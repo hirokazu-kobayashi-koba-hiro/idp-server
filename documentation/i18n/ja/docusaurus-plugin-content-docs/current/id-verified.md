@@ -270,3 +270,8 @@ payload
   "key": "value"
 }
 ```
+
+## 参考
+
+* https://openid-foundation-japan.github.io/openid-connect-4-identity-assurance.html
+* https://openid.net/specs/openid-ida-verified-claims-1_0-final.html

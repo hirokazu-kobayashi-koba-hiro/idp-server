@@ -20,12 +20,9 @@ import java.util.*;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdParam;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowDelegation;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationVerifiedClaimsConfiguration;
 import org.idp.server.platform.http.HmacAuthenticationConfiguration;
-import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.JsonReadable;
-import org.idp.server.platform.json.schema.JsonSchemaDefinition;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
 public class IdentityVerificationConfigurationRequest implements JsonReadable {
@@ -39,7 +36,7 @@ public class IdentityVerificationConfigurationRequest implements JsonReadable {
   HmacAuthenticationConfiguration hmacAuthentication;
   Map<String, IdentityVerificationProcessConfiguration> processes;
   List<String> approvedTargetTypes = new ArrayList<>();
-  Map<String, Object> verifiedClaimsSchema;
+  IdentityVerificationVerifiedClaimsConfiguration verifiedClaimsConfiguration;
 
   public IdentityVerificationConfigurationRequest() {}
 
@@ -63,45 +60,6 @@ public class IdentityVerificationConfigurationRequest implements JsonReadable {
     return description;
   }
 
-  public ExternalWorkflowDelegation externalWorkflowDelegation() {
-    return new ExternalWorkflowDelegation(externalWorkflowDelegation);
-  }
-
-  public ExternalWorkflowApplicationIdParam externalWorkflowApplicationIdParam() {
-    return new ExternalWorkflowApplicationIdParam(externalWorkflowApplicationIdParam);
-  }
-
-  public OAuthAuthorizationConfiguration oauthAuthorization() {
-    if (oauthAuthorization == null) {
-      return new OAuthAuthorizationConfiguration();
-    }
-    return oauthAuthorization;
-  }
-
-  public boolean hasAuthorization() {
-    return oauthAuthorization != null && oauthAuthorization.exists();
-  }
-
-  public Map<String, IdentityVerificationProcessConfiguration> processes() {
-    return processes;
-  }
-
-  public List<String> approvedTargetTypes() {
-    return approvedTargetTypes;
-  }
-
-  public String approvedTargetTypesAsString() {
-    return String.join(",", approvedTargetTypes);
-  }
-
-  public Map<String, Object> verifiedClaimsSchema() {
-    return verifiedClaimsSchema;
-  }
-
-  public JsonSchemaDefinition verifiedClaimsSchemaAsDefinition() {
-    return new JsonSchemaDefinition(JsonNodeWrapper.fromMap(verifiedClaimsSchema));
-  }
-
   public IdentityVerificationConfiguration toConfiguration(String identifier) {
     return new IdentityVerificationConfiguration(
         identifier,
@@ -114,6 +72,6 @@ public class IdentityVerificationConfigurationRequest implements JsonReadable {
         hmacAuthentication,
         processes,
         approvedTargetTypes,
-        verifiedClaimsSchema);
+        verifiedClaimsConfiguration);
   }
 }

@@ -18,46 +18,95 @@ package org.idp.server.platform.json.path;
 
 import com.jayway.jsonpath.*;
 import java.util.*;
-import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 
 public class JsonPathWrapper {
 
   Object document;
+  LoggerWrapper log = LoggerWrapper.getLogger(JsonPathWrapper.class);
 
-  public JsonPathWrapper(JsonNodeWrapper jsonSource) {
+  public JsonPathWrapper(String json) {
     Configuration conf = Configuration.defaultConfiguration();
-    this.document = conf.jsonProvider().parse(jsonSource.toJson());
+    this.document = conf.jsonProvider().parse(json);
   }
 
   public String readAsString(String path) {
-    return JsonPath.read(document, path);
+    try {
+      return JsonPath.read(document, path);
+    } catch (PathNotFoundException e) {
+
+      log.warn(e.getMessage());
+      return null;
+    }
   }
 
   public Integer readAsInt(String path) {
-    return JsonPath.read(document, path);
+    try {
+      return JsonPath.read(document, path);
+    } catch (PathNotFoundException e) {
+
+      log.warn(e.getMessage());
+      return null;
+    }
   }
 
   public Boolean readAsBoolean(String path) {
-    return JsonPath.read(document, path);
+    try {
+      return JsonPath.read(document, path);
+    } catch (PathNotFoundException e) {
+
+      log.warn(e.getMessage());
+      return null;
+    }
   }
 
   public List<String> readAsStringList(String path) {
-    return JsonPath.read(document, path);
+    try {
+      return JsonPath.read(document, path);
+    } catch (PathNotFoundException e) {
+
+      log.warn(e.getMessage());
+      return null;
+    }
   }
 
   public List<Map<String, Object>> readAsMapList(String path) {
-    return JsonPath.read(document, path);
+    try {
+      return JsonPath.read(document, path);
+    } catch (PathNotFoundException e) {
+
+      log.warn(e.getMessage());
+      return null;
+    }
   }
 
   public Map<String, Object> readAsMap(String path) {
-    return JsonPath.read(document, path);
+    try {
+      return JsonPath.read(document, path);
+    } catch (PathNotFoundException e) {
+
+      log.warn(e.getMessage());
+      return null;
+    }
   }
 
   public Map<String, String> readAsStringMap(String path) {
-    return JsonPath.read(document, path);
+    try {
+      return JsonPath.read(document, path);
+    } catch (PathNotFoundException e) {
+
+      log.warn(e.getMessage());
+      return null;
+    }
   }
 
   public Object readRaw(String path) {
-    return JsonPath.read(document, path);
+    try {
+      return JsonPath.read(document, path);
+    } catch (PathNotFoundException e) {
+
+      log.warn(e.getMessage());
+      return null;
+    }
   }
 }

@@ -32,7 +32,7 @@ public class HttpRequestDynamicMapper {
       Map<String, String> headers, JsonNodeWrapper body, HttpRequestMappingRules mappingRules) {
     this.headers = headers;
     this.mappingRules = mappingRules;
-    this.bodyJsonPath = new JsonPathWrapper(body);
+    this.bodyJsonPath = new JsonPathWrapper(body.toJson());
   }
 
   public Map<String, String> toHeaders() {

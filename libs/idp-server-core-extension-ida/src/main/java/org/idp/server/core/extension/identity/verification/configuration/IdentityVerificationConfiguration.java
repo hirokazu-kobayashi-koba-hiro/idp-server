@@ -23,9 +23,7 @@ import org.idp.server.core.extension.identity.verification.delegation.ExternalWo
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowDelegation;
 import org.idp.server.core.extension.identity.verification.exception.IdentityVerificationApplicationConfigurationNotFoundException;
 import org.idp.server.platform.http.HmacAuthenticationConfiguration;
-import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.JsonReadable;
-import org.idp.server.platform.json.schema.JsonSchemaDefinition;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 import org.idp.server.platform.uuid.UuidConvertable;
 
@@ -36,11 +34,12 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
   String description;
   String externalWorkflowDelegation;
   String externalWorkflowApplicationIdParam;
-  OAuthAuthorizationConfiguration oauthAuthorization;
-  HmacAuthenticationConfiguration hmacAuthentication;
+  OAuthAuthorizationConfiguration oauthAuthorization = new OAuthAuthorizationConfiguration();
+  HmacAuthenticationConfiguration hmacAuthentication = new HmacAuthenticationConfiguration();
   Map<String, IdentityVerificationProcessConfiguration> processes;
   List<String> approvedTargetTypes = new ArrayList<>();
-  Map<String, Object> verifiedClaimsSchema;
+  IdentityVerificationVerifiedClaimsConfiguration verifiedClaimsConfiguration =
+      new IdentityVerificationVerifiedClaimsConfiguration();
 
   public IdentityVerificationConfiguration() {}
 
@@ -55,7 +54,7 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
       HmacAuthenticationConfiguration hmacAuthentication,
       Map<String, IdentityVerificationProcessConfiguration> processes,
       List<String> approvedTargetTypes,
-      Map<String, Object> verifiedClaimsSchema) {
+      IdentityVerificationVerifiedClaimsConfiguration verifiedClaimsConfiguration) {
     this.id = id;
     this.type = type;
     this.delegation = delegation;
@@ -66,7 +65,7 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
     this.hmacAuthentication = hmacAuthentication;
     this.processes = processes;
     this.approvedTargetTypes = approvedTargetTypes;
-    this.verifiedClaimsSchema = verifiedClaimsSchema;
+    this.verifiedClaimsConfiguration = verifiedClaimsConfiguration;
   }
 
   public String id() {
@@ -162,12 +161,12 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
     return String.join(",", approvedTargetTypes);
   }
 
-  public Map<String, Object> verifiedClaimsSchema() {
-    return verifiedClaimsSchema;
+  public IdentityVerificationVerifiedClaimsConfiguration verifiedClaimsConfiguration() {
+    return verifiedClaimsConfiguration;
   }
 
-  public JsonSchemaDefinition verifiedClaimsSchemaAsDefinition() {
-    return new JsonSchemaDefinition(JsonNodeWrapper.fromMap(verifiedClaimsSchema));
+  public boolean hasVerifiedClaimsConfiguration() {
+    return verifiedClaimsConfiguration != null && verifiedClaimsConfiguration.exists();
   }
 
   public Map<String, Object> toMap() {
@@ -182,7 +181,8 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
     if (hasHmacAuthentication()) map.put("hmac_authentication", hmacAuthentication.toMap());
     map.put("processes", processes);
     map.put("approved_target_types", approvedTargetTypes);
-    map.put("verified_claims_schema", verifiedClaimsSchema);
+    if (hasVerifiedClaimsConfiguration())
+      map.put("verified_claims_configuration", verifiedClaimsConfiguration.toMap());
 
     return map;
   }
