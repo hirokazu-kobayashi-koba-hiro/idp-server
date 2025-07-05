@@ -19,25 +19,30 @@ package org.idp.server.platform.http;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import org.idp.server.platform.mapper.MappingRule;
 
-public class HttpRequestMappingRules implements Iterable<HttpRequestMappingRule> {
+public class HttpRequestMappingRules implements Iterable<MappingRule> {
 
-  List<HttpRequestMappingRule> values;
+  List<MappingRule> values;
 
   public HttpRequestMappingRules() {
     this.values = new ArrayList<>();
   }
 
-  public HttpRequestMappingRules(List<HttpRequestMappingRule> values) {
+  public HttpRequestMappingRules(List<MappingRule> values) {
     this.values = values;
   }
 
   @Override
-  public Iterator<HttpRequestMappingRule> iterator() {
+  public Iterator<MappingRule> iterator() {
     return values.iterator();
   }
 
   public boolean exists() {
     return values != null && !values.isEmpty();
+  }
+
+  public List<MappingRule> toList() {
+    return values;
   }
 }

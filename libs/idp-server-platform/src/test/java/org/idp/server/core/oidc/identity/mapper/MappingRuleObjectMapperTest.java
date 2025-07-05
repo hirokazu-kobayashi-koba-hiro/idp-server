@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.*;
 import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.mapper.MappingRule;
 import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -62,8 +63,8 @@ public class MappingRuleObjectMapperTest {
             new MappingRule("$.result.tf", "verification.trust_framework"),
             new MappingRule("$.result.ev", "verification.evidence"));
 
-    MappingRuleObjectMapper mapper = new MappingRuleObjectMapper(mappingRules, jsonNodeWrapper);
-    Map<String, Object> result = mapper.execute();
+    JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
+    Map<String, Object> result = MappingRuleObjectMapper.execute(mappingRules, jsonPathWrapper);
 
     assertEquals("Sarah", ((Map<String, Object>) result.get("claims")).get("given_name"));
     assertEquals("Meredyth", ((Map<String, Object>) result.get("claims")).get("family_name"));
@@ -117,8 +118,8 @@ public class MappingRuleObjectMapperTest {
             new MappingRule("$.consumer.tf", "verification.trust_framework"),
             new MappingRule("$.ekyc.ev[0].type", "verification.evidence.0.type"));
 
-    MappingRuleObjectMapper mapper = new MappingRuleObjectMapper(mappingRules, jsonNodeWrapper);
-    Map<String, Object> result = mapper.execute();
+    JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
+    Map<String, Object> result = MappingRuleObjectMapper.execute(mappingRules, jsonPathWrapper);
 
     Map<String, Object> claims = (Map<String, Object>) result.get("claims");
     assertNotNull(claims);
@@ -139,5 +140,35 @@ public class MappingRuleObjectMapperTest {
     assertNotNull(evidence);
     assertEquals(1, evidence.size());
     assertEquals("electronic_record", evidence.get(0).get("type"));
+  }
+
+  @Test
+  public void convertType() {
+    String json =
+        """
+      {
+        "source": {
+          "name": "Alice",
+          "age": "30",
+          "active": "true"
+        }
+      }
+    """;
+
+    JsonNodeWrapper wrapper = JsonNodeWrapper.fromString(json);
+    JsonPathWrapper pathWrapper = new JsonPathWrapper(wrapper.toJson());
+
+    List<MappingRule> rules =
+        List.of(
+            new MappingRule("$.source.name", "user.name", "string"),
+            new MappingRule("$.source.age", "user.age", "int"),
+            new MappingRule("$.source.active", "user.active", "boolean"));
+
+    Map<String, Object> result = MappingRuleObjectMapper.execute(rules, pathWrapper);
+
+    Map<String, Object> user = (Map<String, Object>) result.get("user");
+    assertEquals("Alice", user.get("name"));
+    assertEquals(30, user.get("age"));
+    assertEquals(true, user.get("active"));
   }
 }

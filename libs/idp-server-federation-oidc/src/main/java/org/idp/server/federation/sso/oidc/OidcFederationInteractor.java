@@ -135,15 +135,15 @@ public class OidcFederationInteractor implements FederationInteractor {
 
     UserInfoMapper userInfoMapper =
         new UserInfoMapper(
-            oidcSsoConfiguration.issuerName(),
-            userinfoResult.headers(),
+            oidcSsoConfiguration.userinfoMappingRules(),
+            userinfoResult.headersAsSingleValueMap(),
             userinfoResult.body(),
-            oidcSsoConfiguration.userinfoMappingRules());
+            oidcSsoConfiguration.issuerName());
     User user = userInfoMapper.toUser();
 
     User exsitingUser =
         userQueryRepository.findByExternalIdpSubject(
-            tenant, user.sub(), oidcSsoConfiguration.issuerName());
+            tenant, user.providerUserId(), oidcSsoConfiguration.issuerName());
 
     if (exsitingUser.exists()) {
       user.setSub(exsitingUser.sub());

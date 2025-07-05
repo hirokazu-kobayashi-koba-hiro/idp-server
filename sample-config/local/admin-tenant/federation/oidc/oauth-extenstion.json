@@ -64,10 +64,10 @@
     "client_secret": "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890",
     "redirect_uri": "http://localhost:8080/signin/sso-callback/index.html",
     "userinfo_mapping_rules": [
-      { "source": "body", "from": "$.sub", "to": "provider_user_id", "type": "string" },
-      { "source": "body", "from": "$.email", "to": "email", "type": "string" },
-      { "source": "body", "from": "$.email_verified", "to": "email_verified", "type": "boolean" },
-      { "source": "header", "from": "$.cache-control", "to": "name", "type": "string" }
+      { "from": "$.body.sub", "to": "provider_user_id" },
+      { "from": "$.body.email", "to": "email" },
+      { "from": "$.body.email_verified", "to": "email_verified" },
+      { "from": "$.header.cache-control", "to": "name" }
     ]
   }
 }

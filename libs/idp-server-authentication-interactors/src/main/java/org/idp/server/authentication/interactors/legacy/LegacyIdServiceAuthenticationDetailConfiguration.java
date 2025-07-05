@@ -18,9 +18,9 @@ package org.idp.server.authentication.interactors.legacy;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.oidc.identity.mapper.UserinfoMappingRule;
 import org.idp.server.platform.http.*;
 import org.idp.server.platform.json.JsonReadable;
+import org.idp.server.platform.mapper.MappingRule;
 
 public class LegacyIdServiceAuthenticationDetailConfiguration implements JsonReadable {
   String url;
@@ -28,7 +28,7 @@ public class LegacyIdServiceAuthenticationDetailConfiguration implements JsonRea
   Map<String, String> headers;
   List<String> dynamicBodyKeys;
   Map<String, Object> staticBody;
-  List<UserinfoMappingRule> userinfoMappingRules;
+  List<MappingRule> userinfoMappingRules;
 
   public LegacyIdServiceAuthenticationDetailConfiguration() {}
 
@@ -52,7 +52,7 @@ public class LegacyIdServiceAuthenticationDetailConfiguration implements JsonRea
     return new HttpRequestStaticBody(staticBody);
   }
 
-  public List<UserinfoMappingRule> userinfoMappingRules() {
+  public List<MappingRule> userinfoMappingRules() {
     return userinfoMappingRules;
   }
 }
