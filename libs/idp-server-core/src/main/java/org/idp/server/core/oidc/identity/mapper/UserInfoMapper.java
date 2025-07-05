@@ -36,7 +36,7 @@ public class UserInfoMapper {
     this.providerName = providerName;
     this.headers = headers;
     this.mappingRules = mappingRules;
-    this.bodyJsonPath = new JsonPathWrapper(body);
+    this.bodyJsonPath = new JsonPathWrapper(body.toJson());
   }
 
   public User toUser() {

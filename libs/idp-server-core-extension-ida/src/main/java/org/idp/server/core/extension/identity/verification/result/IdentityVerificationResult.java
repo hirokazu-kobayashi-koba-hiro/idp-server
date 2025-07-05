@@ -41,7 +41,6 @@ public class IdentityVerificationResult {
   LocalDateTime verifiedAt;
   LocalDateTime verifiedUntil;
   IdentityVerificationSource source;
-  ;
 
   public static IdentityVerificationResult create(
       IdentityVerificationApplication application,
@@ -57,8 +56,7 @@ public class IdentityVerificationResult {
     ExternalWorkflowApplicationIdentifier externalApplicationId =
         application.externalApplicationId();
     VerifiedClaims verifiedClaims =
-        VerifiedClaims.create(
-            request, verificationConfiguration.verifiedClaimsSchemaAsDefinition());
+        VerifiedClaims.create(request, verificationConfiguration.verifiedClaimsConfiguration());
     LocalDateTime verifiedAt = SystemDateTime.now();
     IdentityVerificationSource source = IdentityVerificationSource.APPLICATION;
 
