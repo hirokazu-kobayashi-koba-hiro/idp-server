@@ -26,14 +26,14 @@ import org.idp.server.core.extension.identity.verification.configuration.Identit
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplyingResult;
 import org.idp.server.core.extension.identity.verification.handler.IdentityVerificationHandler;
+import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationResponse;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationDynamicResponseMapper;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationResponse;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationCommandRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationQueryRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationResultCommandRepository;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResult;
-import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationRequestValidator;
-import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationValidationResult;
+import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationApplicationRequestValidator;
+import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationApplicationValidationResult;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserStatus;
 import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
@@ -49,7 +49,8 @@ import org.idp.server.platform.security.event.SecurityEventType;
 import org.idp.server.platform.security.type.RequestAttributes;
 
 @Transaction
-public class IdentityVerificationEntryService implements IdentityVerificationApi {
+public class IdentityVerificationApplicationEntryService
+    implements IdentityVerificationApplicationApi {
 
   IdentityVerificationConfigurationQueryRepository configurationQueryRepository;
   IdentityVerificationApplicationCommandRepository applicationCommandRepository;
@@ -61,7 +62,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
   UserCommandRepository userCommandRepository;
   TokenEventPublisher eventPublisher;
 
-  public IdentityVerificationEntryService(
+  public IdentityVerificationApplicationEntryService(
       IdentityVerificationConfigurationQueryRepository configurationQueryRepository,
       IdentityVerificationApplicationCommandRepository applicationCommandRepository,
       IdentityVerificationApplicationQueryRepository applicationQueryRepository,
@@ -82,13 +83,13 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
   }
 
   @Override
-  public IdentityVerificationResponse apply(
+  public IdentityVerificationApplicationResponse apply(
       TenantIdentifier tenantIdentifier,
       User user,
       OAuthToken oAuthToken,
       IdentityVerificationType type,
       IdentityVerificationProcess process,
-      IdentityVerificationRequest request,
+      IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
@@ -142,11 +143,11 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
             process,
             verificationConfiguration);
 
-    return IdentityVerificationResponse.OK(response);
+    return IdentityVerificationApplicationResponse.OK(response);
   }
 
   @Override
-  public IdentityVerificationResponse findApplications(
+  public IdentityVerificationApplicationResponse findApplications(
       TenantIdentifier tenantIdentifier,
       User user,
       OAuthToken oAuthToken,
@@ -166,18 +167,18 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
 
     Map<String, Object> response = new HashMap<>();
     response.put("list", applications.toList());
-    return IdentityVerificationResponse.OK(response);
+    return IdentityVerificationApplicationResponse.OK(response);
   }
 
   @Override
-  public IdentityVerificationResponse process(
+  public IdentityVerificationApplicationResponse process(
       TenantIdentifier tenantIdentifier,
       User user,
       OAuthToken oAuthToken,
       IdentityVerificationApplicationIdentifier identifier,
       IdentityVerificationType type,
       IdentityVerificationProcess process,
-      IdentityVerificationRequest request,
+      IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
@@ -223,16 +224,16 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
             applyingResult.externalWorkflowResponse(),
             process,
             verificationConfiguration);
-    return IdentityVerificationResponse.OK(response);
+    return IdentityVerificationApplicationResponse.OK(response);
   }
 
   @Override
-  public IdentityVerificationResponse evaluateResult(
+  public IdentityVerificationApplicationResponse evaluateResult(
       TenantIdentifier tenantIdentifier,
       User user,
       OAuthToken oAuthToken,
       IdentityVerificationType type,
-      IdentityVerificationRequest request,
+      IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
@@ -244,9 +245,10 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
     IdentityVerificationProcessConfiguration processConfiguration =
         verificationConfiguration.getProcessConfig(process);
 
-    IdentityVerificationRequestValidator applicationValidator =
-        new IdentityVerificationRequestValidator(processConfiguration, request);
-    IdentityVerificationValidationResult validationResult = applicationValidator.validate();
+    IdentityVerificationApplicationRequestValidator applicationValidator =
+        new IdentityVerificationApplicationRequestValidator(processConfiguration, request);
+    IdentityVerificationApplicationValidationResult validationResult =
+        applicationValidator.validate();
 
     if (validationResult.isError()) {
 
@@ -276,11 +278,11 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
     userCommandRepository.update(tenant, verifiedUser);
 
     Map<String, Object> response = new HashMap<>();
-    return IdentityVerificationResponse.OK(response);
+    return IdentityVerificationApplicationResponse.OK(response);
   }
 
   @Override
-  public IdentityVerificationResponse delete(
+  public IdentityVerificationApplicationResponse delete(
       TenantIdentifier tenantIdentifier,
       User user,
       OAuthToken oAuthToken,
@@ -298,6 +300,6 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
         DefaultSecurityEventType.identity_verification_application_delete,
         requestAttributes);
 
-    return IdentityVerificationResponse.OK(Map.of());
+    return IdentityVerificationApplicationResponse.OK(Map.of());
   }
 }

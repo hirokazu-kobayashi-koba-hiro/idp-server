@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.identity.verification.verifier;
+package org.idp.server.core.extension.identity.verification.verifier.application;
 
+import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
-import org.idp.server.core.extension.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
@@ -25,7 +25,7 @@ import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.type.RequestAttributes;
 
-public interface IdentityVerificationRequestVerifier {
+public interface IdentityVerificationApplicationRequestVerifier {
 
   default boolean shouldVerify(
       Tenant tenant,
@@ -33,19 +33,19 @@ public interface IdentityVerificationRequestVerifier {
       IdentityVerificationApplications applications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
-      IdentityVerificationRequest request,
+      IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
     return false;
   }
 
-  IdentityVerificationRequestVerificationResult verify(
+  IdentityVerificationApplicationRequestVerifiedResult verify(
       Tenant tenant,
       User user,
       IdentityVerificationApplications applications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
-      IdentityVerificationRequest request,
+      IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration);
 }

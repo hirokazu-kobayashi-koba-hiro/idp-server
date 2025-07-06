@@ -20,30 +20,28 @@ import java.util.Map;
 
 public class IdentityVerificationResponse {
 
-  IdentityVerificationApplicationStatus status;
+  IdentityVerificationStatus status;
   Map<String, Object> response;
 
   public static IdentityVerificationResponse OK(Map<String, Object> response) {
-    return new IdentityVerificationResponse(IdentityVerificationApplicationStatus.OK, response);
+    return new IdentityVerificationResponse(IdentityVerificationStatus.OK, response);
   }
 
   public static IdentityVerificationResponse CLIENT_ERROR(Map<String, Object> response) {
-    return new IdentityVerificationResponse(
-        IdentityVerificationApplicationStatus.CLIENT_ERROR, response);
+    return new IdentityVerificationResponse(IdentityVerificationStatus.CLIENT_ERROR, response);
   }
 
   public static IdentityVerificationResponse SERVER_ERROR(Map<String, Object> response) {
-    return new IdentityVerificationResponse(
-        IdentityVerificationApplicationStatus.SERVER_ERROR, response);
+    return new IdentityVerificationResponse(IdentityVerificationStatus.SERVER_ERROR, response);
   }
 
   private IdentityVerificationResponse(
-      IdentityVerificationApplicationStatus status, Map<String, Object> response) {
+      IdentityVerificationStatus status, Map<String, Object> response) {
     this.status = status;
     this.response = response;
   }
 
-  public IdentityVerificationApplicationStatus status() {
+  public IdentityVerificationStatus status() {
     return status;
   }
 
@@ -52,7 +50,7 @@ public class IdentityVerificationResponse {
   }
 
   public boolean isOK() {
-    return status == IdentityVerificationApplicationStatus.OK;
+    return status == IdentityVerificationStatus.OK;
   }
 
   public int statusCode() {

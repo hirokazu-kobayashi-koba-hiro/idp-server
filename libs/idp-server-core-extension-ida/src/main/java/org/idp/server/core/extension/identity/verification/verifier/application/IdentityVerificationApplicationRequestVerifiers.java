@@ -14,46 +14,46 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.identity.verification.verifier;
+package org.idp.server.core.extension.identity.verification.verifier.application;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
-import org.idp.server.core.extension.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
-import org.idp.server.core.extension.identity.verification.plugin.IdentityVerificationRequestVerifierPluginLoader;
+import org.idp.server.core.extension.identity.verification.plugin.IdentityVerificationApplicationRequestVerifierPluginLoader;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.type.RequestAttributes;
 
-public class IdentityVerificationRequestVerifiers {
+public class IdentityVerificationApplicationRequestVerifiers {
 
-  List<IdentityVerificationRequestVerifier> verifiers;
+  List<IdentityVerificationApplicationRequestVerifier> verifiers;
 
-  public IdentityVerificationRequestVerifiers() {
+  public IdentityVerificationApplicationRequestVerifiers() {
     this.verifiers = new ArrayList<>();
-    this.verifiers.add(new DenyDuplicateIdentityVerificationApplicationVerifier());
-    this.verifiers.add(new UnmatchedEmailIdentityVerificationApplicationVerifier());
-    this.verifiers.add(new UnmatchedPhoneIdentityVerificationApplicationVerifier());
-    this.verifiers.add(new ContinuousCustomerDueDiligenceIdentityVerificationVerifier());
-    List<IdentityVerificationRequestVerifier> loaded =
-        IdentityVerificationRequestVerifierPluginLoader.load();
+    this.verifiers.add(new DenyDuplicateIdentityVerificationApplicationApplicationVerifier());
+    this.verifiers.add(new UnmatchedEmailIdentityVerificationApplicationApplicationVerifier());
+    this.verifiers.add(new UnmatchedPhoneIdentityVerificationApplicationApplicationVerifier());
+    this.verifiers.add(new ContinuousCustomerDueDiligenceIdentityVerificationApplicationVerifier());
+    List<IdentityVerificationApplicationRequestVerifier> loaded =
+        IdentityVerificationApplicationRequestVerifierPluginLoader.load();
     this.verifiers.addAll(loaded);
   }
 
-  public IdentityVerificationRequestVerificationResult verify(
+  public IdentityVerificationApplicationRequestVerifiedResult verify(
       Tenant tenant,
       User user,
       IdentityVerificationApplications applications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
-      IdentityVerificationRequest request,
+      IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
 
-    for (IdentityVerificationRequestVerifier verifier : verifiers) {
+    for (IdentityVerificationApplicationRequestVerifier verifier : verifiers) {
 
       if (!verifier.shouldVerify(
           tenant,
@@ -67,7 +67,7 @@ public class IdentityVerificationRequestVerifiers {
         continue;
       }
 
-      IdentityVerificationRequestVerificationResult verifyResult =
+      IdentityVerificationApplicationRequestVerifiedResult verifyResult =
           verifier.verify(
               tenant,
               user,
@@ -83,6 +83,6 @@ public class IdentityVerificationRequestVerifiers {
       }
     }
 
-    return IdentityVerificationRequestVerificationResult.success();
+    return IdentityVerificationApplicationRequestVerifiedResult.success();
   }
 }

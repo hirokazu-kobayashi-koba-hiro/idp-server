@@ -1,0 +1,201 @@
+{
+  "id": "8c91feb0-97d5-41ce-b041-ad2ab2c65158",
+  "type": "trust-service",
+  "external_workflow_delegation": "trust-service",
+  "external_workflow_application_id_param": "application_id",
+  "verified_claims_configuration": {
+   "mapping_rules": [
+     { "from": "$.trust_framework", "to": "verification.trust_framework" },
+     { "from": "$.evidence[0].type", "to": "verification.evidence.0.type" },
+     { "from": "$.evidence[0].check_details[0].check_method", "to": "verification.evidence.0.check_details.0.check_method" },
+     { "from": "$.evidence[0].check_details[0].organization", "to": "verification.evidence.0.check_details.0.organization" },
+     { "from": "$.evidence[0].check_details[0].txn", "to": "verification.evidence.0.check_details.0.txn" },
+     { "from": "$.evidence[0].time", "to": "verification.evidence.0.time" },
+     { "from": "$.evidence[0].record.type", "to": "verification.evidence.0.record.type" },
+     { "from": "$.evidence[0].record.source.name", "to": "verification.evidence.0.record.source.name" },
+     { "from": "$.last_name", "to": "claims.last_name" },
+     { "from": "$.family_name", "to": "claims.family_name" },
+     { "from": "$.last_name_kana", "to": "claims.last_name_kana" },
+     { "from": "$.first_name_kana", "to": "claims.first_name_kana" },
+     { "from": "$.birthdate", "to": "claims.birthdate" },
+     { "from": "$.nationality", "to": "claims.nationality" },
+     { "from": "$.email_address", "to": "claims.email_address" },
+     { "from": "$.mobile_phone_number", "to": "claims.mobile_phone_number" },
+     { "from": "$.address", "to": "claims.address" }
+   ]
+  },
+  "registration": {
+    "basic_auth": {
+      "username": "test_user",
+      "password": "test_user001"
+    },
+    "request_validation_schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "request Application",
+      "type": "object",
+      "required": [
+        "last_name",
+        "first_name",
+        "last_name_kana",
+        "first_name_kana",
+        "birthdate",
+        "nationality",
+        "email_address",
+        "mobile_phone_number",
+        "address",
+        "trust_framework"
+      ],
+      "properties": {
+        "trust_framework": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "check_details",
+              "time",
+              "record"
+            ],
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "check_details": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "check_method",
+                    "organization",
+                    "txn"
+                  ],
+                  "properties": {
+                    "check_method": {
+                      "type":"string"
+                    },
+                    "organization": {
+                      "type": "string"
+                    },
+                    "txn": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "time": {
+                "type": "string"
+              },
+              "record": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "source"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "object",
+                    "required": [
+                      "name"
+                    ],
+                    "properties": {
+                      "source": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "last_name": {
+          "type": "string",
+          "maxLength": 255,
+          "store": true
+        },
+        "first_name": {
+          "type": "string",
+          "maxLength": 255,
+          "store": true
+        },
+        "last_name_kana": {
+          "type": "string",
+          "maxLength": 255,
+          "store": true
+        },
+        "first_name_kana": {
+          "type": "string",
+          "maxLength": 255,
+          "store": true
+        },
+        "birthdate": {
+          "type": "string",
+          "format": "date",
+          "store": true
+        },
+        "nationality": {
+          "type": "string",
+          "maxLength": 255,
+          "store": true
+        },
+        "email_address": {
+          "type": "string",
+          "maxLength": 255,
+          "pattern": "^[\\w\\.-]+@[\\w\\.-]+\\.[a-zA-Z]{2,}$",
+          "store": true
+        },
+        "mobile_phone_number": {
+          "type": "string",
+          "maxLength": 11,
+          "pattern": "^[0-9]{10,11}$",
+          "store": true
+        },
+        "address": {
+          "type": "object",
+          "store": true,
+          "properties": {
+            "street_address": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "locality": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "region": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "postal_code": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "country": {
+              "type": "string",
+              "maxLength": 255
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "request_verification_schema": {
+      "$schema": "original",
+      "duplicate_application": false,
+      "unmatched_user_claims_email": {
+        "property": "email_address"
+      },
+      "unmatched_user_claims_phone": {
+        "property": "mobile_phone_number"
+      }
+    }
+  }
+}

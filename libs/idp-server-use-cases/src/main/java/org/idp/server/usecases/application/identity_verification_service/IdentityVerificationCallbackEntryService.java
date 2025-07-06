@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.usecases.application.system;
+package org.idp.server.usecases.application.identity_verification_service;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,13 +25,13 @@ import org.idp.server.core.extension.identity.verification.configuration.Identit
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.handler.IdentityVerificationHandler;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationResponse;
+import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationResponse;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationCommandRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationQueryRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationResultCommandRepository;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResult;
-import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationRequestValidator;
-import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationValidationResult;
+import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationApplicationRequestValidator;
+import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationApplicationValidationResult;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserStatus;
 import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
@@ -78,11 +78,11 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
   }
 
   @Override
-  public IdentityVerificationResponse callbackExamination(
+  public IdentityVerificationApplicationResponse callbackExamination(
       TenantIdentifier tenantIdentifier,
       BasicAuth basicAuth,
       IdentityVerificationType type,
-      IdentityVerificationRequest request,
+      IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
@@ -94,9 +94,10 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
     IdentityVerificationProcessConfiguration processConfiguration =
         verificationConfiguration.getProcessConfig(process);
 
-    IdentityVerificationRequestValidator applicationValidator =
-        new IdentityVerificationRequestValidator(processConfiguration, request);
-    IdentityVerificationValidationResult validationResult = applicationValidator.validate();
+    IdentityVerificationApplicationRequestValidator applicationValidator =
+        new IdentityVerificationApplicationRequestValidator(processConfiguration, request);
+    IdentityVerificationApplicationValidationResult validationResult =
+        applicationValidator.validate();
 
     if (validationResult.isError()) {
 
@@ -115,15 +116,15 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
     applicationCommandRepository.update(tenant, updatedExamination);
 
     Map<String, Object> response = new HashMap<>();
-    return IdentityVerificationResponse.OK(response);
+    return IdentityVerificationApplicationResponse.OK(response);
   }
 
   @Override
-  public IdentityVerificationResponse callbackResult(
+  public IdentityVerificationApplicationResponse callbackResult(
       TenantIdentifier tenantIdentifier,
       BasicAuth basicAuth,
       IdentityVerificationType type,
-      IdentityVerificationRequest request,
+      IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
@@ -135,9 +136,10 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
     IdentityVerificationProcessConfiguration processConfiguration =
         verificationConfiguration.getProcessConfig(process);
 
-    IdentityVerificationRequestValidator applicationValidator =
-        new IdentityVerificationRequestValidator(processConfiguration, request);
-    IdentityVerificationValidationResult validationResult = applicationValidator.validate();
+    IdentityVerificationApplicationRequestValidator applicationValidator =
+        new IdentityVerificationApplicationRequestValidator(processConfiguration, request);
+    IdentityVerificationApplicationValidationResult validationResult =
+        applicationValidator.validate();
 
     if (validationResult.isError()) {
 
@@ -168,6 +170,6 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
     userCommandRepository.update(tenant, verifiedUser);
 
     Map<String, Object> response = new HashMap<>();
-    return IdentityVerificationResponse.OK(response);
+    return IdentityVerificationApplicationResponse.OK(response);
   }
 }

@@ -16,31 +16,32 @@
 
 package org.idp.server.core.extension.identity.verification.validation;
 
+import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
-import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaDefinition;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 import org.idp.server.platform.json.schema.JsonSchemaValidator;
 
-public class IdentityVerificationResponseValidator {
+public class IdentityVerificationApplicationRequestValidator {
   IdentityVerificationProcessConfiguration processConfiguration;
-  JsonNodeWrapper response;
-  JsonConverter jsonConverter;
+  IdentityVerificationApplicationRequest request;
 
-  public IdentityVerificationResponseValidator(
-      IdentityVerificationProcessConfiguration processConfiguration, JsonNodeWrapper response) {
+  public IdentityVerificationApplicationRequestValidator(
+      IdentityVerificationProcessConfiguration processConfiguration,
+      IdentityVerificationApplicationRequest request) {
     this.processConfiguration = processConfiguration;
-    this.response = response;
-    this.jsonConverter = JsonConverter.snakeCaseInstance();
+    this.request = request;
   }
 
   public IdentityVerificationApplicationValidationResult validate() {
+
     JsonSchemaDefinition jsonSchemaDefinition =
-        processConfiguration.responseValidationSchemaAsDefinition();
+        processConfiguration.requestValidationSchemaAsDefinition();
     JsonSchemaValidator jsonSchemaValidator = new JsonSchemaValidator(jsonSchemaDefinition);
 
-    JsonSchemaValidationResult validationResult = jsonSchemaValidator.validate(response);
+    JsonNodeWrapper requestJson = JsonNodeWrapper.fromMap(request.toMap());
+    JsonSchemaValidationResult validationResult = jsonSchemaValidator.validate(requestJson);
 
     return new IdentityVerificationApplicationValidationResult(validationResult);
   }

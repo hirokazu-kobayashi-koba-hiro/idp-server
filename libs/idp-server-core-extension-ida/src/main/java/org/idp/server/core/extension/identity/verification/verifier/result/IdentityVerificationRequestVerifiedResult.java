@@ -14,33 +14,33 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.identity.verification.verifier;
+package org.idp.server.core.extension.identity.verification.verifier.result;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationResponse;
 
-public class IdentityVerificationRequestVerificationResult {
+public class IdentityVerificationRequestVerifiedResult {
 
   boolean valid;
   List<String> errors;
 
-  private IdentityVerificationRequestVerificationResult(boolean valid, List<String> errors) {
+  private IdentityVerificationRequestVerifiedResult(boolean valid, List<String> errors) {
     this.valid = valid;
     this.errors = errors;
   }
 
-  public static IdentityVerificationRequestVerificationResult empty() {
-    return new IdentityVerificationRequestVerificationResult(false, List.of());
+  public static IdentityVerificationRequestVerifiedResult empty() {
+    return new IdentityVerificationRequestVerifiedResult(false, List.of());
   }
 
-  public static IdentityVerificationRequestVerificationResult success() {
-    return new IdentityVerificationRequestVerificationResult(true, List.of());
+  public static IdentityVerificationRequestVerifiedResult success() {
+    return new IdentityVerificationRequestVerifiedResult(true, List.of());
   }
 
-  public static IdentityVerificationRequestVerificationResult failure(List<String> errors) {
-    return new IdentityVerificationRequestVerificationResult(false, errors);
+  public static IdentityVerificationRequestVerifiedResult failure(List<String> errors) {
+    return new IdentityVerificationRequestVerifiedResult(false, errors);
   }
 
   public boolean isValid() {
@@ -58,7 +58,7 @@ public class IdentityVerificationRequestVerificationResult {
   public IdentityVerificationResponse errorResponse() {
     Map<String, Object> response = new HashMap<>();
     response.put("error", "invalid_request");
-    response.put("error_description", "identity verification application is invalid.");
+    response.put("error_description", "identity verification is invalid.");
     response.put("error_details", errors);
     return IdentityVerificationResponse.CLIENT_ERROR(response);
   }

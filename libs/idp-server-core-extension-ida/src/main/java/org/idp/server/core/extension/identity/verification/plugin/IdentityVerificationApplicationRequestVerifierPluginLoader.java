@@ -18,35 +18,35 @@ package org.idp.server.core.extension.identity.verification.plugin;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.core.extension.identity.verification.verifier.result.IdentityVerificationRequestVerifier;
+import org.idp.server.core.extension.identity.verification.verifier.application.IdentityVerificationApplicationRequestVerifier;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.plugin.PluginLoader;
 
-public class IdentityVerificationRequestVerifierPluginLoader extends PluginLoader {
+public class IdentityVerificationApplicationRequestVerifierPluginLoader extends PluginLoader {
 
   private static final LoggerWrapper log =
-      LoggerWrapper.getLogger(IdentityVerificationRequestVerifierPluginLoader.class);
+      LoggerWrapper.getLogger(IdentityVerificationApplicationRequestVerifierPluginLoader.class);
 
-  public static List<IdentityVerificationRequestVerifier> load() {
-    List<IdentityVerificationRequestVerifier> verifiers = new ArrayList<>();
+  public static List<IdentityVerificationApplicationRequestVerifier> load() {
+    List<IdentityVerificationApplicationRequestVerifier> verifiers = new ArrayList<>();
 
-    List<IdentityVerificationRequestVerifier> internals =
-        loadFromInternalModule(IdentityVerificationRequestVerifier.class);
-    for (IdentityVerificationRequestVerifier verifier : internals) {
+    List<IdentityVerificationApplicationRequestVerifier> internals =
+        loadFromInternalModule(IdentityVerificationApplicationRequestVerifier.class);
+    for (IdentityVerificationApplicationRequestVerifier verifier : internals) {
       verifiers.add(verifier);
       log.info(
           String.format(
-              "Dynamic Registered internal IdentityVerificationRequestVerifier %s",
+              "Dynamic Registered internal IdentityVerificationApplicationRequestVerifier %s",
               verifier.getClass().getSimpleName()));
     }
 
-    List<IdentityVerificationRequestVerifier> externals =
-        loadFromExternalModule(IdentityVerificationRequestVerifier.class);
-    for (IdentityVerificationRequestVerifier verifier : externals) {
+    List<IdentityVerificationApplicationRequestVerifier> externals =
+        loadFromExternalModule(IdentityVerificationApplicationRequestVerifier.class);
+    for (IdentityVerificationApplicationRequestVerifier verifier : externals) {
       verifiers.add(verifier);
       log.info(
           String.format(
-              "Dynamic Registered externals IdentityVerificationRequestVerifier %s",
+              "Dynamic Registered externals IdentityVerificationApplicationRequestVerifier %s",
               verifier.getClass().getSimpleName()));
     }
 

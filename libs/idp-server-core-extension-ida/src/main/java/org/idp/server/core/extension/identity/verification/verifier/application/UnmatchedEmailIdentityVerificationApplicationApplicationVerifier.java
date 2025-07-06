@@ -14,26 +14,23 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.identity.verification.verifier;
+package org.idp.server.core.extension.identity.verification.verifier.application;
 
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
-import org.idp.server.core.extension.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.oidc.identity.User;
-import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.type.RequestAttributes;
 
-public class UnmatchedPhoneIdentityVerificationApplicationVerifier
-    implements IdentityVerificationRequestVerifier {
-
-  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+public class UnmatchedEmailIdentityVerificationApplicationApplicationVerifier
+    implements IdentityVerificationApplicationRequestVerifier {
 
   @Override
   public boolean shouldVerify(
@@ -42,7 +39,7 @@ public class UnmatchedPhoneIdentityVerificationApplicationVerifier
       IdentityVerificationApplications applications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
-      IdentityVerificationRequest request,
+      IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
 
@@ -55,35 +52,35 @@ public class UnmatchedPhoneIdentityVerificationApplicationVerifier
     }
 
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(verificationSchema);
-    return jsonNodeWrapper.optValueAsBoolean("unmatched_user_claims_phone", false);
+    return jsonNodeWrapper.optValueAsBoolean("unmatched_user_claims_email", false);
   }
 
   @Override
-  public IdentityVerificationRequestVerificationResult verify(
+  public IdentityVerificationApplicationRequestVerifiedResult verify(
       Tenant tenant,
       User user,
       IdentityVerificationApplications applications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
-      IdentityVerificationRequest request,
+      IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
 
     IdentityVerificationProcessConfiguration processConfig =
         verificationConfiguration.getProcessConfig(processes);
     Map<String, Object> verificationSchema = processConfig.requestVerificationSchema();
-    JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(verificationSchema);
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(verificationSchema);
     JsonNodeWrapper unmatchedUserClaims =
-        jsonNodeWrapper.getValueAsJsonNode("unmatched_user_claims_phone");
+        jsonNodeWrapper.getValueAsJsonNode("unmatched_user_claims_email");
 
     String property = unmatchedUserClaims.getValueOrEmptyAsString("property");
     String requestValue = request.optValueAsString(property, "");
 
-    if (!requestValue.equals(user.phoneNumber())) {
-      return IdentityVerificationRequestVerificationResult.failure(
-          List.of("PhoneNumber does not match"));
+    if (!requestValue.equals(user.email())) {
+      return IdentityVerificationApplicationRequestVerifiedResult.failure(
+          List.of("Email does not match"));
     }
 
-    return IdentityVerificationRequestVerificationResult.success();
+    return IdentityVerificationApplicationRequestVerifiedResult.success();
   }
 }

@@ -798,7 +798,8 @@ CREATE TABLE identity_verification_configuration
     created_at TIMESTAMP DEFAULT now() NOT NULL,
     updated_at TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (id),
-    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
+    UNIQUE (tenant_id, type)
 );
 
 ALTER TABLE identity_verification_configuration ENABLE ROW LEVEL SECURITY;
@@ -820,7 +821,7 @@ CREATE TABLE identity_verification_application
     application_details          JSONB                   NOT NULL,
     trust_framework              VARCHAR(255),
     evidence_document_type       VARCHAR(255),
-    evidence_document_details     JSONB,
+    evidence_document_details    JSONB,
     evidence_method              VARCHAR(255),
     external_workflow_delegation VARCHAR(255)            NOT NULL,
     external_application_id      VARCHAR(255)            NOT NULL,
@@ -857,7 +858,7 @@ CREATE TABLE identity_verification_result
     tenant_id               UUID         NOT NULL,
     user_id                 UUID         NOT NULL,
     application_id          UUID,
-    verification_type       VARCHAR(255),
+    verification_type       VARCHAR(255) NOT NULL,
     external_application_id VARCHAR(255),
     verified_claims         JSONB        NOT NULL,
     verified_at             TIMESTAMP    NOT NULL,

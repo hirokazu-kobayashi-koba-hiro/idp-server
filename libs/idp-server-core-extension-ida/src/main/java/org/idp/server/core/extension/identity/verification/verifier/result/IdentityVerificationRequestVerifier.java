@@ -14,39 +14,35 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.identity.verification.delegation.request;
+package org.idp.server.core.extension.identity.verification.verifier.result;
 
-import java.util.Map;
-import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
-import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
-import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.type.RequestAttributes;
 
-public interface AdditionalRequestParameterResolver {
+public interface IdentityVerificationRequestVerifier {
 
-  default boolean shouldResolve(
+  default boolean shouldVerify(
       Tenant tenant,
       User user,
-      IdentityVerificationApplications applications,
+      BasicAuth basicAuth,
       IdentityVerificationType type,
-      IdentityVerificationProcess processes,
-      IdentityVerificationApplicationRequest request,
+      IdentityVerificationRequest request,
       RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
     return false;
   }
 
-  Map<String, Object> resolve(
+  IdentityVerificationRequestVerifiedResult verify(
       Tenant tenant,
       User user,
-      IdentityVerificationApplications applications,
+      BasicAuth basicAuth,
       IdentityVerificationType type,
-      IdentityVerificationProcess processes,
-      IdentityVerificationApplicationRequest request,
+      IdentityVerificationRequest request,
       RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration);
 }

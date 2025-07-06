@@ -18,6 +18,7 @@ package org.idp.server.core.extension.identity.verification.result;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplication;
@@ -33,7 +34,7 @@ public class IdentityVerificationResult {
 
   IdentityVerificationResultIdentifier identifier;
   TenantIdentifier tenantId;
-  UserIdentifier userIdentifier;
+  UserIdentifier userId;
   IdentityVerificationApplicationIdentifier applicationId;
   IdentityVerificationType identityVerificationType;
   ExternalWorkflowApplicationIdentifier externalApplicationId;
@@ -44,7 +45,7 @@ public class IdentityVerificationResult {
 
   public static IdentityVerificationResult create(
       IdentityVerificationApplication application,
-      IdentityVerificationRequest request,
+      IdentityVerificationApplicationRequest request,
       IdentityVerificationConfiguration verificationConfiguration) {
 
     IdentityVerificationResultIdentifier identifier =
@@ -73,12 +74,43 @@ public class IdentityVerificationResult {
         source);
   }
 
+  public static IdentityVerificationResult createOnDirect(
+      TenantIdentifier tenantId,
+      IdentityVerificationType identityVerificationType,
+      IdentityVerificationRequest request,
+      IdentityVerificationConfiguration verificationConfiguration) {
+
+    IdentityVerificationResultIdentifier identifier =
+        new IdentityVerificationResultIdentifier(UUID.randomUUID().toString());
+    UserIdentifier userIdentifier = request.userIdentifier();
+    IdentityVerificationApplicationIdentifier applicationId =
+        new IdentityVerificationApplicationIdentifier();
+    ExternalWorkflowApplicationIdentifier externalApplicationId =
+        new ExternalWorkflowApplicationIdentifier();
+    VerifiedClaims verifiedClaims =
+        VerifiedClaims.create(request, verificationConfiguration.verifiedClaimsConfiguration());
+    LocalDateTime verifiedAt = SystemDateTime.now();
+    IdentityVerificationSource source = IdentityVerificationSource.DIRECT;
+
+    return new IdentityVerificationResult(
+        identifier,
+        tenantId,
+        userIdentifier,
+        applicationId,
+        identityVerificationType,
+        externalApplicationId,
+        verifiedClaims,
+        verifiedAt,
+        null,
+        source);
+  }
+
   public IdentityVerificationResult() {}
 
   public IdentityVerificationResult(
       IdentityVerificationResultIdentifier identifier,
       TenantIdentifier tenantId,
-      UserIdentifier userIdentifier,
+      UserIdentifier userId,
       IdentityVerificationApplicationIdentifier applicationId,
       IdentityVerificationType identityVerificationType,
       ExternalWorkflowApplicationIdentifier externalApplicationId,
@@ -88,7 +120,7 @@ public class IdentityVerificationResult {
       IdentityVerificationSource source) {
     this.identifier = identifier;
     this.tenantId = tenantId;
-    this.userIdentifier = userIdentifier;
+    this.userId = userId;
     this.applicationId = applicationId;
     this.identityVerificationType = identityVerificationType;
     this.externalApplicationId = externalApplicationId;
@@ -106,8 +138,8 @@ public class IdentityVerificationResult {
     return tenantId;
   }
 
-  public UserIdentifier userIdentifier() {
-    return userIdentifier;
+  public UserIdentifier userId() {
+    return userId;
   }
 
   public IdentityVerificationApplicationIdentifier applicationId() {
@@ -144,5 +176,13 @@ public class IdentityVerificationResult {
 
   public boolean exists() {
     return identifier != null && identifier.exists();
+  }
+
+  public boolean hasApplicationId() {
+    return applicationId != null && applicationId.exists();
+  }
+
+  public boolean hasExternalApplicationId() {
+    return externalApplicationId != null && externalApplicationId.exists();
   }
 }

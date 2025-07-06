@@ -20,6 +20,7 @@ import java.util.*;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationRegistrationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationVerifiedClaimsConfiguration;
 import org.idp.server.platform.http.HmacAuthenticationConfiguration;
 import org.idp.server.platform.json.JsonReadable;
@@ -35,6 +36,7 @@ public class IdentityVerificationConfigurationRequest implements JsonReadable {
   OAuthAuthorizationConfiguration oauthAuthorization;
   HmacAuthenticationConfiguration hmacAuthentication;
   Map<String, IdentityVerificationProcessConfiguration> processes;
+  IdentityVerificationRegistrationConfiguration registration;
   List<String> approvedTargetTypes = new ArrayList<>();
   IdentityVerificationVerifiedClaimsConfiguration verifiedClaimsConfiguration;
 
@@ -71,6 +73,7 @@ public class IdentityVerificationConfigurationRequest implements JsonReadable {
         oauthAuthorization,
         hmacAuthentication,
         processes,
+        registration,
         approvedTargetTypes,
         verifiedClaimsConfiguration);
   }

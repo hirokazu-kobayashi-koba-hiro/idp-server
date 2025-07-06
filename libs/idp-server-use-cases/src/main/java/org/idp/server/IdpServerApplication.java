@@ -55,6 +55,7 @@ import org.idp.server.core.extension.ciba.CibaProtocols;
 import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRequestOperationCommandRepository;
 import org.idp.server.core.extension.ciba.repository.CibaGrantOperationCommandRepository;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationApi;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationApi;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationCallbackApi;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationCommandRepository;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationQueryRepository;
@@ -118,6 +119,8 @@ import org.idp.server.platform.security.SecurityEventHooks;
 import org.idp.server.platform.security.SecurityEventPublisher;
 import org.idp.server.platform.security.repository.*;
 import org.idp.server.usecases.application.enduser.*;
+import org.idp.server.usecases.application.identity_verification_service.IdentityVerificationCallbackEntryService;
+import org.idp.server.usecases.application.identity_verification_service.IdentityVerificationEntryService;
 import org.idp.server.usecases.application.relying_party.OidcMetaDataEntryService;
 import org.idp.server.usecases.application.system.*;
 import org.idp.server.usecases.application.tenant_invitator.TenantInvitationMetaDataEntryService;
@@ -138,8 +141,9 @@ public class IdpServerApplication {
   CibaFlowApi cibaFlowApi;
   AuthenticationMetaDataApi authenticationMetaDataApi;
   AuthenticationTransactionApi authenticationTransactionApi;
-  IdentityVerificationApi identityVerificationApi;
+  IdentityVerificationApplicationApi identityVerificationApplicationApi;
   IdentityVerificationCallbackApi identityVerificationCallbackApi;
+  IdentityVerificationApi identityVerificationApi;
   SecurityEventApi securityEventApi;
   TenantMetaDataApi tenantMetaDataApi;
   TenantInvitationMetaDataApi tenantInvitationMetaDataApi;
@@ -461,9 +465,9 @@ public class IdpServerApplication {
             AuthenticationTransactionApi.class,
             tenantDialectProvider);
 
-    this.identityVerificationApi =
+    this.identityVerificationApplicationApi =
         TenantAwareEntryServiceProxy.createProxy(
-            new IdentityVerificationEntryService(
+            new IdentityVerificationApplicationEntryService(
                 identityVerificationConfigurationQueryRepository,
                 identityVerificationApplicationCommandRepository,
                 identityVerificationApplicationQueryRepository,
@@ -472,7 +476,7 @@ public class IdpServerApplication {
                 userQueryRepository,
                 userCommandRepository,
                 tokenEventPublisher),
-            IdentityVerificationApi.class,
+            IdentityVerificationApplicationApi.class,
             tenantDialectProvider);
 
     this.identityVerificationCallbackApi =
@@ -487,6 +491,20 @@ public class IdpServerApplication {
                 userCommandRepository,
                 tokenEventPublisher),
             IdentityVerificationCallbackApi.class,
+            tenantDialectProvider);
+
+    this.identityVerificationApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new IdentityVerificationEntryService(
+                identityVerificationConfigurationQueryRepository,
+                identityVerificationApplicationCommandRepository,
+                identityVerificationApplicationQueryRepository,
+                identityVerificationResultCommandRepository,
+                tenantQueryRepository,
+                userQueryRepository,
+                userCommandRepository,
+                tokenEventPublisher),
+            IdentityVerificationApi.class,
             tenantDialectProvider);
 
     this.securityEventApi =
@@ -724,12 +742,16 @@ public class IdpServerApplication {
     return authenticationTransactionApi;
   }
 
-  public IdentityVerificationApi identityVerificationApi() {
-    return identityVerificationApi;
+  public IdentityVerificationApplicationApi identityVerificationApplicationApi() {
+    return identityVerificationApplicationApi;
   }
 
   public IdentityVerificationCallbackApi identityVerificationCallbackApi() {
     return identityVerificationCallbackApi;
+  }
+
+  public IdentityVerificationApi identityVerificationApi() {
+    return identityVerificationApi;
   }
 
   public SecurityEventApi securityEventApi() {

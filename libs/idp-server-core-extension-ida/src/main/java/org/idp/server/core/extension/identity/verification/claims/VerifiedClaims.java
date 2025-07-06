@@ -17,6 +17,7 @@
 package org.idp.server.core.extension.identity.verification.claims;
 
 import java.util.Map;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationVerifiedClaimsConfiguration;
 import org.idp.server.platform.json.JsonNodeWrapper;
@@ -35,10 +36,23 @@ public class VerifiedClaims {
   }
 
   public static VerifiedClaims create(
+      IdentityVerificationApplicationRequest request,
+      IdentityVerificationVerifiedClaimsConfiguration verifiedClaimsConfiguration) {
+
+    return create(request.toMap(), verifiedClaimsConfiguration);
+  }
+
+  public static VerifiedClaims create(
       IdentityVerificationRequest request,
       IdentityVerificationVerifiedClaimsConfiguration verifiedClaimsConfiguration) {
 
-    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request.toMap());
+    return create(request.toMap(), verifiedClaimsConfiguration);
+  }
+
+  private static VerifiedClaims create(
+      Map<String, Object> request,
+      IdentityVerificationVerifiedClaimsConfiguration verifiedClaimsConfiguration) {
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request);
     JsonPathWrapper jsonPath = new JsonPathWrapper(jsonNodeWrapper.toJson());
     Map<String, Object> mappingResult =
         MappingRuleObjectMapper.execute(verifiedClaimsConfiguration.mappingRules(), jsonPath);

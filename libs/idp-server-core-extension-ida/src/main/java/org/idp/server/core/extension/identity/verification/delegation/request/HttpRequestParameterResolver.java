@@ -18,8 +18,8 @@ package org.idp.server.core.extension.identity.verification.delegation.request;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
-import org.idp.server.core.extension.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
@@ -54,7 +54,7 @@ public class HttpRequestParameterResolver implements AdditionalRequestParameterR
       IdentityVerificationApplications applications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
-      IdentityVerificationRequest request,
+      IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
 
@@ -77,7 +77,7 @@ public class HttpRequestParameterResolver implements AdditionalRequestParameterR
       IdentityVerificationApplications applications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
-      IdentityVerificationRequest request,
+      IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
 
@@ -118,7 +118,7 @@ public class HttpRequestParameterResolver implements AdditionalRequestParameterR
       IdentityVerificationApplications applications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
-      IdentityVerificationRequest request,
+      IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
     Map<String, Object> parameters = new HashMap<>(staticBody.toMap());
