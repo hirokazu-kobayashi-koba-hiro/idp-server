@@ -27,10 +27,10 @@ import org.idp.server.core.extension.identity.verification.IdentityVerificationP
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationDetails;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplyingResult;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowDelegation;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplicationDetails;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplicationIdentifier;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplyingResult;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationService;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserIdentifier;
 import org.idp.server.platform.date.SystemDateTime;
@@ -45,9 +45,9 @@ public class IdentityVerificationApplication {
   RequestedClientId requestedClientId;
   UserIdentifier userIdentifier;
   IdentityVerificationApplicationDetails applicationDetails;
-  ExternalWorkflowDelegation externalWorkflowDelegation;
-  ExternalWorkflowApplicationIdentifier externalApplicationId;
-  ExternalWorkflowApplicationDetails externalWorkflowApplicationDetails;
+  ExternalIdentityVerificationService externalIdentityVerificationService;
+  ExternalIdentityVerificationApplicationIdentifier externalApplicationId;
+  ExternalIdentityVerificationApplicationDetails externalIdentityVerificationApplicationDetails;
   TrustFramework trustFramework;
   EvidenceDocumentType evidenceDocumentType;
   EvidenceDocumentDetail evidenceDocumentDetail;
@@ -66,9 +66,9 @@ public class IdentityVerificationApplication {
       RequestedClientId requestedClientId,
       UserIdentifier userIdentifier,
       IdentityVerificationApplicationDetails applicationDetails,
-      ExternalWorkflowDelegation externalWorkflowDelegation,
-      ExternalWorkflowApplicationIdentifier externalApplicationId,
-      ExternalWorkflowApplicationDetails externalWorkflowApplicationDetails,
+      ExternalIdentityVerificationService externalIdentityVerificationService,
+      ExternalIdentityVerificationApplicationIdentifier externalApplicationId,
+      ExternalIdentityVerificationApplicationDetails externalIdentityVerificationApplicationDetails,
       TrustFramework trustFramework,
       EvidenceDocumentType evidenceDocumentType,
       EvidenceDocumentDetail evidenceDocumentDetail,
@@ -83,9 +83,10 @@ public class IdentityVerificationApplication {
     this.requestedClientId = requestedClientId;
     this.userIdentifier = userIdentifier;
     this.applicationDetails = applicationDetails;
-    this.externalWorkflowDelegation = externalWorkflowDelegation;
+    this.externalIdentityVerificationService = externalIdentityVerificationService;
     this.externalApplicationId = externalApplicationId;
-    this.externalWorkflowApplicationDetails = externalWorkflowApplicationDetails;
+    this.externalIdentityVerificationApplicationDetails =
+        externalIdentityVerificationApplicationDetails;
     this.trustFramework = trustFramework;
     this.evidenceDocumentType = evidenceDocumentType;
     this.evidenceDocumentDetail = evidenceDocumentDetail;
@@ -102,8 +103,8 @@ public class IdentityVerificationApplication {
       User user,
       IdentityVerificationType verificationType,
       IdentityVerificationApplicationRequest request,
-      ExternalWorkflowDelegation externalWorkflowDelegation,
-      ExternalWorkflowApplyingResult applyingResult,
+      ExternalIdentityVerificationService externalIdentityVerificationService,
+      ExternalIdentityVerificationApplyingResult applyingResult,
       IdentityVerificationProcess process,
       IdentityVerificationConfiguration verificationConfiguration) {
 
@@ -117,10 +118,10 @@ public class IdentityVerificationApplication {
     IdentityVerificationApplicationDetails details =
         IdentityVerificationApplicationDetails.create(request, processConfig);
 
-    ExternalWorkflowApplicationIdentifier externalApplicationId =
+    ExternalIdentityVerificationApplicationIdentifier externalApplicationId =
         applyingResult.extractApplicationIdentifierFromBody();
-    ExternalWorkflowApplicationDetails externalWorkflowApplicationDetails =
-        ExternalWorkflowApplicationDetails.create(
+    ExternalIdentityVerificationApplicationDetails externalIdentityVerificationApplicationDetails =
+        ExternalIdentityVerificationApplicationDetails.create(
             applyingResult.externalWorkflowResponse(), processConfig);
 
     TrustFramework trustFramework = new TrustFramework(request.extractTrustFramework());
@@ -142,9 +143,9 @@ public class IdentityVerificationApplication {
         requestedClientId,
         userIdentifier,
         details,
-        externalWorkflowDelegation,
+        externalIdentityVerificationService,
         externalApplicationId,
-        externalWorkflowApplicationDetails,
+        externalIdentityVerificationApplicationDetails,
         trustFramework,
         evidenceDocumentType,
         evidenceDocumentDetail,
@@ -158,16 +159,17 @@ public class IdentityVerificationApplication {
   public IdentityVerificationApplication updateProcess(
       IdentityVerificationProcess process,
       IdentityVerificationApplicationRequest request,
-      ExternalWorkflowApplyingResult applyingResult,
+      ExternalIdentityVerificationApplyingResult applyingResult,
       IdentityVerificationConfiguration verificationConfiguration) {
 
     IdentityVerificationProcessConfiguration processConfig =
         verificationConfiguration.getProcessConfig(process);
     IdentityVerificationApplicationDetails mergedApplicationDetails =
         applicationDetails.merge(request, processConfig);
-    ExternalWorkflowApplicationDetails mergedExternalWorkflowApplicationDetails =
-        externalWorkflowApplicationDetails.merge(
-            applyingResult.externalWorkflowResponse(), processConfig);
+    ExternalIdentityVerificationApplicationDetails
+        mergedExternalIdentityVerificationApplicationDetails =
+            externalIdentityVerificationApplicationDetails.merge(
+                applyingResult.externalWorkflowResponse(), processConfig);
     TrustFramework trustFramework = new TrustFramework(request.extractTrustFramework());
     EvidenceDocumentType evidenceDocumentType =
         new EvidenceDocumentType(request.extractEvidenceDocumentType());
@@ -186,9 +188,9 @@ public class IdentityVerificationApplication {
         requestedClientId,
         userIdentifier,
         mergedApplicationDetails,
-        externalWorkflowDelegation,
+        externalIdentityVerificationService,
         externalApplicationId,
-        mergedExternalWorkflowApplicationDetails,
+        mergedExternalIdentityVerificationApplicationDetails,
         trustFramework,
         evidenceDocumentType,
         evidenceDocumentDetail,
@@ -227,9 +229,9 @@ public class IdentityVerificationApplication {
         requestedClientId,
         userIdentifier,
         applicationDetails,
-        externalWorkflowDelegation,
+        externalIdentityVerificationService,
         externalApplicationId,
-        externalWorkflowApplicationDetails,
+        externalIdentityVerificationApplicationDetails,
         trustFramework,
         evidenceDocumentType,
         evidenceDocumentDetail,
@@ -265,9 +267,9 @@ public class IdentityVerificationApplication {
         requestedClientId,
         userIdentifier,
         applicationDetails,
-        externalWorkflowDelegation,
+        externalIdentityVerificationService,
         externalApplicationId,
-        externalWorkflowApplicationDetails,
+        externalIdentityVerificationApplicationDetails,
         trustFramework,
         evidenceDocumentType,
         evidenceDocumentDetail,
@@ -302,16 +304,16 @@ public class IdentityVerificationApplication {
     return userIdentifier;
   }
 
-  public ExternalWorkflowDelegation externalWorkflowDelegation() {
-    return externalWorkflowDelegation;
+  public ExternalIdentityVerificationService externalWorkflowDelegation() {
+    return externalIdentityVerificationService;
   }
 
-  public ExternalWorkflowApplicationIdentifier externalApplicationId() {
+  public ExternalIdentityVerificationApplicationIdentifier externalApplicationId() {
     return externalApplicationId;
   }
 
-  public ExternalWorkflowApplicationDetails externalApplicationDetails() {
-    return externalWorkflowApplicationDetails;
+  public ExternalIdentityVerificationApplicationDetails externalApplicationDetails() {
+    return externalIdentityVerificationApplicationDetails;
   }
 
   public TrustFramework trustFramework() {
@@ -379,8 +381,8 @@ public class IdentityVerificationApplication {
   }
 
   public boolean hasExternalApplicationDetails() {
-    return externalWorkflowApplicationDetails != null
-        && externalWorkflowApplicationDetails.exists();
+    return externalIdentityVerificationApplicationDetails != null
+        && externalIdentityVerificationApplicationDetails.exists();
   }
 
   public boolean hasExaminationResults() {
@@ -395,9 +397,9 @@ public class IdentityVerificationApplication {
     map.put("client_id", requestedClientId.value());
     map.put("user_id", userIdentifier.value());
     map.put("application_details", applicationDetails.toMap());
-    map.put("external_workflow_delegation", externalWorkflowDelegation.name());
+    map.put("external_workflow_delegation", externalIdentityVerificationService.name());
     map.put("external_application_id", externalApplicationId.value());
-    map.put("external_application_details", externalWorkflowApplicationDetails.toMap());
+    map.put("external_application_details", externalIdentityVerificationApplicationDetails.toMap());
     map.put("trust_framework", trustFramework.name());
     if (hasTrustFramework()) map.put("trustFramework", trustFramework.name());
     if (hasEvidenceDocumentType())

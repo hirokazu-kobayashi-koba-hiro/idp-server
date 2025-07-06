@@ -24,9 +24,9 @@ import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.*;
 import org.idp.server.core.extension.identity.verification.application.TrustFramework;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationDetails;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowDelegation;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplicationDetails;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplicationIdentifier;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationService;
 import org.idp.server.core.oidc.identity.UserIdentifier;
 import org.idp.server.platform.date.LocalDateTimeParser;
 import org.idp.server.platform.json.JsonNodeWrapper;
@@ -47,12 +47,12 @@ public class ModelConverter {
         new IdentityVerificationApplicationDetails(
             JsonNodeWrapper.fromString(map.get("application_details")));
 
-    ExternalWorkflowDelegation externalWorkflowDelegation =
-        new ExternalWorkflowDelegation(map.get("external_workflow_delegation"));
-    ExternalWorkflowApplicationIdentifier externalApplicationId =
-        new ExternalWorkflowApplicationIdentifier(map.get("external_application_id"));
-    ExternalWorkflowApplicationDetails externalWorkflowApplicationDetails =
-        new ExternalWorkflowApplicationDetails(
+    ExternalIdentityVerificationService externalIdentityVerificationService =
+        new ExternalIdentityVerificationService(map.get("external_service"));
+    ExternalIdentityVerificationApplicationIdentifier externalApplicationId =
+        new ExternalIdentityVerificationApplicationIdentifier(map.get("external_application_id"));
+    ExternalIdentityVerificationApplicationDetails externalIdentityVerificationApplicationDetails =
+        new ExternalIdentityVerificationApplicationDetails(
             JsonNodeWrapper.fromString(map.get("external_application_details")));
 
     TrustFramework trustFramework = new TrustFramework(map.get("trust_framework"));
@@ -75,9 +75,9 @@ public class ModelConverter {
         requestedClientId,
         sub,
         details,
-        externalWorkflowDelegation,
+        externalIdentityVerificationService,
         externalApplicationId,
-        externalWorkflowApplicationDetails,
+        externalIdentityVerificationApplicationDetails,
         trustFramework,
         evidenceDocumentType,
         evidenceDocumentDetail,

@@ -19,8 +19,8 @@ package org.idp.server.core.extension.identity.verification.configuration;
 import java.util.*;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdParam;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowDelegation;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplicationIdParam;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationService;
 import org.idp.server.core.extension.identity.verification.exception.IdentityVerificationApplicationConfigurationNotFoundException;
 import org.idp.server.platform.http.HmacAuthenticationConfiguration;
 import org.idp.server.platform.json.JsonReadable;
@@ -32,8 +32,8 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
   String type;
   String delegation;
   String description;
-  String externalWorkflowDelegation;
-  String externalWorkflowApplicationIdParam;
+  String externalService;
+  String externalApplicationIdParam;
   OAuthAuthorizationConfiguration oauthAuthorization = new OAuthAuthorizationConfiguration();
   HmacAuthenticationConfiguration hmacAuthentication = new HmacAuthenticationConfiguration();
   Map<String, IdentityVerificationProcessConfiguration> processes = new HashMap<>();
@@ -50,8 +50,8 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
       String type,
       String delegation,
       String description,
-      String externalWorkflowDelegation,
-      String externalWorkflowApplicationIdParam,
+      String externalService,
+      String externalApplicationIdParam,
       OAuthAuthorizationConfiguration oauthAuthorization,
       HmacAuthenticationConfiguration hmacAuthentication,
       Map<String, IdentityVerificationProcessConfiguration> processes,
@@ -62,8 +62,8 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
     this.type = type;
     this.delegation = delegation;
     this.description = description;
-    this.externalWorkflowDelegation = externalWorkflowDelegation;
-    this.externalWorkflowApplicationIdParam = externalWorkflowApplicationIdParam;
+    this.externalService = externalService;
+    this.externalApplicationIdParam = externalApplicationIdParam;
     this.oauthAuthorization = oauthAuthorization;
     this.hmacAuthentication = hmacAuthentication;
     this.processes = processes;
@@ -92,12 +92,12 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
     return description;
   }
 
-  public ExternalWorkflowDelegation externalWorkflowDelegation() {
-    return new ExternalWorkflowDelegation(externalWorkflowDelegation);
+  public ExternalIdentityVerificationService externalIdentityVerificationService() {
+    return new ExternalIdentityVerificationService(externalService);
   }
 
-  public ExternalWorkflowApplicationIdParam externalWorkflowApplicationIdParam() {
-    return new ExternalWorkflowApplicationIdParam(externalWorkflowApplicationIdParam);
+  public ExternalIdentityVerificationApplicationIdParam externalApplicationIdParam() {
+    return new ExternalIdentityVerificationApplicationIdParam(externalApplicationIdParam);
   }
 
   public boolean hasOAuthAuthorization() {
@@ -183,8 +183,8 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
     map.put("type", type);
     map.put("delegation", delegation);
     map.put("description", description);
-    map.put("external_workflow_delegation", externalWorkflowDelegation);
-    map.put("externalWorkflowApplicationIdParam", externalWorkflowApplicationIdParam);
+    map.put("external_service", externalService);
+    map.put("external_application_id_param", externalApplicationIdParam);
     if (hasOAuthAuthorization()) map.put("oauth_authorization", oauthAuthorization.toMap());
     if (hasHmacAuthentication()) map.put("hmac_authentication", hmacAuthentication.toMap());
     map.put("processes", processes);

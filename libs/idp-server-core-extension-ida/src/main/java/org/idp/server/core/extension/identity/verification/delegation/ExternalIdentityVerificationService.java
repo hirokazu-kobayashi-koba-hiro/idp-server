@@ -16,26 +16,35 @@
 
 package org.idp.server.core.extension.identity.verification.delegation;
 
-import java.util.Map;
-import org.idp.server.platform.json.JsonNodeWrapper;
+import java.util.Objects;
 
-public class ExternalWorkflowExaminationDetails {
+public class ExternalIdentityVerificationService {
 
-  JsonNodeWrapper json;
+  String name;
 
-  public ExternalWorkflowExaminationDetails() {
-    this.json = JsonNodeWrapper.empty();
+  public ExternalIdentityVerificationService() {}
+
+  public ExternalIdentityVerificationService(String name) {
+    this.name = name;
   }
 
-  public ExternalWorkflowExaminationDetails(JsonNodeWrapper json) {
-    this.json = json;
+  public String name() {
+    return name;
   }
 
-  public String getValueOrEmptyAsString(String fieldName) {
-    return json.getValueOrEmptyAsString(fieldName);
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    ExternalIdentityVerificationService that = (ExternalIdentityVerificationService) o;
+    return Objects.equals(name, that.name);
   }
 
-  public Map<String, Object> toMap() {
-    return json.toMap();
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(name);
+  }
+
+  public boolean exists() {
+    return name != null && !name.isEmpty();
   }
 }

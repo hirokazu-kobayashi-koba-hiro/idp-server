@@ -17,6 +17,8 @@
 package org.idp.server.core.extension.identity.verification.result;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationRequest;
@@ -25,7 +27,8 @@ import org.idp.server.core.extension.identity.verification.application.IdentityV
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.claims.VerifiedClaims;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplicationIdentifier;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationService;
 import org.idp.server.core.oidc.identity.UserIdentifier;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -37,7 +40,8 @@ public class IdentityVerificationResult {
   UserIdentifier userId;
   IdentityVerificationApplicationIdentifier applicationId;
   IdentityVerificationType identityVerificationType;
-  ExternalWorkflowApplicationIdentifier externalApplicationId;
+  ExternalIdentityVerificationService externalIdentityVerificationService;
+  ExternalIdentityVerificationApplicationIdentifier externalApplicationId;
   VerifiedClaims verifiedClaims;
   LocalDateTime verifiedAt;
   LocalDateTime verifiedUntil;
@@ -54,7 +58,9 @@ public class IdentityVerificationResult {
     UserIdentifier userIdentifier = application.userIdentifier();
     IdentityVerificationApplicationIdentifier applicationId = application.identifier();
     IdentityVerificationType identityVerificationType = application.identityVerificationType();
-    ExternalWorkflowApplicationIdentifier externalApplicationId =
+    ExternalIdentityVerificationService externalIdentityVerificationService =
+        verificationConfiguration.externalIdentityVerificationService();
+    ExternalIdentityVerificationApplicationIdentifier externalApplicationId =
         application.externalApplicationId();
     VerifiedClaims verifiedClaims =
         VerifiedClaims.create(request, verificationConfiguration.verifiedClaimsConfiguration());
@@ -67,6 +73,7 @@ public class IdentityVerificationResult {
         userIdentifier,
         applicationId,
         identityVerificationType,
+        externalIdentityVerificationService,
         externalApplicationId,
         verifiedClaims,
         verifiedAt,
@@ -85,8 +92,10 @@ public class IdentityVerificationResult {
     UserIdentifier userIdentifier = request.userIdentifier();
     IdentityVerificationApplicationIdentifier applicationId =
         new IdentityVerificationApplicationIdentifier();
-    ExternalWorkflowApplicationIdentifier externalApplicationId =
-        new ExternalWorkflowApplicationIdentifier();
+    ExternalIdentityVerificationService externalIdentityVerificationService =
+        verificationConfiguration.externalIdentityVerificationService();
+    ExternalIdentityVerificationApplicationIdentifier externalApplicationId =
+        new ExternalIdentityVerificationApplicationIdentifier();
     VerifiedClaims verifiedClaims =
         VerifiedClaims.create(request, verificationConfiguration.verifiedClaimsConfiguration());
     LocalDateTime verifiedAt = SystemDateTime.now();
@@ -98,6 +107,7 @@ public class IdentityVerificationResult {
         userIdentifier,
         applicationId,
         identityVerificationType,
+        externalIdentityVerificationService,
         externalApplicationId,
         verifiedClaims,
         verifiedAt,
@@ -113,7 +123,8 @@ public class IdentityVerificationResult {
       UserIdentifier userId,
       IdentityVerificationApplicationIdentifier applicationId,
       IdentityVerificationType identityVerificationType,
-      ExternalWorkflowApplicationIdentifier externalApplicationId,
+      ExternalIdentityVerificationService externalIdentityVerificationService,
+      ExternalIdentityVerificationApplicationIdentifier externalApplicationId,
       VerifiedClaims verifiedClaims,
       LocalDateTime verifiedAt,
       LocalDateTime verifiedUntil,
@@ -123,6 +134,7 @@ public class IdentityVerificationResult {
     this.userId = userId;
     this.applicationId = applicationId;
     this.identityVerificationType = identityVerificationType;
+    this.externalIdentityVerificationService = externalIdentityVerificationService;
     this.externalApplicationId = externalApplicationId;
     this.verifiedClaims = verifiedClaims;
     this.verifiedAt = verifiedAt;
@@ -150,7 +162,11 @@ public class IdentityVerificationResult {
     return identityVerificationType;
   }
 
-  public ExternalWorkflowApplicationIdentifier externalApplicationId() {
+  public ExternalIdentityVerificationService externalIdentityVerificationService() {
+    return externalIdentityVerificationService;
+  }
+
+  public ExternalIdentityVerificationApplicationIdentifier externalApplicationId() {
     return externalApplicationId;
   }
 
@@ -184,5 +200,22 @@ public class IdentityVerificationResult {
 
   public boolean hasExternalApplicationId() {
     return externalApplicationId != null && externalApplicationId.exists();
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("id", identifier.value());
+    map.put("tenant_id", tenantId.value());
+    map.put("user_id", userId.value());
+    if (hasApplicationId()) map.put("application_id", applicationId.value());
+    map.put("verification_type", identityVerificationType.name());
+    map.put("external_service", externalIdentityVerificationService.name());
+    if (hasExternalApplicationId())
+      map.put("external_application_id", externalApplicationId.value());
+    map.put("verified_claims", verifiedClaims.toMap());
+    map.put("verified_at", verifiedAt);
+    map.put("verified_until", verifiedUntil);
+    map.put("source", source);
+    return map;
   }
 }

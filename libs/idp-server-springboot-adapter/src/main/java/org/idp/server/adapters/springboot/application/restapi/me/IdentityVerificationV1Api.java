@@ -14,24 +14,26 @@
  * limitations under the License.
  */
 
-package org.idp.server.adapters.springboot.application.restapi.identity;
+package org.idp.server.adapters.springboot.application.restapi.me;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
+import org.idp.server.adapters.springboot.application.restapi.model.ResourceOwnerPrincipal;
 import org.idp.server.core.extension.identity.verification.*;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationResponse;
-import org.idp.server.platform.http.BasicAuth;
+import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResultQueries;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/{tenant-id}/v1/identity-verification/result")
+@RequestMapping("/{tenant-id}/v1/me/identity-verification/results")
 public class IdentityVerificationV1Api implements ParameterTransformable {
 
   IdentityVerificationApi identityVerificationApi;
@@ -40,23 +42,21 @@ public class IdentityVerificationV1Api implements ParameterTransformable {
     this.identityVerificationApi = idpServerApplication.identityVerificationApi();
   }
 
-  @PostMapping("/{verification-type}/registration")
-  public ResponseEntity<?> callbackExamination(
-      @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
+  @GetMapping
+  public ResponseEntity<?> findList(
+      @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @PathVariable("verification-type") IdentityVerificationType verificationType,
-      @RequestBody(required = false) Map<String, Object> requestBody,
+      @RequestParam Map<String, String> queryParams,
       HttpServletRequest httpServletRequest) {
 
-    BasicAuth basicAuth = convertBasicAuth(authorizationHeader);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     IdentityVerificationResponse response =
-        identityVerificationApi.register(
+        identityVerificationApi.findList(
             tenantIdentifier,
-            basicAuth,
-            verificationType,
-            new IdentityVerificationRequest(requestBody),
+            resourceOwnerPrincipal.getUser(),
+            resourceOwnerPrincipal.getOAuthToken(),
+            new IdentityVerificationResultQueries(queryParams),
             requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();

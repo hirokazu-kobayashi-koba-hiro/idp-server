@@ -24,9 +24,9 @@ import org.idp.server.core.extension.identity.verification.IdentityVerificationT
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdParam;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplyingExecutionResult;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplyingResult;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplicationIdParam;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplyingExecutionResult;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplyingResult;
 import org.idp.server.core.extension.identity.verification.delegation.request.AdditionalRequestParameterResolvers;
 import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationApplicationRequestValidator;
 import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationApplicationValidationResult;
@@ -55,7 +55,7 @@ public class IdentityVerificationHandler {
     this.httpRequestExecutor = new HttpRequestExecutor(HttpClientFactory.defaultClient());
   }
 
-  public ExternalWorkflowApplyingResult handleRequest(
+  public ExternalIdentityVerificationApplyingResult handleRequest(
       Tenant tenant,
       User user,
       IdentityVerificationApplications applications,
@@ -74,7 +74,7 @@ public class IdentityVerificationHandler {
         applicationValidator.validate();
 
     if (requestValidationResult.isError()) {
-      return ExternalWorkflowApplyingResult.requestError(requestValidationResult);
+      return ExternalIdentityVerificationApplyingResult.requestError(requestValidationResult);
     }
 
     IdentityVerificationApplicationRequestVerifiedResult verifyResult =
@@ -90,7 +90,7 @@ public class IdentityVerificationHandler {
 
     if (verifyResult.isError()) {
 
-      return ExternalWorkflowApplyingResult.requestVerificationError(
+      return ExternalIdentityVerificationApplyingResult.requestVerificationError(
           requestValidationResult, verifyResult);
     }
 
@@ -113,11 +113,14 @@ public class IdentityVerificationHandler {
             processes,
             verificationConfiguration);
 
-    ExternalWorkflowApplyingExecutionResult externalWorkflowApplyingExecutionResult =
-        new ExternalWorkflowApplyingExecutionResult(executionResult);
+    ExternalIdentityVerificationApplyingExecutionResult
+        externalIdentityVerificationApplyingExecutionResult =
+            new ExternalIdentityVerificationApplyingExecutionResult(executionResult);
     if (!executionResult.isSuccess()) {
-      return ExternalWorkflowApplyingResult.executionError(
-          requestValidationResult, verifyResult, externalWorkflowApplyingExecutionResult);
+      return ExternalIdentityVerificationApplyingResult.executionError(
+          requestValidationResult,
+          verifyResult,
+          externalIdentityVerificationApplyingExecutionResult);
     }
 
     IdentityVerificationResponseValidator responseValidator =
@@ -125,14 +128,14 @@ public class IdentityVerificationHandler {
     IdentityVerificationApplicationValidationResult responseValidationResult =
         responseValidator.validate();
 
-    ExternalWorkflowApplicationIdParam externalWorkflowApplicationIdParam =
-        verificationConfiguration.externalWorkflowApplicationIdParam();
+    ExternalIdentityVerificationApplicationIdParam externalIdentityVerificationApplicationIdParam =
+        verificationConfiguration.externalApplicationIdParam();
 
-    return new ExternalWorkflowApplyingResult(
-        externalWorkflowApplicationIdParam,
+    return new ExternalIdentityVerificationApplyingResult(
+        externalIdentityVerificationApplicationIdParam,
         responseValidationResult,
         verifyResult,
-        externalWorkflowApplyingExecutionResult,
+        externalIdentityVerificationApplyingExecutionResult,
         responseValidationResult);
   }
 

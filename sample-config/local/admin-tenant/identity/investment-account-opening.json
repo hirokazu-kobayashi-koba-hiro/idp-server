@@ -1,8 +1,8 @@
 {
   "id": "666bae10-bc0d-41ce-92b4-53359b2f8439",
   "type": "investment-account-opening",
-  "external_workflow_delegation": "mocky",
-  "external_workflow_application_id_param": "application_id",
+  "external_service": "mocky",
+  "external_application_id_param": "application_id",
   "oauth_authorization": {
     "type": "password",
     "token_endpoint": "http://mockoon:4000/token",

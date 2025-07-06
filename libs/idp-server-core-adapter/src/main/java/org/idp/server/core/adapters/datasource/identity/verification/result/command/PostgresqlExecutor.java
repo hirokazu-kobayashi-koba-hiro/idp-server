@@ -38,6 +38,7 @@ public class PostgresqlExecutor implements IdentityVerificationResultCommandSqlE
                     user_id,
                     application_id,
                     verification_type,
+                    external_service,
                     external_application_id,
                     verified_claims,
                     verified_at,
@@ -48,6 +49,7 @@ public class PostgresqlExecutor implements IdentityVerificationResultCommandSqlE
                     ?::uuid,
                     ?::uuid,
                     ?::uuid,
+                    ?,
                     ?,
                     ?,
                     ?::jsonb,
@@ -67,6 +69,7 @@ public class PostgresqlExecutor implements IdentityVerificationResultCommandSqlE
       params.add(null);
     }
     params.add(result.identityVerificationType().name());
+    params.add(result.externalIdentityVerificationService().name());
     if (result.hasExternalApplicationId()) {
       params.add(result.externalApplicationId().value());
     } else {

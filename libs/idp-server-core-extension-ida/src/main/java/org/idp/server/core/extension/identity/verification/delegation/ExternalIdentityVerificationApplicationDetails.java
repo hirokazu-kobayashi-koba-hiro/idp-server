@@ -23,28 +23,29 @@ import org.idp.server.core.extension.identity.verification.configuration.Identit
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaDefinition;
 
-public class ExternalWorkflowApplicationDetails {
+public class ExternalIdentityVerificationApplicationDetails {
 
   JsonNodeWrapper json;
 
-  public ExternalWorkflowApplicationDetails() {
+  public ExternalIdentityVerificationApplicationDetails() {
     this.json = JsonNodeWrapper.empty();
   }
 
-  public ExternalWorkflowApplicationDetails(JsonNodeWrapper json) {
+  public ExternalIdentityVerificationApplicationDetails(JsonNodeWrapper json) {
     this.json = json;
   }
 
-  public static ExternalWorkflowApplicationDetails create(
+  public static ExternalIdentityVerificationApplicationDetails create(
       JsonNodeWrapper body, IdentityVerificationProcessConfiguration processConfig) {
     JsonSchemaDefinition jsonSchemaDefinition =
         processConfig.responseValidationSchemaAsDefinition();
     Map<String, Object> mappingResult =
         IdentityVerificationMapper.mapping(body.toMap(), jsonSchemaDefinition);
-    return new ExternalWorkflowApplicationDetails(JsonNodeWrapper.fromMap(mappingResult));
+    return new ExternalIdentityVerificationApplicationDetails(
+        JsonNodeWrapper.fromMap(mappingResult));
   }
 
-  public ExternalWorkflowApplicationDetails merge(
+  public ExternalIdentityVerificationApplicationDetails merge(
       JsonNodeWrapper body, IdentityVerificationProcessConfiguration processConfig) {
     JsonSchemaDefinition jsonSchemaDefinition =
         processConfig.responseValidationSchemaAsDefinition();
@@ -52,7 +53,7 @@ public class ExternalWorkflowApplicationDetails {
         IdentityVerificationMapper.mapping(body.toMap(), jsonSchemaDefinition);
     Map<String, Object> merged = new HashMap<>(json.toMap());
     merged.putAll(mappingResult);
-    return new ExternalWorkflowApplicationDetails(JsonNodeWrapper.fromMap(merged));
+    return new ExternalIdentityVerificationApplicationDetails(JsonNodeWrapper.fromMap(merged));
   }
 
   public String getValueOrEmptyAsString(String fieldName) {

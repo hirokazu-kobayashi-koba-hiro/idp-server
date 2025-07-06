@@ -58,20 +58,20 @@ public class IdentityVerificationApplicationQueries implements UuidConvertable {
     return values.get("client_id");
   }
 
-  public boolean hasExternalWorkflowApplicationId() {
-    return values.containsKey("external_workflow_application_id");
+  public boolean hasExternalApplicationId() {
+    return values.containsKey("external_application_id");
   }
 
-  public String externalWorkflowApplicationId() {
-    return values.get("external_workflow_application_id");
+  public String externalApplicationId() {
+    return values.get("external_application_id");
   }
 
-  public boolean hasExternalWorkflowDelegation() {
-    return values.containsKey("external_workflow_delegation");
+  public boolean hasExternalService() {
+    return values.containsKey("external_service");
   }
 
-  public String externalWorkflowDelegation() {
-    return values.get("external_workflow_delegation");
+  public String externalService() {
+    return values.get("external_service");
   }
 
   public boolean hasTrustFramework() {

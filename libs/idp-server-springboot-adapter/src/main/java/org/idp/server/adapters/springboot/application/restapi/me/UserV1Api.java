@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.adapters.springboot.application.restapi.user;
+package org.idp.server.adapters.springboot.application.restapi.me;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
@@ -35,7 +35,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/{tenant-id}/v1/users")
+@RequestMapping("/{tenant-id}/v1/me")
 public class UserV1Api implements ParameterTransformable {
 
   UserOperationApi userOperationApi;

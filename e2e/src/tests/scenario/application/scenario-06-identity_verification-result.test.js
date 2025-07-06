@@ -25,7 +25,7 @@ describe("identity-verification result", () => {
 
       let mfaRegistrationResponse =
         await postWithJson({
-          url: serverConfig.usersEndpoint + "/mfa-registration",
+          url: serverConfig.resourceOwnerEndpoint + "/mfa-registration",
           body: {
             "flow": "fido-uaf-registration",
             "platform": "Android",
@@ -292,6 +292,7 @@ describe("identity-verification result", () => {
       expect(userinfoResponse.data).toHaveProperty("authentication_devices");
       expect(userinfoResponse.data.authentication_devices.length).toBe(1);
       expect(userinfoResponse.data).toHaveProperty("mfa");
+
     });
   });
 

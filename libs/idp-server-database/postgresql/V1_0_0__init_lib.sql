@@ -823,7 +823,7 @@ CREATE TABLE identity_verification_application
     evidence_document_type       VARCHAR(255),
     evidence_document_details    JSONB,
     evidence_method              VARCHAR(255),
-    external_workflow_delegation VARCHAR(255)            NOT NULL,
+    external_service             VARCHAR(255)            NOT NULL,
     external_application_id      VARCHAR(255)            NOT NULL,
     external_application_details JSONB,
     examination_results          JSONB,
@@ -847,7 +847,8 @@ ALTER TABLE identity_verification_application FORCE ROW LEVEL SECURITY;
 CREATE INDEX idx_verification_user ON identity_verification_application (user_id);
 CREATE INDEX idx_verification_tenant_client ON identity_verification_application (tenant_id, client_id);
 CREATE INDEX idx_verification_status ON identity_verification_application (status);
-CREATE INDEX idx_verification_external_ref ON identity_verification_application (external_application_id);
+CREATE INDEX idx_verification_external_service ON identity_verification_application (external_service);
+CREATE INDEX idx_verification_external_application_id ON identity_verification_application (external_application_id);
 CREATE INDEX idx_verification_evidence_document_type ON identity_verification_application (evidence_document_type);
 CREATE INDEX idx_verification_evidence_method ON identity_verification_application (evidence_method);
 CREATE INDEX idx_verification_evidence_document_details ON identity_verification_application USING GIN (evidence_document_details);
@@ -858,6 +859,7 @@ CREATE TABLE identity_verification_result
     tenant_id               UUID         NOT NULL,
     user_id                 UUID         NOT NULL,
     application_id          UUID,
+    external_service        VARCHAR(255) NOT NULL,
     verification_type       VARCHAR(255) NOT NULL,
     external_application_id VARCHAR(255),
     verified_claims         JSONB        NOT NULL,
@@ -873,6 +875,8 @@ CREATE TABLE identity_verification_result
 CREATE INDEX idx_verification_result_user_id ON identity_verification_result (user_id);
 CREATE INDEX idx_verification_result_application_id ON identity_verification_result (application_id);
 CREATE INDEX idx_verification_result_verification_type ON identity_verification_result (verification_type);
+CREATE INDEX idx_verification_result_external_service ON identity_verification_result (external_service);
+CREATE INDEX idx_verification_result_external_application_id ON identity_verification_result (external_application_id);
 CREATE INDEX idx_verification_result_verified_at ON identity_verification_result (verified_at);
 CREATE INDEX idx_verification_result_verified_claims ON identity_verification_result USING GIN (verified_claims);
 

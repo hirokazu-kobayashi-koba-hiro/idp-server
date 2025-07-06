@@ -17,6 +17,9 @@
 package org.idp.server.core.extension.identity.verification;
 
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationResponse;
+import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResultQueries;
+import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.type.RequestAttributes;
@@ -28,5 +31,12 @@ public interface IdentityVerificationApi {
       BasicAuth basicAuth,
       IdentityVerificationType identityVerificationType,
       IdentityVerificationRequest request,
+      RequestAttributes requestAttributes);
+
+  IdentityVerificationResponse findList(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      IdentityVerificationResultQueries queries,
       RequestAttributes requestAttributes);
 }

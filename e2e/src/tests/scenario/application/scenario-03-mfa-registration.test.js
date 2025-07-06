@@ -25,7 +25,7 @@ describe("user - mfa registration", () => {
 
       let mfaRegistrationResponse =
         await postWithJson({
-          url: serverConfig.usersEndpoint + "/mfa-registration",
+          url: serverConfig.resourceOwnerEndpoint + "/mfa-registration",
           body: {
             "flow": "fido-uaf-registration",
             "platform": "Android",
@@ -93,7 +93,7 @@ describe("user - mfa registration", () => {
 
       mfaRegistrationResponse =
         await postWithJson({
-          url: serverConfig.usersEndpoint + "/mfa-registration",
+          url: serverConfig.resourceOwnerEndpoint + "/mfa-registration",
           body: {
             "flow": "fido-uaf-deregistration",
             "authentication_device_id": authenticationDeviceId

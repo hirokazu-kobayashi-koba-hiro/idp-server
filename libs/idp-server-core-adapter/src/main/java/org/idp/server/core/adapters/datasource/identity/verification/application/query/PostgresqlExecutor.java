@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationQueries;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplicationIdentifier;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -51,7 +51,7 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
 
   @Override
   public Map<String, String> selectOne(
-      Tenant tenant, ExternalWorkflowApplicationIdentifier identifier) {
+      Tenant tenant, ExternalIdentityVerificationApplicationIdentifier identifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         selectSql
@@ -112,13 +112,13 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
       sqlBuilder.append(" AND client_id = ?");
       params.add(queries.clientId());
     }
-    if (queries.hasExternalWorkflowApplicationId()) {
+    if (queries.hasExternalApplicationId()) {
       sqlBuilder.append(" AND external_application_id = ?");
-      params.add(queries.externalWorkflowApplicationId());
+      params.add(queries.externalApplicationId());
     }
-    if (queries.hasExternalWorkflowDelegation()) {
-      sqlBuilder.append(" AND external_workflow_delegation = ?");
-      params.add(queries.externalWorkflowDelegation());
+    if (queries.hasExternalService()) {
+      sqlBuilder.append(" AND external_service = ?");
+      params.add(queries.externalService());
     }
     if (queries.hasTrustFramework()) {
       sqlBuilder.append(" AND trust_framework = ?");
@@ -143,7 +143,7 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
                        user_id,
                        verification_type,
                        application_details,
-                       external_workflow_delegation,
+                       external_service,
                        external_application_id,
                        external_application_details,
                        trust_framework,
