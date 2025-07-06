@@ -18,6 +18,7 @@ package org.idp.server.core.extension.identity.verification.result;
 
 public enum IdentityVerificationSource {
   APPLICATION("application"),
+  DIRECT("direct"),
   MANUAL("manual"),
   IMPORT("import");
 

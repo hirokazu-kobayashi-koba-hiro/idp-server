@@ -18,7 +18,7 @@ package org.idp.server.core.extension.identity.verification.application;
 
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.extension.identity.verification.IdentityVerificationRequest;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
 
 public enum IdentityVerificationApplicationStatus {
@@ -48,8 +48,10 @@ public enum IdentityVerificationApplicationStatus {
     return UNKNOWN;
   }
 
+  // TODO to be more flexible
   public static boolean isRejected(
-      IdentityVerificationRequest request, IdentityVerificationProcessConfiguration processConfig) {
+      IdentityVerificationApplicationRequest request,
+      IdentityVerificationProcessConfiguration processConfig) {
 
     Map<String, Object> rejectedConditionSchema = processConfig.rejectedConditionSchema();
     String type = (String) rejectedConditionSchema.getOrDefault("type", "");

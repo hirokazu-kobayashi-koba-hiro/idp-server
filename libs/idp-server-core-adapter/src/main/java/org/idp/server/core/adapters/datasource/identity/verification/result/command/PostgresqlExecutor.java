@@ -60,10 +60,18 @@ public class PostgresqlExecutor implements IdentityVerificationResultCommandSqlE
     List<Object> params = new ArrayList<>();
     params.add(result.identifier().valueAsUuid());
     params.add(tenant.identifierUUID());
-    params.add(result.userIdentifier().valueAsUuid());
-    params.add(result.applicationId().valueAsUuid());
+    params.add(result.userId().valueAsUuid());
+    if (result.hasApplicationId()) {
+      params.add(result.applicationId().valueAsUuid());
+    } else {
+      params.add(null);
+    }
     params.add(result.identityVerificationType().name());
-    params.add(result.externalApplicationId().value());
+    if (result.hasExternalApplicationId()) {
+      params.add(result.externalApplicationId().value());
+    } else {
+      params.add(null);
+    }
     params.add(jsonConverter.write(result.verifiedClaims().toMap()));
     params.add(result.verifiedAt());
     if (result.hasVerifiedUntil()) {

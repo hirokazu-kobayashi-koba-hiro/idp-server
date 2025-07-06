@@ -22,8 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.idp.server.basic.type.oauth.RequestedClientId;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
-import org.idp.server.core.extension.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
@@ -101,7 +101,7 @@ public class IdentityVerificationApplication {
       RequestedClientId requestedClientId,
       User user,
       IdentityVerificationType verificationType,
-      IdentityVerificationRequest request,
+      IdentityVerificationApplicationRequest request,
       ExternalWorkflowDelegation externalWorkflowDelegation,
       ExternalWorkflowApplyingResult applyingResult,
       IdentityVerificationProcess process,
@@ -157,7 +157,7 @@ public class IdentityVerificationApplication {
 
   public IdentityVerificationApplication updateProcess(
       IdentityVerificationProcess process,
-      IdentityVerificationRequest request,
+      IdentityVerificationApplicationRequest request,
       ExternalWorkflowApplyingResult applyingResult,
       IdentityVerificationConfiguration verificationConfiguration) {
 
@@ -201,7 +201,7 @@ public class IdentityVerificationApplication {
 
   public IdentityVerificationApplication updateExamination(
       IdentityVerificationProcess process,
-      IdentityVerificationRequest request,
+      IdentityVerificationApplicationRequest request,
       IdentityVerificationConfiguration verificationConfiguration) {
 
     IdentityVerificationProcessConfiguration processConfig =
@@ -242,7 +242,7 @@ public class IdentityVerificationApplication {
 
   public IdentityVerificationApplication completeExamination(
       IdentityVerificationProcess process,
-      IdentityVerificationRequest request,
+      IdentityVerificationApplicationRequest request,
       IdentityVerificationConfiguration verificationConfiguration) {
 
     IdentityVerificationProcessConfiguration processConfig =

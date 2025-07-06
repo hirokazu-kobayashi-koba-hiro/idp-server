@@ -36,7 +36,9 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
   String externalWorkflowApplicationIdParam;
   OAuthAuthorizationConfiguration oauthAuthorization = new OAuthAuthorizationConfiguration();
   HmacAuthenticationConfiguration hmacAuthentication = new HmacAuthenticationConfiguration();
-  Map<String, IdentityVerificationProcessConfiguration> processes;
+  Map<String, IdentityVerificationProcessConfiguration> processes = new HashMap<>();
+  IdentityVerificationRegistrationConfiguration registration =
+      new IdentityVerificationRegistrationConfiguration();
   List<String> approvedTargetTypes = new ArrayList<>();
   IdentityVerificationVerifiedClaimsConfiguration verifiedClaimsConfiguration =
       new IdentityVerificationVerifiedClaimsConfiguration();
@@ -53,6 +55,7 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
       OAuthAuthorizationConfiguration oauthAuthorization,
       HmacAuthenticationConfiguration hmacAuthentication,
       Map<String, IdentityVerificationProcessConfiguration> processes,
+      IdentityVerificationRegistrationConfiguration registration,
       List<String> approvedTargetTypes,
       IdentityVerificationVerifiedClaimsConfiguration verifiedClaimsConfiguration) {
     this.id = id;
@@ -64,6 +67,7 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
     this.oauthAuthorization = oauthAuthorization;
     this.hmacAuthentication = hmacAuthentication;
     this.processes = processes;
+    this.registration = registration;
     this.approvedTargetTypes = approvedTargetTypes;
     this.verifiedClaimsConfiguration = verifiedClaimsConfiguration;
   }
@@ -169,6 +173,10 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
     return verifiedClaimsConfiguration != null && verifiedClaimsConfiguration.exists();
   }
 
+  public IdentityVerificationRegistrationConfiguration registrationConfiguration() {
+    return registration;
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("id", id);
@@ -180,6 +188,7 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
     if (hasOAuthAuthorization()) map.put("oauth_authorization", oauthAuthorization.toMap());
     if (hasHmacAuthentication()) map.put("hmac_authentication", hmacAuthentication.toMap());
     map.put("processes", processes);
+    map.put("registration", registration);
     map.put("approved_target_types", approvedTargetTypes);
     if (hasVerifiedClaimsConfiguration())
       map.put("verified_claims_configuration", verifiedClaimsConfiguration.toMap());

@@ -20,10 +20,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationCallbackApi;
-import org.idp.server.core.extension.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationResponse;
+import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationResponse;
 import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.type.RequestAttributes;
@@ -33,7 +33,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/{tenant-id}/v1/identity-verification-callback")
+@RequestMapping("/{tenant-id}/v1/identity-verification/callback")
 public class IdentityVerificationCallbackV1Api implements ParameterTransformable {
 
   IdentityVerificationCallbackApi identityVerificationCallbackApi;
@@ -53,12 +53,12 @@ public class IdentityVerificationCallbackV1Api implements ParameterTransformable
     BasicAuth basicAuth = convertBasicAuth(authorizationHeader);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    IdentityVerificationResponse response =
+    IdentityVerificationApplicationResponse response =
         identityVerificationCallbackApi.callbackExamination(
             tenantIdentifier,
             basicAuth,
             verificationType,
-            new IdentityVerificationRequest(requestBody),
+            new IdentityVerificationApplicationRequest(requestBody),
             requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
@@ -78,12 +78,12 @@ public class IdentityVerificationCallbackV1Api implements ParameterTransformable
     BasicAuth basicAuth = convertBasicAuth(authorizationHeader);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    IdentityVerificationResponse response =
+    IdentityVerificationApplicationResponse response =
         identityVerificationCallbackApi.callbackResult(
             tenantIdentifier,
             basicAuth,
             verificationType,
-            new IdentityVerificationRequest(requestBody),
+            new IdentityVerificationApplicationRequest(requestBody),
             requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();

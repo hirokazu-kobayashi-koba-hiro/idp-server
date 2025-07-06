@@ -18,7 +18,7 @@ package org.idp.server.core.extension.identity.verification.application;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.extension.identity.verification.IdentityVerificationRequest;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaDefinition;
@@ -36,7 +36,8 @@ public class IdentityVerificationApplicationDetails {
   }
 
   public static IdentityVerificationApplicationDetails create(
-      IdentityVerificationRequest request, IdentityVerificationProcessConfiguration processConfig) {
+      IdentityVerificationApplicationRequest request,
+      IdentityVerificationProcessConfiguration processConfig) {
 
     JsonSchemaDefinition jsonSchemaDefinition = processConfig.requestValidationSchemaAsDefinition();
     Map<String, Object> mappingResult =
@@ -46,7 +47,8 @@ public class IdentityVerificationApplicationDetails {
   }
 
   public IdentityVerificationApplicationDetails merge(
-      IdentityVerificationRequest request, IdentityVerificationProcessConfiguration processConfig) {
+      IdentityVerificationApplicationRequest request,
+      IdentityVerificationProcessConfiguration processConfig) {
     JsonSchemaDefinition jsonSchemaDefinition = processConfig.requestValidationSchemaAsDefinition();
     Map<String, Object> mappingResult =
         IdentityVerificationMapper.mapping(request.toMap(), jsonSchemaDefinition);

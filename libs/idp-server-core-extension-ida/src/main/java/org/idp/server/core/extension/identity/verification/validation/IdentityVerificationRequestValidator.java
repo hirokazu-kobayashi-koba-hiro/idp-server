@@ -17,33 +17,30 @@
 package org.idp.server.core.extension.identity.verification.validation;
 
 import org.idp.server.core.extension.identity.verification.IdentityVerificationRequest;
-import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
-import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationRegistrationConfiguration;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaDefinition;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 import org.idp.server.platform.json.schema.JsonSchemaValidator;
 
 public class IdentityVerificationRequestValidator {
-  IdentityVerificationProcessConfiguration processConfiguration;
+  IdentityVerificationRegistrationConfiguration registrationConfiguration;
   IdentityVerificationRequest request;
-  JsonConverter jsonConverter;
 
   public IdentityVerificationRequestValidator(
-      IdentityVerificationProcessConfiguration processConfiguration,
+      IdentityVerificationRegistrationConfiguration registrationConfiguration,
       IdentityVerificationRequest request) {
-    this.processConfiguration = processConfiguration;
+    this.registrationConfiguration = registrationConfiguration;
     this.request = request;
-    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   public IdentityVerificationValidationResult validate() {
 
     JsonSchemaDefinition jsonSchemaDefinition =
-        processConfiguration.requestValidationSchemaAsDefinition();
+        registrationConfiguration.requestValidationSchemaAsDefinition();
     JsonSchemaValidator jsonSchemaValidator = new JsonSchemaValidator(jsonSchemaDefinition);
 
-    JsonNodeWrapper requestJson = jsonConverter.readTree(request.toMap());
+    JsonNodeWrapper requestJson = JsonNodeWrapper.fromMap(request.toMap());
     JsonSchemaValidationResult validationResult = jsonSchemaValidator.validate(requestJson);
 
     return new IdentityVerificationValidationResult(validationResult);

@@ -16,7 +16,7 @@
 
 package org.idp.server.core.extension.identity.verification.io;
 
-public enum IdentityVerificationApplicationStatus {
+public enum IdentityVerificationStatus {
   OK(200),
   CLIENT_ERROR(400),
   UNAUTHORIZED(401),
@@ -26,7 +26,7 @@ public enum IdentityVerificationApplicationStatus {
 
   int statusCode;
 
-  IdentityVerificationApplicationStatus(int statusCode) {
+  IdentityVerificationStatus(int statusCode) {
     this.statusCode = statusCode;
   }
 

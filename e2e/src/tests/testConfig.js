@@ -33,8 +33,9 @@ export const serverConfig = {
   identityVerificationApplyEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/identity-verification/applications/{type}/{process}`,
   identityVerificationProcessEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/identity-verification/applications/{type}/{id}/{process}`,
   identityVerificationApplicationsEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/identity-verification/applications`,
-  identityVerificationApplicationsStaticCallbackExaminationEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/identity-verification-callback/{type}/examination`,
-  identityVerificationApplicationsStaticCallbackResultEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/identity-verification-callback/{type}/result`,
+  identityVerificationApplicationsStaticCallbackExaminationEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/identity-verification/callback/{type}/examination`,
+  identityVerificationApplicationsStaticCallbackResultEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/identity-verification/callback/{type}/result`,
+  identityVerificationResultEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/identity-verification/result/{type}/registration`,
   identityVerificationApplicationsDeletionEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/identity-verification/applications/{type}/{id}`,
   discoveryEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/.well-known/openid-configuration`,
@@ -56,6 +57,12 @@ export const serverConfig = {
   oauth: {
     username: "ito.ichiro",
     password: "successUserCode001",
+  },
+  identityVerification: {
+    basicAuth: {
+      username: "test_user",
+      password: "test_user001"
+    }
   },
   acr: "urn:mace:incommon:iap:bronze",
 };

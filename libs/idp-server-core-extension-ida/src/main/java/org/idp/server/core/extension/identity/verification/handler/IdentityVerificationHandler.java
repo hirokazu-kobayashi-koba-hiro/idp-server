@@ -18,8 +18,8 @@ package org.idp.server.core.extension.identity.verification.handler;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
-import org.idp.server.core.extension.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
@@ -28,11 +28,11 @@ import org.idp.server.core.extension.identity.verification.delegation.ExternalWo
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplyingExecutionResult;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplyingResult;
 import org.idp.server.core.extension.identity.verification.delegation.request.AdditionalRequestParameterResolvers;
-import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationRequestValidator;
+import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationApplicationRequestValidator;
+import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationApplicationValidationResult;
 import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationResponseValidator;
-import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationValidationResult;
-import org.idp.server.core.extension.identity.verification.verifier.IdentityVerificationRequestVerificationResult;
-import org.idp.server.core.extension.identity.verification.verifier.IdentityVerificationRequestVerifiers;
+import org.idp.server.core.extension.identity.verification.verifier.application.IdentityVerificationApplicationRequestVerifiedResult;
+import org.idp.server.core.extension.identity.verification.verifier.application.IdentityVerificationApplicationRequestVerifiers;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.http.*;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -44,13 +44,13 @@ import org.idp.server.platform.security.type.RequestAttributes;
 public class IdentityVerificationHandler {
 
   OAuthAuthorizationResolvers authorizationResolvers;
-  IdentityVerificationRequestVerifiers requestVerifiers;
+  IdentityVerificationApplicationRequestVerifiers requestVerifiers;
   AdditionalRequestParameterResolvers additionalRequestParameterResolvers;
   HttpRequestExecutor httpRequestExecutor;
 
   public IdentityVerificationHandler() {
     this.authorizationResolvers = new OAuthAuthorizationResolvers();
-    this.requestVerifiers = new IdentityVerificationRequestVerifiers();
+    this.requestVerifiers = new IdentityVerificationApplicationRequestVerifiers();
     this.additionalRequestParameterResolvers = new AdditionalRequestParameterResolvers();
     this.httpRequestExecutor = new HttpRequestExecutor(HttpClientFactory.defaultClient());
   }
@@ -61,22 +61,23 @@ public class IdentityVerificationHandler {
       IdentityVerificationApplications applications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
-      IdentityVerificationRequest request,
+      IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
 
     IdentityVerificationProcessConfiguration processConfig =
         verificationConfiguration.getProcessConfig(processes);
 
-    IdentityVerificationRequestValidator applicationValidator =
-        new IdentityVerificationRequestValidator(processConfig, request);
-    IdentityVerificationValidationResult requestValidationResult = applicationValidator.validate();
+    IdentityVerificationApplicationRequestValidator applicationValidator =
+        new IdentityVerificationApplicationRequestValidator(processConfig, request);
+    IdentityVerificationApplicationValidationResult requestValidationResult =
+        applicationValidator.validate();
 
     if (requestValidationResult.isError()) {
       return ExternalWorkflowApplyingResult.requestError(requestValidationResult);
     }
 
-    IdentityVerificationRequestVerificationResult verifyResult =
+    IdentityVerificationApplicationRequestVerifiedResult verifyResult =
         requestVerifiers.verify(
             tenant,
             user,
@@ -121,7 +122,8 @@ public class IdentityVerificationHandler {
 
     IdentityVerificationResponseValidator responseValidator =
         new IdentityVerificationResponseValidator(processConfig, executionResult.body());
-    IdentityVerificationValidationResult responseValidationResult = responseValidator.validate();
+    IdentityVerificationApplicationValidationResult responseValidationResult =
+        responseValidator.validate();
 
     ExternalWorkflowApplicationIdParam externalWorkflowApplicationIdParam =
         verificationConfiguration.externalWorkflowApplicationIdParam();
@@ -141,7 +143,7 @@ public class IdentityVerificationHandler {
       IdentityVerificationApplications applications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
-      IdentityVerificationRequest request,
+      IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
     Map<String, Object> parameters = new HashMap<>(staticBody.toMap());

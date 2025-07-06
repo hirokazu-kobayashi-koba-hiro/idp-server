@@ -14,55 +14,62 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.identity.verification.verifier;
+package org.idp.server.core.extension.identity.verification.verifier.application;
 
 import java.util.List;
+import java.util.Map;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
-import org.idp.server.core.extension.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.type.RequestAttributes;
 
-public class ContinuousCustomerDueDiligenceIdentityVerificationVerifier
-    implements IdentityVerificationRequestVerifier {
+public class DenyDuplicateIdentityVerificationApplicationApplicationVerifier
+    implements IdentityVerificationApplicationRequestVerifier {
 
+  @Override
   public boolean shouldVerify(
       Tenant tenant,
       User user,
       IdentityVerificationApplications applications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
-      IdentityVerificationRequest request,
+      IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
 
-    return type.isContinuousCustomerDueDiligence();
+    IdentityVerificationProcessConfiguration processConfig =
+        verificationConfiguration.getProcessConfig(processes);
+    Map<String, Object> verificationSchema = processConfig.requestVerificationSchema();
+
+    if (verificationSchema == null || verificationSchema.isEmpty()) {
+      return false;
+    }
+
+    return verificationSchema.containsKey("duplicate_application")
+        && (Boolean) verificationSchema.get("duplicate_application");
   }
 
   @Override
-  public IdentityVerificationRequestVerificationResult verify(
+  public IdentityVerificationApplicationRequestVerifiedResult verify(
       Tenant tenant,
       User user,
       IdentityVerificationApplications applications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
-      IdentityVerificationRequest request,
+      IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
 
-    if (!applications.containsApproved(verificationConfiguration.approvedTargetTypes())) {
-
-      List<String> errors =
-          List.of(
-              String.format(
-                  "user does not have approved application required any type (%s)",
-                  verificationConfiguration.approvedTargetTypesAsString()));
-      return IdentityVerificationRequestVerificationResult.failure(errors);
+    if (applications.containsRunningState(type)) {
+      List<String> errors = List.of("Duplicate application found for type " + type.name());
+      return IdentityVerificationApplicationRequestVerifiedResult.failure(errors);
     }
 
-    return IdentityVerificationRequestVerificationResult.success();
+    return IdentityVerificationApplicationRequestVerifiedResult.success();
   }
 }

@@ -18,14 +18,13 @@ package org.idp.server.core.extension.identity.verification;
 
 import java.util.Map;
 import java.util.function.BiConsumer;
-import org.idp.server.core.oidc.identity.UserIdentifier;
 
-public class IdentityVerificationRequest {
+public class IdentityVerificationApplicationRequest {
   Map<String, Object> values;
 
-  public IdentityVerificationRequest() {}
+  public IdentityVerificationApplicationRequest() {}
 
-  public IdentityVerificationRequest(Map<String, Object> values) {
+  public IdentityVerificationApplicationRequest(Map<String, Object> values) {
     this.values = values;
   }
 
@@ -94,9 +93,5 @@ public class IdentityVerificationRequest {
 
   public String extractEvidenceMethod() {
     return optValueAsString("evidence_method", "");
-  }
-
-  public UserIdentifier userIdentifier() {
-    return new UserIdentifier(optValueAsString("user_id", ""));
   }
 }

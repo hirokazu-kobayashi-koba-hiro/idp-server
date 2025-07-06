@@ -16,54 +16,17 @@
 
 package org.idp.server.core.extension.identity.verification;
 
-import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationIdentifier;
-import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationQueries;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationResponse;
-import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.token.OAuthToken;
+import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.type.RequestAttributes;
 
 public interface IdentityVerificationApi {
-  IdentityVerificationResponse apply(
-      TenantIdentifier tenantIdentifier,
-      User user,
-      OAuthToken oAuthToken,
-      IdentityVerificationType identityVerificationType,
-      IdentityVerificationProcess identityVerificationProcess,
-      IdentityVerificationRequest request,
-      RequestAttributes requestAttributes);
 
-  IdentityVerificationResponse findApplications(
+  IdentityVerificationResponse register(
       TenantIdentifier tenantIdentifier,
-      User user,
-      OAuthToken oAuthToken,
-      IdentityVerificationApplicationQueries queries,
-      RequestAttributes requestAttributes);
-
-  IdentityVerificationResponse process(
-      TenantIdentifier tenantIdentifier,
-      User user,
-      OAuthToken oAuthToken,
-      IdentityVerificationApplicationIdentifier identifier,
-      IdentityVerificationType identityVerificationType,
-      IdentityVerificationProcess identityVerificationProcess,
-      IdentityVerificationRequest request,
-      RequestAttributes requestAttributes);
-
-  IdentityVerificationResponse evaluateResult(
-      TenantIdentifier tenantIdentifier,
-      User user,
-      OAuthToken oAuthToken,
+      BasicAuth basicAuth,
       IdentityVerificationType identityVerificationType,
       IdentityVerificationRequest request,
-      RequestAttributes requestAttributes);
-
-  IdentityVerificationResponse delete(
-      TenantIdentifier tenantIdentifier,
-      User user,
-      OAuthToken oAuthToken,
-      IdentityVerificationApplicationIdentifier identifier,
-      IdentityVerificationType type,
       RequestAttributes requestAttributes);
 }
