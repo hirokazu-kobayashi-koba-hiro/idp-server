@@ -18,13 +18,13 @@ package org.idp.server.core.extension.identity.verification.delegation;
 
 import java.util.Objects;
 
-public class ExternalWorkflowApplicationIdParam {
+public class ExternalIdentityVerificationApplicationIdentifier {
 
   String value;
 
-  public ExternalWorkflowApplicationIdParam() {}
+  public ExternalIdentityVerificationApplicationIdentifier() {}
 
-  public ExternalWorkflowApplicationIdParam(String value) {
+  public ExternalIdentityVerificationApplicationIdentifier(String value) {
     this.value = value;
   }
 
@@ -35,7 +35,8 @@ public class ExternalWorkflowApplicationIdParam {
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
-    ExternalWorkflowApplicationIdParam that = (ExternalWorkflowApplicationIdParam) o;
+    ExternalIdentityVerificationApplicationIdentifier that =
+        (ExternalIdentityVerificationApplicationIdentifier) o;
     return Objects.equals(value, that.value);
   }
 

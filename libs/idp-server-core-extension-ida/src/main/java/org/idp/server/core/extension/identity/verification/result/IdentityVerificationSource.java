@@ -20,7 +20,8 @@ public enum IdentityVerificationSource {
   APPLICATION("application"),
   DIRECT("direct"),
   MANUAL("manual"),
-  IMPORT("import");
+  IMPORT("import"),
+  UNKNOWN("");
 
   String value;
 
@@ -30,11 +31,11 @@ public enum IdentityVerificationSource {
 
   public static IdentityVerificationSource of(String value) {
     for (IdentityVerificationSource source : IdentityVerificationSource.values()) {
-      if (source.value.equals(value)) {
+      if (source.value.equalsIgnoreCase(value)) {
         return source;
       }
     }
-    throw new UnsupportedOperationException("Unsupported IdentityVerificationSource: " + value);
+    return UNKNOWN;
   }
 
   public String value() {

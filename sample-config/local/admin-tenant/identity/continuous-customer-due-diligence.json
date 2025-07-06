@@ -1,8 +1,8 @@
 {
   "id": "d58a464d-c654-4d9a-a7d3-43e7420f7ebf",
   "type": "continuous-customer-due-diligence",
-  "external_workflow_delegation": "mocky",
-  "external_workflow_application_id_param": "application_id",
+  "external_service": "mocky",
+  "external_application_id_param": "application_id",
   "oauth_authorization": {
     "type": "password",
     "token_endpoint": "https://run.mocky.io/v3/04646fc3-8cce-44c8-bc59-5c64df51bf82",

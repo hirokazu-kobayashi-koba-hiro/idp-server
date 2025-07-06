@@ -17,6 +17,7 @@
 package org.idp.server.usecases.application.identity_verification_service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.*;
 import org.idp.server.core.extension.identity.verification.claims.VerifiedClaims;
@@ -24,10 +25,10 @@ import org.idp.server.core.extension.identity.verification.configuration.Identit
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationRegistrationConfiguration;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationResponse;
-import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationCommandRepository;
-import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationQueryRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationResultCommandRepository;
+import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationResultQueryRepository;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResult;
+import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResultQueries;
 import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationRequestValidator;
 import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationValidationResult;
 import org.idp.server.core.extension.identity.verification.verifier.result.IdentityVerificationRequestVerifiedResult;
@@ -36,12 +37,14 @@ import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserStatus;
 import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
+import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.core.oidc.token.TokenEventPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
+import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.security.type.RequestAttributes;
 
 @Transaction
@@ -49,6 +52,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
 
   IdentityVerificationConfigurationQueryRepository configurationQueryRepository;
   IdentityVerificationResultCommandRepository resultCommandRepository;
+  IdentityVerificationResultQueryRepository resultQueryRepository;
   TenantQueryRepository tenantQueryRepository;
   UserQueryRepository userQueryRepository;
   UserCommandRepository userCommandRepository;
@@ -57,9 +61,8 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
 
   public IdentityVerificationEntryService(
       IdentityVerificationConfigurationQueryRepository configurationQueryRepository,
-      IdentityVerificationApplicationCommandRepository applicationCommandRepository,
-      IdentityVerificationApplicationQueryRepository applicationQueryRepository,
       IdentityVerificationResultCommandRepository resultCommandRepository,
+      IdentityVerificationResultQueryRepository resultQueryRepository,
       TenantQueryRepository tenantQueryRepository,
       UserQueryRepository userQueryRepository,
       UserCommandRepository userCommandRepository,
@@ -67,6 +70,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
     this.configurationQueryRepository = configurationQueryRepository;
     this.tenantQueryRepository = tenantQueryRepository;
     this.resultCommandRepository = resultCommandRepository;
+    this.resultQueryRepository = resultQueryRepository;
     this.userQueryRepository = userQueryRepository;
     this.userCommandRepository = userCommandRepository;
     this.verifiers = new IdentityVerificationRequestVerifiers();
@@ -123,6 +127,30 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
     userCommandRepository.update(tenant, verifiedUser);
 
     Map<String, Object> response = new HashMap<>();
+    return IdentityVerificationResponse.OK(response);
+  }
+
+  @Override
+  public IdentityVerificationResponse findList(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      IdentityVerificationResultQueries queries,
+      RequestAttributes requestAttributes) {
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    List<IdentityVerificationResult> resultList =
+        resultQueryRepository.findList(tenant, user, queries);
+
+    eventPublisher.publish(
+        tenant,
+        oAuthToken,
+        DefaultSecurityEventType.identity_verification_application_findList,
+        requestAttributes);
+
+    Map<String, Object> response = new HashMap<>();
+    response.put("list", resultList.stream().map(IdentityVerificationResult::toMap).toList());
     return IdentityVerificationResponse.OK(response);
   }
 }

@@ -1,8 +1,8 @@
 {
   "id": "8c91feb0-97d5-41ce-b041-ad2ab2c65158",
   "type": "trust-service",
-  "external_workflow_delegation": "trust-service",
-  "external_workflow_application_id_param": "application_id",
+  "external_service": "mocky",
+  "external_application_id_param": "application_id",
   "verified_claims_configuration": {
    "mapping_rules": [
      { "from": "$.trust_framework", "to": "verification.trust_framework" },

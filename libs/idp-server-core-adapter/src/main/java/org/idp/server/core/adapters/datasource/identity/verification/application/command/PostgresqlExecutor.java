@@ -41,7 +41,7 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
                     user_id,
                     verification_type,
                     application_details,
-                    external_workflow_delegation,
+                    external_service,
                     external_application_id,
                     external_application_details,
                     trust_framework,

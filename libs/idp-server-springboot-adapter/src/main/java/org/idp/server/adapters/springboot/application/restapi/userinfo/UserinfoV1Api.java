@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.adapters.springboot.application.restapi.user;
+package org.idp.server.adapters.springboot.application.restapi.userinfo;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.idp.server.IdpServerApplication;

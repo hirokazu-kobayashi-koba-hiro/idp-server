@@ -24,7 +24,7 @@ describe("identity-verification application", () => {
 
       let mfaRegistrationResponse =
         await postWithJson({
-          url: serverConfig.usersEndpoint + "/mfa-registration",
+          url: serverConfig.resourceOwnerEndpoint + "/mfa-registration",
           body: {
             "flow": "fido-uaf-registration",
             "platform": "Android",
@@ -432,6 +432,19 @@ describe("identity-verification application", () => {
       expect(userinfoResponse.data).toHaveProperty("authentication_devices");
       expect(userinfoResponse.data.authentication_devices.length).toBe(1);
       expect(userinfoResponse.data).toHaveProperty("mfa");
+
+      let resultsResponse = await get({
+        url: serverConfig.identityVerificationResultResourceOwnerEndpoint + `?application_id=${applicationId}&type=${type}`,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`
+        }
+      });
+      console.log(JSON.stringify(resultsResponse.data, null, 2));
+      expect(resultsResponse.status).toBe(200);
+      expect(resultsResponse.data.list.length).toBe(1);
+      expect(resultsResponse.data.list[0].application_id).toBe(applicationId);
+
     });
   });
 

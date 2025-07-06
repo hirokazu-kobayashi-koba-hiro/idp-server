@@ -31,8 +31,8 @@ public class IdentityVerificationConfigurationRequest implements JsonReadable {
   String type;
   String delegation;
   String description;
-  String externalWorkflowDelegation;
-  String externalWorkflowApplicationIdParam;
+  String externalService;
+  String externalApplicationIdParam;
   OAuthAuthorizationConfiguration oauthAuthorization;
   HmacAuthenticationConfiguration hmacAuthentication;
   Map<String, IdentityVerificationProcessConfiguration> processes;
@@ -68,8 +68,8 @@ public class IdentityVerificationConfigurationRequest implements JsonReadable {
         type,
         delegation,
         description,
-        externalWorkflowDelegation,
-        externalWorkflowApplicationIdParam,
+        externalService,
+        externalApplicationIdParam,
         oauthAuthorization,
         hmacAuthentication,
         processes,

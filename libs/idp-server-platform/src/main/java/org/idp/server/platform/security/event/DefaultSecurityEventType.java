@@ -102,6 +102,7 @@ public enum DefaultSecurityEventType {
   identity_verification_application_cancel("identity verification application was canceled"),
   identity_verification_application_delete("identity verification application was deleted"),
   identity_verification_application_findList("identity verification application was foundList"),
+  identity_verification_result_findList("identity verification result was foundList"),
   server_create("Server instance was created"),
   server_get("Server details were retrieved"),
   server_edit("Server configuration was updated"),

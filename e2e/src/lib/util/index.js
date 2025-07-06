@@ -126,7 +126,7 @@ export const toJsonString = (object) => {
 };
 
 export const generatePassword = (length) => {
-  const upper = faker.string.alpha({ length: 1, casing: "upper" }); // ✅ v7以降
+  const upper = faker.string.alpha({ length: 1, casing: "upper" });
   const digit = faker.string.numeric(1);
   const symbol = faker.helpers.arrayElement(["!", "@", "#", "$", "%", "^", "&", "*", "(", ")"]);
   const rest = faker.string.alphanumeric(length);

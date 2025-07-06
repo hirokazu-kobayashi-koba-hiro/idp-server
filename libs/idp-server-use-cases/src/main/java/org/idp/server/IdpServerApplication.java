@@ -62,6 +62,7 @@ import org.idp.server.core.extension.identity.verification.configuration.Identit
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationCommandRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationQueryRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationResultCommandRepository;
+import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationResultQueryRepository;
 import org.idp.server.core.oidc.*;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractors;
 import org.idp.server.core.oidc.authentication.AuthenticationTransactionApi;
@@ -241,6 +242,8 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(IdentityVerificationApplicationQueryRepository.class);
     IdentityVerificationResultCommandRepository identityVerificationResultCommandRepository =
         applicationComponentContainer.resolve(IdentityVerificationResultCommandRepository.class);
+    IdentityVerificationResultQueryRepository identityVerificationResultQueryRepository =
+        applicationComponentContainer.resolve(IdentityVerificationResultQueryRepository.class);
     FederationConfigurationCommandRepository federationConfigurationCommandRepository =
         applicationComponentContainer.resolve(FederationConfigurationCommandRepository.class);
     FederationConfigurationQueryRepository federationConfigurationQueryRepository =
@@ -497,9 +500,8 @@ public class IdpServerApplication {
         TenantAwareEntryServiceProxy.createProxy(
             new IdentityVerificationEntryService(
                 identityVerificationConfigurationQueryRepository,
-                identityVerificationApplicationCommandRepository,
-                identityVerificationApplicationQueryRepository,
                 identityVerificationResultCommandRepository,
+                identityVerificationResultQueryRepository,
                 tenantQueryRepository,
                 userQueryRepository,
                 userCommandRepository,

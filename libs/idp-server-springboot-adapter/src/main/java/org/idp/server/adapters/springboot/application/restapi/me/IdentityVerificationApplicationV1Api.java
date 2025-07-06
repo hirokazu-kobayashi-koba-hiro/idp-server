@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.adapters.springboot.application.restapi.identity;
+package org.idp.server.adapters.springboot.application.restapi.me;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
@@ -37,7 +37,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/{tenant-id}/v1/identity-verification/applications")
+@RequestMapping("/{tenant-id}/v1/me/identity-verification/applications")
 public class IdentityVerificationApplicationV1Api implements ParameterTransformable {
 
   IdentityVerificationApplicationApi identityVerificationApplicationApi;
@@ -126,7 +126,7 @@ public class IdentityVerificationApplicationV1Api implements ParameterTransforma
         response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
-  @PostMapping("/{id}/{verification-type}/callback-result")
+  @PostMapping("/{id}/{verification-type}/evaluate-result")
   public ResponseEntity<?> callbackExamination(
       @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,

@@ -23,7 +23,7 @@ import org.idp.server.core.extension.identity.verification.application.IdentityV
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.handler.IdentityVerificationHandler;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationResponse;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationCommandRepository;
@@ -104,12 +104,13 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
       return validationResult.errorResponse();
     }
 
-    ExternalWorkflowApplicationIdentifier externalWorkflowApplicationIdentifier =
-        new ExternalWorkflowApplicationIdentifier(
-            request.getValueAsString(
-                verificationConfiguration.externalWorkflowApplicationIdParam().value()));
+    ExternalIdentityVerificationApplicationIdentifier
+        externalIdentityVerificationApplicationIdentifier =
+            new ExternalIdentityVerificationApplicationIdentifier(
+                request.getValueAsString(
+                    verificationConfiguration.externalApplicationIdParam().value()));
     IdentityVerificationApplication application =
-        applicationQueryRepository.get(tenant, externalWorkflowApplicationIdentifier);
+        applicationQueryRepository.get(tenant, externalIdentityVerificationApplicationIdentifier);
 
     IdentityVerificationApplication updatedExamination =
         application.updateExamination(process, request, verificationConfiguration);
@@ -146,12 +147,13 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
       return validationResult.errorResponse();
     }
 
-    ExternalWorkflowApplicationIdentifier externalWorkflowApplicationIdentifier =
-        new ExternalWorkflowApplicationIdentifier(
-            request.getValueAsString(
-                verificationConfiguration.externalWorkflowApplicationIdParam().value()));
+    ExternalIdentityVerificationApplicationIdentifier
+        externalIdentityVerificationApplicationIdentifier =
+            new ExternalIdentityVerificationApplicationIdentifier(
+                request.getValueAsString(
+                    verificationConfiguration.externalApplicationIdParam().value()));
     IdentityVerificationApplication application =
-        applicationQueryRepository.get(tenant, externalWorkflowApplicationIdentifier);
+        applicationQueryRepository.get(tenant, externalIdentityVerificationApplicationIdentifier);
 
     IdentityVerificationApplication updatedExamination =
         application.completeExamination(process, request, verificationConfiguration);

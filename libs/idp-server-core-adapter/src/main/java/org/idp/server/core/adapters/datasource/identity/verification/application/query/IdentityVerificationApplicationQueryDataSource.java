@@ -19,7 +19,7 @@ package org.idp.server.core.adapters.datasource.identity.verification.applicatio
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.application.*;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalWorkflowApplicationIdentifier;
+import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.exception.IdentityVerificationApplicationNotFoundException;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
@@ -51,7 +51,7 @@ public class IdentityVerificationApplicationQueryDataSource
 
   @Override
   public IdentityVerificationApplication get(
-      Tenant tenant, ExternalWorkflowApplicationIdentifier identifier) {
+      Tenant tenant, ExternalIdentityVerificationApplicationIdentifier identifier) {
     IdentityVerificationApplicationQuerySqlExecutor executor = executors.get(tenant.databaseType());
 
     Map<String, String> result = executor.selectOne(tenant, identifier);

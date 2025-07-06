@@ -19,7 +19,7 @@ describe("User lifecycle", () => {
       console.log(user);
 
       const deleteResponse = await deletion({
-        url: serverConfig.usersEndpoint,
+        url: serverConfig.resourceOwnerEndpoint,
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${accessToken}`

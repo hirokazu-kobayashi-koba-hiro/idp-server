@@ -21,14 +21,14 @@ import java.util.Map;
 import org.idp.server.platform.http.HttpRequestResult;
 import org.idp.server.platform.json.JsonNodeWrapper;
 
-public class ExternalWorkflowApplyingExecutionResult {
+public class ExternalIdentityVerificationApplyingExecutionResult {
   int statusCode;
   Map<String, List<String>> headers;
   JsonNodeWrapper body;
 
-  public ExternalWorkflowApplyingExecutionResult() {}
+  public ExternalIdentityVerificationApplyingExecutionResult() {}
 
-  public ExternalWorkflowApplyingExecutionResult(HttpRequestResult httpRequestResult) {
+  public ExternalIdentityVerificationApplyingExecutionResult(HttpRequestResult httpRequestResult) {
     this.statusCode = httpRequestResult.statusCode();
     this.headers = httpRequestResult.headers();
     this.body = httpRequestResult.body();
