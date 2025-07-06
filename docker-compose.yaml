@@ -83,7 +83,6 @@ services:
     depends_on:
       - idp-server-1
       - idp-server-2
-      - idp-server-3
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
