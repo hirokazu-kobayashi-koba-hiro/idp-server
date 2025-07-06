@@ -1,10 +1,11 @@
 version: '3'
 
 services:
-  idp-server:
+  idp-server-1:
     build: ./
+    container_name: idp-server-1
     ports:
-      - "8080:8080"
+      - "8081:8080"
     depends_on:
       - postgresql
       - postgresql-reader
@@ -13,13 +14,51 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.0'
+          cpus: '2.0'
           memory: 2g
         reservations:
           cpus: '0.5'
           memory: 1g
     environment:
-      SERVER_URL: "http://localhost:8080"
+      SERVER_URL: "http://localhost:8081"
+      IDP_SERVER_API_KEY: $IDP_SERVER_API_KEY
+      IDP_SERVER_API_SECRET: $IDP_SERVER_API_SECRET
+      ENCRYPTION_KEY: $ENCRYPTION_KEY
+      DB_WRITE_URL: jdbc:postgresql://postgresql:5432/idpserver
+      DB_WRITE_USER_NAME: idpserver
+      DB_WRITE_PASSWORD: idpserver
+      DB_READ_URL: jdbc:postgresql://postgresql:5432/idpserver
+      DB_READ_USER_NAME: idpserver
+      DB_READ_PASSWORD: idpserver
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CACHE_ENABLE: "true"
+      CACHE_TIME_TO_LIVE_SECOND: 300
+      JAVA_TOOL_OPTIONS: >
+        -Xms512m -Xmx2g
+        -XX:+UseG1GC
+        -XX:MaxGCPauseMillis=100
+
+  idp-server-2:
+    build: ./
+    container_name: idp-server-2
+    ports:
+      - "8082:8080"
+    depends_on:
+      - postgresql
+      - postgresql-reader
+      - mysql
+      - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2g
+        reservations:
+          cpus: '0.5'
+          memory: 1g
+    environment:
+      SERVER_URL: "http://localhost:8082"
       IDP_SERVER_API_KEY: $IDP_SERVER_API_KEY
       IDP_SERVER_API_SECRET: $IDP_SERVER_API_SECRET
       ENCRYPTION_KEY: $ENCRYPTION_KEY
@@ -39,10 +78,16 @@ services:
         -XX:MaxGCPauseMillis=100
 
   nginx:
-    build: ./nginx
-    image: fapi-nginx
+    image: nginx:alpine
+    container_name: load-balancer
+    depends_on:
+      - idp-server-1
+      - idp-server-2
+      - idp-server-3
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
-      - "443:443"
+      - "8080:80"
 
   postgresql:
     image: postgres:15
