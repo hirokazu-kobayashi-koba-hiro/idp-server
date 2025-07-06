@@ -1,3 +1,5 @@
+import { faker } from "@faker-js/faker";
+
 export const convertNextAction = (redirectUri) => {
   const query = redirectUri.includes("?")
     ? redirectUri.split("?")[1]
@@ -121,6 +123,16 @@ export const base64UrlEncode = (input) => {
 
 export const toJsonString = (object) => {
   return JSON.stringify(object, null, 2);
+};
+
+export const generatePassword = (length) => {
+  const upper = faker.string.alpha({ length: 1, casing: "upper" }); // ✅ v7以降
+  const digit = faker.string.numeric(1);
+  const symbol = faker.helpers.arrayElement(["!", "@", "#", "$", "%", "^", "&", "*", "(", ")"]);
+  const rest = faker.string.alphanumeric(length);
+
+  const raw = upper + digit + symbol + rest;
+  return faker.helpers.shuffle([...raw]).join("");
 };
 
 export const validateSchemeDefinition = ({ name, target, schemeDefinition }) => {

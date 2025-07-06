@@ -6,6 +6,7 @@ import { get, post } from "../lib/http";
 import { requestFederation } from "../oauth/federation";
 import { requestAuthorizations } from "../oauth/request";
 import { verifyAndDecodeJwt } from "../lib/jose";
+import { generatePassword } from "../lib/util";
 
 
 export const createFederatedUser = async ({
@@ -16,10 +17,7 @@ export const createFederatedUser = async ({
 
   const registrationUser = {
     email: faker.internet.email(),
-    password: faker.internet.password(
-      12,
-      false,
-      "^(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()]).+$") + "!",
+    password: generatePassword(12),
     name: faker.person.fullName(),
     given_name: faker.person.firstName(),
     family_name: faker.person.lastName(),
