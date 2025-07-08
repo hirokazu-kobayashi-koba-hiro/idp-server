@@ -1,7 +1,7 @@
 import { describe, expect, it, test } from "@jest/globals";
-import { get } from "../../lib/http";
-import { backendUrl, clientSecretPostClient, serverConfig } from "../testConfig";
-import { requestToken } from "../../api/oauthClient";
+import { get } from "../../../lib/http";
+import { backendUrl, clientSecretPostClient, serverConfig } from "../../testConfig";
+import { requestToken } from "../../../api/oauthClient";
 
 describe("audit log management api", () => {
 

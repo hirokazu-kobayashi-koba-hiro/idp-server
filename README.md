@@ -25,6 +25,106 @@ control modular and customizable.
 Yes — **idp-server is a framework**.  
 It empowers developers to build enterprise-grade identity platforms with flexibility, structure, and control.
 
+## Getting Started
+
+This section helps you quickly set up and launch the IdP server in your local environment.
+
+Whether you're testing OpenID Connect flows etc, or benchmarking performance —
+you’ll be up and running in just a few steps.
+
+### requirements
+
+- Java 21 or later
+- Docker & Docker Compose
+- Node.js 18 later（for e2e）
+
+### preparation
+
+* set up generate api-key and api-secret
+
+```shell
+./init.sh
+```
+
+※ fix your configuration
+
+```shell
+export IDP_SERVER_DOMAIN=http://localhost:8080/
+export IDP_SERVER_API_KEY=xxx
+export IDP_SERVER_API_SECRET=xxx
+export ENCRYPTION_KEY=xxx
+export ENV=local or develop or ...
+
+docker compose up -d
+docker compose logs -f idp-server
+```
+
+* init table
+
+```shell
+./gradlew flywayClean flywayMigrate
+```
+
+### setup configuration
+
+```shell
+./setup.sh
+```
+
+```shell
+./sample-config/test-data.sh \
+-e "local" \
+-u ito.ichiro \
+-p successUserCode001 \
+-t 67e7eae6-62b0-4500-9eff-87459f63fc66 \
+-b http://localhost:8080 \
+-c clientSecretPost \
+-s clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890 \
+-d false
+ ```
+
+```shell
+./sample-config/test-tenant-data.sh \
+-e "local" \
+-u ito.ichiro \
+-p successUserCode001 \
+-t 67e7eae6-62b0-4500-9eff-87459f63fc66 \
+-b http://localhost:8080 \
+-c clientSecretPost \
+-s clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890 \
+-n 1e68932e-ed4a-43e7-b412-460665e42df3 \
+-l clientSecretPost \
+-m clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890 \
+-d false
+ ```
+
+### e2e
+
+Once the setup configuration is complete, you can immediately run E2E tests to verify that your IdP server is functioning correctly.
+
+#### Test Structure
+The test suite is organized into three categories:
+
+* 📘 scenario/: Realistic user and system behavior — e.g., user registration, SSO login, CIBA flow, MFA registration.
+* 📕 spec/: Specification compliance tests based on OpenID Connect, FAPI, JARM, and Verifiable Credentials.
+* 🐒 monkey/: Fault injection and edge-case validation — intentionally invalid sequences, parameters, or protocol violations.
+
+#### run
+
+```shell
+cd e2e
+npm install
+npm test
+```
+
+### performance-test
+
+* Load testing powered by k6
+* Covers CIBA, Token, and Multi-tenant login scenarios
+* Supports horizontal scalability testing
+* ➡️ See [performance-test/README.md](./performance-test/README.md) for full usage
+
+
 ## 🗂 System Architecture (Container Level)
 
 ```mermaid
@@ -132,126 +232,8 @@ built with Java and React.
 This architecture is designed to deliver high security, customization flexibility, and developer-friendly extensibility,
 making it suitable for real-world enterprise deployments and Verifiable Credential issuance.
 
-## 🔥 Technical Highlights
-
-### ⚙️ Modular & Composable Architecture
-
-Each core capability—Authorization, Authentication, MFA, Consent, VC Issuance, Hooks—is implemented as independent,
-composable modules.  
-You can disable or replace modules without breaking the entire system.
-
-> 🧩 Easy to maintain, easy to embed.
-
 ---
 
-### 🔌 Plug-and-Play
-
-Built-in extensibility via interfaces
-
-1. `AuthenticationInteractor`
-2. `SecurityEventHookExecutor`
-3. `OAuthProtocol` etc
-
-Swap out mechanisms with minimal code.
-
-## Getting Started
-
-### preparation
-
-* set up generate api-key and api-secret
-
-```shell
-./init.sh
-```
-
-※ fix your configuration
-
-```shell
-export IDP_SERVER_DOMAIN=http://localhost:8080/
-export IDP_SERVER_API_KEY=xxx
-export IDP_SERVER_API_SECRET=xxx
-export ENCRYPTION_KEY=xxx
-export ENV=local or develop or ...
-
-docker compose up -d
-docker compose logs -f idp-server
-```
-
-* init table
-
-```shell
-./gradlew flywayClean flywayMigrate
-```
-
-### setup configuration
-
-```shell
-./setup.sh
-```
-
-```shell
-./sample-config/test-data.sh \
--e "local" \
--u ito.ichiro \
--p successUserCode001 \
--t 67e7eae6-62b0-4500-9eff-87459f63fc66 \
--b http://localhost:8080 \
--c clientSecretPost \
--s clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890 \
--d false
- ```
-
-```shell
-./sample-config/test-tenant-data.sh \
--e "local" \
--u ito.ichiro \
--p successUserCode001 \
--t 67e7eae6-62b0-4500-9eff-87459f63fc66 \
--b http://localhost:8080 \
--c clientSecretPost \
--s clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890 \
--n 1e68932e-ed4a-43e7-b412-460665e42df3 \
--l clientSecretPost \
--m clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890 \ 
--d false
- ```
-
-### debug access token
-
-```shell
-./sample-config/get-access-token.sh \
--u ito.ichiro@gmail.com \
--p successUserCode \
--t 67e7eae6-62b0-4500-9eff-87459f63fc66 \
--e http://localhost:8080 \
--c clientSecretPost \
--s clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890
-```
-
-### e2e
-
-```shell
-cd e2e
-npm install
-npm test
-```
-
-### docker 
-
-```shell
-docker build -t idp-server .
-```
-
-```shell
-docker run -p 8080:8080 \
-  -e IDP_SERVER_API_KEY=local-key \
-  -e IDP_SERVER_API_SECRET=local-secret \
-  -e ENCRYPTION_KEY=supersecret \
-  -e DB_WRITE_URL=jdbc:postgresql://host.docker.internal:5432/idpserver \
-  -e DB_READ_URL=jdbc:postgresql://host.docker.internal:5432/idpserver \
-  -e REDIS_HOST=host.docker.internal \
-  idp-server:latest -it idp-server ls /app/providers
-```
 
 ## License
 

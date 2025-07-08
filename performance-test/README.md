@@ -25,8 +25,10 @@ conducted. Each test type targets a specific system behavior:
 ### 🗃️ User
 
 ```shell
-../data/generate_users_100k.sh
-../data/test-user.sh
+chmod +x ./performance-test/data/generate_users_100k.sh
+chmod +x ./performance-test/data/test-user.sh
+./performance-test/data/generate_users_100k.sh
+./performance-test/data/test-user.sh
 ```
 
 * 10k
@@ -44,32 +46,13 @@ psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user (
   phone_number_verified,
   status,
   authentication_devices
-) FROM './data/generated_users_100k.tsv' WITH (FORMAT csv, HEADER false,  DELIMITER E'\t')"
+) FROM './performance-test/data/generated_users_100k.tsv' WITH (FORMAT csv, HEADER false,  DELIMITER E'\t')"
 
 ```
-
-* ciba
-
-```shell
-psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user (
-  id,
-  tenant_id,
-  provider_id,
-  provider_user_id,
-  name,
-  email,
-  email_verified,
-  phone_number,
-  phone_number_verified,
-  status,
-  authentication_devices
-) FROM './data/user-for-ciba.csv' WITH (FORMAT csv, HEADER false,  DELIMITER E',')"
-```
-
 ### tenants
 
 ```shell
-./performance-test/load/register-tenants.sh \
+./performance-test/data/register-tenants.sh \
   -e local \
   -u ito.ichiro \
   -p successUserCode001 \
@@ -77,23 +60,8 @@ psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user (
   -b http://localhost:8080 \
   -c clientSecretPost \
   -s clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890 \
-  -n 50 \
+  -n 1 \
   -d false
-```
-
-## 📄 App Logging
-
-If you analyze execution time at each step, enable file logging in your application.yaml:
-
-```yaml
-logging:
-  level:
-    root: info
-    web: info
-  file:
-    name: logs/idp-server.log
-    pattern:
-      file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
 ```
 
 ## k6
@@ -115,8 +83,6 @@ export CLIENT_ID=clientSecretPost
 export CLIENT_SECRET=clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890
 export REDIRECT_URI=https://www.certification.openid.net/test/a/idp_oidc_basic/callback
 export ACCESS_TOKEN=eyJhbGciOiJSUzI1NiIsInR5cCI6ImF0K2p3dCIsImtpZCI6ImlkX3Rva2VuX25leHRhdXRoIn0.eyJzdWIiOiI5MmU2ZmEwMy02NjgwLTQ3NDItOGQzOC0xYjU4NTFjMmJlYzciLCJzY29wZSI6InBob25lIG1hbmFnZW1lbnQgb3BlbmlkIHRyYW5zZmVycyBwcm9maWxlIGVtYWlsIGFjY291bnQiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvNjdlN2VhZTYtNjJiMC00NTAwLTllZmYtODc0NTlmNjNmYzY2IiwiZXhwIjoxNzQ5OTE5ODM1LCJpYXQiOjE3NDk5MTYyMzUsImNsaWVudF9pZCI6ImNsaWVudFNlY3JldFBvc3QiLCJqdGkiOiJmMzQ0Yjc0ZC1iNWJlLTQ4MjgtOWU3OS00YjVmNTRmMTFkNjkifQ.TWVEVEO172iHaBf13xr5Spcmh8wDcTY6HZlhnmpZkI8YI93L5kvpfJKtTrwxJqguYCaWXEkNKk9MlbOp0fF-keIyq1JS2ikfRkUSrYRg0SYt5Fsmvqf2re4YpxbPKlAOtD-DvNz6WQ0mQESMOTN5oYbd9togIIrqB7ReI1YYDntC6IQZKup4heYkbm6z4zn_2GjAnbOzF-gmaZ7Jm2iOhHjgvQLHSXykkUMHOb_JA3q_CachHNUh0mMhRk-3qpJlOxxCnlr6U5Q-QZS60DcKqp0ovmz6DTPZJy9aMRsDuqNwmbHpohBQz3Jzo-QG6nLsz40NGC00Plo4uaXsXTcJvA
-export ADMIN_API_KEY=your api key
-export ADMIN_API_SECRET=your api secret
 ```
 
 ### run
@@ -173,6 +139,28 @@ k6 run ./performance-test/stress/scenario-7-token-introspection.js
 ```shell
 k6 run ./performance-test/stress/scenario-8-authentication-device.js
 ```
+
+## CPU Memory
+
+```shell
+docker stats $(docker compose ps -q idp-server)
+```
+
+## 📄 App Logging
+
+If you analyze execution time at each step, enable file logging in your application.yaml:
+
+```yaml
+logging:
+  level:
+    root: info
+    web: info
+  file:
+    name: logs/idp-server.log
+    pattern:
+      file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+```
+
 
 ## 📊 analyze
 

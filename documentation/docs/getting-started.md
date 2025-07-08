@@ -4,16 +4,17 @@ sidebar_position: 2
 
 # はじめにガイド
 
-このガイドでは、**idp-server** を初めてセットアップして実行する手順を説明します。
+このセクションでは、ローカル環境で `idp-server` をセットアップして起動する方法を説明します。
+
+OpenID ConnectフローなどのE2Eテストを数ステップですぐに実行できます。
 
 ## 前提条件
 
 以下のツールが事前にインストールされている必要があります：
 
 - Java 21 以上
-- PostgreSQL または MySQL
-- Node.js（フロントエンドと連携する場合）
-- Docker（オプション、コンテナベースでのセットアップを行う場合）
+- Docker & Docker Compose
+- Node 18 以上（E2E用）
 
 ## インストール手順
 
@@ -69,19 +70,34 @@ docker compose logs -f idp-server
 -d false
 ```
 
-### アクセストークンの取得（デバッグ用）
-
 ```shell
-./sample-config/get-access-token.sh \
--u ito.ichiro@gmail.com \
--p successUserCode \
+./sample-config/test-tenant-data.sh \
+-e "local" \
+-u ito.ichiro \
+-p successUserCode001 \
 -t 67e7eae6-62b0-4500-9eff-87459f63fc66 \
--e http://localhost:8080 \
+-b http://localhost:8080 \
 -c clientSecretPost \
--s clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890
-```
+-s clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890 \
+-n 1e68932e-ed4a-43e7-b412-460665e42df3 \
+-l clientSecretPost \
+-m clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890 \
+-d false
+ ```
 
 ### エンドツーエンドテスト（E2E）
+
+セットアップ構成が完了したら、すぐにE2Eテストを実行して、IdPサーバーが正しく動作していることを確認できます。
+
+#### テスト構成
+テストスイートは、以下の3つのカテゴリに分類されています：
+
+* 📘 scenario/：ユーザー登録、SSOログイン、CIBAフロー、MFA登録など、実際のユーザーやシステムの振る舞いを再現したシナリオテスト。
+* 📕 spec/：OpenID Connect、FAPI、JARM、Verifiable Credentials など、各種仕様準拠を検証するコンプライアンステスト。
+* 🐒 monkey/：異常系・エッジケースの検証を行うモンキーテスト。意図的に不正なパラメータやシーケンスを使い、堅牢性をチェック。
+
+
+#### 実行
 
 ```shell
 cd e2e
@@ -89,23 +105,3 @@ npm install
 npm test
 ```
 
-### Dockerビルドと実行
-
-```shell
-docker build -t idp-server .
-```
-
-```shell
-docker run -p 8080:8080 \
-  -e IDP_SERVER_API_KEY=local-key \
-  -e IDP_SERVER_API_SECRET=local-secret \
-  -e ENCRYPTION_KEY=supersecret \
-  -e DB_WRITE_URL=jdbc:postgresql://host.docker.internal:5432/idpserver \
-  -e DB_READ_URL=jdbc:postgresql://host.docker.internal:5432/idpserver \
-  -e REDIS_HOST=host.docker.internal \
-  idp-server:latest -it idp-server ls /app/providers
-```
-
----
-
-次は管理画面のセットアップ、またはOIDCクライアント設定に進んでください。

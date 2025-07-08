@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
-import { get } from "../../lib/http";
-import { requestToken } from "../../api/oauthClient";
-import { clientSecretPostClient, serverConfig, backendUrl } from "../testConfig";
+import { get } from "../../../lib/http";
+import { requestToken } from "../../../api/oauthClient";
+import { clientSecretPostClient, serverConfig, backendUrl } from "../../testConfig";
 
 describe("client management api", () => {
 

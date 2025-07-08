@@ -1,5 +1,7 @@
 #!/bin/bash
 
+OUTPUT_FILE="./performance-test/data/performance-test-tenant.json"
+
 usage() {
   echo "Usage: $0 -e <env> -u <username> -p <password> -t <admin_tenant_id> -b <base_url> -c <client_id> -s <client_secret> -n <number_of_tenants> [-d <dry_run_flag>]"
   exit 1
@@ -23,6 +25,9 @@ done
 [ -z "$NUM_TENANTS" ] && echo "❌ -n <number_of_tenants> は必須" && usage
 
 echo "🚀 Start registering $NUM_TENANTS tenants..."
+
+echo "[" > "$OUTPUT_FILE"
+first=1
 
 for ((i=1; i<=NUM_TENANTS; i++)); do
   TENANT_ID=$(uuidgen | tr 'A-Z' 'a-z')
@@ -48,6 +53,17 @@ for ((i=1; i<=NUM_TENANTS; i++)); do
     echo "❌ Error while registering tenant $TENANT_ID"
     exit 1
   fi
+
+  if [ "$first" -eq 1 ]; then
+    first=0
+  else
+    echo "," >> "$OUTPUT_FILE"
+  fi
+
+  echo "  { \"tenantId\": \"$TENANT_ID\", \"clientId\": \"$CLIENT_ID\", \"clientSecret\": \"clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890\", \"deviceId\": \"${USER_ID}\" }" >> "$OUTPUT_FILE"
+
 done
+
+echo "]" >> "$OUTPUT_FILE"
 
 echo "✅ All $NUM_TENANTS tenants registered successfully!"

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
-import { get, post } from "../../lib/http";
-import { requestToken } from "../../api/oauthClient";
-import { clientSecretPostClient, serverConfig, backendUrl } from "../testConfig";
+import { get, post } from "../../../lib/http";
+import { requestToken } from "../../../api/oauthClient";
+import { clientSecretPostClient, serverConfig, backendUrl } from "../../testConfig";
 
 describe("tenant invitation management api", () => {
 

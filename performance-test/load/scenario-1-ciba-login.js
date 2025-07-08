@@ -33,7 +33,7 @@ export function login() {
   const clientSecret = __ENV.CLIENT_SECRET;
   const tenantId = __ENV.TENANT_ID;
 
-  const testUser = data(getRandomInt(499));
+  const testUser = data[getRandomInt(499)];
   const deviceId = testUser.device_id;
   const bindingMessage = "999";
   const loginHint = encodeURIComponent(`sub:${deviceId},idp:idp-server`);
