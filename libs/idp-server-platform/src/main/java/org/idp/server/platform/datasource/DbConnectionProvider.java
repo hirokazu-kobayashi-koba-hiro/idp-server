@@ -17,7 +17,8 @@
 package org.idp.server.platform.datasource;
 
 import java.sql.Connection;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public interface DbConnectionProvider {
-  Connection getConnection(DatabaseType databaseType);
+  Connection getConnection(DatabaseType databaseType, TenantIdentifier tenantIdentifier);
 }

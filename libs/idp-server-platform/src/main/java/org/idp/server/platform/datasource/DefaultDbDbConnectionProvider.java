@@ -19,23 +19,41 @@ package org.idp.server.platform.datasource;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.Map;
+import org.idp.server.platform.multi_tenancy.tenant.AdminTenantContext;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class DefaultDbDbConnectionProvider implements DbConnectionProvider {
-  Map<DatabaseType, DbConfig> writerConfigs;
-  Map<DatabaseType, DbConfig> readerConfigs;
+  DatabaseConfig adminDatabaseConfig;
+  DatabaseConfig appDatabaseConfig;
 
-  public DefaultDbDbConnectionProvider(DatabaseConfig databaseConfig) {
-    this.writerConfigs = databaseConfig.writerConfigs();
-    this.readerConfigs = databaseConfig.readerConfigs();
+  public DefaultDbDbConnectionProvider(
+      DatabaseConfig adminDatabaseConfig, DatabaseConfig appDatabaseConfig) {
+    this.adminDatabaseConfig = adminDatabaseConfig;
+    this.appDatabaseConfig = appDatabaseConfig;
   }
 
-  public Connection getConnection(DatabaseType databaseType) {
+  public Connection getConnection(DatabaseType databaseType, TenantIdentifier tenantIdentifier) {
     OperationType type = OperationContext.get();
+
+    if (AdminTenantContext.isAdmin(tenantIdentifier)) {
+      DbConfig dbConfig =
+          (type == OperationType.READ)
+              ? adminDatabaseConfig.readerConfigs().get(databaseType)
+              : adminDatabaseConfig.writerConfigs().get(databaseType);
+      try {
+        Connection connection =
+            DriverManager.getConnection(dbConfig.url(), dbConfig.username(), dbConfig.password());
+        connection.setAutoCommit(false);
+        return connection;
+      } catch (SQLException e) {
+        throw new SqlRuntimeException("Failed to get DB connection", e);
+      }
+    }
+
     DbConfig dbConfig =
         (type == OperationType.READ)
-            ? readerConfigs.get(databaseType)
-            : writerConfigs.get(databaseType);
+            ? appDatabaseConfig.readerConfigs().get(databaseType)
+            : appDatabaseConfig.writerConfigs().get(databaseType);
     try {
       Connection connection =
           DriverManager.getConnection(dbConfig.url(), dbConfig.username(), dbConfig.password());

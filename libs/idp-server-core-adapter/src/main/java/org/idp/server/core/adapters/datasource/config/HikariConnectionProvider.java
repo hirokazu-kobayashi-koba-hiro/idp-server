@@ -19,35 +19,69 @@ package org.idp.server.core.adapters.datasource.config;
 import com.zaxxer.hikari.HikariDataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Map;
 import org.idp.server.platform.datasource.*;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.tenant.AdminTenantContext;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class HikariConnectionProvider implements DbConnectionProvider {
 
-  Map<DatabaseType, HikariDataSource> writerConfigs;
-  Map<DatabaseType, HikariDataSource> readerConfigs;
+  HikariDatabaseConfig adminDatabaseConfig;
+  HikariDatabaseConfig appDatabaseConfig;
   LoggerWrapper log = LoggerWrapper.getLogger(HikariConnectionProvider.class);
 
-  public HikariConnectionProvider(DatabaseConfig databaseConfig) {
-    this.writerConfigs = HikariDataSourceFactory.create(databaseConfig.writerConfigs());
-    this.readerConfigs = HikariDataSourceFactory.create(databaseConfig.readerConfigs());
+  public HikariConnectionProvider(
+      DatabaseConfig adminDatabaseConfig, DatabaseConfig appDatabaseConfig) {
+    this.adminDatabaseConfig =
+        new HikariDatabaseConfig(
+            HikariDataSourceFactory.create(adminDatabaseConfig.writerConfigs()),
+            HikariDataSourceFactory.create(adminDatabaseConfig.readerConfigs()));
+    this.appDatabaseConfig =
+        new HikariDatabaseConfig(
+            HikariDataSourceFactory.create(appDatabaseConfig.writerConfigs()),
+            HikariDataSourceFactory.create(appDatabaseConfig.readerConfigs()));
   }
 
-  public Connection getConnection(DatabaseType databaseType) {
+  public Connection getConnection(DatabaseType databaseType, TenantIdentifier tenantIdentifier) {
     OperationType type = OperationContext.get();
+
+    if (AdminTenantContext.isAdmin(tenantIdentifier)) {
+      HikariDataSource hikariDataSource =
+          (type == OperationType.READ)
+              ? adminDatabaseConfig.readerConfigs().get(databaseType)
+              : adminDatabaseConfig.writerConfigs().get(databaseType);
+      try {
+
+        log.debug(
+            "DB connection for "
+                + databaseType
+                + " url: "
+                + hikariDataSource.getJdbcUrl()
+                + " max connection pool: "
+                + hikariDataSource.getMaximumPoolSize());
+
+        Connection connection = hikariDataSource.getConnection();
+        connection.setAutoCommit(false);
+        return connection;
+      } catch (SQLException e) {
+        throw new SqlRuntimeException("Failed to get DB connection", e);
+      }
+    }
+
     HikariDataSource hikariDataSource =
         (type == OperationType.READ)
-            ? readerConfigs.get(databaseType)
-            : writerConfigs.get(databaseType);
-    log.debug(
-        "DB connection for "
-            + databaseType
-            + " url: "
-            + hikariDataSource.getJdbcUrl()
-            + " max connection pool: "
-            + hikariDataSource.getMaximumPoolSize());
+            ? appDatabaseConfig.readerConfigs().get(databaseType)
+            : appDatabaseConfig.writerConfigs().get(databaseType);
     try {
+
+      log.debug(
+          "DB connection for "
+              + databaseType
+              + " url: "
+              + hikariDataSource.getJdbcUrl()
+              + " max connection pool: "
+              + hikariDataSource.getMaximumPoolSize());
+
       Connection connection = hikariDataSource.getConnection();
       connection.setAutoCommit(false);
       return connection;

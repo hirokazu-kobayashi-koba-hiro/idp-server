@@ -63,11 +63,11 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         OperationContext.set(operationType);
         log.debug("READ start: " + target.getClass().getName() + ": " + method.getName() + " ...");
         TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
-        TransactionManager.createConnection(DatabaseType.POSTGRESQL, tenantIdentifier.value());
+        TransactionManager.createConnection(DatabaseType.POSTGRESQL, tenantIdentifier);
         DatabaseType databaseType = dialectProvider.provide(tenantIdentifier);
         TransactionManager.closeConnection();
 
-        TransactionManager.createConnection(databaseType, tenantIdentifier.value());
+        TransactionManager.createConnection(databaseType, tenantIdentifier);
         Object result = method.invoke(target, args);
 
         TransactionManager.closeConnection();
@@ -96,11 +96,11 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         log.debug("WRITE start: " + target.getClass().getName() + ": " + method.getName() + " ...");
         TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
 
-        TransactionManager.createConnection(DatabaseType.POSTGRESQL, tenantIdentifier.value());
+        TransactionManager.createConnection(DatabaseType.POSTGRESQL, tenantIdentifier);
         DatabaseType databaseType = dialectProvider.provide(tenantIdentifier);
         TransactionManager.closeConnection();
 
-        TransactionManager.beginTransaction(databaseType, tenantIdentifier.value());
+        TransactionManager.beginTransaction(databaseType, tenantIdentifier);
 
         log.debug(
             databaseType.name()

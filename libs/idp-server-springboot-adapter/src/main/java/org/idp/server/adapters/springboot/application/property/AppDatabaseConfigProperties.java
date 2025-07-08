@@ -21,8 +21,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConfigurationProperties(prefix = "idp.datasource")
-public class DatabaseConfigProperties {
+@ConfigurationProperties(prefix = "idp.datasource.app")
+public class AppDatabaseConfigProperties {
   private Map<String, DbConfigProperty> postgresql;
   private Map<String, DbConfigProperty> mysql;
 
