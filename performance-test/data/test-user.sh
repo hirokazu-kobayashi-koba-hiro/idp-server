@@ -1,7 +1,7 @@
 #!/bin/bash
 
 INPUT_FILE="generated_users_100k.tsv"
-OUTPUT_FILE="performance-test-user.json"
+OUTPUT_FILE="./performance-test/data/performance-test-user.json"
 LIMIT=500
 
 echo "[" > "$OUTPUT_FILE"

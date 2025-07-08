@@ -52,6 +52,7 @@ export const options = {
   },
 };
 
+const data = JSON.parse(open('../data/performance-test-tenant.json'));
 
 export function tenant0login() {
   login(0)
@@ -76,7 +77,7 @@ export function tenant4login() {
 
 function login(index) {
   const baseUrl = __ENV.BASE_URL;
-  const testData = getTestData(index);
+  const testData = data[index];
   const clientId = testData.clientId;
   const clientSecret = testData.clientSecret;
   const tenantId = testData.tenantId;
@@ -134,15 +135,4 @@ function login(index) {
 
   check(jwksResponse, { "jwksResponse request OK": (r) => r.status === 200 });
 
-}
-
-//TODO change your data
-const getTestData = (index) => {
-  return [
-    { tenantId: "0db93323-cc6c-4248-a6d4-1ba691b6e096", clientId: "clientSecretPost", clientSecret: "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890", deviceId: "0b8dc6fb-9330-4037-9f22-7447c2bcd7ed" },
-    { tenantId: "0ee91f98-ad99-430d-9bc5-6ec5b7eb1368", clientId: "clientSecretPost", clientSecret: "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890", deviceId: "0cf90ab2-e81e-476f-826c-04a056bbb206" },
-    { tenantId: "1b738a2b-2b91-46af-b1a8-295dc1d77e65", clientId: "clientSecretPost", clientSecret: "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890", deviceId: "b66f3ac6-c5d5-4cb7-800d-3ec99b17931b" },
-    { tenantId: "1f26fc2f-dbca-4fd6-9397-fd3fd0b0b37a", clientId: "clientSecretPost", clientSecret: "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890", deviceId: "5aa68e9b-a447-42b0-b29c-8b15f246d23f" },
-    { tenantId: "2c4330c1-dcc0-42cb-a6d8-f6e32e7b2504", clientId: "clientSecretPost", clientSecret: "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890", deviceId: "73dafa1b-5ad4-4a3c-a6a5-4f885cd0d8d0" }
-  ][index]
 }

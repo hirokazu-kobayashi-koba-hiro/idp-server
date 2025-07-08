@@ -22,7 +22,9 @@ import org.idp.server.platform.exception.*;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -62,6 +64,18 @@ public class ApiExceptionHandler {
     return new ResponseEntity<>(HttpStatus.NOT_FOUND);
   }
 
+  @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+  public ResponseEntity<?> handleException(HttpRequestMethodNotSupportedException exception) {
+    log.warn(exception.getMessage(), exception);
+    return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
+  }
+
+  @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
+  public ResponseEntity<?> handleException(HttpMediaTypeNotAcceptableException ex) {
+    log.warn(ex.getMessage());
+    return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
+  }
+
   @ExceptionHandler(ConflictException.class)
   public ResponseEntity<?> handleException(ConflictException exception) {
     log.warn(exception.getMessage());
@@ -74,7 +88,7 @@ public class ApiExceptionHandler {
     log.warn(exception.getMessage(), exception);
     return new ResponseEntity<>(
         Map.of("error", "client_error", "error_description", "please check media type"),
-        HttpStatus.INTERNAL_SERVER_ERROR);
+        HttpStatus.UNSUPPORTED_MEDIA_TYPE);
   }
 
   @ExceptionHandler

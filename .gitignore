@@ -40,3 +40,4 @@ secret/
 
 generated_users_100k.tsv
 performance-test-user.json
+performance-test-tenant.json
