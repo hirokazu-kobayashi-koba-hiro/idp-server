@@ -72,6 +72,9 @@ public class JsonNodeWrapper {
   }
 
   public Iterator<String> fieldNames() {
+    if (jsonNode == null) {
+      return Collections.emptyIterator();
+    }
     return jsonNode.fieldNames();
   }
 

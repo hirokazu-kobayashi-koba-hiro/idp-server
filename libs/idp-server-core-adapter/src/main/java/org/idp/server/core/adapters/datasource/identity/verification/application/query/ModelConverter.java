@@ -17,13 +17,10 @@
 package org.idp.server.core.adapters.datasource.identity.verification.application.query;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.*;
-import org.idp.server.core.extension.identity.verification.application.TrustFramework;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplicationDetails;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationService;
@@ -55,14 +52,8 @@ public class ModelConverter {
         new ExternalIdentityVerificationApplicationDetails(
             JsonNodeWrapper.fromString(map.get("external_application_details")));
 
-    TrustFramework trustFramework = new TrustFramework(map.get("trust_framework"));
-    EvidenceDocumentType evidenceDocumentType =
-        new EvidenceDocumentType(map.get("evidence_document_type"));
-    EvidenceDocumentDetail evidenceDocumentDetail =
-        EvidenceDocumentDetail.fromString(map.get("evidence_document_details"));
-    EvidenceMethod evidenceMethod = new EvidenceMethod(map.get("evidence_method"));
     IdentityVerificationExaminationResults examinationResults = toExaminationResults(map);
-    IdentityVerificationApplicationProcesses processes = toProcesses(map);
+    IdentityVerificationApplicationProcessResults processes = toProcesses(map);
 
     IdentityVerificationApplicationStatus status =
         IdentityVerificationApplicationStatus.of(map.get("status"));
@@ -78,10 +69,6 @@ public class ModelConverter {
         externalIdentityVerificationService,
         externalApplicationId,
         externalIdentityVerificationApplicationDetails,
-        trustFramework,
-        evidenceDocumentType,
-        evidenceDocumentDetail,
-        evidenceMethod,
         examinationResults,
         processes,
         status,
@@ -103,18 +90,27 @@ public class ModelConverter {
     return new IdentityVerificationExaminationResults(examinationResultList);
   }
 
-  static IdentityVerificationApplicationProcesses toProcesses(Map<String, String> map) {
-    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(map.get("processes"));
-    List<IdentityVerificationApplicationProcess> processList = new ArrayList<>();
+  static IdentityVerificationApplicationProcessResults toProcesses(Map<String, String> map) {
 
-    for (JsonNodeWrapper wrapper : jsonNodeWrapper.elements()) {
-      String process = wrapper.getValueOrEmptyAsString("process");
-      String requestedAt = wrapper.getValueOrEmptyAsString("requested_at");
-      IdentityVerificationApplicationProcess applicationProcess =
-          new IdentityVerificationApplicationProcess(process, requestedAt);
-      processList.add(applicationProcess);
+    if (map.containsKey("processes") && map.get("processes") != null) {
+
+      HashMap<String, IdentityVerificationApplicationProcessResult> results = new HashMap<>();
+      JsonNodeWrapper interactions = JsonNodeWrapper.fromString(map.get("processes"));
+
+      for (Iterator<String> it = interactions.fieldNames(); it.hasNext(); ) {
+        String interaction = it.next();
+        JsonNodeWrapper node = interactions.getValueAsJsonNode(interaction);
+        int callCount = node.getValueAsInt("call_count");
+        int successCount = node.getValueAsInt("success_count");
+        int failureCount = node.getValueAsInt("failure_count");
+        IdentityVerificationApplicationProcessResult result =
+            new IdentityVerificationApplicationProcessResult(callCount, successCount, failureCount);
+        results.put(interaction, result);
+      }
+
+      return new IdentityVerificationApplicationProcessResults(results);
     }
 
-    return new IdentityVerificationApplicationProcesses(processList);
+    return new IdentityVerificationApplicationProcessResults();
   }
 }

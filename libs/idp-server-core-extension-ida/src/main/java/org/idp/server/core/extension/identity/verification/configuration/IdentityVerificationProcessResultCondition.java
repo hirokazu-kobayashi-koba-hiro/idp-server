@@ -16,37 +16,52 @@
 
 package org.idp.server.core.extension.identity.verification.configuration;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
-import org.idp.server.platform.mapper.MappingRule;
 
-public class IdentityVerificationVerifiedClaimsConfiguration implements JsonReadable {
+public class IdentityVerificationProcessResultCondition implements JsonReadable {
+  String processName;
+  String type;
+  int count;
 
-  List<MappingRule> mappingRules = new ArrayList<>();
+  public IdentityVerificationProcessResultCondition() {}
 
-  public IdentityVerificationVerifiedClaimsConfiguration() {}
-
-  public IdentityVerificationVerifiedClaimsConfiguration(List<MappingRule> mappingRules) {
-    this.mappingRules = mappingRules;
+  public IdentityVerificationProcessResultCondition(String processName, String type, int count) {
+    this.processName = processName;
+    this.type = type;
+    this.count = count;
   }
 
-  public List<MappingRule> mappingRules() {
-    if (mappingRules == null) {
-      return new ArrayList<>();
-    }
-    return mappingRules;
+  public String processName() {
+    return processName;
   }
 
-  public boolean exists() {
-    return mappingRules != null && !mappingRules.isEmpty();
+  public String type() {
+    return type;
+  }
+
+  public int count() {
+    return count;
+  }
+
+  public boolean isSatisfiedCount(int count) {
+    return count >= this.count;
   }
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
-    map.put("mapping_rules", mappingRules);
+    map.put("process_name", processName);
+    map.put("type", type);
+    map.put("count", count);
     return map;
+  }
+
+  public boolean isSuccessType() {
+    return "success".equals(type);
+  }
+
+  public boolean isFailureType() {
+    return "failure".equals(type);
   }
 }

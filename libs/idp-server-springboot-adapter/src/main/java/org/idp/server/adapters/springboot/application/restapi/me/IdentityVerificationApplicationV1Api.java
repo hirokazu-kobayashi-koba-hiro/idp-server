@@ -126,10 +126,11 @@ public class IdentityVerificationApplicationV1Api implements ParameterTransforma
         response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
-  @PostMapping("/{id}/{verification-type}/evaluate-result")
+  @PostMapping("/{verification-type}/{id}/evaluate-result")
   public ResponseEntity<?> callbackExamination(
       @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("id") IdentityVerificationApplicationIdentifier identifier,
       @PathVariable("verification-type") IdentityVerificationType verificationType,
       @RequestBody(required = false) Map<String, Object> requestBody,
       HttpServletRequest httpServletRequest) {
@@ -141,6 +142,7 @@ public class IdentityVerificationApplicationV1Api implements ParameterTransforma
             tenantIdentifier,
             resourceOwnerPrincipal.getUser(),
             resourceOwnerPrincipal.getOAuthToken(),
+            identifier,
             verificationType,
             new IdentityVerificationApplicationRequest(requestBody),
             requestAttributes);

@@ -16,37 +16,52 @@
 
 package org.idp.server.core.extension.identity.verification.configuration;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
-import org.idp.server.platform.mapper.MappingRule;
 
-public class IdentityVerificationVerifiedClaimsConfiguration implements JsonReadable {
+public class IdentityVerificationRequestResultCondition implements JsonReadable {
+  String path;
+  String type;
+  String operation;
+  Object value;
 
-  List<MappingRule> mappingRules = new ArrayList<>();
+  public IdentityVerificationRequestResultCondition() {}
 
-  public IdentityVerificationVerifiedClaimsConfiguration() {}
-
-  public IdentityVerificationVerifiedClaimsConfiguration(List<MappingRule> mappingRules) {
-    this.mappingRules = mappingRules;
+  public IdentityVerificationRequestResultCondition(
+      String path, String type, String operation, Object value) {
+    this.path = path;
+    this.type = type;
+    this.operation = operation;
+    this.value = value;
   }
 
-  public List<MappingRule> mappingRules() {
-    if (mappingRules == null) {
-      return new ArrayList<>();
-    }
-    return mappingRules;
+  public String path() {
+    return path;
+  }
+
+  public String type() {
+    return type;
+  }
+
+  public String operation() {
+    return operation;
+  }
+
+  public Object value() {
+    return value;
   }
 
   public boolean exists() {
-    return mappingRules != null && !mappingRules.isEmpty();
+    return path != null && operation != null && value != null;
   }
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
-    map.put("mapping_rules", mappingRules);
+    map.put("path", path);
+    map.put("type", type);
+    map.put("operation", operation);
+    map.put("value", value);
     return map;
   }
 }

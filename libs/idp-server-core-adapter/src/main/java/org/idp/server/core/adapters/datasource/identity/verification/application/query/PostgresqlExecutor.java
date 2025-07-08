@@ -120,10 +120,7 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
       sqlBuilder.append(" AND external_service = ?");
       params.add(queries.externalService());
     }
-    if (queries.hasTrustFramework()) {
-      sqlBuilder.append(" AND trust_framework = ?");
-      params.add(queries.trustFramework());
-    }
+
     if (queries.hasStatus()) {
       sqlBuilder.append(" AND status = ?");
       params.add(queries.status());
@@ -146,10 +143,6 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
                        external_service,
                        external_application_id,
                        external_application_details,
-                       trust_framework,
-                       evidence_document_type,
-                       evidence_document_details,
-                       evidence_method,
                        examination_results,
                        processes,
                        status,

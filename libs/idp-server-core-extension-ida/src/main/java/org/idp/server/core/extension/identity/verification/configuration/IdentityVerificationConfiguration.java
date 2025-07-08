@@ -166,6 +166,9 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
   }
 
   public IdentityVerificationVerifiedClaimsConfiguration verifiedClaimsConfiguration() {
+    if (verifiedClaimsConfiguration == null) {
+      return new IdentityVerificationVerifiedClaimsConfiguration();
+    }
     return verifiedClaimsConfiguration;
   }
 

@@ -19,6 +19,7 @@ package org.idp.server.core.oidc.identity.mapper;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.*;
+import org.idp.server.platform.date.LocalDateTimeParser;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.mapper.MappingRule;
@@ -170,5 +171,27 @@ public class MappingRuleObjectMapperTest {
     assertEquals("Alice", user.get("name"));
     assertEquals(30, user.get("age"));
     assertEquals(true, user.get("active"));
+  }
+
+  @Test
+  public void array() {
+    String json =
+        """
+            [{"processName": "apply", "requested_at": "2025-07-06T11:51:20.797165171"}, {"process": "crm-registration", "requested_at": "2025-07-06T11:51:20.816208671"}, {"process": "request-ekyc", "requested_at": "2025-07-06T11:51:20.835968755"}, {"process": "complete-ekyc", "requested_at": "2025-07-06T11:51:20.857751130"}, {"process": "callback-examination", "requested_at": "2025-07-06T11:51:20.917423380"}]
+            """;
+
+    JsonNodeWrapper wrapper = JsonNodeWrapper.fromString(json);
+    JsonPathWrapper pathWrapper = new JsonPathWrapper(wrapper.toJson());
+
+    List<MappingRule> rules =
+        List.of(
+            new MappingRule("$.[0].processName", "process", "string"),
+            new MappingRule("$.[0].requested_at", "requested_at", "datetime"));
+
+    Map<String, Object> result = MappingRuleObjectMapper.execute(rules, pathWrapper);
+
+    assertEquals("apply", result.get("process"));
+    assertEquals(
+        LocalDateTimeParser.parse("2025-07-06T11:51:20.797165171"), result.get("requested_at"));
   }
 }

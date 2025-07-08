@@ -77,6 +77,10 @@ public class ExternalIdentityVerificationApplyingResult {
     this.responseValidationResult = responseValidationResult;
   }
 
+  public boolean isSuccess() {
+    return !isError();
+  }
+
   public boolean isError() {
     return requestIdValidationResult.isError()
         || verifyResult.isError()

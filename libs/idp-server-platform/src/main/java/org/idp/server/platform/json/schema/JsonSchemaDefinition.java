@@ -46,6 +46,11 @@ public class JsonSchemaDefinition {
 
   public Map<String, JsonSchemaProperty> getProperties() {
     JsonNodeWrapper jsonNodeWrapper = definition.getValueAsJsonNode("properties");
+
+    if (jsonNodeWrapper == null) {
+      return new HashMap<>();
+    }
+
     Map<String, JsonSchemaProperty> properties = new HashMap<>();
 
     jsonNodeWrapper

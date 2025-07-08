@@ -20,15 +20,15 @@
 
 ## 設定項目（テンプレート定義）
 
-| 項目                                       | 内容                                        |
-|------------------------------------------|-------------------------------------------|
-| `id`                                     | テンプレートのUUID                               |
-| `type`                                   | ワークフロー種別（例: `investment-account-opening`） |
-| `external_workflow_delegation`           | 外部ワークフロー名（例: `mocky`）                     |
-| `external_workflow_application_id_param` | 外部申請IDを示すキー（例: `application_id`）          |
-| `oauth_authorization`                    | 外部APIへの認証情報（OAuth2設定）                     |
-| `verified_claims_schema`                 | 検証済みクレームのスキーマ構造定義                         |
-| `processes`                              | 外部身元確認API定義であるprocessを複数登録可能              |
+| 項目                              | 内容                                        |
+|---------------------------------|-------------------------------------------|
+| `id`                            | テンプレートのUUID                               |
+| `type`                          | ワークフロー種別（例: `investment-account-opening`） |
+| `external_service`              | 外部ワークフロー名（例: `mocky`）                     |
+| `external_application_id_param` | 外部申請IDを示すキー（例: `application_id`）          |
+| `oauth_authorization`           | 外部APIへの認証情報（OAuth2設定）                     |
+| `verified_claims_schema`        | 検証済みクレームのスキーマ構造定義                         |
+| `processes`                     | 外部身元確認API定義であるprocessを複数登録可能              |
 
 ### `processe`設定
 

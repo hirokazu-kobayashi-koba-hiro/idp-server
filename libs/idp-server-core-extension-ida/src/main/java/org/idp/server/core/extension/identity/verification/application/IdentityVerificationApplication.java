@@ -48,12 +48,8 @@ public class IdentityVerificationApplication {
   ExternalIdentityVerificationService externalIdentityVerificationService;
   ExternalIdentityVerificationApplicationIdentifier externalApplicationId;
   ExternalIdentityVerificationApplicationDetails externalIdentityVerificationApplicationDetails;
-  TrustFramework trustFramework;
-  EvidenceDocumentType evidenceDocumentType;
-  EvidenceDocumentDetail evidenceDocumentDetail;
-  EvidenceMethod evidenceMethod;
   IdentityVerificationExaminationResults examinations;
-  IdentityVerificationApplicationProcesses processes;
+  IdentityVerificationApplicationProcessResults processes;
   IdentityVerificationApplicationStatus status;
   LocalDateTime requestedAt;
 
@@ -69,12 +65,8 @@ public class IdentityVerificationApplication {
       ExternalIdentityVerificationService externalIdentityVerificationService,
       ExternalIdentityVerificationApplicationIdentifier externalApplicationId,
       ExternalIdentityVerificationApplicationDetails externalIdentityVerificationApplicationDetails,
-      TrustFramework trustFramework,
-      EvidenceDocumentType evidenceDocumentType,
-      EvidenceDocumentDetail evidenceDocumentDetail,
-      EvidenceMethod evidenceMethod,
       IdentityVerificationExaminationResults examinations,
-      IdentityVerificationApplicationProcesses processes,
+      IdentityVerificationApplicationProcessResults processes,
       IdentityVerificationApplicationStatus status,
       LocalDateTime requestedAt) {
     this.identifier = identifier;
@@ -87,10 +79,6 @@ public class IdentityVerificationApplication {
     this.externalApplicationId = externalApplicationId;
     this.externalIdentityVerificationApplicationDetails =
         externalIdentityVerificationApplicationDetails;
-    this.trustFramework = trustFramework;
-    this.evidenceDocumentType = evidenceDocumentType;
-    this.evidenceDocumentDetail = evidenceDocumentDetail;
-    this.evidenceMethod = evidenceMethod;
     this.examinations = examinations;
     this.processes = processes;
     this.status = status;
@@ -124,17 +112,12 @@ public class IdentityVerificationApplication {
         ExternalIdentityVerificationApplicationDetails.create(
             applyingResult.externalWorkflowResponse(), processConfig);
 
-    TrustFramework trustFramework = new TrustFramework(request.extractTrustFramework());
-    EvidenceDocumentType evidenceDocumentType =
-        new EvidenceDocumentType(request.extractEvidenceDocumentType());
-    EvidenceDocumentDetail evidenceDocumentDetail =
-        EvidenceDocumentDetail.fromObject(request.extractEvidenceDocumentDetail());
-    EvidenceMethod evidenceMethod = new EvidenceMethod(request.extractEvidenceMethod());
     LocalDateTime requestedAt = SystemDateTime.now();
-    IdentityVerificationApplicationProcess applicationProcess =
-        new IdentityVerificationApplicationProcess(process, requestedAt);
-    IdentityVerificationApplicationProcesses processes =
-        new IdentityVerificationApplicationProcesses(List.of(applicationProcess));
+    IdentityVerificationApplicationProcessResult applicationProcess =
+        new IdentityVerificationApplicationProcessResult(1, 1, 0);
+    IdentityVerificationApplicationProcessResults processes =
+        new IdentityVerificationApplicationProcessResults(
+            Map.of(process.name(), applicationProcess));
 
     return new IdentityVerificationApplication(
         identifier,
@@ -146,10 +129,6 @@ public class IdentityVerificationApplication {
         externalIdentityVerificationService,
         externalApplicationId,
         externalIdentityVerificationApplicationDetails,
-        trustFramework,
-        evidenceDocumentType,
-        evidenceDocumentDetail,
-        evidenceMethod,
         new IdentityVerificationExaminationResults(),
         processes,
         IdentityVerificationApplicationStatus.REQUESTED,
@@ -170,16 +149,27 @@ public class IdentityVerificationApplication {
         mergedExternalIdentityVerificationApplicationDetails =
             externalIdentityVerificationApplicationDetails.merge(
                 applyingResult.externalWorkflowResponse(), processConfig);
-    TrustFramework trustFramework = new TrustFramework(request.extractTrustFramework());
-    EvidenceDocumentType evidenceDocumentType =
-        new EvidenceDocumentType(request.extractEvidenceDocumentType());
-    EvidenceDocumentDetail evidenceDocumentDetail =
-        EvidenceDocumentDetail.fromObject(request.extractEvidenceDocumentDetail());
-    EvidenceMethod evidenceMethod = new EvidenceMethod(request.extractEvidenceMethod());
 
-    IdentityVerificationApplicationProcess applicationProcess =
-        new IdentityVerificationApplicationProcess(process, SystemDateTime.now());
-    IdentityVerificationApplicationProcesses addedProcesses = processes.add(applicationProcess);
+    Map<String, IdentityVerificationApplicationProcessResult> resultMap = processes.toMap();
+    if (processes.contains(process.name())) {
+
+      IdentityVerificationApplicationProcessResult foundResult = processes.get(process.name());
+      IdentityVerificationApplicationProcessResult updatedResult =
+          foundResult.updateWith(applyingResult);
+      resultMap.remove(process.name());
+      resultMap.put(process.name(), updatedResult);
+
+    } else {
+
+      int successCount = applyingResult.isSuccess() ? 1 : 0;
+      int failureCount = applyingResult.isSuccess() ? 0 : 1;
+      IdentityVerificationApplicationProcessResult result =
+          new IdentityVerificationApplicationProcessResult(1, successCount, failureCount);
+      resultMap.put(process.name(), result);
+    }
+
+    IdentityVerificationApplicationProcessResults processResults =
+        new IdentityVerificationApplicationProcessResults(resultMap);
 
     return new IdentityVerificationApplication(
         identifier,
@@ -191,12 +181,8 @@ public class IdentityVerificationApplication {
         externalIdentityVerificationService,
         externalApplicationId,
         mergedExternalIdentityVerificationApplicationDetails,
-        trustFramework,
-        evidenceDocumentType,
-        evidenceDocumentDetail,
-        evidenceMethod,
         new IdentityVerificationExaminationResults(),
-        addedProcesses,
+        processResults,
         IdentityVerificationApplicationStatus.APPLYING,
         requestedAt);
   }
@@ -213,12 +199,30 @@ public class IdentityVerificationApplication {
         IdentityVerificationExaminationResult.create(request, processConfig);
     IdentityVerificationExaminationResults addExaminations =
         examinations.add(identityVerificationExaminationResult);
-    IdentityVerificationApplicationProcess applicationProcess =
-        new IdentityVerificationApplicationProcess(process, SystemDateTime.now());
-    IdentityVerificationApplicationProcesses addedProcesses = processes.add(applicationProcess);
+
+    // TODO to be more correct
+    Map<String, IdentityVerificationApplicationProcessResult> resultMap = processes.toMap();
+    if (processes.contains(process.name())) {
+
+      IdentityVerificationApplicationProcessResult foundResult = processes.get(process.name());
+      IdentityVerificationApplicationProcessResult updatedResult = foundResult.updateSuccess();
+      resultMap.remove(process.name());
+      resultMap.put(process.name(), updatedResult);
+
+    } else {
+
+      int successCount = 1;
+      int failureCount = 0;
+      IdentityVerificationApplicationProcessResult result =
+          new IdentityVerificationApplicationProcessResult(1, successCount, failureCount);
+      resultMap.put(process.name(), result);
+    }
+    IdentityVerificationApplicationProcessResults processResults =
+        new IdentityVerificationApplicationProcessResults(resultMap);
 
     IdentityVerificationApplicationStatus status =
-        IdentityVerificationApplicationStatus.isRejected(request, processConfig)
+        IdentityVerificationApplicationEvaluator.isSatisfied(
+                processConfig.rejectedConditionConfiguration(), request, processResults)
             ? IdentityVerificationApplicationStatus.REJECTED
             : IdentityVerificationApplicationStatus.EXAMINATION_PROCESSING;
 
@@ -232,12 +236,8 @@ public class IdentityVerificationApplication {
         externalIdentityVerificationService,
         externalApplicationId,
         externalIdentityVerificationApplicationDetails,
-        trustFramework,
-        evidenceDocumentType,
-        evidenceDocumentDetail,
-        evidenceMethod,
         addExaminations,
-        addedProcesses,
+        processResults,
         status,
         requestedAt);
   }
@@ -254,11 +254,33 @@ public class IdentityVerificationApplication {
         IdentityVerificationExaminationResult.create(request, processConfig);
     IdentityVerificationExaminationResults addExaminations =
         examinations.add(identityVerificationExaminationResult);
-    IdentityVerificationApplicationProcess applicationProcess =
-        new IdentityVerificationApplicationProcess(process, SystemDateTime.now());
-    IdentityVerificationApplicationProcesses addedProcesses = processes.add(applicationProcess);
 
-    IdentityVerificationApplicationStatus status = IdentityVerificationApplicationStatus.APPROVED;
+    // TODO to be more correct
+    Map<String, IdentityVerificationApplicationProcessResult> resultMap = processes.toMap();
+    if (processes.contains(process.name())) {
+
+      IdentityVerificationApplicationProcessResult foundResult = processes.get(process.name());
+      IdentityVerificationApplicationProcessResult updatedResult = foundResult.updateSuccess();
+      resultMap.remove(process.name());
+      resultMap.put(process.name(), updatedResult);
+
+    } else {
+
+      int successCount = 1;
+      int failureCount = 0;
+      IdentityVerificationApplicationProcessResult result =
+          new IdentityVerificationApplicationProcessResult(1, successCount, failureCount);
+      resultMap.put(process.name(), result);
+    }
+
+    IdentityVerificationApplicationProcessResults processResults =
+        new IdentityVerificationApplicationProcessResults(resultMap);
+
+    IdentityVerificationApplicationStatus status =
+        IdentityVerificationApplicationEvaluator.isSatisfied(
+                processConfig.completionConditionConfiguration(), request, processResults)
+            ? IdentityVerificationApplicationStatus.APPROVED
+            : this.status;
 
     return new IdentityVerificationApplication(
         identifier,
@@ -270,12 +292,8 @@ public class IdentityVerificationApplication {
         externalIdentityVerificationService,
         externalApplicationId,
         externalIdentityVerificationApplicationDetails,
-        trustFramework,
-        evidenceDocumentType,
-        evidenceDocumentDetail,
-        evidenceMethod,
         addExaminations,
-        addedProcesses,
+        processResults,
         status,
         requestedAt);
   }
@@ -316,10 +334,6 @@ public class IdentityVerificationApplication {
     return externalIdentityVerificationApplicationDetails;
   }
 
-  public TrustFramework trustFramework() {
-    return trustFramework;
-  }
-
   public IdentityVerificationExaminationResults examinationResults() {
     return examinations;
   }
@@ -328,16 +342,12 @@ public class IdentityVerificationApplication {
     return examinations.toMapList();
   }
 
-  public IdentityVerificationApplicationProcesses processes() {
+  public IdentityVerificationApplicationProcessResults processes() {
     return processes;
   }
 
-  public List<IdentityVerificationApplicationProcess> processesAsList() {
-    return processes.toList();
-  }
-
-  public List<Map<String, Object>> processesAsMapList() {
-    return processes.toMapList();
+  public Map<String, Object> processesAsMapObject() {
+    return processes.toMapAsObject();
   }
 
   public IdentityVerificationApplicationStatus status() {
@@ -352,34 +362,6 @@ public class IdentityVerificationApplication {
     return requestedAt;
   }
 
-  public boolean hasTrustFramework() {
-    return trustFramework != null && trustFramework.exists();
-  }
-
-  public EvidenceDocumentType evidenceDocumentType() {
-    return evidenceDocumentType;
-  }
-
-  public boolean hasEvidenceDocumentType() {
-    return evidenceDocumentType != null && evidenceDocumentType.exists();
-  }
-
-  public EvidenceDocumentDetail evidenceDocumentDetail() {
-    return evidenceDocumentDetail;
-  }
-
-  public boolean hasEvidenceDocumentDetail() {
-    return evidenceDocumentDetail != null && evidenceDocumentDetail.exists();
-  }
-
-  public EvidenceMethod evidenceMethod() {
-    return evidenceMethod;
-  }
-
-  public boolean hasEvidenceMethod() {
-    return evidenceMethod != null && evidenceMethod.exists();
-  }
-
   public boolean hasExternalApplicationDetails() {
     return externalIdentityVerificationApplicationDetails != null
         && externalIdentityVerificationApplicationDetails.exists();
@@ -387,6 +369,10 @@ public class IdentityVerificationApplication {
 
   public boolean hasExaminationResults() {
     return examinations != null && examinations.exists();
+  }
+
+  public boolean isApproved() {
+    return status.isApproved();
   }
 
   public Map<String, Object> toMap() {
@@ -400,13 +386,7 @@ public class IdentityVerificationApplication {
     map.put("external_workflow_delegation", externalIdentityVerificationService.name());
     map.put("external_application_id", externalApplicationId.value());
     map.put("external_application_details", externalIdentityVerificationApplicationDetails.toMap());
-    map.put("trust_framework", trustFramework.name());
-    if (hasTrustFramework()) map.put("trustFramework", trustFramework.name());
-    if (hasEvidenceDocumentType())
-      map.put("evidence_document_details", evidenceDocumentDetail.toMap());
-    if (hasEvidenceDocumentDetail()) map.put("evidence_method", evidenceMethod.name());
-    if (hasEvidenceMethod()) map.put("examination_results", examinationResultsAsMapList());
-    map.put("processes", processesAsMapList());
+    map.put("processes", processesAsMapObject());
     map.put("status", status.value());
     map.put("requested_at", requestedAt.toString());
     return map;

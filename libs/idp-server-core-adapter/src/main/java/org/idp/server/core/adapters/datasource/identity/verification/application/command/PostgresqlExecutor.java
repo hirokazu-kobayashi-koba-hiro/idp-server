@@ -44,10 +44,6 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
                     external_service,
                     external_application_id,
                     external_application_details,
-                    trust_framework,
-                    evidence_document_type,
-                    evidence_document_details,
-                    evidence_method,
                     processes,
                     status,
                     requested_at)
@@ -61,10 +57,6 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
                     ?,
                     ?,
                     ?::jsonb,
-                    ?,
-                    ?,
-                    ?::jsonb,
-                    ?,
                     ?::jsonb,
                     ?,
                     ?
@@ -87,31 +79,7 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
       params.add(null);
     }
 
-    if (application.hasTrustFramework()) {
-      params.add(application.trustFramework().name());
-    } else {
-      params.add(null);
-    }
-
-    if (application.hasEvidenceDocumentType()) {
-      params.add(application.evidenceDocumentType().name());
-    } else {
-      params.add(null);
-    }
-
-    if (application.hasEvidenceDocumentDetail()) {
-      params.add(application.evidenceDocumentDetail().toJson());
-    } else {
-      params.add(null);
-    }
-
-    if (application.hasEvidenceMethod()) {
-      params.add(application.evidenceMethod().name());
-    } else {
-      params.add(null);
-    }
-
-    params.add(jsonConverter.write(application.processesAsList()));
+    params.add(jsonConverter.write(application.processesAsMapObject()));
     params.add(application.status().value());
     params.add(application.requestedAt());
 
@@ -130,26 +98,6 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
     setClauses.add("application_details = ?::jsonb");
     params.add(jsonConverter.write(application.applicationDetails().toMap()));
 
-    if (application.hasTrustFramework()) {
-      setClauses.add("trust_framework = ?");
-      params.add(application.trustFramework().name());
-    }
-
-    if (application.hasEvidenceDocumentType()) {
-      setClauses.add("evidence_document_type = ?");
-      params.add(application.evidenceDocumentType().name());
-    }
-
-    if (application.hasEvidenceDocumentDetail()) {
-      setClauses.add("evidence_document_details = ?::jsonb");
-      params.add(application.evidenceDocumentDetail().toJson());
-    }
-
-    if (application.hasEvidenceMethod()) {
-      setClauses.add("evidence_method = ?");
-      params.add(application.evidenceMethod().name());
-    }
-
     setClauses.add("status = ?");
     params.add(application.status().value());
 
@@ -164,7 +112,7 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
     }
 
     setClauses.add("processes = ?::jsonb");
-    params.add(jsonConverter.write(application.processesAsList()));
+    params.add(jsonConverter.write(application.processesAsMapObject()));
 
     setClauses.add("updated_at = now()");
     sqlBuilder.append(String.join(", ", setClauses));

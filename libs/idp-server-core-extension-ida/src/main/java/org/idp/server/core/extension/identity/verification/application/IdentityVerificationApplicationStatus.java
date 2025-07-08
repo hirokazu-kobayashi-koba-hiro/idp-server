@@ -16,11 +16,6 @@
 
 package org.idp.server.core.extension.identity.verification.application;
 
-import java.util.Map;
-import java.util.Objects;
-import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
-import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
-
 public enum IdentityVerificationApplicationStatus {
   REQUESTED("requested"),
   APPLYING("applying"),
@@ -48,35 +43,15 @@ public enum IdentityVerificationApplicationStatus {
     return UNKNOWN;
   }
 
-  // TODO to be more flexible
-  public static boolean isRejected(
-      IdentityVerificationApplicationRequest request,
-      IdentityVerificationProcessConfiguration processConfig) {
-
-    Map<String, Object> rejectedConditionSchema = processConfig.rejectedConditionSchema();
-    String type = (String) rejectedConditionSchema.getOrDefault("type", "");
-    if (Objects.equals(type, "string")) {
-      String field = (String) rejectedConditionSchema.getOrDefault("field", "");
-      String expectedValue = (String) rejectedConditionSchema.getOrDefault("expected_value", "");
-
-      return request.containsKey(field) && request.getValueAsString(field).equals(expectedValue);
-    }
-
-    if (Objects.equals(type, "boolean")) {
-      String field = (String) rejectedConditionSchema.getOrDefault("field", "");
-      Boolean expectedValue =
-          (Boolean) rejectedConditionSchema.getOrDefault("expected_value", false);
-      return request.containsKey(field) && request.getValueAsBoolean(field) == expectedValue;
-    }
-
-    return false;
-  }
-
   public String value() {
     return value;
   }
 
   public boolean isRunning() {
     return this == REQUESTED || this == APPLYING || this == EXAMINATION_PROCESSING;
+  }
+
+  public boolean isApproved() {
+    return this == APPROVED;
   }
 }
