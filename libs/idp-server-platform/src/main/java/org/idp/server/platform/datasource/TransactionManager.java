@@ -19,6 +19,7 @@ package org.idp.server.platform.datasource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class TransactionManager {
   private static final LoggerWrapper log = LoggerWrapper.getLogger(TransactionManager.class);
@@ -29,24 +30,26 @@ public class TransactionManager {
     dbConnectionProvider = provider;
   }
 
-  public static void createConnection(DatabaseType databaseType, String tenantIdentifier) {
+  public static void createConnection(
+      DatabaseType databaseType, TenantIdentifier tenantIdentifier) {
     if (connectionHolder.get() != null) {
       throw new SqlRuntimeException("Transaction already started");
     }
     OperationContext.set(OperationType.READ);
-    Connection conn = dbConnectionProvider.getConnection(databaseType);
+    Connection conn = dbConnectionProvider.getConnection(databaseType, tenantIdentifier);
     if (databaseType == DatabaseType.POSTGRESQL) {
       setTenantId(conn, tenantIdentifier);
     }
     connectionHolder.set(conn);
   }
 
-  public static void beginTransaction(DatabaseType databaseType, String tenantIdentifier) {
+  public static void beginTransaction(
+      DatabaseType databaseType, TenantIdentifier tenantIdentifier) {
     if (connectionHolder.get() != null) {
       throw new SqlRuntimeException("Transaction already started");
     }
     OperationContext.set(OperationType.WRITE);
-    Connection conn = dbConnectionProvider.getConnection(databaseType);
+    Connection conn = dbConnectionProvider.getConnection(databaseType, tenantIdentifier);
     if (databaseType == DatabaseType.POSTGRESQL) {
       setTenantId(conn, tenantIdentifier);
     }
@@ -99,11 +102,11 @@ public class TransactionManager {
     }
   }
 
-  private static void setTenantId(Connection conn, String tenantIdentifier) {
-    log.debug("[RLS] SET app.tenant_id = '" + tenantIdentifier + "'");
+  private static void setTenantId(Connection conn, TenantIdentifier tenantIdentifier) {
+    log.debug("[RLS] SET app.tenant_id = '" + tenantIdentifier.value() + "'");
 
     try (var stmt = conn.createStatement()) {
-      stmt.execute("SET app.tenant_id = '" + tenantIdentifier + "'");
+      stmt.execute("SET app.tenant_id = '" + tenantIdentifier.value() + "'");
     } catch (SQLException e) {
       throw new SqlRuntimeException("Failed to set tenant_id", e);
     }

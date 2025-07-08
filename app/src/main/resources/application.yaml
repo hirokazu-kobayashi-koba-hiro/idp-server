@@ -7,41 +7,78 @@ idp:
    apiSecret: ${IDP_SERVER_API_SECRET}
    encryptionKey: ${ENCRYPTION_KEY}
   datasource:
-    postgresql:
-      writer:
-        url: "${DB_WRITE_URL:jdbc:postgresql://localhost:5432/idpserver}"
-        username: "${DB_WRITE_USER_NAME:idpserver}"
-        password: "${DB_WRITE_PASSWORD:idpserver}"
-        hikari:
-          connection-timeout: 2000
-          maximum-pool-size: 50
-          minimum-idle: 20
-      reader:
-        url: "${DB_READ_URL:jdbc:postgresql://localhost:5432/idpserver}"
-        username: "${DB_READ_USER_NAME:idpserver}"
-        password: "${DB_READ_PASSWORD:idpserver}"
-        hikari:
-          connection-timeout: 2000
-          maximum-pool-size: 50
-          minimum-idle: 20
+    admin:
+      postgresql:
+        writer:
+          url: "${DB_WRITE_URL:jdbc:postgresql://localhost:5432/idpserver}"
+          username: "${ADMIN_DB_WRITE_USER_NAME:idpserver}"
+          password: "${ADMIN_DB_WRITE_PASSWORD:idpserver}"
+          hikari:
+            connection-timeout: 2000
+            maximum-pool-size: 50
+            minimum-idle: 20
+        reader:
+          url: "${DB_READ_URL:jdbc:postgresql://localhost:5432/idpserver}"
+          username: "${ADMIN_DB_READ_USER_NAME:idpserver}"
+          password: "${ADMIN_DB_READ_PASSWORD:idpserver}"
+          hikari:
+            connection-timeout: 2000
+            maximum-pool-size: 50
+            minimum-idle: 20
 
-    mysql:
-      writer:
-        url: "${DB_WRITE_URL:jdbc:mysql://localhost:3306/idpserver}"
-        username: "${DB_WRITE_USER_NAME:idpserver}"
-        password: "${DB_WRITE_PASSWORD:idpserver}"
-        hikari:
-          connection-timeout: 3000
-          maximum-pool-size: 5
-          minimum-idle: 2
-      reader:
-        url: "${DB_READ_URL:jdbc:mysql://localhost:3306/idpserver}"
-        username: "${DB_READ_USER_NAME:idpserver}"
-        password: "${DB_READ_PASSWORD:idpserver}"
-        hikari:
-          connection-timeout: 2000
-          maximum-pool-size: 3
-          minimum-idle: 1
+      mysql:
+        writer:
+          url: "${DB_WRITE_URL:jdbc:mysql://localhost:3306/idpserver}"
+          username: "${ADMIN_DB_WRITE_USER_NAME:idpserver}"
+          password: "${ADMIN_DB_WRITE_PASSWORD:idpserver}"
+          hikari:
+            connection-timeout: 3000
+            maximum-pool-size: 5
+            minimum-idle: 2
+        reader:
+          url: "${DB_READ_URL:jdbc:mysql://localhost:3306/idpserver}"
+          username: "${ADMIN_DB_READ_USER_NAME:idpserver}"
+          password: "${ADMIN_DB_READ_PASSWORD:idpserver}"
+          hikari:
+            connection-timeout: 2000
+            maximum-pool-size: 3
+            minimum-idle: 1
+    app:
+      postgresql:
+        writer:
+          url: "${DB_WRITE_URL:jdbc:postgresql://localhost:5432/idpserver}"
+          username: "${DB_WRITE_USER_NAME:idp_app_user}"
+          password: "${DB_WRITE_PASSWORD:idp_app_user}"
+          hikari:
+            connection-timeout: 2000
+            maximum-pool-size: 50
+            minimum-idle: 20
+        reader:
+          url: "${DB_READ_URL:jdbc:postgresql://localhost:5432/idpserver}"
+          username: "${DB_READ_USER_NAME:idp_app_user}"
+          password: "${DB_READ_PASSWORD:idp_app_user}"
+          hikari:
+            connection-timeout: 2000
+            maximum-pool-size: 50
+            minimum-idle: 20
+
+      mysql:
+        writer:
+          url: "${DB_WRITE_URL:jdbc:mysql://localhost:3306/idpserver}"
+          username: "${DB_WRITE_USER_NAME:idpserver}"
+          password: "${DB_WRITE_PASSWORD:idpserver}"
+          hikari:
+            connection-timeout: 3000
+            maximum-pool-size: 5
+            minimum-idle: 2
+        reader:
+          url: "${DB_READ_URL:jdbc:mysql://localhost:3306/idpserver}"
+          username: "${DB_READ_USER_NAME:idpserver}"
+          password: "${DB_READ_PASSWORD:idpserver}"
+          hikari:
+            connection-timeout: 2000
+            maximum-pool-size: 3
+            minimum-idle: 1
   cache:
     enabled: ${CACHE_ENABLE:true}
     timeToLiveSecond: ${CACHE_TIME_TO_LIVE_SECOND:300}

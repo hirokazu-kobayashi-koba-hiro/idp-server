@@ -22,7 +22,8 @@ import org.idp.server.adapters.springboot.application.delegation.PasswordEncoder
 import org.idp.server.adapters.springboot.application.delegation.PasswordVerification;
 import org.idp.server.adapters.springboot.application.event.SecurityEventPublisherService;
 import org.idp.server.adapters.springboot.application.event.UserLifecycleEventPublisherService;
-import org.idp.server.adapters.springboot.application.property.DatabaseConfigProperties;
+import org.idp.server.adapters.springboot.application.property.AdminDatabaseConfigProperties;
+import org.idp.server.adapters.springboot.application.property.AppDatabaseConfigProperties;
 import org.idp.server.adapters.springboot.application.session.OAuthSessionService;
 import org.idp.server.control_plane.base.AdminDashboardUrl;
 import org.idp.server.core.adapters.datasource.cache.JedisCacheStore;
@@ -45,7 +46,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 @EnableAsync
 @EnableScheduling
 @Configuration
-@EnableConfigurationProperties(DatabaseConfigProperties.class)
+@EnableConfigurationProperties(AppDatabaseConfigProperties.class)
 public class IdPServerConfiguration {
 
   @Value("${idp.configurations.adminTenantId}")
@@ -78,7 +79,8 @@ public class IdPServerConfiguration {
   @Value("${idp.cache.redis.minIdle}")
   int minIdle;
 
-  @Autowired DatabaseConfigProperties databaseConfigProperties;
+  @Autowired AdminDatabaseConfigProperties adminDatabaseConfigProperties;
+  @Autowired AppDatabaseConfigProperties appDatabaseConfigProperties;
 
   @Bean
   public IdpServerApplication idpServerApplication(
@@ -86,22 +88,7 @@ public class IdPServerConfiguration {
       SecurityEventPublisherService eventPublisherService,
       UserLifecycleEventPublisherService userLifecycleEventPublisherService) {
 
-    Map<DatabaseType, DbConfig> writerConfigs =
-        Map.of(
-            DatabaseType.POSTGRESQL,
-            databaseConfigProperties.getPostgresql().get("writer").toDbConfig(),
-            DatabaseType.MYSQL,
-            databaseConfigProperties.getMysql().get("writer").toDbConfig());
-
-    Map<DatabaseType, DbConfig> readerConfigs =
-        Map.of(
-            DatabaseType.POSTGRESQL,
-            databaseConfigProperties.getPostgresql().get("reader").toDbConfig(),
-            DatabaseType.MYSQL,
-            databaseConfigProperties.getMysql().get("reader").toDbConfig());
-
-    DatabaseConfig databaseConfig = new DatabaseConfig(writerConfigs, readerConfigs);
-    HikariConnectionProvider dbConnectionProvider = new HikariConnectionProvider(databaseConfig);
+    HikariConnectionProvider dbConnectionProvider = createHikariConnectionProvider();
 
     CacheStore cacheStore = createCacheStore();
 
@@ -121,6 +108,41 @@ public class IdPServerConfiguration {
         passwordVerification,
         eventPublisherService,
         userLifecycleEventPublisherService);
+  }
+
+  private HikariConnectionProvider createHikariConnectionProvider() {
+    Map<DatabaseType, DbConfig> adminWriterConfigs =
+        Map.of(
+            DatabaseType.POSTGRESQL,
+            adminDatabaseConfigProperties.getPostgresql().get("writer").toDbConfig(),
+            DatabaseType.MYSQL,
+            adminDatabaseConfigProperties.getMysql().get("writer").toDbConfig());
+
+    Map<DatabaseType, DbConfig> adminReaderConfigs =
+        Map.of(
+            DatabaseType.POSTGRESQL,
+            adminDatabaseConfigProperties.getPostgresql().get("reader").toDbConfig(),
+            DatabaseType.MYSQL,
+            adminDatabaseConfigProperties.getMysql().get("reader").toDbConfig());
+
+    DatabaseConfig adminDatabaseConfig = new DatabaseConfig(adminWriterConfigs, adminReaderConfigs);
+
+    Map<DatabaseType, DbConfig> appWriterConfigs =
+        Map.of(
+            DatabaseType.POSTGRESQL,
+            appDatabaseConfigProperties.getPostgresql().get("writer").toDbConfig(),
+            DatabaseType.MYSQL,
+            appDatabaseConfigProperties.getMysql().get("writer").toDbConfig());
+
+    Map<DatabaseType, DbConfig> appReaderConfigs =
+        Map.of(
+            DatabaseType.POSTGRESQL,
+            appDatabaseConfigProperties.getPostgresql().get("reader").toDbConfig(),
+            DatabaseType.MYSQL,
+            appDatabaseConfigProperties.getMysql().get("reader").toDbConfig());
+
+    DatabaseConfig appDatabaseConfig = new DatabaseConfig(appWriterConfigs, appReaderConfigs);
+    return new HikariConnectionProvider(adminDatabaseConfig, appDatabaseConfig);
   }
 
   private CacheStore createCacheStore() {
