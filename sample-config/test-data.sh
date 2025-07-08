@@ -128,6 +128,7 @@ identity_verification_config_files=(
   investment-account-opening.json
   continuous-customer-due-diligence.json
   trust-service.json
+  authentication-assurance.json
 )
 
 for identity_verification_config_file in "${identity_verification_config_files[@]}"; do

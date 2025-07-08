@@ -36,8 +36,7 @@ public class IdentityVerificationDynamicResponseMapper {
 
     Map<String, Object> userResponse = new HashMap<>();
     userResponse.put("id", application.identifier().value());
-    userResponse.put(
-        "external_workflow_application_id", application.externalApplicationId().value());
+    userResponse.put("external_application_id", application.externalApplicationId().value());
     userResponse.put("status", application.status().value());
 
     IdentityVerificationProcessConfiguration processConfig =

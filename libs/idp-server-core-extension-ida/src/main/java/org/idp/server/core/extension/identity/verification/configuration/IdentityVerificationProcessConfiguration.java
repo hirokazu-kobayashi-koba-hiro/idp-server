@@ -44,7 +44,10 @@ public class IdentityVerificationProcessConfiguration
   Map<String, Object> requestVerificationSchema = new HashMap<>();
   Map<String, Object> requestAdditionalParameterSchema = new HashMap<>();
   Map<String, Object> responseValidationSchema = new HashMap<>();
-  Map<String, Object> rejectedConditionSchema = new HashMap<>();
+  IdentityVerificationConditionConfiguration rejectedConditionConfiguration =
+      new IdentityVerificationConditionConfiguration();
+  IdentityVerificationConditionConfiguration completionConditionConfiguration =
+      new IdentityVerificationConditionConfiguration();
 
   public IdentityVerificationProcessConfiguration() {}
 
@@ -144,15 +147,35 @@ public class IdentityVerificationProcessConfiguration
     return responseValidationSchema;
   }
 
-  public Map<String, Object> rejectedConditionSchema() {
-    return rejectedConditionSchema;
-  }
-
   public JsonSchemaDefinition requestValidationSchemaAsDefinition() {
+    if (requestValidationSchema == null) {
+      return new JsonSchemaDefinition(JsonNodeWrapper.empty());
+    }
     return new JsonSchemaDefinition(JsonNodeWrapper.fromMap(requestValidationSchema));
   }
 
   public JsonSchemaDefinition responseValidationSchemaAsDefinition() {
+    if (responseValidationSchema == null) {
+      return new JsonSchemaDefinition(JsonNodeWrapper.empty());
+    }
     return new JsonSchemaDefinition(JsonNodeWrapper.fromMap(responseValidationSchema));
+  }
+
+  public boolean hasCompletionCondition() {
+    return completionConditionConfiguration != null && !completionConditionConfiguration.exists();
+  }
+
+  public IdentityVerificationConditionConfiguration rejectedConditionConfiguration() {
+    if (rejectedConditionConfiguration == null) {
+      return new IdentityVerificationConditionConfiguration();
+    }
+    return rejectedConditionConfiguration;
+  }
+
+  public IdentityVerificationConditionConfiguration completionConditionConfiguration() {
+    if (completionConditionConfiguration == null) {
+      return new IdentityVerificationConditionConfiguration();
+    }
+    return completionConditionConfiguration;
   }
 }

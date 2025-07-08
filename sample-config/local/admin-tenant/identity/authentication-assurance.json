@@ -1,44 +1,8 @@
 {
-  "id": "666bae10-bc0d-41ce-92b4-53359b2f8439",
-  "type": "investment-account-opening",
+  "id": "7e5c5afe-ae23-45ad-8668-6be49b98533d",
+  "type": "authentication-assurance",
   "external_service": "mocky",
   "external_application_id_param": "application_id",
-  "oauth_authorization": {
-    "type": "password",
-    "token_endpoint": "http://mockoon:4000/token",
-    "client_id": "your-client-id",
-    "username": "username",
-    "password": "password",
-    "scope": "application"
-  },
-  "hmac_authentication": {},
-  "verified_claims_configuration": {
-   "mapping_rules": [
-     { "from": "$.verification.trust_framework", "to": "verification.trust_framework" },
-     { "from": "$.verification.evidence[0].type", "to": "verification.evidence.0.type" },
-     { "from": "$.verification.evidence[0].check_details[0].check_method", "to": "verification.evidence.0.check_details.0.check_method" },
-     { "from": "$.verification.evidence[0].check_details[0].organization", "to": "verification.evidence.0.check_details.0.organization" },
-     { "from": "$.verification.evidence[0].check_details[0].txn", "to": "verification.evidence.0.check_details.0.txn" },
-     { "from": "$.verification.evidence[0].time", "to": "verification.evidence.0.time" },
-     { "from": "$.verification.evidence[0].record.type", "to": "verification.evidence.0.record.type" },
-     { "from": "$.verification.evidence[0].record.source.name", "to": "verification.evidence.0.record.source.name" },
-     { "from": "$.verification.evidence[1].type", "to": "verification.evidence.1.type" },
-     { "from": "$.verification.evidence[1].check_details[0].check_method", "to": "verification.evidence.1.check_details.0.check_method" },
-     { "from": "$.verification.evidence[1].check_details[0].organization", "to": "verification.evidence.1.check_details.0.organization" },
-     { "from": "$.verification.evidence[1].check_details[0].txn", "to": "verification.evidence.1.check_details.1.txn" },
-     { "from": "$.verification.evidence[1].time", "to": "verification.evidence.1.time" },
-     { "from": "$.verification.evidence[1].record.type", "to": "verification.evidence.1.record.type" },
-     { "from": "$.verification.evidence[1].record.source.name", "to": "verification.evidence.1.record.source.name" },
-     { "from": "$.claims.given_name", "to": "claims.given_name" },
-     { "from": "$.claims.family_name", "to": "claims.family_name" },
-     { "from": "$.claims.birthdate", "to": "claims.birthdate" },
-     { "from": "$.claims.place_of_birth.country", "to": "claims.place_of_birth.country" },
-     { "from": "$.claims.address.locality", "to": "claims.address.locality" },
-     { "from": "$.claims.address.postal_code", "to": "claims.address.postal_code" },
-     { "from": "$.claims.address.country", "to": "claims.address.country" },
-     { "from": "$.claims.address.street_address", "to": "claims.address.street_address" }
-   ]
-  },
   "processes": {
     "apply": {
       "url": "http://mockoon:4000/apply",
@@ -152,7 +116,10 @@
         "$schema": "original",
         "user": {
           "mapping_rules": [
-            { "from": "", "to": "" }
+            {
+              "from": "",
+              "to": ""
+            }
           ]
         },
         "http_request": {
@@ -211,8 +178,8 @@
         "additionalProperties": false
       }
     },
-    "request-ekyc": {
-      "url": "http://mockoon:4000/request-ekyc",
+    "request-authentication": {
+      "url": "http://mockoon:4000/request-authentication",
       "method": "POST",
       "headers": {
         "Content-Type": "application/json",
@@ -247,13 +214,13 @@
       },
       "response_validation_schema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "request eKYC response",
+        "title": "tx response",
         "type": "object",
         "required": [
-          "ekyc_url"
+          "tx_id"
         ],
         "properties": {
-          "ekyc_url": {
+          "tx_id": {
             "type": "string",
             "respond": true,
             "store": true
@@ -262,8 +229,8 @@
         "additionalProperties": false
       }
     },
-    "complete-ekyc": {
-      "url": "http://mockoon:4000/complete-ekyc",
+    "authentication-status": {
+      "url": "http://mockoon:4000/authentication-status",
       "method": "POST",
       "headers": {
         "Content-Type": "application/json",
@@ -288,123 +255,53 @@
         "additionalProperties": false
       }
     },
-    "crm-registration": {
-      "url": "http://mockoon:4000/crm-registration",
-      "method": "POST",
-      "auth_type": "hmac_sha256",
-      "hmac_authentication": {
-        "api_key": "abcdef123456",
-        "secret": "super-secret-key",
-        "signature_format": "HmacSHA256={signature}",
-        "signing_fields": [
-          "method",
-          "path",
-          "timestamp",
-          "body"
-        ]
-      },
-      "headers": {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer dummy-token"
-      },
-      "dynamic_body_keys": [],
-      "static_body": {},
-      "request_validation_schema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "complete eKYC",
-        "type": "object",
-        "required": [],
-        "properties": {},
-        "additionalProperties": false
-      },
-      "response_validation_schema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "complete eKYC response",
-        "type": "object",
-        "required": [],
-        "properties": {},
-        "additionalProperties": false
-      }
-    },
-    "callback-examination": {
-      "type": "callback",
-      "request_validation_schema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "start-examination",
-        "type": "object",
-        "required": [
-          "application_id"
-        ],
-        "properties": {
-          "application_id": {
-            "type": "string",
-            "store": true
-          },
-          "step": {
-            "type": "string",
-            "store": true
-          },
-          "comment": {
-            "type": "string",
-            "store": true
-          },
-          "rejected": {
-            "type": "boolean",
-            "store": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "rejected_condition_schema": {
-        "$schema": "original",
-        "field": "rejected",
-        "type": "boolean",
-        "expected_value": true
-      }
-    },
-    "callback-result": {
-      "request_validation_schema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "callback result",
-        "type": "object",
-        "required": [
-          "application_id",
-          "verification",
-          "claims"
-        ],
-        "properties": {
-          "application_id": {
-            "type": "string"
-          },
-          "verification": {
-            "type": "object"
-          },
-          "claims": {
-            "type": "object"
-          }
-        },
-        "additionalProperties": false
-      },
-      "request_verification_schema": {
-        "$schema": "original",
-        "duplicate_application": false,
-        "unmatched_user_claims_email": {
-          "property": "email_address"
-        },
-        "unmatched_user_claims_phone": {
-          "property": "mobile_phone_number"
-        }
-      },
+    "evaluate-result": {
+      "description": "",
       "completion_condition_configuration": {
+        "request_condition": {
+          "all_of": [
+            {
+              "path": "$.approved",
+              "type": "boolean",
+              "operation": "eq",
+              "value": true
+            },
+            {
+              "path": "$.rejected",
+              "type": "boolean",
+              "operation": "eq",
+              "value": false
+            }
+          ]
+        },
         "process_condition": {
           "all_of": [
             {
-              "type": "apply",
+              "type": "request-authentication",
               "success_count": 1
             },
             {
-              "type": "callback-examination",
+              "type": "authentication-status",
               "success_count": 1
+            }
+          ]
+        }
+      },
+      "rejected_condition_configuration": {
+        "description": "",
+        "request_condition": {
+          "all_of": [
+            {
+              "source": "request_body",
+              "path": "$.approved",
+              "operation": "eq",
+              "value": false
+            },
+            {
+              "source": "request_body",
+              "path": "$.rejected",
+              "operation": "eq",
+              "value": true
             }
           ]
         }

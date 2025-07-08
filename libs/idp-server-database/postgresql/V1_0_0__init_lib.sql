@@ -819,10 +819,6 @@ CREATE TABLE identity_verification_application
     user_id                      UUID                    NOT NULL,
     verification_type            VARCHAR(255)            NOT NULL,
     application_details          JSONB                   NOT NULL,
-    trust_framework              VARCHAR(255),
-    evidence_document_type       VARCHAR(255),
-    evidence_document_details    JSONB,
-    evidence_method              VARCHAR(255),
     external_service             VARCHAR(255)            NOT NULL,
     external_application_id      VARCHAR(255)            NOT NULL,
     external_application_details JSONB,
@@ -849,9 +845,6 @@ CREATE INDEX idx_verification_tenant_client ON identity_verification_application
 CREATE INDEX idx_verification_status ON identity_verification_application (status);
 CREATE INDEX idx_verification_external_service ON identity_verification_application (external_service);
 CREATE INDEX idx_verification_external_application_id ON identity_verification_application (external_application_id);
-CREATE INDEX idx_verification_evidence_document_type ON identity_verification_application (evidence_document_type);
-CREATE INDEX idx_verification_evidence_method ON identity_verification_application (evidence_method);
-CREATE INDEX idx_verification_evidence_document_details ON identity_verification_application USING GIN (evidence_document_details);
 
 CREATE TABLE identity_verification_result
 (

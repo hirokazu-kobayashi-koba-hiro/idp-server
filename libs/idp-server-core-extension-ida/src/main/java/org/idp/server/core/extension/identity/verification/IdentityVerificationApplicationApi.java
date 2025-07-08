@@ -55,6 +55,7 @@ public interface IdentityVerificationApplicationApi {
       TenantIdentifier tenantIdentifier,
       User user,
       OAuthToken oAuthToken,
+      IdentityVerificationApplicationIdentifier identifier,
       IdentityVerificationType identityVerificationType,
       IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes);

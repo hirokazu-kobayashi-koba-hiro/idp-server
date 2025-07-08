@@ -14,24 +14,34 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.identity.verification;
+package org.idp.server.core.extension.identity.verification.application;
 
-public enum ReservedIdentityVerificationProcess {
-  CALLBACK_EXAMINATION("callback-examination"),
-  CALLBACK_RESULT("callback-result"),
-  EVALUATE_RESULT("evaluate-result");
+import java.util.Arrays;
 
-  private final String value;
+public enum Operator {
+  EQ("eq"),
+  NE("ne"),
+  GT("gt"),
+  LT("lt"),
+  GTE("gte"),
+  LTE("lte"),
+  IN("in"),
+  NIN("nin"),
+  EXISTS("exists"),
+  MISSING("missing"),
+  CONTAINS("contains"),
+  REGEX("regex");
 
-  ReservedIdentityVerificationProcess(String value) {
+  final String value;
+
+  Operator(String value) {
     this.value = value;
   }
 
-  public String value() {
-    return value;
-  }
-
-  public IdentityVerificationProcess toProcess() {
-    return new IdentityVerificationProcess(value);
+  public static Operator from(String val) {
+    return Arrays.stream(values())
+        .filter(o -> o.value.equalsIgnoreCase(val))
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException("Unknown operator: " + val));
   }
 }

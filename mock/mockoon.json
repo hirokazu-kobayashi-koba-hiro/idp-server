@@ -348,6 +348,68 @@
       "responseMode": null,
       "streamingMode": null,
       "streamingInterval": 0
+    },
+    {
+      "uuid": "7c7c305e-8366-4132-bd97-13806e1f3571",
+      "type": "http",
+      "documentation": "d9c775e5-f86a-4866-a2c3-ce914f30e9fa",
+      "method": "post",
+      "endpoint": "request-authentication",
+      "responses": [
+        {
+          "uuid": "",
+          "body": "{\n  \"tx_id\": \"{{ uuid }}\" \n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "5f0c6869-8be4-4515-959b-9671f2ccdb4e",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "authentication-status",
+      "responses": [
+        {
+          "uuid": "f0eaf180-d76e-4363-bde7-2373c664cf8f",
+          "body": "{\n  \"status\": \"ok\" \n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
     }
   ],
   "rootChildren": [
@@ -390,6 +452,14 @@
     {
       "type": "route",
       "uuid": "1b9599b7-ebfc-4450-b1c5-26fe78bb14cc"
+    },
+    {
+      "type": "route",
+      "uuid": "7c7c305e-8366-4132-bd97-13806e1f3571"
+    },
+    {
+      "type": "route",
+      "uuid": "5f0c6869-8be4-4515-959b-9671f2ccdb4e"
     }
   ],
   "proxyMode": false,
