@@ -99,23 +99,23 @@ public class JsonSchemaProperty {
   }
 
   public boolean hasMinItems() {
-    return propertySchema.contains("min_items");
+    return propertySchema.contains("minItems");
   }
 
   public int minItems() {
-    return propertySchema.getValueAsInt("min_items");
+    return propertySchema.getValueAsInt("minItems");
   }
 
   public boolean hasMaxItems() {
-    return propertySchema.contains("max_items");
+    return propertySchema.contains("maxItems");
   }
 
   public int maxItems() {
-    return propertySchema.getValueAsInt("max_items");
+    return propertySchema.getValueAsInt("maxItems");
   }
 
   public boolean uniqueItems() {
-    return propertySchema.contains("unique_items");
+    return propertySchema.contains("uniqueItems");
   }
 
   public boolean isStringType() {
