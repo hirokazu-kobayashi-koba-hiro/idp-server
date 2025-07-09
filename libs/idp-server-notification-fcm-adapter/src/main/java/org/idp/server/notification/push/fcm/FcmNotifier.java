@@ -82,23 +82,26 @@ public class FcmNotifier implements AuthenticationDeviceNotifier {
     }
   }
 
-  FirebaseMessaging getOrInitFirebaseMessaging(Tenant tenant, FcmConfiguration fcmConfiguration)
-      throws IOException {
+  FirebaseMessaging getOrInitFirebaseMessaging(Tenant tenant, FcmConfiguration fcmConfiguration) {
 
-    if (cache.containsKey(tenant.identifierValue())) {
-      return cache.get(tenant.identifierValue());
-    }
+    return cache.computeIfAbsent(
+        tenant.identifierValue(),
+        (key) -> {
+          try {
+            String credential = fcmConfiguration.credential();
+            FirebaseOptions options =
+                FirebaseOptions.builder()
+                    .setCredentials(
+                        GoogleCredentials.fromStream(
+                            new ByteArrayInputStream(credential.getBytes())))
+                    .build();
 
-    String credential = fcmConfiguration.credential();
-    FirebaseOptions options =
-        FirebaseOptions.builder()
-            .setCredentials(
-                GoogleCredentials.fromStream(new ByteArrayInputStream(credential.getBytes())))
-            .build();
+            FirebaseApp firebaseApp = FirebaseApp.initializeApp(options, tenant.identifierValue());
+            return FirebaseMessaging.getInstance(firebaseApp);
 
-    FirebaseApp firebaseApp = FirebaseApp.initializeApp(options, tenant.identifierValue());
-    FirebaseMessaging firebaseMessaging = FirebaseMessaging.getInstance(firebaseApp);
-    cache.put(tenant.identifierValue(), firebaseMessaging);
-    return firebaseMessaging;
+          } catch (IOException e) {
+            throw new FcmRuntimeException(e);
+          }
+        });
   }
 }
