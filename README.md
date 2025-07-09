@@ -124,6 +124,25 @@ npm test
 * Supports horizontal scalability testing
 * ➡️ See [performance-test/README.md](./performance-test/README.md) for full usage
 
+## documentation
+
+### English
+
+```shell
+cd documentation
+npm install
+npx run start
+```
+
+### Japanese
+
+```shell
+cd documentation
+npm install
+npx docusaurus write-translations --locale ja
+npm run start -- --locale ja
+```
+
 
 ## 🗂 System Architecture (Container Level)
 

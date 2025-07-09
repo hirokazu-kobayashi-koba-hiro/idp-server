@@ -62,6 +62,7 @@ const sidebars = {
         'developer-guide/caching',
       ],
     },
+    'test-strategy',
     'deployment',
     'contributing',
     'faq',
