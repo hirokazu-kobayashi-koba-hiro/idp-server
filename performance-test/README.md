@@ -60,7 +60,7 @@ psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user (
   -b http://localhost:8080 \
   -c clientSecretPost \
   -s clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890 \
-  -n 1 \
+  -n 5 \
   -d false
 ```
 
@@ -86,25 +86,6 @@ export ACCESS_TOKEN=eyJhbGciOiJSUzI1NiIsInR5cCI6ImF0K2p3dCIsImtpZCI6ImlkX3Rva2Vu
 ```
 
 ### run
-
-#### load test
-
-```shell
-k6 run ./performance-test/load/scenario-1-ciba-login.js
-```
-
-```shell
-k6 run ./performance-test/load/scenario-2-multi-ciba-login.js
-```
-
-```shell
-k6 run ./performance-test/load/scenario-3-peak-login.js
-```
-
-```shell
-k6 run ./performance-test/load/scenario-4-federation.js
-```
-
 
 #### stress test
 
@@ -139,6 +120,25 @@ k6 run ./performance-test/stress/scenario-7-token-introspection.js
 ```shell
 k6 run ./performance-test/stress/scenario-8-authentication-device.js
 ```
+
+#### load test
+
+```shell
+k6 run ./performance-test/load/scenario-1-ciba-login.js
+```
+
+```shell
+k6 run ./performance-test/load/scenario-2-multi-ciba-login.js
+```
+
+```shell
+k6 run ./performance-test/load/scenario-3-peak-login.js
+```
+
+```shell
+k6 run ./performance-test/load/scenario-4-federation.js
+```
+
 
 ## CPU Memory
 
