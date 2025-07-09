@@ -24,12 +24,28 @@ services:
       IDP_SERVER_API_KEY: $IDP_SERVER_API_KEY
       IDP_SERVER_API_SECRET: $IDP_SERVER_API_SECRET
       ENCRYPTION_KEY: $ENCRYPTION_KEY
-      DB_WRITE_URL: jdbc:postgresql://postgresql:5432/idpserver
-      DB_WRITE_USER_NAME: idpserver
-      DB_WRITE_PASSWORD: idpserver
-      DB_READ_URL: jdbc:postgresql://postgresql:5432/idpserver
-      DB_READ_USER_NAME: idpserver
-      DB_READ_PASSWORD: idpserver
+      DB_WRITER_URL: jdbc:postgresql://postgresql:5432/idpserver
+      ADMIN_DB_WRITER_USER_NAME: idpserver
+      ADMIN_DB_WRITER_PASSWORD: idpserver
+      ADMIN_DB_READER_USER_NAME: idpserver
+      ADMIN_DB_READER_PASSWORD: idpserver
+      ADMIN_DB_WRITER_TIMEOUT: 2000
+      ADMIN_DB_WRITER_MAX_POOL_SIZE: 10
+      ADMIN_DB_WRITER_MIN_IDLE: 5
+      ADMIN_DB_READER_TIMEOUT: 2000
+      ADMIN_DB_READER_MAX_POOL_SIZE: 10
+      ADMIN_DB_READER_MIN_IDLE: 5
+      DB_WRITER_USER_NAME: idp_app_user
+      DB_WRITER_PASSWORD: idp_app_user
+      DB_WRITER_TIMEOUT: 2000
+      DB_WRITER_MAX_POOL_SIZE: 30
+      DB_WRITER_MIN_IDLE: 10
+      DB_READER_URL: jdbc:postgresql://postgresql:5432/idpserver
+      DB_READER_USER_NAME: idp_app_user
+      DB_READER_PASSWORD: idp_app_user
+      DB_READER_TIMEOUT: 2000
+      DB_READER_MAX_POOL_SIZE: 30
+      DB_READER_MIN_IDLE: 10
       REDIS_HOST: redis
       REDIS_PORT: 6379
       CACHE_ENABLE: "true"
@@ -62,12 +78,28 @@ services:
       IDP_SERVER_API_KEY: $IDP_SERVER_API_KEY
       IDP_SERVER_API_SECRET: $IDP_SERVER_API_SECRET
       ENCRYPTION_KEY: $ENCRYPTION_KEY
-      DB_WRITE_URL: jdbc:postgresql://postgresql:5432/idpserver
-      DB_WRITE_USER_NAME: idpserver
-      DB_WRITE_PASSWORD: idpserver
-      DB_READ_URL: jdbc:postgresql://postgresql:5432/idpserver
-      DB_READ_USER_NAME: idpserver
-      DB_READ_PASSWORD: idpserver
+      DB_WRITER_URL: jdbc:postgresql://postgresql:5432/idpserver
+      ADMIN_DB_WRITER_USER_NAME: idpserver
+      ADMIN_DB_WRITER_PASSWORD: idpserver
+      ADMIN_DB_READER_USER_NAME: idpserver
+      ADMIN_DB_READER_PASSWORD: idpserver
+      ADMIN_DB_WRITER_TIMEOUT: 2000
+      ADMIN_DB_WRITER_MAX_POOL_SIZE: 10
+      ADMIN_DB_WRITER_MIN_IDLE: 5
+      ADMIN_DB_READER_TIMEOUT: 2000
+      ADMIN_DB_READER_MAX_POOL_SIZE: 10
+      ADMIN_DB_READER_MIN_IDLE: 5
+      DB_WRITER_USER_NAME: idp_app_user
+      DB_WRITER_PASSWORD: idp_app_user
+      DB_WRITER_TIMEOUT: 2000
+      DB_WRITER_MAX_POOL_SIZE: 30
+      DB_WRITER_MIN_IDLE: 10
+      DB_READER_URL: jdbc:postgresql://postgresql:5432/idpserver
+      DB_READER_USER_NAME: idp_app_user
+      DB_READER_PASSWORD: idp_app_user
+      DB_READER_TIMEOUT: 2000
+      DB_READER_MAX_POOL_SIZE: 30
+      DB_READER_MIN_IDLE: 10
       REDIS_HOST: redis
       REDIS_PORT: 6379
       CACHE_ENABLE: "true"
@@ -98,6 +130,8 @@ services:
     ports:
       - "5432:5432"
     command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements"]
+    volumes:
+      - ./libs/idp-server-database/postgresql/operation:/docker-entrypoint-initdb.d
   postgresql-reader:
     image: postgres:15
     container_name: postgres-reader
@@ -108,6 +142,8 @@ services:
     ports:
       - "54321:5432"
     command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements"]
+    volumes:
+      - ./libs/idp-server-database/postgresql/operation:/docker-entrypoint-initdb.d
 
   mysql:
     image: mysql:8.0
