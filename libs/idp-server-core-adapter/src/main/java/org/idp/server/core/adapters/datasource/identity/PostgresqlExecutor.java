@@ -88,13 +88,17 @@ public class PostgresqlExecutor implements UserSqlExecutor {
         String.format(
             selectSql,
             """
-                                WHERE idp_user.tenant_id = ?::uuid
-                                AND authentication_devices @> ?::jsonb
-                                AND idp_user.provider_id = ?
-                            """);
+                WHERE idp_user.tenant_id = ?::uuid
+                AND EXISTS (
+                    SELECT 1
+                    FROM jsonb_array_elements(idp_user.authentication_devices) AS device
+                    WHERE device->>'id' = ?
+                )
+                AND idp_user.provider_id = ?
+            """);
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierUUID());
-    params.add(String.format("[{\"id\": \"%s\"}]", deviceId));
+    params.add(deviceId);
     params.add(providerId);
 
     return sqlExecutor.selectOne(sqlTemplate, params);
