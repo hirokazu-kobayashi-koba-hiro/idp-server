@@ -7,7 +7,7 @@ info:
     name: idp-server OSS
 
 servers:
-  - url: http://localhost:8080/{tenant-id}
+  - url: https://xxx/{tenant-id}
 
 tags:
   - name: CIBAフロー
@@ -1579,10 +1579,10 @@ components:
           description: "必須。openid を含める必要がある。例：openid profile email"
         login_hint:
           type: string
-          description: "ユーザーを識別するヒント。IDやメールアドレスなど"
+          description: "ユーザーを識別するヒント。IDやメールアドレスなど ※login_hintまたはid_token_hintの指定が必要"
         id_token_hint:
           type: string
-          description: "過去の ID Token を用いたユーザー識別"
+          description: "過去の ID Token を用いたユーザー識別 ※login_hintまたはid_token_hintの指定が必要"
         binding_message:
           type: string
           description: "ユーザー端末に表示される文言"

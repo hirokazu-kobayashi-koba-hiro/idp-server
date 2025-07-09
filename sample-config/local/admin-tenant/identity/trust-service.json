@@ -2,7 +2,6 @@
   "id": "8c91feb0-97d5-41ce-b041-ad2ab2c65158",
   "type": "trust-service",
   "external_service": "mocky",
-  "external_application_id_param": "application_id",
   "verified_claims_configuration": {
    "mapping_rules": [
      { "from": "$.trust_framework", "to": "verification.trust_framework" },
@@ -186,16 +185,6 @@
         }
       },
       "additionalProperties": false
-    },
-    "request_verification_schema": {
-      "$schema": "original",
-      "duplicate_application": false,
-      "unmatched_user_claims_email": {
-        "property": "email_address"
-      },
-      "unmatched_user_claims_phone": {
-        "property": "mobile_phone_number"
-      }
     }
   }
 }

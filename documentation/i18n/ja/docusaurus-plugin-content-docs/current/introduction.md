@@ -10,7 +10,7 @@ OIDCの拡張仕様の追加に対応できるようにプラガブルな設計�
 ## 機能スタック図
 
 ![](function-stack.png)
-<img src="function-stak-notes.png" alt="function-stak-notes" width="20%"/>
+![](function-stak-notes.png)
 
 この図は `idp-server` の全体機能構成を示しています。
 
@@ -36,15 +36,15 @@ OIDCの拡張仕様の追加に対応できるようにプラガブルな設計�
 
 `idp-server`は機能拡張可能なPluginのインターフェースを用意しています。
 
-### 主なインターフェース
+### 主なPlugin
 
-| 分類         | 機能             | インターフェース                              | 備考                          |
-|------------|----------------|---------------------------------------|-----------------------------|
-| 認可         | アクセストークンのプロパティ | AccessTokenCustomClaimsCreator        | 　                           |
-|            | 認可リクエストの検証     | AuthorizationRequestExtensionVerifier | 追加のOAuthの拡張仕様をサポートするために実装する |
-| 認証         | 認証機能           | AuthenticationInteractor              | 追加の認証方式をサポートする場合に実装する       |
-| フェデレーション   | SSO            | OidcSsoExecutor                       | 標準仕様以外の拡張仕様に対応する場合に実装する     |
-| セキュリティイベント | セキュリティイベントフック  | SecurityEventHookExecutor             | 標準仕様以外のフックに対応する場合に実装する      |
+| 分類         | 機能             | Pluginインターフェース                              | 想定されるユースケース                           |
+|------------|----------------|---------------------------------------|---------------------------------------|
+| 認可         | アクセストークンのプロパティ | AccessTokenCustomClaimsCreator        | 独自のプロパティをアクセストークンに付与したい場合に実装する　       |
+|            | 認可リクエストの検証     | AuthorizationRequestExtensionVerifier | OAuthの拡張仕様のサポートや独自のバリデーション追加するために実装する |
+| 認証         | 認証機能           | AuthenticationInteractor              | 追加の認証方式をサポートする場合に実装する                 |
+| フェデレーション   | SSO            | OidcSsoExecutor                       | 標準仕様以外の拡張仕様に対応する場合に実装する               |
+| セキュリティイベント | セキュリティイベントフック  | SecurityEventHookExecutor             | 標準仕様以外のフックに対応する場合に実装する                |
 
 ### 機能拡張の手順
 
@@ -52,9 +52,9 @@ OIDCの拡張仕様の追加に対応できるようにプラガブルな設計�
 
 1. インターフェースを実装
 2. `resources/META-INF/services` 配下にインターフェースのクラスパスのファイルを追加
-   1. 例：org.idp.server.core.oidc.token.plugin.AccessTokenCustomClaimsCreator
+    1. 例：org.idp.server.core.oidc.token.plugin.AccessTokenCustomClaimsCreator
 3. 2のファイルに1で実装したクラスパスを定義
-   1. 例：org.idp.server.core.extension.identity.verified.AccessTokenSelectiveVerifiedClaimsCreator
+    1. 例：org.idp.server.core.extension.identity.verified.AccessTokenSelectiveVerifiedClaimsCreator
 
 #### 外部モジュールによる機能拡張
 
@@ -65,6 +65,5 @@ OIDCの拡張仕様の追加に対応できるようにプラガブルな設計�
     1. 例：org.idp.server.core.extension.identity.verified.AccessTokenSelectiveVerifiedClaimsCreator
 4. idp-serverの実行環境のpluginsディレクトリ配下に実装したjarを配置します。
 5. idp-serverを再起動しモジュールを読み取ります。
-
 
 ---
