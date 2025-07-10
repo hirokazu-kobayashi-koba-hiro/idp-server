@@ -197,7 +197,9 @@ idp-server の申込APIは、テンプレート定義の内容に基づいて動
 に定義されたキーにより組み立てられます。
 
 ベースPath
+```
 POST /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{process}
+```
 
 ### 例
 
