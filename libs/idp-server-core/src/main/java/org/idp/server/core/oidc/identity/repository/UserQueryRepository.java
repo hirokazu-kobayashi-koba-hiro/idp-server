@@ -20,6 +20,7 @@ import java.util.List;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserIdentifier;
 import org.idp.server.core.oidc.identity.UserQueries;
+import org.idp.server.core.oidc.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface UserQueryRepository {
@@ -32,7 +33,7 @@ public interface UserQueryRepository {
 
   User findByName(Tenant tenant, String hint, String providerId);
 
-  User findByDeviceId(Tenant tenant, String hint, String providerId);
+  User findByDeviceId(Tenant tenant, AuthenticationDeviceIdentifier deviceId, String providerId);
 
   User findByEmail(Tenant tenant, String hint, String providerId);
 

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.oidc.identity.UserIdentifier;
 import org.idp.server.core.oidc.identity.UserQueries;
+import org.idp.server.core.oidc.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface UserSqlExecutor {
@@ -31,7 +32,8 @@ public interface UserSqlExecutor {
 
   Map<String, String> selectByName(Tenant tenant, String name, String providerId);
 
-  Map<String, String> selectByDeviceId(Tenant tenant, String deviceId, String providerId);
+  Map<String, String> selectByDeviceId(
+      Tenant tenant, AuthenticationDeviceIdentifier deviceId, String providerId);
 
   Map<String, String> selectByEmail(Tenant tenant, String email, String providerId);
 

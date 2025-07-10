@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserIdentifier;
 import org.idp.server.core.oidc.identity.UserQueries;
+import org.idp.server.core.oidc.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.oidc.identity.exception.UserNotFoundException;
 import org.idp.server.core.oidc.identity.exception.UserTooManyFoundResultException;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
@@ -111,7 +112,8 @@ public class UserQueryDataSource implements UserQueryRepository {
   }
 
   @Override
-  public User findByDeviceId(Tenant tenant, String deviceId, String providerId) {
+  public User findByDeviceId(
+      Tenant tenant, AuthenticationDeviceIdentifier deviceId, String providerId) {
     try {
       UserSqlExecutor executor = executors.get(tenant.databaseType());
       Map<String, String> result = executor.selectByDeviceId(tenant, deviceId, providerId);

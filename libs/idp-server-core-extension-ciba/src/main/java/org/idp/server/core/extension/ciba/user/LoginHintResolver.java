@@ -20,6 +20,7 @@ import java.util.List;
 import org.idp.server.basic.type.extension.Pairs;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserIdentifier;
+import org.idp.server.core.oidc.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -49,7 +50,10 @@ public class LoginHintResolver implements UserHintResolver {
             new PrefixMatcher(
                 "device:",
                 hints ->
-                    userQueryRepository.findByDeviceId(tenant, hints.getLeft(), hints.getRight())),
+                    userQueryRepository.findByDeviceId(
+                        tenant,
+                        new AuthenticationDeviceIdentifier(hints.getLeft()),
+                        hints.getRight())),
             new PrefixMatcher(
                 "phone:",
                 hints ->
