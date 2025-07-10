@@ -123,8 +123,8 @@ CREATE TABLE idp_user
     id                             CHAR(36)                           NOT NULL,
     tenant_id                      CHAR(36)                           NOT NULL,
     provider_id                    VARCHAR(255)                       NOT NULL,
-    provider_user_id               VARCHAR(255)                       NOT NULL,
-    provider_user_original_payload JSON,
+    external_user_id               VARCHAR(255)                       NOT NULL,
+    external_user_original_payload JSON,
     name                           VARCHAR(255),
     given_name                     VARCHAR(255),
     family_name                    VARCHAR(255),
@@ -154,10 +154,10 @@ CREATE TABLE idp_user
     updated_at                     DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
-    CONSTRAINT uk_tenant_provider_user unique (tenant_id, provider_id, provider_user_id)
+    CONSTRAINT uk_tenant_provider_user unique (tenant_id, provider_id, external_user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE INDEX idx_idp_user_tenant_provider ON idp_user (tenant_id, provider_id, provider_user_id);
+CREATE INDEX idx_idp_user_tenant_provider ON idp_user (tenant_id, provider_id, external_user_id);
 CREATE INDEX idx_idp_user_tenant_email ON idp_user (tenant_id, email);
 
 CREATE TABLE idp_user_assigned_organizations
@@ -689,7 +689,7 @@ CREATE TABLE audit_log
     tenant_id              CHAR(36)                NOT NULL,
     client_id              VARCHAR(255)            NOT NULL,
     user_id                CHAR(36)                NOT NULL,
-    external_user_id       VARCHAR(255)            NOT NULL,
+    external_user_id       VARCHAR(255),
     user_payload           JSON                    NOT NULL,
     target_resource        TEXT                    NOT NULL,
     target_resource_action TEXT                    NOT NULL,

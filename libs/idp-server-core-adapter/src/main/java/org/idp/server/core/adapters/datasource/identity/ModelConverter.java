@@ -40,7 +40,7 @@ class ModelConverter {
 
     user.setSub(stringMap.getOrDefault("id", ""));
     user.setProviderId(stringMap.getOrDefault("provider_id", ""));
-    user.setProviderUserId(stringMap.getOrDefault("provider_user_id", ""));
+    user.setExternalUserId(stringMap.getOrDefault("external_user_id", ""));
     user.setName(stringMap.getOrDefault("name", ""));
     user.setGivenName(stringMap.getOrDefault("given_name", ""));
     user.setFamilyName(stringMap.getOrDefault("family_name", ""));

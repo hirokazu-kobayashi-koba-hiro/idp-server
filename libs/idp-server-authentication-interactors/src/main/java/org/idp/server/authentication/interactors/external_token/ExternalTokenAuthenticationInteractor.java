@@ -78,7 +78,7 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
 
     User exsitingUser =
         userQueryRepository.findByProvider(
-            tenant, configuration.providerName(), user.providerUserId());
+            tenant, configuration.providerName(), user.externalUserId());
     if (exsitingUser.exists()) {
       user.setSub(exsitingUser.sub());
     } else {

@@ -534,7 +534,7 @@
   "user": {
     "sub": "3ec055a8-8000-44a2-8677-e70ebff414e2",
     "provider_id": "idp-server",
-    "provider_user_id": "3ec055a8-8000-44a2-8677-e70ebff414e2",
+    "external_user_id": "3ec055a8-8000-44a2-8677-e70ebff414e2",
     "name": "ito.ichiro",
     "given_name": "ichiro",
     "family_name": "ito",

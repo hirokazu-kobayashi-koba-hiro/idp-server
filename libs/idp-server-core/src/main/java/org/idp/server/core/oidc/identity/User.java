@@ -34,8 +34,8 @@ import org.idp.server.platform.uuid.UuidConvertable;
 public class User implements JsonReadable, Serializable, UuidConvertable {
   String sub;
   String providerId = "idp-server";
-  String providerUserId;
-  HashMap<String, Object> providerOriginalPayload = new HashMap<>();
+  String externalUserId;
+  HashMap<String, Object> externalProviderOriginalPayload = new HashMap<>();
   String name;
   String givenName;
   String familyName;
@@ -113,26 +113,27 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     return this;
   }
 
-  public String providerUserId() {
-    return providerUserId;
+  public String externalUserId() {
+    return externalUserId;
   }
 
-  public User setProviderUserId(String providerUserId) {
-    this.providerUserId = providerUserId;
+  public User setExternalUserId(String externalUserId) {
+    this.externalUserId = externalUserId;
     return this;
   }
 
-  public User setProviderOriginalPayload(HashMap<String, Object> providerOriginalPayload) {
-    this.providerOriginalPayload = providerOriginalPayload;
+  public User setExternalProviderOriginalPayload(
+      HashMap<String, Object> externalProviderOriginalPayload) {
+    this.externalProviderOriginalPayload = externalProviderOriginalPayload;
     return this;
   }
 
   public boolean hasProviderOriginalPayload() {
-    return providerOriginalPayload != null && !providerOriginalPayload.isEmpty();
+    return externalProviderOriginalPayload != null && !externalProviderOriginalPayload.isEmpty();
   }
 
   public HashMap<String, Object> providerOriginalPayload() {
-    return providerOriginalPayload;
+    return externalProviderOriginalPayload;
   }
 
   public String name() {
@@ -405,8 +406,8 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     return Objects.nonNull(sub) && !sub.isEmpty();
   }
 
-  public boolean hasProviderUserId() {
-    return providerUserId != null && !providerUserId.isEmpty();
+  public boolean hasExternalUserId() {
+    return externalUserId != null && !externalUserId.isEmpty();
   }
 
   public boolean hasName() {
@@ -676,8 +677,9 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
 
     if (exists()) map.put("sub", sub);
     if (exists()) map.put("provider_id", providerId);
-    if (exists()) map.put("provider_user_id", providerUserId);
-    if (hasProviderOriginalPayload()) map.put("provider_original_payload", providerOriginalPayload);
+    if (exists()) map.put("external_user_id", externalUserId);
+    if (hasProviderOriginalPayload())
+      map.put("provider_original_payload", externalProviderOriginalPayload);
     if (hasName()) map.put("name", name);
     if (hasGivenName()) map.put("given_name", givenName);
     if (hasFamilyName()) map.put("family_name", familyName);

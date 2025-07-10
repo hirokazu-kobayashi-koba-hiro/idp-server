@@ -25,7 +25,7 @@
         "dynamic_body_keys": ["username"],
         "static_body": {},
         "userinfo_mapping_rules": [
-          { "from": "$.header.cache-control", "to": "provider_user_id" },
+          { "from": "$.header.cache-control", "to": "external_user_id" },
           { "from": "$.body.name", "to": "name" },
           { "from": "$.body.given_name", "to": "given_name" },
           { "from": "$.body.family_name", "to": "family_name" },

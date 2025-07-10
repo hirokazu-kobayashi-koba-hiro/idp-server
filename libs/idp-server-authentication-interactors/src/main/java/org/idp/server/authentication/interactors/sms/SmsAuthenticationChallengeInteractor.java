@@ -129,7 +129,7 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
     User user = new User();
     String id = UUID.randomUUID().toString();
     user.setSub(id);
-    user.setProviderUserId(id);
+    user.setExternalUserId(id);
     user.setPhoneNumber(phoneNumber);
     user.setStatus(UserStatus.REGISTERED);
 

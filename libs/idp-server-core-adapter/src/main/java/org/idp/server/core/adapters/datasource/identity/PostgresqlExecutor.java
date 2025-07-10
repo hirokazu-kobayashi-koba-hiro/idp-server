@@ -49,7 +49,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
             selectSql,
             """
                         WHERE idp_user.tenant_id = ?::uuid
-                        AND idp_user.provider_user_id = ?
+                        AND idp_user.external_user_id = ?
                         AND idp_user.provider_id = ?
                     """);
     List<Object> params = new ArrayList<>();
@@ -168,7 +168,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
     }
 
     if (queries.hasExternalUserId()) {
-      where.append(" AND idp_user.provider_user_id = ?");
+      where.append(" AND idp_user.external_user_id = ?");
       params.add(queries.externalUserId());
     }
 
@@ -178,7 +178,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
     }
 
     if (queries.hasProviderUserId()) {
-      where.append(" AND idp_user.provider_user_id = ?");
+      where.append(" AND idp_user.external_user_id = ?");
       params.add(queries.providerUserId());
     }
 
@@ -269,7 +269,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
     }
 
     if (queries.hasExternalUserId()) {
-      where.append(" AND idp_user.provider_user_id = ?");
+      where.append(" AND idp_user.external_user_id = ?");
       params.add(queries.externalUserId());
     }
 
@@ -279,7 +279,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
     }
 
     if (queries.hasProviderUserId()) {
-      where.append(" AND idp_user.provider_user_id = ?");
+      where.append(" AND idp_user.external_user_id = ?");
       params.add(queries.providerUserId());
     }
 
@@ -358,7 +358,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
                 WHERE
                 idp_user.tenant_id = ?::uuid
                 AND idp_user.provider_id = ?
-                AND idp_user.provider_user_id = ?
+                AND idp_user.external_user_id = ?
             """);
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierUUID());
@@ -452,8 +452,8 @@ public class PostgresqlExecutor implements UserSqlExecutor {
               SELECT
                   idp_user.id,
                   idp_user.provider_id,
-                  idp_user.provider_user_id,
-                  idp_user.provider_user_original_payload,
+                  idp_user.external_user_id,
+                  idp_user.external_user_original_payload,
                   idp_user.name,
                   idp_user.given_name,
                   idp_user.family_name,
@@ -499,8 +499,8 @@ public class PostgresqlExecutor implements UserSqlExecutor {
                GROUP BY
                idp_user.id,
                idp_user.provider_id,
-               idp_user.provider_user_id,
-               idp_user.provider_user_original_payload,
+               idp_user.external_user_id,
+               idp_user.external_user_original_payload,
                idp_user.name,
                idp_user.given_name,
                idp_user.family_name,

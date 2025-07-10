@@ -9,7 +9,7 @@
       "type": "string",
       "maxLength": 255
     },
-    "provider_user_id": {
+    "external_user_id": {
       "type": "string",
       "maxLength": 255
     },

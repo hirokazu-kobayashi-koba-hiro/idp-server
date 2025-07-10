@@ -8,7 +8,7 @@
   "properties": {
     "sub": { "type": "string", "format": "uuid" },
     "provider_id": { "type": "string" },
-    "provider_user_id": { "type": "string" },
+    "external_user_id": { "type": "string" },
     "name": { "type": "string" },
     "given_name": { "type": "string" },
     "family_name": { "type": "string" },

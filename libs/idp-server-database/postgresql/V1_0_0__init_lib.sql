@@ -168,8 +168,8 @@ CREATE TABLE idp_user
     id                             UUID                    NOT NULL,
     tenant_id                      UUID                    NOT NULL,
     provider_id                    VARCHAR(255)            NOT NULL,
-    provider_user_id               VARCHAR(255)            NOT NULL,
-    provider_user_original_payload JSONB,
+    external_user_id               VARCHAR(255),
+    external_user_original_payload JSONB,
     name                           VARCHAR(255),
     given_name                     VARCHAR(255),
     family_name                    VARCHAR(255),
@@ -199,7 +199,7 @@ CREATE TABLE idp_user
     updated_at                     TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
-    CONSTRAINT uk_tenant_provider_user unique (tenant_id, provider_id, provider_user_id)
+    CONSTRAINT uk_external_user unique (tenant_id, provider_id, external_user_id)
 );
 
 ALTER TABLE idp_user ENABLE ROW LEVEL SECURITY;
@@ -209,7 +209,7 @@ POLICY rls_idp_user
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE idp_user FORCE ROW LEVEL SECURITY;
 
-CREATE INDEX idx_idp_user_tenant_provider ON idp_user (tenant_id, provider_id, provider_user_id);
+CREATE INDEX idx_idp_external_user_id ON idp_user (tenant_id, provider_id, external_user_id);
 CREATE INDEX idx_idp_user_tenant_email ON idp_user (tenant_id, email);
 CREATE INDEX idx_idp_user_tenant_phone ON idp_user (tenant_id, phone_number);
 CREATE INDEX idx_user_devices_gin_path_ops
@@ -908,7 +908,7 @@ CREATE TABLE audit_log
     tenant_id              UUID                    NOT NULL,
     client_id              VARCHAR(255)            NOT NULL,
     user_id                UUID                    NOT NULL,
-    external_user_id       VARCHAR(255)            NOT NULL,
+    external_user_id       VARCHAR(255),
     user_payload           JSONB                   NOT NULL,
     target_resource        TEXT                    NOT NULL,
     target_resource_action TEXT                    NOT NULL,
