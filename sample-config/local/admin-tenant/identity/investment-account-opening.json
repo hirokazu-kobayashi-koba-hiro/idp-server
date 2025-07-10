@@ -152,7 +152,9 @@
         "$schema": "original",
         "user": {
           "mapping_rules": [
-            { "from": "", "to": "" }
+            { "from": "$.sub", "to": "user_id" },
+            { "from": "$.email", "to": "mail_address" },
+            { "from": "$.custom_properties.token", "to": "token" }
           ]
         },
         "http_request": {
