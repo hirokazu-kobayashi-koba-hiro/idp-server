@@ -49,9 +49,7 @@ public class UserRegistrationContextCreator {
     if (!user.hasSub()) {
       user.setSub(UUID.randomUUID().toString());
     }
-    if (!user.hasProviderUserId()) {
-      user.setProviderUserId(user.sub());
-    }
+
     String encoded = passwordEncodeDelegation.encode(user.rawPassword());
     user.setHashedPassword(encoded);
     user.setStatus(UserStatus.REGISTERED);

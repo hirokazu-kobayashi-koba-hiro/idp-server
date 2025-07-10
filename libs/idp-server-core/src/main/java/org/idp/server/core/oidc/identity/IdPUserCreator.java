@@ -42,7 +42,6 @@ public class IdPUserCreator {
     String id = UUID.randomUUID().toString();
     user.setSub(id);
     user.setProviderId("idp-server");
-    user.setProviderUserId(id);
     if (definition.hasProperty("name") && request.containsKey("name")) {
       user.setName(request.getValueAsString("name"));
     }

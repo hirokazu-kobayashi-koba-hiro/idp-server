@@ -254,7 +254,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
           bindingMessage: ciba.bindingMessage,
           userCode: ciba.userCode,
           authorizationDetails: JSON.stringify(authorizationDetails),
-          loginHint: ciba.loginHintExSub,
+          loginHint: ciba.loginHintSub,
           clientSecret: clientSecretPostClient.clientSecret,
         });
       console.log(backchannelAuthenticationResponse.data);
@@ -383,7 +383,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
           binding_message: ciba.bindingMessage,
           userCode: ciba.userCode,
           authorization_details: authorizationDetails,
-          login_hint: ciba.loginHintExSub,
+          login_hint: ciba.loginHintSub,
           client_secret: clientSecretPostClient.clientSecret,
           aud: serverConfig.issuer,
           iss: clientSecretPostClient.clientId,
@@ -520,7 +520,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
           binding_message: ciba.bindingMessage,
           userCode: ciba.userCode,
           authorization_details: authorizationDetails,
-          login_hint: ciba.loginHintExSub,
+          login_hint: ciba.loginHintSub,
           client_secret: clientSecretPostClient.clientSecret,
           aud: serverConfig.issuer,
           iss: clientSecretPostClient.clientId,

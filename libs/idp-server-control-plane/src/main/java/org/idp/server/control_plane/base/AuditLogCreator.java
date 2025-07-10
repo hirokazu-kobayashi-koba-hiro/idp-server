@@ -42,7 +42,7 @@ public class AuditLogCreator {
     String tenantId = tenant.identifier().value();
     String clientId = oAuthToken.requestedClientId().value();
     String userId = user.sub();
-    String externalUserId = user.providerUserId();
+    String externalUserId = user.externalUserId();
     JsonNodeWrapper userPayload = JsonNodeWrapper.fromMap(user.toMap());
     String targetResource = requestAttributes.resource().value();
     String targetResourceAction = requestAttributes.action().value();
@@ -85,7 +85,7 @@ public class AuditLogCreator {
     String tenantId = tenant.identifier().value();
     String clientId = oAuthToken.requestedClientId().value();
     String userId = user.sub();
-    String externalUserId = user.providerUserId();
+    String externalUserId = user.externalUserId();
     JsonNodeWrapper userPayload = JsonNodeWrapper.fromMap(user.toMap());
     String targetResource = requestAttributes.resource().value();
     String targetResourceAction = requestAttributes.action().value();
@@ -129,7 +129,7 @@ public class AuditLogCreator {
     String tenantId = tenant.identifier().value();
     String clientId = oAuthToken.requestedClientId().value();
     String userId = user.sub();
-    String externalUserId = user.providerUserId();
+    String externalUserId = user.externalUserId();
     JsonNodeWrapper userPayload = JsonNodeWrapper.fromMap(user.toMap());
     String targetResource = requestAttributes.resource().value();
     String targetResourceAction = requestAttributes.action().value();
@@ -173,7 +173,7 @@ public class AuditLogCreator {
     String tenantId = tenant.identifier().value();
     String clientId = oAuthToken.requestedClientId().value();
     String userId = user.sub();
-    String externalUserId = user.providerUserId();
+    String externalUserId = user.externalUserId();
     JsonNodeWrapper userPayload = JsonNodeWrapper.fromMap(user.toMap());
     String targetResource = requestAttributes.resource().value();
     String targetResourceAction = requestAttributes.action().value();

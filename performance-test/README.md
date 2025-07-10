@@ -40,7 +40,7 @@ psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user (
   id,
   tenant_id,
   provider_id,
-  provider_user_id,
+  external_user_id,
   name,
   email,
   email_verified,

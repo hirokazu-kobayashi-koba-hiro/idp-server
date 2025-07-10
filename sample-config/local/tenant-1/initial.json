@@ -140,7 +140,7 @@
   "user": {
     "sub": "42fde73f-dfd9-4482-8802-04214ca343fb",
     "provider_id": "idp-server",
-    "provider_user_id": "42fde73f-dfd9-4482-8802-04214ca343fb",
+    "external_user_id": "42fde73f-dfd9-4482-8802-04214ca343fb",
     "name": "ito.ichiro",
     "given_name": "ichiro",
     "family_name": "ito",

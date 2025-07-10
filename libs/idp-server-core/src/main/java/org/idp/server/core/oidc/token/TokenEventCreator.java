@@ -75,7 +75,7 @@ public class TokenEventCreator {
 
     if (user != null) {
       SecurityEventUser securityEventUser =
-          new SecurityEventUser(user.sub(), user.name(), user.providerUserId());
+          new SecurityEventUser(user.sub(), user.name(), user.externalUserId());
       builder.add(securityEventUser);
       detailsMap.put("user", user.toMap());
     }

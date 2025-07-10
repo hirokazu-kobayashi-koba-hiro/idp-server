@@ -204,7 +204,7 @@ describe("Monkey test CIBA Flow", () => {
           clientId: clientSecretPostClient.clientId,
           clientSecret: clientSecretPostClient.clientSecret,
           scope: "openid",
-          loginHint: serverConfig.ciba.loginHintExSub,
+          loginHint: serverConfig.ciba.loginHintSub,
           userCode: serverConfig.ciba.userCode,
           bindingMessage: serverConfig.ciba.bindingMessage
         };
@@ -289,7 +289,7 @@ describe("Monkey test CIBA Flow", () => {
     const endpoint = serverConfig.backchannelAuthenticationEndpoint;
     const clientId = clientSecretPostClient.clientId;
     const clientSecret = clientSecretPostClient.clientSecret;
-    const loginHint = serverConfig.ciba.loginHintExSub;
+    const loginHint = serverConfig.ciba.loginHintSub;
     const userCode = serverConfig.ciba.userCode;
     const bindingMessage = serverConfig.ciba.bindingMessage;
 
@@ -393,7 +393,7 @@ describe("Monkey test CIBA Flow", () => {
             clientId: clientSecretPostClient.clientId,
             bindingMessage: ciba.bindingMessage,
             userCode: ciba.userCode,
-            loginHint: ciba.loginHintExSub,
+            loginHint: ciba.loginHintSub,
             scope: "openid profile phone email" + clientSecretPostClient.scope,
             clientSecret: clientSecretPostClient.clientSecret
           });

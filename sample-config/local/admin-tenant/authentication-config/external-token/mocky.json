@@ -18,7 +18,7 @@
         "dynamic_body_keys": [],
         "static_body": {},
         "userinfo_mapping_rules": [
-          { "from": "$.body.sub", "to": "provider_user_id" },
+          { "from": "$.body.sub", "to": "external_user_id" },
           { "from": "$.body.name", "to": "name" },
           { "from": "$.body.given_name", "to": "given_name" },
           { "from": "$.body.family_name", "to": "family_name" },

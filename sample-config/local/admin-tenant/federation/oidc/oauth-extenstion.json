@@ -64,7 +64,7 @@
     "client_secret": "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890",
     "redirect_uri": "http://localhost:8080/signin/sso-callback/index.html",
     "userinfo_mapping_rules": [
-      { "from": "$.body.sub", "to": "provider_user_id" },
+      { "from": "$.body.sub", "to": "external_user_id" },
       { "from": "$.body.email", "to": "email" },
       { "from": "$.body.email_verified", "to": "email_verified" },
       { "from": "$.header.cache-control", "to": "name" }

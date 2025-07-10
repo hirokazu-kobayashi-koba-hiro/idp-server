@@ -106,8 +106,8 @@ sequenceDiagram
 |----------------------------------|---------|---------------------------------------------|
 | `sub`                            | string  | Subject - Issuer における End-User の識別子         |
 | `provider_id`                    | string  | 外部IdPと連携した場合のID識別子                          |
-| `provider_user_id`               | string  | 外部IdPのユーザーID(sub)                           |
-| `provider_user_original_payload` | object  | 外部IdPのユーザークレーム   （JSONオブジェクト）               |
+| `external_user_id`               | string  | 外部IdPのユーザーID(sub)                           |
+| `external_user_original_payload` | object  | 外部IdPのユーザークレーム   （JSONオブジェクト）               |
 | `name`                           | string  | End-User の表示用フルネーム。肩書きや称号 (suffix) を含むこともある |
 | `given_name`                     | string  | 名（Given Name）                               |
 | `family_name`                    | string  | 姓（Family Name）                              |

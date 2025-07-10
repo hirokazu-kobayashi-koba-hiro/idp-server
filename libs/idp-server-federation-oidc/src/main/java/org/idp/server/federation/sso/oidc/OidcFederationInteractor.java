@@ -143,16 +143,12 @@ public class OidcFederationInteractor implements FederationInteractor {
 
     User exsitingUser =
         userQueryRepository.findByExternalIdpSubject(
-            tenant, user.providerUserId(), oidcSsoConfiguration.issuerName());
+            tenant, user.externalUserId(), oidcSsoConfiguration.issuerName());
 
     if (exsitingUser.exists()) {
       user.setSub(exsitingUser.sub());
     } else {
       user.setSub(UUID.randomUUID().toString());
-    }
-
-    if (!user.hasProviderUserId()) {
-      user.setProviderUserId(user.sub());
     }
 
     if (user.status() == UserStatus.UNREGISTERED) {

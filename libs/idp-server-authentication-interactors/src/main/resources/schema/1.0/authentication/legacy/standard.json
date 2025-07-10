@@ -135,7 +135,7 @@
                   "to": {
                     "type": "string",
                     "enum": [
-                      "provider_user_id",
+                      "external_user_id",
                       "name",
                       "given_name",
                       "family_name",

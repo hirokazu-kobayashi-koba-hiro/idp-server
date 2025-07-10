@@ -1,7 +1,7 @@
 {
   "sub": "1dfc83e4-5c98-4910-902b-e3cdd8705757",
   "provider_id": "idp-server",
-  "provider_user_id": "1dfc83e4-5c98-4910-902b-e3cdd8705757",
+  "external_user_id": "1dfc83e4-5c98-4910-902b-e3cdd8705757",
   "name": "ito.ichiro",
   "given_name": "ichiro",
   "family_name": "ito",

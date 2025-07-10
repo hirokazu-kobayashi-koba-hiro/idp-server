@@ -39,8 +39,8 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
                 id,
                 tenant_id,
                 provider_id,
-                provider_user_id,
-                provider_user_original_payload,
+                external_user_id,
+                external_user_original_payload,
                 name,
                 given_name,
                 family_name,
@@ -105,7 +105,7 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
     params.add(user.subAsUuid());
     params.add(tenant.identifierUUID());
     params.add(user.providerId());
-    params.add(user.providerUserId());
+    params.add(user.externalUserId());
     params.add(jsonConverter.write(user.providerOriginalPayload()));
     params.add(user.name());
     params.add(user.givenName());
