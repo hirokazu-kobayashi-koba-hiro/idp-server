@@ -17,3 +17,10 @@ echo "export IDP_SERVER_API_KEY=$API_KEY"
 echo "export IDP_SERVER_API_SECRET=$API_SECRET"
 echo "export ENCRYPTION_KEY=$ENCRYPTION_KEY"
 echo "export ENV=local"
+
+# write to .env file
+echo "IDP_SERVER_DOMAIN=http://localhost:8080/" > .env
+echo "IDP_SERVER_API_KEY=$API_KEY" >> .env
+echo "IDP_SERVER_API_SECRET=$API_SECRET" >> .env
+echo "ENCRYPTION_KEY=$ENCRYPTION_KEY" >> .env
+echo "ENV=local" >> .env
