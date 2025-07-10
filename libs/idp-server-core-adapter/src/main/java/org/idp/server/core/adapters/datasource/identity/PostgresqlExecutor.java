@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.oidc.identity.UserIdentifier;
 import org.idp.server.core.oidc.identity.UserQueries;
+import org.idp.server.core.oidc.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -81,7 +82,8 @@ public class PostgresqlExecutor implements UserSqlExecutor {
   }
 
   @Override
-  public Map<String, String> selectByDeviceId(Tenant tenant, String deviceId, String providerId) {
+  public Map<String, String> selectByDeviceId(
+      Tenant tenant, AuthenticationDeviceIdentifier deviceId, String providerId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
@@ -89,16 +91,12 @@ public class PostgresqlExecutor implements UserSqlExecutor {
             selectSql,
             """
                 WHERE idp_user.tenant_id = ?::uuid
-                AND EXISTS (
-                    SELECT 1
-                    FROM jsonb_array_elements(idp_user.authentication_devices) AS device
-                    WHERE device->>'id' = ?
-                )
+                AND authentication_devices @> ?::jsonb
                 AND idp_user.provider_id = ?
             """);
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierUUID());
-    params.add(deviceId);
+    params.add(String.format("[{\"id\": \"%s\"}]", deviceId.valueAsUuid()));
     params.add(providerId);
 
     return sqlExecutor.selectOne(sqlTemplate, params);

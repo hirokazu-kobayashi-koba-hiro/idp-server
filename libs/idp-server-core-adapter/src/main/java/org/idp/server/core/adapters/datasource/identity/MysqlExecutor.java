@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.oidc.identity.UserIdentifier;
 import org.idp.server.core.oidc.identity.UserQueries;
+import org.idp.server.core.oidc.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -81,7 +82,8 @@ public class MysqlExecutor implements UserSqlExecutor {
   }
 
   @Override
-  public Map<String, String> selectByDeviceId(Tenant tenant, String deviceId, String providerId) {
+  public Map<String, String> selectByDeviceId(
+      Tenant tenant, AuthenticationDeviceIdentifier deviceId, String providerId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
@@ -98,7 +100,7 @@ public class MysqlExecutor implements UserSqlExecutor {
                     """);
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
-    params.add(deviceId);
+    params.add(deviceId.value());
     params.add(providerId);
 
     return sqlExecutor.selectOne(sqlTemplate, params);
