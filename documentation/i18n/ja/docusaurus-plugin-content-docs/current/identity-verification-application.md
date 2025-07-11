@@ -50,8 +50,6 @@
 | `request_additional_parameter_schema` | ユーザー情報などから補完する追加パラメータの定義。Httpによる外部通信によるパラメータの追加も可能。                             |
 | `request_verification_schema`         | 重複申請や、ユーザー情報との不一致チェックを行うための定義                                                   |
 | `response_validation_schema`          | 外部APIからのレスポンスのスキーマ定義。`application_id` などを格納可能な構造を記載                             |
-| `request_mapping_rules`               | リクエストデータを加工・変換するためのマッピングルール（※後述）                                                |
-| `response_mapping_rules`              | レスポンスデータを加工・変換するためのマッピングルール（※後述）                                                |
 
 #### `processes` に定義できる処理タイプ例
 
@@ -228,13 +226,13 @@ POST /{tenant-id}/v1/me/identity-verification/applications/investment-account-op
 
 ## 🔧 Mapping Rules（マッピングルール）
 
-`request_mapping_rules` および `response_mapping_rules` により、リクエストやレスポンスのデータを柔軟に変換できます。
+MappingRulesを指定することにより、リクエストのデータを柔軟に変換できます。
 
-### 例
+### 例 body_mapping_rules
 
 ```json
 {
-  "request_mapping_rules": [
+  "body_mapping_rules": [
     {
       "from": "$.header.Authorization",
       "to": "token",
@@ -242,7 +240,7 @@ POST /{tenant-id}/v1/me/identity-verification/applications/investment-account-op
     },
     {
       "from": "$.body.user_id",
-      "to": "applicant_id",
+      "to": "user_id",
       "convert_type": "string"
     },
     {
