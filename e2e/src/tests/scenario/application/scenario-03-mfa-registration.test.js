@@ -18,7 +18,8 @@ describe("user - mfa registration", () => {
       const { user, accessToken } = await createFederatedUser({
         serverConfig: serverConfig,
         federationServerConfig: federationServerConfig,
-        clientSecretPostClient: clientSecretPostClient
+        client: clientSecretPostClient,
+        adminClient: clientSecretPostClient
       });
 
       console.log(user);

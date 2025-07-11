@@ -1,6 +1,6 @@
 import { expect } from "@jest/globals";
 import { faker } from "@faker-js/faker";
-import { backendUrl, serverConfig } from "../tests/testConfig";
+import { backendUrl, clientSecretPostClient, serverConfig } from "../tests/testConfig";
 import { postAuthentication, requestToken } from "../api/oauthClient";
 import { get, post } from "../lib/http";
 import { requestFederation } from "../oauth/federation";
@@ -12,7 +12,8 @@ import { generatePassword } from "../lib/util";
 export const createFederatedUser = async ({
   serverConfig,
   federationServerConfig,
-  clientSecretPostClient
+  client,
+  adminClient = clientSecretPostClient
 }) => {
 
   const registrationUser = {
@@ -63,9 +64,9 @@ export const createFederatedUser = async ({
         grantType: "password",
         username: serverConfig.oauth.username,
         password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret
+        scope: adminClient.scope,
+        clientId: adminClient.clientId,
+        clientSecret: adminClient.clientSecret
       });
       console.log(adminTokenResponse.data);
       expect(adminTokenResponse.status).toBe(200);
@@ -78,6 +79,7 @@ export const createFederatedUser = async ({
         }
       });
       console.log(authenticationTransactionResponse.data);
+      expect(authenticationTransactionResponse.status).toBe(200);
       const transactionId = authenticationTransactionResponse.data.list[0].id;
 
       const interactionResponse = await get({
@@ -134,11 +136,11 @@ export const createFederatedUser = async ({
 
   const { authorizationResponse } = await requestAuthorizations({
     endpoint: serverConfig.authorizationEndpoint,
-    clientId: clientSecretPostClient.clientId,
+    clientId: client.clientId,
     responseType: "code",
     state: "aiueo",
-    scope: "openid profile phone email" + clientSecretPostClient.scope,
-    redirectUri: clientSecretPostClient.redirectUri,
+    scope: "openid profile phone email" + client.scope,
+    redirectUri: client.redirectUri,
     customParams: {
       organizationId: "123",
       organizationName: "test",
@@ -152,9 +154,9 @@ export const createFederatedUser = async ({
     endpoint: serverConfig.tokenEndpoint,
     code: authorizationResponse.code,
     grantType: "authorization_code",
-    redirectUri: clientSecretPostClient.redirectUri,
-    clientId: clientSecretPostClient.clientId,
-    clientSecret: clientSecretPostClient.clientSecret,
+    redirectUri: client.redirectUri,
+    clientId: client.clientId,
+    clientSecret: client.clientSecret,
   });
   console.log(tokenResponse.data);
   expect(tokenResponse.data).toHaveProperty("id_token");

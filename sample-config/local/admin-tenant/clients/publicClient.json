@@ -41,5 +41,16 @@
     "payment_initiation",
     "account_information",
     "openid_credential"
-  ]
+  ],
+  "extension": {
+    "access_token_duration": 10,
+    "available_federations": [
+      {
+        "id": "b7481833-c95a-4c7a-9481-94b30008c8ef",
+        "type": "oidc",
+        "sso_provider": "b7481833-c95a-4c7a-9481-94b30008c8ef",
+        "auto_selected": true
+      }
+    ]
+  }
 }
