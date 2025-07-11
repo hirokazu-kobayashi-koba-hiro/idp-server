@@ -463,10 +463,13 @@ export const getAuthenticationDeviceAuthenticationTransaction = async ({
   deviceId,
   params,
 }) => {
-  const url = endpoint.replace("{id}", deviceId);
+
+  const query = new URLSearchParams(params).toString();
+  const url = endpoint.replace("{id}", deviceId) + `?${query}`;
+  console.log(url);
+
   return await get({
     url: url,
-    params,
   });
 };
 

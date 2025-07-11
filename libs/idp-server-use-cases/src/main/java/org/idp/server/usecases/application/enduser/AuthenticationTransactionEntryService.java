@@ -21,7 +21,6 @@ import org.idp.server.core.oidc.authentication.AuthenticationTransaction;
 import org.idp.server.core.oidc.authentication.AuthenticationTransactionApi;
 import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.oidc.authentication.AuthenticationTransactionQueries;
-import org.idp.server.core.oidc.authentication.io.AuthenticationTransactionFindingListResponse;
 import org.idp.server.core.oidc.authentication.io.AuthenticationTransactionFindingResponse;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationTransactionCommandRepository;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationTransactionQueryRepository;
@@ -70,28 +69,16 @@ public class AuthenticationTransactionEntryService implements AuthenticationTran
   }
 
   @Override
-  public AuthenticationTransactionFindingListResponse findList(
-      TenantIdentifier tenantIdentifier, AuthenticationTransactionQueries queries) {
-
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    List<AuthenticationTransaction> transactions =
-        authenticationTransactionQueryRepository.findList(tenant, queries);
-
-    return AuthenticationTransactionFindingListResponse.success(transactions);
-  }
-
-  public AuthenticationTransactionFindingResponse findLatest(
+  public AuthenticationTransactionFindingResponse findList(
       TenantIdentifier tenantIdentifier,
       AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
+      AuthenticationTransactionQueries queries,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    AuthenticationTransaction authenticationTransaction =
-        authenticationTransactionQueryRepository.findLatest(tenant, authenticationDeviceIdentifier);
-
-    if (!authenticationTransaction.exists()) {
-      return AuthenticationTransactionFindingResponse.notFound();
-    }
+    List<AuthenticationTransaction> authenticationTransaction =
+        authenticationTransactionQueryRepository.findList(
+            tenant, authenticationDeviceIdentifier, queries);
 
     return AuthenticationTransactionFindingResponse.success(authenticationTransaction);
   }

@@ -16,9 +16,11 @@
 
 package org.idp.server.core.oidc.authentication;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.idp.server.platform.date.LocalDateTimeParser;
 import org.idp.server.platform.uuid.UuidConvertable;
 
 public class AuthenticationTransactionQueries implements UuidConvertable {
@@ -74,12 +76,25 @@ public class AuthenticationTransactionQueries implements UuidConvertable {
     return values.get("device_id");
   }
 
+  public UUID deviceIdAsUuid() {
+    return convertUuid(clientId());
+  }
+
   public boolean hasDeviceId() {
     return values.containsKey("device_id");
   }
 
   public boolean hasAttributes() {
     return !attributes().isEmpty();
+  }
+
+  public boolean isExcludeExpired() {
+    // default true
+    if (!values.containsKey("expires_at")) {
+      return true;
+    }
+
+    return Boolean.parseBoolean(values.get("exclude_expired"));
   }
 
   public Map<String, String> attributes() {
@@ -92,5 +107,35 @@ public class AuthenticationTransactionQueries implements UuidConvertable {
       }
     }
     return attributes;
+  }
+
+  public LocalDateTime from() {
+    return LocalDateTimeParser.parse(values.get("from"));
+  }
+
+  public boolean hasFrom() {
+    return values.containsKey("from");
+  }
+
+  public LocalDateTime to() {
+    return LocalDateTimeParser.parse(values.get("to"));
+  }
+
+  public boolean hasTo() {
+    return values.containsKey("to");
+  }
+
+  public int limit() {
+    if (!values.containsKey("limit")) {
+      return 20;
+    }
+    return Integer.parseInt(values.get("limit"));
+  }
+
+  public int offset() {
+    if (!values.containsKey("offset")) {
+      return 0;
+    }
+    return Integer.parseInt(values.get("offset"));
   }
 }

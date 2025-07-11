@@ -740,11 +740,11 @@ CREATE INDEX idx_authentication_configuration_type ON authentication_configurati
 
 CREATE TABLE authentication_transaction
 (
-    id                       UUID         NOT NULL,
-    tenant_id                UUID         NOT NULL,
-    flow                     VARCHAR(255) NOT NULL,
+    id                       UUID                    NOT NULL,
+    tenant_id                UUID                    NOT NULL,
+    flow                     VARCHAR(255)            NOT NULL,
     authorization_id         UUID,
-    client_id                VARCHAR(255) NOT NULL,
+    client_id                VARCHAR(255)            NOT NULL,
     user_id                  UUID,
     user_payload             JSONB,
     context                  JSONB,
@@ -752,8 +752,9 @@ CREATE TABLE authentication_transaction
     authentication_policy    JSONB,
     interactions             JSONB,
     attributes               JSONB,
-    created_at               TEXT         NOT NULL,
-    expires_at               TIMESTAMP    NOT NULL,
+    expires_at               TIMESTAMP               NOT NULL,
+    created_at               TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at               TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );

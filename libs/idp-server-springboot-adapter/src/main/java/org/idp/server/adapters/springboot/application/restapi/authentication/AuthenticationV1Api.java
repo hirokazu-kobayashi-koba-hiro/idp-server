@@ -25,7 +25,6 @@ import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationReque
 import org.idp.server.core.oidc.OAuthFlowApi;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.authentication.AuthenticationTransactionApi;
-import org.idp.server.core.oidc.authentication.io.AuthenticationTransactionFindingListResponse;
 import org.idp.server.core.oidc.identity.UserOperationApi;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.platform.exception.UnSupportedException;
@@ -50,36 +49,6 @@ public class AuthenticationV1Api implements ParameterTransformable {
     this.oAuthFlowApi = idpServerApplication.oAuthFlowApi();
     this.cibaFlowApi = idpServerApplication.cibaFlowApi();
     this.userOperationApi = idpServerApplication.userOperationApi();
-  }
-
-  @PostMapping
-  public ResponseEntity<?> post(
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @RequestBody(required = false) Map<String, Object> requestBody,
-      HttpServletRequest httpServletRequest) {
-
-    HttpHeaders httpHeaders = new HttpHeaders();
-    httpHeaders.add("Content-Type", "application/json");
-
-    return new ResponseEntity<>(httpHeaders, HttpStatus.OK);
-  }
-
-  @GetMapping
-  public ResponseEntity<?> findList(
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @RequestParam Map<String, String> queryParams,
-      HttpServletRequest httpServletRequest) {
-
-    RequestAttributes requestAttributes = transform(httpServletRequest);
-
-    AuthenticationTransactionFindingListResponse response =
-        authenticationTransactionApi.findList(
-            tenantIdentifier, new AuthenticationTransactionQueries(queryParams));
-
-    HttpHeaders httpHeaders = new HttpHeaders();
-    httpHeaders.add("Content-Type", "application/json");
-    return new ResponseEntity<>(
-        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
   @PostMapping("/{id}/{interaction-type}")

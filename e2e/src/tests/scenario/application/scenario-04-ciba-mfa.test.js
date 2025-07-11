@@ -45,14 +45,11 @@ describe("ciba - mfa", () => {
     authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
       endpoint: serverConfig.authenticationDeviceEndpoint,
       deviceId: serverConfig.ciba.authenticationDeviceId,
-      params: {},
+      params: {
+        "attributes.auth_req_id": backchannelAuthenticationResponse.data.auth_req_id
+      },
     });
     console.log(authenticationTransactionResponse.data);
-
-    authenticationTransactionResponse = await get({
-      url: serverConfig.authenticationEndpoint + `?attributes.auth_req_id=${backchannelAuthenticationResponse.data.auth_req_id}`,
-    });
-
     expect(authenticationTransactionResponse.status).toBe(200);
 
     const authenticationTransaction = authenticationTransactionResponse.data.list[0];
@@ -159,12 +156,9 @@ describe("ciba - mfa", () => {
     authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
       endpoint: serverConfig.authenticationDeviceEndpoint,
       deviceId: serverConfig.ciba.authenticationDeviceId,
-      params: {},
-    });
-    console.log(authenticationTransactionResponse.data);
-
-    authenticationTransactionResponse = await get({
-      url: serverConfig.authenticationEndpoint + `?attributes.auth_req_id=${backchannelAuthenticationResponse.data.auth_req_id}`,
+      params: {
+        "attributes.auth_req_id": backchannelAuthenticationResponse.data.auth_req_id
+      },
     });
 
     expect(authenticationTransactionResponse.status).toBe(200);

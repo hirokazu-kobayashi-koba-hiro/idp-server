@@ -13,7 +13,6 @@ import {
 } from "../testConfig";
 import { createJwt, createJwtWithPrivateKey, generateJti } from "../../lib/jose";
 import { isNumber, sleep, toEpocTime } from "../../lib/util";
-import { get } from "../../lib/http";
 
 describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core 1.0", () => {
   const ciba = serverConfig.ciba;
@@ -36,14 +35,11 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
     authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
       endpoint: serverConfig.authenticationDeviceEndpoint,
       deviceId: serverConfig.ciba.authenticationDeviceId,
-      params: {},
+      params: {
+        "attributes.auth_req_id": backchannelAuthenticationResponse.data.auth_req_id
+      },
     });
     console.log(authenticationTransactionResponse.data);
-
-    authenticationTransactionResponse = await get({
-      url: serverConfig.authenticationEndpoint + `?attributes.auth_req_id=${backchannelAuthenticationResponse.data.auth_req_id}`,
-    });
-
     expect(authenticationTransactionResponse.status).toBe(200);
 
     const authenticationTransaction = authenticationTransactionResponse.data.list[0];
@@ -641,8 +637,12 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
       console.log(backchannelAuthenticationResponse.data);
       expect(backchannelAuthenticationResponse.status).toBe(200);
 
-      const authenticationTransactionResponse = await get({
-        url: serverConfig.authenticationEndpoint + `?attributes.auth_req_id=${backchannelAuthenticationResponse.data.auth_req_id}`,
+      const authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
+        endpoint: serverConfig.authenticationDeviceEndpoint,
+        deviceId: serverConfig.ciba.authenticationDeviceId,
+        params: {
+          "attributes.auth_req_id": backchannelAuthenticationResponse.data.auth_req_id
+        },
       });
 
       expect(authenticationTransactionResponse.status).toBe(200);
@@ -691,14 +691,11 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
       authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
         endpoint: serverConfig.authenticationDeviceEndpoint,
         deviceId: serverConfig.ciba.authenticationDeviceId,
-        params: {},
+        params: {
+          "attributes.auth_req_id": backchannelAuthenticationResponse.data.auth_req_id
+        },
       });
       console.log(authenticationTransactionResponse.data);
-
-      authenticationTransactionResponse = await get({
-        url: serverConfig.authenticationEndpoint + `?attributes.auth_req_id=${backchannelAuthenticationResponse.data.auth_req_id}`,
-      });
-
       expect(authenticationTransactionResponse.status).toBe(200);
 
       const authenticationTransaction = authenticationTransactionResponse.data.list[0];

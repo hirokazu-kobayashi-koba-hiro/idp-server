@@ -17,9 +17,11 @@
 package org.idp.server.adapters.springboot.application.restapi.authentication.device;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.core.oidc.authentication.AuthenticationTransactionApi;
+import org.idp.server.core.oidc.authentication.AuthenticationTransactionQueries;
 import org.idp.server.core.oidc.authentication.io.AuthenticationTransactionFindingResponse;
 import org.idp.server.core.oidc.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -39,18 +41,22 @@ public class AuthenticationDeviceV1Api implements ParameterTransformable {
     this.authenticationTransactionApi = idpServerApplication.authenticationApi();
   }
 
-  @GetMapping("/latest")
+  @GetMapping
   public ResponseEntity<?> get(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("authentication-device-id")
           AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
+      @RequestParam Map<String, String> queryParams,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AuthenticationTransactionFindingResponse response =
-        authenticationTransactionApi.findLatest(
-            tenantIdentifier, authenticationDeviceIdentifier, requestAttributes);
+        authenticationTransactionApi.findList(
+            tenantIdentifier,
+            authenticationDeviceIdentifier,
+            new AuthenticationTransactionQueries(queryParams),
+            requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");

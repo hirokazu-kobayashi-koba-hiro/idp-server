@@ -57,8 +57,6 @@ public class MysqlExecutor implements AuthenticationInteractionQuerySqlExecutor 
     sql.append(" AND created_at BETWEEN ? AND ?");
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierUUID());
-    params.add(queries.from());
-    params.add(queries.to());
 
     if (queries.hasType()) {
       sql.append(" AND interaction_type = ?");

@@ -16,40 +16,38 @@
 
 package org.idp.server.core.oidc.authentication.io;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.core.oidc.authentication.AuthenticationTransaction;
 
 public class AuthenticationTransactionFindingResponse {
   int statusCode;
-  AuthenticationTransaction authenticationTransaction;
+  List<AuthenticationTransaction> authenticationTransactions;
 
   public static AuthenticationTransactionFindingResponse success(
-      AuthenticationTransaction authenticationTransaction) {
-    return new AuthenticationTransactionFindingResponse(200, authenticationTransaction);
-  }
-
-  public static AuthenticationTransactionFindingResponse notFound() {
-    return new AuthenticationTransactionFindingResponse(404, null);
+      List<AuthenticationTransaction> authenticationTransactions) {
+    return new AuthenticationTransactionFindingResponse(200, authenticationTransactions);
   }
 
   private AuthenticationTransactionFindingResponse(
-      int statusCode, AuthenticationTransaction authenticationTransaction) {
+      int statusCode, List<AuthenticationTransaction> authenticationTransactions) {
     this.statusCode = statusCode;
-    this.authenticationTransaction = authenticationTransaction;
+    this.authenticationTransactions = authenticationTransactions;
   }
 
   public int statusCode() {
     return statusCode;
   }
 
-  public AuthenticationTransaction authenticationTransaction() {
-    return authenticationTransaction;
+  public List<AuthenticationTransaction> authenticationTransactions() {
+    return authenticationTransactions;
   }
 
   public Map<String, Object> contents() {
-    if (statusCode == 200) {
-      return authenticationTransaction.toMap();
-    }
-    return Map.of();
+    Map<String, Object> contents = new HashMap<>();
+    contents.put(
+        "list", authenticationTransactions.stream().map(AuthenticationTransaction::toMap).toList());
+    return contents;
   }
 }

@@ -54,7 +54,14 @@ export IDP_SERVER_API_KEY=xxx
 export IDP_SERVER_API_SECRET=xxx
 export ENCRYPTION_KEY=xxx
 export ENV=local or develop or ...
+```
 
+
+```shell
+docker build -t idp-server:latest .
+```
+
+```shell
 docker compose up -d
 docker compose logs -f idp-server
 ```

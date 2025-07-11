@@ -8,9 +8,9 @@ export const serverConfig = {
   authorizationIdEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authorizations/{id}/`,
   authenticationEndpoint:
-    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authentications`,
+    `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-transactions`,
   authenticationDeviceEndpoint:
-    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authentication-devices/{id}/authentications/latest`,
+    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authentication-devices/{id}/authentications`,
   authorizeEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authorizations/{id}/authorize`,
   denyEndpoint:
