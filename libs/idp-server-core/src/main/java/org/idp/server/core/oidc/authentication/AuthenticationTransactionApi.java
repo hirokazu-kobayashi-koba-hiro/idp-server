@@ -16,7 +16,6 @@
 
 package org.idp.server.core.oidc.authentication;
 
-import org.idp.server.core.oidc.authentication.io.AuthenticationTransactionFindingListResponse;
 import org.idp.server.core.oidc.authentication.io.AuthenticationTransactionFindingResponse;
 import org.idp.server.core.oidc.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -31,11 +30,9 @@ public interface AuthenticationTransactionApi {
       TenantIdentifier tenantIdentifier,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier);
 
-  AuthenticationTransactionFindingListResponse findList(
-      TenantIdentifier tenantIdentifier, AuthenticationTransactionQueries queries);
-
-  AuthenticationTransactionFindingResponse findLatest(
+  AuthenticationTransactionFindingResponse findList(
       TenantIdentifier tenantIdentifier,
       AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
+      AuthenticationTransactionQueries queries,
       RequestAttributes requestAttributes);
 }

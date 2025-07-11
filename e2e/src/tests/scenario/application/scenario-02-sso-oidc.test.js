@@ -42,12 +42,6 @@ describe("sso oidc", () => {
           console.log(challengeResponse.status);
           console.log(challengeResponse.data);
 
-          const authenticationTransactionResponse = await get({
-            url: `${backendUrl}/${federationServerConfig.tenantId}/v1/authentications?authorization_id=${id}`,
-          });
-          console.log(authenticationTransactionResponse.data);
-          const transactionId = authenticationTransactionResponse.data.list[0].id;
-
           const adminTokenResponse = await requestToken({
             endpoint: serverConfig.tokenEndpoint,
             grantType: "password",
@@ -60,6 +54,15 @@ describe("sso oidc", () => {
           console.log(adminTokenResponse.data);
           expect(adminTokenResponse.status).toBe(200);
           const accessToken = adminTokenResponse.data.access_token;
+
+          const authenticationTransactionResponse = await get({
+            url: `${backendUrl}/v1/management/tenants/${federationServerConfig.tenantId}/authentication-transactions?authorization_id=${id}`,
+            headers: {
+              Authorization: `Bearer ${accessToken}`
+            }
+          });
+          console.log(authenticationTransactionResponse.data);
+          const transactionId = authenticationTransactionResponse.data.list[0].id;
 
           const interactionResponse = await get({
             url: `${backendUrl}/v1/management/tenants/${federationServerConfig.tenantId}/authentication-interactions/${transactionId}/email`,
@@ -174,12 +177,6 @@ describe("sso oidc", () => {
         console.log(challengeResponse.status);
         console.log(challengeResponse.data);
 
-        const authenticationTransactionResponse = await get({
-          url: `${backendUrl}/${serverConfig.tenantId}/v1/authentications?authorization_id=${id}`,
-        });
-        console.log(authenticationTransactionResponse.data);
-        const transactionId = authenticationTransactionResponse.data.list[0].id;
-
         const adminTokenResponse = await requestToken({
           endpoint: serverConfig.tokenEndpoint,
           grantType: "password",
@@ -192,6 +189,15 @@ describe("sso oidc", () => {
         console.log(adminTokenResponse.data);
         expect(adminTokenResponse.status).toBe(200);
         const accessToken = adminTokenResponse.data.access_token;
+
+        const authenticationTransactionResponse = await get({
+          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        });
+        console.log(authenticationTransactionResponse.data);
+        const transactionId = authenticationTransactionResponse.data.list[0].id;
 
         const interactionResponse = await get({
           url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/authentication-interactions/${transactionId}/email`,

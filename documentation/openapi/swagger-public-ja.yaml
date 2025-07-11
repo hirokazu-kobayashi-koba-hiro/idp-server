@@ -1,0 +1,167 @@
+openapi: 3.0.3
+info:
+  title: idp-server API
+  description: 外部向けのAPI
+  version: 1.0.0
+  contact:
+    name: idp-server OSS
+
+servers:
+  - url: https://xxx/{tenant-id}
+
+tags:
+  - name: 認証
+
+  - name: 認証デバイス
+    description: |
+
+  - name: 身元確認申込み
+    description: |
+
+  - name: 身元確認結果
+    description: |
+
+paths:
+  /{tenant-id}/v1/authentications:
+    get:
+      tags:
+        - 認証
+      summary: 認証トランザクション一覧取得
+      description: 認証トランザクションを検索条件に基づいて一覧取得する
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/AuthenticationTransactionId'
+        - $ref: '#/components/parameters/AuthenticationTransactionFlow'
+        - $ref: '#/components/parameters/AuthorizationId'
+        - $ref: '#/components/parameters/ClientId'
+        - $ref: '#/components/parameters/DeviceId'
+        - $ref: '#/components/parameters/ExcludeExpired'
+        - $ref: '#/components/parameters/AttributeFilter'
+      responses:
+        '200':
+          description: 認証トランザクション一覧の取得成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuthenticationTransaction'
+        '400':
+          description: 不正なリクエスト
+        '500':
+          description: サーバー内部エラー
+
+components:
+  parameters:
+    TenantId:
+      name: tenant-id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: テナント識別子
+
+    AuthenticationTransactionId:
+      name: id
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: 認証トランザクションのID
+
+    AuthenticationTransactionFlow:
+      name: flow
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [ oauth, ciba, federation, session ]
+      description: 認証フローの種類
+
+    AuthorizationId:
+      name: authorization_id
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: 認可リクエストのID
+
+    ClientId:
+      name: client_id
+      in: query
+      required: false
+      schema:
+        type: string
+      description: クライアントID
+
+    DeviceId:
+      name: device_id
+      in: query
+      required: false
+      schema:
+        type: string
+      description: デバイスID
+
+    ExcludeExpired:
+      name: exclude_expired
+      in: query
+      required: false
+      schema:
+        type: boolean
+        default: true
+      description: trueの場合、期限切れのトランザクションを除外する（デフォルトtrue）
+
+    AttributeFilter:
+      name: attributes.{key}
+      in: query
+      required: false
+      schema:
+        type: string
+      description: 任意の属性フィルター（attributes.から始まる任意のキー）
+
+  schemas:
+    AuthenticationTransaction:
+      type: object
+      required:
+        - id
+        - flow
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 認証トランザクションのID
+        flow:
+          type: string
+          enum: [oauth, ciba, federation, session]
+          description: 認証フローの種類
+        client_id:
+          type: string
+          description: クライアントID
+        device_id:
+          type: string
+          description: デバイスID
+        status:
+          type: string
+          enum: [pending, success, failure, expired, canceled]
+          description: 認証トランザクションの状態
+        attributes:
+          type: object
+          additionalProperties:
+            type: string
+          description: 任意の属性（attributes.プレフィックス付きのクエリパラメータに対応）
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+        authorization_id:
+          type: string
+          format: uuid
+          description: 関連する認可リクエストのID

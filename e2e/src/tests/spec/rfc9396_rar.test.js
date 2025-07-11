@@ -264,12 +264,9 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
       authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
         endpoint: serverConfig.authenticationDeviceEndpoint,
         deviceId: serverConfig.ciba.authenticationDeviceId,
-        params: {},
-      });
-      console.log(authenticationTransactionResponse.data);
-
-      authenticationTransactionResponse = await get({
-        url: serverConfig.authenticationEndpoint + `?attributes.auth_req_id=${backchannelAuthenticationResponse.data.auth_req_id}`,
+        params: {
+          "attributes.auth_req_id": backchannelAuthenticationResponse.data.auth_req_id
+        },
       });
 
       expect(authenticationTransactionResponse.status).toBe(200);
@@ -407,11 +404,15 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
       const authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
         endpoint: serverConfig.authenticationDeviceEndpoint,
         deviceId: serverConfig.ciba.authenticationDeviceId,
-        params: {},
+        params: {
+          "attributes.auth_req_id": backchannelAuthenticationResponse.data.auth_req_id
+        },
       });
 
       console.log(authenticationTransactionResponse.data);
       expect(authenticationTransactionResponse.status).toBe(200);
+
+      const authenticationTransaction = authenticationTransactionResponse.data.list[0];
 
       const failureResponse = await postAuthenticationDeviceInteraction({
         endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
@@ -428,8 +429,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
 
       const completeResponse = await postAuthenticationDeviceInteraction({
         endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-        flowType: authenticationTransactionResponse.data.flow,
-        id: authenticationTransactionResponse.data.id,
+        flowType: authenticationTransaction.flow,
+        id: authenticationTransaction.id,
         interactionType: "password-authentication",
         body: {
           username: serverConfig.ciba.username,
@@ -544,16 +545,19 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
       const authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
         endpoint: serverConfig.authenticationDeviceEndpoint,
         deviceId: serverConfig.ciba.authenticationDeviceId,
-        params: {},
+        params: {
+          "attributes.auth_req_id": backchannelAuthenticationResponse.data.auth_req_id
+        },
       });
 
       console.log(authenticationTransactionResponse.data);
       expect(authenticationTransactionResponse.status).toBe(200);
+      const authenticationTransaction = authenticationTransactionResponse.data.list[0]
 
       const failureResponse = await postAuthenticationDeviceInteraction({
         endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-        flowType: authenticationTransactionResponse.data.flow,
-        id: authenticationTransactionResponse.data.id,
+        flowType: authenticationTransaction.flow,
+        id: authenticationTransaction.id,
         interactionType: "password-authentication",
         body: {
           username: serverConfig.ciba.username,
@@ -565,8 +569,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
 
       const completeResponse = await postAuthenticationDeviceInteraction({
         endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-        flowType: authenticationTransactionResponse.data.flow,
-        id: authenticationTransactionResponse.data.id,
+        flowType: authenticationTransaction.flow,
+        id: authenticationTransaction.id,
         interactionType: "password-authentication",
         body: {
           username: serverConfig.ciba.username,

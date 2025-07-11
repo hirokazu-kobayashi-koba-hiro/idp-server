@@ -66,18 +66,33 @@ public class AuthenticationTransactionQueryDataSource
   }
 
   @Override
-  public AuthenticationTransaction findLatest(
-      Tenant tenant, AuthenticationDeviceIdentifier authenticationDeviceIdentifier) {
+  public List<AuthenticationTransaction> findList(
+      Tenant tenant,
+      AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
+      AuthenticationTransactionQueries queries) {
 
     AuthenticationTransactionQuerySqlExecutor executor = executors.get(tenant.databaseType());
-    Map<String, String> result =
-        executor.selectOneByDeviceId(tenant, authenticationDeviceIdentifier);
+    List<Map<String, String>> results =
+        executor.selectListByDeviceId(tenant, authenticationDeviceIdentifier, queries);
 
-    if (result == null || result.isEmpty()) {
-      return new AuthenticationTransaction();
+    if (results == null || results.isEmpty()) {
+      return List.of();
     }
 
-    return ModelConverter.convert(result);
+    return results.stream().map(ModelConverter::convert).toList();
+  }
+
+  @Override
+  public long findTotalCount(Tenant tenant, AuthenticationTransactionQueries queries) {
+
+    AuthenticationTransactionQuerySqlExecutor executor = executors.get(tenant.databaseType());
+    Map<String, String> result = executor.selectCount(tenant, queries);
+
+    if (result == null || result.isEmpty()) {
+      return 0;
+    }
+
+    return Long.parseLong(result.get("count"));
   }
 
   @Override
@@ -92,5 +107,18 @@ public class AuthenticationTransactionQueryDataSource
     }
 
     return results.stream().map(ModelConverter::convert).collect(Collectors.toList());
+  }
+
+  @Override
+  public AuthenticationTransaction find(
+      Tenant tenant, AuthenticationTransactionIdentifier identifier) {
+    AuthenticationTransactionQuerySqlExecutor executor = executors.get(tenant.databaseType());
+    Map<String, String> result = executor.selectOne(tenant, identifier);
+
+    if (result == null || result.isEmpty()) {
+      return new AuthenticationTransaction();
+    }
+
+    return ModelConverter.convert(result);
   }
 }

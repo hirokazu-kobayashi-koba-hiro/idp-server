@@ -128,7 +128,8 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
                 SET user_id = ?::uuid,
                 user_payload = ?::jsonb,
                 authentication_device_id = ?::uuid,
-                interactions = ?::jsonb
+                interactions = ?::jsonb,
+                updated_at = now()
                 WHERE id = ?::uuid
                 AND tenant_id = ?::uuid
                 """;

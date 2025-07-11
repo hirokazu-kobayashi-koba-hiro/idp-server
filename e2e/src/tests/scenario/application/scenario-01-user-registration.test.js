@@ -24,12 +24,6 @@ describe("user registration", () => {
         console.log(challengeResponse.status);
         console.log(challengeResponse.data);
 
-        const authenticationTransactionResponse = await get({
-          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
-        });
-        console.log(authenticationTransactionResponse.data);
-        const transactionId = authenticationTransactionResponse.data.list[0].id;
-
         const adminTokenResponse = await requestToken({
           endpoint: serverConfig.tokenEndpoint,
           grantType: "password",
@@ -42,6 +36,15 @@ describe("user registration", () => {
         console.log(adminTokenResponse.data);
         expect(adminTokenResponse.status).toBe(200);
         const accessToken = adminTokenResponse.data.access_token;
+
+        const authenticationTransactionResponse = await get({
+          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        });
+        console.log(authenticationTransactionResponse.data);
+        const transactionId = authenticationTransactionResponse.data.list[0].id;
 
         const interactionResponse = await get({
           url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/email`,
@@ -125,12 +128,6 @@ describe("user registration", () => {
         console.log(challengeResponse.status);
         console.log(challengeResponse.data);
 
-        const authenticationTransactionResponse = await get({
-          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
-        });
-        console.log(authenticationTransactionResponse.data);
-        const transactionId = authenticationTransactionResponse.data.list[0].id;
-
         const adminTokenResponse = await requestToken({
           endpoint: serverConfig.tokenEndpoint,
           grantType: "password",
@@ -143,6 +140,15 @@ describe("user registration", () => {
         console.log(adminTokenResponse.data);
         expect(adminTokenResponse.status).toBe(200);
         const accessToken = adminTokenResponse.data.access_token;
+
+        const authenticationTransactionResponse = await get({
+          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        });
+        console.log(authenticationTransactionResponse.data);
+        const transactionId = authenticationTransactionResponse.data.list[0].id;
 
         const interactionResponse = await get({
           url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/sms`,
@@ -228,12 +234,6 @@ describe("user registration", () => {
         console.log(challengeResponse.status);
         console.log(challengeResponse.data);
 
-        const authenticationTransactionResponse = await get({
-          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
-        });
-        console.log(authenticationTransactionResponse.data);
-        const transactionId = authenticationTransactionResponse.data.list[0].id;
-
         const adminTokenResponse = await requestToken({
           endpoint: serverConfig.tokenEndpoint,
           grantType: "password",
@@ -246,6 +246,15 @@ describe("user registration", () => {
         console.log(adminTokenResponse.data);
         expect(adminTokenResponse.status).toBe(200);
         const accessToken = adminTokenResponse.data.access_token;
+
+        const authenticationTransactionResponse = await get({
+          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        });
+        console.log(authenticationTransactionResponse.data);
+        const transactionId = authenticationTransactionResponse.data.list[0].id;
 
         const interactionResponse = await get({
           url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/sms`,
@@ -329,12 +338,6 @@ describe("user registration", () => {
         console.log(challengeResponse.status);
         console.log(challengeResponse.data);
 
-        const authenticationTransactionResponse = await get({
-          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
-        });
-        console.log(authenticationTransactionResponse.data);
-        const transactionId = authenticationTransactionResponse.data.list[0].id;
-
         const adminTokenResponse = await requestToken({
           endpoint: serverConfig.tokenEndpoint,
           grantType: "password",
@@ -347,6 +350,15 @@ describe("user registration", () => {
         console.log(adminTokenResponse.data);
         expect(adminTokenResponse.status).toBe(200);
         const accessToken = adminTokenResponse.data.access_token;
+
+        const authenticationTransactionResponse = await get({
+          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        });
+        console.log(authenticationTransactionResponse.data);
+        const transactionId = authenticationTransactionResponse.data.list[0].id;
 
         const interactionResponse = await get({
           url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/sms`,
@@ -433,12 +445,6 @@ describe("user registration", () => {
         console.log(challengeResponse.status);
         console.log(challengeResponse.data);
 
-        let authenticationTransactionResponse = await get({
-          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
-        });
-        console.log(authenticationTransactionResponse.data);
-        let transactionId = authenticationTransactionResponse.data.list[0].id;
-
         let adminTokenResponse = await requestToken({
           endpoint: serverConfig.tokenEndpoint,
           grantType: "password",
@@ -451,6 +457,15 @@ describe("user registration", () => {
         console.log(adminTokenResponse.data);
         expect(adminTokenResponse.status).toBe(200);
         let accessToken = adminTokenResponse.data.access_token;
+
+        let authenticationTransactionResponse = await get({
+          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        });
+        console.log(authenticationTransactionResponse.data);
+        let transactionId = authenticationTransactionResponse.data.list[0].id;
 
         let interactionResponse = await get({
           url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/email`,
@@ -483,12 +498,6 @@ describe("user registration", () => {
         console.log(challengeResponse.status);
         console.log(challengeResponse.data);
 
-        authenticationTransactionResponse = await get({
-          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
-        });
-        console.log(authenticationTransactionResponse.data);
-        transactionId = authenticationTransactionResponse.data.list[0].id;
-
         adminTokenResponse = await requestToken({
           endpoint: serverConfig.tokenEndpoint,
           grantType: "password",
@@ -501,6 +510,15 @@ describe("user registration", () => {
         console.log(adminTokenResponse.data);
         expect(adminTokenResponse.status).toBe(200);
         accessToken = adminTokenResponse.data.access_token;
+
+        authenticationTransactionResponse = await get({
+          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        });
+        console.log(authenticationTransactionResponse.data);
+        transactionId = authenticationTransactionResponse.data.list[0].id;
 
         interactionResponse = await get({
           url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/sms`,
@@ -571,12 +589,6 @@ describe("user registration", () => {
         console.log(challengeResponse.status);
         console.log(challengeResponse.data);
 
-        let authenticationTransactionResponse = await get({
-          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
-        });
-        console.log(authenticationTransactionResponse.data);
-        let transactionId = authenticationTransactionResponse.data.list[0].id;
-
         let adminTokenResponse = await requestToken({
           endpoint: serverConfig.tokenEndpoint,
           grantType: "password",
@@ -589,6 +601,15 @@ describe("user registration", () => {
         console.log(adminTokenResponse.data);
         expect(adminTokenResponse.status).toBe(200);
         let accessToken = adminTokenResponse.data.access_token;
+
+        let authenticationTransactionResponse = await get({
+          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        });
+        console.log(authenticationTransactionResponse.data);
+        let transactionId = authenticationTransactionResponse.data.list[0].id;
 
         let interactionResponse = await get({
           url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/sms`,
@@ -621,12 +642,6 @@ describe("user registration", () => {
         console.log(challengeResponse.status);
         console.log(challengeResponse.data);
 
-        authenticationTransactionResponse = await get({
-          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
-        });
-        console.log(authenticationTransactionResponse.data);
-        transactionId = authenticationTransactionResponse.data.list[0].id;
-
         adminTokenResponse = await requestToken({
           endpoint: serverConfig.tokenEndpoint,
           grantType: "password",
@@ -639,6 +654,15 @@ describe("user registration", () => {
         console.log(adminTokenResponse.data);
         expect(adminTokenResponse.status).toBe(200);
         accessToken = adminTokenResponse.data.access_token;
+
+        authenticationTransactionResponse = await get({
+          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        });
+        console.log(authenticationTransactionResponse.data);
+        transactionId = authenticationTransactionResponse.data.list[0].id;
 
         interactionResponse = await get({
           url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/email`,

@@ -30,8 +30,12 @@ public interface AuthenticationTransactionQuerySqlExecutor {
 
   Map<String, String> selectOne(Tenant tenant, AuthorizationIdentifier identifier);
 
-  Map<String, String> selectOneByDeviceId(
-      Tenant tenant, AuthenticationDeviceIdentifier authenticationDeviceIdentifier);
+  List<Map<String, String>> selectListByDeviceId(
+      Tenant tenant,
+      AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
+      AuthenticationTransactionQueries queries);
 
   List<Map<String, String>> selectList(Tenant tenant, AuthenticationTransactionQueries queries);
+
+  Map<String, String> selectCount(Tenant tenant, AuthenticationTransactionQueries queries);
 }

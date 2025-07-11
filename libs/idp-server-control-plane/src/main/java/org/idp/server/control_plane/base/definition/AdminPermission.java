@@ -184,6 +184,10 @@ public enum AdminPermission {
       "Admin Read security-event information"),
   AUDIT_LOG_READ(
       "dac5337d-a014-4039-a537-d282881d256d", "audit-log:read", "Admin Read audit-log information"),
+  AUTHENTICATION_TRANSACTION_READ(
+      "e1bc7b84-847b-4e00-ae4e-ce729808a794",
+      "authentication-transaction:read",
+      "Admin Read authentication-transaction information"),
   AUTHENTICATION_INTERACTION_READ(
       "faff38c2-7d4c-4c71-9403-c2b76d82c4f9",
       "authentication-interaction:read",

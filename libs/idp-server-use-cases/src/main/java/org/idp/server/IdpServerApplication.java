@@ -35,6 +35,7 @@ import org.idp.server.control_plane.base.schema.SchemaReader;
 import org.idp.server.control_plane.management.audit.AuditLogManagementApi;
 import org.idp.server.control_plane.management.authentication.configuration.AuthenticationConfigurationManagementApi;
 import org.idp.server.control_plane.management.authentication.interaction.AuthenticationInteractionManagementApi;
+import org.idp.server.control_plane.management.authentication.transaction.AuthenticationTransactionManagementApi;
 import org.idp.server.control_plane.management.federation.FederationConfigurationManagementApi;
 import org.idp.server.control_plane.management.identity.user.UserManagementApi;
 import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigManagementApi;
@@ -164,6 +165,7 @@ public class IdpServerApplication {
   SecurityEventManagementApi securityEventManagementApi;
   AuditLogManagementApi auditLogManagementApi;
   AuthenticationInteractionManagementApi authenticationInteractionManagementApi;
+  AuthenticationTransactionManagementApi authenticationTransactionManagementApi;
   UserAuthenticationApi userAuthenticationApi;
 
   public IdpServerApplication(
@@ -698,6 +700,13 @@ public class IdpServerApplication {
             AuthenticationInteractionManagementApi.class,
             tenantDialectProvider);
 
+    this.authenticationTransactionManagementApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new AuthenticationTransactionManagementEntryService(
+                authenticationTransactionQueryRepository, tenantQueryRepository, auditLogWriters),
+            AuthenticationTransactionManagementApi.class,
+            tenantDialectProvider);
+
     this.userAuthenticationApi =
         TenantAwareEntryServiceProxy.createProxy(
             new UserAuthenticationEntryService(
@@ -834,5 +843,9 @@ public class IdpServerApplication {
 
   public AuthenticationInteractionManagementApi authenticationInteractionManagementApi() {
     return authenticationInteractionManagementApi;
+  }
+
+  public AuthenticationTransactionManagementApi authenticationTransactionManagementApi() {
+    return authenticationTransactionManagementApi;
   }
 }

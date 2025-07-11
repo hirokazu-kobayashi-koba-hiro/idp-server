@@ -24,6 +24,7 @@ import org.idp.server.core.oidc.authentication.AuthenticationTransactionQueries;
 import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
 import org.idp.server.core.oidc.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.platform.datasource.SqlExecutor;
+import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExecutor {
@@ -66,33 +67,90 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
   }
 
   @Override
-  public Map<String, String> selectOneByDeviceId(
-      Tenant tenant, AuthenticationDeviceIdentifier authenticationDeviceIdentifier) {
+  public List<Map<String, String>> selectListByDeviceId(
+      Tenant tenant,
+      AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
+      AuthenticationTransactionQueries queries) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate =
-        selectSql
-            + " "
-            + """
-                WHERE authentication_device_id = ?::uuid
-                AND tenant_id = ?::uuid
-                ORDER BY created_at DESC
-                limit 1
-                """;
+    StringBuilder sql =
+        new StringBuilder(selectSql)
+            .append(" WHERE tenant_id = ?::uuid AND authentication_device_id = ?::uuid");
     List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierValue());
     params.add(authenticationDeviceIdentifier.valueAsUuid());
-    params.add(tenant.identifierUUID());
 
-    return sqlExecutor.selectOne(sqlTemplate, params);
+    if (queries.hasFrom()) {
+      sql.append(" AND created_at >= ?");
+      params.add(queries.from());
+    }
+
+    if (queries.hasTo()) {
+      sql.append(" AND created_at <= ?");
+      params.add(queries.to());
+    }
+
+    if (queries.hasId()) {
+      sql.append(" AND id = ?");
+      params.add(queries.id());
+    }
+
+    if (queries.hasFlow()) {
+      sql.append(" AND flow = ?");
+      params.add(queries.flow());
+    }
+
+    if (queries.hasAuthorizationId()) {
+      sql.append(" AND authorization_id = ?::uuid");
+      params.add(queries.authorizationIdAsUuid());
+    }
+
+    if (queries.hasClientId()) {
+      sql.append(" AND client_id = ?");
+      params.add(queries.clientId());
+    }
+
+    if (queries.isExcludeExpired()) {
+      sql.append(" AND expires_at > ?");
+      params.add(SystemDateTime.now());
+    }
+
+    if (queries.hasAttributes()) {
+      for (Map.Entry<String, String> entry : queries.attributes().entrySet()) {
+        String key = entry.getKey();
+        String value = entry.getValue();
+        sql.append(" AND attributes ->> ? = ?");
+        params.add(key);
+        params.add(value);
+      }
+    }
+
+    sql.append(" ORDER BY created_at DESC");
+    sql.append(" LIMIT ?");
+    sql.append(" OFFSET ?");
+    params.add(queries.limit());
+    params.add(queries.offset());
+
+    return sqlExecutor.selectList(sql.toString(), params);
   }
 
   @Override
-  public List<Map<String, String>> selectList(
-      Tenant tenant, AuthenticationTransactionQueries queries) {
+  public Map<String, String> selectCount(Tenant tenant, AuthenticationTransactionQueries queries) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    StringBuilder sql = new StringBuilder(selectSql).append(" WHERE tenant_id = ?::uuid");
+    StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM authentication_transaction");
+    sql.append(" WHERE tenant_id = ?::uuid");
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifierUUID());
+
+    if (queries.hasFrom()) {
+      sql.append(" AND created_at >= ?");
+      params.add(queries.from());
+    }
+
+    if (queries.hasTo()) {
+      sql.append(" AND created_at <= ?");
+      params.add(queries.to());
+    }
 
     if (queries.hasId()) {
       sql.append(" AND id = ?");
@@ -115,7 +173,74 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
     }
 
     if (queries.hasDeviceId()) {
-      sql.append(" AND authentication_device_id = ?");
+      sql.append(" AND authentication_device_id = ?::uuid");
+      params.add(queries.deviceIdAsUuid());
+    }
+
+    if (queries.isExcludeExpired()) {
+      sql.append(" AND expires_at > ?");
+      params.add(SystemDateTime.now());
+    }
+
+    if (queries.hasAttributes()) {
+      for (Map.Entry<String, String> entry : queries.attributes().entrySet()) {
+        String key = entry.getKey();
+        String value = entry.getValue();
+        sql.append(" AND attributes ->> ? = ?");
+        params.add(key);
+        params.add(value);
+      }
+    }
+
+    return sqlExecutor.selectOne(sql.toString(), params);
+  }
+
+  @Override
+  public List<Map<String, String>> selectList(
+      Tenant tenant, AuthenticationTransactionQueries queries) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    StringBuilder sql = new StringBuilder(selectSql).append(" WHERE tenant_id = ?::uuid");
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierValue());
+
+    if (queries.hasFrom()) {
+      sql.append(" AND created_at >= ?");
+      params.add(queries.from());
+    }
+
+    if (queries.hasTo()) {
+      sql.append(" AND created_at <= ?");
+      params.add(queries.to());
+    }
+
+    if (queries.hasId()) {
+      sql.append(" AND id = ?");
+      params.add(queries.id());
+    }
+
+    if (queries.hasFlow()) {
+      sql.append(" AND flow = ?");
+      params.add(queries.flow());
+    }
+
+    if (queries.hasAuthorizationId()) {
+      sql.append(" AND authorization_id = ?::uuid");
+      params.add(queries.authorizationIdAsUuid());
+    }
+
+    if (queries.hasClientId()) {
+      sql.append(" AND client_id = ?");
+      params.add(queries.clientId());
+    }
+
+    if (queries.hasDeviceId()) {
+      sql.append(" AND authentication_device_id = ?::uuid");
+      params.add(queries.deviceIdAsUuid());
+    }
+
+    if (queries.isExcludeExpired()) {
+      sql.append(" AND expires_at > ?");
+      params.add(SystemDateTime.now());
     }
 
     if (queries.hasAttributes()) {
@@ -129,6 +254,10 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
     }
 
     sql.append(" ORDER BY created_at DESC");
+    sql.append(" LIMIT ?");
+    sql.append(" OFFSET ?");
+    params.add(queries.limit());
+    params.add(queries.offset());
 
     return sqlExecutor.selectList(sql.toString(), params);
   }

@@ -30,8 +30,14 @@ public interface AuthenticationTransactionQueryRepository {
 
   AuthenticationTransaction get(Tenant tenant, AuthorizationIdentifier identifier);
 
-  AuthenticationTransaction findLatest(
-      Tenant tenant, AuthenticationDeviceIdentifier authenticationDeviceIdentifier);
+  List<AuthenticationTransaction> findList(
+      Tenant tenant,
+      AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
+      AuthenticationTransactionQueries queries);
+
+  long findTotalCount(Tenant tenant, AuthenticationTransactionQueries queries);
 
   List<AuthenticationTransaction> findList(Tenant tenant, AuthenticationTransactionQueries queries);
+
+  AuthenticationTransaction find(Tenant tenant, AuthenticationTransactionIdentifier identifier);
 }
