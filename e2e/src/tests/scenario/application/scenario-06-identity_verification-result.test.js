@@ -26,9 +26,8 @@ describe("identity-verification result", () => {
 
       let mfaRegistrationResponse =
         await postWithJson({
-          url: serverConfig.resourceOwnerEndpoint + "/mfa-registration",
+          url: serverConfig.resourceOwnerEndpoint + "/mfa/fido-uaf-registration",
           body: {
-            "flow": "fido-uaf-registration",
             "platform": "Android",
             "os": "Android15",
             "model": "galaxy z fold 6",

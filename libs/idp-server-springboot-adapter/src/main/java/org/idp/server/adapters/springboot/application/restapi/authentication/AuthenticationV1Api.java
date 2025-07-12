@@ -27,7 +27,6 @@ import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.authentication.AuthenticationTransactionApi;
 import org.idp.server.core.oidc.identity.UserOperationApi;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
-import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;
@@ -102,7 +101,7 @@ public class AuthenticationV1Api implements ParameterTransformable {
             requestAttributes);
       }
 
-      case FIDO_UAF_REGISTRATION -> {
+      default -> {
         return userOperationApi.interact(
             tenantIdentifier,
             authenticationTransaction.identifier(),
@@ -110,9 +109,6 @@ public class AuthenticationV1Api implements ParameterTransformable {
             request,
             requestAttributes);
       }
-
-      default ->
-          throw new UnSupportedException("Unexpected value: " + authenticationTransaction.flow());
     }
   }
 }

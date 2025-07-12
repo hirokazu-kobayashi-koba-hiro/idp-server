@@ -18,7 +18,6 @@ package org.idp.server.core.oidc.identity.io;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.type.AuthFlow;
 
 public class MfaRegistrationRequest {
 
@@ -49,10 +48,5 @@ public class MfaRegistrationRequest {
 
   public boolean exists() {
     return values != null && !values.isEmpty();
-  }
-
-  public AuthFlow getAuthFlow() {
-
-    return AuthFlow.of(getValueOrEmpty("flow"));
   }
 }

@@ -31,6 +31,8 @@ const sidebars = {
     'id-verified',
     'identity-verification-application',
     `identity-verification-registration`,
+    `mfa-fido-uaf-registration`,
+    `mfa-fido-uaf-deregistration`,
     {
       type: 'category',
       label: 'Configuration',

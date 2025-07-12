@@ -21,6 +21,7 @@ import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.adapters.springboot.application.restapi.model.ResourceOwnerPrincipal;
+import org.idp.server.basic.type.AuthFlow;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserOperationApi;
 import org.idp.server.core.oidc.identity.io.MfaRegistrationRequest;
@@ -44,10 +45,11 @@ public class UserV1Api implements ParameterTransformable {
     this.userOperationApi = idpServerApplication.userOperationApi();
   }
 
-  @PostMapping("/mfa-registration")
+  @PostMapping("/mfa/{mfa-operation-type}")
   public ResponseEntity<?> requestMfaRegistration(
       @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("mfa-operation-type") String mfaOperationType,
       @RequestBody(required = false) Map<String, Object> requestBody,
       HttpServletRequest httpServletRequest) {
 
@@ -56,9 +58,10 @@ public class UserV1Api implements ParameterTransformable {
     MfaRegistrationRequest request = new MfaRegistrationRequest(requestBody);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
+    AuthFlow authFlow = AuthFlow.of(mfaOperationType);
     UserOperationResponse response =
         userOperationApi.requestMfaOperation(
-            tenantIdentifier, user, oAuthToken, request, requestAttributes);
+            tenantIdentifier, user, oAuthToken, authFlow, request, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");

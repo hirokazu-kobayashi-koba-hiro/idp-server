@@ -16,6 +16,7 @@
 
 package org.idp.server.core.oidc.identity;
 
+import org.idp.server.basic.type.AuthFlow;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractionRequestResult;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractionType;
@@ -32,6 +33,7 @@ public interface UserOperationApi {
       TenantIdentifier tenantIdentifier,
       User user,
       OAuthToken token,
+      AuthFlow authFlow,
       MfaRegistrationRequest request,
       RequestAttributes requestAttributes);
 

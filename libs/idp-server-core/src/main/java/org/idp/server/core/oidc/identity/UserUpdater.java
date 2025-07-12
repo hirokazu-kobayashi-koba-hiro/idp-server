@@ -53,6 +53,8 @@ public class UserUpdater {
     if (user.hasCustomProperties()) updatedUser.setCustomProperties(user.customPropertiesValue());
     if (user.hasMultiFactorAuthentication())
       updatedUser.setMultiFactorAuthentication(user.multiFactorAuthentication());
+    if (user.hasAuthenticationDevices())
+      updatedUser.setAuthenticationDevices(user.authenticationDevicesAsList());
     if (user.hasRoles()) updatedUser.setRoles(user.roles());
     if (user.hasAssignedTenants()) updatedUser.setAssignedTenants(user.assignedTenants());
 

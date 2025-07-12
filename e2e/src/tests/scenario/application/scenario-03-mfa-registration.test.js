@@ -26,9 +26,8 @@ describe("user - mfa registration", () => {
 
       let mfaRegistrationResponse =
         await postWithJson({
-          url: serverConfig.resourceOwnerEndpoint + "/mfa-registration",
+          url: serverConfig.resourceOwnerEndpoint + "/mfa/fido-uaf-registration",
           body: {
-            "flow": "fido-uaf-registration",
             "platform": "Android",
             "os": "Android15",
             "model": "galaxy z fold 6",
@@ -76,6 +75,8 @@ describe("user - mfa registration", () => {
         }
       });
       expect(authenticationResponse.status).toBe(200);
+      expect(authenticationResponse.data).toHaveProperty("device_id");
+      const authenticationDeviceId = authenticationResponse.data.device_id;
 
       let userinfoResponse = await getUserinfo({
         endpoint: serverConfig.userinfoEndpoint,
@@ -89,14 +90,12 @@ describe("user - mfa registration", () => {
       expect(userinfoResponse.data).toHaveProperty("authentication_devices");
       expect(userinfoResponse.data.authentication_devices.length).toBe(1);
       expect(userinfoResponse.data).toHaveProperty("mfa");
-
-      const authenticationDeviceId = userinfoResponse.data.authentication_devices[0].id;
+      expect(userinfoResponse.data.authentication_devices[0].id).toEqual(authenticationDeviceId);
 
       mfaRegistrationResponse =
         await postWithJson({
-          url: serverConfig.resourceOwnerEndpoint + "/mfa-registration",
+          url: serverConfig.resourceOwnerEndpoint + "/mfa/fido-uaf-deregistration",
           body: {
-            "flow": "fido-uaf-deregistration",
             "authentication_device_id": authenticationDeviceId
           },
           headers: {

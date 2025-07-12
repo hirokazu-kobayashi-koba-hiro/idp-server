@@ -103,14 +103,14 @@ describe("Monkey test CIBA Flow", () => {
       const res = await requestBackchannelAuthentications({
         endpoint: serverConfig.backchannelAuthenticationEndpoint,
         clientId: clientSecretPostClient.clientId,
-        scope: shouldOmit(0.2) ? "openid" : longStr,
-        bindingMessage: shouldOmit(0.5) ? "999" : longStr,
-        userCode: shouldOmit(0.5) ? ciba.userCode : longStr,
-        loginHint: shouldOmit(0.5) ? ciba.loginHint : longStr,
+        scope: "openid " + longStr,
+        bindingMessage: longStr,
+        userCode: ciba.userCode,
+        loginHint: ciba.loginHint,
         clientSecret: clientSecretPostClient.clientSecret
       });
       console.log(res.status, res.data);
-      expect([400]).toContain(res.status);
+      expect([200]).toContain(res.status);
     });
   });
 

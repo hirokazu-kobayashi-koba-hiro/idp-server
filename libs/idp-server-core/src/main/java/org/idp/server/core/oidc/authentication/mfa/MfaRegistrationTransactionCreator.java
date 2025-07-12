@@ -39,6 +39,7 @@ public class MfaRegistrationTransactionCreator {
       Tenant tenant,
       User user,
       OAuthToken oAuthToken,
+      AuthFlow authFlow,
       MfaRegistrationRequest mfaRegistrationRequest,
       AuthenticationPolicy authenticationPolicy) {
 
@@ -47,7 +48,7 @@ public class MfaRegistrationTransactionCreator {
     AuthorizationIdentifier authorizationIdentifier = new AuthorizationIdentifier();
 
     AuthenticationRequest authenticationRequest =
-        toAuthenticationRequest(tenant, user, oAuthToken, mfaRegistrationRequest);
+        toAuthenticationRequest(tenant, user, oAuthToken, authFlow);
     AuthenticationTransactionAttributes attributes =
         new AuthenticationTransactionAttributes(mfaRegistrationRequest.toMap());
 
@@ -60,12 +61,8 @@ public class MfaRegistrationTransactionCreator {
   }
 
   private static AuthenticationRequest toAuthenticationRequest(
-      Tenant tenant,
-      User user,
-      OAuthToken oAuthToken,
-      MfaRegistrationRequest mfaRegistrationRequest) {
+      Tenant tenant, User user, OAuthToken oAuthToken, AuthFlow authFlow) {
 
-    AuthFlow authFlow = mfaRegistrationRequest.getAuthFlow();
     TenantIdentifier tenantIdentifier = tenant.identifier();
 
     RequestedClientId requestedClientId = oAuthToken.requestedClientId();

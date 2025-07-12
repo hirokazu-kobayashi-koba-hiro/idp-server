@@ -18,6 +18,7 @@ package org.idp.server.usecases.application.enduser;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.basic.type.AuthFlow;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.authentication.mfa.*;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationTransactionCommandRepository;
@@ -80,13 +81,14 @@ public class UserOperationEntryService implements UserOperationApi {
       TenantIdentifier tenantIdentifier,
       User user,
       OAuthToken token,
+      AuthFlow authFlow,
       MfaRegistrationRequest request,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    AuthenticationPolicy authenticationPolicy = mfaPolicies.get(request.getAuthFlow());
-    MfaRequestVerifier mfaRequestVerifier = mfaRegistrationVerifiers.get(request.getAuthFlow());
+    AuthenticationPolicy authenticationPolicy = mfaPolicies.get(authFlow);
+    MfaRequestVerifier mfaRequestVerifier = mfaRegistrationVerifiers.get(authFlow);
     MfaVerificationResult verificationResult =
         mfaRequestVerifier.verify(user, request, authenticationPolicy);
 
@@ -96,7 +98,7 @@ public class UserOperationEntryService implements UserOperationApi {
 
     AuthenticationTransaction authenticationTransaction =
         MfaRegistrationTransactionCreator.create(
-            tenant, user, token, request, authenticationPolicy);
+            tenant, user, token, authFlow, request, authenticationPolicy);
     authenticationTransactionCommandRepository.register(tenant, authenticationTransaction);
 
     Map<String, Object> contents = new HashMap<>();
@@ -126,6 +128,7 @@ public class UserOperationEntryService implements UserOperationApi {
     authenticationTransactionCommandRepository.update(tenant, updatedTransaction);
 
     if (updatedTransaction.isSuccess()) {
+      // TODO to be more correctly
       userCommandRepository.update(tenant, authenticationTransaction.user());
     }
 
