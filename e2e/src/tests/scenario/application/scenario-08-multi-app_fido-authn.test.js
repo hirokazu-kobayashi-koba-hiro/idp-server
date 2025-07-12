@@ -75,6 +75,8 @@ describe("multi client", () => {
         }
       });
       expect(authenticationResponse.status).toBe(200);
+      expect(authenticationResponse.data).toHaveProperty("device_id");
+      const authenticationDeviceId = authenticationResponse.data.device_id;
 
       let userinfoResponse = await getUserinfo({
         endpoint: serverConfig.userinfoEndpoint,
@@ -88,8 +90,7 @@ describe("multi client", () => {
       expect(userinfoResponse.data).toHaveProperty("authentication_devices");
       expect(userinfoResponse.data.authentication_devices.length).toBe(1);
       expect(userinfoResponse.data).toHaveProperty("mfa");
-
-      const authenticationDeviceId = userinfoResponse.data.authentication_devices[0].id;
+      expect(userinfoResponse.data.authentication_devices[0].id).toEqual(authenticationDeviceId);
 
       const ciba = serverConfig.ciba;
 
