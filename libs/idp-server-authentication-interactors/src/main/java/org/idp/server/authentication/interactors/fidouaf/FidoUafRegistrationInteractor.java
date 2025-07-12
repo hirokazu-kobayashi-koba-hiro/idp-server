@@ -101,12 +101,15 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
             .addMethods(new ArrayList<>(List.of("hwk")))
             .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
 
+    Map<String, Object> contents = new HashMap<>();
+    contents.put("device_id", deviceId);
+
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
         addedDeviceUser,
         authentication,
-        executionResult.contents(),
+        contents,
         DefaultSecurityEventType.fido_uaf_registration_success);
   }
 
