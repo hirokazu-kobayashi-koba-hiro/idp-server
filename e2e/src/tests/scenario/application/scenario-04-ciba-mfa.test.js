@@ -17,7 +17,7 @@ import { get } from "../../../lib/http";
 describe("ciba - mfa", () => {
   const ciba = serverConfig.ciba;
 
-  xit("fido-uaf", async () => {
+  it("fido-uaf", async () => {
     const fidoUafFacetsResponse = await get({
       url: serverConfig.fidoUafFacetsEndpoint,
       headers: {
@@ -31,7 +31,7 @@ describe("ciba - mfa", () => {
       await requestBackchannelAuthentications({
         endpoint: serverConfig.backchannelAuthenticationEndpoint,
         clientId: clientSecretPostClient.clientId,
-        scope: "openid profile phone email transfers",
+        scope: "openid profile phone email",
         bindingMessage: ciba.bindingMessage,
         userCode: ciba.userCode,
         loginHint: ciba.loginHint,
@@ -61,20 +61,7 @@ describe("ciba - mfa", () => {
       endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
       flowType: authenticationTransaction.flow,
       id: authenticationTransaction.id,
-      interactionType: "password-authentication",
-      body: {
-        username: serverConfig.ciba.username,
-        password: serverConfig.ciba.userCode,
-      }
-    });
-
-    expect(authenticationResponse.status).toBe(200);
-
-    authenticationResponse = await postAuthenticationDeviceInteraction({
-      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-      flowType: authenticationTransaction.flow,
-      id: authenticationTransaction.id,
-      interactionType: "fido-uaf-registration-challenge",
+      interactionType: "fido-uaf-authentication-challenge",
       body: {
         username: serverConfig.ciba.username,
         password: serverConfig.ciba.userCode,
@@ -115,7 +102,7 @@ describe("ciba - mfa", () => {
     });
     console.log(tokenResponse.data);
     expect(tokenResponse.status).toBe(200);
-    expect(tokenResponse.data.scope).toContain("transfers");
+    expect(tokenResponse.data.scope).toContain("phone");
 
     const jwksResponse = await getJwks({ endpoint: serverConfig.jwksEndpoint });
     console.log(jwksResponse.data);
@@ -134,6 +121,106 @@ describe("ciba - mfa", () => {
     });
     console.log(JSON.stringify(decodedAccessToken, null, 2));
 
+  });
+
+  it("fido-uaf cancel", async () => {
+    const fidoUafFacetsResponse = await get({
+      url: serverConfig.fidoUafFacetsEndpoint,
+      headers: {
+        "Content-Type": "application/json",
+      }
+    });
+    console.log(fidoUafFacetsResponse.data);
+    expect(fidoUafFacetsResponse.status).toBe(200);
+
+    let backchannelAuthenticationResponse =
+      await requestBackchannelAuthentications({
+        endpoint: serverConfig.backchannelAuthenticationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        scope: "openid profile phone email",
+        bindingMessage: ciba.bindingMessage,
+        userCode: ciba.userCode,
+        loginHint: ciba.loginHint,
+        acrValues: "urn:mace:incommon:iap:gold",
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+    console.log(backchannelAuthenticationResponse.data);
+    expect(backchannelAuthenticationResponse.status).toBe(200);
+
+    let authenticationTransactionResponse;
+    authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
+      endpoint: serverConfig.authenticationDeviceEndpoint,
+      deviceId: serverConfig.ciba.authenticationDeviceId,
+      params: {
+        "attributes.auth_req_id": backchannelAuthenticationResponse.data.auth_req_id
+      },
+    });
+    console.log(authenticationTransactionResponse.data);
+    expect(authenticationTransactionResponse.status).toBe(200);
+
+    const authenticationTransaction = authenticationTransactionResponse.data.list[0];
+    console.log(authenticationTransaction);
+
+    let authenticationResponse;
+
+    authenticationResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      flowType: authenticationTransaction.flow,
+      id: authenticationTransaction.id,
+      interactionType: "fido-uaf-authentication-challenge",
+      body: {
+        username: serverConfig.ciba.username,
+        password: serverConfig.ciba.userCode,
+      }
+    });
+    expect(authenticationResponse.status).toBe(200);
+
+    authenticationResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      flowType: authenticationTransaction.flow,
+      id: authenticationTransaction.id,
+      interactionType: "fido-uaf-authentication-challenge",
+      body: {
+        username: serverConfig.ciba.username,
+        password: serverConfig.ciba.userCode,
+      }
+    });
+    expect(authenticationResponse.status).toBe(200);
+
+    authenticationResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      flowType: authenticationTransaction.flow,
+      id: authenticationTransaction.id,
+      interactionType: "fido-uaf-cancel",
+      body: {
+        username: serverConfig.ciba.username,
+        password: serverConfig.ciba.userCode,
+      }
+    });
+    expect(authenticationResponse.status).toBe(200);
+
+    const tokenResponse = await requestToken({
+      endpoint: serverConfig.tokenEndpoint,
+      grantType: "urn:openid:params:grant-type:ciba",
+      authReqId: backchannelAuthenticationResponse.data.auth_req_id,
+      clientId: clientSecretPostClient.clientId,
+      clientSecret: clientSecretPostClient.clientSecret,
+    });
+    console.log(tokenResponse.data);
+    expect(tokenResponse.status).toBe(400);
+
+    authenticationResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      flowType: authenticationTransaction.flow,
+      id: authenticationTransaction.id,
+      interactionType: "fido-uaf-authentication",
+      body: {
+        username: serverConfig.ciba.username,
+        password: serverConfig.ciba.userCode,
+      }
+    });
+    console.log(authenticationResponse.data);
+    expect(authenticationResponse.status).toBe(404);
 
   });
 
