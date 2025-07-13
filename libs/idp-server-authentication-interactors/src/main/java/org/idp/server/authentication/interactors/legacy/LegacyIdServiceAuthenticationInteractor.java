@@ -22,7 +22,6 @@ import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigur
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.mapper.UserInfoMapper;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
-import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.http.*;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
@@ -36,6 +35,11 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
       AuthenticationConfigurationQueryRepository configurationRepository) {
     this.configurationRepository = configurationRepository;
     this.httpRequestExecutor = new HttpRequestExecutor(HttpClientFactory.defaultClient());
+  }
+
+  @Override
+  public String method() {
+    return "legacy-id-service";
   }
 
   @Override
@@ -67,15 +71,11 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
       return new AuthenticationInteractionRequestResult(
           AuthenticationInteractionStatus.CLIENT_ERROR,
           type,
+          operationType(),
+          method(),
           authenticationResult.toMap(),
           DefaultSecurityEventType.legacy_authentication_failure);
     }
-
-    Authentication authentication =
-        new Authentication()
-            .setTime(SystemDateTime.now())
-            .addMethods(new ArrayList<>(List.of("pwd")))
-            .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
 
     LegacyIdServiceAuthenticationDetailConfiguration userinfoConfig =
         configuration.userinfoDetailConfig();
@@ -108,13 +108,13 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
 
     Map<String, Object> result = new HashMap<>();
     result.put("user", user.toMap());
-    result.put("authentication", authentication.toMap());
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
+        operationType(),
+        method(),
         user,
-        authentication,
         result,
         DefaultSecurityEventType.legacy_authentication_success);
   }

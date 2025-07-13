@@ -40,6 +40,16 @@ public class AuthenticationDeviceNotificationInteractor implements Authenticatio
   }
 
   @Override
+  public OperationType operationType() {
+    return OperationType.CHALLENGE;
+  }
+
+  @Override
+  public String method() {
+    return "device-notification";
+  }
+
+  @Override
   public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
       AuthenticationTransaction transaction,
@@ -59,7 +69,8 @@ public class AuthenticationDeviceNotificationInteractor implements Authenticatio
         response.put("error_description", "User does not exist");
         DefaultSecurityEventType eventType =
             DefaultSecurityEventType.authentication_device_notification_failure;
-        return AuthenticationInteractionRequestResult.clientError(response, type, eventType);
+        return AuthenticationInteractionRequestResult.clientError(
+            response, type, operationType(), method(), eventType);
       }
 
       AuthenticationDevice authenticationDevice = user.findPrimaryAuthenticationDevice();
@@ -71,7 +82,8 @@ public class AuthenticationDeviceNotificationInteractor implements Authenticatio
         response.put("error_description", "User does not have a primary authentication device");
         DefaultSecurityEventType eventType =
             DefaultSecurityEventType.authentication_device_notification_failure;
-        return AuthenticationInteractionRequestResult.clientError(response, type, eventType);
+        return AuthenticationInteractionRequestResult.clientError(
+            response, type, operationType(), method(), eventType);
       }
 
       NotificationChannel channel = new NotificationChannel("fcm");
@@ -84,7 +96,8 @@ public class AuthenticationDeviceNotificationInteractor implements Authenticatio
       Map<String, Object> response = Map.of();
       DefaultSecurityEventType eventType =
           DefaultSecurityEventType.authentication_device_notification_success;
-      return new AuthenticationInteractionRequestResult(status, type, response, eventType);
+      return new AuthenticationInteractionRequestResult(
+          status, type, operationType(), method(), response, eventType);
     } catch (Exception e) {
 
       Map<String, Object> response = new HashMap<>();
@@ -92,7 +105,8 @@ public class AuthenticationDeviceNotificationInteractor implements Authenticatio
       response.put("error_description", e.getMessage());
       DefaultSecurityEventType eventType =
           DefaultSecurityEventType.authentication_device_notification_failure;
-      return AuthenticationInteractionRequestResult.clientError(response, type, eventType);
+      return AuthenticationInteractionRequestResult.clientError(
+          response, type, operationType(), method(), eventType);
     }
   }
 }

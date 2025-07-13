@@ -106,11 +106,16 @@ public class ModelConverter {
       for (Iterator<String> it = interactions.fieldNames(); it.hasNext(); ) {
         String interaction = it.next();
         JsonNodeWrapper node = interactions.getValueAsJsonNode(interaction);
+        String operationType = node.getValueOrEmptyAsString("operation_type");
+        String method = node.getValueOrEmptyAsString("method");
         int callCount = node.getValueAsInt("call_count");
         int successCount = node.getValueAsInt("success_count");
         int failureCount = node.getValueAsInt("failure_count");
+        LocalDateTime interactionTIme =
+            LocalDateTimeParser.parse(node.getValueOrEmptyAsString("interaction_time"));
         AuthenticationInteractionResult authenticationInteractionResult =
-            new AuthenticationInteractionResult(callCount, successCount, failureCount);
+            new AuthenticationInteractionResult(
+                operationType, method, callCount, successCount, failureCount, interactionTIme);
         results.put(interaction, authenticationInteractionResult);
       }
 

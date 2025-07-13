@@ -42,6 +42,16 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
   }
 
   @Override
+  public OperationType operationType() {
+    return OperationType.CHALLENGE;
+  }
+
+  @Override
+  public String method() {
+    return StandardAuthenticationMethod.FIDO_UAF.type();
+  }
+
+  @Override
   public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
       AuthenticationTransaction transaction,
@@ -71,6 +81,8 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
       return AuthenticationInteractionRequestResult.clientError(
           executionResult.contents(),
           type,
+          operationType(),
+          method(),
           DefaultSecurityEventType.fido_uaf_authentication_challenge_failure);
     }
 
@@ -78,14 +90,17 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
       return AuthenticationInteractionRequestResult.serverError(
           executionResult.contents(),
           type,
+          operationType(),
+          method(),
           DefaultSecurityEventType.fido_uaf_authentication_challenge_failure);
     }
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
+        operationType(),
+        method(),
         transaction.user(),
-        new Authentication(),
         executionResult.contents(),
         DefaultSecurityEventType.fido_uaf_authentication_challenge_success);
   }

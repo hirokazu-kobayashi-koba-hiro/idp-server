@@ -16,9 +16,7 @@
 
 package org.idp.server.authentication.interactors.fidouaf;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditionalRequestResolvers;
 import org.idp.server.core.oidc.authentication.*;
@@ -28,7 +26,6 @@ import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserStatus;
 import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
-import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 
@@ -45,6 +42,11 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
     this.fidoUafExecutors = fidoUafExecutors;
     this.configurationQueryRepository = configurationQueryRepository;
     this.additionalRequestResolvers = additionalRequestResolvers;
+  }
+
+  @Override
+  public String method() {
+    return StandardAuthenticationMethod.FIDO_UAF.type();
   }
 
   @Override
@@ -71,12 +73,20 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
 
     if (executionResult.isClientError()) {
       return AuthenticationInteractionRequestResult.clientError(
-          executionResult.contents(), type, DefaultSecurityEventType.fido_uaf_registration_failure);
+          executionResult.contents(),
+          type,
+          operationType(),
+          method(),
+          DefaultSecurityEventType.fido_uaf_registration_failure);
     }
 
     if (executionResult.isServerError()) {
       return AuthenticationInteractionRequestResult.serverError(
-          executionResult.contents(), type, DefaultSecurityEventType.fido_uaf_registration_failure);
+          executionResult.contents(),
+          type,
+          operationType(),
+          method(),
+          DefaultSecurityEventType.fido_uaf_registration_failure);
     }
 
     String deviceId =
@@ -95,20 +105,15 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
       addedDeviceUser.setStatus(UserStatus.IDENTITY_VERIFICATION_REQUIRED);
     }
 
-    Authentication authentication =
-        new Authentication()
-            .setTime(SystemDateTime.now())
-            .addMethods(new ArrayList<>(List.of("hwk")))
-            .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
-
     Map<String, Object> contents = new HashMap<>();
     contents.put("device_id", deviceId);
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
+        operationType(),
+        method(),
         addedDeviceUser,
-        authentication,
         contents,
         DefaultSecurityEventType.fido_uaf_registration_success);
   }

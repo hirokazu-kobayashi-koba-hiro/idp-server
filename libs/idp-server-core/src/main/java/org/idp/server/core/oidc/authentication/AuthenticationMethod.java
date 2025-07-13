@@ -16,21 +16,21 @@
 
 package org.idp.server.core.oidc.authentication;
 
-import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+public class AuthenticationMethod {
 
-public interface AuthenticationInteractor {
+  String name;
 
-  default OperationType operationType() {
-    return OperationType.AUTHENTICATION;
+  public AuthenticationMethod() {}
+
+  public AuthenticationMethod(String name) {
+    this.name = name;
   }
 
-  String method();
+  public String name() {
+    return name;
+  }
 
-  AuthenticationInteractionRequestResult interact(
-      Tenant tenant,
-      AuthenticationTransaction transaction,
-      AuthenticationInteractionType type,
-      AuthenticationInteractionRequest request,
-      UserQueryRepository userQueryRepository);
+  public boolean exists() {
+    return name != null && !name.isEmpty();
+  }
 }

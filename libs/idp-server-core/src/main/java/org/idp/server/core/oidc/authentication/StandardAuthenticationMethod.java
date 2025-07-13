@@ -16,21 +16,20 @@
 
 package org.idp.server.core.oidc.authentication;
 
-import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+public enum StandardAuthenticationMethod {
+  PASSWORD("password"),
+  EMAIL("email"),
+  SMS("sms"),
+  FIDO_UAF("fido-uaf"),
+  WEB_AUTHN("webauthn");
 
-public interface AuthenticationInteractor {
+  private final String type;
 
-  default OperationType operationType() {
-    return OperationType.AUTHENTICATION;
+  StandardAuthenticationMethod(String type) {
+    this.type = type;
   }
 
-  String method();
-
-  AuthenticationInteractionRequestResult interact(
-      Tenant tenant,
-      AuthenticationTransaction transaction,
-      AuthenticationInteractionType type,
-      AuthenticationInteractionRequest request,
-      UserQueryRepository userQueryRepository);
+  public String type() {
+    return type;
+  }
 }

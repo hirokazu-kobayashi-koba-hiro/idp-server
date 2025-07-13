@@ -49,6 +49,16 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
   }
 
   @Override
+  public OperationType operationType() {
+    return OperationType.CHALLENGE;
+  }
+
+  @Override
+  public String method() {
+    return StandardAuthenticationMethod.EMAIL.type();
+  }
+
+  @Override
   public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
       AuthenticationTransaction transaction,
@@ -71,6 +81,8 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
         return new AuthenticationInteractionRequestResult(
             AuthenticationInteractionStatus.CLIENT_ERROR,
             type,
+            operationType(),
+            method(),
             response,
             DefaultSecurityEventType.email_verification_failure);
       }
@@ -100,7 +112,11 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
       if (sendResult.isError()) {
 
         return AuthenticationInteractionRequestResult.serverError(
-            sendResult.data(), type, DefaultSecurityEventType.email_verification_request_failure);
+            sendResult.data(),
+            type,
+            operationType(),
+            method(),
+            DefaultSecurityEventType.email_verification_request_failure);
       }
 
       EmailVerificationChallenge emailVerificationChallenge =
@@ -112,8 +128,9 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
       return new AuthenticationInteractionRequestResult(
           AuthenticationInteractionStatus.SUCCESS,
           type,
+          operationType(),
+          method(),
           user,
-          new Authentication(),
           Map.of(),
           DefaultSecurityEventType.email_verification_request_success);
     } catch (UserTooManyFoundResultException tooManyFoundResultException) {
@@ -125,7 +142,11 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
               "error_description",
               "too many users found for email: " + request.getValueAsString("email"));
       return AuthenticationInteractionRequestResult.clientError(
-          response, type, DefaultSecurityEventType.email_verification_request_failure);
+          response,
+          type,
+          operationType(),
+          method(),
+          DefaultSecurityEventType.email_verification_request_failure);
     }
   }
 

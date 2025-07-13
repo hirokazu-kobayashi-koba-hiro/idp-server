@@ -41,6 +41,16 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
   }
 
   @Override
+  public OperationType operationType() {
+    return OperationType.CHALLENGE;
+  }
+
+  @Override
+  public String method() {
+    return StandardAuthenticationMethod.SMS.type();
+  }
+
+  @Override
   public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
       AuthenticationTransaction transaction,
@@ -62,6 +72,8 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
         return new AuthenticationInteractionRequestResult(
             AuthenticationInteractionStatus.CLIENT_ERROR,
             type,
+            operationType(),
+            method(),
             response,
             DefaultSecurityEventType.sms_verification_challenge_failure);
       }
@@ -78,6 +90,8 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
         return AuthenticationInteractionRequestResult.clientError(
             executionResult.contents(),
             type,
+            operationType(),
+            method(),
             DefaultSecurityEventType.sms_verification_challenge_failure);
       }
 
@@ -85,14 +99,17 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
         return AuthenticationInteractionRequestResult.serverError(
             executionResult.contents(),
             type,
+            operationType(),
+            method(),
             DefaultSecurityEventType.sms_verification_challenge_failure);
       }
 
       return new AuthenticationInteractionRequestResult(
           AuthenticationInteractionStatus.SUCCESS,
           type,
+          operationType(),
+          method(),
           user,
-          new Authentication(),
           executionResult.contents(),
           DefaultSecurityEventType.sms_verification_challenge_success);
     } catch (UserTooManyFoundResultException tooManyFoundResultException) {
@@ -104,7 +121,11 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
               "error_description",
               "too many users found for phone number: " + request.getValueAsString("phone_number"));
       return AuthenticationInteractionRequestResult.clientError(
-          response, type, DefaultSecurityEventType.sms_verification_challenge_failure);
+          response,
+          type,
+          operationType(),
+          method(),
+          DefaultSecurityEventType.sms_verification_challenge_failure);
     }
   }
 

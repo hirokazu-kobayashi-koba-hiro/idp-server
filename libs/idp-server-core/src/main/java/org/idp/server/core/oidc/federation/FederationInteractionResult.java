@@ -161,4 +161,8 @@ public class FederationInteractionResult {
   public String interactionTypeName() {
     return federationType.name() + "-" + ssoProvider.name();
   }
+
+  public SsoProvider ssoProvider() {
+    return ssoProvider;
+  }
 }

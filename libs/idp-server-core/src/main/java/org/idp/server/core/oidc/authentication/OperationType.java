@@ -16,21 +16,28 @@
 
 package org.idp.server.core.oidc.authentication;
 
-import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+public enum OperationType {
+  CHALLENGE,
+  AUTHENTICATION,
+  REGISTRATION,
+  DENY,
+  DE_REGISTRATION,
+  UNKNOWN;
 
-public interface AuthenticationInteractor {
-
-  default OperationType operationType() {
-    return OperationType.AUTHENTICATION;
+  public static OperationType of(String type) {
+    for (OperationType operationType : OperationType.values()) {
+      if (operationType.name().equalsIgnoreCase(type)) {
+        return operationType;
+      }
+    }
+    return UNKNOWN;
   }
 
-  String method();
+  public boolean isAuthentication() {
+    return this == AUTHENTICATION;
+  }
 
-  AuthenticationInteractionRequestResult interact(
-      Tenant tenant,
-      AuthenticationTransaction transaction,
-      AuthenticationInteractionType type,
-      AuthenticationInteractionRequest request,
-      UserQueryRepository userQueryRepository);
+  public boolean isDeny() {
+    return this == DENY;
+  }
 }

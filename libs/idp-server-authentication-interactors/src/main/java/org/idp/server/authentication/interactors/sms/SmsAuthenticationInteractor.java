@@ -16,13 +16,10 @@
 
 package org.idp.server.authentication.interactors.sms;
 
-import java.util.ArrayList;
-import java.util.List;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
-import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 
@@ -36,6 +33,11 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
       AuthenticationConfigurationQueryRepository configurationQueryRepository) {
     this.executors = executors;
     this.configurationQueryRepository = configurationQueryRepository;
+  }
+
+  @Override
+  public String method() {
+    return StandardAuthenticationMethod.SMS.type();
   }
 
   @Override
@@ -56,19 +58,21 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
 
     if (executionResult.isClientError()) {
       return AuthenticationInteractionRequestResult.clientError(
-          executionResult.contents(), type, DefaultSecurityEventType.sms_verification_failure);
+          executionResult.contents(),
+          type,
+          operationType(),
+          method(),
+          DefaultSecurityEventType.sms_verification_failure);
     }
 
     if (executionResult.isServerError()) {
       return AuthenticationInteractionRequestResult.serverError(
-          executionResult.contents(), type, DefaultSecurityEventType.sms_verification_failure);
+          executionResult.contents(),
+          type,
+          operationType(),
+          method(),
+          DefaultSecurityEventType.sms_verification_failure);
     }
-
-    Authentication authentication =
-        new Authentication()
-            .setTime(SystemDateTime.now())
-            .addMethods(new ArrayList<>(List.of("opt")))
-            .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
 
     User verifiedUser = transaction.user();
     verifiedUser.setPhoneNumberVerified(true);
@@ -76,8 +80,9 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
+        operationType(),
+        method(),
         verifiedUser,
-        authentication,
         executionResult.contents(),
         DefaultSecurityEventType.sms_verification_success);
   }

@@ -16,15 +16,12 @@
 
 package org.idp.server.authentication.interactors.password;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.authentication.PasswordVerificationDelegation;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
-import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 
@@ -35,6 +32,10 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
   public PasswordAuthenticationInteractor(
       PasswordVerificationDelegation passwordVerificationDelegation) {
     this.passwordVerificationDelegation = passwordVerificationDelegation;
+  }
+
+  public String method() {
+    return StandardAuthenticationMethod.PASSWORD.type();
   }
 
   @Override
@@ -59,27 +60,22 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
       return new AuthenticationInteractionRequestResult(
           AuthenticationInteractionStatus.CLIENT_ERROR,
           type,
+          operationType(),
+          method(),
           user,
-          new Authentication(),
           response,
           DefaultSecurityEventType.password_failure);
     }
 
-    Authentication authentication =
-        new Authentication()
-            .setTime(SystemDateTime.now())
-            .addMethods(new ArrayList<>(List.of("pwd")))
-            .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
-
     Map<String, Object> response = new HashMap<>();
     response.put("user", user.toMap());
-    response.put("authentication", authentication.toMap());
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
+        operationType(),
+        method(),
         user,
-        authentication,
         response,
         DefaultSecurityEventType.password_success);
   }

@@ -25,6 +25,16 @@ import org.idp.server.platform.security.event.DefaultSecurityEventType;
 public class AuthenticationDeviceDeniedInteractor implements AuthenticationInteractor {
 
   @Override
+  public OperationType operationType() {
+    return OperationType.DENY;
+  }
+
+  @Override
+  public String method() {
+    return "deny";
+  }
+
+  @Override
   public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
       AuthenticationTransaction transaction,
@@ -36,6 +46,7 @@ public class AuthenticationDeviceDeniedInteractor implements AuthenticationInter
     Map<String, Object> response = Map.of();
     DefaultSecurityEventType eventType =
         DefaultSecurityEventType.authentication_device_deny_success;
-    return new AuthenticationInteractionRequestResult(status, type, response, eventType);
+    return new AuthenticationInteractionRequestResult(
+        status, type, operationType(), method(), response, eventType);
   }
 }

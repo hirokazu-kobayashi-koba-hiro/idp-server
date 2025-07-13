@@ -16,16 +16,13 @@
 
 package org.idp.server.authentication.interactors.fidouaf;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditionalRequestResolvers;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
-import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 
@@ -42,6 +39,11 @@ public class FidoUafAuthenticationInteractor implements AuthenticationInteractor
     this.fidoUafExecutors = fidoUafExecutors;
     this.configurationQueryRepository = configurationQueryRepository;
     this.additionalRequestResolvers = additionalRequestResolvers;
+  }
+
+  @Override
+  public String method() {
+    return StandardAuthenticationMethod.FIDO_UAF.type();
   }
 
   @Override
@@ -70,6 +72,8 @@ public class FidoUafAuthenticationInteractor implements AuthenticationInteractor
       return AuthenticationInteractionRequestResult.clientError(
           executionResult.contents(),
           type,
+          operationType(),
+          method(),
           DefaultSecurityEventType.fido_uaf_authentication_failure);
     }
 
@@ -77,23 +81,21 @@ public class FidoUafAuthenticationInteractor implements AuthenticationInteractor
       return AuthenticationInteractionRequestResult.serverError(
           executionResult.contents(),
           type,
+          operationType(),
+          method(),
           DefaultSecurityEventType.fido_uaf_authentication_failure);
     }
 
     String deviceId =
         executionResult.getValueAsStringFromContents(fidoUafConfiguration.deviceIdParam());
     User user = userQueryRepository.findByAuthenticationDevice(tenant, deviceId);
-    Authentication authentication =
-        new Authentication()
-            .setTime(SystemDateTime.now())
-            .addMethods(new ArrayList<>(List.of("hwk")))
-            .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
+        operationType(),
+        method(),
         user,
-        authentication,
         executionResult.contents(),
         DefaultSecurityEventType.fido_uaf_authentication_success);
   }
