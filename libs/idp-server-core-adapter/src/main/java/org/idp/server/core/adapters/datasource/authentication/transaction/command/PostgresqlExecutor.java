@@ -101,7 +101,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
     }
     params.add(jsonConverter.write(authenticationTransaction.authenticationPolicy().toMap()));
     if (authenticationTransaction.hasInteractions()) {
-      params.add(jsonConverter.write(authenticationTransaction.interactionResultsAsMap()));
+      params.add(jsonConverter.write(authenticationTransaction.interactionResultsAsMapObject()));
     } else {
       params.add(null);
     }
@@ -152,7 +152,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
     }
 
     if (authenticationTransaction.hasInteractions()) {
-      params.add(jsonConverter.write(authenticationTransaction.interactionResultsAsMap()));
+      params.add(jsonConverter.write(authenticationTransaction.interactionResultsAsMapObject()));
     } else {
       params.add(null);
     }

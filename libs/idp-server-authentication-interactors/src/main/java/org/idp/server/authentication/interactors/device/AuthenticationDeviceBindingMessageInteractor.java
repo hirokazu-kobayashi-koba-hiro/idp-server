@@ -27,6 +27,11 @@ import org.idp.server.platform.security.event.DefaultSecurityEventType;
 public class AuthenticationDeviceBindingMessageInteractor implements AuthenticationInteractor {
 
   @Override
+  public String method() {
+    return "binding-message";
+  }
+
+  @Override
   public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
       AuthenticationTransaction transaction,
@@ -45,7 +50,8 @@ public class AuthenticationDeviceBindingMessageInteractor implements Authenticat
       DefaultSecurityEventType eventType =
           DefaultSecurityEventType.authentication_device_binding_message_failure;
 
-      return AuthenticationInteractionRequestResult.clientError(response, type, eventType);
+      return AuthenticationInteractionRequestResult.clientError(
+          response, type, operationType(), method(), eventType);
     }
 
     String bindingMessageValue = request.getValueAsString("binding_message");
@@ -57,13 +63,15 @@ public class AuthenticationDeviceBindingMessageInteractor implements Authenticat
       DefaultSecurityEventType eventType =
           DefaultSecurityEventType.authentication_device_binding_message_failure;
 
-      return AuthenticationInteractionRequestResult.clientError(response, type, eventType);
+      return AuthenticationInteractionRequestResult.clientError(
+          response, type, operationType(), method(), eventType);
     }
 
     AuthenticationInteractionStatus status = AuthenticationInteractionStatus.SUCCESS;
     Map<String, Object> response = Map.of();
     DefaultSecurityEventType eventType =
         DefaultSecurityEventType.authentication_device_binding_message_success;
-    return new AuthenticationInteractionRequestResult(status, type, response, eventType);
+    return new AuthenticationInteractionRequestResult(
+        status, type, operationType(), method(), response, eventType);
   }
 }

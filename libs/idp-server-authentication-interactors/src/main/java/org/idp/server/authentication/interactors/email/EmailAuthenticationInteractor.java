@@ -22,7 +22,6 @@ import org.idp.server.core.oidc.authentication.repository.AuthenticationInteract
 import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionQueryRepository;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
-import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 
@@ -36,6 +35,11 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
       AuthenticationInteractionQueryRepository queryRepository) {
     this.commandRepository = commandRepository;
     this.queryRepository = queryRepository;
+  }
+
+  @Override
+  public String method() {
+    return StandardAuthenticationMethod.EMAIL.type();
   }
 
   @Override
@@ -64,8 +68,9 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
       return new AuthenticationInteractionRequestResult(
           AuthenticationInteractionStatus.CLIENT_ERROR,
           type,
+          operationType(),
+          method(),
           transaction.user(),
-          new Authentication(),
           verificationResult.response(),
           DefaultSecurityEventType.email_verification_failure);
     }
@@ -73,21 +78,15 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
     User verifiedUser = transaction.user();
     verifiedUser.setEmailVerified(true);
 
-    Authentication authentication =
-        new Authentication()
-            .setTime(SystemDateTime.now())
-            .addMethods(new ArrayList<>(List.of("otp")))
-            .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
-
     Map<String, Object> response = new HashMap<>();
     response.put("user", verifiedUser.toMap());
-    response.put("authentication", authentication.toMap());
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
+        operationType(),
+        method(),
         verifiedUser,
-        authentication,
         response,
         DefaultSecurityEventType.email_verification_success);
   }

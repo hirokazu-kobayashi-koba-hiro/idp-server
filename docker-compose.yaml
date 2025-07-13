@@ -127,6 +127,7 @@ services:
       - POSTGRES_USER=idpserver
       - POSTGRES_PASSWORD=idpserver
       - POSTGRES_DB=idpserver
+      - TZ=UTC
     ports:
       - "5432:5432"
     command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements"]

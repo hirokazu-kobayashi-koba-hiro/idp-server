@@ -37,6 +37,16 @@ public class WebAuthnRegistrationChallengeInteractor implements AuthenticationIn
   }
 
   @Override
+  public OperationType operationType() {
+    return OperationType.CHALLENGE;
+  }
+
+  @Override
+  public String method() {
+    return StandardAuthenticationMethod.WEB_AUTHN.type();
+  }
+
+  @Override
   public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
       AuthenticationTransaction transaction,
@@ -58,8 +68,9 @@ public class WebAuthnRegistrationChallengeInteractor implements AuthenticationIn
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
+        operationType(),
+        method(),
         transaction.user(),
-        new Authentication(),
         response,
         DefaultSecurityEventType.webauthn_registration_challenge);
   }

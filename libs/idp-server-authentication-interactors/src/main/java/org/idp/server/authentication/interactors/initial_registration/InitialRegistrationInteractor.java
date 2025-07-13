@@ -47,6 +47,16 @@ public class InitialRegistrationInteractor implements AuthenticationInteractor {
   }
 
   @Override
+  public OperationType operationType() {
+    return OperationType.REGISTRATION;
+  }
+
+  @Override
+  public String method() {
+    return "initial-registration";
+  }
+
+  @Override
   public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
       AuthenticationTransaction transaction,
@@ -69,7 +79,7 @@ public class InitialRegistrationInteractor implements AuthenticationInteractor {
       response.put("error_details", validationResult.errors());
 
       return AuthenticationInteractionRequestResult.clientError(
-          response, type, DefaultSecurityEventType.user_signup_failure);
+          response, type, operationType(), method(), DefaultSecurityEventType.user_signup_failure);
     }
 
     String email = request.optValueAsString("email", "");
@@ -85,8 +95,9 @@ public class InitialRegistrationInteractor implements AuthenticationInteractor {
       return new AuthenticationInteractionRequestResult(
           AuthenticationInteractionStatus.CLIENT_ERROR,
           type,
+          operationType(),
+          method(),
           existingUser,
-          new Authentication(),
           response,
           DefaultSecurityEventType.user_signup_conflict);
     }
@@ -95,17 +106,15 @@ public class InitialRegistrationInteractor implements AuthenticationInteractor {
         new IdPUserCreator(jsonSchemaDefinition, request, passwordEncodeDelegation);
     User user = idPUserCreator.create();
 
-    Authentication authentication = new Authentication();
-
     Map<String, Object> response = new HashMap<>();
     response.put("user", user.toMap());
-    response.put("authentication", authentication.toMap());
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
+        operationType(),
+        method(),
         user,
-        authentication,
         response,
         DefaultSecurityEventType.user_signup);
   }

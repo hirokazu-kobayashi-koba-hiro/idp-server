@@ -26,33 +26,52 @@ public class AuthenticationInteractionRequestResult {
 
   AuthenticationInteractionStatus status;
   AuthenticationInteractionType type;
+  OperationType operationType;
+  String method;
   User user;
-  Authentication authentication;
   Map<String, Object> response;
   SecurityEventType eventType;
 
   public static AuthenticationInteractionRequestResult clientError(
       Map<String, Object> response,
       AuthenticationInteractionType type,
+      OperationType operationType,
+      String method,
       DefaultSecurityEventType eventType) {
     return new AuthenticationInteractionRequestResult(
-        AuthenticationInteractionStatus.CLIENT_ERROR, type, response, eventType);
+        AuthenticationInteractionStatus.CLIENT_ERROR,
+        type,
+        operationType,
+        method,
+        response,
+        eventType);
   }
 
   public static AuthenticationInteractionRequestResult serverError(
       Map<String, Object> response,
       AuthenticationInteractionType type,
+      OperationType operationType,
+      String method,
       DefaultSecurityEventType eventType) {
     return new AuthenticationInteractionRequestResult(
-        AuthenticationInteractionStatus.SERVER_ERROR, type, response, eventType);
+        AuthenticationInteractionStatus.SERVER_ERROR,
+        type,
+        operationType,
+        method,
+        response,
+        eventType);
   }
 
   public AuthenticationInteractionRequestResult(
       AuthenticationInteractionStatus status,
       AuthenticationInteractionType type,
+      OperationType operationType,
+      String method,
       Map<String, Object> response,
       DefaultSecurityEventType eventType) {
     this.status = status;
+    this.operationType = operationType;
+    this.method = method;
     this.type = type;
     this.response = response;
     this.eventType = eventType.toEventType();
@@ -61,14 +80,16 @@ public class AuthenticationInteractionRequestResult {
   public AuthenticationInteractionRequestResult(
       AuthenticationInteractionStatus status,
       AuthenticationInteractionType type,
+      OperationType operationType,
+      String method,
       User user,
-      Authentication authentication,
       Map<String, Object> response,
       DefaultSecurityEventType eventType) {
     this.status = status;
     this.type = type;
+    this.operationType = operationType;
+    this.method = method;
     this.user = user;
-    this.authentication = authentication;
     this.response = response;
     this.eventType = eventType.toEventType();
   }
@@ -76,14 +97,16 @@ public class AuthenticationInteractionRequestResult {
   public AuthenticationInteractionRequestResult(
       AuthenticationInteractionStatus status,
       AuthenticationInteractionType type,
+      OperationType operationType,
+      String method,
       User user,
-      Authentication authentication,
       Map<String, Object> response,
       SecurityEventType eventType) {
     this.status = status;
     this.type = type;
+    this.operationType = operationType;
+    this.method = method;
     this.user = user;
-    this.authentication = authentication;
     this.response = response;
     this.eventType = eventType;
   }
@@ -104,12 +127,16 @@ public class AuthenticationInteractionRequestResult {
     return type;
   }
 
-  public User user() {
-    return user;
+  public OperationType operationType() {
+    return operationType;
   }
 
-  public Authentication authentication() {
-    return authentication;
+  public String method() {
+    return method;
+  }
+
+  public User user() {
+    return user;
   }
 
   public Map<String, Object> response() {
@@ -126,10 +153,6 @@ public class AuthenticationInteractionRequestResult {
 
   public boolean hasUser() {
     return Objects.nonNull(user) && user.exists();
-  }
-
-  public boolean hasAuthentication() {
-    return Objects.nonNull(authentication) && authentication.exists();
   }
 
   public int statusCode() {

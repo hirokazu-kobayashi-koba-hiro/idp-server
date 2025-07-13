@@ -16,20 +16,36 @@
 
 package org.idp.server.core.oidc.authentication;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.core.oidc.federation.FederationInteractionResult;
+import org.idp.server.platform.date.SystemDateTime;
 
 public class AuthenticationInteractionResult {
 
+  String operationType;
+  String method;
   int callCount;
   int successCount;
   int failureCount;
+  LocalDateTime interactionTime;
 
   public AuthenticationInteractionResult() {}
 
-  public AuthenticationInteractionResult(int callCount, int successCount, int failureCount) {
+  public AuthenticationInteractionResult(
+      String operationType,
+      String method,
+      int callCount,
+      int successCount,
+      int failureCount,
+      LocalDateTime interactionTime) {
+    this.operationType = operationType;
+    this.method = method;
     this.callCount = callCount;
     this.successCount = successCount;
     this.failureCount = failureCount;
+    this.interactionTime = interactionTime;
   }
 
   public int callCount() {
@@ -50,7 +66,12 @@ public class AuthenticationInteractionResult {
     int increaseFailureCount = interactionRequestResult.isSuccess() ? 0 : 1;
 
     return new AuthenticationInteractionResult(
-        callCount + 1, successCount + increaseSuccessCount, failureCount + increaseFailureCount);
+        operationType,
+        method,
+        callCount + 1,
+        successCount + increaseSuccessCount,
+        failureCount + increaseFailureCount,
+        SystemDateTime.now());
   }
 
   public AuthenticationInteractionResult updateWith(
@@ -59,6 +80,42 @@ public class AuthenticationInteractionResult {
     int increaseFailureCount = interactionRequestResult.isSuccess() ? 0 : 1;
 
     return new AuthenticationInteractionResult(
-        callCount + 1, successCount + increaseSuccessCount, failureCount + increaseFailureCount);
+        operationType,
+        method,
+        callCount + 1,
+        successCount + increaseSuccessCount,
+        failureCount + increaseFailureCount,
+        SystemDateTime.now());
+  }
+
+  public OperationType operationType() {
+    return OperationType.of(operationType);
+  }
+
+  public boolean isAuthentication() {
+    return operationType().isAuthentication();
+  }
+
+  public boolean isDeny() {
+    return operationType().isDeny();
+  }
+
+  public String method() {
+    return method;
+  }
+
+  public LocalDateTime interactionTime() {
+    return interactionTime;
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("operation_type", operationType);
+    map.put("method", method);
+    map.put("call_count", callCount);
+    map.put("success_count", successCount);
+    map.put("failure_count", failureCount);
+    map.put("interaction_time", interactionTime.toString());
+    return map;
   }
 }

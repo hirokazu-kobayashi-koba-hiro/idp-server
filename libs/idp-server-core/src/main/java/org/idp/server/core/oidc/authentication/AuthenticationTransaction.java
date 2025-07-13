@@ -88,10 +88,14 @@ public class AuthenticationTransaction {
 
     } else {
 
+      String operationType = interactionRequestResult.operationType().name();
+      String method = interactionRequestResult.method();
       int successCount = interactionRequestResult.isSuccess() ? 1 : 0;
       int failureCount = interactionRequestResult.isSuccess() ? 0 : 1;
+      LocalDateTime interactionTime = SystemDateTime.now();
       AuthenticationInteractionResult result =
-          new AuthenticationInteractionResult(1, successCount, failureCount);
+          new AuthenticationInteractionResult(
+              operationType, method, 1, successCount, failureCount, interactionTime);
       resultMap.put(interactionRequestResult.interactionTypeName(), result);
     }
 
@@ -138,10 +142,14 @@ public class AuthenticationTransaction {
 
     } else {
 
+      String operationType = OperationType.AUTHENTICATION.name();
+      String method = result.ssoProvider().name();
       int successCount = result.isSuccess() ? 1 : 0;
       int failureCount = result.isSuccess() ? 0 : 1;
+      LocalDateTime interactionTime = SystemDateTime.now();
       AuthenticationInteractionResult authenticationInteractionResult =
-          new AuthenticationInteractionResult(1, successCount, failureCount);
+          new AuthenticationInteractionResult(
+              operationType, method, 1, successCount, failureCount, interactionTime);
       resultMap.put(result.interactionTypeName(), authenticationInteractionResult);
     }
 
@@ -183,8 +191,8 @@ public class AuthenticationTransaction {
     return interactionResults;
   }
 
-  public Map<String, AuthenticationInteractionResult> interactionResultsAsMap() {
-    return interactionResults.toMap();
+  public Map<String, Object> interactionResultsAsMapObject() {
+    return interactionResults.toMapAsObject();
   }
 
   public Map<String, Object> toMap() {
@@ -261,7 +269,11 @@ public class AuthenticationTransaction {
   }
 
   public Authentication authentication() {
-    LocalDateTime time = SystemDateTime.now();
+    if (!isSuccess()) {
+      return new Authentication();
+    }
+
+    LocalDateTime time = interactionResults.authenticationTime();
     List<String> methods = interactionResults.authenticationMethods();
     List<String> acrValues = AcrResolver.resolve(authenticationPolicy.acrMappingRules(), methods);
     return new Authentication().setTime(time).addMethods(methods).addAcrValues(acrValues);

@@ -42,6 +42,16 @@ public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor
   }
 
   @Override
+  public OperationType operationType() {
+    return OperationType.DE_REGISTRATION;
+  }
+
+  @Override
+  public String method() {
+    return StandardAuthenticationMethod.FIDO_UAF.type();
+  }
+
+  @Override
   public AuthenticationInteractionRequestResult interact(
       Tenant tenant,
       AuthenticationTransaction transaction,
@@ -66,6 +76,8 @@ public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor
       return AuthenticationInteractionRequestResult.clientError(
           executionResult.contents(),
           type,
+          operationType(),
+          method(),
           DefaultSecurityEventType.fido_uaf_deregistration_failure);
     }
 
@@ -73,6 +85,8 @@ public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor
       return AuthenticationInteractionRequestResult.serverError(
           executionResult.contents(),
           type,
+          operationType(),
+          method(),
           DefaultSecurityEventType.fido_uaf_deregistration_failure);
     }
 
@@ -84,8 +98,9 @@ public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
+        operationType(),
+        method(),
         removedDeviceUser,
-        new Authentication(),
         executionResult.contents(),
         DefaultSecurityEventType.fido_uaf_deregistration_success);
   }

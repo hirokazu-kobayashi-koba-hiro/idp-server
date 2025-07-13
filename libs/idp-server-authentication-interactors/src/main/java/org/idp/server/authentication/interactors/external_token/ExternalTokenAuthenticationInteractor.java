@@ -22,7 +22,6 @@ import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigur
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.mapper.UserInfoMapper;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
-import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.http.*;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
@@ -35,6 +34,11 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
       AuthenticationConfigurationQueryRepository configurationRepository) {
     this.configurationRepository = configurationRepository;
     this.httpRequestExecutor = new HttpRequestExecutor(HttpClientFactory.defaultClient());
+  }
+
+  @Override
+  public String method() {
+    return "external-token";
   }
 
   @Override
@@ -58,6 +62,8 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
       return AuthenticationInteractionRequestResult.clientError(
           userinfoResult.toMap(),
           type,
+          operationType(),
+          method(),
           DefaultSecurityEventType.external_token_authentication_failure);
     }
 
@@ -65,6 +71,8 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
       return AuthenticationInteractionRequestResult.serverError(
           userinfoResult.toMap(),
           type,
+          operationType(),
+          method(),
           DefaultSecurityEventType.external_token_authentication_failure);
     }
 
@@ -85,21 +93,15 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
       user.setSub(UUID.randomUUID().toString());
     }
 
-    Authentication authentication =
-        new Authentication()
-            .setTime(SystemDateTime.now())
-            .addMethods(new ArrayList<>(List.of("token")))
-            .addAcrValues(List.of("urn:mace:incommon:iap:silver"));
-
     Map<String, Object> result = new HashMap<>();
     result.put("user", user.toMap());
-    result.put("authentication", authentication.toMap());
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
+        operationType(),
+        method(),
         user,
-        authentication,
         result,
         DefaultSecurityEventType.external_token_authentication_success);
   }

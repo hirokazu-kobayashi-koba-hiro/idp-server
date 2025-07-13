@@ -16,7 +16,9 @@
 
 package org.idp.server.core.oidc.authentication;
 
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 import org.idp.server.platform.json.JsonReadable;
 
 public class AuthenticationInteractionResults implements JsonReadable {
@@ -51,6 +53,11 @@ public class AuthenticationInteractionResults implements JsonReadable {
     return values;
   }
 
+  public Map<String, Object> toMapAsObject() {
+    return values.entrySet().stream()
+        .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toMap()));
+  }
+
   public AuthenticationInteractionResult get(String interactionType) {
     return values.get(interactionType);
   }
@@ -66,7 +73,8 @@ public class AuthenticationInteractionResults implements JsonReadable {
 
   public boolean containsDenyInteraction() {
     for (Map.Entry<String, AuthenticationInteractionResult> result : values.entrySet()) {
-      if (result.getKey().contains("deny") && result.getValue().successCount() > 0) {
+      AuthenticationInteractionResult interactionResult = result.getValue();
+      if (interactionResult.isDeny() && interactionResult.successCount() > 0) {
         return true;
       }
     }
@@ -76,11 +84,21 @@ public class AuthenticationInteractionResults implements JsonReadable {
   public List<String> authenticationMethods() {
     List<String> methods = new ArrayList<>();
     for (Map.Entry<String, AuthenticationInteractionResult> result : values.entrySet()) {
-      if (result.getKey().contains("-authentication") && result.getValue().successCount() > 0) {
-        methods.add(result.getKey().replace("-authentication", ""));
+      AuthenticationInteractionResult interactionResult = result.getValue();
+      if (interactionResult.isAuthentication() && interactionResult.successCount() > 0) {
+        methods.add(interactionResult.method());
       }
     }
 
     return methods;
+  }
+
+  public LocalDateTime authenticationTime() {
+    return values.entrySet().stream()
+        .map(Map.Entry::getValue)
+        .filter(result -> result.isAuthentication() && result.successCount() > 0)
+        .map(AuthenticationInteractionResult::interactionTime)
+        .max(Comparator.naturalOrder())
+        .orElse(null);
   }
 }
