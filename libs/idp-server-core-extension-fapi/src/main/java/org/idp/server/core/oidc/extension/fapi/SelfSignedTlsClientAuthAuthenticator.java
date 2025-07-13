@@ -17,16 +17,6 @@
 package org.idp.server.core.oidc.extension.fapi;
 
 import java.util.List;
-import org.idp.server.basic.jose.JsonWebKey;
-import org.idp.server.basic.jose.JsonWebKeyInvalidException;
-import org.idp.server.basic.jose.JsonWebKeys;
-import org.idp.server.basic.jose.JwkParser;
-import org.idp.server.basic.type.mtls.ClientCert;
-import org.idp.server.basic.type.oauth.ClientAuthenticationType;
-import org.idp.server.basic.type.oauth.ClientSecret;
-import org.idp.server.basic.type.oauth.RequestedClientId;
-import org.idp.server.basic.x509.X509CertInvalidException;
-import org.idp.server.basic.x509.X509Certification;
 import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.oidc.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.oidc.clientauthenticator.plugin.ClientAuthenticator;
@@ -34,6 +24,16 @@ import org.idp.server.core.oidc.clientcredentials.ClientAssertionJwt;
 import org.idp.server.core.oidc.clientcredentials.ClientAuthenticationPublicKey;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.mtls.ClientCertification;
+import org.idp.server.core.oidc.type.mtls.ClientCert;
+import org.idp.server.core.oidc.type.oauth.ClientAuthenticationType;
+import org.idp.server.core.oidc.type.oauth.ClientSecret;
+import org.idp.server.core.oidc.type.oauth.RequestedClientId;
+import org.idp.server.platform.jose.JsonWebKey;
+import org.idp.server.platform.jose.JsonWebKeyInvalidException;
+import org.idp.server.platform.jose.JsonWebKeys;
+import org.idp.server.platform.jose.JwkParser;
+import org.idp.server.platform.x509.X509CertInvalidException;
+import org.idp.server.platform.x509.X509Certification;
 
 public class SelfSignedTlsClientAuthAuthenticator implements ClientAuthenticator {
 

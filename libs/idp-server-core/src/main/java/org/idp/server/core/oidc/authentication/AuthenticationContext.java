@@ -18,10 +18,10 @@ package org.idp.server.core.oidc.authentication;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.type.ciba.BindingMessage;
-import org.idp.server.basic.type.oauth.Scopes;
-import org.idp.server.basic.type.oidc.AcrValues;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
+import org.idp.server.core.oidc.type.ciba.BindingMessage;
+import org.idp.server.core.oidc.type.oauth.Scopes;
+import org.idp.server.core.oidc.type.oidc.AcrValues;
 
 public class AuthenticationContext {
   AcrValues acrValues;

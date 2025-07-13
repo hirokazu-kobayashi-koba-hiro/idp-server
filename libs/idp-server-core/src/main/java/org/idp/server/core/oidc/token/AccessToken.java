@@ -18,16 +18,16 @@ package org.idp.server.core.oidc.token;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
-import org.idp.server.basic.type.extension.CreatedAt;
-import org.idp.server.basic.type.extension.CustomProperties;
-import org.idp.server.basic.type.extension.ExpiresAt;
-import org.idp.server.basic.type.oauth.*;
 import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.oidc.client.ClientIdentifier;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.mtls.ClientCertificationThumbprint;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
+import org.idp.server.core.oidc.type.extension.CreatedAt;
+import org.idp.server.core.oidc.type.extension.CustomProperties;
+import org.idp.server.core.oidc.type.extension.ExpiresAt;
+import org.idp.server.core.oidc.type.oauth.*;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class AccessToken {

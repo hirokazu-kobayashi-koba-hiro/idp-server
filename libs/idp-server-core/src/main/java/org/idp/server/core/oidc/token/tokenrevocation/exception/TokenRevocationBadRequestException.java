@@ -16,8 +16,8 @@
 
 package org.idp.server.core.oidc.token.tokenrevocation.exception;
 
-import org.idp.server.basic.type.oauth.Error;
-import org.idp.server.basic.type.oauth.ErrorDescription;
+import org.idp.server.core.oidc.type.oauth.Error;
+import org.idp.server.core.oidc.type.oauth.ErrorDescription;
 
 public class TokenRevocationBadRequestException extends RuntimeException {
   String error;

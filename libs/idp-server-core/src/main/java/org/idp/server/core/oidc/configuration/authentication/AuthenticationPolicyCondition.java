@@ -20,9 +20,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.type.AuthFlow;
-import org.idp.server.basic.type.oauth.Scopes;
-import org.idp.server.basic.type.oidc.AcrValues;
+import org.idp.server.core.oidc.type.AuthFlow;
+import org.idp.server.core.oidc.type.oauth.Scopes;
+import org.idp.server.core.oidc.type.oidc.AcrValues;
 import org.idp.server.platform.json.JsonReadable;
 
 public class AuthenticationPolicyCondition implements JsonReadable {

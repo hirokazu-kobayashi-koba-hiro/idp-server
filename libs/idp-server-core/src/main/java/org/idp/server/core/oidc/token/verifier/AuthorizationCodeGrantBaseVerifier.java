@@ -16,12 +16,12 @@
 
 package org.idp.server.core.oidc.token.verifier;
 
-import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.grant.AuthorizationCodeGrant;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.token.TokenRequestContext;
 import org.idp.server.core.oidc.token.exception.TokenBadRequestException;
+import org.idp.server.core.oidc.type.oauth.GrantType;
 
 public class AuthorizationCodeGrantBaseVerifier {
 

@@ -17,8 +17,8 @@
 package org.idp.server.core.oidc.mtls;
 
 import java.util.Objects;
-import org.idp.server.basic.x509.X509CertInvalidException;
-import org.idp.server.basic.x509.X509Certification;
+import org.idp.server.platform.x509.X509CertInvalidException;
+import org.idp.server.platform.x509.X509Certification;
 
 public class ClientCertification {
   X509Certification x509Certification;

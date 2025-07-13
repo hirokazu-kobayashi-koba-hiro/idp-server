@@ -16,18 +16,18 @@
 
 package org.idp.server.core.oidc.request;
 
-import static org.idp.server.basic.type.OAuthRequestKey.*;
+import static org.idp.server.core.oidc.type.OAuthRequestKey.*;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.basic.type.OAuthRequestKey;
-import org.idp.server.basic.type.oauth.*;
-import org.idp.server.basic.type.oidc.*;
-import org.idp.server.basic.type.pkce.CodeChallenge;
-import org.idp.server.basic.type.pkce.CodeChallengeMethod;
-import org.idp.server.basic.type.rar.AuthorizationDetailsEntity;
+import org.idp.server.core.oidc.type.OAuthRequestKey;
+import org.idp.server.core.oidc.type.oauth.*;
+import org.idp.server.core.oidc.type.oidc.*;
+import org.idp.server.core.oidc.type.pkce.CodeChallenge;
+import org.idp.server.core.oidc.type.pkce.CodeChallengeMethod;
+import org.idp.server.core.oidc.type.rar.AuthorizationDetailsEntity;
 
 /** RequestObjectParameters */
 public class RequestObjectParameters {

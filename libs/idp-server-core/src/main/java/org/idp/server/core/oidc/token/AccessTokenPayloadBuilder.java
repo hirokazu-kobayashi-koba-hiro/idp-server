@@ -18,11 +18,11 @@ package org.idp.server.core.oidc.token;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.type.extension.CreatedAt;
-import org.idp.server.basic.type.extension.ExpiresAt;
-import org.idp.server.basic.type.oauth.*;
 import org.idp.server.core.oidc.mtls.ClientCertificationThumbprint;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
+import org.idp.server.core.oidc.type.extension.CreatedAt;
+import org.idp.server.core.oidc.type.extension.ExpiresAt;
+import org.idp.server.core.oidc.type.oauth.*;
 
 public class AccessTokenPayloadBuilder {
   Map<String, Object> values = new HashMap<>();

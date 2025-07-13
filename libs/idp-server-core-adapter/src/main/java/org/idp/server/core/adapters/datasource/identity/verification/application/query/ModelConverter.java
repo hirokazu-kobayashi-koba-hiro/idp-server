@@ -18,13 +18,13 @@ package org.idp.server.core.adapters.datasource.identity.verification.applicatio
 
 import java.time.LocalDateTime;
 import java.util.*;
-import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.*;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplicationDetails;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationService;
 import org.idp.server.core.oidc.identity.UserIdentifier;
+import org.idp.server.core.oidc.type.oauth.RequestedClientId;
 import org.idp.server.platform.date.LocalDateTimeParser;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;

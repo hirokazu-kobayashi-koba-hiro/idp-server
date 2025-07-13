@@ -16,14 +16,14 @@
 
 package org.idp.server.core.extension.ciba.handler;
 
-import org.idp.server.basic.type.oauth.Error;
-import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.core.extension.ciba.exception.CibaAuthorizeBadRequestException;
 import org.idp.server.core.extension.ciba.exception.CibaGrantNotFoundException;
 import org.idp.server.core.extension.ciba.handler.io.CibaDenyResponse;
 import org.idp.server.core.extension.ciba.handler.io.CibaDenyStatus;
 import org.idp.server.core.oidc.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.core.oidc.configuration.exception.ServerConfigurationNotFoundException;
+import org.idp.server.core.oidc.type.oauth.Error;
+import org.idp.server.core.oidc.type.oauth.ErrorDescription;
 import org.idp.server.platform.log.LoggerWrapper;
 
 public class CibaDenyRequestErrorHandler {

@@ -16,13 +16,13 @@
 
 package org.idp.server.core.oidc.response;
 
-import static org.idp.server.basic.type.oauth.ResponseType.*;
-import static org.idp.server.basic.type.oauth.ResponseType.none;
+import static org.idp.server.core.oidc.type.oauth.ResponseType.*;
+import static org.idp.server.core.oidc.type.oauth.ResponseType.none;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.basic.type.oauth.ResponseType;
+import org.idp.server.core.oidc.type.oauth.ResponseType;
 import org.idp.server.platform.exception.UnSupportedException;
 
 public class AuthorizationResponseCreators {

@@ -16,7 +16,6 @@
 
 package org.idp.server.usecases.application.system;
 
-import org.idp.server.basic.type.extension.Pairs;
 import org.idp.server.control_plane.base.TokenIntrospectionCreator;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserAuthenticationApi;
@@ -32,6 +31,7 @@ import org.idp.server.platform.exception.UnauthorizedException;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
+import org.idp.server.platform.type.Pairs;
 
 @Transaction
 public class UserAuthenticationEntryService implements UserAuthenticationApi {

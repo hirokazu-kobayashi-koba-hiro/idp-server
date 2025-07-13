@@ -18,16 +18,16 @@ package org.idp.server.core.adapters.datasource.authentication.transaction.query
 
 import java.time.LocalDateTime;
 import java.util.*;
-import org.idp.server.basic.type.AuthFlow;
-import org.idp.server.basic.type.ciba.BindingMessage;
-import org.idp.server.basic.type.oauth.RequestedClientId;
-import org.idp.server.basic.type.oauth.Scopes;
-import org.idp.server.basic.type.oidc.AcrValues;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.rar.AuthorizationDetail;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
+import org.idp.server.core.oidc.type.AuthFlow;
+import org.idp.server.core.oidc.type.ciba.BindingMessage;
+import org.idp.server.core.oidc.type.oauth.RequestedClientId;
+import org.idp.server.core.oidc.type.oauth.Scopes;
+import org.idp.server.core.oidc.type.oidc.AcrValues;
 import org.idp.server.platform.date.LocalDateTimeParser;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;

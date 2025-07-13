@@ -18,9 +18,9 @@ package org.idp.server.core.oidc.token.tokenintrospection;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.type.ArrayValueMap;
-import org.idp.server.basic.type.OAuthRequestKey;
-import org.idp.server.basic.type.oauth.*;
+import org.idp.server.core.oidc.type.ArrayValueMap;
+import org.idp.server.core.oidc.type.OAuthRequestKey;
+import org.idp.server.core.oidc.type.oauth.*;
 
 /** TokenRequestParameters */
 public class TokenIntrospectionRequestParameters {

@@ -16,20 +16,20 @@
 
 package org.idp.server.core.extension.ciba;
 
-import static org.idp.server.basic.type.OAuthRequestKey.*;
+import static org.idp.server.core.oidc.type.OAuthRequestKey.*;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.basic.type.OAuthRequestKey;
-import org.idp.server.basic.type.ciba.*;
-import org.idp.server.basic.type.oauth.*;
-import org.idp.server.basic.type.oidc.AcrValues;
-import org.idp.server.basic.type.oidc.IdTokenHint;
-import org.idp.server.basic.type.oidc.LoginHint;
-import org.idp.server.basic.type.oidc.RequestObject;
 import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestParameters;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
+import org.idp.server.core.oidc.type.OAuthRequestKey;
+import org.idp.server.core.oidc.type.ciba.*;
+import org.idp.server.core.oidc.type.oauth.*;
+import org.idp.server.core.oidc.type.oidc.AcrValues;
+import org.idp.server.core.oidc.type.oidc.IdTokenHint;
+import org.idp.server.core.oidc.type.oidc.LoginHint;
+import org.idp.server.core.oidc.type.oidc.RequestObject;
 
 public class CibaRequestObjectParameters implements BackchannelRequestParameters {
   Map<String, Object> values;

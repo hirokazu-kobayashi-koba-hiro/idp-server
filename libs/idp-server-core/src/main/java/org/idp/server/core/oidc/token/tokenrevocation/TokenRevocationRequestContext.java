@@ -16,11 +16,11 @@
 
 package org.idp.server.core.oidc.token.tokenrevocation;
 
-import org.idp.server.basic.type.mtls.ClientCert;
-import org.idp.server.basic.type.oauth.*;
 import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.core.oidc.type.mtls.ClientCert;
+import org.idp.server.core.oidc.type.oauth.*;
 
 public class TokenRevocationRequestContext implements BackchannelRequestContext {
 

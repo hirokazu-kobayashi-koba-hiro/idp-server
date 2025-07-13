@@ -17,7 +17,7 @@
 package org.idp.server.core.oidc.token;
 
 import java.util.Base64;
-import org.idp.server.basic.type.oauth.AccessTokenEntity;
+import org.idp.server.core.oidc.type.oauth.AccessTokenEntity;
 import org.idp.server.platform.http.BasicAuth;
 
 public interface AuthorizationHeaderHandlerable {

@@ -16,8 +16,8 @@
 
 package org.idp.server.core.oidc.token.verifier;
 
-import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.core.oidc.token.exception.TokenBadRequestException;
+import org.idp.server.core.oidc.type.oauth.Scopes;
 
 public class ClientCredentialsGrantVerifier {
 

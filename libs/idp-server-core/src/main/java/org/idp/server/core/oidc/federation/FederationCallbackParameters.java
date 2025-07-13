@@ -18,8 +18,8 @@ package org.idp.server.core.oidc.federation;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.type.ArrayValueMap;
-import org.idp.server.basic.type.oauth.*;
+import org.idp.server.core.oidc.type.ArrayValueMap;
+import org.idp.server.core.oidc.type.oauth.*;
 
 /** FederationCallbackParameters */
 public class FederationCallbackParameters {

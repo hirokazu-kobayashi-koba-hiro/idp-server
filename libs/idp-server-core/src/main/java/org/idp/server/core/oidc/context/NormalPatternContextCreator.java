@@ -17,7 +17,6 @@
 package org.idp.server.core.oidc.context;
 
 import java.util.Set;
-import org.idp.server.basic.jose.JoseContext;
 import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.OAuthRequestContext;
 import org.idp.server.core.oidc.OAuthRequestPattern;
@@ -26,6 +25,7 @@ import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.factory.NormalRequestFactory;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.OAuthRequestParameters;
+import org.idp.server.platform.jose.JoseContext;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /** NormalPatternContextService */

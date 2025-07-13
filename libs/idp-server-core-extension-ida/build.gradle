@@ -13,7 +13,6 @@ repositories {
 dependencies {
 	implementation project(':libs:idp-server-platform')
 	implementation project(':libs:idp-server-core')
-	implementation project(':libs:idp-server-core-supporter')
 
 	testImplementation platform('org.junit:junit-bom:5.10.0')
 	testImplementation 'org.junit.jupiter:junit-jupiter'

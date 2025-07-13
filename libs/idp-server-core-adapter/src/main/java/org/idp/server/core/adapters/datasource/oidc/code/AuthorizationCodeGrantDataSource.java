@@ -18,9 +18,9 @@ package org.idp.server.core.adapters.datasource.oidc.code;
 
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.basic.type.oauth.AuthorizationCode;
 import org.idp.server.core.oidc.grant.AuthorizationCodeGrant;
 import org.idp.server.core.oidc.repository.AuthorizationCodeGrantRepository;
+import org.idp.server.core.oidc.type.oauth.AuthorizationCode;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class AuthorizationCodeGrantDataSource implements AuthorizationCodeGrantRepository {

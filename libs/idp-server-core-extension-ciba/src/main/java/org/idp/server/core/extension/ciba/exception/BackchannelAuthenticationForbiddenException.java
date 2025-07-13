@@ -16,8 +16,8 @@
 
 package org.idp.server.core.extension.ciba.exception;
 
-import org.idp.server.basic.type.oauth.Error;
-import org.idp.server.basic.type.oauth.ErrorDescription;
+import org.idp.server.core.oidc.type.oauth.Error;
+import org.idp.server.core.oidc.type.oauth.ErrorDescription;
 import org.idp.server.platform.exception.ForbiddenException;
 
 public class BackchannelAuthenticationForbiddenException extends ForbiddenException {

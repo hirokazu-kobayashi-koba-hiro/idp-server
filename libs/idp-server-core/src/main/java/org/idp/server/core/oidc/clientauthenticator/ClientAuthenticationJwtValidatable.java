@@ -17,12 +17,12 @@
 package org.idp.server.core.oidc.clientauthenticator;
 
 import java.util.Date;
-import org.idp.server.basic.jose.JoseContext;
-import org.idp.server.basic.jose.JsonWebTokenClaims;
-import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.oidc.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.type.oauth.RequestedClientId;
 import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.jose.JoseContext;
+import org.idp.server.platform.jose.JsonWebTokenClaims;
 
 public interface ClientAuthenticationJwtValidatable {
 

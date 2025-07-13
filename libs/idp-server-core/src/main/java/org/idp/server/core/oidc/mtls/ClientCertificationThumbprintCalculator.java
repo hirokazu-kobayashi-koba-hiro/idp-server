@@ -16,8 +16,8 @@
 
 package org.idp.server.core.oidc.mtls;
 
-import org.idp.server.basic.base64.Base64Codeable;
-import org.idp.server.basic.hash.MessageDigestable;
+import org.idp.server.platform.base64.Base64Codeable;
+import org.idp.server.platform.hash.MessageDigestable;
 
 /**
  * certificate-thumbprint

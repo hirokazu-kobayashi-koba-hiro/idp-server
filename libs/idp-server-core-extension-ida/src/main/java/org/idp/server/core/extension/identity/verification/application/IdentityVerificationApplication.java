@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
@@ -33,6 +32,7 @@ import org.idp.server.core.extension.identity.verification.delegation.ExternalId
 import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationService;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserIdentifier;
+import org.idp.server.core.oidc.type.oauth.RequestedClientId;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;

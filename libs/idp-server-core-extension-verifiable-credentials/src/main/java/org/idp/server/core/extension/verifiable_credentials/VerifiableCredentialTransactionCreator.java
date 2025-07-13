@@ -17,13 +17,13 @@
 package org.idp.server.core.extension.verifiable_credentials;
 
 import java.util.UUID;
-import org.idp.server.basic.type.oauth.RequestedClientId;
-import org.idp.server.basic.type.oauth.Subject;
-import org.idp.server.basic.type.vc.Credential;
-import org.idp.server.basic.type.verifiablecredential.CredentialIssuer;
-import org.idp.server.basic.type.verifiablecredential.TransactionId;
 import org.idp.server.core.oidc.configuration.vc.VerifiableCredentialConfiguration;
 import org.idp.server.core.oidc.token.OAuthToken;
+import org.idp.server.core.oidc.type.oauth.RequestedClientId;
+import org.idp.server.core.oidc.type.oauth.Subject;
+import org.idp.server.core.oidc.type.vc.Credential;
+import org.idp.server.core.oidc.type.verifiablecredential.CredentialIssuer;
+import org.idp.server.core.oidc.type.verifiablecredential.TransactionId;
 
 public class VerifiableCredentialTransactionCreator {
 

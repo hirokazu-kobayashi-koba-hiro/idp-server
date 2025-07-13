@@ -16,9 +16,9 @@
 
 package org.idp.server.core.oidc.token;
 
-import org.idp.server.basic.type.oidc.IdToken;
-import org.idp.server.basic.type.verifiablecredential.CNonce;
-import org.idp.server.basic.type.verifiablecredential.CNonceExpiresIn;
+import org.idp.server.core.oidc.type.oidc.IdToken;
+import org.idp.server.core.oidc.type.verifiablecredential.CNonce;
+import org.idp.server.core.oidc.type.verifiablecredential.CNonceExpiresIn;
 
 public class OAuthTokenBuilder {
   OAuthTokenIdentifier identifier;

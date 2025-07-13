@@ -19,13 +19,13 @@ package org.idp.server.federation.sso.oidc;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.jose.JoseContext;
-import org.idp.server.basic.jose.JoseHandler;
-import org.idp.server.basic.jose.JoseInvalidException;
-import org.idp.server.basic.jose.JsonWebTokenClaims;
 import org.idp.server.core.oidc.federation.sso.SsoProvider;
 import org.idp.server.core.oidc.federation.sso.oidc.OidcSsoSession;
 import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.jose.JoseContext;
+import org.idp.server.platform.jose.JoseHandler;
+import org.idp.server.platform.jose.JoseInvalidException;
+import org.idp.server.platform.jose.JsonWebTokenClaims;
 
 public interface OidcSsoExecutor {
 

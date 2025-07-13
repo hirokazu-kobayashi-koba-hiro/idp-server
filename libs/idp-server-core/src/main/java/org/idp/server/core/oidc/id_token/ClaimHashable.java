@@ -17,8 +17,8 @@
 package org.idp.server.core.oidc.id_token;
 
 import java.util.Arrays;
-import org.idp.server.basic.base64.Base64Codeable;
-import org.idp.server.basic.hash.MessageDigestable;
+import org.idp.server.platform.base64.Base64Codeable;
+import org.idp.server.platform.hash.MessageDigestable;
 
 /**
  * example at_hash case

@@ -16,18 +16,18 @@
 
 package org.idp.server.core.oidc.token.service;
 
-import static org.idp.server.basic.type.oauth.GrantType.*;
+import static org.idp.server.core.oidc.type.oauth.GrantType.*;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.core.oidc.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.oidc.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.oidc.repository.AuthorizationRequestRepository;
 import org.idp.server.core.oidc.token.exception.TokenUnSupportedGrantException;
 import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.oidc.token.repository.OAuthTokenQueryRepository;
+import org.idp.server.core.oidc.type.oauth.GrantType;
 
 public class OAuthTokenCreationServices {
 

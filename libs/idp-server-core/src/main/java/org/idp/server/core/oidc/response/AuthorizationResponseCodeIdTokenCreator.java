@@ -16,15 +16,15 @@
 
 package org.idp.server.core.oidc.response;
 
-import org.idp.server.basic.type.extension.JarmPayload;
-import org.idp.server.basic.type.extension.ResponseModeValue;
-import org.idp.server.basic.type.oauth.*;
-import org.idp.server.basic.type.oidc.IdToken;
 import org.idp.server.core.oidc.OAuthAuthorizeContext;
 import org.idp.server.core.oidc.id_token.IdTokenCreator;
 import org.idp.server.core.oidc.id_token.IdTokenCustomClaims;
 import org.idp.server.core.oidc.id_token.IdTokenCustomClaimsBuilder;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
+import org.idp.server.core.oidc.type.extension.JarmPayload;
+import org.idp.server.core.oidc.type.extension.ResponseModeValue;
+import org.idp.server.core.oidc.type.oauth.*;
+import org.idp.server.core.oidc.type.oidc.IdToken;
 
 public class AuthorizationResponseCodeIdTokenCreator
     implements AuthorizationResponseCreator,

@@ -17,7 +17,6 @@
 package org.idp.server.core.extension.ciba.handler;
 
 import java.util.UUID;
-import org.idp.server.basic.type.ciba.AuthReqId;
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.CibaRequestParameters;
 import org.idp.server.core.extension.ciba.CibaRequestPattern;
@@ -44,6 +43,7 @@ import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQu
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.type.ciba.AuthReqId;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**

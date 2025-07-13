@@ -19,10 +19,10 @@ package org.idp.server.security.event.hook.ssf;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Map;
-import org.idp.server.basic.jose.JoseContext;
-import org.idp.server.basic.jose.JoseHandler;
-import org.idp.server.basic.jose.JoseInvalidException;
-import org.idp.server.basic.jose.JsonWebTokenClaims;
+import org.idp.server.platform.jose.JoseContext;
+import org.idp.server.platform.jose.JoseHandler;
+import org.idp.server.platform.jose.JoseInvalidException;
+import org.idp.server.platform.jose.JsonWebTokenClaims;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.junit.jupiter.api.Test;
 

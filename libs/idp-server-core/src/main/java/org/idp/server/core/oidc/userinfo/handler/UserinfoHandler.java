@@ -17,13 +17,13 @@
 package org.idp.server.core.oidc.userinfo.handler;
 
 import java.util.Map;
-import org.idp.server.basic.type.oauth.AccessTokenEntity;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.core.oidc.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.oidc.token.tokenintrospection.exception.TokenInvalidException;
+import org.idp.server.core.oidc.type.oauth.AccessTokenEntity;
 import org.idp.server.core.oidc.userinfo.UserinfoClaimsCreator;
 import org.idp.server.core.oidc.userinfo.UserinfoResponse;
 import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequest;

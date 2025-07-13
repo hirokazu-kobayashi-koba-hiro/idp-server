@@ -16,8 +16,8 @@
 
 package org.idp.server.core.oidc.gateway;
 
-import org.idp.server.basic.type.oauth.RequestUri;
-import org.idp.server.basic.type.oidc.RequestObject;
+import org.idp.server.core.oidc.type.oauth.RequestUri;
+import org.idp.server.core.oidc.type.oidc.RequestObject;
 
 /** RequestObjectGateway */
 public interface RequestObjectGateway {

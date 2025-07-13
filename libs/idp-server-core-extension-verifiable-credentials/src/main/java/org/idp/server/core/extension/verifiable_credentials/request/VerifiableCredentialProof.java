@@ -17,7 +17,7 @@
 package org.idp.server.core.extension.verifiable_credentials.request;
 
 import java.util.Objects;
-import org.idp.server.basic.type.verifiablecredential.ProofType;
+import org.idp.server.core.oidc.type.verifiablecredential.ProofType;
 
 public class VerifiableCredentialProof {
   ProofType proofType;

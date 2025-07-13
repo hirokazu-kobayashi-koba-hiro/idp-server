@@ -19,16 +19,6 @@ package org.idp.server.core.oidc.token;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
-import org.idp.server.basic.jose.JoseInvalidException;
-import org.idp.server.basic.jose.JsonWebKeyInvalidException;
-import org.idp.server.basic.jose.JsonWebSignature;
-import org.idp.server.basic.jose.JsonWebSignatureFactory;
-import org.idp.server.basic.random.RandomStringGenerator;
-import org.idp.server.basic.type.extension.CreatedAt;
-import org.idp.server.basic.type.extension.ExpiresAt;
-import org.idp.server.basic.type.oauth.AccessTokenEntity;
-import org.idp.server.basic.type.oauth.ExpiresIn;
-import org.idp.server.basic.type.oauth.TokenType;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
@@ -38,7 +28,17 @@ import org.idp.server.core.oidc.mtls.ClientCertification;
 import org.idp.server.core.oidc.mtls.ClientCertificationThumbprint;
 import org.idp.server.core.oidc.mtls.ClientCertificationThumbprintCalculator;
 import org.idp.server.core.oidc.token.plugin.AccessTokenCustomClaimsCreators;
+import org.idp.server.core.oidc.type.extension.CreatedAt;
+import org.idp.server.core.oidc.type.extension.ExpiresAt;
+import org.idp.server.core.oidc.type.oauth.AccessTokenEntity;
+import org.idp.server.core.oidc.type.oauth.ExpiresIn;
+import org.idp.server.core.oidc.type.oauth.TokenType;
 import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.jose.JoseInvalidException;
+import org.idp.server.platform.jose.JsonWebKeyInvalidException;
+import org.idp.server.platform.jose.JsonWebSignature;
+import org.idp.server.platform.jose.JsonWebSignatureFactory;
+import org.idp.server.platform.random.RandomStringGenerator;
 
 public class AccessTokenCreator {
 

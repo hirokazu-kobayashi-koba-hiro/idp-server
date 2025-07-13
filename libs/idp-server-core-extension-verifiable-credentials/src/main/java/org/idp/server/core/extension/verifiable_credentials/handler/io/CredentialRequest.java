@@ -17,10 +17,10 @@
 package org.idp.server.core.extension.verifiable_credentials.handler.io;
 
 import java.util.Map;
-import org.idp.server.basic.type.mtls.ClientCert;
-import org.idp.server.basic.type.oauth.AccessTokenEntity;
 import org.idp.server.core.extension.verifiable_credentials.request.CredentialRequestParameters;
 import org.idp.server.core.oidc.token.AuthorizationHeaderHandlerable;
+import org.idp.server.core.oidc.type.mtls.ClientCert;
+import org.idp.server.core.oidc.type.oauth.AccessTokenEntity;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class CredentialRequest implements AuthorizationHeaderHandlerable {

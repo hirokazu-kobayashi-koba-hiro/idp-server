@@ -18,7 +18,6 @@ package org.idp.server.usecases.application.enduser;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.type.AuthFlow;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.authentication.mfa.*;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationTransactionCommandRepository;
@@ -34,6 +33,7 @@ import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.core.oidc.token.TokenEventPublisher;
+import org.idp.server.core.oidc.type.AuthFlow;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;

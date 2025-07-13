@@ -17,14 +17,6 @@
 package org.idp.server.core.oidc.extension.fapi;
 
 import java.util.Set;
-import org.idp.server.basic.jose.JoseContext;
-import org.idp.server.basic.jose.JsonWebTokenClaims;
-import org.idp.server.basic.type.extension.ExpiresAt;
-import org.idp.server.basic.type.oauth.*;
-import org.idp.server.basic.type.oidc.*;
-import org.idp.server.basic.type.pkce.CodeChallenge;
-import org.idp.server.basic.type.pkce.CodeChallengeMethod;
-import org.idp.server.basic.type.rar.AuthorizationDetailsEntity;
 import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
@@ -34,7 +26,15 @@ import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.request.AuthorizationRequestBuilder;
 import org.idp.server.core.oidc.request.OAuthRequestParameters;
 import org.idp.server.core.oidc.request.RequestObjectParameters;
+import org.idp.server.core.oidc.type.extension.ExpiresAt;
+import org.idp.server.core.oidc.type.oauth.*;
+import org.idp.server.core.oidc.type.oidc.*;
+import org.idp.server.core.oidc.type.pkce.CodeChallenge;
+import org.idp.server.core.oidc.type.pkce.CodeChallengeMethod;
+import org.idp.server.core.oidc.type.rar.AuthorizationDetailsEntity;
 import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.jose.JoseContext;
+import org.idp.server.platform.jose.JsonWebTokenClaims;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**

@@ -16,7 +16,6 @@ dependencies {
 	implementation project(':libs:idp-server-platform')
 	implementation project(':libs:idp-server-core')
 	implementation project(':libs:idp-server-control-plane')
-	implementation project(':libs:idp-server-core-supporter')
 	implementation project(':libs:idp-server-core-adapter')
 	implementation project(':libs:idp-server-webauthn4j-adapter')
 	implementation project(':libs:idp-server-notification-fcm-adapter')

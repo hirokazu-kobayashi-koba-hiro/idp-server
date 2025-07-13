@@ -19,8 +19,8 @@ package org.idp.server.core.oidc.plugin.clientauthenticator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.oidc.clientauthenticator.plugin.ClientAuthenticator;
+import org.idp.server.core.oidc.type.oauth.ClientAuthenticationType;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.plugin.PluginLoader;
 

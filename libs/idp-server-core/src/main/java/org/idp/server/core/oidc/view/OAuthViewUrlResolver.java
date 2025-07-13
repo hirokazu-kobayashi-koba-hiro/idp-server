@@ -16,10 +16,10 @@
 
 package org.idp.server.core.oidc.view;
 
-import org.idp.server.basic.type.oauth.CustomParams;
-import org.idp.server.basic.type.oauth.Error;
-import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.core.oidc.OAuthRequestContext;
+import org.idp.server.core.oidc.type.oauth.CustomParams;
+import org.idp.server.core.oidc.type.oauth.Error;
+import org.idp.server.core.oidc.type.oauth.ErrorDescription;
 import org.idp.server.platform.http.HttpQueryParams;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantAttributes;

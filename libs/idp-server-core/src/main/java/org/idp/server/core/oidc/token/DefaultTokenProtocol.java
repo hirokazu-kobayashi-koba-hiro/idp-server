@@ -17,7 +17,6 @@
 package org.idp.server.core.oidc.token;
 
 import java.util.Map;
-import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.grant_management.AuthorizationGrantedRepository;
@@ -40,6 +39,7 @@ import org.idp.server.core.oidc.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.oidc.token.service.OAuthTokenCreationService;
 import org.idp.server.core.oidc.token.tokenintrospection.TokenIntrospectionContentsCreator;
 import org.idp.server.core.oidc.token.tokenintrospection.exception.TokenInvalidException;
+import org.idp.server.core.oidc.type.oauth.GrantType;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.platform.dependency.protocol.DefaultAuthorizationProvider;
 import org.idp.server.platform.log.LoggerWrapper;

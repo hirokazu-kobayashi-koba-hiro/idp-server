@@ -17,10 +17,6 @@
 package org.idp.server.core.oidc.token.service;
 
 import java.util.UUID;
-import org.idp.server.basic.type.oauth.*;
-import org.idp.server.basic.type.oidc.IdToken;
-import org.idp.server.basic.type.verifiablecredential.CNonce;
-import org.idp.server.basic.type.verifiablecredential.CNonceExpiresIn;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
@@ -40,6 +36,10 @@ import org.idp.server.core.oidc.token.exception.TokenBadRequestException;
 import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.oidc.token.validator.TokenRequestCodeGrantValidator;
 import org.idp.server.core.oidc.token.verifier.AuthorizationCodeGrantVerifier;
+import org.idp.server.core.oidc.type.oauth.*;
+import org.idp.server.core.oidc.type.oidc.IdToken;
+import org.idp.server.core.oidc.type.verifiablecredential.CNonce;
+import org.idp.server.core.oidc.type.verifiablecredential.CNonceExpiresIn;
 import org.idp.server.core.oidc.vc.CNonceCreatable;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 

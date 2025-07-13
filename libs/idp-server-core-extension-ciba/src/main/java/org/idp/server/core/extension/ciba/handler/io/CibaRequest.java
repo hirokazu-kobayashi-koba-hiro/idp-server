@@ -17,11 +17,11 @@
 package org.idp.server.core.extension.ciba.handler.io;
 
 import java.util.Map;
-import org.idp.server.basic.type.mtls.ClientCert;
-import org.idp.server.basic.type.oauth.ClientSecretBasic;
-import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.extension.ciba.CibaRequestParameters;
 import org.idp.server.core.oidc.token.AuthorizationHeaderHandlerable;
+import org.idp.server.core.oidc.type.mtls.ClientCert;
+import org.idp.server.core.oidc.type.oauth.ClientSecretBasic;
+import org.idp.server.core.oidc.type.oauth.RequestedClientId;
 import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 

@@ -20,16 +20,16 @@ import java.security.PublicKey;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.basic.jose.JsonWebKey;
-import org.idp.server.basic.jose.JsonWebKeyInvalidException;
-import org.idp.server.basic.jose.JsonWebSignatureHeader;
-import org.idp.server.basic.type.verifiablecredential.DocType;
-import org.idp.server.basic.type.verifiablecredential.Format;
-import org.idp.server.basic.type.verifiablecredential.ProofType;
-import org.idp.server.basic.x509.X509CertInvalidException;
-import org.idp.server.basic.x509.X509Certification;
 import org.idp.server.core.extension.verifiable_credentials.exception.VerifiableCredentialRequestInvalidException;
+import org.idp.server.core.oidc.type.verifiablecredential.DocType;
+import org.idp.server.core.oidc.type.verifiablecredential.Format;
+import org.idp.server.core.oidc.type.verifiablecredential.ProofType;
 import org.idp.server.core.oidc.vc.CredentialDefinition;
+import org.idp.server.platform.jose.JsonWebKey;
+import org.idp.server.platform.jose.JsonWebKeyInvalidException;
+import org.idp.server.platform.jose.JsonWebSignatureHeader;
+import org.idp.server.platform.x509.X509CertInvalidException;
+import org.idp.server.platform.x509.X509Certification;
 
 public interface VerifiableCredentialRequestTransformable {
 

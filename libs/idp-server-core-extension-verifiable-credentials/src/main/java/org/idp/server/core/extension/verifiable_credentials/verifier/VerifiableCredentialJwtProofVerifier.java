@@ -18,13 +18,13 @@ package org.idp.server.core.extension.verifiable_credentials.verifier;
 
 import java.security.PublicKey;
 import java.util.List;
-import org.idp.server.basic.jose.*;
 import org.idp.server.core.extension.verifiable_credentials.exception.VerifiableCredentialBadRequestException;
 import org.idp.server.core.extension.verifiable_credentials.exception.VerifiableCredentialRequestInvalidException;
 import org.idp.server.core.extension.verifiable_credentials.request.VerifiableCredentialRequestTransformable;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.vc.VerifiableCredentialConfiguration;
 import org.idp.server.core.oidc.token.OAuthToken;
+import org.idp.server.platform.jose.*;
 
 public class VerifiableCredentialJwtProofVerifier
     implements VerifiableCredentialRequestTransformable {

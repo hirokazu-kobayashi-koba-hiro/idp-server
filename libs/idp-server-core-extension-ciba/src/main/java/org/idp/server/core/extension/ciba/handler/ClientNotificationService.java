@@ -17,9 +17,6 @@
 package org.idp.server.core.extension.ciba.handler;
 
 import java.util.UUID;
-import org.idp.server.basic.type.oauth.ExpiresIn;
-import org.idp.server.basic.type.oauth.TokenType;
-import org.idp.server.basic.type.oidc.IdToken;
 import org.idp.server.core.extension.ciba.clientnotification.ClientNotificationRequest;
 import org.idp.server.core.extension.ciba.clientnotification.ClientNotificationRequestBodyBuilder;
 import org.idp.server.core.extension.ciba.gateway.ClientNotificationGateway;
@@ -39,6 +36,9 @@ import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.core.oidc.token.OAuthTokenBuilder;
 import org.idp.server.core.oidc.token.OAuthTokenIdentifier;
 import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
+import org.idp.server.core.oidc.type.oauth.ExpiresIn;
+import org.idp.server.core.oidc.type.oauth.TokenType;
+import org.idp.server.core.oidc.type.oidc.IdToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 // FIXME consider. this is bad code.

@@ -16,12 +16,6 @@
 
 package org.idp.server.core.extension.ciba.grant;
 
-import org.idp.server.basic.type.ciba.AuthReqId;
-import org.idp.server.basic.type.ciba.Interval;
-import org.idp.server.basic.type.extension.ExpiresAt;
-import org.idp.server.basic.type.oauth.GrantType;
-import org.idp.server.basic.type.oauth.RequestedClientId;
-import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
@@ -32,6 +26,12 @@ import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.grant.AuthorizationGrantBuilder;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
+import org.idp.server.core.oidc.type.ciba.AuthReqId;
+import org.idp.server.core.oidc.type.ciba.Interval;
+import org.idp.server.core.oidc.type.extension.ExpiresAt;
+import org.idp.server.core.oidc.type.oauth.GrantType;
+import org.idp.server.core.oidc.type.oauth.RequestedClientId;
+import org.idp.server.core.oidc.type.oauth.Scopes;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class CibaGrantFactory {

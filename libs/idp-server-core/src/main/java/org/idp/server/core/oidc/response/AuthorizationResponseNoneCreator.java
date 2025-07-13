@@ -16,9 +16,9 @@
 
 package org.idp.server.core.oidc.response;
 
-import org.idp.server.basic.type.extension.JarmPayload;
 import org.idp.server.core.oidc.OAuthAuthorizeContext;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
+import org.idp.server.core.oidc.type.extension.JarmPayload;
 
 public class AuthorizationResponseNoneCreator
     implements AuthorizationResponseCreator,

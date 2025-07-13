@@ -17,17 +17,17 @@
 package org.idp.server.core.extension.ciba.grant;
 
 import java.time.LocalDateTime;
-import org.idp.server.basic.type.ciba.AuthReqId;
-import org.idp.server.basic.type.ciba.Interval;
-import org.idp.server.basic.type.extension.DeniedScopes;
-import org.idp.server.basic.type.extension.ExpiresAt;
-import org.idp.server.basic.type.oauth.RequestedClientId;
-import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.client.ClientIdentifier;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.type.ciba.AuthReqId;
+import org.idp.server.core.oidc.type.ciba.Interval;
+import org.idp.server.core.oidc.type.extension.DeniedScopes;
+import org.idp.server.core.oidc.type.extension.ExpiresAt;
+import org.idp.server.core.oidc.type.oauth.RequestedClientId;
+import org.idp.server.core.oidc.type.oauth.Scopes;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class CibaGrant {

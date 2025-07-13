@@ -18,8 +18,6 @@ package org.idp.server.core.extension.verifiable_credentials.handler;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.basic.type.oauth.AccessTokenEntity;
-import org.idp.server.basic.type.vc.Credential;
 import org.idp.server.core.extension.verifiable_credentials.*;
 import org.idp.server.core.extension.verifiable_credentials.handler.io.*;
 import org.idp.server.core.extension.verifiable_credentials.repository.VerifiableCredentialTransactionRepository;
@@ -35,6 +33,8 @@ import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRep
 import org.idp.server.core.oidc.token.AccessToken;
 import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.core.oidc.token.repository.OAuthTokenQueryRepository;
+import org.idp.server.core.oidc.type.oauth.AccessTokenEntity;
+import org.idp.server.core.oidc.type.vc.Credential;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class CredentialHandler {

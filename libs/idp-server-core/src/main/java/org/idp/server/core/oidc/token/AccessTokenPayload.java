@@ -17,10 +17,10 @@
 package org.idp.server.core.oidc.token;
 
 import java.util.Map;
-import org.idp.server.basic.type.extension.CreatedAt;
-import org.idp.server.basic.type.extension.CustomProperties;
-import org.idp.server.basic.type.extension.ExpiresAt;
-import org.idp.server.basic.type.oauth.*;
+import org.idp.server.core.oidc.type.extension.CreatedAt;
+import org.idp.server.core.oidc.type.extension.CustomProperties;
+import org.idp.server.core.oidc.type.extension.ExpiresAt;
+import org.idp.server.core.oidc.type.oauth.*;
 
 public class AccessTokenPayload {
   TokenIssuer tokenIssuer;

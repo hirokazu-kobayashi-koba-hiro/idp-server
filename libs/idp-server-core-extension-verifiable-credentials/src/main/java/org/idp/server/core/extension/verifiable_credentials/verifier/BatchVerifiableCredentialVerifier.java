@@ -16,7 +16,6 @@
 
 package org.idp.server.core.extension.verifiable_credentials.verifier;
 
-import org.idp.server.basic.type.mtls.ClientCert;
 import org.idp.server.core.extension.verifiable_credentials.exception.VerifiableCredentialBadRequestException;
 import org.idp.server.core.extension.verifiable_credentials.exception.VerifiableCredentialRequestInvalidException;
 import org.idp.server.core.extension.verifiable_credentials.request.BatchCredentialRequestParameters;
@@ -24,6 +23,7 @@ import org.idp.server.core.extension.verifiable_credentials.request.BatchCredent
 import org.idp.server.core.extension.verifiable_credentials.request.VerifiableCredentialRequestTransformable;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.token.OAuthToken;
+import org.idp.server.core.oidc.type.mtls.ClientCert;
 
 public class BatchVerifiableCredentialVerifier implements VerifiableCredentialRequestTransformable {
 

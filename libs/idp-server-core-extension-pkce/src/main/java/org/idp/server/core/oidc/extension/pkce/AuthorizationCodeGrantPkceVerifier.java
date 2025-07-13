@@ -16,8 +16,6 @@
 
 package org.idp.server.core.oidc.extension.pkce;
 
-import org.idp.server.basic.type.pkce.CodeChallenge;
-import org.idp.server.basic.type.pkce.CodeVerifier;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.grant.AuthorizationCodeGrant;
 import org.idp.server.core.oidc.pkce.CodeChallengeCalculator;
@@ -25,6 +23,8 @@ import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.token.TokenRequestContext;
 import org.idp.server.core.oidc.token.exception.TokenBadRequestException;
 import org.idp.server.core.oidc.token.verifier.AuthorizationCodeGrantExtensionVerifierInterface;
+import org.idp.server.core.oidc.type.pkce.CodeChallenge;
+import org.idp.server.core.oidc.type.pkce.CodeVerifier;
 import org.idp.server.platform.log.LoggerWrapper;
 
 public class AuthorizationCodeGrantPkceVerifier

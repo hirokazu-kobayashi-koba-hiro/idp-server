@@ -16,7 +16,6 @@
 
 package org.idp.server.core.oidc.identity;
 
-import org.idp.server.basic.type.AuthFlow;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractionRequestResult;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractionType;
@@ -24,6 +23,7 @@ import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifi
 import org.idp.server.core.oidc.identity.io.MfaRegistrationRequest;
 import org.idp.server.core.oidc.identity.io.UserOperationResponse;
 import org.idp.server.core.oidc.token.OAuthToken;
+import org.idp.server.core.oidc.type.AuthFlow;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.type.RequestAttributes;
 

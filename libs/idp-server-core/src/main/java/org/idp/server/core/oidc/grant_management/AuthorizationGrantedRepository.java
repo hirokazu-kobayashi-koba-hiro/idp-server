@@ -16,8 +16,8 @@
 
 package org.idp.server.core.oidc.grant_management;
 
-import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.type.oauth.RequestedClientId;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface AuthorizationGrantedRepository {
