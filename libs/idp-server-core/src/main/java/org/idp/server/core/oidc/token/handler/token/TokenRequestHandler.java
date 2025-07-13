@@ -17,11 +17,6 @@
 package org.idp.server.core.oidc.token.handler.token;
 
 import java.util.Map;
-import org.idp.server.basic.type.extension.CustomProperties;
-import org.idp.server.basic.type.mtls.ClientCert;
-import org.idp.server.basic.type.oauth.ClientSecretBasic;
-import org.idp.server.basic.type.oauth.GrantType;
-import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.oidc.clientauthenticator.ClientAuthenticationHandler;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
@@ -42,6 +37,11 @@ import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.oidc.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.oidc.token.service.*;
 import org.idp.server.core.oidc.token.validator.TokenRequestValidator;
+import org.idp.server.core.oidc.type.extension.CustomProperties;
+import org.idp.server.core.oidc.type.mtls.ClientCert;
+import org.idp.server.core.oidc.type.oauth.ClientSecretBasic;
+import org.idp.server.core.oidc.type.oauth.GrantType;
+import org.idp.server.core.oidc.type.oauth.RequestedClientId;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class TokenRequestHandler {

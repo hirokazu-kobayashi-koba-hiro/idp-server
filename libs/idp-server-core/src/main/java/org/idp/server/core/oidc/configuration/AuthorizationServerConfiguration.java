@@ -17,12 +17,12 @@
 package org.idp.server.core.oidc.configuration;
 
 import java.util.*;
-import org.idp.server.basic.type.oauth.GrantType;
-import org.idp.server.basic.type.oauth.ResponseType;
-import org.idp.server.basic.type.oauth.TokenIssuer;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractionType;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.oidc.configuration.vc.VerifiableCredentialConfiguration;
+import org.idp.server.core.oidc.type.oauth.GrantType;
+import org.idp.server.core.oidc.type.oauth.ResponseType;
+import org.idp.server.core.oidc.type.oauth.TokenIssuer;
 import org.idp.server.platform.json.JsonReadable;
 
 /** ServerConfiguration */

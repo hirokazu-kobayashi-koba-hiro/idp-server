@@ -16,8 +16,8 @@
 
 package org.idp.server.core.oidc.response;
 
-import org.idp.server.basic.random.RandomStringGenerator;
-import org.idp.server.basic.type.oauth.AuthorizationCode;
+import org.idp.server.core.oidc.type.oauth.AuthorizationCode;
+import org.idp.server.platform.random.RandomStringGenerator;
 
 public interface AuthorizationCodeCreatable {
 

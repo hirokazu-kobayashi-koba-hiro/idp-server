@@ -17,17 +17,17 @@
 package org.idp.server.core.oidc.token;
 
 import java.util.Objects;
-import org.idp.server.basic.type.OAuthRequestKey;
-import org.idp.server.basic.type.ciba.AuthReqId;
-import org.idp.server.basic.type.ciba.BackchannelTokenDeliveryMode;
-import org.idp.server.basic.type.extension.CustomProperties;
-import org.idp.server.basic.type.mtls.ClientCert;
-import org.idp.server.basic.type.oauth.*;
-import org.idp.server.basic.type.pkce.CodeVerifier;
 import org.idp.server.core.oidc.client.ClientIdentifier;
 import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.core.oidc.type.OAuthRequestKey;
+import org.idp.server.core.oidc.type.ciba.AuthReqId;
+import org.idp.server.core.oidc.type.ciba.BackchannelTokenDeliveryMode;
+import org.idp.server.core.oidc.type.extension.CustomProperties;
+import org.idp.server.core.oidc.type.mtls.ClientCert;
+import org.idp.server.core.oidc.type.oauth.*;
+import org.idp.server.core.oidc.type.pkce.CodeVerifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 

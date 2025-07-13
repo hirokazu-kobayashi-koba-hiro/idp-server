@@ -18,12 +18,12 @@ package org.idp.server.core.oidc.token;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.type.ArrayValueMap;
-import org.idp.server.basic.type.OAuthRequestKey;
-import org.idp.server.basic.type.ciba.AuthReqId;
-import org.idp.server.basic.type.oauth.*;
-import org.idp.server.basic.type.pkce.CodeVerifier;
 import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestParameters;
+import org.idp.server.core.oidc.type.ArrayValueMap;
+import org.idp.server.core.oidc.type.OAuthRequestKey;
+import org.idp.server.core.oidc.type.ciba.AuthReqId;
+import org.idp.server.core.oidc.type.oauth.*;
+import org.idp.server.core.oidc.type.pkce.CodeVerifier;
 
 /** TokenRequestParameters */
 public class TokenRequestParameters implements BackchannelRequestParameters {

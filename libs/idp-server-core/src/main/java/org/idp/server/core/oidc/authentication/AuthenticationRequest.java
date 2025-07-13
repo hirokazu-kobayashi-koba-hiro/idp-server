@@ -19,12 +19,12 @@ package org.idp.server.core.oidc.authentication;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.type.AuthFlow;
-import org.idp.server.basic.type.oauth.RequestedClientId;
-import org.idp.server.basic.type.oauth.Scopes;
-import org.idp.server.basic.type.oidc.AcrValues;
 import org.idp.server.core.oidc.federation.FederationInteractionResult;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.type.AuthFlow;
+import org.idp.server.core.oidc.type.oauth.RequestedClientId;
+import org.idp.server.core.oidc.type.oauth.Scopes;
+import org.idp.server.core.oidc.type.oidc.AcrValues;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class AuthenticationRequest {

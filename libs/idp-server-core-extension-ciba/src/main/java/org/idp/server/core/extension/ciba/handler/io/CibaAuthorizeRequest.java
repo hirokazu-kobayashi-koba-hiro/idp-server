@@ -20,10 +20,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.type.extension.CustomProperties;
-import org.idp.server.basic.type.extension.DeniedScopes;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.oidc.authentication.Authentication;
+import org.idp.server.core.oidc.type.extension.CustomProperties;
+import org.idp.server.core.oidc.type.extension.DeniedScopes;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 

@@ -16,9 +16,9 @@
 
 package org.idp.server.core.extension.ciba.handler.io;
 
-import org.idp.server.basic.type.ContentType;
 import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationErrorResponse;
 import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationResponse;
+import org.idp.server.core.oidc.type.ContentType;
 
 public class CibaRequestResponse {
   CibaRequestStatus status;

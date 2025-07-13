@@ -18,8 +18,6 @@ package org.idp.server.core.oidc.token.handler.token;
 
 import static org.idp.server.core.oidc.token.handler.token.io.TokenRequestStatus.*;
 
-import org.idp.server.basic.type.oauth.Error;
-import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.core.oidc.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.oidc.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.core.oidc.configuration.exception.ServerConfigurationNotFoundException;
@@ -27,6 +25,8 @@ import org.idp.server.core.oidc.token.TokenErrorResponse;
 import org.idp.server.core.oidc.token.exception.TokenBadRequestException;
 import org.idp.server.core.oidc.token.exception.TokenUnSupportedGrantException;
 import org.idp.server.core.oidc.token.handler.token.io.TokenRequestResponse;
+import org.idp.server.core.oidc.type.oauth.Error;
+import org.idp.server.core.oidc.type.oauth.ErrorDescription;
 import org.idp.server.platform.log.LoggerWrapper;
 
 public class TokenRequestErrorHandler {

@@ -16,8 +16,8 @@
 
 package org.idp.server.core.oidc.vc;
 
-import org.idp.server.basic.random.RandomStringGenerator;
-import org.idp.server.basic.type.verifiablecredential.CNonce;
+import org.idp.server.core.oidc.type.verifiablecredential.CNonce;
+import org.idp.server.platform.random.RandomStringGenerator;
 
 public interface CNonceCreatable {
   RandomStringGenerator randomStringGenerator = new RandomStringGenerator(20);

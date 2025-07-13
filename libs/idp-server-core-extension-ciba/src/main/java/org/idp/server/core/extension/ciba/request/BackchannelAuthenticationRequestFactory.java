@@ -18,12 +18,12 @@ package org.idp.server.core.extension.ciba.request;
 
 import java.util.Set;
 import java.util.UUID;
-import org.idp.server.basic.jose.JoseContext;
-import org.idp.server.basic.type.oauth.ClientSecretBasic;
 import org.idp.server.core.extension.ciba.CibaProfile;
 import org.idp.server.core.extension.ciba.CibaRequestParameters;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.core.oidc.type.oauth.ClientSecretBasic;
+import org.idp.server.platform.jose.JoseContext;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface BackchannelAuthenticationRequestFactory {

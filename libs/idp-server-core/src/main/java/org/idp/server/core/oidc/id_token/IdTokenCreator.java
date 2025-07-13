@@ -19,11 +19,6 @@ package org.idp.server.core.oidc.id_token;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.jose.*;
-import org.idp.server.basic.type.extension.ExpiresAt;
-import org.idp.server.basic.type.oauth.State;
-import org.idp.server.basic.type.oauth.TokenIssuer;
-import org.idp.server.basic.type.oidc.IdToken;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
@@ -31,7 +26,12 @@ import org.idp.server.core.oidc.configuration.exception.ConfigurationInvalidExce
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.id_token.plugin.CustomIndividualClaimsCreators;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.type.extension.ExpiresAt;
+import org.idp.server.core.oidc.type.oauth.State;
+import org.idp.server.core.oidc.type.oauth.TokenIssuer;
+import org.idp.server.core.oidc.type.oidc.IdToken;
 import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.jose.*;
 
 public class IdTokenCreator implements IndividualClaimsCreatable, ClaimHashable {
 

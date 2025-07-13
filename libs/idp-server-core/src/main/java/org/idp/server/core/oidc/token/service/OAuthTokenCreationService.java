@@ -16,10 +16,10 @@
 
 package org.idp.server.core.oidc.token.service;
 
-import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.core.oidc.token.TokenRequestContext;
+import org.idp.server.core.oidc.type.oauth.GrantType;
 
 public interface OAuthTokenCreationService {
 

@@ -16,16 +16,16 @@
 
 package org.idp.server.core.oidc.request;
 
-import static org.idp.server.basic.type.OAuthRequestKey.*;
+import static org.idp.server.core.oidc.type.OAuthRequestKey.*;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.type.ArrayValueMap;
-import org.idp.server.basic.type.OAuthRequestKey;
-import org.idp.server.basic.type.oauth.*;
-import org.idp.server.basic.type.oidc.*;
-import org.idp.server.basic.type.oidc.logout.LogoutHint;
-import org.idp.server.basic.type.oidc.logout.PostLogoutRedirectUri;
+import org.idp.server.core.oidc.type.ArrayValueMap;
+import org.idp.server.core.oidc.type.OAuthRequestKey;
+import org.idp.server.core.oidc.type.oauth.*;
+import org.idp.server.core.oidc.type.oidc.*;
+import org.idp.server.core.oidc.type.oidc.logout.LogoutHint;
+import org.idp.server.core.oidc.type.oidc.logout.PostLogoutRedirectUri;
 
 /** OAuthLogoutParameters */
 public class OAuthLogoutParameters {

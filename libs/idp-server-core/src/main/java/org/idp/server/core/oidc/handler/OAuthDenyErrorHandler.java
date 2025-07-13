@@ -16,8 +16,6 @@
 
 package org.idp.server.core.oidc.handler;
 
-import org.idp.server.basic.type.oauth.Error;
-import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.core.oidc.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.core.oidc.configuration.exception.ServerConfigurationNotFoundException;
 import org.idp.server.core.oidc.exception.OAuthRedirectableBadRequestException;
@@ -25,6 +23,8 @@ import org.idp.server.core.oidc.io.OAuthDenyResponse;
 import org.idp.server.core.oidc.io.OAuthDenyStatus;
 import org.idp.server.core.oidc.response.AuthorizationErrorResponse;
 import org.idp.server.core.oidc.response.AuthorizationErrorResponseCreator;
+import org.idp.server.core.oidc.type.oauth.Error;
+import org.idp.server.core.oidc.type.oauth.ErrorDescription;
 import org.idp.server.platform.log.LoggerWrapper;
 
 public class OAuthDenyErrorHandler {

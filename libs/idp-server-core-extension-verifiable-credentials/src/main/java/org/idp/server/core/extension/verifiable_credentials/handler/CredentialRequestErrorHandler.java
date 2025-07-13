@@ -16,8 +16,6 @@
 
 package org.idp.server.core.extension.verifiable_credentials.handler;
 
-import org.idp.server.basic.type.oauth.Error;
-import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.core.extension.verifiable_credentials.VerifiableCredentialErrorResponse;
 import org.idp.server.core.extension.verifiable_credentials.exception.VerifiableCredentialBadRequestException;
 import org.idp.server.core.extension.verifiable_credentials.exception.VerifiableCredentialTokenInvalidException;
@@ -27,6 +25,8 @@ import org.idp.server.core.extension.verifiable_credentials.handler.io.Credentia
 import org.idp.server.core.extension.verifiable_credentials.handler.io.DeferredCredentialResponse;
 import org.idp.server.core.oidc.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.core.oidc.configuration.exception.ServerConfigurationNotFoundException;
+import org.idp.server.core.oidc.type.oauth.Error;
+import org.idp.server.core.oidc.type.oauth.ErrorDescription;
 import org.idp.server.platform.log.LoggerWrapper;
 
 public class CredentialRequestErrorHandler {

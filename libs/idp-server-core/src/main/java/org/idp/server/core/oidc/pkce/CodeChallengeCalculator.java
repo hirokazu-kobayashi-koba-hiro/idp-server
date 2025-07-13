@@ -16,10 +16,10 @@
 
 package org.idp.server.core.oidc.pkce;
 
-import org.idp.server.basic.base64.Base64Codeable;
-import org.idp.server.basic.hash.MessageDigestable;
-import org.idp.server.basic.type.pkce.CodeChallenge;
-import org.idp.server.basic.type.pkce.CodeVerifier;
+import org.idp.server.core.oidc.type.pkce.CodeChallenge;
+import org.idp.server.core.oidc.type.pkce.CodeVerifier;
+import org.idp.server.platform.base64.Base64Codeable;
+import org.idp.server.platform.hash.MessageDigestable;
 
 public class CodeChallengeCalculator implements MessageDigestable, Base64Codeable {
 

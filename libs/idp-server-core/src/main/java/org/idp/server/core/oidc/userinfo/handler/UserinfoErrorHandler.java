@@ -16,13 +16,13 @@
 
 package org.idp.server.core.oidc.userinfo.handler;
 
-import org.idp.server.basic.type.oauth.Error;
-import org.idp.server.basic.type.oauth.ErrorDescription;
 import org.idp.server.core.oidc.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.oidc.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.core.oidc.configuration.exception.ServerConfigurationNotFoundException;
 import org.idp.server.core.oidc.identity.exception.UserNotFoundException;
 import org.idp.server.core.oidc.token.tokenintrospection.exception.TokenInvalidException;
+import org.idp.server.core.oidc.type.oauth.Error;
+import org.idp.server.core.oidc.type.oauth.ErrorDescription;
 import org.idp.server.core.oidc.userinfo.UserinfoErrorResponse;
 import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequestResponse;
 import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequestStatus;

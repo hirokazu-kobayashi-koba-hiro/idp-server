@@ -17,10 +17,10 @@
 package org.idp.server.core.extension.verifiable_credentials.request;
 
 import java.util.Map;
-import org.idp.server.basic.type.OAuthRequestKey;
-import org.idp.server.basic.type.verifiablecredential.CredentialDefinitionEntity;
-import org.idp.server.basic.type.verifiablecredential.Format;
-import org.idp.server.basic.type.verifiablecredential.ProofEntity;
+import org.idp.server.core.oidc.type.OAuthRequestKey;
+import org.idp.server.core.oidc.type.verifiablecredential.CredentialDefinitionEntity;
+import org.idp.server.core.oidc.type.verifiablecredential.Format;
+import org.idp.server.core.oidc.type.verifiablecredential.ProofEntity;
 
 public class CredentialRequestParameters implements VerifiableCredentialRequestTransformable {
   Map<String, Object> values;

@@ -17,13 +17,13 @@
 package org.idp.server.core.oidc.token;
 
 import java.time.LocalDateTime;
-import org.idp.server.basic.random.RandomStringGenerator;
-import org.idp.server.basic.type.extension.CreatedAt;
-import org.idp.server.basic.type.extension.ExpiresAt;
-import org.idp.server.basic.type.oauth.RefreshTokenEntity;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.core.oidc.type.extension.CreatedAt;
+import org.idp.server.core.oidc.type.extension.ExpiresAt;
+import org.idp.server.core.oidc.type.oauth.RefreshTokenEntity;
 import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.random.RandomStringGenerator;
 
 public interface RefreshTokenCreatable {
 

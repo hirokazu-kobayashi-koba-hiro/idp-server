@@ -16,7 +16,6 @@
 
 package org.idp.server.core.extension.ciba.handler;
 
-import org.idp.server.basic.type.extension.DeniedScopes;
 import org.idp.server.core.extension.ciba.grant.CibaGrant;
 import org.idp.server.core.extension.ciba.grant.CibaGrantStatus;
 import org.idp.server.core.extension.ciba.handler.io.CibaDenyRequest;
@@ -28,6 +27,7 @@ import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationReque
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.oidc.type.extension.DeniedScopes;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class CibaDenyHandler {

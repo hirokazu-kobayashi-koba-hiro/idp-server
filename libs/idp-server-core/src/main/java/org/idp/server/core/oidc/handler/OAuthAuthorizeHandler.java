@@ -16,9 +16,6 @@
 
 package org.idp.server.core.oidc.handler;
 
-import org.idp.server.basic.type.extension.CustomProperties;
-import org.idp.server.basic.type.extension.DeniedScopes;
-import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.oidc.OAuthAuthorizeContext;
 import org.idp.server.core.oidc.OAuthSession;
 import org.idp.server.core.oidc.OAuthSessionDelegate;
@@ -40,6 +37,9 @@ import org.idp.server.core.oidc.response.*;
 import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.core.oidc.token.OAuthTokenFactory;
 import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
+import org.idp.server.core.oidc.type.extension.CustomProperties;
+import org.idp.server.core.oidc.type.extension.DeniedScopes;
+import org.idp.server.core.oidc.type.oauth.RequestedClientId;
 import org.idp.server.core.oidc.validator.OAuthAuthorizeRequestValidator;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 

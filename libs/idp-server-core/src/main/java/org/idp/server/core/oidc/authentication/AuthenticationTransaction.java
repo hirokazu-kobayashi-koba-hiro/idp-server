@@ -20,7 +20,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.basic.type.AuthFlow;
 import org.idp.server.core.oidc.authentication.acr.AcrResolver;
 import org.idp.server.core.oidc.authentication.evaluator.MfaConditionEvaluator;
 import org.idp.server.core.oidc.authentication.loa.LoaDeniedScopeResolver;
@@ -28,6 +27,7 @@ import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolic
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationResultConditions;
 import org.idp.server.core.oidc.federation.FederationInteractionResult;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.type.AuthFlow;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.exception.BadRequestException;
 

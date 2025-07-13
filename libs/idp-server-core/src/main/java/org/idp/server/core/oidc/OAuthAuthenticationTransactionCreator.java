@@ -18,15 +18,15 @@ package org.idp.server.core.oidc;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
-import org.idp.server.basic.type.AuthFlow;
-import org.idp.server.basic.type.ciba.BindingMessage;
-import org.idp.server.basic.type.oauth.RequestedClientId;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.io.OAuthRequestResponse;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
+import org.idp.server.core.oidc.type.AuthFlow;
+import org.idp.server.core.oidc.type.ciba.BindingMessage;
+import org.idp.server.core.oidc.type.oauth.RequestedClientId;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;

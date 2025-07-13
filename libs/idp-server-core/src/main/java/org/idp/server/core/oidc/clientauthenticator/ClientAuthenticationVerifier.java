@@ -17,10 +17,10 @@
 package org.idp.server.core.oidc.clientauthenticator;
 
 import java.util.Objects;
-import org.idp.server.basic.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.oidc.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.oidc.clientauthenticator.plugin.ClientAuthenticator;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.type.oauth.ClientAuthenticationType;
 
 public class ClientAuthenticationVerifier {
   ClientAuthenticationType clientAuthenticationType;

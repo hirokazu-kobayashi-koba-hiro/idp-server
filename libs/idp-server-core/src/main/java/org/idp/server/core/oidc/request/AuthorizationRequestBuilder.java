@@ -16,15 +16,15 @@
 
 package org.idp.server.core.oidc.request;
 
-import org.idp.server.basic.type.extension.ExpiresAt;
-import org.idp.server.basic.type.oauth.*;
-import org.idp.server.basic.type.oidc.*;
-import org.idp.server.basic.type.pkce.CodeChallenge;
-import org.idp.server.basic.type.pkce.CodeChallengeMethod;
 import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.oidc.id_token.RequestedClaimsPayload;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
+import org.idp.server.core.oidc.type.extension.ExpiresAt;
+import org.idp.server.core.oidc.type.oauth.*;
+import org.idp.server.core.oidc.type.oidc.*;
+import org.idp.server.core.oidc.type.pkce.CodeChallenge;
+import org.idp.server.core.oidc.type.pkce.CodeChallengeMethod;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 

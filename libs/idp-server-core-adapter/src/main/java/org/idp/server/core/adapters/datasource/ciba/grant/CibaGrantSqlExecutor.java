@@ -17,9 +17,9 @@
 package org.idp.server.core.adapters.datasource.ciba.grant;
 
 import java.util.Map;
-import org.idp.server.basic.type.ciba.AuthReqId;
 import org.idp.server.core.extension.ciba.grant.CibaGrant;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
+import org.idp.server.core.oidc.type.ciba.AuthReqId;
 
 public interface CibaGrantSqlExecutor {
 

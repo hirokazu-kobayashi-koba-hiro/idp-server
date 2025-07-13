@@ -16,9 +16,9 @@
 
 package org.idp.server.core.oidc.token.validator;
 
-import org.idp.server.basic.type.oauth.GrantType;
 import org.idp.server.core.oidc.token.TokenRequestContext;
 import org.idp.server.core.oidc.token.exception.TokenBadRequestException;
+import org.idp.server.core.oidc.type.oauth.GrantType;
 
 /**
  * 4.3.2. Access Token Request

@@ -17,11 +17,11 @@
 package org.idp.server.core.oidc.validator;
 
 import java.util.Objects;
-import org.idp.server.basic.type.extension.CustomProperties;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.exception.OAuthAuthorizeBadRequestException;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.oidc.type.extension.CustomProperties;
 
 public class OAuthAuthorizeRequestValidator {
   AuthorizationRequestIdentifier authorizationRequestIdentifier;

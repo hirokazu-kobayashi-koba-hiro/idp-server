@@ -16,11 +16,11 @@
 
 package org.idp.server.core.oidc.id_token;
 
-import org.idp.server.basic.type.extension.CustomProperties;
-import org.idp.server.basic.type.oauth.AccessTokenEntity;
-import org.idp.server.basic.type.oauth.AuthorizationCode;
-import org.idp.server.basic.type.oauth.State;
-import org.idp.server.basic.type.oidc.Nonce;
+import org.idp.server.core.oidc.type.extension.CustomProperties;
+import org.idp.server.core.oidc.type.oauth.AccessTokenEntity;
+import org.idp.server.core.oidc.type.oauth.AuthorizationCode;
+import org.idp.server.core.oidc.type.oauth.State;
+import org.idp.server.core.oidc.type.oidc.Nonce;
 
 public class IdTokenCustomClaims {
   AuthorizationCode authorizationCode;

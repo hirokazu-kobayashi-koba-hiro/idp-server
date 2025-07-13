@@ -17,8 +17,8 @@
 package org.idp.server.security.event.hook.ssf;
 
 import java.util.Map;
-import org.idp.server.basic.type.oauth.RequestedClientId;
-import org.idp.server.basic.type.oauth.TokenIssuer;
+import org.idp.server.core.oidc.type.oauth.RequestedClientId;
+import org.idp.server.core.oidc.type.oauth.TokenIssuer;
 
 /**
  * SET

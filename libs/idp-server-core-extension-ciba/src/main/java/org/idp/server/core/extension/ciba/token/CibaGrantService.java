@@ -17,9 +17,6 @@
 package org.idp.server.core.extension.ciba.token;
 
 import java.util.UUID;
-import org.idp.server.basic.type.ciba.AuthReqId;
-import org.idp.server.basic.type.oauth.GrantType;
-import org.idp.server.basic.type.oidc.IdToken;
 import org.idp.server.core.extension.ciba.grant.CibaGrant;
 import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.extension.ciba.repository.CibaGrantRepository;
@@ -37,6 +34,9 @@ import org.idp.server.core.oidc.token.exception.TokenBadRequestException;
 import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.oidc.token.service.OAuthTokenCreationService;
 import org.idp.server.core.oidc.token.validator.CibaGrantValidator;
+import org.idp.server.core.oidc.type.ciba.AuthReqId;
+import org.idp.server.core.oidc.type.oauth.GrantType;
+import org.idp.server.core.oidc.type.oidc.IdToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class CibaGrantService implements OAuthTokenCreationService, RefreshTokenCreatable {

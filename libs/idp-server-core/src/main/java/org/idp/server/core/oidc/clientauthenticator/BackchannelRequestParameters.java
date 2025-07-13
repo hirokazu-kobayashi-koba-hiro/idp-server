@@ -16,10 +16,10 @@
 
 package org.idp.server.core.oidc.clientauthenticator;
 
-import org.idp.server.basic.type.oauth.ClientAssertion;
-import org.idp.server.basic.type.oauth.ClientAssertionType;
-import org.idp.server.basic.type.oauth.ClientSecret;
-import org.idp.server.basic.type.oauth.RequestedClientId;
+import org.idp.server.core.oidc.type.oauth.ClientAssertion;
+import org.idp.server.core.oidc.type.oauth.ClientAssertionType;
+import org.idp.server.core.oidc.type.oauth.ClientSecret;
+import org.idp.server.core.oidc.type.oauth.RequestedClientId;
 
 public interface BackchannelRequestParameters {
   RequestedClientId clientId();

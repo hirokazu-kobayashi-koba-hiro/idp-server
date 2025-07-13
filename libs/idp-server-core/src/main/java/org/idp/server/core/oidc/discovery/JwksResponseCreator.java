@@ -17,9 +17,9 @@
 package org.idp.server.core.oidc.discovery;
 
 import java.util.Map;
-import org.idp.server.basic.jose.JsonWebKeyInvalidException;
-import org.idp.server.basic.jose.JwkParser;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.platform.jose.JsonWebKeyInvalidException;
+import org.idp.server.platform.jose.JwkParser;
 
 public class JwksResponseCreator {
 

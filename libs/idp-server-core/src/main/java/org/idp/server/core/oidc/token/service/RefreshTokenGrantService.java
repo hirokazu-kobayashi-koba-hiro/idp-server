@@ -17,8 +17,6 @@
 package org.idp.server.core.oidc.token.service;
 
 import java.util.UUID;
-import org.idp.server.basic.type.oauth.GrantType;
-import org.idp.server.basic.type.oauth.RefreshTokenEntity;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
@@ -28,6 +26,8 @@ import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.oidc.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.oidc.token.validator.RefreshTokenGrantValidator;
 import org.idp.server.core.oidc.token.verifier.RefreshTokenVerifier;
+import org.idp.server.core.oidc.type.oauth.GrantType;
+import org.idp.server.core.oidc.type.oauth.RefreshTokenEntity;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class RefreshTokenGrantService implements OAuthTokenCreationService, RefreshTokenCreatable {

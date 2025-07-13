@@ -19,13 +19,6 @@ package org.idp.server.core.extension.ciba.handler.io;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import org.idp.server.basic.type.AuthFlow;
-import org.idp.server.basic.type.ContentType;
-import org.idp.server.basic.type.ciba.AuthReqId;
-import org.idp.server.basic.type.ciba.BindingMessage;
-import org.idp.server.basic.type.oauth.ExpiresIn;
-import org.idp.server.basic.type.oauth.Scopes;
-import org.idp.server.basic.type.oidc.AcrValues;
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
@@ -34,6 +27,13 @@ import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationResp
 import org.idp.server.core.oidc.authentication.AuthenticationInteractionType;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.type.AuthFlow;
+import org.idp.server.core.oidc.type.ContentType;
+import org.idp.server.core.oidc.type.ciba.AuthReqId;
+import org.idp.server.core.oidc.type.ciba.BindingMessage;
+import org.idp.server.core.oidc.type.oauth.ExpiresIn;
+import org.idp.server.core.oidc.type.oauth.Scopes;
+import org.idp.server.core.oidc.type.oidc.AcrValues;
 
 // TODO to be more readable name
 public class CibaIssueResponse {

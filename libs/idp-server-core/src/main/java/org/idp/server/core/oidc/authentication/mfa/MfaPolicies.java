@@ -18,8 +18,8 @@ package org.idp.server.core.oidc.authentication.mfa;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.type.AuthFlow;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
+import org.idp.server.core.oidc.type.AuthFlow;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.json.JsonConverter;
 

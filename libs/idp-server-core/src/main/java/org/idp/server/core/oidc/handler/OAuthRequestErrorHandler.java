@@ -18,8 +18,6 @@ package org.idp.server.core.oidc.handler;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.type.oauth.*;
-import org.idp.server.basic.type.oauth.Error;
 import org.idp.server.core.oidc.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.core.oidc.configuration.exception.ServerConfigurationNotFoundException;
 import org.idp.server.core.oidc.exception.OAuthBadRequestException;
@@ -30,6 +28,8 @@ import org.idp.server.core.oidc.io.OAuthRequestResponse;
 import org.idp.server.core.oidc.io.OAuthRequestStatus;
 import org.idp.server.core.oidc.response.AuthorizationErrorResponse;
 import org.idp.server.core.oidc.response.AuthorizationErrorResponseCreator;
+import org.idp.server.core.oidc.type.oauth.*;
+import org.idp.server.core.oidc.type.oauth.Error;
 import org.idp.server.core.oidc.view.OAuthViewUrlResolver;
 import org.idp.server.platform.log.LoggerWrapper;
 

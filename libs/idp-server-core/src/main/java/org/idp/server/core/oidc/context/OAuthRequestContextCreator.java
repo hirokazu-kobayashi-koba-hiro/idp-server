@@ -17,9 +17,6 @@
 package org.idp.server.core.oidc.context;
 
 import java.util.Set;
-import org.idp.server.basic.jose.JoseContext;
-import org.idp.server.basic.jose.JsonWebTokenClaims;
-import org.idp.server.basic.type.OAuthRequestKey;
 import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.OAuthRequestContext;
 import org.idp.server.core.oidc.OAuthRequestPattern;
@@ -27,6 +24,9 @@ import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.factory.RequestObjectFactoryType;
 import org.idp.server.core.oidc.request.OAuthRequestParameters;
+import org.idp.server.core.oidc.type.OAuthRequestKey;
+import org.idp.server.platform.jose.JoseContext;
+import org.idp.server.platform.jose.JsonWebTokenClaims;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /** OAuthRequestContextService */

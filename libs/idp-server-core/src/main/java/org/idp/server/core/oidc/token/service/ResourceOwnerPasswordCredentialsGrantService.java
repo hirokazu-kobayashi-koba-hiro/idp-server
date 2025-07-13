@@ -17,10 +17,6 @@
 package org.idp.server.core.oidc.token.service;
 
 import java.util.UUID;
-import org.idp.server.basic.type.extension.CustomProperties;
-import org.idp.server.basic.type.oauth.GrantType;
-import org.idp.server.basic.type.oauth.Scopes;
-import org.idp.server.basic.type.oidc.IdToken;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
@@ -33,6 +29,10 @@ import org.idp.server.core.oidc.token.*;
 import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.oidc.token.validator.ResourceOwnerPasswordGrantValidator;
 import org.idp.server.core.oidc.token.verifier.ResourceOwnerPasswordGrantVerifier;
+import org.idp.server.core.oidc.type.extension.CustomProperties;
+import org.idp.server.core.oidc.type.oauth.GrantType;
+import org.idp.server.core.oidc.type.oauth.Scopes;
+import org.idp.server.core.oidc.type.oidc.IdToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**

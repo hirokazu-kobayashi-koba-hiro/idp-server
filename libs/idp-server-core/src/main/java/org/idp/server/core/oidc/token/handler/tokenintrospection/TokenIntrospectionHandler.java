@@ -17,8 +17,6 @@
 package org.idp.server.core.oidc.token.handler.tokenintrospection;
 
 import java.util.Map;
-import org.idp.server.basic.type.oauth.AccessTokenEntity;
-import org.idp.server.basic.type.oauth.RefreshTokenEntity;
 import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionRequest;
 import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionRequestStatus;
@@ -29,6 +27,8 @@ import org.idp.server.core.oidc.token.tokenintrospection.TokenIntrospectionConte
 import org.idp.server.core.oidc.token.tokenintrospection.TokenIntrospectionRequestParameters;
 import org.idp.server.core.oidc.token.tokenintrospection.validator.TokenIntrospectionValidator;
 import org.idp.server.core.oidc.token.tokenintrospection.verifier.TokenIntrospectionVerifier;
+import org.idp.server.core.oidc.type.oauth.AccessTokenEntity;
+import org.idp.server.core.oidc.type.oauth.RefreshTokenEntity;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class TokenIntrospectionHandler {

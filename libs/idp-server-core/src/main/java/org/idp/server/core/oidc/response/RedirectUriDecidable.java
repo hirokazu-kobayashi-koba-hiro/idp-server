@@ -16,9 +16,9 @@
 
 package org.idp.server.core.oidc.response;
 
-import org.idp.server.basic.type.oauth.RedirectUri;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
+import org.idp.server.core.oidc.type.oauth.RedirectUri;
 
 public interface RedirectUriDecidable {
 

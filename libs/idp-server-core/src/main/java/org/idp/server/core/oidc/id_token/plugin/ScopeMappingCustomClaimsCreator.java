@@ -18,8 +18,6 @@ package org.idp.server.core.oidc.id_token.plugin;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.basic.type.extension.CustomProperties;
-import org.idp.server.basic.type.oauth.Scopes;
 import org.idp.server.core.oidc.authentication.Authentication;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
@@ -27,6 +25,8 @@ import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.id_token.IdTokenCustomClaims;
 import org.idp.server.core.oidc.id_token.RequestedClaimsPayload;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.type.extension.CustomProperties;
+import org.idp.server.core.oidc.type.oauth.Scopes;
 
 public class ScopeMappingCustomClaimsCreator implements CustomIndividualClaimsCreator {
 
