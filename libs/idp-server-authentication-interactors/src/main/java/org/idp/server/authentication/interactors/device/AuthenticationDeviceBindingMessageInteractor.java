@@ -26,6 +26,10 @@ import org.idp.server.platform.security.event.DefaultSecurityEventType;
 
 public class AuthenticationDeviceBindingMessageInteractor implements AuthenticationInteractor {
 
+  public AuthenticationInteractionType type() {
+    return StandardAuthenticationInteraction.AUTHENTICATION_DEVICE_BINDING_MESSAGE.toType();
+  }
+
   @Override
   public String method() {
     return "binding-message";

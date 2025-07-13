@@ -39,16 +39,18 @@ public class AuthenticationInteractorPluginLoader extends PluginLoader {
         loadFromInternalModule(AuthenticationInteractorFactory.class);
     for (AuthenticationInteractorFactory factory : internals) {
       AuthenticationInteractor interactor = factory.create(container);
-      interactors.put(factory.type(), interactor);
-      log.info("Dynamic Registered internal Authentication interactor: " + factory.type().name());
+      interactors.put(interactor.type(), interactor);
+      log.info(
+          "Dynamic Registered internal Authentication interactor: " + interactor.type().name());
     }
 
     List<AuthenticationInteractorFactory> externals =
         loadFromExternalModule(AuthenticationInteractorFactory.class);
     for (AuthenticationInteractorFactory factory : externals) {
       AuthenticationInteractor interactor = factory.create(container);
-      interactors.put(factory.type(), interactor);
-      log.info("Dynamic Registered external Authentication interactor: " + factory.type().name());
+      interactors.put(interactor.type(), interactor);
+      log.info(
+          "Dynamic Registered external Authentication interactor: " + interactor.type().name());
     }
 
     return new AuthenticationInteractors(interactors);

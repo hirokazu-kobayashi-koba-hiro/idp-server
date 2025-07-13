@@ -143,7 +143,7 @@ public class IdTokenCreator implements IndividualClaimsCreatable, ClaimHashable 
       claims.put("amr", authentication.methods());
     }
     if (authentication.hasAcrValues()) {
-      claims.put("acr", authentication.toAcr());
+      claims.put("acr", authentication.acr());
     }
 
     Map<String, Object> individualClaims =

@@ -38,6 +38,11 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
   }
 
   @Override
+  public AuthenticationInteractionType type() {
+    return StandardAuthenticationInteraction.EMAIL_AUTHENTICATION.toType();
+  }
+
+  @Override
   public String method() {
     return StandardAuthenticationMethod.EMAIL.type();
   }

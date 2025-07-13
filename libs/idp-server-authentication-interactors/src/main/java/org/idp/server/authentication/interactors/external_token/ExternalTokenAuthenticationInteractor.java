@@ -37,6 +37,11 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
   }
 
   @Override
+  public AuthenticationInteractionType type() {
+    return new AuthenticationInteractionType("external-token");
+  }
+
+  @Override
   public String method() {
     return "external-token";
   }

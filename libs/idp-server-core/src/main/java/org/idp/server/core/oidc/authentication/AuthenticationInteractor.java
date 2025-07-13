@@ -21,6 +21,8 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface AuthenticationInteractor {
 
+  AuthenticationInteractionType type();
+
   default OperationType operationType() {
     return OperationType.AUTHENTICATION;
   }

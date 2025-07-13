@@ -34,6 +34,11 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
     this.passwordVerificationDelegation = passwordVerificationDelegation;
   }
 
+  @Override
+  public AuthenticationInteractionType type() {
+    return StandardAuthenticationInteraction.PASSWORD_AUTHENTICATION.toType();
+  }
+
   public String method() {
     return StandardAuthenticationMethod.PASSWORD.type();
   }

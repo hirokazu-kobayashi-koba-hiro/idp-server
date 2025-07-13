@@ -20,11 +20,11 @@ import java.util.*;
 
 public class AcrResolver {
 
-  public static List<String> resolve(
+  public static String resolve(
       Map<String, List<String>> acrMappingRules, List<String> performedMethods) {
 
     if (acrMappingRules == null || acrMappingRules.isEmpty()) {
-      return List.of();
+      return "";
     }
 
     List<String> acrs = new ArrayList<>();
@@ -34,6 +34,6 @@ public class AcrResolver {
         acrs.add(entry.getKey());
       }
     }
-    return acrs;
+    return acrs.stream().findFirst().orElse("");
   }
 }

@@ -275,8 +275,8 @@ public class AuthenticationTransaction {
 
     LocalDateTime time = interactionResults.authenticationTime();
     List<String> methods = interactionResults.authenticationMethods();
-    List<String> acrValues = AcrResolver.resolve(authenticationPolicy.acrMappingRules(), methods);
-    return new Authentication().setTime(time).addMethods(methods).addAcrValues(acrValues);
+    String acr = AcrResolver.resolve(authenticationPolicy.acrMappingRules(), methods);
+    return new Authentication().setTime(time).addMethods(methods).addAcr(acr);
   }
 
   public List<String> deniedScopes() {

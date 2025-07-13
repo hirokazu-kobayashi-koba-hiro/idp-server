@@ -41,6 +41,10 @@ public class FidoUafAuthenticationInteractor implements AuthenticationInteractor
     this.additionalRequestResolvers = additionalRequestResolvers;
   }
 
+  public AuthenticationInteractionType type() {
+    return StandardAuthenticationInteraction.FIDO_UAF_AUTHENTICATION.toType();
+  }
+
   @Override
   public String method() {
     return StandardAuthenticationMethod.FIDO_UAF.type();

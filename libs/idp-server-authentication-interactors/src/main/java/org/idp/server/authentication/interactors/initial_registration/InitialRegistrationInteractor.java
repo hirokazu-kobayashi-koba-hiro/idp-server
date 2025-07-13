@@ -46,6 +46,10 @@ public class InitialRegistrationInteractor implements AuthenticationInteractor {
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
+  public AuthenticationInteractionType type() {
+    return StandardAuthenticationInteraction.INITIAL_REGISTRATION.toType();
+  }
+
   @Override
   public OperationType operationType() {
     return OperationType.REGISTRATION;

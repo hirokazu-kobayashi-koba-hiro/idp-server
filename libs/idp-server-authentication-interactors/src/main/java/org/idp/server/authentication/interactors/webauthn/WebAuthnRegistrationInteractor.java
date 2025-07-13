@@ -37,6 +37,11 @@ public class WebAuthnRegistrationInteractor implements AuthenticationInteractor 
   }
 
   @Override
+  public AuthenticationInteractionType type() {
+    return StandardAuthenticationInteraction.WEBAUTHN_REGISTRATION.toType();
+  }
+
+  @Override
   public String method() {
     return StandardAuthenticationMethod.WEB_AUTHN.type();
   }
