@@ -125,19 +125,23 @@ public class UserOperationEntryService implements UserOperationApi {
             tenant, authenticationTransaction, type, request, userQueryRepository);
 
     AuthenticationTransaction updatedTransaction = authenticationTransaction.updateWith(result);
-    authenticationTransactionCommandRepository.update(tenant, updatedTransaction);
 
     if (updatedTransaction.isSuccess()) {
       // TODO to be more correctly
       userCommandRepository.update(tenant, authenticationTransaction.user());
     }
 
-    if (updatedTransaction.isFailure()) {}
-
     if (updatedTransaction.isLocked()) {
       UserLifecycleEvent userLifecycleEvent =
           new UserLifecycleEvent(tenant, result.user(), UserLifecycleType.LOCK);
       userLifecycleEventPublisher.publish(userLifecycleEvent);
+    }
+
+    if (updatedTransaction.isComplete()) {
+      authenticationTransactionCommandRepository.delete(
+          tenant, authenticationTransactionIdentifier);
+    } else {
+      authenticationTransactionCommandRepository.update(tenant, updatedTransaction);
     }
 
     return result;
