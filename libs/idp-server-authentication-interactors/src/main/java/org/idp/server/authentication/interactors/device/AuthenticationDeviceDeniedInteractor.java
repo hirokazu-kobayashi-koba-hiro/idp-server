@@ -25,6 +25,11 @@ import org.idp.server.platform.security.event.DefaultSecurityEventType;
 public class AuthenticationDeviceDeniedInteractor implements AuthenticationInteractor {
 
   @Override
+  public AuthenticationInteractionType type() {
+    return StandardAuthenticationInteraction.AUTHENTICATION_DEVICE_DENY.toType();
+  }
+
+  @Override
   public OperationType operationType() {
     return OperationType.DENY;
   }

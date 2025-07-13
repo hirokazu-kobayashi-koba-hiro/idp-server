@@ -38,6 +38,11 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
   }
 
   @Override
+  public AuthenticationInteractionType type() {
+    return new AuthenticationInteractionType("legacy-authentication");
+  }
+
+  @Override
   public String method() {
     return "legacy-id-service";
   }

@@ -41,6 +41,10 @@ public class FidoUafRegistrationChallengeInteractor implements AuthenticationInt
     this.additionalRequestResolvers = additionalRequestResolvers;
   }
 
+  public AuthenticationInteractionType type() {
+    return StandardAuthenticationInteraction.FIDO_UAF_REGISTRATION_CHALLENGE.toType();
+  }
+
   @Override
   public OperationType operationType() {
     return OperationType.CHALLENGE;

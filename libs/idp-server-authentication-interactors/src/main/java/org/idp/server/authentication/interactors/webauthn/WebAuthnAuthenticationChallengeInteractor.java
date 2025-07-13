@@ -37,6 +37,11 @@ public class WebAuthnAuthenticationChallengeInteractor implements Authentication
   }
 
   @Override
+  public AuthenticationInteractionType type() {
+    return StandardAuthenticationInteraction.WEBAUTHN_AUTHENTICATION_CHALLENGE.toType();
+  }
+
+  @Override
   public OperationType operationType() {
     return OperationType.CHALLENGE;
   }

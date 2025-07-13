@@ -40,6 +40,11 @@ public class AuthenticationDeviceNotificationInteractor implements Authenticatio
   }
 
   @Override
+  public AuthenticationInteractionType type() {
+    return StandardAuthenticationInteraction.AUTHENTICATION_DEVICE_NOTIFICATION.toType();
+  }
+
+  @Override
   public OperationType operationType() {
     return OperationType.CHALLENGE;
   }

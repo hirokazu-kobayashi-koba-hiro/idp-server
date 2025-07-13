@@ -37,6 +37,11 @@ public class WebAuthnRegistrationChallengeInteractor implements AuthenticationIn
   }
 
   @Override
+  public AuthenticationInteractionType type() {
+    return StandardAuthenticationInteraction.WEBAUTHN_REGISTRATION_CHALLENGE.toType();
+  }
+
+  @Override
   public OperationType operationType() {
     return OperationType.CHALLENGE;
   }

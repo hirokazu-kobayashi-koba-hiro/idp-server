@@ -19,11 +19,12 @@ package org.idp.server.core.oidc.authentication;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.*;
+import org.idp.server.platform.json.JsonReadable;
 
-public class Authentication implements Serializable {
+public class Authentication implements Serializable, JsonReadable {
   LocalDateTime time;
   List<String> methods = new ArrayList<>();
-  List<String> acrValues = new ArrayList<>();
+  String acr = "";
 
   public Authentication() {}
 
@@ -39,10 +40,8 @@ public class Authentication implements Serializable {
     return this;
   }
 
-  public Authentication addAcrValues(List<String> acrValues) {
-    List<String> newValues = new ArrayList<>(this.acrValues);
-    newValues.addAll(acrValues);
-    this.acrValues = newValues;
+  public Authentication addAcr(String acr) {
+    this.acr = acr;
     return this;
   }
 
@@ -62,19 +61,12 @@ public class Authentication implements Serializable {
     return !methods.isEmpty();
   }
 
-  public List<String> acrValues() {
-    return acrValues;
-  }
-
-  public String toAcr() {
-    if (methods.contains("hwk")) {
-      return "urn:mace:incommon:iap:silver";
-    }
-    return "urn:mace:incommon:iap:bronze";
+  public String acr() {
+    return acr;
   }
 
   public boolean hasAcrValues() {
-    return !acrValues.isEmpty();
+    return acr != null && !acr.isEmpty();
   }
 
   public boolean exists() {
@@ -86,7 +78,7 @@ public class Authentication implements Serializable {
     Map<String, Object> map = new HashMap<>();
     map.put("time", time);
     map.put("methods", methods);
-    map.put("acrValues", acrValues);
+    map.put("acr", acr);
     return map;
   }
 }

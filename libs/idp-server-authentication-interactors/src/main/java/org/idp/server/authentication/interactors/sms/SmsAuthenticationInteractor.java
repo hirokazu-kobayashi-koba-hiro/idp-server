@@ -36,6 +36,11 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
   }
 
   @Override
+  public AuthenticationInteractionType type() {
+    return StandardAuthenticationInteraction.SMS_AUTHENTICATION.toType();
+  }
+
+  @Override
   public String method() {
     return StandardAuthenticationMethod.SMS.type();
   }

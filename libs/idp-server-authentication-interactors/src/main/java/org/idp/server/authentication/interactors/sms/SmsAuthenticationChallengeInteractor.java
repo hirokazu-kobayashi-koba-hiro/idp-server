@@ -41,6 +41,11 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
   }
 
   @Override
+  public AuthenticationInteractionType type() {
+    return StandardAuthenticationInteraction.SMS_AUTHENTICATION_CHALLENGE.toType();
+  }
+
+  @Override
   public OperationType operationType() {
     return OperationType.CHALLENGE;
   }

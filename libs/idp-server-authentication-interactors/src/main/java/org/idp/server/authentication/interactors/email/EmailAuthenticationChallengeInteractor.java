@@ -49,6 +49,11 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
   }
 
   @Override
+  public AuthenticationInteractionType type() {
+    return StandardAuthenticationInteraction.EMAIL_AUTHENTICATION_CHALLENGE.toType();
+  }
+
+  @Override
   public OperationType operationType() {
     return OperationType.CHALLENGE;
   }

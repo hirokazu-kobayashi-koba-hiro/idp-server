@@ -41,6 +41,10 @@ public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor
     this.additionalRequestResolvers = additionalRequestResolvers;
   }
 
+  public AuthenticationInteractionType type() {
+    return StandardAuthenticationInteraction.FIDO_UAF_DEREGISTRATION.toType();
+  }
+
   @Override
   public OperationType operationType() {
     return OperationType.DE_REGISTRATION;

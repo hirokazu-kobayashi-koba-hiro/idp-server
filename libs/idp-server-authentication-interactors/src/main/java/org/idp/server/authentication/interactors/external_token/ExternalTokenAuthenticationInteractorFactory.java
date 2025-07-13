@@ -16,7 +16,6 @@
 
 package org.idp.server.authentication.interactors.external_token;
 
-import org.idp.server.core.oidc.authentication.AuthenticationInteractionType;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractor;
 import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.oidc.authentication.plugin.AuthenticationInteractorFactory;
@@ -24,11 +23,6 @@ import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigur
 
 public class ExternalTokenAuthenticationInteractorFactory
     implements AuthenticationInteractorFactory {
-
-  @Override
-  public AuthenticationInteractionType type() {
-    return new AuthenticationInteractionType("external-token");
-  }
 
   @Override
   public AuthenticationInteractor create(AuthenticationDependencyContainer container) {
