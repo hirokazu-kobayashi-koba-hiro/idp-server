@@ -21,6 +21,7 @@ import java.util.Map;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
+import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
@@ -35,7 +36,8 @@ public class DenyDuplicateIdentityVerificationApplicationApplicationVerifier
   public boolean shouldVerify(
       Tenant tenant,
       User user,
-      IdentityVerificationApplications applications,
+      IdentityVerificationApplication currentApplication,
+      IdentityVerificationApplications previousApplications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
       IdentityVerificationApplicationRequest request,
@@ -58,14 +60,15 @@ public class DenyDuplicateIdentityVerificationApplicationApplicationVerifier
   public IdentityVerificationApplicationRequestVerifiedResult verify(
       Tenant tenant,
       User user,
-      IdentityVerificationApplications applications,
+      IdentityVerificationApplication currentApplication,
+      IdentityVerificationApplications previousApplications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
       IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
 
-    if (applications.containsRunningState(type)) {
+    if (previousApplications.containsRunningState(type)) {
       List<String> errors = List.of("Duplicate application found for type " + type.name());
       return IdentityVerificationApplicationRequestVerifiedResult.failure(errors);
     }

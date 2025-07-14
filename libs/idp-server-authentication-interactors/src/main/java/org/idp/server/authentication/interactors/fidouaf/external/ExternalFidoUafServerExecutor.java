@@ -22,7 +22,6 @@ import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifi
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
 public class ExternalFidoUafServerExecutor implements FidoUafExecutor {
 
@@ -104,11 +103,9 @@ public class ExternalFidoUafServerExecutor implements FidoUafExecutor {
 
     ExternalFidoUafServerExecutionConfiguration executionConfiguration =
         externalFidoUafServerConfiguration.getExecutionConfig(executionType);
-    OAuthAuthorizationConfiguration oAuthAuthorizationConfiguration =
-        externalFidoUafServerConfiguration.oauthAuthorization();
 
     ExternalFidoUafServerHttpRequestResult httpRequestResult =
-        httpClient.execute(request, executionConfiguration, oAuthAuthorizationConfiguration);
+        httpClient.execute(request, executionConfiguration);
 
     if (httpRequestResult.isClientError()) {
       return FidoUafExecutionResult.clientError(httpRequestResult.responseBody());

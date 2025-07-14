@@ -16,6 +16,8 @@
 
 package org.idp.server.platform.http;
 
+import java.util.Map;
+
 public class HttpRequestUrl {
   String value;
 
@@ -44,5 +46,15 @@ public class HttpRequestUrl {
 
     stringBuilder.append(paramString);
     return stringBuilder.toString();
+  }
+
+  public HttpRequestUrl interpolate(Map<String, String> pathParams) {
+    String interpolated = value;
+    for (Map.Entry<String, String> entry : pathParams.entrySet()) {
+      String key = entry.getKey();
+      String value = entry.getValue();
+      interpolated = interpolated.replace("{{" + key + "}}", value);
+    }
+    return new HttpRequestUrl(interpolated);
   }
 }

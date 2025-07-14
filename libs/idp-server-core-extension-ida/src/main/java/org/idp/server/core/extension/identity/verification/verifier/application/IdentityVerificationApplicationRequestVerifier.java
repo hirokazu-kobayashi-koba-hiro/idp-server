@@ -19,6 +19,7 @@ package org.idp.server.core.extension.identity.verification.verifier.application
 import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
+import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.oidc.identity.User;
@@ -30,7 +31,8 @@ public interface IdentityVerificationApplicationRequestVerifier {
   default boolean shouldVerify(
       Tenant tenant,
       User user,
-      IdentityVerificationApplications applications,
+      IdentityVerificationApplication currentApplication,
+      IdentityVerificationApplications previousApplications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
       IdentityVerificationApplicationRequest request,
@@ -42,7 +44,8 @@ public interface IdentityVerificationApplicationRequestVerifier {
   IdentityVerificationApplicationRequestVerifiedResult verify(
       Tenant tenant,
       User user,
-      IdentityVerificationApplications applications,
+      IdentityVerificationApplication currentApplication,
+      IdentityVerificationApplications previousApplications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
       IdentityVerificationApplicationRequest request,

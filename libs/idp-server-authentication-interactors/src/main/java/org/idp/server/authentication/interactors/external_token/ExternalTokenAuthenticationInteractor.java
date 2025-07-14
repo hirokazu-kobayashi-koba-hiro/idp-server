@@ -24,15 +24,20 @@ import org.idp.server.core.oidc.identity.mapper.UserInfoMapper;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.http.*;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
+import org.idp.server.platform.oauth.OAuthAuthorizationResolver;
+import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 
 public class ExternalTokenAuthenticationInteractor implements AuthenticationInteractor {
   AuthenticationConfigurationQueryRepository configurationRepository;
+  OAuthAuthorizationResolvers authorizationResolvers;
   HttpRequestExecutor httpRequestExecutor;
 
   public ExternalTokenAuthenticationInteractor(
       AuthenticationConfigurationQueryRepository configurationRepository) {
     this.configurationRepository = configurationRepository;
+    this.authorizationResolvers = new OAuthAuthorizationResolvers();
     this.httpRequestExecutor = new HttpRequestExecutor(HttpClientFactory.defaultClient());
   }
 
@@ -61,7 +66,8 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
     ExternalTokenAuthenticationDetailConfiguration userinfoConfig =
         configuration.userinfoDetailConfig();
 
-    HttpRequestResult userinfoResult = execute(request, userinfoConfig);
+    HttpRequestResult userinfoResult =
+        execute(new HttpRequestBaseParams(request.toMap()), userinfoConfig);
 
     if (userinfoResult.isClientError()) {
       return AuthenticationInteractionRequestResult.clientError(
@@ -113,47 +119,46 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
 
   // TODO to be more simply
   private HttpRequestResult execute(
-      AuthenticationInteractionRequest request,
-      ExternalTokenAuthenticationDetailConfiguration userinfoConfig) {
+      HttpRequestBaseParams httpRequestBaseParams,
+      HttpRequestExecutionConfigInterface configuration) {
 
-    if (userinfoConfig.isGetHttpMethod()) {
-      HttpRequestUrl httpRequestUrl = userinfoConfig.httpRequestUrl();
-      HttpRequestStaticHeaders httpRequestStaticHeaders = userinfoConfig.httpRequestHeaders();
-      HttpRequestMappingRules queryMappingRules = userinfoConfig.httpRequestQueryMappingRules();
-      HttpRequestBaseParams httpRequestBaseParams = new HttpRequestBaseParams(request.toMap());
-      return httpRequestExecutor.getWithDynamicQueryMapping(
-          httpRequestUrl, httpRequestStaticHeaders, queryMappingRules, httpRequestBaseParams);
-    }
+    Map<String, String> headers = new HashMap<>(configuration.httpRequestHeaders().toMap());
 
-    if (userinfoConfig.hasHmacAuthentication()) {
-      return httpRequestExecutor.execute(
-          userinfoConfig.httpRequestUrl(),
-          userinfoConfig.httpMethod(),
-          userinfoConfig.hmacAuthentication(),
-          userinfoConfig.httpRequestHeaders(),
-          new HttpRequestBaseParams(request.toMap()),
-          userinfoConfig.httpRequestDynamicBodyKeys(),
-          userinfoConfig.httpRequestStaticBody());
-    }
+    switch (configuration.httpRequestAuthType()) {
+      case OAUTH2 -> {
+        OAuthAuthorizationConfiguration oAuthAuthorizationConfig =
+            configuration.oauthAuthorization();
+        OAuthAuthorizationResolver resolver =
+            authorizationResolvers.get(oAuthAuthorizationConfig.type());
+        String accessToken = resolver.resolve(oAuthAuthorizationConfig);
+        headers.put("Authorization", "Bearer " + accessToken);
+      }
+      case HMAC_SHA256 -> {
+        HttpRequestStaticHeaders httpRequestStaticHeaders = new HttpRequestStaticHeaders(headers);
+        HmacAuthenticationConfiguration hmacAuthenticationConfig =
+            configuration.hmacAuthentication();
 
-    if (userinfoConfig.hasDynamicBodyKeys()) {
-
-      return httpRequestExecutor.execute(
-          userinfoConfig.httpRequestUrl(),
-          userinfoConfig.httpMethod(),
-          userinfoConfig.httpRequestHeaders(),
-          new HttpRequestBaseParams(request.toMap()),
-          userinfoConfig.httpRequestDynamicBodyKeys(),
-          userinfoConfig.httpRequestStaticBody());
+        return httpRequestExecutor.execute(
+            configuration.httpRequestUrl(),
+            configuration.httpMethod(),
+            hmacAuthenticationConfig,
+            httpRequestBaseParams,
+            httpRequestStaticHeaders,
+            configuration.httpRequestStaticBody(),
+            configuration.httpRequestPathMappingRules(),
+            configuration.httpRequestHeaderMappingRules(),
+            configuration.httpRequestBodyMappingRules());
+      }
     }
 
     return httpRequestExecutor.executeWithDynamicMapping(
-        userinfoConfig.httpRequestUrl(),
-        userinfoConfig.httpMethod(),
-        userinfoConfig.httpRequestHeaders(),
-        userinfoConfig.httpRequestHeaderMappingRules(),
-        userinfoConfig.httpRequestHeaderMappingRules(),
-        new HttpRequestBaseParams(request.toMap()),
-        userinfoConfig.httpRequestStaticBody());
+        configuration.httpRequestUrl(),
+        configuration.httpMethod(),
+        httpRequestBaseParams,
+        new HttpRequestStaticHeaders(headers),
+        configuration.httpRequestStaticBody(),
+        configuration.httpRequestPathMappingRules(),
+        configuration.httpRequestHeaderMappingRules(),
+        configuration.httpRequestHeaderMappingRules());
   }
 }

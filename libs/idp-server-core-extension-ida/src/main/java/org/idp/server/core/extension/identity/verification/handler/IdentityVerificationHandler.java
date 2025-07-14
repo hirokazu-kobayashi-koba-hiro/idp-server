@@ -21,6 +21,7 @@ import java.util.Map;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
+import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
@@ -58,7 +59,8 @@ public class IdentityVerificationHandler {
   public ExternalIdentityVerificationApplyingResult handleRequest(
       Tenant tenant,
       User user,
-      IdentityVerificationApplications applications,
+      IdentityVerificationApplication currentApplication,
+      IdentityVerificationApplications previousApplications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
       IdentityVerificationApplicationRequest request,
@@ -81,7 +83,8 @@ public class IdentityVerificationHandler {
         requestVerifiers.verify(
             tenant,
             user,
-            applications,
+            currentApplication,
+            previousApplications,
             type,
             processes,
             request,
@@ -94,12 +97,12 @@ public class IdentityVerificationHandler {
           requestValidationResult, verifyResult);
     }
 
-    HttpRequestStaticBody httpRequestStaticBody =
-        resolveStaticBody(
-            processConfig.httpRequestStaticBody(),
+    HttpRequestBaseParams httpRequestBaseParams =
+        resolveBaseParams(
             tenant,
             user,
-            applications,
+            currentApplication,
+            previousApplications,
             type,
             processes,
             request,
@@ -108,8 +111,8 @@ public class IdentityVerificationHandler {
 
     HttpRequestResult executionResult =
         execute(
-            new HttpRequestBaseParams(request.toMap()),
-            httpRequestStaticBody,
+            httpRequestBaseParams,
+            processConfig.httpRequestStaticBody(),
             processes,
             verificationConfiguration);
 
@@ -139,29 +142,35 @@ public class IdentityVerificationHandler {
         responseValidationResult);
   }
 
-  private HttpRequestStaticBody resolveStaticBody(
-      HttpRequestStaticBody staticBody,
+  private HttpRequestBaseParams resolveBaseParams(
       Tenant tenant,
       User user,
-      IdentityVerificationApplications applications,
+      IdentityVerificationApplication currentApplication,
+      IdentityVerificationApplications previousApplications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
       IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
-    Map<String, Object> parameters = new HashMap<>(staticBody.toMap());
+    Map<String, Object> parameters = new HashMap<>();
+    parameters.put("body", request.toMap());
+    parameters.put("attributes", requestAttributes.toMap());
+    parameters.put("user", user.toMap());
+    if (currentApplication.exists()) {
+      parameters.put("application", currentApplication.toMap());
+    }
     Map<String, Object> additionalParameters =
         additionalRequestParameterResolvers.resolve(
             tenant,
             user,
-            applications,
+            previousApplications,
             type,
             processes,
             request,
             requestAttributes,
             verificationConfiguration);
     parameters.putAll(additionalParameters);
-    return new HttpRequestStaticBody(parameters);
+    return new HttpRequestBaseParams(parameters);
   }
 
   // TODO to be more simply
@@ -183,15 +192,6 @@ public class IdentityVerificationHandler {
             authorizationResolvers.get(oAuthAuthorizationConfig.type());
         String accessToken = resolver.resolve(oAuthAuthorizationConfig);
         headers.put("Authorization", "Bearer " + accessToken);
-        HttpRequestStaticHeaders httpRequestStaticHeaders = new HttpRequestStaticHeaders(headers);
-
-        return httpRequestExecutor.execute(
-            processConfig.httpRequestUrl(),
-            processConfig.httpMethod(),
-            httpRequestStaticHeaders,
-            httpRequestBaseParams,
-            processConfig.httpRequestDynamicBodyKeys(),
-            httpRequestStaticBody);
       }
       case HMAC_SHA256 -> {
         HttpRequestStaticHeaders httpRequestStaticHeaders = new HttpRequestStaticHeaders(headers);
@@ -202,32 +202,23 @@ public class IdentityVerificationHandler {
             processConfig.httpRequestUrl(),
             processConfig.httpMethod(),
             hmacAuthenticationConfig,
+            httpRequestBaseParams,
             httpRequestStaticHeaders,
-            httpRequestBaseParams,
-            processConfig.httpRequestDynamicBodyKeys(),
-            httpRequestStaticBody);
-      }
-      default -> {
-        if (processConfig.hasDynamicBodyKeys()) {
-
-          return httpRequestExecutor.execute(
-              processConfig.httpRequestUrl(),
-              processConfig.httpMethod(),
-              processConfig.httpRequestHeaders(),
-              httpRequestBaseParams,
-              processConfig.httpRequestDynamicBodyKeys(),
-              processConfig.httpRequestStaticBody());
-        }
-
-        return httpRequestExecutor.executeWithDynamicMapping(
-            processConfig.httpRequestUrl(),
-            processConfig.httpMethod(),
-            processConfig.httpRequestHeaders(),
+            httpRequestStaticBody,
+            processConfig.httpRequestPathMappingRules(),
             processConfig.httpRequestHeaderMappingRules(),
-            processConfig.httpRequestHeaderMappingRules(),
-            httpRequestBaseParams,
-            processConfig.httpRequestStaticBody());
+            processConfig.httpRequestBodyMappingRules());
       }
     }
+
+    return httpRequestExecutor.executeWithDynamicMapping(
+        processConfig.httpRequestUrl(),
+        processConfig.httpMethod(),
+        httpRequestBaseParams,
+        new HttpRequestStaticHeaders(headers),
+        processConfig.httpRequestStaticBody(),
+        processConfig.httpRequestPathMappingRules(),
+        processConfig.httpRequestHeaderMappingRules(),
+        processConfig.httpRequestHeaderMappingRules());
   }
 }

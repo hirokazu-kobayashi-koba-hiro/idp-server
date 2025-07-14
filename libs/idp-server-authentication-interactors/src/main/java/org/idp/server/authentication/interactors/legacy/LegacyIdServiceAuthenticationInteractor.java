@@ -63,13 +63,15 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
         configuration.authenticationDetailConfig();
 
     HttpRequestResult authenticationResult =
-        httpRequestExecutor.execute(
+        httpRequestExecutor.executeWithDynamicMapping(
             authenticationConfig.httpRequestUrl(),
             authenticationConfig.httpMethod(),
-            authenticationConfig.httpRequestHeaders(),
             new HttpRequestBaseParams(request.toMap()),
-            authenticationConfig.httpRequestDynamicBodyKeys(),
-            authenticationConfig.httpRequestStaticBody());
+            authenticationConfig.httpRequestHeaders(),
+            authenticationConfig.httpRequestStaticBody(),
+            authenticationConfig.httpRequestPathMappingRules(),
+            authenticationConfig.httpRequestHeaderMappingRules(),
+            authenticationConfig.httpRequestBodyMappingRules());
 
     if (authenticationResult.isClientError()) {
 
@@ -86,13 +88,15 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
         configuration.userinfoDetailConfig();
 
     HttpRequestResult userinfoResult =
-        httpRequestExecutor.execute(
+        httpRequestExecutor.executeWithDynamicMapping(
             userinfoConfig.httpRequestUrl(),
             userinfoConfig.httpMethod(),
-            userinfoConfig.httpRequestHeaders(),
             new HttpRequestBaseParams(request.toMap()),
-            userinfoConfig.httpRequestDynamicBodyKeys(),
-            userinfoConfig.httpRequestStaticBody());
+            userinfoConfig.httpRequestHeaders(),
+            userinfoConfig.httpRequestStaticBody(),
+            userinfoConfig.httpRequestPathMappingRules(),
+            userinfoConfig.httpRequestHeaderMappingRules(),
+            userinfoConfig.httpRequestBodyMappingRules());
 
     UserInfoMapper userInfoMapper =
         new UserInfoMapper(

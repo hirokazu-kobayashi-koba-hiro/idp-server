@@ -36,7 +36,6 @@ public class AdditionalRequestParameterResolvers {
 
   public AdditionalRequestParameterResolvers() {
     this.resolvers = new ArrayList<>();
-    this.resolvers.add(new UserParameterResolver());
     this.resolvers.add(new ContinuousCustomerDueDiligenceParameterResolver());
     this.resolvers.add(new HttpRequestParameterResolver());
     List<AdditionalRequestParameterResolver> loaded =

@@ -36,7 +36,7 @@ public class AdditionalParameterHttpRequestConfiguration
   HmacAuthenticationConfiguration hmacAuthentication = new HmacAuthenticationConfiguration();
   Map<String, String> headers = new HashMap<>();
   Map<String, Object> staticBody = new HashMap<>();
-  List<String> dynamicBodyKeys = new ArrayList<>();
+  List<MappingRule> pathMappingRules = new ArrayList<>();
   List<MappingRule> headerMappingRules = new ArrayList<>();
   List<MappingRule> bodyMappingRules = new ArrayList<>();
   List<MappingRule> queryMappingRules = new ArrayList<>();
@@ -97,18 +97,13 @@ public class AdditionalParameterHttpRequestConfiguration
   }
 
   @Override
-  public HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys() {
-    return new HttpRequestDynamicBodyKeys(dynamicBodyKeys);
-  }
-
-  @Override
-  public boolean hasDynamicBodyKeys() {
-    return dynamicBodyKeys != null && !dynamicBodyKeys.isEmpty();
-  }
-
-  @Override
   public HttpRequestStaticBody httpRequestStaticBody() {
     return new HttpRequestStaticBody(staticBody);
+  }
+
+  @Override
+  public HttpRequestMappingRules httpRequestPathMappingRules() {
+    return new HttpRequestMappingRules(pathMappingRules);
   }
 
   @Override

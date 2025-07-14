@@ -50,6 +50,8 @@ services:
       REDIS_PORT: 6379
       CACHE_ENABLE: "true"
       CACHE_TIME_TO_LIVE_SECOND: 300
+      LOGGING_LEVEL_ROOT: debug
+      LOGGING_LEVEL_WEB: debug
       JAVA_TOOL_OPTIONS: >
         -Xms512m -Xmx2g
         -XX:+UseG1GC
@@ -104,6 +106,8 @@ services:
       REDIS_PORT: 6379
       CACHE_ENABLE: "true"
       CACHE_TIME_TO_LIVE_SECOND: 300
+      LOGGING_LEVEL_ROOT: debug
+      LOGGING_LEVEL_WEB: debug
       JAVA_TOOL_OPTIONS: >
         -Xms512m -Xmx2g
         -XX:+UseG1GC

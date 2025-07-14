@@ -16,13 +16,16 @@
 
 package org.idp.server.platform.http;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class HttpRequestBaseParams {
 
   Map<String, Object> values;
 
-  public HttpRequestBaseParams() {}
+  public HttpRequestBaseParams() {
+    values = new HashMap<>();
+  }
 
   public HttpRequestBaseParams(Map<String, Object> values) {
     this.values = values;
@@ -30,6 +33,10 @@ public class HttpRequestBaseParams {
 
   public Map<String, Object> toMap() {
     return values;
+  }
+
+  public void add(String key, Object value) {
+    values.put(key, value);
   }
 
   public String optValueAsString(String key, String defaultValue) {

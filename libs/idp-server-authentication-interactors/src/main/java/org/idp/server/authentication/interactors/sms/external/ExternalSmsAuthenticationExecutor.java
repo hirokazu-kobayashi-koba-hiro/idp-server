@@ -24,7 +24,6 @@ import org.idp.server.core.oidc.authentication.repository.AuthenticationInteract
 import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionQueryRepository;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
 public class ExternalSmsAuthenticationExecutor implements SmsAuthenticationExecutor {
 
@@ -94,16 +93,14 @@ public class ExternalSmsAuthenticationExecutor implements SmsAuthenticationExecu
       SmsAuthenticationConfiguration configuration) {
 
     Map<String, Object> detail = configuration.getDetail(type());
-    ExternalSmsAuthenticationConfiguration externalFidoUafServerConfiguration =
+    ExternalSmsAuthenticationConfiguration smsConfiguration =
         jsonConverter.read(detail, ExternalSmsAuthenticationConfiguration.class);
 
     ExternalSmsAuthenticationExecutionConfiguration executionConfiguration =
-        externalFidoUafServerConfiguration.getExecutionConfig(executionType);
-    OAuthAuthorizationConfiguration oAuthAuthorizationConfiguration =
-        externalFidoUafServerConfiguration.oauthAuthorization();
+        smsConfiguration.getExecutionConfig(executionType);
 
     ExternalSmsAuthenticationHttpRequestResult httpRequestResult =
-        httpClient.execute(request, executionConfiguration, oAuthAuthorizationConfiguration);
+        httpClient.execute(request, executionConfiguration);
 
     if (httpRequestResult.isClientError()) {
       return SmsAuthenticationExecutionResult.clientError(httpRequestResult.responseBody());

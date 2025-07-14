@@ -75,7 +75,7 @@
       "type": "http",
       "documentation": "",
       "method": "post",
-      "endpoint": "request-ekyc",
+      "endpoint": ":externalApplicationId/request-ekyc",
       "responses": [
         {
           "uuid": "0a7dffec-df84-44fe-938a-f99021a53d04",
@@ -106,7 +106,7 @@
       "type": "http",
       "documentation": "",
       "method": "post",
-      "endpoint": "complete-ekyc",
+      "endpoint": ":externalApplicationId/complete-ekyc",
       "responses": [
         {
           "uuid": "42afa479-2567-4059-9997-ea07abcb74a0",

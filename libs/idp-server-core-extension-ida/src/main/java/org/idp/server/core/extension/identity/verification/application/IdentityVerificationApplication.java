@@ -375,6 +375,10 @@ public class IdentityVerificationApplication {
     return status.isApproved();
   }
 
+  public boolean exists() {
+    return identifier != null && identifier.exists();
+  }
+
   public Map<String, Object> toMap() {
     HashMap<String, Object> map = new HashMap<>();
     map.put("id", identifier.value());
@@ -383,10 +387,13 @@ public class IdentityVerificationApplication {
     map.put("client_id", requestedClientId.value());
     map.put("user_id", userIdentifier.value());
     map.put("application_details", applicationDetails.toMap());
-    map.put("external_workflow_delegation", externalIdentityVerificationService.name());
+    map.put("external_service", externalIdentityVerificationService.name());
     map.put("external_application_id", externalApplicationId.value());
-    map.put("external_application_details", externalIdentityVerificationApplicationDetails.toMap());
+    if (hasExternalApplicationDetails())
+      map.put(
+          "external_application_details", externalIdentityVerificationApplicationDetails.toMap());
     map.put("processes", processesAsMapObject());
+    if (hasExaminationResults()) map.put("examination_results", examinations.toMapList());
     map.put("status", status.value());
     map.put("requested_at", requestedAt.toString());
     return map;

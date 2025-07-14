@@ -101,6 +101,7 @@ public class IdentityVerificationApplicationEntryService
         identityVerificationHandler.handleRequest(
             tenant,
             user,
+            new IdentityVerificationApplication(),
             applications,
             type,
             process,
@@ -192,6 +193,7 @@ public class IdentityVerificationApplicationEntryService
         identityVerificationHandler.handleRequest(
             tenant,
             user,
+            application,
             applications,
             type,
             process,

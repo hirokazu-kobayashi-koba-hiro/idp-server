@@ -84,17 +84,7 @@ public class HttpRequestParameterResolver implements AdditionalRequestParameterR
     IdentityVerificationProcessConfiguration processConfig =
         verificationConfiguration.getProcessConfig(processes);
 
-    HttpRequestStaticBody httpRequestStaticBody =
-        resolveStaticBody(
-            processConfig.httpRequestStaticBody(),
-            tenant,
-            user,
-            applications,
-            type,
-            processes,
-            request,
-            requestAttributes,
-            verificationConfiguration);
+    HttpRequestBaseParams baseParams = resolveBaseParams(request, requestAttributes);
 
     Map<String, Object> additionalParameterSchema =
         processConfig.requestAdditionalParameterSchema();
@@ -104,27 +94,23 @@ public class HttpRequestParameterResolver implements AdditionalRequestParameterR
             AdditionalParameterHttpRequestConfiguration.class);
 
     HttpRequestResult executionResult =
-        execute(new HttpRequestBaseParams(request.toMap()), httpRequestStaticBody, configuration);
+        execute(baseParams, processConfig.httpRequestStaticBody(), configuration);
 
     JsonNodeWrapper body = executionResult.body();
+    Map<String, Object> parameters = new HashMap<>();
+    parameters.put("additional_parameter_http.header", executionResult.headers());
+    parameters.put("additional_parameter_http.body", body.toMap());
 
-    return body.toMap();
+    return parameters;
   }
 
-  private HttpRequestStaticBody resolveStaticBody(
-      HttpRequestStaticBody staticBody,
-      Tenant tenant,
-      User user,
-      IdentityVerificationApplications applications,
-      IdentityVerificationType type,
-      IdentityVerificationProcess processes,
-      IdentityVerificationApplicationRequest request,
-      RequestAttributes requestAttributes,
-      IdentityVerificationConfiguration verificationConfiguration) {
-    Map<String, Object> parameters = new HashMap<>(staticBody.toMap());
-    parameters.putAll(requestAttributes.toMap());
+  private HttpRequestBaseParams resolveBaseParams(
+      IdentityVerificationApplicationRequest request, RequestAttributes requestAttributes) {
+    Map<String, Object> parameters = new HashMap<>();
+    parameters.put("body", request.toMap());
+    parameters.put("attributes", requestAttributes.toMap());
 
-    return new HttpRequestStaticBody(parameters);
+    return new HttpRequestBaseParams(parameters);
   }
 
   private HttpRequestResult execute(
@@ -150,32 +136,25 @@ public class HttpRequestParameterResolver implements AdditionalRequestParameterR
             config.httpRequestUrl(),
             config.httpMethod(),
             hmacAuthenticationConfig,
-            httpRequestStaticHeaders,
             httpRequestBaseParams,
-            config.httpRequestDynamicBodyKeys(),
-            httpRequestStaticBody);
+            httpRequestStaticHeaders,
+            httpRequestStaticBody,
+            config.httpRequestPathMappingRules(),
+            config.httpRequestHeaderMappingRules(),
+            config.httpRequestBodyMappingRules());
       }
     }
 
     HttpRequestStaticHeaders httpRequestStaticHeaders = new HttpRequestStaticHeaders(headers);
-    if (config.hasDynamicBodyKeys()) {
-
-      return httpRequestExecutor.execute(
-          config.httpRequestUrl(),
-          config.httpMethod(),
-          httpRequestStaticHeaders,
-          httpRequestBaseParams,
-          config.httpRequestDynamicBodyKeys(),
-          config.httpRequestStaticBody());
-    }
 
     return httpRequestExecutor.executeWithDynamicMapping(
         config.httpRequestUrl(),
         config.httpMethod(),
-        httpRequestStaticHeaders,
-        config.httpRequestHeaderMappingRules(),
-        config.httpRequestHeaderMappingRules(),
         httpRequestBaseParams,
-        config.httpRequestStaticBody());
+        httpRequestStaticHeaders,
+        httpRequestStaticBody,
+        config.httpRequestPathMappingRules(),
+        config.httpRequestHeaderMappingRules(),
+        config.httpRequestBodyMappingRules());
   }
 }
