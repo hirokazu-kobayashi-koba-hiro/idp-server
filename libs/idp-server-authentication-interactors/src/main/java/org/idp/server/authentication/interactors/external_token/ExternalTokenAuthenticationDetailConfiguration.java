@@ -33,8 +33,8 @@ public class ExternalTokenAuthenticationDetailConfiguration
   OAuthAuthorizationConfiguration oauthAuthorization = new OAuthAuthorizationConfiguration();
   HmacAuthenticationConfiguration hmacAuthentication = new HmacAuthenticationConfiguration();
   Map<String, String> headers = new HashMap<>();
-  List<String> dynamicBodyKeys = new ArrayList<>();
   Map<String, Object> staticBody = new HashMap<>();
+  List<MappingRule> pathMappingRules = new ArrayList<>();
   List<MappingRule> headerMappingRules = new ArrayList<>();
   List<MappingRule> bodyMappingRules = new ArrayList<>();
   List<MappingRule> queryMappingRules = new ArrayList<>();
@@ -85,13 +85,8 @@ public class ExternalTokenAuthenticationDetailConfiguration
   }
 
   @Override
-  public boolean hasDynamicBodyKeys() {
-    return dynamicBodyKeys != null && !dynamicBodyKeys.isEmpty();
-  }
-
-  @Override
-  public HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys() {
-    return new HttpRequestDynamicBodyKeys(dynamicBodyKeys);
+  public HttpRequestMappingRules httpRequestPathMappingRules() {
+    return new HttpRequestMappingRules(pathMappingRules);
   }
 
   @Override

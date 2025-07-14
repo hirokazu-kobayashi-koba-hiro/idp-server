@@ -16,17 +16,28 @@
 
 package org.idp.server.authentication.interactors.fidouaf.external;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.http.*;
 import org.idp.server.platform.json.JsonReadable;
+import org.idp.server.platform.mapper.MappingRule;
+import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
-public class ExternalFidoUafServerExecutionConfiguration implements JsonReadable {
+public class ExternalFidoUafServerExecutionConfiguration
+    implements HttpRequestExecutionConfigInterface, JsonReadable {
   String url;
   String method;
-  Map<String, String> headers;
-  List<String> dynamicBodyKeys;
-  Map<String, Object> staticBody;
+  String authType;
+  OAuthAuthorizationConfiguration oauthAuthorization = new OAuthAuthorizationConfiguration();
+  HmacAuthenticationConfiguration hmacAuthentication = new HmacAuthenticationConfiguration();
+  Map<String, String> headers = new HashMap<>();
+  Map<String, Object> staticBody = new HashMap<>();
+  List<MappingRule> pathMappingRules = new ArrayList<>();
+  List<MappingRule> headerMappingRules = new ArrayList<>();
+  List<MappingRule> bodyMappingRules = new ArrayList<>();
+  List<MappingRule> queryMappingRules = new ArrayList<>();
 
   public ExternalFidoUafServerExecutionConfiguration() {}
 
@@ -38,15 +49,62 @@ public class ExternalFidoUafServerExecutionConfiguration implements JsonReadable
     return HttpMethod.of(method);
   }
 
+  public boolean isGetHttpMethod() {
+    return httpMethod().isGet();
+  }
+
+  @Override
+  public HttpRequestAuthType httpRequestAuthType() {
+    return HttpRequestAuthType.of(authType);
+  }
+
+  @Override
+  public boolean hasOAuthAuthorization() {
+    return oauthAuthorization != null && oauthAuthorization.exists();
+  }
+
+  @Override
+  public OAuthAuthorizationConfiguration oauthAuthorization() {
+    return oauthAuthorization;
+  }
+
+  @Override
+  public boolean hasHmacAuthentication() {
+    return hmacAuthentication != null && hmacAuthentication.exists();
+  }
+
+  @Override
+  public HmacAuthenticationConfiguration hmacAuthentication() {
+    return hmacAuthentication;
+  }
+
+  @Override
   public HttpRequestStaticHeaders httpRequestHeaders() {
     return new HttpRequestStaticHeaders(headers);
   }
 
-  public HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys() {
-    return new HttpRequestDynamicBodyKeys(dynamicBodyKeys);
+  @Override
+  public HttpRequestMappingRules httpRequestPathMappingRules() {
+    return new HttpRequestMappingRules(pathMappingRules);
   }
 
+  @Override
   public HttpRequestStaticBody httpRequestStaticBody() {
     return new HttpRequestStaticBody(staticBody);
+  }
+
+  @Override
+  public HttpRequestMappingRules httpRequestHeaderMappingRules() {
+    return new HttpRequestMappingRules(headerMappingRules);
+  }
+
+  @Override
+  public HttpRequestMappingRules httpRequestBodyMappingRules() {
+    return new HttpRequestMappingRules(bodyMappingRules);
+  }
+
+  @Override
+  public HttpRequestMappingRules httpRequestQueryMappingRules() {
+    return new HttpRequestMappingRules(queryMappingRules);
   }
 }

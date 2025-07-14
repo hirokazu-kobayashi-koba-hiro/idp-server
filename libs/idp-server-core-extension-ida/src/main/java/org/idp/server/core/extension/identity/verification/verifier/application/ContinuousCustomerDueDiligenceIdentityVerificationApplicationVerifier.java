@@ -20,6 +20,7 @@ import java.util.List;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
+import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.oidc.identity.User;
@@ -32,7 +33,8 @@ public class ContinuousCustomerDueDiligenceIdentityVerificationApplicationVerifi
   public boolean shouldVerify(
       Tenant tenant,
       User user,
-      IdentityVerificationApplications applications,
+      IdentityVerificationApplication currentApplication,
+      IdentityVerificationApplications previousApplications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
       IdentityVerificationApplicationRequest request,
@@ -46,14 +48,15 @@ public class ContinuousCustomerDueDiligenceIdentityVerificationApplicationVerifi
   public IdentityVerificationApplicationRequestVerifiedResult verify(
       Tenant tenant,
       User user,
-      IdentityVerificationApplications applications,
+      IdentityVerificationApplication currentApplication,
+      IdentityVerificationApplications previousApplications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
       IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
 
-    if (!applications.containsApproved(verificationConfiguration.approvedTargetTypes())) {
+    if (!previousApplications.containsApproved(verificationConfiguration.approvedTargetTypes())) {
 
       List<String> errors =
           List.of(

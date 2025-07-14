@@ -31,13 +31,13 @@ public class HttpRequestDynamicMapper {
 
   public HttpRequestDynamicMapper(
       HttpRequestMappingRules httpRequestMappingRules,
-      Map<String, String> headers,
-      Map<String, Object> body) {
+      HttpRequestBaseParams httpRequestBaseParams) {
     this.mappingRules = httpRequestMappingRules.toList();
-    Map<String, Object> payload = new HashMap<>();
-    payload.put("header", headers);
-    payload.put("body", body);
-    this.payload = payload;
+    this.payload = httpRequestBaseParams.toMap();
+  }
+
+  public Map<String, String> toPathParams() {
+    return executeAndConvertString();
   }
 
   public Map<String, String> toHeaders() {

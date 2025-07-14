@@ -36,11 +36,9 @@ public interface HttpRequestExecutionConfigInterface {
 
   HttpRequestStaticHeaders httpRequestHeaders();
 
-  boolean hasDynamicBodyKeys();
-
-  HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys();
-
   HttpRequestStaticBody httpRequestStaticBody();
+
+  HttpRequestMappingRules httpRequestPathMappingRules();
 
   HttpRequestMappingRules httpRequestHeaderMappingRules();
 

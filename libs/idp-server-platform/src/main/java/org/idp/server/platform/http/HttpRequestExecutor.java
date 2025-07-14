@@ -38,88 +38,38 @@ public class HttpRequestExecutor {
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
-  public HttpRequestResult executeWithDynamicHeaderMapping(
-      HttpRequestUrl httpRequestUrl,
-      HttpMethod httpMethod,
-      HttpRequestStaticHeaders httpRequestStaticHeaders,
-      HttpRequestMappingRules headerMappingRules,
-      HttpRequestBaseParams httpRequestBaseParams,
-      HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys,
-      HttpRequestStaticBody httpRequestStaticBody) {
-
-    HttpRequestDynamicMapper headerMapper =
-        new HttpRequestDynamicMapper(
-            headerMappingRules, httpRequestStaticHeaders.toMap(), httpRequestBaseParams.toMap());
-    Map<String, String> headers = headerMapper.toHeaders();
-
-    HttpRequestBodyCreator requestBodyCreator =
-        new HttpRequestBodyCreator(
-            httpRequestBaseParams, httpRequestDynamicBodyKeys, httpRequestStaticBody);
-    Map<String, Object> requestBody = requestBodyCreator.create();
-
-    HttpRequest.Builder httpRequestBuilder =
-        HttpRequest.newBuilder().uri(URI.create(httpRequestUrl.value()));
-
-    setHeaders(httpRequestBuilder, headers);
-    setParams(httpRequestBuilder, httpMethod, requestBody);
-
-    HttpRequest httpRequest = httpRequestBuilder.build();
-
-    return execute(httpRequest);
-  }
-
-  public HttpRequestResult executeWithDynamicBodyMapping(
-      HttpRequestUrl httpRequestUrl,
-      HttpMethod httpMethod,
-      HttpRequestStaticHeaders httpRequestStaticHeaders,
-      HttpRequestMappingRules bodyMappingRules,
-      HttpRequestBaseParams httpRequestBaseParams,
-      HttpRequestStaticBody httpRequestStaticBody) {
-
-    Map<String, String> headers = httpRequestStaticHeaders.toMap();
-    Map<String, Object> baseBody = new HashMap<>(httpRequestBaseParams.toMap());
-    baseBody.putAll(httpRequestStaticBody.toMap());
-
-    HttpRequestDynamicMapper bodyMapper =
-        new HttpRequestDynamicMapper(bodyMappingRules, httpRequestStaticHeaders.toMap(), baseBody);
-
-    Map<String, Object> requestBody = bodyMapper.toBody();
-
-    HttpRequest.Builder httpRequestBuilder =
-        HttpRequest.newBuilder().uri(URI.create(httpRequestUrl.value()));
-
-    setHeaders(httpRequestBuilder, headers);
-    setParams(httpRequestBuilder, httpMethod, requestBody);
-
-    HttpRequest httpRequest = httpRequestBuilder.build();
-
-    return execute(httpRequest);
-  }
-
   public HttpRequestResult executeWithDynamicMapping(
       HttpRequestUrl httpRequestUrl,
       HttpMethod httpMethod,
-      HttpRequestStaticHeaders httpRequestStaticHeaders,
-      HttpRequestMappingRules headerMappingRules,
-      HttpRequestMappingRules bodyMappingRules,
       HttpRequestBaseParams httpRequestBaseParams,
-      HttpRequestStaticBody httpRequestStaticBody) {
+      HttpRequestStaticHeaders httpRequestStaticHeaders,
+      HttpRequestStaticBody httpRequestStaticBody,
+      HttpRequestMappingRules pathMappingRules,
+      HttpRequestMappingRules headerMappingRules,
+      HttpRequestMappingRules bodyMappingRules) {
 
+    HttpRequestDynamicMapper pathMapper =
+        new HttpRequestDynamicMapper(pathMappingRules, httpRequestBaseParams);
+    Map<String, String> pathParams = pathMapper.toPathParams();
+    HttpRequestUrl interpolatedUrl = httpRequestUrl.interpolate(pathParams);
+
+    Map<String, String> headers = new HashMap<>();
     HttpRequestDynamicMapper headerMapper =
-        new HttpRequestDynamicMapper(
-            headerMappingRules, httpRequestStaticHeaders.toMap(), httpRequestBaseParams.toMap());
-    Map<String, String> headers = headerMapper.toHeaders();
+        new HttpRequestDynamicMapper(headerMappingRules, httpRequestBaseParams);
+    Map<String, String> resolvedMappingHeaders = headerMapper.toHeaders();
+    headers.putAll(resolvedMappingHeaders);
+    headers.putAll(httpRequestStaticHeaders.toMap());
 
-    Map<String, Object> baseBody = new HashMap<>(httpRequestBaseParams.toMap());
-    baseBody.putAll(httpRequestStaticBody.toMap());
+    Map<String, Object> requestBody = new HashMap<>(httpRequestStaticBody.toMap());
 
     HttpRequestDynamicMapper bodyMapper =
-        new HttpRequestDynamicMapper(bodyMappingRules, httpRequestStaticHeaders.toMap(), baseBody);
+        new HttpRequestDynamicMapper(bodyMappingRules, httpRequestBaseParams);
 
-    Map<String, Object> requestBody = bodyMapper.toBody();
+    Map<String, Object> resolvedMappingBody = bodyMapper.toBody();
+    requestBody.putAll(resolvedMappingBody);
 
     HttpRequest.Builder httpRequestBuilder =
-        HttpRequest.newBuilder().uri(URI.create(httpRequestUrl.value()));
+        HttpRequest.newBuilder().uri(URI.create(interpolatedUrl.value()));
 
     setHeaders(httpRequestBuilder, headers);
     setParams(httpRequestBuilder, httpMethod, requestBody);
@@ -131,18 +81,23 @@ public class HttpRequestExecutor {
 
   public HttpRequestResult getWithDynamicQueryMapping(
       HttpRequestUrl httpRequestUrl,
+      HttpRequestBaseParams httpRequestBaseParams,
       HttpRequestStaticHeaders httpRequestStaticHeaders,
-      HttpRequestMappingRules queryMappingRules,
-      HttpRequestBaseParams httpRequestBaseParams) {
+      HttpRequestMappingRules pathMappingRules,
+      HttpRequestMappingRules queryMappingRules) {
+
+    HttpRequestDynamicMapper pathMapper =
+        new HttpRequestDynamicMapper(pathMappingRules, httpRequestBaseParams);
+    Map<String, String> pathParams = pathMapper.toPathParams();
+    HttpRequestUrl interpolatedUrl = httpRequestUrl.interpolate(pathParams);
 
     Map<String, String> headers = httpRequestStaticHeaders.toMap();
     HttpRequestDynamicMapper bodyMapper =
-        new HttpRequestDynamicMapper(
-            queryMappingRules, httpRequestStaticHeaders.toMap(), httpRequestBaseParams.toMap());
+        new HttpRequestDynamicMapper(queryMappingRules, httpRequestBaseParams);
 
     Map<String, String> queryParams = bodyMapper.toQueryParams();
 
-    String urlWithQueryParams = httpRequestUrl.withQueryParams(new HttpQueryParams(queryParams));
+    String urlWithQueryParams = interpolatedUrl.withQueryParams(new HttpQueryParams(queryParams));
 
     HttpRequest.Builder httpRequestBuilder =
         HttpRequest.newBuilder().uri(URI.create(urlWithQueryParams));
@@ -160,15 +115,32 @@ public class HttpRequestExecutor {
       HttpRequestUrl httpRequestUrl,
       HttpMethod httpMethod,
       HmacAuthenticationConfiguration hmacAuthenticationConfig,
-      HttpRequestStaticHeaders httpRequestStaticHeaders,
       HttpRequestBaseParams httpRequestBaseParams,
-      HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys,
-      HttpRequestStaticBody httpRequestStaticBody) {
+      HttpRequestStaticHeaders httpRequestStaticHeaders,
+      HttpRequestStaticBody httpRequestStaticBody,
+      HttpRequestMappingRules pathMappingRules,
+      HttpRequestMappingRules headerMappingRules,
+      HttpRequestMappingRules bodyMappingRules) {
 
-    HttpRequestBodyCreator requestBodyCreator =
-        new HttpRequestBodyCreator(
-            httpRequestBaseParams, httpRequestDynamicBodyKeys, httpRequestStaticBody);
-    Map<String, Object> requestBody = requestBodyCreator.create();
+    HttpRequestDynamicMapper pathMapper =
+        new HttpRequestDynamicMapper(pathMappingRules, httpRequestBaseParams);
+    Map<String, String> pathParams = pathMapper.toPathParams();
+    HttpRequestUrl interpolatedUrl = httpRequestUrl.interpolate(pathParams);
+
+    Map<String, String> headers = httpRequestStaticHeaders.toMap();
+    HttpRequestDynamicMapper headerMapper =
+        new HttpRequestDynamicMapper(headerMappingRules, httpRequestBaseParams);
+    Map<String, String> resolvedMappingHeaders = headerMapper.toHeaders();
+    headers.putAll(resolvedMappingHeaders);
+    headers.putAll(httpRequestStaticHeaders.toMap());
+
+    Map<String, Object> requestBody = new HashMap<>();
+
+    HttpRequestDynamicMapper bodyMapper =
+        new HttpRequestDynamicMapper(bodyMappingRules, httpRequestBaseParams);
+    Map<String, Object> resolvedMappingRequestBody = bodyMapper.toBody();
+    requestBody.putAll(resolvedMappingRequestBody);
+    requestBody.putAll(httpRequestStaticBody.toMap());
 
     HttpHmacAuthorizationHeaderCreator httpHmacAuthorizationHeaderCreator =
         new HttpHmacAuthorizationHeaderCreator(
@@ -180,37 +152,13 @@ public class HttpRequestExecutor {
             requestBody,
             hmacAuthenticationConfig.signingFields(),
             hmacAuthenticationConfig.signatureFormat());
-    Map<String, String> headers = new HashMap<>(httpRequestStaticHeaders.toMap());
+
     headers.put("Authorization", hmacAuthentication);
 
     HttpRequest.Builder httpRequestBuilder =
-        HttpRequest.newBuilder().uri(URI.create(httpRequestUrl.value()));
+        HttpRequest.newBuilder().uri(URI.create(interpolatedUrl.value()));
 
     setHeaders(httpRequestBuilder, headers);
-    setParams(httpRequestBuilder, httpMethod, requestBody);
-
-    HttpRequest httpRequest = httpRequestBuilder.build();
-
-    return execute(httpRequest);
-  }
-
-  public HttpRequestResult execute(
-      HttpRequestUrl httpRequestUrl,
-      HttpMethod httpMethod,
-      HttpRequestStaticHeaders httpRequestStaticHeaders,
-      HttpRequestBaseParams httpRequestBaseParams,
-      HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys,
-      HttpRequestStaticBody httpRequestStaticBody) {
-
-    HttpRequestBodyCreator requestBodyCreator =
-        new HttpRequestBodyCreator(
-            httpRequestBaseParams, httpRequestDynamicBodyKeys, httpRequestStaticBody);
-    Map<String, Object> requestBody = requestBodyCreator.create();
-
-    HttpRequest.Builder httpRequestBuilder =
-        HttpRequest.newBuilder().uri(URI.create(httpRequestUrl.value()));
-
-    setHeaders(httpRequestBuilder, httpRequestStaticHeaders.toMap());
     setParams(httpRequestBuilder, httpMethod, requestBody);
 
     HttpRequest httpRequest = httpRequestBuilder.build();
