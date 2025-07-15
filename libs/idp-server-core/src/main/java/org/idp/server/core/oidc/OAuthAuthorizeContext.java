@@ -21,8 +21,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.oidc.authentication.Authentication;
-import org.idp.server.core.oidc.client.Client;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.oidc.configuration.client.ClientAttributes;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.grant.GrantIdTokenClaims;
@@ -92,7 +92,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
 
     TenantIdentifier tenantIdentifier = authorizationRequest.tenantIdentifier();
     RequestedClientId requestedClientId = authorizationRequest.requestedClientId();
-    Client client = clientConfiguration.client();
+    ClientAttributes clientAttributes = clientConfiguration.clientAttributes();
 
     Scopes scopes = authorizationRequest.scopes();
     Scopes removeScopes = scopes.removeScopes(deniedScopes);
@@ -119,7 +119,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
         user,
         authentication,
         requestedClientId,
-        client,
+        clientAttributes,
         grantType,
         scopes,
         grantIdTokenClaims,

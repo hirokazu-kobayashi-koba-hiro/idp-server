@@ -26,6 +26,7 @@ import org.idp.server.core.oidc.identity.device.NotificationChannel;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 public class AuthenticationDeviceNotificationInteractor implements AuthenticationInteractor {
 
@@ -60,6 +61,7 @@ public class AuthenticationDeviceNotificationInteractor implements Authenticatio
       AuthenticationTransaction transaction,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
     try {

@@ -24,13 +24,16 @@ import org.idp.server.core.extension.ciba.handler.io.CibaIssueResponse;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
+import org.idp.server.core.oidc.configuration.client.ClientAttributes;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.core.oidc.type.AuthFlow;
 import org.idp.server.core.oidc.type.oauth.ExpiresIn;
 import org.idp.server.core.oidc.type.oauth.RequestedClientId;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantAttributes;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class CibaAuthenticationTransactionCreator {
@@ -68,9 +71,12 @@ public class CibaAuthenticationTransactionCreator {
     ExpiresIn expiresIn = cibaIssueResponse.expiresIn();
     AuthFlow authFlow = AuthFlow.CIBA;
     TenantIdentifier tenantIdentifier = tenant.identifier();
+    TenantAttributes tenantAttributes = tenant.attributes();
 
     RequestedClientId requestedClientId = backchannelAuthenticationRequest.requestedClientId();
+    ClientAttributes clientAttributes = cibaIssueResponse.clientAttributes();
     User user = cibaIssueResponse.user();
+    AuthenticationDevice authenticationDevice = user.findPrimaryAuthenticationDevice();
     AuthorizationDetails authorizationDetails = cibaIssueResponse.request().authorizationDetails();
     AuthenticationContext context =
         new AuthenticationContext(
@@ -82,6 +88,15 @@ public class CibaAuthenticationTransactionCreator {
     LocalDateTime createdAt = SystemDateTime.now();
     LocalDateTime expiredAt = createdAt.plusSeconds(expiresIn.value());
     return new AuthenticationRequest(
-        authFlow, tenantIdentifier, requestedClientId, user, context, createdAt, expiredAt);
+        authFlow,
+        tenantIdentifier,
+        tenantAttributes,
+        requestedClientId,
+        clientAttributes,
+        user,
+        authenticationDevice,
+        context,
+        createdAt,
+        expiredAt);
   }
 }

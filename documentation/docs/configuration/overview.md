@@ -46,7 +46,7 @@ Attributes:
 
 - `subject` (unique per tenant)
 - `name`, `email`, `phone_number`
-- `claims` (customizable per client)
+- `claims` (customizable per clientAttributes)
 - `authentication_methods` (password, passkey, email OTP, etc.)
 
 ## Credential Setup
@@ -55,7 +55,7 @@ Attributes:
 Store password hash (e.g., bcrypt) linked to user subject.
 
 ### WebAuthn / Passkey
-Register public key from client device.
+Register public key from clientAttributes device.
 
 ### Email OTP
 Enable email sender and store verification code metadata temporarily.

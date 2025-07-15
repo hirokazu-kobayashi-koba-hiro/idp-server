@@ -24,7 +24,7 @@ import org.idp.server.core.extension.ciba.grant.CibaGrant;
 import org.idp.server.core.extension.ciba.grant.CibaGrantStatus;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.oidc.authentication.Authentication;
-import org.idp.server.core.oidc.client.Client;
+import org.idp.server.core.oidc.configuration.client.ClientAttributes;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.grant.GrantIdTokenClaims;
 import org.idp.server.core.oidc.grant.GrantUserinfoClaims;
@@ -60,7 +60,8 @@ class ModelConverter {
     Authentication authentication =
         jsonConverter.read(stringMap.get("authentication"), Authentication.class);
     RequestedClientId requestedClientId = new RequestedClientId(stringMap.get("client_id"));
-    Client client = jsonConverter.read(stringMap.get("client_payload"), Client.class);
+    ClientAttributes clientAttributes =
+        jsonConverter.read(stringMap.get("client_payload"), ClientAttributes.class);
     GrantType grantType = GrantType.of(stringMap.get("grant_type"));
     Scopes scopes = new Scopes(stringMap.get("scopes"));
     CustomProperties customProperties = new CustomProperties();
@@ -77,7 +78,7 @@ class ModelConverter {
             user,
             authentication,
             requestedClientId,
-            client,
+            clientAttributes,
             grantType,
             scopes,
             idTokenClaims,

@@ -3,7 +3,7 @@
 ## 概要
 
 `idp-server` は、OpenID Connect
-の拡張仕様である [OpenID Connect CIBA (Client Initiated Backchannel Authentication)](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html)
+の拡張仕様である [OpenID Connect CIBA (Client Initiated Backchannel Authentication)](https://openid.net/specs/openid-clientAttributes-initiated-backchannel-authentication-core-1_0.html)
 をサポートしています。
 
 スマートフォン等のユーザー操作可能な端末を用いた非同期認証を実現し、以下のようなユースケースに最適です。
@@ -87,6 +87,21 @@ CIBA フローにおけるユーザー認証も、通常の認可コードフロ
 |--------------------------------------|------------------|-------|
 | `backchannel_auth_request_expire_in` | 認証リクエストの有効期限     | 300秒  |
 | `backchannel_auth_polling_interval`  | ポーリング間隔（pollモード） | 5秒    |
+
+## クライアント認証
+
+このエンドポイントはクライアント認証を必要とします。
+以下のクライアント認証方式に対応しています（Client Authentication）：
+
+| 認証方式                          | 説明                                                                   | 
+|-------------------------------|----------------------------------------------------------------------|
+| `client_secret_basic`         | AuthorizationヘッダにBasic認証形式で `client_id` / `client_secret` を送信（デフォルト） | 
+| `client_secret_post`          | `client_id` と `client_secret` をリクエストボディに含めて送信                        |
+| `client_secret_jwt`           | `client_secret` を使って署名したJWTを `client_assertion` に含めて送信               |
+| `private_key_jwt`             | 秘密鍵で署名したJWTを `client_assertion` に含めて送信。公開鍵は事前に登録されている必要あり            | 
+| `tls_client_auth`（mTLS）       | クライアント証明書で相互TLS認証。サーバーは証明書のSubject DNやSANでクライアントを識別                  | 
+| `self_signed_tls_client_auth` | 自己署名クライアント証明書でTLS認証。証明書のフィンガープリントを事前に登録して認証を成立させる                    |
+
 
 ## FAPI
 

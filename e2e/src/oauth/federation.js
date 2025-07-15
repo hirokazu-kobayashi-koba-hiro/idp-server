@@ -74,9 +74,7 @@ export const requestFederation = async ({
       const authorizeResponse = await authorize({
         endpoint: `${backendUrl}/${federationTenantId}/v1/authorizations/{id}/authorize`,
         id,
-        body: {
-          action: "signin"
-        }
+        body: {}
       });
 
       // console.log(authorizeResponse.headers);

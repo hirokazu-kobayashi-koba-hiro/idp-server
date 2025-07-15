@@ -348,11 +348,10 @@ describe("multi client", () => {
           "attributes.auth_req_id": backchannelAuthenticationResponse.data.auth_req_id
         },
       });
-      console.log(authenticationTransactionResponse.data);
+      console.log(JSON.stringify(authenticationTransactionResponse.data, null, 2));
       expect(authenticationTransactionResponse.status).toBe(200);
 
       const authenticationTransaction = authenticationTransactionResponse.data.list[0];
-      console.log(authenticationTransaction);
 
       authenticationResponse = await postAuthenticationDeviceInteraction({
         endpoint: serverConfig.authenticationDeviceInteractionEndpoint,

@@ -14,32 +14,22 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.oidc.client;
+package org.idp.server.core.oidc.configuration.client;
 
-public class Client {
-  ClientIdentifier identifier;
-  ClientName name;
+public class ClientName {
+  String value;
 
-  public Client() {}
+  public ClientName() {}
 
-  public Client(ClientIdentifier identifier, ClientName name) {
-    this.identifier = identifier;
-    this.name = name;
+  public ClientName(String value) {
+    this.value = value;
   }
 
-  public ClientIdentifier identifier() {
-    return identifier;
-  }
-
-  public ClientName name() {
-    return name;
+  public String value() {
+    return value;
   }
 
   public boolean exists() {
-    return identifier != null && !identifier.exists();
-  }
-
-  public String nameValue() {
-    return name.value();
+    return value != null && !value.isEmpty();
   }
 }

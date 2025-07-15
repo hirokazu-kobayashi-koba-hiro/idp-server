@@ -67,4 +67,11 @@ public class AuthenticationContext {
       map.put("authorization_details", authorizationDetails.toMapValues());
     return map;
   }
+
+  public boolean exists() {
+    return acrValues != null
+        || scopes != null
+        || bindingMessage != null
+        || authorizationDetails != null;
+  }
 }

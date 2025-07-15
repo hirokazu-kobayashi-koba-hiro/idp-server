@@ -49,6 +49,15 @@ public interface ParameterTransformable extends AuthorizationHeaderHandlerable {
     contents.put("resource", request.getRequestURI());
     contents.put("action", request.getMethod());
 
+    Enumeration<String> headerNames = request.getHeaderNames();
+    Map<String, String> headers = new HashMap<>();
+    while (headerNames.hasMoreElements()) {
+      String headerName = headerNames.nextElement();
+      String headerValue = request.getHeader(headerName);
+      headers.put(headerName, headerValue);
+    }
+    contents.put("headers", headers);
+
     return new RequestAttributes(contents);
   }
 }

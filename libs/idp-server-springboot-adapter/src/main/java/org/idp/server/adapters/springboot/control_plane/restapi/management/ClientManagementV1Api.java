@@ -24,7 +24,7 @@ import org.idp.server.adapters.springboot.control_plane.model.OperatorPrincipal;
 import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
 import org.idp.server.control_plane.management.oidc.client.io.ClientRegistrationRequest;
-import org.idp.server.core.oidc.client.ClientIdentifier;
+import org.idp.server.core.oidc.configuration.client.ClientIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;

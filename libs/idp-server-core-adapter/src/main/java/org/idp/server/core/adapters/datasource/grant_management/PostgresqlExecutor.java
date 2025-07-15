@@ -79,7 +79,7 @@ public class PostgresqlExecutor implements AuthorizationGrantedSqlExecutor {
     params.add(toJson(authorizationGrant.user()));
     params.add(toJson(authorizationGrant.authentication()));
     params.add(authorizationGrant.requestedClientId().value());
-    params.add(toJson(authorizationGrant.client()));
+    params.add(toJson(authorizationGrant.clientAttributes()));
     params.add(authorizationGrant.grantType().name());
     params.add(authorizationGrant.scopes().toStringValues());
 
@@ -177,7 +177,7 @@ public class PostgresqlExecutor implements AuthorizationGrantedSqlExecutor {
     AuthorizationGrant authorizationGrant = authorizationGranted.authorizationGrant();
     params.add(toJson(authorizationGrant.user()));
     params.add(toJson(authorizationGrant.authentication()));
-    params.add(toJson(authorizationGrant.client()));
+    params.add(toJson(authorizationGrant.clientAttributes()));
     params.add(authorizationGrant.scopes().toStringValues());
 
     if (authorizationGrant.hasIdTokenClaims()) {

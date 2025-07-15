@@ -22,27 +22,22 @@ sequenceDiagram
     participant App
     participant IdP
     participant FIDO as FIDO Server
-    
     note over App, IdP: 1. ログイン。認可コードフローなどでアクセストークンを取得する
-    
     App ->> IdP: 2. POST {tenant-id}/v1/me/mfa/fido-uaf-registration
     IdP -->> App: 200 OK (id)
-    
+    note over App, IdP: レスポンスの `id` はFIDO-UAFチャレンジ・FIDO UAF登録APIのPathに指定する
     App ->> IdP: 3. POST {tenant-id}/v1/authentications/{id}/fido-uaf-registration-challenge
     IdP ->> FIDO: 認証チャレンジ生成要求
     FIDO -->> IdP: 認証チャレンジ
     IdP -->> App: 200 OK (challenge)
-    
     App ->> IdP: 4. GET {tenant-id}/.well-known/fido/facets
     IdP ->> FIDO: FIDOクライアントFacetリスト取得
     FIDO -->> IdP: Facetリスト
     IdP -->> App: 200 OK (facet list)
-    
     App ->> IdP: 5. POST {tenant-id}/v1/authentications/{id}/fido-uaf-registration
     IdP ->> FIDO: 登録データ検証・保存要求
     FIDO -->> IdP: 登録成功レスポンス
     IdP -->> App: 200 OK (device_id)
-    
     App ->> IdP: 6. GET /userinfo
     IdP -->> App: 200 OK (authentication_devices)
 
@@ -62,12 +57,14 @@ Authorization: Bearer {access_token}
 Content-Type: application/json
 
 {
+  "app_name": "sampleアプリ",  
   "platform": "Android",
   "os": "Android15",
   "model": "galaxy z fold 6",
+  "locale": "ja",
   "notification_channel": "fcm",
   "notification_token": "test token",
-  "preferred_for_notification": true
+  "priority": 1
 }
 ```
 
@@ -75,15 +72,16 @@ Content-Type: application/json
 
 認証デバイスの属性情報に設定するパラメータをリクエストに指定することができます。
 
-| パラメータ名                       | 必須 | 説明                                            |
-|------------------------------|----|-----------------------------------------------|
-| `app_name`                   | -  | アプリ名（例：◯◯アプリ）。                                |
-| `platform`                   | -  | デバイスのプラットフォーム名（例："Android", "iOS" など）。        |
-| `os`                         | -  | オペレーティングシステムのバージョン情報（例："Android15"）。          |
-| `model`                      | -  | デバイスモデル名（例："galaxy z fold 6"）。                |
-| `notification_channel`       | -  | 通知チャネル（"fcm" など）。※現在サポートしているPush通知チャネルはfcmのみ。 |
-| `notification_token`         | -  | 通知を送信するためのトークン（例：FCMトークン）。                    |
-| `preferred_for_notification` | -  | このデバイスを通知の優先対象にするかどうか（`true` or `false`）。     |
+| パラメータ名                 | 必須 | 説明                                            |
+|------------------------|----|-----------------------------------------------|
+| `app_name`             | -  | アプリ名（例：◯◯アプリ）。                                |
+| `platform`             | -  | デバイスのプラットフォーム名（例："Android", "iOS" など）。        |
+| `os`                   | -  | オペレーティングシステムのバージョン情報（例："Android15"）。          |
+| `model`                | -  | デバイスモデル名（例："galaxy z fold 6"）。                |
+| `locale`               | -  | 言語設定。（例：ja, en）                               |
+| `notification_channel` | -  | 通知チャネル（"fcm" など）。※現在サポートしているPush通知チャネルはfcmのみ。 |
+| `notification_token`   | -  | 通知を送信するためのトークン（例：FCMトークン）。                    |
+| `priority`             | -  | このデバイスの通知の優先順位                                |
 
 * 正常応答レスポンス `200 OK`
 
@@ -100,8 +98,7 @@ Content-Type: application/json
 fido-uaf 認証デバイスの登録リクエストは、ポリシーに応じたデータの整合性を検証します。
 
 - 登録上限数
-  - 登録条件数に達していた場合、ステータスコード 400エラーを返却します。
-
+    - 登録条件数に達していた場合、ステータスコード 400エラーを返却します。
 
 ---
 
@@ -178,12 +175,18 @@ Authorization: Bearer {access_token}
   "authentication_devices": [
     {
       "id": "UUID",
-      ...
+      "app_name": "sampleアプリ",  
+  　　 "platform": "Android",
+      "os": "Android15",
+  　　 "model": "galaxy z fold 6",
+      "notification_channel": "fcm",
+      "notification_token": "test token",
+      "available_methods": ["fido-uaf"]
+      "preferred_for_notification": true
     }
   ],
   "mfa": {
-    "enabled": true,
-    ...
+    "fido-uaf": true
   }
 }
 ```

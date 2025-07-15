@@ -95,7 +95,7 @@ public class ResourceOwnerPasswordCredentialsGrantService
         new AuthorizationGrantBuilder(
                 context.tenantIdentifier(), context.requestedClientId(), GrantType.password, scopes)
             .add(user)
-            .add(clientConfiguration.client())
+            .add(clientConfiguration.clientAttributes())
             .add(customProperties)
             .build();
 

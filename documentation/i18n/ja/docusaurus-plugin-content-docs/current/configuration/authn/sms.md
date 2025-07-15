@@ -15,13 +15,6 @@ SMS認証は、ユーザーの電話番号にワンタイムコード（OTP）�
 
 SMS認証は以下の複数のインタラクションを連続的に実行することで成立します：
 
-登録時
-
-* `sms-authentication-registration-challenge`: MFA登録時のチャレンジコード送信
-* `sms-authentication-registration`: 登録コードの検証とデバイス登録完了
-
-認証時
-
 * `sms-authentication-challenge`: 認証用ワンタイムコードの送信
 * `sms-authentication`: ワンタイムコードの検証
 

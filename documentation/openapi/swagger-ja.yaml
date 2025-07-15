@@ -102,6 +102,8 @@ paths:
           - **client_secret_post**：`client_id` と `client_secret` をフォームパラメータとしてリクエストボディに含めます。
           - **client_secret_jwt**：client_secret を共通鍵として署名した JWT を `client_assertion` として送信します。
           - **private_key_jwt**：登録済みの公開鍵に対応する秘密鍵で署名した JWT を `client_assertion` として送信します。
+          - **tls_client_auth（mTLS）**：クライアント証明書を使って双方向TLS認証を行います。サーバーは証明書のサブジェクトなどでクライアントを識別します。
+          - **self_signed_tls_client_auth（自己署名TLS）**: 自己署名のクライアント証明書を用いたTLS認証方式。証明書のフィンガープリントを事前登録することで認証が成立します。
 
           JWT認証（client_secret_jwt / private_key_jwt）では、以下のクレームを含むJWTを生成し、次のパラメータを使用して送信してください：
 
@@ -205,6 +207,8 @@ paths:
           - **client_secret_jwt**：client_secret を共通鍵として署名した JWT を `client_assertion` として送信します。
           - **private_key_jwt**：登録済みの公開鍵に対応する秘密鍵で署名した JWT を `client_assertion` として送信します。
           - **none**：認証を行いません。PKCEを使用するPublicクライアント向け。
+          - **tls_client_auth（mTLS）**：クライアント証明書を使って双方向TLS認証を行います。サーバーは証明書のサブジェクトなどでクライアントを識別します。
+          - **self_signed_tls_client_auth（自己署名TLS）**: 自己署名のクライアント証明書を用いたTLS認証方式。証明書のフィンガープリントを事前登録することで認証が成立します。
 
           JWT認証（client_secret_jwt / private_key_jwt）では、以下のクレームを含むJWTを生成し、次のパラメータを使用して送信してください：
 
@@ -1572,8 +1576,10 @@ components:
       properties:
         client_id:
           type: string
+          description: "クライアントの識別子。クライアント認証方式が client_secret_basicの場合は省略可能。"
         client_secret:
           type: string
+          description: "クライアントシークレット。クライアント認証方式が client_secret_postの場合は必須。"
         scope:
           type: string
           description: "必須。openid を含める必要がある。例：openid profile email"
@@ -1598,7 +1604,6 @@ components:
         authorization_details:
           $ref: '#/components/schemas/AuthorizationDetails'
       required:
-        - client_id
         - scope
 
 

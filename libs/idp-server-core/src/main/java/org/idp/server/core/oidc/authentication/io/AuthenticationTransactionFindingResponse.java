@@ -47,7 +47,8 @@ public class AuthenticationTransactionFindingResponse {
   public Map<String, Object> contents() {
     Map<String, Object> contents = new HashMap<>();
     contents.put(
-        "list", authenticationTransactions.stream().map(AuthenticationTransaction::toMap).toList());
+        "list",
+        authenticationTransactions.stream().map(AuthenticationTransaction::toRequestMap).toList());
     return contents;
   }
 }

@@ -740,21 +740,24 @@ CREATE INDEX idx_authentication_configuration_type ON authentication_configurati
 
 CREATE TABLE authentication_transaction
 (
-    id                       UUID                    NOT NULL,
-    tenant_id                UUID                    NOT NULL,
-    flow                     VARCHAR(255)            NOT NULL,
-    authorization_id         UUID,
-    client_id                VARCHAR(255)            NOT NULL,
-    user_id                  UUID,
-    user_payload             JSONB,
-    context                  JSONB,
-    authentication_device_id UUID,
-    authentication_policy    JSONB,
-    interactions             JSONB,
-    attributes               JSONB,
-    expires_at               TIMESTAMP               NOT NULL,
-    created_at               TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at               TIMESTAMP DEFAULT now() NOT NULL,
+    id                            UUID                    NOT NULL,
+    tenant_id                     UUID                    NOT NULL,
+    tenant_payload                JSONB                   NOT NULL,
+    flow                          VARCHAR(255)            NOT NULL,
+    authorization_id              UUID,
+    client_id                     VARCHAR(255)            NOT NULL,
+    client_payload                JSONB                   NOT NULL,
+    user_id                       UUID,
+    user_payload                  JSONB,
+    context                       JSONB,
+    authentication_device_id      UUID,
+    authentication_device_payload JSONB,
+    authentication_policy         JSONB,
+    interactions                  JSONB,
+    attributes                    JSONB,
+    expires_at                    TIMESTAMP               NOT NULL,
+    created_at                    TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at                    TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
@@ -767,6 +770,9 @@ POLICY rls_authentication_transaction
 ALTER TABLE authentication_transaction FORCE ROW LEVEL SECURITY;
 
 CREATE INDEX idx_authentication_transaction_device_id ON authentication_transaction (authentication_device_id);
+CREATE INDEX idx_authentication_client_id ON authentication_transaction (client_id);
+CREATE INDEX idx_authentication_tenant_id ON authentication_transaction (tenant_id);
+CREATE INDEX idx_authentication_flow ON authentication_transaction (flow);
 CREATE INDEX idx_authentication_transaction_expires_at ON authentication_transaction (tenant_id, expires_at);
 
 CREATE TABLE authentication_interactions

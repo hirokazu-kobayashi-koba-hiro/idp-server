@@ -25,6 +25,7 @@ import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.http.*;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 public class LegacyIdServiceAuthenticationInteractor implements AuthenticationInteractor {
 
@@ -53,6 +54,7 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
       AuthenticationTransaction transaction,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
     LegacyIdServiceAuthenticationConfiguration configuration =

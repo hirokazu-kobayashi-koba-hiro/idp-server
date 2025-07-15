@@ -17,7 +17,7 @@
 package org.idp.server.core.oidc.request;
 
 import org.idp.server.core.oidc.AuthorizationProfile;
-import org.idp.server.core.oidc.client.Client;
+import org.idp.server.core.oidc.configuration.client.ClientAttributes;
 import org.idp.server.core.oidc.id_token.RequestedClaimsPayload;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.core.oidc.type.extension.ExpiresAt;
@@ -37,7 +37,7 @@ public class AuthorizationRequestBuilder {
   Scopes scopes = new Scopes();
   ResponseType responseType = ResponseType.undefined;
   RequestedClientId requestedClientId = new RequestedClientId();
-  Client client = new Client();
+  ClientAttributes clientAttributes = new ClientAttributes();
   RedirectUri redirectUri = new RedirectUri();
   State state = new State();
   ResponseMode responseMode = ResponseMode.undefined;
@@ -92,8 +92,8 @@ public class AuthorizationRequestBuilder {
     return this;
   }
 
-  public AuthorizationRequestBuilder add(Client client) {
-    this.client = client;
+  public AuthorizationRequestBuilder add(ClientAttributes clientAttributes) {
+    this.clientAttributes = clientAttributes;
     return this;
   }
 
@@ -210,7 +210,7 @@ public class AuthorizationRequestBuilder {
         scopes,
         responseType,
         requestedClientId,
-        client,
+        clientAttributes,
         redirectUri,
         state,
         responseMode,

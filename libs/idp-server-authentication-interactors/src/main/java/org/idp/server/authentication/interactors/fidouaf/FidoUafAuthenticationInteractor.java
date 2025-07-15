@@ -25,6 +25,7 @@ import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 public class FidoUafAuthenticationInteractor implements AuthenticationInteractor {
 
@@ -56,6 +57,7 @@ public class FidoUafAuthenticationInteractor implements AuthenticationInteractor
       AuthenticationTransaction transaction,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
     FidoUafConfiguration fidoUafConfiguration =
@@ -91,8 +93,26 @@ public class FidoUafAuthenticationInteractor implements AuthenticationInteractor
     }
 
     String deviceId =
-        executionResult.getValueAsStringFromContents(fidoUafConfiguration.deviceIdParam());
+        executionResult.optValueAsStringFromContents(fidoUafConfiguration.deviceIdParam(), "");
     User user = userQueryRepository.findByAuthenticationDevice(tenant, deviceId);
+
+    // TODO remove comment out
+    //    if (!user.exists()) {
+    //      Map<String, Object> contents = new HashMap<>();
+    //      contents.put("error", "invalid_request");
+    //      contents.put(
+    //          "error_description",
+    //          String.format(
+    //              "fido-uaf authentication is success. but user does not exist. device ID: %s",
+    //              deviceId));
+    //
+    //      return AuthenticationInteractionRequestResult.clientError(
+    //          contents,
+    //          type,
+    //          operationType(),
+    //          method(),
+    //          DefaultSecurityEventType.fido_uaf_authentication_failure);
+    //    }
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,

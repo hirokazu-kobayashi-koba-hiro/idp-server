@@ -241,7 +241,7 @@ This diagram illustrates the container-level architecture of the idp-server, a m
 built with Java and React.
 
 * The Frontend is implemented with React / Next.js and handles user interactions for login, consent.
-* The Backend API is built with Spring Boot and exposes REST endpoints for OIDC/OAuth flows, client management, tenant
+* The Backend API is built with Spring Boot and exposes REST endpoints for OIDC/OAuth flows, clientAttributes management, tenant
   operations, and hook configuration.
 * The IdP Engine encapsulates the core logic for authentication, authorization, grant handling, and token issuance.
 * Authentication Interactors are pluggable components that support various methods such as Password, Email OTP,

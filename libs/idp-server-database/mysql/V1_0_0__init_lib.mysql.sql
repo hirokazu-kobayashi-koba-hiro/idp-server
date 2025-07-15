@@ -27,18 +27,18 @@ CREATE TABLE tenant
 
 CREATE TABLE tenant_invitation
 (
-    id          CHAR(36)     NOT NULL,
-    tenant_id   CHAR(36)     NOT NULL,
-    tenant_name VARCHAR(255) NOT NULL,
-    email       VARCHAR(255) NOT NULL,
-    role_id     CHAR(36)     NOT NULL,
-    role_name   VARCHAR(255) NOT NULL,
-    url         TEXT         NOT NULL,
-    status      VARCHAR(255) NOT NULL,
-    expires_in  TEXT         NOT NULL,
-    created_at  TEXT         NOT NULL,
-    expires_at  TEXT         NOT NULL,
-    updated_at  TEXT         NOT NULL,
+    id          CHAR(36)               NOT NULL,
+    tenant_id   CHAR(36)               NOT NULL,
+    tenant_name VARCHAR(255)           NOT NULL,
+    email       VARCHAR(255)           NOT NULL,
+    role_id     CHAR(36)               NOT NULL,
+    role_name   VARCHAR(255)           NOT NULL,
+    url         TEXT                   NOT NULL,
+    status      VARCHAR(255)           NOT NULL,
+    expires_in  TEXT                   NOT NULL,
+    created_at  DATETIME DEFAULT now() NOT NULL,
+    expires_at  DATETIME               NOT NULL,
+    updated_at  DATETIME DEFAULT now() NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -563,24 +563,31 @@ CREATE INDEX idx_authentication_configuration_type ON authentication_configurati
 
 CREATE TABLE authentication_transaction
 (
-    id                                   CHAR(36)     NOT NULL,
-    tenant_id                            CHAR(36)     NOT NULL,
-    flow                                 VARCHAR(255) NOT NULL,
+    id                                   CHAR(36)                           NOT NULL,
+    tenant_id                            CHAR(36)                           NOT NULL,
+    flow                                 VARCHAR(255)                       NOT NULL,
     authorization_id                     CHAR(36),
-    client_id                            VARCHAR(255) NOT NULL,
+    client_id                            VARCHAR(255)                       NOT NULL,
     user_id                              CHAR(36),
     user_payload                         JSON,
     authentication_device_id             CHAR(36),
-    available_authentication_types       JSON         NOT NULL,
+    authentication_device_payload        JSON,
+    available_authentication_types       JSON                               NOT NULL,
     required_any_of_authentication_types JSON,
     last_interaction_type                VARCHAR(255),
     interactions                         JSON,
     attributes                           JSON,
-    created_at                           TEXT         NOT NULL,
-    expired_at                           TEXT         NOT NULL,
+    created_at                           DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    expires_at                           DATETIME                           NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE INDEX idx_authentication_transaction_device_id ON authentication_transaction (authentication_device_id);
+CREATE INDEX idx_authentication_client_id ON authentication_transaction (client_id);
+CREATE INDEX idx_authentication_tenant_id ON authentication_transaction (tenant_id);
+CREATE INDEX idx_authentication_flow ON authentication_transaction (flow);
+CREATE INDEX idx_authentication_transaction_expires_at ON authentication_transaction (tenant_id, expires_at);
 
 CREATE TABLE authentication_interactions
 (

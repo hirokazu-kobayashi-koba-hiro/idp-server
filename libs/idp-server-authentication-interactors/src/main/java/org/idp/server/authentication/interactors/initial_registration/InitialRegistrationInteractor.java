@@ -31,6 +31,7 @@ import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 import org.idp.server.platform.json.schema.JsonSchemaValidator;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 public class InitialRegistrationInteractor implements AuthenticationInteractor {
 
@@ -66,6 +67,7 @@ public class InitialRegistrationInteractor implements AuthenticationInteractor {
       AuthenticationTransaction transaction,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
     // TODO fix type

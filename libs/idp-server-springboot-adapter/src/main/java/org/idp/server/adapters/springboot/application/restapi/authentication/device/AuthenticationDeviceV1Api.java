@@ -32,7 +32,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("{tenant-id}/v1/authentication-devices/{authentication-device-id}/authentications")
+@RequestMapping("{tenant-id}/v1/authentication-devices/{device-id}/authentications")
 public class AuthenticationDeviceV1Api implements ParameterTransformable {
 
   AuthenticationTransactionApi authenticationTransactionApi;
@@ -44,8 +44,7 @@ public class AuthenticationDeviceV1Api implements ParameterTransformable {
   @GetMapping
   public ResponseEntity<?> get(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @PathVariable("authentication-device-id")
-          AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
+      @PathVariable("device-id") AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
       @RequestParam Map<String, String> queryParams,
       HttpServletRequest httpServletRequest) {
 

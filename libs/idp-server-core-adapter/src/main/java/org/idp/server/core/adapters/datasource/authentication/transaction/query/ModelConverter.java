@@ -20,7 +20,9 @@ import java.time.LocalDateTime;
 import java.util.*;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
+import org.idp.server.core.oidc.configuration.client.ClientAttributes;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
 import org.idp.server.core.oidc.rar.AuthorizationDetail;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.core.oidc.type.AuthFlow;
@@ -31,6 +33,7 @@ import org.idp.server.core.oidc.type.oidc.AcrValues;
 import org.idp.server.platform.date.LocalDateTimeParser;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.multi_tenancy.tenant.TenantAttributes;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class ModelConverter {
@@ -44,8 +47,12 @@ public class ModelConverter {
     AuthorizationIdentifier authorizationIdentifier =
         new AuthorizationIdentifier(map.get("authorization_id"));
     TenantIdentifier tenantIdentifier = new TenantIdentifier(map.get("tenant_id"));
+    TenantAttributes tenantAttributes = toTenantAttributes(map);
     RequestedClientId requestedClientId = new RequestedClientId(map.get("client_id"));
+    ClientAttributes clientAttributes =
+        jsonConverter.read(map.get("client_payload"), ClientAttributes.class);
     User user = toUser(map);
+    AuthenticationDevice authenticationDevice = toAuthenticationDevice(map);
     AuthenticationContext context = toAuthenticationContext(map);
     AuthenticationPolicy authenticationPolicy =
         jsonConverter.read(map.get("authentication_policy"), AuthenticationPolicy.class);
@@ -53,7 +60,16 @@ public class ModelConverter {
     LocalDateTime expiredAt = LocalDateTimeParser.parse(map.get("expires_at"));
     AuthenticationRequest request =
         new AuthenticationRequest(
-            authFlow, tenantIdentifier, requestedClientId, user, context, createdAt, expiredAt);
+            authFlow,
+            tenantIdentifier,
+            tenantAttributes,
+            requestedClientId,
+            clientAttributes,
+            user,
+            authenticationDevice,
+            context,
+            createdAt,
+            expiredAt);
 
     AuthenticationInteractionResults interactionResults = toAuthenticationInteractionResults(map);
     AuthenticationTransactionAttributes attributes = toAuthenticationTransactionAttributes(map);
@@ -73,8 +89,7 @@ public class ModelConverter {
       String acrValues = jsonNodeWrapper.getValueOrEmptyAsString("acr_values");
       String scopes = jsonNodeWrapper.getValueOrEmptyAsString("scopes");
       String bindingMessage = jsonNodeWrapper.getValueOrEmptyAsString("binding_message");
-      Object authorizationDetails = jsonNodeWrapper.getValue("authorization_details");
-      JsonNodeWrapper detailsNode = JsonNodeWrapper.fromObject(authorizationDetails);
+      JsonNodeWrapper detailsNode = jsonNodeWrapper.getNode("authorization_details");
       List<Map<String, Object>> listAsMap = detailsNode.toListAsMap();
       List<AuthorizationDetail> authorizationDetailsList =
           listAsMap.stream().map(AuthorizationDetail::new).toList();
@@ -87,6 +102,16 @@ public class ModelConverter {
     }
 
     return new AuthenticationContext();
+  }
+
+  static TenantAttributes toTenantAttributes(Map<String, String> map) {
+
+    if (map.containsKey("tenant_payload") && map.get("tenant_payload") != null) {
+      JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(map.get("tenant_payload"));
+      return new TenantAttributes(jsonNodeWrapper.toMap());
+    }
+
+    return new TenantAttributes();
   }
 
   static User toUser(Map<String, String> map) {
@@ -134,5 +159,38 @@ public class ModelConverter {
     }
 
     return new AuthenticationTransactionAttributes();
+  }
+
+  static AuthenticationDevice toAuthenticationDevice(Map<String, String> map) {
+
+    if (map.containsKey("authentication_device_payload")
+        && map.get("authentication_device_payload") != null) {
+      JsonNodeWrapper wrapper =
+          JsonNodeWrapper.fromString(map.get("authentication_device_payload"));
+
+      String id = wrapper.getValueOrEmptyAsString("id");
+      String appName = wrapper.getValueOrEmptyAsString("app_name");
+      String platform = wrapper.getValueOrEmptyAsString("platform");
+      String os = wrapper.getValueOrEmptyAsString("os");
+      String model = wrapper.getValueOrEmptyAsString("model");
+      String notificationChannel = wrapper.getValueOrEmptyAsString("notification_channel");
+      String notificationToken = wrapper.getValueOrEmptyAsString("notification_token");
+      JsonNodeWrapper availableAuthenticationMethodsNodes = wrapper.getNode("available_methods");
+      List<String> availableAuthenticationMethods = availableAuthenticationMethodsNodes.toList();
+      boolean preferredForNotification =
+          wrapper.optValueAsBoolean("preferred_for_notification", false);
+      return new AuthenticationDevice(
+          id,
+          appName,
+          platform,
+          os,
+          model,
+          notificationChannel,
+          notificationToken,
+          availableAuthenticationMethods,
+          preferredForNotification);
+    }
+
+    return new AuthenticationDevice();
   }
 }

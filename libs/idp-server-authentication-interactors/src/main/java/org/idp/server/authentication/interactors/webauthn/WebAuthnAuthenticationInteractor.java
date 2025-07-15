@@ -25,6 +25,7 @@ import org.idp.server.core.oidc.identity.UserIdentifier;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 public class WebAuthnAuthenticationInteractor implements AuthenticationInteractor {
 
@@ -54,6 +55,7 @@ public class WebAuthnAuthenticationInteractor implements AuthenticationInteracto
       AuthenticationTransaction transaction,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
     WebAuthnConfiguration configuration =

@@ -25,6 +25,7 @@ import org.idp.server.core.oidc.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 public class FidoUafRegistrationChallengeInteractor implements AuthenticationInteractor {
 
@@ -61,6 +62,7 @@ public class FidoUafRegistrationChallengeInteractor implements AuthenticationInt
       AuthenticationTransaction transaction,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
     FidoUafConfiguration fidoUafConfiguration =

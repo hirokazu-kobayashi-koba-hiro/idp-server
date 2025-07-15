@@ -53,7 +53,7 @@ public class AuthenticationTransactionFindingListResponse {
     if (statusCode == 200) {
       Map<String, Object> map = new HashMap<>();
       List<Map<String, Object>> list =
-          authenticationTransactions.stream().map(AuthenticationTransaction::toMap).toList();
+          authenticationTransactions.stream().map(AuthenticationTransaction::toRequestMap).toList();
       map.put("list", list);
       return map;
     }

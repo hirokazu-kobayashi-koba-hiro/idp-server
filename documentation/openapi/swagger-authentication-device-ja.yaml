@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: idp-server API
-  description: 外部向けのAPI
+  description: 認証デバイス向けのAPI
   version: 1.0.0
   contact:
     name: idp-server OSS
@@ -15,21 +15,15 @@ tags:
   - name: 認証デバイス
     description: |
 
-  - name: 身元確認申込み
-    description: |
-
-  - name: 身元確認結果
-    description: |
 
 paths:
-  /{tenant-id}/v1/authentications:
+  /v1/authentication-devices/{device-id}/authentications:
     get:
       tags:
-        - 認証
-      summary: 認証トランザクション一覧取得
-      description: 認証トランザクションを検索条件に基づいて一覧取得する
+        - 認証デバイス
+      summary: 認証デバイスに紐づく認証トランザクション一覧
+      description: 認証デバイスに紐づく認証トランザクションを検索条件に基づいて一覧取得する
       parameters:
-        - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/AuthenticationTransactionId'
         - $ref: '#/components/parameters/AuthenticationTransactionFlow'
         - $ref: '#/components/parameters/AuthorizationId'
@@ -43,9 +37,12 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AuthenticationTransaction'
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuthenticationTransaction'
         '400':
           description: 不正なリクエスト
         '500':
@@ -126,42 +123,56 @@ components:
       type: object
       required:
         - id
+        - tenant_id
         - flow
-        - status
         - created_at
+        - expires_at
       properties:
         id:
           type: string
           format: uuid
-          description: 認証トランザクションのID
         flow:
           type: string
-          enum: [oauth, ciba, federation, session]
-          description: 認証フローの種類
+          example: ciba
+        tenant_id:
+          type: string
+          format: uuid
         client_id:
           type: string
-          description: クライアントID
-        device_id:
-          type: string
-          description: デバイスID
-        status:
-          type: string
-          enum: [pending, success, failure, expired, canceled]
-          description: 認証トランザクションの状態
-        attributes:
+        context:
           type: object
-          additionalProperties:
-            type: string
-          description: 任意の属性（attributes.プレフィックス付きのクエリパラメータに対応）
+          properties:
+            acr_values:
+              type: string
+            binding_message:
+              type: string
+            scopes:
+              type: string
+        user:
+          type: object
+          properties:
+            sub:
+              type: string
+              format: uuid
+            external_user_id:
+              type: string
+              format: uuid
+            provider_id:
+              type: string
+            name:
+              type: string
+            email:
+              type: string
+              format: email
+            phone_number:
+              type: string
+            status:
+              type: string
+              enum: [ IDENTITY_UNVERIFIED, IDENTITY_VERIFIED ]
+        expires_at:
+          type: string
+          format: date-time
         created_at:
           type: string
           format: date-time
-          description: 作成日時
-        updated_at:
-          type: string
-          format: date-time
-          description: 更新日時
-        authorization_id:
-          type: string
-          format: uuid
-          description: 関連する認可リクエストのID
+

@@ -27,7 +27,7 @@ public class FidoUafDeRegistrationVerifier implements MfaRequestVerifier {
   @Override
   public MfaVerificationResult verify(
       User user, MfaRegistrationRequest registrationRequest, AuthenticationPolicy policy) {
-    String deviceId = registrationRequest.getValueOrEmpty("authentication_device_id");
+    String deviceId = registrationRequest.getValueOrEmpty("device_id");
 
     if (!user.hasAuthenticationDevice(deviceId)) {
       Map<String, Object> errors = new HashMap<>();

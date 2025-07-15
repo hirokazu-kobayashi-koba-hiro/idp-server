@@ -27,6 +27,7 @@ import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolic
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationResultConditions;
 import org.idp.server.core.oidc.federation.FederationInteractionResult;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
 import org.idp.server.core.oidc.type.AuthFlow;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.exception.BadRequestException;
@@ -180,6 +181,10 @@ public class AuthenticationTransaction {
     return request;
   }
 
+  public AuthenticationDevice authenticationDevice() {
+    return request.authenticationDevice();
+  }
+
   public User user() {
     if (request.hasUser()) {
       return request.user();
@@ -195,10 +200,10 @@ public class AuthenticationTransaction {
     return interactionResults.toMapAsObject();
   }
 
-  public Map<String, Object> toMap() {
+  public Map<String, Object> toRequestMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("id", identifier.value());
-    map.putAll(request.toMap());
+    map.putAll(request.toMapForPublic());
     return map;
   }
 
@@ -254,6 +259,10 @@ public class AuthenticationTransaction {
 
   public boolean hasUser() {
     return request.hasUser();
+  }
+
+  public boolean hasAuthenticationDevice() {
+    return request.hasAuthenticationDevice();
   }
 
   public AuthenticationContext requestContext() {

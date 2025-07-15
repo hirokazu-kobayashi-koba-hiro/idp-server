@@ -27,10 +27,10 @@ import org.idp.server.control_plane.management.oidc.client.io.ClientManagementSt
 import org.idp.server.control_plane.management.oidc.client.io.ClientRegistrationRequest;
 import org.idp.server.control_plane.management.oidc.client.validator.ClientRegistrationRequestValidationResult;
 import org.idp.server.control_plane.management.oidc.client.validator.ClientRegistrationRequestValidator;
-import org.idp.server.core.oidc.client.ClientIdentifier;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.oidc.configuration.client.ClientIdentifier;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;

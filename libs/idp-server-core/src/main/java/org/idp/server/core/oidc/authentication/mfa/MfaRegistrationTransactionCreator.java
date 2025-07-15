@@ -20,7 +20,9 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
+import org.idp.server.core.oidc.configuration.client.ClientAttributes;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
 import org.idp.server.core.oidc.identity.io.MfaRegistrationRequest;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.core.oidc.token.OAuthToken;
@@ -31,6 +33,7 @@ import org.idp.server.core.oidc.type.oauth.Scopes;
 import org.idp.server.core.oidc.type.oidc.AcrValues;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantAttributes;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class MfaRegistrationTransactionCreator {
@@ -64,8 +67,11 @@ public class MfaRegistrationTransactionCreator {
       Tenant tenant, User user, OAuthToken oAuthToken, AuthFlow authFlow) {
 
     TenantIdentifier tenantIdentifier = tenant.identifier();
+    TenantAttributes tenantAttributes = tenant.attributes();
+    AuthenticationDevice authenticationDevice = user.findPrimaryAuthenticationDevice();
 
     RequestedClientId requestedClientId = oAuthToken.requestedClientId();
+    ClientAttributes clientAttributes = oAuthToken.clientAttributes();
     AuthenticationContext context =
         new AuthenticationContext(
             new AcrValues(), new Scopes(), new BindingMessage(), new AuthorizationDetails());
@@ -73,6 +79,15 @@ public class MfaRegistrationTransactionCreator {
     LocalDateTime expiredAt = createdAt.plusSeconds(300);
 
     return new AuthenticationRequest(
-        authFlow, tenantIdentifier, requestedClientId, user, context, createdAt, expiredAt);
+        authFlow,
+        tenantIdentifier,
+        tenantAttributes,
+        requestedClientId,
+        clientAttributes,
+        user,
+        authenticationDevice,
+        context,
+        createdAt,
+        expiredAt);
   }
 }

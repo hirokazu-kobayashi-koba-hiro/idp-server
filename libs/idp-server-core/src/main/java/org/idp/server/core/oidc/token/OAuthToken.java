@@ -19,7 +19,7 @@ package org.idp.server.core.oidc.token;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
-import org.idp.server.core.oidc.client.Client;
+import org.idp.server.core.oidc.configuration.client.ClientAttributes;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
@@ -159,12 +159,8 @@ public class OAuthToken {
     return accessToken.user();
   }
 
-  public Client client() {
-    return accessToken.client();
-  }
-
-  public String clientName() {
-    return accessToken.client().nameValue();
+  public ClientAttributes clientAttributes() {
+    return accessToken.clientAttributes();
   }
 
   public List<String> scopeAsList() {

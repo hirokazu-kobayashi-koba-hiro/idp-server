@@ -203,7 +203,7 @@
       },
       "execution": {
         "http_request": {
-          "url": "http://localhost:4000/{{external_application_id}}/request-ekyc",
+          "url": "http://mockoon:4000/{{external_application_id}}/request-ekyc",
           "pass_mapping_rules": [
             { "from": "$.application.external_application_id", "to": "external_application_id" }
           ],
