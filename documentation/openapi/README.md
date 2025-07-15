@@ -6,10 +6,10 @@
 cat ../../libs/idp-server-core/src/main/resources/schema/1.0/authorization-server.json | yq -P > schema.yaml
 ```
 
-## client
+## clientAttributes
 
 ```shell
-cat ../../libs/idp-server-core/src/main/resources/schema/1.0/client.json | yq -P > schema.yaml
+cat ../../libs/idp-server-core/src/main/resources/schema/1.0/clientAttributes.json | yq -P > schema.yaml
 ```
 
 ## authentication

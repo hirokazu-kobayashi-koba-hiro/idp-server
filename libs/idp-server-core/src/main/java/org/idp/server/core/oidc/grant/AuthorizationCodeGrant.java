@@ -19,8 +19,8 @@ package org.idp.server.core.oidc.grant;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import org.idp.server.core.oidc.authentication.Authentication;
-import org.idp.server.core.oidc.client.Client;
-import org.idp.server.core.oidc.client.ClientIdentifier;
+import org.idp.server.core.oidc.configuration.client.ClientAttributes;
+import org.idp.server.core.oidc.configuration.client.ClientIdentifier;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.oidc.type.extension.ExpiresAt;
@@ -93,8 +93,8 @@ public class AuthorizationCodeGrant {
     return expiresAt;
   }
 
-  public Client client() {
-    return authorizationGrant.client();
+  public ClientAttributes clientAttributes() {
+    return authorizationGrant.clientAttributes();
   }
 
   public TenantIdentifier tenantIdentifier() {

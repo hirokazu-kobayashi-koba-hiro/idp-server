@@ -18,9 +18,6 @@ package org.idp.server.core.oidc.configuration.client;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import org.idp.server.core.oidc.client.Client;
-import org.idp.server.core.oidc.client.ClientIdentifier;
-import org.idp.server.core.oidc.client.ClientName;
 import org.idp.server.core.oidc.type.ciba.BackchannelTokenDeliveryMode;
 import org.idp.server.core.oidc.type.extension.RegisteredRedirectUris;
 import org.idp.server.core.oidc.type.oauth.*;
@@ -326,8 +323,9 @@ public class ClientConfiguration implements JsonReadable {
         && Objects.nonNull(idTokenEncryptedResponseEnc);
   }
 
-  public Client client() {
-    return new Client(clientIdentifier(), clientName());
+  public ClientAttributes clientAttributes() {
+    return new ClientAttributes(
+        clientId, clientName, clientUri, logoUri, contacts, tosUri, policyUri);
   }
 
   public boolean hasJwks() {

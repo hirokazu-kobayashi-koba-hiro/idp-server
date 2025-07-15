@@ -25,6 +25,7 @@ import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor {
 
@@ -61,6 +62,7 @@ public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor
       AuthenticationTransaction transaction,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
     FidoUafConfiguration fidoUafConfiguration =
@@ -94,7 +96,7 @@ public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor
           DefaultSecurityEventType.fido_uaf_deregistration_failure);
     }
 
-    String deviceId = request.getValueAsString("authentication_device_id");
+    String deviceId = request.getValueAsString("device_id");
     User user = transaction.user();
 
     User removedDeviceUser = user.removeAuthenticationDevice(deviceId);

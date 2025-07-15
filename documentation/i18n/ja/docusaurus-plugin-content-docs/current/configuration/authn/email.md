@@ -15,13 +15,6 @@ Email認証は、ユーザーのメールアドレスにワンタイムコード
 
 Email認証は以下の複数のインタラクションを連続的に実行することで成立します：
 
-登録時：
-
-* `email-authentication-registration-challenge`: MFA登録時のチャレンジコード送信
-* `email-authentication-registration`: 登録コードの検証とデバイス登録完了
-
-認証時：
-
 * `email-authentication-challenge`: 認証用コードまたはリンクの送信
 * `email-authentication`: ワンタイムコードやリンクパラメータの検証
 

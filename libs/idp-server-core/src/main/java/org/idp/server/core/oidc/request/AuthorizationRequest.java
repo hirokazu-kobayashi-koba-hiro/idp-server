@@ -18,7 +18,7 @@ package org.idp.server.core.oidc.request;
 
 import org.idp.server.core.oidc.AuthorizationProfile;
 import org.idp.server.core.oidc.OAuthSessionKey;
-import org.idp.server.core.oidc.client.Client;
+import org.idp.server.core.oidc.configuration.client.ClientAttributes;
 import org.idp.server.core.oidc.id_token.RequestedClaimsPayload;
 import org.idp.server.core.oidc.id_token.RequestedIdTokenClaims;
 import org.idp.server.core.oidc.id_token.RequestedUserinfoClaims;
@@ -38,7 +38,7 @@ public class AuthorizationRequest {
   AuthorizationProfile profile = AuthorizationProfile.UNDEFINED;
   Scopes scopes;
   ResponseType responseType;
-  Client client;
+  ClientAttributes clientAttributes;
   RequestedClientId requestedClientId;
   RedirectUri redirectUri;
   State state;
@@ -71,7 +71,7 @@ public class AuthorizationRequest {
       Scopes scopes,
       ResponseType responseType,
       RequestedClientId requestedClientId,
-      Client client,
+      ClientAttributes clientAttributes,
       RedirectUri redirectUri,
       State state,
       ResponseMode responseMode,
@@ -99,7 +99,7 @@ public class AuthorizationRequest {
     this.scopes = scopes;
     this.responseType = responseType;
     this.requestedClientId = requestedClientId;
-    this.client = client;
+    this.clientAttributes = clientAttributes;
     this.redirectUri = redirectUri;
     this.state = state;
     this.responseMode = responseMode;
@@ -163,12 +163,12 @@ public class AuthorizationRequest {
     return requestedClientId.exists();
   }
 
-  public Client client() {
-    return client;
+  public ClientAttributes clientAttributes() {
+    return clientAttributes;
   }
 
   public String clientNameValue() {
-    return client.name().value();
+    return clientAttributes.clientName().value();
   }
 
   public RedirectUri redirectUri() {

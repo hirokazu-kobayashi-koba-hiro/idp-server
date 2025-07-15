@@ -107,7 +107,8 @@ public class AuthenticationTransactionManagementEntryService
 
     Map<String, Object> response = new HashMap<>();
     response.put(
-        "list", authenticationTransactions.stream().map(AuthenticationTransaction::toMap).toList());
+        "list",
+        authenticationTransactions.stream().map(AuthenticationTransaction::toRequestMap).toList());
     response.put("total_count", totalCount);
     response.put("limit", queries.limit());
     response.put("offset", queries.offset());
@@ -158,6 +159,6 @@ public class AuthenticationTransactionManagementEntryService
     }
 
     return new AuthenticationTransactionManagementResponse(
-        AuthenticationTransactionManagementStatus.OK, authenticationTransaction.toMap());
+        AuthenticationTransactionManagementStatus.OK, authenticationTransaction.toRequestMap());
   }
 }

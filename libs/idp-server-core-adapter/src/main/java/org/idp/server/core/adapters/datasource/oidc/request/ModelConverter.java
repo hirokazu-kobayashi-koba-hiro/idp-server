@@ -18,7 +18,7 @@ package org.idp.server.core.adapters.datasource.oidc.request;
 
 import java.util.Map;
 import org.idp.server.core.oidc.AuthorizationProfile;
-import org.idp.server.core.oidc.client.Client;
+import org.idp.server.core.oidc.configuration.client.ClientAttributes;
 import org.idp.server.core.oidc.id_token.RequestedClaimsPayload;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
@@ -69,11 +69,11 @@ class ModelConverter {
     return builder.build();
   }
 
-  private static Client convertClient(String value) {
+  private static ClientAttributes convertClient(String value) {
     if (value == null || value.isEmpty()) {
-      return new Client();
+      return new ClientAttributes();
     }
-    return jsonConverter.read(value, Client.class);
+    return jsonConverter.read(value, ClientAttributes.class);
   }
 
   private static RequestedClaimsPayload convertClaimsPayload(String value) {

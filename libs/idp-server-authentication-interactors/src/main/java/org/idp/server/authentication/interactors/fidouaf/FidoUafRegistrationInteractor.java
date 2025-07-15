@@ -17,6 +17,7 @@
 package org.idp.server.authentication.interactors.fidouaf;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditionalRequestResolvers;
 import org.idp.server.core.oidc.authentication.*;
@@ -28,6 +29,7 @@ import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
 
@@ -59,6 +61,7 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
       AuthenticationTransaction transaction,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
     FidoUafConfiguration fidoUafConfiguration =
@@ -100,7 +103,7 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
         createAuthenticationDevice(deviceId, transaction.attributes());
 
     HashMap<String, Object> mfa = new HashMap<>();
-    mfa.put("fido-uaf", true);
+    mfa.put(method(), true);
     User addedDeviceUser =
         user.addAuthenticationDevice(authenticationDevice).addMultiFactorAuthentication(mfa);
 
@@ -125,20 +128,24 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
   private AuthenticationDevice createAuthenticationDevice(
       String deviceId, AuthenticationTransactionAttributes attributes) {
 
+    String appName = attributes.getValueOrEmpty("app_name");
     String platform = attributes.getValueOrEmpty("platform");
     String os = attributes.getValueOrEmpty("os");
     String model = attributes.getValueOrEmpty("model");
     String notificationChannel = attributes.getValueOrEmpty("notification_channel");
     String notificationToken = attributes.getValueOrEmpty("notification_token");
+    List<String> availableAuthenticationMethods = List.of(method());
     boolean preferredForNotification = attributes.getValueAsBoolean("preferred_for_notification");
 
     return new AuthenticationDevice(
         deviceId,
+        appName,
         platform,
         os,
         model,
         notificationChannel,
         notificationToken,
+        availableAuthenticationMethods,
         preferredForNotification);
   }
 }

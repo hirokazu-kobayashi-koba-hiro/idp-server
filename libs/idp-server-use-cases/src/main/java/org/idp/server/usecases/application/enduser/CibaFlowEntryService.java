@@ -113,6 +113,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
             authenticationTransaction,
             authenticationInteractionType,
             new AuthenticationInteractionRequest(Map.of()),
+            requestAttributes,
             userQueryRepository);
 
     AuthenticationTransaction updatedTransaction =
@@ -146,7 +147,12 @@ public class CibaFlowEntryService implements CibaFlowApi {
 
     AuthenticationInteractionRequestResult result =
         authenticationInteractor.interact(
-            tenant, authenticationTransaction, type, request, userQueryRepository);
+            tenant,
+            authenticationTransaction,
+            type,
+            request,
+            requestAttributes,
+            userQueryRepository);
 
     AuthenticationTransaction updatedTransaction = authenticationTransaction.updateWith(result);
 

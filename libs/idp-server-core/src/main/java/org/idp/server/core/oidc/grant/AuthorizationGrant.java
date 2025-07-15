@@ -19,9 +19,9 @@ package org.idp.server.core.oidc.grant;
 import java.util.HashSet;
 import java.util.Set;
 import org.idp.server.core.oidc.authentication.Authentication;
-import org.idp.server.core.oidc.client.Client;
-import org.idp.server.core.oidc.client.ClientIdentifier;
-import org.idp.server.core.oidc.client.ClientName;
+import org.idp.server.core.oidc.configuration.client.ClientAttributes;
+import org.idp.server.core.oidc.configuration.client.ClientIdentifier;
+import org.idp.server.core.oidc.configuration.client.ClientName;
 import org.idp.server.core.oidc.grant.consent.ConsentClaims;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
@@ -38,7 +38,7 @@ public class AuthorizationGrant {
   User user;
   Authentication authentication;
   RequestedClientId requestedClientId;
-  Client client;
+  ClientAttributes clientAttributes;
   GrantType grantType;
   Scopes scopes;
   GrantIdTokenClaims idTokenClaims;
@@ -54,7 +54,7 @@ public class AuthorizationGrant {
       User user,
       Authentication authentication,
       RequestedClientId requestedClientId,
-      Client client,
+      ClientAttributes clientAttributes,
       GrantType grantType,
       Scopes scopes,
       GrantIdTokenClaims idTokenClaims,
@@ -66,7 +66,7 @@ public class AuthorizationGrant {
     this.user = user;
     this.authentication = authentication;
     this.requestedClientId = requestedClientId;
-    this.client = client;
+    this.clientAttributes = clientAttributes;
     this.grantType = grantType;
     this.scopes = scopes;
     this.idTokenClaims = idTokenClaims;
@@ -100,20 +100,20 @@ public class AuthorizationGrant {
     return requestedClientId;
   }
 
-  public Client client() {
-    return client;
+  public ClientAttributes clientAttributes() {
+    return clientAttributes;
   }
 
   public ClientIdentifier clientIdentifier() {
-    return client.identifier();
+    return clientAttributes.identifier();
   }
 
   public ClientName clientName() {
-    return client.name();
+    return clientAttributes.clientName();
   }
 
   public String clientIdentifierValue() {
-    return client.identifier().value();
+    return clientAttributes.identifier().value();
   }
 
   public GrantType grantType() {
@@ -191,7 +191,7 @@ public class AuthorizationGrant {
         user,
         authentication,
         requestedClientId,
-        client,
+        clientAttributes,
         grantType,
         scopes,
         idTokenClaims,
@@ -206,7 +206,7 @@ public class AuthorizationGrant {
     User newUser = newAuthorizationGrant.user();
     Authentication newAuthentication = newAuthorizationGrant.authentication();
     RequestedClientId newRequestClientId = newAuthorizationGrant.requestedClientId();
-    Client newClient = newAuthorizationGrant.client();
+    ClientAttributes newClientAttributes = newAuthorizationGrant.clientAttributes();
 
     Set<String> newScopeValues = new HashSet<>(this.scopes.toStringSet());
     newAuthorizationGrant.scopes().forEach(newScopeValues::add);
@@ -230,7 +230,7 @@ public class AuthorizationGrant {
         newUser,
         newAuthentication,
         newRequestClientId,
-        newClient,
+        newClientAttributes,
         grantType,
         newScopes,
         newGrantIdToken,

@@ -67,6 +67,7 @@ describe("ciba - mfa", () => {
         password: serverConfig.ciba.userCode,
       }
     });
+    console.log(authenticationResponse.data);
     expect(authenticationResponse.status).toBe(200);
 
     authenticationResponse = await postAuthenticationDeviceInteraction({
@@ -91,6 +92,7 @@ describe("ciba - mfa", () => {
         password: serverConfig.ciba.userCode,
       }
     });
+    console.log(authenticationResponse.data);
     expect(authenticationResponse.status).toBe(200);
 
     const tokenResponse = await requestToken({

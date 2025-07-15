@@ -68,7 +68,7 @@ public class ClientCredentialsGrantService implements OAuthTokenCreationService 
                 GrantType.client_credentials,
                 scopes)
             .add(customProperties)
-            .add(clientConfiguration.client())
+            .add(clientConfiguration.clientAttributes())
             .build();
 
     AccessToken accessToken =

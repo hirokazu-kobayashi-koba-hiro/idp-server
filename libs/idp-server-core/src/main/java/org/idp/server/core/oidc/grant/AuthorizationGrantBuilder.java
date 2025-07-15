@@ -17,7 +17,7 @@
 package org.idp.server.core.oidc.grant;
 
 import org.idp.server.core.oidc.authentication.Authentication;
-import org.idp.server.core.oidc.client.Client;
+import org.idp.server.core.oidc.configuration.client.ClientAttributes;
 import org.idp.server.core.oidc.grant.consent.ConsentClaims;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
@@ -33,7 +33,7 @@ public class AuthorizationGrantBuilder {
   User user = new User();
   Authentication authentication = new Authentication();
   RequestedClientId requestedClientId;
-  Client client = new Client();
+  ClientAttributes clientAttributes = new ClientAttributes();
   GrantType grantType;
   Scopes scopes;
   GrantIdTokenClaims grantIdTokenClaims = new GrantIdTokenClaims();
@@ -63,8 +63,8 @@ public class AuthorizationGrantBuilder {
     return this;
   }
 
-  public AuthorizationGrantBuilder add(Client client) {
-    this.client = client;
+  public AuthorizationGrantBuilder add(ClientAttributes clientAttributes) {
+    this.clientAttributes = clientAttributes;
     return this;
   }
 
@@ -99,7 +99,7 @@ public class AuthorizationGrantBuilder {
         user,
         authentication,
         requestedClientId,
-        client,
+        clientAttributes,
         grantType,
         scopes,
         grantIdTokenClaims,

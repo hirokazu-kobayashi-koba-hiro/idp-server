@@ -120,9 +120,7 @@ export const requestAuthorizations = async ({
       const authorizeResponse = await authorize({
         endpoint: serverConfig.authorizeEndpoint,
         id,
-        body: {
-          action: "signin"
-        }
+        body: {}
       });
 
       // console.log(authorizeResponse.headers);

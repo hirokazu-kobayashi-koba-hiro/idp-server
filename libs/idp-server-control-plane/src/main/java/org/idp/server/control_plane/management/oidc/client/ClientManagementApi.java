@@ -23,7 +23,7 @@ import org.idp.server.control_plane.base.definition.AdminPermission;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
 import org.idp.server.control_plane.management.oidc.client.io.ClientRegistrationRequest;
-import org.idp.server.core.oidc.client.ClientIdentifier;
+import org.idp.server.core.oidc.configuration.client.ClientIdentifier;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;

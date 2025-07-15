@@ -20,7 +20,9 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
+import org.idp.server.core.oidc.configuration.client.ClientAttributes;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
 import org.idp.server.core.oidc.io.OAuthRequestResponse;
 import org.idp.server.core.oidc.rar.AuthorizationDetails;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
@@ -29,6 +31,7 @@ import org.idp.server.core.oidc.type.ciba.BindingMessage;
 import org.idp.server.core.oidc.type.oauth.RequestedClientId;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantAttributes;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class OAuthAuthenticationTransactionCreator {
@@ -59,9 +62,12 @@ public class OAuthAuthenticationTransactionCreator {
     AuthorizationRequest authorizationRequest = requestResponse.authorizationRequest();
     AuthFlow authFlow = AuthFlow.OAUTH;
     TenantIdentifier tenantIdentifier = tenant.identifier();
+    TenantAttributes tenantAttributes = tenant.attributes();
 
     RequestedClientId requestedClientId = authorizationRequest.requestedClientId();
+    ClientAttributes clientAttributes = authorizationRequest.clientAttributes();
     User user = User.notFound();
+    AuthenticationDevice authenticationDevice = new AuthenticationDevice();
     AuthorizationDetails authorizationDetails =
         requestResponse.authorizationRequest().authorizationDetails();
     AuthenticationContext context =
@@ -74,6 +80,15 @@ public class OAuthAuthenticationTransactionCreator {
     LocalDateTime expiredAt =
         createdAt.plusSeconds(requestResponse.oauthAuthorizationRequestExpiresIn());
     return new AuthenticationRequest(
-        authFlow, tenantIdentifier, requestedClientId, user, context, createdAt, expiredAt);
+        authFlow,
+        tenantIdentifier,
+        tenantAttributes,
+        requestedClientId,
+        clientAttributes,
+        user,
+        authenticationDevice,
+        context,
+        createdAt,
+        expiredAt);
   }
 }

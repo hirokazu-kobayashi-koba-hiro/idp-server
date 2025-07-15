@@ -160,6 +160,14 @@ public class JsonNodeWrapper {
     return jsonNode.get(fieldName);
   }
 
+  public JsonNodeWrapper getNode(String fieldName) {
+    JsonNode node = jsonNode.get(fieldName);
+    if (node == null) {
+      return empty();
+    }
+    return new JsonNodeWrapper(node);
+  }
+
   /**
    * Retrieves the value for a field as a string. Returns an empty string if the field is absent.
    *

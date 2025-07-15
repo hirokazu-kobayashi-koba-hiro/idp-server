@@ -16,8 +16,6 @@
 
 package org.idp.server.core.adapters.datasource.identity;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.idp.server.core.oidc.identity.User;
@@ -26,6 +24,7 @@ import org.idp.server.core.oidc.identity.UserRole;
 import org.idp.server.core.oidc.identity.UserStatus;
 import org.idp.server.core.oidc.identity.address.Address;
 import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
+import org.idp.server.platform.date.LocalDateTimeParser;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
@@ -62,7 +61,7 @@ class ModelConverter {
     user.setHashedPassword(stringMap.getOrDefault("hashed_password", ""));
 
     if (stringMap.containsKey("updated_at")) {
-      user.setUpdatedAt(parseDateTime(stringMap.get("updated_at")));
+      user.setUpdatedAt(LocalDateTimeParser.parse(stringMap.get("updated_at")));
     }
 
     if (stringMap.containsKey("address")
@@ -167,20 +166,26 @@ class ModelConverter {
       List<AuthenticationDevice> authenticationDevices = new ArrayList<>();
       for (JsonNodeWrapper wrapper : wrapperList) {
         String id = wrapper.getValueOrEmptyAsString("id");
+        String appName = wrapper.getValueOrEmptyAsString("app_name");
         String platform = wrapper.getValueOrEmptyAsString("platform");
         String os = wrapper.getValueOrEmptyAsString("os");
         String model = wrapper.getValueOrEmptyAsString("model");
         String notificationChannel = wrapper.getValueOrEmptyAsString("notification_channel");
         String notificationToken = wrapper.getValueOrEmptyAsString("notification_token");
-        boolean preferredForNotification = wrapper.getValueAsBoolean("preferred_for_notification");
+        JsonNodeWrapper availableAuthenticationMethodsNodes = wrapper.getNode("available_methods");
+        List<String> availableAuthenticationMethods = availableAuthenticationMethodsNodes.toList();
+        boolean preferredForNotification =
+            wrapper.optValueAsBoolean("preferred_for_notification", false);
         AuthenticationDevice authenticationDevice =
             new AuthenticationDevice(
                 id,
+                appName,
                 platform,
                 os,
                 model,
                 notificationChannel,
                 notificationToken,
+                availableAuthenticationMethods,
                 preferredForNotification);
         authenticationDevices.add(authenticationDevice);
       }
@@ -205,29 +210,5 @@ class ModelConverter {
   static UserIdentifier extractUserIdentifier(Map<String, String> stringMap) {
     String id = stringMap.get("id");
     return new UserIdentifier(id);
-  }
-
-  static LocalDateTime parseDateTime(String dateTime) {
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
-
-    return LocalDateTime.parse(normalizeDateTime(dateTime), formatter);
-  }
-
-  private static String normalizeDateTime(String dateTimeStr) {
-    if (!dateTimeStr.contains(".")) {
-      return dateTimeStr + ".000000"; // No fraction present, add six zeroes
-    }
-
-    String[] parts = dateTimeStr.split("\\.");
-    String fraction = parts[1];
-
-    // Ensure fraction has exactly 6 digits
-    if (fraction.length() < 6) {
-      fraction = String.format("%-6s", fraction).replace(' ', '0'); // Pad with zeros
-    } else if (fraction.length() > 6) {
-      fraction = fraction.substring(0, 6); // Trim to 6 digits
-    }
-
-    return parts[0] + "." + fraction;
   }
 }

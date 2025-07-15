@@ -28,6 +28,7 @@ import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolver;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 public class ExternalTokenAuthenticationInteractor implements AuthenticationInteractor {
   AuthenticationConfigurationQueryRepository configurationRepository;
@@ -57,6 +58,7 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
       AuthenticationTransaction transaction,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
     ExternalTokenAuthenticationConfiguration configuration =

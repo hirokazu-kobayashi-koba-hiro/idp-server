@@ -21,10 +21,11 @@ import java.util.Map;
 import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditionalRequestResolvers;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
-import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 public class FidoUafAuthenticationChallengeInteractor implements AuthenticationInteractor {
 
@@ -61,14 +62,28 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
       AuthenticationTransaction transaction,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
     FidoUafConfiguration fidoUafConfiguration =
         configurationQueryRepository.get(tenant, "fido-uaf", FidoUafConfiguration.class);
     FidoUafExecutor fidoUafExecutor = fidoUafExecutors.get(fidoUafConfiguration.type());
 
-    User user = transaction.user();
-    String deviceId = user.findPrimaryAuthenticationDevice().id();
+    String deviceId = extractDeviceId(transaction, request, requestAttributes);
+
+    if (deviceId == null || deviceId.isEmpty()) {
+      Map<String, Object> contents = new HashMap<>();
+      contents.put("error", "invalid_request");
+      contents.put("error_description", "device_id is required.");
+
+      return AuthenticationInteractionRequestResult.clientError(
+          contents,
+          type,
+          operationType(),
+          method(),
+          DefaultSecurityEventType.fido_uaf_authentication_challenge_failure);
+    }
+
     Map<String, Object> executionRequest = new HashMap<>();
     executionRequest.put(fidoUafConfiguration.deviceIdParam(), deviceId);
 
@@ -107,5 +122,26 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
         transaction.user(),
         executionResult.contents(),
         DefaultSecurityEventType.fido_uaf_authentication_challenge_success);
+  }
+
+  private String extractDeviceId(
+      AuthenticationTransaction transaction,
+      AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes) {
+
+    if (request.containsKey("device_id")) {
+      return request.getValueAsString("device_id");
+    }
+
+    if (requestAttributes.containsKey("x-device-id")) {
+      return requestAttributes.getValueAsString("x-device-id");
+    }
+
+    if (transaction.hasAuthenticationDevice()) {
+      AuthenticationDevice authenticationDevice = transaction.authenticationDevice();
+      return authenticationDevice.id();
+    }
+
+    return "";
   }
 }

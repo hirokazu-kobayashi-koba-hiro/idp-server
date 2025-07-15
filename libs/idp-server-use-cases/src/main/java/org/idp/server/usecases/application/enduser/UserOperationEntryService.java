@@ -87,6 +87,7 @@ public class UserOperationEntryService implements UserOperationApi {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
+    // TODO to be more correct getting mfaPolicies
     AuthenticationPolicy authenticationPolicy = mfaPolicies.get(authFlow);
     MfaRequestVerifier mfaRequestVerifier = mfaRegistrationVerifiers.get(authFlow);
     MfaVerificationResult verificationResult =
@@ -96,6 +97,7 @@ public class UserOperationEntryService implements UserOperationApi {
       return UserOperationResponse.failure(verificationResult.errorContents());
     }
 
+    // TODO to be more correct getting client attributes
     AuthenticationTransaction authenticationTransaction =
         MfaRegistrationTransactionCreator.create(
             tenant, user, token, authFlow, request, authenticationPolicy);
@@ -122,7 +124,12 @@ public class UserOperationEntryService implements UserOperationApi {
         authenticationTransactionQueryRepository.get(tenant, authenticationTransactionIdentifier);
     AuthenticationInteractionRequestResult result =
         authenticationInteractor.interact(
-            tenant, authenticationTransaction, type, request, userQueryRepository);
+            tenant,
+            authenticationTransaction,
+            type,
+            request,
+            requestAttributes,
+            userQueryRepository);
 
     AuthenticationTransaction updatedTransaction = authenticationTransaction.updateWith(result);
 

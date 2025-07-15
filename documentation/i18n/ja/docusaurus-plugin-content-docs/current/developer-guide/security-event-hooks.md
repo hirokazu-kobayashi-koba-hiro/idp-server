@@ -76,7 +76,7 @@ eventPublisher.publish(
     "base": {
       "description": "slack共通通知",
       "incoming_webhook_url": "https://hooks.slack.com/services/xxx",
-      "message_template": "🔐 type: ${trigger} / user: ${user.id} / tenant: ${tenant.id} / client: ${client.id}"
+      "message_template": "🔐 type: ${trigger} / user: ${user.id} / tenant: ${tenant.id} / clientAttributes: ${clientAttributes.id}"
     },
     "overlays": {
       "user_deletion": {

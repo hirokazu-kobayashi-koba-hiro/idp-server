@@ -22,6 +22,7 @@ import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.security.type.RequestAttributes;
 
 public class SmsAuthenticationInteractor implements AuthenticationInteractor {
 
@@ -51,6 +52,7 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
       AuthenticationTransaction transaction,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
     SmsAuthenticationConfiguration configuration =
         configurationQueryRepository.get(tenant, "sms", SmsAuthenticationConfiguration.class);

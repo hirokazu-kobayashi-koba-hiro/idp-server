@@ -21,7 +21,7 @@ import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationReque
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationResponse;
 import org.idp.server.core.oidc.authentication.Authentication;
-import org.idp.server.core.oidc.client.Client;
+import org.idp.server.core.oidc.configuration.client.ClientAttributes;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.grant.AuthorizationGrantBuilder;
 import org.idp.server.core.oidc.identity.User;
@@ -59,13 +59,13 @@ public class CibaGrantFactory {
     RequestedClientId requestedClientId = context.requestedClientId();
 
     TenantIdentifier tenantIdentifier = context.tenantIdentifier();
-    Client client = context.client();
+    ClientAttributes clientAttributes = context.clientAttributes();
     Scopes scopes = context.scopes();
     AuthorizationDetails authorizationDetails = context.authorizationDetails();
 
     AuthorizationGrantBuilder builder =
         new AuthorizationGrantBuilder(tenantIdentifier, requestedClientId, GrantType.ciba, scopes)
-            .add(client)
+            .add(clientAttributes)
             .add(user)
             .add(authentication)
             .add(authorizationDetails);

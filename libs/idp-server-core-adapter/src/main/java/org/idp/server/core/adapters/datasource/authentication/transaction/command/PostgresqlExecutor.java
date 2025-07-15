@@ -40,13 +40,16 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
             (
             id,
             tenant_id,
+            tenant_payload,
             flow,
             authorization_id,
             client_id,
+            client_payload,
             user_id,
             user_payload,
             context,
             authentication_device_id,
+            authentication_device_payload,
             authentication_policy,
             interactions,
             attributes,
@@ -57,13 +60,16 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
             (
             ?::uuid,
             ?::uuid,
+            ?::jsonb,
             ?,
             ?::uuid,
             ?,
+            ?::jsonb,
             ?::uuid,
             ?::jsonb,
             ?::jsonb,
             ?::uuid,
+            ?::jsonb,
             ?::jsonb,
             ?::jsonb,
             ?::jsonb,
@@ -77,6 +83,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
     List<Object> params = new ArrayList<>();
     params.add(authenticationTransaction.identifier().valueAsUuid());
     params.add(tenant.identifierUUID());
+    params.add(jsonConverter.write(tenant.toMap()));
     params.add(authenticationTransaction.request().authorizationFlow().value());
     if (authenticationTransaction.hasAuthorizationIdentifier()) {
       params.add(authenticationTransaction.authorizationIdentifier().valueAsUuid());
@@ -84,6 +91,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
       params.add(null);
     }
     params.add(authenticationTransaction.request().requestedClientId().value());
+    params.add(jsonConverter.write(authenticationTransaction.request().clientAttributes().toMap()));
 
     if (user.exists()) {
       params.add(user.subAsUuid());
@@ -93,10 +101,12 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
       params.add(null);
     }
     params.add(jsonConverter.write(authenticationTransaction.requestContext().toMap()));
-    if (user.hasAuthenticationDevices()) {
-      AuthenticationDevice authenticationDevice = user.findPreferredForNotification();
+    if (authenticationTransaction.hasAuthenticationDevice()) {
+      AuthenticationDevice authenticationDevice = authenticationTransaction.authenticationDevice();
       params.add(authenticationDevice.idAsUuid());
+      params.add(jsonConverter.write(authenticationDevice.toMap()));
     } else {
+      params.add(null);
       params.add(null);
     }
     params.add(jsonConverter.write(authenticationTransaction.authenticationPolicy().toMap()));
@@ -128,6 +138,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
                 SET user_id = ?::uuid,
                 user_payload = ?::jsonb,
                 authentication_device_id = ?::uuid,
+                authentication_device_payload = ?::jsonb,
                 interactions = ?::jsonb,
                 updated_at = now()
                 WHERE id = ?::uuid
@@ -144,10 +155,12 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
       params.add(null);
     }
 
-    if (user.hasAuthenticationDevices()) {
-      AuthenticationDevice authenticationDevice = user.findPreferredForNotification();
+    if (authenticationTransaction.hasAuthenticationDevice()) {
+      AuthenticationDevice authenticationDevice = authenticationTransaction.authenticationDevice();
       params.add(authenticationDevice.idAsUuid());
+      params.add(jsonConverter.write(authenticationDevice.toMap()));
     } else {
+      params.add(null);
       params.add(null);
     }
 

@@ -19,20 +19,26 @@ package org.idp.server.core.oidc.authentication;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.oidc.configuration.client.ClientAttributes;
 import org.idp.server.core.oidc.federation.FederationInteractionResult;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
 import org.idp.server.core.oidc.type.AuthFlow;
 import org.idp.server.core.oidc.type.oauth.RequestedClientId;
 import org.idp.server.core.oidc.type.oauth.Scopes;
 import org.idp.server.core.oidc.type.oidc.AcrValues;
+import org.idp.server.platform.multi_tenancy.tenant.TenantAttributes;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class AuthenticationRequest {
 
   AuthFlow authFlow;
   TenantIdentifier tenantIdentifier;
+  TenantAttributes tenantAttributes;
   RequestedClientId requestedClientId;
+  ClientAttributes clientAttributes;
   User user;
+  AuthenticationDevice authenticationDevice;
   AuthenticationContext context;
   LocalDateTime createdAt;
   LocalDateTime expiresAt;
@@ -42,15 +48,21 @@ public class AuthenticationRequest {
   public AuthenticationRequest(
       AuthFlow authFlow,
       TenantIdentifier tenantIdentifier,
+      TenantAttributes tenantAttributes,
       RequestedClientId requestedClientId,
+      ClientAttributes clientAttributes,
       User user,
+      AuthenticationDevice authenticationDevice,
       AuthenticationContext context,
       LocalDateTime createdAt,
       LocalDateTime expiresAt) {
     this.authFlow = authFlow;
     this.tenantIdentifier = tenantIdentifier;
+    this.tenantAttributes = tenantAttributes;
     this.requestedClientId = requestedClientId;
+    this.clientAttributes = clientAttributes;
     this.user = user;
+    this.authenticationDevice = authenticationDevice;
     this.context = context;
     this.createdAt = createdAt;
     this.expiresAt = expiresAt;
@@ -64,8 +76,16 @@ public class AuthenticationRequest {
     return tenantIdentifier;
   }
 
+  public TenantAttributes tenantAttributes() {
+    return tenantAttributes;
+  }
+
   public RequestedClientId requestedClientId() {
     return requestedClientId;
+  }
+
+  public ClientAttributes clientAttributes() {
+    return clientAttributes;
   }
 
   public User user() {
@@ -77,6 +97,10 @@ public class AuthenticationRequest {
       return false;
     }
     return this.user.sub().equals(interactedUser.sub());
+  }
+
+  public AuthenticationDevice authenticationDevice() {
+    return authenticationDevice;
   }
 
   public AuthenticationContext context() {
@@ -95,13 +119,37 @@ public class AuthenticationRequest {
     return user != null && user.exists();
   }
 
+  public boolean hasAuthenticationDevice() {
+    return authenticationDevice != null && authenticationDevice.exists();
+  }
+
+  public boolean hasContext() {
+    return context != null && context.exists();
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("flow", authFlow.value());
     map.put("tenant_id", tenantIdentifier.value());
+    map.put("tenant_attributes", tenantAttributes.toMap());
     map.put("client_id", requestedClientId.value());
-    map.put("user", user.toMap());
-    map.put("context", context.toMap());
+    map.put("client_attributes", clientAttributes.toMap());
+    if (hasUser()) map.put("user", user.toMap());
+    if (hasAuthenticationDevice()) map.put("authentication_device", authenticationDevice.toMap());
+    if (hasContext()) map.put("context", context.toMap());
+    map.put("created_at", createdAt.toString());
+    map.put("expires_at", expiresAt.toString());
+    return map;
+  }
+
+  public Map<String, Object> toMapForPublic() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("flow", authFlow.value());
+    map.put("tenant_id", tenantIdentifier.value());
+    map.put("client_id", requestedClientId.value());
+    if (hasUser()) map.put("user", user.toMap());
+    if (hasAuthenticationDevice()) map.put("authentication_device", authenticationDevice.toMap());
+    if (hasContext()) map.put("context", context.toMap());
     map.put("created_at", createdAt.toString());
     map.put("expires_at", expiresAt.toString());
     return map;
@@ -111,13 +159,31 @@ public class AuthenticationRequest {
       AuthenticationInteractionRequestResult interactionRequestResult) {
     User user = interactionRequestResult.user();
     return new AuthenticationRequest(
-        authFlow, tenantIdentifier, requestedClientId, user, context, createdAt, expiresAt);
+        authFlow,
+        tenantIdentifier,
+        tenantAttributes,
+        requestedClientId,
+        clientAttributes,
+        user,
+        authenticationDevice,
+        context,
+        createdAt,
+        expiresAt);
   }
 
   public AuthenticationRequest updateWithUser(FederationInteractionResult result) {
     User user = result.user();
     return new AuthenticationRequest(
-        authFlow, tenantIdentifier, requestedClientId, user, context, createdAt, expiresAt);
+        authFlow,
+        tenantIdentifier,
+        tenantAttributes,
+        requestedClientId,
+        clientAttributes,
+        user,
+        authenticationDevice,
+        context,
+        createdAt,
+        expiresAt);
   }
 
   public AcrValues acrValues() {

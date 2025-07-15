@@ -16,7 +16,6 @@
 
 package org.idp.server.core.extension.ciba.handler.io;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import org.idp.server.core.extension.ciba.CibaRequestContext;
@@ -26,6 +25,7 @@ import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationErro
 import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationResponse;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractionType;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
+import org.idp.server.core.oidc.configuration.client.ClientAttributes;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.type.AuthFlow;
 import org.idp.server.core.oidc.type.ContentType;
@@ -91,16 +91,6 @@ public class CibaIssueResponse {
     return user;
   }
 
-  public List<String> requiredAnyOfAuthenticationTypes() {
-    List<String> methods = new ArrayList<>();
-    if (cibaRequestContext.isFapiProfile()) {
-      methods.add("webauthn");
-      methods.add("fido-uaf");
-      methods.add("fido2");
-    }
-    return methods;
-  }
-
   public ExpiresIn expiresIn() {
     return cibaRequestContext.expiresIn();
   }
@@ -146,6 +136,10 @@ public class CibaIssueResponse {
 
   public AuthenticationInteractionType defaultCibaAuthenticationInteractionType() {
     return cibaRequestContext.defaultCibaAuthenticationInteractionType();
+  }
+
+  public ClientAttributes clientAttributes() {
+    return cibaRequestContext.clientAttributes();
   }
 
   public AuthenticationPolicy findSatisfiedAuthenticationPolicy() {

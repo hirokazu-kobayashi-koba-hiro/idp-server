@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.oidc.client;
+package org.idp.server.core.oidc.configuration.client;
 
-public class ClientName {
+import java.util.Objects;
+import java.util.UUID;
+import org.idp.server.platform.uuid.UuidConvertable;
+
+public class ClientIdentifier implements UuidConvertable {
   String value;
 
-  public ClientName() {}
+  public ClientIdentifier() {}
 
-  public ClientName(String value) {
+  public ClientIdentifier(String value) {
     this.value = value;
   }
 
@@ -29,7 +33,23 @@ public class ClientName {
     return value;
   }
 
+  public UUID valueAsUuid() {
+    return convertUuid(value);
+  }
+
   public boolean exists() {
     return value != null && !value.isEmpty();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    ClientIdentifier that = (ClientIdentifier) o;
+    return Objects.equals(value, that.value);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(value);
   }
 }

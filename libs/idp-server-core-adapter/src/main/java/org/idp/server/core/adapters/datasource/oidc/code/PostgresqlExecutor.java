@@ -82,7 +82,7 @@ public class PostgresqlExecutor implements AuthorizationCodeGrantExecutor {
     params.add(toJson(authorizationCodeGrant.user()));
     params.add(toJson(authorizationCodeGrant.authentication()));
     params.add(authorizationCodeGrant.clientId().value());
-    params.add(toJson(authorizationCodeGrant.client()));
+    params.add(toJson(authorizationCodeGrant.clientAttributes()));
     params.add(authorizationCodeGrant.authorizationGrant().grantType().name());
     params.add(authorizationCodeGrant.scopes().toStringValues());
 

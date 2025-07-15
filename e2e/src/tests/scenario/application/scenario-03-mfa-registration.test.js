@@ -28,6 +28,7 @@ describe("user - mfa registration", () => {
         await postWithJson({
           url: serverConfig.resourceOwnerEndpoint + "/mfa/fido-uaf-registration",
           body: {
+            "app_name": "idp-server-app",
             "platform": "Android",
             "os": "Android15",
             "model": "galaxy z fold 6",
@@ -91,12 +92,20 @@ describe("user - mfa registration", () => {
       expect(userinfoResponse.data.authentication_devices.length).toBe(1);
       expect(userinfoResponse.data).toHaveProperty("mfa");
       expect(userinfoResponse.data.authentication_devices[0].id).toEqual(authenticationDeviceId);
+      expect(userinfoResponse.data.authentication_devices[0].app_name).toEqual("idp-server-app");
+      expect(userinfoResponse.data.authentication_devices[0].platform).toEqual("Android");
+      expect(userinfoResponse.data.authentication_devices[0].model).toEqual("galaxy z fold 6");
+      expect(userinfoResponse.data.authentication_devices[0].notification_channel).toEqual("fcm");
+      expect(userinfoResponse.data.authentication_devices[0].notification_token).toEqual("test token");
+      expect(userinfoResponse.data.authentication_devices[0].available_methods).toContain("fido-uaf");
+      expect(userinfoResponse.data.authentication_devices[0].preferred_for_notification).toEqual(true);
+
 
       mfaRegistrationResponse =
         await postWithJson({
           url: serverConfig.resourceOwnerEndpoint + "/mfa/fido-uaf-deregistration",
           body: {
-            "authentication_device_id": authenticationDeviceId
+            "device_id": authenticationDeviceId
           },
           headers: {
             "Authorization": `Bearer ${accessToken}`
@@ -110,7 +119,7 @@ describe("user - mfa registration", () => {
         id: mfaRegistrationResponse.data.id,
         interactionType: "fido-uaf-deregistration",
         body: {
-          authentication_device_id: authenticationDeviceId,
+          device_id: authenticationDeviceId,
         }
       });
       expect(authenticationResponse.status).toBe(200);
@@ -145,6 +154,7 @@ describe("user - mfa registration", () => {
         await postWithJson({
           url: serverConfig.resourceOwnerEndpoint + "/mfa/fido-uaf-registration",
           body: {
+            "app_name": "idp-server-app",
             "platform": "Android",
             "os": "Android15",
             "model": "galaxy z fold 6",

@@ -46,15 +46,15 @@ Authorization: Bearer {access_token}
 Content-Type: application/json
 
 {
-  "authentication_device_id": "UUID"
+  "device_id": "UUID"
 }
 ```
 
 ### リクエストボディのパラメータ説明
 
-| パラメータ名                     | 必須 | 説明        |
-|----------------------------|----|-----------|
-| `authentication_device_id` | -  | 認証デバイスID。 |
+| パラメータ名      | 必須 | 説明        |
+|-------------|----|-----------|
+| `device_id` | -  | 認証デバイスID。 |
 
 * レスポンス `200 OK`
 

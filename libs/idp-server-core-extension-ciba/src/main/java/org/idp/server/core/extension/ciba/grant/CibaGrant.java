@@ -19,7 +19,7 @@ package org.idp.server.core.extension.ciba.grant;
 import java.time.LocalDateTime;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.oidc.authentication.Authentication;
-import org.idp.server.core.oidc.client.ClientIdentifier;
+import org.idp.server.core.oidc.configuration.client.ClientIdentifier;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.type.ciba.AuthReqId;

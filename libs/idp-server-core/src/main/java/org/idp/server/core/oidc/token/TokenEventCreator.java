@@ -69,7 +69,7 @@ public class TokenEventCreator {
 
     SecurityEventClient securityEventClient =
         new SecurityEventClient(
-            oAuthToken.requestedClientId().value(), oAuthToken.client().nameValue());
+            oAuthToken.requestedClientId().value(), oAuthToken.clientAttributes().nameValue());
     builder.add(securityEventClient);
     User user = oAuthToken.user();
 
