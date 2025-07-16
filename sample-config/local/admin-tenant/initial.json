@@ -239,7 +239,7 @@
       "authentication_policies": [
         {
           "id": "gold",
-          "priority": 100,
+          "priority": 1,
           "conditions": {
             "acr_values": [
               "urn:mace:incommon:iap:gold"
@@ -307,7 +307,7 @@
         },
         {
           "id": "default_authentication_policy",
-          "priority": 1,
+          "priority": 100,
           "conditions": {
             "scopes": [
               "openid"
@@ -601,7 +601,7 @@
         "model": "iPhone15",
         "notification_channel": "fcm",
         "notification_token": "test token",
-        "preferred_for_notification": true
+        "priority": 1
       }
     ],
     "verified_claims": {"claims": {"address": {"country": "UK", "locality": "Edinburgh", "postal_code": "EH1 9GP", "street_address": "122 Burns Crescent"}, "birthdate": "1976-03-11", "given_name": "Sarah", "family_name": "Meredyth", "place_of_birth": {"country": "UK"}}, "verification": {"evidence": [{"time": "2021-04-09T14:12Z", "type": "electronic_record", "record": {"type": "mortgage_account", "source": {"name": "TheCreditBureau"}}, "check_details": [{"txn": "kbv1-hf934hn09234ng03jj3", "check_method": "kbv", "organization": "TheCreditBureau"}]}, {"time": "2021-04-09T14:12Z", "type": "electronic_record", "record": {"type": "bank_account", "source": {"name": "TheBank"}}, "check_details": [{"txn": "kbv2-nm0f23u9459fj38u5j6", "check_method": "kbv", "organization": "OpenBankingTPP"}]}], "trust_framework": "eidas"}},

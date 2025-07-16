@@ -146,7 +146,7 @@ public class CibaIssueResponse {
     List<AuthenticationPolicy> authenticationPolicies = cibaRequestContext.authenticationPolicies();
     return authenticationPolicies.stream()
         .filter(policy -> policy.anyMatch(AuthFlow.CIBA, request.acrValues(), request.scopes()))
-        .max(Comparator.comparingInt(AuthenticationPolicy::priority))
+        .min(Comparator.comparingInt(AuthenticationPolicy::priority))
         .orElse(new AuthenticationPolicy());
   }
 

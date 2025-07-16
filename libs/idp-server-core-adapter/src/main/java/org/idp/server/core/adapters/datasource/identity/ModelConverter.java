@@ -174,8 +174,7 @@ class ModelConverter {
         String notificationToken = wrapper.getValueOrEmptyAsString("notification_token");
         JsonNodeWrapper availableAuthenticationMethodsNodes = wrapper.getNode("available_methods");
         List<String> availableAuthenticationMethods = availableAuthenticationMethodsNodes.toList();
-        boolean preferredForNotification =
-            wrapper.optValueAsBoolean("preferred_for_notification", false);
+        Integer priority = wrapper.getValueAsInteger("priority");
         AuthenticationDevice authenticationDevice =
             new AuthenticationDevice(
                 id,
@@ -186,7 +185,7 @@ class ModelConverter {
                 notificationChannel,
                 notificationToken,
                 availableAuthenticationMethods,
-                preferredForNotification);
+                priority);
         authenticationDevices.add(authenticationDevice);
       }
       user.setAuthenticationDevices(authenticationDevices);

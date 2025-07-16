@@ -185,6 +185,13 @@ public class JsonNodeWrapper {
     return jsonNode.get(fieldName).asInt();
   }
 
+  public Integer getValueAsInteger(String fieldName) {
+    if (!contains(fieldName)) {
+      return null;
+    }
+    return jsonNode.get(fieldName).asInt();
+  }
+
   public boolean getValueAsBoolean(String fieldName) {
     return jsonNode.get(fieldName).asBoolean();
   }

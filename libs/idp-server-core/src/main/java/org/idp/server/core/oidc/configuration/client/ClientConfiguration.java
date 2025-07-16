@@ -325,7 +325,7 @@ public class ClientConfiguration implements JsonReadable {
 
   public ClientAttributes clientAttributes() {
     return new ClientAttributes(
-        clientId, clientName, clientUri, logoUri, contacts, tosUri, policyUri);
+        clientId, clientIdAlias, clientName, clientUri, logoUri, contacts, tosUri, policyUri);
   }
 
   public boolean hasJwks() {

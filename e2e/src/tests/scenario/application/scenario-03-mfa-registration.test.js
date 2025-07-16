@@ -34,7 +34,7 @@ describe("user - mfa registration", () => {
             "model": "galaxy z fold 6",
             "notification_channel": "fcm",
             "notification_token": "test token",
-            "preferred_for_notification": true
+            // "priority": 1
           },
           headers: {
             "Authorization": `Bearer ${accessToken}`
@@ -98,7 +98,7 @@ describe("user - mfa registration", () => {
       expect(userinfoResponse.data.authentication_devices[0].notification_channel).toEqual("fcm");
       expect(userinfoResponse.data.authentication_devices[0].notification_token).toEqual("test token");
       expect(userinfoResponse.data.authentication_devices[0].available_methods).toContain("fido-uaf");
-      expect(userinfoResponse.data.authentication_devices[0].preferred_for_notification).toEqual(true);
+      expect(userinfoResponse.data.authentication_devices[0].priority).toEqual(1);
 
 
       mfaRegistrationResponse =

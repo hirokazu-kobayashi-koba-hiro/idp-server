@@ -215,7 +215,7 @@
     "authentication_policies": [
       {
         "id": "gold",
-        "priority": 100,
+        "priority": 1,
         "conditions": {
           "acr_values": [
             "urn:mace:incommon:iap:gold"
@@ -283,7 +283,7 @@
       },
       {
         "id": "default_authentication_policy",
-        "priority": 1,
+        "priority": 100,
         "conditions": {
           "scopes": [
             "openid"

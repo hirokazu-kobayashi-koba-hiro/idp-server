@@ -98,14 +98,8 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
 
     String deviceId =
         executionResult.getValueAsStringFromContents(fidoUafConfiguration.deviceIdParam());
-    User user = transaction.user();
-    AuthenticationDevice authenticationDevice =
-        createAuthenticationDevice(deviceId, transaction.attributes());
-
-    HashMap<String, Object> mfa = new HashMap<>();
-    mfa.put(method(), true);
     User addedDeviceUser =
-        user.addAuthenticationDevice(authenticationDevice).addMultiFactorAuthentication(mfa);
+        addAuthenticationDevice(transaction.user(), deviceId, transaction.attributes());
 
     AuthenticationPolicy authenticationPolicy = transaction.authenticationPolicy();
     if (authenticationPolicy.authenticationDeviceRule().requiredIdentityVerification()) {
@@ -125,8 +119,8 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
         DefaultSecurityEventType.fido_uaf_registration_success);
   }
 
-  private AuthenticationDevice createAuthenticationDevice(
-      String deviceId, AuthenticationTransactionAttributes attributes) {
+  private User addAuthenticationDevice(
+      User user, String deviceId, AuthenticationTransactionAttributes attributes) {
 
     String appName = attributes.getValueOrEmpty("app_name");
     String platform = attributes.getValueOrEmpty("platform");
@@ -135,17 +129,28 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
     String notificationChannel = attributes.getValueOrEmpty("notification_channel");
     String notificationToken = attributes.getValueOrEmpty("notification_token");
     List<String> availableAuthenticationMethods = List.of(method());
-    boolean preferredForNotification = attributes.getValueAsBoolean("preferred_for_notification");
+    int priority =
+        attributes.containsKey("priority")
+            ? attributes.getValueAsInteger("priority")
+            : user.authenticationDeviceNextCount();
 
-    return new AuthenticationDevice(
-        deviceId,
-        appName,
-        platform,
-        os,
-        model,
-        notificationChannel,
-        notificationToken,
-        availableAuthenticationMethods,
-        preferredForNotification);
+    AuthenticationDevice authenticationDevice =
+        new AuthenticationDevice(
+            deviceId,
+            appName,
+            platform,
+            os,
+            model,
+            notificationChannel,
+            notificationToken,
+            availableAuthenticationMethods,
+            priority);
+
+    HashMap<String, Object> mfa = new HashMap<>();
+    mfa.put(method(), true);
+    User addedDeviceUser =
+        user.addAuthenticationDevice(authenticationDevice).addMultiFactorAuthentication(mfa);
+
+    return addedDeviceUser;
   }
 }

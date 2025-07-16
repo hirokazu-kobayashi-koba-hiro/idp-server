@@ -146,8 +146,10 @@ public class AuthenticationRequest {
     Map<String, Object> map = new HashMap<>();
     map.put("flow", authFlow.value());
     map.put("tenant_id", tenantIdentifier.value());
+    map.put("tenant_attributes", tenantAttributes.toMap());
     map.put("client_id", requestedClientId.value());
-    if (hasUser()) map.put("user", user.toMap());
+    map.put("client_attributes", clientAttributes.toMap());
+    if (hasUser()) map.put("user", user.toMinimalizedMap());
     if (hasAuthenticationDevice()) map.put("authentication_device", authenticationDevice.toMap());
     if (hasContext()) map.put("context", context.toMap());
     map.put("created_at", createdAt.toString());

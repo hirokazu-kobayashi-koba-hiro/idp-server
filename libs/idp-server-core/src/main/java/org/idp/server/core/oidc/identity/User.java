@@ -358,8 +358,7 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
 
   public AuthenticationDevice findPrimaryAuthenticationDevice() {
     return authenticationDevices.stream()
-        .filter(AuthenticationDevice::isPreferredForNotification)
-        .findFirst()
+        .min(Comparator.comparingInt(AuthenticationDevice::priority))
         .orElse(new AuthenticationDevice());
   }
 
@@ -369,8 +368,7 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
 
   public AuthenticationDevice findPreferredForNotification() {
     return authenticationDevices.stream()
-        .filter(AuthenticationDevice::isPreferredForNotification)
-        .findFirst()
+        .min(Comparator.comparingInt(AuthenticationDevice::priority))
         .orElse(new AuthenticationDevice());
   }
 
@@ -400,6 +398,10 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
 
   public int authenticationDeviceCount() {
     return authenticationDevices.size();
+  }
+
+  public int authenticationDeviceNextCount() {
+    return authenticationDevices.size() + 1;
   }
 
   public boolean exists() {
@@ -677,7 +679,7 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
 
     if (exists()) map.put("sub", sub);
     if (exists()) map.put("provider_id", providerId);
-    if (exists()) map.put("external_user_id", externalUserId);
+    if (hasExternalUserId()) map.put("external_user_id", externalUserId);
     if (hasProviderOriginalPayload())
       map.put("provider_original_payload", externalProviderOriginalPayload);
     if (hasName()) map.put("name", name);
@@ -721,7 +723,7 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
 
     if (exists()) map.put("sub", sub);
     if (exists()) map.put("provider_id", providerId);
-    if (exists()) map.put("external_user_id", externalUserId);
+    if (hasExternalUserId()) map.put("external_user_id", externalUserId);
     if (hasName()) map.put("name", name);
     if (hasEmail()) map.put("email", email);
     if (hasLocale()) map.put("locale", locale);
