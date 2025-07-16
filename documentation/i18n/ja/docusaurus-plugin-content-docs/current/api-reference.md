@@ -1,6 +1,7 @@
 # API ドキュメント
 
-[アプリケーションAPI仕様](api-ja)
+[RP用のAPI仕様](api-rp-ja)
 
+[認証デバイス用のAPI仕様](api-authentication-device-ja)
 
-[コントロールプレーンAPI仕様](control-plane-api-ja)
+[コントロールプレーン用のAPI仕様](control-plane-api-ja)
