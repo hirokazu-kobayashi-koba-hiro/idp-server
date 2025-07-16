@@ -37,7 +37,7 @@ public class IdentityVerificationResultQueries implements UuidConvertable {
     return LocalDateTimeParser.parse(values.get("verified_at_from"));
   }
 
-  public LocalDateTime to() {
+  public LocalDateTime verifiedAtTo() {
     return LocalDateTimeParser.parse(values.get("verified_at_to"));
   }
 

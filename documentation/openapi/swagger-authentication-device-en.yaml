@@ -82,10 +82,10 @@ paths:
             default: true
           description: 有効期限切れを除外するか
         - in: query
-          name: attributes.key
+          name: attributes.<key>
           schema:
             type: string
-          description: 属性情報のオブジェクトのkeyに対する検索（keyは具体的な値に変更が必要）
+          description: 属性情報のオブジェクトのkeyに対する検索（keyは具体的な値の設定が必要）
       responses:
         '200':
           description: 認証トランザクション一覧レスポンス

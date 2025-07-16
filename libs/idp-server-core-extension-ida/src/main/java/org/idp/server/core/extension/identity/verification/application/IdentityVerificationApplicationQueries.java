@@ -16,8 +16,11 @@
 
 package org.idp.server.core.extension.identity.verification.application;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.idp.server.platform.date.LocalDateTimeParser;
 import org.idp.server.platform.uuid.UuidConvertable;
 
 public class IdentityVerificationApplicationQueries implements UuidConvertable {
@@ -28,6 +31,22 @@ public class IdentityVerificationApplicationQueries implements UuidConvertable {
 
   public IdentityVerificationApplicationQueries(Map<String, String> values) {
     this.values = values;
+  }
+
+  public LocalDateTime from() {
+    return LocalDateTimeParser.parse(values.get("from"));
+  }
+
+  public boolean hasFrom() {
+    return values.containsKey("from");
+  }
+
+  public LocalDateTime to() {
+    return LocalDateTimeParser.parse(values.get("to"));
+  }
+
+  public boolean hasTo() {
+    return values.containsKey("to");
   }
 
   public boolean hasId() {
@@ -74,19 +93,57 @@ public class IdentityVerificationApplicationQueries implements UuidConvertable {
     return values.get("external_service");
   }
 
-  public boolean hasTrustFramework() {
-    return values.containsKey("trust_framework");
-  }
-
-  public String trustFramework() {
-    return values.get("trust_framework");
-  }
-
   public boolean hasStatus() {
     return values.containsKey("status");
   }
 
   public String status() {
     return values.get("status");
+  }
+
+  public boolean hasApplicationDetails() {
+    return !applicationDetails().isEmpty();
+  }
+
+  public Map<String, String> applicationDetails() {
+    Map<String, String> details = new HashMap<>();
+    for (Map.Entry<String, String> entry : values.entrySet()) {
+      String key = entry.getKey();
+      if (key.startsWith("application_details.")) {
+        String value = entry.getValue();
+        details.put(key.replace("application_details.", ""), value);
+      }
+    }
+    return details;
+  }
+
+  public boolean hasExternalApplicationDetails() {
+    return !externalApplicationDetails().isEmpty();
+  }
+
+  public Map<String, String> externalApplicationDetails() {
+    Map<String, String> details = new HashMap<>();
+    for (Map.Entry<String, String> entry : values.entrySet()) {
+      String key = entry.getKey();
+      if (key.startsWith("external_application_details.")) {
+        String value = entry.getValue();
+        details.put(key.replace("external_application_details.", ""), value);
+      }
+    }
+    return details;
+  }
+
+  public int limit() {
+    if (!values.containsKey("limit")) {
+      return 20;
+    }
+    return Integer.parseInt(values.get("limit"));
+  }
+
+  public int offset() {
+    if (!values.containsKey("offset")) {
+      return 0;
+    }
+    return Integer.parseInt(values.get("offset"));
   }
 }

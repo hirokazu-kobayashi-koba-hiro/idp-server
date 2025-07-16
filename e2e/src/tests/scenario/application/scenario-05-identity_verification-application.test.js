@@ -199,7 +199,20 @@ describe("identity-verification application", () => {
       console.log(JSON.stringify(applicationsResponse.data, null, 2));
       expect(applicationsResponse.status).toBe(200);
       expect(applicationsResponse.data.list.length).toBe(1);
-      expect(applicationsResponse.data.list[0].id).toBe(applicationId);
+      expect(applicationsResponse.data.list[0].id).toEqual(applicationId);
+      expect(applicationsResponse.data.list[0].external_application_id).toEqual(externalId);
+      expect(applicationsResponse.data.list[0].type).toEqual(type);
+      expect(applicationsResponse.data.list[0].tenant_id).toEqual(serverConfig.tenantId);
+      expect(applicationsResponse.data.list[0].client_id).toEqual(clientSecretPostClient.clientId);
+      expect(applicationsResponse.data.list[0].user_id).toEqual(user.sub);
+      expect(applicationsResponse.data.list[0]).toHaveProperty("application_details");
+      expect(applicationsResponse.data.list[0]).toHaveProperty("external_service");
+      expect(applicationsResponse.data.list[0]).toHaveProperty("external_application_id");
+      expect(applicationsResponse.data.list[0]).toHaveProperty("external_application_details");
+      expect(applicationsResponse.data.list[0]).toHaveProperty("processes");
+      expect(applicationsResponse.data.list[0].status).toEqual("applying");
+      expect(applicationsResponse.data.list[0]).toHaveProperty("requested_at");
+
 
       const callbackEndpoint = serverConfig.identityVerificationApplicationsStaticCallbackExaminationEndpoint
         .replace("{type}", type);
@@ -230,7 +243,19 @@ describe("identity-verification application", () => {
       console.log(JSON.stringify(applicationsResponse.data, null, 2));
       expect(applicationsResponse.status).toBe(200);
       expect(applicationsResponse.data.list.length).toBe(1);
-      expect(applicationsResponse.data.list[0].id).toBe(applicationId);
+      expect(applicationsResponse.data.list[0].id).toEqual(applicationId);
+      expect(applicationsResponse.data.list[0].external_application_id).toEqual(externalId);
+      expect(applicationsResponse.data.list[0].type).toEqual(type);
+      expect(applicationsResponse.data.list[0].tenant_id).toEqual(serverConfig.tenantId);
+      expect(applicationsResponse.data.list[0].client_id).toEqual(clientSecretPostClient.clientId);
+      expect(applicationsResponse.data.list[0].user_id).toEqual(user.sub);
+      expect(applicationsResponse.data.list[0]).toHaveProperty("application_details");
+      expect(applicationsResponse.data.list[0]).toHaveProperty("external_service");
+      expect(applicationsResponse.data.list[0]).toHaveProperty("external_application_id");
+      expect(applicationsResponse.data.list[0]).toHaveProperty("external_application_details");
+      expect(applicationsResponse.data.list[0]).toHaveProperty("processes");
+      expect(applicationsResponse.data.list[0].status).toEqual("examination_processing");
+      expect(applicationsResponse.data.list[0]).toHaveProperty("requested_at");
 
       const callbackResultEndpoint = serverConfig.identityVerificationApplicationsStaticCallbackResultEndpoint
         .replace("{type}", type);
@@ -310,7 +335,19 @@ describe("identity-verification application", () => {
       console.log(JSON.stringify(applicationsResponse.data, null, 2));
       expect(applicationsResponse.status).toBe(200);
       expect(applicationsResponse.data.list.length).toBe(1);
-      expect(applicationsResponse.data.list[0].id).toBe(applicationId);
+      expect(applicationsResponse.data.list[0].id).toEqual(applicationId);
+      expect(applicationsResponse.data.list[0].external_application_id).toEqual(externalId);
+      expect(applicationsResponse.data.list[0].type).toEqual(type);
+      expect(applicationsResponse.data.list[0].tenant_id).toEqual(serverConfig.tenantId);
+      expect(applicationsResponse.data.list[0].client_id).toEqual(clientSecretPostClient.clientId);
+      expect(applicationsResponse.data.list[0].user_id).toEqual(user.sub);
+      expect(applicationsResponse.data.list[0]).toHaveProperty("application_details");
+      expect(applicationsResponse.data.list[0]).toHaveProperty("external_service");
+      expect(applicationsResponse.data.list[0]).toHaveProperty("external_application_id");
+      expect(applicationsResponse.data.list[0]).toHaveProperty("external_application_details");
+      expect(applicationsResponse.data.list[0]).toHaveProperty("processes");
+      expect(applicationsResponse.data.list[0].status).toEqual("approved");
+      expect(applicationsResponse.data.list[0]).toHaveProperty("requested_at");
 
       // const deleteUrl = serverConfig.identityVerificationApplicationsDeletionEndpoint
       //   .replace("{type}", type)
@@ -441,7 +478,7 @@ describe("identity-verification application", () => {
       console.log(JSON.stringify(resultsResponse.data, null, 2));
       expect(resultsResponse.status).toBe(200);
       expect(resultsResponse.data.list.length).toBe(1);
-      expect(resultsResponse.data.list[0].application_id).toBe(applicationId);
+      expect(resultsResponse.data.list[0].application_id).toEqual(applicationId);
 
     });
 
@@ -619,7 +656,19 @@ describe("identity-verification application", () => {
       console.log(JSON.stringify(applicationsResponse.data, null, 2));
       expect(applicationsResponse.status).toBe(200);
       expect(applicationsResponse.data.list.length).toBe(1);
-      expect(applicationsResponse.data.list[0].id).toBe(applicationId);
+      expect(applicationsResponse.data.list[0].id).toEqual(applicationId);
+      expect(applicationsResponse.data.list[0].external_application_id).toEqual(externalId);
+      expect(applicationsResponse.data.list[0].type).toEqual(type);
+      expect(applicationsResponse.data.list[0].tenant_id).toEqual(serverConfig.tenantId);
+      expect(applicationsResponse.data.list[0].client_id).toEqual(clientSecretPostClient.clientId);
+      expect(applicationsResponse.data.list[0].user_id).toEqual(user.sub);
+      expect(applicationsResponse.data.list[0]).toHaveProperty("application_details");
+      expect(applicationsResponse.data.list[0]).toHaveProperty("external_service");
+      expect(applicationsResponse.data.list[0]).toHaveProperty("external_application_id");
+      expect(applicationsResponse.data.list[0]).toHaveProperty("external_application_details");
+      expect(applicationsResponse.data.list[0]).toHaveProperty("processes");
+      expect(applicationsResponse.data.list[0].status).toEqual("applying");
+      expect(applicationsResponse.data.list[0]).toHaveProperty("requested_at");
 
 
       const evaluateResultEndpoint = serverConfig.identityVerificationApplicationsEvaluateResultEndpoint
@@ -651,7 +700,7 @@ describe("identity-verification application", () => {
       console.log(JSON.stringify(applicationsResponse.data, null, 2));
       expect(applicationsResponse.status).toBe(200);
       expect(applicationsResponse.data.list.length).toBe(1);
-      expect(applicationsResponse.data.list[0].id).toBe(applicationId);
+      expect(applicationsResponse.data.list[0].id).toEqual(applicationId);
 
       // const deleteUrl = serverConfig.identityVerificationApplicationsDeletionEndpoint
       //   .replace("{type}", type)
@@ -782,7 +831,17 @@ describe("identity-verification application", () => {
       console.log(JSON.stringify(resultsResponse.data, null, 2));
       expect(resultsResponse.status).toBe(200);
       expect(resultsResponse.data.list.length).toBe(1);
-      expect(resultsResponse.data.list[0].application_id).toBe(applicationId);
+      expect(resultsResponse.data.list[0]).toHaveProperty("id");
+      expect(resultsResponse.data.list[0].application_id).toEqual(applicationId);
+      expect(resultsResponse.data.list[0].external_application_id).toEqual(externalId);
+      expect(resultsResponse.data.list[0].tenant_id).toEqual(serverConfig.tenantId);
+      expect(resultsResponse.data.list[0].user_id).toBe(user.sub);
+      expect(resultsResponse.data.list[0].verification_type).toEqual(type);
+      expect(resultsResponse.data.list[0]).toHaveProperty("external_service");
+      expect(resultsResponse.data.list[0]).toHaveProperty("verified_at");
+      expect(resultsResponse.data.list[0]).toHaveProperty("verified_until");
+      expect(resultsResponse.data.list[0]).toHaveProperty("external_service");
+      expect(resultsResponse.data.list[0].external_service).toEqual("mocky");
 
     });
   });
