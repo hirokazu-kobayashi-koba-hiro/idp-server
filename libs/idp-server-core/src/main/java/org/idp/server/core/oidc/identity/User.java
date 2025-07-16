@@ -128,11 +128,11 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     return this;
   }
 
-  public boolean hasProviderOriginalPayload() {
+  public boolean hasExternalProviderOriginalPayload() {
     return externalProviderOriginalPayload != null && !externalProviderOriginalPayload.isEmpty();
   }
 
-  public HashMap<String, Object> providerOriginalPayload() {
+  public HashMap<String, Object> externalProviderOriginalPayload() {
     return externalProviderOriginalPayload;
   }
 
@@ -680,8 +680,8 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     if (exists()) map.put("sub", sub);
     if (exists()) map.put("provider_id", providerId);
     if (hasExternalUserId()) map.put("external_user_id", externalUserId);
-    if (hasProviderOriginalPayload())
-      map.put("provider_original_payload", externalProviderOriginalPayload);
+    if (hasExternalProviderOriginalPayload())
+      map.put("external_user_original_payload", externalProviderOriginalPayload);
     if (hasName()) map.put("name", name);
     if (hasGivenName()) map.put("given_name", givenName);
     if (hasFamilyName()) map.put("family_name", familyName);

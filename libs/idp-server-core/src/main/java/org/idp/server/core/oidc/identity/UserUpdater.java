@@ -28,8 +28,8 @@ public class UserUpdater {
   public User update() {
     User updatedUser = existingUser;
     if (user.hasEmail()) updatedUser.setEmail(user.email());
-    if (user.hasProviderOriginalPayload())
-      updatedUser.setExternalProviderOriginalPayload(user.providerOriginalPayload());
+    if (user.hasExternalProviderOriginalPayload())
+      updatedUser.setExternalProviderOriginalPayload(user.externalProviderOriginalPayload());
     if (user.hasName()) updatedUser.setName(user.name());
     if (user.hasGivenName()) updatedUser.setGivenName(user.givenName());
     if (user.hasFamilyName()) updatedUser.setFamilyName(user.familyName());

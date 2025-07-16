@@ -106,7 +106,7 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
     params.add(tenant.identifierUUID());
     params.add(user.providerId());
     params.add(user.externalUserId());
-    params.add(jsonConverter.write(user.providerOriginalPayload()));
+    params.add(jsonConverter.write(user.externalProviderOriginalPayload()));
     params.add(user.name());
     params.add(user.givenName());
     params.add(user.familyName());
