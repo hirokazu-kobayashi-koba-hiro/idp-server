@@ -143,7 +143,6 @@ sequenceDiagram
 |----------------------------------|----------------------------------------------|
 | `UNREGISTERED`                   | アカウントが未作成の状態（初回アクセスや一時的ID）                   |
 | `REGISTERED`                     | 登録済だが、メールアドレスなど連絡先が未確認の状態                    |
-| `CONTACT_VERIFIED`               | メールアドレスまたは電話番号など、連絡先のいずれかが確認済                |
 | `IDENTITY_VERIFICATION_REQUIRED` | サービス利用にあたり本人確認が必要な状態                         |
 | `IDENTITY_VERIFIED`              | eKYCなどの本人確認が完了した状態                           |
 | `LOCKED`                         | 連続ログイン失敗などにより一時的にロックされた状態（MFA再認証や管理者解除が必要）   |
@@ -156,9 +155,7 @@ sequenceDiagram
 UNREGISTERED
    ↓ 登録
 REGISTERED
-   ↓ メール認証
-CONTACT_VERIFIED
-   ↓ eKYC完了
+   ↓ 身元確認完了
 IDENTITY_VERIFIED
 ```
 
@@ -170,6 +167,5 @@ IDENTITY_VERIFIED
 
 以下のデータを削除：
 
-* 認証情報（Passkey, Password hash等）
-* セッション情報（Redis含む）
 * 発行済みトークン／認可情報（grant, token）
+* 認証情報（FIDO, Password 等）

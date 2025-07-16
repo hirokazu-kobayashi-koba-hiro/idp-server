@@ -19,7 +19,6 @@ package org.idp.server.core.oidc.identity;
 public enum UserStatus {
   UNREGISTERED("Account has not been created"),
   REGISTERED("Registered but email not verified"),
-  CONTACT_VERIFIED("Email or phone verified"),
   IDENTITY_VERIFIED("Identity verified"),
   IDENTITY_VERIFICATION_REQUIRED("Identity verification (ekyc) required"),
   ACTIVATED("Account activated"),
@@ -28,8 +27,7 @@ public enum UserStatus {
   SUSPENDED("Suspended due to policy violations"),
   DEACTIVATED("Deactivation requested, in grace period"),
   DELETED_PENDING("Pending deletion after grace period"),
-  DELETED("Permanently deleted"),
-  FEDERATED_ONLY("Login via external IdP only");
+  DELETED("Permanently deleted");
 
   String description;
 
