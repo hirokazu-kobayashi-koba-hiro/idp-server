@@ -30,7 +30,7 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
   String notificationChannel;
   String notificationToken;
   List<String> availableMethods;
-  boolean preferredForNotification;
+  Integer priority;
 
   public AuthenticationDevice() {}
 
@@ -43,7 +43,7 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
       String notificationChannel,
       String notificationToken,
       List<String> availableMethods,
-      boolean preferredForNotification) {
+      Integer priority) {
     this.id = id;
     this.appName = appName;
     this.platform = platform;
@@ -52,7 +52,7 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
     this.notificationChannel = notificationChannel;
     this.notificationToken = notificationToken;
     this.availableMethods = availableMethods;
-    this.preferredForNotification = preferredForNotification;
+    this.priority = priority;
   }
 
   public String id() {
@@ -119,6 +119,15 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
     return availableMethods != null && !availableMethods.isEmpty();
   }
 
+  public Integer priority() {
+    // fallback value
+    return Objects.requireNonNullElse(priority, 100);
+  }
+
+  public boolean hasPriority() {
+    return priority != null;
+  }
+
   public AuthenticationDevice withAvailableMethod(String method) {
     List<String> newAvailableMethods = new ArrayList<>(availableMethods);
     newAvailableMethods.add(method);
@@ -131,11 +140,7 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
         notificationChannel,
         notificationToken,
         newAvailableMethods,
-        preferredForNotification);
-  }
-
-  public boolean isPreferredForNotification() {
-    return preferredForNotification;
+        priority);
   }
 
   public boolean exists() {
@@ -152,7 +157,7 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
     if (hasNotificationChannel()) map.put("notification_channel", notificationChannel);
     if (hasNotificationToken()) map.put("notification_token", notificationToken);
     if (hasAvailableMethods()) map.put("available_methods", availableMethods);
-    map.put("preferred_for_notification", preferredForNotification);
+    if (hasPriority()) map.put("priority", priority);
     return map;
   }
 }

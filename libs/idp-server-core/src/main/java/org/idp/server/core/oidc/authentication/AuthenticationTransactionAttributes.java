@@ -46,6 +46,17 @@ public class AuthenticationTransactionAttributes {
     return (Boolean) values.getOrDefault(key, false);
   }
 
+  public Integer getValueAsInteger(String key) {
+    if (!values.containsKey(key)) {
+      return null;
+    }
+    return (Integer) values.get(key);
+  }
+
+  public boolean containsKey(String key) {
+    return values.containsKey(key);
+  }
+
   public boolean exists() {
     return values != null && !values.isEmpty();
   }

@@ -69,9 +69,10 @@ function login(index) {
   // console.log(authReqId)
 
   //authentication transaction
-  const txRes = http.get(`${baseUrl}/${tenantId}/v1/authentication-devices/${deviceId}/authentications/latest`);
+  const txRes = http.get(`${baseUrl}/${tenantId}/v1/authentication-devices/${deviceId}/authentications?attributes.auth_req_id=${authReqId}`);
   check(txRes, { "txRes request OK": (r) => r.status === 200 });
-  const tx = JSON.parse(txRes.body);
+  const txList = JSON.parse(txRes.body);
+  const tx = txList.list[0]
   // console.log(tx.id)
 
   //bindingMessage

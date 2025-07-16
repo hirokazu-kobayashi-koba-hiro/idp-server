@@ -33,6 +33,7 @@ const sidebars = {
     `identity-verification-registration`,
     `mfa-fido-uaf-registration`,
     `mfa-fido-uaf-deregistration`,
+    `ciba-flow-fido-uaf`,
     {
       type: 'category',
       label: 'Configuration',

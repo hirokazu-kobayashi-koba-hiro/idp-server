@@ -795,7 +795,9 @@ components:
           format: uri
         client_id:
           type: string
-          description: クライアントの識別子。public クライアントでは必須。
+          description: |
+           クライアントの識別子。
+           認証方式がclient_secret_basicの場合は省略可能。
         client_secret:
           type: string
           description: |
@@ -833,7 +835,7 @@ components:
           type: string
           description: |
             クライアントの識別子。
-            認証方式がclient_secret_post or none の場合に設定する
+            認証方式がclient_secret_basicの場合は省略可能。
         client_secret:
           type: string
           description: |
@@ -863,7 +865,7 @@ components:
           type: string
           description: |
             クライアントの識別子
-            認証方式がclient_secret_postの場合に設定する。
+            認証方式がclient_secret_basicの場合は省略可能。
         client_secret:
           type: string
           description: |
@@ -892,7 +894,7 @@ components:
           type: string
           description: |
             クライアントの識別子。
-            認証方式がclient_secret_post or none の場合に設定する
+            認証方式がclient_secret_basicの場合は省略可能。
         client_secret:
           type: string
           description: |
@@ -923,7 +925,7 @@ components:
           type: string
           description: |
             クライアントの識別子。
-            認証方式がclient_secret_postの場合に設定する。
+            認証方式がclient_secret_basicの場合は省略可能。
         client_secret:
           type: string
           description: |
