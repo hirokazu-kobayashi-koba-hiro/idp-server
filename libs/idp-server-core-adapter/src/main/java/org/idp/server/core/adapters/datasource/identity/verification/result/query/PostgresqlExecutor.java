@@ -68,17 +68,17 @@ public class PostgresqlExecutor implements IdentityVerificationResultSqlExecutor
 
     if (queries.hasVerifiedAtTo()) {
       sqlBuilder.append(" AND verified_at <= ?");
-      params.add(queries.to());
+      params.add(queries.verifiedAtTo());
     }
 
     if (queries.hasVerifiedUntilFrom()) {
       sqlBuilder.append(" AND verified_until >= ?");
-      params.add(queries.verifiedAtFrom());
+      params.add(queries.verifiedUntilFrom());
     }
 
     if (queries.hasVerifiedUntilTo()) {
       sqlBuilder.append(" AND verified_until <= ?");
-      params.add(queries.to());
+      params.add(queries.verifiedUntilTo());
     }
 
     if (queries.hasId()) {
@@ -121,6 +121,9 @@ public class PostgresqlExecutor implements IdentityVerificationResultSqlExecutor
     }
 
     sqlBuilder.append(" ORDER BY created_at DESC");
+    sqlBuilder.append(" LIMIT ? OFFSET ?;");
+    params.add(queries.limit());
+    params.add(queries.offset());
 
     String sql = sqlBuilder.toString();
     return sqlExecutor.selectList(sql, params);
@@ -132,6 +135,7 @@ public class PostgresqlExecutor implements IdentityVerificationResultSqlExecutor
                  tenant_id,
                  user_id,
                  application_id,
+                 external_service,
                  verification_type,
                  external_application_id,
                  verified_claims,

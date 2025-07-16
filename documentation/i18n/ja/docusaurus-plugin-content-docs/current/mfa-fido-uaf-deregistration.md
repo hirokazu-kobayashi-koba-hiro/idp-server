@@ -38,7 +38,7 @@ sequenceDiagram
 
 [認可コードフロー](authorization-code-flow.md)を参照。
 
-## 2. FIDO-UAF登録開始リクエスト
+## 2. FIDO-UAF解除開始リクエスト
 
 ```http
 POST {tenant-id}/v1/me/mfa/fido-uaf-deregistration
@@ -54,7 +54,7 @@ Content-Type: application/json
 
 | パラメータ名      | 必須 | 説明        |
 |-------------|----|-----------|
-| `device_id` | -  | 認証デバイスID。 |
+| `device_id` | ✅️ | 認証デバイスID。 |
 
 * レスポンス `200 OK`
 

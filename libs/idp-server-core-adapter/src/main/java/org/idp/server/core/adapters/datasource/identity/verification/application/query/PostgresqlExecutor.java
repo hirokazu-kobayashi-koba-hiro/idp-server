@@ -100,6 +100,16 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
     params.add(user.sub());
     params.add(tenant.identifierUUID());
 
+    if (queries.hasFrom()) {
+      sqlBuilder.append(" AND created_at >= ?");
+      params.add(queries.from());
+    }
+
+    if (queries.hasTo()) {
+      sqlBuilder.append(" AND created_at <= ?");
+      params.add(queries.to());
+    }
+
     if (queries.hasId()) {
       sqlBuilder.append(" AND id = ?::uuid");
       params.add(queries.idAsUuid());
@@ -126,7 +136,30 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
       params.add(queries.status());
     }
 
-    sqlBuilder.append(" ORDER BY requested_at DESC");
+    if (queries.hasApplicationDetails()) {
+      for (Map.Entry<String, String> entry : queries.applicationDetails().entrySet()) {
+        String key = entry.getKey();
+        String value = entry.getValue();
+        sqlBuilder.append(" AND application_details ->> ? = ?");
+        params.add(key);
+        params.add(value);
+      }
+    }
+
+    if (queries.hasExternalApplicationDetails()) {
+      for (Map.Entry<String, String> entry : queries.externalApplicationDetails().entrySet()) {
+        String key = entry.getKey();
+        String value = entry.getValue();
+        sqlBuilder.append(" AND external_application_details ->> ? = ?");
+        params.add(key);
+        params.add(value);
+      }
+    }
+
+    sqlBuilder.append(" ORDER BY created_at DESC");
+    sqlBuilder.append(" LIMIT ? OFFSET ?;");
+    params.add(queries.limit());
+    params.add(queries.offset());
 
     String sql = sqlBuilder.toString();
     return sqlExecutor.selectList(sql, params);

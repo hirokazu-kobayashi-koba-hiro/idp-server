@@ -1,0 +1,541 @@
+openapi: 3.0.3
+info:
+  title: リソースオーナー用API
+  version: 1.0.0
+
+tags:
+  - name: ユーザー
+    description: |
+      リソースオーナー（ユーザー）本人による操作に関するAPI群。
+
+      主に以下のような操作を提供します：
+       - 自身のアカウント削除
+       - 多要素認証（MFA）の登録要求（FIDO-UAF など）
+      
+      アクセストークンを用いて、ユーザー本人による安全な自己操作を実現します。
+  - name: 身元確認申込み
+    description: |
+      `idp-server` は身元確認済みID（verified ID）を提供するために、外部のサービスと連携した申込み・審査・完了登録の一連のフローを管理できます。
+      
+      このAPIを利用することで、ユーザーから収集した情報を外部の身元確認サービスに送信し、確認済みクレーム（`verified_claims`）として `idp-server` に反映できます。
+      
+      - Control Plane APIでテンプレートを登録
+      - ユーザーが申込みを行うと、テンプレートに従い外部APIと連携
+      - コールバック等で審査結果・verified_claims登録用データを受信
+      - 認証時、verified_claimsを含んだIDトークンやUserInfoを返却
+      
+      テンプレートでは各種マッピングルール、JSON Schemaによるバリデーション、外部APIとの連携方式（OAuth2, HMAC, なし）を柔軟に定義可能です。
+      
+      アクセストークンを用いて、ユーザー本人による安全な自己操作を実現します。
+  - name: 身元確認結果
+    description: |
+      
+      
+      アクセストークンを用いて、ユーザー本人による安全な自己操作を実現します。
+      
+
+paths:
+  /{tenant-id}/v1/me:
+    delete:
+      tags:
+        - ユーザー
+      summary: ユーザー削除
+      description: |
+        ユーザー（リソースオーナー）自身の削除を行う。
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '204':
+          description: User deleted
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /{tenant-id}/v1/me/mfa/{mfa-operation-type}:
+    post:
+      tags:
+        - ユーザー
+      summary: MFAの登録要求
+      description: |
+        FIDO-UAFなどの登録要求の依頼を行う。
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/MfaOperationType'
+      requestBody:
+        required: false
+        description: MFAの仕様に応じたパラメータをBodyに設定する。
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Operation requested
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                properties:
+                  id:
+                    type: string
+                    description: 認証トランザクションID
+
+  /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{verification-process}:
+    post:
+      tags:
+        - 身元確認申込み
+      summary: 身元確認申込み
+      description: |
+        指定された verification-type（テンプレート種別）および verification-process（申込み処理タイプ）に従い、
+        身元確認申込みの初期リクエストを実行します。
+        
+        このAPIは、あらかじめ Control Plane API により定義されたテンプレートに基づいて外部サービスに対して申請データを送信し、
+        審査プロセスの開始またはeKYCプロセスの起動を行います。
+        
+        - `verification-type` はテンプレートの `type` に対応
+        - `verification-process` はテンプレート内の `processes` のキーに対応（例: apply, request-ekyc など）
+        
+        リクエストボディはテンプレートで定義された `request_validation_schema` に基づいてバリデーションされ、
+        必須項目の漏れや形式の不正がある場合はエラーになります。
+        
+        正常に処理された場合は、外部サービスからのレスポンスを中継しつつ、
+        `idp-server` 側に申込トランザクションが記録されます。
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/VerificationType'
+        - $ref: '#/components/parameters/VerificationProcess'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Successfully applied
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /{tenant-id}/v1/me/identity-verification/applications:
+    get:
+      tags:
+        - 身元確認申込み
+      summary: 身元確認の申込みの一覧を取得する
+      description: |
+        身元確認の申込みの一覧を取得する。
+
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - name: id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: 身元確認申請のID（UUID形式）での絞り込み
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 申込み種別（verification-type）での絞り込み
+        - name: client_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 申請時に使用されたクライアントID
+        - name: external_application_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 外部連携先の申請ID
+        - name: external_service
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 連携先の外部サービス名
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+          description: |
+            申請のステータス（現在調整中）
+        - in: query
+          name: application_details.<key>
+          schema:
+            type: string
+          description: 申込み詳細情報のオブジェクトのkeyに対する検索（keyは具体的な値の設定が必要）
+        - in: query
+          name: external_application_details.<key>
+          schema:
+            type: string
+          description: 外部申込み結果の詳細情報のオブジェクトのkeyに対する検索（keyは具体的な値の設定が必要）
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: 絞り込み開始日時（ISO 8601形式）
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: 絞り込み終了日時（ISO 8601形式）
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+          description: 取得件数の上限（デフォルトは20件）
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: ページネーション用のオフセット（デフォルトは0）
+
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                          description: 身元確認申込みID
+                        tenant_id:
+                          type: string
+                          format: uuid
+                          description: テナントID
+                        user_id:
+                          type: string
+                          format: uuid
+                          description: ユーザーID
+                        type:
+                          type: string
+                          description: 申込み種別（verification-type）
+                        client_id:
+                          type: string
+                          description: クライアントID
+                        status:
+                          type: string
+                          description: 現在のステータス
+                        external_service:
+                          type: string
+                          description: 連携先外部サービス名
+                        external_application_id:
+                          type: string
+                          description: 外部連携先での申請ID
+                        requested_at:
+                          type: string
+                          format: date-time
+                          description: 申請が行われた日時
+                        application_details:
+                          type: object
+                          description: 申込み時に送信した詳細情報
+                        external_application_details:
+                          type: object
+                          description: 外部サービスから返された情報。ekyc_urlは例として記載。
+                          properties:
+                            ekyc_url:
+                              type: string
+                              format: uri
+                        processes:
+                          type: object
+                          additionalProperties:
+                            type: object
+                            properties:
+                              call_count:
+                                type: integer
+                              success_count:
+                                type: integer
+                              failure_count:
+                                type: integer
+
+
+
+  /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{id}/{verification-process}:
+    post:
+      tags:
+        - 身元確認申込み
+      summary: 既存の申込みに対して定義された処理（プロセス）を実行する
+      description: |
+        既存の身元確認申込み（application）に対して、定義済みテンプレートおよびプロセスに従った後続の処理を実行します。
+        
+        このAPIは、初回申込み（apply等）によって発行された申請ID（`application_id`）を指定し、
+        対象となる申込みに対して、eKYC完了通知・審査要求・外部サービスとの再連携などのアクションを柔軟に実行可能です。
+        
+        - `verification-type` はテンプレートの `type` に対応
+        - `id` は既存の申込みID（`application_id`）を指定
+        - `verification-process` はテンプレートの `processes` 内で定義された処理（例: `complete-ekyc`, `callback-result`）
+        
+        リクエストボディは、該当プロセスで必要とされる `request_validation_schema` に基づいてバリデーションされ、
+        外部サービスとの連携や verified_claims 登録等が自動的に実行されます。
+        
+        正常に完了すると、対応するプロセスのレスポンス内容が返却されます。
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/VerificationType'
+        - $ref: '#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/VerificationProcess'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Processed
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{id}/evaluate-result:
+    post:
+      tags:
+        - 身元確認申込み
+      summary: 身元確認の評価結果（合否など）を反映する
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/VerificationType'
+        - $ref: '#/components/parameters/ApplicationId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Result submitted
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{id}:
+    delete:
+      tags:
+        - 身元確認申込み
+      summary: Delete identity verification application
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/VerificationType'
+        - $ref: '#/components/parameters/ApplicationId'
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /{tenant-id}/v1/me/identity-verification/results:
+    get:
+      tags:
+        - 身元確認結果
+      summary: 身元確認結果の一覧を取得します。
+      description: |
+        身元確認結果の一覧を取得します。
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - name: id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: 身元確認結果のID（UUID形式）での絞り込み
+        - name: application_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: 身元確認申込みのID（UUID形式）での絞り込み
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 申込み種別（verification-type）での絞り込み
+        - name: external_application_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 外部連携先の申請ID
+        - name: external_service
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 連携先の外部サービス名
+        - in: query
+          name: verified_claims.<key>
+          schema:
+            type: string
+          description: verified_claimsのオブジェクトのkeyに対する検索（keyは具体的な値の設定が必要）
+        - name: verified_at_from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: verified_atに対する絞り込み 開始日時（ISO 8601形式）
+        - name: verified_at_to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: verified_atに対する絞り込み 終了日時（ISO 8601形式）
+        - name: verified_until_from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: verified_untilに対する絞り込み 開始日時（ISO 8601形式）
+        - name: verified_until_to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: verified_untilに対する絞り込み 終了日時（ISO 8601形式）
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+          description: 取得件数の上限（デフォルトは20件）
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: ページネーション用のオフセット（デフォルトは0）
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                          description: 身元確認結果のID
+                        tenant_id:
+                          type: string
+                          format: uuid
+                          description: テナントID
+                        user_id:
+                          type: string
+                          format: uuid
+                          description: ユーザーID
+                        application_id:
+                          type: string
+                          format: uuid
+                          description: 元となる申請のID
+                        external_application_id:
+                          type: string
+                          description: 外部サービスでの申請ID
+                        external_service:
+                          type: string
+                          description: 外部サービス名
+                        verification_type:
+                          type: string
+                          description: 申込み種別（verification-type）
+                        verified_at:
+                          type: string
+                          format: date-time
+                          description: 身元確認が完了した日時
+                        verified_until:
+                          type: string
+                          format: date-time
+                          nullable: true
+                          description: 身元確認が有効な期限（省略可能）
+                        source:
+                          type: string
+                          description: |
+                            結果の生成元（例: APPLICATION）
+                        verified_claims:
+                          type: object
+                          description: verified_claims オブジェクト(IDA準拠）
+                          properties:
+                            claims:
+                              type: object
+                            verification:
+                              type: object
+
+
+components:
+  parameters:
+    TenantId:
+      name: tenant-id
+      in: path
+      required: true
+      schema:
+        type: string
+    MfaOperationType:
+      name: mfa-operation-type
+      in: path
+      required: true
+      schema:
+        type: string
+        example: fido-uaf-registration
+    VerificationType:
+      name: verification-type
+      in: path
+      required: true
+      schema:
+        type: string
+        example: my_number
+    VerificationProcess:
+      name: verification-process
+      in: path
+      required: true
+      schema:
+        type: string
+        example: capture
+    ApplicationId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
