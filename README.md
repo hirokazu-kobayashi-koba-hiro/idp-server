@@ -72,6 +72,12 @@ docker compose logs -f idp-server
 ./gradlew flywayClean flywayMigrate
 ```
 
+### health check
+
+```shell
+curl -v http://localhost:8080/actuator/health
+```
+
 ### setup configuration
 
 ```shell

@@ -13,6 +13,7 @@ repositories {
 }
 
 dependencies {
+	//idp-server-lib
 	implementation project(':libs:idp-server-platform')
 	implementation project(':libs:idp-server-core')
 	implementation project(':libs:idp-server-control-plane')
@@ -24,14 +25,18 @@ dependencies {
 	implementation project(':libs:idp-server-authentication-interactors')
 	implementation project(':libs:idp-server-core-extension-verifiable-credentials')
 	implementation project(':libs:idp-server-use-cases')
-	implementation 'com.webauthn4j:webauthn4j-core:0.28.5.RELEASE'
 
+	//springboot
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation "org.springframework.boot:spring-boot-starter-security"
+	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
 	//session
 	implementation 'org.springframework.session:spring-session-core'
+
+	//webauthn
+	implementation 'com.webauthn4j:webauthn4j-core:0.28.5.RELEASE'
 
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
@@ -50,16 +55,6 @@ jar {
 
 bootJar {
 	enabled = false
-}
-
-sourceSets {
-	main {
-		// mybatis SQL map XML to java
-		resources.srcDirs = [
-			"src/main/java",
-			"src/main/resources"
-		]
-	}
 }
 
 spotless {
