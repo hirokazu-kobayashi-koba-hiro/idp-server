@@ -95,6 +95,10 @@ const config = {
             route: '/docs/api-authentication-device-en/',
           },
           {
+            spec: 'openapi/swagger-resource-owner-en.yaml',
+            route: '/docs/api-resource-owner-en/',
+          },
+          {
             spec: 'openapi/swagger-control-plane-en.yaml',
             route: '/docs/control-plane-api-en/',
           },
@@ -105,6 +109,10 @@ const config = {
           {
             spec: 'openapi/swagger-authentication-device-ja.yaml',
             route: '/docs/api-authentication-device-ja/',
+          },
+          {
+            spec: 'openapi/swagger-resource-owner-ja.yaml',
+            route: '/docs/api-resource-owner-ja/',
           },
           {
             spec: 'openapi/swagger-control-plane-ja.yaml',

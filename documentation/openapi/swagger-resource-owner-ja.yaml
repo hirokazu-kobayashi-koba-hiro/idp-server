@@ -29,8 +29,7 @@ tags:
       アクセストークンを用いて、ユーザー本人による安全な自己操作を実現します。
   - name: 身元確認結果
     description: |
-      
-      
+      身元確認結果を確認するためのAPI
       アクセストークンを用いて、ユーザー本人による安全な自己操作を実現します。
       
 
@@ -125,7 +124,7 @@ paths:
     get:
       tags:
         - 身元確認申込み
-      summary: 身元確認の申込みの一覧を取得する
+      summary: 身元確認申込み一覧取得
       description: |
         身元確認の申込みの一覧を取得する。
 
@@ -280,7 +279,7 @@ paths:
     post:
       tags:
         - 身元確認申込み
-      summary: 既存の申込みに対して定義された処理（プロセス）を実行する
+      summary: 身元確認申込み後続処理
       description: |
         既存の身元確認申込み（application）に対して、定義済みテンプレートおよびプロセスに従った後続の処理を実行します。
         
@@ -318,7 +317,7 @@ paths:
     post:
       tags:
         - 身元確認申込み
-      summary: 身元確認の評価結果（合否など）を反映する
+      summary: 身元確認 結果反映（合否など）
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/VerificationType'
@@ -341,7 +340,7 @@ paths:
     delete:
       tags:
         - 身元確認申込み
-      summary: Delete identity verification application
+      summary: 身元確認申込み削除
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/VerificationType'
@@ -358,7 +357,7 @@ paths:
     get:
       tags:
         - 身元確認結果
-      summary: 身元確認結果の一覧を取得します。
+      summary: 身元確認結果の一覧取得
       description: |
         身元確認結果の一覧を取得します。
       parameters:
