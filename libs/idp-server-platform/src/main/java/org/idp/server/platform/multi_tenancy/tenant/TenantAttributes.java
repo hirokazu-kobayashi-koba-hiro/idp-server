@@ -19,6 +19,7 @@ package org.idp.server.platform.multi_tenancy.tenant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 
 public class TenantAttributes {
@@ -29,7 +30,7 @@ public class TenantAttributes {
   }
 
   public TenantAttributes(Map<String, Object> values) {
-    this.values = values;
+    this.values = Objects.requireNonNullElseGet(values, HashMap::new);
   }
 
   public Map<String, Object> toMap() {

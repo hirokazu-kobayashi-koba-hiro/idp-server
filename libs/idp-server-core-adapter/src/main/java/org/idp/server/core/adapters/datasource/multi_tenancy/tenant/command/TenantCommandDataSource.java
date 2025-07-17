@@ -42,12 +42,16 @@ public class TenantCommandDataSource implements TenantCommandRepository {
   public void update(Tenant tenant) {
     String key = key(tenant.identifier());
     cacheStore.delete(key);
+    TenantCommandSqlExecutor executor = executors.get(DatabaseType.POSTGRESQL);
+    executor.update(tenant);
   }
 
   @Override
   public void delete(TenantIdentifier tenantIdentifier) {
     String key = key(tenantIdentifier);
     cacheStore.delete(key);
+    TenantCommandSqlExecutor executor = executors.get(DatabaseType.POSTGRESQL);
+    executor.delete(tenantIdentifier);
   }
 
   private String key(TenantIdentifier tenantIdentifier) {

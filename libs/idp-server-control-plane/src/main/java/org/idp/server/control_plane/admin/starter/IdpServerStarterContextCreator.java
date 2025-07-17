@@ -78,7 +78,7 @@ public class IdpServerStarterContextCreator {
             tenantRequest.tenantDomain(),
             tenantRequest.authorizationProvider(),
             tenantRequest.databaseType(),
-            new TenantAttributes());
+            new TenantAttributes(tenantRequest.attributes()));
 
     AssignedTenant assignedTenant =
         new AssignedTenant(tenant.identifierValue(), tenant.name().value(), tenant.type().name());
