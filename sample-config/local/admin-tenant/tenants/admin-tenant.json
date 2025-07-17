@@ -2,18 +2,18 @@
   "tenant": {
     "id": "67e7eae6-62b0-4500-9eff-87459f63fc66",
     "name": "admin-tenant",
-    "domain": "http://localhost:8080",
+    "domain": "http://localhost:3100",
     "authorization_provider": "idp-server",
     "database_type": "postgresql",
     "attributes": {
       "cookie_name": "ADMIN_TENANT_IDP_SERVER_SESSION",
       "use_secure_cookie": false,
       "allow_origins": [
-        "localhost:3000",
-        "localhost:3100",
-        "localhost:5173",
-        "idp-auth-frontend-ecru.vercel.app",
-        "idp-auth-frontend-diqt.vercel.app"
+        "http://localhost:3000",
+        "http://localhost:3100",
+        "http://localhost:5173",
+        "https://idp-auth-frontend-ecru.vercel.app",
+        "https://idp-auth-frontend-diqt.vercel.app"
       ]
     }
   },

@@ -14,35 +14,29 @@
  * limitations under the License.
  */
 
-package org.idp.server.adapters.springboot.application.filter;
+package org.idp.server.adapters.springboot;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.net.URI;
 import java.util.List;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.platform.exception.BadRequestException;
-import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.platform.exception.NotFoundException;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.*;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
 public class DynamicCorsFilter extends OncePerRequestFilter {
   TenantMetaDataApi tenantMetaDataApi;
-  URI serverUri;
   LoggerWrapper log = LoggerWrapper.getLogger(DynamicCorsFilter.class);
 
-  public DynamicCorsFilter(
-      IdpServerApplication idpServerApplication,
-      @Value("${idp.configurations.serverUrl}") String serverUrl) {
+  public DynamicCorsFilter(IdpServerApplication idpServerApplication) {
     this.tenantMetaDataApi = idpServerApplication.tenantMetadataApi();
-    this.serverUri = URI.create(serverUrl);
   }
 
   @Override
@@ -51,20 +45,39 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
       throws ServletException, IOException {
 
     try {
+      log.info(
+          "RequestURI: {}. {}, {}, {}",
+          request.getServerName(),
+          request.getServerPort(),
+          request.getRequestURI(),
+          request.getMethod());
+
       TenantIdentifier tenantIdentifier = extractTenantIdentifier(request);
       Tenant tenant = tenantMetaDataApi.get(tenantIdentifier);
       TenantAttributes tenantAttributes = tenant.attributes();
       List<String> allowOrigins = tenantAttributes.optValueAsStringList("allow_origins", List.of());
-      String origin = request.getServerName();
+      String serverName = request.getServerName();
+      int serverPort = request.getServerPort();
       String allowOrigin =
-          allowOrigins.stream().filter(origin::equals).findFirst().orElse(tenant.domain().host());
+          allowOrigins.stream()
+              .filter(
+                  allow -> {
+                    if (request.getScheme().equalsIgnoreCase("http")) {
+                      return allow.contains(serverName)
+                          && allow.contains(String.valueOf(serverPort));
+                    }
+                    return allow.contains(serverName);
+                  })
+              .findFirst()
+              .orElse(tenant.domain().value());
       log.info(
           "DynamicCorsFilter tenantId: {} allow origin: {}", tenantIdentifier.value(), allowOrigin);
 
       response.setHeader("Access-Control-Allow-Origin", allowOrigin);
       response.setHeader("Access-Control-Allow-Credentials", "true");
+      // TODO config
       response.setHeader(
-          "Access-Control-Allow-Headers", "Authorization, Content-Type, Accept, X-Requested-With");
+          "Access-Control-Allow-Headers", "Authorization, Content-Type, Accept, x-device-id");
       response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
 
       if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
@@ -86,22 +99,16 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
 
   private TenantIdentifier extractTenantIdentifier(HttpServletRequest request) {
     String path = request.getRequestURI();
+    if (path.contains("/admin/") || path.contains("/management/")) {
+      return AdminTenantContext.getTenantIdentifier();
+    }
+
     String[] parts = path.split("/");
 
     if (parts.length > 1) {
       return new TenantIdentifier(parts[1]);
     }
 
-    throw new UnSupportedException("invalid request path");
-  }
-
-  protected boolean shouldNotFilter(HttpServletRequest request) {
-    log.info("RequestURI: {}, {}", request.getRequestURI(), request.getMethod());
-    if (serverUri.getHost().equals(request.getServerName())) {
-      return true;
-    }
-    String path = request.getRequestURI();
-
-    return path.contains("/admin/") || path.contains("/management/");
+    throw new NotFoundException(String.format("invalid request path: %s", request.getRequestURI()));
   }
 }
