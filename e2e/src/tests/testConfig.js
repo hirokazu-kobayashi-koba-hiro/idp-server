@@ -19,6 +19,8 @@ export const serverConfig = {
   tokenEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/tokens`,
   tokenIntrospectionEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/tokens/introspection`,
+  tokenIntrospectionExtensionsEndpoint:
+    `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/tokens/introspection-extensions`,
   tokenRevocationEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/tokens/revocation`,
   userinfoEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/userinfo`,
   jwksEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/jwks`,

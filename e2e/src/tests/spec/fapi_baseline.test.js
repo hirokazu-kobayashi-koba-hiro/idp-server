@@ -59,6 +59,8 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
     const introspectionResponse = await inspectToken({
       endpoint: serverConfig.tokenIntrospectionEndpoint,
       token: tokenResponse.data.access_token,
+      clientId: selfSignedTlsAuthClient.clientId,
+      clientCertFile: selfSignedTlsAuthClient.clientCertFile,
     });
     console.log(introspectionResponse.data);
     expect(introspectionResponse.status).toBe(200);

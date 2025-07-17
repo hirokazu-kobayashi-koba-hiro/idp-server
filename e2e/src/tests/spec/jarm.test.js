@@ -53,6 +53,8 @@ describe("Financial-grade API: JWT Secured Authorization Response Mode for OAuth
     const introspectionResponse = await inspectToken({
       endpoint: serverConfig.tokenIntrospectionEndpoint,
       token: tokenResponse.data.access_token,
+      clientId: selfSignedTlsAuthClient.clientId,
+      clientCertFile: selfSignedTlsAuthClient.clientCertFile,
     });
     console.log(introspectionResponse.data);
     expect(introspectionResponse.status).toBe(200);

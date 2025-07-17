@@ -21,6 +21,8 @@ public enum TokenIntrospectionRequestStatus {
   BAD_REQUEST(400),
   INVALID_TOKEN(200),
   EXPIRED_TOKEN(200),
+  INSUFFICIENT_SCOPE(200),
+  INVALID_CLIENT_CERT(200),
   SERVER_ERROR(500);
 
   int statusCode;

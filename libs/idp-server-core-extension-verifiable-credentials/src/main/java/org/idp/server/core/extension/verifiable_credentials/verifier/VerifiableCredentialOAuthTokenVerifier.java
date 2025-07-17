@@ -55,7 +55,7 @@ public class VerifiableCredentialOAuthTokenVerifier {
       throw new TokenInvalidException("not found token");
     }
     LocalDateTime now = SystemDateTime.now();
-    if (oAuthToken.isExpire(now)) {
+    if (oAuthToken.isExpiredAccessToken(now)) {
       throw new TokenInvalidException("token is expired");
     }
   }

@@ -45,7 +45,9 @@ describe("User lifecycle", () => {
       const introspectionResponse = await post({
         url: `${backendUrl}/${serverConfig.tenantId}/v1/tokens/introspection`,
         body: new URLSearchParams({
-          token: accessToken
+          token: accessToken,
+          client_id: clientSecretPostClient.clientId,
+          client_secret: clientSecretPostClient.clientSecret,
         }).toString()
       });
       console.log(introspectionResponse.data);

@@ -18,12 +18,13 @@ package org.idp.server.core.oidc.token.tokenintrospection;
 
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestParameters;
 import org.idp.server.core.oidc.type.ArrayValueMap;
 import org.idp.server.core.oidc.type.OAuthRequestKey;
 import org.idp.server.core.oidc.type.oauth.*;
 
 /** TokenRequestParameters */
-public class TokenIntrospectionRequestParameters {
+public class TokenIntrospectionRequestParameters implements BackchannelRequestParameters {
   ArrayValueMap values;
 
   public TokenIntrospectionRequestParameters() {
@@ -64,5 +65,45 @@ public class TokenIntrospectionRequestParameters {
 
   public List<String> multiValueKeys() {
     return values.multiValueKeys();
+  }
+
+  @Override
+  public RequestedClientId clientId() {
+    return new RequestedClientId(getValueOrEmpty(OAuthRequestKey.client_id));
+  }
+
+  @Override
+  public boolean hasClientId() {
+    return contains(OAuthRequestKey.client_id);
+  }
+
+  @Override
+  public ClientSecret clientSecret() {
+    return new ClientSecret(getValueOrEmpty(OAuthRequestKey.client_secret));
+  }
+
+  @Override
+  public boolean hasClientSecret() {
+    return contains(OAuthRequestKey.client_secret);
+  }
+
+  @Override
+  public ClientAssertion clientAssertion() {
+    return new ClientAssertion(getValueOrEmpty(OAuthRequestKey.client_assertion));
+  }
+
+  @Override
+  public boolean hasClientAssertion() {
+    return contains(OAuthRequestKey.client_assertion);
+  }
+
+  @Override
+  public ClientAssertionType clientAssertionType() {
+    return ClientAssertionType.of(getValueOrEmpty(OAuthRequestKey.client_assertion_type));
+  }
+
+  @Override
+  public boolean hasClientAssertionType() {
+    return contains(OAuthRequestKey.client_assertion_type);
   }
 }

@@ -58,7 +58,7 @@
             ]
           },
           "http_request": {
-            "url": "http://localhost:4000/apply",
+            "url": "http://mockoon:4000/apply",
             "method": "POST",
             "headers": {
               "Content-Type": "application/json",
@@ -91,7 +91,7 @@
       "execution": {
         "type": "http",
         "http_request": {
-          "url": "http://localhost:4000/apply",
+          "url": "http://mockoon:4000/apply",
           "method": "POST",
           "request_behavior": "passthrough",
           "static_headers": {
@@ -171,7 +171,7 @@
             ]
           },
           "http_request": {
-            "url": "http://localhost:4000/apply",
+            "url": "http://mockoon:4000/apply",
             "method": "POST",
             "headers": {
               "Content-Type": "application/json",
@@ -203,14 +203,14 @@
       },
       "execution": {
         "http_request": {
-          "url": "http://localhost:4000/{{external_application_id}}/request-ekyc",
+          "url": "http://mockoon:4000/{{external_application_id}}/request-ekyc",
           "pass_mapping_rules": [
             { "from": "$.application.external_application_id", "to": "external_application_id" }
           ],
           "method": "POST",
           "oauth_authorization": {
             "type": "password",
-            "token_endpoint": "http://localhost:4000/token",
+            "token_endpoint": "http://mockoon:4000/token",
             "client_id": "your-client-id",
             "username": "username",
             "password": "password",

@@ -57,7 +57,7 @@ public class ProtectedResourceApiFilter extends OncePerRequestFilter {
     try {
       TenantIdentifier adminTenantIdentifier = extractTenantIdentifier(request);
       Pairs<User, OAuthToken> result =
-          userAuthenticationApi.authenticate(adminTenantIdentifier, authorization);
+          userAuthenticationApi.authenticate(adminTenantIdentifier, authorization, clientCert);
       User user = result.getLeft();
       OAuthToken oAuthToken = result.getRight();
 

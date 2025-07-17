@@ -23,7 +23,7 @@ import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQu
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.oidc.token.OAuthToken;
-import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionRequest;
+import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionExtensionRequest;
 import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionRequestStatus;
 import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
 import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
@@ -32,12 +32,12 @@ import org.idp.server.core.oidc.token.tokenintrospection.TokenIntrospectionConte
 import org.idp.server.core.oidc.token.tokenintrospection.TokenIntrospectionRequestContext;
 import org.idp.server.core.oidc.token.tokenintrospection.TokenIntrospectionRequestParameters;
 import org.idp.server.core.oidc.token.tokenintrospection.validator.TokenIntrospectionValidator;
-import org.idp.server.core.oidc.token.tokenintrospection.verifier.TokenIntrospectionVerifier;
+import org.idp.server.core.oidc.token.tokenintrospection.verifier.TokenIntrospectionExtensionVerifier;
 import org.idp.server.core.oidc.type.oauth.AccessTokenEntity;
 import org.idp.server.core.oidc.type.oauth.RefreshTokenEntity;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class TokenIntrospectionHandler {
+public class TokenIntrospectionExtensionHandler {
 
   OAuthTokenCommandRepository oAuthTokenCommandRepository;
   OAuthTokenQueryRepository oAuthTokenQueryRepository;
@@ -45,7 +45,7 @@ public class TokenIntrospectionHandler {
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
   ClientAuthenticationHandler clientAuthenticationHandler;
 
-  public TokenIntrospectionHandler(
+  public TokenIntrospectionExtensionHandler(
       OAuthTokenCommandRepository oAuthTokenCommandRepository,
       OAuthTokenQueryRepository oAuthTokenQueryRepository,
       AuthorizationServerConfigurationQueryRepository
@@ -59,7 +59,7 @@ public class TokenIntrospectionHandler {
     this.clientAuthenticationHandler = new ClientAuthenticationHandler();
   }
 
-  public TokenIntrospectionResponse handle(TokenIntrospectionRequest request) {
+  public TokenIntrospectionResponse handle(TokenIntrospectionExtensionRequest request) {
     TokenIntrospectionValidator validator = new TokenIntrospectionValidator(request.toParameters());
     validator.validate();
 
@@ -72,20 +72,21 @@ public class TokenIntrospectionHandler {
     TokenIntrospectionRequestContext introspectionRequestContext =
         new TokenIntrospectionRequestContext(
             request.clientSecretBasic(),
-            request.toClientCert(),
+            request.clientCertFormMtls(),
             request.toParameters(),
             authorizationServerConfiguration,
             clientConfiguration);
     clientAuthenticationHandler.authenticate(introspectionRequestContext);
 
     OAuthToken oAuthToken = find(request);
-    TokenIntrospectionVerifier verifier = new TokenIntrospectionVerifier(oAuthToken);
-    TokenIntrospectionRequestStatus verifiedStatus = verifier.verify();
-
-    if (!verifiedStatus.isOK()) {
-      Map<String, Object> contents = TokenIntrospectionContentsCreator.createFailureContents();
-      return new TokenIntrospectionResponse(verifiedStatus, oAuthToken, contents);
-    }
+    TokenIntrospectionExtensionVerifier verifier =
+        new TokenIntrospectionExtensionVerifier(
+            request.clientCertForTokenBinding(),
+            request.scopes(),
+            oAuthToken,
+            authorizationServerConfiguration,
+            clientConfiguration);
+    verifier.verify();
 
     Map<String, Object> contents =
         TokenIntrospectionContentsCreator.createSuccessContents(oAuthToken);
@@ -94,10 +95,10 @@ public class TokenIntrospectionHandler {
       oAuthTokenCommandRepository.delete(request.tenant(), oAuthToken);
     }
 
-    return new TokenIntrospectionResponse(verifiedStatus, oAuthToken, contents);
+    return new TokenIntrospectionResponse(TokenIntrospectionRequestStatus.OK, oAuthToken, contents);
   }
 
-  OAuthToken find(TokenIntrospectionRequest request) {
+  OAuthToken find(TokenIntrospectionExtensionRequest request) {
     TokenIntrospectionRequestParameters parameters = request.toParameters();
     AccessTokenEntity accessTokenEntity = parameters.accessToken();
     Tenant tenant = request.tenant();

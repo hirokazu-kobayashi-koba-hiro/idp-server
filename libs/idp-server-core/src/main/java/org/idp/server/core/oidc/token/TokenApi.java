@@ -35,6 +35,15 @@ public interface TokenApi {
   TokenIntrospectionResponse inspect(
       TenantIdentifier tenantIdentifier,
       Map<String, String[]> params,
+      String authorizationHeader,
+      String clientCert,
+      RequestAttributes requestAttributes);
+
+  TokenIntrospectionResponse inspectWithVerification(
+      TenantIdentifier tenantIdentifier,
+      Map<String, String[]> params,
+      String authorizationHeader,
+      String clientCert,
       RequestAttributes requestAttributes);
 
   TokenRevocationResponse revoke(

@@ -16,7 +16,6 @@
 
 package org.idp.server.usecases.application.system;
 
-import org.idp.server.control_plane.base.TokenIntrospectionCreator;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserAuthenticationApi;
 import org.idp.server.core.oidc.identity.UserIdentifier;
@@ -24,7 +23,7 @@ import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.core.oidc.token.TokenProtocol;
 import org.idp.server.core.oidc.token.TokenProtocols;
-import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionRequest;
+import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionInternalRequest;
 import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.exception.UnauthorizedException;
@@ -50,21 +49,16 @@ public class UserAuthenticationEntryService implements UserAuthenticationApi {
   }
 
   public Pairs<User, OAuthToken> authenticate(
-      TenantIdentifier tenantIdentifier, String authorizationHeader) {
-    Tenant adminTenant = tenantQueryRepository.get(tenantIdentifier);
+      TenantIdentifier tenantIdentifier, String authorizationHeader, String clientCert) {
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    TokenIntrospectionCreator tokenIntrospectionCreator =
-        new TokenIntrospectionCreator(adminTenant, authorizationHeader);
-    TokenIntrospectionRequest tokenIntrospectionRequest = tokenIntrospectionCreator.create();
+    TokenIntrospectionInternalRequest tokenIntrospectionInternalRequest =
+        new TokenIntrospectionInternalRequest(tenant, authorizationHeader, clientCert);
 
-    if (!tokenIntrospectionRequest.hasToken()) {
-      throw new UnauthorizedException("error=invalid_token error_description=token is undefined");
-    }
-
-    TokenProtocol tokenProtocol = tokenProtocols.get(adminTenant.authorizationProvider());
+    TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProvider());
 
     TokenIntrospectionResponse introspectionResponse =
-        tokenProtocol.inspect(tokenIntrospectionRequest);
+        tokenProtocol.inspectForInternal(tokenIntrospectionInternalRequest);
 
     if (!introspectionResponse.isActive()) {
       throw new UnauthorizedException("error=invalid_token error_description=token is undefined");
@@ -75,7 +69,7 @@ public class UserAuthenticationEntryService implements UserAuthenticationApi {
     }
 
     UserIdentifier userIdentifier = new UserIdentifier(introspectionResponse.subject());
-    User user = userQueryRepository.get(adminTenant, userIdentifier);
+    User user = userQueryRepository.get(tenant, userIdentifier);
 
     return new Pairs<>(user, introspectionResponse.oAuthToken());
   }
