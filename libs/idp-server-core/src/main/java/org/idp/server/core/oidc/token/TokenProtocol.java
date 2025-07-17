@@ -18,6 +18,8 @@ package org.idp.server.core.oidc.token;
 
 import org.idp.server.core.oidc.token.handler.token.io.TokenRequest;
 import org.idp.server.core.oidc.token.handler.token.io.TokenRequestResponse;
+import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionExtensionRequest;
+import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionInternalRequest;
 import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionRequest;
 import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
 import org.idp.server.core.oidc.token.handler.tokenrevocation.io.TokenRevocationRequest;
@@ -31,6 +33,10 @@ public interface TokenProtocol {
   TokenRequestResponse request(TokenRequest tokenRequest);
 
   TokenIntrospectionResponse inspect(TokenIntrospectionRequest request);
+
+  TokenIntrospectionResponse inspectWithVerification(TokenIntrospectionExtensionRequest request);
+
+  TokenIntrospectionResponse inspectForInternal(TokenIntrospectionInternalRequest request);
 
   TokenRevocationResponse revoke(TokenRevocationRequest request);
 }

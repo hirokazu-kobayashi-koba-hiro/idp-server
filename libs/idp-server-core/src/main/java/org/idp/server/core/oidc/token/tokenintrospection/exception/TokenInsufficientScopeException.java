@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.oidc.identity;
+package org.idp.server.core.oidc.token.tokenintrospection.exception;
 
-import org.idp.server.core.oidc.token.OAuthToken;
-import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.type.Pairs;
+public class TokenInsufficientScopeException extends RuntimeException {
+  public TokenInsufficientScopeException(String message) {
+    super(message);
+  }
 
-public interface UserAuthenticationApi {
-
-  Pairs<User, OAuthToken> authenticate(
-      TenantIdentifier adminTenantIdentifier, String authorizationHeader, String clientCert);
+  public TokenInsufficientScopeException(String message, Throwable throwable) {
+    super(message, throwable);
+  }
 }

@@ -81,6 +81,8 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
     const introspectionResponse = await inspectToken({
       endpoint: serverConfig.tokenIntrospectionEndpoint,
       token: tokenResponse.data.access_token,
+      clientId: selfSignedTlsAuthClient.clientId,
+      clientCertFile: selfSignedTlsAuthClient.clientCertFile,
     });
     console.log(introspectionResponse.data);
     expect(introspectionResponse.status).toBe(200);
@@ -191,6 +193,8 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
       const introspectionResponse = await inspectToken({
         endpoint: serverConfig.tokenIntrospectionEndpoint,
         token: tokenResponse.data.access_token,
+        clientId: selfSignedTlsAuthClient.clientId,
+        clientCertFile: selfSignedTlsAuthClient.clientCertFile,
       });
       console.log(introspectionResponse.data);
       expect(introspectionResponse.status).toBe(200);
@@ -338,6 +342,8 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
       const introspectionResponse = await inspectToken({
         endpoint: serverConfig.tokenIntrospectionEndpoint,
         token: tokenResponse.data.access_token,
+        clientId: selfSignedTlsAuthClient.clientId,
+        clientCertFile: selfSignedTlsAuthClient.clientCertFile,
       });
       console.log(introspectionResponse.data);
       expect(introspectionResponse.status).toBe(200);

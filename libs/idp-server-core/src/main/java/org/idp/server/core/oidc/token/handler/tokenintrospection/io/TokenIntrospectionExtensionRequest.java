@@ -14,32 +14,32 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.oidc.token.handler.tokenrevocation.io;
+package org.idp.server.core.oidc.token.handler.tokenintrospection.io;
 
 import java.util.Map;
 import org.idp.server.core.oidc.token.AuthorizationHeaderHandlerable;
-import org.idp.server.core.oidc.token.tokenrevocation.TokenRevocationRequestParameters;
+import org.idp.server.core.oidc.token.tokenintrospection.TokenIntrospectionRequestParameters;
 import org.idp.server.core.oidc.type.mtls.ClientCert;
 import org.idp.server.core.oidc.type.oauth.ClientSecretBasic;
 import org.idp.server.core.oidc.type.oauth.RequestedClientId;
+import org.idp.server.core.oidc.type.oauth.Scopes;
 import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class TokenRevocationRequest implements AuthorizationHeaderHandlerable {
-
+public class TokenIntrospectionExtensionRequest implements AuthorizationHeaderHandlerable {
   Tenant tenant;
   String authorizationHeaders;
   Map<String, String[]> params;
   String clientCert;
 
-  public TokenRevocationRequest(
+  public TokenIntrospectionExtensionRequest(
       Tenant tenant, String authorizationHeaders, Map<String, String[]> params) {
     this.tenant = tenant;
     this.authorizationHeaders = authorizationHeaders;
     this.params = params;
   }
 
-  public TokenRevocationRequest setClientCert(String clientCert) {
+  public TokenIntrospectionExtensionRequest setClientCert(String clientCert) {
     this.clientCert = clientCert;
     return this;
   }
@@ -56,12 +56,16 @@ public class TokenRevocationRequest implements AuthorizationHeaderHandlerable {
     return clientCert;
   }
 
+  public TokenIntrospectionRequestParameters toParameters() {
+    return new TokenIntrospectionRequestParameters(params);
+  }
+
   public Tenant tenant() {
     return tenant;
   }
 
   public RequestedClientId clientId() {
-    TokenRevocationRequestParameters parameters = toParameters();
+    TokenIntrospectionRequestParameters parameters = toParameters();
 
     if (isBasicAuth(authorizationHeaders)) {
       BasicAuth basicAuth = convertBasicAuth(authorizationHeaders);
@@ -82,11 +86,46 @@ public class TokenRevocationRequest implements AuthorizationHeaderHandlerable {
     return new ClientSecretBasic();
   }
 
-  public TokenRevocationRequestParameters toParameters() {
-    return new TokenRevocationRequestParameters(params);
+  public String token() {
+    if (hasToken()) {
+      return params.get("token")[0];
+    }
+    return "";
   }
 
-  public ClientCert toClientCert() {
+  public boolean hasToken() {
+    return params.containsKey("token");
+  }
+
+  public Scopes scopes() {
+
+    if (hasScope()) {
+      String scopes = params.get("scope")[0];
+
+      return new Scopes(scopes);
+    }
+    return new Scopes();
+  }
+
+  public boolean hasScope() {
+    return params.containsKey("scope");
+  }
+
+  public ClientCert clientCertForTokenBinding() {
+
+    if (hasClientCertForTokenBinding()) {
+      String clientCert = params.get("client_cert")[0];
+      return new ClientCert(clientCert);
+    }
+
+    return new ClientCert();
+  }
+
+  public boolean hasClientCertForTokenBinding() {
+    return params.containsKey("client_cert");
+  }
+
+  public ClientCert clientCertFormMtls() {
     return new ClientCert(clientCert);
   }
 }

@@ -71,8 +71,17 @@ public class OAuthToken {
     return Objects.nonNull(identifier) && identifier.exists();
   }
 
-  public boolean isExpire(LocalDateTime other) {
+  public boolean isExpiredAccessToken(LocalDateTime other) {
     return accessToken.isExpired(other);
+  }
+
+  public boolean isExpiredRefreshToken(LocalDateTime other) {
+
+    if (!refreshToken.exists()) {
+      return true;
+    }
+
+    return refreshToken.isExpired(other);
   }
 
   public AccessTokenEntity accessTokenEntity() {
@@ -185,5 +194,9 @@ public class OAuthToken {
     return refreshTokenExpiresAt.isAfter(accessTokenExpiresAt)
         ? refreshTokenExpiresAt
         : accessTokenExpiresAt;
+  }
+
+  public boolean isGrantedScopes(Scopes scopes) {
+    return accessToken.isGrantedScopes(scopes);
   }
 }

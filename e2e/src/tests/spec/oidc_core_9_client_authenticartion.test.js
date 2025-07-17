@@ -11,7 +11,7 @@ import { verifyAndDecodeJwt } from "../../lib/jose";
 import { createClientAssertion } from "../../lib/oauth";
 
 describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", () => {
-  it("client secret jwt", async () => {
+  it("client_secret_jwt", async () => {
     const { authorizationResponse } = await requestAuthorizations({
       endpoint: serverConfig.authorizationEndpoint,
       responseType: "code",
@@ -53,7 +53,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
     console.log(decodedIdToken);
   });
 
-  it("private key jwt", async () => {
+  it("private_key_jwt", async () => {
     const { authorizationResponse } = await requestAuthorizations({
       endpoint: serverConfig.authorizationEndpoint,
       responseType: "code",

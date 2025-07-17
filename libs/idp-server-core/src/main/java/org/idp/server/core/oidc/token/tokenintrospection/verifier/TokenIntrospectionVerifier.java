@@ -35,7 +35,7 @@ public class TokenIntrospectionVerifier {
       return TokenIntrospectionRequestStatus.INVALID_TOKEN;
     }
     LocalDateTime now = SystemDateTime.now();
-    if (oAuthToken.isExpire(now)) {
+    if (oAuthToken.isExpiredAccessToken(now)) {
       return TokenIntrospectionRequestStatus.EXPIRED_TOKEN;
     }
 

@@ -26,10 +26,8 @@ import org.idp.server.core.oidc.token.handler.token.TokenRequestErrorHandler;
 import org.idp.server.core.oidc.token.handler.token.TokenRequestHandler;
 import org.idp.server.core.oidc.token.handler.token.io.TokenRequest;
 import org.idp.server.core.oidc.token.handler.token.io.TokenRequestResponse;
-import org.idp.server.core.oidc.token.handler.tokenintrospection.TokenIntrospectionHandler;
-import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionRequest;
-import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionRequestStatus;
-import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
+import org.idp.server.core.oidc.token.handler.tokenintrospection.*;
+import org.idp.server.core.oidc.token.handler.tokenintrospection.io.*;
 import org.idp.server.core.oidc.token.handler.tokenrevocation.TokenRevocationHandler;
 import org.idp.server.core.oidc.token.handler.tokenrevocation.io.TokenRevocationRequest;
 import org.idp.server.core.oidc.token.handler.tokenrevocation.io.TokenRevocationRequestStatus;
@@ -47,9 +45,12 @@ import org.idp.server.platform.log.LoggerWrapper;
 public class DefaultTokenProtocol implements TokenProtocol {
 
   TokenRequestHandler tokenRequestHandler;
-  TokenIntrospectionHandler tokenIntrospectionHandler;
-  TokenRevocationHandler tokenRevocationHandler;
+  TokenIntrospectionHandler introspectionHandler;
+  TokenIntrospectionExtensionHandler introspectionExtensionHandler;
+  TokenIntrospectionInternalHandler introspectionInternalHandler;
+  TokenRevocationHandler revocationHandler;
   TokenRequestErrorHandler errorHandler;
+  TokenIntrospectionErrorHandler introspectionErrorHandler;
   PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate;
   LoggerWrapper log = LoggerWrapper.getLogger(DefaultTokenProtocol.class);
 
@@ -75,9 +76,29 @@ public class DefaultTokenProtocol implements TokenProtocol {
             clientConfigurationQueryRepository,
             extensionOAuthTokenCreationServices);
     this.errorHandler = new TokenRequestErrorHandler();
-    this.tokenIntrospectionHandler =
-        new TokenIntrospectionHandler(oAuthTokenCommandRepository, oAuthTokenQueryRepository);
-    this.tokenRevocationHandler =
+    this.introspectionHandler =
+        new TokenIntrospectionHandler(
+            oAuthTokenCommandRepository,
+            oAuthTokenQueryRepository,
+            authorizationServerConfigurationQueryRepository,
+            clientConfigurationQueryRepository);
+    this.introspectionHandler =
+        new TokenIntrospectionHandler(
+            oAuthTokenCommandRepository,
+            oAuthTokenQueryRepository,
+            authorizationServerConfigurationQueryRepository,
+            clientConfigurationQueryRepository);
+    this.introspectionExtensionHandler =
+        new TokenIntrospectionExtensionHandler(
+            oAuthTokenCommandRepository,
+            oAuthTokenQueryRepository,
+            authorizationServerConfigurationQueryRepository,
+            clientConfigurationQueryRepository);
+    this.introspectionInternalHandler =
+        new TokenIntrospectionInternalHandler(
+            oAuthTokenCommandRepository, oAuthTokenQueryRepository);
+    this.introspectionErrorHandler = new TokenIntrospectionErrorHandler();
+    this.revocationHandler =
         new TokenRevocationHandler(
             oAuthTokenCommandRepository,
             oAuthTokenQueryRepository,
@@ -102,22 +123,46 @@ public class DefaultTokenProtocol implements TokenProtocol {
   public TokenIntrospectionResponse inspect(TokenIntrospectionRequest request) {
     try {
 
-      return tokenIntrospectionHandler.handle(request);
+      return introspectionHandler.handle(request);
     } catch (TokenInvalidException exception) {
       Map<String, Object> contents = TokenIntrospectionContentsCreator.createFailureContents();
       return new TokenIntrospectionResponse(
           TokenIntrospectionRequestStatus.INVALID_TOKEN, contents);
     } catch (Exception exception) {
-      log.error(exception.getMessage(), exception);
+
+      return introspectionErrorHandler.handle(exception);
+    }
+  }
+
+  public TokenIntrospectionResponse inspectWithVerification(
+      TokenIntrospectionExtensionRequest request) {
+    try {
+
+      return introspectionExtensionHandler.handle(request);
+    } catch (Exception exception) {
+
+      return introspectionErrorHandler.handle(exception);
+    }
+  }
+
+  public TokenIntrospectionResponse inspectForInternal(TokenIntrospectionInternalRequest request) {
+    try {
+
+      return introspectionInternalHandler.handle(request);
+    } catch (TokenInvalidException exception) {
       Map<String, Object> contents = TokenIntrospectionContentsCreator.createFailureContents();
-      return new TokenIntrospectionResponse(TokenIntrospectionRequestStatus.SERVER_ERROR, contents);
+      return new TokenIntrospectionResponse(
+          TokenIntrospectionRequestStatus.INVALID_TOKEN, contents);
+    } catch (Exception exception) {
+
+      return introspectionErrorHandler.handle(exception);
     }
   }
 
   public TokenRevocationResponse revoke(TokenRevocationRequest request) {
     try {
 
-      return tokenRevocationHandler.handle(request);
+      return revocationHandler.handle(request);
     } catch (Exception exception) {
       log.error(exception.getMessage(), exception);
       return new TokenRevocationResponse(

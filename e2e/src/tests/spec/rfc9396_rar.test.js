@@ -622,6 +622,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
       let introspectionResponse = await inspectToken({
         endpoint: serverConfig.tokenIntrospectionEndpoint,
         token: tokenResponse.data.access_token,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
       });
       console.log(introspectionResponse.data);
       expect(introspectionResponse.status).toBe(200);
@@ -630,6 +632,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
       introspectionResponse = await inspectToken({
         endpoint: serverConfig.tokenIntrospectionEndpoint,
         token: tokenResponse.data.access_token,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
       });
       console.log(introspectionResponse.data);
       expect(introspectionResponse.status).toBe(200);

@@ -44,10 +44,10 @@ public class TokenV1Api implements ParameterTransformable {
 
   @PostMapping
   public ResponseEntity<?> request(
-      @RequestBody(required = false) MultiValueMap<String, String> body,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
       @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestBody(required = false) MultiValueMap<String, String> body,
       HttpServletRequest httpServletRequest) {
 
     Map<String, String[]> request = transform(body);
@@ -65,25 +65,46 @@ public class TokenV1Api implements ParameterTransformable {
 
   @PostMapping("/introspection")
   public ResponseEntity<?> inspect(
-      @RequestBody(required = false) MultiValueMap<String, String> body,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
+      @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
+      @RequestBody(required = false) MultiValueMap<String, String> body,
       HttpServletRequest httpServletRequest) {
 
     Map<String, String[]> request = transform(body);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     TokenIntrospectionResponse response =
-        tokenApi.inspect(tenantIdentifier, request, requestAttributes);
+        tokenApi.inspect(
+            tenantIdentifier, request, authorizationHeader, clientCert, requestAttributes);
+
+    return new ResponseEntity<>(response.response(), HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @PostMapping("/introspection-extensions")
+  public ResponseEntity<?> inspectWithVerification(
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
+      @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
+      @RequestBody(required = false) MultiValueMap<String, String> body,
+      HttpServletRequest httpServletRequest) {
+
+    Map<String, String[]> request = transform(body);
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    TokenIntrospectionResponse response =
+        tokenApi.inspectWithVerification(
+            tenantIdentifier, request, authorizationHeader, clientCert, requestAttributes);
 
     return new ResponseEntity<>(response.response(), HttpStatus.valueOf(response.statusCode()));
   }
 
   @PostMapping("/revocation")
   public ResponseEntity<?> revoke(
-      @RequestBody(required = false) MultiValueMap<String, String> body,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
       @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestBody(required = false) MultiValueMap<String, String> body,
       HttpServletRequest httpServletRequest) {
 
     Map<String, String[]> request = transform(body);

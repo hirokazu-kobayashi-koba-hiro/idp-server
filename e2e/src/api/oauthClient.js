@@ -1,32 +1,32 @@
-import { get, post, postWithJson } from ".../../lib/http";
-import { convertToSnake } from ".../../lib/util";
+import { get, post, postWithJson } from "../lib/http";
+import { convertToSnake } from "../lib/util";
 import { encodedClientCert } from "./cert/clientCert";
 
 export const createParams = ({
-  scope,
-  responseType,
-  clientId,
-  redirectUri,
-  state,
-  responseMode,
-  nonce,
-  display,
-  prompt,
-  maxAge,
-  uiLocales,
-  idTokenHint,
-  loginHint,
-  acrValues,
-  claims,
-  request,
-  requestUri,
-  codeChallenge,
-  codeChallengeMethod,
-  authorizationDetails,
-  customParams,
-  clientSecret,
-  clientAssertion,
-  clientAssertionType,
+ scope,
+ responseType,
+ clientId,
+ redirectUri,
+ state,
+ responseMode,
+ nonce,
+ display,
+ prompt,
+ maxAge,
+ uiLocales,
+ idTokenHint,
+ loginHint,
+ acrValues,
+ claims,
+ request,
+ requestUri,
+ codeChallenge,
+ codeChallengeMethod,
+ authorizationDetails,
+ customParams,
+ clientSecret,
+ clientAssertion,
+ clientAssertionType
 }) => {
   const baseParams = {
     scope,
@@ -52,7 +52,7 @@ export const createParams = ({
     customParams,
     clientSecret,
     clientAssertion,
-    clientAssertionType,
+    clientAssertionType
   };
 
   const filtered = Object.fromEntries(
@@ -85,7 +85,7 @@ export const createAuthorizationRequest = ({
  codeChallengeMethod,
  authorizationDetails,
  presentationDefinition,
- customParams,
+ customParams
 }) => {
   const params = createParams({
     scope,
@@ -109,7 +109,7 @@ export const createAuthorizationRequest = ({
     codeChallengeMethod,
     authorizationDetails,
     presentationDefinition,
-    customParams,
+    customParams
   });
   const url = `${endpoint}?${params}`;
   console.log(url);
@@ -139,7 +139,7 @@ export const getAuthorizations = async ({
   codeChallengeMethod,
   authorizationDetails,
   presentationDefinition,
-  customParams,
+  customParams
 }) => {
   const url = createAuthorizationRequest({
     endpoint,
@@ -164,11 +164,11 @@ export const getAuthorizations = async ({
     codeChallengeMethod,
     authorizationDetails,
     presentationDefinition,
-    customParams,
+    customParams
   });
   return await get({
     url: url,
-    headers: {},
+    headers: {}
   });
 };
 
@@ -176,7 +176,7 @@ export const authenticateWithPassword = async ({ endpoint, id, body }) => {
   const url = endpoint.replace("{id}", id);
   return await postWithJson({
     url,
-    body,
+    body
   });
 };
 
@@ -184,7 +184,7 @@ export const postAuthentication = async ({ endpoint, id, body }) => {
   const url = endpoint.replace("{id}", id);
   return await postWithJson({
     url,
-    body,
+    body
   });
 };
 
@@ -192,35 +192,34 @@ export const authorize = async ({ endpoint, id, body }) => {
   const url = endpoint.replace("{id}", id);
   return await postWithJson({
     url,
-    body,
+    body
   });
 };
 
 export const deny = async ({ endpoint, id }) => {
   const url = endpoint.replace("{id}", id);
   return await postWithJson({
-    url,
+    url
   });
 };
 
 export const requestToken = async ({
-  endpoint,
-  code,
-  grantType,
-  redirectUri,
-  refreshToken,
-  codeVerifier,
-  scope,
-  username,
-  password,
-  authReqId,
-  clientId,
-  clientSecret,
-  clientAssertion,
-  clientAssertionType,
-  basicAuth,
-  clientCertFile,
-  clientCertKeyFile,
+ endpoint,
+ code,
+ grantType,
+ redirectUri,
+ refreshToken,
+ codeVerifier,
+ scope,
+ username,
+ password,
+ authReqId,
+ clientId,
+ clientSecret,
+ clientAssertion,
+ clientAssertionType,
+ basicAuth,
+ clientCertFile,
 }) => {
   let params = new URLSearchParams();
   if (code) {
@@ -268,28 +267,127 @@ export const requestToken = async ({
     const clientCert = encodedClientCert(clientCertFile);
     headers = {
       ...headers,
-      "x-ssl-cert": clientCert,
+      "x-ssl-cert": clientCert
     };
   }
   console.log(headers);
   return await post({
     url: endpoint,
     body: params,
-    headers,
+    headers
   });
 };
 
-export const inspectToken = async ({ endpoint, token, tokenHintType }) => {
+export const inspectToken = async ({
+ endpoint,
+ token,
+ tokenHintType,
+ clientId,
+ clientSecret,
+ clientAssertion,
+ clientAssertionType,
+ basicAuth,
+ clientCertFile
+}) => {
   let params = new URLSearchParams();
   if (params) {
     params.append("token", token);
   }
+
   if (tokenHintType) {
     params.append("token_hint_type", tokenHintType);
   }
+
+  if (clientId) {
+    params.append("client_id", clientId);
+  }
+
+  if (clientSecret) {
+    params.append("client_secret", clientSecret);
+  }
+
+  if (clientAssertion) {
+    params.append("client_assertion", clientAssertion);
+  }
+  if (clientAssertionType) {
+    params.append("client_assertion_type", clientAssertionType);
+  }
+
+  let headers = basicAuth ? basicAuth : {};
+  if (clientCertFile) {
+    const clientCert = encodedClientCert(clientCertFile);
+    headers = {
+      ...headers,
+      "x-ssl-cert": clientCert
+    };
+  }
+
   return await post({
     url: endpoint,
     body: params,
+    headers: headers
+  });
+};
+
+export const inspectTokenWithVerification = async ({
+ endpoint,
+ token,
+ tokenHintType,
+ scope,
+ clientId,
+ clientSecret,
+ clientAssertion,
+ clientAssertionType,
+ basicAuth,
+ clientCert,
+ clientCertFile
+}) => {
+  let params = new URLSearchParams();
+  if (params) {
+    params.append("token", token);
+  }
+
+  if (tokenHintType) {
+    params.append("token_hint_type", tokenHintType);
+  }
+
+  if (scope) {
+    params.append("scope", scope);
+  }
+
+  if (clientId) {
+    params.append("client_id", clientId);
+  }
+
+  if (clientSecret) {
+    params.append("client_secret", clientSecret);
+  }
+
+  if (clientAssertion) {
+    params.append("client_assertion", clientAssertion);
+  }
+  if (clientAssertionType) {
+    params.append("client_assertion_type", clientAssertionType);
+  }
+
+  if (clientCert) {
+    const encoded = encodedClientCert(clientCert);
+    params.append("client_cert", encoded);
+  }
+
+  let headers = basicAuth ? basicAuth : {};
+  if (clientCertFile) {
+    const encoded = encodedClientCert(clientCertFile);
+    headers = {
+      ...headers,
+      "x-ssl-cert": encoded
+    };
+  }
+
+  return await post({
+    url: endpoint,
+    body: params,
+    headers: headers
   });
 };
 
@@ -301,7 +399,7 @@ export const revokeToken = async ({
   clientSecret,
   clientAssertion,
   clientAssertionType,
-  basicAuth,
+  basicAuth
 }) => {
   let params = new URLSearchParams();
   if (params) {
@@ -326,33 +424,33 @@ export const revokeToken = async ({
   return await post({
     url: endpoint,
     body: params,
-    headers,
+    headers
   });
 };
 
 export const getUserinfo = async ({ endpoint, authorizationHeader }) => {
   return await get({
     url: endpoint,
-    headers: authorizationHeader,
+    headers: authorizationHeader
   });
 };
 
 export const postUserinfo = async ({ endpoint, authorizationHeader }) => {
   return await post({
     url: endpoint,
-    headers: authorizationHeader,
+    headers: authorizationHeader
   });
 };
 
 export const getConfiguration = async ({ endpoint }) => {
   return await get({
-    url: endpoint,
+    url: endpoint
   });
 };
 
 export const getJwks = async ({ endpoint }) => {
   return await get({
-    url: endpoint,
+    url: endpoint
   });
 };
 
@@ -373,7 +471,7 @@ export const requestBackchannelAuthentications = async ({
   clientSecret,
   clientAssertion,
   clientAssertionType,
-  basicAuth,
+  basicAuth
 }) => {
   let params = new URLSearchParams();
   if (scope) {
@@ -429,39 +527,39 @@ export const requestBackchannelAuthentications = async ({
   return await post({
     url: endpoint,
     body: params,
-    headers,
+    headers
   });
 };
 
 export const postAuthenticationDeviceInteraction = async ({
- endpoint,
- flowType,
- id,
- interactionType,
- body,
+  endpoint,
+  flowType,
+  id,
+  interactionType,
+  body
 }) => {
 
   const url = endpoint.replace("{flow-type}", flowType).replace("{id}", id) + interactionType;
   return await postWithJson({
     url: url,
-    body,
+    body
   });
 };
 
 export const completeBackchannelAuthentications = async ({
-  endpoint,
-  authReqId,
-  action,
+ endpoint,
+ authReqId,
+ action
 }) => {
   return await post({
-    url: `${endpoint}?auth_req_id=${authReqId}&action=${action}`,
+    url: `${endpoint}?auth_req_id=${authReqId}&action=${action}`
   });
 };
 
 export const getAuthenticationDeviceAuthenticationTransaction = async ({
-  endpoint,
-  deviceId,
-  params,
+ endpoint,
+ deviceId,
+ params
 }) => {
 
   const query = new URLSearchParams(params).toString();
@@ -469,31 +567,31 @@ export const getAuthenticationDeviceAuthenticationTransaction = async ({
   console.log(url);
 
   return await get({
-    url: url,
+    url: url
   });
 };
 
 export const requestCredentials = async ({
-  endpoint,
-  params,
-  authorizationHeader,
+ endpoint,
+ params,
+ authorizationHeader
 }) => {
 
   return await postWithJson({
     url: endpoint,
     body: params,
-    headers: authorizationHeader,
+    headers: authorizationHeader
   });
 };
 
 export const requestBatchCredentials = async ({
- endpoint,
- params,
- authorizationHeader,
+  endpoint,
+  params,
+  authorizationHeader
 }) => {
   return await postWithJson({
     url: endpoint,
     body: params,
-    headers: authorizationHeader,
+    headers: authorizationHeader
   });
 };

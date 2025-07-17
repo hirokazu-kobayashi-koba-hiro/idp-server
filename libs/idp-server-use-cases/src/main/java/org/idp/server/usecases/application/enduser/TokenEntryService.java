@@ -24,6 +24,7 @@ import org.idp.server.core.oidc.token.TokenProtocol;
 import org.idp.server.core.oidc.token.TokenProtocols;
 import org.idp.server.core.oidc.token.handler.token.io.TokenRequest;
 import org.idp.server.core.oidc.token.handler.token.io.TokenRequestResponse;
+import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionExtensionRequest;
 import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionRequest;
 import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
 import org.idp.server.core.oidc.token.handler.tokenrevocation.io.TokenRevocationRequest;
@@ -82,15 +83,43 @@ public class TokenEntryService implements TokenApi {
   public TokenIntrospectionResponse inspect(
       TenantIdentifier tenantIdentifier,
       Map<String, String[]> params,
+      String authorizationHeader,
+      String clientCert,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     TokenIntrospectionRequest tokenIntrospectionRequest =
-        new TokenIntrospectionRequest(tenant, params);
+        new TokenIntrospectionRequest(tenant, authorizationHeader, params);
+    tokenIntrospectionRequest.setClientCert(clientCert);
 
     TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProvider());
 
     TokenIntrospectionResponse result = tokenProtocol.inspect(tokenIntrospectionRequest);
+
+    if (result.hasOAuthToken()) {
+      eventPublisher.publish(
+          tenant, result.oAuthToken(), result.securityEventType(), requestAttributes);
+    }
+
+    return result;
+  }
+
+  public TokenIntrospectionResponse inspectWithVerification(
+      TenantIdentifier tenantIdentifier,
+      Map<String, String[]> params,
+      String authorizationHeader,
+      String clientCert,
+      RequestAttributes requestAttributes) {
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    TokenIntrospectionExtensionRequest tokenIntrospectionRequest =
+        new TokenIntrospectionExtensionRequest(tenant, authorizationHeader, params);
+    tokenIntrospectionRequest.setClientCert(clientCert);
+
+    TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProvider());
+
+    TokenIntrospectionResponse result =
+        tokenProtocol.inspectWithVerification(tokenIntrospectionRequest);
 
     if (result.hasOAuthToken()) {
       eventPublisher.publish(

@@ -32,6 +32,8 @@ describe("OAuth 2.0 Token Revocation", () => {
     const introspectionResponse = await inspectToken({
       endpoint: serverConfig.tokenIntrospectionEndpoint,
       token: tokenResponse.data.access_token,
+      clientId: clientSecretPostClient.clientId,
+      clientSecret: clientSecretPostClient.clientSecret,
     });
     console.log(introspectionResponse.data);
     expect(introspectionResponse.status).toBe(200);
@@ -49,6 +51,8 @@ describe("OAuth 2.0 Token Revocation", () => {
     const reIntrospectionResponse = await inspectToken({
       endpoint: serverConfig.tokenIntrospectionEndpoint,
       token: tokenResponse.data.access_token,
+      clientId: clientSecretPostClient.clientId,
+      clientSecret: clientSecretPostClient.clientSecret,
     });
     console.log(reIntrospectionResponse.data);
     expect(reIntrospectionResponse.status).toBe(200);

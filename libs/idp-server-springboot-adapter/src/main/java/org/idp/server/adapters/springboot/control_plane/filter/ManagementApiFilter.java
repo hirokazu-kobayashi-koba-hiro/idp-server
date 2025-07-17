@@ -53,11 +53,12 @@ public class ManagementApiFilter extends OncePerRequestFilter {
       HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) {
 
     String authorization = request.getHeader("Authorization");
+    String clientCert = request.getHeader("x-ssl-cert");
 
     try {
       TenantIdentifier adminTenantIdentifier = AdminTenantContext.getTenantIdentifier();
       Pairs<User, OAuthToken> result =
-          userAuthenticationApi.authenticate(adminTenantIdentifier, authorization);
+          userAuthenticationApi.authenticate(adminTenantIdentifier, authorization, clientCert);
 
       User user = result.getLeft();
       OAuthToken oAuthToken = result.getRight();

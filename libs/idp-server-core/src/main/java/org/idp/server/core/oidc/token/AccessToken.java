@@ -171,4 +171,8 @@ public class AccessToken {
   public boolean isOneshotToken() {
     return authorizationGrant.isOneshotToken();
   }
+
+  public boolean isGrantedScopes(Scopes scopes) {
+    return authorizationGrant.isGrantedScopes(scopes);
+  }
 }

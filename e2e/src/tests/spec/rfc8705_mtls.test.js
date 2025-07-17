@@ -46,6 +46,8 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
     const introspectionResponse = await inspectToken({
       endpoint: serverConfig.tokenIntrospectionEndpoint,
       token: tokenResponse.data.access_token,
+      clientId: selfSignedTlsAuthClient.clientId,
+      clientCertFile: selfSignedTlsAuthClient.clientCertFile,
     });
     console.log(introspectionResponse.data);
     expect(introspectionResponse.status).toBe(200);
