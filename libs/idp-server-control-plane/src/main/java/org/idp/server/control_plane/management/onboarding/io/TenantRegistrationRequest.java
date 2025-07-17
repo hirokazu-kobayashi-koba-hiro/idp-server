@@ -16,6 +16,7 @@
 
 package org.idp.server.control_plane.management.onboarding.io;
 
+import java.util.Map;
 import java.util.UUID;
 import org.idp.server.platform.datasource.DatabaseType;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
@@ -31,6 +32,7 @@ public class TenantRegistrationRequest implements JsonReadable {
   String domain;
   String authorizationProvider;
   String databaseType;
+  Map<String, Object> attributes;
 
   public TenantRegistrationRequest() {}
 
@@ -59,5 +61,9 @@ public class TenantRegistrationRequest implements JsonReadable {
 
   public DatabaseType databaseType() {
     return DatabaseType.of(databaseType);
+  }
+
+  public Map<String, Object> attributes() {
+    return attributes;
   }
 }

@@ -65,8 +65,38 @@ public class PostgresqlExecutor implements TenantCommandSqlExecutor {
   }
 
   @Override
-  public void update(Tenant tenant) {}
+  public void update(Tenant tenant) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+                UPDATE tenant
+                SET name = ?,
+                domain = ?,
+                attributes = ?::jsonb
+                WHERE id = ?::uuid;
+                """;
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.name().value());
+    params.add(tenant.domain().value());
+    params.add(jsonConverter.write(tenant.attributesAsMap()));
+    params.add(tenant.identifierUUID());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
 
   @Override
-  public void delete(TenantIdentifier tenantIdentifier) {}
+  public void delete(TenantIdentifier tenantIdentifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+                DELETE FROM tenant
+                WHERE id = ?::uuid;
+                """;
+    List<Object> params = new ArrayList<>();
+    params.add(tenantIdentifier.valueAsUuid());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
 }

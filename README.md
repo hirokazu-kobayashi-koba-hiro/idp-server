@@ -84,6 +84,8 @@ curl -v http://localhost:8080/actuator/health
 ./setup.sh
 ```
 
+* admin-tenant
+
 ```shell
 ./sample-config/test-data.sh \
 -e "local" \
@@ -95,6 +97,8 @@ curl -v http://localhost:8080/actuator/health
 -s clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890 \
 -d false
  ```
+
+* test-tenant
 
 ```shell
 ./sample-config/test-tenant-data.sh \
