@@ -20,6 +20,7 @@ import org.idp.server.core.oidc.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractionRequestResult;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractionType;
 import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.oidc.identity.io.AuthenticationDevicePatchRequest;
 import org.idp.server.core.oidc.identity.io.MfaRegistrationRequest;
 import org.idp.server.core.oidc.identity.io.UserOperationResponse;
 import org.idp.server.core.oidc.token.OAuthToken;
@@ -43,6 +44,13 @@ public interface UserOperationApi {
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
       RequestAttributes requestAttributes);
+
+  void patchAuthenticationDevice(
+          TenantIdentifier tenantIdentifier,
+          User user,
+          OAuthToken token,
+          AuthenticationDevicePatchRequest request,
+          RequestAttributes requestAttributes);
 
   void delete(
       TenantIdentifier tenantIdentifier,

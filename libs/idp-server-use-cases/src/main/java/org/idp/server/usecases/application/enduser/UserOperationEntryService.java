@@ -27,6 +27,7 @@ import org.idp.server.core.oidc.identity.*;
 import org.idp.server.core.oidc.identity.event.UserLifecycleEvent;
 import org.idp.server.core.oidc.identity.event.UserLifecycleEventPublisher;
 import org.idp.server.core.oidc.identity.event.UserLifecycleType;
+import org.idp.server.core.oidc.identity.io.AuthenticationDevicePatchRequest;
 import org.idp.server.core.oidc.identity.io.MfaRegistrationRequest;
 import org.idp.server.core.oidc.identity.io.UserOperationResponse;
 import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
@@ -152,6 +153,14 @@ public class UserOperationEntryService implements UserOperationApi {
     }
 
     return result;
+  }
+
+  @Override
+  public void patchAuthenticationDevice(TenantIdentifier tenantIdentifier, User user, OAuthToken token, AuthenticationDevicePatchRequest request, RequestAttributes requestAttributes) {
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+
+    userCommandRepository.update(tenant, user);
   }
 
   @Override
