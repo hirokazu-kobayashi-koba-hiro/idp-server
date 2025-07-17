@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.adapters.springboot.control_plane.filter;
+package org.idp.server.adapters.springboot;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,15 +22,14 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.IdpServerApplication;
-import org.idp.server.adapters.springboot.control_plane.model.IdpControlPlaneAuthority;
-import org.idp.server.adapters.springboot.control_plane.model.OperatorPrincipal;
-import org.idp.server.control_plane.base.definition.IdpControlPlaneScope;
+import org.idp.server.adapters.springboot.application.restapi.model.IdPApplicationScope;
+import org.idp.server.adapters.springboot.application.restapi.model.ResourceOwnerPrincipal;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserAuthenticationApi;
 import org.idp.server.core.oidc.token.OAuthToken;
+import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.exception.UnauthorizedException;
 import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.tenant.AdminTenantContext;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.Pairs;
 import org.springframework.http.HttpHeaders;
@@ -39,12 +38,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
-public class ManagementApiFilter extends OncePerRequestFilter {
+public class ProtectedResourceApiFilter extends OncePerRequestFilter {
 
   UserAuthenticationApi userAuthenticationApi;
-  LoggerWrapper logger = LoggerWrapper.getLogger(ManagementApiFilter.class);
+  LoggerWrapper logger = LoggerWrapper.getLogger(ProtectedResourceApiFilter.class);
 
-  public ManagementApiFilter(IdpServerApplication idpServerApplication) {
+  public ProtectedResourceApiFilter(IdpServerApplication idpServerApplication) {
     this.userAuthenticationApi = idpServerApplication.operatorAuthenticationApi();
   }
 
@@ -56,40 +55,20 @@ public class ManagementApiFilter extends OncePerRequestFilter {
     String clientCert = request.getHeader("x-ssl-cert");
 
     try {
-      TenantIdentifier adminTenantIdentifier = AdminTenantContext.getTenantIdentifier();
+      TenantIdentifier adminTenantIdentifier = extractTenantIdentifier(request);
       Pairs<User, OAuthToken> result =
           userAuthenticationApi.authenticate(adminTenantIdentifier, authorization, clientCert);
-
       User user = result.getLeft();
       OAuthToken oAuthToken = result.getRight();
 
-      if (oAuthToken.isClientCredentialsGrant()) {
-        response.setHeader(
-            HttpHeaders.WWW_AUTHENTICATE,
-            "error=invalid_token, error_description=management api is not supported token type client credentials grant.");
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        return;
-      }
-
-      List<IdpControlPlaneAuthority> scopes = new ArrayList<>();
+      List<IdPApplicationScope> idPApplicationScopes = new ArrayList<>();
       for (String scope : oAuthToken.scopeAsList()) {
-        scopes.add(IdpControlPlaneAuthority.of(scope));
+        idPApplicationScopes.add(IdPApplicationScope.of(scope));
       }
 
-      if (scopes.stream()
-          .noneMatch(
-              authority ->
-                  authority.getAuthority().equals(IdpControlPlaneScope.management.name()))) {
-
-        response.setHeader(
-            HttpHeaders.WWW_AUTHENTICATE,
-            "error=access_denied, error_description=scope api is not supported token type client credentials grant.");
-        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-        return;
-      }
-
-      OperatorPrincipal operatorPrincipal = new OperatorPrincipal(user, oAuthToken, scopes);
-      SecurityContextHolder.getContext().setAuthentication(operatorPrincipal);
+      ResourceOwnerPrincipal principal =
+          new ResourceOwnerPrincipal(user, oAuthToken, idPApplicationScopes);
+      SecurityContextHolder.getContext().setAuthentication(principal);
       filterChain.doFilter(request, response);
     } catch (UnauthorizedException e) {
       response.setHeader(HttpHeaders.WWW_AUTHENTICATE, e.getMessage());
@@ -99,14 +78,28 @@ public class ManagementApiFilter extends OncePerRequestFilter {
 
       logger.error(e.getMessage(), e);
       response.setHeader(
-          HttpHeaders.WWW_AUTHENTICATE,
-          "error=invalid_token, error_description=unexpected error occurred");
+          HttpHeaders.WWW_AUTHENTICATE, "error=invalid_token unexpected error occurred");
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     }
   }
 
-  @Override
+  private TenantIdentifier extractTenantIdentifier(HttpServletRequest request) {
+    String path = request.getRequestURI();
+    String[] parts = path.split("/");
+
+    if (parts.length > 1) {
+      return new TenantIdentifier(parts[1]);
+    }
+
+    throw new UnSupportedException("invalid request path");
+  }
+
   protected boolean shouldNotFilter(HttpServletRequest request) {
-    return !request.getRequestURI().contains("/management/");
+    String path = request.getRequestURI();
+    List<String> protectedPrefixes = List.of("/me");
+    List<String> excludedPrefixes = List.of("/admin/", "/management/");
+    boolean protectedResourceMatch = protectedPrefixes.stream().anyMatch(path::contains);
+    boolean excludedResourceMatch = excludedPrefixes.stream().anyMatch(path::contains);
+    return !protectedResourceMatch || excludedResourceMatch;
   }
 }

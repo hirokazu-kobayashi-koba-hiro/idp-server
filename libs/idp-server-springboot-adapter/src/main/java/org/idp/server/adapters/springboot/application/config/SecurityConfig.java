@@ -17,11 +17,11 @@
 package org.idp.server.adapters.springboot.application.config;
 
 import org.idp.server.IdpServerApplication;
-import org.idp.server.adapters.springboot.application.filter.DynamicCorsFilter;
-import org.idp.server.adapters.springboot.application.filter.ProtectedResourceApiFilter;
+import org.idp.server.adapters.springboot.DynamicCorsFilter;
+import org.idp.server.adapters.springboot.ManagementApiFilter;
+import org.idp.server.adapters.springboot.ProtectedResourceApiFilter;
 import org.idp.server.adapters.springboot.application.restapi.model.IdPApplicationScope;
 import org.idp.server.adapters.springboot.application.session.DynamicCookieSerializer;
-import org.idp.server.adapters.springboot.control_plane.filter.ManagementApiFilter;
 import org.idp.server.platform.multi_tenancy.tenant.TenantMetaDataApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
