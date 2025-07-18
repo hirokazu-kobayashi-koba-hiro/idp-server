@@ -52,6 +52,7 @@ services:
       CACHE_TIME_TO_LIVE_SECOND: 300
       LOGGING_LEVEL_ROOT: debug
       LOGGING_LEVEL_WEB: debug
+      LOGGING_LEVEL_HTTP_REQUEST_EXECUTOR: debug
       JAVA_TOOL_OPTIONS: >
         -Xms512m -Xmx2g
         -XX:+UseG1GC
@@ -108,6 +109,7 @@ services:
       CACHE_TIME_TO_LIVE_SECOND: 300
       LOGGING_LEVEL_ROOT: debug
       LOGGING_LEVEL_WEB: debug
+      LOGGING_LEVEL_HTTP_REQUEST_EXECUTOR: debug
       JAVA_TOOL_OPTIONS: >
         -Xms512m -Xmx2g
         -XX:+UseG1GC
