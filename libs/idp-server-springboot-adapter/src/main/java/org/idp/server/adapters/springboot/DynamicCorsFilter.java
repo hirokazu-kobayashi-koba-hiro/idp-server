@@ -111,4 +111,9 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
 
     throw new NotFoundException(String.format("invalid request path: %s", request.getRequestURI()));
   }
+
+  @Override
+  protected boolean shouldNotFilter(HttpServletRequest request) {
+    return request.getRequestURI().contains("/health");
+  }
 }
