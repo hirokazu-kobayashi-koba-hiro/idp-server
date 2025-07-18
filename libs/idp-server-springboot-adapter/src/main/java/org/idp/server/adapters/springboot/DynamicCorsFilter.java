@@ -99,7 +99,7 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
 
   private TenantIdentifier extractTenantIdentifier(HttpServletRequest request) {
     String path = request.getRequestURI();
-    if (path.contains("/admin/") || path.contains("/management/")) {
+    if (path.contains("/management/")) {
       return AdminTenantContext.getTenantIdentifier();
     }
 
@@ -114,6 +114,7 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
 
   @Override
   protected boolean shouldNotFilter(HttpServletRequest request) {
-    return request.getRequestURI().contains("/health");
+    return request.getRequestURI().contains("/health")
+        || request.getRequestURI().contains("/admin");
   }
 }
