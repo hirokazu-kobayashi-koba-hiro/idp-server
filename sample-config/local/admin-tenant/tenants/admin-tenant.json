@@ -2,7 +2,7 @@
   "tenant": {
     "id": "67e7eae6-62b0-4500-9eff-87459f63fc66",
     "name": "admin-tenant",
-    "domain": "http://localhost:3100",
+    "domain": "http://localhost:8080",
     "authorization_provider": "idp-server",
     "database_type": "postgresql",
     "attributes": {

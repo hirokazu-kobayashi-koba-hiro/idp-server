@@ -20,7 +20,7 @@ const idpConfigs = [
     type: "oidc",
     name: "google",
     label: "Google",
-    logo: "/logos/google.svg",
+    logo: "/auth-views/logos/google.svg",
   },
   // {
   //   type: "oidc",

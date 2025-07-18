@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "copy-static": "rm -rf ../app/src/main/resources/static/* && cp -r out/* ../app/src/main/resources/static/",
+    "copy-static": "rm -rf ../app/src/main/resources/static/auth-views/* && cp -r out/* ../app/src/main/resources/static/auth-views",
     "build-and-copy": "npm run build && npm run copy-static",
     "start": "next start",
     "lint": "next lint"

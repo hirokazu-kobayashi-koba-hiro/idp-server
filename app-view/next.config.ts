@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  basePath: "/auth-views",
   trailingSlash: true,
   images: {
     unoptimized: true,
