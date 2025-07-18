@@ -32,11 +32,12 @@ public class OAuthViewUrlResolver {
     String base = context.tenant().domain().value();
 
     if (context.isPromptCreate()) {
-      String signupPage = attributes.optValueAsString("signup_page", "signup/index.html");
+      String signupPage =
+          attributes.optValueAsString("signup_page", "/auth-views/signup/index.html");
       return buildUrl(base, signupPage, context);
     }
 
-    String signinPage = attributes.optValueAsString("signin_page", "signin/index.html");
+    String signinPage = attributes.optValueAsString("signin_page", "/auth-views/signin/index.html");
     return buildUrl(base, signinPage, context);
   }
 

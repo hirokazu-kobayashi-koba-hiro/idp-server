@@ -23,6 +23,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class ViewController {
   @GetMapping("/{path:[^\\.]*}")
   public String forward() {
-    return "forward:/index.html";
+    return "forward:/auth-views/index.html";
   }
 }
