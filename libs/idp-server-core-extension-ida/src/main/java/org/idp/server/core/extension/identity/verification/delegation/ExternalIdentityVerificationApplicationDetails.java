@@ -37,8 +37,7 @@ public class ExternalIdentityVerificationApplicationDetails {
 
   public static ExternalIdentityVerificationApplicationDetails create(
       JsonNodeWrapper body, IdentityVerificationProcessConfiguration processConfig) {
-    JsonSchemaDefinition jsonSchemaDefinition =
-        processConfig.responseValidationSchemaAsDefinition();
+    JsonSchemaDefinition jsonSchemaDefinition = processConfig.responseSchemaAsDefinition();
     Map<String, Object> mappingResult =
         IdentityVerificationMapper.mapping(body.toMap(), jsonSchemaDefinition);
     return new ExternalIdentityVerificationApplicationDetails(
@@ -47,8 +46,7 @@ public class ExternalIdentityVerificationApplicationDetails {
 
   public ExternalIdentityVerificationApplicationDetails merge(
       JsonNodeWrapper body, IdentityVerificationProcessConfiguration processConfig) {
-    JsonSchemaDefinition jsonSchemaDefinition =
-        processConfig.responseValidationSchemaAsDefinition();
+    JsonSchemaDefinition jsonSchemaDefinition = processConfig.responseSchemaAsDefinition();
     Map<String, Object> mappingResult =
         IdentityVerificationMapper.mapping(body.toMap(), jsonSchemaDefinition);
     Map<String, Object> merged = new HashMap<>(json.toMap());

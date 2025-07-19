@@ -92,7 +92,7 @@ logging:
   level:
     root: "${LOGGING_LEVEL_ROOT:info}"
     web: "${LOGGING_LEVEL_WEB:info}"
-    org.idp.server.platform.http.HttpRequestExecutor: "${LOGGING_LEVEL_HTTP_REQUEST_EXECUTOR:info}"
+    org.idp.server.platform.http.HttpRequestExecutor: "${LOGGING_LEVEL_HTTP_REQUEST_EXECUTOR:debug}"
 
 spring:
   data:

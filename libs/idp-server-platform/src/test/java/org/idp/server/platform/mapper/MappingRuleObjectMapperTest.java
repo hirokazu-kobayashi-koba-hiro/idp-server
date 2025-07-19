@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.platform;
+package org.idp.server.platform.mapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -22,8 +22,6 @@ import java.util.*;
 import org.idp.server.platform.date.LocalDateTimeParser;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
-import org.idp.server.platform.mapper.MappingRule;
-import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 import org.junit.jupiter.api.Test;
 
 public class MappingRuleObjectMapperTest {
@@ -193,5 +191,31 @@ public class MappingRuleObjectMapperTest {
     assertEquals("apply", result.get("process"));
     assertEquals(
         LocalDateTimeParser.parse("2025-07-06T11:51:20.797165171"), result.get("requested_at"));
+  }
+
+  @Test
+  public void putAll() {
+    String json =
+        """
+                    {
+                      "body": {
+                        "processName": "apply",
+                        "requested_at": "2025-07-06T11:51:20.797165171",
+                        "status": "ok"
+                      }
+                    }
+                """;
+
+    JsonNodeWrapper wrapper = JsonNodeWrapper.fromString(json);
+    JsonPathWrapper pathWrapper = new JsonPathWrapper(wrapper.toJson());
+
+    List<MappingRule> rules = List.of(new MappingRule("$.body", "*"));
+
+    Map<String, Object> result = MappingRuleObjectMapper.execute(rules, pathWrapper);
+
+    assertEquals("apply", result.get("processName"));
+    assertEquals(
+        LocalDateTimeParser.parse("2025-07-06T11:51:20.797165171").toString(),
+        result.get("requested_at").toString());
   }
 }

@@ -22,7 +22,6 @@ import org.idp.server.core.extension.identity.verification.IdentityVerificationR
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.plugin.IdentityVerificationRequestVerifierPluginLoader;
-import org.idp.server.core.extension.identity.verification.verifier.application.*;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;

@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
 
-public class IdentityVerificationConditionConfiguration implements JsonReadable {
+public class IdentityVerificationConditionConfig implements JsonReadable {
 
   IdentityVerificationRequestConditionConfig requestCondition =
       new IdentityVerificationRequestConditionConfig();

@@ -16,161 +16,92 @@
 
 package org.idp.server.core.extension.identity.verification.configuration;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import org.idp.server.platform.http.*;
+import org.idp.server.core.extension.identity.verification.configuration.post_hook.IdentityVerificationPostHookConfig;
+import org.idp.server.core.extension.identity.verification.configuration.pre_hook.IdentityVerificationPreHookConfig;
+import org.idp.server.platform.http.HmacAuthenticationConfiguration;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.json.schema.JsonSchemaDefinition;
-import org.idp.server.platform.mapper.MappingRule;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
-public class IdentityVerificationProcessConfiguration
-    implements HttpRequestExecutionConfigInterface, JsonReadable {
-  String url;
-  String method;
-  String authType;
-  OAuthAuthorizationConfiguration oauthAuthorization = new OAuthAuthorizationConfiguration();
-  HmacAuthenticationConfiguration hmacAuthentication = new HmacAuthenticationConfiguration();
-  Map<String, String> headers = new HashMap<>();
-  Map<String, Object> staticBody = new HashMap<>();
-  List<MappingRule> pathMappingRules = new ArrayList<>();
-  List<MappingRule> headerMappingRules = new ArrayList<>();
-  List<MappingRule> bodyMappingRules = new ArrayList<>();
-  List<MappingRule> queryMappingRules = new ArrayList<>();
-  Map<String, Object> requestValidationSchema = new HashMap<>();
-  Map<String, Object> requestVerificationSchema = new HashMap<>();
-  Map<String, Object> requestAdditionalParameterSchema = new HashMap<>();
-  Map<String, Object> responseValidationSchema = new HashMap<>();
-  IdentityVerificationConditionConfiguration rejectedConditionConfiguration =
-      new IdentityVerificationConditionConfiguration();
-  IdentityVerificationConditionConfiguration completionConditionConfiguration =
-      new IdentityVerificationConditionConfiguration();
+public class IdentityVerificationProcessConfiguration implements JsonReadable {
+  Map<String, Object> requestSchema = new HashMap<>();
+  IdentityVerificationPreHookConfig preHook = new IdentityVerificationPreHookConfig();
+  IdentityVerificationExecutionConfig execution = new IdentityVerificationExecutionConfig();
+  IdentityVerificationPostHookConfig postHook = new IdentityVerificationPostHookConfig();
+  Map<String, Object> responseSchema = new HashMap<>();
+  IdentityVerificationConditionConfig rejectedConditionConfiguration =
+      new IdentityVerificationConditionConfig();
+  IdentityVerificationConditionConfig completionConditionConfiguration =
+      new IdentityVerificationConditionConfig();
 
   public IdentityVerificationProcessConfiguration() {}
 
-  @Override
-  public HttpRequestUrl httpRequestUrl() {
-    return new HttpRequestUrl(url);
-  }
-
-  @Override
-  public HttpMethod httpMethod() {
-    return HttpMethod.of(method);
-  }
-
-  public boolean isGetHttpMethod() {
-    return httpMethod().equals(HttpMethod.GET);
-  }
-
-  @Override
-  public HttpRequestAuthType httpRequestAuthType() {
-    return HttpRequestAuthType.of(authType);
-  }
-
-  @Override
-  public boolean hasOAuthAuthorization() {
-    return oauthAuthorization != null && oauthAuthorization.exists();
-  }
-
-  @Override
-  public OAuthAuthorizationConfiguration oauthAuthorization() {
-    if (oauthAuthorization == null) {
-      return new OAuthAuthorizationConfiguration();
-    }
-    return oauthAuthorization;
-  }
-
-  @Override
-  public boolean hasHmacAuthentication() {
-    return hmacAuthentication != null && hmacAuthentication.exists();
-  }
-
-  @Override
-  public HmacAuthenticationConfiguration hmacAuthentication() {
-    if (hmacAuthentication == null) {
-      return new HmacAuthenticationConfiguration();
-    }
-    return hmacAuthentication;
-  }
-
-  @Override
-  public HttpRequestStaticHeaders httpRequestHeaders() {
-    return new HttpRequestStaticHeaders(headers);
-  }
-
-  @Override
-  public HttpRequestMappingRules httpRequestPathMappingRules() {
-    return new HttpRequestMappingRules(pathMappingRules);
-  }
-
-  @Override
-  public HttpRequestStaticBody httpRequestStaticBody() {
-    return new HttpRequestStaticBody(staticBody);
-  }
-
-  @Override
-  public HttpRequestMappingRules httpRequestHeaderMappingRules() {
-    return new HttpRequestMappingRules(headerMappingRules);
-  }
-
-  @Override
-  public HttpRequestMappingRules httpRequestBodyMappingRules() {
-    return new HttpRequestMappingRules(bodyMappingRules);
-  }
-
-  @Override
-  public HttpRequestMappingRules httpRequestQueryMappingRules() {
-    return new HttpRequestMappingRules(queryMappingRules);
-  }
-
-  public Map<String, Object> requestValidationSchema() {
-    return requestValidationSchema;
-  }
-
-  public Map<String, Object> requestVerificationSchema() {
-    return requestVerificationSchema;
-  }
-
-  public Map<String, Object> requestAdditionalParameterSchema() {
-    return requestAdditionalParameterSchema;
-  }
-
-  public Map<String, Object> responseValidationSchema() {
-    return responseValidationSchema;
-  }
-
-  public JsonSchemaDefinition requestValidationSchemaAsDefinition() {
-    if (requestValidationSchema == null) {
+  public JsonSchemaDefinition requestSchemaAsDefinition() {
+    if (requestSchema == null) {
       return new JsonSchemaDefinition(JsonNodeWrapper.empty());
     }
-    return new JsonSchemaDefinition(JsonNodeWrapper.fromMap(requestValidationSchema));
-  }
-
-  public JsonSchemaDefinition responseValidationSchemaAsDefinition() {
-    if (responseValidationSchema == null) {
-      return new JsonSchemaDefinition(JsonNodeWrapper.empty());
-    }
-    return new JsonSchemaDefinition(JsonNodeWrapper.fromMap(responseValidationSchema));
+    return new JsonSchemaDefinition(JsonNodeWrapper.fromMap(requestSchema));
   }
 
   public boolean hasCompletionCondition() {
     return completionConditionConfiguration != null && !completionConditionConfiguration.exists();
   }
 
-  public IdentityVerificationConditionConfiguration rejectedConditionConfiguration() {
+  public IdentityVerificationPreHookConfig preHook() {
+    if (preHook == null) {
+      return new IdentityVerificationPreHookConfig();
+    }
+    return preHook;
+  }
+
+  public IdentityVerificationExecutionConfig execution() {
+    return execution;
+  }
+
+  public IdentityVerificationPostHookConfig postHook() {
+    if (postHook == null) {
+      return new IdentityVerificationPostHookConfig();
+    }
+    return postHook;
+  }
+
+  public IdentityVerificationConditionConfig rejectedConditionConfiguration() {
     if (rejectedConditionConfiguration == null) {
-      return new IdentityVerificationConditionConfiguration();
+      return new IdentityVerificationConditionConfig();
     }
     return rejectedConditionConfiguration;
   }
 
-  public IdentityVerificationConditionConfiguration completionConditionConfiguration() {
+  public IdentityVerificationConditionConfig completionConditionConfiguration() {
     if (completionConditionConfiguration == null) {
-      return new IdentityVerificationConditionConfiguration();
+      return new IdentityVerificationConditionConfig();
     }
     return completionConditionConfiguration;
+  }
+
+  public boolean hasOAuthAuthorization() {
+    return execution.hasOAuthAuthorization();
+  }
+
+  public OAuthAuthorizationConfiguration oauthAuthorization() {
+    return execution.oauthAuthorization();
+  }
+
+  public boolean hasHmacAuthentication() {
+    return execution.hasHmacAuthentication();
+  }
+
+  public HmacAuthenticationConfiguration hmacAuthentication() {
+    return execution.hmacAuthentication();
+  }
+
+  public JsonSchemaDefinition responseSchemaAsDefinition() {
+    if (responseSchema == null) {
+      return new JsonSchemaDefinition(JsonNodeWrapper.empty());
+    }
+    return new JsonSchemaDefinition(JsonNodeWrapper.fromMap(responseSchema));
   }
 }

@@ -79,7 +79,7 @@ public class ExternalFidoUafServerExecutionConfiguration
   }
 
   @Override
-  public HttpRequestStaticHeaders httpRequestHeaders() {
+  public HttpRequestStaticHeaders httpRequestStaticHeaders() {
     return new HttpRequestStaticHeaders(headers);
   }
 

@@ -16,9 +16,9 @@
 
 package org.idp.server.core.extension.identity.verification.delegation;
 
+import org.idp.server.core.extension.identity.verification.configuration.pre_hook.verification.IdentityVerificationApplicationRequestVerifiedResult;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationResponse;
 import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationApplicationValidationResult;
-import org.idp.server.core.extension.identity.verification.verifier.application.IdentityVerificationApplicationRequestVerifiedResult;
 import org.idp.server.platform.json.JsonNodeWrapper;
 
 public class ExternalIdentityVerificationApplyingResult {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.identity.verification.verifier.application;
+package org.idp.server.core.extension.identity.verification.configuration.pre_hook.verification;
 
 import java.util.HashMap;
 import java.util.List;

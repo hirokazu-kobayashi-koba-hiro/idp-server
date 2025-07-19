@@ -14,29 +14,38 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.identity.verification.delegation.request;
+package org.idp.server.core.extension.identity.verification.configuration.pre_hook.verification;
 
-import java.util.Map;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
+import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfig;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.type.RequestAttributes;
 
-public interface AdditionalRequestParameterResolver {
+// TODO reconsider logic
+public class ContinuousCustomerDueDiligenceIdentityVerificationApplicationVerifier
+    implements IdentityVerificationApplicationRequestVerifier {
 
-  String type();
+  public String type() {
+    return "continuous_customer_due_diligence";
+  }
 
-  Map<String, Object> resolve(
+  @Override
+  public IdentityVerificationApplicationRequestVerifiedResult verify(
       Tenant tenant,
       User user,
-      IdentityVerificationApplications applications,
+      IdentityVerificationApplication currentApplication,
+      IdentityVerificationApplications previousApplications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
       IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes,
-      IdentityVerificationConfig additionalParameterConfig);
+      IdentityVerificationConfig verificationConfig) {
+
+    return IdentityVerificationApplicationRequestVerifiedResult.success();
+  }
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors.sms.external;
+package org.idp.server.core.extension.identity.verification.configuration;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,32 +25,34 @@ import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.mapper.MappingRule;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
-public class ExternalSmsAuthenticationExecutionConfiguration
-    implements JsonReadable, HttpRequestExecutionConfigInterface {
+public class IdentityVerificationExecutionConfig
+    implements HttpRequestExecutionConfigInterface, JsonReadable {
   String url;
   String method;
   String authType;
   OAuthAuthorizationConfiguration oauthAuthorization = new OAuthAuthorizationConfiguration();
   HmacAuthenticationConfiguration hmacAuthentication = new HmacAuthenticationConfiguration();
-  Map<String, String> headers = new HashMap<>();
+  Map<String, String> staticHeaders = new HashMap<>();
   Map<String, Object> staticBody = new HashMap<>();
   List<MappingRule> pathMappingRules = new ArrayList<>();
   List<MappingRule> headerMappingRules = new ArrayList<>();
   List<MappingRule> bodyMappingRules = new ArrayList<>();
   List<MappingRule> queryMappingRules = new ArrayList<>();
 
-  public ExternalSmsAuthenticationExecutionConfiguration() {}
+  public IdentityVerificationExecutionConfig() {}
 
+  @Override
   public HttpRequestUrl httpRequestUrl() {
     return new HttpRequestUrl(url);
   }
 
+  @Override
   public HttpMethod httpMethod() {
     return HttpMethod.of(method);
   }
 
   public boolean isGetHttpMethod() {
-    return httpMethod().isGet();
+    return httpMethod().equals(HttpMethod.GET);
   }
 
   @Override
@@ -65,6 +67,9 @@ public class ExternalSmsAuthenticationExecutionConfiguration
 
   @Override
   public OAuthAuthorizationConfiguration oauthAuthorization() {
+    if (oauthAuthorization == null) {
+      return new OAuthAuthorizationConfiguration();
+    }
     return oauthAuthorization;
   }
 
@@ -75,12 +80,15 @@ public class ExternalSmsAuthenticationExecutionConfiguration
 
   @Override
   public HmacAuthenticationConfiguration hmacAuthentication() {
+    if (hmacAuthentication == null) {
+      return new HmacAuthenticationConfiguration();
+    }
     return hmacAuthentication;
   }
 
   @Override
   public HttpRequestStaticHeaders httpRequestStaticHeaders() {
-    return new HttpRequestStaticHeaders(headers);
+    return new HttpRequestStaticHeaders(staticHeaders);
   }
 
   @Override
