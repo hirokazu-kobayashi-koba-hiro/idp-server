@@ -201,8 +201,9 @@ describe("multi client", () => {
       expect(applicationsResponse.data.list.length).toBe(1);
       expect(applicationsResponse.data.list[0].id).toBe(applicationId);
 
-      const callbackEndpoint = serverConfig.identityVerificationApplicationsStaticCallbackExaminationEndpoint
-        .replace("{type}", type);
+      const callbackEndpoint = serverConfig.identityVerificationApplicationsPublicCallbackEndpoint
+        .replace("{type}", type)
+        .replace("{callbackName}", "callback-examination");
 
       let callbackExaminationResponse = await post({
         url: callbackEndpoint,
@@ -232,8 +233,9 @@ describe("multi client", () => {
       expect(applicationsResponse.data.list.length).toBe(1);
       expect(applicationsResponse.data.list[0].id).toBe(applicationId);
 
-      const callbackResultEndpoint = serverConfig.identityVerificationApplicationsStaticCallbackResultEndpoint
-        .replace("{type}", type);
+      const callbackResultEndpoint = serverConfig.identityVerificationApplicationsPublicCallbackEndpoint
+        .replace("{type}", type)
+        .replace("{callbackName}", "callback-result");
       const callbackResultResponse = await post({
         url: callbackResultEndpoint,
         headers: {

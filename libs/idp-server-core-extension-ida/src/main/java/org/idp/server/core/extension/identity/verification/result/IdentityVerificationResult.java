@@ -20,15 +20,14 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
-import org.idp.server.core.extension.identity.verification.IdentityVerificationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
-import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplication;
-import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationIdentifier;
-import org.idp.server.core.extension.identity.verification.claims.VerifiedClaims;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplicationIdentifier;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationService;
+import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationRequest;
+import org.idp.server.core.extension.identity.verification.io.IdentityVerificationCallbackRequest;
+import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
+import org.idp.server.core.extension.identity.verified.VerifiedClaims;
 import org.idp.server.core.oidc.identity.UserIdentifier;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -40,12 +39,11 @@ public class IdentityVerificationResult {
   UserIdentifier userId;
   IdentityVerificationApplicationIdentifier applicationId;
   IdentityVerificationType identityVerificationType;
-  ExternalIdentityVerificationService externalIdentityVerificationService;
-  ExternalIdentityVerificationApplicationIdentifier externalApplicationId;
   VerifiedClaims verifiedClaims;
   LocalDateTime verifiedAt;
   LocalDateTime verifiedUntil;
-  IdentityVerificationSource source;
+  IdentityVerificationSourceType source;
+  IdentityVerificationSourceDetails sourceDetails;
 
   public static IdentityVerificationResult create(
       IdentityVerificationApplication application,
@@ -58,14 +56,13 @@ public class IdentityVerificationResult {
     UserIdentifier userIdentifier = application.userIdentifier();
     IdentityVerificationApplicationIdentifier applicationId = application.identifier();
     IdentityVerificationType identityVerificationType = application.identityVerificationType();
-    ExternalIdentityVerificationService externalIdentityVerificationService =
-        verificationConfiguration.externalIdentityVerificationService();
-    ExternalIdentityVerificationApplicationIdentifier externalApplicationId =
-        application.externalApplicationId();
+
     VerifiedClaims verifiedClaims =
         VerifiedClaims.create(request, verificationConfiguration.verifiedClaimsConfiguration());
     LocalDateTime verifiedAt = SystemDateTime.now();
-    IdentityVerificationSource source = IdentityVerificationSource.APPLICATION;
+    IdentityVerificationSourceType source = IdentityVerificationSourceType.APPLICATION;
+    // TODO
+    IdentityVerificationSourceDetails sourceDetails = new IdentityVerificationSourceDetails();
 
     return new IdentityVerificationResult(
         identifier,
@@ -73,12 +70,44 @@ public class IdentityVerificationResult {
         userIdentifier,
         applicationId,
         identityVerificationType,
-        externalIdentityVerificationService,
-        externalApplicationId,
         verifiedClaims,
         verifiedAt,
         null,
-        source);
+        source,
+        sourceDetails);
+  }
+
+  public static IdentityVerificationResult createOnCallback(
+      IdentityVerificationApplication application,
+      IdentityVerificationCallbackRequest request,
+      IdentityVerificationConfiguration verificationConfiguration) {
+
+    IdentityVerificationResultIdentifier identifier =
+        new IdentityVerificationResultIdentifier(UUID.randomUUID().toString());
+    TenantIdentifier tenantId = application.tenantIdentifier();
+    UserIdentifier userIdentifier = application.userIdentifier();
+    IdentityVerificationApplicationIdentifier applicationId = application.identifier();
+    IdentityVerificationType identityVerificationType = application.identityVerificationType();
+
+    VerifiedClaims verifiedClaims =
+        VerifiedClaims.createOnCallback(
+            request, verificationConfiguration.verifiedClaimsConfiguration());
+    LocalDateTime verifiedAt = SystemDateTime.now();
+    IdentityVerificationSourceType source = IdentityVerificationSourceType.APPLICATION;
+    // TODO
+    IdentityVerificationSourceDetails sourceDetails = new IdentityVerificationSourceDetails();
+
+    return new IdentityVerificationResult(
+        identifier,
+        tenantId,
+        userIdentifier,
+        applicationId,
+        identityVerificationType,
+        verifiedClaims,
+        verifiedAt,
+        null,
+        source,
+        sourceDetails);
   }
 
   public static IdentityVerificationResult createOnDirect(
@@ -92,14 +121,11 @@ public class IdentityVerificationResult {
     UserIdentifier userIdentifier = request.userIdentifier();
     IdentityVerificationApplicationIdentifier applicationId =
         new IdentityVerificationApplicationIdentifier();
-    ExternalIdentityVerificationService externalIdentityVerificationService =
-        verificationConfiguration.externalIdentityVerificationService();
-    ExternalIdentityVerificationApplicationIdentifier externalApplicationId =
-        new ExternalIdentityVerificationApplicationIdentifier();
     VerifiedClaims verifiedClaims =
         VerifiedClaims.create(request, verificationConfiguration.verifiedClaimsConfiguration());
     LocalDateTime verifiedAt = SystemDateTime.now();
-    IdentityVerificationSource source = IdentityVerificationSource.DIRECT;
+    IdentityVerificationSourceType source = IdentityVerificationSourceType.DIRECT;
+    IdentityVerificationSourceDetails sourceDetails = new IdentityVerificationSourceDetails();
 
     return new IdentityVerificationResult(
         identifier,
@@ -107,12 +133,11 @@ public class IdentityVerificationResult {
         userIdentifier,
         applicationId,
         identityVerificationType,
-        externalIdentityVerificationService,
-        externalApplicationId,
         verifiedClaims,
         verifiedAt,
         null,
-        source);
+        source,
+        sourceDetails);
   }
 
   public IdentityVerificationResult() {}
@@ -123,23 +148,21 @@ public class IdentityVerificationResult {
       UserIdentifier userId,
       IdentityVerificationApplicationIdentifier applicationId,
       IdentityVerificationType identityVerificationType,
-      ExternalIdentityVerificationService externalIdentityVerificationService,
-      ExternalIdentityVerificationApplicationIdentifier externalApplicationId,
       VerifiedClaims verifiedClaims,
       LocalDateTime verifiedAt,
       LocalDateTime verifiedUntil,
-      IdentityVerificationSource source) {
+      IdentityVerificationSourceType source,
+      IdentityVerificationSourceDetails sourceDetails) {
     this.identifier = identifier;
     this.tenantId = tenantId;
     this.userId = userId;
     this.applicationId = applicationId;
     this.identityVerificationType = identityVerificationType;
-    this.externalIdentityVerificationService = externalIdentityVerificationService;
-    this.externalApplicationId = externalApplicationId;
     this.verifiedClaims = verifiedClaims;
     this.verifiedAt = verifiedAt;
     this.verifiedUntil = verifiedUntil;
     this.source = source;
+    this.sourceDetails = sourceDetails;
   }
 
   public IdentityVerificationResultIdentifier identifier() {
@@ -162,14 +185,6 @@ public class IdentityVerificationResult {
     return identityVerificationType;
   }
 
-  public ExternalIdentityVerificationService externalIdentityVerificationService() {
-    return externalIdentityVerificationService;
-  }
-
-  public ExternalIdentityVerificationApplicationIdentifier externalApplicationId() {
-    return externalApplicationId;
-  }
-
   public VerifiedClaims verifiedClaims() {
     return verifiedClaims;
   }
@@ -186,8 +201,16 @@ public class IdentityVerificationResult {
     return verifiedUntil != null;
   }
 
-  public IdentityVerificationSource source() {
+  public IdentityVerificationSourceType source() {
     return source;
+  }
+
+  public IdentityVerificationSourceDetails sourceDetails() {
+    return sourceDetails;
+  }
+
+  public boolean hasSourceDetails() {
+    return sourceDetails != null;
   }
 
   public boolean exists() {
@@ -198,10 +221,6 @@ public class IdentityVerificationResult {
     return applicationId != null && applicationId.exists();
   }
 
-  public boolean hasExternalApplicationId() {
-    return externalApplicationId != null && externalApplicationId.exists();
-  }
-
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("id", identifier.value());
@@ -209,13 +228,11 @@ public class IdentityVerificationResult {
     map.put("user_id", userId.value());
     if (hasApplicationId()) map.put("application_id", applicationId.value());
     map.put("verification_type", identityVerificationType.name());
-    map.put("external_service", externalIdentityVerificationService.name());
-    if (hasExternalApplicationId())
-      map.put("external_application_id", externalApplicationId.value());
     map.put("verified_claims", verifiedClaims.toMap());
     map.put("verified_at", verifiedAt);
     map.put("verified_until", verifiedUntil);
     map.put("source", source);
+    if (hasSourceDetails()) map.put("source_details", sourceDetails.toMap());
     return map;
   }
 }

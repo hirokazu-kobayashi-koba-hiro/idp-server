@@ -58,10 +58,10 @@ import org.idp.server.core.extension.ciba.repository.CibaGrantOperationCommandRe
 import org.idp.server.core.extension.identity.verification.IdentityVerificationApi;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationApi;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationCallbackApi;
-import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationCommandRepository;
-import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationCommandRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationQueryRepository;
+import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationCommandRepository;
+import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationResultCommandRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationResultQueryRepository;
 import org.idp.server.core.oidc.*;

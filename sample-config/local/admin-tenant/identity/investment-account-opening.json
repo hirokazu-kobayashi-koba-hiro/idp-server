@@ -1,236 +1,179 @@
 {
   "id": "666bae10-bc0d-41ce-92b4-53359b2f8439",
   "type": "investment-account-opening",
-  "external_service": "mocky",
-  "external_application_id_param": "application_id",
-  "oauth_authorization": {
-    "type": "password",
-    "token_endpoint": "http://mockoon:4000/token",
-    "client_id": "your-client-id",
-    "username": "username",
-    "password": "password",
-    "scope": "application"
-  },
-  "hmac_authentication": {},
-  "verified_claims_configuration": {
-   "mapping_rules": [
-     { "from": "$.verification.trust_framework", "to": "verification.trust_framework" },
-     { "from": "$.verification.evidence[0].type", "to": "verification.evidence.0.type" },
-     { "from": "$.verification.evidence[0].check_details[0].check_method", "to": "verification.evidence.0.check_details.0.check_method" },
-     { "from": "$.verification.evidence[0].check_details[0].organization", "to": "verification.evidence.0.check_details.0.organization" },
-     { "from": "$.verification.evidence[0].check_details[0].txn", "to": "verification.evidence.0.check_details.0.txn" },
-     { "from": "$.verification.evidence[0].time", "to": "verification.evidence.0.time" },
-     { "from": "$.verification.evidence[0].record.type", "to": "verification.evidence.0.record.type" },
-     { "from": "$.verification.evidence[0].record.source.name", "to": "verification.evidence.0.record.source.name" },
-     { "from": "$.verification.evidence[1].type", "to": "verification.evidence.1.type" },
-     { "from": "$.verification.evidence[1].check_details[0].check_method", "to": "verification.evidence.1.check_details.0.check_method" },
-     { "from": "$.verification.evidence[1].check_details[0].organization", "to": "verification.evidence.1.check_details.0.organization" },
-     { "from": "$.verification.evidence[1].check_details[0].txn", "to": "verification.evidence.1.check_details.1.txn" },
-     { "from": "$.verification.evidence[1].time", "to": "verification.evidence.1.time" },
-     { "from": "$.verification.evidence[1].record.type", "to": "verification.evidence.1.record.type" },
-     { "from": "$.verification.evidence[1].record.source.name", "to": "verification.evidence.1.record.source.name" },
-     { "from": "$.claims.given_name", "to": "claims.given_name" },
-     { "from": "$.claims.family_name", "to": "claims.family_name" },
-     { "from": "$.claims.birthdate", "to": "claims.birthdate" },
-     { "from": "$.claims.place_of_birth.country", "to": "claims.place_of_birth.country" },
-     { "from": "$.claims.address.locality", "to": "claims.address.locality" },
-     { "from": "$.claims.address.postal_code", "to": "claims.address.postal_code" },
-     { "from": "$.claims.address.country", "to": "claims.address.country" },
-     { "from": "$.claims.address.street_address", "to": "claims.address.street_address" }
-   ]
+  "common": {
+    "external_service": "mocky",
+    "callback_application_id_param": "application_id",
+    "oauth_authorization": {
+      "type": "password",
+      "token_endpoint": "http://localhost:4000/token",
+      "client_id": "your-client-id",
+      "username": "username",
+      "password": "password",
+      "scope": "application"
+    },
+    "hmac_authentication": {}
   },
   "processes": {
     "apply": {
-      "url": "http://mockoon:4000/apply",
-      "method": "POST",
-      "headers": {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer dummy-token"
-      },
-      "dynamic_body_keys": [
-        "last_name",
-        "first_name",
-        "last_name_kana",
-        "last_name_kana",
-        "first_name_kana",
-        "birthdate",
-        "nationality",
-        "email_address",
-        "mobile_phone_number",
-        "address"
-      ],
-      "static_body": {},
-      "request_validation_schema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "request Application",
-        "type": "object",
-        "required": [
-          "last_name",
-          "first_name",
-          "last_name_kana",
-          "first_name_kana",
-          "birthdate",
-          "nationality",
-          "email_address",
-          "mobile_phone_number",
-          "address"
-        ],
-        "properties": {
-          "last_name": {
-            "type": "string",
-            "maxLength": 255,
-            "store": true
-          },
-          "first_name": {
-            "type": "string",
-            "maxLength": 255,
-            "store": true
-          },
-          "last_name_kana": {
-            "type": "string",
-            "maxLength": 255,
-            "store": true
-          },
-          "first_name_kana": {
-            "type": "string",
-            "maxLength": 255,
-            "store": true
-          },
-          "birthdate": {
-            "type": "string",
-            "format": "date",
-            "store": true
-          },
-          "nationality": {
-            "type": "string",
-            "maxLength": 255,
-            "store": true
-          },
-          "email_address": {
-            "type": "string",
-            "maxLength": 255,
-            "pattern": "^[\\w\\.-]+@[\\w\\.-]+\\.[a-zA-Z]{2,}$",
-            "store": true
-          },
-          "mobile_phone_number": {
-            "type": "string",
-            "maxLength": 11,
-            "pattern": "^[0-9]{10,11}$",
-            "store": true
-          },
-          "address": {
-            "type": "object",
-            "store": true,
-            "properties": {
-              "street_address": {
-                "type": "string",
-                "maxLength": 255
-              },
-              "locality": {
-                "type": "string",
-                "maxLength": 255
-              },
-              "region": {
-                "type": "string",
-                "maxLength": 255
-              },
-              "postal_code": {
-                "type": "string",
-                "maxLength": 255
-              },
-              "country": {
-                "type": "string",
-                "maxLength": 255
-              }
-            },
-            "additionalProperties": false
-          }
-        },
-        "additionalProperties": false
-      },
-      "request_additional_parameter_schema": {
-        "$schema": "original",
-        "user": {
-          "mapping_rules": [
-            { "from": "$.sub", "to": "user_id" },
-            { "from": "$.email", "to": "mail_address" },
-            { "from": "$.custom_properties.token", "to": "token" }
-          ]
-        },
-        "http_request": {
-          "url": "http://mockoon:4000/apply",
-          "method": "POST",
-          "headers": {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer dummy-token"
-          },
-          "dynamic_body_keys": [
+      "request": {
+        "schema": {
+          "type": "object",
+          "required": [
             "last_name",
             "first_name",
             "last_name_kana",
-            "first_name_kana"
+            "first_name_kana",
+            "birthdate",
+            "nationality",
+            "email_address",
+            "mobile_phone_number",
+            "address"
           ],
-          "response_validation_schema": {
-            "$schema": "https://json-schema.org/draft/2020-12/schema",
-            "title": "external user data response",
-            "type": "object",
-            "required": [
-              "application_id"
-            ],
-            "properties": {
-              "application_id": {
-                "type": "string",
-                "store": true
-              }
+          "properties": {
+            "last_name": {
+              "type": "string",
+              "maxLength": 255,
+              "store": true
             },
-            "additionalProperties": false
+            "first_name": {
+              "type": "string",
+              "maxLength": 255,
+              "store": true
+            },
+            "last_name_kana": {
+              "type": "string",
+              "maxLength": 255,
+              "store": true
+            },
+            "first_name_kana": {
+              "type": "string",
+              "maxLength": 255,
+              "store": true
+            },
+            "birthdate": {
+              "type": "string",
+              "format": "date",
+              "store": true
+            },
+            "nationality": {
+              "type": "string",
+              "maxLength": 255,
+              "store": true
+            },
+            "email_address": {
+              "type": "string",
+              "maxLength": 255,
+              "pattern": "^[\\w\\.-]+@[\\w\\.-]+\\.[a-zA-Z]{2,}$",
+              "store": true
+            },
+            "mobile_phone_number": {
+              "type": "string",
+              "maxLength": 11,
+              "pattern": "^[0-9]{10,11}$",
+              "store": true
+            },
+            "address": {
+              "type": "object",
+              "store": true,
+              "properties": {
+                "street_address": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "locality": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "region": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "postal_code": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "country": {
+                  "type": "string",
+                  "maxLength": 255
+                }
+              }
+            }
           }
         }
       },
-      "request_verification_schema": {
-        "$schema": "original",
-        "duplicate_application": false,
-        "unmatched_user_claims_email": {
-          "property": "email_address"
-        },
-        "unmatched_user_claims_phone": {
-          "property": "mobile_phone_number"
-        }
-      },
-      "response_validation_schema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "application response",
-        "type": "object",
-        "required": [
-          "application_id"
+      "pre_hook": {
+        "verifications": [
+          {
+            "type": "user_claim",
+            "details": {
+              "verification_parameters": [
+                {
+                  "request_json_path": "$.request_body.phone_number",
+                  "user_claim_json_path": "phone_number"
+                }
+              ]
+            }
+          }
         ],
-        "properties": {
-          "application_id": {
-            "type": "string",
-            "store": true
+        "additional_parameters": [
+          {
+            "type": "http_request",
+            "details": {
+              "url": "http://localhost:4000/apply",
+              "method": "POST",
+              "static_headers": {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer dummy-token"
+              },
+              "body_mapping_rules": [
+                { "from": "$.request_body", "to": "*" }
+              ],
+              "response_schema": {
+                "type": "object",
+                "required": [
+                  "application_id"
+                ],
+                "properties": {
+                  "application_id": {
+                    "type": "string",
+                    "store": true
+                  }
+                }
+              }
+            }
           }
+        ]
+      },
+      "execution": {
+        "url": "http://localhost:4000/apply",
+        "method": "POST",
+        "static_headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer dummy-token"
         },
-        "additionalProperties": false
+        "static_body": {},
+        "body_mapping_rules": [
+          { "from": "$.request_body", "to": "*" }
+        ]
+      },
+      "post_hook": {},
+      "store": {
+        "application_details_mapping_rules": [
+          { "from": "$.request_body", "to": "*" },
+          { "from": "$.response_body.application_id", "to": "application_id" },
+          { "from": "$.response_body.application_id", "to": "external_application_id" }
+        ]
+      },
+      "response": {
+        "body_mapping_rules": [
+          { "from": "$.response_body", "to": "*" },
+          { "from": "$.response_body.application_id", "to": "external_application_id" }
+        ]
       }
     },
     "request-ekyc": {
-      "url": "http://mockoon:4000/{{external_application_id}}/request-ekyc",
-      "method": "POST",
-      "headers": {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer dummy-token"
-      },
-      "dynamic_body_keys": [
-        "trust_framework",
-        "evidence_document_type"
-      ],
-      "static_body": {},
-      "path_mapping_rules": [
-        { "from": "$.application.external_application_id", "to": "external_application_id" }
-      ],
-      "request_validation_schema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "request eKYC",
+      "request_schema": {
         "type": "object",
         "required": [
           "trust_framework",
@@ -247,176 +190,242 @@
             "maxLength": 50,
             "store": true
           }
-        },
-        "additionalProperties": false
+        }
       },
-      "response_validation_schema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "request eKYC response",
-        "type": "object",
-        "required": [
-          "ekyc_url"
-        ],
-        "properties": {
-          "ekyc_url": {
-            "type": "string",
-            "respond": true,
-            "store": true
-          }
+      "execution": {
+        "type": "http_request",
+        "url": "http://localhost:4000/{{external_application_id}}/request-ekyc",
+        "method": "POST",
+        "static_headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer dummy-token"
         },
-        "additionalProperties": false
+        "dynamic_body_keys": [
+          "trust_framework",
+          "evidence_document_type"
+        ],
+        "static_body": {},
+        "path_mapping_rules": [
+          { "from": "$.application.application_details.external_application_id", "to": "external_application_id" }
+        ],
+        "body_mapping_rules": [
+          { "from":  "$.request_body.trust_framework", "to": "trust_framework" },
+          { "from":  "$.request_body.evidence_document_type", "to": "evidence_document_type" }
+        ]
+      },
+      "store": {
+        "application_details_mapping_rules": [
+          { "from": "$.request_body", "to": "*" }
+        ]
+      },
+      "response": {
+        "body_mapping_rules": [
+          { "from": "$.response_body", "to": "*" }
+        ]
       }
     },
     "complete-ekyc": {
-      "url": "http://mockoon:4000/{{external_application_id}}/complete-ekyc",
-      "method": "POST",
-      "headers": {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer dummy-token"
-      },
-      "dynamic_body_keys": [],
-      "static_body": {},
-      "path_mapping_rules": [
-        { "from": "$.application.external_application_id", "to": "external_application_id" }
-      ],
-      "request_validation_schema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "complete eKYC",
+      "request_schema": {
         "type": "object",
         "required": [],
         "properties": {},
         "additionalProperties": false
       },
-      "response_validation_schema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "complete eKYC response",
-        "type": "object",
-        "required": [],
-        "properties": {},
-        "additionalProperties": false
+      "execution": {
+        "url": "http://localhost:4000/{{external_application_id}}/complete-ekyc",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer dummy-token"
+        },
+        "static_body": {},
+        "path_mapping_rules": [
+          { "from": "$.application.application_details.external_application_id", "to": "external_application_id" }
+        ],
+        "body_mapping_rules": [
+          { "from": "$.request_body", "to": "*" }
+        ]
+      },
+      "store": {
+        "application_details_mapping_rules": [
+          { "from": "$.request_body", "to": "*" },
+          { "from": "$.response_body", "to": "*" }
+        ]
+      },
+      "response": {
+        "body_mapping_rules": [
+          { "from": "$.response_body", "to": "*" }
+        ]
       }
     },
     "crm-registration": {
-      "url": "http://mockoon:4000/crm-registration",
-      "method": "POST",
-      "auth_type": "hmac_sha256",
-      "hmac_authentication": {
-        "api_key": "abcdef123456",
-        "secret": "super-secret-key",
-        "signature_format": "HmacSHA256={signature}",
-        "signing_fields": [
-          "method",
-          "path",
-          "timestamp",
-          "body"
+      "request_schema": {
+        "type": "object",
+        "required": [],
+        "properties": {}
+      },
+      "execution": {
+        "url": "http://localhost:4000/crm-registration",
+        "method": "POST",
+        "auth_type": "hmac_sha256",
+        "hmac_authentication": {
+          "api_key": "abcdef123456",
+          "secret": "super-secret-key",
+          "signature_format": "HmacSHA256={signature}",
+          "signing_fields": [
+            "method",
+            "path",
+            "timestamp",
+            "body"
+          ]
+        },
+        "static_headers": {
+          "Content-Type": "application/json"
+        },
+        "static_body": {},
+        "body_mapping_rules": [
+          { "from": "$.request_body", "to": "*" }
         ]
       },
-      "headers": {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer dummy-token"
+      "store": {
+        "application_details_mapping_rules": [
+          { "from": "$.request_body", "to": "*" },
+          { "from": "$.response_body", "to": "*" }
+        ]
       },
-      "dynamic_body_keys": [],
-      "static_body": {},
-      "request_validation_schema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "complete eKYC",
-        "type": "object",
-        "required": [],
-        "properties": {},
-        "additionalProperties": false
-      },
-      "response_validation_schema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "complete eKYC response",
-        "type": "object",
-        "required": [],
-        "properties": {},
-        "additionalProperties": false
+      "response": {
+        "body_mapping_rules": [
+          { "from": "$.response_body", "to": "*" }
+        ]
       }
     },
     "callback-examination": {
       "type": "callback",
-      "request_validation_schema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "start-examination",
-        "type": "object",
-        "required": [
-          "application_id"
-        ],
-        "properties": {
-          "application_id": {
-            "type": "string",
-            "store": true
-          },
-          "step": {
-            "type": "string",
-            "store": true
-          },
-          "comment": {
-            "type": "string",
-            "store": true
-          },
-          "rejected": {
-            "type": "boolean",
-            "store": true
+      "request": {
+        "schema": {
+          "type": "object",
+          "required": [
+            "application_id"
+          ],
+          "properties": {
+            "application_id": {
+              "type": "string",
+              "store": true
+            },
+            "step": {
+              "type": "string",
+              "store": true
+            },
+            "comment": {
+              "type": "string",
+              "store": true
+            },
+            "rejected": {
+              "type": "boolean",
+              "store": true
+            }
           }
-        },
-        "additionalProperties": false
-      },
-      "rejected_condition_schema": {
-        "$schema": "original",
-        "field": "rejected",
-        "type": "boolean",
-        "expected_value": true
+        }
       }
     },
-    "callback-result": {
-      "request_validation_schema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "callback result",
-        "type": "object",
-        "required": [
-          "application_id",
-          "verification",
-          "claims"
-        ],
-        "properties": {
-          "application_id": {
-            "type": "string"
-          },
-          "verification": {
-            "type": "object"
-          },
-          "claims": {
-            "type": "object"
-          }
+    "cancel": {
+      "cancellation_condition": {
+        "request_condition": {
+          "all_of": [
+            {
+              "path": "$.application_id",
+              "type": "string",
+              "operation": "exists",
+              "value": true
+            }
+          ]
         },
-        "additionalProperties": false
-      },
-      "request_verification_schema": {
-        "$schema": "original",
-        "duplicate_application": false,
-        "unmatched_user_claims_email": {
-          "property": "email_address"
-        },
-        "unmatched_user_claims_phone": {
-          "property": "mobile_phone_number"
-        }
-      },
-      "completion_condition_configuration": {
         "process_condition": {
           "all_of": [
             {
-              "type": "apply",
+              "process_name": "apply",
+              "type": "success",
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    "callback-result": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "required": [
+            "application_id",
+            "verification",
+            "claims"
+          ],
+          "properties": {
+            "application_id": {
+              "type": "string"
+            },
+            "verification": {
+              "type": "object"
+            },
+            "claims": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "completion_condition": {
+        "request_condition": {
+          "all_of": [
+            {
+              "path": "$.application_id",
+              "type": "string",
+              "operation": "exists",
+              "value": true
+            }
+          ]
+        },
+        "process_condition": {
+          "all_of": [
+            {
+              "process_name": "apply",
+              "type": "success",
               "success_count": 1
             },
             {
-              "type": "callback-examination",
+              "process_name": "callback-examination",
+              "type": "success",
               "success_count": 1
             }
           ]
         }
       }
     }
+  },
+  "verified_claims": {
+    "mapping_rules": [
+      { "from": "$.verification.trust_framework", "to": "verification.trust_framework" },
+      { "from": "$.verification.evidence[0].type", "to": "verification.evidence.0.type" },
+      { "from": "$.verification.evidence[0].check_details[0].check_method", "to": "verification.evidence.0.check_details.0.check_method" },
+      { "from": "$.verification.evidence[0].check_details[0].organization", "to": "verification.evidence.0.check_details.0.organization" },
+      { "from": "$.verification.evidence[0].check_details[0].txn", "to": "verification.evidence.0.check_details.0.txn" },
+      { "from": "$.verification.evidence[0].time", "to": "verification.evidence.0.time" },
+      { "from": "$.verification.evidence[0].record.type", "to": "verification.evidence.0.record.type" },
+      { "from": "$.verification.evidence[0].record.source.name", "to": "verification.evidence.0.record.source.name" },
+      { "from": "$.verification.evidence[1].type", "to": "verification.evidence.1.type" },
+      { "from": "$.verification.evidence[1].check_details[0].check_method", "to": "verification.evidence.1.check_details.0.check_method" },
+      { "from": "$.verification.evidence[1].check_details[0].organization", "to": "verification.evidence.1.check_details.0.organization" },
+      { "from": "$.verification.evidence[1].check_details[0].txn", "to": "verification.evidence.1.check_details.1.txn" },
+      { "from": "$.verification.evidence[1].time", "to": "verification.evidence.1.time" },
+      { "from": "$.verification.evidence[1].record.type", "to": "verification.evidence.1.record.type" },
+      { "from": "$.verification.evidence[1].record.source.name", "to": "verification.evidence.1.record.source.name" },
+      { "from": "$.claims.given_name", "to": "claims.given_name" },
+      { "from": "$.claims.family_name", "to": "claims.family_name" },
+      { "from": "$.claims.birthdate", "to": "claims.birthdate" },
+      { "from": "$.claims.place_of_birth.country", "to": "claims.place_of_birth.country" },
+      { "from": "$.claims.address.locality", "to": "claims.address.locality" },
+      { "from": "$.claims.address.postal_code", "to": "claims.address.postal_code" },
+      { "from": "$.claims.address.country", "to": "claims.address.country" },
+      { "from": "$.claims.address.street_address", "to": "claims.address.street_address" }
+    ]
   }
 }

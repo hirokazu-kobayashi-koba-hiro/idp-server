@@ -16,11 +16,10 @@
 
 package org.idp.server.core.extension.identity.verification.repository;
 
-import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplication;
-import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationIdentifier;
-import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationQueries;
-import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplications;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplicationIdentifier;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationQueries;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplications;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -29,8 +28,7 @@ public interface IdentityVerificationApplicationQueryRepository {
   IdentityVerificationApplication get(
       Tenant tenant, User user, IdentityVerificationApplicationIdentifier identifier);
 
-  IdentityVerificationApplication get(
-      Tenant tenant, ExternalIdentityVerificationApplicationIdentifier identifier);
+  IdentityVerificationApplication get(Tenant tenant, String key, String identifier);
 
   IdentityVerificationApplications findAll(Tenant tenant, User user);
 

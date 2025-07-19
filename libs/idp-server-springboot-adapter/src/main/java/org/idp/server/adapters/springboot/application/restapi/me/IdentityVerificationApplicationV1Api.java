@@ -22,11 +22,11 @@ import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.adapters.springboot.application.restapi.model.ResourceOwnerPrincipal;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationApi;
-import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
-import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationIdentifier;
-import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationQueries;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationQueries;
+import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationResponse;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.type.RequestAttributes;
@@ -103,7 +103,7 @@ public class IdentityVerificationApplicationV1Api implements ParameterTransforma
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("id") IdentityVerificationApplicationIdentifier identifier,
       @PathVariable("verification-type") IdentityVerificationType verificationType,
-      @PathVariable("verification-process") IdentityVerificationProcess identityVerificationProcess,
+      @PathVariable("verification-process") IdentityVerificationProcess process,
       @RequestBody(required = false) Map<String, Object> requestBody,
       HttpServletRequest httpServletRequest) {
 
@@ -116,34 +116,7 @@ public class IdentityVerificationApplicationV1Api implements ParameterTransforma
             resourceOwnerPrincipal.getOAuthToken(),
             identifier,
             verificationType,
-            identityVerificationProcess,
-            new IdentityVerificationApplicationRequest(requestBody),
-            requestAttributes);
-
-    HttpHeaders httpHeaders = new HttpHeaders();
-    httpHeaders.add("Content-Type", "application/json");
-    return new ResponseEntity<>(
-        response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
-  }
-
-  @PostMapping("/{verification-type}/{id}/evaluate-result")
-  public ResponseEntity<?> callbackExamination(
-      @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @PathVariable("id") IdentityVerificationApplicationIdentifier identifier,
-      @PathVariable("verification-type") IdentityVerificationType verificationType,
-      @RequestBody(required = false) Map<String, Object> requestBody,
-      HttpServletRequest httpServletRequest) {
-
-    RequestAttributes requestAttributes = transform(httpServletRequest);
-
-    IdentityVerificationApplicationResponse response =
-        identityVerificationApplicationApi.evaluateResult(
-            tenantIdentifier,
-            resourceOwnerPrincipal.getUser(),
-            resourceOwnerPrincipal.getOAuthToken(),
-            identifier,
-            verificationType,
+            process,
             new IdentityVerificationApplicationRequest(requestBody),
             requestAttributes);
 

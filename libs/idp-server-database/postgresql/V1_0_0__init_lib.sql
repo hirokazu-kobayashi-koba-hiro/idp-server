@@ -826,10 +826,6 @@ CREATE TABLE identity_verification_application
     user_id                      UUID                    NOT NULL,
     verification_type            VARCHAR(255)            NOT NULL,
     application_details          JSONB                   NOT NULL,
-    external_service             VARCHAR(255)            NOT NULL,
-    external_application_id      VARCHAR(255)            NOT NULL,
-    external_application_details JSONB,
-    examination_results          JSONB,
     processes                    JSONB                   NOT NULL,
     status                       VARCHAR(255)            NOT NULL,
     requested_at                 TIMESTAMP               NOT NULL,
@@ -850,8 +846,7 @@ ALTER TABLE identity_verification_application FORCE ROW LEVEL SECURITY;
 CREATE INDEX idx_verification_user ON identity_verification_application (user_id);
 CREATE INDEX idx_verification_tenant_client ON identity_verification_application (tenant_id, client_id);
 CREATE INDEX idx_verification_status ON identity_verification_application (status);
-CREATE INDEX idx_verification_external_service ON identity_verification_application (external_service);
-CREATE INDEX idx_verification_external_application_id ON identity_verification_application (external_application_id);
+CREATE INDEX idx_verification_application_details ON identity_verification_application USING GIN (application_details);
 
 CREATE TABLE identity_verification_result
 (
@@ -859,13 +854,12 @@ CREATE TABLE identity_verification_result
     tenant_id               UUID         NOT NULL,
     user_id                 UUID         NOT NULL,
     application_id          UUID,
-    external_service        VARCHAR(255) NOT NULL,
     verification_type       VARCHAR(255) NOT NULL,
-    external_application_id VARCHAR(255),
     verified_claims         JSONB        NOT NULL,
     verified_at             TIMESTAMP    NOT NULL,
     valid_until             TIMESTAMP,
     source                  VARCHAR(255) NOT NULL DEFAULT 'application',
+    source_details JSONB,
     created_at              TIMESTAMP             DEFAULT now() NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (application_id) REFERENCES identity_verification_application (id) ON DELETE CASCADE,
@@ -875,10 +869,9 @@ CREATE TABLE identity_verification_result
 CREATE INDEX idx_verification_result_user_id ON identity_verification_result (user_id);
 CREATE INDEX idx_verification_result_application_id ON identity_verification_result (application_id);
 CREATE INDEX idx_verification_result_verification_type ON identity_verification_result (verification_type);
-CREATE INDEX idx_verification_result_external_service ON identity_verification_result (external_service);
-CREATE INDEX idx_verification_result_external_application_id ON identity_verification_result (external_application_id);
 CREATE INDEX idx_verification_result_verified_at ON identity_verification_result (verified_at);
 CREATE INDEX idx_verification_result_verified_claims ON identity_verification_result USING GIN (verified_claims);
+CREATE INDEX idx_verification_result_source_details ON identity_verification_result USING GIN (source_details);
 
 ALTER TABLE identity_verification_result ENABLE ROW LEVEL SECURITY;
 CREATE

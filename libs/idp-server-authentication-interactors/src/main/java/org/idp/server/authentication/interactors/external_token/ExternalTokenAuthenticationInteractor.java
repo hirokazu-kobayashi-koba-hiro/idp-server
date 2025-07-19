@@ -124,7 +124,7 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
       HttpRequestBaseParams httpRequestBaseParams,
       HttpRequestExecutionConfigInterface configuration) {
 
-    Map<String, String> headers = new HashMap<>(configuration.httpRequestHeaders().toMap());
+    Map<String, String> headers = new HashMap<>(configuration.httpRequestStaticHeaders().toMap());
 
     switch (configuration.httpRequestAuthType()) {
       case OAUTH2 -> {

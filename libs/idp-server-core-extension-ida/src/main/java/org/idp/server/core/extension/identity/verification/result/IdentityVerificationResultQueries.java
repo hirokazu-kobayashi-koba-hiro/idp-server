@@ -97,22 +97,6 @@ public class IdentityVerificationResultQueries implements UuidConvertable {
     return convertUuid(applicationId());
   }
 
-  public boolean hasExternalApplicationId() {
-    return values.containsKey("external_application_id");
-  }
-
-  public String externalApplicationId() {
-    return values.get("external_application_id");
-  }
-
-  public boolean hasExternalService() {
-    return values.containsKey("external_service");
-  }
-
-  public String externalService() {
-    return values.get("external_service");
-  }
-
   public boolean hasSource() {
     return values.containsKey("source");
   }
@@ -133,6 +117,24 @@ public class IdentityVerificationResultQueries implements UuidConvertable {
       if (key.startsWith("verified_claims.")) {
         String value = entry.getValue();
         details.put(key.replace("verified_claims.", ""), value);
+      }
+    }
+
+    return details;
+  }
+
+  public boolean hasSourceDetails() {
+    return !sourceDetails().isEmpty();
+  }
+
+  public Map<String, String> sourceDetails() {
+    Map<String, String> details = new HashMap<>();
+
+    for (Map.Entry<String, String> entry : values.entrySet()) {
+      String key = entry.getKey();
+      if (key.startsWith("source_details.")) {
+        String value = entry.getValue();
+        details.put(key.replace("source_details.", ""), value);
       }
     }
 

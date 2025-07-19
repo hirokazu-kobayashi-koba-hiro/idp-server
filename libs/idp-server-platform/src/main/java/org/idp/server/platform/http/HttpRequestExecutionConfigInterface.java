@@ -34,7 +34,7 @@ public interface HttpRequestExecutionConfigInterface {
 
   HmacAuthenticationConfiguration hmacAuthentication();
 
-  HttpRequestStaticHeaders httpRequestHeaders();
+  HttpRequestStaticHeaders httpRequestStaticHeaders();
 
   HttpRequestStaticBody httpRequestStaticBody();
 

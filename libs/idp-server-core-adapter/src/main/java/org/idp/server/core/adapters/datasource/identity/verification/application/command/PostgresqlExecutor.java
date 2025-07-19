@@ -18,8 +18,8 @@ package org.idp.server.core.adapters.datasource.identity.verification.applicatio
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplication;
-import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationIdentifier;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.json.JsonConverter;
@@ -35,15 +35,13 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
     String sqlTemplate =
         """
                     INSERT INTO public.identity_verification_application
-                    (id,
+                    (
+                    id,
                     tenant_id,
                     client_id,
                     user_id,
                     verification_type,
                     application_details,
-                    external_service,
-                    external_application_id,
-                    external_application_details,
                     processes,
                     status,
                     requested_at)
@@ -52,9 +50,6 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
                     ?::uuid,
                     ?,
                     ?::uuid,
-                    ?,
-                    ?::jsonb,
-                    ?,
                     ?,
                     ?::jsonb,
                     ?::jsonb,
@@ -70,15 +65,6 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
     params.add(application.userIdentifier().valueAsUuid());
     params.add(application.identityVerificationType().name());
     params.add(jsonConverter.write(application.applicationDetails().toMap()));
-
-    params.add(application.externalWorkflowDelegation().name());
-    params.add(application.externalApplicationId().value());
-    if (application.externalApplicationDetails() != null) {
-      params.add(jsonConverter.write(application.externalApplicationDetails().toMap()));
-    } else {
-      params.add(null);
-    }
-
     params.add(jsonConverter.write(application.processesAsMapObject()));
     params.add(application.status().value());
     params.add(application.requestedAt());
@@ -100,17 +86,6 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
 
     setClauses.add("status = ?");
     params.add(application.status().value());
-
-    if (application.hasExternalApplicationDetails()) {
-      setClauses.add("external_application_details = ?::jsonb");
-      params.add(jsonConverter.write(application.externalApplicationDetails().toMap()));
-    }
-
-    if (application.hasExaminationResults()) {
-      setClauses.add("examination_results = ?::jsonb");
-      params.add(jsonConverter.write(application.examinationResultsAsMapList()));
-    }
-
     setClauses.add("processes = ?::jsonb");
     params.add(jsonConverter.write(application.processesAsMapObject()));
 

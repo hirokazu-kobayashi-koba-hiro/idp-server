@@ -19,20 +19,22 @@ package org.idp.server.usecases.application.identity_verification_service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.extension.identity.verification.*;
-import org.idp.server.core.extension.identity.verification.claims.VerifiedClaims;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationApi;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
+import org.idp.server.core.extension.identity.verification.application.pre_hook.basic_auth.IdentityVerificationRequestVerifiedResult;
+import org.idp.server.core.extension.identity.verification.application.pre_hook.basic_auth.IdentityVerificationRequestVerifiers;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
-import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationQueryRepository;
-import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationRegistrationConfiguration;
+import org.idp.server.core.extension.identity.verification.configuration.registration.IdentityVerificationRegistrationConfig;
+import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationResponse;
+import org.idp.server.core.extension.identity.verification.registration.IdentityVerificationRequestValidator;
+import org.idp.server.core.extension.identity.verification.registration.IdentityVerificationValidationResult;
+import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationResultCommandRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationResultQueryRepository;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResult;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResultQueries;
-import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationRequestValidator;
-import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationValidationResult;
-import org.idp.server.core.extension.identity.verification.verifier.result.IdentityVerificationRequestVerifiedResult;
-import org.idp.server.core.extension.identity.verification.verifier.result.IdentityVerificationRequestVerifiers;
+import org.idp.server.core.extension.identity.verified.VerifiedClaims;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserStatus;
 import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
@@ -90,8 +92,8 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
     IdentityVerificationConfiguration verificationConfiguration =
         configurationQueryRepository.get(tenant, type);
 
-    IdentityVerificationRegistrationConfiguration registrationConfiguration =
-        verificationConfiguration.registrationConfiguration();
+    IdentityVerificationRegistrationConfig registrationConfiguration =
+        verificationConfiguration.registration();
 
     IdentityVerificationRequestValidator verificationRequestValidator =
         new IdentityVerificationRequestValidator(registrationConfiguration, request);

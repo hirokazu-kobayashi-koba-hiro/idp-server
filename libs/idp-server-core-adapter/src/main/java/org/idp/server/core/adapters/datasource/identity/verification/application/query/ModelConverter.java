@@ -19,10 +19,7 @@ package org.idp.server.core.adapters.datasource.identity.verification.applicatio
 import java.time.LocalDateTime;
 import java.util.*;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
-import org.idp.server.core.extension.identity.verification.application.*;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplicationDetails;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplicationIdentifier;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationService;
+import org.idp.server.core.extension.identity.verification.application.model.*;
 import org.idp.server.core.oidc.identity.UserIdentifier;
 import org.idp.server.core.oidc.type.oauth.RequestedClientId;
 import org.idp.server.platform.date.LocalDateTimeParser;
@@ -44,15 +41,6 @@ public class ModelConverter {
         new IdentityVerificationApplicationDetails(
             JsonNodeWrapper.fromString(map.get("application_details")));
 
-    ExternalIdentityVerificationService externalIdentityVerificationService =
-        new ExternalIdentityVerificationService(map.get("external_service"));
-    ExternalIdentityVerificationApplicationIdentifier externalApplicationId =
-        new ExternalIdentityVerificationApplicationIdentifier(map.get("external_application_id"));
-    ExternalIdentityVerificationApplicationDetails externalIdentityVerificationApplicationDetails =
-        new ExternalIdentityVerificationApplicationDetails(
-            JsonNodeWrapper.fromString(map.get("external_application_details")));
-
-    IdentityVerificationExaminationResults examinationResults = toExaminationResults(map);
     IdentityVerificationApplicationProcessResults processes = toProcesses(map);
 
     IdentityVerificationApplicationStatus status =
@@ -66,28 +54,9 @@ public class ModelConverter {
         requestedClientId,
         sub,
         details,
-        externalIdentityVerificationService,
-        externalApplicationId,
-        externalIdentityVerificationApplicationDetails,
-        examinationResults,
         processes,
         status,
         requestedAt);
-  }
-
-  private static IdentityVerificationExaminationResults toExaminationResults(
-      Map<String, String> map) {
-    if (map.get("examination_results") == null || map.get("examination_results").isEmpty()) {
-      return new IdentityVerificationExaminationResults();
-    }
-    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(map.get("examination_results"));
-    List<IdentityVerificationExaminationResult> examinationResultList = new ArrayList<>();
-
-    for (JsonNodeWrapper wrapper : jsonNodeWrapper.elements()) {
-      examinationResultList.add(new IdentityVerificationExaminationResult(wrapper));
-    }
-
-    return new IdentityVerificationExaminationResults(examinationResultList);
   }
 
   static IdentityVerificationApplicationProcessResults toProcesses(Map<String, String> map) {

@@ -2,27 +2,6 @@
   "id": "8c91feb0-97d5-41ce-b041-ad2ab2c65158",
   "type": "trust-service",
   "external_service": "mocky",
-  "verified_claims_configuration": {
-   "mapping_rules": [
-     { "from": "$.trust_framework", "to": "verification.trust_framework" },
-     { "from": "$.evidence[0].type", "to": "verification.evidence.0.type" },
-     { "from": "$.evidence[0].check_details[0].check_method", "to": "verification.evidence.0.check_details.0.check_method" },
-     { "from": "$.evidence[0].check_details[0].organization", "to": "verification.evidence.0.check_details.0.organization" },
-     { "from": "$.evidence[0].check_details[0].txn", "to": "verification.evidence.0.check_details.0.txn" },
-     { "from": "$.evidence[0].time", "to": "verification.evidence.0.time" },
-     { "from": "$.evidence[0].record.type", "to": "verification.evidence.0.record.type" },
-     { "from": "$.evidence[0].record.source.name", "to": "verification.evidence.0.record.source.name" },
-     { "from": "$.last_name", "to": "claims.last_name" },
-     { "from": "$.family_name", "to": "claims.family_name" },
-     { "from": "$.last_name_kana", "to": "claims.last_name_kana" },
-     { "from": "$.first_name_kana", "to": "claims.first_name_kana" },
-     { "from": "$.birthdate", "to": "claims.birthdate" },
-     { "from": "$.nationality", "to": "claims.nationality" },
-     { "from": "$.email_address", "to": "claims.email_address" },
-     { "from": "$.mobile_phone_number", "to": "claims.mobile_phone_number" },
-     { "from": "$.address", "to": "claims.address" }
-   ]
-  },
   "registration": {
     "basic_auth": {
       "username": "test_user",
@@ -180,11 +159,30 @@
               "type": "string",
               "maxLength": 255
             }
-          },
-          "additionalProperties": false
+          }
         }
-      },
-      "additionalProperties": false
+      }
     }
+  },
+  "verified_claims": {
+    "mapping_rules": [
+      { "from": "$.trust_framework", "to": "verification.trust_framework" },
+      { "from": "$.evidence[0].type", "to": "verification.evidence.0.type" },
+      { "from": "$.evidence[0].check_details[0].check_method", "to": "verification.evidence.0.check_details.0.check_method" },
+      { "from": "$.evidence[0].check_details[0].organization", "to": "verification.evidence.0.check_details.0.organization" },
+      { "from": "$.evidence[0].check_details[0].txn", "to": "verification.evidence.0.check_details.0.txn" },
+      { "from": "$.evidence[0].time", "to": "verification.evidence.0.time" },
+      { "from": "$.evidence[0].record.type", "to": "verification.evidence.0.record.type" },
+      { "from": "$.evidence[0].record.source.name", "to": "verification.evidence.0.record.source.name" },
+      { "from": "$.last_name", "to": "claims.last_name" },
+      { "from": "$.family_name", "to": "claims.family_name" },
+      { "from": "$.last_name_kana", "to": "claims.last_name_kana" },
+      { "from": "$.first_name_kana", "to": "claims.first_name_kana" },
+      { "from": "$.birthdate", "to": "claims.birthdate" },
+      { "from": "$.nationality", "to": "claims.nationality" },
+      { "from": "$.email_address", "to": "claims.email_address" },
+      { "from": "$.mobile_phone_number", "to": "claims.mobile_phone_number" },
+      { "from": "$.address", "to": "claims.address" }
+    ]
   }
 }

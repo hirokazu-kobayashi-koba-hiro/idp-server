@@ -95,16 +95,6 @@ public class PostgresqlExecutor implements IdentityVerificationResultSqlExecutor
       params.add(queries.applicationIdAsUuid());
     }
 
-    if (queries.hasExternalApplicationId()) {
-      sqlBuilder.append(" AND external_application_id = ?");
-      params.add(queries.externalApplicationId());
-    }
-
-    if (queries.hasExternalService()) {
-      sqlBuilder.append(" AND external_service = ?");
-      params.add(queries.externalService());
-    }
-
     if (queries.hasSource()) {
       sqlBuilder.append(" AND source = ?");
       params.add(queries.source());
@@ -135,9 +125,7 @@ public class PostgresqlExecutor implements IdentityVerificationResultSqlExecutor
                  tenant_id,
                  user_id,
                  application_id,
-                 external_service,
                  verification_type,
-                 external_application_id,
                  verified_claims,
                  verified_at,
                  valid_until,

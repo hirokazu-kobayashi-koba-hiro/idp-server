@@ -18,20 +18,21 @@ package org.idp.server.usecases.application.identity_verification_service;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.extension.identity.verification.*;
-import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplication;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationCallbackApi;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
+import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationHandler;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
+import org.idp.server.core.extension.identity.verification.callback.validation.IdentityVerificationCallbackRequestValidator;
+import org.idp.server.core.extension.identity.verification.callback.validation.IdentityVerificationCallbackValidationResult;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
-import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationQueryRepository;
-import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplicationIdentifier;
-import org.idp.server.core.extension.identity.verification.handler.IdentityVerificationHandler;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationResponse;
+import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
+import org.idp.server.core.extension.identity.verification.io.*;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationCommandRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationQueryRepository;
+import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationResultCommandRepository;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResult;
-import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationApplicationRequestValidator;
-import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationApplicationValidationResult;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserStatus;
 import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
@@ -51,7 +52,7 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
   IdentityVerificationApplicationCommandRepository applicationCommandRepository;
   IdentityVerificationApplicationQueryRepository applicationQueryRepository;
   IdentityVerificationResultCommandRepository resultCommandRepository;
-  IdentityVerificationHandler identityVerificationHandler;
+  IdentityVerificationApplicationHandler identityVerificationApplicationHandler;
   TenantQueryRepository tenantQueryRepository;
   UserQueryRepository userQueryRepository;
   UserCommandRepository userCommandRepository;
@@ -73,105 +74,61 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
     this.resultCommandRepository = resultCommandRepository;
     this.userQueryRepository = userQueryRepository;
     this.userCommandRepository = userCommandRepository;
-    this.identityVerificationHandler = new IdentityVerificationHandler();
+    this.identityVerificationApplicationHandler = new IdentityVerificationApplicationHandler();
     this.eventPublisher = eventPublisher;
   }
 
   @Override
-  public IdentityVerificationApplicationResponse callbackExamination(
+  public IdentityVerificationCallbackResponse callback(
       TenantIdentifier tenantIdentifier,
       BasicAuth basicAuth,
       IdentityVerificationType type,
-      IdentityVerificationApplicationRequest request,
+      IdentityVerificationProcess process,
+      IdentityVerificationCallbackRequest request,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     IdentityVerificationConfiguration verificationConfiguration =
         configurationQueryRepository.get(tenant, type);
 
-    IdentityVerificationProcess process =
-        ReservedIdentityVerificationProcess.CALLBACK_EXAMINATION.toProcess();
     IdentityVerificationProcessConfiguration processConfiguration =
         verificationConfiguration.getProcessConfig(process);
 
-    IdentityVerificationApplicationRequestValidator applicationValidator =
-        new IdentityVerificationApplicationRequestValidator(processConfiguration, request);
-    IdentityVerificationApplicationValidationResult validationResult =
-        applicationValidator.validate();
+    IdentityVerificationCallbackRequestValidator validator =
+        new IdentityVerificationCallbackRequestValidator(processConfiguration, request);
+
+    IdentityVerificationCallbackValidationResult validationResult = validator.validate();
 
     if (validationResult.isError()) {
 
       return validationResult.errorResponse();
     }
 
-    ExternalIdentityVerificationApplicationIdentifier
-        externalIdentityVerificationApplicationIdentifier =
-            new ExternalIdentityVerificationApplicationIdentifier(
-                request.getValueAsString(
-                    verificationConfiguration.externalApplicationIdParam().value()));
+    String applicationIdParams = verificationConfiguration.getCallbackApplicationId(process);
+    String applicationId = request.getValueAsString(applicationIdParams);
     IdentityVerificationApplication application =
-        applicationQueryRepository.get(tenant, externalIdentityVerificationApplicationIdentifier);
+        applicationQueryRepository.get(tenant, applicationIdParams, applicationId);
 
-    IdentityVerificationApplication updatedExamination =
-        application.updateExamination(process, request, verificationConfiguration);
-    applicationCommandRepository.update(tenant, updatedExamination);
+    IdentityVerificationApplication updatedApplication =
+        application.updateCallbackWith(process, request, verificationConfiguration);
+    applicationCommandRepository.update(tenant, updatedApplication);
 
-    Map<String, Object> response = new HashMap<>();
-    return IdentityVerificationApplicationResponse.OK(response);
-  }
+    if (updatedApplication.isApproved()) {
+      IdentityVerificationResult identityVerificationResult =
+          IdentityVerificationResult.createOnCallback(
+              updatedApplication, request, verificationConfiguration);
+      resultCommandRepository.register(tenant, identityVerificationResult);
 
-  @Override
-  public IdentityVerificationApplicationResponse callbackResult(
-      TenantIdentifier tenantIdentifier,
-      BasicAuth basicAuth,
-      IdentityVerificationType type,
-      IdentityVerificationApplicationRequest request,
-      RequestAttributes requestAttributes) {
+      // TODO dynamic lifecycle management
+      User user = userQueryRepository.get(tenant, application.userIdentifier());
+      User verifiedUser =
+          user.transitStatus(UserStatus.IDENTITY_VERIFIED)
+              .setVerifiedClaims(identityVerificationResult.verifiedClaims().toMap());
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    IdentityVerificationConfiguration verificationConfiguration =
-        configurationQueryRepository.get(tenant, type);
-    IdentityVerificationProcess process =
-        ReservedIdentityVerificationProcess.CALLBACK_RESULT.toProcess();
-    IdentityVerificationProcessConfiguration processConfiguration =
-        verificationConfiguration.getProcessConfig(process);
-
-    IdentityVerificationApplicationRequestValidator applicationValidator =
-        new IdentityVerificationApplicationRequestValidator(processConfiguration, request);
-    IdentityVerificationApplicationValidationResult validationResult =
-        applicationValidator.validate();
-
-    if (validationResult.isError()) {
-
-      return validationResult.errorResponse();
+      userCommandRepository.update(tenant, verifiedUser);
     }
 
-    ExternalIdentityVerificationApplicationIdentifier
-        externalIdentityVerificationApplicationIdentifier =
-            new ExternalIdentityVerificationApplicationIdentifier(
-                request.getValueAsString(
-                    verificationConfiguration.externalApplicationIdParam().value()));
-    IdentityVerificationApplication application =
-        applicationQueryRepository.get(tenant, externalIdentityVerificationApplicationIdentifier);
-
-    IdentityVerificationApplication updatedExamination =
-        application.completeExamination(process, request, verificationConfiguration);
-    applicationCommandRepository.update(tenant, updatedExamination);
-
-    IdentityVerificationResult identityVerificationResult =
-        IdentityVerificationResult.create(updatedExamination, request, verificationConfiguration);
-    resultCommandRepository.register(tenant, identityVerificationResult);
-
-    // TODO dynamic lifecycle management
-    User user = userQueryRepository.get(tenant, application.userIdentifier());
-    User verifiedUser =
-        user.transitStatus(UserStatus.IDENTITY_VERIFIED)
-            .setVerifiedClaims(identityVerificationResult.verifiedClaims().toMap());
-
-    userCommandRepository.update(tenant, verifiedUser);
-
     Map<String, Object> response = new HashMap<>();
-    return IdentityVerificationApplicationResponse.OK(response);
+    return IdentityVerificationCallbackResponse.OK(response);
   }
 }

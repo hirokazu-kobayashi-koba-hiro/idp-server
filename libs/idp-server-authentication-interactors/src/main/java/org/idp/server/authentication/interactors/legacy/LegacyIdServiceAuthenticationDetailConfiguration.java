@@ -80,7 +80,7 @@ public class LegacyIdServiceAuthenticationDetailConfiguration
   }
 
   @Override
-  public HttpRequestStaticHeaders httpRequestHeaders() {
+  public HttpRequestStaticHeaders httpRequestStaticHeaders() {
     return new HttpRequestStaticHeaders(headers);
   }
 

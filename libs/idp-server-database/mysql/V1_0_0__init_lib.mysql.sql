@@ -626,14 +626,6 @@ CREATE TABLE identity_verification_application
     user_id                      CHAR(36)                           NOT NULL,
     verification_type            VARCHAR(255)                       NOT NULL,
     application_details          JSON                               NOT NULL,
-    trust_framework              VARCHAR(255),
-    evidence_document_type       VARCHAR(255),
-    evidence_document_details    JSON,
-    evidence_method              VARCHAR(255),
-    external_workflow_delegation VARCHAR(255)                       NOT NULL,
-    external_application_id      VARCHAR(255)                       NOT NULL,
-    external_application_details JSON,
-    examination_results          JSON,
     processes                    JSON                               NOT NULL,
     status                       VARCHAR(255)                       NOT NULL,
     requested_at                 DATETIME                           NOT NULL,
@@ -647,9 +639,7 @@ CREATE TABLE identity_verification_application
 CREATE INDEX idx_verification_user ON identity_verification_application (user_id);
 CREATE INDEX idx_verification_tenant_client ON identity_verification_application (tenant_id, client_id);
 CREATE INDEX idx_verification_status ON identity_verification_application (status);
-CREATE INDEX idx_verification_external_ref ON identity_verification_application (external_application_id);
-CREATE INDEX idx_verification_evidence_document_type ON identity_verification_application (evidence_document_type);
-CREATE INDEX idx_verification_evidence_method ON identity_verification_application (evidence_method);
+CREATE INDEX idx_verification_application_details ON identity_verification_application USING GIN (application_details);
 
 CREATE TABLE identity_verification_result
 (
@@ -658,11 +648,11 @@ CREATE TABLE identity_verification_result
     user_id                 CHAR(36)     NOT NULL,
     application_id          CHAR(36),
     verification_type       VARCHAR(255),
-    external_application_id VARCHAR(255),
     verified_claims         JSON         NOT NULL,
     verified_at             DATETIME     NOT NULL,
     valid_until             DATETIME,
     source                  VARCHAR(255) NOT NULL DEFAULT 'application',
+    source_details JSON,
     created_at              DATETIME              DEFAULT CURRENT_TIMESTAMP NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (application_id) REFERENCES identity_verification_application (id) ON DELETE CASCADE,
@@ -673,6 +663,7 @@ CREATE INDEX idx_verification_result_user_id ON identity_verification_result (us
 CREATE INDEX idx_verification_result_application_id ON identity_verification_result (application_id);
 CREATE INDEX idx_verification_result_verification_type ON identity_verification_result (verification_type);
 CREATE INDEX idx_verification_result_verified_at ON identity_verification_result (verified_at);
+CREATE INDEX idx_verification_result_source_details ON identity_verification_result USING GIN (source_details);
 
 
 CREATE TABLE idp_user_lifecycle_event_result

@@ -16,8 +16,9 @@
 
 package org.idp.server.core.extension.identity.verification;
 
-import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationIdentifier;
-import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationQueries;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationQueries;
+import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationResponse;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.token.OAuthToken;
@@ -30,7 +31,7 @@ public interface IdentityVerificationApplicationApi {
       User user,
       OAuthToken oAuthToken,
       IdentityVerificationType identityVerificationType,
-      IdentityVerificationProcess identityVerificationProcess,
+      IdentityVerificationProcess process,
       IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes);
 
@@ -47,16 +48,7 @@ public interface IdentityVerificationApplicationApi {
       OAuthToken oAuthToken,
       IdentityVerificationApplicationIdentifier identifier,
       IdentityVerificationType identityVerificationType,
-      IdentityVerificationProcess identityVerificationProcess,
-      IdentityVerificationApplicationRequest request,
-      RequestAttributes requestAttributes);
-
-  IdentityVerificationApplicationResponse evaluateResult(
-      TenantIdentifier tenantIdentifier,
-      User user,
-      OAuthToken oAuthToken,
-      IdentityVerificationApplicationIdentifier identifier,
-      IdentityVerificationType identityVerificationType,
+      IdentityVerificationProcess process,
       IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes);
 

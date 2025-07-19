@@ -16,24 +16,18 @@
 
 package org.idp.server.core.extension.identity.verification;
 
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationResponse;
+import org.idp.server.core.extension.identity.verification.io.*;
 import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.type.RequestAttributes;
 
 public interface IdentityVerificationCallbackApi {
 
-  IdentityVerificationApplicationResponse callbackExamination(
+  IdentityVerificationCallbackResponse callback(
       TenantIdentifier tenantIdentifier,
       BasicAuth basicAuth,
       IdentityVerificationType type,
-      IdentityVerificationApplicationRequest request,
-      RequestAttributes requestAttributes);
-
-  IdentityVerificationApplicationResponse callbackResult(
-      TenantIdentifier tenantIdentifier,
-      BasicAuth basicAuth,
-      IdentityVerificationType identityVerificationType,
-      IdentityVerificationApplicationRequest request,
+      IdentityVerificationProcess process,
+      IdentityVerificationCallbackRequest request,
       RequestAttributes requestAttributes);
 }

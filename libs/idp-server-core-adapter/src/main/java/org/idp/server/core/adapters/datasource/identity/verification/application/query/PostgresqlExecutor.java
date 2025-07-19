@@ -19,9 +19,8 @@ package org.idp.server.core.adapters.datasource.identity.verification.applicatio
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationIdentifier;
-import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationQueries;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplicationIdentifier;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationQueries;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -50,19 +49,19 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
   }
 
   @Override
-  public Map<String, String> selectOne(
-      Tenant tenant, ExternalIdentityVerificationApplicationIdentifier identifier) {
+  public Map<String, String> selectOneByDetail(Tenant tenant, String key, String identifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         selectSql
             + " "
             + """
-                 WHERE external_application_id = ?
+                 WHERE application_details ->> ? = ?
                  AND tenant_id = ?::uuid;
                 """;
 
     List<Object> params = new ArrayList<>();
-    params.add(identifier.value());
+    params.add(key);
+    params.add(identifier);
     params.add(tenant.identifierUUID());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
@@ -114,21 +113,15 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
       sqlBuilder.append(" AND id = ?::uuid");
       params.add(queries.idAsUuid());
     }
+
     if (queries.hasType()) {
       sqlBuilder.append(" AND verification_type = ?");
       params.add(queries.type());
     }
+
     if (queries.hasClientId()) {
       sqlBuilder.append(" AND client_id = ?");
       params.add(queries.clientId());
-    }
-    if (queries.hasExternalApplicationId()) {
-      sqlBuilder.append(" AND external_application_id = ?");
-      params.add(queries.externalApplicationId());
-    }
-    if (queries.hasExternalService()) {
-      sqlBuilder.append(" AND external_service = ?");
-      params.add(queries.externalService());
     }
 
     if (queries.hasStatus()) {
@@ -141,16 +134,6 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
         String key = entry.getKey();
         String value = entry.getValue();
         sqlBuilder.append(" AND application_details ->> ? = ?");
-        params.add(key);
-        params.add(value);
-      }
-    }
-
-    if (queries.hasExternalApplicationDetails()) {
-      for (Map.Entry<String, String> entry : queries.externalApplicationDetails().entrySet()) {
-        String key = entry.getKey();
-        String value = entry.getValue();
-        sqlBuilder.append(" AND external_application_details ->> ? = ?");
         params.add(key);
         params.add(value);
       }
@@ -173,14 +156,9 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
                        user_id,
                        verification_type,
                        application_details,
-                       external_service,
-                       external_application_id,
-                       external_application_details,
-                       examination_results,
                        processes,
                        status,
                        requested_at,
-                       examination_results,
                        comment
                  FROM identity_verification_application
           """;
