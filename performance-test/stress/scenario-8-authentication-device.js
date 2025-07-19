@@ -19,8 +19,8 @@ export default function () {
   const testUser = data[getRandomInt(499)]
   const deviceId = testUser.device_id
 
-  const txRes = http.get(`${baseUrl}/${tenantId}/v1/authentication-devices/${deviceId}/authentications/latest`);
-  check(txRes, { 'txRes request OK': (r) => r.status === 200 });
+  const txRes = http.get(`${baseUrl}/${tenantId}/v1/authentication-devices/${deviceId}/authentications?limit=1`);
+  check(txRes, { "txRes request OK": (r) => r.status === 200 });
 
 }
 

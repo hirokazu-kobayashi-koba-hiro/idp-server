@@ -116,6 +116,7 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
   protected boolean shouldNotFilter(HttpServletRequest request) {
     return request.getRequestURI().contains("/health")
         || request.getRequestURI().contains("/admin")
+        || request.getRequestURI().contains("/backchannel")
         || request.getRequestURI().contains("/auth-views/");
   }
 }
