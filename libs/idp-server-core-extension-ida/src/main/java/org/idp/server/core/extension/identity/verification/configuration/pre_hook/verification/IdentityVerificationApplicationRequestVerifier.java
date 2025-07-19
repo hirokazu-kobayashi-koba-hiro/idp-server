@@ -14,32 +14,21 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.identity.verification.verifier.application;
+package org.idp.server.core.extension.identity.verification.configuration.pre_hook.verification;
 
 import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplications;
-import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfig;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.type.RequestAttributes;
 
 public interface IdentityVerificationApplicationRequestVerifier {
 
-  default boolean shouldVerify(
-      Tenant tenant,
-      User user,
-      IdentityVerificationApplication currentApplication,
-      IdentityVerificationApplications previousApplications,
-      IdentityVerificationType type,
-      IdentityVerificationProcess processes,
-      IdentityVerificationApplicationRequest request,
-      RequestAttributes requestAttributes,
-      IdentityVerificationConfiguration verificationConfiguration) {
-    return false;
-  }
+  String type();
 
   IdentityVerificationApplicationRequestVerifiedResult verify(
       Tenant tenant,
@@ -50,5 +39,5 @@ public interface IdentityVerificationApplicationRequestVerifier {
       IdentityVerificationProcess processes,
       IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes,
-      IdentityVerificationConfiguration verificationConfiguration);
+      IdentityVerificationConfig verificationConfig);
 }

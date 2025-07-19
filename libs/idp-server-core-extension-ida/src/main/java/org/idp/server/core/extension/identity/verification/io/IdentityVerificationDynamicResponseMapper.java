@@ -41,8 +41,7 @@ public class IdentityVerificationDynamicResponseMapper {
 
     IdentityVerificationProcessConfiguration processConfig =
         verificationConfiguration.getProcessConfig(process);
-    JsonSchemaDefinition responseSchemaDefinition =
-        processConfig.responseValidationSchemaAsDefinition();
+    JsonSchemaDefinition responseSchemaDefinition = processConfig.responseSchemaAsDefinition();
     Map<String, JsonSchemaProperty> properties = responseSchemaDefinition.getProperties();
 
     for (Map.Entry<String, JsonSchemaProperty> entry : properties.entrySet()) {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.identity.verification.verifier.application;
+package org.idp.server.core.extension.identity.verification.configuration.pre_hook.verification;
 
 import java.util.List;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
@@ -22,26 +22,22 @@ import org.idp.server.core.extension.identity.verification.IdentityVerificationP
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplications;
-import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfig;
+import org.idp.server.core.extension.identity.verification.configuration.pre_hook.UserClaimPreHook;
+import org.idp.server.core.extension.identity.verification.configuration.pre_hook.UserClaimVerificationRule;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.type.RequestAttributes;
 
-public class ContinuousCustomerDueDiligenceIdentityVerificationApplicationVerifier
-    implements IdentityVerificationApplicationRequestVerifier {
+public class UserClaimVerifier implements IdentityVerificationApplicationRequestVerifier {
 
-  public boolean shouldVerify(
-      Tenant tenant,
-      User user,
-      IdentityVerificationApplication currentApplication,
-      IdentityVerificationApplications previousApplications,
-      IdentityVerificationType type,
-      IdentityVerificationProcess processes,
-      IdentityVerificationApplicationRequest request,
-      RequestAttributes requestAttributes,
-      IdentityVerificationConfiguration verificationConfiguration) {
+  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
-    return type.isContinuousCustomerDueDiligence();
+  @Override
+  public String type() {
+    return "user_claim";
   }
 
   @Override
@@ -54,16 +50,19 @@ public class ContinuousCustomerDueDiligenceIdentityVerificationApplicationVerifi
       IdentityVerificationProcess processes,
       IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes,
-      IdentityVerificationConfiguration verificationConfiguration) {
+      IdentityVerificationConfig verificationConfig) {
 
-    if (!previousApplications.containsApproved(verificationConfiguration.approvedTargetTypes())) {
-
-      List<String> errors =
-          List.of(
-              String.format(
-                  "user does not have approved application required any type (%s)",
-                  verificationConfiguration.approvedTargetTypesAsString()));
-      return IdentityVerificationApplicationRequestVerifiedResult.failure(errors);
+    String requestJson = request.toJson();
+    String userJson = jsonConverter.write(user);
+    JsonPathWrapper requestJsonPath = new JsonPathWrapper(requestJson);
+    JsonPathWrapper userJsonPath = new JsonPathWrapper(userJson);
+    UserClaimPreHook userClaimPreHook =
+        jsonConverter.read(verificationConfig.details(), UserClaimPreHook.class);
+    List<UserClaimVerificationRule> userClaimVerificationRules =
+        userClaimPreHook.verificationParameters();
+    for (UserClaimVerificationRule userClaimVerificationRule : userClaimVerificationRules) {
+      Object requestValue = requestJsonPath.readRaw(userClaimVerificationRule.requestJsonPath());
+      Object userValue = userJsonPath.readRaw(userClaimVerificationRule.userClaimJsonPath());
     }
 
     return IdentityVerificationApplicationRequestVerifiedResult.success();

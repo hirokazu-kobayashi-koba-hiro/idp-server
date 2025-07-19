@@ -22,8 +22,7 @@ import org.idp.server.core.extension.identity.verification.IdentityVerificationA
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplications;
-import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
-import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfig;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.http.*;
 import org.idp.server.platform.json.JsonConverter;
@@ -48,26 +47,8 @@ public class HttpRequestParameterResolver implements AdditionalRequestParameterR
   }
 
   @Override
-  public boolean shouldResolve(
-      Tenant tenant,
-      User user,
-      IdentityVerificationApplications applications,
-      IdentityVerificationType type,
-      IdentityVerificationProcess processes,
-      IdentityVerificationApplicationRequest request,
-      RequestAttributes requestAttributes,
-      IdentityVerificationConfiguration verificationConfiguration) {
-
-    IdentityVerificationProcessConfiguration processConfig =
-        verificationConfiguration.getProcessConfig(processes);
-    Map<String, Object> additionalParameterSchema =
-        processConfig.requestAdditionalParameterSchema();
-
-    if (additionalParameterSchema == null || additionalParameterSchema.isEmpty()) {
-      return false;
-    }
-
-    return additionalParameterSchema.containsKey("http_request");
+  public String type() {
+    return "http_request";
   }
 
   @Override
@@ -79,22 +60,15 @@ public class HttpRequestParameterResolver implements AdditionalRequestParameterR
       IdentityVerificationProcess processes,
       IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes,
-      IdentityVerificationConfiguration verificationConfiguration) {
-
-    IdentityVerificationProcessConfiguration processConfig =
-        verificationConfiguration.getProcessConfig(processes);
+      IdentityVerificationConfig additionalParameterConfig) {
 
     HttpRequestBaseParams baseParams = resolveBaseParams(request, requestAttributes);
 
-    Map<String, Object> additionalParameterSchema =
-        processConfig.requestAdditionalParameterSchema();
     AdditionalParameterHttpRequestConfiguration configuration =
         jsonConverter.read(
-            additionalParameterSchema.get("http_request"),
-            AdditionalParameterHttpRequestConfiguration.class);
+            additionalParameterConfig.details(), AdditionalParameterHttpRequestConfiguration.class);
 
-    HttpRequestResult executionResult =
-        execute(baseParams, processConfig.httpRequestStaticBody(), configuration);
+    HttpRequestResult executionResult = execute(baseParams, configuration);
 
     JsonNodeWrapper body = executionResult.body();
     Map<String, Object> parameters = new HashMap<>();
@@ -114,11 +88,9 @@ public class HttpRequestParameterResolver implements AdditionalRequestParameterR
   }
 
   private HttpRequestResult execute(
-      HttpRequestBaseParams httpRequestBaseParams,
-      HttpRequestStaticBody httpRequestStaticBody,
-      HttpRequestExecutionConfigInterface config) {
+      HttpRequestBaseParams httpRequestBaseParams, HttpRequestExecutionConfigInterface config) {
 
-    Map<String, String> headers = new HashMap<>(config.httpRequestHeaders().toMap());
+    Map<String, String> headers = new HashMap<>(config.httpRequestStaticHeaders().toMap());
 
     switch (config.httpRequestAuthType()) {
       case OAUTH2 -> {
@@ -138,7 +110,7 @@ public class HttpRequestParameterResolver implements AdditionalRequestParameterR
             hmacAuthenticationConfig,
             httpRequestBaseParams,
             httpRequestStaticHeaders,
-            httpRequestStaticBody,
+            config.httpRequestStaticBody(),
             config.httpRequestPathMappingRules(),
             config.httpRequestHeaderMappingRules(),
             config.httpRequestBodyMappingRules());
@@ -152,7 +124,7 @@ public class HttpRequestParameterResolver implements AdditionalRequestParameterR
         config.httpMethod(),
         httpRequestBaseParams,
         httpRequestStaticHeaders,
-        httpRequestStaticBody,
+        config.httpRequestStaticBody(),
         config.httpRequestPathMappingRules(),
         config.httpRequestHeaderMappingRules(),
         config.httpRequestBodyMappingRules());

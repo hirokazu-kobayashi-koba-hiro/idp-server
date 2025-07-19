@@ -16,31 +16,38 @@
 
 package org.idp.server.core.extension.identity.verification.delegation.request;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplications;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfig;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.extension.identity.verification.plugin.IdentityVerificationRequestAdditionalParameterPluginLoader;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.type.RequestAttributes;
 
 public class AdditionalRequestParameterResolvers {
 
-  List<AdditionalRequestParameterResolver> resolvers;
+  Map<String, AdditionalRequestParameterResolver> resolvers;
+  LoggerWrapper log = LoggerWrapper.getLogger(AdditionalRequestParameterResolvers.class);
 
   public AdditionalRequestParameterResolvers() {
-    this.resolvers = new ArrayList<>();
-    this.resolvers.add(new ContinuousCustomerDueDiligenceParameterResolver());
-    this.resolvers.add(new HttpRequestParameterResolver());
-    List<AdditionalRequestParameterResolver> loaded =
+    this.resolvers = new ConcurrentHashMap<>();
+    ContinuousCustomerDueDiligenceParameterResolver customerDueDiligence =
+        new ContinuousCustomerDueDiligenceParameterResolver();
+    this.resolvers.put(customerDueDiligence.type(), customerDueDiligence);
+    HttpRequestParameterResolver httpRequest = new HttpRequestParameterResolver();
+    this.resolvers.put(httpRequest.type(), httpRequest);
+    Map<String, AdditionalRequestParameterResolver> loaded =
         IdentityVerificationRequestAdditionalParameterPluginLoader.load();
-    this.resolvers.addAll(loaded);
+    this.resolvers.putAll(loaded);
   }
 
   public Map<String, Object> resolve(
@@ -53,29 +60,36 @@ public class AdditionalRequestParameterResolvers {
       RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
 
+    IdentityVerificationProcessConfiguration processConfig =
+        verificationConfiguration.getProcessConfig(processes);
+    List<IdentityVerificationConfig> additionalParameterConfigs =
+        processConfig.preHook().additionalParameters();
+
     Map<String, Object> additionalParameters = new HashMap<>();
 
-    for (AdditionalRequestParameterResolver resolver : resolvers) {
-      if (resolver.shouldResolve(
-          tenant,
-          user,
-          applications,
-          type,
-          processes,
-          request,
-          requestAttributes,
-          verificationConfiguration)) {
-        additionalParameters.putAll(
-            resolver.resolve(
-                tenant,
-                user,
-                applications,
-                type,
-                processes,
-                request,
-                requestAttributes,
-                verificationConfiguration));
+    for (IdentityVerificationConfig additionalParameterConfig : additionalParameterConfigs) {
+
+      AdditionalRequestParameterResolver resolver =
+          this.resolvers.get(additionalParameterConfig.type());
+      if (resolver == null) {
+        log.warn(
+            String.format(
+                "No identity additional parameter resolver found for type %s",
+                additionalParameterConfig.type()));
+        continue;
       }
+
+      Map<String, Object> resolved =
+          resolver.resolve(
+              tenant,
+              user,
+              applications,
+              type,
+              processes,
+              request,
+              requestAttributes,
+              additionalParameterConfig);
+      additionalParameters.putAll(resolved);
     }
 
     return additionalParameters;

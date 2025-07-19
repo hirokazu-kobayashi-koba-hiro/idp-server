@@ -16,9 +16,10 @@
 
 package org.idp.server.core.extension.identity.verification.plugin;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import org.idp.server.core.extension.identity.verification.verifier.application.IdentityVerificationApplicationRequestVerifier;
+import java.util.Map;
+import org.idp.server.core.extension.identity.verification.configuration.pre_hook.verification.IdentityVerificationApplicationRequestVerifier;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.plugin.PluginLoader;
 
@@ -27,13 +28,13 @@ public class IdentityVerificationApplicationRequestVerifierPluginLoader extends 
   private static final LoggerWrapper log =
       LoggerWrapper.getLogger(IdentityVerificationApplicationRequestVerifierPluginLoader.class);
 
-  public static List<IdentityVerificationApplicationRequestVerifier> load() {
-    List<IdentityVerificationApplicationRequestVerifier> verifiers = new ArrayList<>();
+  public static Map<String, IdentityVerificationApplicationRequestVerifier> load() {
+    Map<String, IdentityVerificationApplicationRequestVerifier> verifiers = new HashMap<>();
 
     List<IdentityVerificationApplicationRequestVerifier> internals =
         loadFromInternalModule(IdentityVerificationApplicationRequestVerifier.class);
     for (IdentityVerificationApplicationRequestVerifier verifier : internals) {
-      verifiers.add(verifier);
+      verifiers.put(verifier.type(), verifier);
       log.info(
           String.format(
               "Dynamic Registered internal IdentityVerificationApplicationRequestVerifier %s",
@@ -43,7 +44,7 @@ public class IdentityVerificationApplicationRequestVerifierPluginLoader extends 
     List<IdentityVerificationApplicationRequestVerifier> externals =
         loadFromExternalModule(IdentityVerificationApplicationRequestVerifier.class);
     for (IdentityVerificationApplicationRequestVerifier verifier : externals) {
-      verifiers.add(verifier);
+      verifiers.put(verifier.type(), verifier);
       log.info(
           String.format(
               "Dynamic Registered externals IdentityVerificationApplicationRequestVerifier %s",

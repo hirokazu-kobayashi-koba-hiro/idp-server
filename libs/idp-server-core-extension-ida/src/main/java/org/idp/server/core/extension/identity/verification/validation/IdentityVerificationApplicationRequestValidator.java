@@ -36,8 +36,7 @@ public class IdentityVerificationApplicationRequestValidator {
 
   public IdentityVerificationApplicationValidationResult validate() {
 
-    JsonSchemaDefinition jsonSchemaDefinition =
-        processConfiguration.requestValidationSchemaAsDefinition();
+    JsonSchemaDefinition jsonSchemaDefinition = processConfiguration.requestSchemaAsDefinition();
     JsonSchemaValidator jsonSchemaValidator = new JsonSchemaValidator(jsonSchemaDefinition);
 
     JsonNodeWrapper requestJson = JsonNodeWrapper.fromMap(request.toMap());

@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.identity.verification.verifier.application;
+package org.idp.server.core.extension.identity.verification.configuration.pre_hook.verification;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
@@ -23,45 +24,33 @@ import org.idp.server.core.extension.identity.verification.IdentityVerificationP
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplications;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfig;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
+import org.idp.server.core.extension.identity.verification.plugin.IdentityVerificationApplicationRequestVerifierPluginLoader;
 import org.idp.server.core.oidc.identity.User;
-import org.idp.server.platform.json.JsonConverter;
-import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.type.RequestAttributes;
 
-public class UnmatchedPhoneIdentityVerificationApplicationApplicationVerifier
-    implements IdentityVerificationApplicationRequestVerifier {
+public class IdentityVerificationApplicationRequestVerifiers {
 
-  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+  Map<String, IdentityVerificationApplicationRequestVerifier> verifiers;
+  LoggerWrapper log =
+      LoggerWrapper.getLogger(IdentityVerificationApplicationRequestVerifiers.class);
 
-  @Override
-  public boolean shouldVerify(
-      Tenant tenant,
-      User user,
-      IdentityVerificationApplication currentApplication,
-      IdentityVerificationApplications previousApplications,
-      IdentityVerificationType type,
-      IdentityVerificationProcess processes,
-      IdentityVerificationApplicationRequest request,
-      RequestAttributes requestAttributes,
-      IdentityVerificationConfiguration verificationConfiguration) {
+  public IdentityVerificationApplicationRequestVerifiers() {
+    this.verifiers = new HashMap<>();
+    DenyDuplicateIdentityVerificationApplicationVerifier denyDuplicate =
+        new DenyDuplicateIdentityVerificationApplicationVerifier();
+    this.verifiers.put(denyDuplicate.type(), denyDuplicate);
 
-    IdentityVerificationProcessConfiguration processConfig =
-        verificationConfiguration.getProcessConfig(processes);
-    Map<String, Object> verificationSchema = processConfig.requestVerificationSchema();
-
-    if (verificationSchema == null || verificationSchema.isEmpty()) {
-      return false;
-    }
-
-    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(verificationSchema);
-    return jsonNodeWrapper.optValueAsBoolean("unmatched_user_claims_phone", false);
+    Map<String, IdentityVerificationApplicationRequestVerifier> loaded =
+        IdentityVerificationApplicationRequestVerifierPluginLoader.load();
+    this.verifiers.putAll(loaded);
   }
 
-  @Override
-  public IdentityVerificationApplicationRequestVerifiedResult verify(
+  public IdentityVerificationApplicationRequestVerifiedResult verifyAll(
       Tenant tenant,
       User user,
       IdentityVerificationApplication currentApplication,
@@ -74,17 +63,33 @@ public class UnmatchedPhoneIdentityVerificationApplicationApplicationVerifier
 
     IdentityVerificationProcessConfiguration processConfig =
         verificationConfiguration.getProcessConfig(processes);
-    Map<String, Object> verificationSchema = processConfig.requestVerificationSchema();
-    JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(verificationSchema);
-    JsonNodeWrapper unmatchedUserClaims =
-        jsonNodeWrapper.getValueAsJsonNode("unmatched_user_claims_phone");
+    List<IdentityVerificationConfig> verifications = processConfig.preHook().verifications();
+    for (IdentityVerificationConfig verificationConfig : verifications) {
 
-    String property = unmatchedUserClaims.getValueOrEmptyAsString("property");
-    String requestValue = request.optValueAsString(property, "");
+      IdentityVerificationApplicationRequestVerifier verifier =
+          verifiers.get(verificationConfig.type());
+      if (verifier == null) {
+        log.warn(
+            String.format(
+                "IdentityVerification verifier is undefined. type: %s", verificationConfig.type()));
+        continue;
+      }
 
-    if (!requestValue.equals(user.phoneNumber())) {
-      return IdentityVerificationApplicationRequestVerifiedResult.failure(
-          List.of("PhoneNumber does not match"));
+      IdentityVerificationApplicationRequestVerifiedResult verifyResult =
+          verifier.verify(
+              tenant,
+              user,
+              currentApplication,
+              previousApplications,
+              type,
+              processes,
+              request,
+              requestAttributes,
+              verificationConfig);
+
+      if (verifyResult.isError()) {
+        return verifyResult;
+      }
     }
 
     return IdentityVerificationApplicationRequestVerifiedResult.success();

@@ -16,8 +16,9 @@
 
 package org.idp.server.core.extension.identity.verification.plugin;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.idp.server.core.extension.identity.verification.delegation.request.AdditionalRequestParameterResolver;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.plugin.PluginLoader;
@@ -27,13 +28,13 @@ public class IdentityVerificationRequestAdditionalParameterPluginLoader extends 
   private static final LoggerWrapper log =
       LoggerWrapper.getLogger(IdentityVerificationRequestAdditionalParameterPluginLoader.class);
 
-  public static List<AdditionalRequestParameterResolver> load() {
-    List<AdditionalRequestParameterResolver> resolvers = new ArrayList<>();
+  public static Map<String, AdditionalRequestParameterResolver> load() {
+    Map<String, AdditionalRequestParameterResolver> resolvers = new HashMap<>();
 
     List<AdditionalRequestParameterResolver> internals =
         loadFromInternalModule(AdditionalRequestParameterResolver.class);
     for (AdditionalRequestParameterResolver resolver : internals) {
-      resolvers.add(resolver);
+      resolvers.put(resolver.type(), resolver);
       log.info(
           String.format(
               "Dynamic Registered internal AdditionalRequestParameterResolver %s",
@@ -43,7 +44,7 @@ public class IdentityVerificationRequestAdditionalParameterPluginLoader extends 
     List<AdditionalRequestParameterResolver> externals =
         loadFromExternalModule(AdditionalRequestParameterResolver.class);
     for (AdditionalRequestParameterResolver resolver : externals) {
-      resolvers.add(resolver);
+      resolvers.put(resolver.type(), resolver);
       log.info(
           String.format(
               "Dynamic Registered externals AdditionalRequestParameterResolver %s",

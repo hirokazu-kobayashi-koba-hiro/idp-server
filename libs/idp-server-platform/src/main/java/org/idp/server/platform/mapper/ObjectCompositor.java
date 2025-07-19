@@ -60,7 +60,6 @@ public class ObjectCompositor {
   /**
    * Constructs a new ObjectCompositor.
    *
-   * @param regex delimiter regex for splitting keys
    * @param flatMap flat key-value map to be composed
    */
   public ObjectCompositor(Map<String, Object> flatMap) {
@@ -84,7 +83,17 @@ public class ObjectCompositor {
 
   /**
    * Inserts a value into the nested structure according to the provided key path. Supports both map
-   * and list nodes based on key pattern (e.g., "0" for list index).
+   * and list nodes based on key pattern (e.g., "0" for list index). Also supports special wildcard
+   * key "*" for top-level expansion.
+   *
+   * <p>Special behavior for "*":
+   *
+   * <ul>
+   *   <li>If the key path is exactly "*", and the value is a {@code Map}, its entries are merged
+   *       into the root level.
+   *   <li>Other usages of "*" (e.g. "claims.*.value") are not supported in this method and must be
+   *       handled earlier.
+   * </ul>
    *
    * @param root the root object to insert into
    * @param keys the path keys split by delimiter
@@ -92,46 +101,50 @@ public class ObjectCompositor {
    */
   private void insertValue(Map<String, Object> root, String[] keys, Object value) {
     Object current = root;
-    for (int i = 0; i < keys.length; i++) {
-      String key = keys[i];
-      boolean isLast = i == keys.length - 1;
-      boolean isIndex = key.matches("\\d+");
+    if (keys.length == 1 && keys[0].equals("*") && value instanceof Map) {
+      root.putAll((Map<String, ?>) value);
+    } else {
+      for (int i = 0; i < keys.length; i++) {
+        String key = keys[i];
+        boolean isLast = i == keys.length - 1;
+        boolean isIndex = key.matches("\\d+");
 
-      if (isIndex) {
-        int index = Integer.parseInt(key);
-        List<Object> list;
+        if (isIndex) {
+          int index = Integer.parseInt(key);
+          List<Object> list;
 
-        if (current instanceof List) {
-          list = (List<Object>) current;
-        } else if (current instanceof Map) {
-          throw new IllegalStateException("Expected List but found Map at index: " + key);
-        } else {
-          list = new ArrayList<>();
-          current = list;
-        }
-
-        while (list.size() <= index) {
-          list.add(null);
-        }
-
-        if (isLast) {
-          list.set(index, value);
-        } else {
-          if (list.get(index) == null) {
-            list.set(index, keys[i + 1].matches("\\d+") ? new ArrayList<>() : new HashMap<>());
+          if (current instanceof List) {
+            list = (List<Object>) current;
+          } else if (current instanceof Map) {
+            throw new IllegalStateException("Expected List but found Map at index: " + key);
+          } else {
+            list = new ArrayList<>();
+            current = list;
           }
-          current = list.get(index);
-        }
 
-      } else {
-        Map<String, Object> map = (Map<String, Object>) current;
-        if (isLast) {
-          map.put(key, value);
-        } else {
-          if (!map.containsKey(key)) {
-            map.put(key, keys[i + 1].matches("\\d+") ? new ArrayList<>() : new HashMap<>());
+          while (list.size() <= index) {
+            list.add(null);
           }
-          current = map.get(key);
+
+          if (isLast) {
+            list.set(index, value);
+          } else {
+            if (list.get(index) == null) {
+              list.set(index, keys[i + 1].matches("\\d+") ? new ArrayList<>() : new HashMap<>());
+            }
+            current = list.get(index);
+          }
+
+        } else {
+          Map<String, Object> map = (Map<String, Object>) current;
+          if (isLast) {
+            map.put(key, value);
+          } else {
+            if (!map.containsKey(key)) {
+              map.put(key, keys[i + 1].matches("\\d+") ? new ArrayList<>() : new HashMap<>());
+            }
+            current = map.get(key);
+          }
         }
       }
     }

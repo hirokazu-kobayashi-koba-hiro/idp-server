@@ -34,7 +34,7 @@ public class AdditionalParameterHttpRequestConfiguration
   String authType;
   OAuthAuthorizationConfiguration oauthAuthorization = new OAuthAuthorizationConfiguration();
   HmacAuthenticationConfiguration hmacAuthentication = new HmacAuthenticationConfiguration();
-  Map<String, String> headers = new HashMap<>();
+  Map<String, String> staticHeaders = new HashMap<>();
   Map<String, Object> staticBody = new HashMap<>();
   List<MappingRule> pathMappingRules = new ArrayList<>();
   List<MappingRule> headerMappingRules = new ArrayList<>();
@@ -92,8 +92,8 @@ public class AdditionalParameterHttpRequestConfiguration
   }
 
   @Override
-  public HttpRequestStaticHeaders httpRequestHeaders() {
-    return new HttpRequestStaticHeaders(headers);
+  public HttpRequestStaticHeaders httpRequestStaticHeaders() {
+    return new HttpRequestStaticHeaders(staticHeaders);
   }
 
   @Override

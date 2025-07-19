@@ -24,7 +24,10 @@ import org.idp.server.core.extension.identity.verification.IdentityVerificationT
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationExecutionConfig;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
+import org.idp.server.core.extension.identity.verification.configuration.pre_hook.verification.IdentityVerificationApplicationRequestVerifiedResult;
+import org.idp.server.core.extension.identity.verification.configuration.pre_hook.verification.IdentityVerificationApplicationRequestVerifiers;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplicationIdParam;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplyingExecutionResult;
 import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplyingResult;
@@ -32,8 +35,6 @@ import org.idp.server.core.extension.identity.verification.delegation.request.Ad
 import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationApplicationRequestValidator;
 import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationApplicationValidationResult;
 import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationResponseValidator;
-import org.idp.server.core.extension.identity.verification.verifier.application.IdentityVerificationApplicationRequestVerifiedResult;
-import org.idp.server.core.extension.identity.verification.verifier.application.IdentityVerificationApplicationRequestVerifiers;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.http.*;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -80,7 +81,7 @@ public class IdentityVerificationHandler {
     }
 
     IdentityVerificationApplicationRequestVerifiedResult verifyResult =
-        requestVerifiers.verify(
+        requestVerifiers.verifyAll(
             tenant,
             user,
             currentApplication,
@@ -110,11 +111,7 @@ public class IdentityVerificationHandler {
             verificationConfiguration);
 
     HttpRequestResult executionResult =
-        execute(
-            httpRequestBaseParams,
-            processConfig.httpRequestStaticBody(),
-            processes,
-            verificationConfiguration);
+        execute(httpRequestBaseParams, processes, verificationConfiguration);
 
     ExternalIdentityVerificationApplyingExecutionResult
         externalIdentityVerificationApplyingExecutionResult =
@@ -176,15 +173,15 @@ public class IdentityVerificationHandler {
   // TODO to be more simply
   private HttpRequestResult execute(
       HttpRequestBaseParams httpRequestBaseParams,
-      HttpRequestStaticBody httpRequestStaticBody,
       IdentityVerificationProcess processes,
       IdentityVerificationConfiguration verificationConfiguration) {
 
     IdentityVerificationProcessConfiguration processConfig =
         verificationConfiguration.getProcessConfig(processes);
-    Map<String, String> headers = new HashMap<>(processConfig.httpRequestHeaders().toMap());
+    IdentityVerificationExecutionConfig executionConfig = processConfig.execution();
+    Map<String, String> headers = new HashMap<>(executionConfig.httpRequestStaticHeaders().toMap());
 
-    switch (processConfig.httpRequestAuthType()) {
+    switch (executionConfig.httpRequestAuthType()) {
       case OAUTH2 -> {
         OAuthAuthorizationConfiguration oAuthAuthorizationConfig =
             verificationConfiguration.getOAuthAuthorizationConfig(processes);
@@ -199,26 +196,26 @@ public class IdentityVerificationHandler {
             verificationConfiguration.getHmacAuthenticationConfig(processes);
 
         return httpRequestExecutor.execute(
-            processConfig.httpRequestUrl(),
-            processConfig.httpMethod(),
+            executionConfig.httpRequestUrl(),
+            executionConfig.httpMethod(),
             hmacAuthenticationConfig,
             httpRequestBaseParams,
             httpRequestStaticHeaders,
-            httpRequestStaticBody,
-            processConfig.httpRequestPathMappingRules(),
-            processConfig.httpRequestHeaderMappingRules(),
-            processConfig.httpRequestBodyMappingRules());
+            executionConfig.httpRequestStaticBody(),
+            executionConfig.httpRequestPathMappingRules(),
+            executionConfig.httpRequestHeaderMappingRules(),
+            executionConfig.httpRequestBodyMappingRules());
       }
     }
 
     return httpRequestExecutor.executeWithDynamicMapping(
-        processConfig.httpRequestUrl(),
-        processConfig.httpMethod(),
+        executionConfig.httpRequestUrl(),
+        executionConfig.httpMethod(),
         httpRequestBaseParams,
         new HttpRequestStaticHeaders(headers),
-        processConfig.httpRequestStaticBody(),
-        processConfig.httpRequestPathMappingRules(),
-        processConfig.httpRequestHeaderMappingRules(),
-        processConfig.httpRequestHeaderMappingRules());
+        executionConfig.httpRequestStaticBody(),
+        executionConfig.httpRequestPathMappingRules(),
+        executionConfig.httpRequestHeaderMappingRules(),
+        executionConfig.httpRequestBodyMappingRules());
   }
 }

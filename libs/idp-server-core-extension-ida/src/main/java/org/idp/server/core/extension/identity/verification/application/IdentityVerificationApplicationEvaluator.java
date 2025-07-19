@@ -25,7 +25,7 @@ import org.idp.server.platform.json.path.JsonPathWrapper;
 public class IdentityVerificationApplicationEvaluator {
 
   public static boolean isSatisfied(
-      IdentityVerificationConditionConfiguration config,
+      IdentityVerificationConditionConfig config,
       IdentityVerificationApplicationRequest applicationRequest,
       IdentityVerificationApplicationProcessResults results) {
 

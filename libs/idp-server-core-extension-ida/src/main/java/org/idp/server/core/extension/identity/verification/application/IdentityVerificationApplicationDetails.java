@@ -39,7 +39,7 @@ public class IdentityVerificationApplicationDetails {
       IdentityVerificationApplicationRequest request,
       IdentityVerificationProcessConfiguration processConfig) {
 
-    JsonSchemaDefinition jsonSchemaDefinition = processConfig.requestValidationSchemaAsDefinition();
+    JsonSchemaDefinition jsonSchemaDefinition = processConfig.requestSchemaAsDefinition();
     Map<String, Object> mappingResult =
         IdentityVerificationMapper.mapping(request.toMap(), jsonSchemaDefinition);
 
@@ -49,7 +49,7 @@ public class IdentityVerificationApplicationDetails {
   public IdentityVerificationApplicationDetails merge(
       IdentityVerificationApplicationRequest request,
       IdentityVerificationProcessConfiguration processConfig) {
-    JsonSchemaDefinition jsonSchemaDefinition = processConfig.requestValidationSchemaAsDefinition();
+    JsonSchemaDefinition jsonSchemaDefinition = processConfig.requestSchemaAsDefinition();
     Map<String, Object> mappingResult =
         IdentityVerificationMapper.mapping(request.toMap(), jsonSchemaDefinition);
     Map<String, Object> mergedResult = new HashMap<>(json.toMap());
