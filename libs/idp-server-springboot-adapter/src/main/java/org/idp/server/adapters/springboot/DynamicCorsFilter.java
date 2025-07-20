@@ -56,18 +56,10 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
       Tenant tenant = tenantMetaDataApi.get(tenantIdentifier);
       TenantAttributes tenantAttributes = tenant.attributes();
       List<String> allowOrigins = tenantAttributes.optValueAsStringList("allow_origins", List.of());
-      String serverName = request.getServerName();
-      int serverPort = request.getServerPort();
+      String origin = request.getHeader("Origin") != null ? request.getHeader("Origin") : "";
       String allowOrigin =
           allowOrigins.stream()
-              .filter(
-                  allow -> {
-                    if (request.getScheme().equalsIgnoreCase("http")) {
-                      return allow.contains(serverName)
-                          && allow.contains(String.valueOf(serverPort));
-                    }
-                    return allow.contains(serverName);
-                  })
+              .filter(allow -> allow.contains(origin))
               .findFirst()
               .orElse(tenant.domain().value());
       log.info(
