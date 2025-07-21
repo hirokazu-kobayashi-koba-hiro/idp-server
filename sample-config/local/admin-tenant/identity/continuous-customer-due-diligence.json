@@ -19,14 +19,14 @@
           "type": "object",
           "required": ["last_name", "first_name", "last_name_kana", "first_name_kana", "birthdate", "nationality", "email_address", "mobile_phone_number", "address"],
           "properties": {
-            "last_name": { "type": "string", "maxLength": 255, "store": true },
-            "first_name": { "type": "string", "maxLength": 255, "store": true },
-            "last_name_kana": { "type": "string", "maxLength": 255, "store": true },
-            "first_name_kana": { "type": "string", "maxLength": 255, "store": true },
-            "birthdate": { "type": "string", "format": "date", "store": true },
-            "nationality": { "type": "string", "maxLength": 255, "store": true },
-            "email_address": { "type": "string", "maxLength": 255, "pattern": "^[\\w\\.-]+@[\\w\\.-]+\\.[a-zA-Z]{2,}$", "store": true },
-            "mobile_phone_number": { "type": "string", "maxLength": 11, "pattern": "^[0-9]{10,11}$", "store": true },
+            "last_name": { "type": "string", "maxLength": 255 },
+            "first_name": { "type": "string", "maxLength": 255 },
+            "last_name_kana": { "type": "string", "maxLength": 255 },
+            "first_name_kana": { "type": "string", "maxLength": 255 },
+            "birthdate": { "type": "string", "format": "date" },
+            "nationality": { "type": "string", "maxLength": 255 },
+            "email_address": { "type": "string", "maxLength": 255, "pattern": "^[\\w\\.-]+@[\\w\\.-]+\\.[a-zA-Z]{2,}$" },
+            "mobile_phone_number": { "type": "string", "maxLength": 11, "pattern": "^[0-9]{10,11}$" },
             "address": {
               "type": "object",
               "store": false,
@@ -81,19 +81,20 @@
       }
     },
     "request-ekyc": {
-      "request_schema": {
-        "type": "object",
-        "required": ["trust_framework", "document_type"],
-        "properties": {
-          "trust_framework": { "type": "string", "maxLength": 100, "store": true },
-          "document_type": { "type": "string", "maxLength": 50, "store": true }
-        },
-        "additionalProperties": false
+      "request": {
+        "schema": {
+          "type": "object",
+          "required": ["trust_framework", "document_type"],
+          "properties": {
+            "trust_framework": { "type": "string", "maxLength": 100 },
+            "document_type": { "type": "string", "maxLength": 50 }
+          }
+        }
       },
       "execution": {
         "url": "https://run.mocky.io/v3/0a587222-da2b-4713-b090-e4ff8447a02b",
         "method": "POST",
-        "headers": {
+        "static_headers": {
           "Content-Type": "application/json",
           "Authorization": "Bearer dummy-token"
         },
@@ -113,18 +114,17 @@
       }
     },
     "complete-ekyc": {
-      "request_schema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "complete eKYC",
-        "type": "object",
-        "required": [],
-        "properties": {},
-        "additionalProperties": false
+      "request": {
+        "schema": {
+          "type": "object",
+          "required": [],
+          "properties": {}
+        }
       },
       "execution": {
         "url": "https://run.mocky.io/v3/73f192dd-7bcd-4415-8fc7-811c56684cb7",
         "method": "POST",
-        "headers": {
+        "static_headers": {
           "Content-Type": "application/json",
           "Authorization": "Bearer dummy-token"
         },

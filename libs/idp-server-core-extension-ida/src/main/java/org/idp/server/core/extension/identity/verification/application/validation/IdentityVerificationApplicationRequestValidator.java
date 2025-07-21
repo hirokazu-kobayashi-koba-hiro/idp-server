@@ -22,16 +22,20 @@ import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaDefinition;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 import org.idp.server.platform.json.schema.JsonSchemaValidator;
+import org.idp.server.platform.type.RequestAttributes;
 
 public class IdentityVerificationApplicationRequestValidator {
   IdentityVerificationProcessConfiguration processConfiguration;
   IdentityVerificationApplicationRequest request;
+  RequestAttributes requestAttributes;
 
   public IdentityVerificationApplicationRequestValidator(
       IdentityVerificationProcessConfiguration processConfiguration,
-      IdentityVerificationApplicationRequest request) {
+      IdentityVerificationApplicationRequest request,
+      RequestAttributes requestAttributes) {
     this.processConfiguration = processConfiguration;
     this.request = request;
+    this.requestAttributes = requestAttributes;
   }
 
   public IdentityVerificationApplicationValidationResult validate() {
@@ -42,6 +46,7 @@ public class IdentityVerificationApplicationRequestValidator {
     JsonNodeWrapper requestJson = JsonNodeWrapper.fromMap(request.toMap());
     JsonSchemaValidationResult validationResult = jsonSchemaValidator.validate(requestJson);
 
-    return new IdentityVerificationApplicationValidationResult(validationResult);
+    return new IdentityVerificationApplicationValidationResult(
+        validationResult.isValid(), validationResult.errors());
   }
 }

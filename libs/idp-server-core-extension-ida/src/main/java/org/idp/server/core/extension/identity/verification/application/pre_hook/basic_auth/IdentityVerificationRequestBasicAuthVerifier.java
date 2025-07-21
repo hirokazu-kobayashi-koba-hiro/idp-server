@@ -26,7 +26,7 @@ import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 public class IdentityVerificationRequestBasicAuthVerifier
     implements IdentityVerificationRequestVerifier {
@@ -37,7 +37,6 @@ public class IdentityVerificationRequestBasicAuthVerifier
   public boolean shouldVerify(
       Tenant tenant,
       User user,
-      BasicAuth basicAuth,
       IdentityVerificationType type,
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes,
@@ -52,7 +51,6 @@ public class IdentityVerificationRequestBasicAuthVerifier
   public IdentityVerificationRequestVerifiedResult verify(
       Tenant tenant,
       User user,
-      BasicAuth basicAuth,
       IdentityVerificationType type,
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes,
@@ -60,6 +58,7 @@ public class IdentityVerificationRequestBasicAuthVerifier
 
     IdentityVerificationRegistrationConfig registrationConfiguration =
         verificationConfiguration.registration();
+    BasicAuth basicAuth = requestAttributes.basicAuth();
     BasicAuth configurationBasicAuth = registrationConfiguration.basicAuth();
 
     if (!basicAuth.exists()) {

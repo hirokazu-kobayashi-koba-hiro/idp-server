@@ -1,8 +1,8 @@
-import { expect } from "@jest/globals";
+import { expect, it } from "@jest/globals";
 import { faker } from "@faker-js/faker";
-import { backendUrl, clientSecretPostClient, serverConfig } from "../tests/testConfig";
-import { postAuthentication, requestToken } from "../api/oauthClient";
-import { get, post } from "../lib/http";
+import { backendUrl, clientSecretPostClient, federationServerConfig, serverConfig } from "../tests/testConfig";
+import { getUserinfo, postAuthentication, postAuthenticationDeviceInteraction, requestToken } from "../api/oauthClient";
+import { get, post, postWithJson } from "../lib/http";
 import { requestFederation } from "../oauth/federation";
 import { requestAuthorizations } from "../oauth/request";
 import { verifyAndDecodeJwt } from "../lib/jose";
@@ -174,4 +174,66 @@ export const createFederatedUser = async ({
     user: decodedIdToken.payload,
     accessToken: tokenResponse.data.access_token
   };
+};
+
+export const registerFidoUaf = async ({
+  accessToken,
+}) => {
+
+    let mfaRegistrationResponse =
+      await postWithJson({
+        url: serverConfig.resourceOwnerEndpoint + "/mfa/fido-uaf-registration",
+        body: {
+          "platform": "Android",
+          "os": "Android15",
+          "model": "galaxy z fold 6",
+          "notification_channel": "fcm",
+          "notification_token": "test token",
+          "preferred_for_notification": true
+        },
+        headers: {
+          "Authorization": `Bearer ${accessToken}`
+        }
+      });
+    console.log(mfaRegistrationResponse.data);
+    expect(mfaRegistrationResponse.status).toBe(200);
+
+    const transactionId = mfaRegistrationResponse.data.id;
+
+    let authenticationResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      id: transactionId,
+      interactionType: "fido-uaf-registration-challenge",
+      body: {
+        username: serverConfig.ciba.username,
+        password: serverConfig.ciba.userCode,
+      }
+    });
+    console.log(authenticationResponse.data);
+    expect(authenticationResponse.status).toBe(200);
+
+    const fidoUafFacetsResponse = await get({
+      url: serverConfig.fidoUafFacetsEndpoint,
+      headers: {
+        "Content-Type": "application/json",
+      }
+    });
+    console.log(fidoUafFacetsResponse.data);
+    expect(fidoUafFacetsResponse.status).toBe(200);
+
+    authenticationResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      id: transactionId,
+      interactionType: "fido-uaf-registration",
+      body: {
+        username: serverConfig.ciba.username,
+        password: serverConfig.ciba.userCode,
+      }
+    });
+    expect(authenticationResponse.status).toBe(200);
+    expect(authenticationResponse.data).toHaveProperty("device_id");
+
+    return {
+      authenticationDeviceId: authenticationResponse.data.device_id
+    };
 };

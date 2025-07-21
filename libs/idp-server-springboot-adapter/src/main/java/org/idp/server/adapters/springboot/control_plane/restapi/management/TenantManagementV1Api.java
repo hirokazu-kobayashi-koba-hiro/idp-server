@@ -26,7 +26,7 @@ import org.idp.server.control_plane.management.tenant.io.TenantManagementRespons
 import org.idp.server.control_plane.management.tenant.io.TenantRequest;
 import org.idp.server.platform.multi_tenancy.tenant.AdminTenantContext;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

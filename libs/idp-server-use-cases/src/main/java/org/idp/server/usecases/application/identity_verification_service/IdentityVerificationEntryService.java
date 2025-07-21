@@ -42,12 +42,11 @@ import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.core.oidc.token.TokenEventPublisher;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 @Transaction
 public class IdentityVerificationEntryService implements IdentityVerificationApi {
@@ -82,7 +81,6 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
   @Override
   public IdentityVerificationResponse register(
       TenantIdentifier tenantIdentifier,
-      BasicAuth basicAuth,
       IdentityVerificationType type,
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes) {
@@ -107,8 +105,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
     User user = userQueryRepository.get(tenant, request.userIdentifier());
 
     IdentityVerificationRequestVerifiedResult verifiedResult =
-        verifiers.verify(
-            tenant, user, basicAuth, type, request, requestAttributes, verificationConfiguration);
+        verifiers.verify(tenant, user, type, request, requestAttributes, verificationConfiguration);
 
     if (verifiedResult.isError()) {
       return verifiedResult.errorResponse();

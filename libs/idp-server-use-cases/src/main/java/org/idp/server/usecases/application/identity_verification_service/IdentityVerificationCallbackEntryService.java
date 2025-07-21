@@ -43,7 +43,7 @@ import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 @Transaction
 public class IdentityVerificationCallbackEntryService implements IdentityVerificationCallbackApi {
@@ -95,7 +95,8 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
         verificationConfiguration.getProcessConfig(process);
 
     IdentityVerificationCallbackRequestValidator validator =
-        new IdentityVerificationCallbackRequestValidator(processConfiguration, request);
+        new IdentityVerificationCallbackRequestValidator(
+            processConfiguration, request, requestAttributes);
 
     IdentityVerificationCallbackValidationResult validationResult = validator.validate();
 

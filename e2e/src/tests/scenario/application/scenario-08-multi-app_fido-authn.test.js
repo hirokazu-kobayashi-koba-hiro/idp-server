@@ -7,6 +7,7 @@ import {
   requestBackchannelAuthentications, requestToken
 } from "../../../api/oauthClient";
 import { verifyAndDecodeJwt } from "../../../lib/jose";
+import { createBasicAuthHeader } from "../../../lib/util";
 
 describe("multi client", () => {
 
@@ -208,7 +209,11 @@ describe("multi client", () => {
       let callbackExaminationResponse = await post({
         url: callbackEndpoint,
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          ...createBasicAuthHeader({
+            username: serverConfig.identityVerification.basicAuth.username,
+            password: serverConfig.identityVerification.basicAuth.password
+          })
         },
         body: {
           "application_id": externalId,
@@ -239,7 +244,11 @@ describe("multi client", () => {
       const callbackResultResponse = await post({
         url: callbackResultEndpoint,
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          ...createBasicAuthHeader({
+            username: serverConfig.identityVerification.basicAuth.username,
+            password: serverConfig.identityVerification.basicAuth.password
+          })
         },
         body: {
           "application_id": externalId,

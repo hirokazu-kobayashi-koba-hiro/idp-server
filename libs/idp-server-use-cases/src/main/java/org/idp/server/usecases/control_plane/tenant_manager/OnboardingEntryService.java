@@ -41,7 +41,7 @@ import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.*;
 import org.idp.server.platform.multi_tenancy.tenant.*;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 @Transaction
 public class OnboardingEntryService implements OnboardingApi {

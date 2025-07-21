@@ -36,7 +36,7 @@ import org.idp.server.core.oidc.identity.role.RoleCommandRepository;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.*;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 @Transaction
 public class IdpServerStarterEntryService implements IdpServerStarterApi {

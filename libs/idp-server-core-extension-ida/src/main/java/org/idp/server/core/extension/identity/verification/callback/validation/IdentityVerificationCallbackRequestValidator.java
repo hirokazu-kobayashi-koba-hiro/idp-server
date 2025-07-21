@@ -16,25 +16,53 @@
 
 package org.idp.server.core.extension.identity.verification.callback.validation;
 
+import java.util.ArrayList;
+import java.util.List;
+import org.idp.server.core.extension.identity.verification.configuration.common.IdentityVerificationBasicAuthConfig;
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationCallbackRequest;
+import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaDefinition;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 import org.idp.server.platform.json.schema.JsonSchemaValidator;
+import org.idp.server.platform.type.RequestAttributes;
 
 public class IdentityVerificationCallbackRequestValidator {
   IdentityVerificationProcessConfiguration processConfiguration;
   IdentityVerificationCallbackRequest request;
+  RequestAttributes requestAttributes;
 
   public IdentityVerificationCallbackRequestValidator(
       IdentityVerificationProcessConfiguration processConfiguration,
-      IdentityVerificationCallbackRequest request) {
+      IdentityVerificationCallbackRequest request,
+      RequestAttributes requestAttributes) {
     this.processConfiguration = processConfiguration;
     this.request = request;
+    this.requestAttributes = requestAttributes;
   }
 
   public IdentityVerificationCallbackValidationResult validate() {
+
+    if (processConfiguration.hasBasicAuth()) {
+      BasicAuth basicAuth = requestAttributes.basicAuth();
+      IdentityVerificationBasicAuthConfig basicAuthConfig = processConfiguration.basicAuthConfig();
+      BasicAuth configurationBasicAuth = basicAuthConfig.basicAuth();
+
+      if (!basicAuth.exists()) {
+
+        List<String> errors = new ArrayList<>();
+        errors.add("The identity verification request requires a basic authentication");
+        return new IdentityVerificationCallbackValidationResult(false, errors);
+      }
+
+      if (!configurationBasicAuth.equals(basicAuth)) {
+
+        List<String> errors = new ArrayList<>();
+        errors.add("The identity verification request unmatch a basic authentication");
+        return new IdentityVerificationCallbackValidationResult(false, errors);
+      }
+    }
 
     JsonSchemaDefinition jsonSchemaDefinition = processConfiguration.requestSchemaAsDefinition();
     JsonSchemaValidator jsonSchemaValidator = new JsonSchemaValidator(jsonSchemaDefinition);
@@ -42,6 +70,7 @@ public class IdentityVerificationCallbackRequestValidator {
     JsonNodeWrapper requestJson = JsonNodeWrapper.fromMap(request.toMap());
     JsonSchemaValidationResult validationResult = jsonSchemaValidator.validate(requestJson);
 
-    return new IdentityVerificationCallbackValidationResult(validationResult);
+    return new IdentityVerificationCallbackValidationResult(
+        validationResult.isValid(), validationResult.errors());
   }
 }

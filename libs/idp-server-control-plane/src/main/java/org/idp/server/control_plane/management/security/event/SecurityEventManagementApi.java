@@ -28,7 +28,7 @@ import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.SecurityEventQueries;
 import org.idp.server.platform.security.event.SecurityEventIdentifier;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 public interface SecurityEventManagementApi {
   default AdminPermissions getRequiredPermissions(String method) {

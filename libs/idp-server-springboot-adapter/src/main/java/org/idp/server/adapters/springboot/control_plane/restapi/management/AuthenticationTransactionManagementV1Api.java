@@ -28,7 +28,7 @@ import org.idp.server.core.oidc.OAuthFlowApi;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.identity.UserOperationApi;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

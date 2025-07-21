@@ -25,7 +25,7 @@ import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 public class FidoUafAuthenticationChallengeInteractor implements AuthenticationInteractor {
 
@@ -134,7 +134,7 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
     }
 
     if (requestAttributes.containsKey("x-device-id")) {
-      return requestAttributes.getValueAsString("x-device-id");
+      return requestAttributes.getValueOrEmptyAsString("x-device-id");
     }
 
     if (transaction.hasAuthenticationDevice()) {

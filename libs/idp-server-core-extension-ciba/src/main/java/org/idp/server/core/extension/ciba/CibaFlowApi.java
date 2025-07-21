@@ -24,7 +24,7 @@ import org.idp.server.core.oidc.authentication.AuthenticationInteractionRequestR
 import org.idp.server.core.oidc.authentication.AuthenticationInteractionType;
 import org.idp.server.core.oidc.authentication.AuthenticationTransaction;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 public interface CibaFlowApi {
   CibaRequestResponse request(

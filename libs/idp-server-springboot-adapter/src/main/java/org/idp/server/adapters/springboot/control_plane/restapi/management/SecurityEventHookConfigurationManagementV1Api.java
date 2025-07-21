@@ -26,7 +26,7 @@ import org.idp.server.control_plane.management.security.hook.io.SecurityEventHoo
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigRequest;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.hook.SecurityEventHookConfigurationIdentifier;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

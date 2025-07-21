@@ -24,7 +24,7 @@ import org.idp.server.core.oidc.OAuthFlowApi;
 import org.idp.server.core.oidc.io.OAuthRequestResponse;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.MultiValueMap;

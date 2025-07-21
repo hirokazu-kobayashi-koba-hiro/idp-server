@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.identity.verification.configuration.registration;
+package org.idp.server.core.extension.identity.verification.configuration.common;
 
 import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.json.JsonReadable;

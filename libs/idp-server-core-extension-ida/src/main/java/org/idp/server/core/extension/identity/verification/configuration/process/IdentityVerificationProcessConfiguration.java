@@ -16,6 +16,7 @@
 
 package org.idp.server.core.extension.identity.verification.configuration.process;
 
+import org.idp.server.core.extension.identity.verification.configuration.common.IdentityVerificationBasicAuthConfig;
 import org.idp.server.platform.http.HmacAuthenticationConfiguration;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.JsonReadable;
@@ -37,6 +38,20 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
       new IdentityVerificationConditionConfig();
 
   public IdentityVerificationProcessConfiguration() {}
+
+  public boolean hasBasicAuth() {
+    if (request == null) {
+      return false;
+    }
+    return request.hasBasicAuth();
+  }
+
+  public IdentityVerificationBasicAuthConfig basicAuthConfig() {
+    if (request == null) {
+      return new IdentityVerificationBasicAuthConfig();
+    }
+    return request.basicAuth();
+  }
 
   public JsonSchemaDefinition requestSchemaAsDefinition() {
     if (request == null) {

@@ -27,6 +27,8 @@ import org.idp.server.core.extension.identity.verification.application.model.Ide
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationQueries;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplications;
+import org.idp.server.core.extension.identity.verification.application.validation.IdentityVerificationApplicationRequestValidator;
+import org.idp.server.core.extension.identity.verification.application.validation.IdentityVerificationApplicationValidationResult;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.extension.identity.verification.io.*;
@@ -47,7 +49,7 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.security.event.SecurityEventType;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 @Transaction
 public class IdentityVerificationApplicationEntryService
@@ -96,6 +98,20 @@ public class IdentityVerificationApplicationEntryService
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     IdentityVerificationConfiguration verificationConfiguration =
         configurationQueryRepository.get(tenant, type);
+
+    IdentityVerificationProcessConfiguration processConfig =
+        verificationConfiguration.getProcessConfig(process);
+
+    IdentityVerificationApplicationRequestValidator applicationValidator =
+        new IdentityVerificationApplicationRequestValidator(
+            processConfig, request, requestAttributes);
+    IdentityVerificationApplicationValidationResult requestValidationResult =
+        applicationValidator.validate();
+
+    if (requestValidationResult.isError()) {
+      return requestValidationResult.errorResponse();
+    }
+
     IdentityVerificationApplications applications =
         applicationQueryRepository.findAll(tenant, user);
 
@@ -136,8 +152,6 @@ public class IdentityVerificationApplicationEntryService
         DefaultSecurityEventType.identity_verification_application_apply,
         requestAttributes);
 
-    IdentityVerificationProcessConfiguration processConfig =
-        verificationConfiguration.getProcessConfig(process);
     Map<String, Object> response =
         IdentityVerificationDynamicResponseMapper.buildDynamicResponse(
             application, applyingResult.applicationContext(), processConfig.response());

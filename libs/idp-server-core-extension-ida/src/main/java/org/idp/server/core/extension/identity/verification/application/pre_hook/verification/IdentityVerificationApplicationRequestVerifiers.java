@@ -31,7 +31,7 @@ import org.idp.server.core.extension.identity.verification.io.IdentityVerificati
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 public class IdentityVerificationApplicationRequestVerifiers {
 

@@ -38,7 +38,7 @@ import org.idp.server.platform.security.hook.SecurityEventHookConfiguration;
 import org.idp.server.platform.security.hook.SecurityEventHookConfigurationIdentifier;
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationCommandRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 @Transaction
 public class SecurityEventHookConfigurationManagementEntryService

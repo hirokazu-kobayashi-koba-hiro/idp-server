@@ -31,7 +31,7 @@ import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 public class UserClaimVerifier implements IdentityVerificationApplicationRequestVerifier {
 

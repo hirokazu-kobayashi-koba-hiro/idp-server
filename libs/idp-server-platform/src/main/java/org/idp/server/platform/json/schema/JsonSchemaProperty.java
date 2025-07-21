@@ -63,6 +63,25 @@ public class JsonSchemaProperty {
     return propertySchema.contains("maxLength");
   }
 
+  // "minimum": 0,
+  //  "maximum": 100
+
+  public int minimum() {
+    return propertySchema.getValueAsInt("minimum");
+  }
+
+  public boolean hasMinimum() {
+    return propertySchema.contains("minimum");
+  }
+
+  public int maximum() {
+    return propertySchema.getValueAsInt("maximum");
+  }
+
+  public boolean hasMaximum() {
+    return propertySchema.contains("maximum");
+  }
+
   public boolean hasPattern() {
     return propertySchema.contains("pattern");
   }
@@ -120,6 +139,14 @@ public class JsonSchemaProperty {
 
   public boolean isStringType() {
     return "string".equals(type());
+  }
+
+  public boolean isBooleanType() {
+    return "boolean".equals(type());
+  }
+
+  public boolean isIntegerType() {
+    return "integer".equals(type());
   }
 
   public boolean isArrayType() {

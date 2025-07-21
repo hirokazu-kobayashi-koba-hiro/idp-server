@@ -67,6 +67,10 @@ public class JsonSchemaValidator {
 
       if (childSchema.isStringType()) {
         validateStringConstraints(prefix, field, valueObject, childSchema, errors);
+      } else if (childSchema.isBooleanType()) {
+        validateBooleanConstraints(prefix, field, valueObject, childSchema, errors);
+      } else if (childSchema.isIntegerType()) {
+        validateIntegerConstraints(prefix, field, valueObject, childSchema, errors);
       } else if (childSchema.isArrayType()) {
         validateArrayConstraints(prefix, field, valueObject, childSchema, errors);
       } else if (childSchema.isObjectType()) {
@@ -105,6 +109,12 @@ public class JsonSchemaValidator {
       return;
     }
 
+    if (!valueObject.isString()) {
+      String composedFiledName = composeFiledName(prefix, field);
+      errors.add(composedFiledName + " is not a string");
+      return;
+    }
+
     String value = valueObject.asText();
     String composedFiledName = composeFiledName(prefix, field);
 
@@ -137,6 +147,52 @@ public class JsonSchemaValidator {
     }
   }
 
+  void validateBooleanConstraints(
+      String prefix,
+      String field,
+      JsonNodeWrapper valueObject,
+      JsonSchemaProperty schemaProperty,
+      List<String> errors) {
+
+    if (!valueObject.exists()) {
+      // validateRequiredField is covered
+      return;
+    }
+
+    if (!valueObject.isBoolean()) {
+      String composedFiledName = composeFiledName(prefix, field);
+      errors.add(composedFiledName + " is not a boolean");
+    }
+  }
+
+  void validateIntegerConstraints(
+      String prefix,
+      String field,
+      JsonNodeWrapper valueObject,
+      JsonSchemaProperty schemaProperty,
+      List<String> errors) {
+
+    if (!valueObject.exists()) {
+      // validateRequiredField is covered
+      return;
+    }
+
+    int value = valueObject.asInt();
+    String composedFiledName = composeFiledName(prefix, field);
+
+    if (!valueObject.isInt()) {
+      errors.add(composedFiledName + " is not a integer");
+    }
+
+    if (schemaProperty.hasMinimum() && value < schemaProperty.minimum()) {
+      errors.add(composedFiledName + " minimum is " + schemaProperty.minLength());
+    }
+
+    if (schemaProperty.hasMaxLength() && value > schemaProperty.maximum()) {
+      errors.add(composedFiledName + " maximum is " + schemaProperty.maxLength());
+    }
+  }
+
   void validateArrayConstraints(
       String prefix,
       String field,
@@ -146,6 +202,12 @@ public class JsonSchemaValidator {
 
     if (!valueObject.exists()) {
       // validateRequiredField is covered
+      return;
+    }
+
+    if (!valueObject.isArray()) {
+      String composedFiledName = composeFiledName(prefix, field);
+      errors.add(composedFiledName + " is not a array");
       return;
     }
 

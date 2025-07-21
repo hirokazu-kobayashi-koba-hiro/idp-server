@@ -25,7 +25,7 @@ import org.idp.server.core.extension.identity.verification.IdentityVerificationA
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationResponse;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResultQueries;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
