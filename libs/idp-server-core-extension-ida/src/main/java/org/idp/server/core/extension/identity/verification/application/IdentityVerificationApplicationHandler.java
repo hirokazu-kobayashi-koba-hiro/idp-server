@@ -16,7 +16,6 @@
 
 package org.idp.server.core.extension.identity.verification.application;
 
-import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
@@ -29,8 +28,6 @@ import org.idp.server.core.extension.identity.verification.application.model.Ide
 import org.idp.server.core.extension.identity.verification.application.pre_hook.additional_parameter.AdditionalRequestParameterResolvers;
 import org.idp.server.core.extension.identity.verification.application.pre_hook.verification.IdentityVerificationApplicationRequestVerifiedResult;
 import org.idp.server.core.extension.identity.verification.application.pre_hook.verification.IdentityVerificationApplicationRequestVerifiers;
-import org.idp.server.core.extension.identity.verification.application.validation.IdentityVerificationApplicationRequestValidator;
-import org.idp.server.core.extension.identity.verification.application.validation.IdentityVerificationApplicationValidationResult;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationExecutionConfig;
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
@@ -42,7 +39,7 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolver;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 public class IdentityVerificationApplicationHandler {
 
@@ -69,18 +66,6 @@ public class IdentityVerificationApplicationHandler {
       RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
 
-    IdentityVerificationProcessConfiguration processConfig =
-        verificationConfiguration.getProcessConfig(processes);
-
-    IdentityVerificationApplicationRequestValidator applicationValidator =
-        new IdentityVerificationApplicationRequestValidator(processConfig, request);
-    IdentityVerificationApplicationValidationResult requestValidationResult =
-        applicationValidator.validate();
-
-    if (requestValidationResult.isError()) {
-      return IdentityVerificationApplyingResult.requestError(requestValidationResult);
-    }
-
     IdentityVerificationApplicationRequestVerifiedResult verifyResult =
         requestVerifiers.verifyAll(
             tenant,
@@ -95,8 +80,7 @@ public class IdentityVerificationApplicationHandler {
 
     if (verifyResult.isError()) {
 
-      return IdentityVerificationApplyingResult.requestVerificationError(
-          requestValidationResult, verifyResult);
+      return IdentityVerificationApplyingResult.requestVerificationError(verifyResult);
     }
 
     Map<String, Object> requestBaseParams =
@@ -119,17 +103,14 @@ public class IdentityVerificationApplicationHandler {
 
     if (!executionResult.isSuccess()) {
       return IdentityVerificationApplyingResult.executionError(
-          requestValidationResult, verifyResult, identityVerificationApplyingExecutionResult);
+          verifyResult, identityVerificationApplyingExecutionResult);
     }
 
     IdentityVerificationApplicationContext applicationContext =
         new IdentityVerificationApplicationContext(requestBaseParams, executionResult);
 
     return new IdentityVerificationApplyingResult(
-        applicationContext,
-        requestValidationResult,
-        verifyResult,
-        identityVerificationApplyingExecutionResult);
+        applicationContext, verifyResult, identityVerificationApplyingExecutionResult);
   }
 
   private Map<String, Object> resolveBaseParams(

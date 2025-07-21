@@ -24,7 +24,7 @@ import org.idp.server.core.extension.identity.verification.configuration.Identit
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationRequest;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 public interface IdentityVerificationApplicationRequestVerifier {
 

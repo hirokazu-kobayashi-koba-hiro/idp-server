@@ -16,42 +16,45 @@
 
 package org.idp.server.core.extension.identity.verification.application.validation;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationResponse;
-import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 
 public class IdentityVerificationApplicationValidationResult {
 
-  JsonSchemaValidationResult validationResult;
+  boolean valid;
+  List<String> errors;
+  ;
 
   public IdentityVerificationApplicationValidationResult() {
-    this.validationResult = JsonSchemaValidationResult.empty();
+    this.valid = false;
+    this.errors = new ArrayList<>();
   }
 
-  public IdentityVerificationApplicationValidationResult(
-      JsonSchemaValidationResult validationResult) {
-    this.validationResult = validationResult;
+  public IdentityVerificationApplicationValidationResult(boolean valid, List<String> errors) {
+    this.valid = valid;
+    this.errors = errors;
   }
 
   public boolean isOK() {
-    return validationResult.isValid();
+    return valid;
   }
 
   public boolean isError() {
-    return !validationResult.isValid();
+    return !valid;
   }
 
   public List<String> errors() {
-    return validationResult.errors();
+    return errors;
   }
 
   public IdentityVerificationApplicationResponse errorResponse() {
     Map<String, Object> response = new HashMap<>();
     response.put("error", "invalid_request");
     response.put("error_description", "identity verification is invalid.");
-    response.put("error_details", validationResult.errors());
+    response.put("error_details", errors);
     return IdentityVerificationApplicationResponse.CLIENT_ERROR(response);
   }
 }

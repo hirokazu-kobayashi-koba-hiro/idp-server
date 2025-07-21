@@ -20,16 +20,14 @@ import org.idp.server.core.extension.identity.verification.IdentityVerificationT
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.core.oidc.identity.User;
-import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 public interface IdentityVerificationRequestVerifier {
 
   default boolean shouldVerify(
       Tenant tenant,
       User user,
-      BasicAuth basicAuth,
       IdentityVerificationType type,
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes,
@@ -40,7 +38,6 @@ public interface IdentityVerificationRequestVerifier {
   IdentityVerificationRequestVerifiedResult verify(
       Tenant tenant,
       User user,
-      BasicAuth basicAuth,
       IdentityVerificationType type,
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes,

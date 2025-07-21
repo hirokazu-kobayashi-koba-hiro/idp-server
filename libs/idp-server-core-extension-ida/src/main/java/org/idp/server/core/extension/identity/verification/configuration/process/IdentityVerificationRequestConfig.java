@@ -18,14 +18,27 @@ package org.idp.server.core.extension.identity.verification.configuration.proces
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.extension.identity.verification.configuration.common.IdentityVerificationBasicAuthConfig;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.json.schema.JsonSchemaDefinition;
 
 public class IdentityVerificationRequestConfig implements JsonReadable {
+  IdentityVerificationBasicAuthConfig basicAuth = new IdentityVerificationBasicAuthConfig();
   Map<String, Object> schema = new HashMap<>();
 
   public IdentityVerificationRequestConfig() {}
+
+  public IdentityVerificationBasicAuthConfig basicAuth() {
+    if (basicAuth == null) {
+      return new IdentityVerificationBasicAuthConfig();
+    }
+    return basicAuth;
+  }
+
+  public boolean hasBasicAuth() {
+    return basicAuth != null && basicAuth.exists();
+  }
 
   public JsonSchemaDefinition requestSchemaAsDefinition() {
     if (schema == null) {

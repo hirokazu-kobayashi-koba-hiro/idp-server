@@ -19,7 +19,7 @@ package org.idp.server.control_plane.admin.operation;
 import org.idp.server.control_plane.admin.operation.io.IdpServerOperationRequest;
 import org.idp.server.control_plane.admin.operation.io.IdpServerOperationResponse;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 public interface IdpServerOperationApi {
 

@@ -31,7 +31,7 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolver;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 // TODO to be more readable and handling error
 public class HttpRequestParameterResolver implements AdditionalRequestParameterResolver {

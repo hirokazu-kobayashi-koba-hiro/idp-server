@@ -1,12 +1,13 @@
 import { describe, expect, it } from "@jest/globals";
 import { deletion, get, post, postWithJson } from "../../../lib/http";
 import { clientSecretPostClient, serverConfig, federationServerConfig } from "../../testConfig";
-import { createFederatedUser } from "../../../user";
+import { createFederatedUser, registerFidoUaf } from "../../../user";
 import {
   getAuthenticationDeviceAuthenticationTransaction, getJwks, getUserinfo, postAuthenticationDeviceInteraction,
   requestBackchannelAuthentications, requestToken
 } from "../../../api/oauthClient";
 import { verifyAndDecodeJwt } from "../../../lib/jose";
+import { createBasicAuthHeader } from "../../../lib/util";
 
 describe("identity-verification application", () => {
 
@@ -20,76 +21,8 @@ describe("identity-verification application", () => {
         client: clientSecretPostClient,
         adminClient: clientSecretPostClient
       });
-
       console.log(user);
-
-      let mfaRegistrationResponse =
-        await postWithJson({
-          url: serverConfig.resourceOwnerEndpoint + "/mfa/fido-uaf-registration",
-          body: {
-            "platform": "Android",
-            "os": "Android15",
-            "model": "galaxy z fold 6",
-            "notification_channel": "fcm",
-            "notification_token": "test token",
-            "preferred_for_notification": true
-          },
-          headers: {
-            "Authorization": `Bearer ${accessToken}`
-          }
-        });
-      console.log(mfaRegistrationResponse.data);
-      expect(mfaRegistrationResponse.status).toBe(200);
-
-      const transactionId = mfaRegistrationResponse.data.id;
-
-      let authenticationResponse = await postAuthenticationDeviceInteraction({
-        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-        id: transactionId,
-        interactionType: "fido-uaf-registration-challenge",
-        body: {
-          username: serverConfig.ciba.username,
-          password: serverConfig.ciba.userCode,
-        }
-      });
-      console.log(authenticationResponse.data);
-      expect(authenticationResponse.status).toBe(200);
-
-      const fidoUafFacetsResponse = await get({
-        url: serverConfig.fidoUafFacetsEndpoint,
-        headers: {
-          "Content-Type": "application/json",
-        }
-      });
-      console.log(fidoUafFacetsResponse.data);
-      expect(fidoUafFacetsResponse.status).toBe(200);
-
-      authenticationResponse = await postAuthenticationDeviceInteraction({
-        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-        id: transactionId,
-        interactionType: "fido-uaf-registration",
-        body: {
-          username: serverConfig.ciba.username,
-          password: serverConfig.ciba.userCode,
-        }
-      });
-      expect(authenticationResponse.status).toBe(200);
-      expect(authenticationResponse.data).toHaveProperty("device_id");
-      const authenticationDeviceId = authenticationResponse.data.device_id;
-
-      let userinfoResponse = await getUserinfo({
-        endpoint: serverConfig.userinfoEndpoint,
-        authorizationHeader: {
-          "Authorization": `Bearer ${accessToken}`
-        }
-      });
-      console.log(JSON.stringify(userinfoResponse.data, null, 2));
-      expect(userinfoResponse.status).toBe(200);
-      expect(userinfoResponse.data.sub).toEqual(user.sub);
-      expect(userinfoResponse.data).toHaveProperty("authentication_devices");
-      expect(userinfoResponse.data.authentication_devices.length).toBe(1);
-      expect(userinfoResponse.data).toHaveProperty("mfa");
-      expect(userinfoResponse.data.authentication_devices[0].id).toEqual(authenticationDeviceId);
+      const { authenticationDeviceId } = await registerFidoUaf({ accessToken: accessToken});
 
       const ciba = serverConfig.ciba;
 
@@ -217,7 +150,11 @@ describe("identity-verification application", () => {
       let callbackExaminationResponse = await post({
         url: callbackEndpoint,
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          ...createBasicAuthHeader({
+            username: serverConfig.identityVerification.basicAuth.username,
+            password: serverConfig.identityVerification.basicAuth.password
+          })
         },
         body: {
           "application_id": externalId,
@@ -256,7 +193,11 @@ describe("identity-verification application", () => {
       const callbackResultResponse = await post({
         url: callbackResultEndpoint,
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          ...createBasicAuthHeader({
+            username: serverConfig.identityVerification.basicAuth.username,
+            password: serverConfig.identityVerification.basicAuth.password
+          })
         },
         body: {
           "application_id": externalId,
@@ -381,7 +322,7 @@ describe("identity-verification application", () => {
       const authenticationTransaction = authenticationTransactionResponse.data.list[0];
       console.log(authenticationTransaction);
 
-      authenticationResponse = await postAuthenticationDeviceInteraction({
+      let authenticationResponse = await postAuthenticationDeviceInteraction({
         endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
         flowType: authenticationTransaction.flow,
         id: authenticationTransaction.id,
@@ -445,7 +386,7 @@ describe("identity-verification application", () => {
       });
       console.log(JSON.stringify(decodedAccessToken, null, 2));
 
-      userinfoResponse = await getUserinfo({
+      let userinfoResponse = await getUserinfo({
         endpoint: serverConfig.userinfoEndpoint,
         authorizationHeader: {
           "Authorization": `Bearer ${tokenResponse.data.access_token}`
@@ -480,75 +421,8 @@ describe("identity-verification application", () => {
         client: clientSecretPostClient,
         adminClient: clientSecretPostClient
       });
-
       console.log(user);
-
-      let mfaRegistrationResponse =
-        await postWithJson({
-          url: serverConfig.resourceOwnerEndpoint + "/mfa/fido-uaf-registration",
-          body: {
-            "platform": "Android",
-            "os": "Android15",
-            "model": "galaxy z fold 6",
-            "notification_channel": "fcm",
-            "notification_token": "test token",
-            "preferred_for_notification": true
-          },
-          headers: {
-            "Authorization": `Bearer ${accessToken}`
-          }
-        });
-      console.log(mfaRegistrationResponse.data);
-      expect(mfaRegistrationResponse.status).toBe(200);
-
-      const transactionId = mfaRegistrationResponse.data.id;
-
-      let authenticationResponse = await postAuthenticationDeviceInteraction({
-        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-        id: transactionId,
-        interactionType: "fido-uaf-registration-challenge",
-        body: {
-          username: serverConfig.ciba.username,
-          password: serverConfig.ciba.userCode,
-        }
-      });
-      console.log(authenticationResponse.data);
-      expect(authenticationResponse.status).toBe(200);
-
-      const fidoUafFacetsResponse = await get({
-        url: serverConfig.fidoUafFacetsEndpoint,
-        headers: {
-          "Content-Type": "application/json",
-        }
-      });
-      console.log(fidoUafFacetsResponse.data);
-      expect(fidoUafFacetsResponse.status).toBe(200);
-
-      authenticationResponse = await postAuthenticationDeviceInteraction({
-        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-        id: transactionId,
-        interactionType: "fido-uaf-registration",
-        body: {
-          username: serverConfig.ciba.username,
-          password: serverConfig.ciba.userCode,
-        }
-      });
-      expect(authenticationResponse.status).toBe(200);
-
-      let userinfoResponse = await getUserinfo({
-        endpoint: serverConfig.userinfoEndpoint,
-        authorizationHeader: {
-          "Authorization": `Bearer ${accessToken}`
-        }
-      });
-      console.log(JSON.stringify(userinfoResponse.data, null, 2));
-      expect(userinfoResponse.status).toBe(200);
-      expect(userinfoResponse.data.sub).toEqual(user.sub);
-      expect(userinfoResponse.data).toHaveProperty("authentication_devices");
-      expect(userinfoResponse.data.authentication_devices.length).toBe(1);
-      expect(userinfoResponse.data).toHaveProperty("mfa");
-
-      const authenticationDeviceId = userinfoResponse.data.authentication_devices[0].id;
+      const { authenticationDeviceId } = await registerFidoUaf({ accessToken: accessToken});
 
       const ciba = serverConfig.ciba;
 
@@ -730,7 +604,7 @@ describe("identity-verification application", () => {
       const authenticationTransaction = authenticationTransactionResponse.data.list[0];
       console.log(authenticationTransaction);
 
-      authenticationResponse = await postAuthenticationDeviceInteraction({
+      let authenticationResponse = await postAuthenticationDeviceInteraction({
         endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
         flowType: authenticationTransaction.flow,
         id: authenticationTransaction.id,
@@ -794,7 +668,7 @@ describe("identity-verification application", () => {
       });
       console.log(JSON.stringify(decodedAccessToken, null, 2));
 
-      userinfoResponse = await getUserinfo({
+      let userinfoResponse = await getUserinfo({
         endpoint: serverConfig.userinfoEndpoint,
         authorizationHeader: {
           "Authorization": `Bearer ${tokenResponse.data.access_token}`
@@ -837,76 +711,8 @@ describe("identity-verification application", () => {
         client: clientSecretPostClient,
         adminClient: clientSecretPostClient
       });
-
       console.log(user);
-
-      let mfaRegistrationResponse =
-        await postWithJson({
-          url: serverConfig.resourceOwnerEndpoint + "/mfa/fido-uaf-registration",
-          body: {
-            "platform": "Android",
-            "os": "Android15",
-            "model": "galaxy z fold 6",
-            "notification_channel": "fcm",
-            "notification_token": "test token",
-            "preferred_for_notification": true
-          },
-          headers: {
-            "Authorization": `Bearer ${accessToken}`
-          }
-        });
-      console.log(mfaRegistrationResponse.data);
-      expect(mfaRegistrationResponse.status).toBe(200);
-
-      const transactionId = mfaRegistrationResponse.data.id;
-
-      let authenticationResponse = await postAuthenticationDeviceInteraction({
-        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-        id: transactionId,
-        interactionType: "fido-uaf-registration-challenge",
-        body: {
-          username: serverConfig.ciba.username,
-          password: serverConfig.ciba.userCode,
-        }
-      });
-      console.log(authenticationResponse.data);
-      expect(authenticationResponse.status).toBe(200);
-
-      const fidoUafFacetsResponse = await get({
-        url: serverConfig.fidoUafFacetsEndpoint,
-        headers: {
-          "Content-Type": "application/json",
-        }
-      });
-      console.log(fidoUafFacetsResponse.data);
-      expect(fidoUafFacetsResponse.status).toBe(200);
-
-      authenticationResponse = await postAuthenticationDeviceInteraction({
-        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-        id: transactionId,
-        interactionType: "fido-uaf-registration",
-        body: {
-          username: serverConfig.ciba.username,
-          password: serverConfig.ciba.userCode,
-        }
-      });
-      expect(authenticationResponse.status).toBe(200);
-      expect(authenticationResponse.data).toHaveProperty("device_id");
-      const authenticationDeviceId = authenticationResponse.data.device_id;
-
-      let userinfoResponse = await getUserinfo({
-        endpoint: serverConfig.userinfoEndpoint,
-        authorizationHeader: {
-          "Authorization": `Bearer ${accessToken}`
-        }
-      });
-      console.log(JSON.stringify(userinfoResponse.data, null, 2));
-      expect(userinfoResponse.status).toBe(200);
-      expect(userinfoResponse.data.sub).toEqual(user.sub);
-      expect(userinfoResponse.data).toHaveProperty("authentication_devices");
-      expect(userinfoResponse.data.authentication_devices.length).toBe(1);
-      expect(userinfoResponse.data).toHaveProperty("mfa");
-      expect(userinfoResponse.data.authentication_devices[0].id).toEqual(authenticationDeviceId);
+      const { authenticationDeviceId } = await registerFidoUaf({ accessToken: accessToken});
 
       const ciba = serverConfig.ciba;
 
@@ -1059,13 +865,112 @@ describe("identity-verification application", () => {
       expect(applicationsResponse.data.list[0].user_id).toEqual(user.sub);
       expect(applicationsResponse.data.list[0]).toHaveProperty("application_details");
       expect(applicationsResponse.data.list[0]).toHaveProperty("requested_at");
-
-
-
     });
   });
 
   describe("error pattern", () => {
+
+    it("required params investment-account-opening", async () => {
+
+      const type = "investment-account-opening";
+      const { user, accessToken } = await createFederatedUser({
+        serverConfig: serverConfig,
+        federationServerConfig: federationServerConfig,
+        client: clientSecretPostClient,
+        adminClient: clientSecretPostClient
+      });
+
+      console.log(user);
+
+      const applyUrl = serverConfig.identityVerificationApplyEndpoint
+        .replace("{type}", type)
+        .replace("{process}", "apply")
+      ;
+      const applyResponse = await post({
+        url: applyUrl,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`
+        },
+        body: {}
+      });
+
+      console.log(applyResponse.data);
+      expect(applyResponse.status).toBe(400);
+      expect(applyResponse.data.error).toEqual("invalid_request");
+      expect(applyResponse.data.error_description).toEqual("identity verification is invalid.");
+      expect(applyResponse.data.error_details).toContain("last_name is missing");
+      expect(applyResponse.data.error_details).toContain("last_name is missing");
+      expect(applyResponse.data.error_details).toContain("first_name is missing");
+      expect(applyResponse.data.error_details).toContain("last_name_kana is missing");
+      expect(applyResponse.data.error_details).toContain("first_name_kana is missing");
+      expect(applyResponse.data.error_details).toContain("birthdate is missing");
+      expect(applyResponse.data.error_details).toContain("nationality is missing");
+      expect(applyResponse.data.error_details).toContain("email_address is missing");
+      expect(applyResponse.data.error_details).toContain("mobile_phone_number is missing");
+      expect(applyResponse.data.error_details).toContain("address is missing");
+    });
+
+    it("invalid type params investment-account-opening", async () => {
+
+      const type = "investment-account-opening";
+      const { user, accessToken } = await createFederatedUser({
+        serverConfig: serverConfig,
+        federationServerConfig: federationServerConfig,
+        client: clientSecretPostClient,
+        adminClient: clientSecretPostClient
+      });
+
+      console.log(user);
+
+      const applyUrl = serverConfig.identityVerificationApplyEndpoint
+        .replace("{type}", type)
+        .replace("{process}", "apply")
+      ;
+      const applyResponse = await post({
+        url: applyUrl,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`
+        },
+        body: {
+          "last_name": {"name": "value"},
+          "first_name": {"name": "value"},
+          "last_name_kana": {"name": "value"},
+          "first_name_kana": {"name": "value"},
+          "birthdate": {"name": "value"},
+          "nationality": {"name": "value"},
+          "email_address": {"name": "value"},
+          "mobile_phone_number": {"name": "value"},
+          "address": {
+            "street_address": {"name": "value"},
+            "locality": {"name": "value"},
+            "region": {"name": "value"},
+            "postal_code": {"name": "value"},
+            "country": {"name": "value"}
+          }
+        }
+      });
+
+      console.log(applyResponse.data);
+      expect(applyResponse.status).toBe(400);
+      expect(applyResponse.data.error).toEqual("invalid_request");
+      expect(applyResponse.data.error_description).toEqual("identity verification is invalid.");
+      expect(applyResponse.data.error_details).toContain("last_name is not a string");
+      expect(applyResponse.data.error_details).toContain("last_name is not a string");
+      expect(applyResponse.data.error_details).toContain("first_name is not a string");
+      expect(applyResponse.data.error_details).toContain("last_name_kana is not a string");
+      expect(applyResponse.data.error_details).toContain("first_name_kana is not a string");
+      expect(applyResponse.data.error_details).toContain("birthdate is not a string");
+      expect(applyResponse.data.error_details).toContain("nationality is not a string");
+      expect(applyResponse.data.error_details).toContain("email_address is not a string");
+      expect(applyResponse.data.error_details).toContain("mobile_phone_number is not a string");
+      expect(applyResponse.data.error_details).toContain("address.region is not a string");
+      expect(applyResponse.data.error_details).toContain("address.country is not a string");
+      expect(applyResponse.data.error_details).toContain("address.locality is not a string");
+      expect(applyResponse.data.error_details).toContain("address.postal_code is not a string");
+      expect(applyResponse.data.error_details).toContain("address.street_address is not a string");
+    });
 
     it("email unmatched continuous-customer-due-diligence", async () => {
 

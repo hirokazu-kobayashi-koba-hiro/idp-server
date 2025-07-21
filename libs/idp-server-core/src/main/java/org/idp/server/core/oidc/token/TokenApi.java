@@ -21,7 +21,7 @@ import org.idp.server.core.oidc.token.handler.token.io.TokenRequestResponse;
 import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
 import org.idp.server.core.oidc.token.handler.tokenrevocation.io.TokenRevocationResponse;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 public interface TokenApi {
 

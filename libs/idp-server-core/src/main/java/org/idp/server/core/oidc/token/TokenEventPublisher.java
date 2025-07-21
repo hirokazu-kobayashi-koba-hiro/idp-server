@@ -22,7 +22,7 @@ import org.idp.server.platform.security.SecurityEventPublisher;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.security.event.SecurityEventDescription;
 import org.idp.server.platform.security.event.SecurityEventType;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 public class TokenEventPublisher {
 

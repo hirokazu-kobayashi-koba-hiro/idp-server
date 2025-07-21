@@ -22,7 +22,7 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.SecurityEventPublisher;
 import org.idp.server.platform.security.event.SecurityEventType;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 public class CibaFlowEventPublisher {
 

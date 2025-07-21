@@ -21,15 +21,13 @@ import org.idp.server.core.extension.identity.verification.io.IdentityVerificati
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResultQueries;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.token.OAuthToken;
-import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 public interface IdentityVerificationApi {
 
   IdentityVerificationResponse register(
       TenantIdentifier tenantIdentifier,
-      BasicAuth basicAuth,
       IdentityVerificationType identityVerificationType,
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes);

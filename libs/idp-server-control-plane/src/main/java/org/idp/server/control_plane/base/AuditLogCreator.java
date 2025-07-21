@@ -25,7 +25,7 @@ import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 public class AuditLogCreator {
 

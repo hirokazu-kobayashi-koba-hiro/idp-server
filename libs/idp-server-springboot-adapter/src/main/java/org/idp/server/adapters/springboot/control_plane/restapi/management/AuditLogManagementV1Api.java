@@ -26,7 +26,7 @@ import org.idp.server.control_plane.management.audit.io.AuditLogManagementRespon
 import org.idp.server.platform.audit.AuditLogIdentifier;
 import org.idp.server.platform.audit.AuditLogQueries;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

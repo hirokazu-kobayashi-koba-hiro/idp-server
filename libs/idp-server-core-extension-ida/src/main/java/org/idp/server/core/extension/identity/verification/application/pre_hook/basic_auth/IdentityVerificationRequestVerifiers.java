@@ -23,9 +23,8 @@ import org.idp.server.core.extension.identity.verification.IdentityVerificationT
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.core.oidc.identity.User;
-import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 public class IdentityVerificationRequestVerifiers {
 
@@ -42,7 +41,6 @@ public class IdentityVerificationRequestVerifiers {
   public IdentityVerificationRequestVerifiedResult verify(
       Tenant tenant,
       User user,
-      BasicAuth basicAuth,
       IdentityVerificationType type,
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes,
@@ -51,13 +49,13 @@ public class IdentityVerificationRequestVerifiers {
     for (IdentityVerificationRequestVerifier verifier : verifiers) {
 
       if (!verifier.shouldVerify(
-          tenant, user, basicAuth, type, request, requestAttributes, verificationConfiguration)) {
+          tenant, user, type, request, requestAttributes, verificationConfiguration)) {
         continue;
       }
 
       IdentityVerificationRequestVerifiedResult verifyResult =
           verifier.verify(
-              tenant, user, basicAuth, type, request, requestAttributes, verificationConfiguration);
+              tenant, user, type, request, requestAttributes, verificationConfiguration);
 
       if (verifyResult.isError()) {
         return verifyResult;

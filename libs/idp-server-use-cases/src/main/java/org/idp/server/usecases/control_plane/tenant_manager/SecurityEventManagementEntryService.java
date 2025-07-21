@@ -24,7 +24,6 @@ import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.security.event.SecurityEventManagementApi;
 import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementResponse;
 import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementStatus;
-import org.idp.server.control_plane.management.security.hook.*;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
@@ -38,7 +37,7 @@ import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.SecurityEventQueries;
 import org.idp.server.platform.security.event.SecurityEventIdentifier;
 import org.idp.server.platform.security.repository.SecurityEventQueryRepository;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 @Transaction(readOnly = true)
 public class SecurityEventManagementEntryService implements SecurityEventManagementApi {

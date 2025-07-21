@@ -19,56 +19,37 @@ package org.idp.server.core.extension.identity.verification.application.executio
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.application.pre_hook.verification.IdentityVerificationApplicationRequestVerifiedResult;
-import org.idp.server.core.extension.identity.verification.application.validation.IdentityVerificationApplicationValidationResult;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationResponse;
 import org.idp.server.platform.json.JsonNodeWrapper;
 
 public class IdentityVerificationApplyingResult {
 
   IdentityVerificationApplicationContext applicationContext;
-  IdentityVerificationApplicationValidationResult requestIdValidationResult;
   IdentityVerificationApplicationRequestVerifiedResult verifyResult;
   IdentityVerificationApplyingExecutionResult executionResult;
 
   public IdentityVerificationApplyingResult() {}
 
-  public static IdentityVerificationApplyingResult requestError(
-      IdentityVerificationApplicationValidationResult requestIdValidationResult) {
-    return new IdentityVerificationApplyingResult(
-        new IdentityVerificationApplicationContext(),
-        requestIdValidationResult,
-        IdentityVerificationApplicationRequestVerifiedResult.empty(),
-        new IdentityVerificationApplyingExecutionResult());
-  }
-
   public static IdentityVerificationApplyingResult requestVerificationError(
-      IdentityVerificationApplicationValidationResult requestIdValidationResult,
       IdentityVerificationApplicationRequestVerifiedResult verifyResult) {
     return new IdentityVerificationApplyingResult(
         new IdentityVerificationApplicationContext(),
-        requestIdValidationResult,
         verifyResult,
         new IdentityVerificationApplyingExecutionResult());
   }
 
   public static IdentityVerificationApplyingResult executionError(
-      IdentityVerificationApplicationValidationResult requestIdValidationResult,
       IdentityVerificationApplicationRequestVerifiedResult verifyResult,
       IdentityVerificationApplyingExecutionResult executionResult) {
     return new IdentityVerificationApplyingResult(
-        new IdentityVerificationApplicationContext(),
-        requestIdValidationResult,
-        verifyResult,
-        executionResult);
+        new IdentityVerificationApplicationContext(), verifyResult, executionResult);
   }
 
   public IdentityVerificationApplyingResult(
       IdentityVerificationApplicationContext applicationContext,
-      IdentityVerificationApplicationValidationResult requestIdValidationResult,
       IdentityVerificationApplicationRequestVerifiedResult verifyResult,
       IdentityVerificationApplyingExecutionResult executionResult) {
     this.applicationContext = applicationContext;
-    this.requestIdValidationResult = requestIdValidationResult;
     this.verifyResult = verifyResult;
     this.executionResult = executionResult;
   }
@@ -78,15 +59,10 @@ public class IdentityVerificationApplyingResult {
   }
 
   public boolean isError() {
-    return requestIdValidationResult.isError()
-        || verifyResult.isError()
-        || executionResult.isClientError();
+    return verifyResult.isError() || executionResult.isClientError();
   }
 
   public IdentityVerificationApplicationResponse errorResponse() {
-    if (requestIdValidationResult.isError()) {
-      return requestIdValidationResult.errorResponse();
-    }
 
     if (verifyResult.isError()) {
       return verifyResult.errorResponse();

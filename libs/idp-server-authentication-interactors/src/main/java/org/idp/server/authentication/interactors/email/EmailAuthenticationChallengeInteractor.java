@@ -32,7 +32,7 @@ import org.idp.server.platform.notification.email.EmailSender;
 import org.idp.server.platform.notification.email.EmailSenders;
 import org.idp.server.platform.notification.email.EmailSendingRequest;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 public class EmailAuthenticationChallengeInteractor implements AuthenticationInteractor {
 

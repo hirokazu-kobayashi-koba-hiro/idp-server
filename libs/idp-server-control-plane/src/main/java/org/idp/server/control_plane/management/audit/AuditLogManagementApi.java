@@ -28,7 +28,7 @@ import org.idp.server.platform.audit.AuditLogIdentifier;
 import org.idp.server.platform.audit.AuditLogQueries;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.security.type.RequestAttributes;
+import org.idp.server.platform.type.RequestAttributes;
 
 public interface AuditLogManagementApi {
   default AdminPermissions getRequiredPermissions(String method) {

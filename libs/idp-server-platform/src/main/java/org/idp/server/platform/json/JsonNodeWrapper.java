@@ -204,6 +204,10 @@ public class JsonNodeWrapper {
     return jsonNode.asText();
   }
 
+  public int asInt() {
+    return jsonNode.asInt();
+  }
+
   /**
    * Converts the entire JSON object into a Java {@link Map}, recursively extracting primitive
    * values.
@@ -259,6 +263,10 @@ public class JsonNodeWrapper {
 
   public boolean isString() {
     return jsonNode.isTextual();
+  }
+
+  public boolean isBoolean() {
+    return jsonNode.isBoolean();
   }
 
   public boolean isInt() {

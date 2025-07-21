@@ -18,6 +18,7 @@ package org.idp.server.core.extension.identity.verification.configuration.regist
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.extension.identity.verification.configuration.common.IdentityVerificationBasicAuthConfig;
 import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.JsonReadable;
