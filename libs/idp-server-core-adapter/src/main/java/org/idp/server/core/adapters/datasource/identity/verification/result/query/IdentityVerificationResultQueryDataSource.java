@@ -19,7 +19,7 @@ package org.idp.server.core.adapters.datasource.identity.verification.result.que
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.extension.identity.verification.exception.IdentityVerificationApplicationNotFoundException;
+import org.idp.server.core.extension.identity.exception.IdentityVerificationApplicationNotFoundException;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationResultQueryRepository;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResult;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResultIdentifier;

@@ -48,7 +48,7 @@ public class ExternalSmsAuthenticationHttpClient {
       HttpRequestBaseParams httpRequestBaseParams,
       ExternalSmsAuthenticationExecutionConfiguration configuration) {
 
-    Map<String, String> headers = new HashMap<>(configuration.httpRequestHeaders().toMap());
+    Map<String, String> headers = new HashMap<>(configuration.httpRequestStaticHeaders().toMap());
 
     switch (configuration.httpRequestAuthType()) {
       case OAUTH2 -> {

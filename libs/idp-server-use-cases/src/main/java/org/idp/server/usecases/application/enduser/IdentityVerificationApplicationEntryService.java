@@ -18,21 +18,23 @@ package org.idp.server.usecases.application.enduser;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.extension.identity.verification.*;
-import org.idp.server.core.extension.identity.verification.application.*;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationApi;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
+import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationHandler;
+import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationApplyingResult;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationQueries;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
-import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationQueryRepository;
-import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplyingResult;
-import org.idp.server.core.extension.identity.verification.handler.IdentityVerificationHandler;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationResponse;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationDynamicResponseMapper;
+import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
+import org.idp.server.core.extension.identity.verification.io.*;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationCommandRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationQueryRepository;
+import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationResultCommandRepository;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResult;
-import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationApplicationRequestValidator;
-import org.idp.server.core.extension.identity.verification.validation.IdentityVerificationApplicationValidationResult;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserStatus;
 import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
@@ -55,7 +57,7 @@ public class IdentityVerificationApplicationEntryService
   IdentityVerificationApplicationCommandRepository applicationCommandRepository;
   IdentityVerificationApplicationQueryRepository applicationQueryRepository;
   IdentityVerificationResultCommandRepository resultCommandRepository;
-  IdentityVerificationHandler identityVerificationHandler;
+  IdentityVerificationApplicationHandler identityVerificationApplicationHandler;
   TenantQueryRepository tenantQueryRepository;
   UserQueryRepository userQueryRepository;
   UserCommandRepository userCommandRepository;
@@ -77,7 +79,7 @@ public class IdentityVerificationApplicationEntryService
     this.resultCommandRepository = resultCommandRepository;
     this.userQueryRepository = userQueryRepository;
     this.userCommandRepository = userCommandRepository;
-    this.identityVerificationHandler = new IdentityVerificationHandler();
+    this.identityVerificationApplicationHandler = new IdentityVerificationApplicationHandler();
     this.eventPublisher = eventPublisher;
   }
 
@@ -97,8 +99,8 @@ public class IdentityVerificationApplicationEntryService
     IdentityVerificationApplications applications =
         applicationQueryRepository.findAll(tenant, user);
 
-    ExternalIdentityVerificationApplyingResult applyingResult =
-        identityVerificationHandler.handleRequest(
+    IdentityVerificationApplyingResult applyingResult =
+        identityVerificationApplicationHandler.executeRequest(
             tenant,
             user,
             new IdentityVerificationApplication(),
@@ -124,9 +126,7 @@ public class IdentityVerificationApplicationEntryService
             oAuthToken.requestedClientId(),
             user,
             type,
-            request,
-            verificationConfiguration.externalIdentityVerificationService(),
-            applyingResult,
+            applyingResult.applicationContext(),
             process,
             verificationConfiguration);
     applicationCommandRepository.register(tenant, application);
@@ -136,12 +136,11 @@ public class IdentityVerificationApplicationEntryService
         DefaultSecurityEventType.identity_verification_application_apply,
         requestAttributes);
 
+    IdentityVerificationProcessConfiguration processConfig =
+        verificationConfiguration.getProcessConfig(process);
     Map<String, Object> response =
         IdentityVerificationDynamicResponseMapper.buildDynamicResponse(
-            application,
-            applyingResult.externalWorkflowResponse(),
-            process,
-            verificationConfiguration);
+            application, applyingResult.applicationContext(), processConfig.response());
 
     return IdentityVerificationApplicationResponse.OK(response);
   }
@@ -189,8 +188,8 @@ public class IdentityVerificationApplicationEntryService
     IdentityVerificationApplications applications =
         applicationQueryRepository.findAll(tenant, user);
 
-    ExternalIdentityVerificationApplyingResult applyingResult =
-        identityVerificationHandler.handleRequest(
+    IdentityVerificationApplyingResult applyingResult =
+        identityVerificationApplicationHandler.executeRequest(
             tenant,
             user,
             application,
@@ -202,71 +201,24 @@ public class IdentityVerificationApplicationEntryService
             verificationConfiguration);
     if (applyingResult.isError()) {
 
-      eventPublisher.publish(
-          tenant,
-          oAuthToken,
-          DefaultSecurityEventType.identity_verification_application_failure,
-          requestAttributes);
+      SecurityEventType securityEventType =
+          new SecurityEventType(type.name() + "_" + process.name() + "_" + "failure");
+      eventPublisher.publish(tenant, oAuthToken, securityEventType, requestAttributes);
 
       return applyingResult.errorResponse();
     }
 
     IdentityVerificationApplication updated =
-        application.updateProcess(process, request, applyingResult, verificationConfiguration);
+        application.updateProcessWith(process, request, applyingResult, verificationConfiguration);
     applicationCommandRepository.update(tenant, updated);
     SecurityEventType securityEventType =
         new SecurityEventType(type.name() + "_" + process.name() + "_" + "success");
 
     eventPublisher.publish(tenant, oAuthToken, securityEventType, requestAttributes);
 
-    Map<String, Object> response =
-        IdentityVerificationDynamicResponseMapper.buildDynamicResponse(
-            application,
-            applyingResult.externalWorkflowResponse(),
-            process,
-            verificationConfiguration);
-    return IdentityVerificationApplicationResponse.OK(response);
-  }
-
-  @Override
-  public IdentityVerificationApplicationResponse evaluateResult(
-      TenantIdentifier tenantIdentifier,
-      User user,
-      OAuthToken oAuthToken,
-      IdentityVerificationApplicationIdentifier identifier,
-      IdentityVerificationType type,
-      IdentityVerificationApplicationRequest request,
-      RequestAttributes requestAttributes) {
-
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    IdentityVerificationConfiguration verificationConfiguration =
-        configurationQueryRepository.get(tenant, type);
-    IdentityVerificationProcess process =
-        ReservedIdentityVerificationProcess.EVALUATE_RESULT.toProcess();
-    IdentityVerificationProcessConfiguration processConfiguration =
-        verificationConfiguration.getProcessConfig(process);
-
-    IdentityVerificationApplicationRequestValidator applicationValidator =
-        new IdentityVerificationApplicationRequestValidator(processConfiguration, request);
-    IdentityVerificationApplicationValidationResult validationResult =
-        applicationValidator.validate();
-
-    if (validationResult.isError()) {
-
-      return validationResult.errorResponse();
-    }
-
-    IdentityVerificationApplication application =
-        applicationQueryRepository.get(tenant, user, identifier);
-
-    IdentityVerificationApplication updatedExamination =
-        application.completeExamination(process, request, verificationConfiguration);
-    applicationCommandRepository.update(tenant, updatedExamination);
-
-    if (updatedExamination.isApproved()) {
+    if (updated.isApproved()) {
       IdentityVerificationResult identityVerificationResult =
-          IdentityVerificationResult.create(updatedExamination, request, verificationConfiguration);
+          IdentityVerificationResult.create(updated, request, verificationConfiguration);
       resultCommandRepository.register(tenant, identityVerificationResult);
 
       // TODO dynamic lifecycle management
@@ -277,7 +229,11 @@ public class IdentityVerificationApplicationEntryService
       userCommandRepository.update(tenant, verifiedUser);
     }
 
-    Map<String, Object> response = new HashMap<>();
+    IdentityVerificationProcessConfiguration processConfig =
+        verificationConfiguration.getProcessConfig(process);
+    Map<String, Object> response =
+        IdentityVerificationDynamicResponseMapper.buildDynamicResponse(
+            application, applyingResult.applicationContext(), processConfig.response());
     return IdentityVerificationApplicationResponse.OK(response);
   }
 

@@ -19,13 +19,12 @@ package org.idp.server.core.adapters.datasource.identity.verification.result.que
 import java.time.LocalDateTime;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
-import org.idp.server.core.extension.identity.verification.application.*;
-import org.idp.server.core.extension.identity.verification.claims.VerifiedClaims;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplicationIdentifier;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationService;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResult;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResultIdentifier;
-import org.idp.server.core.extension.identity.verification.result.IdentityVerificationSource;
+import org.idp.server.core.extension.identity.verification.result.IdentityVerificationSourceDetails;
+import org.idp.server.core.extension.identity.verification.result.IdentityVerificationSourceType;
+import org.idp.server.core.extension.identity.verified.VerifiedClaims;
 import org.idp.server.core.oidc.identity.UserIdentifier;
 import org.idp.server.platform.date.LocalDateTimeParser;
 import org.idp.server.platform.json.JsonNodeWrapper;
@@ -44,10 +43,6 @@ public class ModelConverter {
         new IdentityVerificationApplicationIdentifier(map.get("application_id"));
     IdentityVerificationType verificationType =
         new IdentityVerificationType(map.get("verification_type"));
-    ExternalIdentityVerificationService externalIdentityVerificationService =
-        new ExternalIdentityVerificationService(map.get("external_service"));
-    ExternalIdentityVerificationApplicationIdentifier externalApplicationId =
-        new ExternalIdentityVerificationApplicationIdentifier(map.get("external_application_id"));
     VerifiedClaims verifiedClaims =
         new VerifiedClaims(JsonNodeWrapper.fromString(map.get("verified_claims")));
     LocalDateTime verifiedAt = LocalDateTimeParser.parse(map.get("verified_at"));
@@ -55,7 +50,10 @@ public class ModelConverter {
         map.get("verified_until") != null
             ? LocalDateTimeParser.parse(map.get("verified_until"))
             : null;
-    IdentityVerificationSource source = IdentityVerificationSource.of(map.get("source"));
+    IdentityVerificationSourceType source = IdentityVerificationSourceType.of(map.get("source"));
+    IdentityVerificationSourceDetails sourceDetails =
+        new IdentityVerificationSourceDetails(
+            JsonNodeWrapper.fromString(map.get("source_details")));
 
     return new IdentityVerificationResult(
         identifier,
@@ -63,11 +61,10 @@ public class ModelConverter {
         sub,
         applicationId,
         verificationType,
-        externalIdentityVerificationService,
-        externalApplicationId,
         verifiedClaims,
         verifiedAt,
         verifiedUntil,
-        source);
+        source,
+        sourceDetails);
   }
 }

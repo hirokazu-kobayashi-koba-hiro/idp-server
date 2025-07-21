@@ -20,10 +20,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
-import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationCallbackApi;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationResponse;
+import org.idp.server.core.extension.identity.verification.io.*;
 import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.type.RequestAttributes;
@@ -42,48 +42,25 @@ public class IdentityVerificationPublicCallbackV1Api implements ParameterTransfo
     this.identityVerificationCallbackApi = idpServerApplication.identityVerificationCallbackApi();
   }
 
-  @PostMapping("/{verification-type}/examination")
+  @PostMapping("/{verification-type}/{verification-callback}")
   public ResponseEntity<?> callback(
       @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("verification-type") IdentityVerificationType verificationType,
+      @PathVariable("verification-callback") IdentityVerificationProcess process,
       @RequestBody Map<String, Object> requestBody,
       HttpServletRequest httpServletRequest) {
 
     BasicAuth basicAuth = convertBasicAuth(authorizationHeader);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    IdentityVerificationApplicationResponse response =
-        identityVerificationCallbackApi.callbackExamination(
+    IdentityVerificationCallbackResponse response =
+        identityVerificationCallbackApi.callback(
             tenantIdentifier,
             basicAuth,
             verificationType,
-            new IdentityVerificationApplicationRequest(requestBody),
-            requestAttributes);
-
-    HttpHeaders httpHeaders = new HttpHeaders();
-    httpHeaders.add("Content-Type", "application/json");
-    return new ResponseEntity<>(
-        response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
-  }
-
-  @PostMapping("/{verification-type}/result")
-  public ResponseEntity<?> callbackExamination(
-      @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @PathVariable("verification-type") IdentityVerificationType verificationType,
-      @RequestBody(required = false) Map<String, Object> requestBody,
-      HttpServletRequest httpServletRequest) {
-
-    BasicAuth basicAuth = convertBasicAuth(authorizationHeader);
-    RequestAttributes requestAttributes = transform(httpServletRequest);
-
-    IdentityVerificationApplicationResponse response =
-        identityVerificationCallbackApi.callbackResult(
-            tenantIdentifier,
-            basicAuth,
-            verificationType,
-            new IdentityVerificationApplicationRequest(requestBody),
+            process,
+            new IdentityVerificationCallbackRequest(requestBody),
             requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();

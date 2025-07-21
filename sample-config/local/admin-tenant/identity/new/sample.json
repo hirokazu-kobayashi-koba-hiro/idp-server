@@ -5,7 +5,6 @@
   "external_application_id_param": "sample_id",
   "processes": {
     "apply": {
-      "type": "external",
       "request": {
         "schema": {
           "type": "object",
@@ -29,213 +28,116 @@
           }
         }
       },
-      "pre_hook": {
-        "verification": {
-          "$schema": "original",
-          "duplicate_application": false,
-          "unmatched_user_claims_email": {
-            "property": "email_address"
-          },
-          "unmatched_user_claims_phone": {
-            "property": "mobile_phone_number"
-          }
-        },
-        "additional_parameter": {
-          "user": {
-            "mapping_rules": [
-              {
-                "from": "$.sub",
-                "to": "user_id"
-              },
-              {
-                "from": "$.email",
-                "to": "mail_address"
-              },
-              {
-                "from": "$.custom_properties.token",
-                "to": "token"
-              }
-            ]
-          },
-          "http_request": {
-            "url": "http://mockoon:4000/apply",
-            "method": "POST",
-            "headers": {
-              "Content-Type": "application/json",
-              "Authorization": "Bearer dummy-token"
-            },
-            "dynamic_body_keys": [
-              "last_name",
-              "first_name",
-              "last_name_kana",
-              "first_name_kana"
-            ],
-            "response_validation_schema": {
-              "$schema": "https://json-schema.org/draft/2020-12/schema",
-              "title": "external user data response",
-              "type": "object",
-              "required": [
-                "application_id"
-              ],
-              "properties": {
-                "application_id": {
-                  "type": "string",
-                  "store": true
+      "pre_hooks": {
+        "verifications": [
+          {
+            "type": "user_claim",
+            "details": {
+              "verification_parameters": [
+                {
+                  "request_json_path": "$.request_body.email_address",
+                  "user_claim_json_path": "email"
+                },
+                {
+                  "request_json_path": "$.request_body.phone_number",
+                  "user_claim_json_path": "phone_number"
                 }
-              },
-              "additionalProperties": false
+              ]
+            }
+          },
+          {
+            "type": "duplicate_application",
+            "details": {
+              "available_application": 1,
+              "exclude_status": []
+            }
+          },
+          {
+            "type": "http_request",
+            "details": {
+              "url": "http://localhost:4000/apply",
+              "method": "POST",
+              "static_headers": {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer dummy-token"
+              }
             }
           }
-        }
+        ],
+        "additional_parameters": [
+          {
+            "type": "http_request",
+            "additional_parameter": "external_param",
+            "details": {
+              "url": "http://localhost:4000/apply",
+              "method": "POST",
+              "behavior": "passthrough",
+              "static_headers": {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer dummy-token"
+              },
+              "response_validation_schema": {
+                "type": "object",
+                "required": [
+                  "application_id"
+                ],
+                "properties": {
+                  "application_id": {
+                    "type": "string",
+                    "store": true
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        ]
       },
       "execution": {
-        "type": "http",
-        "http_request": {
-          "url": "http://mockoon:4000/apply",
+        "type": "http_proxy",
+        "details": {
+          "url": "http://localhost:4000/apply",
           "method": "POST",
-          "request_behavior": "passthrough",
+          "body_mapping_rules": [
+            { "from": "$.request_body", "to": "*" }
+          ],
           "static_headers": {
             "Content-Type": "application/json",
             "Authorization": "Bearer dummy-token"
           },
-          "static_body": {}
-        },
-        "response_schema": {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
-          "title": "application response",
-          "type": "object",
-          "required": [
-            "application_id"
-          ],
-          "properties": {
-            "application_id": {
-              "type": "string",
-              "store": true
-            }
-          },
-          "additionalProperties": false
+          "static_body": {},
+          "response_behavior": "passthrough",
+          "response_schema": {
+            "type": "object",
+            "required": [
+              "application_id"
+            ],
+            "properties": {
+              "application_id": {
+                "type": "string",
+                "store": true
+              }
+            },
+            "additionalProperties": false
+          }
         }
       },
-      "post_hook": {
-        "store": {
-
+      "post_hooks": [
+        {
+          "type": "http_request",
+          "details": {
+            "url": "http://localhost:4000/token",
+            "body_mapping_rules": [
+              { "from": "$.request_body", "to": "*" }
+            ]
+          }
         }
-      },
+      ],
       "response": {
         "status": 200,
-        "request_behavior": "passthrough"
-      }
-    },
-    "issue-ekyc": {
-      "type": "external",
-      "request": {
-        "schema": {
-          "type": "object",
-          "required": [
-            "kyc_method"
-          ],
-          "properties": {
-            "kyc_method": {
-              "type": "string",
-              "maxLength": 255,
-              "store": true
-            }
-          }
-        }
-      },
-      "pre_request": {
-        "verification": {
-          "duplicate_application": false,
-          "unmatched_user_claims_email": {
-            "property": "email_address"
-          },
-          "unmatched_user_claims_phone": {
-            "property": "mobile_phone_number"
-          }
-        },
-        "additional_parameter": {
-          "user": {
-            "mapping_rules": [
-              {
-                "from": "$.sub",
-                "to": "user_id"
-              },
-              {
-                "from": "$.email",
-                "to": "mail_address"
-              },
-              {
-                "from": "$.custom_properties.token",
-                "to": "token"
-              }
-            ]
-          },
-          "http_request": {
-            "url": "http://mockoon:4000/apply",
-            "method": "POST",
-            "headers": {
-              "Content-Type": "application/json",
-              "Authorization": "Bearer dummy-token"
-            },
-            "dynamic_body_keys": [
-              "last_name",
-              "first_name",
-              "last_name_kana",
-              "first_name_kana"
-            ],
-            "response_validation_schema": {
-              "$schema": "https://json-schema.org/draft/2020-12/schema",
-              "title": "external user data response",
-              "type": "object",
-              "required": [
-                "application_id"
-              ],
-              "properties": {
-                "application_id": {
-                  "type": "string",
-                  "store": true
-                }
-              },
-              "additionalProperties": false
-            }
-          }
-        }
-      },
-      "execution": {
-        "http_request": {
-          "url": "http://mockoon:4000/{{external_application_id}}/request-ekyc",
-          "pass_mapping_rules": [
-            { "from": "$.application.external_application_id", "to": "external_application_id" }
-          ],
-          "method": "POST",
-          "oauth_authorization": {
-            "type": "password",
-            "token_endpoint": "http://mockoon:4000/token",
-            "client_id": "your-client-id",
-            "username": "username",
-            "password": "password",
-            "scope": "application"
-          },
-          "headers": {
-            "Content-Type": "application/json"
-          },
-          "request_behavior": "passthrough"
-        },
-        "response_schema": {
-          "type": "object",
-          "required": [
-            "application_id"
-          ],
-          "properties": {
-            "application_id": {
-              "type": "string",
-              "store": true
-            }
-          },
-          "additionalProperties": false
-        }
-      },
-      "post_request": {
+        "body_mapping_rules": [
+          { "from": "", "to": "" }
+        ]
       }
     }
   }

@@ -62,7 +62,7 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
               .filter(allow -> allow.contains(origin))
               .findFirst()
               .orElse(tenant.domain().value());
-      log.info(
+      log.debug(
           "DynamicCorsFilter tenantId: {} allow origin: {}", tenantIdentifier.value(), allowOrigin);
 
       response.setHeader("Access-Control-Allow-Origin", allowOrigin);

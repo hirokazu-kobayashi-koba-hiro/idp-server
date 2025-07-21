@@ -33,29 +33,28 @@ public class PostgresqlExecutor implements IdentityVerificationResultCommandSqlE
     String sqlTemplate =
         """
                     INSERT INTO public.identity_verification_result
-                    (id,
+                    (
+                    id,
                     tenant_id,
                     user_id,
                     application_id,
                     verification_type,
-                    external_service,
-                    external_application_id,
                     verified_claims,
                     verified_at,
                     valid_until,
-                    source)
+                    source,
+                    source_details)
                     VALUES (
                     ?::uuid,
                     ?::uuid,
                     ?::uuid,
                     ?::uuid,
                     ?,
-                    ?,
-                    ?,
                     ?::jsonb,
                     ?,
                     ?,
-                    ?
+                    ?,
+                    ?::jsonb
                     );
                 """;
 
@@ -69,12 +68,6 @@ public class PostgresqlExecutor implements IdentityVerificationResultCommandSqlE
       params.add(null);
     }
     params.add(result.identityVerificationType().name());
-    params.add(result.externalIdentityVerificationService().name());
-    if (result.hasExternalApplicationId()) {
-      params.add(result.externalApplicationId().value());
-    } else {
-      params.add(null);
-    }
     params.add(jsonConverter.write(result.verifiedClaims().toMap()));
     params.add(result.verifiedAt());
     if (result.hasVerifiedUntil()) {
@@ -83,6 +76,11 @@ public class PostgresqlExecutor implements IdentityVerificationResultCommandSqlE
       params.add(null);
     }
     params.add(result.source().name());
+    if (result.hasSourceDetails()) {
+      params.add(jsonConverter.write(result.sourceDetails().toMap()));
+    } else {
+      params.add(null);
+    }
 
     sqlExecutor.execute(sqlTemplate, params);
   }

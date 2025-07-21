@@ -19,26 +19,20 @@ package org.idp.server.control_plane.management.identity.verification.io;
 import java.util.*;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
-import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationProcessConfiguration;
-import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationRegistrationConfiguration;
-import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationVerifiedClaimsConfiguration;
-import org.idp.server.platform.http.HmacAuthenticationConfiguration;
+import org.idp.server.core.extension.identity.verification.configuration.common.IdentityVerificationCommonConfiguration;
+import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
+import org.idp.server.core.extension.identity.verification.configuration.registration.IdentityVerificationRegistrationConfig;
+import org.idp.server.core.extension.identity.verification.configuration.verified_claims.IdentityVerificationVerifiedClaimsConfiguration;
 import org.idp.server.platform.json.JsonReadable;
-import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
 public class IdentityVerificationConfigurationRequest implements JsonReadable {
   String id;
   String type;
-  String delegation;
   String description;
-  String externalService;
-  String externalApplicationIdParam;
-  OAuthAuthorizationConfiguration oauthAuthorization;
-  HmacAuthenticationConfiguration hmacAuthentication;
+  IdentityVerificationCommonConfiguration common;
   Map<String, IdentityVerificationProcessConfiguration> processes;
-  IdentityVerificationRegistrationConfiguration registration;
-  List<String> approvedTargetTypes = new ArrayList<>();
-  IdentityVerificationVerifiedClaimsConfiguration verifiedClaimsConfiguration;
+  IdentityVerificationRegistrationConfig registration;
+  IdentityVerificationVerifiedClaimsConfiguration verifiedClaims;
 
   public IdentityVerificationConfigurationRequest() {}
 
@@ -54,27 +48,12 @@ public class IdentityVerificationConfigurationRequest implements JsonReadable {
     return new IdentityVerificationType(type);
   }
 
-  public String delegation() {
-    return delegation;
-  }
-
   public String description() {
     return description;
   }
 
   public IdentityVerificationConfiguration toConfiguration(String identifier) {
     return new IdentityVerificationConfiguration(
-        identifier,
-        type,
-        delegation,
-        description,
-        externalService,
-        externalApplicationIdParam,
-        oauthAuthorization,
-        hmacAuthentication,
-        processes,
-        registration,
-        approvedTargetTypes,
-        verifiedClaimsConfiguration);
+        identifier, type, description, common, processes, registration, verifiedClaims);
   }
 }

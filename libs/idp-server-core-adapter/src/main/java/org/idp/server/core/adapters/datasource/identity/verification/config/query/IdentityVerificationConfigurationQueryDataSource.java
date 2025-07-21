@@ -19,11 +19,11 @@ package org.idp.server.core.adapters.datasource.identity.verification.config.que
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.idp.server.core.extension.identity.exception.IdentityVerificationConfigurationNotFoundException;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
-import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationQueryRepository;
-import org.idp.server.core.extension.identity.verification.exception.IdentityVerificationConfigurationNotFoundException;
+import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 

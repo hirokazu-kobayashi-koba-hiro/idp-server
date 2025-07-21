@@ -5,28 +5,7 @@
   "external_application_id_param": "application_id",
   "processes": {
     "apply": {
-      "url": "http://mockoon:4000/apply",
-      "method": "POST",
-      "headers": {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer dummy-token"
-      },
-      "dynamic_body_keys": [
-        "last_name",
-        "first_name",
-        "last_name_kana",
-        "last_name_kana",
-        "first_name_kana",
-        "birthdate",
-        "nationality",
-        "email_address",
-        "mobile_phone_number",
-        "address"
-      ],
-      "static_body": {},
-      "request_validation_schema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "request Application",
+      "request_schema": {
         "type": "object",
         "required": [
           "last_name",
@@ -106,92 +85,73 @@
                 "type": "string",
                 "maxLength": 255
               }
-            },
-            "additionalProperties": false
-          }
-        },
-        "additionalProperties": false
-      },
-      "request_additional_parameter_schema": {
-        "$schema": "original",
-        "user": {
-          "mapping_rules": [
-            { "from": "$.sub", "to": "user_id" },
-            { "from": "$.email", "to": "mail_address" },
-            { "from": "$.custom_properties.token", "to": "token" }
-          ]
-        },
-        "http_request": {
-          "url": "http://mockoon:4000/apply",
-          "method": "POST",
-          "headers": {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer dummy-token"
-          },
-          "dynamic_body_keys": [
-            "last_name",
-            "first_name",
-            "last_name_kana",
-            "first_name_kana"
-          ],
-          "response_validation_schema": {
-            "$schema": "https://json-schema.org/draft/2020-12/schema",
-            "title": "external user data response",
-            "type": "object",
-            "required": [
-              "application_id"
-            ],
-            "properties": {
-              "application_id": {
-                "type": "string",
-                "store": true
-              }
-            },
-            "additionalProperties": false
+            }
           }
         }
       },
-      "request_verification_schema": {
-        "$schema": "original",
-        "duplicate_application": false,
-        "unmatched_user_claims_email": {
-          "property": "email_address"
-        },
-        "unmatched_user_claims_phone": {
-          "property": "mobile_phone_number"
-        }
-      },
-      "response_validation_schema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "application response",
-        "type": "object",
-        "required": [
-          "application_id"
+      "pre_hook": {
+        "verifications": [
+
         ],
-        "properties": {
-          "application_id": {
-            "type": "string",
-            "store": true
+        "additional_parameters": [
+          {
+            "type": "http_request",
+            "details": {
+              "url": "http://localhost:4000/apply",
+              "method": "POST",
+              "static_headers": {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer dummy-token"
+              },
+              "body_mapping_rules": [
+                { "from": "$.request_body", "to": "*" }
+              ],
+              "response_validation_schema": {
+                "type": "object",
+                "required": [
+                  "application_id"
+                ],
+                "properties": {
+                  "application_id": {
+                    "type": "string",
+                    "store": true
+                  }
+                }
+              }
+            }
           }
+        ]
+      },
+      "execution": {
+        "type": "http_proxy",
+        "url": "http://localhost:4000/apply",
+        "method": "POST",
+        "static_headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer dummy-token"
         },
-        "additionalProperties": false
+        "static_body": {},
+        "body_mapping_rules": [
+          { "from": "$.request_body", "to": "*" },
+          { "from": "$.user.sub", "to": "user_id" },
+          { "from": "$.user.email", "to": "mail_address" },
+          { "from": "$.user.custom_properties.token", "to": "token" }
+        ]
+      },
+      "store": {
+        "application_details_mapping_rules": [
+          { "from": "$.request_body", "to": "*" },
+          { "from": "$.response_body", "to": "*" }
+        ]
+      },
+      "response": {
+        "body_mapping_rules": [
+          { "from": "$.response_body", "to": "*" }
+        ]
       }
     },
     "request-authentication": {
-      "url": "http://mockoon:4000/request-authentication",
-      "method": "POST",
-      "headers": {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer dummy-token"
-      },
-      "dynamic_body_keys": [
-        "trust_framework",
-        "evidence_document_type"
-      ],
-      "static_body": {},
-      "request_validation_schema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "request eKYC",
+      "request_schema": {
         "type": "object",
         "required": [
           "trust_framework",
@@ -211,52 +171,62 @@
         },
         "additionalProperties": false
       },
-      "response_validation_schema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "tx response",
-        "type": "object",
-        "required": [
-          "tx_id"
-        ],
-        "properties": {
-          "tx_id": {
-            "type": "string",
-            "respond": true,
-            "store": true
-          }
+      "execution": {
+        "url": "http://localhost:4000/request-authentication",
+        "method": "POST",
+        "static_headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer dummy-token"
         },
-        "additionalProperties": false
+        "body_mapping_rules": [
+          { "from": "$.request_body", "to": "*"}
+        ],
+        "static_body": {}
+      },
+      "store": {
+        "application_details_mapping_rules": [
+          { "from": "$.request_body", "to": "*" },
+          { "from": "$.response_body", "to": "*" }
+        ]
+      },
+      "response": {
+        "body_mapping_rules": [
+          { "from": "$.response_body", "to": "*" }
+        ]
       }
     },
     "authentication-status": {
-      "url": "http://mockoon:4000/authentication-status",
-      "method": "POST",
-      "headers": {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer dummy-token"
-      },
-      "dynamic_body_keys": [],
-      "static_body": {},
-      "request_validation_schema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "complete eKYC",
+      "request_schema": {
         "type": "object",
         "required": [],
         "properties": {},
         "additionalProperties": false
       },
-      "response_validation_schema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "complete eKYC response",
-        "type": "object",
-        "required": [],
-        "properties": {},
-        "additionalProperties": false
+      "execution": {
+        "url": "http://localhost:4000/authentication-status",
+        "method": "POST",
+        "static_headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer dummy-token"
+        },
+        "dynamic_body_keys": [],
+        "static_body": {}
+      },
+      "store": {
+        "application_details_mapping_rules": [
+          { "from": "$.request_body", "to": "*" },
+          { "from": "$.response_body", "to": "*" }
+        ]
+      },
+      "response": {
+        "body_mapping_rules": [
+          { "from": "$.response_body", "to": "*" }
+        ]
       }
     },
     "evaluate-result": {
       "description": "",
-      "completion_condition_configuration": {
+      "completion_condition": {
         "request_condition": {
           "all_of": [
             {
@@ -276,17 +246,17 @@
         "process_condition": {
           "all_of": [
             {
-              "type": "request-authentication",
+              "process_name": "request-authentication",
               "success_count": 1
             },
             {
-              "type": "authentication-status",
+              "process_name": "authentication-status",
               "success_count": 1
             }
           ]
         }
       },
-      "rejected_condition_configuration": {
+      "rejection_condition": {
         "description": "",
         "request_condition": {
           "all_of": [

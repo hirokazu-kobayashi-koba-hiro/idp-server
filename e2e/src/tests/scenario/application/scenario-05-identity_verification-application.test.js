@@ -190,7 +190,7 @@ describe("identity-verification application", () => {
 
 
       let applicationsResponse = await get({
-        url: serverConfig.identityVerificationApplicationsEndpoint + `?id=${applicationId}&type=${type}&status=applying&trust_framework=eidas&external_workflow_delegation=mocky`,
+        url: serverConfig.identityVerificationApplicationsEndpoint + `?id=${applicationId}&type=${type}&status=applying`,
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${accessToken}`
@@ -200,22 +200,19 @@ describe("identity-verification application", () => {
       expect(applicationsResponse.status).toBe(200);
       expect(applicationsResponse.data.list.length).toBe(1);
       expect(applicationsResponse.data.list[0].id).toEqual(applicationId);
-      expect(applicationsResponse.data.list[0].external_application_id).toEqual(externalId);
+      expect(applicationsResponse.data.list[0].application_details.external_application_id).toEqual(externalId);
       expect(applicationsResponse.data.list[0].type).toEqual(type);
       expect(applicationsResponse.data.list[0].tenant_id).toEqual(serverConfig.tenantId);
       expect(applicationsResponse.data.list[0].client_id).toEqual(clientSecretPostClient.clientId);
       expect(applicationsResponse.data.list[0].user_id).toEqual(user.sub);
       expect(applicationsResponse.data.list[0]).toHaveProperty("application_details");
-      expect(applicationsResponse.data.list[0]).toHaveProperty("external_service");
-      expect(applicationsResponse.data.list[0]).toHaveProperty("external_application_id");
-      expect(applicationsResponse.data.list[0]).toHaveProperty("external_application_details");
-      expect(applicationsResponse.data.list[0]).toHaveProperty("processes");
       expect(applicationsResponse.data.list[0].status).toEqual("applying");
       expect(applicationsResponse.data.list[0]).toHaveProperty("requested_at");
 
 
-      const callbackEndpoint = serverConfig.identityVerificationApplicationsStaticCallbackExaminationEndpoint
-        .replace("{type}", type);
+      const callbackEndpoint = serverConfig.identityVerificationApplicationsPublicCallbackEndpoint
+        .replace("{type}", type)
+        .replace("{callbackName}", "callback-examination");
 
       let callbackExaminationResponse = await post({
         url: callbackEndpoint,
@@ -234,7 +231,7 @@ describe("identity-verification application", () => {
 
 
       applicationsResponse = await get({
-        url: serverConfig.identityVerificationApplicationsEndpoint + `?id=${applicationId}&type=${type}&status=examination_processing&trust_framework=eidas&external_workflow_delegation=mocky`,
+        url: serverConfig.identityVerificationApplicationsEndpoint + `?id=${applicationId}&type=${type}&status=examination_processing`,
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${accessToken}`
@@ -244,21 +241,18 @@ describe("identity-verification application", () => {
       expect(applicationsResponse.status).toBe(200);
       expect(applicationsResponse.data.list.length).toBe(1);
       expect(applicationsResponse.data.list[0].id).toEqual(applicationId);
-      expect(applicationsResponse.data.list[0].external_application_id).toEqual(externalId);
+      expect(applicationsResponse.data.list[0].application_details.external_application_id).toEqual(externalId);
       expect(applicationsResponse.data.list[0].type).toEqual(type);
       expect(applicationsResponse.data.list[0].tenant_id).toEqual(serverConfig.tenantId);
       expect(applicationsResponse.data.list[0].client_id).toEqual(clientSecretPostClient.clientId);
       expect(applicationsResponse.data.list[0].user_id).toEqual(user.sub);
       expect(applicationsResponse.data.list[0]).toHaveProperty("application_details");
-      expect(applicationsResponse.data.list[0]).toHaveProperty("external_service");
-      expect(applicationsResponse.data.list[0]).toHaveProperty("external_application_id");
-      expect(applicationsResponse.data.list[0]).toHaveProperty("external_application_details");
-      expect(applicationsResponse.data.list[0]).toHaveProperty("processes");
-      expect(applicationsResponse.data.list[0].status).toEqual("examination_processing");
       expect(applicationsResponse.data.list[0]).toHaveProperty("requested_at");
 
-      const callbackResultEndpoint = serverConfig.identityVerificationApplicationsStaticCallbackResultEndpoint
-        .replace("{type}", type);
+      const callbackResultEndpoint = serverConfig.identityVerificationApplicationsPublicCallbackEndpoint
+        .replace("{type}", type)
+        .replace("{callbackName}", "callback-result");
+
       const callbackResultResponse = await post({
         url: callbackResultEndpoint,
         headers: {
@@ -326,7 +320,7 @@ describe("identity-verification application", () => {
       expect(callbackResultResponse.status).toBe(200);
 
       applicationsResponse = await get({
-        url: serverConfig.identityVerificationApplicationsEndpoint + `?id=${applicationId}&type=${type}&status=approved&trust_framework=eidas&external_workflow_delegation=mocky`,
+        url: serverConfig.identityVerificationApplicationsEndpoint + `?id=${applicationId}&type=${type}&status=approved`,
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${accessToken}`
@@ -336,16 +330,12 @@ describe("identity-verification application", () => {
       expect(applicationsResponse.status).toBe(200);
       expect(applicationsResponse.data.list.length).toBe(1);
       expect(applicationsResponse.data.list[0].id).toEqual(applicationId);
-      expect(applicationsResponse.data.list[0].external_application_id).toEqual(externalId);
+      expect(applicationsResponse.data.list[0].application_details.external_application_id).toEqual(externalId);
       expect(applicationsResponse.data.list[0].type).toEqual(type);
       expect(applicationsResponse.data.list[0].tenant_id).toEqual(serverConfig.tenantId);
       expect(applicationsResponse.data.list[0].client_id).toEqual(clientSecretPostClient.clientId);
       expect(applicationsResponse.data.list[0].user_id).toEqual(user.sub);
       expect(applicationsResponse.data.list[0]).toHaveProperty("application_details");
-      expect(applicationsResponse.data.list[0]).toHaveProperty("external_service");
-      expect(applicationsResponse.data.list[0]).toHaveProperty("external_application_id");
-      expect(applicationsResponse.data.list[0]).toHaveProperty("external_application_details");
-      expect(applicationsResponse.data.list[0]).toHaveProperty("processes");
       expect(applicationsResponse.data.list[0].status).toEqual("approved");
       expect(applicationsResponse.data.list[0]).toHaveProperty("requested_at");
 
@@ -647,7 +637,7 @@ describe("identity-verification application", () => {
 
 
       let applicationsResponse = await get({
-        url: serverConfig.identityVerificationApplicationsEndpoint + `?id=${applicationId}&type=${type}&status=applying&trust_framework=eidas&external_workflow_delegation=mocky`,
+        url: serverConfig.identityVerificationApplicationsEndpoint + `?id=${applicationId}&type=${type}&status=applying`,
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${accessToken}`
@@ -657,16 +647,12 @@ describe("identity-verification application", () => {
       expect(applicationsResponse.status).toBe(200);
       expect(applicationsResponse.data.list.length).toBe(1);
       expect(applicationsResponse.data.list[0].id).toEqual(applicationId);
-      expect(applicationsResponse.data.list[0].external_application_id).toEqual(externalId);
+      expect(applicationsResponse.data.list[0].application_details.external_application_id).toEqual(externalId);
       expect(applicationsResponse.data.list[0].type).toEqual(type);
       expect(applicationsResponse.data.list[0].tenant_id).toEqual(serverConfig.tenantId);
       expect(applicationsResponse.data.list[0].client_id).toEqual(clientSecretPostClient.clientId);
       expect(applicationsResponse.data.list[0].user_id).toEqual(user.sub);
       expect(applicationsResponse.data.list[0]).toHaveProperty("application_details");
-      expect(applicationsResponse.data.list[0]).toHaveProperty("external_service");
-      expect(applicationsResponse.data.list[0]).toHaveProperty("external_application_id");
-      expect(applicationsResponse.data.list[0]).toHaveProperty("external_application_details");
-      expect(applicationsResponse.data.list[0]).toHaveProperty("processes");
       expect(applicationsResponse.data.list[0].status).toEqual("applying");
       expect(applicationsResponse.data.list[0]).toHaveProperty("requested_at");
 
@@ -691,7 +677,7 @@ describe("identity-verification application", () => {
       expect(evaluateResultResponse.status).toBe(200);
 
       applicationsResponse = await get({
-        url: serverConfig.identityVerificationApplicationsEndpoint + `?id=${applicationId}&type=${type}&status=approved&trust_framework=eidas&external_workflow_delegation=mocky`,
+        url: serverConfig.identityVerificationApplicationsEndpoint + `?id=${applicationId}&type=${type}&status=approved`,
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${accessToken}`
@@ -833,22 +819,255 @@ describe("identity-verification application", () => {
       expect(resultsResponse.data.list.length).toBe(1);
       expect(resultsResponse.data.list[0]).toHaveProperty("id");
       expect(resultsResponse.data.list[0].application_id).toEqual(applicationId);
-      expect(resultsResponse.data.list[0].external_application_id).toEqual(externalId);
       expect(resultsResponse.data.list[0].tenant_id).toEqual(serverConfig.tenantId);
       expect(resultsResponse.data.list[0].user_id).toBe(user.sub);
       expect(resultsResponse.data.list[0].verification_type).toEqual(type);
-      expect(resultsResponse.data.list[0]).toHaveProperty("external_service");
       expect(resultsResponse.data.list[0]).toHaveProperty("verified_at");
       expect(resultsResponse.data.list[0]).toHaveProperty("verified_until");
-      expect(resultsResponse.data.list[0]).toHaveProperty("external_service");
-      expect(resultsResponse.data.list[0].external_service).toEqual("mocky");
+
+    });
+  });
+
+  describe("cancel pattern", () => {
+    it("investment-account-opening", async () => {
+
+      const { user, accessToken } = await createFederatedUser({
+        serverConfig: serverConfig,
+        federationServerConfig: federationServerConfig,
+        client: clientSecretPostClient,
+        adminClient: clientSecretPostClient
+      });
+
+      console.log(user);
+
+      let mfaRegistrationResponse =
+        await postWithJson({
+          url: serverConfig.resourceOwnerEndpoint + "/mfa/fido-uaf-registration",
+          body: {
+            "platform": "Android",
+            "os": "Android15",
+            "model": "galaxy z fold 6",
+            "notification_channel": "fcm",
+            "notification_token": "test token",
+            "preferred_for_notification": true
+          },
+          headers: {
+            "Authorization": `Bearer ${accessToken}`
+          }
+        });
+      console.log(mfaRegistrationResponse.data);
+      expect(mfaRegistrationResponse.status).toBe(200);
+
+      const transactionId = mfaRegistrationResponse.data.id;
+
+      let authenticationResponse = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        id: transactionId,
+        interactionType: "fido-uaf-registration-challenge",
+        body: {
+          username: serverConfig.ciba.username,
+          password: serverConfig.ciba.userCode,
+        }
+      });
+      console.log(authenticationResponse.data);
+      expect(authenticationResponse.status).toBe(200);
+
+      const fidoUafFacetsResponse = await get({
+        url: serverConfig.fidoUafFacetsEndpoint,
+        headers: {
+          "Content-Type": "application/json",
+        }
+      });
+      console.log(fidoUafFacetsResponse.data);
+      expect(fidoUafFacetsResponse.status).toBe(200);
+
+      authenticationResponse = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        id: transactionId,
+        interactionType: "fido-uaf-registration",
+        body: {
+          username: serverConfig.ciba.username,
+          password: serverConfig.ciba.userCode,
+        }
+      });
+      expect(authenticationResponse.status).toBe(200);
+      expect(authenticationResponse.data).toHaveProperty("device_id");
+      const authenticationDeviceId = authenticationResponse.data.device_id;
+
+      let userinfoResponse = await getUserinfo({
+        endpoint: serverConfig.userinfoEndpoint,
+        authorizationHeader: {
+          "Authorization": `Bearer ${accessToken}`
+        }
+      });
+      console.log(JSON.stringify(userinfoResponse.data, null, 2));
+      expect(userinfoResponse.status).toBe(200);
+      expect(userinfoResponse.data.sub).toEqual(user.sub);
+      expect(userinfoResponse.data).toHaveProperty("authentication_devices");
+      expect(userinfoResponse.data.authentication_devices.length).toBe(1);
+      expect(userinfoResponse.data).toHaveProperty("mfa");
+      expect(userinfoResponse.data.authentication_devices[0].id).toEqual(authenticationDeviceId);
+
+      const ciba = serverConfig.ciba;
+
+      let backchannelAuthenticationResponse =
+        await requestBackchannelAuthentications({
+          endpoint: serverConfig.backchannelAuthenticationEndpoint,
+          clientId: clientSecretPostClient.clientId,
+          scope: "openid profile phone email transfers " + clientSecretPostClient.identityVerificationScope,
+          bindingMessage: ciba.bindingMessage,
+          loginHint: `sub:${user.sub}`,
+          acrValues: "urn:mace:incommon:iap:gold",
+          clientSecret: clientSecretPostClient.clientSecret,
+        });
+      console.log(backchannelAuthenticationResponse.data);
+      expect(backchannelAuthenticationResponse.status).toBe(403);
+      expect(backchannelAuthenticationResponse.data.error).toEqual("access_denied");
+
+      const type = "investment-account-opening";
+
+      const applyUrl = serverConfig.identityVerificationApplyEndpoint
+        .replace("{type}", type)
+        .replace("{process}", "apply")
+      ;
+      const applyResponse = await post({
+        url: applyUrl,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`
+        },
+        body: {
+          "last_name": "john",
+          "first_name": "mac",
+          "last_name_kana": "jon",
+          "first_name_kana": "mac",
+          "birthdate": "1992-02-12",
+          "nationality": "JP",
+          "email_address": "ito.ichiro@gmail.com",
+          "mobile_phone_number": "09012345678",
+          "address": {
+            "street_address": "test",
+            "locality": "test",
+            "region": "test",
+            "postal_code": "1000001",
+            "country": "JP"
+          }
+        }
+      });
+
+      console.log(applyResponse.data);
+      expect(applyResponse.status).toBe(200);
+
+      const applicationId = applyResponse.data.id;
+      const externalId = applyResponse.data.external_application_id;
+
+      const processEndpoint = serverConfig.identityVerificationProcessEndpoint
+        .replace("{type}", type)
+        .replace("{id}", applicationId);
+
+      const registrationResponse = await post({
+        url: processEndpoint.replace("{process}", "crm-registration"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`
+        },
+        body: {
+          "trust_framework":"eidas",
+          "evidence_document_type": "driver_license",
+        }
+      });
+      console.log(registrationResponse.data);
+      expect(registrationResponse.status).toBe(200);
+
+
+      const requestEkycResponse = await post({
+        url: processEndpoint.replace("{process}", "request-ekyc"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`
+        },
+        body: {
+          "trust_framework":"eidas",
+          "evidence_document_type": "driver_license",
+        }
+      });
+      console.log(requestEkycResponse.data);
+      expect(requestEkycResponse.status).toBe(200);
+
+      const completeEkycResponse = await post({
+        url: processEndpoint.replace("{process}", "complete-ekyc"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`
+        },
+        body: {}
+      });
+      console.log(completeEkycResponse.data);
+      expect(completeEkycResponse.status).toBe(200);
+
+
+      let applicationsResponse = await get({
+        url: serverConfig.identityVerificationApplicationsEndpoint + `?id=${applicationId}&type=${type}&status=applying`,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`
+        }
+      });
+      console.log(JSON.stringify(applicationsResponse.data, null, 2));
+      expect(applicationsResponse.status).toBe(200);
+      expect(applicationsResponse.data.list.length).toBe(1);
+      expect(applicationsResponse.data.list[0].id).toEqual(applicationId);
+      expect(applicationsResponse.data.list[0].application_details.external_application_id).toEqual(externalId);
+      expect(applicationsResponse.data.list[0].type).toEqual(type);
+      expect(applicationsResponse.data.list[0].tenant_id).toEqual(serverConfig.tenantId);
+      expect(applicationsResponse.data.list[0].client_id).toEqual(clientSecretPostClient.clientId);
+      expect(applicationsResponse.data.list[0].user_id).toEqual(user.sub);
+      expect(applicationsResponse.data.list[0]).toHaveProperty("application_details");
+      expect(applicationsResponse.data.list[0].status).toEqual("applying");
+      expect(applicationsResponse.data.list[0]).toHaveProperty("requested_at");
+
+
+
+      let cancelResponse = await post({
+        url: processEndpoint.replace("{process}", "cancel"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`
+        },
+        body: {
+          "application_id": externalId,
+        }
+      });
+      console.log(cancelResponse.data);
+      expect(cancelResponse.status).toBe(200);
+
+      applicationsResponse = await get({
+        url: serverConfig.identityVerificationApplicationsEndpoint + `?id=${applicationId}&type=${type}&status=cancelled`,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`
+        }
+      });
+      console.log(JSON.stringify(applicationsResponse.data, null, 2));
+      expect(applicationsResponse.status).toBe(200);
+      expect(applicationsResponse.data.list.length).toBe(1);
+      expect(applicationsResponse.data.list[0].id).toEqual(applicationId);
+      expect(applicationsResponse.data.list[0].application_details.external_application_id).toEqual(externalId);
+      expect(applicationsResponse.data.list[0].type).toEqual(type);
+      expect(applicationsResponse.data.list[0].tenant_id).toEqual(serverConfig.tenantId);
+      expect(applicationsResponse.data.list[0].client_id).toEqual(clientSecretPostClient.clientId);
+      expect(applicationsResponse.data.list[0].user_id).toEqual(user.sub);
+      expect(applicationsResponse.data.list[0]).toHaveProperty("application_details");
+      expect(applicationsResponse.data.list[0]).toHaveProperty("requested_at");
+
+
 
     });
   });
 
   describe("error pattern", () => {
 
-    it("continuous-customer-due-diligence", async () => {
+    it("email unmatched continuous-customer-due-diligence", async () => {
 
       const type = "continuous-customer-due-diligence";
       const { user, accessToken } = await createFederatedUser({
@@ -894,7 +1113,7 @@ describe("identity-verification application", () => {
       expect(applyResponse.status).toBe(400);
       expect(applyResponse.data.error).toEqual("invalid_request");
       expect(applyResponse.data.error_description).toEqual("identity verification application is invalid.");
-      expect(applyResponse.data.error_details[0]).toContain("user does not have approved application required any type");
+      expect(applyResponse.data.error_details[0]).toContain("User claim verification failed. unmatched: $.request_body.email_address, user:email");
     });
   });
 });

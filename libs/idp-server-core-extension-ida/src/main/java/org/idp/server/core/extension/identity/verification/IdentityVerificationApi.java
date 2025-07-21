@@ -16,6 +16,7 @@
 
 package org.idp.server.core.extension.identity.verification;
 
+import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationResponse;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResultQueries;
 import org.idp.server.core.oidc.identity.User;

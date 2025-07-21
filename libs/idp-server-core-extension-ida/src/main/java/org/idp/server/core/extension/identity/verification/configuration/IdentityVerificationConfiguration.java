@@ -17,11 +17,13 @@
 package org.idp.server.core.extension.identity.verification.configuration;
 
 import java.util.*;
+import org.idp.server.core.extension.identity.exception.IdentityVerificationApplicationConfigurationNotFoundException;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationApplicationIdParam;
-import org.idp.server.core.extension.identity.verification.delegation.ExternalIdentityVerificationService;
-import org.idp.server.core.extension.identity.verification.exception.IdentityVerificationApplicationConfigurationNotFoundException;
+import org.idp.server.core.extension.identity.verification.configuration.common.IdentityVerificationCommonConfiguration;
+import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
+import org.idp.server.core.extension.identity.verification.configuration.registration.IdentityVerificationRegistrationConfig;
+import org.idp.server.core.extension.identity.verification.configuration.verified_claims.IdentityVerificationVerifiedClaimsConfiguration;
 import org.idp.server.platform.http.HmacAuthenticationConfiguration;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
@@ -30,17 +32,12 @@ import org.idp.server.platform.uuid.UuidConvertable;
 public class IdentityVerificationConfiguration implements JsonReadable, UuidConvertable {
   String id;
   String type;
-  String delegation;
   String description;
-  String externalService;
-  String externalApplicationIdParam;
-  OAuthAuthorizationConfiguration oauthAuthorization = new OAuthAuthorizationConfiguration();
-  HmacAuthenticationConfiguration hmacAuthentication = new HmacAuthenticationConfiguration();
+  IdentityVerificationCommonConfiguration common = new IdentityVerificationCommonConfiguration();
   Map<String, IdentityVerificationProcessConfiguration> processes = new HashMap<>();
-  IdentityVerificationRegistrationConfiguration registration =
-      new IdentityVerificationRegistrationConfiguration();
-  List<String> approvedTargetTypes = new ArrayList<>();
-  IdentityVerificationVerifiedClaimsConfiguration verifiedClaimsConfiguration =
+  IdentityVerificationRegistrationConfig registration =
+      new IdentityVerificationRegistrationConfig();
+  IdentityVerificationVerifiedClaimsConfiguration verifiedClaims =
       new IdentityVerificationVerifiedClaimsConfiguration();
 
   public IdentityVerificationConfiguration() {}
@@ -48,28 +45,18 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
   public IdentityVerificationConfiguration(
       String id,
       String type,
-      String delegation,
       String description,
-      String externalService,
-      String externalApplicationIdParam,
-      OAuthAuthorizationConfiguration oauthAuthorization,
-      HmacAuthenticationConfiguration hmacAuthentication,
+      IdentityVerificationCommonConfiguration common,
       Map<String, IdentityVerificationProcessConfiguration> processes,
-      IdentityVerificationRegistrationConfiguration registration,
-      List<String> approvedTargetTypes,
-      IdentityVerificationVerifiedClaimsConfiguration verifiedClaimsConfiguration) {
+      IdentityVerificationRegistrationConfig registration,
+      IdentityVerificationVerifiedClaimsConfiguration verifiedClaims) {
     this.id = id;
     this.type = type;
-    this.delegation = delegation;
     this.description = description;
-    this.externalService = externalService;
-    this.externalApplicationIdParam = externalApplicationIdParam;
-    this.oauthAuthorization = oauthAuthorization;
-    this.hmacAuthentication = hmacAuthentication;
+    this.common = common;
     this.processes = processes;
     this.registration = registration;
-    this.approvedTargetTypes = approvedTargetTypes;
-    this.verifiedClaimsConfiguration = verifiedClaimsConfiguration;
+    this.verifiedClaims = verifiedClaims;
   }
 
   public String id() {
@@ -84,46 +71,55 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
     return new IdentityVerificationType(type);
   }
 
-  public String delegation() {
-    return delegation;
-  }
-
   public String description() {
     return description;
   }
 
-  public ExternalIdentityVerificationService externalIdentityVerificationService() {
-    return new ExternalIdentityVerificationService(externalService);
+  public boolean hasCommon() {
+    return common != null;
   }
 
-  public ExternalIdentityVerificationApplicationIdParam externalApplicationIdParam() {
-    return new ExternalIdentityVerificationApplicationIdParam(externalApplicationIdParam);
+  public IdentityVerificationCommonConfiguration common() {
+    if (common == null) {
+      return new IdentityVerificationCommonConfiguration();
+    }
+    return common;
   }
 
-  public boolean hasOAuthAuthorization() {
-    return oauthAuthorization != null && oauthAuthorization.exists();
+  public String getCallbackApplicationId(IdentityVerificationProcess process) {
+
+    return common().callbackApplicationIdParam();
   }
 
-  public OAuthAuthorizationConfiguration oauthAuthorization() {
-    if (oauthAuthorization == null) {
+  public OAuthAuthorizationConfiguration oauthAuthorizationFromCommon() {
+    if (common == null) {
       return new OAuthAuthorizationConfiguration();
     }
-    return oauthAuthorization;
+
+    if (common.hasOAuthAuthorization()) {
+      return common.oAuthAuthorization();
+    }
+    return new OAuthAuthorizationConfiguration();
   }
 
-  public boolean hasHmacAuthentication() {
-    return hmacAuthentication != null && hmacAuthentication.exists();
-  }
-
-  public HmacAuthenticationConfiguration hmacAuthentication() {
-    if (hmacAuthentication == null) {
+  public HmacAuthenticationConfiguration hmacAuthenticationFromCommon() {
+    if (common == null) {
       return new HmacAuthenticationConfiguration();
     }
-    return hmacAuthentication;
+
+    if (common.hasHmacAuthentication()) {
+      return common.hmacAuthentication();
+    }
+
+    return new HmacAuthenticationConfiguration();
   }
 
   public Map<String, IdentityVerificationProcessConfiguration> processes() {
     return processes;
+  }
+
+  public boolean hasProcesses() {
+    return processes != null && !processes.isEmpty();
   }
 
   public IdentityVerificationProcessConfiguration getProcessConfig(
@@ -143,7 +139,7 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
       return processConfig.oauthAuthorization();
     }
 
-    return oauthAuthorization();
+    return oauthAuthorizationFromCommon();
   }
 
   public HmacAuthenticationConfiguration getHmacAuthenticationConfig(
@@ -154,47 +150,37 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
       return processConfig.hmacAuthentication();
     }
 
-    return hmacAuthentication();
-  }
-
-  public List<String> approvedTargetTypes() {
-    return approvedTargetTypes;
-  }
-
-  public String approvedTargetTypesAsString() {
-    return String.join(",", approvedTargetTypes);
+    return hmacAuthenticationFromCommon();
   }
 
   public IdentityVerificationVerifiedClaimsConfiguration verifiedClaimsConfiguration() {
-    if (verifiedClaimsConfiguration == null) {
+    if (verifiedClaims == null) {
       return new IdentityVerificationVerifiedClaimsConfiguration();
     }
-    return verifiedClaimsConfiguration;
+    return verifiedClaims;
   }
 
-  public boolean hasVerifiedClaimsConfiguration() {
-    return verifiedClaimsConfiguration != null && verifiedClaimsConfiguration.exists();
+  public boolean hasVerifiedClaims() {
+    return verifiedClaims != null && verifiedClaims.exists();
   }
 
-  public IdentityVerificationRegistrationConfiguration registrationConfiguration() {
+  public IdentityVerificationRegistrationConfig registration() {
     return registration;
+  }
+
+  public boolean hasRegistration() {
+    return registration != null;
   }
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("id", id);
     map.put("type", type);
-    map.put("delegation", delegation);
     map.put("description", description);
-    map.put("external_service", externalService);
-    map.put("external_application_id_param", externalApplicationIdParam);
-    if (hasOAuthAuthorization()) map.put("oauth_authorization", oauthAuthorization.toMap());
-    if (hasHmacAuthentication()) map.put("hmac_authentication", hmacAuthentication.toMap());
-    map.put("processes", processes);
-    map.put("registration", registration);
-    map.put("approved_target_types", approvedTargetTypes);
-    if (hasVerifiedClaimsConfiguration())
-      map.put("verified_claims_configuration", verifiedClaimsConfiguration.toMap());
+    if (hasCommon()) map.put("common", common.toMap());
+    if (hasProcesses()) map.put("processes", processes);
+    if (hasRegistration()) map.put("registration", registration);
+    if (hasVerifiedClaims()) map.put("verified_claims", verifiedClaims.toMap());
 
     return map;
   }
