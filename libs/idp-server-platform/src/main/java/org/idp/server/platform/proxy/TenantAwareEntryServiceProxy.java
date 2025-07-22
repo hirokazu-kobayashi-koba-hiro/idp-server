@@ -75,7 +75,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
 
         return result;
       } catch (InvocationTargetException e) {
-        log.error(
+        log.warn(
             "fail (InvocationTargetException): "
                 + target.getClass().getName()
                 + ": "
