@@ -16,27 +16,15 @@
 
 package org.idp.server.core.extension.identity.verification.application.execution;
 
-import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 
-public class IdentityVerificationApplicationContext {
-  Map<String, Object> requestBaseParams;
-  Map<String, Object> executionResult;
+public interface IdentityVerificationApplicationExecutor {
+  String type();
 
-  public IdentityVerificationApplicationContext() {
-    this.requestBaseParams = new HashMap<>();
-    this.executionResult = new HashMap<>();
-  }
-
-  public IdentityVerificationApplicationContext(
-      Map<String, Object> requestBaseParams, Map<String, Object> executionResult) {
-    this.requestBaseParams = requestBaseParams;
-    this.executionResult = executionResult;
-  }
-
-  public Map<String, Object> toMap() {
-    Map<String, Object> result = new HashMap<>(requestBaseParams);
-    result.putAll(executionResult);
-    return result;
-  }
+  IdentityVerificationExecutionResult execute(
+      Map<String, Object> parameters,
+      IdentityVerificationProcess processes,
+      IdentityVerificationConfiguration verificationConfiguration);
 }

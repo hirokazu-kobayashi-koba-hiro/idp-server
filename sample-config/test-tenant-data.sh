@@ -145,8 +145,8 @@ echo ""
 echo "identity-verification-config"
 
 identity_verification_config_files=(
-  identity-verification-investment.json
-  identity-verification-continuous-customer-due-diligence.json
+  investment-account-opening.json
+  continuous-customer-due-diligence.json
 )
 
 for identity_verification_config_file in "${identity_verification_config_files[@]}"; do

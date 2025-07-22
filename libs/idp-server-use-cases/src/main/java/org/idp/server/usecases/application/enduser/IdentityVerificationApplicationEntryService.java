@@ -22,7 +22,7 @@ import org.idp.server.core.extension.identity.verification.IdentityVerificationA
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationHandler;
-import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationApplyingResult;
+import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplyingResult;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationQueries;

@@ -122,6 +122,10 @@ k6 run ./performance-test/stress/scenario-7-token-introspection.js
 k6 run ./performance-test/stress/scenario-8-authentication-device.js
 ```
 
+```shell
+k6 run ./performance-test/stress/scenario-9-identity-verification-application.js
+```
+
 #### load test
 
 ```shell

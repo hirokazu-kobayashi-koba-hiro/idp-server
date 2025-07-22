@@ -104,19 +104,31 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
   }
 
   public boolean hasOAuthAuthorization() {
-    return execution.hasOAuthAuthorization();
+    if (execution == null || !execution.hasHttpRequest()) {
+      return false;
+    }
+    return execution.httpRequest().hasOAuthAuthorization();
   }
 
   public OAuthAuthorizationConfiguration oauthAuthorization() {
-    return execution.oauthAuthorization();
+    if (execution == null || !execution.hasHttpRequest()) {
+      return new OAuthAuthorizationConfiguration();
+    }
+    return execution.httpRequest().oauthAuthorization();
   }
 
   public boolean hasHmacAuthentication() {
-    return execution.hasHmacAuthentication();
+    if (execution == null || !execution.hasHttpRequest()) {
+      return false;
+    }
+    return execution.httpRequest().hasHmacAuthentication();
   }
 
   public HmacAuthenticationConfiguration hmacAuthentication() {
-    return execution.hmacAuthentication();
+    if (execution == null || !execution.hasHttpRequest()) {
+      return new HmacAuthenticationConfiguration();
+    }
+    return execution.httpRequest().hmacAuthentication();
   }
 
   public IdentityVerificationStoreConfig store() {
