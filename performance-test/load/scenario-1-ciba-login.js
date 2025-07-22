@@ -84,7 +84,7 @@ export function login() {
 
   // console.log(tokenRes.status);
 
-  const jwksResponse = http.get("http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/jwks");
+  const jwksResponse = http.get(`${baseUrl}/${tenantId}/v1/jwks`);
 
   check(jwksResponse, { "jwksResponse request OK": (r) => r.status === 200 });
 

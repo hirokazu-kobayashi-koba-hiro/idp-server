@@ -45,14 +45,14 @@ export default function() {
 
 
   //authentication transaction
-  const txRes = http.get(`${baseUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authentication-devices/${deviceId}/authentications?attributes.auth_req_id=${authReqId}`);
+  const txRes = http.get(`${baseUrl}/${tenantId}/v1/authentication-devices/${deviceId}/authentications?attributes.auth_req_id=${authReqId}`);
   check(txRes, { "txRes request OK": (r) => r.status === 200 });
   const txList = JSON.parse(txRes.body);
   const tx = txList.list[0]
   // console.log(tx.id)
 
   //bindingMessage
-  const bindingMessageRes = http.post(`${baseUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authentications/${tx.id}/authentication-device-binding-message`,
+  const bindingMessageRes = http.post(`${baseUrl}/${tenantId}/v1/authentications/${tx.id}/authentication-device-binding-message`,
     JSON.stringify({ binding_message: bindingMessage }),
     { headers: { "Content-Type": "application/json" } }
   );
@@ -63,7 +63,7 @@ export default function() {
 
   //token
   const tokenRes = http.post(
-    `${baseUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/tokens`,
+    `${baseUrl}/${tenantId}/v1/tokens`,
     `grant_type=urn:openid:params:grant-type:ciba&auth_req_id=${authReqId}&client_id=${clientId}&client_secret=${clientSecret}`,
     { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
   );
@@ -71,7 +71,7 @@ export default function() {
 
   // console.log(tokenRes.status);
 
-  const jwksResponse = http.get("http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/jwks");
+  const jwksResponse = http.get(`${baseUrl}/${tenantId}/v1/jwks`);
 
   check(jwksResponse, { "jwksResponse request OK": (r) => r.status === 200 });
 
