@@ -20,9 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
-import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationApplicationContext;
-import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationApplyingExecutionResult;
-import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationApplyingResult;
+import org.idp.server.core.extension.identity.verification.application.execution.*;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.application.pre_hook.additional_parameter.AdditionalRequestParameterResolvers;
@@ -33,26 +31,19 @@ import org.idp.server.core.extension.identity.verification.configuration.process
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationRequest;
 import org.idp.server.core.oidc.identity.User;
-import org.idp.server.platform.http.*;
-import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolver;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 import org.idp.server.platform.type.RequestAttributes;
 
 public class IdentityVerificationApplicationHandler {
 
-  OAuthAuthorizationResolvers authorizationResolvers;
   IdentityVerificationApplicationRequestVerifiers requestVerifiers;
   AdditionalRequestParameterResolvers additionalRequestParameterResolvers;
-  HttpRequestExecutor httpRequestExecutor;
+  IdentityVerificationApplicationExecutors executors;
 
   public IdentityVerificationApplicationHandler() {
-    this.authorizationResolvers = new OAuthAuthorizationResolvers();
     this.requestVerifiers = new IdentityVerificationApplicationRequestVerifiers();
     this.additionalRequestParameterResolvers = new AdditionalRequestParameterResolvers();
-    this.httpRequestExecutor = new HttpRequestExecutor(HttpClientFactory.defaultClient());
+    this.executors = new IdentityVerificationApplicationExecutors();
   }
 
   public IdentityVerificationApplyingResult executeRequest(
@@ -95,22 +86,23 @@ public class IdentityVerificationApplicationHandler {
             requestAttributes,
             verificationConfiguration);
 
-    HttpRequestResult executionResult =
-        execute(new HttpRequestBaseParams(requestBaseParams), processes, verificationConfiguration);
+    IdentityVerificationProcessConfiguration processConfig =
+        verificationConfiguration.getProcessConfig(processes);
+    IdentityVerificationExecutionConfig executionConfig = processConfig.execution();
+    IdentityVerificationApplicationExecutor executor = executors.get(executionConfig.type());
 
-    IdentityVerificationApplyingExecutionResult identityVerificationApplyingExecutionResult =
-        new IdentityVerificationApplyingExecutionResult(executionResult);
+    IdentityVerificationExecutionResult executionResult =
+        executor.execute(requestBaseParams, processes, verificationConfiguration);
 
-    if (!executionResult.isSuccess()) {
-      return IdentityVerificationApplyingResult.executionError(
-          verifyResult, identityVerificationApplyingExecutionResult);
+    if (!executionResult.isOk()) {
+      return IdentityVerificationApplyingResult.executionError(verifyResult, executionResult);
     }
 
     IdentityVerificationApplicationContext applicationContext =
-        new IdentityVerificationApplicationContext(requestBaseParams, executionResult);
+        new IdentityVerificationApplicationContext(requestBaseParams, executionResult.result());
 
     return new IdentityVerificationApplyingResult(
-        applicationContext, verifyResult, identityVerificationApplyingExecutionResult);
+        applicationContext, verifyResult, executionResult);
   }
 
   private Map<String, Object> resolveBaseParams(
@@ -142,60 +134,5 @@ public class IdentityVerificationApplicationHandler {
             verificationConfiguration);
     parameters.putAll(additionalParameters);
     return parameters;
-  }
-
-  // TODO to be more simply
-  private HttpRequestResult execute(
-      HttpRequestBaseParams httpRequestBaseParams,
-      IdentityVerificationProcess processes,
-      IdentityVerificationConfiguration verificationConfiguration) {
-
-    IdentityVerificationProcessConfiguration processConfig =
-        verificationConfiguration.getProcessConfig(processes);
-    IdentityVerificationExecutionConfig executionConfig = processConfig.execution();
-
-    // TODO to be more correct
-    if (!executionConfig.exists()) {
-      return new HttpRequestResult(200, Map.of(), JsonNodeWrapper.empty());
-    }
-
-    Map<String, String> headers = new HashMap<>(executionConfig.httpRequestStaticHeaders().toMap());
-
-    switch (executionConfig.httpRequestAuthType()) {
-      case OAUTH2 -> {
-        OAuthAuthorizationConfiguration oAuthAuthorizationConfig =
-            verificationConfiguration.getOAuthAuthorizationConfig(processes);
-        OAuthAuthorizationResolver resolver =
-            authorizationResolvers.get(oAuthAuthorizationConfig.type());
-        String accessToken = resolver.resolve(oAuthAuthorizationConfig);
-        headers.put("Authorization", "Bearer " + accessToken);
-      }
-      case HMAC_SHA256 -> {
-        HttpRequestStaticHeaders httpRequestStaticHeaders = new HttpRequestStaticHeaders(headers);
-        HmacAuthenticationConfiguration hmacAuthenticationConfig =
-            verificationConfiguration.getHmacAuthenticationConfig(processes);
-
-        return httpRequestExecutor.execute(
-            executionConfig.httpRequestUrl(),
-            executionConfig.httpMethod(),
-            hmacAuthenticationConfig,
-            httpRequestBaseParams,
-            httpRequestStaticHeaders,
-            executionConfig.httpRequestStaticBody(),
-            executionConfig.httpRequestPathMappingRules(),
-            executionConfig.httpRequestHeaderMappingRules(),
-            executionConfig.httpRequestBodyMappingRules());
-      }
-    }
-
-    return httpRequestExecutor.executeWithDynamicMapping(
-        executionConfig.httpRequestUrl(),
-        executionConfig.httpMethod(),
-        httpRequestBaseParams,
-        new HttpRequestStaticHeaders(headers),
-        executionConfig.httpRequestStaticBody(),
-        executionConfig.httpRequestPathMappingRules(),
-        executionConfig.httpRequestHeaderMappingRules(),
-        executionConfig.httpRequestBodyMappingRules());
   }
 }

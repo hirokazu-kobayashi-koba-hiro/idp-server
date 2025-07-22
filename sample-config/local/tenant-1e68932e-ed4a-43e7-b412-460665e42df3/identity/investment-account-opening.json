@@ -328,9 +328,6 @@
       }
     },
     "cancel": {
-      "execution": {
-        "type": "no_action"
-      },
       "cancellation_condition": {
         "request_condition": {
           "all_of": [

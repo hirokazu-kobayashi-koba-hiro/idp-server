@@ -16,108 +16,43 @@
 
 package org.idp.server.core.extension.identity.verification.configuration.process;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import org.idp.server.platform.http.*;
 import org.idp.server.platform.json.JsonReadable;
-import org.idp.server.platform.mapper.MappingRule;
-import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
-public class IdentityVerificationExecutionConfig
-    implements HttpRequestExecutionConfigInterface, JsonReadable {
-  String url;
-  String method;
-  String authType;
-  OAuthAuthorizationConfiguration oauthAuthorization = new OAuthAuthorizationConfiguration();
-  HmacAuthenticationConfiguration hmacAuthentication = new HmacAuthenticationConfiguration();
-  Map<String, String> staticHeaders = new HashMap<>();
-  Map<String, Object> staticBody = new HashMap<>();
-  List<MappingRule> pathMappingRules = new ArrayList<>();
-  List<MappingRule> headerMappingRules = new ArrayList<>();
-  List<MappingRule> bodyMappingRules = new ArrayList<>();
-  List<MappingRule> queryMappingRules = new ArrayList<>();
+public class IdentityVerificationExecutionConfig implements JsonReadable {
+  String type;
+  IdentityVerificationHttpRequestConfig httpRequest = new IdentityVerificationHttpRequestConfig();
+  IdentityVerificationMockConfig mock = new IdentityVerificationMockConfig();
 
   public IdentityVerificationExecutionConfig() {}
 
-  @Override
-  public HttpRequestUrl httpRequestUrl() {
-    return new HttpRequestUrl(url);
+  public String type() {
+    return type;
   }
 
-  @Override
-  public HttpMethod httpMethod() {
-    return HttpMethod.of(method);
-  }
-
-  public boolean isGetHttpMethod() {
-    return httpMethod().equals(HttpMethod.GET);
-  }
-
-  @Override
-  public HttpRequestAuthType httpRequestAuthType() {
-    return HttpRequestAuthType.of(authType);
-  }
-
-  @Override
-  public boolean hasOAuthAuthorization() {
-    return oauthAuthorization != null && oauthAuthorization.exists();
-  }
-
-  @Override
-  public OAuthAuthorizationConfiguration oauthAuthorization() {
-    if (oauthAuthorization == null) {
-      return new OAuthAuthorizationConfiguration();
+  public IdentityVerificationHttpRequestConfig httpRequest() {
+    if (httpRequest == null) {
+      return new IdentityVerificationHttpRequestConfig();
     }
-    return oauthAuthorization;
+    return httpRequest;
   }
 
-  @Override
-  public boolean hasHmacAuthentication() {
-    return hmacAuthentication != null && hmacAuthentication.exists();
+  public boolean hasHttpRequest() {
+    return httpRequest != null && httpRequest.exists();
   }
 
-  @Override
-  public HmacAuthenticationConfiguration hmacAuthentication() {
-    if (hmacAuthentication == null) {
-      return new HmacAuthenticationConfiguration();
+  public IdentityVerificationMockConfig mock() {
+    if (mock == null) {
+      return new IdentityVerificationMockConfig();
     }
-    return hmacAuthentication;
+    return mock;
   }
 
-  @Override
-  public HttpRequestStaticHeaders httpRequestStaticHeaders() {
-    return new HttpRequestStaticHeaders(staticHeaders);
+  public boolean hasMock() {
+    return mock != null;
   }
 
-  @Override
-  public HttpRequestMappingRules httpRequestPathMappingRules() {
-    return new HttpRequestMappingRules(pathMappingRules);
-  }
-
-  @Override
-  public HttpRequestStaticBody httpRequestStaticBody() {
-    return new HttpRequestStaticBody(staticBody);
-  }
-
-  @Override
-  public HttpRequestMappingRules httpRequestHeaderMappingRules() {
-    return new HttpRequestMappingRules(headerMappingRules);
-  }
-
-  @Override
-  public HttpRequestMappingRules httpRequestBodyMappingRules() {
-    return new HttpRequestMappingRules(bodyMappingRules);
-  }
-
-  @Override
-  public HttpRequestMappingRules httpRequestQueryMappingRules() {
-    return new HttpRequestMappingRules(queryMappingRules);
-  }
-
-  // FIXME to be more correct
   public boolean exists() {
-    return url != null && !url.isEmpty();
+    return type != null && !type.isEmpty();
   }
 }

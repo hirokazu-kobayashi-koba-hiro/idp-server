@@ -18,7 +18,7 @@ package org.idp.server.core.extension.identity.verification.application.model;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationApplyingResult;
+import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplyingResult;
 
 public class IdentityVerificationApplicationProcessResult {
 

@@ -1,10 +1,16 @@
 import http from "k6/http";
 import { check } from "k6";
+import encoding from "k6/encoding";
 
 export let options = {
-  vus: 30,
-  duration: '20m',
+  vus: 20,
+  duration: '30s',
 };
+
+function createBasicAuthHeaderValue({ username, password }) {
+  const credentials = `${username}:${password}`;
+ return encoding.b64encode(credentials);
+}
 
 const BASE_URL = __ENV.BASE_URL;
 const TENANT_ID = __ENV.TENANT_ID;
@@ -170,6 +176,122 @@ export default function () {
     { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
   );
   check(tokenRes, { 'Step 14: token request': (r) => r.status === 200 });
+
+
+  function createAuthHeader(token) {
+    return {
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      }
+    };
+  }
+
+  const type = "investment-account-opening"
+  const token = tokenRes.json().access_token
+  // console.log(token)
+
+  // Step 1: apply
+  const applyUrl = `${BASE_URL}/${TENANT_ID}/v1/me/identity-verification/applications/${type}/apply`;
+  const applyPayload = JSON.stringify({
+    last_name: "john",
+    first_name: "mac",
+    last_name_kana: "jon",
+    first_name_kana: "mac",
+    birthdate: "1992-02-12",
+    nationality: "JP",
+    email_address: "ito.ichiro@gmail.com",
+    mobile_phone_number: "09012345678",
+    address: {
+      street_address: "test",
+      locality: "test",
+      region: "test",
+      postal_code: "1000001",
+      country: "JP"
+    }
+  });
+  const applyRes = http.post(applyUrl, applyPayload, createAuthHeader(token));
+  check(applyRes, { "apply ok": (r) => r.status === 200 });
+  // console.log(applyRes)
+
+  const applyData = applyRes.json();
+  // console.log(applyData);
+  const applicationId = applyData.id;
+  const externalId = applyData.application_id
+
+  // Step 2: crm-registration
+  const processBase = `${BASE_URL}/${TENANT_ID}/v1/me/identity-verification/applications/${type}/${applicationId}`;
+  const crmRegistrationRes = http.post(`${processBase}/crm-registration`, JSON.stringify({
+    trust_framework: "eidas",
+    evidence_document_type: "driver_license"
+  }), createAuthHeader(token));
+  check(crmRegistrationRes, { "crm-registration ok": (r) => r.status === 200 });
+  // console.log(crmRegistrationRes)
+
+  // Step 3: request-ekyc
+  const requestEkycRes = http.post(`${processBase}/request-ekyc`, JSON.stringify({
+    trust_framework: "eidas",
+    evidence_document_type: "driver_license"
+  }), createAuthHeader(token));
+  check(requestEkycRes, { "request-ekyc ok": (r) => r.status === 200 });
+  // console.log(requestEkycRes)
+
+  // Step 4: complete-ekyc
+  const completeEkycRes = http.post(`${processBase}/complete-ekyc`, "{}", createAuthHeader(token));
+  check(completeEkycRes, { "complete-ekyc ok": (r) => r.status === 200 });
+
+  // Step 5: callback-examination
+  const callbackAuthHeader = {
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Basic ${createBasicAuthHeaderValue({
+        username: "test_user",
+        password: "test_user001",
+      })}`
+    }
+  };
+
+  const callbackExamRes = http.post(`${BASE_URL}/${TENANT_ID}/v1/identity-verification/callback/${type}/callback-examination`, JSON.stringify({
+    application_id: externalId,
+    step: "first-examination",
+    comment: "test comment",
+    rejected: false
+  }), callbackAuthHeader);
+  check(callbackExamRes, { "callback-examination ok": (r) => r.status === 200 });
+  // console.log(callbackExamRes)
+
+  // Step 6: callback-result
+  const callbackResultRes = http.post(`${BASE_URL}/${TENANT_ID}/v1/identity-verification/callback/${type}/callback-result`, JSON.stringify({
+    application_id: externalId,
+    verification: {
+      trust_framework: "eidas",
+      evidence: [
+        {
+          type: "electronic_record",
+          check_details: [{
+            check_method: "kbv",
+            organization: "TheCreditBureau",
+            txn: "kbv1-xyz"
+          }],
+          time: "2021-04-09T14:12Z",
+          record: { type: "mortgage_account", source: { name: "TheCreditBureau" } }
+        }
+      ]
+    },
+    claims: {
+      given_name: "Sarah",
+      family_name: "Meredyth",
+      birthdate: "1976-03-11",
+      place_of_birth: { country: "UK" },
+      address: {
+        locality: "Edinburgh",
+        postal_code: "EH1 9GP",
+        country: "UK",
+        street_address: "122 Burns Crescent"
+      }
+    }
+  }), callbackAuthHeader);
+  check(callbackResultRes, { "callback-result ok": (r) => r.status === 200 });
 
 }
 

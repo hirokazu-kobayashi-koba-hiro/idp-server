@@ -14,19 +14,18 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.identity.verification.application.execution;
+package org.idp.server.core.extension.identity.verification.application;
 
-import java.util.List;
-import java.util.Map;
+import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationApplicationContext;
+import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationExecutionResult;
 import org.idp.server.core.extension.identity.verification.application.pre_hook.verification.IdentityVerificationApplicationRequestVerifiedResult;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationResponse;
-import org.idp.server.platform.json.JsonNodeWrapper;
 
 public class IdentityVerificationApplyingResult {
 
   IdentityVerificationApplicationContext applicationContext;
   IdentityVerificationApplicationRequestVerifiedResult verifyResult;
-  IdentityVerificationApplyingExecutionResult executionResult;
+  IdentityVerificationExecutionResult executionResult;
 
   public IdentityVerificationApplyingResult() {}
 
@@ -35,12 +34,12 @@ public class IdentityVerificationApplyingResult {
     return new IdentityVerificationApplyingResult(
         new IdentityVerificationApplicationContext(),
         verifyResult,
-        new IdentityVerificationApplyingExecutionResult());
+        new IdentityVerificationExecutionResult());
   }
 
   public static IdentityVerificationApplyingResult executionError(
       IdentityVerificationApplicationRequestVerifiedResult verifyResult,
-      IdentityVerificationApplyingExecutionResult executionResult) {
+      IdentityVerificationExecutionResult executionResult) {
     return new IdentityVerificationApplyingResult(
         new IdentityVerificationApplicationContext(), verifyResult, executionResult);
   }
@@ -48,7 +47,7 @@ public class IdentityVerificationApplyingResult {
   public IdentityVerificationApplyingResult(
       IdentityVerificationApplicationContext applicationContext,
       IdentityVerificationApplicationRequestVerifiedResult verifyResult,
-      IdentityVerificationApplyingExecutionResult executionResult) {
+      IdentityVerificationExecutionResult executionResult) {
     this.applicationContext = applicationContext;
     this.verifyResult = verifyResult;
     this.executionResult = executionResult;
@@ -69,25 +68,13 @@ public class IdentityVerificationApplyingResult {
     }
 
     if (executionResult.isClientError()) {
-      return IdentityVerificationApplicationResponse.CLIENT_ERROR(executionResult.body().toMap());
+      return IdentityVerificationApplicationResponse.CLIENT_ERROR(executionResult.result());
     }
 
-    return IdentityVerificationApplicationResponse.SERVER_ERROR(executionResult.body().toMap());
+    return IdentityVerificationApplicationResponse.SERVER_ERROR(executionResult.result());
   }
 
   public IdentityVerificationApplicationContext applicationContext() {
     return applicationContext;
-  }
-
-  public int responseStatusCode() {
-    return executionResult.statusCode();
-  }
-
-  public Map<String, List<String>> responseHeaders() {
-    return executionResult.headers();
-  }
-
-  public JsonNodeWrapper responseBody() {
-    return executionResult.body();
   }
 }
