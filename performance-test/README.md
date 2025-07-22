@@ -107,7 +107,7 @@ k6 run ./performance-test/stress/scenario-4-token-password.js
 ```
 
 ```shell
-k6 run ./performance-test/stress/scenario-5-token-clientAttributes-credentials.js
+k6 run ./performance-test/stress/scenario-5-token-client-credentials.js
 ```
 
 ```shell
