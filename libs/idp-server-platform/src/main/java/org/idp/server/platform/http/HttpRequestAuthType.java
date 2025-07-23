@@ -45,4 +45,12 @@ public enum HttpRequestAuthType {
 
     return UNKNOWN;
   }
+
+  public boolean isOauth2() {
+    return this == HttpRequestAuthType.OAUTH2;
+  }
+
+  public boolean isHmacSha256() {
+    return this == HttpRequestAuthType.HMAC_SHA256;
+  }
 }

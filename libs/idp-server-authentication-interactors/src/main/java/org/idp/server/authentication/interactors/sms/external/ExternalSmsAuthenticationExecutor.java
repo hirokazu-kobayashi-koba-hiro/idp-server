@@ -24,6 +24,7 @@ import org.idp.server.core.oidc.authentication.repository.AuthenticationInteract
 import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionQueryRepository;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.type.RequestAttributes;
 
 public class ExternalSmsAuthenticationExecutor implements SmsAuthenticationExecutor {
 
@@ -51,9 +52,11 @@ public class ExternalSmsAuthenticationExecutor implements SmsAuthenticationExecu
       Tenant tenant,
       AuthenticationTransactionIdentifier identifier,
       SmsAuthenticationExecutionRequest request,
+      RequestAttributes requestAttributes,
       SmsAuthenticationConfiguration configuration) {
 
-    SmsAuthenticationExecutionResult challengeResult = execute("challenge", request, configuration);
+    SmsAuthenticationExecutionResult challengeResult =
+        execute("challenge", request, requestAttributes, configuration);
 
     if (challengeResult.isSuccess()) {
       ExternalSmsAuthenticationTransaction transaction =
@@ -70,6 +73,7 @@ public class ExternalSmsAuthenticationExecutor implements SmsAuthenticationExecu
       Tenant tenant,
       AuthenticationTransactionIdentifier identifier,
       SmsAuthenticationExecutionRequest request,
+      RequestAttributes requestAttributes,
       SmsAuthenticationConfiguration configuration) {
 
     ExternalSmsAuthenticationTransaction transaction =
@@ -84,12 +88,13 @@ public class ExternalSmsAuthenticationExecutor implements SmsAuthenticationExecu
 
     SmsAuthenticationExecutionRequest externalRequest = new SmsAuthenticationExecutionRequest(map);
 
-    return execute("verify", externalRequest, configuration);
+    return execute("verify", externalRequest, requestAttributes, configuration);
   }
 
   private SmsAuthenticationExecutionResult execute(
       String executionType,
       SmsAuthenticationExecutionRequest request,
+      RequestAttributes requestAttributes,
       SmsAuthenticationConfiguration configuration) {
 
     Map<String, Object> detail = configuration.getDetail(type());
@@ -100,7 +105,7 @@ public class ExternalSmsAuthenticationExecutor implements SmsAuthenticationExecu
         smsConfiguration.getExecutionConfig(executionType);
 
     ExternalSmsAuthenticationHttpRequestResult httpRequestResult =
-        httpClient.execute(request, executionConfiguration);
+        httpClient.execute(request, requestAttributes, executionConfiguration);
 
     if (httpRequestResult.isClientError()) {
       return SmsAuthenticationExecutionResult.clientError(httpRequestResult.responseBody());

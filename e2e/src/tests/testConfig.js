@@ -36,9 +36,9 @@ export const serverConfig = {
   identityVerificationProcessEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/me/identity-verification/applications/{type}/{id}/{process}`,
   identityVerificationApplicationsEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/me/identity-verification/applications`,
   identityVerificationApplicationsDeletionEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/me/identity-verification/applications/{type}/{id}`,
-  identityVerificationApplicationsPublicCallbackEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/identity-verification/callback/{type}/{callbackName}`,
+  identityVerificationApplicationsPublicCallbackEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/internal/v1/identity-verification/callback/{type}/{callbackName}`,
   identityVerificationApplicationsEvaluateResultEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/me/identity-verification/applications/{type}/{id}/evaluate-result`,
-  identityVerificationResultEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/identity-verification/results/{type}/registration`,
+  identityVerificationResultEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/internal/v1/identity-verification/results/{type}/registration`,
   identityVerificationResultResourceOwnerEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/me/identity-verification/results`,
   discoveryEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/.well-known/openid-configuration`,

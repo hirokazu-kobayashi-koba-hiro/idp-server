@@ -21,9 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.http.*;
-import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.JsonReadable;
-import org.idp.server.platform.json.schema.JsonSchemaDefinition;
 import org.idp.server.platform.mapper.MappingRule;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
@@ -33,16 +31,12 @@ public class AdditionalParameterHttpRequestConfiguration
   String method;
   String authType;
   OAuthAuthorizationConfiguration oauthAuthorization = new OAuthAuthorizationConfiguration();
-  HmacAuthenticationConfiguration hmacAuthentication = new HmacAuthenticationConfiguration();
-  Map<String, String> staticHeaders = new HashMap<>();
-  Map<String, Object> staticBody = new HashMap<>();
+  HmacAuthenticationConfig hmacAuthentication = new HmacAuthenticationConfig();
   List<MappingRule> pathMappingRules = new ArrayList<>();
   List<MappingRule> headerMappingRules = new ArrayList<>();
   List<MappingRule> bodyMappingRules = new ArrayList<>();
   List<MappingRule> queryMappingRules = new ArrayList<>();
-  Map<String, Object> requestValidationSchema = new HashMap<>();
-  Map<String, Object> requestVerificationSchema = new HashMap<>();
-  Map<String, Object> responseValidationSchema = new HashMap<>();
+  Map<String, String> parameterNames = new HashMap<>();
 
   public AdditionalParameterHttpRequestConfiguration() {}
 
@@ -84,60 +78,37 @@ public class AdditionalParameterHttpRequestConfiguration
   }
 
   @Override
-  public HmacAuthenticationConfiguration hmacAuthentication() {
+  public HmacAuthenticationConfig hmacAuthentication() {
     if (hmacAuthentication == null) {
-      return new HmacAuthenticationConfiguration();
+      return new HmacAuthenticationConfig();
     }
     return hmacAuthentication;
   }
 
   @Override
-  public HttpRequestStaticHeaders httpRequestStaticHeaders() {
-    return new HttpRequestStaticHeaders(staticHeaders);
-  }
-
-  @Override
-  public HttpRequestStaticBody httpRequestStaticBody() {
-    return new HttpRequestStaticBody(staticBody);
-  }
-
-  @Override
-  public HttpRequestMappingRules httpRequestPathMappingRules() {
+  public HttpRequestMappingRules pathMappingRules() {
     return new HttpRequestMappingRules(pathMappingRules);
   }
 
   @Override
-  public HttpRequestMappingRules httpRequestHeaderMappingRules() {
+  public HttpRequestMappingRules headerMappingRules() {
     return new HttpRequestMappingRules(headerMappingRules);
   }
 
   @Override
-  public HttpRequestMappingRules httpRequestBodyMappingRules() {
+  public HttpRequestMappingRules bodyMappingRules() {
     return new HttpRequestMappingRules(bodyMappingRules);
   }
 
   @Override
-  public HttpRequestMappingRules httpRequestQueryMappingRules() {
+  public HttpRequestMappingRules queryMappingRules() {
     return new HttpRequestMappingRules(queryMappingRules);
   }
 
-  public Map<String, Object> requestValidationSchema() {
-    return requestValidationSchema;
-  }
-
-  public Map<String, Object> requestVerificationSchema() {
-    return requestVerificationSchema;
-  }
-
-  public Map<String, Object> responseValidationSchema() {
-    return responseValidationSchema;
-  }
-
-  public JsonSchemaDefinition requestValidationSchemaAsDefinition() {
-    return new JsonSchemaDefinition(JsonNodeWrapper.fromMap(requestValidationSchema));
-  }
-
-  public JsonSchemaDefinition responseValidationSchemaAsDefinition() {
-    return new JsonSchemaDefinition(JsonNodeWrapper.fromMap(responseValidationSchema));
+  public String optValueFromAdditionalParameterNames(String key, String defaultValue) {
+    if (parameterNames == null) {
+      return defaultValue;
+    }
+    return parameterNames.getOrDefault(key, defaultValue);
   }
 }

@@ -21,13 +21,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
+import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationApplicationContext;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationRequest;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationCallbackRequest;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.core.extension.identity.verified.VerifiedClaims;
+import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserIdentifier;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -47,7 +46,7 @@ public class IdentityVerificationResult {
 
   public static IdentityVerificationResult create(
       IdentityVerificationApplication application,
-      IdentityVerificationApplicationRequest request,
+      IdentityVerificationApplicationContext context,
       IdentityVerificationConfiguration verificationConfiguration) {
 
     IdentityVerificationResultIdentifier identifier =
@@ -58,11 +57,14 @@ public class IdentityVerificationResult {
     IdentityVerificationType identityVerificationType = application.identityVerificationType();
 
     VerifiedClaims verifiedClaims =
-        VerifiedClaims.create(request, verificationConfiguration.verifiedClaimsConfiguration());
+        VerifiedClaims.create(
+            context.toMap(), verificationConfiguration.result().verifiedClaimsMappingRules());
     LocalDateTime verifiedAt = SystemDateTime.now();
     IdentityVerificationSourceType source = IdentityVerificationSourceType.APPLICATION;
-    // TODO
-    IdentityVerificationSourceDetails sourceDetails = new IdentityVerificationSourceDetails();
+
+    IdentityVerificationSourceDetails sourceDetails =
+        IdentityVerificationSourceDetails.create(
+            context.toMap(), verificationConfiguration.result().sourceDetailsMappingRules());
 
     return new IdentityVerificationResult(
         identifier,
@@ -79,7 +81,7 @@ public class IdentityVerificationResult {
 
   public static IdentityVerificationResult createOnCallback(
       IdentityVerificationApplication application,
-      IdentityVerificationCallbackRequest request,
+      IdentityVerificationApplicationContext context,
       IdentityVerificationConfiguration verificationConfiguration) {
 
     IdentityVerificationResultIdentifier identifier =
@@ -90,12 +92,13 @@ public class IdentityVerificationResult {
     IdentityVerificationType identityVerificationType = application.identityVerificationType();
 
     VerifiedClaims verifiedClaims =
-        VerifiedClaims.createOnCallback(
-            request, verificationConfiguration.verifiedClaimsConfiguration());
+        VerifiedClaims.create(
+            context.toMap(), verificationConfiguration.result().verifiedClaimsMappingRules());
     LocalDateTime verifiedAt = SystemDateTime.now();
     IdentityVerificationSourceType source = IdentityVerificationSourceType.APPLICATION;
-    // TODO
-    IdentityVerificationSourceDetails sourceDetails = new IdentityVerificationSourceDetails();
+    IdentityVerificationSourceDetails sourceDetails =
+        IdentityVerificationSourceDetails.create(
+            context.toMap(), verificationConfiguration.result().sourceDetailsMappingRules());
 
     return new IdentityVerificationResult(
         identifier,
@@ -112,20 +115,24 @@ public class IdentityVerificationResult {
 
   public static IdentityVerificationResult createOnDirect(
       TenantIdentifier tenantId,
+      User user,
       IdentityVerificationType identityVerificationType,
-      IdentityVerificationRequest request,
+      IdentityVerificationApplicationContext context,
       IdentityVerificationConfiguration verificationConfiguration) {
 
     IdentityVerificationResultIdentifier identifier =
         new IdentityVerificationResultIdentifier(UUID.randomUUID().toString());
-    UserIdentifier userIdentifier = request.userIdentifier();
+    UserIdentifier userIdentifier = user.userIdentifier();
     IdentityVerificationApplicationIdentifier applicationId =
         new IdentityVerificationApplicationIdentifier();
     VerifiedClaims verifiedClaims =
-        VerifiedClaims.create(request, verificationConfiguration.verifiedClaimsConfiguration());
+        VerifiedClaims.create(
+            context.toMap(), verificationConfiguration.result().verifiedClaimsMappingRules());
     LocalDateTime verifiedAt = SystemDateTime.now();
     IdentityVerificationSourceType source = IdentityVerificationSourceType.DIRECT;
-    IdentityVerificationSourceDetails sourceDetails = new IdentityVerificationSourceDetails();
+    IdentityVerificationSourceDetails sourceDetails =
+        IdentityVerificationSourceDetails.create(
+            context.toMap(), verificationConfiguration.result().sourceDetailsMappingRules());
 
     return new IdentityVerificationResult(
         identifier,

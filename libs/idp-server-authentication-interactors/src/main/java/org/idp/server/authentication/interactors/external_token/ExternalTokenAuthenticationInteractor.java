@@ -24,8 +24,6 @@ import org.idp.server.core.oidc.identity.mapper.UserInfoMapper;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.http.*;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolver;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
@@ -68,8 +66,7 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
     ExternalTokenAuthenticationDetailConfiguration userinfoConfig =
         configuration.userinfoDetailConfig();
 
-    HttpRequestResult userinfoResult =
-        execute(new HttpRequestBaseParams(request.toMap()), userinfoConfig);
+    HttpRequestResult userinfoResult = execute(userinfoConfig, request, requestAttributes);
 
     if (userinfoResult.isClientError()) {
       return AuthenticationInteractionRequestResult.clientError(
@@ -119,48 +116,16 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
         DefaultSecurityEventType.external_token_authentication_success);
   }
 
-  // TODO to be more simply
   private HttpRequestResult execute(
-      HttpRequestBaseParams httpRequestBaseParams,
-      HttpRequestExecutionConfigInterface configuration) {
+      ExternalTokenAuthenticationDetailConfiguration configuration,
+      AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes) {
 
-    Map<String, String> headers = new HashMap<>(configuration.httpRequestStaticHeaders().toMap());
+    Map<String, Object> param = new HashMap<>();
+    param.put("request_body", request.toMap());
+    param.put("request_attributes", requestAttributes.toMap());
+    HttpRequestBaseParams httpRequestBaseParams = new HttpRequestBaseParams(param);
 
-    switch (configuration.httpRequestAuthType()) {
-      case OAUTH2 -> {
-        OAuthAuthorizationConfiguration oAuthAuthorizationConfig =
-            configuration.oauthAuthorization();
-        OAuthAuthorizationResolver resolver =
-            authorizationResolvers.get(oAuthAuthorizationConfig.type());
-        String accessToken = resolver.resolve(oAuthAuthorizationConfig);
-        headers.put("Authorization", "Bearer " + accessToken);
-      }
-      case HMAC_SHA256 -> {
-        HttpRequestStaticHeaders httpRequestStaticHeaders = new HttpRequestStaticHeaders(headers);
-        HmacAuthenticationConfiguration hmacAuthenticationConfig =
-            configuration.hmacAuthentication();
-
-        return httpRequestExecutor.execute(
-            configuration.httpRequestUrl(),
-            configuration.httpMethod(),
-            hmacAuthenticationConfig,
-            httpRequestBaseParams,
-            httpRequestStaticHeaders,
-            configuration.httpRequestStaticBody(),
-            configuration.httpRequestPathMappingRules(),
-            configuration.httpRequestHeaderMappingRules(),
-            configuration.httpRequestBodyMappingRules());
-      }
-    }
-
-    return httpRequestExecutor.executeWithDynamicMapping(
-        configuration.httpRequestUrl(),
-        configuration.httpMethod(),
-        httpRequestBaseParams,
-        new HttpRequestStaticHeaders(headers),
-        configuration.httpRequestStaticBody(),
-        configuration.httpRequestPathMappingRules(),
-        configuration.httpRequestHeaderMappingRules(),
-        configuration.httpRequestHeaderMappingRules());
+    return httpRequestExecutor.execute(configuration, httpRequestBaseParams);
   }
 }

@@ -5,7 +5,7 @@
   "external_application_id_param": "application_id",
   "oauth_authorization": {
     "type": "password",
-    "token_endpoint": "https://run.mocky.io/v3/04646fc3-8cce-44c8-bc59-5c64df51bf82",
+    "token_endpoint": "http://mockoon:4000/token",
     "client_id": "your-client-id",
     "username": "username",
     "password": "password",
@@ -59,12 +59,12 @@
       "execution": {
         "type": "http_request",
         "http_request": {
-          "url": "https://run.mocky.io/v3/1f706ee6-9bca-45d2-9676-d0c85c48ccb9",
+          "url": "http://mockoon:4000/request-ekyc",
           "method": "POST",
-          "static_headers": {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer dummy-token"
-          },
+          "header_mapping_rules": [
+            { "static_value": "application/json", "to": "Content-Type" },
+            { "static_value": "Bearer dummy-token", "to": "Authorization" }
+          ],
           "body_mapping_rules": [
             { "from": "$.request_body", "to": "*" }
           ],
@@ -97,14 +97,12 @@
       "execution": {
         "type": "http_request",
         "http_request": {
-          "url": "https://run.mocky.io/v3/0a587222-da2b-4713-b090-e4ff8447a02b",
+          "url": "http://mockoon:4000/request-ekyc",
           "method": "POST",
-          "static_headers": {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer dummy-token"
-          },
-          "dynamic_body_keys": ["trust_framework", "document_type"],
-          "static_body": {}
+          "header_mapping_rules": [
+            { "static_value": "application/json", "to": "Content-Type" },
+            { "static_value": "Bearer dummy-token", "to": "Authorization" }
+          ]
         }
       },
       "store": {
@@ -130,16 +128,15 @@
       "execution": {
         "type": "http_request",
         "http_request": {
-          "url": "https://run.mocky.io/v3/73f192dd-7bcd-4415-8fc7-811c56684cb7",
+          "url": "https://localhost:4000/complete-ekyc",
           "method": "POST",
-          "static_headers": {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer dummy-token"
-          },
+          "header_mapping_rules": [
+            { "static_value": "application/json", "to": "Content-Type" },
+            { "static_value": "Bearer dummy-token", "to": "Authorization" }
+          ],
           "body_mapping_rules": [
             { "from": "$.request_body", "to": "*"}
-          ],
-          "static_body": {}
+          ]
         }
       },
       "store": {

@@ -18,6 +18,7 @@ package org.idp.server.authentication.interactors.sms;
 
 import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.type.RequestAttributes;
 
 public interface SmsAuthenticationExecutor {
 
@@ -27,11 +28,13 @@ public interface SmsAuthenticationExecutor {
       Tenant tenant,
       AuthenticationTransactionIdentifier identifier,
       SmsAuthenticationExecutionRequest request,
+      RequestAttributes requestAttributes,
       SmsAuthenticationConfiguration configuration);
 
   SmsAuthenticationExecutionResult verify(
       Tenant tenant,
       AuthenticationTransactionIdentifier identifier,
       SmsAuthenticationExecutionRequest request,
+      RequestAttributes requestAttributes,
       SmsAuthenticationConfiguration configuration);
 }

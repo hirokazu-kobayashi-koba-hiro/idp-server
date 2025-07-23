@@ -20,71 +20,29 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.authentication.interactors.sms.SmsAuthenticationExecutionRequest;
 import org.idp.server.platform.http.*;
-import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolver;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
+import org.idp.server.platform.type.RequestAttributes;
 
 public class ExternalSmsAuthenticationHttpClient {
 
-  OAuthAuthorizationResolvers authorizationResolvers;
   HttpRequestExecutor httpRequestExecutor;
 
   public ExternalSmsAuthenticationHttpClient() {
-    this.authorizationResolvers = new OAuthAuthorizationResolvers();
     this.httpRequestExecutor = new HttpRequestExecutor(HttpClientFactory.defaultClient());
   }
 
   public ExternalSmsAuthenticationHttpRequestResult execute(
       SmsAuthenticationExecutionRequest request,
+      RequestAttributes requestAttributes,
       ExternalSmsAuthenticationExecutionConfiguration configuration) {
+
+    Map<String, Object> param = new HashMap<>();
+    param.put("request_body", request.toMap());
+    param.put("request_attributes", requestAttributes);
+    HttpRequestBaseParams httpRequestBaseParams = new HttpRequestBaseParams(param);
 
     HttpRequestResult executionResult =
-        execute(new HttpRequestBaseParams(request.toMap()), configuration);
+        httpRequestExecutor.execute(configuration, httpRequestBaseParams);
 
     return new ExternalSmsAuthenticationHttpRequestResult(executionResult);
-  }
-
-  private HttpRequestResult execute(
-      HttpRequestBaseParams httpRequestBaseParams,
-      ExternalSmsAuthenticationExecutionConfiguration configuration) {
-
-    Map<String, String> headers = new HashMap<>(configuration.httpRequestStaticHeaders().toMap());
-
-    switch (configuration.httpRequestAuthType()) {
-      case OAUTH2 -> {
-        OAuthAuthorizationConfiguration oAuthAuthorizationConfig =
-            configuration.oauthAuthorization();
-        OAuthAuthorizationResolver resolver =
-            authorizationResolvers.get(oAuthAuthorizationConfig.type());
-        String accessToken = resolver.resolve(oAuthAuthorizationConfig);
-        headers.put("Authorization", "Bearer " + accessToken);
-      }
-      case HMAC_SHA256 -> {
-        HttpRequestStaticHeaders httpRequestStaticHeaders = new HttpRequestStaticHeaders(headers);
-        HmacAuthenticationConfiguration hmacAuthenticationConfig =
-            configuration.hmacAuthentication();
-
-        return httpRequestExecutor.execute(
-            configuration.httpRequestUrl(),
-            configuration.httpMethod(),
-            hmacAuthenticationConfig,
-            httpRequestBaseParams,
-            httpRequestStaticHeaders,
-            configuration.httpRequestStaticBody(),
-            configuration.httpRequestPathMappingRules(),
-            configuration.httpRequestHeaderMappingRules(),
-            configuration.httpRequestBodyMappingRules());
-      }
-    }
-
-    return httpRequestExecutor.executeWithDynamicMapping(
-        configuration.httpRequestUrl(),
-        configuration.httpMethod(),
-        httpRequestBaseParams,
-        new HttpRequestStaticHeaders(headers),
-        configuration.httpRequestStaticBody(),
-        configuration.httpRequestPathMappingRules(),
-        configuration.httpRequestHeaderMappingRules(),
-        configuration.httpRequestHeaderMappingRules());
   }
 }

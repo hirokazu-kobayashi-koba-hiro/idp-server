@@ -16,13 +16,11 @@
 
 package org.idp.server.core.extension.identity.verified;
 
+import java.util.List;
 import java.util.Map;
-import org.idp.server.core.extension.identity.verification.configuration.verified_claims.IdentityVerificationVerifiedClaimsConfiguration;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationRequest;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationCallbackRequest;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
+import org.idp.server.platform.mapper.MappingRule;
 import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 
 public class VerifiedClaims {
@@ -36,34 +34,10 @@ public class VerifiedClaims {
     this.json = json;
   }
 
-  public static VerifiedClaims create(
-      IdentityVerificationApplicationRequest request,
-      IdentityVerificationVerifiedClaimsConfiguration verifiedClaimsConfiguration) {
-
-    return create(request.toMap(), verifiedClaimsConfiguration);
-  }
-
-  public static VerifiedClaims createOnCallback(
-      IdentityVerificationCallbackRequest request,
-      IdentityVerificationVerifiedClaimsConfiguration verifiedClaimsConfiguration) {
-
-    return create(request.toMap(), verifiedClaimsConfiguration);
-  }
-
-  public static VerifiedClaims create(
-      IdentityVerificationRequest request,
-      IdentityVerificationVerifiedClaimsConfiguration verifiedClaimsConfiguration) {
-
-    return create(request.toMap(), verifiedClaimsConfiguration);
-  }
-
-  private static VerifiedClaims create(
-      Map<String, Object> request,
-      IdentityVerificationVerifiedClaimsConfiguration verifiedClaimsConfiguration) {
-    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request);
+  public static VerifiedClaims create(Map<String, Object> context, List<MappingRule> mappingRules) {
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(context);
     JsonPathWrapper jsonPath = new JsonPathWrapper(jsonNodeWrapper.toJson());
-    Map<String, Object> mappingResult =
-        MappingRuleObjectMapper.execute(verifiedClaimsConfiguration.mappingRules(), jsonPath);
+    Map<String, Object> mappingResult = MappingRuleObjectMapper.execute(mappingRules, jsonPath);
 
     return new VerifiedClaims(JsonNodeWrapper.fromMap(mappingResult));
   }

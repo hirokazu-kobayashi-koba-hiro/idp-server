@@ -36,7 +36,7 @@ public class TypeConverter {
     try {
       return switch (type) {
         case "string" -> value.toString();
-        case "int" -> {
+        case "integer" -> {
           if (value instanceof Number) {
             yield ((Number) value).intValue();
           }

@@ -140,11 +140,10 @@
         "http_request": {
           "url": "http://mockoon:4000/apply",
           "method": "POST",
-          "static_headers": {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer dummy-token"
-          },
-          "static_body": {},
+          "header_mapping_rules": [
+            { "static_value": "application/json", "to": "Content-Type" },
+            { "static_value": "Bearer dummy-token", "to": "Authorization" }
+          ],
           "body_mapping_rules": [
             { "from": "$.request_body", "to": "*" }
           ]
@@ -188,15 +187,10 @@
         "http_request": {
           "url": "http://mockoon:4000/{{external_application_id}}/request-ekyc",
           "method": "POST",
-          "static_headers": {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer dummy-token"
-          },
-          "dynamic_body_keys": [
-            "trust_framework",
-            "evidence_document_type"
+          "header_mapping_rules": [
+            { "static_value": "application/json", "to": "Content-Type" },
+            { "static_value": "Bearer dummy-token", "to": "Authorization" }
           ],
-          "static_body": {},
           "path_mapping_rules": [
             { "from": "$.application.application_details.external_application_id", "to": "external_application_id" }
           ],
@@ -229,11 +223,10 @@
         "http_request": {
           "url": "http://mockoon:4000/{{external_application_id}}/complete-ekyc",
           "method": "POST",
-          "headers": {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer dummy-token"
-          },
-          "static_body": {},
+          "header_mapping_rules": [
+            { "static_value": "application/json", "to": "Content-Type" },
+            { "static_value": "Bearer dummy-token", "to": "Authorization" }
+          ],
           "path_mapping_rules": [
             { "from": "$.application.application_details.external_application_id", "to": "external_application_id" }
           ],
@@ -277,10 +270,9 @@
               "body"
             ]
           },
-          "static_headers": {
-            "Content-Type": "application/json"
-          },
-          "static_body": {},
+          "header_mapping_rules": [
+            { "static_value": "application/json", "to": "Content-Type" }
+          ],
           "body_mapping_rules": [
             { "from": "$.request_body", "to": "*" }
           ]
@@ -328,6 +320,9 @@
       }
     },
     "cancel": {
+      "execution": {
+        "type": "no_action"
+      },
       "cancellation_condition": {
         "request_condition": {
           "all_of": [
@@ -406,7 +401,7 @@
   },
   "verified_claims": {
     "mapping_rules": [
-      { "from": "$.verification.trust_framework", "to": "verification.trust_framework" },
+      { "static_value": "jp_aml", "to": "verification.trust_framework" },
       { "from": "$.verification.evidence[0].type", "to": "verification.evidence.0.type" },
       { "from": "$.verification.evidence[0].check_details[0].check_method", "to": "verification.evidence.0.check_details.0.check_method" },
       { "from": "$.verification.evidence[0].check_details[0].organization", "to": "verification.evidence.0.check_details.0.organization" },

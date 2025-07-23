@@ -82,7 +82,11 @@ public class FidoUafRegistrationChallengeInteractor implements AuthenticationInt
     FidoUafExecutionRequest fidoUafExecutionRequest = new FidoUafExecutionRequest(executionRequest);
     FidoUafExecutionResult executionResult =
         fidoUafExecutor.challengeRegistration(
-            tenant, transaction.identifier(), fidoUafExecutionRequest, fidoUafConfiguration);
+            tenant,
+            transaction.identifier(),
+            fidoUafExecutionRequest,
+            requestAttributes,
+            fidoUafConfiguration);
 
     if (executionResult.isClientError()) {
       return AuthenticationInteractionRequestResult.clientError(

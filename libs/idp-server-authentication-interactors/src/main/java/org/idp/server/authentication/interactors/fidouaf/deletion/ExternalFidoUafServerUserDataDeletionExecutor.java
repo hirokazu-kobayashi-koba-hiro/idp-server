@@ -27,6 +27,7 @@ import org.idp.server.core.oidc.identity.event.UserLifecycleEventResult;
 import org.idp.server.core.oidc.identity.event.UserLifecycleType;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.type.RequestAttributes;
 
 public class ExternalFidoUafServerUserDataDeletionExecutor implements UserLifecycleEventExecutor {
 
@@ -73,7 +74,8 @@ public class ExternalFidoUafServerUserDataDeletionExecutor implements UserLifecy
       // TODO dynamic mapping request
       FidoUafExecutionRequest fidoUafExecutionRequest = new FidoUafExecutionRequest(request);
       FidoUafExecutionResult executionResult =
-          fidoUafExecutor.deleteKey(tenant, fidoUafExecutionRequest, fidoUafConfiguration);
+          fidoUafExecutor.deleteKey(
+              tenant, fidoUafExecutionRequest, new RequestAttributes(), fidoUafConfiguration);
 
       if (!executionResult.isSuccess()) {
         Map<String, Object> data = new HashMap<>();

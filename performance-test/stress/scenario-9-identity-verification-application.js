@@ -251,7 +251,7 @@ export default function () {
     }
   };
 
-  const callbackExamRes = http.post(`${BASE_URL}/${TENANT_ID}/v1/identity-verification/callback/${type}/callback-examination`, JSON.stringify({
+  const callbackExamRes = http.post(`${BASE_URL}/${TENANT_ID}/internal/v1/identity-verification/callback/${type}/callback-examination`, JSON.stringify({
     application_id: externalId,
     step: "first-examination",
     comment: "test comment",
@@ -261,7 +261,7 @@ export default function () {
   // console.log(callbackExamRes)
 
   // Step 6: callback-result
-  const callbackResultRes = http.post(`${BASE_URL}/${TENANT_ID}/v1/identity-verification/callback/${type}/callback-result`, JSON.stringify({
+  const callbackResultRes = http.post(`${BASE_URL}/${TENANT_ID}/internal/v1/identity-verification/callback/${type}/callback-result`, JSON.stringify({
     application_id: externalId,
     verification: {
       trust_framework: "eidas",

@@ -27,18 +27,13 @@ import org.idp.server.core.extension.identity.verification.configuration.process
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationHttpRequestConfig;
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
 import org.idp.server.platform.http.*;
-import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolver;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 
 public class IdentityVerificationApplicationHttpRequestExecutor
     implements IdentityVerificationApplicationExecutor {
 
-  OAuthAuthorizationResolvers authorizationResolvers;
   HttpRequestExecutor httpRequestExecutor;
 
   public IdentityVerificationApplicationHttpRequestExecutor() {
-    this.authorizationResolvers = new OAuthAuthorizationResolvers();
     this.httpRequestExecutor = new HttpRequestExecutor(HttpClientFactory.defaultClient());
   }
 
@@ -59,50 +54,8 @@ public class IdentityVerificationApplicationHttpRequestExecutor
 
     HttpRequestBaseParams httpRequestBaseParams = new HttpRequestBaseParams(parameters);
 
-    Map<String, String> headers =
-        new HashMap<>(httpRequestConfig.httpRequestStaticHeaders().toMap());
-
-    switch (httpRequestConfig.httpRequestAuthType()) {
-      case OAUTH2 -> {
-        OAuthAuthorizationConfiguration oAuthAuthorizationConfig =
-            verificationConfiguration.getOAuthAuthorizationConfig(processes);
-        OAuthAuthorizationResolver resolver =
-            authorizationResolvers.get(oAuthAuthorizationConfig.type());
-        String accessToken = resolver.resolve(oAuthAuthorizationConfig);
-        headers.put("Authorization", "Bearer " + accessToken);
-      }
-      case HMAC_SHA256 -> {
-        HttpRequestStaticHeaders httpRequestStaticHeaders = new HttpRequestStaticHeaders(headers);
-        HmacAuthenticationConfiguration hmacAuthenticationConfig =
-            verificationConfiguration.getHmacAuthenticationConfig(processes);
-
-        HttpRequestResult httpRequestResult =
-            httpRequestExecutor.execute(
-                httpRequestConfig.httpRequestUrl(),
-                httpRequestConfig.httpMethod(),
-                hmacAuthenticationConfig,
-                httpRequestBaseParams,
-                httpRequestStaticHeaders,
-                httpRequestConfig.httpRequestStaticBody(),
-                httpRequestConfig.httpRequestPathMappingRules(),
-                httpRequestConfig.httpRequestHeaderMappingRules(),
-                httpRequestConfig.httpRequestBodyMappingRules());
-
-        return new IdentityVerificationExecutionResult(
-            resolveStatus(httpRequestResult), resolveResult(httpRequestResult));
-      }
-    }
-
     HttpRequestResult httpRequestResult =
-        httpRequestExecutor.executeWithDynamicMapping(
-            httpRequestConfig.httpRequestUrl(),
-            httpRequestConfig.httpMethod(),
-            httpRequestBaseParams,
-            new HttpRequestStaticHeaders(headers),
-            httpRequestConfig.httpRequestStaticBody(),
-            httpRequestConfig.httpRequestPathMappingRules(),
-            httpRequestConfig.httpRequestHeaderMappingRules(),
-            httpRequestConfig.httpRequestBodyMappingRules());
+        httpRequestExecutor.execute(httpRequestConfig, httpRequestBaseParams);
 
     return new IdentityVerificationExecutionResult(
         resolveStatus(httpRequestResult), resolveResult(httpRequestResult));

@@ -17,9 +17,7 @@
 package org.idp.server.authentication.interactors.sms.external;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import org.idp.server.platform.http.*;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.mapper.MappingRule;
@@ -31,9 +29,7 @@ public class ExternalSmsAuthenticationExecutionConfiguration
   String method;
   String authType;
   OAuthAuthorizationConfiguration oauthAuthorization = new OAuthAuthorizationConfiguration();
-  HmacAuthenticationConfiguration hmacAuthentication = new HmacAuthenticationConfiguration();
-  Map<String, String> headers = new HashMap<>();
-  Map<String, Object> staticBody = new HashMap<>();
+  HmacAuthenticationConfig hmacAuthentication = new HmacAuthenticationConfig();
   List<MappingRule> pathMappingRules = new ArrayList<>();
   List<MappingRule> headerMappingRules = new ArrayList<>();
   List<MappingRule> bodyMappingRules = new ArrayList<>();
@@ -74,37 +70,27 @@ public class ExternalSmsAuthenticationExecutionConfiguration
   }
 
   @Override
-  public HmacAuthenticationConfiguration hmacAuthentication() {
+  public HmacAuthenticationConfig hmacAuthentication() {
     return hmacAuthentication;
   }
 
   @Override
-  public HttpRequestStaticHeaders httpRequestStaticHeaders() {
-    return new HttpRequestStaticHeaders(headers);
-  }
-
-  @Override
-  public HttpRequestMappingRules httpRequestPathMappingRules() {
+  public HttpRequestMappingRules pathMappingRules() {
     return new HttpRequestMappingRules(pathMappingRules);
   }
 
   @Override
-  public HttpRequestStaticBody httpRequestStaticBody() {
-    return new HttpRequestStaticBody(staticBody);
-  }
-
-  @Override
-  public HttpRequestMappingRules httpRequestHeaderMappingRules() {
+  public HttpRequestMappingRules headerMappingRules() {
     return new HttpRequestMappingRules(headerMappingRules);
   }
 
   @Override
-  public HttpRequestMappingRules httpRequestBodyMappingRules() {
+  public HttpRequestMappingRules bodyMappingRules() {
     return new HttpRequestMappingRules(bodyMappingRules);
   }
 
   @Override
-  public HttpRequestMappingRules httpRequestQueryMappingRules() {
+  public HttpRequestMappingRules queryMappingRules() {
     return new HttpRequestMappingRules(queryMappingRules);
   }
 }

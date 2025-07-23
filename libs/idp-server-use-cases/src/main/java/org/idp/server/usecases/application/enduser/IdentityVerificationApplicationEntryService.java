@@ -232,7 +232,8 @@ public class IdentityVerificationApplicationEntryService
 
     if (updated.isApproved()) {
       IdentityVerificationResult identityVerificationResult =
-          IdentityVerificationResult.create(updated, request, verificationConfiguration);
+          IdentityVerificationResult.create(
+              updated, applyingResult.applicationContext(), verificationConfiguration);
       resultCommandRepository.register(tenant, identityVerificationResult);
 
       // TODO dynamic lifecycle management

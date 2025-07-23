@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationApi;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
+import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationApplicationContext;
 import org.idp.server.core.extension.identity.verification.application.pre_hook.basic_auth.IdentityVerificationRequestVerifiedResult;
 import org.idp.server.core.extension.identity.verification.application.pre_hook.basic_auth.IdentityVerificationRequestVerifiers;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
@@ -111,11 +112,16 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
       return verifiedResult.errorResponse();
     }
 
+    // TODO to be more correct
+    IdentityVerificationApplicationContext context =
+        new IdentityVerificationApplicationContext(
+            Map.of(
+                "request_body", request.toMap(), "request_attributes", requestAttributes.toMap()),
+            Map.of());
     IdentityVerificationResult identityVerificationResult =
         IdentityVerificationResult.createOnDirect(
-            tenantIdentifier, type, request, verificationConfiguration);
-    VerifiedClaims verifiedClaims =
-        VerifiedClaims.create(request, verificationConfiguration.verifiedClaimsConfiguration());
+            tenantIdentifier, user, type, context, verificationConfiguration);
+    VerifiedClaims verifiedClaims = identityVerificationResult.verifiedClaims();
 
     resultCommandRepository.register(tenant, identityVerificationResult);
 

@@ -91,7 +91,8 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
       SmsAuthenticationExecutionRequest executionRequest =
           new SmsAuthenticationExecutionRequest(request.toMap());
       SmsAuthenticationExecutionResult executionResult =
-          executor.challenge(tenant, transaction.identifier(), executionRequest, configuration);
+          executor.challenge(
+              tenant, transaction.identifier(), executionRequest, requestAttributes, configuration);
 
       if (executionResult.isClientError()) {
         return AuthenticationInteractionRequestResult.clientError(
