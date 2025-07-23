@@ -16,8 +16,12 @@
 
 package org.idp.server.core.extension.identity.verification.result;
 
+import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.path.JsonPathWrapper;
+import org.idp.server.platform.mapper.MappingRule;
+import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 
 public class IdentityVerificationSourceDetails {
 
@@ -29,6 +33,15 @@ public class IdentityVerificationSourceDetails {
 
   public IdentityVerificationSourceDetails(JsonNodeWrapper json) {
     this.json = json;
+  }
+
+  public static IdentityVerificationSourceDetails create(
+      Map<String, Object> context, List<MappingRule> mappingRules) {
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(context);
+    JsonPathWrapper jsonPath = new JsonPathWrapper(jsonNodeWrapper.toJson());
+    Map<String, Object> mappingResult = MappingRuleObjectMapper.execute(mappingRules, jsonPath);
+
+    return new IdentityVerificationSourceDetails(JsonNodeWrapper.fromMap(mappingResult));
   }
 
   public String getValueOrEmptyAsString(String fieldName) {

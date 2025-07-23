@@ -33,7 +33,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/{tenant-id}/v1/identity-verification/callback")
+@RequestMapping("/{tenant-id}/internal/v1/identity-verification/callback")
 public class IdentityVerificationPublicCallbackV1Api implements ParameterTransformable {
 
   IdentityVerificationCallbackApi identityVerificationCallbackApi;

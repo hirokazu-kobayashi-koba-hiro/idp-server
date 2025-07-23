@@ -20,6 +20,7 @@ import org.idp.server.platform.json.JsonReadable;
 
 public class MappingRule implements JsonReadable {
   String from;
+  Object staticValue;
   String to;
   String convertType;
 
@@ -27,6 +28,11 @@ public class MappingRule implements JsonReadable {
 
   public MappingRule(String from, String to) {
     this.from = from;
+    this.to = to;
+  }
+
+  public MappingRule(Object staticValue, String to) {
+    this.staticValue = staticValue;
     this.to = to;
   }
 
@@ -38,6 +44,14 @@ public class MappingRule implements JsonReadable {
 
   public String from() {
     return from;
+  }
+
+  public Object staticValue() {
+    return staticValue;
+  }
+
+  public boolean hasStaticValue() {
+    return staticValue != null;
   }
 
   public String to() {

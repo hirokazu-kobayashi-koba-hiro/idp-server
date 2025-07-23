@@ -28,10 +28,27 @@ public class MappingRuleObjectMapper {
 
     Map<String, Object> flatMap = new HashMap<>();
     for (MappingRule rule : mappingRules) {
-      Object value = jsonPath.readRaw(rule.from());
-      if (value != null) {
+
+      if (rule.hasStaticValue()) {
+
+        Object value = rule.staticValue();
         Object converted = TypeConverter.convert(value, rule.convertType());
         flatMap.put(rule.to(), converted);
+
+      } else {
+        Object value = jsonPath.readRaw(rule.from());
+        if ("*".equals(rule.to())) {
+          if (value instanceof Map<?, ?> mapValue) {
+            for (Map.Entry<?, ?> entry : mapValue.entrySet()) {
+              if (entry.getKey() instanceof String key) {
+                flatMap.put(key, entry.getValue());
+              }
+            }
+          }
+        } else {
+          Object converted = TypeConverter.convert(value, rule.convertType());
+          flatMap.put(rule.to(), converted);
+        }
       }
     }
 

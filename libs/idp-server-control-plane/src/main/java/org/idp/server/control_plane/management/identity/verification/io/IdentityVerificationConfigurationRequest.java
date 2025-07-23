@@ -22,7 +22,7 @@ import org.idp.server.core.extension.identity.verification.configuration.Identit
 import org.idp.server.core.extension.identity.verification.configuration.common.IdentityVerificationCommonConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.registration.IdentityVerificationRegistrationConfig;
-import org.idp.server.core.extension.identity.verification.configuration.verified_claims.IdentityVerificationVerifiedClaimsConfiguration;
+import org.idp.server.core.extension.identity.verification.configuration.verified_claims.IdentityVerificationResultConfig;
 import org.idp.server.platform.json.JsonReadable;
 
 public class IdentityVerificationConfigurationRequest implements JsonReadable {
@@ -32,7 +32,7 @@ public class IdentityVerificationConfigurationRequest implements JsonReadable {
   IdentityVerificationCommonConfiguration common;
   Map<String, IdentityVerificationProcessConfiguration> processes;
   IdentityVerificationRegistrationConfig registration;
-  IdentityVerificationVerifiedClaimsConfiguration verifiedClaims;
+  IdentityVerificationResultConfig result;
 
   public IdentityVerificationConfigurationRequest() {}
 
@@ -54,6 +54,6 @@ public class IdentityVerificationConfigurationRequest implements JsonReadable {
 
   public IdentityVerificationConfiguration toConfiguration(String identifier) {
     return new IdentityVerificationConfiguration(
-        identifier, type, description, common, processes, registration, verifiedClaims);
+        identifier, type, description, common, processes, registration, result);
   }
 }

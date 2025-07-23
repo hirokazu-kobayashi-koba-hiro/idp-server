@@ -76,7 +76,8 @@ public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor
 
     FidoUafExecutionRequest fidoUafExecutionRequest = new FidoUafExecutionRequest(executionRequest);
     FidoUafExecutionResult executionResult =
-        fidoUafExecutor.deleteKey(tenant, fidoUafExecutionRequest, fidoUafConfiguration);
+        fidoUafExecutor.deleteKey(
+            tenant, fidoUafExecutionRequest, requestAttributes, fidoUafConfiguration);
 
     if (executionResult.isClientError()) {
       return AuthenticationInteractionRequestResult.clientError(

@@ -22,6 +22,7 @@ import org.idp.server.core.extension.identity.verification.IdentityVerificationC
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationHandler;
+import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationApplicationContext;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.callback.validation.IdentityVerificationCallbackRequestValidator;
 import org.idp.server.core.extension.identity.verification.callback.validation.IdentityVerificationCallbackValidationResult;
@@ -114,10 +115,21 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
         application.updateCallbackWith(process, request, verificationConfiguration);
     applicationCommandRepository.update(tenant, updatedApplication);
 
+    // TODO to be more correct
+    IdentityVerificationApplicationContext context =
+        new IdentityVerificationApplicationContext(
+            Map.of(
+                "request_body",
+                request.toMap(),
+                "request_attributes",
+                requestAttributes.toMap(),
+                "application",
+                application.toMap()),
+            Map.of());
     if (updatedApplication.isApproved()) {
       IdentityVerificationResult identityVerificationResult =
           IdentityVerificationResult.createOnCallback(
-              updatedApplication, request, verificationConfiguration);
+              updatedApplication, context, verificationConfiguration);
       resultCommandRepository.register(tenant, identityVerificationResult);
 
       // TODO dynamic lifecycle management

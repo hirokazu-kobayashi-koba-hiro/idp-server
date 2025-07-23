@@ -22,6 +22,7 @@ import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifi
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.type.RequestAttributes;
 
 public class ExternalFidoUafServerExecutor implements FidoUafExecutor {
 
@@ -43,9 +44,9 @@ public class ExternalFidoUafServerExecutor implements FidoUafExecutor {
 
   @Override
   public FidoUafExecutionResult getFidoUafFacets(
-      Tenant tenant, FidoUafConfiguration configuration) {
+      Tenant tenant, RequestAttributes requestAttributes, FidoUafConfiguration configuration) {
 
-    return execute("facets", FidoUafExecutionRequest.empty(), configuration);
+    return execute("facets", FidoUafExecutionRequest.empty(), requestAttributes, configuration);
   }
 
   @Override
@@ -53,9 +54,10 @@ public class ExternalFidoUafServerExecutor implements FidoUafExecutor {
       Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       FidoUafExecutionRequest request,
+      RequestAttributes requestAttributes,
       FidoUafConfiguration configuration) {
 
-    return execute("registration-challenge", request, configuration);
+    return execute("registration-challenge", request, requestAttributes, configuration);
   }
 
   @Override
@@ -63,9 +65,10 @@ public class ExternalFidoUafServerExecutor implements FidoUafExecutor {
       Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       FidoUafExecutionRequest request,
+      RequestAttributes requestAttributes,
       FidoUafConfiguration configuration) {
 
-    return execute("registration", request, configuration);
+    return execute("registration", request, requestAttributes, configuration);
   }
 
   @Override
@@ -73,9 +76,10 @@ public class ExternalFidoUafServerExecutor implements FidoUafExecutor {
       Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       FidoUafExecutionRequest request,
+      RequestAttributes requestAttributes,
       FidoUafConfiguration configuration) {
 
-    return execute("authentication-challenge", request, configuration);
+    return execute("authentication-challenge", request, requestAttributes, configuration);
   }
 
   @Override
@@ -83,19 +87,26 @@ public class ExternalFidoUafServerExecutor implements FidoUafExecutor {
       Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       FidoUafExecutionRequest request,
+      RequestAttributes requestAttributes,
       FidoUafConfiguration configuration) {
 
-    return execute("authentication", request, configuration);
+    return execute("authentication", request, requestAttributes, configuration);
   }
 
   @Override
   public FidoUafExecutionResult deleteKey(
-      Tenant tenant, FidoUafExecutionRequest request, FidoUafConfiguration fidoUafConfiguration) {
-    return execute("delete-key", request, fidoUafConfiguration);
+      Tenant tenant,
+      FidoUafExecutionRequest request,
+      RequestAttributes requestAttributes,
+      FidoUafConfiguration fidoUafConfiguration) {
+    return execute("delete-key", request, requestAttributes, fidoUafConfiguration);
   }
 
   private FidoUafExecutionResult execute(
-      String executionType, FidoUafExecutionRequest request, FidoUafConfiguration configuration) {
+      String executionType,
+      FidoUafExecutionRequest request,
+      RequestAttributes requestAttributes,
+      FidoUafConfiguration configuration) {
 
     Map<String, Object> detail = configuration.getDetail(type());
     ExternalFidoUafServerConfiguration externalFidoUafServerConfiguration =
@@ -105,7 +116,7 @@ public class ExternalFidoUafServerExecutor implements FidoUafExecutor {
         externalFidoUafServerConfiguration.getExecutionConfig(executionType);
 
     ExternalFidoUafServerHttpRequestResult httpRequestResult =
-        httpClient.execute(request, executionConfiguration);
+        httpClient.execute(request, requestAttributes, executionConfiguration);
 
     if (httpRequestResult.isClientError()) {
       return FidoUafExecutionResult.clientError(httpRequestResult.responseBody());

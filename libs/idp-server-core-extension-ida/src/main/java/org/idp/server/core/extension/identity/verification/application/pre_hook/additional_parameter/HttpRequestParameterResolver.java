@@ -28,12 +28,10 @@ import org.idp.server.platform.http.*;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolver;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 import org.idp.server.platform.type.RequestAttributes;
 
-// TODO to be more readable and handling error
+// TODO handle error
 public class HttpRequestParameterResolver implements AdditionalRequestParameterResolver {
 
   OAuthAuthorizationResolvers authorizationResolvers;
@@ -68,12 +66,22 @@ public class HttpRequestParameterResolver implements AdditionalRequestParameterR
         jsonConverter.read(
             additionalParameterConfig.details(), AdditionalParameterHttpRequestConfiguration.class);
 
-    HttpRequestResult executionResult = execute(baseParams, configuration);
+    HttpRequestResult executionResult = httpRequestExecutor.execute(configuration, baseParams);
 
     JsonNodeWrapper body = executionResult.body();
     Map<String, Object> parameters = new HashMap<>();
-    parameters.put("additional_parameter_http.header", executionResult.headers());
-    parameters.put("additional_parameter_http.body", body.toMap());
+    String statusCodeName =
+        configuration.optValueFromAdditionalParameterNames(
+            "status_code", "additional_parameter_status_code");
+    parameters.put(statusCodeName, executionResult.headers());
+    String headerName =
+        configuration.optValueFromAdditionalParameterNames(
+            "header", "additional_parameter_http_header");
+    parameters.put(headerName, executionResult.headers());
+    String bodyName =
+        configuration.optValueFromAdditionalParameterNames(
+            "body", "additional_parameter_http_body");
+    parameters.put(bodyName, body.toMap());
 
     return parameters;
   }
@@ -81,52 +89,9 @@ public class HttpRequestParameterResolver implements AdditionalRequestParameterR
   private HttpRequestBaseParams resolveBaseParams(
       IdentityVerificationApplicationRequest request, RequestAttributes requestAttributes) {
     Map<String, Object> parameters = new HashMap<>();
-    parameters.put("body", request.toMap());
-    parameters.put("attributes", requestAttributes.toMap());
+    parameters.put("request_body", request.toMap());
+    parameters.put("request_attributes", requestAttributes.toMap());
 
     return new HttpRequestBaseParams(parameters);
-  }
-
-  private HttpRequestResult execute(
-      HttpRequestBaseParams httpRequestBaseParams, HttpRequestExecutionConfigInterface config) {
-
-    Map<String, String> headers = new HashMap<>(config.httpRequestStaticHeaders().toMap());
-
-    switch (config.httpRequestAuthType()) {
-      case OAUTH2 -> {
-        OAuthAuthorizationConfiguration oAuthAuthorizationConfig = config.oauthAuthorization();
-        OAuthAuthorizationResolver resolver =
-            authorizationResolvers.get(oAuthAuthorizationConfig.type());
-        String accessToken = resolver.resolve(oAuthAuthorizationConfig);
-        headers.put("Authorization", "Bearer " + accessToken);
-      }
-      case HMAC_SHA256 -> {
-        HttpRequestStaticHeaders httpRequestStaticHeaders = new HttpRequestStaticHeaders(headers);
-        HmacAuthenticationConfiguration hmacAuthenticationConfig = config.hmacAuthentication();
-
-        return httpRequestExecutor.execute(
-            config.httpRequestUrl(),
-            config.httpMethod(),
-            hmacAuthenticationConfig,
-            httpRequestBaseParams,
-            httpRequestStaticHeaders,
-            config.httpRequestStaticBody(),
-            config.httpRequestPathMappingRules(),
-            config.httpRequestHeaderMappingRules(),
-            config.httpRequestBodyMappingRules());
-      }
-    }
-
-    HttpRequestStaticHeaders httpRequestStaticHeaders = new HttpRequestStaticHeaders(headers);
-
-    return httpRequestExecutor.executeWithDynamicMapping(
-        config.httpRequestUrl(),
-        config.httpMethod(),
-        httpRequestBaseParams,
-        httpRequestStaticHeaders,
-        config.httpRequestStaticBody(),
-        config.httpRequestPathMappingRules(),
-        config.httpRequestHeaderMappingRules(),
-        config.httpRequestBodyMappingRules());
   }
 }

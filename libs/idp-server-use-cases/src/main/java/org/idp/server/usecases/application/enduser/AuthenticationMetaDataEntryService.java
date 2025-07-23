@@ -22,6 +22,7 @@ import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
+import org.idp.server.platform.type.RequestAttributes;
 
 @Transaction(readOnly = true)
 public class AuthenticationMetaDataEntryService implements AuthenticationMetaDataApi {
@@ -40,7 +41,8 @@ public class AuthenticationMetaDataEntryService implements AuthenticationMetaDat
   }
 
   @Override
-  public FidoUafExecutionResult getFidoUafFacets(TenantIdentifier tenantIdentifier) {
+  public FidoUafExecutionResult getFidoUafFacets(
+      TenantIdentifier tenantIdentifier, RequestAttributes requestAttributes) {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     FidoUafConfiguration fidoUafConfiguration =
         authenticationConfigurationQueryRepository.get(
@@ -48,6 +50,6 @@ public class AuthenticationMetaDataEntryService implements AuthenticationMetaDat
 
     FidoUafExecutor fidoUafExecutor = fidoUafExecutors.get(fidoUafConfiguration.type());
 
-    return fidoUafExecutor.getFidoUafFacets(tenant, fidoUafConfiguration);
+    return fidoUafExecutor.getFidoUafFacets(tenant, requestAttributes, fidoUafConfiguration);
   }
 }

@@ -18,37 +18,48 @@ package org.idp.server.authentication.interactors.fidouaf;
 
 import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.type.RequestAttributes;
 
 public interface FidoUafExecutor {
 
   FidoUafExecutorType type();
 
-  FidoUafExecutionResult getFidoUafFacets(Tenant tenant, FidoUafConfiguration fidoUafConfiguration);
+  FidoUafExecutionResult getFidoUafFacets(
+      Tenant tenant,
+      RequestAttributes requestAttributes,
+      FidoUafConfiguration fidoUafConfiguration);
 
   FidoUafExecutionResult challengeRegistration(
       Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       FidoUafExecutionRequest request,
+      RequestAttributes requestAttributes,
       FidoUafConfiguration configuration);
 
   FidoUafExecutionResult verifyRegistration(
       Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       FidoUafExecutionRequest request,
+      RequestAttributes requestAttributes,
       FidoUafConfiguration configuration);
 
   FidoUafExecutionResult challengeAuthentication(
       Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       FidoUafExecutionRequest request,
+      RequestAttributes requestAttributes,
       FidoUafConfiguration configuration);
 
   FidoUafExecutionResult verifyAuthentication(
       Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       FidoUafExecutionRequest request,
+      RequestAttributes requestAttributes,
       FidoUafConfiguration configuration);
 
   FidoUafExecutionResult deleteKey(
-      Tenant tenant, FidoUafExecutionRequest request, FidoUafConfiguration fidoUafConfiguration);
+      Tenant tenant,
+      FidoUafExecutionRequest request,
+      RequestAttributes requestAttributes,
+      FidoUafConfiguration fidoUafConfiguration);
 }

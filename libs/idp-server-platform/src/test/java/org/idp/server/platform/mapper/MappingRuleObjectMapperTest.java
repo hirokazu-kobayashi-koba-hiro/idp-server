@@ -160,7 +160,7 @@ public class MappingRuleObjectMapperTest {
     List<MappingRule> rules =
         List.of(
             new MappingRule("$.source.name", "user.name", "string"),
-            new MappingRule("$.source.age", "user.age", "int"),
+            new MappingRule("$.source.age", "user.age", "integer"),
             new MappingRule("$.source.active", "user.active", "boolean"));
 
     Map<String, Object> result = MappingRuleObjectMapper.execute(rules, pathWrapper);
@@ -202,6 +202,9 @@ public class MappingRuleObjectMapperTest {
                         "processName": "apply",
                         "requested_at": "2025-07-06T11:51:20.797165171",
                         "status": "ok"
+                      },
+                      "body2": {
+                        "key": "value"
                       }
                     }
                 """;
@@ -209,7 +212,8 @@ public class MappingRuleObjectMapperTest {
     JsonNodeWrapper wrapper = JsonNodeWrapper.fromString(json);
     JsonPathWrapper pathWrapper = new JsonPathWrapper(wrapper.toJson());
 
-    List<MappingRule> rules = List.of(new MappingRule("$.body", "*"));
+    List<MappingRule> rules =
+        List.of(new MappingRule("$.body", "*"), new MappingRule("$.body2", "*"));
 
     Map<String, Object> result = MappingRuleObjectMapper.execute(rules, pathWrapper);
 
@@ -217,5 +221,7 @@ public class MappingRuleObjectMapperTest {
     assertEquals(
         LocalDateTimeParser.parse("2025-07-06T11:51:20.797165171").toString(),
         result.get("requested_at").toString());
+
+    assertEquals("value", result.get("key"));
   }
 }

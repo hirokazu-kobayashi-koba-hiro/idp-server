@@ -23,30 +23,41 @@ import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.mapper.MappingRule;
 
-public class IdentityVerificationVerifiedClaimsConfiguration implements JsonReadable {
+public class IdentityVerificationResultConfig implements JsonReadable {
 
-  List<MappingRule> mappingRules = new ArrayList<>();
+  List<MappingRule> verifiedClaimsMappingRules = new ArrayList<>();
+  List<MappingRule> sourceDetailsMappingRules = new ArrayList<>();
 
-  public IdentityVerificationVerifiedClaimsConfiguration() {}
+  public IdentityVerificationResultConfig() {}
 
-  public IdentityVerificationVerifiedClaimsConfiguration(List<MappingRule> mappingRules) {
-    this.mappingRules = mappingRules;
+  public IdentityVerificationResultConfig(
+      List<MappingRule> verifiedClaimsMappingRules, List<MappingRule> sourceDetailsMappingRules) {
+    this.verifiedClaimsMappingRules = verifiedClaimsMappingRules;
+    this.sourceDetailsMappingRules = sourceDetailsMappingRules;
   }
 
-  public List<MappingRule> mappingRules() {
-    if (mappingRules == null) {
+  public List<MappingRule> verifiedClaimsMappingRules() {
+    if (verifiedClaimsMappingRules == null) {
       return new ArrayList<>();
     }
-    return mappingRules;
+    return verifiedClaimsMappingRules;
+  }
+
+  public List<MappingRule> sourceDetailsMappingRules() {
+    if (sourceDetailsMappingRules == null) {
+      return new ArrayList<>();
+    }
+    return sourceDetailsMappingRules;
   }
 
   public boolean exists() {
-    return mappingRules != null && !mappingRules.isEmpty();
+    return verifiedClaimsMappingRules != null && !verifiedClaimsMappingRules.isEmpty();
   }
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
-    map.put("mapping_rules", mappingRules);
+    map.put("verified_claims_mapping_rules", verifiedClaimsMappingRules);
+    map.put("source_details_mapping_rules", sourceDetailsMappingRules);
     return map;
   }
 }

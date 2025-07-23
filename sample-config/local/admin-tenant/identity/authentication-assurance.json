@@ -127,11 +127,10 @@
         "http_request": {
           "url": "http://mockoon:4000/apply",
           "method": "POST",
-          "static_headers": {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer dummy-token"
-          },
-          "static_body": {},
+          "header_mapping_rules": [
+            { "static_value": "application/json", "to": "Content-Type" },
+            { "static_value": "Bearer dummy-token", "to": "Authorization" }
+          ],
           "body_mapping_rules": [
             { "from": "$.request_body", "to": "*" },
             { "from": "$.user.sub", "to": "user_id" },
@@ -178,10 +177,10 @@
         "http_request": {
           "url": "http://mockoon:4000/request-authentication",
           "method": "POST",
-          "static_headers": {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer dummy-token"
-          },
+          "header_mapping_rules": [
+            { "static_value": "application/json", "to": "Content-Type" },
+            { "static_value": "Bearer dummy-token", "to": "Authorization" }
+          ],
           "body_mapping_rules": [
             { "from": "$.request_body", "to": "*"}
           ],
@@ -213,10 +212,10 @@
         "http_request": {
           "url": "http://mockoon:4000/authentication-status",
           "method": "POST",
-          "static_headers": {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer dummy-token"
-          },
+          "header_mapping_rules": [
+            { "static_value": "application/json", "to": "Content-Type" },
+            { "static_value": "Bearer dummy-token", "to": "Authorization" }
+          ],
           "dynamic_body_keys": [],
           "static_body": {}
         }

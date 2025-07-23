@@ -102,7 +102,7 @@ public class ObjectCompositor {
   private void insertValue(Map<String, Object> root, String[] keys, Object value) {
     Object current = root;
     if (keys.length == 1 && keys[0].equals("*") && value instanceof Map) {
-      root.putAll((Map<String, ?>) value);
+      //      root.putAll((Map<String, ?>) value);
     } else {
       for (int i = 0; i < keys.length; i++) {
         String key = keys[i];

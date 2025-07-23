@@ -23,8 +23,8 @@ import org.idp.server.core.extension.identity.verification.IdentityVerificationT
 import org.idp.server.core.extension.identity.verification.configuration.common.IdentityVerificationCommonConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.registration.IdentityVerificationRegistrationConfig;
-import org.idp.server.core.extension.identity.verification.configuration.verified_claims.IdentityVerificationVerifiedClaimsConfiguration;
-import org.idp.server.platform.http.HmacAuthenticationConfiguration;
+import org.idp.server.core.extension.identity.verification.configuration.verified_claims.IdentityVerificationResultConfig;
+import org.idp.server.platform.http.HmacAuthenticationConfig;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 import org.idp.server.platform.uuid.UuidConvertable;
@@ -37,8 +37,7 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
   Map<String, IdentityVerificationProcessConfiguration> processes = new HashMap<>();
   IdentityVerificationRegistrationConfig registration =
       new IdentityVerificationRegistrationConfig();
-  IdentityVerificationVerifiedClaimsConfiguration verifiedClaims =
-      new IdentityVerificationVerifiedClaimsConfiguration();
+  IdentityVerificationResultConfig result = new IdentityVerificationResultConfig();
 
   public IdentityVerificationConfiguration() {}
 
@@ -49,14 +48,14 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
       IdentityVerificationCommonConfiguration common,
       Map<String, IdentityVerificationProcessConfiguration> processes,
       IdentityVerificationRegistrationConfig registration,
-      IdentityVerificationVerifiedClaimsConfiguration verifiedClaims) {
+      IdentityVerificationResultConfig result) {
     this.id = id;
     this.type = type;
     this.description = description;
     this.common = common;
     this.processes = processes;
     this.registration = registration;
-    this.verifiedClaims = verifiedClaims;
+    this.result = result;
   }
 
   public String id() {
@@ -102,16 +101,16 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
     return new OAuthAuthorizationConfiguration();
   }
 
-  public HmacAuthenticationConfiguration hmacAuthenticationFromCommon() {
+  public HmacAuthenticationConfig hmacAuthenticationFromCommon() {
     if (common == null) {
-      return new HmacAuthenticationConfiguration();
+      return new HmacAuthenticationConfig();
     }
 
     if (common.hasHmacAuthentication()) {
       return common.hmacAuthentication();
     }
 
-    return new HmacAuthenticationConfiguration();
+    return new HmacAuthenticationConfig();
   }
 
   public Map<String, IdentityVerificationProcessConfiguration> processes() {
@@ -131,37 +130,15 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
     return processes.get(process.name());
   }
 
-  public OAuthAuthorizationConfiguration getOAuthAuthorizationConfig(
-      IdentityVerificationProcess process) {
-    IdentityVerificationProcessConfiguration processConfig = getProcessConfig(process);
-
-    if (processConfig.hasOAuthAuthorization()) {
-      return processConfig.oauthAuthorization();
+  public IdentityVerificationResultConfig result() {
+    if (result == null) {
+      return new IdentityVerificationResultConfig();
     }
-
-    return oauthAuthorizationFromCommon();
-  }
-
-  public HmacAuthenticationConfiguration getHmacAuthenticationConfig(
-      IdentityVerificationProcess process) {
-    IdentityVerificationProcessConfiguration processConfig = getProcessConfig(process);
-
-    if (processConfig.hasHmacAuthentication()) {
-      return processConfig.hmacAuthentication();
-    }
-
-    return hmacAuthenticationFromCommon();
-  }
-
-  public IdentityVerificationVerifiedClaimsConfiguration verifiedClaimsConfiguration() {
-    if (verifiedClaims == null) {
-      return new IdentityVerificationVerifiedClaimsConfiguration();
-    }
-    return verifiedClaims;
+    return result;
   }
 
   public boolean hasVerifiedClaims() {
-    return verifiedClaims != null && verifiedClaims.exists();
+    return result != null && result.exists();
   }
 
   public IdentityVerificationRegistrationConfig registration() {
@@ -180,7 +157,7 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
     if (hasCommon()) map.put("common", common.toMap());
     if (hasProcesses()) map.put("processes", processes);
     if (hasRegistration()) map.put("registration", registration);
-    if (hasVerifiedClaims()) map.put("verified_claims", verifiedClaims.toMap());
+    if (hasVerifiedClaims()) map.put("result", result.toMap());
 
     return map;
   }

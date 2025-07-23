@@ -31,6 +31,7 @@ import org.idp.server.platform.notification.sms.SmsSendResult;
 import org.idp.server.platform.notification.sms.SmsSender;
 import org.idp.server.platform.notification.sms.SmsSenders;
 import org.idp.server.platform.notification.sms.SmsSendingRequest;
+import org.idp.server.platform.type.RequestAttributes;
 
 public class InternalSmsAuthenticationExecutor implements SmsAuthenticationExecutor {
 
@@ -59,6 +60,7 @@ public class InternalSmsAuthenticationExecutor implements SmsAuthenticationExecu
       Tenant tenant,
       AuthenticationTransactionIdentifier identifier,
       SmsAuthenticationExecutionRequest request,
+      RequestAttributes requestAttributes,
       SmsAuthenticationConfiguration configuration) {
 
     Map<String, Object> detail = configuration.getDetail(configuration.type());
@@ -99,6 +101,7 @@ public class InternalSmsAuthenticationExecutor implements SmsAuthenticationExecu
       Tenant tenant,
       AuthenticationTransactionIdentifier identifier,
       SmsAuthenticationExecutionRequest request,
+      RequestAttributes requestAttributes,
       SmsAuthenticationConfiguration configuration) {
 
     SmsVerificationChallenge verificationChallenge =

@@ -61,7 +61,8 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
     SmsAuthenticationExecutionRequest executionRequest =
         new SmsAuthenticationExecutionRequest(request.toMap());
     SmsAuthenticationExecutionResult executionResult =
-        executor.verify(tenant, transaction.identifier(), executionRequest, configuration);
+        executor.verify(
+            tenant, transaction.identifier(), executionRequest, requestAttributes, configuration);
 
     if (executionResult.isClientError()) {
       return AuthenticationInteractionRequestResult.clientError(

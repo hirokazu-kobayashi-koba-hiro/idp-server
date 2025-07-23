@@ -115,13 +115,16 @@ public class IdentityVerificationApplicationHandler {
       IdentityVerificationApplicationRequest request,
       RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
+
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("request_body", request.toMap());
     parameters.put("request_attributes", requestAttributes.toMap());
     parameters.put("user", user.toMap());
+
     if (currentApplication.exists()) {
       parameters.put("application", currentApplication.toMap());
     }
+
     Map<String, Object> additionalParameters =
         additionalRequestParameterResolvers.resolve(
             tenant,
@@ -132,7 +135,8 @@ public class IdentityVerificationApplicationHandler {
             request,
             requestAttributes,
             verificationConfiguration);
-    parameters.putAll(additionalParameters);
+    parameters.put("additional_parameters", additionalParameters);
+
     return parameters;
   }
 }

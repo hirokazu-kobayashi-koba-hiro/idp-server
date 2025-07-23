@@ -20,70 +20,29 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.authentication.interactors.fidouaf.FidoUafExecutionRequest;
 import org.idp.server.platform.http.*;
-import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolver;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
+import org.idp.server.platform.type.RequestAttributes;
 
 public class ExternalFidoUafServerHttpClient {
 
-  OAuthAuthorizationResolvers authorizationResolvers;
   HttpRequestExecutor httpRequestExecutor;
 
   public ExternalFidoUafServerHttpClient() {
-    this.authorizationResolvers = new OAuthAuthorizationResolvers();
     this.httpRequestExecutor = new HttpRequestExecutor(HttpClientFactory.defaultClient());
   }
 
   public ExternalFidoUafServerHttpRequestResult execute(
-      FidoUafExecutionRequest request, ExternalFidoUafServerExecutionConfiguration configuration) {
+      FidoUafExecutionRequest request,
+      RequestAttributes requestAttributes,
+      ExternalFidoUafServerExecutionConfiguration configuration) {
+
+    Map<String, Object> params = new HashMap<>();
+    params.put("request_body", request.toMap());
+    params.put("request_attributes", requestAttributes);
+    HttpRequestBaseParams httpRequestBaseParams = new HttpRequestBaseParams(params);
 
     HttpRequestResult executionResult =
-        execute(new HttpRequestBaseParams(request.toMap()), configuration);
+        httpRequestExecutor.execute(configuration, httpRequestBaseParams);
 
     return new ExternalFidoUafServerHttpRequestResult(executionResult);
-  }
-
-  private HttpRequestResult execute(
-      HttpRequestBaseParams httpRequestBaseParams,
-      HttpRequestExecutionConfigInterface configuration) {
-
-    Map<String, String> headers = new HashMap<>(configuration.httpRequestStaticHeaders().toMap());
-
-    switch (configuration.httpRequestAuthType()) {
-      case OAUTH2 -> {
-        OAuthAuthorizationConfiguration oAuthAuthorizationConfig =
-            configuration.oauthAuthorization();
-        OAuthAuthorizationResolver resolver =
-            authorizationResolvers.get(oAuthAuthorizationConfig.type());
-        String accessToken = resolver.resolve(oAuthAuthorizationConfig);
-        headers.put("Authorization", "Bearer " + accessToken);
-      }
-      case HMAC_SHA256 -> {
-        HttpRequestStaticHeaders httpRequestStaticHeaders = new HttpRequestStaticHeaders(headers);
-        HmacAuthenticationConfiguration hmacAuthenticationConfig =
-            configuration.hmacAuthentication();
-
-        return httpRequestExecutor.execute(
-            configuration.httpRequestUrl(),
-            configuration.httpMethod(),
-            hmacAuthenticationConfig,
-            httpRequestBaseParams,
-            httpRequestStaticHeaders,
-            configuration.httpRequestStaticBody(),
-            configuration.httpRequestPathMappingRules(),
-            configuration.httpRequestHeaderMappingRules(),
-            configuration.httpRequestBodyMappingRules());
-      }
-    }
-
-    return httpRequestExecutor.executeWithDynamicMapping(
-        configuration.httpRequestUrl(),
-        configuration.httpMethod(),
-        httpRequestBaseParams,
-        new HttpRequestStaticHeaders(headers),
-        configuration.httpRequestStaticBody(),
-        configuration.httpRequestPathMappingRules(),
-        configuration.httpRequestHeaderMappingRules(),
-        configuration.httpRequestHeaderMappingRules());
   }
 }

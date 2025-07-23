@@ -18,7 +18,7 @@ package org.idp.server.core.extension.identity.verification.configuration.common
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.platform.http.HmacAuthenticationConfiguration;
+import org.idp.server.platform.http.HmacAuthenticationConfig;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
@@ -26,7 +26,7 @@ public class IdentityVerificationCommonConfiguration implements JsonReadable {
   String callbackApplicationIdParam;
   String authType;
   OAuthAuthorizationConfiguration oauthAuthorization = new OAuthAuthorizationConfiguration();
-  HmacAuthenticationConfiguration hmacAuthentication = new HmacAuthenticationConfiguration();
+  HmacAuthenticationConfig hmacAuthentication = new HmacAuthenticationConfig();
 
   public IdentityVerificationCommonConfiguration() {}
 
@@ -58,7 +58,7 @@ public class IdentityVerificationCommonConfiguration implements JsonReadable {
     return hmacAuthentication != null && hmacAuthentication.exists();
   }
 
-  public HmacAuthenticationConfiguration hmacAuthentication() {
+  public HmacAuthenticationConfig hmacAuthentication() {
     return hmacAuthentication;
   }
 

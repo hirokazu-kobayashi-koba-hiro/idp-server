@@ -32,17 +32,13 @@ public interface HttpRequestExecutionConfigInterface {
 
   boolean hasHmacAuthentication();
 
-  HmacAuthenticationConfiguration hmacAuthentication();
+  HmacAuthenticationConfig hmacAuthentication();
 
-  HttpRequestStaticHeaders httpRequestStaticHeaders();
+  HttpRequestMappingRules pathMappingRules();
 
-  HttpRequestStaticBody httpRequestStaticBody();
+  HttpRequestMappingRules headerMappingRules();
 
-  HttpRequestMappingRules httpRequestPathMappingRules();
+  HttpRequestMappingRules bodyMappingRules();
 
-  HttpRequestMappingRules httpRequestHeaderMappingRules();
-
-  HttpRequestMappingRules httpRequestBodyMappingRules();
-
-  HttpRequestMappingRules httpRequestQueryMappingRules();
+  HttpRequestMappingRules queryMappingRules();
 }

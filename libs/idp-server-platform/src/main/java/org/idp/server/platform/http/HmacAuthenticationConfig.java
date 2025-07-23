@@ -21,15 +21,15 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
 
-public class HmacAuthenticationConfiguration implements JsonReadable {
+public class HmacAuthenticationConfig implements JsonReadable {
   String apiKey;
   String secret;
   String signatureFormat;
   List<String> signingFields;
 
-  public HmacAuthenticationConfiguration() {}
+  public HmacAuthenticationConfig() {}
 
-  public HmacAuthenticationConfiguration(
+  public HmacAuthenticationConfig(
       String apiKey, String secret, String signatureFormat, List<String> signingFields) {
     this.apiKey = apiKey;
     this.secret = secret;
