@@ -865,6 +865,7 @@ describe("identity-verification application", () => {
       expect(applicationsResponse.data.list[0].user_id).toEqual(user.sub);
       expect(applicationsResponse.data.list[0]).toHaveProperty("application_details");
       expect(applicationsResponse.data.list[0]).toHaveProperty("requested_at");
+      expect(applicationsResponse.data.list[0].status).toEqual("cancelled");
     });
   });
 

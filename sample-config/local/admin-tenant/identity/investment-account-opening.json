@@ -118,7 +118,10 @@
                 "Authorization": "Bearer dummy-token"
               },
               "body_mapping_rules": [
-                { "from": "$.request_body", "to": "*" }
+                {
+                  "from": "$.request_body",
+                  "to": "*"
+                }
               ],
               "response_schema": {
                 "type": "object",
@@ -141,26 +144,50 @@
           "url": "http://mockoon:4000/apply",
           "method": "POST",
           "header_mapping_rules": [
-            { "static_value": "application/json", "to": "Content-Type" },
-            { "static_value": "Bearer dummy-token", "to": "Authorization" }
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            },
+            {
+              "static_value": "Bearer dummy-token",
+              "to": "Authorization"
+            }
           ],
           "body_mapping_rules": [
-            { "from": "$.request_body", "to": "*" }
+            {
+              "from": "$.request_body",
+              "to": "*"
+            }
           ]
         }
       },
       "post_hook": {},
       "store": {
         "application_details_mapping_rules": [
-          { "from": "$.request_body", "to": "*" },
-          { "from": "$.response_body.application_id", "to": "application_id" },
-          { "from": "$.response_body.application_id", "to": "external_application_id" }
+          {
+            "from": "$.request_body",
+            "to": "*"
+          },
+          {
+            "from": "$.response_body.application_id",
+            "to": "application_id"
+          },
+          {
+            "from": "$.response_body.application_id",
+            "to": "external_application_id"
+          }
         ]
       },
       "response": {
         "body_mapping_rules": [
-          { "from": "$.response_body", "to": "*" },
-          { "from": "$.response_body.application_id", "to": "external_application_id" }
+          {
+            "from": "$.response_body",
+            "to": "*"
+          },
+          {
+            "from": "$.response_body.application_id",
+            "to": "external_application_id"
+          }
         ]
       }
     },
@@ -188,26 +215,47 @@
           "url": "http://mockoon:4000/{{external_application_id}}/request-ekyc",
           "method": "POST",
           "header_mapping_rules": [
-            { "static_value": "application/json", "to": "Content-Type" },
-            { "static_value": "Bearer dummy-token", "to": "Authorization" }
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            },
+            {
+              "static_value": "Bearer dummy-token",
+              "to": "Authorization"
+            }
           ],
           "path_mapping_rules": [
-            { "from": "$.application.application_details.external_application_id", "to": "external_application_id" }
+            {
+              "from": "$.application.application_details.external_application_id",
+              "to": "external_application_id"
+            }
           ],
           "body_mapping_rules": [
-            { "from":  "$.request_body.trust_framework", "to": "trust_framework" },
-            { "from":  "$.request_body.evidence_document_type", "to": "evidence_document_type" }
+            {
+              "from": "$.request_body.trust_framework",
+              "to": "trust_framework"
+            },
+            {
+              "from": "$.request_body.evidence_document_type",
+              "to": "evidence_document_type"
+            }
           ]
         }
       },
       "store": {
         "application_details_mapping_rules": [
-          { "from": "$.request_body", "to": "*" }
+          {
+            "from": "$.request_body",
+            "to": "*"
+          }
         ]
       },
       "response": {
         "body_mapping_rules": [
-          { "from": "$.response_body", "to": "*" }
+          {
+            "from": "$.response_body",
+            "to": "*"
+          }
         ]
       }
     },
@@ -224,26 +272,47 @@
           "url": "http://mockoon:4000/{{external_application_id}}/complete-ekyc",
           "method": "POST",
           "header_mapping_rules": [
-            { "static_value": "application/json", "to": "Content-Type" },
-            { "static_value": "Bearer dummy-token", "to": "Authorization" }
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            },
+            {
+              "static_value": "Bearer dummy-token",
+              "to": "Authorization"
+            }
           ],
           "path_mapping_rules": [
-            { "from": "$.application.application_details.external_application_id", "to": "external_application_id" }
+            {
+              "from": "$.application.application_details.external_application_id",
+              "to": "external_application_id"
+            }
           ],
           "body_mapping_rules": [
-            { "from": "$.request_body", "to": "*" }
+            {
+              "from": "$.request_body",
+              "to": "*"
+            }
           ]
         }
       },
       "store": {
         "application_details_mapping_rules": [
-          { "from": "$.request_body", "to": "*" },
-          { "from": "$.response_body", "to": "*" }
+          {
+            "from": "$.request_body",
+            "to": "*"
+          },
+          {
+            "from": "$.response_body",
+            "to": "*"
+          }
         ]
       },
       "response": {
         "body_mapping_rules": [
-          { "from": "$.response_body", "to": "*" }
+          {
+            "from": "$.response_body",
+            "to": "*"
+          }
         ]
       }
     },
@@ -271,22 +340,37 @@
             ]
           },
           "header_mapping_rules": [
-            { "static_value": "application/json", "to": "Content-Type" }
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            }
           ],
           "body_mapping_rules": [
-            { "from": "$.request_body", "to": "*" }
+            {
+              "from": "$.request_body",
+              "to": "*"
+            }
           ]
         }
       },
       "store": {
         "application_details_mapping_rules": [
-          { "from": "$.request_body", "to": "*" },
-          { "from": "$.response_body", "to": "*" }
+          {
+            "from": "$.request_body",
+            "to": "*"
+          },
+          {
+            "from": "$.response_body",
+            "to": "*"
+          }
         ]
       },
       "response": {
         "body_mapping_rules": [
-          { "from": "$.response_body", "to": "*" }
+          {
+            "from": "$.response_body",
+            "to": "*"
+          }
         ]
       }
     },
@@ -323,24 +407,17 @@
       "execution": {
         "type": "no_action"
       },
-      "cancellation_condition": {
-        "request_condition": {
-          "all_of": [
-            {
-              "path": "$.application_id",
-              "type": "string",
-              "operation": "exists",
-              "value": true
-            }
-          ]
-        },
-        "process_condition": {
-          "all_of": [
-            {
-              "process_name": "apply",
-              "type": "success",
-              "count": 1
-            }
+      "transition": {
+        "canceled": {
+          "any_of": [
+            [
+              {
+                "path": "$.application.processes.apply.success_count",
+                "type": "integer",
+                "operation": "gte",
+                "value": 1
+              }
+            ]
           ]
         }
       }
@@ -371,29 +448,29 @@
           }
         }
       },
-      "completion_condition": {
-        "request_condition": {
-          "all_of": [
-            {
-              "path": "$.application_id",
-              "type": "string",
-              "operation": "exists",
-              "value": true
-            }
-          ]
-        },
-        "process_condition": {
-          "all_of": [
-            {
-              "process_name": "apply",
-              "type": "success",
-              "success_count": 1
-            },
-            {
-              "process_name": "callback-examination",
-              "type": "success",
-              "success_count": 1
-            }
+      "transition": {
+        "approved": {
+          "any_of": [
+            [
+              {
+                "path": "$.request_body.application_id",
+                "type": "string",
+                "operation": "exists",
+                "value": true
+              },
+              {
+                "path": "$.application.processes.apply.success_count",
+                "type": "integer",
+                "operation": "gte",
+                "value": 1
+              },
+              {
+                "path": "$.application.processes.callback-examination.success_count",
+                "type": "integer",
+                "operation": "gte",
+                "value": 1
+              }
+            ]
           ]
         }
       }
@@ -401,32 +478,104 @@
   },
   "result": {
     "verified_claims_mapping_rules": [
-      { "static_value": "jp_aml", "to": "verification.trust_framework" },
-      { "from": "$.request_body.verification.evidence[0].type", "to": "verification.evidence.0.type" },
-      { "from": "$.request_body.verification.evidence[0].check_details[0].check_method", "to": "verification.evidence.0.check_details.0.check_method" },
-      { "from": "$.request_body.verification.evidence[0].check_details[0].organization", "to": "verification.evidence.0.check_details.0.organization" },
-      { "from": "$.request_body.verification.evidence[0].check_details[0].txn", "to": "verification.evidence.0.check_details.0.txn" },
-      { "from": "$.request_body.verification.evidence[0].time", "to": "verification.evidence.0.time" },
-      { "from": "$.request_body.verification.evidence[0].record.type", "to": "verification.evidence.0.record.type" },
-      { "from": "$.request_body.verification.evidence[0].record.source.name", "to": "verification.evidence.0.record.source.name" },
-      { "from": "$.request_body.verification.evidence[1].type", "to": "verification.evidence.1.type" },
-      { "from": "$.request_body.verification.evidence[1].check_details[0].check_method", "to": "verification.evidence.1.check_details.0.check_method" },
-      { "from": "$.request_body.verification.evidence[1].check_details[0].organization", "to": "verification.evidence.1.check_details.0.organization" },
-      { "from": "$.request_body.verification.evidence[1].check_details[0].txn", "to": "verification.evidence.1.check_details.1.txn" },
-      { "from": "$.request_body.verification.evidence[1].time", "to": "verification.evidence.1.time" },
-      { "from": "$.request_body.verification.evidence[1].record.type", "to": "verification.evidence.1.record.type" },
-      { "from": "$.request_body.verification.evidence[1].record.source.name", "to": "verification.evidence.1.record.source.name" },
-      { "from": "$.request_body.claims.given_name", "to": "claims.given_name" },
-      { "from": "$.request_body.claims.family_name", "to": "claims.family_name" },
-      { "from": "$.request_body.claims.birthdate", "to": "claims.birthdate" },
-      { "from": "$.request_body.claims.place_of_birth.country", "to": "claims.place_of_birth.country" },
-      { "from": "$.request_body.claims.address.locality", "to": "claims.address.locality" },
-      { "from": "$.request_body.claims.address.postal_code", "to": "claims.address.postal_code" },
-      { "from": "$.request_body.claims.address.country", "to": "claims.address.country" },
-      { "from": "$.request_body.claims.address.street_address", "to": "claims.address.street_address" }
+      {
+        "static_value": "jp_aml",
+        "to": "verification.trust_framework"
+      },
+      {
+        "from": "$.request_body.verification.evidence[0].type",
+        "to": "verification.evidence.0.type"
+      },
+      {
+        "from": "$.request_body.verification.evidence[0].check_details[0].check_method",
+        "to": "verification.evidence.0.check_details.0.check_method"
+      },
+      {
+        "from": "$.request_body.verification.evidence[0].check_details[0].organization",
+        "to": "verification.evidence.0.check_details.0.organization"
+      },
+      {
+        "from": "$.request_body.verification.evidence[0].check_details[0].txn",
+        "to": "verification.evidence.0.check_details.0.txn"
+      },
+      {
+        "from": "$.request_body.verification.evidence[0].time",
+        "to": "verification.evidence.0.time"
+      },
+      {
+        "from": "$.request_body.verification.evidence[0].record.type",
+        "to": "verification.evidence.0.record.type"
+      },
+      {
+        "from": "$.request_body.verification.evidence[0].record.source.name",
+        "to": "verification.evidence.0.record.source.name"
+      },
+      {
+        "from": "$.request_body.verification.evidence[1].type",
+        "to": "verification.evidence.1.type"
+      },
+      {
+        "from": "$.request_body.verification.evidence[1].check_details[0].check_method",
+        "to": "verification.evidence.1.check_details.0.check_method"
+      },
+      {
+        "from": "$.request_body.verification.evidence[1].check_details[0].organization",
+        "to": "verification.evidence.1.check_details.0.organization"
+      },
+      {
+        "from": "$.request_body.verification.evidence[1].check_details[0].txn",
+        "to": "verification.evidence.1.check_details.1.txn"
+      },
+      {
+        "from": "$.request_body.verification.evidence[1].time",
+        "to": "verification.evidence.1.time"
+      },
+      {
+        "from": "$.request_body.verification.evidence[1].record.type",
+        "to": "verification.evidence.1.record.type"
+      },
+      {
+        "from": "$.request_body.verification.evidence[1].record.source.name",
+        "to": "verification.evidence.1.record.source.name"
+      },
+      {
+        "from": "$.request_body.claims.given_name",
+        "to": "claims.given_name"
+      },
+      {
+        "from": "$.request_body.claims.family_name",
+        "to": "claims.family_name"
+      },
+      {
+        "from": "$.request_body.claims.birthdate",
+        "to": "claims.birthdate"
+      },
+      {
+        "from": "$.request_body.claims.place_of_birth.country",
+        "to": "claims.place_of_birth.country"
+      },
+      {
+        "from": "$.request_body.claims.address.locality",
+        "to": "claims.address.locality"
+      },
+      {
+        "from": "$.request_body.claims.address.postal_code",
+        "to": "claims.address.postal_code"
+      },
+      {
+        "from": "$.request_body.claims.address.country",
+        "to": "claims.address.country"
+      },
+      {
+        "from": "$.request_body.claims.address.street_address",
+        "to": "claims.address.street_address"
+      }
     ],
     "source_details_mapping_rules": [
-      { "from": "$.application.application_details", "to": "*" }
+      {
+        "from": "$.application.application_details",
+        "to": "*"
+      }
     ]
   }
 }

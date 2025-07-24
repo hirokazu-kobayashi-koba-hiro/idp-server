@@ -16,168 +16,108 @@
 
 package org.idp.server.core.extension.identity.verification.application.model;
 
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationApplicationContext;
 import org.idp.server.core.extension.identity.verification.configuration.process.*;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationRequest;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationCallbackRequest;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
 
 public class IdentityVerificationApplicationStatusEvaluator {
 
-  public static IdentityVerificationApplicationStatus evaluate(
+  public static IdentityVerificationApplicationStatus evaluateOnProcess(
       IdentityVerificationProcessConfiguration config,
-      IdentityVerificationApplicationRequest request,
-      IdentityVerificationApplicationProcessResults results) {
+      IdentityVerificationApplicationContext context) {
 
-    IdentityVerificationConditionConfig completionConfig = config.completionCondition();
-    boolean completionRequestResult =
-        isSatisfiedRequest(completionConfig.requestCondition(), request.toMap());
-    boolean completionProcessResult =
-        isSatisfiedProcess(completionConfig.processCondition(), results);
+    IdentityVerificationConditionConfig approvedConfig = config.approved();
+    IdentityVerificationTransitionResult approvedRequestResult =
+        isAnySatisfied(approvedConfig, context.toMap());
 
-    if (completionRequestResult && completionProcessResult) {
+    if (approvedRequestResult.isSuccess()) {
       return IdentityVerificationApplicationStatus.APPROVED;
     }
 
-    IdentityVerificationConditionConfig rejectedConfig = config.rejectionCondition();
-    boolean rejectedRequestResult =
-        isSatisfiedRequest(rejectedConfig.requestCondition(), request.toMap());
-    boolean rejectedProcessResult = isSatisfiedProcess(rejectedConfig.processCondition(), results);
+    IdentityVerificationConditionConfig rejectedConfig = config.rejected();
+    IdentityVerificationTransitionResult rejectedRequestResult =
+        isAnySatisfied(rejectedConfig, context.toMap());
 
-    if (rejectedRequestResult && rejectedProcessResult) {
+    if (rejectedRequestResult.isSuccess()) {
       return IdentityVerificationApplicationStatus.REJECTED;
     }
 
-    IdentityVerificationConditionConfig cancellationConfig = config.cancellationCondition();
-    boolean cancellationRequestResult =
-        isSatisfiedRequest(cancellationConfig.requestCondition(), request.toMap());
-    boolean cancellationProcessResult =
-        isSatisfiedProcess(cancellationConfig.processCondition(), results);
+    IdentityVerificationConditionConfig cancellationConfig = config.canceled();
+    IdentityVerificationTransitionResult cancellationRequestResult =
+        isAnySatisfied(cancellationConfig, context.toMap());
 
-    if (cancellationRequestResult && cancellationProcessResult) {
+    if (cancellationRequestResult.isSuccess()) {
       return IdentityVerificationApplicationStatus.CANCELLED;
     }
 
     return IdentityVerificationApplicationStatus.APPLYING;
   }
 
-  public static IdentityVerificationApplicationStatus evaluate(
+  public static IdentityVerificationApplicationStatus evaluateOnCallback(
       IdentityVerificationProcessConfiguration config,
-      IdentityVerificationCallbackRequest request,
-      IdentityVerificationApplicationProcessResults results) {
+      IdentityVerificationApplicationContext context) {
 
-    IdentityVerificationConditionConfig completionConfig = config.completionCondition();
-    boolean completionRequestResult =
-        isSatisfiedRequest(completionConfig.requestCondition(), request.toMap());
-    boolean completionProcessResult =
-        isSatisfiedProcess(completionConfig.processCondition(), results);
+    IdentityVerificationConditionConfig approvedConfig = config.approved();
+    IdentityVerificationTransitionResult approvedRequestResult =
+        isAnySatisfied(approvedConfig, context.toMap());
 
-    if (completionRequestResult && completionProcessResult) {
+    if (approvedRequestResult.isSuccess()) {
       return IdentityVerificationApplicationStatus.APPROVED;
     }
 
-    IdentityVerificationConditionConfig rejectedConfig = config.rejectionCondition();
-    boolean rejectedRequestResult =
-        isSatisfiedRequest(rejectedConfig.requestCondition(), request.toMap());
-    boolean rejectedProcessResult = isSatisfiedProcess(rejectedConfig.processCondition(), results);
+    IdentityVerificationConditionConfig rejectedConfig = config.rejected();
+    IdentityVerificationTransitionResult rejectedRequestResult =
+        isAnySatisfied(rejectedConfig, context.toMap());
 
-    if (rejectedRequestResult && rejectedProcessResult) {
+    if (rejectedRequestResult.isSuccess()) {
       return IdentityVerificationApplicationStatus.REJECTED;
     }
 
-    IdentityVerificationConditionConfig cancellationConfig = config.cancellationCondition();
-    boolean cancellationRequestResult =
-        isSatisfiedRequest(cancellationConfig.requestCondition(), request.toMap());
-    boolean cancellationProcessResult =
-        isSatisfiedProcess(cancellationConfig.processCondition(), results);
+    IdentityVerificationConditionConfig cancellationConfig = config.canceled();
+    IdentityVerificationTransitionResult cancellationRequestResult =
+        isAnySatisfied(cancellationConfig, context.toMap());
 
-    if (cancellationRequestResult && cancellationProcessResult) {
+    if (cancellationRequestResult.isSuccess()) {
       return IdentityVerificationApplicationStatus.CANCELLED;
     }
 
     return IdentityVerificationApplicationStatus.EXAMINATION_PROCESSING;
   }
 
-  static boolean isSatisfiedProcess(
-      IdentityVerificationProcessConditionConfig processCondition,
-      IdentityVerificationApplicationProcessResults results) {
-
-    if (!processCondition.exists()) {
-      return false;
-    }
-
-    if (processCondition.hasAllOf()) {
-      for (IdentityVerificationProcessResultCondition condition : processCondition.allOf()) {
-        if (!results.contains(condition.processName())) return false;
-        if (condition.isSuccessType()
-            && !condition.isGraterEqualSuccessCount(
-                results.get(condition.processName()).successCount())) return false;
-        if (condition.isFailureType()
-            && !condition.isGraterEqualFailureCount(
-                results.get(condition.processName()).failureCount())) return false;
-      }
-      return true;
-    }
-
-    if (processCondition.hasAnyOf()) {
-      for (IdentityVerificationProcessResultCondition condition : processCondition.anyOf()) {
-        if (!results.contains(condition.processName())) continue;
-        if (condition.isSuccessType()
-            && condition.isGraterEqualSuccessCount(
-                results.get(condition.processName()).successCount())) return true;
-        if (condition.isFailureType()
-            && condition.isGraterEqualFailureCount(
-                results.get(condition.processName()).failureCount())) return true;
-      }
-      return false;
-    }
-
-    return false;
-  }
-
-  static boolean isSatisfiedRequest(
-      IdentityVerificationRequestConditionConfig conditionConfig, Map<String, Object> request) {
+  static IdentityVerificationTransitionResult isAnySatisfied(
+      IdentityVerificationConditionConfig conditionConfig, Map<String, Object> request) {
 
     if (!conditionConfig.exists()) {
-      return false;
+      return IdentityVerificationTransitionResult.UNDEFINED;
     }
 
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request);
     JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
-    for (IdentityVerificationRequestResultCondition resultCondition : conditionConfig.allOf()) {
 
-      Object actualValue =
-          extractValue(jsonPathWrapper, resultCondition.path(), resultCondition.type());
+    for (List<IdentityVerificationCondition> resultConditions : conditionConfig.anyOf()) {
+
+      if (isAllSatisfied(resultConditions, jsonPathWrapper)) {
+        return IdentityVerificationTransitionResult.SUCCESS;
+      }
+    }
+
+    return IdentityVerificationTransitionResult.FAILURE;
+  }
+
+  static boolean isAllSatisfied(
+      List<IdentityVerificationCondition> resultConditions, JsonPathWrapper jsonPathWrapper) {
+    for (IdentityVerificationCondition resultCondition : resultConditions) {
+
+      Object actualValue = jsonPathWrapper.readRaw(resultCondition.path());
 
       if (!OperatorEvaluator.evaluate(
           actualValue, resultCondition.operation(), resultCondition.value())) {
         return false;
       }
     }
-
-    for (IdentityVerificationRequestResultCondition resultCondition : conditionConfig.anyOf()) {
-
-      Object actualValue =
-          extractValue(jsonPathWrapper, resultCondition.path(), resultCondition.type());
-
-      if (OperatorEvaluator.evaluate(
-          actualValue, resultCondition.operation(), resultCondition.value())) {
-        return true;
-      }
-    }
-
     return true;
-  }
-
-  static Object extractValue(JsonPathWrapper jsonPathWrapper, String path, String type) {
-    if (jsonPathWrapper == null) return null;
-
-    if (Objects.equals(type, "string")) return jsonPathWrapper.readAsString(path);
-    if (Objects.equals(type, "integer")) return jsonPathWrapper.readAsInt(path);
-    if (Objects.equals(type, "boolean")) return jsonPathWrapper.readAsBoolean(path);
-
-    return null;
   }
 }

@@ -28,14 +28,9 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
   IdentityVerificationPreHookConfig preHook = new IdentityVerificationPreHookConfig();
   IdentityVerificationExecutionConfig execution = new IdentityVerificationExecutionConfig();
   IdentityVerificationPostHookConfig postHook = new IdentityVerificationPostHookConfig();
+  IdentityVerificationTransitionConfig transition = new IdentityVerificationTransitionConfig();
   IdentityVerificationStoreConfig store = new IdentityVerificationStoreConfig();
   IdentityVerificationResponseConfig response = new IdentityVerificationResponseConfig();
-  IdentityVerificationConditionConfig rejectionCondition =
-      new IdentityVerificationConditionConfig();
-  IdentityVerificationConditionConfig cancellationCondition =
-      new IdentityVerificationConditionConfig();
-  IdentityVerificationConditionConfig completionCondition =
-      new IdentityVerificationConditionConfig();
 
   public IdentityVerificationProcessConfiguration() {}
 
@@ -60,10 +55,6 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
     return request.requestSchemaAsDefinition();
   }
 
-  public boolean hasCompletionCondition() {
-    return completionCondition != null && completionCondition.exists();
-  }
-
   public IdentityVerificationPreHookConfig preHook() {
     if (preHook == null) {
       return new IdentityVerificationPreHookConfig();
@@ -82,25 +73,25 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
     return postHook;
   }
 
-  public IdentityVerificationConditionConfig rejectionCondition() {
-    if (rejectionCondition == null) {
+  public IdentityVerificationConditionConfig rejected() {
+    if (transition == null) {
       return new IdentityVerificationConditionConfig();
     }
-    return rejectionCondition;
+    return transition.rejected();
   }
 
-  public IdentityVerificationConditionConfig cancellationCondition() {
-    if (cancellationCondition == null) {
+  public IdentityVerificationConditionConfig canceled() {
+    if (transition == null) {
       return new IdentityVerificationConditionConfig();
     }
-    return cancellationCondition;
+    return transition.canceled();
   }
 
-  public IdentityVerificationConditionConfig completionCondition() {
-    if (completionCondition == null) {
+  public IdentityVerificationConditionConfig approved() {
+    if (transition == null) {
       return new IdentityVerificationConditionConfig();
     }
-    return completionCondition;
+    return transition.approved();
   }
 
   public boolean hasOAuthAuthorization() {

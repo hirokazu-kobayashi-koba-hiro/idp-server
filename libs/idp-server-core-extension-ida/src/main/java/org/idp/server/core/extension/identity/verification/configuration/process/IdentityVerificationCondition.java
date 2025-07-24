@@ -20,16 +20,15 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
 
-public class IdentityVerificationRequestResultCondition implements JsonReadable {
+public class IdentityVerificationCondition implements JsonReadable {
   String path;
   String type;
   String operation;
   Object value;
 
-  public IdentityVerificationRequestResultCondition() {}
+  public IdentityVerificationCondition() {}
 
-  public IdentityVerificationRequestResultCondition(
-      String path, String type, String operation, Object value) {
+  public IdentityVerificationCondition(String path, String type, String operation, Object value) {
     this.path = path;
     this.type = type;
     this.operation = operation;
