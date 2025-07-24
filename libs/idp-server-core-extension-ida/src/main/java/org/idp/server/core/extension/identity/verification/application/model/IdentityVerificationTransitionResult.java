@@ -16,33 +16,20 @@
 
 package org.idp.server.core.extension.identity.verification.application.model;
 
-import java.util.Arrays;
+public enum IdentityVerificationTransitionResult {
+  SUCCESS,
+  FAILURE,
+  UNDEFINED;
 
-public enum Operator {
-  EQ("eq"),
-  NE("ne"),
-  GT("gt"),
-  LT("lt"),
-  GTE("gte"),
-  LTE("lte"),
-  IN("in"),
-  NIN("nin"),
-  EXISTS("exists"),
-  MISSING("missing"),
-  CONTAINS("contains"),
-  REGEX("regex"),
-  UNKNOWN("unknown");
-
-  final String value;
-
-  Operator(String value) {
-    this.value = value;
+  public boolean isSuccess() {
+    return this == SUCCESS;
   }
 
-  public static Operator from(String val) {
-    return Arrays.stream(values())
-        .filter(o -> o.value.equalsIgnoreCase(val))
-        .findFirst()
-        .orElse(Operator.UNKNOWN);
+  public boolean isFailure() {
+    return this == FAILURE;
+  }
+
+  public boolean isUndefined() {
+    return this == UNDEFINED;
   }
 }

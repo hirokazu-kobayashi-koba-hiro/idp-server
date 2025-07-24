@@ -20,7 +20,6 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.regex.Pattern;
 
-@SuppressWarnings("unchecked")
 public class OperatorEvaluator {
 
   public static boolean evaluate(Object target, String operatorStr, Object expected) {
@@ -29,34 +28,21 @@ public class OperatorEvaluator {
   }
 
   public static boolean evaluate(Object target, Operator operator, Object expected) {
-    switch (operator) {
-      case EQ:
-        return Objects.equals(target, expected);
-      case NE:
-        return !Objects.equals(target, expected);
-      case GT:
-        return compareNumbers(target, expected) > 0;
-      case GTE:
-        return compareNumbers(target, expected) >= 0;
-      case LT:
-        return compareNumbers(target, expected) < 0;
-      case LTE:
-        return compareNumbers(target, expected) <= 0;
-      case IN:
-        return expected instanceof Collection<?> list && list.contains(target);
-      case NIN:
-        return expected instanceof Collection<?> list && !list.contains(target);
-      case EXISTS:
-        return target != null;
-      case MISSING:
-        return target == null;
-      case CONTAINS:
-        return contains(target, expected);
-      case REGEX:
-        return matchRegex(target, expected);
-      default:
-        throw new UnsupportedOperationException("Unsupported operator: " + operator);
-    }
+    return switch (operator) {
+      case EQ -> Objects.equals(target, expected);
+      case NE -> !Objects.equals(target, expected);
+      case GT -> target != null && compareNumbers(target, expected) > 0;
+      case GTE -> target != null && compareNumbers(target, expected) >= 0;
+      case LT -> target != null && compareNumbers(target, expected) < 0;
+      case LTE -> target != null && compareNumbers(target, expected) <= 0;
+      case IN -> expected instanceof Collection<?> list && list.contains(target);
+      case NIN -> expected instanceof Collection<?> list && !list.contains(target);
+      case EXISTS -> target != null;
+      case MISSING -> target == null;
+      case CONTAINS -> contains(target, expected);
+      case REGEX -> matchRegex(target, expected);
+      case UNKNOWN -> false;
+    };
   }
 
   private static int compareNumbers(Object a, Object b) {

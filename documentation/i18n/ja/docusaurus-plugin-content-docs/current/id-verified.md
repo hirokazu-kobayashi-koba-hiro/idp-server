@@ -61,7 +61,6 @@ sequenceDiagram
     EKYC->>EKYC: 審査処理
 
     EKYC-->>IdP: 審査結果を通知（非同期コールバック）
-    App ->>IdP: 完了結果
     IdP ->>IdP: 成功/失敗　条件の判定
     IdP->>IdP: 審査結果に応じてユーザーの検証済みクレームを更新する
     IdP-->>App: 結果通知 or データ取得

@@ -16,41 +16,41 @@
 
 package org.idp.server.core.extension.identity.verification.configuration.process;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
 
 public class IdentityVerificationConditionConfig implements JsonReadable {
 
-  IdentityVerificationRequestConditionConfig requestCondition =
-      new IdentityVerificationRequestConditionConfig();
-  IdentityVerificationProcessConditionConfig processCondition =
-      new IdentityVerificationProcessConditionConfig();
+  List<List<IdentityVerificationCondition>> anyOf = new ArrayList<>();
+
+  public boolean hasAnyOf() {
+    return anyOf != null && !anyOf.isEmpty();
+  }
 
   public boolean exists() {
-    return hasRequestCondition() || hasProcessCondition();
+    return hasAnyOf();
   }
 
-  public boolean hasRequestCondition() {
-    return requestCondition != null && requestCondition.exists();
+  public List<List<IdentityVerificationCondition>> anyOf() {
+    return anyOf;
   }
 
-  public IdentityVerificationRequestConditionConfig requestCondition() {
-    return requestCondition;
-  }
-
-  public boolean hasProcessCondition() {
-    return processCondition != null && processCondition.exists();
-  }
-
-  public IdentityVerificationProcessConditionConfig processCondition() {
-    return processCondition;
+  public List<List<Map<String, Object>>> anyOfListAsMap() {
+    List<List<Map<String, Object>>> result = new ArrayList<>();
+    for (List<IdentityVerificationCondition> list : anyOf) {
+      List<Map<String, Object>> mapList =
+          new ArrayList<>(list.stream().map(IdentityVerificationCondition::toMap).toList());
+      result.add(mapList);
+    }
+    return result;
   }
 
   public Map<String, Object> toMap() {
     HashMap<String, Object> map = new HashMap<>();
-    if (hasRequestCondition()) map.put("request_condition", requestCondition.toMap());
-    if (hasProcessCondition()) map.put("process_condition", processCondition.toMap());
+    if (hasAnyOf()) map.put("any_of", anyOfListAsMap());
     return map;
   }
 }

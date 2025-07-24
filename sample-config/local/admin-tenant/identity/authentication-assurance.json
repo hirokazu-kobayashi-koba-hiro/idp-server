@@ -236,51 +236,53 @@
       "execution": {
         "type": "no_action"
       },
-      "completion_condition": {
-        "request_condition": {
-          "all_of": [
-            {
-              "path": "$.approved",
-              "type": "boolean",
-              "operation": "eq",
-              "value": true
-            },
-            {
-              "path": "$.rejected",
-              "type": "boolean",
-              "operation": "eq",
-              "value": false
-            }
+      "transition": {
+        "approved": {
+          "any_of": [
+            [
+              {
+                "path": "$.request_body.approved",
+                "type": "boolean",
+                "operation": "eq",
+                "value": true
+              },
+              {
+                "path": "$.request_body.rejected",
+                "type": "boolean",
+                "operation": "eq",
+                "value": false
+              },
+              {
+                "path": "$.application.processes.request-authentication.success_count",
+                "type": "integer",
+                "operation": "gte",
+                "value": 1
+              },
+              {
+                "path": "$.application.processes.authentication-status.success_count",
+                "type": "boolean",
+                "operation": "gte",
+                "value": 1
+              }
+            ]
           ]
         },
-        "process_condition": {
-          "all_of": [
-            {
-              "process_name": "request-authentication",
-              "success_count": 1
-            },
-            {
-              "process_name": "authentication-status",
-              "success_count": 1
-            }
-          ]
-        }
-      },
-      "rejection_condition": {
-        "request_condition": {
-          "all_of": [
-            {
-              "source": "request_body",
-              "path": "$.approved",
-              "operation": "eq",
-              "value": false
-            },
-            {
-              "source": "request_body",
-              "path": "$.rejected",
-              "operation": "eq",
-              "value": true
-            }
+        "rejected": {
+          "any_of": [
+            [
+              {
+                "path": "$.request_body.approved",
+                "type": "boolean",
+                "operation": "eq",
+                "value": false
+              },
+              {
+                "path": "$.request_body.rejected",
+                "type": "boolean",
+                "operation": "eq",
+                "value": true
+              }
+            ]
           ]
         }
       }

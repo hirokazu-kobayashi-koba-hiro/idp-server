@@ -98,7 +98,6 @@ public class IdentityVerificationApplicationEntryService
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     IdentityVerificationConfiguration verificationConfiguration =
         configurationQueryRepository.get(tenant, type);
-
     IdentityVerificationProcessConfiguration processConfig =
         verificationConfiguration.getProcessConfig(process);
 
@@ -199,6 +198,19 @@ public class IdentityVerificationApplicationEntryService
         applicationQueryRepository.get(tenant, user, identifier);
     IdentityVerificationConfiguration verificationConfiguration =
         configurationQueryRepository.get(tenant, type);
+    IdentityVerificationProcessConfiguration processConfig =
+        verificationConfiguration.getProcessConfig(process);
+
+    IdentityVerificationApplicationRequestValidator applicationValidator =
+        new IdentityVerificationApplicationRequestValidator(
+            processConfig, request, requestAttributes);
+    IdentityVerificationApplicationValidationResult requestValidationResult =
+        applicationValidator.validate();
+
+    if (requestValidationResult.isError()) {
+      return requestValidationResult.errorResponse();
+    }
+
     IdentityVerificationApplications applications =
         applicationQueryRepository.findAll(tenant, user);
 
@@ -223,7 +235,7 @@ public class IdentityVerificationApplicationEntryService
     }
 
     IdentityVerificationApplication updated =
-        application.updateProcessWith(process, request, applyingResult, verificationConfiguration);
+        application.updateProcessWith(process, applyingResult, verificationConfiguration);
     applicationCommandRepository.update(tenant, updated);
     SecurityEventType securityEventType =
         new SecurityEventType(type.name() + "_" + process.name() + "_" + "success");
@@ -244,8 +256,6 @@ public class IdentityVerificationApplicationEntryService
       userCommandRepository.update(tenant, verifiedUser);
     }
 
-    IdentityVerificationProcessConfiguration processConfig =
-        verificationConfiguration.getProcessConfig(process);
     Map<String, Object> response =
         IdentityVerificationDynamicResponseMapper.buildDynamicResponse(
             application, applyingResult.applicationContext(), processConfig.response());

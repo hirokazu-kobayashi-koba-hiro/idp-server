@@ -2,23 +2,23 @@
 
 ## 概要
 
-`idp-server` は身元確認済みID（verified ID）を提供するにあたり、外部のサービスと連携した **申込み・審査・完了登録**
-の一連の申込みを管理できます。
+`idp-server` は身元確認済みID（verified ID）を提供するにあたり、 **申込み・審査・完了登録**の一連の申込みを管理できます。
+外部のサービスと連携も可能です。
 
-この機能を利用することで、ユーザーから収集した情報を外部の身元確認サービスに送信し、確認済みクレーム（`verified_claims`）として
-`idp-server` に反映できます。
-
-外部サービスとの連携はテンプレート形式で柔軟に定義可能であり、JSON Schema による構造化と検証、そしてマッピングルールによる変換に対応しています。
+申込み機能はテンプレート形式で柔軟に定義可能で、申込みのバリデーション・外部サービス連携・データ変換などに対応しています。
 
 ## 利用方法
 
-1. `Control Plane API` を使ってテンプレートを事前に登録する（テンプレートIDで管理）。
-2. ユーザーが申込み操作を実行すると、定義済みテンプレートに従って申込み処理を実行する。
-3. 外部サービスからコールバックも同様に、定義済みテンプレートに従って処理を実行する。
-4. 身元確認が完了すると `verified_claims` をユーザーに紐づけて永続化する。
-5. IDトークンやUserInfoに `verified_claims` を含めることができる。
+1. `Control Plane API` を使ってテンプレートを事前に登録する。
+2. テンプレートに応じて身元確認APIが利用可能になる。
+3. ユーザーが申込み操作を実行すると、定義済みテンプレートに従って申込み処理を実行する。
+4. 外部サービスからコールバックも同様に、定義済みテンプレートに従って処理を実行する。
+5. 身元確認が完了すると `verified_claims` をユーザーに紐づけて永続化する。
+6. IDトークンやUserInfoに `verified_claims` を含めることができる。
 
-## 設定項目（テンプレート定義）
+※ 外部身元確認サービスのAPI仕様に合わせて、柔軟に `idp-server` の各申込のプロセスの設定を設定することができます。
+
+## 申込みテンプレートの設定項目
 
 | 項目          | 内容                                          | 必須 |
 |-------------|---------------------------------------------|----|
@@ -47,7 +47,7 @@ POST /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{
 POST /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{id}/{process}
 ```
 
-### 例
+**例**
 
 ```json
 {
@@ -66,60 +66,125 @@ POST /{tenant-id}/v1/me/identity-verification/applications/investment-account-op
 POST /{tenant-id}/v1/me/identity-verification/applications/investment-account-opening/{id}/ekyc-request
 ```
 
-### `process` に定義できる処理タイプ例
+## 申込みフロー例
+
+1. アプリから身元確認の申込みを行い、idp-server経由で外部身元確認サービスに連携する
+2. アプリでeKYCの実施し、idp-server経由で結果を外部身元確認サービスに連携する
+3. 外部身元確認サービスでの審査
+4. idp-serverが外部身元確認サービスから審査結果を受信する
+5. 審査結果に応じて、ユーザーの検証済みクレームを更新する
+
+### 例に対応する`process` 定義
 
 - `apply`：申請データの送信
-- `request-ekyc`：eKYC用URL取得
-- `complete-ekyc`：完了通知
+- `ekyc`：eKYC実施
 - `callback-examination`：審査状態の通知（コールバック）
 - `callback-result`：verified_claims 登録用データの受信（コールバック）
 
-### ポイント
+### 例に対応するシーケンス
 
-- "type" は API の verification-type に対応
-- "processes" の各キー名が process に対応
-- APIリクエストを受けると、該当テンプレートとプロセス定義を読み取り、動的に外部API連携や申請処理を行う
+```mermaid
+sequenceDiagram
+    participant App as 🧑‍💻 アプリ
+    participant IdP as 🔐 idp-server
+    participant EKYC as 🛰 外部身元確認サービス
+    Note over App, EKYC: eKYC連携フロー
+    App ->> IdP: 身元確認の申込み
+    IdP ->> EKYC: 外部身元確認サービスへ申込み情報連携
+    EKYC ->> EKYC: 申込みデータを記録
+    EKYC -->> IdP: 申込みIDを返却
+    IdP ->> IdP: 設定に応じて最小限の申込みデータを記録
+    IdP -->> App: 申込みIDなどを返却
+    App ->> App: eKYCの実施
+    App ->> IdP: eKYC結果の送信（例：本人確認書類＋顔写真）
+    IdP ->> EKYC: eKYC結果を中継
+    EKYC ->> EKYC: eKYC結果を記録
+    EKYC -->> IdP: 申込みIDを返却
+    IdP ->> IdP: 設定に応じて最小限のデータを記録
+    IdP -->> App: 申込みIDなどを返却
+    EKYC ->> EKYC: 審査処理
+    EKYC -->> IdP: 審査結果を通知（非同期コールバック）
+    IdP ->> IdP: 成功/失敗 条件の判定
+    IdP ->> IdP: 審査結果に応じてユーザーの検証済みクレームを更新する
+    IdP -->> App: 結果通知 or データ取得
+    Note over IdP: 審査結果に応じてIDトークンへ<br/>verified_claims等を反映できる
+
+```
+
+---
+
+## 申込みステータス
+
+身元確認申込みは、申請の受付から承認・否認に至るまで複数のステータスを経由します。
+本項では、各ステータスの意味と代表的な利用タイミングについて解説します。
+
+ステータスは、申込み処理の進行状況を表すものであり、申込み一覧画面や詳細画面での表示などでご利用してください。
+
+以下は、申込みにおける代表的なステータス一覧とその説明です。
+
+| ステータス名                   | 説明                                                             |
+|--------------------------|----------------------------------------------------------------|
+| `requested`              | 申請リクエストが正常に受理された直後の状態です。                                       |
+| `applying`               | ユーザーまたは外部システムが必要な情報を入力・収集中の状態です。フォーム入力中や追加書類のアップロード待ちなどが該当します。 |
+| `examination_processing` | 申請内容に対する審査が実施されている状態です。外部eKYCサービスとの連携や人手による審査が行われている場合も含まれます。  |
+| `approved`               | 審査の結果、申請が承認された状態です。ユーザーの身元確認が完了し、検証済みクレームの登録などが行われます。          |
+| `rejected`               | 審査の結果、申請が却下された状態です。必要に応じて理由の提示や再申請の導線提示が推奨されます。                |
+| `expired`                | 有効期限切れなどにより、申請が無効となった状態です。一定期間操作が行われなかった場合などに自動的に遷移することがあります。  |
+| `cancelled`              | ユーザーまたは管理者によって申請が任意に中断された状態です。取り下げやキャンセル操作などが該当します。            |
+| `unknown`                | 状態が特定できない不明な状態です。移行中やデータ不整合、バージョン差異等により例外的に発生する可能性があります。       |
+
 
 ---
 
 ## process詳細
 
-身元確認申込みAPIの内部ロジックは、6つの主要なフェーズで構成されています。
+身元確認申込みAPIの内部ロジックは、7つの主要なフェーズで構成されています。
 
 これらのフェーズにより、柔軟で拡張可能な申込み処理を実現しています。
 
-### 6つのフェーズ
+### フェーズ一覧
 
-| フェーズ名            | 役割・目的                      | 主な設定項目                                                    | 必須 |
-|------------------|----------------------------|-----------------------------------------------------------|----|
-| **1. request**   | リクエストの構造・形式を検証             | `schema`（JSON Schema）                                     | -  |
-| **2. pre_hook**  | 実行前の事前検証・外部パラメータ取得・外部API実行 | `verifications`, `additional_parameters`                  | -  |
-| **3. execution** | メイン業務処理（外部連携 or 内部処理）      | `type`, `http_request`, `mock`, `no_action` など（処理タイプに応じて） | ✅  |
-| **4. post_hook** | 実行後の検証・外部API実行             | `verifications` `additional_parameters`                   | -  |
-| **5. store**     | 処理結果や申請内容の永続化              | `application_details_mapping_rules`                       | -  |
-| **6. response**  | クライアントへのレスポンス生成            | `body_mapping_rules`                                      | -  |
+| フェーズ名             | 役割・目的                      | 主な設定項目                                                    | 必須 |
+|-------------------|----------------------------|-----------------------------------------------------------|----|
+| **1. request**    | リクエストの構造・形式を検証             | `schema`（JSON Schema）                                     | -  |
+| **2. pre_hook**   | 実行前の事前検証・外部パラメータ取得・外部API実行 | `verifications`, `additional_parameters`                  | -  |
+| **3. execution**  | メイン業務処理（外部連携 or 内部処理）      | `type`, `http_request`, `mock`, `no_action` など（処理タイプに応じて） | ✅  |
+| **4. post_hook**  | 実行後の検証・外部API実行             | `verifications` `additional_parameters`                   | -  |
+| **5. transition** | ステータス遷移                    | `approved` `rejected` `canceled`                          | -  |
+| **6. store**      | 処理結果や申請内容の永続化              | `application_details_mapping_rules`                       | -  |
+| **7. response**   | クライアントへのレスポンス生成            | `body_mapping_rules`                                      | -  |
 
-### プロセス処理シーケンス図
+### プロセス内部ロジック
 
 ```mermaid
 sequenceDiagram
     participant App as アプリ
     participant IdP as IdP Server
     participant External as 外部サービス
+    
     App ->> IdP: POST /apply
+    
     Note right of IdP: 1. Request フェーズ
     IdP ->> IdP: JsonSchemaによるリクエストの検証
+    
     Note right of IdP: 2. Pre Hook フェーズ
     IdP ->> IdP: ビジネスロジックの実行 外部API実行やユーザー属性との一致検証など）
+    
     Note right of IdP: 3. Execution フェーズ
     IdP ->> External: POST /apply
     External -->> IdP: レスポンス
+    
     Note right of IdP: 4. Post Hook Phase
     IdP ->> IdP: ビジネスロジックの実行。外部API実行など
-    Note right of IdP: 5. Store フェーズ
+
+  Note right of IdP: 5. Transition フェーズ
+  IdP ->> IdP: ステータス遷移判定
+    
+    Note right of IdP: 6. Store フェーズ
     IdP ->> IdP: application detailsの組み立て
     IdP ->> IdP: 申込みデータの保存
-    Note right of IdP: 6. Response フェーズ
+    
+    Note right of IdP: 7. Response フェーズ
     IdP ->> IdP: レスポンスの組み立て
     IdP -->> App: Response
 ```
@@ -532,7 +597,135 @@ from で参照できるトップレベルのオブジェクトは以下の通り
 
 ---
 
-### 5. Store フェーズ
+### 5. transition フェーズ
+目的: 外部サービスや事前条件に基づいて、申込みステータスを動的に遷移させるための条件を判定する。
+
+主な機能:
+- コールバックや申込み処理の結果をもとに、申請を approved / rejected / cancelled のいずれかの状態に更新する
+
+
+**各遷移タイプの定義**
+
+| 遷移タイプ       | 意味                                         |
+| ----------- | ------------------------------------------ |
+| `approved`  | 承認された場合の遷移条件。通常は本人確認が成功し、検証済みクレームの発行対象となる。 |
+| `rejected`  | 却下された場合の遷移条件。eKYCの不一致や審査NGの場合など。           |
+| `cancelled` | ユーザーまたは管理者によって明示的にキャンセルされた場合の遷移条件。         |
+
+
+**遷移条件**
+
+下記の3種の条件を設定することで、対応する状態へ遷移する:
+
+* `approved`: 承認
+* `rejected`: 否認
+* `cancelled`: キャンセル
+
+**条件の基本構造**
+
+```json
+{
+  "path": "$.application.type",
+  "type": "string",
+  "operation": "equals",
+  "value": "investment-account-opening"
+}
+
+```
+
+| 項目          | 説明                                                                        |
+| ----------- | ------------------------------------------------------------------------- |
+| `path`      | JSONPathで評価対象を指定。例：`$.request_body.xxx`、`$.processes.apply.success_count` |
+| `type`      | 値の型：`string`, `integer`, `boolean`                                        |
+| `operation` | 比較演算子：`equals`, `not_equals`, `exists`, `in`, `gte`, `lte`, など            |
+| `value`     | 比較対象の値（文字列・数値・真偽値）                                                        |
+
+**条件の組み合わせ構文**
+
+```
+"transition": {
+  "approved": {
+    "any_of": [
+      [ 条件A1, 条件A2 ], // A1 AND A2
+      [ 条件B1 ]          // OR B1
+    ]
+  }
+}
+
+```
+
+- 外側配列：OR条件
+- 内側配列：AND条件
+
+**設定例**
+
+```json
+{
+  "transition": {
+    "approved": {
+      "any_of": [
+        [
+          {
+            "path": "$.request_body.application_id",
+            "type": "string",
+            "operation": "exists",
+            "value": true
+          },
+          {
+            "path": "$.processes.callback-result.status",
+            "type": "string",
+            "operation": "equals",
+            "value": "success"
+          }
+        ]
+      ]
+    },
+    "rejected": {
+      "any_of": [
+        {
+          "path": "$.processes.callback-result.status",
+          "type": "string",
+          "operation": "equals",
+          "value": "rejected"
+        }
+      ]
+    },
+    "cancelled": {
+      "any_of": [
+        [
+          {
+            "path": "$.processes.apply.success_count",
+            "type": "integer",
+            "operation": "gte",
+            "value": 1
+          }
+        ]
+      ]
+    }
+  } 
+}
+```
+
+**評価ルール（ロジック）**
+- transition に定義された状態ごとに条件を評価
+- 各状態の any_of → どれか1グループがすべて成立すればOK
+- 最初に成立した状態に遷移する
+- 条件が空、またはどれも成立しなければ遷移しない
+
+**pathの指定方法**
+
+| オブジェクト名                 | 内容                                    |
+|-------------------------|---------------------------------------|
+| `request_body`          | ユーザーからの申請リクエストボディ（画面入力値など）            |
+| `request_attributes`    | 認証情報やHTTPリクエストヘッダー等のリクエスト属性           |
+| `application`           | 現在の申込み情報                              |
+| `additional_parameters` | pre_hookで追加したパラメータ                    |
+| `response_status_code`  | executionで外部APIを利用した際のレスポンスのステータスコード。 |
+| `response_headers`      | executionで外部APIを利用した際のレスポンスヘッダー。      |
+| `response_body`         | executionで外部APIを利用した場合のレスポンスのボディー。    |
+
+
+### 6. Store フェーズ
 
 **目的**: 処理結果の永続化
 
@@ -593,7 +786,7 @@ from で参照できるトップレベルのオブジェクトは以下の通り
 
 ---
 
-### 6. Response フェーズ
+### 7. Response フェーズ
 
 **目的**: クライアントへのレスポンス構築
 
@@ -733,11 +926,11 @@ from で参照できるトップレベルのオブジェクトは以下の通り
 }
 ```
 
-## 🔧 identity_verification_result
+## 🔧 result
 
 身元確認が完了後に保存する `verified_claims`と `source_details` のマッピングルールを定義します。
 
-### 例
+**例**
 
 ```json
 {

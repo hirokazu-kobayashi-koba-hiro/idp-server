@@ -20,11 +20,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationApplicationContext;
-import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationRequest;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
-import org.idp.server.platform.json.schema.JsonSchemaDefinition;
 import org.idp.server.platform.mapper.MappingRule;
 import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 
@@ -52,11 +49,11 @@ public class IdentityVerificationApplicationDetails {
   }
 
   public IdentityVerificationApplicationDetails merge(
-      IdentityVerificationApplicationRequest request,
-      IdentityVerificationProcessConfiguration processConfig) {
-    JsonSchemaDefinition jsonSchemaDefinition = processConfig.requestSchemaAsDefinition();
+      IdentityVerificationApplicationContext applicationContext, List<MappingRule> mappingRules) {
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(applicationContext.toMap());
+    JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
     Map<String, Object> mappingResult =
-        IdentityVerificationMapper.mapping(request.toMap(), jsonSchemaDefinition);
+        MappingRuleObjectMapper.execute(mappingRules, jsonPathWrapper);
     Map<String, Object> mergedResult = new HashMap<>(json.toMap());
     ;
     mergedResult.putAll(mappingResult);

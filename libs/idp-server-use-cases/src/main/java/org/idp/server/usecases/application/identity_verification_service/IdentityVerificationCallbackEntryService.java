@@ -111,10 +111,6 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
     IdentityVerificationApplication application =
         applicationQueryRepository.get(tenant, applicationIdParams, applicationId);
 
-    IdentityVerificationApplication updatedApplication =
-        application.updateCallbackWith(process, request, verificationConfiguration);
-    applicationCommandRepository.update(tenant, updatedApplication);
-
     // TODO to be more correct
     IdentityVerificationApplicationContext context =
         new IdentityVerificationApplicationContext(
@@ -126,6 +122,11 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
                 "application",
                 application.toMap()),
             Map.of());
+
+    IdentityVerificationApplication updatedApplication =
+        application.updateCallbackWith(process, context, verificationConfiguration);
+    applicationCommandRepository.update(tenant, updatedApplication);
+
     if (updatedApplication.isApproved()) {
       IdentityVerificationResult identityVerificationResult =
           IdentityVerificationResult.createOnCallback(

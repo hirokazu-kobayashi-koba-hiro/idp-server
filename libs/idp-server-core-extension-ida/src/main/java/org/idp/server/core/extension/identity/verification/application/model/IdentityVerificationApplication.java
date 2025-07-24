@@ -27,8 +27,6 @@ import org.idp.server.core.extension.identity.verification.application.IdentityV
 import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationApplicationContext;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationRequest;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationCallbackRequest;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserIdentifier;
 import org.idp.server.core.oidc.type.oauth.RequestedClientId;
@@ -113,14 +111,15 @@ public class IdentityVerificationApplication {
 
   public IdentityVerificationApplication updateProcessWith(
       IdentityVerificationProcess process,
-      IdentityVerificationApplicationRequest request,
       IdentityVerificationApplyingResult applyingResult,
       IdentityVerificationConfiguration verificationConfiguration) {
 
     IdentityVerificationProcessConfiguration processConfig =
         verificationConfiguration.getProcessConfig(process);
     IdentityVerificationApplicationDetails mergedApplicationDetails =
-        applicationDetails.merge(request, processConfig);
+        applicationDetails.merge(
+            applyingResult.applicationContext(),
+            processConfig.store().applicationDetailsMappingRules());
 
     Map<String, IdentityVerificationApplicationProcessResult> resultMap = processes.toMap();
     if (processes.contains(process.name())) {
@@ -144,8 +143,8 @@ public class IdentityVerificationApplication {
         new IdentityVerificationApplicationProcessResults(resultMap);
 
     IdentityVerificationApplicationStatus status =
-        IdentityVerificationApplicationStatusEvaluator.evaluate(
-            processConfig, request, processResults);
+        IdentityVerificationApplicationStatusEvaluator.evaluateOnProcess(
+            processConfig, applyingResult.applicationContext());
 
     return new IdentityVerificationApplication(
         identifier,
@@ -161,11 +160,14 @@ public class IdentityVerificationApplication {
 
   public IdentityVerificationApplication updateCallbackWith(
       IdentityVerificationProcess process,
-      IdentityVerificationCallbackRequest request,
+      IdentityVerificationApplicationContext context,
       IdentityVerificationConfiguration verificationConfiguration) {
 
     IdentityVerificationProcessConfiguration processConfig =
         verificationConfiguration.getProcessConfig(process);
+
+    IdentityVerificationApplicationDetails mergedApplicationDetails =
+        applicationDetails.merge(context, processConfig.store().applicationDetailsMappingRules());
 
     // TODO to be more correct
     Map<String, IdentityVerificationApplicationProcessResult> resultMap = processes.toMap();
@@ -188,8 +190,7 @@ public class IdentityVerificationApplication {
         new IdentityVerificationApplicationProcessResults(resultMap);
 
     IdentityVerificationApplicationStatus status =
-        IdentityVerificationApplicationStatusEvaluator.evaluate(
-            processConfig, request, processResults);
+        IdentityVerificationApplicationStatusEvaluator.evaluateOnCallback(processConfig, context);
 
     return new IdentityVerificationApplication(
         identifier,
@@ -197,7 +198,7 @@ public class IdentityVerificationApplication {
         tenantIdentifier,
         requestedClientId,
         userIdentifier,
-        applicationDetails,
+        mergedApplicationDetails,
         processResults,
         status,
         requestedAt);
@@ -264,6 +265,7 @@ public class IdentityVerificationApplication {
     map.put("user_id", userIdentifier.value());
     map.put("application_details", applicationDetails.toMap());
     map.put("status", status.value());
+    map.put("processes", processes.toMapAsObject());
     map.put("requested_at", requestedAt.toString());
     return map;
   }
