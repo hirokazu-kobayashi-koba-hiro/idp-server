@@ -204,10 +204,10 @@
     "time": "2025-06-01T00:00:00Z"
   },
   "claims": {
-    "given_name": "太郎",
-    "family_name": "山田",
+    "given_name": "一郎",
+    "family_name": "伊藤",
     "birthdate": "1990-01-01",
-    "email": "taro@example.com"
+    "email": "ichiro@example.com"
   }
 }
 ```

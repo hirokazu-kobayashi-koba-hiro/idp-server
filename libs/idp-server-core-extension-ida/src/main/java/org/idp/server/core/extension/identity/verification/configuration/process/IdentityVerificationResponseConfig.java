@@ -26,7 +26,7 @@ public class IdentityVerificationResponseConfig implements JsonReadable {
 
   public IdentityVerificationResponseConfig() {}
 
-  public List<MappingRule> getBodyMappingRules() {
+  public List<MappingRule> bodyMappingRules() {
     if (bodyMappingRules == null) {
       return new ArrayList<>();
     }

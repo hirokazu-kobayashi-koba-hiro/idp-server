@@ -26,7 +26,7 @@ import org.idp.server.core.extension.identity.verification.application.model.Ide
 import org.idp.server.core.extension.identity.verification.application.pre_hook.UserClaimPreHook;
 import org.idp.server.core.extension.identity.verification.application.pre_hook.UserClaimVerificationRule;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfig;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationRequest;
+import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.path.JsonPathWrapper;
@@ -50,7 +50,7 @@ public class UserClaimVerifier implements IdentityVerificationApplicationRequest
       IdentityVerificationApplications previousApplications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
-      IdentityVerificationApplicationRequest request,
+      IdentityVerificationRequest request,
       RequestAttributes requestAttributes,
       IdentityVerificationConfig verificationConfig) {
 

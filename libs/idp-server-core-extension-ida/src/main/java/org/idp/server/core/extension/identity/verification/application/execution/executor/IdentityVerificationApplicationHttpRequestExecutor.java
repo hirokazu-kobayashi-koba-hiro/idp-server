@@ -18,6 +18,7 @@ package org.idp.server.core.extension.identity.verification.application.executio
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationContext;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationApplicationExecutor;
 import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationExecutionResult;
@@ -44,7 +45,7 @@ public class IdentityVerificationApplicationHttpRequestExecutor
 
   @Override
   public IdentityVerificationExecutionResult execute(
-      Map<String, Object> parameters,
+      IdentityVerificationContext context,
       IdentityVerificationProcess processes,
       IdentityVerificationConfiguration verificationConfiguration) {
     IdentityVerificationProcessConfiguration processConfig =
@@ -52,7 +53,7 @@ public class IdentityVerificationApplicationHttpRequestExecutor
     IdentityVerificationExecutionConfig executionConfig = processConfig.execution();
     IdentityVerificationHttpRequestConfig httpRequestConfig = executionConfig.httpRequest();
 
-    HttpRequestBaseParams httpRequestBaseParams = new HttpRequestBaseParams(parameters);
+    HttpRequestBaseParams httpRequestBaseParams = new HttpRequestBaseParams(context.toMap());
 
     HttpRequestResult httpRequestResult =
         httpRequestExecutor.execute(httpRequestConfig, httpRequestBaseParams);

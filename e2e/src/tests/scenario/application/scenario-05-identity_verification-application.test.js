@@ -409,7 +409,14 @@ describe("identity-verification application", () => {
       console.log(JSON.stringify(resultsResponse.data, null, 2));
       expect(resultsResponse.status).toBe(200);
       expect(resultsResponse.data.list.length).toBe(1);
-      expect(resultsResponse.data.list[0].application_id).toEqual(applicationId);
+      expect(resultsResponse.data.list[0]).toHaveProperty("id");
+      expect(resultsResponse.data.list[0].type).toEqual(type);
+      expect(resultsResponse.data.list[0].tenant_id).toEqual(serverConfig.tenantId);
+      expect(resultsResponse.data.list[0].user_id).toEqual(user.sub);
+      expect(resultsResponse.data.list[0].source).toEqual("application");
+      expect(resultsResponse.data.list[0]).toHaveProperty("source_details");
+      expect(resultsResponse.data.list[0].source_details.status).not.toBeNull();
+      expect(resultsResponse.data.list[0]).toHaveProperty("verified_at");
 
     });
 
@@ -695,7 +702,7 @@ describe("identity-verification application", () => {
       expect(resultsResponse.data.list[0].application_id).toEqual(applicationId);
       expect(resultsResponse.data.list[0].tenant_id).toEqual(serverConfig.tenantId);
       expect(resultsResponse.data.list[0].user_id).toBe(user.sub);
-      expect(resultsResponse.data.list[0].verification_type).toEqual(type);
+      expect(resultsResponse.data.list[0].type).toEqual(type);
       expect(resultsResponse.data.list[0]).toHaveProperty("verified_at");
       expect(resultsResponse.data.list[0]).toHaveProperty("verified_until");
 
@@ -899,7 +906,7 @@ describe("identity-verification application", () => {
       console.log(applyResponse.data);
       expect(applyResponse.status).toBe(400);
       expect(applyResponse.data.error).toEqual("invalid_request");
-      expect(applyResponse.data.error_description).toEqual("identity verification is invalid.");
+      expect(applyResponse.data.error_description).toEqual("The identity verification request is invalid. Please review your input for missing or incorrect fields.");
       expect(applyResponse.data.error_details).toContain("last_name is missing");
       expect(applyResponse.data.error_details).toContain("last_name is missing");
       expect(applyResponse.data.error_details).toContain("first_name is missing");
@@ -956,7 +963,7 @@ describe("identity-verification application", () => {
       console.log(applyResponse.data);
       expect(applyResponse.status).toBe(400);
       expect(applyResponse.data.error).toEqual("invalid_request");
-      expect(applyResponse.data.error_description).toEqual("identity verification is invalid.");
+      expect(applyResponse.data.error_description).toEqual("The identity verification request is invalid. Please review your input for missing or incorrect fields.");
       expect(applyResponse.data.error_details).toContain("last_name is not a string");
       expect(applyResponse.data.error_details).toContain("last_name is not a string");
       expect(applyResponse.data.error_details).toContain("first_name is not a string");
@@ -1018,7 +1025,7 @@ describe("identity-verification application", () => {
       console.log(applyResponse.data);
       expect(applyResponse.status).toBe(400);
       expect(applyResponse.data.error).toEqual("invalid_request");
-      expect(applyResponse.data.error_description).toEqual("identity verification application is invalid.");
+      expect(applyResponse.data.error_description).toEqual("The identity verification request could not be completed due to a business rule violation.");
       expect(applyResponse.data.error_details[0]).toContain("User claim verification failed. unmatched: $.request_body.email_address, user:email");
     });
   });

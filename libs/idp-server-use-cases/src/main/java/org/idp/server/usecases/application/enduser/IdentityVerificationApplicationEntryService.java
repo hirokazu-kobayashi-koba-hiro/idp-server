@@ -18,9 +18,7 @@ package org.idp.server.usecases.application.enduser;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationApi;
-import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
-import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
+import org.idp.server.core.extension.identity.verification.*;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationHandler;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplyingResult;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
@@ -92,7 +90,7 @@ public class IdentityVerificationApplicationEntryService
       OAuthToken oAuthToken,
       IdentityVerificationType type,
       IdentityVerificationProcess process,
-      IdentityVerificationApplicationRequest request,
+      IdentityVerificationRequest request,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
@@ -151,9 +149,15 @@ public class IdentityVerificationApplicationEntryService
         DefaultSecurityEventType.identity_verification_application_apply,
         requestAttributes);
 
+    IdentityVerificationContext updatedContext =
+        new IdentityVerificationContextBuilder()
+            .previousContext(applyingResult.applicationContext())
+            .application(application)
+            .build();
     Map<String, Object> response =
         IdentityVerificationDynamicResponseMapper.buildDynamicResponse(
-            application, applyingResult.applicationContext(), processConfig.response());
+            updatedContext, processConfig.response());
+    response.put("id", application.identifier().value());
 
     return IdentityVerificationApplicationResponse.OK(response);
   }
@@ -190,7 +194,7 @@ public class IdentityVerificationApplicationEntryService
       IdentityVerificationApplicationIdentifier identifier,
       IdentityVerificationType type,
       IdentityVerificationProcess process,
-      IdentityVerificationApplicationRequest request,
+      IdentityVerificationRequest request,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
@@ -256,9 +260,16 @@ public class IdentityVerificationApplicationEntryService
       userCommandRepository.update(tenant, verifiedUser);
     }
 
+    IdentityVerificationContext updatedContext =
+        new IdentityVerificationContextBuilder()
+            .previousContext(applyingResult.applicationContext())
+            .application(application)
+            .build();
+
     Map<String, Object> response =
         IdentityVerificationDynamicResponseMapper.buildDynamicResponse(
-            application, applyingResult.applicationContext(), processConfig.response());
+            updatedContext, processConfig.response());
+
     return IdentityVerificationApplicationResponse.OK(response);
   }
 

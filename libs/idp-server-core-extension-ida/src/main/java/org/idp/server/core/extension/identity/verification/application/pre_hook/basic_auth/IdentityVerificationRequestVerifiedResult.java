@@ -58,7 +58,9 @@ public class IdentityVerificationRequestVerifiedResult {
   public IdentityVerificationResponse errorResponse() {
     Map<String, Object> response = new HashMap<>();
     response.put("error", "invalid_request");
-    response.put("error_description", "identity verification is invalid.");
+    response.put(
+        "error_description",
+        "The identity verification request could not be completed due to a business rule violation.");
     response.put("error_details", errors);
     return IdentityVerificationResponse.CLIENT_ERROR(response);
   }

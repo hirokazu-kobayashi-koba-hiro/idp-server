@@ -16,8 +16,9 @@
 
 package org.idp.server.core.extension.identity.verification.application;
 
-import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationContext;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationContextBuilder;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.execution.*;
@@ -29,7 +30,7 @@ import org.idp.server.core.extension.identity.verification.application.pre_hook.
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationExecutionConfig;
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationRequest;
+import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
@@ -53,7 +54,7 @@ public class IdentityVerificationApplicationHandler {
       IdentityVerificationApplications previousApplications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
-      IdentityVerificationApplicationRequest request,
+      IdentityVerificationRequest request,
       RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
 
@@ -74,7 +75,7 @@ public class IdentityVerificationApplicationHandler {
       return IdentityVerificationApplyingResult.requestVerificationError(verifyResult);
     }
 
-    Map<String, Object> requestBaseParams =
+    IdentityVerificationContextBuilder contextBuilder =
         resolveBaseParams(
             tenant,
             user,
@@ -91,38 +92,38 @@ public class IdentityVerificationApplicationHandler {
     IdentityVerificationExecutionConfig executionConfig = processConfig.execution();
     IdentityVerificationApplicationExecutor executor = executors.get(executionConfig.type());
 
+    IdentityVerificationContext context = contextBuilder.build();
     IdentityVerificationExecutionResult executionResult =
-        executor.execute(requestBaseParams, processes, verificationConfiguration);
+        executor.execute(context, processes, verificationConfiguration);
 
     if (!executionResult.isOk()) {
       return IdentityVerificationApplyingResult.executionError(verifyResult, executionResult);
     }
 
-    IdentityVerificationApplicationContext applicationContext =
-        new IdentityVerificationApplicationContext(requestBaseParams, executionResult.result());
+    contextBuilder.executionResult(executionResult.result());
 
     return new IdentityVerificationApplyingResult(
-        applicationContext, verifyResult, executionResult);
+        contextBuilder.build(), verifyResult, executionResult);
   }
 
-  private Map<String, Object> resolveBaseParams(
+  private IdentityVerificationContextBuilder resolveBaseParams(
       Tenant tenant,
       User user,
       IdentityVerificationApplication currentApplication,
       IdentityVerificationApplications previousApplications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
-      IdentityVerificationApplicationRequest request,
+      IdentityVerificationRequest request,
       RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
 
-    Map<String, Object> parameters = new HashMap<>();
-    parameters.put("request_body", request.toMap());
-    parameters.put("request_attributes", requestAttributes.toMap());
-    parameters.put("user", user.toMap());
+    IdentityVerificationContextBuilder builder = new IdentityVerificationContextBuilder();
+    builder.request(request);
+    builder.requestAttributes(requestAttributes);
+    builder.user(user);
 
     if (currentApplication.exists()) {
-      parameters.put("application", currentApplication.toMap());
+      builder.application(currentApplication);
     }
 
     Map<String, Object> additionalParameters =
@@ -135,8 +136,8 @@ public class IdentityVerificationApplicationHandler {
             request,
             requestAttributes,
             verificationConfiguration);
-    parameters.put("additional_parameters", additionalParameters);
+    builder.additionalParams(additionalParameters);
 
-    return parameters;
+    return builder;
   }
 }

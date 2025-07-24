@@ -20,8 +20,8 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationContext;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
-import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationApplicationContext;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
@@ -46,7 +46,7 @@ public class IdentityVerificationResult {
 
   public static IdentityVerificationResult create(
       IdentityVerificationApplication application,
-      IdentityVerificationApplicationContext context,
+      IdentityVerificationContext context,
       IdentityVerificationConfiguration verificationConfiguration) {
 
     IdentityVerificationResultIdentifier identifier =
@@ -81,7 +81,7 @@ public class IdentityVerificationResult {
 
   public static IdentityVerificationResult createOnCallback(
       IdentityVerificationApplication application,
-      IdentityVerificationApplicationContext context,
+      IdentityVerificationContext context,
       IdentityVerificationConfiguration verificationConfiguration) {
 
     IdentityVerificationResultIdentifier identifier =
@@ -117,7 +117,7 @@ public class IdentityVerificationResult {
       TenantIdentifier tenantId,
       User user,
       IdentityVerificationType identityVerificationType,
-      IdentityVerificationApplicationContext context,
+      IdentityVerificationContext context,
       IdentityVerificationConfiguration verificationConfiguration) {
 
     IdentityVerificationResultIdentifier identifier =
@@ -234,11 +234,11 @@ public class IdentityVerificationResult {
     map.put("tenant_id", tenantId.value());
     map.put("user_id", userId.value());
     if (hasApplicationId()) map.put("application_id", applicationId.value());
-    map.put("verification_type", identityVerificationType.name());
+    map.put("type", identityVerificationType.name());
     map.put("verified_claims", verifiedClaims.toMap());
     map.put("verified_at", verifiedAt);
     map.put("verified_until", verifiedUntil);
-    map.put("source", source);
+    map.put("source", source.value());
     if (hasSourceDetails()) map.put("source_details", sourceDetails.toMap());
     return map;
   }

@@ -19,7 +19,7 @@ package org.idp.server.core.extension.identity.verification.application.model;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationApplicationContext;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationContext;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.mapper.MappingRule;
@@ -38,7 +38,7 @@ public class IdentityVerificationApplicationDetails {
   }
 
   public static IdentityVerificationApplicationDetails create(
-      IdentityVerificationApplicationContext applicationContext, List<MappingRule> mappingRules) {
+      IdentityVerificationContext applicationContext, List<MappingRule> mappingRules) {
 
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(applicationContext.toMap());
     JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
@@ -49,7 +49,7 @@ public class IdentityVerificationApplicationDetails {
   }
 
   public IdentityVerificationApplicationDetails merge(
-      IdentityVerificationApplicationContext applicationContext, List<MappingRule> mappingRules) {
+      IdentityVerificationContext applicationContext, List<MappingRule> mappingRules) {
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(applicationContext.toMap());
     JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
     Map<String, Object> mappingResult =

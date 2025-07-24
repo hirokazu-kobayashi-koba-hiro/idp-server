@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.core.extension.identity.verification.configuration.common.IdentityVerificationBasicAuthConfig;
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationCallbackRequest;
+import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaDefinition;
@@ -30,12 +30,12 @@ import org.idp.server.platform.type.RequestAttributes;
 
 public class IdentityVerificationCallbackRequestValidator {
   IdentityVerificationProcessConfiguration processConfiguration;
-  IdentityVerificationCallbackRequest request;
+  IdentityVerificationRequest request;
   RequestAttributes requestAttributes;
 
   public IdentityVerificationCallbackRequestValidator(
       IdentityVerificationProcessConfiguration processConfiguration,
-      IdentityVerificationCallbackRequest request,
+      IdentityVerificationRequest request,
       RequestAttributes requestAttributes) {
     this.processConfiguration = processConfiguration;
     this.request = request;

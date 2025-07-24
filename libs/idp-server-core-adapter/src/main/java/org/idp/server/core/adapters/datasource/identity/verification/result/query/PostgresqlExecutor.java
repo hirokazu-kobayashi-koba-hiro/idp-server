@@ -130,6 +130,7 @@ public class PostgresqlExecutor implements IdentityVerificationResultSqlExecutor
                  verified_at,
                  valid_until,
                  source,
+                 source_details,
                  created_at
                  FROM identity_verification_result
           """;

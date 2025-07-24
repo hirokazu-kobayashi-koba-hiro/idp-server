@@ -20,12 +20,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationApi;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationContext;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationContextBuilder;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
-import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationApplicationContext;
 import org.idp.server.core.extension.identity.verification.application.pre_hook.basic_auth.IdentityVerificationRequestVerifiedResult;
 import org.idp.server.core.extension.identity.verification.application.pre_hook.basic_auth.IdentityVerificationRequestVerifiers;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.registration.IdentityVerificationRegistrationConfig;
+import org.idp.server.core.extension.identity.verification.io.IdentityVerificationDynamicResponseMapper;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationResponse;
 import org.idp.server.core.extension.identity.verification.registration.IdentityVerificationRequestValidator;
@@ -37,6 +39,7 @@ import org.idp.server.core.extension.identity.verification.result.IdentityVerifi
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResultQueries;
 import org.idp.server.core.extension.identity.verified.VerifiedClaims;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.UserIdentifier;
 import org.idp.server.core.oidc.identity.UserStatus;
 import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
@@ -103,7 +106,9 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
       return validationResult.errorResponse();
     }
 
-    User user = userQueryRepository.get(tenant, request.userIdentifier());
+    // TODO to be more correct
+    UserIdentifier userIdentifier = new UserIdentifier(request.getValueAsString("user_id"));
+    User user = userQueryRepository.get(tenant, userIdentifier);
 
     IdentityVerificationRequestVerifiedResult verifiedResult =
         verifiers.verify(tenant, user, type, request, requestAttributes, verificationConfiguration);
@@ -112,12 +117,12 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
       return verifiedResult.errorResponse();
     }
 
-    // TODO to be more correct
-    IdentityVerificationApplicationContext context =
-        new IdentityVerificationApplicationContext(
-            Map.of(
-                "request_body", request.toMap(), "request_attributes", requestAttributes.toMap()),
-            Map.of());
+    IdentityVerificationContext context =
+        new IdentityVerificationContextBuilder()
+            .request(request)
+            .requestAttributes(requestAttributes)
+            .build();
+
     IdentityVerificationResult identityVerificationResult =
         IdentityVerificationResult.createOnDirect(
             tenantIdentifier, user, type, context, verificationConfiguration);
@@ -131,7 +136,10 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
 
     userCommandRepository.update(tenant, verifiedUser);
 
-    Map<String, Object> response = new HashMap<>();
+    Map<String, Object> response =
+        IdentityVerificationDynamicResponseMapper.buildDynamicResponse(
+            context, registrationConfiguration.response());
+
     return IdentityVerificationResponse.OK(response);
   }
 

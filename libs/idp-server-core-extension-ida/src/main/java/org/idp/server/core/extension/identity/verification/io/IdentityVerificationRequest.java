@@ -17,86 +17,34 @@
 package org.idp.server.core.extension.identity.verification.io;
 
 import java.util.Map;
-import java.util.function.BiConsumer;
-import org.idp.server.core.oidc.identity.UserIdentifier;
+import org.idp.server.platform.json.JsonNodeWrapper;
 
 public class IdentityVerificationRequest {
-  Map<String, Object> values;
+  JsonNodeWrapper jsonNodeWrapper;
 
   public IdentityVerificationRequest() {}
 
   public IdentityVerificationRequest(Map<String, Object> values) {
-    this.values = values;
+    this.jsonNodeWrapper = JsonNodeWrapper.fromMap(values);
+  }
+
+  public IdentityVerificationRequest(String jsonString) {
+    this.jsonNodeWrapper = JsonNodeWrapper.fromString(jsonString);
   }
 
   public Map<String, Object> toMap() {
-    return values;
-  }
-
-  public String optValueAsString(String key, String defaultValue) {
-    if (containsKey(key)) {
-      return (String) values.get(key);
-    }
-    return defaultValue;
+    return jsonNodeWrapper.toMap();
   }
 
   public String getValueAsString(String key) {
-    return (String) values.get(key);
-  }
-
-  public boolean getValueAsBoolean(String key) {
-    return (boolean) values.getOrDefault(key, Boolean.FALSE);
-  }
-
-  public Integer optValueAsInteger(String key, int defaultValue) {
-    return (Integer) values.getOrDefault(key, defaultValue);
-  }
-
-  public Long optValueAsLong(String key, long defaultValue) {
-    return (Long) values.getOrDefault(key, defaultValue);
-  }
-
-  public Object getValue(String key) {
-    return values.get(key);
-  }
-
-  public Map<String, Object> getValueAsMap(String key) {
-    return (Map<String, Object>) values.get(key);
-  }
-
-  public Map<String, Object> optValueAsMap(String key, Map<String, Object> defaultValue) {
-    return (Map<String, Object>) values.getOrDefault(key, defaultValue);
-  }
-
-  public boolean containsKey(String key) {
-    return values.containsKey(key);
-  }
-
-  public void forEach(BiConsumer<String, Object> action) {
-    values.forEach(action);
+    return jsonNodeWrapper.getValueOrEmptyAsString(key);
   }
 
   public boolean exists() {
-    return values != null && !values.isEmpty();
+    return jsonNodeWrapper != null && jsonNodeWrapper.exists();
   }
 
-  public String extractTrustFramework() {
-    return optValueAsString("trust_framework", "");
-  }
-
-  public String extractEvidenceDocumentType() {
-    return optValueAsString("evidence_document_type", "");
-  }
-
-  public Object extractEvidenceDocumentDetail() {
-    return getValue("evidence_document_details");
-  }
-
-  public String extractEvidenceMethod() {
-    return optValueAsString("evidence_method", "");
-  }
-
-  public UserIdentifier userIdentifier() {
-    return new UserIdentifier(optValueAsString("user_id", ""));
+  public String toJson() {
+    return jsonNodeWrapper.toJson();
   }
 }

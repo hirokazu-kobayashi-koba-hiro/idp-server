@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.adapters.springboot.application.config;
+package org.idp.server.adapters.springboot;
 
 import org.idp.server.adapters.springboot.application.event.SecurityEventRetryScheduler;
 import org.idp.server.adapters.springboot.application.event.SecurityEventRunnable;

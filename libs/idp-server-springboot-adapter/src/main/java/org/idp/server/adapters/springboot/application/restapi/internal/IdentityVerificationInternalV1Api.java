@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.adapters.springboot.application.restapi.identity_verification;
+package org.idp.server.adapters.springboot.application.restapi.internal;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
@@ -33,11 +33,11 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/{tenant-id}/internal/v1/identity-verification/results")
-public class IdentityVerificationPublicV1Api implements ParameterTransformable {
+public class IdentityVerificationInternalV1Api implements ParameterTransformable {
 
   IdentityVerificationApi identityVerificationApi;
 
-  public IdentityVerificationPublicV1Api(IdpServerApplication idpServerApplication) {
+  public IdentityVerificationInternalV1Api(IdpServerApplication idpServerApplication) {
     this.identityVerificationApi = idpServerApplication.identityVerificationApi();
   }
 

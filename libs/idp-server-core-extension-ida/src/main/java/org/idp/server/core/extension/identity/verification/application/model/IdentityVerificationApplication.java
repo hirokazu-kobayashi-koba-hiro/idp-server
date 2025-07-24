@@ -21,10 +21,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationContext;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplyingResult;
-import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationApplicationContext;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.oidc.identity.User;
@@ -75,7 +75,7 @@ public class IdentityVerificationApplication {
       RequestedClientId requestedClientId,
       User user,
       IdentityVerificationType verificationType,
-      IdentityVerificationApplicationContext applicationContext,
+      IdentityVerificationContext applicationContext,
       IdentityVerificationProcess process,
       IdentityVerificationConfiguration verificationConfiguration) {
 
@@ -160,7 +160,7 @@ public class IdentityVerificationApplication {
 
   public IdentityVerificationApplication updateCallbackWith(
       IdentityVerificationProcess process,
-      IdentityVerificationApplicationContext context,
+      IdentityVerificationContext context,
       IdentityVerificationConfiguration verificationConfiguration) {
 
     IdentityVerificationProcessConfiguration processConfig =
