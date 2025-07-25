@@ -30,6 +30,7 @@ import org.idp.server.control_plane.management.tenant.verifier.TenantManagementV
 import org.idp.server.control_plane.management.tenant.verifier.TenantManagementVerifier;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
 import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogWriters;
@@ -53,6 +54,7 @@ public class TenantManagementEntryService implements TenantManagementApi {
   AuthorizationServerConfigurationCommandRepository
       authorizationServerConfigurationCommandRepository;
   TenantManagementVerifier tenantManagementVerifier;
+  UserCommandRepository userCommandRepository;
   AuditLogWriters auditLogWriters;
 
   LoggerWrapper log = LoggerWrapper.getLogger(TenantManagementEntryService.class);
@@ -63,12 +65,14 @@ public class TenantManagementEntryService implements TenantManagementApi {
       OrganizationRepository organizationRepository,
       AuthorizationServerConfigurationCommandRepository
           authorizationServerConfigurationCommandRepository,
+      UserCommandRepository userCommandRepository,
       AuditLogWriters auditLogWriters) {
     this.tenantCommandRepository = tenantCommandRepository;
     this.tenantQueryRepository = tenantQueryRepository;
     this.organizationRepository = organizationRepository;
     this.authorizationServerConfigurationCommandRepository =
         authorizationServerConfigurationCommandRepository;
+    this.userCommandRepository = userCommandRepository;
     TenantVerifier tenantVerifier = new TenantVerifier(tenantQueryRepository);
     this.tenantManagementVerifier = new TenantManagementVerifier(tenantVerifier);
     this.auditLogWriters = auditLogWriters;
@@ -130,6 +134,7 @@ public class TenantManagementEntryService implements TenantManagementApi {
     organizationRepository.update(adminTenant, context.organization());
     authorizationServerConfigurationCommandRepository.register(
         context.newTenant(), context.authorizationServerConfiguration());
+    userCommandRepository.update(adminTenant, context.user());
 
     return context.toResponse();
   }
