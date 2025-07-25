@@ -55,7 +55,6 @@ services:
       LOGGING_LEVEL_HTTP_REQUEST_EXECUTOR: debug
       JAVA_TOOL_OPTIONS: >
         -Xms512m -Xmx2g
-        -XX:+UseG1GC
         -XX:MaxGCPauseMillis=100
 
   idp-server-2:
@@ -112,7 +111,6 @@ services:
       LOGGING_LEVEL_HTTP_REQUEST_EXECUTOR: debug
       JAVA_TOOL_OPTIONS: >
         -Xms512m -Xmx2g
-        -XX:+UseG1GC
         -XX:MaxGCPauseMillis=100
 
   nginx:
