@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.identity.verification.application.model;
+package org.idp.server.core.extension.identity.verification;
 
-public class IdentityVerificationApplicationVerifier {}
+import java.util.HashMap;
+import java.util.Map;
+
+public class IdentityVerificationContext {
+  Map<String, Object> context;
+
+  IdentityVerificationContext() {
+    this.context = new HashMap<>();
+  }
+
+  IdentityVerificationContext(Map<String, Object> context) {
+    this.context = context;
+  }
+
+  public Map<String, Object> toMap() {
+    return context;
+  }
+}

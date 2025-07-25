@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.adapters.springboot.application.restapi.identity_verification;
+package org.idp.server.adapters.springboot.application.restapi.internal;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
@@ -23,8 +23,8 @@ import org.idp.server.adapters.springboot.application.restapi.ParameterTransform
 import org.idp.server.core.extension.identity.verification.IdentityVerificationCallbackApi;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.io.*;
-import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;
@@ -34,33 +34,56 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/{tenant-id}/internal/v1/identity-verification/callback")
-public class IdentityVerificationPublicCallbackV1Api implements ParameterTransformable {
+public class IdentityVerificationCallbackInternalV1Api implements ParameterTransformable {
 
   IdentityVerificationCallbackApi identityVerificationCallbackApi;
 
-  public IdentityVerificationPublicCallbackV1Api(IdpServerApplication idpServerApplication) {
+  public IdentityVerificationCallbackInternalV1Api(IdpServerApplication idpServerApplication) {
     this.identityVerificationCallbackApi = idpServerApplication.identityVerificationCallbackApi();
   }
 
-  @PostMapping("/{verification-type}/{verification-callback}")
+  @PostMapping("/{verification-type}/{process}")
   public ResponseEntity<?> callback(
-      @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("verification-type") IdentityVerificationType verificationType,
-      @PathVariable("verification-callback") IdentityVerificationProcess process,
+      @PathVariable("process") IdentityVerificationProcess process,
       @RequestBody Map<String, Object> requestBody,
       HttpServletRequest httpServletRequest) {
 
-    BasicAuth basicAuth = convertBasicAuth(authorizationHeader);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     IdentityVerificationCallbackResponse response =
         identityVerificationCallbackApi.callback(
             tenantIdentifier,
-            basicAuth,
             verificationType,
             process,
-            new IdentityVerificationCallbackRequest(requestBody),
+            new IdentityVerificationRequest(requestBody),
+            requestAttributes);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("Content-Type", "application/json");
+    return new ResponseEntity<>(
+        response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @PostMapping("/{verification-type}/{id}/{process}")
+  public ResponseEntity<?> callback(
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("verification-type") IdentityVerificationType verificationType,
+      @PathVariable("id") IdentityVerificationApplicationIdentifier identifier,
+      @PathVariable("process") IdentityVerificationProcess process,
+      @RequestBody Map<String, Object> requestBody,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    IdentityVerificationCallbackResponse response =
+        identityVerificationCallbackApi.callback(
+            tenantIdentifier,
+            identifier,
+            verificationType,
+            process,
+            new IdentityVerificationRequest(requestBody),
             requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();

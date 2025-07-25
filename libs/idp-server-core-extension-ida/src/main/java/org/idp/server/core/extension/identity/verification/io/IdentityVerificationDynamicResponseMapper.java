@@ -18,8 +18,7 @@ package org.idp.server.core.extension.identity.verification.io;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationApplicationContext;
-import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationContext;
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationResponseConfig;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
@@ -28,21 +27,14 @@ import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 public class IdentityVerificationDynamicResponseMapper {
 
   public static Map<String, Object> buildDynamicResponse(
-      IdentityVerificationApplication application,
-      IdentityVerificationApplicationContext applicationContext,
+      IdentityVerificationContext applicationContext,
       IdentityVerificationResponseConfig responseConfig) {
-
-    Map<String, Object> response = new HashMap<>();
-    response.put("id", application.identifier().value());
-    response.put("status", application.status().value());
 
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(applicationContext.toMap());
     JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
     Map<String, Object> result =
-        MappingRuleObjectMapper.execute(responseConfig.getBodyMappingRules(), jsonPathWrapper);
+        MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
 
-    response.putAll(result);
-
-    return response;
+    return new HashMap<>(result);
   }
 }

@@ -18,8 +18,8 @@ package org.idp.server.core.extension.identity.verification;
 
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationQueries;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationResponse;
+import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -32,7 +32,7 @@ public interface IdentityVerificationApplicationApi {
       OAuthToken oAuthToken,
       IdentityVerificationType identityVerificationType,
       IdentityVerificationProcess process,
-      IdentityVerificationApplicationRequest request,
+      IdentityVerificationRequest request,
       RequestAttributes requestAttributes);
 
   IdentityVerificationApplicationResponse findApplications(
@@ -49,7 +49,7 @@ public interface IdentityVerificationApplicationApi {
       IdentityVerificationApplicationIdentifier identifier,
       IdentityVerificationType identityVerificationType,
       IdentityVerificationProcess process,
-      IdentityVerificationApplicationRequest request,
+      IdentityVerificationRequest request,
       RequestAttributes requestAttributes);
 
   IdentityVerificationApplicationResponse delete(

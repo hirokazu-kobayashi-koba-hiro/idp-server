@@ -1,5 +1,11 @@
 # docusaurus
 
+## pre
+
+```shell
+npm install
+```
+
 ## localization
 
 ```shell
@@ -14,10 +20,4 @@ npx run start
 
 ```shell
 npm run start -- --locale ja
-```
-
-## build
-
-```shell
-
 ```

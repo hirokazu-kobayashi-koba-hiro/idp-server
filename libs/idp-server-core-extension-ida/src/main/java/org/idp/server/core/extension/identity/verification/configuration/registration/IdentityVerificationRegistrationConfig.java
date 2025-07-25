@@ -19,6 +19,7 @@ package org.idp.server.core.extension.identity.verification.configuration.regist
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.configuration.common.IdentityVerificationBasicAuthConfig;
+import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationResponseConfig;
 import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.JsonReadable;
@@ -28,6 +29,7 @@ public class IdentityVerificationRegistrationConfig implements JsonReadable {
   IdentityVerificationBasicAuthConfig basicAuth = new IdentityVerificationBasicAuthConfig();
   Map<String, Object> requestValidationSchema = new HashMap<>();
   Map<String, Object> requestVerificationSchema = new HashMap<>();
+  IdentityVerificationResponseConfig response = new IdentityVerificationResponseConfig();
 
   public IdentityVerificationRegistrationConfig() {}
 
@@ -61,5 +63,12 @@ public class IdentityVerificationRegistrationConfig implements JsonReadable {
     map.put("request_validation_schema", requestValidationSchema);
     map.put("request_verification_schema", requestVerificationSchema);
     return map;
+  }
+
+  public IdentityVerificationResponseConfig response() {
+    if (response == null) {
+      return new IdentityVerificationResponseConfig();
+    }
+    return response;
   }
 }

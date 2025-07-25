@@ -26,8 +26,8 @@ import org.idp.server.core.extension.identity.verification.IdentityVerificationP
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationQueries;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationRequest;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationResponse;
+import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;
@@ -47,12 +47,12 @@ public class IdentityVerificationApplicationV1Api implements ParameterTransforma
         idpServerApplication.identityVerificationApplicationApi();
   }
 
-  @PostMapping("/{verification-type}/{verification-process}")
+  @PostMapping("/{verification-type}/{process}")
   public ResponseEntity<?> apply(
       @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("verification-type") IdentityVerificationType verificationType,
-      @PathVariable("verification-process") IdentityVerificationProcess identityVerificationProcess,
+      @PathVariable("process") IdentityVerificationProcess identityVerificationProcess,
       @RequestBody(required = false) Map<String, Object> requestBody,
       HttpServletRequest httpServletRequest) {
 
@@ -65,7 +65,7 @@ public class IdentityVerificationApplicationV1Api implements ParameterTransforma
             resourceOwnerPrincipal.getOAuthToken(),
             verificationType,
             identityVerificationProcess,
-            new IdentityVerificationApplicationRequest(requestBody),
+            new IdentityVerificationRequest(requestBody),
             requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
@@ -117,7 +117,7 @@ public class IdentityVerificationApplicationV1Api implements ParameterTransforma
             identifier,
             verificationType,
             process,
-            new IdentityVerificationApplicationRequest(requestBody),
+            new IdentityVerificationRequest(requestBody),
             requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();

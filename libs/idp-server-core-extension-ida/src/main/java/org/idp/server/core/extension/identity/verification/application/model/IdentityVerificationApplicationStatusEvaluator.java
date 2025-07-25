@@ -18,7 +18,7 @@ package org.idp.server.core.extension.identity.verification.application.model;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationApplicationContext;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationContext;
 import org.idp.server.core.extension.identity.verification.configuration.process.*;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
@@ -26,8 +26,7 @@ import org.idp.server.platform.json.path.JsonPathWrapper;
 public class IdentityVerificationApplicationStatusEvaluator {
 
   public static IdentityVerificationApplicationStatus evaluateOnProcess(
-      IdentityVerificationProcessConfiguration config,
-      IdentityVerificationApplicationContext context) {
+      IdentityVerificationProcessConfiguration config, IdentityVerificationContext context) {
 
     IdentityVerificationConditionConfig approvedConfig = config.approved();
     IdentityVerificationTransitionResult approvedRequestResult =
@@ -57,8 +56,7 @@ public class IdentityVerificationApplicationStatusEvaluator {
   }
 
   public static IdentityVerificationApplicationStatus evaluateOnCallback(
-      IdentityVerificationProcessConfiguration config,
-      IdentityVerificationApplicationContext context) {
+      IdentityVerificationProcessConfiguration config, IdentityVerificationContext context) {
 
     IdentityVerificationConditionConfig approvedConfig = config.approved();
     IdentityVerificationTransitionResult approvedRequestResult =

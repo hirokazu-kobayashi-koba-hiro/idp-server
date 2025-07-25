@@ -139,7 +139,7 @@ export const createFederatedUser = async ({
     clientId: client.clientId,
     responseType: "code",
     state: "aiueo",
-    scope: "openid profile phone email" + client.scope,
+    scope: "openid profile phone email " + client.scope,
     redirectUri: client.redirectUri,
     customParams: {
       organizationId: "123",

@@ -86,10 +86,15 @@ paths:
     post:
       tags:
         - 身元確認申込み
+      security:
+        - OAuth2:
+            - identity_verification_application
       summary: 身元確認申込み
       description: |
         指定された verification-type（テンプレート種別）および verification-process（申込み処理タイプ）に従い、
         身元確認申込みの初期リクエストを実行します。
+        
+        レスポンスに後続で利用するidが返却されます。
         
         このAPIは、あらかじめ Control Plane API により定義されたテンプレートに基づいて外部サービスに対して申請データを送信し、
         審査プロセスの開始またはeKYCプロセスの起動を行います。
@@ -97,33 +102,121 @@ paths:
         - `verification-type` はテンプレートの `type` に対応
         - `verification-process` はテンプレート内の `processes` のキーに対応（例: apply, request-ekyc など）
         
-        リクエストボディはテンプレートで定義された `request_validation_schema` に基づいてバリデーションされ、
+        リクエストボディはテンプレートで定義された `request.schema` に基づいてバリデーションされ、
         必須項目の漏れや形式の不正がある場合はエラーになります。
         
-        正常に処理された場合は、外部サービスからのレスポンスを中継しつつ、
-        `idp-server` 側に申込トランザクションが記録されます。
+        正常に処理された場合は、`response.body_mapping_rules` に従いレスポンスを返却します。
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/VerificationType'
         - $ref: '#/components/parameters/VerificationProcess'
       requestBody:
         required: false
+        description: |
+          テンプレートで定義されたスキーマに従うリクエストボディ。
+          内容は `verification-type` および `verification-process` ごとに異なる。
         content:
           application/json:
             schema:
               type: object
+              additionalProperties:
+
+            example:
+              last_name: "伊藤"
+              first_name: "一朗"
+              birthdate: "1990-01-01"
+              email_address: "ichiro@example.com"
+
       responses:
         '200':
-          description: Successfully applied
+          description: 申込み成功時のレスポンス
           content:
             application/json:
               schema:
                 type: object
+                required:
+                  - id
+                properties:
+                  id:
+                    type: string
+                    description: |
+                      後続で利用する身元確認申込の識別子。
+                additionalProperties:
+                  description:
+                    設定ファイルの `response` に設定した項目が返却される
+              example:
+               id: "565b030e-04b5-45eb-989e-136e3623dc7d"
+               application_number: "abcdefg012345"
+        '400':
+          description: 申込みの入力エラー
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: string
+                    description: |
+                      エラーの種類を示す識別子（"invalid_request"）。
+                  error_description:
+                    type: string
+                    description: |
+                      エラーの概要。
+                  error_details:
+                    type: object
+                    description: |
+                      エラーの詳細内容。バリデーションの具体的な内容や。外部サービスからのエラーレスポンス。
+                example:
+                  error: "invalid_request"
+                  error_description: "The identity verification request is invalid. Please review your input for missing or incorrect fields."
+
+        '401':
+          description: |
+           認証エラー。アクセストークンが無効な場合。
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: string
+                    description: |
+                      エラーの種類を示す識別子（"invalid_token"）。
+                  error_description:
+                    type: string
+                    description: |
+                      エラーの概要。
+
+        '403':
+          description: |
+            権限エラー。スコープ不足。
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: string
+                    description: |
+                      エラーの種類を示す識別子（"invalid_token"）。
+                  error_description:
+                    type: string
+                    description: |
+                      エラーの概要。
 
   /{tenant-id}/v1/me/identity-verification/applications:
     get:
       tags:
         - 身元確認申込み
+      security:
+        - OAuth2:
+          - identity_verification_application
       summary: 身元確認申込み一覧取得
       description: |
         身元確認の申込みの一覧を取得する。
@@ -149,25 +242,13 @@ paths:
           schema:
             type: string
           description: 申請時に使用されたクライアントID
-        - name: external_application_id
-          in: query
-          required: false
-          schema:
-            type: string
-          description: 外部連携先の申請ID
-        - name: external_service
-          in: query
-          required: false
-          schema:
-            type: string
-          description: 連携先の外部サービス名
         - name: status
           in: query
           required: false
           schema:
             type: string
           description: |
-            申請のステータス（現在調整中）
+            申請のステータス
         - in: query
           name: application_details.<key>
           schema:
@@ -223,7 +304,7 @@ paths:
                         id:
                           type: string
                           format: uuid
-                          description: 身元確認申込みID
+                          description: 申込みID
                         tenant_id:
                           type: string
                           format: uuid
@@ -238,29 +319,10 @@ paths:
                         client_id:
                           type: string
                           description: クライアントID
-                        status:
-                          type: string
-                          description: 現在のステータス
-                        external_service:
-                          type: string
-                          description: 連携先外部サービス名
-                        external_application_id:
-                          type: string
-                          description: 外部連携先での申請ID
-                        requested_at:
-                          type: string
-                          format: date-time
-                          description: 申請が行われた日時
                         application_details:
                           type: object
-                          description: 申込み時に送信した詳細情報
-                        external_application_details:
-                          type: object
-                          description: 外部サービスから返された情報。ekyc_urlは例として記載。
-                          properties:
-                            ekyc_url:
-                              type: string
-                              format: uri
+                          description: |
+                            申込みの詳細情報。storeの設定に応じて保存したデータ。
                         processes:
                           type: object
                           additionalProperties:
@@ -272,6 +334,35 @@ paths:
                                 type: integer
                               failure_count:
                                 type: integer
+                        status:
+                          type: string
+                          description: |
+                            現在のステータス
+                            
+                            | ステータス名                   | 説明                                                             |
+                            |--------------------------|----------------------------------------------------------------|
+                            | `requested`              | 申請リクエストが正常に受理された直後の状態です。                                       |
+                            | `applying`               | ユーザーまたは外部システムが必要な情報を入力・収集中の状態です。フォーム入力中や追加書類のアップロード待ちなどが該当します。 |
+                            | `examination_processing` | 申請内容に対する審査が実施されている状態です。外部eKYCサービスとの連携や人手による審査が行われている場合も含まれます。  |
+                            | `approved`               | 審査の結果、申請が承認された状態です。ユーザーの身元確認が完了し、検証済みクレームの登録などが行われます。          |
+                            | `rejected`               | 審査の結果、申請が却下された状態です。必要に応じて理由の提示や再申請の導線提示が推奨されます。                |
+                            | `expired`                | 有効期限切れなどにより、申請が無効となった状態です。一定期間操作が行われなかった場合などに自動的に遷移することがあります。  |
+                            | `cancelled`              | ユーザーまたは管理者によって申請が任意に中断された状態です。取り下げやキャンセル操作などが該当します。            |
+                            | `unknown`                | 状態が特定できない不明な状態です。移行中やデータ不整合、バージョン差異等により例外的に発生する可能性があります。       |
+
+                          enum:
+                            - requested
+                            - applying
+                            - examination_processing
+                            - approved
+                            - rejected
+                            - expired
+                            - cancelled
+                            - unknown
+                        requested_at:
+                          type: string
+                          format: date-time
+                          description: 申請が行われた日時
 
 
 
@@ -279,21 +370,24 @@ paths:
     post:
       tags:
         - 身元確認申込み
+      security:
+        - OAuth2:
+          - identity_verification_application
       summary: 身元確認申込み後続処理
       description: |
         既存の身元確認申込み（application）に対して、定義済みテンプレートおよびプロセスに従った後続の処理を実行します。
         
-        このAPIは、初回申込み（apply等）によって発行された申請ID（`application_id`）を指定し、
+        このAPIは、初回申込み（apply等）によって発行された申込みID（`id`）を指定し、
         対象となる申込みに対して、eKYC完了通知・審査要求・外部サービスとの再連携などのアクションを柔軟に実行可能です。
         
         - `verification-type` はテンプレートの `type` に対応
-        - `id` は既存の申込みID（`application_id`）を指定
+        - `id` は既存の申込みIDを指定
         - `verification-process` はテンプレートの `processes` 内で定義された処理（例: `complete-ekyc`, `callback-result`）
         
-        リクエストボディは、該当プロセスで必要とされる `request_validation_schema` に基づいてバリデーションされ、
+        リクエストボディは、該当プロセスで必要とされる `request.schema` に基づいてバリデーションされ、
         外部サービスとの連携や verified_claims 登録等が自動的に実行されます。
         
-        正常に完了すると、対応するプロセスのレスポンス内容が返却されます。
+        正常に処理された場合は、`response.body_mapping_rules` に従いレスポンスを返却します。
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/VerificationType'
@@ -312,51 +406,34 @@ paths:
             application/json:
               schema:
                 type: object
+                additionalProperties:
+                  description: |
+                    設定ファイルの `response` に設定した項目が返却される
 
-  /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{id}/evaluate-result:
-    post:
-      tags:
-        - 身元確認申込み
-      summary: 身元確認 結果反映（合否など）
-      parameters:
-        - $ref: '#/components/parameters/TenantId'
-        - $ref: '#/components/parameters/VerificationType'
-        - $ref: '#/components/parameters/ApplicationId'
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
-      responses:
-        '200':
-          description: Result submitted
-          content:
-            application/json:
-              schema:
-                type: object
 
   /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{id}:
     delete:
       tags:
         - 身元確認申込み
+      security:
+        - OAuth2:
+          - identity_verification_application_delete
       summary: 身元確認申込み削除
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/VerificationType'
         - $ref: '#/components/parameters/ApplicationId'
       responses:
-        '200':
-          description: Deleted
-          content:
-            application/json:
-              schema:
-                type: object
+        '204':
+          description: No Content
 
   /{tenant-id}/v1/me/identity-verification/results:
     get:
       tags:
         - 身元確認結果
+      security:
+        - OAuth2:
+          - identity-verification-result
       summary: 身元確認結果の一覧取得
       description: |
         身元確認結果の一覧を取得します。
@@ -470,13 +547,7 @@ paths:
                           type: string
                           format: uuid
                           description: 元となる申請のID
-                        external_application_id:
-                          type: string
-                          description: 外部サービスでの申請ID
-                        external_service:
-                          type: string
-                          description: 外部サービス名
-                        verification_type:
+                        type:
                           type: string
                           description: 申込み種別（verification-type）
                         verified_at:
@@ -491,10 +562,15 @@ paths:
                         source:
                           type: string
                           description: |
-                            結果の生成元（例: APPLICATION）
+                            結果の生成元（例: application）
+                        source_details:
+                          type: object
+                          description: |
+                            設定の `result.source_details` に定義したデータ。
                         verified_claims:
                           type: object
-                          description: verified_claims オブジェクト(IDA準拠）
+                          description: |
+                            設定の `result.verified_claims` に定義したデータ。IDA準拠を想定。
                           properties:
                             claims:
                               type: object
@@ -503,6 +579,18 @@ paths:
 
 
 components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://xxx/{tenant-id}/v1/authorizations
+          tokenUrl: https://xxx/{tenant-id}/v1//tokens
+          scopes:
+            identity_verification_application: 身元確認の申込みのAPIに必要なスコープ
+            identity_verification_application_delete: 身元確認の申込みの削除スコープ
+            identity_verification_result: 身元確認結果のAPIに必要なスコープ
+
   parameters:
     TenantId:
       name: tenant-id

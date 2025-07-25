@@ -16,14 +16,15 @@
 
 package org.idp.server.core.extension.identity.verification.application;
 
-import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationApplicationContext;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationContext;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationContextBuilder;
 import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationExecutionResult;
 import org.idp.server.core.extension.identity.verification.application.pre_hook.verification.IdentityVerificationApplicationRequestVerifiedResult;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationResponse;
 
 public class IdentityVerificationApplyingResult {
 
-  IdentityVerificationApplicationContext applicationContext;
+  IdentityVerificationContext applicationContext;
   IdentityVerificationApplicationRequestVerifiedResult verifyResult;
   IdentityVerificationExecutionResult executionResult;
 
@@ -32,7 +33,7 @@ public class IdentityVerificationApplyingResult {
   public static IdentityVerificationApplyingResult requestVerificationError(
       IdentityVerificationApplicationRequestVerifiedResult verifyResult) {
     return new IdentityVerificationApplyingResult(
-        new IdentityVerificationApplicationContext(),
+        new IdentityVerificationContextBuilder().build(),
         verifyResult,
         new IdentityVerificationExecutionResult());
   }
@@ -41,11 +42,11 @@ public class IdentityVerificationApplyingResult {
       IdentityVerificationApplicationRequestVerifiedResult verifyResult,
       IdentityVerificationExecutionResult executionResult) {
     return new IdentityVerificationApplyingResult(
-        new IdentityVerificationApplicationContext(), verifyResult, executionResult);
+        new IdentityVerificationContextBuilder().build(), verifyResult, executionResult);
   }
 
   public IdentityVerificationApplyingResult(
-      IdentityVerificationApplicationContext applicationContext,
+      IdentityVerificationContext applicationContext,
       IdentityVerificationApplicationRequestVerifiedResult verifyResult,
       IdentityVerificationExecutionResult executionResult) {
     this.applicationContext = applicationContext;
@@ -74,7 +75,7 @@ public class IdentityVerificationApplyingResult {
     return IdentityVerificationApplicationResponse.SERVER_ERROR(executionResult.result());
   }
 
-  public IdentityVerificationApplicationContext applicationContext() {
+  public IdentityVerificationContext applicationContext() {
     return applicationContext;
   }
 }

@@ -53,7 +53,9 @@ public class IdentityVerificationApplicationValidationResult {
   public IdentityVerificationApplicationResponse errorResponse() {
     Map<String, Object> response = new HashMap<>();
     response.put("error", "invalid_request");
-    response.put("error_description", "identity verification is invalid.");
+    response.put(
+        "error_description",
+        "The identity verification request is invalid. Please review your input for missing or incorrect fields.");
     response.put("error_details", errors);
     return IdentityVerificationApplicationResponse.CLIENT_ERROR(response);
   }

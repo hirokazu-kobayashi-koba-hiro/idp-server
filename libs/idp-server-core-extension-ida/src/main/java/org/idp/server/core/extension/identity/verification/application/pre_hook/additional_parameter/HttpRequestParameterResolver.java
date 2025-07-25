@@ -22,7 +22,7 @@ import org.idp.server.core.extension.identity.verification.IdentityVerificationP
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfig;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationRequest;
+import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.platform.http.*;
 import org.idp.server.platform.json.JsonConverter;
@@ -56,7 +56,7 @@ public class HttpRequestParameterResolver implements AdditionalRequestParameterR
       IdentityVerificationApplications applications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
-      IdentityVerificationApplicationRequest request,
+      IdentityVerificationRequest request,
       RequestAttributes requestAttributes,
       IdentityVerificationConfig additionalParameterConfig) {
 
@@ -87,7 +87,7 @@ public class HttpRequestParameterResolver implements AdditionalRequestParameterR
   }
 
   private HttpRequestBaseParams resolveBaseParams(
-      IdentityVerificationApplicationRequest request, RequestAttributes requestAttributes) {
+      IdentityVerificationRequest request, RequestAttributes requestAttributes) {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("request_body", request.toMap());
     parameters.put("request_attributes", requestAttributes.toMap());

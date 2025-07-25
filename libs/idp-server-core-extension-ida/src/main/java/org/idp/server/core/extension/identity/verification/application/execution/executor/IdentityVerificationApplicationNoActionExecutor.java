@@ -17,6 +17,7 @@
 package org.idp.server.core.extension.identity.verification.application.execution.executor;
 
 import java.util.Map;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationContext;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationApplicationExecutor;
 import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationExecutionResult;
@@ -33,7 +34,7 @@ public class IdentityVerificationApplicationNoActionExecutor
 
   @Override
   public IdentityVerificationExecutionResult execute(
-      Map<String, Object> parameters,
+      IdentityVerificationContext context,
       IdentityVerificationProcess processes,
       IdentityVerificationConfiguration verificationConfiguration) {
 

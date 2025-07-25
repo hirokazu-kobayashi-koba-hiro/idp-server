@@ -49,6 +49,25 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
   }
 
   @Override
+  public Map<String, String> selectOne(
+      Tenant tenant, IdentityVerificationApplicationIdentifier identifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        selectSql
+            + " "
+            + """
+                 WHERE id = ?::uuid
+                 AND tenant_id = ?::uuid
+                """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(identifier.valueAsUuid());
+    params.add(tenant.identifierUUID());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
+  @Override
   public Map<String, String> selectOneByDetail(Tenant tenant, String key, String identifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =

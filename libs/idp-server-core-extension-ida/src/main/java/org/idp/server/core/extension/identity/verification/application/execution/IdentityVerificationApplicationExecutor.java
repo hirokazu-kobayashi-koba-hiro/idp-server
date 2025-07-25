@@ -16,7 +16,7 @@
 
 package org.idp.server.core.extension.identity.verification.application.execution;
 
-import java.util.Map;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationContext;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 
@@ -24,7 +24,7 @@ public interface IdentityVerificationApplicationExecutor {
   String type();
 
   IdentityVerificationExecutionResult execute(
-      Map<String, Object> parameters,
+      IdentityVerificationContext context,
       IdentityVerificationProcess processes,
       IdentityVerificationConfiguration verificationConfiguration);
 }

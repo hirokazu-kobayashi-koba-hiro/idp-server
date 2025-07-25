@@ -54,6 +54,21 @@ public class IdentityVerificationApplicationQueryDataSource
     return ModelConverter.convert(result);
   }
 
+  @Override
+  public IdentityVerificationApplication get(
+      Tenant tenant, IdentityVerificationApplicationIdentifier identifier) {
+    IdentityVerificationApplicationQuerySqlExecutor executor = executors.get(tenant.databaseType());
+
+    Map<String, String> result = executor.selectOne(tenant, identifier);
+
+    if (result == null || result.isEmpty()) {
+      throw new IdentityVerificationApplicationNotFoundException(
+          String.format("IdentityVerificationApplication not found (%s)", identifier.value()));
+    }
+
+    return ModelConverter.convert(result);
+  }
+
   // TODO
   @Override
   public IdentityVerificationApplication get(Tenant tenant, String key, String identifier) {

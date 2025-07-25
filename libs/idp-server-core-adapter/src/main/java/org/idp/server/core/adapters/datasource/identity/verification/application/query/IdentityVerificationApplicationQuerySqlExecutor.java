@@ -27,6 +27,9 @@ public interface IdentityVerificationApplicationQuerySqlExecutor {
   Map<String, String> selectOne(
       Tenant tenant, User user, IdentityVerificationApplicationIdentifier identifier);
 
+  Map<String, String> selectOne(
+      Tenant tenant, IdentityVerificationApplicationIdentifier identifier);
+
   Map<String, String> selectOneByDetail(Tenant tenant, String key, String identifier);
 
   List<Map<String, String>> selectList(Tenant tenant, User user);

@@ -28,6 +28,9 @@ public interface IdentityVerificationApplicationQueryRepository {
   IdentityVerificationApplication get(
       Tenant tenant, User user, IdentityVerificationApplicationIdentifier identifier);
 
+  IdentityVerificationApplication get(
+      Tenant tenant, IdentityVerificationApplicationIdentifier identifier);
+
   IdentityVerificationApplication get(Tenant tenant, String key, String identifier);
 
   IdentityVerificationApplications findAll(Tenant tenant, User user);

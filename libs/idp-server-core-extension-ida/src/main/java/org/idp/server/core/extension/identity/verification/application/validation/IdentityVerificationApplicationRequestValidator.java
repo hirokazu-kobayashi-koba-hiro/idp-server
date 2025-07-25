@@ -17,7 +17,7 @@
 package org.idp.server.core.extension.identity.verification.application.validation;
 
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
-import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationRequest;
+import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaDefinition;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
@@ -26,12 +26,12 @@ import org.idp.server.platform.type.RequestAttributes;
 
 public class IdentityVerificationApplicationRequestValidator {
   IdentityVerificationProcessConfiguration processConfiguration;
-  IdentityVerificationApplicationRequest request;
+  IdentityVerificationRequest request;
   RequestAttributes requestAttributes;
 
   public IdentityVerificationApplicationRequestValidator(
       IdentityVerificationProcessConfiguration processConfiguration,
-      IdentityVerificationApplicationRequest request,
+      IdentityVerificationRequest request,
       RequestAttributes requestAttributes) {
     this.processConfiguration = processConfiguration;
     this.request = request;
