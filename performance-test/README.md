@@ -88,42 +88,49 @@ export ACCESS_TOKEN=eyJhbGciOiJSUzI1NiIsInR5cCI6ImF0K2p3dCIsImtpZCI6ImlkX3Rva2Vu
 
 ### run
 
+### mkdir
+
+```shell
+mkdir -p performance-test/result/stress
+mkdir -p performance-test/result/load
+```
+
 #### stress test
 
 ```shell
-k6 run ./performance-test/stress/scenario-1-authorization-request.js
+k6 run --summary-export=./performance-test/result/stress/scenario-1-authorization-request.json ./performance-test/stress/scenario-1-authorization-request.js
 ```
 
 ```shell
-k6 run ./performance-test/stress/scenario-2-bc.js
+k6 run --summary-export=./performance-test/result/stress/scenario-2-bc.json ./performance-test/stress/scenario-2-bc.js
 ```
 
 ```shell
-k6 run ./performance-test/stress/scenario-3-ciba.js
+k6 run --summary-export=./performance-test/result/stress/scenario-3-ciba.json ./performance-test/stress/scenario-3-ciba.js
 ```
 
 ```shell
-k6 run ./performance-test/stress/scenario-4-token-password.js
+k6 run --summary-export=./performance-test/result/stress/scenario-4-token-password.json ./performance-test/stress/scenario-4-token-password.js
 ```
 
 ```shell
-k6 run ./performance-test/stress/scenario-5-token-client-credentials.js
+k6 run --summary-export=./performance-test/result/stress/scenario-5-token-client-credentials.json ./performance-test/stress/scenario-5-token-client-credentials.js
 ```
 
 ```shell
-k6 run ./performance-test/stress/scenario-6-jwks.js
+k6 run --summary-export=./performance-test/result/stress/scenario-6-jwks.json ./performance-test/stress/scenario-6-jwks.js
 ```
 
 ```shell
-k6 run ./performance-test/stress/scenario-7-token-introspection.js
+k6 run --summary-export=./performance-test/result/stress/scenario-7-token-introspection.json ./performance-test/stress/scenario-7-token-introspection.js
 ```
 
 ```shell
-k6 run ./performance-test/stress/scenario-8-authentication-device.js
+k6 run --summary-export=./performance-test/result/stress/scenario-8-authentication-device.json ./performance-test/stress/scenario-8-authentication-device.js
 ```
 
 ```shell
-k6 run ./performance-test/stress/scenario-9-identity-verification-application.js
+k6 run --summary-export=./performance-test/result/stress/scenario-9-identity-verification-application.json ./performance-test/stress/scenario-9-identity-verification-application.js
 ```
 
 #### load test

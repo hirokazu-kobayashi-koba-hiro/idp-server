@@ -772,8 +772,10 @@ ALTER TABLE authentication_transaction FORCE ROW LEVEL SECURITY;
 CREATE INDEX idx_authentication_transaction_device_id ON authentication_transaction (authentication_device_id);
 CREATE INDEX idx_authentication_client_id ON authentication_transaction (client_id);
 CREATE INDEX idx_authentication_tenant_id ON authentication_transaction (tenant_id);
+CREATE INDEX idx_authentication_authorization_id ON authentication_transaction (authorization_id);
 CREATE INDEX idx_authentication_flow ON authentication_transaction (flow);
 CREATE INDEX idx_authentication_transaction_expires_at ON authentication_transaction (tenant_id, expires_at);
+CREATE INDEX idx_authentication_transaction_attributes ON authentication_transaction USING GIN (attributes);
 
 CREATE TABLE authentication_interactions
 (

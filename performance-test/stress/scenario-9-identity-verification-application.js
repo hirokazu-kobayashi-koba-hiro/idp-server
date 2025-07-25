@@ -24,7 +24,7 @@ export default function () {
   const encodedRedirectUri = encodeURIComponent(REDIRECT_URI)
 
   const authRes = http.get(`${BASE_URL}/${TENANT_ID}/v1/authorizations?` +
-    `scope=openid+profile+email+phone&` +
+    `scope=openid+profile+email+phone+identity_verification_application&` +
     `response_type=code&client_id=${CLIENT_ID}&redirect_uri=${encodedRedirectUri}&` +
     `state=${state}&nonce=${nonce}`, { redirects: 0 });
 
