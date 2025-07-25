@@ -592,6 +592,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 organizationRepository,
                 authorizationServerConfigurationCommandRepository,
+                userCommandRepository,
                 auditLogWriters),
             TenantManagementApi.class,
             tenantDialectProvider);
