@@ -23,6 +23,7 @@ import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
@@ -32,6 +33,7 @@ public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor
   FidoUafExecutors fidoUafExecutors;
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
   FidoUafAdditionalRequestResolvers additionalRequestResolvers;
+  LoggerWrapper log = LoggerWrapper.getLogger(FidoUafDeRegistrationInteractor.class);
 
   public FidoUafDeRegistrationInteractor(
       FidoUafExecutors fidoUafExecutors,
@@ -64,6 +66,8 @@ public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor
       AuthenticationInteractionRequest request,
       RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
+
+    log.debug("FidoUafDeRegistrationInteractor called");
 
     FidoUafConfiguration fidoUafConfiguration =
         configurationQueryRepository.get(tenant, "fido-uaf", FidoUafConfiguration.class);

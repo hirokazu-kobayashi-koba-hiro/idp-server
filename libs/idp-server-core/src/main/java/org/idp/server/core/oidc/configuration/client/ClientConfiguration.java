@@ -18,6 +18,7 @@ package org.idp.server.core.oidc.configuration.client;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import org.idp.server.core.oidc.authentication.AuthenticationInteractionType;
 import org.idp.server.core.oidc.type.ciba.BackchannelTokenDeliveryMode;
 import org.idp.server.core.oidc.type.extension.RegisteredRedirectUris;
 import org.idp.server.core.oidc.type.oauth.*;
@@ -366,6 +367,14 @@ public class ClientConfiguration implements JsonReadable {
 
   public List<Map<String, Object>> availableFederationsAsMapList() {
     return extension.availableFederationsAsMapList();
+  }
+
+  public AuthenticationInteractionType defaultCibaAuthenticationInteractionType() {
+    return extension.defaultCibaAuthenticationInteractionType();
+  }
+
+  public boolean hasDefaultCibaAuthenticationInteractionType() {
+    return extension.hasDefaultCibaAuthenticationInteractionType();
   }
 
   public Map<String, Object> toMap() {

@@ -19,6 +19,7 @@ package org.idp.server.core.oidc.configuration.client;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.oidc.authentication.AuthenticationInteractionType;
 import org.idp.server.platform.json.JsonReadable;
 
 public class ClientExtensionConfiguration implements JsonReadable {
@@ -27,6 +28,7 @@ public class ClientExtensionConfiguration implements JsonReadable {
   Long refreshTokenDuration;
   boolean supportedJar = false;
   List<AvailableFederation> availableFederations;
+  String defaultCibaAuthenticationInteractionType = "authentication-device-notification-no-action";
 
   public ClientExtensionConfiguration() {}
 
@@ -65,6 +67,15 @@ public class ClientExtensionConfiguration implements JsonReadable {
     return availableFederations != null && !availableFederations.isEmpty();
   }
 
+  public AuthenticationInteractionType defaultCibaAuthenticationInteractionType() {
+    return new AuthenticationInteractionType(defaultCibaAuthenticationInteractionType);
+  }
+
+  public boolean hasDefaultCibaAuthenticationInteractionType() {
+    return defaultCibaAuthenticationInteractionType != null
+        && !defaultCibaAuthenticationInteractionType.isEmpty();
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("access_token_duration", accessTokenDuration);
@@ -72,6 +83,9 @@ public class ClientExtensionConfiguration implements JsonReadable {
     map.put("supported_jar", supportedJar);
     if (hasAvailableFederations())
       map.put("available_federations", availableFederationsAsMapList());
+    if (hasDefaultCibaAuthenticationInteractionType())
+      map.put(
+          "default_ciba_authentication_interaction_type", defaultCibaAuthenticationInteractionType);
     return map;
   }
 }

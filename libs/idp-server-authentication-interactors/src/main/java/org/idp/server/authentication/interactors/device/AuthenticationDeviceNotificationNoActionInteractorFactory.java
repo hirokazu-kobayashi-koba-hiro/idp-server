@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.oidc.token.service;
+package org.idp.server.authentication.interactors.device;
 
-import org.idp.server.core.oidc.clientauthenticator.clientcredentials.ClientCredentials;
-import org.idp.server.core.oidc.token.OAuthToken;
-import org.idp.server.core.oidc.token.TokenRequestContext;
-import org.idp.server.core.oidc.type.oauth.GrantType;
+import org.idp.server.core.oidc.authentication.AuthenticationInteractor;
+import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;
+import org.idp.server.core.oidc.authentication.plugin.AuthenticationInteractorFactory;
 
-public interface OAuthTokenCreationService {
+public class AuthenticationDeviceNotificationNoActionInteractorFactory
+    implements AuthenticationInteractorFactory {
 
-  GrantType grantType();
+  @Override
+  public AuthenticationInteractor create(AuthenticationDependencyContainer container) {
 
-  OAuthToken create(TokenRequestContext tokenRequestContext, ClientCredentials clientCredentials);
+    return new AuthenticationDeviceNotificationNoActionInteractor();
+  }
 }

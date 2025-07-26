@@ -23,6 +23,7 @@ import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.mapper.UserInfoMapper;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.http.*;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
@@ -31,6 +32,7 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
 
   AuthenticationConfigurationQueryRepository configurationRepository;
   HttpRequestExecutor httpRequestExecutor;
+  LoggerWrapper log = LoggerWrapper.getLogger(LegacyIdServiceAuthenticationInteractor.class);
 
   public LegacyIdServiceAuthenticationInteractor(
       AuthenticationConfigurationQueryRepository configurationRepository) {
@@ -56,6 +58,8 @@ public class LegacyIdServiceAuthenticationInteractor implements AuthenticationIn
       AuthenticationInteractionRequest request,
       RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
+
+    log.debug("LegacyIdServiceAuthenticationInteractor called");
 
     LegacyIdServiceAuthenticationConfiguration configuration =
         configurationRepository.get(

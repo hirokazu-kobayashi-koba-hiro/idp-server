@@ -20,3 +20,4 @@ org.idp.server.authentication.interactors.sms.SmsAuthenticationInteractorFactory
 org.idp.server.authentication.interactors.external_token.ExternalTokenAuthenticationInteractorFactory
 org.idp.server.authentication.interactors.cancel.AuthenticationCancelInteractorFactory
 org.idp.server.authentication.interactors.fidouaf.FidoUafCancelInteractorFactory
+org.idp.server.authentication.interactors.device.AuthenticationDeviceNotificationNoActionInteractorFactory

@@ -18,7 +18,7 @@ package org.idp.server.core.oidc.token.verifier;
 
 import java.util.*;
 import org.idp.server.core.oidc.AuthorizationProfile;
-import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
+import org.idp.server.core.oidc.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.grant.AuthorizationCodeGrant;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.token.TokenRequestContext;

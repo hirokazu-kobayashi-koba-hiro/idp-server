@@ -17,7 +17,7 @@
 package org.idp.server.core.oidc.response;
 
 import org.idp.server.core.oidc.OAuthAuthorizeContext;
-import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
+import org.idp.server.core.oidc.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;
 import org.idp.server.core.oidc.request.AuthorizationRequest;
 import org.idp.server.core.oidc.token.AccessToken;

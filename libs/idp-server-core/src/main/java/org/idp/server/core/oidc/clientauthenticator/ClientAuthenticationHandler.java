@@ -16,8 +16,8 @@
 
 package org.idp.server.core.oidc.clientauthenticator;
 
+import org.idp.server.core.oidc.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.clientauthenticator.plugin.ClientAuthenticator;
-import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 
 public class ClientAuthenticationHandler {
 

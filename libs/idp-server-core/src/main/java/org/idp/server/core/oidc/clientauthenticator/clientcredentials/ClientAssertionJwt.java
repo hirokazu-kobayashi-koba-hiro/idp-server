@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.oidc.clientcredentials;
+package org.idp.server.core.oidc.clientauthenticator.clientcredentials;
 
 import java.util.Objects;
 import org.idp.server.platform.jose.JsonWebSignature;

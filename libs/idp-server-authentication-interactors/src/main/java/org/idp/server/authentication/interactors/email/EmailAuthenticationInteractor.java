@@ -22,6 +22,7 @@ import org.idp.server.core.oidc.authentication.repository.AuthenticationInteract
 import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionQueryRepository;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
@@ -30,6 +31,7 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
 
   AuthenticationInteractionCommandRepository commandRepository;
   AuthenticationInteractionQueryRepository queryRepository;
+  LoggerWrapper log = LoggerWrapper.getLogger(EmailAuthenticationInteractor.class);
 
   public EmailAuthenticationInteractor(
       AuthenticationInteractionCommandRepository commandRepository,
@@ -56,6 +58,8 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
       AuthenticationInteractionRequest request,
       RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
+
+    log.debug("EmailAuthenticationInteractor called");
 
     EmailVerificationChallenge emailVerificationChallenge =
         queryRepository.get(

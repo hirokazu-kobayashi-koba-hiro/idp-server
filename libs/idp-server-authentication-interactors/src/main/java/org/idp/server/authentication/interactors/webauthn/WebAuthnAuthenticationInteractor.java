@@ -23,6 +23,7 @@ import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigur
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserIdentifier;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
@@ -31,6 +32,7 @@ public class WebAuthnAuthenticationInteractor implements AuthenticationInteracto
 
   AuthenticationConfigurationQueryRepository configurationRepository;
   WebAuthnExecutors webAuthnExecutors;
+  LoggerWrapper log = LoggerWrapper.getLogger(WebAuthnAuthenticationInteractor.class);
 
   public WebAuthnAuthenticationInteractor(
       AuthenticationConfigurationQueryRepository configurationRepository,

@@ -17,11 +17,11 @@
 package org.idp.server.core.oidc.extension.fapi;
 
 import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestContext;
+import org.idp.server.core.oidc.clientauthenticator.clientcredentials.ClientAssertionJwt;
+import org.idp.server.core.oidc.clientauthenticator.clientcredentials.ClientAuthenticationPublicKey;
+import org.idp.server.core.oidc.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.oidc.clientauthenticator.plugin.ClientAuthenticator;
-import org.idp.server.core.oidc.clientcredentials.ClientAssertionJwt;
-import org.idp.server.core.oidc.clientcredentials.ClientAuthenticationPublicKey;
-import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.mtls.ClientCertification;
 import org.idp.server.core.oidc.type.mtls.ClientCert;

@@ -29,6 +29,7 @@ import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaDefinition;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 import org.idp.server.platform.json.schema.JsonSchemaValidator;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
@@ -38,6 +39,7 @@ public class InitialRegistrationInteractor implements AuthenticationInteractor {
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
   PasswordEncodeDelegation passwordEncodeDelegation;
   JsonConverter jsonConverter;
+  LoggerWrapper log = LoggerWrapper.getLogger(InitialRegistrationInteractor.class);
 
   public InitialRegistrationInteractor(
       AuthenticationConfigurationQueryRepository configurationQueryRepository,
@@ -69,6 +71,8 @@ public class InitialRegistrationInteractor implements AuthenticationInteractor {
       AuthenticationInteractionRequest request,
       RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
+
+    log.debug("InitialRegistrationInteractor called");
 
     // TODO fix type
     Map json = configurationQueryRepository.get(tenant, "initial-registration", Map.class);

@@ -21,6 +21,7 @@ import java.util.Map;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
@@ -29,6 +30,7 @@ public class WebAuthnRegistrationInteractor implements AuthenticationInteractor 
 
   AuthenticationConfigurationQueryRepository configurationRepository;
   WebAuthnExecutors webAuthnExecutors;
+  LoggerWrapper log = LoggerWrapper.getLogger(WebAuthnRegistrationInteractor.class);
 
   public WebAuthnRegistrationInteractor(
       AuthenticationConfigurationQueryRepository configurationRepository,
@@ -55,6 +57,8 @@ public class WebAuthnRegistrationInteractor implements AuthenticationInteractor 
       AuthenticationInteractionRequest request,
       RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
+
+    log.debug("WebAuthnRegistrationInteractor called");
 
     String userId = transaction.user().sub();
     WebAuthnConfiguration configuration =

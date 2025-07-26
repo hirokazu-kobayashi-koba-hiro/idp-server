@@ -21,11 +21,14 @@ import java.util.Map;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.core.oidc.type.ciba.BindingMessage;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
 public class AuthenticationDeviceBindingMessageInteractor implements AuthenticationInteractor {
+
+  LoggerWrapper log = LoggerWrapper.getLogger(AuthenticationDeviceBindingMessageInteractor.class);
 
   public AuthenticationInteractionType type() {
     return StandardAuthenticationInteraction.AUTHENTICATION_DEVICE_BINDING_MESSAGE.toType();
@@ -44,6 +47,8 @@ public class AuthenticationDeviceBindingMessageInteractor implements Authenticat
       AuthenticationInteractionRequest request,
       RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
+
+    log.debug("AuthenticationDeviceBindingMessageInteractor called");
 
     AuthenticationContext authenticationContext = transaction.requestContext();
     BindingMessage bindingMessage = authenticationContext.bindingMessage();
@@ -77,6 +82,7 @@ public class AuthenticationDeviceBindingMessageInteractor implements Authenticat
     Map<String, Object> response = Map.of();
     DefaultSecurityEventType eventType =
         DefaultSecurityEventType.authentication_device_binding_message_success;
+
     return new AuthenticationInteractionRequestResult(
         status, type, operationType(), method(), response, eventType);
   }

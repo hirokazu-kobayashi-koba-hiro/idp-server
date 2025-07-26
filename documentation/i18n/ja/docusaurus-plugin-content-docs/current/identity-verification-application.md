@@ -1081,7 +1081,7 @@ from で参照できるトップレベルのオブジェクトは以下の通り
           {
             "type": "http_request",
             "details": {
-              "url": "http://mockoon:4000/apply",
+              "url": "http://localhost:4000/apply",
               "method": "POST",
               "static_headers": {
                 "Content-Type": "application/json",
@@ -1111,7 +1111,7 @@ from で参照できるトップレベルのオブジェクトは以下の通り
       "execution": {
         "type": "http_request",
         "http_request": {
-          "url": "http://mockoon:4000/apply",
+          "url": "http://localhost:4000/apply",
           "method": "POST",
           "header_mapping_rules": [
             {
@@ -1182,7 +1182,7 @@ from で参照できるトップレベルのオブジェクトは以下の通り
       "execution": {
         "type": "http_request",
         "http_request": {
-          "url": "http://mockoon:4000/{{external_application_id}}/request-ekyc",
+          "url": "http://localhost:4000/{{external_application_id}}/request-ekyc",
           "method": "POST",
           "header_mapping_rules": [
             {
@@ -1239,7 +1239,7 @@ from で参照できるトップレベルのオブジェクトは以下の通り
       "execution": {
         "type": "http_request",
         "http_request": {
-          "url": "http://mockoon:4000/{{external_application_id}}/complete-ekyc",
+          "url": "http://localhost:4000/{{external_application_id}}/complete-ekyc",
           "method": "POST",
           "header_mapping_rules": [
             {
@@ -1295,7 +1295,7 @@ from で参照できるトップレベルのオブジェクトは以下の通り
       "execution": {
         "type": "http_request",
         "http_request": {
-          "url": "http://mockoon:4000/crm-registration",
+          "url": "http://localhost:4000/crm-registration",
           "method": "POST",
           "auth_type": "hmac_sha256",
           "hmac_authentication": {

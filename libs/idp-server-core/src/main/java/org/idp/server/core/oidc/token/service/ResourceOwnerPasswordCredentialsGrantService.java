@@ -18,7 +18,7 @@ package org.idp.server.core.oidc.token.service;
 
 import java.util.UUID;
 import org.idp.server.core.oidc.authentication.Authentication;
-import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
+import org.idp.server.core.oidc.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
 import org.idp.server.core.oidc.grant.AuthorizationGrant;

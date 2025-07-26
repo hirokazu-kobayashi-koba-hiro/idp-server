@@ -23,6 +23,7 @@ import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.mapper.UserInfoMapper;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.http.*;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
@@ -32,6 +33,7 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
   AuthenticationConfigurationQueryRepository configurationRepository;
   OAuthAuthorizationResolvers authorizationResolvers;
   HttpRequestExecutor httpRequestExecutor;
+  LoggerWrapper log = LoggerWrapper.getLogger(ExternalTokenAuthenticationInteractor.class);
 
   public ExternalTokenAuthenticationInteractor(
       AuthenticationConfigurationQueryRepository configurationRepository) {
@@ -58,6 +60,8 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
       AuthenticationInteractionRequest request,
       RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
+
+    log.debug("ExternalTokenAuthenticationInteractor called");
 
     ExternalTokenAuthenticationConfiguration configuration =
         configurationRepository.get(
