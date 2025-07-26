@@ -21,6 +21,7 @@ const sidebars = {
   docs: [
     'introduction',
     'getting-started',
+    'tech-overview',
     'features',
     'use-cases',
     'multi-tenant',
@@ -66,6 +67,7 @@ const sidebars = {
       ],
     },
     'test-strategy',
+    'performance-test',
     'deployment',
     'contributing',
     'faq',
