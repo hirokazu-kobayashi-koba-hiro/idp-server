@@ -84,15 +84,32 @@ idp:
     redis:
       host: "${REDIS_HOST:localhost}"
       port: ${REDIS_PORT:6379}
-      maxTotal: 20
-      maxIdle: 3
-      minIdle: 2
+      maxTotal: ${REDIS_MAX_TOTAL:20}
+      maxIdle: ${REDIS_MAX_IDLE:3}
+      minIdle: ${REDIS_MIN_IDLE:2}
 
 logging:
   level:
     root: "${LOGGING_LEVEL_ROOT:info}"
     web: "${LOGGING_LEVEL_WEB:info}"
-    org.idp.server.platform.http.HttpRequestExecutor: "${LOGGING_LEVEL_HTTP_REQUEST_EXECUTOR:debug}"
+    org:
+      idp:
+        server:
+          platform: "${LOGGING_LEVEL_IDP_SERVER_PLATFORM:info}"
+          authentication: "${LOGGING_LEVEL_IDP_SERVER_AUTHENTICATION_INTERACTORS:info}"
+          control_plane: "${LOGGING_LEVEL_IDP_SERVER_CONTROL_PLANE:info}"
+          core.oidc: "${LOGGING_LEVEL_IDP_SERVER_CORE_OIDC:info}"
+          core.adapters: "${LOGGING_LEVEL_IDP_SERVER_CORE_ADAPTERS:info}"
+          core.extension: "${LOGGING_LEVEL_IDP_SERVER_CORE_EXTENSION:info}"
+          emai.aws: "${LOGGING_LEVEL_IDP_SERVER_EMAIL_AWS:info}"
+          federation:  "${LOGGING_LEVEL_IDP_SERVER_FEDERATION:info}"
+          notification.push.fcm: "${LOGGING_LEVEL_IDP_SERVER_NOTIFICATION_PUSH_FCM:info}"
+          security.event.hook.ssf: "${LOGGING_LEVEL_IDP_SERVER_SECURITY_EVENT_HOOK_SSF:info}"
+          security.event.hooks: "${LOGGING_LEVEL_IDP_SERVER_SECURITY_EVENT_HOOKS:info}"
+          adapters.springboot: "${LOGGING_LEVEL_IDP_SERVER_ADAPTERS_SPRING_BOOT:info}"
+          usecases: "${LOGGING_LEVEL_IDP_SERVER_USECASES:info}"
+          authenticators.webauthn4j: "${LOGGING_LEVEL_IDP_SERVER_AUTHENTICATORS_WEBAUTHN4J:info}"
+    org.idp.server.platform.http.HttpRequestExecutor: "${LOGGING_LEVEL_IDP_SERVER_HTTP_REQUEST_EXECUTOR:debug}"
 
 spring:
   data:

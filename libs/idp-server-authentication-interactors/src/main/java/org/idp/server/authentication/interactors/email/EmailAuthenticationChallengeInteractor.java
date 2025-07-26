@@ -26,6 +26,7 @@ import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserStatus;
 import org.idp.server.core.oidc.identity.exception.UserTooManyFoundResultException;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.notification.email.EmailSendResult;
 import org.idp.server.platform.notification.email.EmailSender;
@@ -39,6 +40,7 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
   AuthenticationInteractionCommandRepository interactionCommandRepository;
   EmailSenders emailSenders;
+  LoggerWrapper log = LoggerWrapper.getLogger(EmailAuthenticationChallengeInteractor.class);
 
   public EmailAuthenticationChallengeInteractor(
       AuthenticationConfigurationQueryRepository configurationQueryRepository,
@@ -74,6 +76,8 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
       UserQueryRepository userQueryRepository) {
 
     try {
+
+      log.debug("EmailAuthenticationChallengeInteractor called");
 
       EmailAuthenticationConfiguration emailAuthenticationConfiguration =
           configurationQueryRepository.get(tenant, "email", EmailAuthenticationConfiguration.class);

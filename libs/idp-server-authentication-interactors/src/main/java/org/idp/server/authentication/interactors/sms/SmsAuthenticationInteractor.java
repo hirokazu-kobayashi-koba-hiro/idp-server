@@ -20,6 +20,7 @@ import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
@@ -28,6 +29,7 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
 
   SmsAuthenticationExecutors executors;
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
+  LoggerWrapper log = LoggerWrapper.getLogger(SmsAuthenticationInteractor.class);
 
   public SmsAuthenticationInteractor(
       SmsAuthenticationExecutors executors,
@@ -54,6 +56,9 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
       AuthenticationInteractionRequest request,
       RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
+
+    log.debug("SmsAuthenticationInteractor called");
+
     SmsAuthenticationConfiguration configuration =
         configurationQueryRepository.get(tenant, "sms", SmsAuthenticationConfiguration.class);
     SmsAuthenticationExecutor executor = executors.get(configuration.type());

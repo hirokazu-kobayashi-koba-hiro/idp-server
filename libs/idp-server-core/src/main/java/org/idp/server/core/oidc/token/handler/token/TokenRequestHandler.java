@@ -18,7 +18,7 @@ package org.idp.server.core.oidc.token.handler.token;
 
 import java.util.Map;
 import org.idp.server.core.oidc.clientauthenticator.ClientAuthenticationHandler;
-import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
+import org.idp.server.core.oidc.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.oidc.configuration.client.ClientConfiguration;

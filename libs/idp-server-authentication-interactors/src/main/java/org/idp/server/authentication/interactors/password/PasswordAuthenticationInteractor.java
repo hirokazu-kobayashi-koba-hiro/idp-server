@@ -22,6 +22,7 @@ import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.authentication.PasswordVerificationDelegation;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
@@ -29,6 +30,7 @@ import org.idp.server.platform.type.RequestAttributes;
 public class PasswordAuthenticationInteractor implements AuthenticationInteractor {
 
   PasswordVerificationDelegation passwordVerificationDelegation;
+  LoggerWrapper log = LoggerWrapper.getLogger(PasswordAuthenticationInteractor.class);
 
   public PasswordAuthenticationInteractor(
       PasswordVerificationDelegation passwordVerificationDelegation) {
@@ -52,6 +54,8 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
       AuthenticationInteractionRequest request,
       RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
+
+    log.debug("PasswordAuthenticationInteractor called");
 
     String username = request.optValueAsString("username", "");
     String password = request.optValueAsString("password", "");

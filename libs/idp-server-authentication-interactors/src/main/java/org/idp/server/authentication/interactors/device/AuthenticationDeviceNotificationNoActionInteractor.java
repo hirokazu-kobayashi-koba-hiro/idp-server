@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors.fidouaf;
+package org.idp.server.authentication.interactors.device;
 
 import java.util.Map;
 import org.idp.server.core.oidc.authentication.*;
@@ -24,23 +24,25 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
-public class FidoUafCancelInteractor implements AuthenticationInteractor {
+public class AuthenticationDeviceNotificationNoActionInteractor
+    implements AuthenticationInteractor {
 
-  LoggerWrapper log = LoggerWrapper.getLogger(FidoUafCancelInteractor.class);
+  LoggerWrapper log =
+      LoggerWrapper.getLogger(AuthenticationDeviceNotificationNoActionInteractor.class);
 
   @Override
   public AuthenticationInteractionType type() {
-    return StandardAuthenticationInteraction.FIDO_UAF_CANCEL.toType();
+    return new AuthenticationInteractionType("authentication-device-notification-no-action");
   }
 
   @Override
   public OperationType operationType() {
-    return OperationType.DENY;
+    return OperationType.NO_ACTION;
   }
 
   @Override
   public String method() {
-    return "cancel";
+    return "authentication-device-no-action";
   }
 
   @Override
@@ -52,11 +54,13 @@ public class FidoUafCancelInteractor implements AuthenticationInteractor {
       RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
-    log.info("FidoUafCancelInteractor called");
+    log.debug("AuthenticationDeviceNotificationNoActionInteractor called");
 
     AuthenticationInteractionStatus status = AuthenticationInteractionStatus.SUCCESS;
     Map<String, Object> response = Map.of();
-    DefaultSecurityEventType eventType = DefaultSecurityEventType.authentication_cancel_success;
+    DefaultSecurityEventType eventType =
+        DefaultSecurityEventType.authentication_device_notification_no_action_success;
+
     return new AuthenticationInteractionRequestResult(
         status, type, operationType(), method(), response, eventType);
   }

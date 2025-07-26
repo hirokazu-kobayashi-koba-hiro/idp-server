@@ -19,11 +19,14 @@ package org.idp.server.authentication.interactors.device;
 import java.util.Map;
 import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
 public class AuthenticationDeviceDeniedInteractor implements AuthenticationInteractor {
+
+  LoggerWrapper log = LoggerWrapper.getLogger(AuthenticationDeviceDeniedInteractor.class);
 
   @Override
   public AuthenticationInteractionType type() {
@@ -49,10 +52,13 @@ public class AuthenticationDeviceDeniedInteractor implements AuthenticationInter
       RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
+    log.debug("AuthenticationDeviceDeniedInteractor called");
+
     AuthenticationInteractionStatus status = AuthenticationInteractionStatus.SUCCESS;
     Map<String, Object> response = Map.of();
     DefaultSecurityEventType eventType =
         DefaultSecurityEventType.authentication_device_deny_success;
+
     return new AuthenticationInteractionRequestResult(
         status, type, operationType(), method(), response, eventType);
   }

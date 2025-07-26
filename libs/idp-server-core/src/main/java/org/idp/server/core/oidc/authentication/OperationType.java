@@ -22,6 +22,7 @@ public enum OperationType {
   REGISTRATION,
   DENY,
   DE_REGISTRATION,
+  NO_ACTION,
   UNKNOWN;
 
   public static OperationType of(String type) {

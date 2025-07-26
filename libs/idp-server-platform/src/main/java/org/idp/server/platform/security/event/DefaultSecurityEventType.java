@@ -79,6 +79,8 @@ public enum DefaultSecurityEventType {
   authentication_device_notification_success("User successfully received a device notification"),
   authentication_device_notification_cancel("User canceled a device notification"),
   authentication_device_notification_failure("User failed to receive a device notification"),
+  authentication_device_notification_no_action_success(
+      "Authentication device notification is no action"),
   authentication_device_deny_success("User successfully denied a device authentication"),
   authentication_device_deny_failure("User failed to deny a device authentication"),
   authentication_cancel_success("User successfully cancel a authentication"),

@@ -208,6 +208,9 @@ public class CibaRequestContext implements BackchannelRequestContext {
   }
 
   public AuthenticationInteractionType defaultCibaAuthenticationInteractionType() {
+    if (clientConfiguration.hasDefaultCibaAuthenticationInteractionType()) {
+      return clientConfiguration.defaultCibaAuthenticationInteractionType();
+    }
     return authorizationServerConfiguration.defaultCibaAuthenticationInteractionType();
   }
 

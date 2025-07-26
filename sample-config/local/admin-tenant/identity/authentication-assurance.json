@@ -97,7 +97,7 @@
           {
             "type": "http_request",
             "details": {
-              "url": "http://mockoon:4000/apply",
+              "url": "http://localhost:4000/apply",
               "method": "POST",
               "static_headers": {
                 "Content-Type": "application/json",
@@ -125,7 +125,7 @@
       "execution": {
         "type": "http_request",
         "http_request": {
-          "url": "http://mockoon:4000/apply",
+          "url": "http://localhost:4000/apply",
           "method": "POST",
           "header_mapping_rules": [
             { "static_value": "application/json", "to": "Content-Type" },
@@ -175,7 +175,7 @@
       "execution": {
         "type": "http_request",
         "http_request": {
-          "url": "http://mockoon:4000/request-authentication",
+          "url": "http://localhost:4000/request-authentication",
           "method": "POST",
           "header_mapping_rules": [
             { "static_value": "application/json", "to": "Content-Type" },
@@ -210,7 +210,7 @@
       "execution": {
         "type": "http_request",
         "http_request": {
-          "url": "http://mockoon:4000/authentication-status",
+          "url": "http://localhost:4000/authentication-status",
           "method": "POST",
           "header_mapping_rules": [
             { "static_value": "application/json", "to": "Content-Type" },

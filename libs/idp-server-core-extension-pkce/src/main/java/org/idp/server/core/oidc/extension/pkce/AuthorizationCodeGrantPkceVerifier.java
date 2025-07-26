@@ -16,7 +16,7 @@
 
 package org.idp.server.core.oidc.extension.pkce;
 
-import org.idp.server.core.oidc.clientcredentials.ClientCredentials;
+import org.idp.server.core.oidc.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.oidc.grant.AuthorizationCodeGrant;
 import org.idp.server.core.oidc.pkce.CodeChallengeCalculator;
 import org.idp.server.core.oidc.request.AuthorizationRequest;

@@ -24,6 +24,7 @@ import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
 import org.idp.server.core.oidc.identity.device.NotificationChannel;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
@@ -32,6 +33,7 @@ public class AuthenticationDeviceNotificationInteractor implements Authenticatio
 
   AuthenticationDeviceNotifiers authenticationDeviceNotifiers;
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
+  LoggerWrapper log = LoggerWrapper.getLogger(AuthenticationDeviceNotificationInteractor.class);
 
   public AuthenticationDeviceNotificationInteractor(
       AuthenticationDeviceNotifiers authenticationDeviceNotifiers,
@@ -65,6 +67,9 @@ public class AuthenticationDeviceNotificationInteractor implements Authenticatio
       UserQueryRepository userQueryRepository) {
 
     try {
+
+      log.debug("AuthenticationDeviceNotificationInteractor called");
+
       AuthenticationDeviceNotificationConfiguration configuration =
           configurationQueryRepository.get(
               tenant, "authentication-device", AuthenticationDeviceNotificationConfiguration.class);
@@ -103,6 +108,7 @@ public class AuthenticationDeviceNotificationInteractor implements Authenticatio
       Map<String, Object> response = Map.of();
       DefaultSecurityEventType eventType =
           DefaultSecurityEventType.authentication_device_notification_success;
+
       return new AuthenticationInteractionRequestResult(
           status, type, operationType(), method(), response, eventType);
     } catch (Exception e) {
