@@ -14,6 +14,30 @@
 
 といったニーズに対応するため、**idp-server** はすべての機能をテナント単位で制御・分離できる設計になっています。
 
+```mermaid
+flowchart TB
+  idp_server["🛡️ idp-server"]
+  subgraph Tenant A
+    a_config["Config A"]
+    a_users["Users A"]
+  end
+  subgraph Tenant B
+    b_config["Config B"]
+    b_users["Users B"]
+  end
+  idp_server --> a_config
+  idp_server --> b_config
+
+```
+
+### 導入パターン例
+
+- グループ会社ごとに分離してIdPを提供（B2B）
+- 開発・ステージング・本番の分離（DevOps）
+- ホワイトラベルSaaSの提供元が、顧客ごとにIdPをカスタマイズ（OEM型）
+
+
+
 ---
 
 ## 設定ガイド
