@@ -1,0 +1,236 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "IdentityVerificationProcessConfiguration",
+  "type": "object",
+  "properties": {
+    "request": {
+      "type": "object",
+      "properties": {
+        "basic_auth": {
+          "type": "object",
+          "properties": {
+            "username": { "type": "string" },
+            "password": { "type": "string" }
+          },
+          "required": ["username", "password"]
+        },
+        "schema": {
+          "type": "object",
+          "description": "リクエスト検証用のJSON Schema",
+          "additionalProperties": true
+        }
+      }
+    },
+    "pre_hook": {
+      "type": "object",
+      "properties": {
+        "verifications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string" },
+              "details": {
+                "type": "object",
+                "properties": {
+                  "verification_parameters": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "request_json_path": { "type": "string" },
+                        "user_claim_json_path": { "type": "string" }
+                      },
+                      "required": ["request_json_path", "user_claim_json_path"]
+                    }
+                  }
+                }
+              }
+            },
+            "required": ["type"]
+          }
+        },
+        "additional_parameters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "enum": ["http_request"] },
+              "details": {
+                "type": "object",
+                "properties": {
+                  "url": { "type": "string" },
+                  "method": { "type": "string" },
+                  "auth_type": {
+                    "type": "string",
+                    "enum": ["none", "oauth2", "hmac_sha256"]
+                  },
+                  "path_mapping_rules": {
+                    "type": "array",
+                    "items": { "$ref": "#/definitions/MappingRule" }
+                  },
+                  "header_mapping_rules": {
+                    "type": "array",
+                    "items": { "$ref": "#/definitions/MappingRule" }
+                  },
+                  "body_mapping_rules": {
+                    "type": "array",
+                    "items": { "$ref": "#/definitions/MappingRule" }
+                  }
+                },
+                "required": ["url", "method"]
+              }
+            },
+            "required": ["type", "details"]
+          }
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["http_request", "no_action", "mock"]
+        },
+        "http_request": {
+          "type": "object",
+          "properties": {
+            "url": { "type": "string" },
+            "method": { "type": "string" },
+            "auth_type": {
+              "type": "string",
+              "enum": ["none", "oauth2", "hmac_sha256"]
+            },
+            "oauth_authorization": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string" },
+                "token_endpoint": { "type": "string" },
+                "client_id": { "type": "string" },
+                "username": { "type": "string" },
+                "password": { "type": "string" },
+                "scope": { "type": "string" }
+              }
+            },
+            "hmac_authentication": {
+              "type": "object",
+              "properties": {
+                "api_key": { "type": "string" },
+                "secret": { "type": "string" },
+                "signature_format": { "type": "string" },
+                "signing_fields": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              }
+            },
+            "path_mapping_rules": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/MappingRule" }
+            },
+            "header_mapping_rules": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/MappingRule" }
+            },
+            "body_mapping_rules": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/MappingRule" }
+            }
+          }
+        }
+      }
+    },
+    "post_hook": {
+      "type": "object",
+      "properties": {
+        "transformations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "enum": ["data_validation", "data_mapping"] },
+              "rules": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": { "type": "string" },
+                    "expected": {}
+                  }
+                }
+              },
+              "mapping_rules": {
+                "type": "array",
+                "items": { "$ref": "#/definitions/MappingRule" }
+              }
+            },
+            "required": ["type"]
+          }
+        }
+      }
+    },
+    "transition": {
+      "type": "object",
+      "properties": {
+        "approved": { "$ref": "#/definitions/TransitionCondition" },
+        "rejected": { "$ref": "#/definitions/TransitionCondition" },
+        "canceled": { "$ref": "#/definitions/TransitionCondition" }
+      }
+    },
+    "store": {
+      "type": "object",
+      "properties": {
+        "application_details_mapping_rules": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/MappingRule" }
+        }
+      }
+    },
+    "response": {
+      "type": "object",
+      "properties": {
+        "body_mapping_rules": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/MappingRule" }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "MappingRule": {
+      "type": "object",
+      "properties": {
+        "from": { "type": "string" },
+        "static_value": {},
+        "to": { "type": "string" },
+        "convert_type": {
+          "type": "string",
+          "enum": ["string", "integer", "boolean", "datetime"]
+        }
+      },
+      "required": ["to"]
+    },
+    "TransitionCondition": {
+      "type": "object",
+      "properties": {
+        "any_of": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": { "type": "string" },
+                "type": { "type": "string" },
+                "operation": { "type": "string" },
+                "value": {}
+              },
+              "required": ["path", "type", "operation"]
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -59,3 +59,9 @@ cat ../../libs/idp-server-authentication-interactors/src/main/resources/schema/1
 ```shell
 cat ../../libs/idp-server-authentication-interactors/src/main/resources/schema/1.0/authentication/authentication-device/fcm.json | yq -P > schema.yaml
 ```
+
+### identity-verification-application
+
+```shell
+cat ../../libs/idp-server-core-extension-ida/src/main/resources/schema/1.0/identity-verification.json | yq -P > schema.yaml
+```
