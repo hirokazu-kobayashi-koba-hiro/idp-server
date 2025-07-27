@@ -35,6 +35,11 @@ public interface AuthenticationTransactionQueryRepository {
       AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
       AuthenticationTransactionQueries queries);
 
+  long findTotalCount(
+      Tenant tenant,
+      AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
+      AuthenticationTransactionQueries queries);
+
   long findTotalCount(Tenant tenant, AuthenticationTransactionQueries queries);
 
   List<AuthenticationTransaction> findList(Tenant tenant, AuthenticationTransactionQueries queries);

@@ -38,4 +38,9 @@ public interface AuthenticationTransactionQuerySqlExecutor {
   List<Map<String, String>> selectList(Tenant tenant, AuthenticationTransactionQueries queries);
 
   Map<String, String> selectCount(Tenant tenant, AuthenticationTransactionQueries queries);
+
+  Map<String, String> selectCountByDeviceId(
+      Tenant tenant,
+      AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
+      AuthenticationTransactionQueries queries);
 }

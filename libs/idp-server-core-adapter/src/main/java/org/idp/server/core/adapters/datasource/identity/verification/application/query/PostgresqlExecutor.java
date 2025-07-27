@@ -167,18 +167,75 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationQueryS
     return sqlExecutor.selectList(sql, params);
   }
 
+  @Override
+  public Map<String, String> selectCount(
+      Tenant tenant, User user, IdentityVerificationApplicationQueries queries) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    StringBuilder sqlBuilder = new StringBuilder();
+    sqlBuilder.append("SELECT COUNT(*) FROM identity_verification_application");
+    sqlBuilder.append(" WHERE user_id = ?::uuid AND tenant_id = ?::uuid");
+
+    List<Object> params = new ArrayList<>();
+    params.add(user.sub());
+    params.add(tenant.identifierUUID());
+
+    if (queries.hasFrom()) {
+      sqlBuilder.append(" AND created_at >= ?");
+      params.add(queries.from());
+    }
+
+    if (queries.hasTo()) {
+      sqlBuilder.append(" AND created_at <= ?");
+      params.add(queries.to());
+    }
+
+    if (queries.hasId()) {
+      sqlBuilder.append(" AND id = ?::uuid");
+      params.add(queries.idAsUuid());
+    }
+
+    if (queries.hasType()) {
+      sqlBuilder.append(" AND verification_type = ?");
+      params.add(queries.type());
+    }
+
+    if (queries.hasClientId()) {
+      sqlBuilder.append(" AND client_id = ?");
+      params.add(queries.clientId());
+    }
+
+    if (queries.hasStatus()) {
+      sqlBuilder.append(" AND status = ?");
+      params.add(queries.status());
+    }
+
+    if (queries.hasApplicationDetails()) {
+      for (Map.Entry<String, String> entry : queries.applicationDetails().entrySet()) {
+        String key = entry.getKey();
+        String value = entry.getValue();
+        sqlBuilder.append(" AND application_details ->> ? = ?");
+        params.add(key);
+        params.add(value);
+      }
+    }
+
+    String sql = sqlBuilder.toString();
+    return sqlExecutor.selectOne(sql, params);
+  }
+
   String selectSql =
       """
           SELECT id,
-                       tenant_id,
-                       client_id,
-                       user_id,
-                       verification_type,
-                       application_details,
-                       processes,
-                       status,
-                       requested_at,
-                       comment
-                 FROM identity_verification_application
+                 tenant_id,
+                 client_id,
+                 user_id,
+                 verification_type,
+                 application_details,
+                 processes,
+                 attributes,
+                 status,
+                 requested_at
+          FROM identity_verification_application
           """;
 }

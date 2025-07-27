@@ -38,8 +38,9 @@ public class ModelConverter {
         new IdentityVerificationType(map.get("verification_type"));
     UserIdentifier sub = new UserIdentifier(map.get("user_id"));
     IdentityVerificationApplicationDetails details =
-        new IdentityVerificationApplicationDetails(
-            JsonNodeWrapper.fromString(map.get("application_details")));
+        IdentityVerificationApplicationDetails.fromJson(map.get("application_details"));
+    IdentityVerificationApplicationAttributes attributes =
+        IdentityVerificationApplicationAttributes.fromJson(map.get("attributes"));
 
     IdentityVerificationApplicationProcessResults processes = toProcesses(map);
 
@@ -55,6 +56,7 @@ public class ModelConverter {
         sub,
         details,
         processes,
+        attributes,
         status,
         requestedAt);
   }

@@ -35,6 +35,14 @@ public class IdentityVerificationSourceDetails {
     this.json = json;
   }
 
+  public static IdentityVerificationSourceDetails fromJson(String json) {
+    return new IdentityVerificationSourceDetails(JsonNodeWrapper.fromString(json));
+  }
+
+  public static IdentityVerificationSourceDetails fromMap(Map<String, Object> json) {
+    return new IdentityVerificationSourceDetails(JsonNodeWrapper.fromMap(json));
+  }
+
   public static IdentityVerificationSourceDetails create(
       Map<String, Object> context, List<MappingRule> mappingRules) {
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(context);
@@ -50,5 +58,9 @@ public class IdentityVerificationSourceDetails {
 
   public Map<String, Object> toMap() {
     return json.toMap();
+  }
+
+  public String toJson() {
+    return json.toJson();
   }
 }

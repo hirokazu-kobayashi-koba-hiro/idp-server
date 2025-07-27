@@ -135,6 +135,72 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
   }
 
   @Override
+  public Map<String, String> selectCountByDeviceId(
+      Tenant tenant,
+      AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
+      AuthenticationTransactionQueries queries) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    StringBuilder sql =
+        new StringBuilder("SELECT COUNT(*) FROM authentication_transaction")
+            .append(" WHERE tenant_id = ?::uuid AND authentication_device_id = ?::uuid");
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierValue());
+    params.add(authenticationDeviceIdentifier.valueAsUuid());
+
+    if (queries.hasFrom()) {
+      sql.append(" AND created_at >= ?");
+      params.add(queries.from());
+    }
+
+    if (queries.hasTo()) {
+      sql.append(" AND created_at <= ?");
+      params.add(queries.to());
+    }
+
+    if (queries.hasId()) {
+      sql.append(" AND id = ?");
+      params.add(queries.id());
+    }
+
+    if (queries.hasFlow()) {
+      sql.append(" AND flow = ?");
+      params.add(queries.flow());
+    }
+
+    if (queries.hasAuthorizationId()) {
+      sql.append(" AND authorization_id = ?::uuid");
+      params.add(queries.authorizationIdAsUuid());
+    }
+
+    if (queries.hasClientId()) {
+      sql.append(" AND client_id = ?");
+      params.add(queries.clientId());
+    }
+
+    if (queries.hasDeviceId()) {
+      sql.append(" AND authentication_device_id = ?::uuid");
+      params.add(queries.deviceIdAsUuid());
+    }
+
+    if (queries.isExcludeExpired()) {
+      sql.append(" AND expires_at > ?");
+      params.add(SystemDateTime.now());
+    }
+
+    if (queries.hasAttributes()) {
+      for (Map.Entry<String, String> entry : queries.attributes().entrySet()) {
+        String key = entry.getKey();
+        String value = entry.getValue();
+        sql.append(" AND attributes ->> ? = ?");
+        params.add(key);
+        params.add(value);
+      }
+    }
+
+    return sqlExecutor.selectOne(sql.toString(), params);
+  }
+
+  @Override
   public Map<String, String> selectCount(Tenant tenant, AuthenticationTransactionQueries queries) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM authentication_transaction");

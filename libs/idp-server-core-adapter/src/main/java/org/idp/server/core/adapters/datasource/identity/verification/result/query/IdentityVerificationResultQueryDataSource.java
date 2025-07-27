@@ -37,6 +37,19 @@ public class IdentityVerificationResultQueryDataSource
   }
 
   @Override
+  public long findTotalCount(Tenant tenant, User user, IdentityVerificationResultQueries queries) {
+    IdentityVerificationResultSqlExecutor executor = executors.get(tenant.databaseType());
+
+    Map<String, String> result = executor.selectCount(tenant, user, queries);
+
+    if (result == null || result.isEmpty()) {
+      return 0;
+    }
+
+    return Long.parseLong(result.get("count"));
+  }
+
+  @Override
   public List<IdentityVerificationResult> findList(
       Tenant tenant, User user, IdentityVerificationResultQueries queries) {
     IdentityVerificationResultSqlExecutor executor = executors.get(tenant.databaseType());

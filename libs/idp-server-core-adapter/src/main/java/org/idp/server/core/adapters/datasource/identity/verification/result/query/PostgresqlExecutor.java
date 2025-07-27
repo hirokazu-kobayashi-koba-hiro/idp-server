@@ -119,6 +119,72 @@ public class PostgresqlExecutor implements IdentityVerificationResultSqlExecutor
     return sqlExecutor.selectList(sql, params);
   }
 
+  @Override
+  public Map<String, String> selectCount(
+      Tenant tenant, User user, IdentityVerificationResultQueries queries) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    StringBuilder sqlBuilder = new StringBuilder();
+    sqlBuilder.append("SELECT COUNT(*) FROM identity_verification_result");
+    sqlBuilder.append(" WHERE user_id = ?::uuid AND tenant_id = ?::uuid");
+
+    List<Object> params = new ArrayList<>();
+    params.add(user.subAsUuid());
+    params.add(tenant.identifierUUID());
+
+    if (queries.hasVerifiedAtFrom()) {
+      sqlBuilder.append(" AND verified_at >= ?");
+      params.add(queries.verifiedAtFrom());
+    }
+
+    if (queries.hasVerifiedAtTo()) {
+      sqlBuilder.append(" AND verified_at <= ?");
+      params.add(queries.verifiedAtTo());
+    }
+
+    if (queries.hasVerifiedUntilFrom()) {
+      sqlBuilder.append(" AND verified_until >= ?");
+      params.add(queries.verifiedUntilFrom());
+    }
+
+    if (queries.hasVerifiedUntilTo()) {
+      sqlBuilder.append(" AND verified_until <= ?");
+      params.add(queries.verifiedUntilTo());
+    }
+
+    if (queries.hasId()) {
+      sqlBuilder.append(" AND id = ?::uuid");
+      params.add(queries.idAsUuid());
+    }
+    if (queries.hasType()) {
+      sqlBuilder.append(" AND verification_type = ?");
+      params.add(queries.type());
+    }
+
+    if (queries.hasApplicationId()) {
+      sqlBuilder.append(" AND application_id = ?::uuid");
+      params.add(queries.applicationIdAsUuid());
+    }
+
+    if (queries.hasSource()) {
+      sqlBuilder.append(" AND source = ?");
+      params.add(queries.source());
+    }
+
+    if (queries.hasVerifiedClaims()) {
+      for (Map.Entry<String, String> entry : queries.verifiedClaims().entrySet()) {
+        String key = entry.getKey();
+        String value = entry.getValue();
+        sqlBuilder.append(" AND verified_claims ->> ? = ?");
+        params.add(key);
+        params.add(value);
+      }
+    }
+
+    String sql = sqlBuilder.toString();
+    return sqlExecutor.selectOne(sql, params);
+  }
+
   String selectSql =
       """
           SELECT id,
@@ -131,6 +197,7 @@ public class PostgresqlExecutor implements IdentityVerificationResultSqlExecutor
                  valid_until,
                  source,
                  source_details,
+                 attributes,
                  created_at
                  FROM identity_verification_result
           """;
