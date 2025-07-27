@@ -29,4 +29,7 @@ public interface IdentityVerificationResultSqlExecutor {
 
   List<Map<String, String>> selectList(
       Tenant tenant, User user, IdentityVerificationResultQueries queries);
+
+  Map<String, String> selectCount(
+      Tenant tenant, User user, IdentityVerificationResultQueries queries);
 }

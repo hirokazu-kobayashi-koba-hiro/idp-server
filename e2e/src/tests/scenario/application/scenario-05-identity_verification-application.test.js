@@ -141,6 +141,7 @@ describe("identity-verification application", () => {
       expect(applicationsResponse.data.list[0]).toHaveProperty("application_details");
       expect(applicationsResponse.data.list[0].status).toEqual("applying");
       expect(applicationsResponse.data.list[0]).toHaveProperty("requested_at");
+      expect(applicationsResponse.data.list[0].attributes.label).toEqual("証券口座開設");
 
 
       const callbackEndpoint = serverConfig.identityVerificationApplicationsPublicCallbackEndpoint
@@ -185,6 +186,7 @@ describe("identity-verification application", () => {
       expect(applicationsResponse.data.list[0].user_id).toEqual(user.sub);
       expect(applicationsResponse.data.list[0]).toHaveProperty("application_details");
       expect(applicationsResponse.data.list[0]).toHaveProperty("requested_at");
+      expect(applicationsResponse.data.list[0].attributes.label).toEqual("証券口座開設");
 
       const callbackResultEndpoint = serverConfig.identityVerificationApplicationsPublicCallbackEndpoint
         .replace("{type}", type)
@@ -279,6 +281,7 @@ describe("identity-verification application", () => {
       expect(applicationsResponse.data.list[0]).toHaveProperty("application_details");
       expect(applicationsResponse.data.list[0].status).toEqual("approved");
       expect(applicationsResponse.data.list[0]).toHaveProperty("requested_at");
+      expect(applicationsResponse.data.list[0].attributes.label).toEqual("証券口座開設");
 
       // const deleteUrl = serverConfig.identityVerificationApplicationsDeletionEndpoint
       //   .replace("{type}", type)
@@ -417,6 +420,7 @@ describe("identity-verification application", () => {
       expect(resultsResponse.data.list[0]).toHaveProperty("source_details");
       expect(resultsResponse.data.list[0].source_details.status).not.toBeNull();
       expect(resultsResponse.data.list[0]).toHaveProperty("verified_at");
+      expect(resultsResponse.data.list[0].attributes.label).toEqual("証券口座開設");
 
     });
 
@@ -705,6 +709,7 @@ describe("identity-verification application", () => {
       expect(resultsResponse.data.list[0].type).toEqual(type);
       expect(resultsResponse.data.list[0]).toHaveProperty("verified_at");
       expect(resultsResponse.data.list[0]).toHaveProperty("verified_until");
+
 
     });
   });

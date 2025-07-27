@@ -153,6 +153,17 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
+    long totalCount = resultQueryRepository.findTotalCount(tenant, user, queries);
+
+    if (totalCount == 0) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("list", List.of());
+      response.put("total_count", 0);
+      response.put("limit", queries.limit());
+      response.put("offset", queries.offset());
+      return IdentityVerificationResponse.OK(response);
+    }
+
     List<IdentityVerificationResult> resultList =
         resultQueryRepository.findList(tenant, user, queries);
 
@@ -164,6 +175,9 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
 
     Map<String, Object> response = new HashMap<>();
     response.put("list", resultList.stream().map(IdentityVerificationResult::toMap).toList());
+    response.put("total_count", totalCount);
+    response.put("limit", queries.limit());
+    response.put("offset", queries.offset());
     return IdentityVerificationResponse.OK(response);
   }
 }

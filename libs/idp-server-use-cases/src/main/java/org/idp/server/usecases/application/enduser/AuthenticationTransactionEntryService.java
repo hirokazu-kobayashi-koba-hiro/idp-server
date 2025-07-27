@@ -16,7 +16,9 @@
 
 package org.idp.server.usecases.application.enduser;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.idp.server.core.oidc.authentication.AuthenticationTransaction;
 import org.idp.server.core.oidc.authentication.AuthenticationTransactionApi;
 import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
@@ -76,10 +78,33 @@ public class AuthenticationTransactionEntryService implements AuthenticationTran
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    List<AuthenticationTransaction> authenticationTransaction =
+
+    long totalCount =
+        authenticationTransactionQueryRepository.findTotalCount(
+            tenant, authenticationDeviceIdentifier, queries);
+
+    if (totalCount == 0) {
+      Map<String, Object> contents = new HashMap<>();
+      contents.put("list", List.of());
+      contents.put("total_count", totalCount);
+      contents.put("limit", queries.limit());
+      contents.put("offset", queries.offset());
+
+      return AuthenticationTransactionFindingResponse.success(contents);
+    }
+
+    List<AuthenticationTransaction> authenticationTransactions =
         authenticationTransactionQueryRepository.findList(
             tenant, authenticationDeviceIdentifier, queries);
 
-    return AuthenticationTransactionFindingResponse.success(authenticationTransaction);
+    Map<String, Object> contents = new HashMap<>();
+    contents.put(
+        "list",
+        authenticationTransactions.stream().map(AuthenticationTransaction::toRequestMap).toList());
+    contents.put("total_count", totalCount);
+    contents.put("limit", queries.limit());
+    contents.put("offset", queries.offset());
+
+    return AuthenticationTransactionFindingResponse.success(contents);
   }
 }

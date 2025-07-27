@@ -32,7 +32,7 @@ import org.idp.server.platform.uuid.UuidConvertable;
 public class IdentityVerificationConfiguration implements JsonReadable, UuidConvertable {
   String id;
   String type;
-  String description;
+  Map<String, Object> attributes = new HashMap<>();
   IdentityVerificationCommonConfiguration common = new IdentityVerificationCommonConfiguration();
   Map<String, IdentityVerificationProcessConfiguration> processes = new HashMap<>();
   IdentityVerificationRegistrationConfig registration =
@@ -44,14 +44,14 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
   public IdentityVerificationConfiguration(
       String id,
       String type,
-      String description,
+      Map<String, Object> attributes,
       IdentityVerificationCommonConfiguration common,
       Map<String, IdentityVerificationProcessConfiguration> processes,
       IdentityVerificationRegistrationConfig registration,
       IdentityVerificationResultConfig result) {
     this.id = id;
     this.type = type;
-    this.description = description;
+    this.attributes = attributes;
     this.common = common;
     this.processes = processes;
     this.registration = registration;
@@ -70,8 +70,12 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
     return new IdentityVerificationType(type);
   }
 
-  public String description() {
-    return description;
+  public Map<String, Object> attributes() {
+    return attributes;
+  }
+
+  public boolean hasAttributes() {
+    return attributes != null && !attributes.isEmpty();
   }
 
   public boolean hasCommon() {
@@ -153,7 +157,7 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
     Map<String, Object> map = new HashMap<>();
     map.put("id", id);
     map.put("type", type);
-    map.put("description", description);
+    if (hasAttributes()) map.put("attributes", attributes);
     if (hasCommon()) map.put("common", common.toMap());
     if (hasProcesses()) map.put("processes", processes);
     if (hasRegistration()) map.put("registration", registration);

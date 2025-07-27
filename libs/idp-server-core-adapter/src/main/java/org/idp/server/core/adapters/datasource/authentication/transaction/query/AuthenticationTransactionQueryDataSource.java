@@ -83,6 +83,23 @@ public class AuthenticationTransactionQueryDataSource
   }
 
   @Override
+  public long findTotalCount(
+      Tenant tenant,
+      AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
+      AuthenticationTransactionQueries queries) {
+
+    AuthenticationTransactionQuerySqlExecutor executor = executors.get(tenant.databaseType());
+    Map<String, String> result =
+        executor.selectCountByDeviceId(tenant, authenticationDeviceIdentifier, queries);
+
+    if (result == null || result.isEmpty()) {
+      return 0;
+    }
+
+    return Long.parseLong(result.get("count"));
+  }
+
+  @Override
   public long findTotalCount(Tenant tenant, AuthenticationTransactionQueries queries) {
 
     AuthenticationTransactionQuerySqlExecutor executor = executors.get(tenant.databaseType());

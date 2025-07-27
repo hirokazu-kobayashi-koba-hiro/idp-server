@@ -37,6 +37,10 @@ public class IdentityVerificationApplicationDetails {
     this.json = json;
   }
 
+  public static IdentityVerificationApplicationDetails fromJson(String json) {
+    return new IdentityVerificationApplicationDetails(JsonNodeWrapper.fromString(json));
+  }
+
   public static IdentityVerificationApplicationDetails create(
       IdentityVerificationContext applicationContext, List<MappingRule> mappingRules) {
 
@@ -67,5 +71,9 @@ public class IdentityVerificationApplicationDetails {
 
   public Map<String, Object> toMap() {
     return json.toMap();
+  }
+
+  public String toJson() {
+    return json.toJson();
   }
 }

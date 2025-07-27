@@ -43,6 +43,7 @@ public class IdentityVerificationResult {
   LocalDateTime verifiedUntil;
   IdentityVerificationSourceType source;
   IdentityVerificationSourceDetails sourceDetails;
+  IdentityVerificationAttributes attributes;
 
   public static IdentityVerificationResult create(
       IdentityVerificationApplication application,
@@ -65,6 +66,8 @@ public class IdentityVerificationResult {
     IdentityVerificationSourceDetails sourceDetails =
         IdentityVerificationSourceDetails.create(
             context.toMap(), verificationConfiguration.result().sourceDetailsMappingRules());
+    IdentityVerificationAttributes attributes =
+        IdentityVerificationAttributes.fromMap(verificationConfiguration.attributes());
 
     return new IdentityVerificationResult(
         identifier,
@@ -76,7 +79,8 @@ public class IdentityVerificationResult {
         verifiedAt,
         null,
         source,
-        sourceDetails);
+        sourceDetails,
+        attributes);
   }
 
   public static IdentityVerificationResult createOnCallback(
@@ -100,6 +104,9 @@ public class IdentityVerificationResult {
         IdentityVerificationSourceDetails.create(
             context.toMap(), verificationConfiguration.result().sourceDetailsMappingRules());
 
+    IdentityVerificationAttributes attributes =
+        IdentityVerificationAttributes.fromMap(verificationConfiguration.attributes());
+
     return new IdentityVerificationResult(
         identifier,
         tenantId,
@@ -110,7 +117,8 @@ public class IdentityVerificationResult {
         verifiedAt,
         null,
         source,
-        sourceDetails);
+        sourceDetails,
+        attributes);
   }
 
   public static IdentityVerificationResult createOnDirect(
@@ -134,6 +142,9 @@ public class IdentityVerificationResult {
         IdentityVerificationSourceDetails.create(
             context.toMap(), verificationConfiguration.result().sourceDetailsMappingRules());
 
+    IdentityVerificationAttributes attributes =
+        IdentityVerificationAttributes.fromMap(verificationConfiguration.attributes());
+
     return new IdentityVerificationResult(
         identifier,
         tenantId,
@@ -144,7 +155,8 @@ public class IdentityVerificationResult {
         verifiedAt,
         null,
         source,
-        sourceDetails);
+        sourceDetails,
+        attributes);
   }
 
   public IdentityVerificationResult() {}
@@ -159,7 +171,8 @@ public class IdentityVerificationResult {
       LocalDateTime verifiedAt,
       LocalDateTime verifiedUntil,
       IdentityVerificationSourceType source,
-      IdentityVerificationSourceDetails sourceDetails) {
+      IdentityVerificationSourceDetails sourceDetails,
+      IdentityVerificationAttributes attributes) {
     this.identifier = identifier;
     this.tenantId = tenantId;
     this.userId = userId;
@@ -170,6 +183,7 @@ public class IdentityVerificationResult {
     this.verifiedUntil = verifiedUntil;
     this.source = source;
     this.sourceDetails = sourceDetails;
+    this.attributes = attributes;
   }
 
   public IdentityVerificationResultIdentifier identifier() {
@@ -228,6 +242,14 @@ public class IdentityVerificationResult {
     return applicationId != null && applicationId.exists();
   }
 
+  public IdentityVerificationAttributes attributes() {
+    return attributes;
+  }
+
+  public boolean hasAttributes() {
+    return attributes != null && attributes.exists();
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("id", identifier.value());
@@ -240,6 +262,7 @@ public class IdentityVerificationResult {
     map.put("verified_until", verifiedUntil);
     map.put("source", source.value());
     if (hasSourceDetails()) map.put("source_details", sourceDetails.toMap());
+    if (hasAttributes()) map.put("attributes", attributes.toMap());
     return map;
   }
 }

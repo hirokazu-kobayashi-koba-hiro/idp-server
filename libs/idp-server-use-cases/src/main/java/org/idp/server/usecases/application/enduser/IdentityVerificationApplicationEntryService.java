@@ -17,6 +17,7 @@
 package org.idp.server.usecases.application.enduser;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.*;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationHandler;
@@ -172,6 +173,17 @@ public class IdentityVerificationApplicationEntryService
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
+    long totalCount = applicationQueryRepository.findTotalCount(tenant, user, queries);
+    if (totalCount == 0) {
+
+      Map<String, Object> response = new HashMap<>();
+      response.put("list", List.of());
+      response.put("total_count", 0);
+      response.put("limit", queries.limit());
+      response.put("offset", queries.offset());
+      return IdentityVerificationApplicationResponse.OK(response);
+    }
+
     IdentityVerificationApplications applications =
         applicationQueryRepository.findList(tenant, user, queries);
 
@@ -183,6 +195,9 @@ public class IdentityVerificationApplicationEntryService
 
     Map<String, Object> response = new HashMap<>();
     response.put("list", applications.toList());
+    response.put("total_count", totalCount);
+    response.put("limit", queries.limit());
+    response.put("offset", queries.offset());
     return IdentityVerificationApplicationResponse.OK(response);
   }
 

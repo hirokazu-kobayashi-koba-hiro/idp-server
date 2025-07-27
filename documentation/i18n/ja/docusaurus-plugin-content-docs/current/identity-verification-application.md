@@ -20,13 +20,14 @@
 
 ## 申込みテンプレートの設定項目
 
-| 項目          | 内容                                          | 必須 |
-|-------------|---------------------------------------------|----|
-| `id`        | テンプレートのUUID                                 | ✅️ |
-| `type`      | 申込み種別（例: `investment-account-opening`）      | ✅️ |
-| `common`    | 共通設定。外部サービス。外部サービスのコールバック用の申込ID             | -  |
-| `processes` | 申込みプロセス。一連の身元確認のプロセスを定義する。複数登録可能            | ✅️ |
-| `result`    | `verified_claims` `source_details` のマッピング定義 | -  |
+| 項目           | 内容                                          | 必須 |
+|--------------|---------------------------------------------|----|
+| `id`         | テンプレートのUUID                                 | ✅️ |
+| `type`       | 申込み種別（例: `investment-account-opening`）      | ✅️ |
+| `common`     | 共通設定。外部サービス。外部サービスのコールバック用の申込ID             | -  |
+| `processes`  | 申込みプロセス。一連の身元確認のプロセスを定義する。複数登録可能            | ✅️ |
+| `result`     | `verified_claims` `source_details` のマッピング定義 | -  |
+| `attributes` | 申込参照APIのレスポンスに含める属性情報。                      | -  |
 
 ## 申込みステータス
 
@@ -1081,7 +1082,7 @@ from で参照できるトップレベルのオブジェクトは以下の通り
           {
             "type": "http_request",
             "details": {
-              "url": "http://localhost:4000/apply",
+              "url": "http://mockoon:4000/apply",
               "method": "POST",
               "static_headers": {
                 "Content-Type": "application/json",
@@ -1111,7 +1112,7 @@ from で参照できるトップレベルのオブジェクトは以下の通り
       "execution": {
         "type": "http_request",
         "http_request": {
-          "url": "http://localhost:4000/apply",
+          "url": "http://mockoon:4000/apply",
           "method": "POST",
           "header_mapping_rules": [
             {
@@ -1182,7 +1183,7 @@ from で参照できるトップレベルのオブジェクトは以下の通り
       "execution": {
         "type": "http_request",
         "http_request": {
-          "url": "http://localhost:4000/{{external_application_id}}/request-ekyc",
+          "url": "http://mockoon:4000/{{external_application_id}}/request-ekyc",
           "method": "POST",
           "header_mapping_rules": [
             {
@@ -1239,7 +1240,7 @@ from で参照できるトップレベルのオブジェクトは以下の通り
       "execution": {
         "type": "http_request",
         "http_request": {
-          "url": "http://localhost:4000/{{external_application_id}}/complete-ekyc",
+          "url": "http://mockoon:4000/{{external_application_id}}/complete-ekyc",
           "method": "POST",
           "header_mapping_rules": [
             {
@@ -1295,7 +1296,7 @@ from で参照できるトップレベルのオブジェクトは以下の通り
       "execution": {
         "type": "http_request",
         "http_request": {
-          "url": "http://localhost:4000/crm-registration",
+          "url": "http://mockoon:4000/crm-registration",
           "method": "POST",
           "auth_type": "hmac_sha256",
           "hmac_authentication": {

@@ -25,6 +25,8 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface IdentityVerificationResultQueryRepository {
 
+  long findTotalCount(Tenant tenant, User user, IdentityVerificationResultQueries queries);
+
   List<IdentityVerificationResult> findList(
       Tenant tenant, User user, IdentityVerificationResultQueries queries);
 

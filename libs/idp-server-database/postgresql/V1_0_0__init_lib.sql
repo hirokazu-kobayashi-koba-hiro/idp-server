@@ -822,18 +822,18 @@ CREATE INDEX idx_identity_verification_configuration_type ON identity_verificati
 
 CREATE TABLE identity_verification_application
 (
-    id                           UUID                    NOT NULL,
-    tenant_id                    UUID                    NOT NULL,
-    client_id                    VARCHAR(255)            NOT NULL,
-    user_id                      UUID                    NOT NULL,
-    verification_type            VARCHAR(255)            NOT NULL,
-    application_details          JSONB                   NOT NULL,
-    processes                    JSONB                   NOT NULL,
-    status                       VARCHAR(255)            NOT NULL,
-    requested_at                 TIMESTAMP               NOT NULL,
-    comment                      TEXT,
-    created_at                   TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at                   TIMESTAMP DEFAULT now() NOT NULL,
+    id                  UUID                    NOT NULL,
+    tenant_id           UUID                    NOT NULL,
+    client_id           VARCHAR(255)            NOT NULL,
+    user_id             UUID                    NOT NULL,
+    verification_type   VARCHAR(255)            NOT NULL,
+    application_details JSONB                   NOT NULL,
+    processes           JSONB                   NOT NULL,
+    status              VARCHAR(255)            NOT NULL,
+    attributes          JSONB,
+    requested_at        TIMESTAMP               NOT NULL,
+    created_at          TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at          TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
@@ -849,20 +849,22 @@ CREATE INDEX idx_verification_user ON identity_verification_application (user_id
 CREATE INDEX idx_verification_tenant_client ON identity_verification_application (tenant_id, client_id);
 CREATE INDEX idx_verification_status ON identity_verification_application (status);
 CREATE INDEX idx_verification_application_details ON identity_verification_application USING GIN (application_details);
+CREATE INDEX idx_verification_application_attributes ON identity_verification_application USING GIN (attributes);
 
 CREATE TABLE identity_verification_result
 (
-    id                      UUID         NOT NULL,
-    tenant_id               UUID         NOT NULL,
-    user_id                 UUID         NOT NULL,
-    application_id          UUID,
-    verification_type       VARCHAR(255) NOT NULL,
-    verified_claims         JSONB        NOT NULL,
-    verified_at             TIMESTAMP    NOT NULL,
-    valid_until             TIMESTAMP,
-    source                  VARCHAR(255) NOT NULL DEFAULT 'application',
-    source_details JSONB,
-    created_at              TIMESTAMP             DEFAULT now() NOT NULL,
+    id                UUID         NOT NULL,
+    tenant_id         UUID         NOT NULL,
+    user_id           UUID         NOT NULL,
+    application_id    UUID,
+    verification_type VARCHAR(255) NOT NULL,
+    verified_claims   JSONB        NOT NULL,
+    verified_at       TIMESTAMP    NOT NULL,
+    valid_until       TIMESTAMP,
+    source            VARCHAR(255) NOT NULL DEFAULT 'application',
+    source_details    JSONB,
+    attributes        JSONB,
+    created_at        TIMESTAMP             DEFAULT now() NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (application_id) REFERENCES identity_verification_application (id) ON DELETE CASCADE,
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
@@ -874,6 +876,7 @@ CREATE INDEX idx_verification_result_verification_type ON identity_verification_
 CREATE INDEX idx_verification_result_verified_at ON identity_verification_result (verified_at);
 CREATE INDEX idx_verification_result_verified_claims ON identity_verification_result USING GIN (verified_claims);
 CREATE INDEX idx_verification_result_source_details ON identity_verification_result USING GIN (source_details);
+CREATE INDEX idx_verification_result_attributes ON identity_verification_result USING GIN (attributes);
 
 ALTER TABLE identity_verification_result ENABLE ROW LEVEL SECURITY;
 CREATE

@@ -43,7 +43,9 @@ public class PostgresqlExecutor implements IdentityVerificationResultCommandSqlE
                     verified_at,
                     valid_until,
                     source,
-                    source_details)
+                    source_details,
+                    attributes
+                    )
                     VALUES (
                     ?::uuid,
                     ?::uuid,
@@ -54,6 +56,7 @@ public class PostgresqlExecutor implements IdentityVerificationResultCommandSqlE
                     ?,
                     ?,
                     ?,
+                    ?::jsonb,
                     ?::jsonb
                     );
                 """;
@@ -77,7 +80,12 @@ public class PostgresqlExecutor implements IdentityVerificationResultCommandSqlE
     }
     params.add(result.source().value());
     if (result.hasSourceDetails()) {
-      params.add(jsonConverter.write(result.sourceDetails().toMap()));
+      params.add(result.sourceDetails().toJson());
+    } else {
+      params.add(null);
+    }
+    if (result.hasAttributes()) {
+      params.add(result.attributes().toJson());
     } else {
       params.add(null);
     }

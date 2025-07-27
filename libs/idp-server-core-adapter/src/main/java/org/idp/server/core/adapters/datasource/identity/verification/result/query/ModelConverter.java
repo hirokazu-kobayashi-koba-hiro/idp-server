@@ -20,10 +20,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
-import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResult;
-import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResultIdentifier;
-import org.idp.server.core.extension.identity.verification.result.IdentityVerificationSourceDetails;
-import org.idp.server.core.extension.identity.verification.result.IdentityVerificationSourceType;
+import org.idp.server.core.extension.identity.verification.result.*;
 import org.idp.server.core.extension.identity.verified.VerifiedClaims;
 import org.idp.server.core.oidc.identity.UserIdentifier;
 import org.idp.server.platform.date.LocalDateTimeParser;
@@ -52,8 +49,10 @@ public class ModelConverter {
             : null;
     IdentityVerificationSourceType source = IdentityVerificationSourceType.of(map.get("source"));
     IdentityVerificationSourceDetails sourceDetails =
-        new IdentityVerificationSourceDetails(
-            JsonNodeWrapper.fromString(map.get("source_details")));
+        IdentityVerificationSourceDetails.fromJson(map.get("source_details"));
+
+    IdentityVerificationAttributes attributes =
+        IdentityVerificationAttributes.fromJson(map.get("attributes"));
 
     return new IdentityVerificationResult(
         identifier,
@@ -65,6 +64,7 @@ public class ModelConverter {
         verifiedAt,
         verifiedUntil,
         source,
-        sourceDetails);
+        sourceDetails,
+        attributes);
   }
 }

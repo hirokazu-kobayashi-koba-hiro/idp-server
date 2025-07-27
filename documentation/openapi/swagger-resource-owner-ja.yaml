@@ -334,6 +334,10 @@ paths:
                                 type: integer
                               failure_count:
                                 type: integer
+                        attributes:
+                          type: object
+                          description: |
+                            申込みの属性情報。attributesに設定したデータ。
                         status:
                           type: string
                           description: |
@@ -363,6 +367,16 @@ paths:
                           type: string
                           format: date-time
                           description: 申請が行われた日時
+                  total_count:
+                    type: integer
+                    description: 申込の総数
+                  limit:
+                    type: integer
+                    description: 取得件数の上限
+                  offset:
+                    type: integer
+                    description:  ページネーション用のオフセット
+
 
 
 
@@ -567,6 +581,10 @@ paths:
                           type: object
                           description: |
                             設定の `result.source_details` に定義したデータ。
+                        attributes:
+                          type: object
+                          description: |
+                            身元確認の属性情報。設定のattributesが登録される。
                         verified_claims:
                           type: object
                           description: |
@@ -576,6 +594,15 @@ paths:
                               type: object
                             verification:
                               type: object
+                  total_count:
+                    type: integer
+                    description: 身元確認結果の総数
+                  limit:
+                    type: integer
+                    description: 取得件数の上限
+                  offset:
+                    type: integer
+                    description: ページネーション用のオフセット
 
 
 components:

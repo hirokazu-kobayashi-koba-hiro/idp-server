@@ -44,6 +44,7 @@ public class IdentityVerificationApplication {
   UserIdentifier userIdentifier;
   IdentityVerificationApplicationDetails applicationDetails;
   IdentityVerificationApplicationProcessResults processes;
+  IdentityVerificationApplicationAttributes attributes;
   IdentityVerificationApplicationStatus status;
   LocalDateTime requestedAt;
 
@@ -57,6 +58,7 @@ public class IdentityVerificationApplication {
       UserIdentifier userIdentifier,
       IdentityVerificationApplicationDetails applicationDetails,
       IdentityVerificationApplicationProcessResults processes,
+      IdentityVerificationApplicationAttributes attributes,
       IdentityVerificationApplicationStatus status,
       LocalDateTime requestedAt) {
     this.identifier = identifier;
@@ -66,6 +68,7 @@ public class IdentityVerificationApplication {
     this.userIdentifier = userIdentifier;
     this.applicationDetails = applicationDetails;
     this.processes = processes;
+    this.attributes = attributes;
     this.status = status;
     this.requestedAt = requestedAt;
   }
@@ -96,6 +99,8 @@ public class IdentityVerificationApplication {
     IdentityVerificationApplicationProcessResults processes =
         new IdentityVerificationApplicationProcessResults(
             Map.of(process.name(), applicationProcess));
+    IdentityVerificationApplicationAttributes attributes =
+        IdentityVerificationApplicationAttributes.fromMap(verificationConfiguration.attributes());
 
     return new IdentityVerificationApplication(
         identifier,
@@ -105,6 +110,7 @@ public class IdentityVerificationApplication {
         userIdentifier,
         details,
         processes,
+        attributes,
         IdentityVerificationApplicationStatus.REQUESTED,
         requestedAt);
   }
@@ -154,6 +160,7 @@ public class IdentityVerificationApplication {
         userIdentifier,
         mergedApplicationDetails,
         processResults,
+        attributes,
         status,
         requestedAt);
   }
@@ -200,6 +207,7 @@ public class IdentityVerificationApplication {
         userIdentifier,
         mergedApplicationDetails,
         processResults,
+        attributes,
         status,
         requestedAt);
   }
@@ -240,6 +248,14 @@ public class IdentityVerificationApplication {
     return status;
   }
 
+  public IdentityVerificationApplicationAttributes attributes() {
+    return attributes;
+  }
+
+  public boolean hasAttributes() {
+    return attributes != null && attributes.exists();
+  }
+
   public boolean isRunning() {
     return status.isRunning();
   }
@@ -266,6 +282,7 @@ public class IdentityVerificationApplication {
     map.put("application_details", applicationDetails.toMap());
     map.put("status", status.value());
     map.put("processes", processes.toMapAsObject());
+    if (hasAttributes()) map.put("attributes", attributes.toMap());
     map.put("requested_at", requestedAt.toString());
     return map;
   }

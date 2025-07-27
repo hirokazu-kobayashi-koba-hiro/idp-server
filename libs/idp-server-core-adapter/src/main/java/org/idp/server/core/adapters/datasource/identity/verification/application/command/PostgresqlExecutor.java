@@ -43,6 +43,7 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
                     verification_type,
                     application_details,
                     processes,
+                    attributes,
                     status,
                     requested_at)
                     VALUES (
@@ -51,6 +52,7 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
                     ?,
                     ?::uuid,
                     ?,
+                    ?::jsonb,
                     ?::jsonb,
                     ?::jsonb,
                     ?,
@@ -64,8 +66,13 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
     params.add(application.requestedClientId().value());
     params.add(application.userIdentifier().valueAsUuid());
     params.add(application.identityVerificationType().name());
-    params.add(jsonConverter.write(application.applicationDetails().toMap()));
+    params.add(application.applicationDetails().toJson());
     params.add(jsonConverter.write(application.processesAsMapObject()));
+    if (application.hasAttributes()) {
+      params.add(application.attributes().toJson());
+    } else {
+      params.add(null);
+    }
     params.add(application.status().value());
     params.add(application.requestedAt());
 

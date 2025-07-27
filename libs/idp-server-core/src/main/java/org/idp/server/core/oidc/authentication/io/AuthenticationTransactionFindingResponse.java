@@ -16,39 +16,26 @@
 
 package org.idp.server.core.oidc.authentication.io;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import org.idp.server.core.oidc.authentication.AuthenticationTransaction;
 
 public class AuthenticationTransactionFindingResponse {
   int statusCode;
-  List<AuthenticationTransaction> authenticationTransactions;
+  Map<String, Object> contents;
 
-  public static AuthenticationTransactionFindingResponse success(
-      List<AuthenticationTransaction> authenticationTransactions) {
-    return new AuthenticationTransactionFindingResponse(200, authenticationTransactions);
+  private AuthenticationTransactionFindingResponse(int statusCode, Map<String, Object> contents) {
+    this.statusCode = statusCode;
+    this.contents = contents;
   }
 
-  private AuthenticationTransactionFindingResponse(
-      int statusCode, List<AuthenticationTransaction> authenticationTransactions) {
-    this.statusCode = statusCode;
-    this.authenticationTransactions = authenticationTransactions;
+  public static AuthenticationTransactionFindingResponse success(Map<String, Object> contents) {
+    return new AuthenticationTransactionFindingResponse(200, contents);
   }
 
   public int statusCode() {
     return statusCode;
   }
 
-  public List<AuthenticationTransaction> authenticationTransactions() {
-    return authenticationTransactions;
-  }
-
   public Map<String, Object> contents() {
-    Map<String, Object> contents = new HashMap<>();
-    contents.put(
-        "list",
-        authenticationTransactions.stream().map(AuthenticationTransaction::toRequestMap).toList());
     return contents;
   }
 }
