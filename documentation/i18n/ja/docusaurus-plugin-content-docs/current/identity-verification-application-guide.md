@@ -11,7 +11,7 @@
 
 | 観点                          | 一言で                                                                                      |
 |-----------------------------|------------------------------------------------------------------------------------------|
-| 1. **テンプレート駆動設計**           | 申込ロジックはテンプレート（JSON）に書いて制御される。コードはほぼ書かない。                                                 |
+| 1. **テンプレート駆動設計**           | 申込ロジックはテンプレート（JSON）に書いて制御される。コードは書かない。                                                   |
 | 2. **7つのフェーズ**              | request / pre_hook / execution / post_hook / transition / store / response という処理フェーズがある。 |
 | 3. **APIは動的生成**             | `/v1/me/identity-verification/applications/{type}/{process}` のパスはテンプレートに応じて変わる。          |
 | 4. **verified_claimsは自動生成** | eKYC結果に応じてIDトークンなどにverified_claimsが出力される。                                                |
@@ -29,18 +29,18 @@ graph TD
     subgraph アプリ
         A[SPA or Mobile App]
     end
-subgraph idp-server
-IDP[身元確認API群] --> P[テンプレート 申込タイプごと]
-end
-subgraph 外部サービス
-KYC[eKYCベンダーAPI]
-end
+    subgraph idp-server
+        IDP[身元確認API群] --> P[テンプレート 申込タイプごと]
+    end
+    subgraph 外部サービス
+        KYC[eKYCベンダーAPI]
+    end
 
-U -->|申込|A -->|API呼出|IDP
-IDP -->|中継|KYC
-KYC -->|callback|IDP
-IDP -->|verified_claims 登録|IDP
-IDP -->|userinfo / id_token出力|A
+    U -->|申込| A -->|API呼出| IDP
+    IDP -->|中継| KYC
+    KYC -->|callback| IDP
+    IDP -->|verified_claims 登録| IDP
+    IDP -->|userinfo / id_token出力| A
 ```
 
 ---
