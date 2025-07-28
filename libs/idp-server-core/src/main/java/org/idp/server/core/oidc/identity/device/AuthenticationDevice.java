@@ -19,6 +19,8 @@ package org.idp.server.core.oidc.identity.device;
 import java.io.Serializable;
 import java.util.*;
 import org.idp.server.platform.json.JsonReadable;
+import org.idp.server.platform.notification.NotificationChannel;
+import org.idp.server.platform.notification.NotificationToken;
 import org.idp.server.platform.uuid.UuidConvertable;
 
 public class AuthenticationDevice implements Serializable, JsonReadable, UuidConvertable {

@@ -17,8 +17,8 @@
 package org.idp.server.notification.push.fcm;
 
 import java.util.Map;
-import org.idp.server.core.oidc.identity.device.NotificationTemplate;
 import org.idp.server.platform.json.JsonReadable;
+import org.idp.server.platform.notification.NotificationTemplate;
 
 public class FcmConfiguration implements JsonReadable {
 
