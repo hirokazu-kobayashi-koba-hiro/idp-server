@@ -14,31 +14,36 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.oidc.identity.device;
+package org.idp.server.platform.notification;
 
-import org.idp.server.platform.json.JsonReadable;
+import java.util.Objects;
 
-public class NotificationTemplate implements JsonReadable {
+public class NotificationToken {
+  String value;
 
-  String subject;
-  String body;
+  public NotificationToken() {}
 
-  public NotificationTemplate() {}
-
-  public NotificationTemplate(String subject, String body) {
-    this.subject = subject;
-    this.body = body;
+  public NotificationToken(String value) {
+    this.value = value;
   }
 
-  public String subject() {
-    return subject;
+  public String value() {
+    return value;
   }
 
-  public String body() {
-    return body;
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    NotificationToken that = (NotificationToken) o;
+    return Objects.equals(value, that.value);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(value);
   }
 
   public boolean exists() {
-    return subject != null && body != null;
+    return value != null && !value.isEmpty();
   }
 }

@@ -19,9 +19,7 @@ package org.idp.server.notification.push.fcm;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
-import com.google.firebase.messaging.FirebaseMessaging;
-import com.google.firebase.messaging.Message;
-import com.google.firebase.messaging.Notification;
+import com.google.firebase.messaging.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Map;
@@ -29,11 +27,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.idp.server.authentication.interactors.device.AuthenticationDeviceNotificationConfiguration;
 import org.idp.server.authentication.interactors.device.AuthenticationDeviceNotifier;
 import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
-import org.idp.server.core.oidc.identity.device.NotificationChannel;
-import org.idp.server.core.oidc.identity.device.NotificationTemplate;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.notification.NotificationChannel;
+import org.idp.server.platform.notification.NotificationTemplate;
 
 public class FcmNotifier implements AuthenticationDeviceNotifier {
 
@@ -55,30 +53,52 @@ public class FcmNotifier implements AuthenticationDeviceNotifier {
     try {
       log.debug("Fcm notification channel called");
 
+      if (!device.hasNotificationToken()) {
+        log.debug("Device has no notification token");
+        return;
+      }
+
       FcmConfiguration fcmConfiguration =
           jsonConverter.read(configuration.getDetail(chanel()), FcmConfiguration.class);
       FirebaseMessaging firebaseMessaging = getOrInitFirebaseMessaging(tenant, fcmConfiguration);
 
       NotificationTemplate notificationTemplate = fcmConfiguration.findTemplate("default");
+      String notificationToken = device.notificationToken().value();
 
-      Notification notification =
-          Notification.builder()
-              .setTitle(notificationTemplate.subject())
-              .setBody(notificationTemplate.body())
-              .build();
-
-      Message firebaseMessage =
+      Message message =
           Message.builder()
-              .setToken(device.notificationToken().value())
-              .setNotification(notification)
+              .setToken(notificationToken)
+              .setAndroidConfig(
+                  AndroidConfig.builder()
+                      .setPriority(AndroidConfig.Priority.HIGH)
+                      .putData("sender", notificationTemplate.optSender(tenant.identifierValue()))
+                      .putData("title", notificationTemplate.optTitle("Transaction Authentication"))
+                      .putData(
+                          "body",
+                          notificationTemplate.optBody(
+                              "Please approve the transaction to continue."))
+                      .build())
+              .setApnsConfig(
+                  ApnsConfig.builder()
+                      .putHeader("apns-priority", "10")
+                      .putCustomData(
+                          "sender", notificationTemplate.optSender(tenant.identifierValue()))
+                      .putCustomData(
+                          "title", notificationTemplate.optTitle("Transaction Authentication"))
+                      .putCustomData(
+                          "body",
+                          notificationTemplate.optBody(
+                              "Please approve the transaction to continue."))
+                      .setAps(Aps.builder().setContentAvailable(true).build())
+                      .build())
               .build();
 
-      String result = firebaseMessaging.send(firebaseMessage);
+      String result = firebaseMessaging.send(message);
 
-      log.info("fcm result: " + result);
+      log.info("fcm result: {}, tenant: {}", result, tenant.identifierValue());
     } catch (Exception e) {
 
-      log.error("Fcm is failed: " + e.getMessage());
+      log.error("Fcm is failed: {}, tenant: {}", e.getMessage(), tenant.identifierValue());
     }
   }
 

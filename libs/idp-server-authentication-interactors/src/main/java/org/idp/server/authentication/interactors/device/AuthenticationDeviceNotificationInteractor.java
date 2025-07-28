@@ -22,10 +22,10 @@ import org.idp.server.core.oidc.authentication.*;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
-import org.idp.server.core.oidc.identity.device.NotificationChannel;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.notification.NotificationChannel;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -98,6 +98,7 @@ public class AuthenticationDeviceNotificationInteractor implements Authenticatio
             response, type, operationType(), method(), eventType);
       }
 
+      // TODO to be more flexible
       NotificationChannel channel = new NotificationChannel("fcm");
 
       AuthenticationDeviceNotifier notifier = authenticationDeviceNotifiers.get(channel);

@@ -21,8 +21,8 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.authentication.interactors.device.AuthenticationDeviceNotifier;
 import org.idp.server.authentication.interactors.device.AuthenticationDeviceNotifiers;
-import org.idp.server.core.oidc.identity.device.NotificationChannel;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.notification.NotificationChannel;
 import org.idp.server.platform.plugin.PluginLoader;
 
 public class AuthenticationDeviceNotifiersPluginLoader extends PluginLoader {

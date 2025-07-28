@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.oidc.identity.device;
+package org.idp.server.platform.notification;
 
 import java.util.Objects;
 
