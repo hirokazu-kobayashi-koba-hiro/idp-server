@@ -31,7 +31,7 @@ import org.idp.server.control_plane.admin.operation.IdpServerOperationApi;
 import org.idp.server.control_plane.admin.starter.IdpServerStarterApi;
 import org.idp.server.control_plane.admin.tenant.TenantInitializationApi;
 import org.idp.server.control_plane.base.AdminDashboardUrl;
-import org.idp.server.control_plane.base.schema.SchemaReader;
+import org.idp.server.control_plane.base.schema.ControlPlaneSchemaReader;
 import org.idp.server.control_plane.management.audit.AuditLogManagementApi;
 import org.idp.server.control_plane.management.authentication.configuration.AuthenticationConfigurationManagementApi;
 import org.idp.server.control_plane.management.authentication.interaction.AuthenticationInteractionManagementApi;
@@ -386,7 +386,7 @@ public class IdpServerApplication {
     FederationInteractors federationInteractors =
         FederationInteractorPluginLoader.load(federationDependencyContainer);
 
-    SchemaReader.initialValidate();
+    ControlPlaneSchemaReader.initialValidate();
 
     AuditLogWriters auditLogWriters =
         AuditLogWriterPluginLoader.load(applicationComponentContainer);

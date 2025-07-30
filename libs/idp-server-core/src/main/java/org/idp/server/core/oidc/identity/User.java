@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import org.idp.server.core.oidc.identity.address.Address;
 import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
+import org.idp.server.core.oidc.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.oidc.identity.device.AuthenticationDevices;
 import org.idp.server.core.oidc.type.extension.CustomProperties;
 import org.idp.server.core.oidc.type.vc.Credential;
@@ -60,7 +61,6 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
   List<AuthenticationDevice> authenticationDevices = new ArrayList<>();
   HashMap<String, Object> customProperties = new HashMap<>();
   List<HashMap<String, Object>> credentials = new ArrayList<>();
-  HashMap<String, Object> multiFactorAuthentication = new HashMap<>();
   List<UserRole> roles = new ArrayList<>();
   List<String> permissions = new ArrayList<>();
   String currentTenant;
@@ -362,14 +362,15 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
         .orElse(new AuthenticationDevice());
   }
 
-  public List<AuthenticationDevice> authenticationDevicesAsList() {
-    return authenticationDevices;
+  public AuthenticationDevice findAuthenticationDevice(String deviceId) {
+    return authenticationDevices.stream()
+        .filter(authenticationDevice -> authenticationDevice.id().equals(deviceId))
+        .findFirst()
+        .orElse(new AuthenticationDevice());
   }
 
-  public AuthenticationDevice findPreferredForNotification() {
-    return authenticationDevices.stream()
-        .min(Comparator.comparingInt(AuthenticationDevice::priority))
-        .orElse(new AuthenticationDevice());
+  public List<AuthenticationDevice> authenticationDevicesAsList() {
+    return authenticationDevices;
   }
 
   public User setAuthenticationDevices(List<AuthenticationDevice> authenticationDevices) {
@@ -382,17 +383,34 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     return this;
   }
 
+  public User patchWithAuthenticationDevice(AuthenticationDevice patchAuthenticationDevice) {
+    AuthenticationDevice authenticationDevice =
+        findAuthenticationDevice(patchAuthenticationDevice.id());
+    if (authenticationDevice.exists()) {
+      List<AuthenticationDevice> updated =
+          new ArrayList<>(
+              authenticationDevices.stream()
+                  .filter(device -> !device.id().equals(authenticationDevice.id()))
+                  .toList());
+      AuthenticationDevice patched = authenticationDevice.patchWith(patchAuthenticationDevice);
+      updated.add(patched);
+      this.authenticationDevices = updated;
+    }
+    return this;
+  }
+
   public boolean hasAuthenticationDevice(String deviceId) {
     return authenticationDevices.stream().anyMatch(device -> device.id().equals(deviceId));
+  }
+
+  public boolean hasAuthenticationDevice(AuthenticationDeviceIdentifier deviceId) {
+    return authenticationDevices.stream().anyMatch(device -> device.id().equals(deviceId.value()));
   }
 
   public User removeAuthenticationDevice(String deviceId) {
     List<AuthenticationDevice> removed =
         authenticationDevices.stream().filter(device -> !device.id().equals(deviceId)).toList();
     this.authenticationDevices = removed;
-    if (removed.isEmpty()) {
-      multiFactorAuthentication.remove("fido-uaf");
-    }
     return this;
   }
 
@@ -527,26 +545,6 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
 
   public boolean hasCredentials() {
     return !credentials.isEmpty();
-  }
-
-  public HashMap<String, Object> multiFactorAuthentication() {
-    return multiFactorAuthentication;
-  }
-
-  public User setMultiFactorAuthentication(HashMap<String, Object> multiFactorAuthentication) {
-    this.multiFactorAuthentication = multiFactorAuthentication;
-    return this;
-  }
-
-  public User addMultiFactorAuthentication(HashMap<String, Object> multiFactorAuthentication) {
-    HashMap<String, Object> newMfa = new HashMap<>(multiFactorAuthentication);
-    newMfa.putAll(multiFactorAuthentication);
-    this.multiFactorAuthentication = newMfa;
-    return this;
-  }
-
-  public boolean hasMultiFactorAuthentication() {
-    return multiFactorAuthentication != null && !multiFactorAuthentication.isEmpty();
   }
 
   public List<UserRole> roles() {
@@ -703,8 +701,6 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     if (hasAddress()) map.put("address", address.toMap());
     if (hasCustomProperties()) map.put("custom_properties", new HashMap<>(customProperties));
     if (hasHashedPassword()) map.put("hashed_password", "****");
-    if (hasMultiFactorAuthentication())
-      map.put("multi_factor_authentication", multiFactorAuthentication);
     if (hasRoles()) map.put("roles", roles);
     if (hasPermissions()) map.put("permissions", permissions);
     if (hasAuthenticationDevices()) map.put("authentication_devices", authenticationDevices);
@@ -749,17 +745,11 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     return rawPassword;
   }
 
-  public boolean enabledFidoUaf() {
-    if (!hasMultiFactorAuthentication()) {
-      return false;
-    }
-    if (multiFactorAuthentication.containsKey("fido_uaf")) {
-      return (boolean) multiFactorAuthentication.get("fido_uaf");
-    }
-    return false;
-  }
-
   public boolean isIdentityVerified() {
     return status.isIdentityVerified();
+  }
+
+  public boolean enabledFidoUaf() {
+    return authenticationDevices.stream().anyMatch(AuthenticationDevice::enabledFidoUaf);
   }
 }

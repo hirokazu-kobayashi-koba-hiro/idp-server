@@ -473,7 +473,6 @@ public class PostgresqlExecutor implements UserSqlExecutor {
                   idp_user.custom_properties,
                   idp_user.credentials,
                   idp_user.hashed_password,
-                  idp_user.multi_factor_authentication,
                   idp_user.authentication_devices,
                   idp_user.verified_claims,
                   idp_user.status,
@@ -520,7 +519,6 @@ public class PostgresqlExecutor implements UserSqlExecutor {
                idp_user.custom_properties,
                idp_user.credentials,
                idp_user.hashed_password,
-               idp_user.multi_factor_authentication,
                idp_user.status,
                idp_user.created_at,
                idp_user.updated_at

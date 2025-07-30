@@ -26,9 +26,6 @@
     "postal_code": "10001",
     "country": "USA"
   },
-  "multi_factor_authentication": {
-    "fido_uaf": true
-  },
   "authentication_devices": [
     {
       "id": "1dfc83e4-5c98-4910-902b-e3cdd8705757",

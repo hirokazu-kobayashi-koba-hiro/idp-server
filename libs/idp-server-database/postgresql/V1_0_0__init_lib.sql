@@ -191,7 +191,6 @@ CREATE TABLE idp_user
     custom_properties              JSONB,
     credentials                    JSONB,
     hashed_password                TEXT,
-    multi_factor_authentication    JSONB,
     authentication_devices         JSONB,
     verified_claims                JSONB,
     status                         VARCHAR(255)            NOT NULL,

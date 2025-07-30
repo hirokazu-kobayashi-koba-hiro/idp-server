@@ -16,7 +16,7 @@
 
 package org.idp.server.control_plane.management.identity.user.validator;
 
-import org.idp.server.control_plane.base.schema.SchemaReader;
+import org.idp.server.control_plane.base.schema.ControlPlaneSchemaReader;
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
@@ -31,7 +31,7 @@ public class UserRegistrationRequestValidator {
   public UserRegistrationRequestValidator(UserRegistrationRequest request, boolean dryRun) {
     this.request = request;
     this.dryRun = dryRun;
-    this.userSchemaValidator = new JsonSchemaValidator(SchemaReader.adminUserSchema());
+    this.userSchemaValidator = new JsonSchemaValidator(ControlPlaneSchemaReader.adminUserSchema());
   }
 
   public UserRequestValidationResult validate() {

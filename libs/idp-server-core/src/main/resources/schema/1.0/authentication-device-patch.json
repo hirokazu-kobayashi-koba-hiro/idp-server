@@ -1,0 +1,31 @@
+{
+  "type": "object",
+  "properties": {
+    "app_name": {
+      "type": "string"
+    },
+    "platform": {
+      "type": "string"
+    },
+    "os": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "locale": {
+      "type": "string"
+    },
+    "notification_channel": {
+      "type": "string",
+      "enum": ["fcm"]
+    },
+    "notification_token": {
+      "type": "string"
+    },
+    "priority": {
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}

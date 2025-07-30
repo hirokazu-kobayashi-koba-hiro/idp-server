@@ -16,7 +16,7 @@
 
 package org.idp.server.control_plane.management.oidc.authorization.validator;
 
-import org.idp.server.control_plane.base.schema.SchemaReader;
+import org.idp.server.control_plane.base.schema.ControlPlaneSchemaReader;
 import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerUpdateRequest;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
@@ -33,7 +33,7 @@ public class AuthorizationServerRequestValidator {
     this.request = request;
     this.dryRun = dryRun;
     this.authorizationServerSchemaValidator =
-        new JsonSchemaValidator(SchemaReader.authorizationServerSchema());
+        new JsonSchemaValidator(ControlPlaneSchemaReader.authorizationServerSchema());
   }
 
   public AuthorizationServerRequestValidationResult validate() {

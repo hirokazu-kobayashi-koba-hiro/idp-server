@@ -89,7 +89,6 @@ describe("identity-verification result", () => {
       expect(userinfoResponse.data.sub).toEqual(user.sub);
       expect(userinfoResponse.data).toHaveProperty("authentication_devices");
       expect(userinfoResponse.data.authentication_devices.length).toBe(1);
-      expect(userinfoResponse.data).toHaveProperty("mfa");
       expect(userinfoResponse.data.authentication_devices[0].id).toEqual(authenticationDeviceId);
 
       const ciba = serverConfig.ciba;
@@ -288,7 +287,6 @@ describe("identity-verification result", () => {
       expect(userinfoResponse.data.sub).toEqual(user.sub);
       expect(userinfoResponse.data).toHaveProperty("authentication_devices");
       expect(userinfoResponse.data.authentication_devices.length).toBe(1);
-      expect(userinfoResponse.data).toHaveProperty("mfa");
 
     });
   });

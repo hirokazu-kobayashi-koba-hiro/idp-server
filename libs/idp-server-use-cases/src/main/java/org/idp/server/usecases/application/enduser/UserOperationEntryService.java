@@ -24,9 +24,13 @@ import org.idp.server.core.oidc.authentication.repository.AuthenticationTransact
 import org.idp.server.core.oidc.authentication.repository.AuthenticationTransactionQueryRepository;
 import org.idp.server.core.oidc.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.oidc.identity.*;
+import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
+import org.idp.server.core.oidc.identity.device.AuthenticationDeviceIdentifier;
+import org.idp.server.core.oidc.identity.device.AuthenticationDevicePatchValidator;
 import org.idp.server.core.oidc.identity.event.UserLifecycleEvent;
 import org.idp.server.core.oidc.identity.event.UserLifecycleEventPublisher;
 import org.idp.server.core.oidc.identity.event.UserLifecycleType;
+import org.idp.server.core.oidc.identity.io.AuthenticationDevicePatchRequest;
 import org.idp.server.core.oidc.identity.io.MfaRegistrationRequest;
 import org.idp.server.core.oidc.identity.io.UserOperationResponse;
 import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
@@ -35,6 +39,7 @@ import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.core.oidc.token.TokenEventPublisher;
 import org.idp.server.core.oidc.type.AuthFlow;
 import org.idp.server.platform.datasource.Transaction;
+import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -152,6 +157,48 @@ public class UserOperationEntryService implements UserOperationApi {
     }
 
     return result;
+  }
+
+  @Override
+  public UserOperationResponse patchAuthenticationDevice(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
+      AuthenticationDevicePatchRequest request,
+      RequestAttributes requestAttributes) {
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    AuthenticationDevicePatchValidator validator = new AuthenticationDevicePatchValidator(request);
+    JsonSchemaValidationResult validate = validator.validate();
+    if (!validate.isValid()) {
+      Map<String, Object> contents = new HashMap<>();
+      contents.put("error", "invalid_request");
+      contents.put("error_description", "authentication device patch is failed");
+      Map<String, Object> details = new HashMap<>();
+      details.put("messages", validate.errors());
+      contents.put("error_details", details);
+      return UserOperationResponse.failure(contents);
+    }
+
+    if (!user.hasAuthenticationDevice(authenticationDeviceIdentifier)) {
+
+      Map<String, Object> contents = new HashMap<>();
+      contents.put("error", "invalid_request");
+      contents.put(
+          "error_description",
+          String.format(
+              "User does not have authentication device (%s).",
+              authenticationDeviceIdentifier.value()));
+      return UserOperationResponse.failure(contents);
+    }
+
+    AuthenticationDevice newAuthenticationDevice =
+        request.toAuthenticationDevice(authenticationDeviceIdentifier);
+    User patched = user.patchWithAuthenticationDevice(newAuthenticationDevice);
+    userCommandRepository.update(tenant, patched);
+
+    return UserOperationResponse.success(null);
   }
 
   @Override

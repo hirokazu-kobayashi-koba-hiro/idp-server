@@ -67,7 +67,9 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              oneOf:
+                - $ref: '#/components/schemas/FidoUafRegistrationRequest'
+                - $ref: '#/components/schemas/FidoUafDeRegistrationRequest'
       responses:
         '200':
           description: Operation requested
@@ -81,6 +83,26 @@ paths:
                   id:
                     type: string
                     description: 認証トランザクションID
+
+  /{tenant-id}/v1/me/authentication-devices/{device-id}:
+    patch:
+      tags:
+        - ユーザー
+      summary: 認証デバイス部分更新API
+      description: |
+        認証デバイスの属性情報の部分更新の依頼を行う。
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/DeviceId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthenticationDeviceRequest'
+      responses:
+        '200':
+          description: 200 OK
 
   /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{verification-process}:
     post:
@@ -632,6 +654,13 @@ components:
       schema:
         type: string
         example: fido-uaf-registration
+    DeviceId:
+      name: device-id
+      in: path
+      required: true
+      schema:
+        type: string
+        example: 0048607e-9b89-4ad9-a203-976b7f72f5f2
     VerificationType:
       name: verification-type
       in: path
@@ -653,3 +682,50 @@ components:
       schema:
         type: string
         format: uuid
+
+  schemas:
+    FidoUafRegistrationRequest:
+      description: FIDO-UAF登録用のリクエスト
+      allOf:
+        - $ref: '#/components/schemas/AuthenticationDeviceRequest'
+
+    FidoUafDeRegistrationRequest:
+      description: FIDO-UAF解除用のリクエスト
+      type: object
+      properties:
+        device_id:
+          type: string
+          example: cab44004-c288-4ae4-be88-9b1cbbe79b71
+
+    AuthenticationDeviceRequest:
+      type: object
+      properties:
+        app_name:
+          type: string
+          description: アプリ名（例：◯◯アプリ）。
+        platform:
+          type: string
+          description: デバイスのプラットフォーム名（例："Android", "iOS" など）。
+        os:
+          type: string
+          description: オペレーティングシステムのバージョン情報（例："Android15"）。
+        model:
+          type: string
+          description: デバイスモデル名（例："galaxy z fold 6"）。
+        locale:
+          type: string
+          description: 言語設定。（例：ja, en）
+        notification_channel:
+          type: string
+          enum: [ fcm ]
+          description: 通知チャネル（"fcm" など）。※現在サポートしているPush通知チャネルはfcmのみ。
+        notification_token:
+          type: string
+          description: 通知を送信するためのトークン（例：FCMトークン）。
+        priority:
+          type: integer
+          minimum: 1
+          description: >
+            このデバイスの通知の優先順位（例: 1, 2, 100）。
+            数値が小さいほど優先度が高く、1が最も高い。
+            省略された場合は、認証デバイスの登録数の連番となる。

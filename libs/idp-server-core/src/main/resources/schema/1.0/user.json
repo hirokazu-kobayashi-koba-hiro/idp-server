@@ -38,12 +38,6 @@
         "country": { "type": "string" }
       }
     },
-    "multi_factor_authentication": {
-      "type": "object",
-      "properties": {
-        "fido_uaf": { "type": "boolean" }
-      }
-    },
     "authentication_devices": {
       "type": "array",
       "items": {

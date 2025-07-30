@@ -23,6 +23,8 @@ import org.idp.server.adapters.springboot.application.restapi.ParameterTransform
 import org.idp.server.adapters.springboot.application.restapi.model.ResourceOwnerPrincipal;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserOperationApi;
+import org.idp.server.core.oidc.identity.device.AuthenticationDeviceIdentifier;
+import org.idp.server.core.oidc.identity.io.AuthenticationDevicePatchRequest;
 import org.idp.server.core.oidc.identity.io.MfaRegistrationRequest;
 import org.idp.server.core.oidc.identity.io.UserOperationResponse;
 import org.idp.server.core.oidc.token.OAuthToken;
@@ -62,6 +64,35 @@ public class UserV1Api implements ParameterTransformable {
     UserOperationResponse response =
         userOperationApi.requestMfaOperation(
             tenantIdentifier, user, oAuthToken, authFlow, request, requestAttributes);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("Content-Type", "application/json");
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @PatchMapping("/authentication-devices/{device-id}")
+  public ResponseEntity<?> patchAuthenticationDevice(
+      @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("device-id") AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
+      @RequestBody(required = false) Map<String, Object> requestBody,
+      HttpServletRequest httpServletRequest) {
+
+    User user = resourceOwnerPrincipal.getUser();
+    OAuthToken oAuthToken = resourceOwnerPrincipal.getOAuthToken();
+    AuthenticationDevicePatchRequest request =
+        AuthenticationDevicePatchRequest.fromMap(requestBody);
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    UserOperationResponse response =
+        userOperationApi.patchAuthenticationDevice(
+            tenantIdentifier,
+            user,
+            oAuthToken,
+            authenticationDeviceIdentifier,
+            request,
+            requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
