@@ -47,7 +47,7 @@ public class TenantManagementUpdateContextCreator {
     String domain = jsonNodeWrapper.getValueOrEmptyAsString("domain");
     TenantAttributes attributes = extractAttributes();
 
-    Tenant updatedDomain = before.updateDomain(new TenantDomain(domain));
+    Tenant updatedDomain = before.updateWithDomain(new TenantDomain(domain));
     Tenant updateAttributes = updatedDomain.updateWithAttributes(attributes);
 
     return new TenantManagementUpdateContext(adminTenant, before, updateAttributes, user, dryRun);

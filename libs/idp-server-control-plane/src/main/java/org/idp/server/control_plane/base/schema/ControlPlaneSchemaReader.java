@@ -16,13 +16,13 @@
 
 package org.idp.server.control_plane.base.schema;
 
-import org.idp.server.control_plane.base.schema.resource.ResourceReader;
 import org.idp.server.platform.json.schema.JsonSchemaDefinition;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.resource.ResourceReader;
 
-public class SchemaReader {
+public class ControlPlaneSchemaReader {
 
-  private static final LoggerWrapper log = LoggerWrapper.getLogger(SchemaReader.class);
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(ControlPlaneSchemaReader.class);
 
   public static void initialValidate() {
     log.info("Schema Registry Initialized");

@@ -271,4 +271,45 @@ public class JsonSchemaValidatorTest {
 
     assertTrue(result.isValid());
   }
+
+  @Test
+  public void testEnumVariousTypes() {
+    String schemaJson =
+        """
+            {
+               "type": "object",
+               "properties": {
+                 "notification_channel": {
+                   "type": "string",
+                   "enum": [
+                     "fcm", ""
+                   ]
+                 }
+               }
+             }
+            """;
+
+    String json = """
+      {
+        "notification_channel": "Password123!"
+      }
+      """;
+
+    JsonSchemaDefinition schemaDefinition = JsonSchemaDefinition.fromJson(schemaJson);
+    JsonNodeWrapper input = JsonNodeWrapper.fromString(json);
+    JsonSchemaValidator validator = new JsonSchemaValidator(schemaDefinition);
+    JsonSchemaValidationResult result = validator.validate(input);
+
+    assertFalse(result.isValid());
+
+    String nullJson = """
+      {
+        "notification_channel": ""
+      }
+    """;
+    JsonNodeWrapper emptyInput = JsonNodeWrapper.fromString(nullJson);
+    JsonSchemaValidationResult nullResult = validator.validate(emptyInput);
+
+    assertTrue(nullResult.isValid());
+  }
 }

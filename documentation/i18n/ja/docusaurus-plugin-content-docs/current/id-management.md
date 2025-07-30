@@ -130,7 +130,6 @@ sequenceDiagram
 | `custom_properties`              | object  | カスタムのユーザークレーム（JSONオブジェクト）                   |
 | `credentials`                    | object  | 資格情報   （JSON配列）                             |
 | `hashed_password`                | object  | ハッシュ化済みのパスワード                               |
-| `multi_factor_authentication`    | object  | MFAの設定状態 （JSONオブジェクト）                       |
 | `authentication_devices`         | object  | FIDO認証などが実施可能な認証デバイス（JSON配列）                |
 | `verified_claims`                | object  | 身元確認済みのクレーム                                 |
 | `updated_at`                     | number  | 最終更新日時（UNIXタイムスタンプ）                         |

@@ -8,7 +8,7 @@ import {
   clientSecretPostClient, federationServerConfig,
   serverConfig
 } from "../../testConfig";
-import { get, postWithJson } from "../../../lib/http";
+import { get, patchWithJson, postWithJson } from "../../../lib/http";
 import { createFederatedUser } from "../../../user";
 
 describe("user - mfa registration", () => {
@@ -32,9 +32,10 @@ describe("user - mfa registration", () => {
             "platform": "Android",
             "os": "Android15",
             "model": "galaxy z fold 6",
+            "locale": "ja",
             "notification_channel": "fcm",
             "notification_token": "test token",
-            // "priority": 1
+            "priority": 1
           },
           headers: {
             "Authorization": `Bearer ${accessToken}`
@@ -90,16 +91,59 @@ describe("user - mfa registration", () => {
       expect(userinfoResponse.data.sub).toEqual(user.sub);
       expect(userinfoResponse.data).toHaveProperty("authentication_devices");
       expect(userinfoResponse.data.authentication_devices.length).toBe(1);
-      expect(userinfoResponse.data).toHaveProperty("mfa");
       expect(userinfoResponse.data.authentication_devices[0].id).toEqual(authenticationDeviceId);
       expect(userinfoResponse.data.authentication_devices[0].app_name).toEqual("idp-server-app");
       expect(userinfoResponse.data.authentication_devices[0].platform).toEqual("Android");
+      expect(userinfoResponse.data.authentication_devices[0].os).toEqual("Android15");
       expect(userinfoResponse.data.authentication_devices[0].model).toEqual("galaxy z fold 6");
+      expect(userinfoResponse.data.authentication_devices[0].locale).toEqual("ja");
       expect(userinfoResponse.data.authentication_devices[0].notification_channel).toEqual("fcm");
       expect(userinfoResponse.data.authentication_devices[0].notification_token).toEqual("test token");
       expect(userinfoResponse.data.authentication_devices[0].available_methods).toContain("fido-uaf");
       expect(userinfoResponse.data.authentication_devices[0].priority).toEqual(1);
 
+      const device = userinfoResponse.data.authentication_devices[0];
+
+      const patchResponse = await patchWithJson({
+        url: serverConfig.resourceOwnerEndpoint + `/authentication-devices/${device.id}`,
+        body: {
+          "app_name": "app_name",
+          "platform": "iOS",
+          "os": "iOS18",
+          "model": "iphone15",
+          "locale": "en",
+          "notification_channel": "fcm",
+          "notification_token": "notification_token",
+          "priority": 10
+        },
+        headers: {
+          "Authorization": `Bearer ${accessToken}`
+        }
+      });
+      console.log(patchResponse.data);
+      expect(patchResponse.status).toBe(200);
+
+      userinfoResponse = await getUserinfo({
+        endpoint: serverConfig.userinfoEndpoint,
+        authorizationHeader: {
+          "Authorization": `Bearer ${accessToken}`
+        }
+      });
+      console.log(JSON.stringify(userinfoResponse.data, null, 2));
+      expect(userinfoResponse.status).toBe(200);
+      expect(userinfoResponse.data.sub).toEqual(user.sub);
+      expect(userinfoResponse.data).toHaveProperty("authentication_devices");
+      expect(userinfoResponse.data.authentication_devices.length).toBe(1);
+      expect(userinfoResponse.data.authentication_devices[0].id).toEqual(authenticationDeviceId);
+      expect(userinfoResponse.data.authentication_devices[0].app_name).toEqual("app_name");
+      expect(userinfoResponse.data.authentication_devices[0].platform).toEqual("iOS");
+      expect(userinfoResponse.data.authentication_devices[0].os).toEqual("iOS18");
+      expect(userinfoResponse.data.authentication_devices[0].model).toEqual("iphone15");
+      expect(userinfoResponse.data.authentication_devices[0].locale).toEqual("en");
+      expect(userinfoResponse.data.authentication_devices[0].notification_channel).toEqual("fcm");
+      expect(userinfoResponse.data.authentication_devices[0].notification_token).toEqual("notification_token");
+      expect(userinfoResponse.data.authentication_devices[0].available_methods).toContain("fido-uaf");
+      expect(userinfoResponse.data.authentication_devices[0].priority).toEqual(10);
 
       mfaRegistrationResponse =
         await postWithJson({

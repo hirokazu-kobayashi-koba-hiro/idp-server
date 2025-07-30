@@ -134,6 +134,7 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
     String platform = attributes.getValueOrEmpty("platform");
     String os = attributes.getValueOrEmpty("os");
     String model = attributes.getValueOrEmpty("model");
+    String locale = attributes.getValueOrEmpty("locale");
     String notificationChannel = attributes.getValueOrEmpty("notification_channel");
     String notificationToken = attributes.getValueOrEmpty("notification_token");
     List<String> availableAuthenticationMethods = List.of(method());
@@ -149,16 +150,12 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
             platform,
             os,
             model,
+            locale,
             notificationChannel,
             notificationToken,
             availableAuthenticationMethods,
             priority);
 
-    HashMap<String, Object> mfa = new HashMap<>();
-    mfa.put(method(), true);
-    User addedDeviceUser =
-        user.addAuthenticationDevice(authenticationDevice).addMultiFactorAuthentication(mfa);
-
-    return addedDeviceUser;
+    return user.addAuthenticationDevice(authenticationDevice);
   }
 }

@@ -140,7 +140,7 @@ public class Tenant {
     return features;
   }
 
-  public Tenant updateDomain(TenantDomain domain) {
+  public Tenant updateWithDomain(TenantDomain domain) {
 
     return new Tenant(
         identifier, name, type, domain, authorizationProvider, databaseType, attributes);

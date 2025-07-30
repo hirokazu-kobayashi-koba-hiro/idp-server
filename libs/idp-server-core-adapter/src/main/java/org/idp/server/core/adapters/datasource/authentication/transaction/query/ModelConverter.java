@@ -173,6 +173,7 @@ public class ModelConverter {
       String platform = wrapper.getValueOrEmptyAsString("platform");
       String os = wrapper.getValueOrEmptyAsString("os");
       String model = wrapper.getValueOrEmptyAsString("model");
+      String locale = wrapper.getValueOrEmptyAsString("locale");
       String notificationChannel = wrapper.getValueOrEmptyAsString("notification_channel");
       String notificationToken = wrapper.getValueOrEmptyAsString("notification_token");
       JsonNodeWrapper availableAuthenticationMethodsNodes = wrapper.getNode("available_methods");
@@ -184,6 +185,7 @@ public class ModelConverter {
           platform,
           os,
           model,
+          locale,
           notificationChannel,
           notificationToken,
           availableAuthenticationMethods,

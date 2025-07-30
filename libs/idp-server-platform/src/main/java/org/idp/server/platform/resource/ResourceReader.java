@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.base.schema.resource;
+package org.idp.server.platform.resource;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;

@@ -98,8 +98,7 @@ public class AuthenticationDeviceNotificationInteractor implements Authenticatio
             response, type, operationType(), method(), eventType);
       }
 
-      // TODO to be more flexible
-      NotificationChannel channel = new NotificationChannel("fcm");
+      NotificationChannel channel = authenticationDevice.optNotificationChannel("fcm");
 
       AuthenticationDeviceNotifier notifier = authenticationDeviceNotifiers.get(channel);
 

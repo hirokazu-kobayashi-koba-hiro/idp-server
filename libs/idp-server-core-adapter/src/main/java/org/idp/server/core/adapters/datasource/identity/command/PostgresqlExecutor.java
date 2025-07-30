@@ -62,7 +62,6 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
                 custom_properties,
                 credentials,
                 hashed_password,
-                multi_factor_authentication,
                 authentication_devices,
                 verified_claims,
                 status)
@@ -96,7 +95,6 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
                 ?,
                 ?::jsonb,
                 ?::jsonb,
-                ?::jsonb,
                 ?
                 );
                 """;
@@ -128,7 +126,6 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
     params.add(jsonConverter.write(user.customProperties().values()));
     params.add(jsonConverter.write(user.verifiableCredentials()));
     params.add(user.hashedPassword());
-    params.add(jsonConverter.write(user.multiFactorAuthentication()));
     params.add(jsonConverter.write(user.authenticationDevicesAsList()));
     params.add(jsonConverter.write(user.verifiedClaims()));
     params.add(user.statusName());
@@ -161,7 +158,6 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
                  phone_number_verified = ?,
                  address = ?::jsonb,
                  custom_properties = ?::jsonb,
-                 multi_factor_authentication = ?::jsonb,
                  authentication_devices = ?::jsonb,
                  verified_claims = ?::jsonb,
                  status = ?,
@@ -190,7 +186,6 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
     params.add(user.phoneNumberVerified());
     params.add(jsonConverter.write(user.address()));
     params.add(jsonConverter.write(user.customPropertiesValue()));
-    params.add(jsonConverter.write(user.multiFactorAuthentication()));
     params.add(jsonConverter.write(user.authenticationDevicesAsList()));
     params.add(jsonConverter.write(user.verifiedClaims()));
     params.add(user.statusName());

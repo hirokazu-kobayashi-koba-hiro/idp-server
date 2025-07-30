@@ -29,6 +29,10 @@ public class JsonSchemaValidator {
     this.schemaDefinition = schemaDefinition;
   }
 
+  public static JsonSchemaValidator fromString(String json) {
+    return new JsonSchemaValidator(JsonSchemaDefinition.fromJson(json));
+  }
+
   public JsonSchemaValidationResult validate(JsonNodeWrapper target) {
     List<String> errors = new ArrayList<>();
     if (!target.exists()) {

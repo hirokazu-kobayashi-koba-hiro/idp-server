@@ -16,7 +16,7 @@
 
 package org.idp.server.control_plane.management.tenant.invitation.validator;
 
-import org.idp.server.control_plane.base.schema.SchemaReader;
+import org.idp.server.control_plane.base.schema.ControlPlaneSchemaReader;
 import org.idp.server.control_plane.management.tenant.invitation.io.TenantInvitationManagementRequest;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
@@ -32,7 +32,7 @@ public class OrganizationInvitationRequestValidator {
       TenantInvitationManagementRequest request, boolean dryRun) {
     this.request = request;
     this.tenantInvitationSchemaValidator =
-        new JsonSchemaValidator(SchemaReader.tenantInvitationSchema());
+        new JsonSchemaValidator(ControlPlaneSchemaReader.tenantInvitationSchema());
     this.dryRun = dryRun;
   }
 

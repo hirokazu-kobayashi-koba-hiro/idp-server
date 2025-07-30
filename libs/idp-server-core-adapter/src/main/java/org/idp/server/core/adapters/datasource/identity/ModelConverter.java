@@ -71,15 +71,6 @@ class ModelConverter {
       user.setAddress(address);
     }
 
-    if (stringMap.containsKey("multi_factor_authentication")
-        && stringMap.get("multi_factor_authentication") != null
-        && !stringMap.get("multi_factor_authentication").isEmpty()) {
-      JsonNodeWrapper jsonNodeWrapper =
-          JsonNodeWrapper.fromString(stringMap.get("multi_factor_authentication"));
-      HashMap<String, Object> mfaProps = new HashMap<>(jsonNodeWrapper.toMap());
-      user.setMultiFactorAuthentication(mfaProps);
-    }
-
     if (stringMap.containsKey("custom_properties")
         && stringMap.get("custom_properties") != null
         && !stringMap.get("custom_properties").isEmpty()) {
@@ -170,6 +161,7 @@ class ModelConverter {
         String platform = wrapper.getValueOrEmptyAsString("platform");
         String os = wrapper.getValueOrEmptyAsString("os");
         String model = wrapper.getValueOrEmptyAsString("model");
+        String locale = wrapper.getValueOrEmptyAsString("locale");
         String notificationChannel = wrapper.getValueOrEmptyAsString("notification_channel");
         String notificationToken = wrapper.getValueOrEmptyAsString("notification_token");
         JsonNodeWrapper availableAuthenticationMethodsNodes = wrapper.getNode("available_methods");
@@ -182,6 +174,7 @@ class ModelConverter {
                 platform,
                 os,
                 model,
+                locale,
                 notificationChannel,
                 notificationToken,
                 availableAuthenticationMethods,

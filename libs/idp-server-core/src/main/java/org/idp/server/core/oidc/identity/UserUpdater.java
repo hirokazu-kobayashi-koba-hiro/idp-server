@@ -51,8 +51,6 @@ public class UserUpdater {
     if (user.hasUpdatedAt()) updatedUser.setUpdatedAt(user.updatedAt());
     if (user.hasAddress()) updatedUser.setAddress(user.address());
     if (user.hasCustomProperties()) updatedUser.setCustomProperties(user.customPropertiesValue());
-    if (user.hasMultiFactorAuthentication())
-      updatedUser.setMultiFactorAuthentication(user.multiFactorAuthentication());
     if (user.hasAuthenticationDevices())
       updatedUser.setAuthenticationDevices(user.authenticationDevicesAsList());
     if (user.hasRoles()) updatedUser.setRoles(user.roles());

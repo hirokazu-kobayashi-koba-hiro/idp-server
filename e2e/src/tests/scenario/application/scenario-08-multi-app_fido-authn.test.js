@@ -89,7 +89,6 @@ describe("multi client", () => {
       expect(userinfoResponse.data.sub).toEqual(user.sub);
       expect(userinfoResponse.data).toHaveProperty("authentication_devices");
       expect(userinfoResponse.data.authentication_devices.length).toBe(1);
-      expect(userinfoResponse.data).toHaveProperty("mfa");
       expect(userinfoResponse.data.authentication_devices[0].id).toEqual(authenticationDeviceId);
 
       const ciba = serverConfig.ciba;
@@ -439,7 +438,6 @@ describe("multi client", () => {
       expect(userinfoResponse.data.sub).toEqual(user.sub);
       expect(userinfoResponse.data).toHaveProperty("authentication_devices");
       expect(userinfoResponse.data.authentication_devices.length).toBe(1);
-      expect(userinfoResponse.data).toHaveProperty("mfa");
 
       let resultsResponse = await get({
         url: serverConfig.identityVerificationResultResourceOwnerEndpoint + `?application_id=${applicationId}&type=${type}`,

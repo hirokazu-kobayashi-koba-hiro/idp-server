@@ -591,9 +591,6 @@
       "postal_code": "10001",
       "country": "USA"
     },
-    "multi_factor_authentication": {
-      "fido_uaf": true
-    },
     "authentication_devices": [
       {
         "id": "7736a252-60b4-45f5-b817-65ea9a540860",
