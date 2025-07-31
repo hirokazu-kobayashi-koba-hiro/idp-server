@@ -117,7 +117,7 @@ import org.idp.server.platform.notification.sms.SmsSenders;
 import org.idp.server.platform.plugin.*;
 import org.idp.server.platform.proxy.TenantAwareEntryServiceProxy;
 import org.idp.server.platform.security.SecurityEventApi;
-import org.idp.server.platform.security.SecurityEventHooks;
+import org.idp.server.platform.security.hook.SecurityEventHooks;
 import org.idp.server.platform.security.SecurityEventPublisher;
 import org.idp.server.platform.security.repository.*;
 import org.idp.server.usecases.application.enduser.*;

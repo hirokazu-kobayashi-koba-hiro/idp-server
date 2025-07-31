@@ -22,7 +22,7 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.SecurityEventApi;
-import org.idp.server.platform.security.SecurityEventHooks;
+import org.idp.server.platform.security.hook.SecurityEventHooks;
 import org.idp.server.platform.security.handler.SecurityEventHandler;
 import org.idp.server.platform.security.repository.SecurityEventCommandRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;

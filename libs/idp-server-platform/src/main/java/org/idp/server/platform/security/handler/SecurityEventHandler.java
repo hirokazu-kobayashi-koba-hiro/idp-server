@@ -21,9 +21,11 @@ import java.util.List;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
-import org.idp.server.platform.security.SecurityEventHookExecutor;
-import org.idp.server.platform.security.SecurityEventHooks;
+import org.idp.server.platform.security.hook.SecurityEventHook;
+import org.idp.server.platform.security.hook.SecurityEventHooks;
 import org.idp.server.platform.security.hook.*;
+import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
+import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfigurations;
 import org.idp.server.platform.security.repository.SecurityEventCommandRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookResultCommandRepository;
@@ -59,7 +61,7 @@ public class SecurityEventHandler {
     List<SecurityEventHookResult> results = new ArrayList<>();
     for (SecurityEventHookConfiguration hookConfiguration : securityEventHookConfigurations) {
 
-      SecurityEventHookExecutor securityEventHookExecutor =
+      SecurityEventHook securityEventHookExecutor =
           securityEventHooks.get(hookConfiguration.hookType());
 
       if (securityEventHookExecutor.shouldNotExecute(tenant, securityEvent, hookConfiguration)) {

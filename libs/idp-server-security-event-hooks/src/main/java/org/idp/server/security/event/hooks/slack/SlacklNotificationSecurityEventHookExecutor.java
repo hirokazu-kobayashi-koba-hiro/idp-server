@@ -29,10 +29,11 @@ import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.notification.NotificationTemplateInterpolator;
 import org.idp.server.platform.security.SecurityEvent;
-import org.idp.server.platform.security.SecurityEventHookExecutor;
+import org.idp.server.platform.security.hook.SecurityEventHook;
 import org.idp.server.platform.security.hook.*;
+import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
 
-public class SlacklNotificationSecurityEventHookExecutor implements SecurityEventHookExecutor {
+public class SlacklNotificationSecurityEventHookExecutor implements SecurityEventHook {
 
   HttpClient httpClient;
   JsonConverter jsonConverter;
@@ -54,7 +55,7 @@ public class SlacklNotificationSecurityEventHookExecutor implements SecurityEven
       SecurityEventHookConfiguration hookConfiguration) {
 
     SlackSecurityEventHookConfiguration configuration =
-        jsonConverter.read(hookConfiguration.payload(), SlackSecurityEventHookConfiguration.class);
+        jsonConverter.read(hookConfiguration.events(), SlackSecurityEventHookConfiguration.class);
     String incomingWebhookUrl = configuration.incomingWebhookUrl(securityEvent.type());
     if (incomingWebhookUrl == null) {
       return SecurityEventHookResult.failure(

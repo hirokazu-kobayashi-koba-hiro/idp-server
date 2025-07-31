@@ -28,11 +28,12 @@ import org.idp.server.platform.http.*;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
-import org.idp.server.platform.security.SecurityEventHookExecutor;
+import org.idp.server.platform.security.hook.SecurityEventHook;
 import org.idp.server.platform.security.hook.*;
+import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
 import org.idp.server.security.event.hooks.webhook.WebHookConfiguration;
 
-public class DatadogLogStreamExecutorSecurityEvent implements SecurityEventHookExecutor {
+public class DatadogLogStreamExecutorSecurityEvent implements SecurityEventHook {
 
   HttpClient httpClient;
   JsonConverter jsonConverter;

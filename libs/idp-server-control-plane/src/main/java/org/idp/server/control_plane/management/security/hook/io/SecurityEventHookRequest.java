@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-package org.idp.server.platform.security;
+package org.idp.server.control_plane.management.security.hook.io;
 
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.security.hook.*;
+import java.util.Map;
 
-public interface SecurityEventHookExecutor {
+public class SecurityEventHookRequest {
 
-  SecurityEventHookType type();
+  Map<String, Object> values;
 
-  default boolean shouldNotExecute(
-      Tenant tenant,
-      SecurityEvent securityEvent,
-      SecurityEventHookConfiguration hookConfiguration) {
-    return !hookConfiguration.hasTrigger(securityEvent.type().value());
+  public SecurityEventHookRequest(Map<String, Object> values) {
+    this.values = values;
   }
 
-  SecurityEventHookResult execute(
-      Tenant tenant, SecurityEvent securityEvent, SecurityEventHookConfiguration configuration);
+  public Map<String, Object> toMap() {
+    return values;
+  }
+
+  public Object get(String key) {
+    return values.get(key);
+  }
 }

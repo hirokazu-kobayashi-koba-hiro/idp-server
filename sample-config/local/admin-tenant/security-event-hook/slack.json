@@ -2,20 +2,30 @@
   "id": "00e9d1bd-c73c-42e9-bf67-2d8625b733e1",
   "type": "SLACK",
   "triggers": [
-    "user_signup"
+    "user_signup",
+    "user_deletion"
   ],
   "execution_order": 1,
-  "payload": {
-    "base": {
+  "attributes": {
+    "label": "slack"
+  },
+  "metadata": {
+    "document": "https://api.slack.com/messaging/webhooks"
+  },
+  "events": {
+    "default": {
       "description": "slack common notification",
       "incoming_webhook_url": "https://hooks.slack.com/services/xxx",
       "message_template": "🔐 type: ${trigger} / user: ${user.id} / tenant: ${tenant.id} / client: ${client.id}"
     },
-    "overlays": {
-      "user_deletion": {
-        "description": "slack user_deletion notification",
-        "incoming_webhook_url": "https://hooks.slack.com/services/xxx",
-        "message_template": "⚠ user_deletion: ${user.email}"
+    "user_deletion": {
+      "execution": {
+        "type": "slack",
+        "slack": {
+          "description": "slack user_deletion notification",
+          "incoming_webhook_url": "https://hooks.slack.com/services/xxx",
+          "message_template": "⚠ user_deletion: ${user.email}"
+        }
       }
     }
   }
