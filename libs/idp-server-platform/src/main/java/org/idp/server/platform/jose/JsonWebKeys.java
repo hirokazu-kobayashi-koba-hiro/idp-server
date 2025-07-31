@@ -44,16 +44,27 @@ public class JsonWebKeys implements Iterable<JsonWebKey> {
   }
 
   public JsonWebKey findBy(String keyId) {
-    return values.stream()
-        .filter(
-            value -> {
-              if (Objects.isNull(value.keyId())) {
-                return false;
-              }
-              return value.keyId().equals(keyId);
-            })
-        .findFirst()
-        .orElse(new JsonWebKey());
+    if (!exists()) {
+      return new JsonWebKey();
+    }
+
+    JsonWebKey jsonWebKey =
+        values.stream()
+            .filter(
+                value -> {
+                  if (Objects.isNull(value.keyId())) {
+                    return false;
+                  }
+                  return value.keyId().equals(keyId);
+                })
+            .findFirst()
+            .orElse(new JsonWebKey());
+
+    if (!jsonWebKey.exists()) {
+      return values.getFirst();
+    }
+
+    return jsonWebKey;
   }
 
   public JsonWebKey findByAlgorithm(String algorithm) {
