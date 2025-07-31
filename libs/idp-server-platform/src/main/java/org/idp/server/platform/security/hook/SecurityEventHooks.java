@@ -16,28 +16,25 @@
 
 package org.idp.server.platform.security.hook;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.Map;
+import org.idp.server.platform.exception.UnSupportedException;
 
-public class SecurityEventHookConfigurations implements Iterable<SecurityEventHookConfiguration> {
+public class SecurityEventHooks {
 
-  List<SecurityEventHookConfiguration> values;
+  Map<SecurityEventHookType, SecurityEventHook> values;
 
-  public SecurityEventHookConfigurations() {
-    this.values = new ArrayList<>();
-  }
-
-  public SecurityEventHookConfigurations(List<SecurityEventHookConfiguration> values) {
+  public SecurityEventHooks(Map<SecurityEventHookType, SecurityEventHook> values) {
     this.values = values;
   }
 
-  @Override
-  public Iterator<SecurityEventHookConfiguration> iterator() {
-    return values.iterator();
-  }
+  public SecurityEventHook get(SecurityEventHookType type) {
 
-  public boolean exists() {
-    return values != null && !values.isEmpty();
+    SecurityEventHook securityEventHookExecutor = values.get(type);
+
+    if (securityEventHookExecutor == null) {
+      throw new UnSupportedException("No executor registered for type " + type);
+    }
+
+    return securityEventHookExecutor;
   }
 }

@@ -22,7 +22,7 @@ import org.idp.server.control_plane.base.ConfigRegistrationContext;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementStatus;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.security.hook.SecurityEventHookConfiguration;
+import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
 
 public class SecurityEventHookConfigRegistrationContext implements ConfigRegistrationContext {
 
@@ -54,7 +54,7 @@ public class SecurityEventHookConfigRegistrationContext implements ConfigRegistr
 
   @Override
   public Map<String, Object> payload() {
-    return securityEventHookConfiguration.payload();
+    return securityEventHookConfiguration.toMap();
   }
 
   @Override
@@ -64,7 +64,7 @@ public class SecurityEventHookConfigRegistrationContext implements ConfigRegistr
 
   public SecurityEventHookConfigManagementResponse toResponse() {
     Map<String, Object> response = new HashMap<>();
-    response.put("result", securityEventHookConfiguration.payload());
+    response.put("result", securityEventHookConfiguration.toMap());
     response.put("dry_run", dryRun);
     return new SecurityEventHookConfigManagementResponse(
         SecurityEventHookConfigManagementStatus.CREATED, response);

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.platform.security.hook;
+package org.idp.server.platform.security.hook.configuration;
 
 import java.util.Objects;
 import java.util.UUID;

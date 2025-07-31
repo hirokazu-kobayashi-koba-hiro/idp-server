@@ -17,7 +17,7 @@
 package org.idp.server.platform.security.repository;
 
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.security.hook.SecurityEventHookConfiguration;
+import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
 
 public interface SecurityEventHookConfigurationCommandRepository {
 

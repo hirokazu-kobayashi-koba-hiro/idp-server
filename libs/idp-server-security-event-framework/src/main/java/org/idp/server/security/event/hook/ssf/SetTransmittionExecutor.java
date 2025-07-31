@@ -16,6 +16,17 @@
 
 package org.idp.server.security.event.hook.ssf;
 
+import org.idp.server.platform.http.HttpClientFactory;
+import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.security.SecurityEvent;
+import org.idp.server.platform.security.hook.SecurityEventHook;
+import org.idp.server.platform.security.hook.SecurityEventHookResult;
+import org.idp.server.platform.security.hook.SecurityEventHookType;
+import org.idp.server.platform.security.hook.StandardSecurityEventHookType;
+import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -24,22 +35,14 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.platform.http.HttpClientFactory;
-import org.idp.server.platform.json.JsonConverter;
-import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.security.SecurityEvent;
-import org.idp.server.platform.security.hook.SecurityEventHook;
-import org.idp.server.platform.security.hook.*;
-import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
 
-public class SsfHookExecutor implements SecurityEventHook {
+public class SetTransmittionExecutor implements SecurityEventHook {
 
-  LoggerWrapper log = LoggerWrapper.getLogger(SsfHookExecutor.class);
+  LoggerWrapper log = LoggerWrapper.getLogger(SetTransmittionExecutor.class);
   HttpClient httpClient;
   JsonConverter jsonConverter;
 
-  public SsfHookExecutor() {
+  public SetTransmittionExecutor() {
     this.httpClient = HttpClientFactory.defaultClient();
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }

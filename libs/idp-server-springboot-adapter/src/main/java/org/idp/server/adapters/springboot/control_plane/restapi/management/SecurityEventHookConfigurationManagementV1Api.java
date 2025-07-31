@@ -23,9 +23,9 @@ import org.idp.server.adapters.springboot.application.restapi.ParameterTransform
 import org.idp.server.adapters.springboot.control_plane.model.OperatorPrincipal;
 import org.idp.server.control_plane.management.security.hook.SecurityEventHookConfigurationManagementApi;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
-import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigRequest;
+import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookRequest;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.security.hook.SecurityEventHookConfigurationIdentifier;
+import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfigurationIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -59,7 +59,7 @@ public class SecurityEventHookConfigurationManagementV1Api implements ParameterT
             tenantIdentifier,
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),
-            new SecurityEventHookConfigRequest(body),
+            new SecurityEventHookRequest(body),
             requestAttributes,
             dryRun);
 
@@ -134,7 +134,7 @@ public class SecurityEventHookConfigurationManagementV1Api implements ParameterT
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),
             identifier,
-            new SecurityEventHookConfigRequest(body),
+            new SecurityEventHookRequest(body),
             requestAttributes,
             dryRun);
     HttpHeaders httpHeaders = new HttpHeaders();

@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package org.idp.server.platform.security.hook;
+package org.idp.server.platform.security.hook.configuration;
+
+import org.idp.server.platform.security.hook.SecurityEventHookType;
 
 import java.util.HashMap;
 import java.util.List;
@@ -24,26 +26,29 @@ public class SecurityEventHookConfiguration {
 
   String id;
   String type;
+  Map<String, Object> attributes = new HashMap<>();
   List<String> triggers;
   int executionOrder;
   boolean enabled;
-  Map<String, Object> payload;
+  Map<String, SecurityEventConfig> events;
 
   public SecurityEventHookConfiguration() {}
 
   public SecurityEventHookConfiguration(
       String id,
       String type,
+      Map<String, Object> attributes,
       List<String> triggers,
       int executionOrder,
-      boolean enabled,
-      Map<String, Object> payload) {
+      Map<String, SecurityEventConfig> events,
+      boolean enabled) {
     this.id = id;
     this.type = type;
+    this.attributes = attributes;
     this.triggers = triggers;
     this.executionOrder = executionOrder;
+    this.events = events;
     this.enabled = enabled;
-    this.payload = payload;
   }
 
   public SecurityEventHookConfigurationIdentifier identifier() {
@@ -58,8 +63,20 @@ public class SecurityEventHookConfiguration {
     return new SecurityEventHookType(type);
   }
 
-  public Map<String, Object> payload() {
-    return payload;
+  public Map<String, SecurityEventConfig> events() {
+    return events;
+  }
+
+  public SecurityEventConfig getEvent(String eventType) {
+    if (events.containsKey(eventType)) {
+      return events.get(eventType);
+    }
+
+    if (events.containsKey("default")) {
+      return events.get("default");
+    }
+
+    return new SecurityEventConfig();
   }
 
   public List<String> triggers() {
@@ -89,7 +106,7 @@ public class SecurityEventHookConfiguration {
     result.put("triggers", triggers);
     result.put("execution_order", executionOrder);
     result.put("enabled", enabled);
-    result.put("payload", payload);
+    result.put("events", events);
     return result;
   }
 }

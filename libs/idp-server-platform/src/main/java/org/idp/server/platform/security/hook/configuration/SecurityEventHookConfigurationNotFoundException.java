@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.security.hook.configuration.command;
+package org.idp.server.platform.security.hook.configuration;
 
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
+import org.idp.server.platform.exception.NotFoundException;
 
-public interface SecurityEventHookConfigSqlExecutor {
-  void insert(Tenant tenant, SecurityEventHookConfiguration configuration);
-
-  void update(Tenant tenant, SecurityEventHookConfiguration configuration);
-
-  void delete(Tenant tenant, SecurityEventHookConfiguration configuration);
+public class SecurityEventHookConfigurationNotFoundException extends NotFoundException {
+  public SecurityEventHookConfigurationNotFoundException(String message) {
+    super(message);
+  }
 }

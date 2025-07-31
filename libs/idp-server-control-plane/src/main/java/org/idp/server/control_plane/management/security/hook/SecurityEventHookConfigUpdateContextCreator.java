@@ -18,46 +18,43 @@ package org.idp.server.control_plane.management.security.hook;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigRequest;
+
+import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigurationRequest;
+import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookRequest;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.security.hook.SecurityEventHookConfiguration;
+import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
+import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfigurationIdentifier;
 
 public class SecurityEventHookConfigUpdateContextCreator {
 
   Tenant tenant;
   SecurityEventHookConfiguration before;
-  SecurityEventHookConfigRequest request;
+  SecurityEventHookConfigurationIdentifier identifier;
+  SecurityEventHookRequest request;
   boolean dryRun;
   JsonConverter jsonConverter;
 
   public SecurityEventHookConfigUpdateContextCreator(
       Tenant tenant,
       SecurityEventHookConfiguration before,
-      SecurityEventHookConfigRequest request,
+      SecurityEventHookConfigurationIdentifier identifier,
+      SecurityEventHookRequest request,
       boolean dryRun) {
     this.tenant = tenant;
     this.before = before;
+    this.identifier = identifier;
     this.request = request;
     this.dryRun = dryRun;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   public SecurityEventHookConfigUpdateContext create() {
-    JsonNodeWrapper configJson = jsonConverter.readTree(request.toMap());
-
-    String id = configJson.getValueOrEmptyAsString("id");
-    String type = configJson.getValueOrEmptyAsString("type");
-    List<JsonNodeWrapper> triggersJson = configJson.getValueAsJsonNodeList("triggers");
-    List<String> triggers = triggersJson.stream().map(JsonNodeWrapper::asText).toList();
-    int executionOrder = configJson.getValueAsInt("execution_order");
-    boolean enabled = configJson.optValueAsBoolean("enabled", false);
-    JsonNodeWrapper payloadJson = configJson.getValueAsJsonNode("payload");
-    Map<String, Object> payload = payloadJson.toMap();
+    SecurityEventHookConfigurationRequest configurationRequest = jsonConverter.read(request.toMap(), SecurityEventHookConfigurationRequest.class);
 
     SecurityEventHookConfiguration after =
-        new SecurityEventHookConfiguration(id, type, triggers, executionOrder, enabled, payload);
+       configurationRequest.toConfiguration(identifier.value());
 
     return new SecurityEventHookConfigUpdateContext(tenant, before, after, dryRun);
   }
