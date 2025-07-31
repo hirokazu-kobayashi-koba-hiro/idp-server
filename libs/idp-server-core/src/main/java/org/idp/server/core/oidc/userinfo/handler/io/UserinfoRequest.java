@@ -55,4 +55,9 @@ public class UserinfoRequest implements AuthorizationHeaderHandlerable {
     this.clientCert = clientCert;
     return this;
   }
+
+  public boolean hasToken() {
+    AccessTokenEntity accessToken = toAccessToken();
+    return accessToken != null && accessToken.exists();
+  }
 }

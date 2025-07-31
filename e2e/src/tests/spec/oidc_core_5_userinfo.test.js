@@ -46,4 +46,15 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 userinfo", () => {
     expect(postUserinfoResponse.status).toBe(200);
     expect(postUserinfoResponse.data).toHaveProperty("sub");
   });
+
+  it("missing access token ", async () => {
+    const userinfoResponse = await getUserinfo({
+      endpoint: serverConfig.userinfoEndpoint,
+      authorizationHeader: {},
+    });
+    console.log(userinfoResponse.data);
+    console.log(userinfoResponse.headers);
+    expect(userinfoResponse.status).toBe(401);
+    expect(userinfoResponse.data.error).toEqual("invalid_token");
+  });
 });
