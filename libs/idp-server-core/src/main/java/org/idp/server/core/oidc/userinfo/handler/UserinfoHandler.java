@@ -29,6 +29,7 @@ import org.idp.server.core.oidc.userinfo.UserinfoResponse;
 import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequest;
 import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequestResponse;
 import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequestStatus;
+import org.idp.server.core.oidc.userinfo.validator.UserinfoValidator;
 import org.idp.server.core.oidc.userinfo.verifier.UserinfoVerifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -53,7 +54,8 @@ public class UserinfoHandler {
     AccessTokenEntity accessTokenEntity = request.toAccessToken();
     Tenant tenant = request.tenant();
 
-    // TODO validate
+    UserinfoValidator validator = new UserinfoValidator(request);
+    validator.validate();
 
     OAuthToken oAuthToken = oAuthTokenQueryRepository.find(tenant, accessTokenEntity);
 
