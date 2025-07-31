@@ -29,10 +29,13 @@ import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
-import org.idp.server.platform.security.SecurityEventHookExecutor;
 import org.idp.server.platform.security.hook.*;
+import org.idp.server.platform.security.hook.SecurityEventHook;
+import org.idp.server.platform.security.hook.configuration.SecurityEventConfig;
+import org.idp.server.platform.security.hook.configuration.SecurityEventExecutionConfig;
+import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
 
-public class SsfHookExecutor implements SecurityEventHookExecutor {
+public class SsfHookExecutor implements SecurityEventHook {
 
   LoggerWrapper log = LoggerWrapper.getLogger(SsfHookExecutor.class);
   HttpClient httpClient;
@@ -54,31 +57,29 @@ public class SsfHookExecutor implements SecurityEventHookExecutor {
       SecurityEvent securityEvent,
       SecurityEventHookConfiguration hookConfiguration) {
 
-    SecurityEventTokenEntityConvertor convertor =
-        new SecurityEventTokenEntityConvertor(securityEvent);
-    SecurityEventTokenEntity securityEventTokenEntity = convertor.convert();
+    SecurityEventConfig securityEventConfig = hookConfiguration.getEvent(securityEvent.type());
+    SharedSignalFrameworkMetadataConfig metadataConfig =
+        jsonConverter.read(hookConfiguration.metadata(), SharedSignalFrameworkMetadataConfig.class);
+    SecurityEventExecutionConfig executionConfig = securityEventConfig.execution();
+    SharedSignalFrameworkTransmissionConfig transmissionConfig =
+        jsonConverter.read(
+            executionConfig.details(), SharedSignalFrameworkTransmissionConfig.class);
 
-    SharedSignalFrameworkConfiguration ssfConfiguration =
-        jsonConverter.read(hookConfiguration.payload(), SharedSignalFrameworkConfiguration.class);
-
-    log.info(
-        String.format(
-            "notify shared signal (%s) to (%s)",
-            securityEventTokenEntity.securityEventAsString(), ssfConfiguration.issuer()));
     SecurityEventTokenCreator securityEventTokenCreator =
-        new SecurityEventTokenCreator(
-            securityEventTokenEntity, ssfConfiguration.privateKey(securityEvent.type()));
+        new SecurityEventTokenCreator(securityEvent, metadataConfig, transmissionConfig);
     SecurityEventToken securityEventToken = securityEventTokenCreator.create();
 
     return send(
-        new SharedSignalEventRequest(
-            ssfConfiguration.endpoint(securityEvent.type()),
-            ssfConfiguration.headers(securityEvent.type()),
-            securityEventToken));
+        new SharedSignalEventRequest(transmissionConfig.url(), Map.of(), securityEventToken));
   }
 
   private SecurityEventHookResult send(SharedSignalEventRequest sharedSignalEventRequest) {
     try {
+
+      log.debug(
+          "send shared signal request url: {}, set: {}",
+          sharedSignalEventRequest.endpoint(),
+          sharedSignalEventRequest.securityEventTokenValue());
 
       HttpRequest.Builder builder =
           HttpRequest.newBuilder()

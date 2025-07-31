@@ -59,14 +59,6 @@ public class SecurityEventTokenEntity {
     return sharedSecurityEvent;
   }
 
-  public String securityEventAsString() {
-    return sharedSecurityEvent.type().name();
-  }
-
-  public boolean isDefinedEvent() {
-    return sharedSecurityEvent.isDefined();
-  }
-
   public Map<String, Object> eventAsMap() {
     return sharedSecurityEvent.eventAsMap();
   }

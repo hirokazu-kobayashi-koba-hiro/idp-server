@@ -14,22 +14,24 @@
  * limitations under the License.
  */
 
-package org.idp.server.platform.security;
+package org.idp.server.platform.security.hook.executor;
 
+import java.util.Map;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.security.hook.*;
+import org.idp.server.platform.security.SecurityEvent;
+import org.idp.server.platform.security.hook.SecurityEventHookResult;
+import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
 
-public interface SecurityEventHookExecutor {
+public class SecurityEventNoActionExecutor implements SecurityEventExecutor {
 
-  SecurityEventHookType type();
-
-  default boolean shouldNotExecute(
-      Tenant tenant,
-      SecurityEvent securityEvent,
-      SecurityEventHookConfiguration hookConfiguration) {
-    return !hookConfiguration.hasTrigger(securityEvent.type().value());
+  @Override
+  public String type() {
+    return "no_action";
   }
 
-  SecurityEventHookResult execute(
-      Tenant tenant, SecurityEvent securityEvent, SecurityEventHookConfiguration configuration);
+  public SecurityEventHookResult execute(
+      Tenant tenant, SecurityEvent securityEvent, SecurityEventHookConfiguration configuration) {
+
+    return SecurityEventHookResult.success(configuration.hookType(), Map.of());
+  }
 }

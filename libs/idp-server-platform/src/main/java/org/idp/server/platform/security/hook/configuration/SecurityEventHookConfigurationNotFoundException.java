@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-package org.idp.server.security.event.hook.ssf;
+package org.idp.server.platform.security.hook.configuration;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.idp.server.platform.exception.NotFoundException;
 
-public class SecurityEventTokenCreatorTest {}
+public class SecurityEventHookConfigurationNotFoundException extends NotFoundException {
+  public SecurityEventHookConfigurationNotFoundException(String message) {
+    super(message);
+  }
+}

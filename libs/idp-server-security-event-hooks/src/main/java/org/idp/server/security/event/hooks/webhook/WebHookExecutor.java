@@ -28,14 +28,15 @@ import org.idp.server.platform.http.*;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
-import org.idp.server.platform.security.SecurityEventHookExecutor;
 import org.idp.server.platform.security.hook.*;
+import org.idp.server.platform.security.hook.SecurityEventHook;
+import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
 
 /**
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc8935">Push-Based Security Event Token
  *     (SET) Delivery Using HTTP</a>
  */
-public class WebHookExecutor implements SecurityEventHookExecutor {
+public class WebHookExecutor implements SecurityEventHook {
 
   HttpClient httpClient;
   JsonConverter jsonConverter;

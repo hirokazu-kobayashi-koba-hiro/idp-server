@@ -18,19 +18,22 @@ package org.idp.server.core.adapters.datasource.security.hook.configuration.quer
 
 import java.util.List;
 import java.util.Map;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.security.hook.SecurityEventHookConfiguration;
-import org.idp.server.platform.security.hook.SecurityEventHookConfigurationIdentifier;
-import org.idp.server.platform.security.hook.SecurityEventHookConfigurations;
+import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
+import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfigurationIdentifier;
+import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfigurations;
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
 
 public class SecurityEventHookConfigurationQueryDataSource
     implements SecurityEventHookConfigurationQueryRepository {
 
   SecurityEventHookConfigSqlExecutors executors;
+  JsonConverter jsonConverter;
 
   public SecurityEventHookConfigurationQueryDataSource() {
     this.executors = new SecurityEventHookConfigSqlExecutors();
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override
@@ -43,7 +46,11 @@ public class SecurityEventHookConfigurationQueryDataSource
     }
 
     List<SecurityEventHookConfiguration> list =
-        results.stream().map(ModelConverter::convert).toList();
+        results.stream()
+            .map(
+                result ->
+                    jsonConverter.read(result.get("payload"), SecurityEventHookConfiguration.class))
+            .toList();
 
     return new SecurityEventHookConfigurations(list);
   }
@@ -58,7 +65,7 @@ public class SecurityEventHookConfigurationQueryDataSource
       return new SecurityEventHookConfiguration();
     }
 
-    return ModelConverter.convert(result);
+    return jsonConverter.read(result.get("payload"), SecurityEventHookConfiguration.class);
   }
 
   @Override
@@ -70,6 +77,10 @@ public class SecurityEventHookConfigurationQueryDataSource
       return List.of();
     }
 
-    return results.stream().map(ModelConverter::convert).toList();
+    return results.stream()
+        .map(
+            result ->
+                jsonConverter.read(result.get("payload"), SecurityEventHookConfiguration.class))
+        .toList();
   }
 }

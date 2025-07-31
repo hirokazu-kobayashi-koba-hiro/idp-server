@@ -74,7 +74,6 @@ public enum SecurityEventType {
   DeviceComplianceChange(
       "CAEP", "", "https://schemas.openid.net/secevent/caep/event-type/device-compliance-change"),
   Undefined("", "", "");
-  ;
 
   String type;
   String name;

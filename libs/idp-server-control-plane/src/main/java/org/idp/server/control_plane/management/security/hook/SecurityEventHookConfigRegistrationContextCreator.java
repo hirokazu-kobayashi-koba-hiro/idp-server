@@ -16,24 +16,22 @@
 
 package org.idp.server.control_plane.management.security.hook;
 
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigRequest;
+import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigurationRequest;
+import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookRequest;
 import org.idp.server.platform.json.JsonConverter;
-import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.security.hook.SecurityEventHookConfiguration;
+import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
 
 public class SecurityEventHookConfigRegistrationContextCreator {
 
   Tenant tenant;
-  SecurityEventHookConfigRequest request;
+  SecurityEventHookRequest request;
   boolean dryRun;
   JsonConverter jsonConverter;
 
   public SecurityEventHookConfigRegistrationContextCreator(
-      Tenant tenant, SecurityEventHookConfigRequest request, boolean dryRun) {
+      Tenant tenant, SecurityEventHookRequest request, boolean dryRun) {
     this.tenant = tenant;
     this.request = request;
     this.dryRun = dryRun;
@@ -41,21 +39,12 @@ public class SecurityEventHookConfigRegistrationContextCreator {
   }
 
   public SecurityEventHookConfigRegistrationContext create() {
-    JsonNodeWrapper configJson = jsonConverter.readTree(request.toMap());
+    SecurityEventHookConfigurationRequest configurationRequest =
+        jsonConverter.read(request.toMap(), SecurityEventHookConfigurationRequest.class);
     String id =
-        configJson.contains("id")
-            ? configJson.getValueOrEmptyAsString("id")
-            : UUID.randomUUID().toString();
-    String type = configJson.getValueOrEmptyAsString("type");
-    List<JsonNodeWrapper> triggersJson = configJson.getValueAsJsonNodeList("triggers");
-    List<String> triggers = triggersJson.stream().map(JsonNodeWrapper::asText).toList();
-    int executionOrder = configJson.getValueAsInt("execution_order");
-    boolean enabled = configJson.optValueAsBoolean("enabled", false);
-    JsonNodeWrapper payloadJson = configJson.getValueAsJsonNode("payload");
-    Map<String, Object> payload = payloadJson.toMap();
+        configurationRequest.hasId() ? configurationRequest.id() : UUID.randomUUID().toString();
 
-    SecurityEventHookConfiguration configuration =
-        new SecurityEventHookConfiguration(id, type, triggers, executionOrder, enabled, payload);
+    SecurityEventHookConfiguration configuration = configurationRequest.toConfiguration(id);
 
     return new SecurityEventHookConfigRegistrationContext(tenant, configuration, dryRun);
   }
