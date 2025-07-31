@@ -85,7 +85,7 @@ public class IdTokenCreator implements IndividualClaimsCreatable, ClaimHashable 
               claims,
               Map.of(),
               authorizationServerConfiguration.jwks(),
-              authorizationServerConfiguration.tokenSignedKeyId());
+              authorizationServerConfiguration.idTokenSignedKeyId());
 
       if (clientConfiguration.hasEncryptedIdTokenMeta()) {
 
