@@ -558,12 +558,12 @@ public class AuthorizationServerConfiguration implements JsonReadable {
     return extension.defaultCibaAuthenticationInteractionType();
   }
 
-  public int backchannelAuthRequestExpiresIn() {
-    return extension.backchannelAuthRequestExpiresIn();
+  public int backchannelAuthenticationRequestExpiresIn() {
+    return extension.backchannelAuthenticationRequestExpiresIn();
   }
 
-  public int backchannelAuthPollingInterval() {
-    return extension.backchannelAuthPollingInterval();
+  public int backchannelAuthenticationPollingInterval() {
+    return extension.backchannelAuthenticationPollingInterval();
   }
 
   public boolean requiredBackchannelAuthUserCode() {

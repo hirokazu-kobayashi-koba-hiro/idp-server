@@ -149,14 +149,16 @@ public class CibaRequestContext implements BackchannelRequestContext {
   }
 
   public Interval interval() {
-    return new Interval(authorizationServerConfiguration.backchannelAuthPollingInterval());
+    return new Interval(
+        authorizationServerConfiguration.backchannelAuthenticationPollingInterval());
   }
 
   public ExpiresIn expiresIn() {
     if (backchannelAuthenticationRequest.hasRequestedExpiry()) {
       return new ExpiresIn(backchannelAuthenticationRequest.requestedExpiry().toIntValue());
     }
-    return new ExpiresIn(authorizationServerConfiguration.backchannelAuthRequestExpiresIn());
+    return new ExpiresIn(
+        authorizationServerConfiguration.backchannelAuthenticationRequestExpiresIn());
   }
 
   public boolean hasUserCode() {

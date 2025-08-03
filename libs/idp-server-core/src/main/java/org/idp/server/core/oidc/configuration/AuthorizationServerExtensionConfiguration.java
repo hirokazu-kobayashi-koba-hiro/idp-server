@@ -41,8 +41,8 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
   boolean idTokenStrictMode = false;
   long defaultMaxAge = 86400;
   long authorizationResponseDuration = 60;
-  int backchannelAuthRequestExpiresIn = 300;
-  int backchannelAuthPollingInterval = 5;
+  int backchannelAuthenticationRequestExpiresIn = 300;
+  int backchannelAuthenticationPollingInterval = 5;
   boolean requiredBackchannelAuthUserCode = false;
   String backchannelAuthUserCodeType = "password";
   String defaultCibaAuthenticationInteractionType = "authentication-device-notification";
@@ -128,12 +128,12 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
     return authorizationResponseDuration;
   }
 
-  public int backchannelAuthRequestExpiresIn() {
-    return backchannelAuthRequestExpiresIn;
+  public int backchannelAuthenticationRequestExpiresIn() {
+    return backchannelAuthenticationRequestExpiresIn;
   }
 
-  public int backchannelAuthPollingInterval() {
-    return backchannelAuthPollingInterval;
+  public int backchannelAuthenticationPollingInterval() {
+    return backchannelAuthenticationPollingInterval;
   }
 
   public boolean requiredBackchannelAuthUserCode() {
