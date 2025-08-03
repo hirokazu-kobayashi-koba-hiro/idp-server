@@ -127,7 +127,7 @@ public class RequestObjectPatternFactory implements BackchannelAuthenticationReq
       int expiresIn = requestedExpiry.valueAsInt();
       builder.add(new ExpiresIn(expiresIn)).add(new ExpiresAt(now.plusSeconds(expiresIn)));
     } else {
-      int expiresIn = authorizationServerConfiguration.backchannelAuthRequestExpiresIn();
+      int expiresIn = authorizationServerConfiguration.backchannelAuthenticationRequestExpiresIn();
       builder.add(new ExpiresIn(expiresIn));
       builder.add(new ExpiresAt(now.plusSeconds(expiresIn)));
     }

@@ -209,6 +209,8 @@
     "required_identity_verification_scopes": [
       "transfers"
     ],
+    "backchannel_authentication_request_expires_in": 60,
+    "backchannel_authentication_polling_interval": 5,
     "enabled_custom_claims_scope_mapping": true,
     "enabled_access_token_user_custom_properties": true,
     "enabled_access_token_selective_verified_claims": true,
