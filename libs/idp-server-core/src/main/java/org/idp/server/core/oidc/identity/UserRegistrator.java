@@ -33,7 +33,7 @@ public class UserRegistrator {
 
   public User registerOrUpdate(Tenant tenant, User user) {
 
-    User existingUser = userQueryRepository.findByEmail(tenant, user.email(), user.providerId());
+    User existingUser = userQueryRepository.findById(tenant, user.userIdentifier());
 
     if (existingUser.exists()) {
       UserUpdater userUpdater = new UserUpdater(user, existingUser);
