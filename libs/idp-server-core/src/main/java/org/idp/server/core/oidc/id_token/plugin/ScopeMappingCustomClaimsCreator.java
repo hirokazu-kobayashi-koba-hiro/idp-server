@@ -76,6 +76,10 @@ public class ScopeMappingCustomClaimsCreator implements CustomIndividualClaimsCr
         claims.put(claimName, customProperties.getValue(claimName));
       }
 
+      if (claimName.equals("ex_sub") && user.hasExternalUserId()) {
+        claims.put("ex_sub", user.externalUserId());
+      }
+
       if (claimName.equals("roles") && user.hasRoles()) {
         claims.put("roles", user.roleNameAsListString());
       }

@@ -158,7 +158,11 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
       claims.put("updated_at", user.updateAtAsLong());
     }
 
-    // TODO move plugin
+    // TODO ↓ move plugin
+    if (user.hasExternalUserId()) {
+      claims.put("ex_sub", user.externalUserId());
+    }
+
     if (user.hasRoles()) {
       claims.put("roles", user.roleNameAsListString());
     }
