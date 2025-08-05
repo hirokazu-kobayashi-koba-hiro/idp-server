@@ -17,6 +17,8 @@
 package org.idp.server.core.oidc.identity;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
 
 public class UserRole implements Serializable, JsonReadable {
@@ -36,5 +38,12 @@ public class UserRole implements Serializable, JsonReadable {
 
   public String roleName() {
     return roleName;
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("role_id", roleId);
+    map.put("role_name", roleName);
+    return map;
   }
 }
