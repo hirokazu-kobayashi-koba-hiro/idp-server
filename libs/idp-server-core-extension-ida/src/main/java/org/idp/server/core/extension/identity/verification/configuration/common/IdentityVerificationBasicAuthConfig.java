@@ -16,6 +16,8 @@
 
 package org.idp.server.core.extension.identity.verification.configuration.common;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.json.JsonReadable;
 
@@ -44,5 +46,12 @@ public class IdentityVerificationBasicAuthConfig implements JsonReadable {
 
   public BasicAuth basicAuth() {
     return new BasicAuth(username, password);
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("username", username);
+    map.put("password", password);
+    return map;
   }
 }

@@ -16,6 +16,8 @@
 
 package org.idp.server.core.extension.identity.verification.configuration.process;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.platform.http.*;
 import org.idp.server.platform.json.JsonReadable;
 
@@ -54,5 +56,13 @@ public class IdentityVerificationExecutionConfig implements JsonReadable {
 
   public boolean exists() {
     return type != null && !type.isEmpty();
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("type", type);
+    if (hasHttpRequest()) map.put("httpRequest", httpRequest.toMap());
+    if (hasMock()) map.put("mock", mock);
+    return map;
   }
 }

@@ -16,6 +16,7 @@
 
 package org.idp.server.core.extension.identity.verification.configuration;
 
+import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
 
@@ -36,5 +37,12 @@ public class IdentityVerificationConfig implements JsonReadable {
 
   public Map<String, Object> details() {
     return details;
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("type", type);
+    map.put("details", details);
+    return map;
   }
 }

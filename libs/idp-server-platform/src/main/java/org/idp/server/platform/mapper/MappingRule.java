@@ -16,6 +16,8 @@
 
 package org.idp.server.platform.mapper;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
 
 public class MappingRule implements JsonReadable {
@@ -60,5 +62,14 @@ public class MappingRule implements JsonReadable {
 
   public String convertType() {
     return convertType;
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("from", from);
+    map.put("static_value", staticValue);
+    map.put("to", to);
+    map.put("convert_type", convertType);
+    return map;
   }
 }

@@ -17,7 +17,9 @@
 package org.idp.server.core.extension.identity.verification.configuration.process;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfig;
 import org.idp.server.platform.json.JsonReadable;
 
@@ -34,10 +36,39 @@ public class IdentityVerificationPreHookConfig implements JsonReadable {
     return verifications;
   }
 
+  public List<Map<String, Object>> verificationsAsMap() {
+    if (verifications == null) {
+      return new ArrayList<>();
+    }
+    return verifications.stream().map(IdentityVerificationConfig::toMap).toList();
+  }
+
+  public boolean hasVerifications() {
+    return verifications != null && !verifications.isEmpty();
+  }
+
   public List<IdentityVerificationConfig> additionalParameters() {
     if (additionalParameters == null) {
       return new ArrayList<>();
     }
     return additionalParameters;
+  }
+
+  public List<Map<String, Object>> additionalParametersAsMap() {
+    if (additionalParameters == null) {
+      return new ArrayList<>();
+    }
+    return additionalParameters.stream().map(IdentityVerificationConfig::toMap).toList();
+  }
+
+  public boolean hasAdditionalParameters() {
+    return additionalParameters != null && !additionalParameters.isEmpty();
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    if (hasVerifications()) map.put("verifications", verificationsAsMap());
+    if (hasAdditionalParameters()) map.put("additional_parameters", additionalParametersAsMap());
+    return map;
   }
 }

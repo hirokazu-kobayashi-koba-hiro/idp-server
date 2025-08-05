@@ -105,19 +105,7 @@
               },
               "body_mapping_rules": [
                 { "from": "$.request_body", "to": "*" }
-              ],
-              "response_validation_schema": {
-                "type": "object",
-                "required": [
-                  "application_id"
-                ],
-                "properties": {
-                  "application_id": {
-                    "type": "string",
-                    "store": true
-                  }
-                }
-              }
+              ]
             }
           }
         ]
