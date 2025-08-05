@@ -16,6 +16,8 @@
 
 package org.idp.server.core.extension.identity.verification.configuration.process;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
 
 public class IdentityVerificationTransitionConfig implements JsonReadable {
@@ -33,6 +35,10 @@ public class IdentityVerificationTransitionConfig implements JsonReadable {
     return rejected;
   }
 
+  public boolean hasRejected() {
+    return rejected != null && rejected.exists();
+  }
+
   public IdentityVerificationConditionConfig canceled() {
     if (canceled == null) {
       return new IdentityVerificationConditionConfig();
@@ -40,10 +46,26 @@ public class IdentityVerificationTransitionConfig implements JsonReadable {
     return canceled;
   }
 
+  public boolean hasCanceled() {
+    return canceled != null && canceled.exists();
+  }
+
   public IdentityVerificationConditionConfig approved() {
     if (approved == null) {
       return new IdentityVerificationConditionConfig();
     }
     return approved;
+  }
+
+  public boolean hasApproved() {
+    return approved != null && approved.exists();
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    if (hasRejected()) map.put("rejected", rejected.toMap());
+    if (hasCanceled()) map.put("canceled", canceled.toMap());
+    if (hasApproved()) map.put("approved", approved.toMap());
+    return map;
   }
 }

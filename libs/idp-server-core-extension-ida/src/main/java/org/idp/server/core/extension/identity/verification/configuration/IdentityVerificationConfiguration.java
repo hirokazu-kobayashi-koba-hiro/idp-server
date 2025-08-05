@@ -121,6 +121,18 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
     return processes;
   }
 
+  public Map<String, Map<String, Object>> processesAsMap() {
+    if (processes == null) {
+      return Collections.emptyMap();
+    }
+
+    Map<String, Map<String, Object>> processesAsMap = new HashMap<>();
+    for (Map.Entry<String, IdentityVerificationProcessConfiguration> entry : processes.entrySet()) {
+      processesAsMap.put(entry.getKey(), entry.getValue().toMap());
+    }
+    return processesAsMap;
+  }
+
   public boolean hasProcesses() {
     return processes != null && !processes.isEmpty();
   }
@@ -159,8 +171,8 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
     map.put("type", type);
     if (hasAttributes()) map.put("attributes", attributes);
     if (hasCommon()) map.put("common", common.toMap());
-    if (hasProcesses()) map.put("processes", processes);
-    if (hasRegistration()) map.put("registration", registration);
+    if (hasProcesses()) map.put("processes", processesAsMap());
+    if (hasRegistration()) map.put("registration", registration.toMap());
     if (hasVerifiedClaims()) map.put("result", result.toMap());
 
     return map;

@@ -373,6 +373,10 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     return authenticationDevices;
   }
 
+  public List<Map<String, Object>> authenticationDevicesListAsMap() {
+    return authenticationDevices.stream().map(AuthenticationDevice::toMap).toList();
+  }
+
   public User setAuthenticationDevices(List<AuthenticationDevice> authenticationDevices) {
     this.authenticationDevices = authenticationDevices;
     return this;
@@ -555,6 +559,10 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     return roles.stream().map(UserRole::roleName).toList();
   }
 
+  public List<Map<String, Object>> roleListAsMap() {
+    return roles.stream().map(UserRole::toMap).toList();
+  }
+
   public User setRoles(List<UserRole> roles) {
     this.roles = roles;
     return this;
@@ -701,9 +709,10 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     if (hasAddress()) map.put("address", address.toMap());
     if (hasCustomProperties()) map.put("custom_properties", new HashMap<>(customProperties));
     if (hasHashedPassword()) map.put("hashed_password", "****");
-    if (hasRoles()) map.put("roles", roles);
+    if (hasRoles()) map.put("roles", roleListAsMap());
     if (hasPermissions()) map.put("permissions", permissions);
-    if (hasAuthenticationDevices()) map.put("authentication_devices", authenticationDevices);
+    if (hasAuthenticationDevices())
+      map.put("authentication_devices", authenticationDevicesListAsMap());
     if (hasCurrentTenantId()) map.put("current_tenant_id", currentTenant);
     if (hasAssignedTenants()) map.put("assigned_tenants", assignedTenants);
     if (hasCurrentOrganizationId()) map.put("current_organization_id", currentOrganizationId);

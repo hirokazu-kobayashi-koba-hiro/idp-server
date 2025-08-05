@@ -17,7 +17,9 @@
 package org.idp.server.core.extension.identity.verification.configuration.process;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.mapper.MappingRule;
 
@@ -31,5 +33,22 @@ public class IdentityVerificationResponseConfig implements JsonReadable {
       return new ArrayList<>();
     }
     return bodyMappingRules;
+  }
+
+  public List<Map<String, Object>> bodyMappingRulesMap() {
+    if (bodyMappingRules == null) {
+      return new ArrayList<>();
+    }
+    return bodyMappingRules.stream().map(MappingRule::toMap).toList();
+  }
+
+  public boolean hasBodyMappingRules() {
+    return bodyMappingRules != null && !bodyMappingRules.isEmpty();
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    if (hasBodyMappingRules()) map.put("bodyMappingRules", bodyMappingRulesMap());
+    return map;
   }
 }
