@@ -17,7 +17,9 @@
 package org.idp.server.core.extension.identity.verification.configuration.process;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfig;
 import org.idp.server.platform.json.JsonReadable;
 
@@ -32,5 +34,22 @@ public class IdentityVerificationPostHookConfig implements JsonReadable {
       return new ArrayList<>();
     }
     return executions;
+  }
+
+  public List<Map<String, Object>> executionsAsMap() {
+    if (executions == null) {
+      return new ArrayList<>();
+    }
+    return executions.stream().map(IdentityVerificationConfig::toMap).toList();
+  }
+
+  public boolean hasExecutions() {
+    return executions != null && !executions.isEmpty();
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("executions", executions);
+    return map;
   }
 }

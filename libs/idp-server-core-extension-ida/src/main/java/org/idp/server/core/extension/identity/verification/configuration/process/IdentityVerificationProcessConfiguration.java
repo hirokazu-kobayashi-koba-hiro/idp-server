@@ -16,6 +16,8 @@
 
 package org.idp.server.core.extension.identity.verification.configuration.process;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.core.extension.identity.verification.configuration.common.IdentityVerificationBasicAuthConfig;
 import org.idp.server.platform.http.HmacAuthenticationConfig;
 import org.idp.server.platform.json.JsonNodeWrapper;
@@ -134,5 +136,17 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
       return new IdentityVerificationResponseConfig();
     }
     return response;
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    if (request != null) map.put("request", request.toMap());
+    if (preHook != null) map.put("pre_hook", preHook.toMap());
+    if (execution != null) map.put("execution", execution.toMap());
+    if (postHook != null) map.put("post_hook", postHook.toMap());
+    if (transition != null) map.put("transition", transition.toMap());
+    if (store != null) map.put("store", store.toMap());
+    if (response != null) map.put("response", response.toMap());
+    return map;
   }
 }

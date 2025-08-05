@@ -46,4 +46,11 @@ public class IdentityVerificationRequestConfig implements JsonReadable {
     }
     return new JsonSchemaDefinition(JsonNodeWrapper.fromMap(schema));
   }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("basic_auth", basicAuth.toMap());
+    map.put("schema", schema);
+    return map;
+  }
 }

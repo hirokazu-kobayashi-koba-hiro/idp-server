@@ -17,7 +17,9 @@
 package org.idp.server.core.extension.identity.verification.configuration.process;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.idp.server.platform.http.*;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.mapper.MappingRule;
@@ -87,9 +89,25 @@ public class IdentityVerificationHttpRequestConfig
     return new HttpRequestMappingRules(pathMappingRules);
   }
 
+  public boolean hasPathMappingRules() {
+    return pathMappingRules != null && !pathMappingRules.isEmpty();
+  }
+
+  public List<Map<String, Object>> pathMappingRulesMap() {
+    return pathMappingRules.stream().map(MappingRule::toMap).toList();
+  }
+
   @Override
   public HttpRequestMappingRules headerMappingRules() {
     return new HttpRequestMappingRules(headerMappingRules);
+  }
+
+  public boolean hasHeaderMappingRules() {
+    return headerMappingRules != null && !headerMappingRules.isEmpty();
+  }
+
+  public List<Map<String, Object>> headerMappingRulesMap() {
+    return headerMappingRules.stream().map(MappingRule::toMap).toList();
   }
 
   @Override
@@ -97,12 +115,42 @@ public class IdentityVerificationHttpRequestConfig
     return new HttpRequestMappingRules(bodyMappingRules);
   }
 
+  public boolean hasBodyMappingRules() {
+    return bodyMappingRules != null && !bodyMappingRules.isEmpty();
+  }
+
+  public List<Map<String, Object>> bodyMappingRulesMap() {
+    return bodyMappingRules.stream().map(MappingRule::toMap).toList();
+  }
+
   @Override
   public HttpRequestMappingRules queryMappingRules() {
     return new HttpRequestMappingRules(queryMappingRules);
   }
 
+  public boolean hasQueryMappingRules() {
+    return queryMappingRules != null && !queryMappingRules.isEmpty();
+  }
+
+  public List<Map<String, Object>> queryMappingRulesMap() {
+    return queryMappingRules.stream().map(MappingRule::toMap).toList();
+  }
+
   public boolean exists() {
     return url != null && !url.isEmpty();
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("url", url);
+    map.put("method", method);
+    map.put("authType", authType);
+    if (hasOAuthAuthorization()) map.put("oauthAuthorization", oauthAuthorization.toMap());
+    if (hasHmacAuthentication()) map.put("hmacAuthentication", hmacAuthentication.toMap());
+    if (hasPathMappingRules()) map.put("pathMappingRules", pathMappingRulesMap());
+    if (hasBodyMappingRules()) map.put("headerMappingRules", headerMappingRulesMap());
+    if (hasBodyMappingRules()) map.put("bodyMappingRules", bodyMappingRulesMap());
+    if (hasQueryMappingRules()) map.put("queryMappingRules", queryMappingRulesMap());
+    return map;
   }
 }
