@@ -120,10 +120,12 @@ import org.idp.server.platform.security.SecurityEventApi;
 import org.idp.server.platform.security.SecurityEventPublisher;
 import org.idp.server.platform.security.hook.SecurityEventHooks;
 import org.idp.server.platform.security.repository.*;
+import org.idp.server.security.event.hook.ssf.SharedSignalsFrameworkMetaDataApi;
 import org.idp.server.usecases.application.enduser.*;
 import org.idp.server.usecases.application.identity_verification_service.IdentityVerificationCallbackEntryService;
 import org.idp.server.usecases.application.identity_verification_service.IdentityVerificationEntryService;
 import org.idp.server.usecases.application.relying_party.OidcMetaDataEntryService;
+import org.idp.server.usecases.application.relying_party.SharedSignalsFrameworkMetaDataEntryService;
 import org.idp.server.usecases.application.system.*;
 import org.idp.server.usecases.application.tenant_invitator.TenantInvitationMetaDataEntryService;
 import org.idp.server.usecases.control_plane.system_administrator.IdpServerOperationEntryService;
@@ -147,6 +149,7 @@ public class IdpServerApplication {
   IdentityVerificationCallbackApi identityVerificationCallbackApi;
   IdentityVerificationApi identityVerificationApi;
   SecurityEventApi securityEventApi;
+  SharedSignalsFrameworkMetaDataApi sharedSignalsFrameworkMetaDataApi;
   TenantMetaDataApi tenantMetaDataApi;
   TenantInvitationMetaDataApi tenantInvitationMetaDataApi;
   UserOperationApi userOperationApi;
@@ -524,6 +527,13 @@ public class IdpServerApplication {
             SecurityEventApi.class,
             tenantDialectProvider);
 
+    this.sharedSignalsFrameworkMetaDataApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new SharedSignalsFrameworkMetaDataEntryService(
+                securityEventHookConfigurationQueryRepository, tenantQueryRepository),
+            SharedSignalsFrameworkMetaDataApi.class,
+            tenantDialectProvider);
+
     this.tenantMetaDataApi =
         TenantAwareEntryServiceProxy.createProxy(
             new TenantMetaDataEntryService(tenantQueryRepository),
@@ -783,6 +793,10 @@ public class IdpServerApplication {
 
   public UserOperationApi userOperationApi() {
     return userOperationApi;
+  }
+
+  public SharedSignalsFrameworkMetaDataApi sharedSignalsFrameworkMetaDataApi() {
+    return sharedSignalsFrameworkMetaDataApi;
   }
 
   public UserLifecycleEventApi userLifecycleEventApi() {

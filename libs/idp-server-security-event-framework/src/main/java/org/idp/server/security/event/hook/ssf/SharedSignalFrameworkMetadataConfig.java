@@ -16,7 +16,10 @@
 
 package org.idp.server.security.event.hook.ssf;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
 
 public class SharedSignalFrameworkMetadataConfig implements JsonReadable {
@@ -84,7 +87,38 @@ public class SharedSignalFrameworkMetadataConfig implements JsonReadable {
     return authorizationSchemes;
   }
 
+  public List<Map<String, Object>> authorizationSchemesAsMap() {
+    if (authorizationSchemes == null) {
+      return new ArrayList<>();
+    }
+    return authorizationSchemes.stream().map(AuthorizationSchemeConfig::toMap).toList();
+  }
+
   public String defaultSubjects() {
     return defaultSubjects;
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("spec_version", specVersion);
+    map.put("issuer", issuer);
+    map.put("jwks", jwks);
+    map.put("jwks_uri", jwksUri);
+    map.put("delivery_methods_supported", deliveryMethodsSupported);
+    map.put("configuration_endpoint", configurationEndpoint);
+    map.put("status_endpoint", statusEndpoint);
+    map.put("add_subject_endpoint", addSubjectEndpoint);
+    map.put("remove_subject_endpoint", removeSubjectEndpoint);
+    map.put("verification_endpoint", verificationEndpoint);
+    map.put("critical_subject_members", criticalSubjectMembers);
+    map.put("authorization_schemes", authorizationSchemesAsMap());
+    map.put("default_subjects", defaultSubjects);
+    return map;
+  }
+
+  public Map<String, Object> toConfigMap() {
+    Map<String, Object> map = toMap();
+    map.remove("jwks");
+    return map;
   }
 }

@@ -42,6 +42,8 @@ export const serverConfig = {
   identityVerificationResultResourceOwnerEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/me/identity-verification/results`,
   discoveryEndpoint:
     `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/.well-known/openid-configuration`,
+  ssfDiscoveryEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/.well-known/ssf-configuration`,
+  ssfJwksEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/ssf/jwks`,
   credentialEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/credentials`,
   credentialBatchEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/credentials/batch-requests`,
   resourceOwnerEndpoint: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/me`,
