@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.identity.verification.configuration.process;
+package org.idp.server.platform.security.hook.configuration;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,7 +25,7 @@ import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.mapper.MappingRule;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
-public class IdentityVerificationHttpRequestConfig
+public class SecurityEventHttpRequestConfig
     implements HttpRequestExecutionConfigInterface, JsonReadable {
   String url;
   String method;
@@ -37,7 +37,7 @@ public class IdentityVerificationHttpRequestConfig
   List<MappingRule> bodyMappingRules = new ArrayList<>();
   List<MappingRule> queryMappingRules = new ArrayList<>();
 
-  public IdentityVerificationHttpRequestConfig() {}
+  public SecurityEventHttpRequestConfig() {}
 
   @Override
   public HttpRequestUrl httpRequestUrl() {

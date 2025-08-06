@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.security.hook.SecurityEventHookConfigurationIdentifier;
+import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfigurationIdentifier;
 
 public class MysqlExecutor implements SecurityEventHookConfigSqlExecutor {
 

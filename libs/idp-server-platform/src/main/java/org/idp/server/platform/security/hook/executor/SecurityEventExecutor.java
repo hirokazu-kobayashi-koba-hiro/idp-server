@@ -14,8 +14,17 @@
  * limitations under the License.
  */
 
-package org.idp.server.security.event.hook.ssf;
+package org.idp.server.platform.security.hook.executor;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.security.SecurityEvent;
+import org.idp.server.platform.security.hook.SecurityEventHookResult;
+import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
 
-public class SecurityEventTokenCreatorTest {}
+public interface SecurityEventExecutor {
+
+  String type();
+
+  SecurityEventHookResult execute(
+      Tenant tenant, SecurityEvent securityEvent, SecurityEventHookConfiguration configuration);
+}

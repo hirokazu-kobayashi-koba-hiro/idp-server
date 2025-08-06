@@ -14,12 +14,23 @@
  * limitations under the License.
  */
 
-package org.idp.server.platform.security.hook;
+package org.idp.server.control_plane.management.security.hook.io;
 
-import org.idp.server.platform.exception.NotFoundException;
+import java.util.Map;
 
-public class SecurityEventHookConfigurationNotFoundException extends NotFoundException {
-  public SecurityEventHookConfigurationNotFoundException(String message) {
-    super(message);
+public class SecurityEventHookRequest {
+
+  Map<String, Object> values;
+
+  public SecurityEventHookRequest(Map<String, Object> values) {
+    this.values = values;
+  }
+
+  public Map<String, Object> toMap() {
+    return values;
+  }
+
+  public Object get(String key) {
+    return values.get(key);
   }
 }

@@ -42,4 +42,16 @@ public class AuthenticationInteractionType {
   public int hashCode() {
     return Objects.hashCode(name);
   }
+
+  public String formatSnakeCase() {
+    String[] parts = name.split("-");
+    StringBuilder result = new StringBuilder();
+    for (String part : parts) {
+      if (!result.isEmpty()) {
+        result.append("_");
+      }
+      result.append(part);
+    }
+    return result.toString();
+  }
 }

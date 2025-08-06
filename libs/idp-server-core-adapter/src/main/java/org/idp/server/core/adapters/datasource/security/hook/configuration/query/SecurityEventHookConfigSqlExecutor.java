@@ -19,7 +19,7 @@ package org.idp.server.core.adapters.datasource.security.hook.configuration.quer
 import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.security.hook.SecurityEventHookConfigurationIdentifier;
+import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfigurationIdentifier;
 
 public interface SecurityEventHookConfigSqlExecutor {
   List<Map<String, String>> selectListBy(Tenant tenant);

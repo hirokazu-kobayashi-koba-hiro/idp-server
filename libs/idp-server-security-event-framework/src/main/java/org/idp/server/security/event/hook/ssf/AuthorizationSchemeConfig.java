@@ -16,6 +16,13 @@
 
 package org.idp.server.security.event.hook.ssf;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.idp.server.platform.json.JsonReadable;
 
-public class SecurityEventTokenCreatorTest {}
+public class AuthorizationSchemeConfig implements JsonReadable {
+
+  String specUrn;
+
+  public String specUrn() {
+    return specUrn;
+  }
+}

@@ -117,8 +117,8 @@ import org.idp.server.platform.notification.sms.SmsSenders;
 import org.idp.server.platform.plugin.*;
 import org.idp.server.platform.proxy.TenantAwareEntryServiceProxy;
 import org.idp.server.platform.security.SecurityEventApi;
-import org.idp.server.platform.security.SecurityEventHooks;
 import org.idp.server.platform.security.SecurityEventPublisher;
+import org.idp.server.platform.security.hook.SecurityEventHooks;
 import org.idp.server.platform.security.repository.*;
 import org.idp.server.usecases.application.enduser.*;
 import org.idp.server.usecases.application.identity_verification_service.IdentityVerificationCallbackEntryService;
@@ -378,6 +378,8 @@ public class IdpServerApplication {
     CibaFlowEventPublisher cibaFlowEventPublisher =
         new CibaFlowEventPublisher(securityEventPublisher);
     TokenEventPublisher tokenEventPublisher = new TokenEventPublisher(securityEventPublisher);
+    UserOperationEventPublisher userOperationEventPublisher =
+        new UserOperationEventPublisher(securityEventPublisher);
 
     OidcSsoExecutors oidcSsoExecutors = OidcSsoExecutorPluginLoader.load();
     FederationDependencyContainer federationDependencyContainer =
@@ -545,6 +547,7 @@ public class IdpServerApplication {
                 authenticationTransactionQueryRepository,
                 authenticationInteractors,
                 tokenEventPublisher,
+                userOperationEventPublisher,
                 userLifecycleEventPublisher),
             UserOperationApi.class,
             tenantDialectProvider);

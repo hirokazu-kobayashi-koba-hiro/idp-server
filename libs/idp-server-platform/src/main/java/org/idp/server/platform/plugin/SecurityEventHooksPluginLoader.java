@@ -20,9 +20,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.security.SecurityEventHookExecutor;
-import org.idp.server.platform.security.SecurityEventHooks;
+import org.idp.server.platform.security.hook.SecurityEventHook;
 import org.idp.server.platform.security.hook.SecurityEventHookType;
+import org.idp.server.platform.security.hook.SecurityEventHooks;
 
 public class SecurityEventHooksPluginLoader extends PluginLoader {
 
@@ -30,19 +30,17 @@ public class SecurityEventHooksPluginLoader extends PluginLoader {
       LoggerWrapper.getLogger(SecurityEventHooksPluginLoader.class);
 
   public static SecurityEventHooks load() {
-    Map<SecurityEventHookType, SecurityEventHookExecutor> hookExecutors = new HashMap<>();
+    Map<SecurityEventHookType, SecurityEventHook> hookExecutors = new HashMap<>();
 
-    List<SecurityEventHookExecutor> internalHookExecutors =
-        loadFromInternalModule(SecurityEventHookExecutor.class);
-    for (SecurityEventHookExecutor executor : internalHookExecutors) {
+    List<SecurityEventHook> internalHookExecutors = loadFromInternalModule(SecurityEventHook.class);
+    for (SecurityEventHook executor : internalHookExecutors) {
       hookExecutors.put(executor.type(), executor);
       log.info(
           "Dynamic Registered internal security event hook executor: " + executor.type().name());
     }
 
-    List<SecurityEventHookExecutor> externalHookExecutors =
-        loadFromExternalModule(SecurityEventHookExecutor.class);
-    for (SecurityEventHookExecutor executor : externalHookExecutors) {
+    List<SecurityEventHook> externalHookExecutors = loadFromExternalModule(SecurityEventHook.class);
+    for (SecurityEventHook executor : externalHookExecutors) {
       hookExecutors.put(executor.type(), executor);
       log.info(
           "Dynamic Registered external security event hook executor: " + executor.type().name());

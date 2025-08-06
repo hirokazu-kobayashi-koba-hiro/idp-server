@@ -58,6 +58,7 @@ public class UserOperationEntryService implements UserOperationApi {
   MfaRegistrationVerifiers mfaRegistrationVerifiers;
   AuthenticationInteractors authenticationInteractors;
   TokenEventPublisher eventPublisher;
+  UserOperationEventPublisher userOperationEventPublisher;
   UserLifecycleEventPublisher userLifecycleEventPublisher;
 
   public UserOperationEntryService(
@@ -68,6 +69,7 @@ public class UserOperationEntryService implements UserOperationApi {
       AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
       AuthenticationInteractors authenticationInteractors,
       TokenEventPublisher eventPublisher,
+      UserOperationEventPublisher userOperationEventPublisher,
       UserLifecycleEventPublisher userLifecycleEventPublisher) {
     this.userQueryRepository = userQueryRepository;
     this.userCommandRepository = userCommandRepository;
@@ -78,6 +80,7 @@ public class UserOperationEntryService implements UserOperationApi {
     this.mfaRegistrationVerifiers = new MfaRegistrationVerifiers();
     this.authenticationInteractors = authenticationInteractors;
     this.eventPublisher = eventPublisher;
+    this.userOperationEventPublisher = userOperationEventPublisher;
     this.userLifecycleEventPublisher = userLifecycleEventPublisher;
   }
 
@@ -140,6 +143,8 @@ public class UserOperationEntryService implements UserOperationApi {
 
     if (updatedTransaction.isSuccess()) {
       // TODO to be more correctly
+      userOperationEventPublisher.publish(
+          tenant, authenticationTransaction, type, true, requestAttributes);
       userCommandRepository.update(tenant, authenticationTransaction.user());
     }
 

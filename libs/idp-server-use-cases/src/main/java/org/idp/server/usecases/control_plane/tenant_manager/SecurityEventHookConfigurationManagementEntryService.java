@@ -24,7 +24,7 @@ import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.security.hook.*;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementStatus;
-import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigRequest;
+import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookRequest;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
@@ -34,8 +34,8 @@ import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
-import org.idp.server.platform.security.hook.SecurityEventHookConfiguration;
-import org.idp.server.platform.security.hook.SecurityEventHookConfigurationIdentifier;
+import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
+import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfigurationIdentifier;
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationCommandRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
@@ -70,7 +70,7 @@ public class SecurityEventHookConfigurationManagementEntryService
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      SecurityEventHookConfigRequest request,
+      SecurityEventHookRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
     AdminPermissions permissions = getRequiredPermissions("create");
@@ -152,7 +152,7 @@ public class SecurityEventHookConfigurationManagementEntryService
 
     Map<String, Object> response = new HashMap<>();
     response.put(
-        "list", configurations.stream().map(SecurityEventHookConfiguration::payload).toList());
+        "list", configurations.stream().map(SecurityEventHookConfiguration::events).toList());
 
     return new SecurityEventHookConfigManagementResponse(
         SecurityEventHookConfigManagementStatus.OK, response);
@@ -200,7 +200,7 @@ public class SecurityEventHookConfigurationManagementEntryService
     }
 
     return new SecurityEventHookConfigManagementResponse(
-        SecurityEventHookConfigManagementStatus.OK, configuration.payload());
+        SecurityEventHookConfigManagementStatus.OK, configuration.toMap());
   }
 
   @Override
@@ -209,7 +209,7 @@ public class SecurityEventHookConfigurationManagementEntryService
       User operator,
       OAuthToken oAuthToken,
       SecurityEventHookConfigurationIdentifier identifier,
-      SecurityEventHookConfigRequest request,
+      SecurityEventHookRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
     AdminPermissions permissions = getRequiredPermissions("update");
@@ -219,7 +219,8 @@ public class SecurityEventHookConfigurationManagementEntryService
         securityEventHookConfigurationQueryRepository.find(tenant, identifier);
 
     SecurityEventHookConfigUpdateContextCreator contextCreator =
-        new SecurityEventHookConfigUpdateContextCreator(tenant, before, request, dryRun);
+        new SecurityEventHookConfigUpdateContextCreator(
+            tenant, before, identifier, request, dryRun);
     SecurityEventHookConfigUpdateContext context = contextCreator.create();
 
     AuditLog auditLog =
@@ -305,6 +306,6 @@ public class SecurityEventHookConfigurationManagementEntryService
     securityEventHookConfigurationCommandRepository.delete(tenant, configuration);
 
     return new SecurityEventHookConfigManagementResponse(
-        SecurityEventHookConfigManagementStatus.OK, configuration.payload());
+        SecurityEventHookConfigManagementStatus.NO_CONTENT, null);
   }
 }

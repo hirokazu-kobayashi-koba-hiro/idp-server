@@ -20,30 +20,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SharedSecurityEvent {
-  SecurityEventType type;
+  SecurityEventTypeIdentifier typeIdentifier;
   SecurityEventSubject subject;
   SecurityEventPayload payload;
 
   public SharedSecurityEvent() {}
 
-  public SharedSecurityEvent(SecurityEventType type, SecurityEventSubject subject) {
-    this.type = type;
-    this.subject = subject;
-  }
-
   public SharedSecurityEvent(
-      SecurityEventType type, SecurityEventSubject subject, SecurityEventPayload payload) {
-    this.type = type;
+      SecurityEventTypeIdentifier typeIdentifier,
+      SecurityEventSubject subject,
+      SecurityEventPayload payload) {
+    this.typeIdentifier = typeIdentifier;
     this.subject = subject;
     this.payload = payload;
   }
 
-  public boolean isDefined() {
-    return type.isDefined();
-  }
-
-  public SecurityEventType type() {
-    return type;
+  public SecurityEventTypeIdentifier typeIdentifier() {
+    return typeIdentifier;
   }
 
   public SecurityEventSubject subject() {
@@ -60,7 +53,7 @@ public class SharedSecurityEvent {
     events.putAll(payload.toMap());
 
     HashMap<String, Object> result = new HashMap<>();
-    result.put(type.typeIdentifier().value(), events);
+    result.put(typeIdentifier.value(), events);
 
     return result;
   }

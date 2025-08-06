@@ -14,23 +14,30 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.management.security.hook.io;
+package org.idp.server.platform.security.hook.configuration;
 
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
-public class SecurityEventHookConfigRequest {
+public class SecurityEventHookConfigurations implements Iterable<SecurityEventHookConfiguration> {
 
-  Map<String, Object> values;
+  List<SecurityEventHookConfiguration> values;
 
-  public SecurityEventHookConfigRequest(Map<String, Object> values) {
+  public SecurityEventHookConfigurations() {
+    this.values = new ArrayList<>();
+  }
+
+  public SecurityEventHookConfigurations(List<SecurityEventHookConfiguration> values) {
     this.values = values;
   }
 
-  public Map<String, Object> toMap() {
-    return values;
+  @Override
+  public Iterator<SecurityEventHookConfiguration> iterator() {
+    return values.iterator();
   }
 
-  public Object get(String key) {
-    return values.get(key);
+  public boolean exists() {
+    return values != null && !values.isEmpty();
   }
 }

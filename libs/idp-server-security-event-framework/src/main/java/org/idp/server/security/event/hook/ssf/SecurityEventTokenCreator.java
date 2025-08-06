@@ -20,24 +20,36 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.jose.JoseInvalidException;
 import org.idp.server.platform.jose.JsonWebKeyInvalidException;
 import org.idp.server.platform.jose.JsonWebSignature;
 import org.idp.server.platform.jose.JsonWebSignatureFactory;
+import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.path.JsonPathWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.mapper.MappingRuleObjectMapper;
+import org.idp.server.platform.security.SecurityEvent;
 
 public class SecurityEventTokenCreator {
 
-  SecurityEventTokenEntity securityEventTokenEntity;
-  String privateKey;
+  SecurityEvent securityEvent;
+  SharedSignalFrameworkMetadataConfig metadataConfig;
+  SharedSignalFrameworkTransmissionConfig transmissionConfig;
+  LoggerWrapper log = LoggerWrapper.getLogger(SecurityEventTokenCreator.class);
 
   public SecurityEventTokenCreator(
-      SecurityEventTokenEntity securityEventTokenEntity, String privateKey) {
-    this.securityEventTokenEntity = securityEventTokenEntity;
-    this.privateKey = privateKey;
+      SecurityEvent securityEvent,
+      SharedSignalFrameworkMetadataConfig metadataConfig,
+      SharedSignalFrameworkTransmissionConfig transmissionConfig) {
+    this.securityEvent = securityEvent;
+    this.metadataConfig = metadataConfig;
+    this.transmissionConfig = transmissionConfig;
   }
 
   public SecurityEventToken create() {
 
     try {
+      SecurityEventTokenEntity securityEventTokenEntity = convert();
       JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();
 
       Map<String, Object> claims = new HashMap<>();
@@ -47,16 +59,48 @@ public class SecurityEventTokenCreator {
       claims.put("aud", securityEventTokenEntity.clientIdValue());
       claims.put("events", securityEventTokenEntity.eventAsMap());
 
-      Map<String, Object> headers = new HashMap<>();
+      Map<String, Object> headers = transmissionConfig.securityEventTokenHeaders();
 
       JsonWebSignature jsonWebSignature =
-          jsonWebSignatureFactory.createWithAsymmetricKey(claims, headers, privateKey);
+          jsonWebSignatureFactory.createWithAsymmetricKey(
+              claims, headers, metadataConfig.jwks(), transmissionConfig.kid());
       String jws = jsonWebSignature.serialize();
 
       return new SecurityEventToken(jws);
-    } catch (JsonWebKeyInvalidException e) {
+    } catch (JsonWebKeyInvalidException | JoseInvalidException e) {
+
+      log.error(e.getMessage(), e);
+
       throw new SecurityEventTokenCreationFailedException(
           "security event token creation is failed.", e);
     }
+  }
+
+  public SecurityEventTokenEntity convert() {
+    String tokenIssuer = securityEvent.tokenIssuer();
+    String requestedClientId = securityEvent.clientId();
+    SharedSecurityEvent sharedSecurityEvent = convertToSecurityEvent();
+
+    return new SecurityEventTokenEntity(tokenIssuer, requestedClientId, sharedSecurityEvent);
+  }
+
+  private SharedSecurityEvent convertToSecurityEvent() {
+    SecurityEventTypeIdentifier typeIdentifier = transmissionConfig.securityEventTypeIdentifier();
+
+    Map<String, String> subjectMap =
+        Map.of("sub", securityEvent.userSub(), "iss", securityEvent.tokenIssuerValue());
+    SecurityEventSubjectPayload securityEventSubjectPayload =
+        new SecurityEventSubjectPayload(subjectMap);
+    SecurityEventSubject subject =
+        new SecurityEventSubject(SecuritySubjectFormat.iss_sub, securityEventSubjectPayload);
+
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(securityEvent.toMap());
+    JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
+    Map<String, Object> payload =
+        MappingRuleObjectMapper.execute(
+            transmissionConfig.securityEventTokenAdditionalPayloadMappingRules(), jsonPathWrapper);
+    SecurityEventPayload eventPayload = new SecurityEventPayload(payload);
+
+    return new SharedSecurityEvent(typeIdentifier, subject, eventPayload);
   }
 }

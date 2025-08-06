@@ -14,35 +14,16 @@
  * limitations under the License.
  */
 
-package org.idp.server.security.event.hook.ssf;
+package org.idp.server.platform.security.hook.configuration;
 
+import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
 
-public class SharedSignalFrameworkConfig implements JsonReadable {
+public class SecurityEventMockConfig implements JsonReadable {
 
-  String privateKey;
-  String endpoint;
-  Map<String, String> headers;
-
-  public SharedSignalFrameworkConfig() {}
-
-  public SharedSignalFrameworkConfig(
-      String privateKey, String endpoint, Map<String, String> headers) {
-    this.privateKey = privateKey;
-    this.endpoint = endpoint;
-    this.headers = headers;
-  }
-
-  public String privateKey() {
-    return privateKey;
-  }
-
-  public String endpoint() {
-    return endpoint;
-  }
-
-  public Map<String, String> headers() {
-    return headers;
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    return map;
   }
 }
