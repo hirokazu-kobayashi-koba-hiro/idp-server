@@ -14,19 +14,29 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.security.hook.configuration.query;
+package org.idp.server.security.event.hook.ssf.io;
 
-import java.util.List;
 import java.util.Map;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfigurationIdentifier;
 
-public interface SecurityEventHookConfigSqlExecutor {
-  List<Map<String, String>> selectListBy(Tenant tenant);
+public class SharedSignalsFrameworkJwksRequestResponse {
+  SharedSignalsFrameworkJwksRequestStatus status;
+  Map<String, Object> content;
 
-  Map<String, String> selectOne(Tenant tenant, SecurityEventHookConfigurationIdentifier identifier);
+  public SharedSignalsFrameworkJwksRequestResponse(
+      SharedSignalsFrameworkJwksRequestStatus status, Map<String, Object> content) {
+    this.status = status;
+    this.content = content;
+  }
 
-  Map<String, String> selectOne(Tenant tenant, String type);
+  public SharedSignalsFrameworkJwksRequestStatus status() {
+    return status;
+  }
 
-  List<Map<String, String>> selectList(Tenant tenant, int limit, int offset);
+  public Map<String, Object> content() {
+    return content;
+  }
+
+  public int statusCode() {
+    return status.statusCode();
+  }
 }

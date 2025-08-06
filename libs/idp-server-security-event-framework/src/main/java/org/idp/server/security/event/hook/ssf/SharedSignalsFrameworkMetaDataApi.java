@@ -16,21 +16,14 @@
 
 package org.idp.server.security.event.hook.ssf;
 
-import java.util.HashMap;
-import java.util.Map;
-import org.idp.server.platform.json.JsonReadable;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.security.event.hook.ssf.io.SharedSignalsFrameworkConfigurationRequestResponse;
+import org.idp.server.security.event.hook.ssf.io.SharedSignalsFrameworkJwksRequestResponse;
 
-public class AuthorizationSchemeConfig implements JsonReadable {
+public interface SharedSignalsFrameworkMetaDataApi {
 
-  String specUrn;
+  SharedSignalsFrameworkConfigurationRequestResponse getConfiguration(
+      TenantIdentifier tenantIdentifier);
 
-  public String specUrn() {
-    return specUrn;
-  }
-
-  public Map<String, Object> toMap() {
-    Map<String, Object> map = new HashMap<>();
-    map.put("spec_urn", specUrn);
-    return map;
-  }
+  SharedSignalsFrameworkJwksRequestResponse getJwks(TenantIdentifier tenantIdentifier);
 }

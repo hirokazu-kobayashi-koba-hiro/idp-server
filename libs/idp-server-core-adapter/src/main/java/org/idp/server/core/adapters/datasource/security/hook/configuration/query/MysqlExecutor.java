@@ -70,6 +70,24 @@ public class MysqlExecutor implements SecurityEventHookConfigSqlExecutor {
   }
 
   @Override
+  public Map<String, String> selectOne(Tenant tenant, String type) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        selectSql
+            + """
+                WHERE tenant_id = ?
+                AND type = ?;
+                """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierUUID());
+    params.add(type);
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
+  @Override
   public List<Map<String, String>> selectList(Tenant tenant, int limit, int offset) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 

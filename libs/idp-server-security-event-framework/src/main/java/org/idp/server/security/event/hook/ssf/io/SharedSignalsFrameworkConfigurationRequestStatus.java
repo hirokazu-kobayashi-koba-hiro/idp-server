@@ -14,23 +14,21 @@
  * limitations under the License.
  */
 
-package org.idp.server.security.event.hook.ssf;
+package org.idp.server.security.event.hook.ssf.io;
 
-import java.util.HashMap;
-import java.util.Map;
-import org.idp.server.platform.json.JsonReadable;
+public enum SharedSignalsFrameworkConfigurationRequestStatus {
+  OK(200),
+  BAD_REQUEST(400),
+  NOT_FOUND(404),
+  SERVER_ERROR(500);
 
-public class AuthorizationSchemeConfig implements JsonReadable {
+  int statusCode;
 
-  String specUrn;
-
-  public String specUrn() {
-    return specUrn;
+  SharedSignalsFrameworkConfigurationRequestStatus(int statusCode) {
+    this.statusCode = statusCode;
   }
 
-  public Map<String, Object> toMap() {
-    Map<String, Object> map = new HashMap<>();
-    map.put("spec_urn", specUrn);
-    return map;
+  public int statusCode() {
+    return statusCode;
   }
 }
