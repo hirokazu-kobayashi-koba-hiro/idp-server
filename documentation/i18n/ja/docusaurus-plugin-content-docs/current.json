@@ -58,5 +58,13 @@
   "sidebar.tutorialSidebar.category.authn": {
     "message": "authn",
     "description": "The label for category authn in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.basic": {
+    "message": "basic",
+    "description": "The label for category basic in sidebar tutorialSidebar"
+  },
+  "sidebar.docs.category.基礎": {
+    "message": "基礎",
+    "description": "The label for category 基礎 in sidebar docs"
   }
 }
