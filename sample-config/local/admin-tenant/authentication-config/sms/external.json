@@ -1,43 +1,147 @@
 {
   "id": "0f12803e-37b6-437e-8ca9-5822bd852b74",
   "type": "sms",
-  "payload": {
+  "attributes": {},
+  "metadata": {
     "type": "external",
     "description": "mocky",
-    "oauth_authorization": {
-      "type": "password",
-      "token_endpoint": "https://run.mocky.io/v3/04646fc3-8cce-44c8-bc59-5c64df51bf82",
-      "client_id": "your-client-id",
-      "username": "username",
-      "password": "password",
-      "scope": "application"
-    },
-    "transaction_id_param": "transaction_id",
     "verification_code_param": "verification_code",
-    "details": {
-      "external": {
-        "executions": {
-          "challenge": {
-            "url": "https://run.mocky.io/v3/4b6d90d6-80b9-4769-9877-2d3dceb9fe1b",
-            "method": "POST",
-            "headers": {
-              "Content-Type": "application/json"
+    "templates": {
+      "registration": {
+        "subject": "[ID Verification] Your signup sms confirmation code",
+        "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\nIf you did not request this, please contact your administrator.\n\n– IDP Support"
+      },
+      "authentication": {
+        "subject": "[ID Verification] Your login sms confirmation code",
+        "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\nIf you did not request this, please contact your administrator.\n\n– IDP Support"
+      }
+    },
+    "retry_count_limitation": 5,
+    "expire_seconds": 300
+  },
+  "interactions": {
+    "sms-authentication-challenge": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "phone_number": {
+              "type": "string"
             },
-            "dynamic_body_keys": [],
-            "static_body": {}
-          },
-          "verify": {
-            "url": "https://run.mocky.io/v3/4b6d90d6-80b9-4769-9877-2d3dceb9fe1b",
-            "method": "POST",
-            "headers": {
-              "Content-Type": "application/json"
-            },
-            "dynamic_body_keys": [],
-            "static_body": {}
+            "template": {
+              "type": "string"
+            }
           }
         }
+      },
+      "pre_hook": {
+        "additional_parameters": [
+          {
+            "function": "message_template",
+            "details": {
+
+            }
+          }
+        ]
+      },
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "http://localhost:4000/sms-authentication-challenge",
+          "method": "POST",
+          "oauth_authorization": {
+            "type": "password",
+            "token_endpoint": "http://localhost:4000/token",
+            "client_id": "your-client-id",
+            "username": "username",
+            "password": "password",
+            "scope": "application"
+          },
+          "header_mapping_rules": [
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            }
+          ],
+          "body_mapping_rules": [
+            {
+              "from": "$.request_body",
+              "to": "*"
+            }
+          ]
+        }
+      },
+      "post_hook": {},
+      "store": {
+        "interaction_payload": [
+          {
+            "from": "$.response_body.transaction_id",
+            "to": "transaction_id"
+          }
+        ]
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.response_body",
+            "to": "*"
+          }
+        ]
+      }
+    },
+    "sms-authentication": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "verification_code": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "pre_hook": {
+      },
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "http://localhost:4000/sms-authentication",
+          "method": "POST",
+          "oauth_authorization": {
+            "type": "password",
+            "token_endpoint": "http://localhost:4000/token",
+            "client_id": "your-client-id",
+            "username": "username",
+            "password": "password",
+            "scope": "application"
+          },
+          "header_mapping_rules": [
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            }
+          ],
+          "body_mapping_rules": [
+            {
+              "from": "$.request_body.verification_code",
+              "to": "verification_code"
+            },
+            {
+              "from": "$.interaction.transaction_id",
+              "to": "transaction_id"
+            }
+          ]
+        }
+      },
+      "post_hook": {},
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.response_body",
+            "to": "*"
+          }
+        ]
       }
     }
   }
-
 }

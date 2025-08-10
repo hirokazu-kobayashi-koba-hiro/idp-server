@@ -19,12 +19,11 @@ package org.idp.server.core.adapters.datasource.authentication.config.query;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.oidc.authentication.AuthenticationConfiguration;
-import org.idp.server.core.oidc.authentication.AuthenticationConfigurationIdentifier;
+import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
+import org.idp.server.core.oidc.authentication.config.AuthenticationConfigurationIdentifier;
 import org.idp.server.core.oidc.authentication.exception.AuthenticationConfigurationNotFoundException;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.platform.json.JsonConverter;
-import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class AuthenticationConfigurationQueryDataSource
@@ -39,7 +38,7 @@ public class AuthenticationConfigurationQueryDataSource
   }
 
   @Override
-  public <T> T get(Tenant tenant, String type, Class<T> clazz) {
+  public AuthenticationConfiguration get(Tenant tenant, String type) {
     AuthenticationConfigSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, type);
 
@@ -50,7 +49,7 @@ public class AuthenticationConfigurationQueryDataSource
               tenant.identifierValue(), type));
     }
 
-    return jsonConverter.read(result.get("payload"), clazz);
+    return jsonConverter.read(result.get("payload"), AuthenticationConfiguration.class);
   }
 
   @Override
@@ -63,11 +62,7 @@ public class AuthenticationConfigurationQueryDataSource
       return new AuthenticationConfiguration();
     }
 
-    String id = result.get("id");
-    String type = result.get("type");
-    JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(result.get("payload"));
-
-    return new AuthenticationConfiguration(id, type, jsonNodeWrapper.toMap());
+    return jsonConverter.read(result.get("payload"), AuthenticationConfiguration.class);
   }
 
   @Override

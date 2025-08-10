@@ -1,154 +1,157 @@
 {
   "id": "71971009-7cc3-4525-9c3b-ebea595732a4",
   "type": "initial-registration",
-  "payload": {
-    "$id": "https://idp-server.example.com/schemas/user.schema.json",
-    "type": "object",
-    "title": "User",
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "required": [
-      "email",
-      "password",
-      "name"
-    ],
-    "properties": {
-      "name": {
-        "type": "string",
-        "maxLength": 255
-      },
-      "email": {
-        "type": "string",
-        "format": "email",
-        "maxLength": 255
-      },
-      "roles": {
-        "type": "array",
-        "items": {
+  "attributes": {},
+  "metadata": {},
+  "interactions": {
+    "initial-registration": {
+      "request": {
+        "schema": {
           "type": "object",
+          "required": [
+            "email",
+            "password",
+            "name"
+          ],
           "properties": {
-            "role_id": {
+            "name": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "email": {
+              "type": "string",
+              "format": "email",
+              "maxLength": 255
+            },
+            "roles": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "role_id": {
+                    "type": "string"
+                  },
+                  "role_name": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "assigned_tenants": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "gender": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "locale": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "address":{
+              "type": "object",
+              "properties": {
+                "region": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "country": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "locality": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "formatted": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "postal_code": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "street_address": {
+                  "type": "string",
+                  "maxLength": 255
+                }
+              }
+            },
+            "picture": {
+              "type": "string",
+              "format": "uri",
+              "maxLength": 255
+            },
+            "profile": {
+              "type": "string",
+              "format": "uri",
+              "maxLength": 255
+            },
+            "website": {
+              "type": "string",
+              "format": "uri",
+              "maxLength": 255
+            },
+            "nickname": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "password": {
+              "type": "string",
+              "pattern": "^(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()]).+$",
+              "maxLength": 64,
+              "minLength": 8
+            },
+            "zoneinfo": {
               "type": "string"
             },
-            "role_name": {
-              "type": "string"
+            "birthdate": {
+              "type": "string",
+              "format": "date",
+              "maxLength": 255
+            },
+            "given_name": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "family_name": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "middle_name": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "permissions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "phone_number": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "email_verified": {
+              "type": "boolean"
+            },
+            "custom_properties": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "preferred_username": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "phone_number_verified": {
+              "type": "boolean"
             }
           }
         }
-      },
-      "assigned_tenants": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      },
-      "gender": {
-        "type": "string",
-        "maxLength": 255
-      },
-      "locale": {
-        "type": "string",
-        "maxLength": 255
-      },
-      "address":{
-        "type": "object",
-        "properties": {
-          "region": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "country": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "locality": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "formatted": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "postal_code": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "street_address": {
-            "type": "string",
-            "maxLength": 255
-          }
-        },
-        "additionalProperties": false
-      },
-      "picture": {
-        "type": "string",
-        "format": "uri",
-        "maxLength": 255
-      },
-      "profile": {
-        "type": "string",
-        "format": "uri",
-        "maxLength": 255
-      },
-      "website": {
-        "type": "string",
-        "format": "uri",
-        "maxLength": 255
-      },
-      "nickname": {
-        "type": "string",
-        "maxLength": 255
-      },
-      "password": {
-        "type": "string",
-        "pattern": "^(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()]).+$",
-        "maxLength": 64,
-        "minLength": 8
-      },
-      "zoneinfo": {
-        "type": "string"
-      },
-      "birthdate": {
-        "type": "string",
-        "format": "date",
-        "maxLength": 255
-      },
-      "given_name": {
-        "type": "string",
-        "maxLength": 255
-      },
-      "family_name": {
-        "type": "string",
-        "maxLength": 255
-      },
-      "middle_name": {
-        "type": "string",
-        "maxLength": 255
-      },
-      "permissions": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      },
-      "phone_number": {
-        "type": "string",
-        "maxLength": 255
-      },
-      "email_verified": {
-        "type": "boolean"
-      },
-      "custom_properties": {
-        "type": "object",
-        "additionalProperties": true
-      },
-      "preferred_username": {
-        "type": "string",
-        "maxLength": 255
-      },
-      "phone_number_verified": {
-        "type": "boolean"
       }
-    },
-    "additionalProperties": false
+    }
   }
 }

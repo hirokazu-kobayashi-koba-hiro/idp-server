@@ -16,6 +16,7 @@
 
 package org.idp.server.authentication.interactors.device;
 
+import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
 import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.notification.NotificationChannel;
@@ -25,7 +26,5 @@ public interface AuthenticationDeviceNotifier {
   NotificationChannel chanel();
 
   void notify(
-      Tenant tenant,
-      AuthenticationDevice device,
-      AuthenticationDeviceNotificationConfiguration configuration);
+      Tenant tenant, AuthenticationDevice device, AuthenticationConfiguration configuration);
 }

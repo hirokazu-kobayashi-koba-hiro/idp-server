@@ -16,11 +16,12 @@
 
 package org.idp.server.authentication.interactors.fidouaf;
 
+import org.idp.server.authentication.interactors.AuthenticationExecutionResult;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 
 public interface AuthenticationMetaDataApi {
 
-  FidoUafExecutionResult getFidoUafFacets(
+  AuthenticationExecutionResult getFidoUafFacets(
       TenantIdentifier tenantIdentifier, RequestAttributes requestAttributes);
 }

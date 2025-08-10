@@ -1,75 +1,191 @@
 {
   "id": "a906928b-6b65-488a-9e31-4df41d5701ab",
   "type": "fido-uaf",
-  "payload": {
+  "attributes": {
     "type": "external",
-    "description": "mocky",
-    "oauth_authorization": {
-      "type": "password",
-      "token_endpoint": "https://run.mocky.io/v3/04646fc3-8cce-44c8-bc59-5c64df51bf82",
-      "client_id": "your-client-id",
-      "username": "username",
-      "password": "password",
-      "scope": "application"
-    },
+    "service_name": "mocky",
     "device_id_param": "user_id",
-    "details": {
-      "external": {
-        "executions": {
-          "facets": {
-            "url": "https://run.mocky.io/v3/35c7931b-85ce-4d4d-81b5-3e041e67214b",
-            "method": "GET",
-            "headers": {
-              "Content-Type": "application/json"
-            },
-            "dynamic_body_keys": [],
-            "static_body": {}
+    "note": "https://fidoalliance.org/specs/fido-uaf-v1.1-id-20170202/fido-uaf-protocol-v1.1-id-20170202.html"
+  },
+  "metadata": {
+
+  },
+  "interactions": {
+    "fido-uaf-facets": {
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "http://localhost:4000/fido-uaf/facets",
+          "method": "GET",
+          "auth_type": "oauth2",
+          "oauth_authorization": {
+            "type": "password",
+            "token_endpoint": "http://localhost:4000/token",
+            "client_id": "your-client-id",
+            "username": "username",
+            "password": "password",
+            "scope": "application"
           },
-          "registration-challenge": {
-            "url": "https://run.mocky.io/v3/c47110bf-0c92-42ea-b725-4c56f21696c8",
-            "method": "POST",
-            "headers": {
-              "Content-Type": "application/json"
-            },
-            "dynamic_body_keys": [],
-            "static_body": {}
+          "header_mapping_rules": [
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            }
+          ]
+        }
+      }
+    },
+    "fido-uaf-registration-challenge": {
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "http://localhost:4000/fido-uaf/registration-challenge",
+          "method": "POST",
+          "auth_type": "oauth2",
+          "oauth_authorization": {
+            "type": "password",
+            "token_endpoint": "http://localhost:4000/token",
+            "client_id": "your-client-id",
+            "username": "username",
+            "password": "password",
+            "scope": "application"
           },
-          "registration": {
-            "url": "https://run.mocky.io/v3/69fbecce-391c-406d-a669-56692e4600bd",
-            "method": "POST",
-            "headers": {
-              "Content-Type": "application/json"
-            },
-            "dynamic_body_keys": [],
-            "static_body": {}
+          "header_mapping_rules": [
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            }
+          ],
+          "body_mapping_rules": [
+            {
+              "from": "$.request_body",
+              "to": "*"
+            }
+          ]
+        }
+      }
+    },
+    "fido-uaf-registration": {
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "http://localhost:4000/fido-uaf/registration",
+          "method": "POST",
+          "auth_type": "oauth2",
+          "oauth_authorization": {
+            "type": "password",
+            "token_endpoint": "http://localhost:4000/token",
+            "client_id": "your-client-id",
+            "username": "username",
+            "password": "password",
+            "scope": "application"
           },
-          "authentication-challenge": {
-            "url": "https://run.mocky.io/v3/57d41fba-4490-4e88-99fa-197db5c0c5a8",
-            "method": "POST",
-            "headers": {
-              "Content-Type": "application/json"
-            },
-            "dynamic_body_keys": [],
-            "static_body": {}
+          "header_mapping_rules": [
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            }
+          ],
+          "body_mapping_rules": [
+            {
+              "from": "$.request_body",
+              "to": "*"
+            }
+          ]
+        }
+      }
+    },
+    "fido-uaf-authentication-challenge": {
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "http://localhost:4000/fido-uaf/authentication-challenge",
+          "method": "POST",
+          "auth_type": "oauth2",
+          "oauth_authorization": {
+            "type": "password",
+            "token_endpoint": "http://localhost:4000/token",
+            "client_id": "your-client-id",
+            "username": "username",
+            "password": "password",
+            "scope": "application"
           },
-          "authentication": {
-            "url": "https://run.mocky.io/v3/35e6b282-354e-4bc5-8a36-98c54de61796",
-            "method": "POST",
-            "headers": {
-              "Content-Type": "application/json"
+          "header_mapping_rules": [
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            }
+          ],
+          "body_mapping_rules": [
+            {
+              "from": "",
+              "to": "username"
             },
-            "dynamic_body_keys": [],
-            "static_body": {}
+            {
+              "from": "$.request_body",
+              "to": "*"
+            }
+          ]
+        }
+      }
+    },
+    "fido-uaf-authentication": {
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "http://localhost:4000/fido-uaf/authentication",
+          "method": "POST",
+          "auth_type": "oauth2",
+          "oauth_authorization": {
+            "type": "password",
+            "token_endpoint": "http://localhost:4000/token",
+            "client_id": "your-client-id",
+            "username": "username",
+            "password": "password",
+            "scope": "application"
           },
-          "delete-key": {
-            "url": "https://run.mocky.io/v3/35e6b282-354e-4bc5-8a36-98c54de61796",
-            "method": "POST",
-            "headers": {
-              "Content-Type": "application/json"
-            },
-            "dynamic_body_keys": [],
-            "static_body": {}
-          }
+          "header_mapping_rules": [
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            }
+          ],
+          "body_mapping_rules": [
+            {
+              "from": "$.request_body",
+              "to": "*"
+            }
+          ]
+        }
+      }
+    },
+    "fido-uaf-deregistration": {
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "http://localhost:4000/fido-uaf/delete-key",
+          "method": "POST",
+          "auth_type": "oauth2",
+          "oauth_authorization": {
+            "type": "password",
+            "token_endpoint": "http://localhost:4000/token",
+            "client_id": "your-client-id",
+            "username": "username",
+            "password": "password",
+            "scope": "application"
+          },
+          "header_mapping_rules": [
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            }
+          ],
+          "body_mapping_rules": [
+            {
+              "from": "$.request_body",
+              "to": "*"
+            }
+          ]
         }
       }
     }

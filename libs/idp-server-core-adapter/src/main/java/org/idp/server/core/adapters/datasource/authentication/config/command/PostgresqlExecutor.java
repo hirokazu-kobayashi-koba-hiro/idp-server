@@ -18,7 +18,7 @@ package org.idp.server.core.adapters.datasource.authentication.config.command;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.core.oidc.authentication.AuthenticationConfiguration;
+import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -50,7 +50,7 @@ public class PostgresqlExecutor implements AuthenticationConfigCommandSqlExecuto
     params.add(configuration.idAsUUID());
     params.add(tenant.identifierUUID());
     params.add(configuration.type());
-    params.add(jsonConverter.write(configuration.payload()));
+    params.add(jsonConverter.write(configuration.toMap()));
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -67,7 +67,7 @@ public class PostgresqlExecutor implements AuthenticationConfigCommandSqlExecuto
                 """;
 
     List<Object> params = new ArrayList<>();
-    params.add(jsonConverter.write(configuration.payload()));
+    params.add(jsonConverter.write(configuration.toMap()));
     params.add(configuration.idAsUUID());
     params.add(tenant.identifierValue());
 

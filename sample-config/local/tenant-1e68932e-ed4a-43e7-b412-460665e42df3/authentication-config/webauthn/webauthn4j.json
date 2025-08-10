@@ -1,19 +1,50 @@
 {
   "id": "c2e1023c-ee67-4ecc-b7de-d07bc1b7e71d",
   "type": "webauthn",
-  "payload": {
-    "type": "webauthn4j",
-    "details": {
-      "webauthn4j": {
-        "rp_id": "localhost",
-        "origin": "http://localhost:8080",
-        "rp_name": "admin",
-        "token_binding_id": null,
-        "require_resident_key": false,
-        "attestation_preference": "none",
-        "user_presence_required": true,
-        "authenticator_attachment": "cross-platform",
-        "user_verification_required": true
+  "metadata": {
+    "webauthn4j": {
+      "rp_id": "localhost",
+      "origin": "http://localhost:8080",
+      "rp_name": "admin",
+      "token_binding_id": null,
+      "require_resident_key": false,
+      "attestation_preference": "none",
+      "user_presence_required": true,
+      "authenticator_attachment": "cross-platform",
+      "user_verification_required": true
+    }
+  },
+  "interactions": {
+    "webauthn-registration-challenge": {
+      "execution": {
+        "function": "webauthn4j",
+        "details": {
+
+        }
+      }
+    },
+    "webauthn-registration": {
+      "execution": {
+        "function": "webauthn4j",
+        "details": {
+
+        }
+      }
+    },
+    "webauthn-authentication-challenge": {
+      "execution": {
+        "function": "webauthn4j",
+        "details": {
+
+        }
+      }
+    },
+    "webauthn-authentication": {
+      "execution": {
+        "function": "webauthn4j",
+        "details": {
+
+        }
       }
     }
   }

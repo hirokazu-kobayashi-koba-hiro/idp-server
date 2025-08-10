@@ -1,40 +1,23 @@
 {
   "id": "cd1a7eae-52ed-4c2e-831a-5737df7c4776",
   "type": "legacy-authentication",
-  "payload": {
-    "type": "mock",
-    "provider_name": "mocky",
-    "details": {
-      "authentication": {
-        "url": "https://run.mocky.io/v3/de9612ca-2550-4ac4-b648-99a9607e8081",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer dummy-token"
-        },
-        "dynamic_body_keys": ["username", "password"],
-        "static_body": {}
-      },
-      "userinfo": {
-        "url": "https://run.mocky.io/v3/de9612ca-2550-4ac4-b648-99a9607e8081",
-        "method": "GET",
-        "headers": {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer dummy-token"
-        },
-        "dynamic_body_keys": ["username"],
-        "static_body": {},
-        "userinfo_mapping_rules": [
-          { "from": "sub", "to": "external_user_id", "type": "string" },
-          { "from": "name", "to": "name", "type": "string" },
-          { "from": "given_name", "to": "given_name", "type": "string" },
-          { "from": "family_name", "to": "family_name", "type": "string" },
-          { "from": "email", "to": "email", "type": "string" },
-          { "from": "email_verified", "to": "email_verified", "type": "boolean" },
-          { "from": "preferred_username", "to": "preferred_username", "type": "string" },
-          { "from": "roles", "to": "roles", "type": "list.string" },
-          { "from": "permissions", "to": "permissions", "type": "list.string" },
-          { "from": "address", "to": "address", "type": "address" }
+  "interactions": {
+    "legacy-authentication": {
+      "request": {},
+      "execution": {
+        "function": "http_requests",
+        "http_requests": [
+          {
+            "url": "http://localhost:4000/password-authentication",
+            "method": "POST",
+            "header_mapping_rules": [
+              { "static_value": "test-client-id", "to": "x-client-id" }
+            ],
+            "body_mapping_rules": [
+              { "from": "$.request_body", "to": "*" }
+            ],
+            "result_context_path": "authentication_token_result"
+          }
         ]
       }
     }

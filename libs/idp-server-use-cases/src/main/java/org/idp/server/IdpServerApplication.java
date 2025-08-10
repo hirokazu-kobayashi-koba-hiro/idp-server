@@ -16,16 +16,14 @@
 
 package org.idp.server;
 
+import org.idp.server.authentication.interactors.AuthenticationExecutors;
 import org.idp.server.authentication.interactors.device.AuthenticationDeviceNotifiers;
 import org.idp.server.authentication.interactors.fidouaf.AuthenticationMetaDataApi;
-import org.idp.server.authentication.interactors.fidouaf.FidoUafExecutors;
 import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditionalRequestResolvers;
 import org.idp.server.authentication.interactors.plugin.AuthenticationDeviceNotifiersPluginLoader;
+import org.idp.server.authentication.interactors.plugin.AuthenticationExecutorPluginLoader;
 import org.idp.server.authentication.interactors.plugin.FidoUafAdditionalRequestResolverPluginLoader;
-import org.idp.server.authentication.interactors.plugin.FidoUafExecutorPluginLoader;
-import org.idp.server.authentication.interactors.plugin.SmsAuthenticationExecutorPluginLoader;
 import org.idp.server.authentication.interactors.plugin.WebAuthnExecutorPluginLoader;
-import org.idp.server.authentication.interactors.sms.SmsAuthenticationExecutors;
 import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutors;
 import org.idp.server.control_plane.admin.operation.IdpServerOperationApi;
 import org.idp.server.control_plane.admin.starter.IdpServerStarterApi;
@@ -325,18 +323,15 @@ public class IdpServerApplication {
     authenticationDependencyContainer.register(
         AuthenticationDeviceNotifiers.class, authenticationDeviceNotifiers);
 
-    FidoUafExecutors fidoUafExecutors =
-        FidoUafExecutorPluginLoader.load(authenticationDependencyContainer);
-    authenticationDependencyContainer.register(FidoUafExecutors.class, fidoUafExecutors);
     FidoUafAdditionalRequestResolvers fidoUafAdditionalRequestResolvers =
         FidoUafAdditionalRequestResolverPluginLoader.load();
     authenticationDependencyContainer.register(
         FidoUafAdditionalRequestResolvers.class, fidoUafAdditionalRequestResolvers);
 
-    SmsAuthenticationExecutors smsAuthenticationExecutors =
-        SmsAuthenticationExecutorPluginLoader.load(authenticationDependencyContainer);
+    AuthenticationExecutors authenticationExecutors =
+        AuthenticationExecutorPluginLoader.load(authenticationDependencyContainer);
     authenticationDependencyContainer.register(
-        SmsAuthenticationExecutors.class, smsAuthenticationExecutors);
+        AuthenticationExecutors.class, authenticationExecutors);
 
     AuthenticationInteractors authenticationInteractors =
         AuthenticationInteractorPluginLoader.load(authenticationDependencyContainer);
@@ -461,7 +456,7 @@ public class IdpServerApplication {
             new AuthenticationMetaDataEntryService(
                 authenticationDependencyContainer.resolve(
                     AuthenticationConfigurationQueryRepository.class),
-                fidoUafExecutors,
+                authenticationExecutors,
                 tenantQueryRepository),
             AuthenticationMetaDataApi.class,
             tenantDialectProvider);

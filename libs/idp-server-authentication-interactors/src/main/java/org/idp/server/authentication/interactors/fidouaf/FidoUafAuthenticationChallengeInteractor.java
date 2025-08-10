@@ -18,8 +18,15 @@ package org.idp.server.authentication.interactors.fidouaf;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.authentication.interactors.AuthenticationExecutionRequest;
+import org.idp.server.authentication.interactors.AuthenticationExecutionResult;
+import org.idp.server.authentication.interactors.AuthenticationExecutor;
+import org.idp.server.authentication.interactors.AuthenticationExecutors;
 import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditionalRequestResolvers;
 import org.idp.server.core.oidc.authentication.*;
+import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
+import org.idp.server.core.oidc.authentication.config.AuthenticationExecutionConfig;
+import org.idp.server.core.oidc.authentication.config.AuthenticationInteractionConfig;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
@@ -30,16 +37,16 @@ import org.idp.server.platform.type.RequestAttributes;
 
 public class FidoUafAuthenticationChallengeInteractor implements AuthenticationInteractor {
 
-  FidoUafExecutors fidoUafExecutors;
+  AuthenticationExecutors authenticationExecutors;
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
   FidoUafAdditionalRequestResolvers additionalRequestResolvers;
   LoggerWrapper log = LoggerWrapper.getLogger(FidoUafAuthenticationChallengeInteractor.class);
 
   public FidoUafAuthenticationChallengeInteractor(
-      FidoUafExecutors fidoUafExecutors,
+      AuthenticationExecutors authenticationExecutors,
       AuthenticationConfigurationQueryRepository configurationQueryRepository,
       FidoUafAdditionalRequestResolvers additionalRequestResolvers) {
-    this.fidoUafExecutors = fidoUafExecutors;
+    this.authenticationExecutors = authenticationExecutors;
     this.configurationQueryRepository = configurationQueryRepository;
     this.additionalRequestResolvers = additionalRequestResolvers;
   }
@@ -69,9 +76,12 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
 
     log.debug("FidoUafAuthenticationChallengeInteractor called");
 
-    FidoUafConfiguration fidoUafConfiguration =
-        configurationQueryRepository.get(tenant, "fido-uaf", FidoUafConfiguration.class);
-    FidoUafExecutor fidoUafExecutor = fidoUafExecutors.get(fidoUafConfiguration.type());
+    AuthenticationConfiguration configuration =
+        configurationQueryRepository.get(tenant, "fido-uaf");
+    AuthenticationInteractionConfig authenticationInteractionConfig =
+        configuration.getAuthenticationConfig("fido-uaf-authentication-challenge");
+    AuthenticationExecutionConfig execution = authenticationInteractionConfig.execution();
+    AuthenticationExecutor executor = authenticationExecutors.get(execution.function());
 
     String deviceId = extractDeviceId(transaction, request, requestAttributes);
 
@@ -88,21 +98,23 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
           DefaultSecurityEventType.fido_uaf_authentication_challenge_failure);
     }
 
+    // TODO
     Map<String, Object> executionRequest = new HashMap<>();
-    executionRequest.put(fidoUafConfiguration.deviceIdParam(), deviceId);
+    executionRequest.put("device_id", deviceId);
 
     Map<String, Object> additionalRequests =
         additionalRequestResolvers.resolveAll(tenant, type, request, transaction);
     executionRequest.putAll(additionalRequests);
 
-    FidoUafExecutionRequest fidoUafExecutionRequest = new FidoUafExecutionRequest(executionRequest);
-    FidoUafExecutionResult executionResult =
-        fidoUafExecutor.challengeAuthentication(
+    AuthenticationExecutionRequest authenticationExecutionRequest =
+        new AuthenticationExecutionRequest(executionRequest);
+    AuthenticationExecutionResult executionResult =
+        executor.execute(
             tenant,
             transaction.identifier(),
-            fidoUafExecutionRequest,
+            authenticationExecutionRequest,
             requestAttributes,
-            fidoUafConfiguration);
+            execution);
 
     if (executionResult.isClientError()) {
       return AuthenticationInteractionRequestResult.clientError(

@@ -19,19 +19,21 @@ package org.idp.server.authentication.interactors.email;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.idp.server.authentication.interactors.AuthenticationExecutionRequest;
+import org.idp.server.authentication.interactors.AuthenticationExecutionResult;
+import org.idp.server.authentication.interactors.AuthenticationExecutor;
+import org.idp.server.authentication.interactors.AuthenticationExecutors;
 import org.idp.server.core.oidc.authentication.*;
+import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
+import org.idp.server.core.oidc.authentication.config.AuthenticationExecutionConfig;
+import org.idp.server.core.oidc.authentication.config.AuthenticationInteractionConfig;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.identity.UserStatus;
 import org.idp.server.core.oidc.identity.exception.UserTooManyFoundResultException;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.notification.email.EmailSendResult;
-import org.idp.server.platform.notification.email.EmailSender;
-import org.idp.server.platform.notification.email.EmailSenders;
-import org.idp.server.platform.notification.email.EmailSendingRequest;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -39,16 +41,16 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
 
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
   AuthenticationInteractionCommandRepository interactionCommandRepository;
-  EmailSenders emailSenders;
+  AuthenticationExecutors authenticationExecutors;
   LoggerWrapper log = LoggerWrapper.getLogger(EmailAuthenticationChallengeInteractor.class);
 
   public EmailAuthenticationChallengeInteractor(
       AuthenticationConfigurationQueryRepository configurationQueryRepository,
       AuthenticationInteractionCommandRepository interactionCommandRepository,
-      EmailSenders emailSenders) {
+      AuthenticationExecutors authenticationExecutors) {
     this.configurationQueryRepository = configurationQueryRepository;
     this.interactionCommandRepository = interactionCommandRepository;
-    this.emailSenders = emailSenders;
+    this.authenticationExecutors = authenticationExecutors;
   }
 
   @Override
@@ -79,8 +81,10 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
 
       log.debug("EmailAuthenticationChallengeInteractor called");
 
-      EmailAuthenticationConfiguration emailAuthenticationConfiguration =
-          configurationQueryRepository.get(tenant, "email", EmailAuthenticationConfiguration.class);
+      AuthenticationConfiguration configuration = configurationQueryRepository.get(tenant, "email");
+      AuthenticationInteractionConfig authenticationConfig =
+          configuration.getAuthenticationConfig("email-authentication-challenge");
+      AuthenticationExecutionConfig execution = authenticationConfig.execution();
 
       String email = resolveEmail(transaction, request);
 
@@ -98,43 +102,34 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
             DefaultSecurityEventType.email_verification_failure);
       }
 
-      String providerId = request.optValueAsString("provider_id", "idp-server");
-      User user = resolveUser(tenant, transaction, email, providerId, userQueryRepository);
+      AuthenticationExecutor executor = authenticationExecutors.get(execution.function());
 
-      OneTimePassword oneTimePassword = OneTimePasswordGenerator.generate();
-      String sender = emailAuthenticationConfiguration.sender();
-      EmailVerificationTemplate emailVerificationTemplate =
-          emailAuthenticationConfiguration.findTemplate(
-              request.optValueAsString("email_template", "authentication"));
-      String subject = emailVerificationTemplate.subject();
-      int retryCountLimitation = emailAuthenticationConfiguration.retryCountLimitation();
-      int expireSeconds = emailAuthenticationConfiguration.expireSeconds();
+      AuthenticationExecutionRequest executionRequest =
+          new AuthenticationExecutionRequest(request.toMap());
+      AuthenticationExecutionResult executionResult =
+          executor.execute(
+              tenant, transaction.identifier(), executionRequest, requestAttributes, execution);
 
-      String body =
-          emailVerificationTemplate.interpolateBody(oneTimePassword.value(), expireSeconds);
-
-      EmailSendingRequest emailSendingRequest =
-          new EmailSendingRequest(sender, email, subject, body);
-
-      EmailSender emailSender = emailSenders.get(emailAuthenticationConfiguration.senderType());
-      EmailSendResult sendResult =
-          emailSender.send(emailSendingRequest, emailAuthenticationConfiguration.setting());
-
-      if (sendResult.isError()) {
-
-        return AuthenticationInteractionRequestResult.serverError(
-            sendResult.data(),
+      if (executionResult.isClientError()) {
+        return AuthenticationInteractionRequestResult.clientError(
+            executionResult.contents(),
             type,
             operationType(),
             method(),
-            DefaultSecurityEventType.email_verification_request_failure);
+            DefaultSecurityEventType.sms_verification_challenge_failure);
       }
 
-      EmailVerificationChallenge emailVerificationChallenge =
-          EmailVerificationChallenge.create(oneTimePassword, retryCountLimitation, expireSeconds);
+      if (executionResult.isServerError()) {
+        return AuthenticationInteractionRequestResult.serverError(
+            executionResult.contents(),
+            type,
+            operationType(),
+            method(),
+            DefaultSecurityEventType.sms_verification_challenge_failure);
+      }
 
-      interactionCommandRepository.register(
-          tenant, transaction.identifier(), "email", emailVerificationChallenge);
+      String providerId = request.optValueAsString("provider_id", "idp-server");
+      User user = resolveUser(tenant, transaction, email, providerId, userQueryRepository);
 
       return new AuthenticationInteractionRequestResult(
           AuthenticationInteractionStatus.SUCCESS,
@@ -184,7 +179,6 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
     user.setSub(id);
     user.setExternalUserId(id);
     user.setEmail(email);
-    user.setStatus(UserStatus.REGISTERED);
 
     return user;
   }

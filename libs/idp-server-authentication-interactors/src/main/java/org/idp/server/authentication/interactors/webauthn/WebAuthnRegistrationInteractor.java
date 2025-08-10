@@ -16,9 +16,14 @@
 
 package org.idp.server.authentication.interactors.webauthn;
 
-import java.util.HashMap;
-import java.util.Map;
+import org.idp.server.authentication.interactors.AuthenticationExecutionRequest;
+import org.idp.server.authentication.interactors.AuthenticationExecutionResult;
+import org.idp.server.authentication.interactors.AuthenticationExecutor;
+import org.idp.server.authentication.interactors.AuthenticationExecutors;
 import org.idp.server.core.oidc.authentication.*;
+import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
+import org.idp.server.core.oidc.authentication.config.AuthenticationExecutionConfig;
+import org.idp.server.core.oidc.authentication.config.AuthenticationInteractionConfig;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -29,14 +34,14 @@ import org.idp.server.platform.type.RequestAttributes;
 public class WebAuthnRegistrationInteractor implements AuthenticationInteractor {
 
   AuthenticationConfigurationQueryRepository configurationRepository;
-  WebAuthnExecutors webAuthnExecutors;
+  AuthenticationExecutors authenticationExecutors;
   LoggerWrapper log = LoggerWrapper.getLogger(WebAuthnRegistrationInteractor.class);
 
   public WebAuthnRegistrationInteractor(
       AuthenticationConfigurationQueryRepository configurationRepository,
-      WebAuthnExecutors webAuthnExecutors) {
+      AuthenticationExecutors authenticationExecutors) {
     this.configurationRepository = configurationRepository;
-    this.webAuthnExecutors = webAuthnExecutors;
+    this.authenticationExecutors = authenticationExecutors;
   }
 
   @Override
@@ -60,16 +65,40 @@ public class WebAuthnRegistrationInteractor implements AuthenticationInteractor 
 
     log.debug("WebAuthnRegistrationInteractor called");
 
-    String userId = transaction.user().sub();
-    WebAuthnConfiguration configuration =
-        configurationRepository.get(tenant, "webauthn", WebAuthnConfiguration.class);
-    WebAuthnExecutor webAuthnExecutor = webAuthnExecutors.get(configuration.type());
-    WebAuthnVerificationResult webAuthnVerificationResult =
-        webAuthnExecutor.verifyRegistration(
-            tenant, transaction.identifier(), userId, request, configuration);
+    AuthenticationConfiguration configuration = configurationRepository.get(tenant, "webauthn");
+    AuthenticationInteractionConfig authenticationInteractionConfig =
+        configuration.getAuthenticationConfig("webauthn-registration");
+    AuthenticationExecutionConfig execution = authenticationInteractionConfig.execution();
 
-    Map<String, Object> response = new HashMap<>();
-    response.put("registration", webAuthnVerificationResult.toMap());
+    AuthenticationExecutor executor = authenticationExecutors.get(execution.function());
+
+    AuthenticationExecutionRequest authenticationExecutionRequest =
+        new AuthenticationExecutionRequest(request.toMap());
+    AuthenticationExecutionResult executionResult =
+        executor.execute(
+            tenant,
+            transaction.identifier(),
+            authenticationExecutionRequest,
+            requestAttributes,
+            execution);
+
+    if (executionResult.isClientError()) {
+      return AuthenticationInteractionRequestResult.clientError(
+          executionResult.contents(),
+          type,
+          operationType(),
+          method(),
+          DefaultSecurityEventType.webauthn_registration_failure);
+    }
+
+    if (executionResult.isServerError()) {
+      return AuthenticationInteractionRequestResult.serverError(
+          executionResult.contents(),
+          type,
+          operationType(),
+          method(),
+          DefaultSecurityEventType.webauthn_registration_failure);
+    }
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
@@ -77,7 +106,7 @@ public class WebAuthnRegistrationInteractor implements AuthenticationInteractor 
         operationType(),
         method(),
         transaction.user(),
-        response,
+        executionResult.contents(),
         DefaultSecurityEventType.webauthn_registration_success);
   }
 }

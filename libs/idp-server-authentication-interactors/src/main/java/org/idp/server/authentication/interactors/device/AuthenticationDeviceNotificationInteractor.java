@@ -19,6 +19,7 @@ package org.idp.server.authentication.interactors.device;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.oidc.authentication.*;
+import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
@@ -70,9 +71,8 @@ public class AuthenticationDeviceNotificationInteractor implements Authenticatio
 
       log.debug("AuthenticationDeviceNotificationInteractor called");
 
-      AuthenticationDeviceNotificationConfiguration configuration =
-          configurationQueryRepository.get(
-              tenant, "authentication-device", AuthenticationDeviceNotificationConfiguration.class);
+      AuthenticationConfiguration configuration =
+          configurationQueryRepository.get(tenant, "authentication-device");
 
       User user = transaction.user();
       if (!user.exists()) {

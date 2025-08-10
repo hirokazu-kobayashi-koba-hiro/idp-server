@@ -1,2 +1,0 @@
-org.idp.server.authentication.interactors.sms.external.ExternalSmsAuthenticationExecutorFactory
-org.idp.server.authentication.interactors.sms.internal.InternalSmsAuthenticationExecutorFactory

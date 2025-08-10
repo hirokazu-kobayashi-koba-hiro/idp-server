@@ -18,7 +18,14 @@ package org.idp.server.authentication.interactors.webauthn;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.authentication.interactors.AuthenticationExecutionRequest;
+import org.idp.server.authentication.interactors.AuthenticationExecutionResult;
+import org.idp.server.authentication.interactors.AuthenticationExecutor;
+import org.idp.server.authentication.interactors.AuthenticationExecutors;
 import org.idp.server.core.oidc.authentication.*;
+import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
+import org.idp.server.core.oidc.authentication.config.AuthenticationExecutionConfig;
+import org.idp.server.core.oidc.authentication.config.AuthenticationInteractionConfig;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.UserIdentifier;
@@ -31,14 +38,14 @@ import org.idp.server.platform.type.RequestAttributes;
 public class WebAuthnAuthenticationInteractor implements AuthenticationInteractor {
 
   AuthenticationConfigurationQueryRepository configurationRepository;
-  WebAuthnExecutors webAuthnExecutors;
+  AuthenticationExecutors authenticationExecutors;
   LoggerWrapper log = LoggerWrapper.getLogger(WebAuthnAuthenticationInteractor.class);
 
   public WebAuthnAuthenticationInteractor(
       AuthenticationConfigurationQueryRepository configurationRepository,
-      WebAuthnExecutors webAuthnExecutors) {
+      AuthenticationExecutors authenticationExecutors) {
     this.configurationRepository = configurationRepository;
-    this.webAuthnExecutors = webAuthnExecutors;
+    this.authenticationExecutors = authenticationExecutors;
   }
 
   @Override
@@ -60,15 +67,43 @@ public class WebAuthnAuthenticationInteractor implements AuthenticationInteracto
       RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
-    WebAuthnConfiguration configuration =
-        configurationRepository.get(tenant, "webauthn", WebAuthnConfiguration.class);
+    AuthenticationConfiguration configuration = configurationRepository.get(tenant, "webauthn");
+    AuthenticationInteractionConfig authenticationInteractionConfig =
+        configuration.getAuthenticationConfig("webauthn-authentication");
+    AuthenticationExecutionConfig execution = authenticationInteractionConfig.execution();
 
-    WebAuthnExecutor webAuthnExecutor = webAuthnExecutors.get(configuration.type());
-    WebAuthnVerificationResult webAuthnVerificationResult =
-        webAuthnExecutor.verifyAuthentication(
-            tenant, transaction.identifier(), request, configuration);
+    AuthenticationExecutor executor = authenticationExecutors.get(execution.function());
 
-    UserIdentifier userIdentifier = new UserIdentifier(webAuthnVerificationResult.getUserId());
+    AuthenticationExecutionRequest authenticationExecutionRequest =
+        new AuthenticationExecutionRequest(request.toMap());
+    AuthenticationExecutionResult executionResult =
+        executor.execute(
+            tenant,
+            transaction.identifier(),
+            authenticationExecutionRequest,
+            requestAttributes,
+            execution);
+
+    if (executionResult.isClientError()) {
+      return AuthenticationInteractionRequestResult.clientError(
+          executionResult.contents(),
+          type,
+          operationType(),
+          method(),
+          DefaultSecurityEventType.webauthn_authentication_failure);
+    }
+
+    if (executionResult.isServerError()) {
+      return AuthenticationInteractionRequestResult.serverError(
+          executionResult.contents(),
+          type,
+          operationType(),
+          method(),
+          DefaultSecurityEventType.webauthn_authentication_failure);
+    }
+
+    // TODO
+    UserIdentifier userIdentifier = new UserIdentifier("");
     User user = userQueryRepository.get(tenant, userIdentifier);
 
     Map<String, Object> response = new HashMap<>();

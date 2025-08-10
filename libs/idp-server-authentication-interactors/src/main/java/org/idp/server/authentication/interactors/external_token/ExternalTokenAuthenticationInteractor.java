@@ -17,29 +17,38 @@
 package org.idp.server.authentication.interactors.external_token;
 
 import java.util.*;
+import org.idp.server.authentication.interactors.AuthenticationExecutionRequest;
+import org.idp.server.authentication.interactors.AuthenticationExecutionResult;
+import org.idp.server.authentication.interactors.AuthenticationExecutor;
+import org.idp.server.authentication.interactors.AuthenticationExecutors;
 import org.idp.server.core.oidc.authentication.*;
+import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
+import org.idp.server.core.oidc.authentication.config.AuthenticationExecutionConfig;
+import org.idp.server.core.oidc.authentication.config.AuthenticationInteractionConfig;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.identity.mapper.UserInfoMapper;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
-import org.idp.server.platform.http.*;
+import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.mapper.MappingRule;
+import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
 public class ExternalTokenAuthenticationInteractor implements AuthenticationInteractor {
   AuthenticationConfigurationQueryRepository configurationRepository;
-  OAuthAuthorizationResolvers authorizationResolvers;
-  HttpRequestExecutor httpRequestExecutor;
+  AuthenticationExecutors authenticationExecutors;
+  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
   LoggerWrapper log = LoggerWrapper.getLogger(ExternalTokenAuthenticationInteractor.class);
 
   public ExternalTokenAuthenticationInteractor(
-      AuthenticationConfigurationQueryRepository configurationRepository) {
+      AuthenticationConfigurationQueryRepository configurationRepository,
+      AuthenticationExecutors authenticationExecutors) {
     this.configurationRepository = configurationRepository;
-    this.authorizationResolvers = new OAuthAuthorizationResolvers();
-    this.httpRequestExecutor = new HttpRequestExecutor(HttpClientFactory.defaultClient());
+    this.authenticationExecutors = authenticationExecutors;
   }
 
   @Override
@@ -63,44 +72,49 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
 
     log.debug("ExternalTokenAuthenticationInteractor called");
 
-    ExternalTokenAuthenticationConfiguration configuration =
-        configurationRepository.get(
-            tenant, "external-token", ExternalTokenAuthenticationConfiguration.class);
+    AuthenticationConfiguration configuration =
+        configurationRepository.get(tenant, "external-token");
 
-    ExternalTokenAuthenticationDetailConfiguration userinfoConfig =
-        configuration.userinfoDetailConfig();
+    AuthenticationInteractionConfig authenticationInteractionConfig =
+        configuration.getAuthenticationConfig("external-token");
+    AuthenticationExecutionConfig executionConfig = authenticationInteractionConfig.execution();
+    AuthenticationExecutor executor = authenticationExecutors.get(executionConfig.function());
+    AuthenticationExecutionRequest authenticationExecutionRequest =
+        new AuthenticationExecutionRequest(request.toMap());
+    AuthenticationExecutionResult executionResult =
+        executor.execute(
+            tenant,
+            transaction.identifier(),
+            authenticationExecutionRequest,
+            requestAttributes,
+            executionConfig);
 
-    HttpRequestResult userinfoResult = execute(userinfoConfig, request, requestAttributes);
-
-    if (userinfoResult.isClientError()) {
+    if (executionResult.isClientError()) {
       return AuthenticationInteractionRequestResult.clientError(
-          userinfoResult.toMap(),
+          executionResult.contents(),
           type,
           operationType(),
           method(),
           DefaultSecurityEventType.external_token_authentication_failure);
     }
 
-    if (userinfoResult.isServerError()) {
+    if (executionResult.isServerError()) {
       return AuthenticationInteractionRequestResult.serverError(
-          userinfoResult.toMap(),
+          executionResult.contents(),
           type,
           operationType(),
           method(),
           DefaultSecurityEventType.external_token_authentication_failure);
     }
 
-    UserInfoMapper userInfoMapper =
-        new UserInfoMapper(
-            userinfoConfig.userinfoMappingRules(),
-            userinfoResult.headersAsSingleValueMap(),
-            userinfoResult.body(),
-            configuration.providerName());
-    User user = userInfoMapper.toUser();
+    User user =
+        toUser(
+            authenticationInteractionConfig.result().userMappingRules(),
+            executionResult.contents());
 
     User exsitingUser =
-        userQueryRepository.findByProvider(
-            tenant, configuration.providerName(), user.externalUserId());
+        userQueryRepository.findByProvider(tenant, user.providerId(), user.externalUserId());
+
     if (exsitingUser.exists()) {
       user.setSub(exsitingUser.sub());
     } else {
@@ -120,16 +134,11 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
         DefaultSecurityEventType.external_token_authentication_success);
   }
 
-  private HttpRequestResult execute(
-      ExternalTokenAuthenticationDetailConfiguration configuration,
-      AuthenticationInteractionRequest request,
-      RequestAttributes requestAttributes) {
+  private User toUser(List<MappingRule> mappingRules, Map<String, Object> results) {
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(results);
+    JsonPathWrapper jsonPath = new JsonPathWrapper(jsonNodeWrapper.toJson());
+    Map<String, Object> executed = MappingRuleObjectMapper.execute(mappingRules, jsonPath);
 
-    Map<String, Object> param = new HashMap<>();
-    param.put("request_body", request.toMap());
-    param.put("request_attributes", requestAttributes.toMap());
-    HttpRequestBaseParams httpRequestBaseParams = new HttpRequestBaseParams(param);
-
-    return httpRequestExecutor.execute(configuration, httpRequestBaseParams);
+    return jsonConverter.read(executed, User.class);
   }
 }

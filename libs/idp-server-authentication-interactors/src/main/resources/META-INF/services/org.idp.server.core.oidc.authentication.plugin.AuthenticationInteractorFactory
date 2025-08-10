@@ -1,6 +1,5 @@
 org.idp.server.authentication.interactors.password.PasswordAuthenticationInteractorFactory
 org.idp.server.authentication.interactors.initial_registration.InitialRegistrationFactory
-org.idp.server.authentication.interactors.legacy.LegacyIdServiceAuthenticationInteractorFactory
 org.idp.server.authentication.interactors.email.EmailAuthenticationInteractorFactory
 org.idp.server.authentication.interactors.email.EmailAuthenticationChallengeInteractorFactory
 org.idp.server.authentication.interactors.webauthn.WebAuthnRegistrationIChallengeInteractorFactory
