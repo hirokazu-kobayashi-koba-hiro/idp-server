@@ -165,5 +165,5 @@ public interface OidcSsoExecutor {
     }
   }
 
-  OidcUserinfoResult requestUserInfo(OidcUserinfoRequest oidcUserinfoRequest);
+  UserinfoExecutionResult requestUserInfo(OidcUserinfoRequest oidcUserinfoRequest);
 }

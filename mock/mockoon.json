@@ -415,7 +415,7 @@
       "uuid": "d5023e6c-4951-4f6d-8585-473ce74bf3da",
       "type": "http",
       "documentation": "",
-      "method": "get",
+      "method": "post",
       "endpoint": "user/overview",
       "responses": [
         {
@@ -446,7 +446,7 @@
       "uuid": "d6dc63e4-a4b8-4569-b1ed-305a95fb8ca7",
       "type": "http",
       "documentation": "",
-      "method": "get",
+      "method": "post",
       "endpoint": "user/details",
       "responses": [
         {

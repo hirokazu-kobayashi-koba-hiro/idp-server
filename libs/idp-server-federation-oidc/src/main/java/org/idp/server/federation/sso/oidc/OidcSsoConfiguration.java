@@ -37,6 +37,7 @@ public class OidcSsoConfiguration implements JsonReadable {
   String authorizationEndpoint;
   String tokenEndpoint;
   String userinfoEndpoint;
+  OAuthExtensionUserinfoExecutionConfig userinfoExecution;
   String jwksUri;
   String privateKeys = "";
   List<MappingRule> userinfoMappingRules;
@@ -57,6 +58,7 @@ public class OidcSsoConfiguration implements JsonReadable {
       String authorizationEndpoint,
       String tokenEndpoint,
       String userinfoEndpoint,
+      OAuthExtensionUserinfoExecutionConfig userinfoExecution,
       String jwksUri,
       String privateKeys,
       String paramsDelimiter) {
@@ -72,6 +74,7 @@ public class OidcSsoConfiguration implements JsonReadable {
     this.authorizationEndpoint = authorizationEndpoint;
     this.tokenEndpoint = tokenEndpoint;
     this.userinfoEndpoint = userinfoEndpoint;
+    this.userinfoExecution = userinfoExecution;
     this.jwksUri = jwksUri;
     this.privateKeys = privateKeys;
     this.paramsDelimiter = paramsDelimiter;
@@ -132,6 +135,13 @@ public class OidcSsoConfiguration implements JsonReadable {
 
   public String userinfoEndpoint() {
     return userinfoEndpoint;
+  }
+
+  public OAuthExtensionUserinfoExecutionConfig userinfoExecution() {
+    if (userinfoExecution == null) {
+      return new OAuthExtensionUserinfoExecutionConfig();
+    }
+    return userinfoExecution;
   }
 
   public String jwksUri() {

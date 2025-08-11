@@ -25,7 +25,6 @@ import org.idp.server.core.openid.federation.repository.FederationConfigurationQ
 import org.idp.server.core.openid.federation.sso.*;
 import org.idp.server.core.openid.federation.sso.oidc.OidcSsoSession;
 import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.identity.mapper.UserInfoMapper;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
@@ -126,18 +125,21 @@ public class OidcFederationInteractor implements FederationInteractor {
     }
 
     OidcUserinfoRequest userinfoRequest =
-        new OidcUserinfoRequest(oidcSsoConfiguration.userinfoEndpoint(), tokenResult.accessToken());
-    OidcUserinfoResult userinfoResult = oidcSsoExecutor.requestUserInfo(userinfoRequest);
-    if (userinfoResult.isError()) {
+        new OidcUserinfoRequest(
+            oidcSsoConfiguration.userinfoEndpoint(),
+            tokenResult.accessToken(),
+            oidcSsoConfiguration.userinfoExecution());
+    UserinfoExecutionResult userinfoResult = oidcSsoExecutor.requestUserInfo(userinfoRequest);
+
+    if (userinfoResult.isClientError()) {
       return FederationInteractionResult.serverError(
-          federationType, ssoProvider, session, userinfoResult.bodyAsMap());
+          federationType, ssoProvider, session, userinfoResult.contents());
     }
 
     UserInfoMapper userInfoMapper =
         new UserInfoMapper(
             oidcSsoConfiguration.userinfoMappingRules(),
-            userinfoResult.headersAsSingleValueMap(),
-            userinfoResult.body(),
+            userinfoResult.contents(),
             oidcSsoConfiguration.issuerName());
     User user = userInfoMapper.toUser();
 
@@ -149,10 +151,6 @@ public class OidcFederationInteractor implements FederationInteractor {
       user.setSub(exsitingUser.sub());
     } else {
       user.setSub(UUID.randomUUID().toString());
-    }
-
-    if (user.status() == UserStatus.UNREGISTERED) {
-      user.setStatus(UserStatus.REGISTERED);
     }
 
     sessionCommandRepository.delete(tenant, session.ssoSessionIdentifier());

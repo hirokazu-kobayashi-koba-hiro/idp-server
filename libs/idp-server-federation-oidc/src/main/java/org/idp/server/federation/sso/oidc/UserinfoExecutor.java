@@ -16,30 +16,10 @@
 
 package org.idp.server.federation.sso.oidc;
 
-public class OidcUserinfoRequest {
+public interface UserinfoExecutor {
 
-  String endpoint;
-  String accessToken;
-  OAuthExtensionUserinfoExecutionConfig userinfoExecution;
+  String function();
 
-  public OidcUserinfoRequest(
-      String endpoint,
-      String accessToken,
-      OAuthExtensionUserinfoExecutionConfig userinfoExecution) {
-    this.endpoint = endpoint;
-    this.accessToken = accessToken;
-    this.userinfoExecution = userinfoExecution;
-  }
-
-  public String endpoint() {
-    return endpoint;
-  }
-
-  public String accessToken() {
-    return accessToken;
-  }
-
-  public OAuthExtensionUserinfoExecutionConfig userinfoExecution() {
-    return userinfoExecution;
-  }
+  UserinfoExecutionResult execute(
+      UserinfoExecutionRequest request, OAuthExtensionUserinfoExecutionConfig configuration);
 }

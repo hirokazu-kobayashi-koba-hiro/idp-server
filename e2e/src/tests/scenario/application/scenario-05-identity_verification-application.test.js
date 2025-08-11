@@ -60,7 +60,7 @@ describe("identity-verification application", () => {
           "birthdate": "1992-02-12",
           "nationality": "JP",
           "email_address": "ito.ichiro@gmail.com",
-          "mobile_phone_number": "09012345678",
+          "mobile_phone_number": user.phone_number,
           "address": {
             "street_address": "test",
             "locality": "test",

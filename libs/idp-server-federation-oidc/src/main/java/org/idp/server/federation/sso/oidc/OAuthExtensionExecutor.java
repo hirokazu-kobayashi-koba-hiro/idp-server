@@ -35,10 +35,12 @@ public class OAuthExtensionExecutor implements OidcSsoExecutor {
 
   LoggerWrapper log = LoggerWrapper.getLogger(OAuthExtensionExecutor.class);
   HttpClient httpClient;
+  UserinfoExecutors userinfoExecutors;
   JsonConverter jsonConverter;
 
   public OAuthExtensionExecutor() {
     this.httpClient = HttpClientFactory.defaultClient();
+    this.userinfoExecutors = new UserinfoExecutors();
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
@@ -99,34 +101,13 @@ public class OAuthExtensionExecutor implements OidcSsoExecutor {
   }
 
   @Override
-  public OidcUserinfoResult requestUserInfo(OidcUserinfoRequest oidcUserinfoRequest) {
-    try {
+  public UserinfoExecutionResult requestUserInfo(OidcUserinfoRequest oidcUserinfoRequest) {
 
-      HttpRequest request =
-          HttpRequest.newBuilder()
-              .uri(new URI(oidcUserinfoRequest.endpoint()))
-              .header("Content-Type", "application/json")
-              .header("Accept", "application/json")
-              .header(
-                  "Authorization", String.format("Bearer %s", oidcUserinfoRequest.accessToken()))
-              .GET()
-              .build();
+    OAuthExtensionUserinfoExecutionConfig execution = oidcUserinfoRequest.userinfoExecution();
+    UserinfoExecutor executor = userinfoExecutors.get(execution.function());
+    UserinfoExecutionRequest executionRequest =
+        new UserinfoExecutionRequest(Map.of("access_token", oidcUserinfoRequest.accessToken()));
 
-      HttpResponse<String> httpResponse =
-          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-      String body = httpResponse.body();
-
-      JsonNodeWrapper json = JsonNodeWrapper.fromString(body);
-
-      return new OidcUserinfoResult(httpResponse.statusCode(), httpResponse.headers().map(), json);
-    } catch (IOException | InterruptedException | URISyntaxException e) {
-      log.error(e.getMessage(), e);
-      return new OidcUserinfoResult(
-          500,
-          Map.of(),
-          JsonNodeWrapper.fromMap(
-              Map.of("error", "server_error", "error_description", "unexpected network error")));
-    }
+    return executor.execute(executionRequest, execution);
   }
 }

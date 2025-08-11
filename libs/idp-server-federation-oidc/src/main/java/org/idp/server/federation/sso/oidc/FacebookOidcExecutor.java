@@ -22,6 +22,7 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.federation.sso.SsoProvider;
 import org.idp.server.platform.http.HttpClientFactory;
@@ -109,7 +110,7 @@ public class FacebookOidcExecutor implements OidcSsoExecutor {
   }
 
   @Override
-  public OidcUserinfoResult requestUserInfo(OidcUserinfoRequest oidcUserinfoRequest) {
+  public UserinfoExecutionResult requestUserInfo(OidcUserinfoRequest oidcUserinfoRequest) {
     try {
 
       HttpQueryParams httpQueryParams = new HttpQueryParams();
@@ -129,15 +130,24 @@ public class FacebookOidcExecutor implements OidcSsoExecutor {
       String body = httpResponse.body();
 
       JsonNodeWrapper json = JsonNodeWrapper.fromString(body);
+      HashMap<String, Object> map = new HashMap<>();
+      map.put("staus_code", httpResponse.statusCode());
+      map.put("response_headers", httpResponse.headers());
+      map.put("response_body", json.toMap());
 
-      return new OidcUserinfoResult(httpResponse.statusCode(), httpResponse.headers().map(), json);
+      if (httpResponse.statusCode() >= 400 && httpResponse.statusCode() < 500) {
+        return UserinfoExecutionResult.clientError(map);
+      }
+
+      if (httpResponse.statusCode() >= 500) {
+        return UserinfoExecutionResult.serverError(map);
+      }
+
+      return UserinfoExecutionResult.success(Map.of("http_request", map));
     } catch (IOException | InterruptedException | URISyntaxException e) {
       log.error(e.getMessage(), e);
-      return new OidcUserinfoResult(
-          500,
-          Map.of(),
-          JsonNodeWrapper.fromMap(
-              Map.of("error", "server_error", "error_description", "unexpected network error")));
+      return UserinfoExecutionResult.serverError(
+          Map.of("error", "server_error", "error_description", "unexpected network error"));
     }
   }
 }
