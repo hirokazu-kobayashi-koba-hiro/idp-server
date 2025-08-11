@@ -16,10 +16,17 @@
 
 package org.idp.server.authentication.interactors.email;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import org.idp.server.authentication.interactors.AuthenticationExecutionRequest;
+import org.idp.server.authentication.interactors.AuthenticationExecutionResult;
+import org.idp.server.authentication.interactors.AuthenticationExecutor;
+import org.idp.server.authentication.interactors.AuthenticationExecutors;
 import org.idp.server.core.openid.authentication.*;
-import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionCommandRepository;
-import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
+import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
+import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
+import org.idp.server.core.openid.authentication.config.AuthenticationInteractionConfig;
+import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -29,15 +36,15 @@ import org.idp.server.platform.type.RequestAttributes;
 
 public class EmailAuthenticationInteractor implements AuthenticationInteractor {
 
-  AuthenticationInteractionCommandRepository commandRepository;
-  AuthenticationInteractionQueryRepository queryRepository;
+  AuthenticationExecutors authenticationExecutors;
+  AuthenticationConfigurationQueryRepository configurationQueryRepository;
   LoggerWrapper log = LoggerWrapper.getLogger(EmailAuthenticationInteractor.class);
 
   public EmailAuthenticationInteractor(
-      AuthenticationInteractionCommandRepository commandRepository,
-      AuthenticationInteractionQueryRepository queryRepository) {
-    this.commandRepository = commandRepository;
-    this.queryRepository = queryRepository;
+      AuthenticationExecutors authenticationExecutors,
+      AuthenticationConfigurationQueryRepository configurationQueryRepository) {
+    this.authenticationExecutors = authenticationExecutors;
+    this.configurationQueryRepository = configurationQueryRepository;
   }
 
   @Override
@@ -61,36 +68,41 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
 
     log.debug("EmailAuthenticationInteractor called");
 
-    EmailVerificationChallenge emailVerificationChallenge =
-        queryRepository.get(
-            tenant, transaction.identifier(), "email", EmailVerificationChallenge.class);
-    String verificationCode = request.optValueAsString("verification_code", "");
+    AuthenticationConfiguration configuration = configurationQueryRepository.get(tenant, "email");
+    AuthenticationInteractionConfig authenticationInteractionConfig =
+        configuration.getAuthenticationConfig("email-authentication");
+    AuthenticationExecutionConfig execution = authenticationInteractionConfig.execution();
+    AuthenticationExecutor executor = authenticationExecutors.get(execution.function());
 
-    EmailVerificationResult verificationResult =
-        emailVerificationChallenge.verify(verificationCode);
+    AuthenticationExecutionRequest executionRequest =
+        new AuthenticationExecutionRequest(request.toMap());
+    AuthenticationExecutionResult executionResult =
+        executor.execute(
+            tenant, transaction.identifier(), executionRequest, requestAttributes, execution);
 
-    if (verificationResult.isFailure()) {
-
-      EmailVerificationChallenge countUpEmailVerificationChallenge =
-          emailVerificationChallenge.countUp();
-      commandRepository.update(
-          tenant, transaction.identifier(), "email", countUpEmailVerificationChallenge);
-
-      return new AuthenticationInteractionRequestResult(
-          AuthenticationInteractionStatus.CLIENT_ERROR,
+    if (executionResult.isClientError()) {
+      return AuthenticationInteractionRequestResult.clientError(
+          executionResult.contents(),
           type,
           operationType(),
           method(),
-          transaction.user(),
-          verificationResult.response(),
+          DefaultSecurityEventType.sms_verification_failure);
+    }
+
+    if (executionResult.isServerError()) {
+      return AuthenticationInteractionRequestResult.serverError(
+          executionResult.contents(),
+          type,
+          operationType(),
+          method(),
           DefaultSecurityEventType.email_verification_failure);
     }
 
     User verifiedUser = transaction.user();
     verifiedUser.setEmailVerified(true);
 
-    Map<String, Object> response = new HashMap<>();
-    response.put("user", verifiedUser.toMap());
+    Map<String, Object> contents = new HashMap<>();
+    contents.put("user", verifiedUser.toMap());
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
@@ -98,7 +110,7 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
         operationType(),
         method(),
         verifiedUser,
-        response,
+        contents,
         DefaultSecurityEventType.email_verification_success);
   }
 }

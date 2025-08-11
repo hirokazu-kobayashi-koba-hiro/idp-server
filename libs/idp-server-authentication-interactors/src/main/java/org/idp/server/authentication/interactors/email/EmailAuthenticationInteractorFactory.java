@@ -16,21 +16,21 @@
 
 package org.idp.server.authentication.interactors.email;
 
+import org.idp.server.authentication.interactors.AuthenticationExecutors;
 import org.idp.server.core.openid.authentication.AuthenticationInteractor;
 import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.openid.authentication.plugin.AuthenticationInteractorFactory;
-import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionCommandRepository;
-import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
+import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 
 public class EmailAuthenticationInteractorFactory implements AuthenticationInteractorFactory {
 
   @Override
   public AuthenticationInteractor create(AuthenticationDependencyContainer container) {
 
-    AuthenticationInteractionCommandRepository commandRepository =
-        container.resolve(AuthenticationInteractionCommandRepository.class);
-    AuthenticationInteractionQueryRepository queryRepository =
-        container.resolve(AuthenticationInteractionQueryRepository.class);
-    return new EmailAuthenticationInteractor(commandRepository, queryRepository);
+    AuthenticationExecutors authenticationExecutors =
+        container.resolve(AuthenticationExecutors.class);
+    AuthenticationConfigurationQueryRepository configurationQueryRepository =
+        container.resolve(AuthenticationConfigurationQueryRepository.class);
+    return new EmailAuthenticationInteractor(authenticationExecutors, configurationQueryRepository);
   }
 }

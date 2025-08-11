@@ -16,6 +16,8 @@
 
 package org.idp.server.authentication.interactors.sms;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.authentication.interactors.AuthenticationExecutionRequest;
 import org.idp.server.authentication.interactors.AuthenticationExecutionResult;
 import org.idp.server.authentication.interactors.AuthenticationExecutor;
@@ -99,13 +101,16 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
     User verifiedUser = transaction.user();
     verifiedUser.setPhoneNumberVerified(true);
 
+    Map<String, Object> contents = new HashMap<>();
+    contents.put("user", verifiedUser.toMap());
+
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
         operationType(),
         method(),
         verifiedUser,
-        executionResult.contents(),
+        contents,
         DefaultSecurityEventType.sms_verification_success);
   }
 }

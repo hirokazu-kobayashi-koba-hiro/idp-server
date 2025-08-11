@@ -1,6 +1,6 @@
 {
   "id": "d06b2c01-e33c-454e-96b1-8cbea339fa65",
-  "type": "authentication-device",
+  "type": "authentication-device-notification",
   "interactions": {
     "authentication-device-notification": {
       "execution": {
@@ -8,15 +8,18 @@
         "details": {
           "templates": {
             "transaction": {
-              "subject": "transaction",
+              "sender": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
+              "title": "transaction",
               "body": "Hello,\n\nPlease try authentication"
             },
             "authentication": {
-              "subject": "authentication ",
+              "sender": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
+              "title": "authentication ",
               "body": "Hello,\n\nPlease try authentication"
             },
             "default": {
-              "subject": "default",
+              "sender": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
+              "title": "default",
               "body": "Hello,\n\nPlease try"
             }
           },

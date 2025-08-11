@@ -59,7 +59,7 @@ public class EmailAuthenticationExecutor implements AuthenticationExecutor {
 
     EmailVerificationChallenge verificationChallenge =
         interactionQueryRepository.get(
-            tenant, identifier, "email", EmailVerificationChallenge.class);
+            tenant, identifier, "email-authentication-challenge", EmailVerificationChallenge.class);
 
     String verificationCode = request.optValueAsString("verification_code", "");
 

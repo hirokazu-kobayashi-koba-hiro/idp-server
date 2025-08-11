@@ -20,20 +20,34 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
+import org.idp.server.core.openid.authentication.config.AuthenticationExecutionStoreConfig;
+import org.idp.server.core.openid.authentication.config.AuthenticationPreviousInteractionResolveConfig;
+import org.idp.server.core.openid.authentication.interaction.AuthenticationInteraction;
+import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionCommandRepository;
+import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
 import org.idp.server.platform.http.HttpClientFactory;
 import org.idp.server.platform.http.HttpRequestBaseParams;
 import org.idp.server.platform.http.HttpRequestExecutor;
 import org.idp.server.platform.http.HttpRequestResult;
 import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.path.JsonPathWrapper;
+import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
 public class HttpRequestAuthenticationExecutor implements AuthenticationExecutor {
 
+  AuthenticationInteractionCommandRepository interactionCommandRepository;
+  AuthenticationInteractionQueryRepository interactionQueryRepository;
   HttpRequestExecutor httpRequestExecutor;
   JsonConverter jsonConverter;
 
-  public HttpRequestAuthenticationExecutor() {
+  public HttpRequestAuthenticationExecutor(
+      AuthenticationInteractionCommandRepository interactionCommandRepository,
+      AuthenticationInteractionQueryRepository interactionQueryRepository) {
+    this.interactionCommandRepository = interactionCommandRepository;
+    this.interactionQueryRepository = interactionQueryRepository;
     this.httpRequestExecutor = new HttpRequestExecutor(HttpClientFactory.defaultClient());
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
@@ -54,6 +68,15 @@ public class HttpRequestAuthenticationExecutor implements AuthenticationExecutor
     Map<String, Object> param = new HashMap<>();
     param.put("request_body", request.toMap());
     param.put("request_attributes", requestAttributes);
+
+    if (configuration.hasPreviousInteraction()) {
+      AuthenticationPreviousInteractionResolveConfig previousInteraction =
+          configuration.previousInteraction();
+      AuthenticationInteraction authenticationInteraction =
+          interactionQueryRepository.find(tenant, identifier, previousInteraction.key());
+      param.put("interaction", authenticationInteraction.payload());
+    }
+
     HttpRequestBaseParams httpRequestBaseParams = new HttpRequestBaseParams(param);
 
     HttpRequestResult executionResult =
@@ -65,6 +88,16 @@ public class HttpRequestAuthenticationExecutor implements AuthenticationExecutor
 
     if (executionResult.isServerError()) {
       return AuthenticationExecutionResult.serverError(executionResult.body().toMap());
+    }
+
+    if (configuration.hasHttpRequestStore()) {
+      AuthenticationExecutionStoreConfig httpRequestStore = configuration.httpRequestStore();
+      JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(executionResult.toMap());
+      JsonPathWrapper pathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
+      Map<String, Object> interactionMap =
+          MappingRuleObjectMapper.execute(httpRequestStore.interactionMappingRules(), pathWrapper);
+      interactionCommandRepository.register(
+          tenant, identifier, httpRequestStore.key(), interactionMap);
     }
 
     return AuthenticationExecutionResult.success(executionResult.body().toMap());

@@ -75,6 +75,15 @@
               "to": "*"
             }
           ]
+        },
+        "http_request_store": {
+          "key": "email-authentication-challenge",
+          "interaction_mapping_rules": [
+            {
+              "from": "$.response_body.transaction_id",
+              "to": "transaction_id"
+            }
+          ]
         }
       },
       "post_hook": {},
@@ -102,6 +111,9 @@
       },
       "execution": {
         "function": "http_request",
+        "previous_interaction": {
+          "key": "email-authentication-challenge"
+        },
         "http_request": {
           "url": "http://localhost:4000/email-authentication",
           "method": "POST",

@@ -92,7 +92,8 @@ public class SmsChallengeAuthenticationExecutor implements AuthenticationExecuto
     SmsVerificationChallenge verificationChallenge =
         SmsVerificationChallenge.create(oneTimePassword, retryCountLimitation, expireSeconds);
 
-    interactionCommandRepository.register(tenant, identifier, "sms", verificationChallenge);
+    interactionCommandRepository.register(
+        tenant, identifier, "sms-authentication-challenge", verificationChallenge);
 
     return AuthenticationExecutionResult.success(Map.of());
   }
