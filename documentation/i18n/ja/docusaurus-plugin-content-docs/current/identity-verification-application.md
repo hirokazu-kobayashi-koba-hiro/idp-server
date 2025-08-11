@@ -367,7 +367,7 @@ flowchart TD
   "details": {
     "verification_parameters": [
       {
-        "request_json_path": "$.request_body.phone_number",
+        "request_json_path": "$.mobile_phone_number",
         "user_claim_json_path": "phone_number"
       },
       {
@@ -1071,7 +1071,7 @@ from で参照できるトップレベルのオブジェクトは以下の通り
             "details": {
               "verification_parameters": [
                 {
-                  "request_json_path": "$.request_body.phone_number",
+                  "request_json_path": "$.mobile_phone_number",
                   "user_claim_json_path": "phone_number"
                 }
               ]

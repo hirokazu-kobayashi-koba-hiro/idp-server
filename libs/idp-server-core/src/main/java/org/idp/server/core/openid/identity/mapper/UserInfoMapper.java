@@ -32,17 +32,11 @@ public class UserInfoMapper {
   JsonPathWrapper jsonPath;
 
   public UserInfoMapper(
-      List<MappingRule> mappingRules,
-      Map<String, String> headers,
-      JsonNodeWrapper body,
-      String providerName) {
+      List<MappingRule> mappingRules, Map<String, Object> contents, String providerName) {
     this.jsonConverter = JsonConverter.snakeCaseInstance();
     this.providerName = providerName;
     this.mappingRules = mappingRules;
-    HashMap<String, Object> map = new HashMap<>();
-    map.put("header", headers);
-    map.put("body", body.toMap());
-    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(map);
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(contents);
     this.jsonPath = new JsonPathWrapper(jsonNodeWrapper.toJson());
   }
 

@@ -42,6 +42,10 @@ public class UserRegistrator {
       return updatedUser;
     }
 
+    if (user.status().isUnregistered()) {
+      user.setStatus(UserStatus.REGISTERED);
+    }
+
     userCommandRepository.register(tenant, user);
 
     return user;

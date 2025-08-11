@@ -16,30 +16,30 @@
 
 package org.idp.server.federation.sso.oidc;
 
-public class OidcUserinfoRequest {
+public enum UserinfoExecutionStatus {
+  OK(200),
+  CLIENT_ERROR(400),
+  SERVER_ERROR(500);
 
-  String endpoint;
-  String accessToken;
-  OAuthExtensionUserinfoExecutionConfig userinfoExecution;
+  int statusCode;
 
-  public OidcUserinfoRequest(
-      String endpoint,
-      String accessToken,
-      OAuthExtensionUserinfoExecutionConfig userinfoExecution) {
-    this.endpoint = endpoint;
-    this.accessToken = accessToken;
-    this.userinfoExecution = userinfoExecution;
+  UserinfoExecutionStatus(int statusCode) {
+    this.statusCode = statusCode;
   }
 
-  public String endpoint() {
-    return endpoint;
+  public boolean isOk() {
+    return this == OK;
   }
 
-  public String accessToken() {
-    return accessToken;
+  public boolean isClientError() {
+    return this == CLIENT_ERROR;
   }
 
-  public OAuthExtensionUserinfoExecutionConfig userinfoExecution() {
-    return userinfoExecution;
+  public boolean isServerError() {
+    return this == SERVER_ERROR;
+  }
+
+  public int code() {
+    return statusCode;
   }
 }

@@ -100,6 +100,8 @@ public class HttpRequestAuthenticationExecutor implements AuthenticationExecutor
           tenant, identifier, httpRequestStore.key(), interactionMap);
     }
 
-    return AuthenticationExecutionResult.success(executionResult.body().toMap());
+    Map<String, Object> interactionMap = new HashMap<>();
+    interactionMap.put("http_request", executionResult.toMap());
+    return AuthenticationExecutionResult.success(interactionMap);
   }
 }
