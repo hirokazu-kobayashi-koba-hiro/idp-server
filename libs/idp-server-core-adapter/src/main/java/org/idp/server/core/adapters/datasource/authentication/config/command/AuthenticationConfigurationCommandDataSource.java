@@ -16,7 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.authentication.config.command;
 
-import org.idp.server.core.oidc.authentication.AuthenticationConfiguration;
+import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationCommandRepository;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;

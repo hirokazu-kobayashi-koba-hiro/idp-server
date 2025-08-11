@@ -17,12 +17,12 @@
 package org.idp.server.core.oidc.authentication.repository;
 
 import java.util.List;
-import org.idp.server.core.oidc.authentication.AuthenticationConfiguration;
-import org.idp.server.core.oidc.authentication.AuthenticationConfigurationIdentifier;
+import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
+import org.idp.server.core.oidc.authentication.config.AuthenticationConfigurationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface AuthenticationConfigurationQueryRepository {
-  <T> T get(Tenant tenant, String key, Class<T> clazz);
+  AuthenticationConfiguration get(Tenant tenant, String key);
 
   AuthenticationConfiguration find(Tenant tenant, AuthenticationConfigurationIdentifier identifier);
 

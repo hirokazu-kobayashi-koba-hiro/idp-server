@@ -19,10 +19,16 @@ package org.idp.server.authentication.interactors.sms;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.idp.server.authentication.interactors.AuthenticationExecutionRequest;
+import org.idp.server.authentication.interactors.AuthenticationExecutionResult;
+import org.idp.server.authentication.interactors.AuthenticationExecutor;
+import org.idp.server.authentication.interactors.AuthenticationExecutors;
 import org.idp.server.core.oidc.authentication.*;
+import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
+import org.idp.server.core.oidc.authentication.config.AuthenticationExecutionConfig;
+import org.idp.server.core.oidc.authentication.config.AuthenticationInteractionConfig;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.identity.UserStatus;
 import org.idp.server.core.oidc.identity.exception.UserTooManyFoundResultException;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -32,12 +38,12 @@ import org.idp.server.platform.type.RequestAttributes;
 
 public class SmsAuthenticationChallengeInteractor implements AuthenticationInteractor {
 
-  SmsAuthenticationExecutors executors;
+  AuthenticationExecutors executors;
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
   LoggerWrapper log = LoggerWrapper.getLogger(SmsAuthenticationChallengeInteractor.class);
 
   public SmsAuthenticationChallengeInteractor(
-      SmsAuthenticationExecutors executors,
+      AuthenticationExecutors executors,
       AuthenticationConfigurationQueryRepository configurationQueryRepository) {
     this.executors = executors;
     this.configurationQueryRepository = configurationQueryRepository;
@@ -70,9 +76,10 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
 
       log.debug("SmsAuthenticationChallengeInteractor called");
 
-      SmsAuthenticationConfiguration configuration =
-          configurationQueryRepository.get(tenant, "sms", SmsAuthenticationConfiguration.class);
-      SmsAuthenticationExecutor executor = executors.get(configuration.type());
+      AuthenticationConfiguration configuration = configurationQueryRepository.get(tenant, "sms");
+      AuthenticationInteractionConfig authenticationInteractionConfig =
+          configuration.getAuthenticationConfig("sms-authentication-challenge");
+      AuthenticationExecutionConfig executionConfig = authenticationInteractionConfig.execution();
 
       String phoneNumber = resolvePhoneNumber(transaction, request);
 
@@ -93,11 +100,17 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
       String providerId = request.optValueAsString("provider_id", "idp-server");
       User user = resolveUser(tenant, transaction, phoneNumber, providerId, userQueryRepository);
 
-      SmsAuthenticationExecutionRequest executionRequest =
-          new SmsAuthenticationExecutionRequest(request.toMap());
-      SmsAuthenticationExecutionResult executionResult =
-          executor.challenge(
-              tenant, transaction.identifier(), executionRequest, requestAttributes, configuration);
+      AuthenticationExecutor executor = executors.get(executionConfig.function());
+
+      AuthenticationExecutionRequest executionRequest =
+          new AuthenticationExecutionRequest(request.toMap());
+      AuthenticationExecutionResult executionResult =
+          executor.execute(
+              tenant,
+              transaction.identifier(),
+              executionRequest,
+              requestAttributes,
+              executionConfig);
 
       if (executionResult.isClientError()) {
         return AuthenticationInteractionRequestResult.clientError(
@@ -165,7 +178,6 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
     user.setSub(id);
     user.setExternalUserId(id);
     user.setPhoneNumber(phoneNumber);
-    user.setStatus(UserStatus.REGISTERED);
 
     return user;
   }

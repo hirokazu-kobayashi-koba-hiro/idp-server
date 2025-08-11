@@ -1,27 +1,73 @@
 {
   "id": "17527d7b-3ca3-4aa1-be9a-3eb9784cb7f7",
   "type": "sms",
-  "payload": {
+  "attributes": {},
+  "metadata": {
     "type": "internal",
-    "description": "internal",
-    "details": {
-      "internal": {
-        "type": "no_action",
-        "settings": {},
-        "templates": {
-          "registration": {
-            "subject": "[ID Verification] Your signup sms confirmation code",
-            "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\nIf you did not request this, please contact your administrator.\n\n– IDP Support"
-          },
-          "authentication": {
-            "subject": "[ID Verification] Your login sms confirmation code",
-            "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\nIf you did not request this, please contact your administrator.\n\n– IDP Support"
+    "transaction_id_param": "transaction_id",
+    "verification_code_param": "verification_code"
+  },
+  "interactions": {
+    "sms-authentication-challenge": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "phone_number": {
+              "type": "string"
+            },
+            "template": {
+              "type": "string"
+            }
           }
-        },
-        "retry_count_limitation": 5,
-        "expire_seconds": 300
+        }
+      },
+      "pre_hook": {
+
+      },
+      "execution": {
+        "function": "sms_authentication_challenge",
+        "details": {
+          "sender_type": "no_action",
+          "templates": {
+            "registration": {
+              "subject": "[ID Verification] Your signup sms confirmation code",
+              "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\nIf you did not request this, please contact your administrator.\n\n– IDP Support"
+            },
+            "authentication": {
+              "subject": "[ID Verification] Your login sms confirmation code",
+              "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\nIf you did not request this, please contact your administrator.\n\n– IDP Support"
+            }
+          },
+          "retry_count_limitation": 5,
+          "expire_seconds": 300
+        }
+      },
+      "post_hook": {},
+      "response": {
+        "body_mapping_rules": [
+          { "from": "$.response_body", "to": "*" }
+        ]
+      }
+    },
+    "sms-authentication": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "verification_code": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "execution": {
+        "function": "sms_authentication",
+        "details": {
+          "retry_count_limitation": 5,
+          "expire_seconds": 300
+        }
       }
     }
   }
-
 }

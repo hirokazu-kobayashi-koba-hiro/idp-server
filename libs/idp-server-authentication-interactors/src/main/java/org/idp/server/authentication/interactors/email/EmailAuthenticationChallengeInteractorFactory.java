@@ -16,12 +16,12 @@
 
 package org.idp.server.authentication.interactors.email;
 
+import org.idp.server.authentication.interactors.AuthenticationExecutors;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractor;
 import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.oidc.authentication.plugin.AuthenticationInteractorFactory;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionCommandRepository;
-import org.idp.server.platform.notification.email.EmailSenders;
 
 public class EmailAuthenticationChallengeInteractorFactory
     implements AuthenticationInteractorFactory {
@@ -33,8 +33,9 @@ public class EmailAuthenticationChallengeInteractorFactory
         container.resolve(AuthenticationConfigurationQueryRepository.class);
     AuthenticationInteractionCommandRepository transactionCommandRepository =
         container.resolve(AuthenticationInteractionCommandRepository.class);
-    EmailSenders emailSenders = container.resolve(EmailSenders.class);
+    AuthenticationExecutors authenticationExecutors =
+        container.resolve(AuthenticationExecutors.class);
     return new EmailAuthenticationChallengeInteractor(
-        configurationQueryRepository, transactionCommandRepository, emailSenders);
+        configurationQueryRepository, transactionCommandRepository, authenticationExecutors);
   }
 }

@@ -410,6 +410,37 @@
       "responseMode": null,
       "streamingMode": null,
       "streamingInterval": 0
+    },
+    {
+      "uuid": "d5023e6c-4951-4f6d-8585-473ce74bf3da",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "users",
+      "responses": [
+        {
+          "uuid": "c6b47497-0160-4228-9afb-b6c1880c5a3a",
+          "body": "{\n  \"status\": \"ok\" \n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
     }
   ],
   "rootChildren": [

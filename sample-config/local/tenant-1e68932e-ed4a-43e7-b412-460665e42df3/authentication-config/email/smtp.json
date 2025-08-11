@@ -1,8 +1,23 @@
 {
   "id": "f85f231d-3619-4a7c-a866-03fefab14272",
   "type": "email",
-  "payload": {
-    "type": "smtp",
+  "attributes": {},
+  "metadata": {
+    "type": "external",
+    "description": "mocky",
+    "sender": "test@gmail.com",
+    "transaction_id_param": "transaction_id",
+    "verification_code_param": "verification_code",
+    "templates": {
+      "registration": {
+        "subject": "[ID Verification] Your signup email confirmation code",
+        "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\nIf you did not request this, please contact your administrator.\n\n– IDP Support"
+      },
+      "authentication": {
+        "subject": "[ID Verification] Your login email confirmation code",
+        "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\nIf you did not request this, please contact your administrator.\n\n– IDP Support"
+      }
+    },
     "settings": {
       "smtp": {
         "host": "smtp.gmail.com",
@@ -15,18 +30,112 @@
         }
       }
     },
-    "sender": "test@gmail.com",
-    "templates": {
-      "registration": {
-        "subject": "[ID Verification] Your signup confirmation code",
-        "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\nIf you did not request this, please contact your administrator.\n\n– IDP Support"
-      },
-      "authentication": {
-        "subject": "[ID Verification] Your login confirmation code",
-        "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\nIf you did not request this, please contact your administrator.\n\n– IDP Support"
-      }
-    },
     "retry_count_limitation": 5,
     "expire_seconds": 300
+  },
+  "interactions": {
+    "email-authentication-challenge": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "phone_number": {
+              "type": "string"
+            },
+            "template": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "pre_hook": {
+      },
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "http://localhost:4000/email-authentication-challenge",
+          "method": "POST",
+          "oauth_authorization": {
+            "type": "password",
+            "token_endpoint": "http://localhost:4000/token",
+            "client_id": "your-client-id",
+            "username": "username",
+            "password": "password",
+            "scope": "application"
+          },
+          "header_mapping_rules": [
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            }
+          ],
+          "body_mapping_rules": [
+            {
+              "from": "$.request_body",
+              "to": "*"
+            }
+          ]
+        }
+      },
+      "post_hook": {},
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.response_body",
+            "to": "*"
+          }
+        ]
+      }
+    },
+    "email-authentication": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "verification_code": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "pre_hook": {
+      },
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "http://localhost:4000/email-authentication",
+          "method": "POST",
+          "oauth_authorization": {
+            "type": "password",
+            "token_endpoint": "http://localhost:4000/token",
+            "client_id": "your-client-id",
+            "username": "username",
+            "password": "password",
+            "scope": "application"
+          },
+          "header_mapping_rules": [
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            }
+          ],
+          "body_mapping_rules": [
+            {
+              "from": "$.request_body",
+              "to": "*"
+            }
+          ]
+        }
+      },
+      "post_hook": {},
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.response_body",
+            "to": "*"
+          }
+        ]
+      }
+    }
   }
 }

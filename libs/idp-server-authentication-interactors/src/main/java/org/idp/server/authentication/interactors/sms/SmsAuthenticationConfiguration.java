@@ -16,39 +16,51 @@
 
 package org.idp.server.authentication.interactors.sms;
 
+import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.authentication.interactors.sms.exception.SmsAuthenticationDetailsConfigNotFoundException;
+import org.idp.server.authentication.interactors.sms.executor.SmslVerificationTemplate;
 import org.idp.server.platform.json.JsonReadable;
+import org.idp.server.platform.notification.sms.SmsSenderType;
 
 public class SmsAuthenticationConfiguration implements JsonReadable {
-  String type;
-  String transactionIdParam;
-  String verificationCodeParam;
-  Map<String, Map<String, Object>> details;
+  String senderType;
+  Map<String, Object> settings = new HashMap<>();
+  Map<String, SmslVerificationTemplate> templates = new HashMap<>();
+  int retryCountLimitation = 5;
+  int expireSeconds = 300;
 
   public SmsAuthenticationConfiguration() {}
 
-  public SmsAuthenticationType type() {
-    return new SmsAuthenticationType(type);
+  public SmsAuthenticationConfiguration(
+      Map<String, SmslVerificationTemplate> templates,
+      int retryCountLimitation,
+      int expireSeconds) {
+    this.templates = templates;
+    this.retryCountLimitation = retryCountLimitation;
+    this.expireSeconds = expireSeconds;
   }
 
-  public String transactionIdParam() {
-    return transactionIdParam;
+  public SmsSenderType senderType() {
+    return new SmsSenderType(senderType);
   }
 
-  public String verificationCodeParam() {
-    return verificationCodeParam;
+  public SmslVerificationTemplate findTemplate(String templateKey) {
+    return templates.getOrDefault(templateKey, new SmslVerificationTemplate());
   }
 
-  public Map<String, Map<String, Object>> details() {
-    return details;
+  public Map<String, Object> settings() {
+    return settings;
   }
 
-  public Map<String, Object> getDetail(SmsAuthenticationType type) {
-    if (!details.containsKey(type.name())) {
-      throw new SmsAuthenticationDetailsConfigNotFoundException(
-          "invalid configuration. key: " + type.name() + " is unregistered.");
-    }
-    return details.get(type.name());
+  public int retryCountLimitation() {
+    return retryCountLimitation;
+  }
+
+  public int expireSeconds() {
+    return expireSeconds;
+  }
+
+  public boolean exists() {
+    return senderType != null && !senderType.isEmpty();
   }
 }

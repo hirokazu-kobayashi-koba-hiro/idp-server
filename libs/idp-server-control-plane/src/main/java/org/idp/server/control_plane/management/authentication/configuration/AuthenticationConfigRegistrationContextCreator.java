@@ -16,12 +16,11 @@
 
 package org.idp.server.control_plane.management.authentication.configuration;
 
-import java.util.Map;
 import java.util.UUID;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigRequest;
-import org.idp.server.core.oidc.authentication.AuthenticationConfiguration;
+import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigurationRequest;
+import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
 import org.idp.server.platform.json.JsonConverter;
-import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class AuthenticationConfigRegistrationContextCreator {
@@ -40,16 +39,14 @@ public class AuthenticationConfigRegistrationContextCreator {
   }
 
   public AuthenticationConfigRegistrationContext create() {
-    JsonNodeWrapper configJson = jsonConverter.readTree(request.toMap());
-    String id =
-        configJson.contains("id")
-            ? configJson.getValueOrEmptyAsString("id")
-            : UUID.randomUUID().toString();
-    String type = configJson.getValueOrEmptyAsString("type");
-    JsonNodeWrapper payloadJson = configJson.getValueAsJsonNode("payload");
-    Map<String, Object> payload = payloadJson.toMap();
 
-    AuthenticationConfiguration configuration = new AuthenticationConfiguration(id, type, payload);
+    AuthenticationConfigurationRequest configurationRequest =
+        jsonConverter.read(request.toMap(), AuthenticationConfigurationRequest.class);
+
+    String id =
+        configurationRequest.hasId() ? configurationRequest.id() : UUID.randomUUID().toString();
+
+    AuthenticationConfiguration configuration = configurationRequest.toConfiguration(id);
 
     return new AuthenticationConfigRegistrationContext(tenant, configuration, dryRun);
   }

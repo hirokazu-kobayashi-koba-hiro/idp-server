@@ -16,6 +16,7 @@
 
 package org.idp.server.authentication.interactors.sms;
 
+import org.idp.server.authentication.interactors.AuthenticationExecutors;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractor;
 import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.oidc.authentication.plugin.AuthenticationInteractorFactory;
@@ -27,7 +28,7 @@ public class SmsAuthenticationChallengeInteractorFactory
   @Override
   public AuthenticationInteractor create(AuthenticationDependencyContainer container) {
 
-    SmsAuthenticationExecutors executors = container.resolve(SmsAuthenticationExecutors.class);
+    AuthenticationExecutors executors = container.resolve(AuthenticationExecutors.class);
     AuthenticationConfigurationQueryRepository configurationQueryRepository =
         container.resolve(AuthenticationConfigurationQueryRepository.class);
     return new SmsAuthenticationChallengeInteractor(executors, configurationQueryRepository);

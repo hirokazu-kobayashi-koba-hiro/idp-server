@@ -19,6 +19,9 @@ package org.idp.server.authentication.interactors.initial_registration;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.oidc.authentication.*;
+import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
+import org.idp.server.core.oidc.authentication.config.AuthenticationInteractionConfig;
+import org.idp.server.core.oidc.authentication.config.AuthenticationRequestConfig;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.IdPUserCreator;
 import org.idp.server.core.oidc.identity.User;
@@ -74,10 +77,13 @@ public class InitialRegistrationInteractor implements AuthenticationInteractor {
 
     log.debug("InitialRegistrationInteractor called");
 
-    // TODO fix type
-    Map json = configurationQueryRepository.get(tenant, "initial-registration", Map.class);
-    JsonNodeWrapper definition = jsonConverter.readTree(json);
-    JsonSchemaDefinition jsonSchemaDefinition = new JsonSchemaDefinition(definition);
+    AuthenticationConfiguration configuration =
+        configurationQueryRepository.get(tenant, "initial-registration");
+    AuthenticationInteractionConfig authenticationInteractionConfig =
+        configuration.getAuthenticationConfig("initial-registration");
+    AuthenticationRequestConfig requestConfig = authenticationInteractionConfig.request();
+
+    JsonSchemaDefinition jsonSchemaDefinition = requestConfig.requestSchemaAsDefinition();
     JsonSchemaValidator jsonSchemaValidator = new JsonSchemaValidator(jsonSchemaDefinition);
     JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(request.toMap());
     JsonSchemaValidationResult validationResult = jsonSchemaValidator.validate(jsonNodeWrapper);

@@ -16,9 +16,14 @@
 
 package org.idp.server.authentication.interactors.webauthn;
 
-import java.util.HashMap;
-import java.util.Map;
+import org.idp.server.authentication.interactors.AuthenticationExecutionRequest;
+import org.idp.server.authentication.interactors.AuthenticationExecutionResult;
+import org.idp.server.authentication.interactors.AuthenticationExecutor;
+import org.idp.server.authentication.interactors.AuthenticationExecutors;
 import org.idp.server.core.oidc.authentication.*;
+import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
+import org.idp.server.core.oidc.authentication.config.AuthenticationExecutionConfig;
+import org.idp.server.core.oidc.authentication.config.AuthenticationInteractionConfig;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -29,14 +34,14 @@ import org.idp.server.platform.type.RequestAttributes;
 public class WebAuthnRegistrationChallengeInteractor implements AuthenticationInteractor {
 
   AuthenticationConfigurationQueryRepository configurationRepository;
-  WebAuthnExecutors webAuthnExecutors;
+  AuthenticationExecutors authenticationExecutors;
   LoggerWrapper log = LoggerWrapper.getLogger(WebAuthnRegistrationChallengeInteractor.class);
 
   public WebAuthnRegistrationChallengeInteractor(
       AuthenticationConfigurationQueryRepository configurationRepository,
-      WebAuthnExecutors webAuthnExecutors) {
+      AuthenticationExecutors authenticationExecutors) {
     this.configurationRepository = configurationRepository;
-    this.webAuthnExecutors = webAuthnExecutors;
+    this.authenticationExecutors = authenticationExecutors;
   }
 
   @Override
@@ -65,16 +70,40 @@ public class WebAuthnRegistrationChallengeInteractor implements AuthenticationIn
 
     log.debug("WebAuthnRegistrationChallengeInteractor called");
 
-    WebAuthnConfiguration configuration =
-        configurationRepository.get(tenant, "webauthn", WebAuthnConfiguration.class);
+    AuthenticationConfiguration configuration = configurationRepository.get(tenant, "webauthn");
+    AuthenticationInteractionConfig authenticationInteractionConfig =
+        configuration.getAuthenticationConfig("webauthn-registration-challenge");
+    AuthenticationExecutionConfig execution = authenticationInteractionConfig.execution();
 
-    WebAuthnExecutor webAuthnExecutor = webAuthnExecutors.get(configuration.type());
-    WebAuthnChallenge webAuthnChallenge =
-        webAuthnExecutor.challengeRegistration(
-            tenant, transaction.identifier(), request, configuration);
+    AuthenticationExecutor executor = authenticationExecutors.get(execution.function());
 
-    Map<String, Object> response = new HashMap<>();
-    response.put("challenge", webAuthnChallenge.challenge());
+    AuthenticationExecutionRequest authenticationExecutionRequest =
+        new AuthenticationExecutionRequest(request.toMap());
+    AuthenticationExecutionResult executionResult =
+        executor.execute(
+            tenant,
+            transaction.identifier(),
+            authenticationExecutionRequest,
+            requestAttributes,
+            execution);
+
+    if (executionResult.isClientError()) {
+      return AuthenticationInteractionRequestResult.clientError(
+          executionResult.contents(),
+          type,
+          operationType(),
+          method(),
+          DefaultSecurityEventType.webauthn_registration_challenge_failure);
+    }
+
+    if (executionResult.isServerError()) {
+      return AuthenticationInteractionRequestResult.serverError(
+          executionResult.contents(),
+          type,
+          operationType(),
+          method(),
+          DefaultSecurityEventType.webauthn_registration_challenge_failure);
+    }
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
@@ -82,7 +111,7 @@ public class WebAuthnRegistrationChallengeInteractor implements AuthenticationIn
         operationType(),
         method(),
         transaction.user(),
-        response,
-        DefaultSecurityEventType.webauthn_registration_challenge);
+        executionResult.contents(),
+        DefaultSecurityEventType.webauthn_registration_challenge_success);
   }
 }

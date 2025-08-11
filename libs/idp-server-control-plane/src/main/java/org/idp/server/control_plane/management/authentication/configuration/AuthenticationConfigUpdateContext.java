@@ -21,7 +21,7 @@ import java.util.Map;
 import org.idp.server.control_plane.base.ConfigUpdateContext;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementStatus;
-import org.idp.server.core.oidc.authentication.AuthenticationConfiguration;
+import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
 import org.idp.server.platform.json.JsonDiffCalculator;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -63,12 +63,12 @@ public class AuthenticationConfigUpdateContext implements ConfigUpdateContext {
 
   @Override
   public Map<String, Object> beforePayload() {
-    return before.payload();
+    return before.toMap();
   }
 
   @Override
   public Map<String, Object> afterPayload() {
-    return after.payload();
+    return after.toMap();
   }
 
   @Override
@@ -77,11 +77,11 @@ public class AuthenticationConfigUpdateContext implements ConfigUpdateContext {
   }
 
   public AuthenticationConfigManagementResponse toResponse() {
-    JsonNodeWrapper beforeJson = JsonNodeWrapper.fromMap(before.payload());
-    JsonNodeWrapper afterJson = JsonNodeWrapper.fromMap(after.payload());
+    JsonNodeWrapper beforeJson = JsonNodeWrapper.fromMap(before.toMap());
+    JsonNodeWrapper afterJson = JsonNodeWrapper.fromMap(after.toMap());
     Map<String, Object> diff = JsonDiffCalculator.deepDiff(beforeJson, afterJson);
     Map<String, Object> response = new HashMap<>();
-    response.put("result", after.payload());
+    response.put("result", after.toMap());
     response.put("diff", diff);
     response.put("dry_run", dryRun);
     return new AuthenticationConfigManagementResponse(

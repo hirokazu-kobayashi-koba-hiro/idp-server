@@ -16,11 +16,10 @@
 
 package org.idp.server.control_plane.management.authentication.configuration;
 
-import java.util.Map;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigRequest;
-import org.idp.server.core.oidc.authentication.AuthenticationConfiguration;
+import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigurationRequest;
+import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
 import org.idp.server.platform.json.JsonConverter;
-import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class AuthenticationConfigUpdateContextCreator {
@@ -44,13 +43,10 @@ public class AuthenticationConfigUpdateContextCreator {
   }
 
   public AuthenticationConfigUpdateContext create() {
-    JsonNodeWrapper configJson = jsonConverter.readTree(request.toMap());
-    String id = configJson.getValueOrEmptyAsString("id");
-    String type = configJson.getValueOrEmptyAsString("type");
-    JsonNodeWrapper payloadJson = configJson.getValueAsJsonNode("payload");
-    Map<String, Object> payload = payloadJson.toMap();
+    AuthenticationConfigurationRequest configurationRequest =
+        jsonConverter.read(request.toMap(), AuthenticationConfigurationRequest.class);
 
-    AuthenticationConfiguration after = new AuthenticationConfiguration(id, type, payload);
+    AuthenticationConfiguration after = configurationRequest.toConfiguration(before.id());
 
     return new AuthenticationConfigUpdateContext(tenant, before, after, dryRun);
   }

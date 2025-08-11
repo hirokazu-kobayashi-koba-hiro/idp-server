@@ -16,23 +16,31 @@
 
 package org.idp.server.authentication.interactors.fidouaf;
 
+import org.idp.server.authentication.interactors.AuthenticationExecutors;
 import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditionalRequestResolvers;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractor;
 import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.oidc.authentication.plugin.AuthenticationInteractorFactory;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
+import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionQueryRepository;
 
 public class FidoUafRegistrationInteractorFactory implements AuthenticationInteractorFactory {
 
   @Override
   public AuthenticationInteractor create(AuthenticationDependencyContainer container) {
 
-    FidoUafExecutors fidoUafExecutors = container.resolve(FidoUafExecutors.class);
+    AuthenticationExecutors authenticationExecutors =
+        container.resolve(AuthenticationExecutors.class);
     AuthenticationConfigurationQueryRepository configurationQueryRepository =
         container.resolve(AuthenticationConfigurationQueryRepository.class);
+    AuthenticationInteractionQueryRepository authenticationInteractionQueryRepository =
+        container.resolve(AuthenticationInteractionQueryRepository.class);
     FidoUafAdditionalRequestResolvers additionalRequestResolvers =
         container.resolve(FidoUafAdditionalRequestResolvers.class);
     return new FidoUafRegistrationInteractor(
-        fidoUafExecutors, configurationQueryRepository, additionalRequestResolvers);
+        authenticationExecutors,
+        configurationQueryRepository,
+        authenticationInteractionQueryRepository,
+        additionalRequestResolvers);
   }
 }

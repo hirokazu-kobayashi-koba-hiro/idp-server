@@ -23,6 +23,7 @@ describe("user registration", () => {
         });
         console.log(challengeResponse.status);
         console.log(challengeResponse.data);
+        expect(challengeResponse.status).toBe(200);
 
         const adminTokenResponse = await requestToken({
           endpoint: serverConfig.tokenEndpoint,
@@ -65,6 +66,7 @@ describe("user registration", () => {
 
         console.log(verificationResponse.status);
         console.log(verificationResponse.data);
+        expect(verificationResponse.status).toBe(200);
       };
 
       const { authorizationResponse } = await requestAuthorizations({
@@ -233,6 +235,7 @@ describe("user registration", () => {
         });
         console.log(challengeResponse.status);
         console.log(challengeResponse.data);
+        expect(challengeResponse.status).toBe(200);
 
         const adminTokenResponse = await requestToken({
           endpoint: serverConfig.tokenEndpoint,
@@ -275,6 +278,7 @@ describe("user registration", () => {
 
         console.log(verificationResponse.status);
         console.log(verificationResponse.data);
+        expect(verificationResponse.status).toBe(200);
       };
 
       const { authorizationResponse } = await requestAuthorizations({

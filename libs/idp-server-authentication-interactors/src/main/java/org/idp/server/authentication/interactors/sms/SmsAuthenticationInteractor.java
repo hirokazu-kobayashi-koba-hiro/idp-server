@@ -16,7 +16,14 @@
 
 package org.idp.server.authentication.interactors.sms;
 
+import org.idp.server.authentication.interactors.AuthenticationExecutionRequest;
+import org.idp.server.authentication.interactors.AuthenticationExecutionResult;
+import org.idp.server.authentication.interactors.AuthenticationExecutor;
+import org.idp.server.authentication.interactors.AuthenticationExecutors;
 import org.idp.server.core.oidc.authentication.*;
+import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
+import org.idp.server.core.oidc.authentication.config.AuthenticationExecutionConfig;
+import org.idp.server.core.oidc.authentication.config.AuthenticationInteractionConfig;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
@@ -27,12 +34,12 @@ import org.idp.server.platform.type.RequestAttributes;
 
 public class SmsAuthenticationInteractor implements AuthenticationInteractor {
 
-  SmsAuthenticationExecutors executors;
+  AuthenticationExecutors executors;
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
   LoggerWrapper log = LoggerWrapper.getLogger(SmsAuthenticationInteractor.class);
 
   public SmsAuthenticationInteractor(
-      SmsAuthenticationExecutors executors,
+      AuthenticationExecutors executors,
       AuthenticationConfigurationQueryRepository configurationQueryRepository) {
     this.executors = executors;
     this.configurationQueryRepository = configurationQueryRepository;
@@ -59,15 +66,17 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
 
     log.debug("SmsAuthenticationInteractor called");
 
-    SmsAuthenticationConfiguration configuration =
-        configurationQueryRepository.get(tenant, "sms", SmsAuthenticationConfiguration.class);
-    SmsAuthenticationExecutor executor = executors.get(configuration.type());
+    AuthenticationConfiguration configuration = configurationQueryRepository.get(tenant, "sms");
+    AuthenticationInteractionConfig authenticationInteractionConfig =
+        configuration.getAuthenticationConfig("sms-authentication");
+    AuthenticationExecutionConfig execution = authenticationInteractionConfig.execution();
+    AuthenticationExecutor executor = executors.get(execution.function());
 
-    SmsAuthenticationExecutionRequest executionRequest =
-        new SmsAuthenticationExecutionRequest(request.toMap());
-    SmsAuthenticationExecutionResult executionResult =
-        executor.verify(
-            tenant, transaction.identifier(), executionRequest, requestAttributes, configuration);
+    AuthenticationExecutionRequest executionRequest =
+        new AuthenticationExecutionRequest(request.toMap());
+    AuthenticationExecutionResult executionResult =
+        executor.execute(
+            tenant, transaction.identifier(), executionRequest, requestAttributes, execution);
 
     if (executionResult.isClientError()) {
       return AuthenticationInteractionRequestResult.clientError(

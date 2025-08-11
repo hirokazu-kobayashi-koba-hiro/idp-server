@@ -25,8 +25,8 @@ import org.idp.server.control_plane.management.authentication.configuration.*;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementStatus;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigRequest;
-import org.idp.server.core.oidc.authentication.AuthenticationConfiguration;
-import org.idp.server.core.oidc.authentication.AuthenticationConfigurationIdentifier;
+import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
+import org.idp.server.core.oidc.authentication.config.AuthenticationConfigurationIdentifier;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationCommandRepository;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
@@ -151,8 +151,7 @@ public class AuthenticationConfigurationManagementEntryService
     }
 
     Map<String, Object> response = new HashMap<>();
-    response.put(
-        "list", configurations.stream().map(AuthenticationConfiguration::payload).toList());
+    response.put("list", configurations.stream().map(AuthenticationConfiguration::toMap).toList());
 
     return new AuthenticationConfigManagementResponse(
         AuthenticationConfigManagementStatus.OK, response);
@@ -201,7 +200,7 @@ public class AuthenticationConfigurationManagementEntryService
     }
 
     return new AuthenticationConfigManagementResponse(
-        AuthenticationConfigManagementStatus.OK, configuration.payload());
+        AuthenticationConfigManagementStatus.OK, configuration.toMap());
   }
 
   @Override
@@ -278,7 +277,7 @@ public class AuthenticationConfigurationManagementEntryService
             tenant,
             operator,
             oAuthToken,
-            configuration.payload(),
+            configuration.toMap(),
             requestAttributes);
     auditLogWriters.write(tenant, auditLog);
 
@@ -303,6 +302,6 @@ public class AuthenticationConfigurationManagementEntryService
     authenticationConfigurationCommandRepository.delete(tenant, configuration);
 
     return new AuthenticationConfigManagementResponse(
-        AuthenticationConfigManagementStatus.OK, configuration.payload());
+        AuthenticationConfigManagementStatus.OK, configuration.toMap());
   }
 }

@@ -21,7 +21,7 @@ import java.util.Map;
 import org.idp.server.control_plane.base.ConfigRegistrationContext;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementStatus;
-import org.idp.server.core.oidc.authentication.AuthenticationConfiguration;
+import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class AuthenticationConfigRegistrationContext implements ConfigRegistrationContext {
@@ -52,7 +52,7 @@ public class AuthenticationConfigRegistrationContext implements ConfigRegistrati
 
   @Override
   public Map<String, Object> payload() {
-    return authenticationConfiguration.payload();
+    return authenticationConfiguration.toMap();
   }
 
   @Override
@@ -62,7 +62,7 @@ public class AuthenticationConfigRegistrationContext implements ConfigRegistrati
 
   public AuthenticationConfigManagementResponse toResponse() {
     Map<String, Object> response = new HashMap<>();
-    response.put("result", authenticationConfiguration.payload());
+    response.put("result", authenticationConfiguration.toMap());
     response.put("dry_run", dryRun);
     return new AuthenticationConfigManagementResponse(
         AuthenticationConfigManagementStatus.CREATED, response);

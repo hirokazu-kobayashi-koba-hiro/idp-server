@@ -18,8 +18,15 @@ package org.idp.server.authentication.interactors.fidouaf;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.authentication.interactors.AuthenticationExecutionRequest;
+import org.idp.server.authentication.interactors.AuthenticationExecutionResult;
+import org.idp.server.authentication.interactors.AuthenticationExecutor;
+import org.idp.server.authentication.interactors.AuthenticationExecutors;
 import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditionalRequestResolvers;
 import org.idp.server.core.oidc.authentication.*;
+import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
+import org.idp.server.core.oidc.authentication.config.AuthenticationExecutionConfig;
+import org.idp.server.core.oidc.authentication.config.AuthenticationInteractionConfig;
 import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.oidc.identity.User;
 import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
@@ -30,16 +37,16 @@ import org.idp.server.platform.type.RequestAttributes;
 
 public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor {
 
-  FidoUafExecutors fidoUafExecutors;
+  AuthenticationExecutors authenticationExecutors;
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
   FidoUafAdditionalRequestResolvers additionalRequestResolvers;
   LoggerWrapper log = LoggerWrapper.getLogger(FidoUafDeRegistrationInteractor.class);
 
   public FidoUafDeRegistrationInteractor(
-      FidoUafExecutors fidoUafExecutors,
+      AuthenticationExecutors authenticationExecutors,
       AuthenticationConfigurationQueryRepository configurationQueryRepository,
       FidoUafAdditionalRequestResolvers additionalRequestResolvers) {
-    this.fidoUafExecutors = fidoUafExecutors;
+    this.authenticationExecutors = authenticationExecutors;
     this.configurationQueryRepository = configurationQueryRepository;
     this.additionalRequestResolvers = additionalRequestResolvers;
   }
@@ -69,19 +76,27 @@ public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor
 
     log.debug("FidoUafDeRegistrationInteractor called");
 
-    FidoUafConfiguration fidoUafConfiguration =
-        configurationQueryRepository.get(tenant, "fido-uaf", FidoUafConfiguration.class);
-    FidoUafExecutor fidoUafExecutor = fidoUafExecutors.get(fidoUafConfiguration.type());
+    AuthenticationConfiguration configuration =
+        configurationQueryRepository.get(tenant, "fido-uaf");
+    AuthenticationInteractionConfig authenticationInteractionConfig =
+        configuration.getAuthenticationConfig("fido-uaf-deregistration");
+    AuthenticationExecutionConfig execution = authenticationInteractionConfig.execution();
+    AuthenticationExecutor executor = authenticationExecutors.get(execution.function());
 
     Map<String, Object> executionRequest = new HashMap<>(request.toMap());
     Map<String, Object> additionalRequests =
         additionalRequestResolvers.resolveAll(tenant, type, request, transaction);
     executionRequest.putAll(additionalRequests);
 
-    FidoUafExecutionRequest fidoUafExecutionRequest = new FidoUafExecutionRequest(executionRequest);
-    FidoUafExecutionResult executionResult =
-        fidoUafExecutor.deleteKey(
-            tenant, fidoUafExecutionRequest, requestAttributes, fidoUafConfiguration);
+    AuthenticationExecutionRequest authenticationExecutionRequest =
+        new AuthenticationExecutionRequest(executionRequest);
+    AuthenticationExecutionResult executionResult =
+        executor.execute(
+            tenant,
+            new AuthenticationTransactionIdentifier(),
+            authenticationExecutionRequest,
+            requestAttributes,
+            execution);
 
     if (executionResult.isClientError()) {
       return AuthenticationInteractionRequestResult.clientError(

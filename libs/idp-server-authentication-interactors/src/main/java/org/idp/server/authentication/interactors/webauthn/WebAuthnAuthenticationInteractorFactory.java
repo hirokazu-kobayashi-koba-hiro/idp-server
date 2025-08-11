@@ -16,6 +16,7 @@
 
 package org.idp.server.authentication.interactors.webauthn;
 
+import org.idp.server.authentication.interactors.AuthenticationExecutors;
 import org.idp.server.core.oidc.authentication.AuthenticationInteractor;
 import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.oidc.authentication.plugin.AuthenticationInteractorFactory;
@@ -28,7 +29,8 @@ public class WebAuthnAuthenticationInteractorFactory implements AuthenticationIn
 
     AuthenticationConfigurationQueryRepository configurationRepository =
         container.resolve(AuthenticationConfigurationQueryRepository.class);
-    WebAuthnExecutors webAuthnExecutors = container.resolve(WebAuthnExecutors.class);
-    return new WebAuthnAuthenticationInteractor(configurationRepository, webAuthnExecutors);
+    AuthenticationExecutors authenticationExecutors =
+        container.resolve(AuthenticationExecutors.class);
+    return new WebAuthnAuthenticationInteractor(configurationRepository, authenticationExecutors);
   }
 }
