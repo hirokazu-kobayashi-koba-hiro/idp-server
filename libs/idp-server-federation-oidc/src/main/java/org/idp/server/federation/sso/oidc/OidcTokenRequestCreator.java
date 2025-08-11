@@ -16,8 +16,8 @@
 
 package org.idp.server.federation.sso.oidc;
 
-import org.idp.server.core.oidc.federation.FederationCallbackParameters;
-import org.idp.server.core.oidc.federation.sso.oidc.OidcSsoSession;
+import org.idp.server.core.openid.federation.FederationCallbackParameters;
+import org.idp.server.core.openid.federation.sso.oidc.OidcSsoSession;
 
 public class OidcTokenRequestCreator {
 

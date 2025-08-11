@@ -16,9 +16,9 @@
 
 package org.idp.server.authentication.interactors.device;
 
-import org.idp.server.core.oidc.authentication.AuthenticationInteractor;
-import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;
-import org.idp.server.core.oidc.authentication.plugin.AuthenticationInteractorFactory;
+import org.idp.server.core.openid.authentication.AuthenticationInteractor;
+import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
+import org.idp.server.core.openid.authentication.plugin.AuthenticationInteractorFactory;
 
 public class AuthenticationDeviceBindingMessageInteractorFactory
     implements AuthenticationInteractorFactory {

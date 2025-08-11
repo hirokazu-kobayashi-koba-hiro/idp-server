@@ -18,9 +18,9 @@ package org.idp.server.authentication.interactors.extension;
 
 import java.util.Map;
 import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditionalRequestResolver;
-import org.idp.server.core.oidc.authentication.AuthenticationInteractionRequest;
-import org.idp.server.core.oidc.authentication.AuthenticationInteractionType;
-import org.idp.server.core.oidc.authentication.AuthenticationTransaction;
+import org.idp.server.core.openid.authentication.AuthenticationInteractionRequest;
+import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
+import org.idp.server.core.openid.authentication.AuthenticationTransaction;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class SampleFidoUafAdditionalRequestResolver implements FidoUafAdditionalRequestResolver {

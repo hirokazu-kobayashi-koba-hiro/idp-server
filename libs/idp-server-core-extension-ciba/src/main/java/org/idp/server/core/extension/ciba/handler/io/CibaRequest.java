@@ -18,10 +18,10 @@ package org.idp.server.core.extension.ciba.handler.io;
 
 import java.util.Map;
 import org.idp.server.core.extension.ciba.CibaRequestParameters;
-import org.idp.server.core.oidc.token.AuthorizationHeaderHandlerable;
-import org.idp.server.core.oidc.type.mtls.ClientCert;
-import org.idp.server.core.oidc.type.oauth.ClientSecretBasic;
-import org.idp.server.core.oidc.type.oauth.RequestedClientId;
+import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
+import org.idp.server.core.openid.oauth.type.oauth.ClientSecretBasic;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
+import org.idp.server.core.openid.token.AuthorizationHeaderHandlerable;
 import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 

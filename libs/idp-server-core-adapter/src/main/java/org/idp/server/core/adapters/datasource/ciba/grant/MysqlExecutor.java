@@ -21,8 +21,8 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.extension.ciba.grant.CibaGrant;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
-import org.idp.server.core.oidc.grant.AuthorizationGrant;
-import org.idp.server.core.oidc.type.ciba.AuthReqId;
+import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
+import org.idp.server.core.openid.oauth.type.ciba.AuthReqId;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.json.JsonConverter;
 

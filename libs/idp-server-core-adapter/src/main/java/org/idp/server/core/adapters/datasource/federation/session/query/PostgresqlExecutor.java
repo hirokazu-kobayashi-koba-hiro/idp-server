@@ -19,7 +19,7 @@ package org.idp.server.core.adapters.datasource.federation.session.query;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.oidc.federation.sso.SsoSessionIdentifier;
+import org.idp.server.core.openid.federation.sso.SsoSessionIdentifier;
 import org.idp.server.platform.datasource.SqlExecutor;
 
 public class PostgresqlExecutor implements SsoSessionQuerySqlExecutor {

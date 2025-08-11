@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.extension.verifiable_credentials.VerifiableCredentialTransaction;
 import org.idp.server.core.extension.verifiable_credentials.repository.VerifiableCredentialTransactionRepository;
-import org.idp.server.core.oidc.type.verifiablecredential.TransactionId;
+import org.idp.server.core.openid.oauth.type.verifiablecredential.TransactionId;
 import org.idp.server.platform.exception.NotFoundException;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 

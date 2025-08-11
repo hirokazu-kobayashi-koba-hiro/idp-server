@@ -16,7 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.oidc.configuration.client.command;
 
-import org.idp.server.core.oidc.configuration.client.ClientConfigurationCommandRepository;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;

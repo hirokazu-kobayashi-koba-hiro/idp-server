@@ -17,7 +17,7 @@
 package org.idp.server.core.adapters.datasource.token.command;
 
 import java.util.List;
-import org.idp.server.core.oidc.token.OAuthToken;
+import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.crypto.AesCipher;
 import org.idp.server.platform.crypto.HmacHasher;
 import org.idp.server.platform.datasource.SqlExecutor;

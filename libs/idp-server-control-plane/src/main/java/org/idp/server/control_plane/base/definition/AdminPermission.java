@@ -21,8 +21,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.idp.server.core.oidc.identity.permission.Permission;
-import org.idp.server.core.oidc.identity.permission.Permissions;
+import org.idp.server.core.openid.identity.permission.Permission;
+import org.idp.server.core.openid.identity.permission.Permissions;
 
 public enum AdminPermission {
   ORGANIZATION_CREATE(

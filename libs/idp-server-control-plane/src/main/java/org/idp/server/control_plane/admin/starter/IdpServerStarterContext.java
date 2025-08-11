@@ -19,11 +19,11 @@ package org.idp.server.control_plane.admin.starter;
 import java.util.Map;
 import org.idp.server.control_plane.admin.starter.io.IdpServerStarterResponse;
 import org.idp.server.control_plane.admin.starter.io.IdpServerStarterStatus;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
-import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
-import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.identity.permission.Permissions;
-import org.idp.server.core.oidc.identity.role.Roles;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.permission.Permissions;
+import org.idp.server.core.openid.identity.role.Roles;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 

@@ -1,0 +1,2 @@
+org.idp.server.core.openid.extension.fapi.AuthorizationCodeGrantFapiAdvanceVerifier
+org.idp.server.core.openid.extension.fapi.AuthorizationCodeGrantFapiBaselineVerifier

@@ -16,7 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.identity.role;
 
-import org.idp.server.core.oidc.identity.role.RoleCommandRepository;
+import org.idp.server.core.openid.identity.role.RoleCommandRepository;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 

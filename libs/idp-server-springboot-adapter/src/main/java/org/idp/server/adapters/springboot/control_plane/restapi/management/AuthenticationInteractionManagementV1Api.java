@@ -23,8 +23,8 @@ import org.idp.server.adapters.springboot.application.restapi.ParameterTransform
 import org.idp.server.adapters.springboot.control_plane.model.OperatorPrincipal;
 import org.idp.server.control_plane.management.authentication.interaction.AuthenticationInteractionManagementApi;
 import org.idp.server.control_plane.management.authentication.interaction.io.AuthenticationInteractionManagementResponse;
-import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
-import org.idp.server.core.oidc.authentication.interaction.AuthenticationInteractionQueries;
+import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.openid.authentication.interaction.AuthenticationInteractionQueries;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;

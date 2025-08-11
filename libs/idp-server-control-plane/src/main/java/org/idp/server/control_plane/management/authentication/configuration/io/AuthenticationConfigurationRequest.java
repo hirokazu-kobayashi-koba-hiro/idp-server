@@ -17,8 +17,8 @@
 package org.idp.server.control_plane.management.authentication.configuration.io;
 
 import java.util.Map;
-import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
-import org.idp.server.core.oidc.authentication.config.AuthenticationInteractionConfig;
+import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
+import org.idp.server.core.openid.authentication.config.AuthenticationInteractionConfig;
 import org.idp.server.platform.json.JsonReadable;
 
 public class AuthenticationConfigurationRequest implements JsonReadable {

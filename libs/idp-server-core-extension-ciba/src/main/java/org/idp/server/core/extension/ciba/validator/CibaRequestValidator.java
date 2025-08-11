@@ -21,7 +21,7 @@ import java.util.Map;
 import org.idp.server.core.extension.ciba.CibaRequestParameters;
 import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationBadRequestException;
 import org.idp.server.core.extension.ciba.handler.io.CibaRequest;
-import org.idp.server.core.oidc.type.OAuthRequestKey;
+import org.idp.server.core.openid.oauth.type.OAuthRequestKey;
 import org.idp.server.platform.json.JsonNodeWrapper;
 
 public class CibaRequestValidator {

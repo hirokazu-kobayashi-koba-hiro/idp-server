@@ -21,7 +21,7 @@ import java.util.Map;
 import org.idp.server.control_plane.base.ConfigRegistrationContext;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementStatus;
-import org.idp.server.core.oidc.federation.FederationConfiguration;
+import org.idp.server.core.openid.federation.FederationConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class FederationConfigRegistrationContext implements ConfigRegistrationContext {

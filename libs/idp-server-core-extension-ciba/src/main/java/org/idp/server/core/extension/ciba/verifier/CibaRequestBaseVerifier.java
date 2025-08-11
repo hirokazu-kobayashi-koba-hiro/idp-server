@@ -18,7 +18,7 @@ package org.idp.server.core.extension.ciba.verifier;
 
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationBadRequestException;
-import org.idp.server.core.oidc.type.oauth.GrantType;
+import org.idp.server.core.openid.oauth.type.oauth.GrantType;
 
 public class CibaRequestBaseVerifier {
 

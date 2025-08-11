@@ -28,11 +28,11 @@ import org.idp.server.control_plane.management.oidc.authorization.io.Authorizati
 import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerUpdateRequest;
 import org.idp.server.control_plane.management.oidc.authorization.validator.AuthorizationServerRequestValidationResult;
 import org.idp.server.control_plane.management.oidc.authorization.validator.AuthorizationServerRequestValidator;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationCommandRepository;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
-import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.token.OAuthToken;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationCommandRepository;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
+import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogWriters;
 import org.idp.server.platform.datasource.Transaction;

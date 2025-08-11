@@ -17,10 +17,10 @@
 package org.idp.server.core.adapters.datasource.grant_management;
 
 import java.util.*;
-import org.idp.server.core.oidc.grant_management.AuthorizationGranted;
-import org.idp.server.core.oidc.grant_management.AuthorizationGrantedRepository;
-import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.type.oauth.RequestedClientId;
+import org.idp.server.core.openid.grant_management.AuthorizationGranted;
+import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepository;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 

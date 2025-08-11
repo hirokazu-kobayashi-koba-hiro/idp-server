@@ -16,9 +16,9 @@
 
 package org.idp.server.core.extension.verifiable_credentials;
 
-import org.idp.server.core.oidc.type.verifiablecredential.CNonce;
-import org.idp.server.core.oidc.type.verifiablecredential.CNonceExpiresIn;
-import org.idp.server.core.oidc.type.verifiablecredential.Format;
+import org.idp.server.core.openid.oauth.type.verifiablecredential.CNonce;
+import org.idp.server.core.openid.oauth.type.verifiablecredential.CNonceExpiresIn;
+import org.idp.server.core.openid.oauth.type.verifiablecredential.Format;
 
 public class VerifiableCredentialResponse {
   Format format;

@@ -20,7 +20,7 @@ import java.util.Map;
 import org.idp.server.control_plane.base.ConfigUpdateContext;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementStatus;
-import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.platform.json.JsonDiffCalculator;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;

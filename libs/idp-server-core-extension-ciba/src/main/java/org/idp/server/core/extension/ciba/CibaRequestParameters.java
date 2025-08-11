@@ -16,17 +16,20 @@
 
 package org.idp.server.core.extension.ciba;
 
-import static org.idp.server.core.oidc.type.OAuthRequestKey.*;
+import static org.idp.server.core.openid.oauth.type.OAuthRequestKey.*;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.oidc.clientauthenticator.BackchannelRequestParameters;
-import org.idp.server.core.oidc.rar.AuthorizationDetails;
-import org.idp.server.core.oidc.type.ArrayValueMap;
-import org.idp.server.core.oidc.type.OAuthRequestKey;
-import org.idp.server.core.oidc.type.ciba.*;
-import org.idp.server.core.oidc.type.oauth.*;
-import org.idp.server.core.oidc.type.oidc.*;
+import org.idp.server.core.openid.oauth.clientauthenticator.BackchannelRequestParameters;
+import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
+import org.idp.server.core.openid.oauth.type.ArrayValueMap;
+import org.idp.server.core.openid.oauth.type.OAuthRequestKey;
+import org.idp.server.core.openid.oauth.type.ciba.*;
+import org.idp.server.core.openid.oauth.type.oauth.*;
+import org.idp.server.core.openid.oauth.type.oidc.AcrValues;
+import org.idp.server.core.openid.oauth.type.oidc.IdTokenHint;
+import org.idp.server.core.openid.oauth.type.oidc.LoginHint;
+import org.idp.server.core.openid.oauth.type.oidc.RequestObject;
 
 public class CibaRequestParameters implements BackchannelRequestParameters {
   ArrayValueMap values;

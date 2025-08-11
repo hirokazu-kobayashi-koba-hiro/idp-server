@@ -21,7 +21,7 @@ import java.util.Map;
 import org.idp.server.control_plane.base.ConfigRegistrationContext;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementStatus;
-import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
+import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class AuthenticationConfigRegistrationContext implements ConfigRegistrationContext {

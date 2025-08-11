@@ -16,8 +16,8 @@
 
 package org.idp.server.core.adapters.datasource.federation.session.query;
 
-import org.idp.server.core.oidc.federation.plugin.FederationDependencyProvider;
-import org.idp.server.core.oidc.federation.sso.SsoSessionQueryRepository;
+import org.idp.server.core.openid.federation.plugin.FederationDependencyProvider;
+import org.idp.server.core.openid.federation.sso.SsoSessionQueryRepository;
 
 public class SsoSessionQueryDataSourceProvider
     implements FederationDependencyProvider<SsoSessionQueryRepository> {

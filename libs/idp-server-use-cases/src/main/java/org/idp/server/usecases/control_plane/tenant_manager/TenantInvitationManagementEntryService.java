@@ -32,8 +32,8 @@ import org.idp.server.control_plane.management.tenant.invitation.operation.Tenan
 import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitationQueryRepository;
 import org.idp.server.control_plane.management.tenant.invitation.validator.OrganizationInvitationRequestValidationResult;
 import org.idp.server.control_plane.management.tenant.invitation.validator.OrganizationInvitationRequestValidator;
-import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.token.OAuthToken;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;

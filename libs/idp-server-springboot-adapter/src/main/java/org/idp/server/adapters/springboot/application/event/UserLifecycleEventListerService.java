@@ -17,8 +17,8 @@
 package org.idp.server.adapters.springboot.application.event;
 
 import org.idp.server.IdpServerApplication;
-import org.idp.server.core.oidc.identity.event.UserLifecycleEvent;
-import org.idp.server.core.oidc.identity.event.UserLifecycleEventApi;
+import org.idp.server.core.openid.identity.event.UserLifecycleEvent;
+import org.idp.server.core.openid.identity.event.UserLifecycleEventApi;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.event.EventListener;

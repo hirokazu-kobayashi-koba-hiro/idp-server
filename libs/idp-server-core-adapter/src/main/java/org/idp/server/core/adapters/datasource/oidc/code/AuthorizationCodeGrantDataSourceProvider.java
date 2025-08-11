@@ -16,7 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.oidc.code;
 
-import org.idp.server.core.oidc.repository.AuthorizationCodeGrantRepository;
+import org.idp.server.core.openid.oauth.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 

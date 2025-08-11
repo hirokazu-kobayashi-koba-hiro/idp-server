@@ -105,7 +105,7 @@ idp-server は、OAuth 2.0 / OpenID Connect を中心に、最新の認証・認
 
 1. インターフェースを実装
 2. `resources/META-INF/services` 配下にインターフェースのクラスパスのファイルを追加
-   1. 例：org.idp.server.core.oidc.token.plugin.AccessTokenCustomClaimsCreator
+   1. 例：org.idp.server.core.openid.token.plugin.AccessTokenCustomClaimsCreator
 3. 2のファイルに1で実装したクラスパスを定義
    1. 例：org.idp.server.core.extension.identity.verified.AccessTokenSelectiveVerifiedClaimsCreator
 
@@ -113,7 +113,7 @@ idp-server は、OAuth 2.0 / OpenID Connect を中心に、最新の認証・認
 
 1. インターフェースを実装
 2. `resources/META-INF/services` 配下にインターフェースのクラスパスのファイルを追加
-   1. 例：org.idp.server.core.oidc.token.plugin.AccessTokenCustomClaimsCreator
+   1. 例：org.idp.server.core.openid.token.plugin.AccessTokenCustomClaimsCreator
 3. 2のファイルに1で実装したクラスパスを定義
    1. 例：org.idp.server.core.extension.identity.verified.AccessTokenSelectiveVerifiedClaimsCreator
 4. idp-serverの実行環境のpluginsディレクトリ配下に実装したjarを配置します。

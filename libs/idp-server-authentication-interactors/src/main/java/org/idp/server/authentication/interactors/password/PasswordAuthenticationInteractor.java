@@ -18,10 +18,10 @@ package org.idp.server.authentication.interactors.password;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.oidc.authentication.*;
-import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.identity.authentication.PasswordVerificationDelegation;
-import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
+import org.idp.server.core.openid.authentication.*;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.authentication.PasswordVerificationDelegation;
+import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;

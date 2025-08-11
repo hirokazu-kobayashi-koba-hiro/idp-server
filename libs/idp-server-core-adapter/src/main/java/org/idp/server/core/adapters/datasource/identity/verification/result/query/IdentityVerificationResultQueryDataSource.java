@@ -24,7 +24,7 @@ import org.idp.server.core.extension.identity.verification.repository.IdentityVe
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResult;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResultIdentifier;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResultQueries;
-import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class IdentityVerificationResultQueryDataSource

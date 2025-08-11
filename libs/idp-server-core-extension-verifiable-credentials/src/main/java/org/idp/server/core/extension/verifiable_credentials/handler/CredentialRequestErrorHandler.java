@@ -23,10 +23,10 @@ import org.idp.server.core.extension.verifiable_credentials.handler.io.BatchCred
 import org.idp.server.core.extension.verifiable_credentials.handler.io.CredentialRequestStatus;
 import org.idp.server.core.extension.verifiable_credentials.handler.io.CredentialResponse;
 import org.idp.server.core.extension.verifiable_credentials.handler.io.DeferredCredentialResponse;
-import org.idp.server.core.oidc.configuration.exception.ClientConfigurationNotFoundException;
-import org.idp.server.core.oidc.configuration.exception.ServerConfigurationNotFoundException;
-import org.idp.server.core.oidc.type.oauth.Error;
-import org.idp.server.core.oidc.type.oauth.ErrorDescription;
+import org.idp.server.core.openid.oauth.configuration.exception.ClientConfigurationNotFoundException;
+import org.idp.server.core.openid.oauth.configuration.exception.ServerConfigurationNotFoundException;
+import org.idp.server.core.openid.oauth.type.oauth.Error;
+import org.idp.server.core.openid.oauth.type.oauth.ErrorDescription;
 import org.idp.server.platform.log.LoggerWrapper;
 
 public class CredentialRequestErrorHandler {

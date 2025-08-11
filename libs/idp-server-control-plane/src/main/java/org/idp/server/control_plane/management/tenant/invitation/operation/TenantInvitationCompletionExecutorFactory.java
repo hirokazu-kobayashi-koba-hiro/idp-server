@@ -16,9 +16,9 @@
 
 package org.idp.server.control_plane.management.tenant.invitation.operation;
 
-import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;
-import org.idp.server.core.oidc.identity.event.UserLifecycleEventExecutor;
-import org.idp.server.core.oidc.identity.event.UserLifecycleEventExecutorFactory;
+import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
+import org.idp.server.core.openid.identity.event.UserLifecycleEventExecutor;
+import org.idp.server.core.openid.identity.event.UserLifecycleEventExecutorFactory;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
 
 public class TenantInvitationCompletionExecutorFactory

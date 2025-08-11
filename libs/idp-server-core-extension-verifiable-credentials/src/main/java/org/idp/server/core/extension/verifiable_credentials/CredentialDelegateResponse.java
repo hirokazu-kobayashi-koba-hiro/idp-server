@@ -16,7 +16,7 @@
 
 package org.idp.server.core.extension.verifiable_credentials;
 
-import org.idp.server.core.oidc.type.vc.Credential;
+import org.idp.server.core.openid.oauth.type.vc.Credential;
 
 public class CredentialDelegateResponse {
   VerifiableCredentialTransactionStatus status;

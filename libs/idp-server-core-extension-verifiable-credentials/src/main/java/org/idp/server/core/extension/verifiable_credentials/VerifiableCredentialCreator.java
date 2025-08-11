@@ -16,9 +16,9 @@
 
 package org.idp.server.core.extension.verifiable_credentials;
 
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
-import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
-import org.idp.server.core.oidc.type.vc.Credential;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.type.vc.Credential;
 
 public interface VerifiableCredentialCreator {
   VerifiableCredential create(

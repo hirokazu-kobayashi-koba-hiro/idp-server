@@ -18,7 +18,7 @@ package org.idp.server.core.adapters.datasource.authentication.config.command;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
+import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;

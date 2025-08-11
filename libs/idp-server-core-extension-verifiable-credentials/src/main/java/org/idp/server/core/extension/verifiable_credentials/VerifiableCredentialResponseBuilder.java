@@ -18,10 +18,10 @@ package org.idp.server.core.extension.verifiable_credentials;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.oidc.type.verifiablecredential.CNonce;
-import org.idp.server.core.oidc.type.verifiablecredential.CNonceExpiresIn;
-import org.idp.server.core.oidc.type.verifiablecredential.Format;
-import org.idp.server.core.oidc.type.verifiablecredential.TransactionId;
+import org.idp.server.core.openid.oauth.type.verifiablecredential.CNonce;
+import org.idp.server.core.openid.oauth.type.verifiablecredential.CNonceExpiresIn;
+import org.idp.server.core.openid.oauth.type.verifiablecredential.Format;
+import org.idp.server.core.openid.oauth.type.verifiablecredential.TransactionId;
 import org.idp.server.platform.json.JsonConverter;
 
 public class VerifiableCredentialResponseBuilder {

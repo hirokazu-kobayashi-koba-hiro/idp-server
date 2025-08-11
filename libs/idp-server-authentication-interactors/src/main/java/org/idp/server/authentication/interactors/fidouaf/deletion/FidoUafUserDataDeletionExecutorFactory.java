@@ -17,10 +17,10 @@
 package org.idp.server.authentication.interactors.fidouaf.deletion;
 
 import org.idp.server.authentication.interactors.AuthenticationExecutors;
-import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;
-import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
-import org.idp.server.core.oidc.identity.event.UserLifecycleEventExecutor;
-import org.idp.server.core.oidc.identity.event.UserLifecycleEventExecutorFactory;
+import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
+import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
+import org.idp.server.core.openid.identity.event.UserLifecycleEventExecutor;
+import org.idp.server.core.openid.identity.event.UserLifecycleEventExecutorFactory;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
 
 public class FidoUafUserDataDeletionExecutorFactory implements UserLifecycleEventExecutorFactory {

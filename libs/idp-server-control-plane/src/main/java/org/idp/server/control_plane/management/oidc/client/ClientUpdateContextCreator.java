@@ -17,7 +17,7 @@
 package org.idp.server.control_plane.management.oidc.client;
 
 import org.idp.server.control_plane.management.oidc.client.io.ClientRegistrationRequest;
-import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 

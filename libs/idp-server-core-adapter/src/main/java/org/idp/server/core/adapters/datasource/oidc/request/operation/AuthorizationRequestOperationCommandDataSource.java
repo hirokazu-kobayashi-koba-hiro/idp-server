@@ -16,7 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.oidc.request.operation;
 
-import org.idp.server.core.oidc.repository.AuthorizationRequestOperationCommandRepository;
+import org.idp.server.core.openid.oauth.repository.AuthorizationRequestOperationCommandRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class AuthorizationRequestOperationCommandDataSource

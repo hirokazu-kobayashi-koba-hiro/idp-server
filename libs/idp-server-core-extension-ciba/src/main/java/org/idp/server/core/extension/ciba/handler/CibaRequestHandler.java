@@ -36,14 +36,14 @@ import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationResp
 import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationResponseBuilder;
 import org.idp.server.core.extension.ciba.validator.CibaRequestValidator;
 import org.idp.server.core.extension.ciba.verifier.CibaRequestVerifier;
-import org.idp.server.core.oidc.authentication.Authentication;
-import org.idp.server.core.oidc.clientauthenticator.ClientAuthenticationHandler;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
-import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
-import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.type.ciba.AuthReqId;
+import org.idp.server.core.openid.authentication.Authentication;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.type.ciba.AuthReqId;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**

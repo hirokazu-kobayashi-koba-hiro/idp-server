@@ -16,7 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.identity.command;
 
-import org.idp.server.core.oidc.identity.repository.UserCommandRepository;
+import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 

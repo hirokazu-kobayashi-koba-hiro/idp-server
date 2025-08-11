@@ -16,8 +16,8 @@
 
 package org.idp.server.core.adapters.datasource.federation.config.command;
 
-import org.idp.server.core.oidc.federation.FederationConfiguration;
-import org.idp.server.core.oidc.federation.repository.FederationConfigurationCommandRepository;
+import org.idp.server.core.openid.federation.FederationConfiguration;
+import org.idp.server.core.openid.federation.repository.FederationConfigurationCommandRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class FederationConfigurationCommandDataSource

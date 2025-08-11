@@ -24,10 +24,10 @@ import org.idp.server.core.extension.ciba.handler.io.CibaDenyStatus;
 import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.extension.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
-import org.idp.server.core.oidc.authentication.Authentication;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
-import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
-import org.idp.server.core.oidc.type.extension.DeniedScopes;
+import org.idp.server.core.openid.authentication.Authentication;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.type.extension.DeniedScopes;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class CibaDenyHandler {

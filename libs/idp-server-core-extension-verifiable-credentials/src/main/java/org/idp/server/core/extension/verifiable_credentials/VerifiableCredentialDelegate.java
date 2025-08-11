@@ -17,8 +17,8 @@
 package org.idp.server.core.extension.verifiable_credentials;
 
 import java.util.List;
-import org.idp.server.core.oidc.type.oauth.Subject;
-import org.idp.server.core.oidc.vc.CredentialDefinition;
+import org.idp.server.core.openid.oauth.type.oauth.Subject;
+import org.idp.server.core.openid.oauth.type.vc.CredentialDefinition;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface VerifiableCredentialDelegate {

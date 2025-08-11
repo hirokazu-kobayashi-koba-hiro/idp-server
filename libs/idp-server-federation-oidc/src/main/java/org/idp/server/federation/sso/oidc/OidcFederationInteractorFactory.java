@@ -16,12 +16,12 @@
 
 package org.idp.server.federation.sso.oidc;
 
-import org.idp.server.core.oidc.federation.*;
-import org.idp.server.core.oidc.federation.plugin.FederationDependencyContainer;
-import org.idp.server.core.oidc.federation.plugin.FederationInteractorFactory;
-import org.idp.server.core.oidc.federation.repository.FederationConfigurationQueryRepository;
-import org.idp.server.core.oidc.federation.sso.SsoSessionCommandRepository;
-import org.idp.server.core.oidc.federation.sso.SsoSessionQueryRepository;
+import org.idp.server.core.openid.federation.*;
+import org.idp.server.core.openid.federation.plugin.FederationDependencyContainer;
+import org.idp.server.core.openid.federation.plugin.FederationInteractorFactory;
+import org.idp.server.core.openid.federation.repository.FederationConfigurationQueryRepository;
+import org.idp.server.core.openid.federation.sso.SsoSessionCommandRepository;
+import org.idp.server.core.openid.federation.sso.SsoSessionQueryRepository;
 
 public class OidcFederationInteractorFactory implements FederationInteractorFactory {
 

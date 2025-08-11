@@ -21,8 +21,8 @@ import java.util.Map;
 import org.idp.server.control_plane.base.ConfigRegistrationContext;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementStatus;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
-import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 

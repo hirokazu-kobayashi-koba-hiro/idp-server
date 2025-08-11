@@ -16,7 +16,7 @@
 
 package org.idp.server.authentication.interactors.webauthn;
 
-import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;
+import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
 
 public interface WebAuthnExecutorFactory {
 

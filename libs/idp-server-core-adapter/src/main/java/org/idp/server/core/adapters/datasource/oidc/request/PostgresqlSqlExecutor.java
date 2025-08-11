@@ -19,8 +19,8 @@ package org.idp.server.core.adapters.datasource.oidc.request;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.oidc.request.AuthorizationRequest;
-import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
+import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 

@@ -30,8 +30,8 @@ import org.idp.server.core.extension.identity.verification.configuration.Identit
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationCommandRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationQueryRepository;
-import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.token.OAuthToken;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogWriters;
 import org.idp.server.platform.datasource.Transaction;

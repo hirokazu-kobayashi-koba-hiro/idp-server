@@ -17,11 +17,11 @@
 package org.idp.server.core.extension.verifiable_credentials;
 
 import java.util.Objects;
-import org.idp.server.core.oidc.type.oauth.RequestedClientId;
-import org.idp.server.core.oidc.type.oauth.Subject;
-import org.idp.server.core.oidc.type.vc.Credential;
-import org.idp.server.core.oidc.type.verifiablecredential.CredentialIssuer;
-import org.idp.server.core.oidc.type.verifiablecredential.TransactionId;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
+import org.idp.server.core.openid.oauth.type.oauth.Subject;
+import org.idp.server.core.openid.oauth.type.vc.Credential;
+import org.idp.server.core.openid.oauth.type.verifiablecredential.CredentialIssuer;
+import org.idp.server.core.openid.oauth.type.verifiablecredential.TransactionId;
 
 public class VerifiableCredentialTransaction {
   TransactionId transactionId;

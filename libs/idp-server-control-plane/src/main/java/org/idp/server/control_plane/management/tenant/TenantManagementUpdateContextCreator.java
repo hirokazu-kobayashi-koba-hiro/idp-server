@@ -18,7 +18,7 @@ package org.idp.server.control_plane.management.tenant;
 
 import java.util.Map;
 import org.idp.server.control_plane.management.tenant.io.TenantRequest;
-import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;

@@ -17,8 +17,8 @@
 package org.idp.server.authentication.interactors;
 
 import java.util.Map;
-import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
-import org.idp.server.core.oidc.authentication.config.AuthenticationExecutionConfig;
+import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 

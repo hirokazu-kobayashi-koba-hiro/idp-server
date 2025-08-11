@@ -21,11 +21,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
-import org.idp.server.core.oidc.authentication.exception.MfaTransactionNotFoundException;
-import org.idp.server.core.oidc.authentication.interaction.AuthenticationInteraction;
-import org.idp.server.core.oidc.authentication.interaction.AuthenticationInteractionQueries;
-import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionQueryRepository;
+import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.openid.authentication.exception.MfaTransactionNotFoundException;
+import org.idp.server.core.openid.authentication.interaction.AuthenticationInteraction;
+import org.idp.server.core.openid.authentication.interaction.AuthenticationInteractionQueries;
+import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 

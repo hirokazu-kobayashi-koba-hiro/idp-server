@@ -16,8 +16,8 @@
 
 package org.idp.server.authentication.interactors.webauthn;
 
-import org.idp.server.core.oidc.authentication.AuthenticationInteractionRequest;
-import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.openid.authentication.AuthenticationInteractionRequest;
+import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface WebAuthnExecutor {

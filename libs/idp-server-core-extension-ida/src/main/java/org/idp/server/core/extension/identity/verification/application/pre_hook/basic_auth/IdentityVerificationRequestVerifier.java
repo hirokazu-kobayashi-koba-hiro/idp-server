@@ -19,7 +19,7 @@ package org.idp.server.core.extension.identity.verification.application.pre_hook
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
-import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 

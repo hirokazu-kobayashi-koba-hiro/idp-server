@@ -18,13 +18,13 @@ package org.idp.server.core.extension.identity.verified;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.oidc.clientauthenticator.clientcredentials.ClientCredentials;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
-import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
-import org.idp.server.core.oidc.grant.AuthorizationGrant;
-import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.token.plugin.AccessTokenCustomClaimsCreator;
-import org.idp.server.core.oidc.type.oauth.Scopes;
+import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.type.oauth.Scopes;
+import org.idp.server.core.openid.token.plugin.AccessTokenCustomClaimsCreator;
 import org.idp.server.platform.json.JsonNodeWrapper;
 
 public class AccessTokenSelectiveVerifiedClaimsCreator implements AccessTokenCustomClaimsCreator {

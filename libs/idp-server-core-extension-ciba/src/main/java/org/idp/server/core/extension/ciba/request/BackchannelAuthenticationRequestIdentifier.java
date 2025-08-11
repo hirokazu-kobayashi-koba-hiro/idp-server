@@ -18,7 +18,7 @@ package org.idp.server.core.extension.ciba.request;
 
 import java.util.Objects;
 import java.util.UUID;
-import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.platform.uuid.UuidConvertable;
 
 public class BackchannelAuthenticationRequestIdentifier implements UuidConvertable {

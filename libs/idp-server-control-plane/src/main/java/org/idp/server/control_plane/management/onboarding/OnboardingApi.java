@@ -23,7 +23,7 @@ import org.idp.server.control_plane.base.definition.AdminPermission;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingRequest;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingResponse;
-import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;

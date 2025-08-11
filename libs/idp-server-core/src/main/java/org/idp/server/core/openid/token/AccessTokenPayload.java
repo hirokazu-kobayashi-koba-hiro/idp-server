@@ -1,0 +1,94 @@
+/*
+ * Copyright 2025 Hirokazu Kobayashi
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.idp.server.core.openid.token;
+
+import java.util.Map;
+import org.idp.server.core.openid.oauth.type.extension.CreatedAt;
+import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
+import org.idp.server.core.openid.oauth.type.extension.ExpiresAt;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
+import org.idp.server.core.openid.oauth.type.oauth.Scopes;
+import org.idp.server.core.openid.oauth.type.oauth.Subject;
+import org.idp.server.core.openid.oauth.type.oauth.TokenIssuer;
+
+public class AccessTokenPayload {
+  TokenIssuer tokenIssuer;
+  Subject subject;
+  RequestedClientId requestedClientId;
+  Scopes scopes;
+  CustomProperties customProperties;
+  CreatedAt createdAt;
+  ExpiresAt expiresAt;
+  Map<String, Object> values;
+
+  public AccessTokenPayload() {}
+
+  AccessTokenPayload(
+      TokenIssuer tokenIssuer,
+      Subject subject,
+      RequestedClientId requestedClientId,
+      Scopes scopes,
+      CustomProperties customProperties,
+      CreatedAt createdAt,
+      ExpiresAt expiresAt,
+      Map<String, Object> values) {
+    this.tokenIssuer = tokenIssuer;
+    this.subject = subject;
+    this.requestedClientId = requestedClientId;
+    this.scopes = scopes;
+    this.customProperties = customProperties;
+    this.createdAt = createdAt;
+    this.expiresAt = expiresAt;
+    this.values = values;
+  }
+
+  public TokenIssuer tokenIssuer() {
+    return tokenIssuer;
+  }
+
+  public Subject subject() {
+    return subject;
+  }
+
+  public RequestedClientId clientId() {
+    return requestedClientId;
+  }
+
+  public Scopes scopes() {
+    return scopes;
+  }
+
+  public CustomProperties customProperties() {
+    return customProperties;
+  }
+
+  public CreatedAt createdAt() {
+    return createdAt;
+  }
+
+  public ExpiresAt expiredAt() {
+    return expiresAt;
+  }
+
+  public Map<String, Object> values() {
+    return values;
+  }
+
+  public boolean hasOpenidScope() {
+    return scopes.contains("openid");
+  }
+}

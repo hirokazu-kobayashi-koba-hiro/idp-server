@@ -16,8 +16,8 @@
 
 package org.idp.server.core.adapters.datasource.token.command;
 
-import org.idp.server.core.oidc.token.OAuthToken;
-import org.idp.server.core.oidc.token.repository.OAuthTokenCommandRepository;
+import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.platform.crypto.AesCipher;
 import org.idp.server.platform.crypto.HmacHasher;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;

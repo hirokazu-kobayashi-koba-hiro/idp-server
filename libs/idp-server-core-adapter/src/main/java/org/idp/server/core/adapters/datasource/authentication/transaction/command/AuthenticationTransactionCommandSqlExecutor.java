@@ -16,8 +16,8 @@
 
 package org.idp.server.core.adapters.datasource.authentication.transaction.command;
 
-import org.idp.server.core.oidc.authentication.AuthenticationTransaction;
-import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.openid.authentication.AuthenticationTransaction;
+import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface AuthenticationTransactionCommandSqlExecutor {
