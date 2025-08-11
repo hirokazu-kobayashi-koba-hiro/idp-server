@@ -18,7 +18,7 @@ describe("user registration", () => {
           id,
           body: {
             email: user.email,
-            email_template: "authentication"
+            template: "authentication"
           },
         });
         console.log(challengeResponse.status);
@@ -124,7 +124,7 @@ describe("user registration", () => {
           id,
           body: {
             phone_number: user.phone_number,
-            email_template: "authentication"
+            template: "authentication"
           },
         });
         console.log(challengeResponse.status);
@@ -230,7 +230,7 @@ describe("user registration", () => {
           id,
           body: {
             phone_number: user.phone_number,
-            sms_template: "authentication"
+            template: "authentication"
           },
         });
         console.log(challengeResponse.status);
@@ -336,7 +336,7 @@ describe("user registration", () => {
           id,
           body: {
             phone_number: user.phone_number,
-            sms_template: "authentication"
+            template: "authentication"
           },
         });
         console.log(challengeResponse.status);
@@ -443,7 +443,7 @@ describe("user registration", () => {
           id,
           body: {
             email: user.email,
-            email_template: "authentication"
+            template: "authentication"
           },
         });
         console.log(challengeResponse.status);
@@ -496,7 +496,7 @@ describe("user registration", () => {
           id,
           body: {
             phone_number: user.phone_number,
-            sms_template: "authentication"
+            template: "authentication"
           },
         });
         console.log(challengeResponse.status);
@@ -587,7 +587,7 @@ describe("user registration", () => {
           id,
           body: {
             phone_number: user.phone_number,
-            sms_template: "authentication"
+            template: "authentication"
           },
         });
         console.log(challengeResponse.status);
@@ -640,7 +640,7 @@ describe("user registration", () => {
           id,
           body: {
             email: user.email,
-            email_template: "authentication"
+            template: "authentication"
           },
         });
         console.log(challengeResponse.status);
@@ -687,6 +687,56 @@ describe("user registration", () => {
 
         console.log(verificationResponse.status);
         console.log(verificationResponse.data);
+      };
+
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "aiueo",
+        scope: "openid profile phone email" + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+        customParams: {
+          organizationId: "123",
+          organizationName: "test",
+        },
+        user: {
+          email: faker.internet.email(),
+          name: faker.person.fullName(),
+          phone_number: faker.phone.number("090-####-####"),
+        },
+        interaction,
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.code).not.toBeNull();
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.data).toHaveProperty("id_token");
+    });
+
+    it("external-token", async () => {
+
+      const interaction = async (id, user) => {
+
+        let challengeResponse = await postAuthentication({
+          endpoint: serverConfig.authorizationIdEndpoint + "external-token",
+          id,
+          body: {
+            access_token: "access_token",
+          },
+        });
+        console.log(challengeResponse.status);
+        console.log(challengeResponse.data);
+        expect(challengeResponse.status).toBe(200);
+
       };
 
       const { authorizationResponse } = await requestAuthorizations({

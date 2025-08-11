@@ -254,7 +254,7 @@
             "sms",
             "webauthn",
             "fido-uaf",
-            "legacy"
+            "external-token"
           ],
           "acr_mapping_rules": {
             "urn:mace:incommon:iap:gold": [
@@ -267,7 +267,7 @@
             ],
             "urn:mace:incommon:iap:bronze": [
               "password",
-              "legacy"
+              "external-token"
             ]
           },
           "level_of_authentication_scopes": {
@@ -322,7 +322,7 @@
             "sms",
             "webauthn",
             "fido-uaf",
-            "legacy"
+            "external-token"
           ],
           "acr_mapping_rules": {
             "urn:mace:incommon:iap:gold": [
@@ -335,7 +335,7 @@
             ],
             "urn:mace:incommon:iap:bronze": [
               "password",
-              "legacy"
+              "external-token"
             ]
           },
           "level_of_authentication_scopes": {
@@ -363,6 +363,10 @@
               },
               {
                 "type": "fido-uaf-authentication",
+                "success_count": 1
+              },
+              {
+                "type": "external-token",
                 "success_count": 1
               },
               {
