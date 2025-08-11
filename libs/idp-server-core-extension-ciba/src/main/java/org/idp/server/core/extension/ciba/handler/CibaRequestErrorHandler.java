@@ -21,11 +21,11 @@ import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationFor
 import org.idp.server.core.extension.ciba.handler.io.CibaIssueResponse;
 import org.idp.server.core.extension.ciba.handler.io.CibaRequestStatus;
 import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationErrorResponse;
-import org.idp.server.core.oidc.clientauthenticator.exception.ClientUnAuthorizedException;
-import org.idp.server.core.oidc.configuration.exception.ClientConfigurationNotFoundException;
-import org.idp.server.core.oidc.configuration.exception.ServerConfigurationNotFoundException;
-import org.idp.server.core.oidc.type.oauth.Error;
-import org.idp.server.core.oidc.type.oauth.ErrorDescription;
+import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
+import org.idp.server.core.openid.oauth.configuration.exception.ClientConfigurationNotFoundException;
+import org.idp.server.core.openid.oauth.configuration.exception.ServerConfigurationNotFoundException;
+import org.idp.server.core.openid.oauth.type.oauth.Error;
+import org.idp.server.core.openid.oauth.type.oauth.ErrorDescription;
 import org.idp.server.platform.log.LoggerWrapper;
 
 public class CibaRequestErrorHandler {

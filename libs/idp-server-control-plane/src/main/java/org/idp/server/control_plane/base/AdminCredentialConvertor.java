@@ -16,7 +16,7 @@
 
 package org.idp.server.control_plane.base;
 
-import org.idp.server.core.oidc.token.AuthorizationHeaderHandlerable;
+import org.idp.server.core.openid.token.AuthorizationHeaderHandlerable;
 import org.idp.server.platform.http.BasicAuth;
 
 public class AdminCredentialConvertor implements AuthorizationHeaderHandlerable {

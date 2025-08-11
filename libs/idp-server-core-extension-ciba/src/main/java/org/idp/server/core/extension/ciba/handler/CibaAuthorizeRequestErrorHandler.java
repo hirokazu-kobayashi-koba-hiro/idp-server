@@ -20,10 +20,10 @@ import org.idp.server.core.extension.ciba.exception.CibaAuthorizeBadRequestExcep
 import org.idp.server.core.extension.ciba.exception.CibaGrantNotFoundException;
 import org.idp.server.core.extension.ciba.handler.io.CibaAuthorizeResponse;
 import org.idp.server.core.extension.ciba.handler.io.CibaAuthorizeStatus;
-import org.idp.server.core.oidc.configuration.exception.ClientConfigurationNotFoundException;
-import org.idp.server.core.oidc.configuration.exception.ServerConfigurationNotFoundException;
-import org.idp.server.core.oidc.type.oauth.Error;
-import org.idp.server.core.oidc.type.oauth.ErrorDescription;
+import org.idp.server.core.openid.oauth.configuration.exception.ClientConfigurationNotFoundException;
+import org.idp.server.core.openid.oauth.configuration.exception.ServerConfigurationNotFoundException;
+import org.idp.server.core.openid.oauth.type.oauth.Error;
+import org.idp.server.core.openid.oauth.type.oauth.ErrorDescription;
 import org.idp.server.platform.log.LoggerWrapper;
 
 public class CibaAuthorizeRequestErrorHandler {

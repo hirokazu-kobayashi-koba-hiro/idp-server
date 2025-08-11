@@ -18,9 +18,9 @@ package org.idp.server.core.extension.verifiable_credentials.handler.io;
 
 import java.util.Map;
 import org.idp.server.core.extension.verifiable_credentials.request.BatchCredentialRequestParameters;
-import org.idp.server.core.oidc.token.AuthorizationHeaderHandlerable;
-import org.idp.server.core.oidc.type.mtls.ClientCert;
-import org.idp.server.core.oidc.type.oauth.AccessTokenEntity;
+import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
+import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
+import org.idp.server.core.openid.token.AuthorizationHeaderHandlerable;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class BatchCredentialRequest implements AuthorizationHeaderHandlerable {

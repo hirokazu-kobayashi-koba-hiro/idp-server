@@ -18,8 +18,8 @@ package org.idp.server.core.extension.ciba.verifier.additional;
 
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationForbiddenException;
-import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.type.oauth.Scopes;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 
 public class IdentityVerificationVerifier implements CibaRequestAdditionalVerifier {
 

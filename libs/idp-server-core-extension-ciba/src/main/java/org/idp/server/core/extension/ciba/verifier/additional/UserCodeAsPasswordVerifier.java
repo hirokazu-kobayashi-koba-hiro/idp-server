@@ -18,9 +18,9 @@ package org.idp.server.core.extension.ciba.verifier.additional;
 
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationBadRequestException;
-import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.identity.authentication.PasswordVerificationDelegation;
-import org.idp.server.core.oidc.type.ciba.UserCode;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.authentication.PasswordVerificationDelegation;
+import org.idp.server.core.openid.oauth.type.ciba.UserCode;
 
 public class UserCodeAsPasswordVerifier implements CibaRequestAdditionalVerifier {
 

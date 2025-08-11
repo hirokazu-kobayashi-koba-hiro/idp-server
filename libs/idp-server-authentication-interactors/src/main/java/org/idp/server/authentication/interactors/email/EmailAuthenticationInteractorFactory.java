@@ -16,11 +16,11 @@
 
 package org.idp.server.authentication.interactors.email;
 
-import org.idp.server.core.oidc.authentication.AuthenticationInteractor;
-import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;
-import org.idp.server.core.oidc.authentication.plugin.AuthenticationInteractorFactory;
-import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionCommandRepository;
-import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionQueryRepository;
+import org.idp.server.core.openid.authentication.AuthenticationInteractor;
+import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
+import org.idp.server.core.openid.authentication.plugin.AuthenticationInteractorFactory;
+import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionCommandRepository;
+import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
 
 public class EmailAuthenticationInteractorFactory implements AuthenticationInteractorFactory {
 

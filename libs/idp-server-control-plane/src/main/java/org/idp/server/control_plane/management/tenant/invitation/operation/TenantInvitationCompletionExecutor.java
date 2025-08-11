@@ -18,7 +18,7 @@ package org.idp.server.control_plane.management.tenant.invitation.operation;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.oidc.identity.event.*;
+import org.idp.server.core.openid.identity.event.*;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class TenantInvitationCompletionExecutor implements UserLifecycleEventExecutor {

@@ -19,9 +19,9 @@ package org.idp.server.authentication.interactors.fidouaf.plugin;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.oidc.authentication.AuthenticationInteractionRequest;
-import org.idp.server.core.oidc.authentication.AuthenticationInteractionType;
-import org.idp.server.core.oidc.authentication.AuthenticationTransaction;
+import org.idp.server.core.openid.authentication.AuthenticationInteractionRequest;
+import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
+import org.idp.server.core.openid.authentication.AuthenticationTransaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 

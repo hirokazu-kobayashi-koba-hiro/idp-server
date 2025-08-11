@@ -23,7 +23,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Map;
-import org.idp.server.core.oidc.federation.sso.SsoProvider;
+import org.idp.server.core.openid.federation.sso.SsoProvider;
 import org.idp.server.platform.http.HttpClientFactory;
 import org.idp.server.platform.http.HttpQueryParams;
 import org.idp.server.platform.json.JsonConverter;

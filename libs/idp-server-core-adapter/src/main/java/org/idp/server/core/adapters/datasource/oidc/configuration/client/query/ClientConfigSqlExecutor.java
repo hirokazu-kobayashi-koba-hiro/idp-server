@@ -18,9 +18,9 @@ package org.idp.server.core.adapters.datasource.oidc.configuration.client.query;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.client.ClientIdentifier;
-import org.idp.server.core.oidc.type.oauth.RequestedClientId;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.configuration.client.ClientIdentifier;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface ClientConfigSqlExecutor {

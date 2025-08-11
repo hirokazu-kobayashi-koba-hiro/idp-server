@@ -25,10 +25,10 @@ import org.idp.server.authentication.interactors.email.EmailVerificationTemplate
 import org.idp.server.authentication.interactors.email.OneTimePassword;
 import org.idp.server.authentication.interactors.email.OneTimePasswordGenerator;
 import org.idp.server.authentication.interactors.sms.executor.SmsVerificationChallenge;
-import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
-import org.idp.server.core.oidc.authentication.config.AuthenticationExecutionConfig;
-import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionCommandRepository;
-import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionQueryRepository;
+import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
+import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionCommandRepository;
+import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.notification.email.EmailSendResult;

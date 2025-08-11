@@ -16,8 +16,8 @@
 
 package org.idp.server.core.adapters.datasource.authentication.interaction.command;
 
-import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyProvider;
-import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionCommandRepository;
+import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyProvider;
+import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionCommandRepository;
 
 public class AuthenticationInteractionCommandDataSourceProvider
     implements AuthenticationDependencyProvider<AuthenticationInteractionCommandRepository> {

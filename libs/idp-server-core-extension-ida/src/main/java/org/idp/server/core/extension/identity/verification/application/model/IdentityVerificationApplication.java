@@ -27,9 +27,9 @@ import org.idp.server.core.extension.identity.verification.IdentityVerificationT
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplyingResult;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
-import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.identity.UserIdentifier;
-import org.idp.server.core.oidc.type.oauth.RequestedClientId;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.UserIdentifier;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.mapper.MappingRule;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;

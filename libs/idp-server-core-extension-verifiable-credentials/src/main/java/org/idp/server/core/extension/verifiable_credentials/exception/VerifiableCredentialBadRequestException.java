@@ -16,8 +16,8 @@
 
 package org.idp.server.core.extension.verifiable_credentials.exception;
 
-import org.idp.server.core.oidc.type.oauth.Error;
-import org.idp.server.core.oidc.type.oauth.ErrorDescription;
+import org.idp.server.core.openid.oauth.type.oauth.Error;
+import org.idp.server.core.openid.oauth.type.oauth.ErrorDescription;
 
 public class VerifiableCredentialBadRequestException extends RuntimeException {
 

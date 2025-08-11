@@ -18,8 +18,8 @@ package org.idp.server.authentication.interactors;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
-import org.idp.server.core.oidc.authentication.config.AuthenticationExecutionConfig;
+import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
 import org.idp.server.platform.http.HttpClientFactory;
 import org.idp.server.platform.http.HttpRequestBaseParams;
 import org.idp.server.platform.http.HttpRequestExecutor;

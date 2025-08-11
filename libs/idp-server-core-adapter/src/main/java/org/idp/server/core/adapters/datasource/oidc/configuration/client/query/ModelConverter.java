@@ -17,7 +17,7 @@
 package org.idp.server.core.adapters.datasource.oidc.configuration.client.query;
 
 import java.util.Map;
-import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.platform.json.JsonConverter;
 
 class ModelConverter {

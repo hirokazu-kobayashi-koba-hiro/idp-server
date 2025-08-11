@@ -18,12 +18,12 @@ package org.idp.server.authentication.interactors.device;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.oidc.authentication.*;
-import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
-import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
-import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
-import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
+import org.idp.server.core.openid.authentication.*;
+import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
+import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.device.AuthenticationDevice;
+import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.notification.NotificationChannel;

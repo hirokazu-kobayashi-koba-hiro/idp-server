@@ -18,7 +18,7 @@ package org.idp.server.core.extension.ciba;
 
 import java.util.HashMap;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
-import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.event.*;

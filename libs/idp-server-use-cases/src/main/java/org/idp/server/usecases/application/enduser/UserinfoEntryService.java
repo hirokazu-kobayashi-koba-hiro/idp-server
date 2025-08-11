@@ -16,17 +16,17 @@
 
 package org.idp.server.usecases.application.enduser;
 
-import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.identity.UserIdentifier;
-import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
-import org.idp.server.core.oidc.token.TokenEventPublisher;
-import org.idp.server.core.oidc.type.oauth.Subject;
-import org.idp.server.core.oidc.userinfo.UserinfoApi;
-import org.idp.server.core.oidc.userinfo.UserinfoProtocol;
-import org.idp.server.core.oidc.userinfo.UserinfoProtocols;
-import org.idp.server.core.oidc.userinfo.handler.UserinfoDelegate;
-import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequest;
-import org.idp.server.core.oidc.userinfo.handler.io.UserinfoRequestResponse;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.UserIdentifier;
+import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.core.openid.oauth.type.oauth.Subject;
+import org.idp.server.core.openid.token.TokenEventPublisher;
+import org.idp.server.core.openid.userinfo.UserinfoApi;
+import org.idp.server.core.openid.userinfo.UserinfoProtocol;
+import org.idp.server.core.openid.userinfo.UserinfoProtocols;
+import org.idp.server.core.openid.userinfo.handler.UserinfoDelegate;
+import org.idp.server.core.openid.userinfo.handler.io.UserinfoRequest;
+import org.idp.server.core.openid.userinfo.handler.io.UserinfoRequestResponse;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;

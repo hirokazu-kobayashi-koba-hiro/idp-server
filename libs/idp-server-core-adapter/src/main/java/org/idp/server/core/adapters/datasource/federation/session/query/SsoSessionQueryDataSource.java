@@ -18,9 +18,9 @@ package org.idp.server.core.adapters.datasource.federation.session.query;
 
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.oidc.federation.sso.SsoSessionIdentifier;
-import org.idp.server.core.oidc.federation.sso.SsoSessionNotFoundException;
-import org.idp.server.core.oidc.federation.sso.SsoSessionQueryRepository;
+import org.idp.server.core.openid.federation.sso.SsoSessionIdentifier;
+import org.idp.server.core.openid.federation.sso.SsoSessionNotFoundException;
+import org.idp.server.core.openid.federation.sso.SsoSessionQueryRepository;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 

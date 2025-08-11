@@ -18,10 +18,10 @@ package org.idp.server.core.adapters.datasource.token.query;
 
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.oidc.token.OAuthToken;
-import org.idp.server.core.oidc.token.repository.OAuthTokenQueryRepository;
-import org.idp.server.core.oidc.type.oauth.AccessTokenEntity;
-import org.idp.server.core.oidc.type.oauth.RefreshTokenEntity;
+import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
+import org.idp.server.core.openid.oauth.type.oauth.RefreshTokenEntity;
+import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.platform.crypto.AesCipher;
 import org.idp.server.platform.crypto.HmacHasher;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;

@@ -23,7 +23,7 @@ import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutor;
 import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutorFactory;
 import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutorType;
 import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutors;
-import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;
+import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.plugin.PluginLoader;
 

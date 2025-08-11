@@ -17,12 +17,12 @@
 package org.idp.server.federation.sso.oidc;
 
 import java.util.UUID;
-import org.idp.server.core.oidc.federation.FederationType;
-import org.idp.server.core.oidc.federation.sso.SsoProvider;
-import org.idp.server.core.oidc.federation.sso.SsoState;
-import org.idp.server.core.oidc.federation.sso.SsoStateCoder;
-import org.idp.server.core.oidc.federation.sso.oidc.OidcSsoSession;
-import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.openid.federation.FederationType;
+import org.idp.server.core.openid.federation.sso.SsoProvider;
+import org.idp.server.core.openid.federation.sso.SsoState;
+import org.idp.server.core.openid.federation.sso.SsoStateCoder;
+import org.idp.server.core.openid.federation.sso.oidc.OidcSsoSession;
+import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.platform.http.HttpQueryParams;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 

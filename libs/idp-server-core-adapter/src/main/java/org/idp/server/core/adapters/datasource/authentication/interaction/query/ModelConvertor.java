@@ -17,7 +17,7 @@
 package org.idp.server.core.adapters.datasource.authentication.interaction.query;
 
 import java.util.Map;
-import org.idp.server.core.oidc.authentication.interaction.AuthenticationInteraction;
+import org.idp.server.core.openid.authentication.interaction.AuthenticationInteraction;
 import org.idp.server.platform.json.JsonNodeWrapper;
 
 public class ModelConvertor {

@@ -17,7 +17,7 @@
 package org.idp.server.core.adapters.datasource.federation.config.query;
 
 import java.util.Map;
-import org.idp.server.core.oidc.federation.FederationConfiguration;
+import org.idp.server.core.openid.federation.FederationConfiguration;
 import org.idp.server.platform.json.JsonNodeWrapper;
 
 class ModelConverter {

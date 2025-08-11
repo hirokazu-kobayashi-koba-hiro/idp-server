@@ -19,10 +19,10 @@ package org.idp.server.core.adapters.datasource.authentication.config.query;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.oidc.authentication.config.AuthenticationConfiguration;
-import org.idp.server.core.oidc.authentication.config.AuthenticationConfigurationIdentifier;
-import org.idp.server.core.oidc.authentication.exception.AuthenticationConfigurationNotFoundException;
-import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
+import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
+import org.idp.server.core.openid.authentication.config.AuthenticationConfigurationIdentifier;
+import org.idp.server.core.openid.authentication.exception.AuthenticationConfigurationNotFoundException;
+import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 

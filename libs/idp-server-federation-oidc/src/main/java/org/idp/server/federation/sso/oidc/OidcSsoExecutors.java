@@ -17,7 +17,7 @@
 package org.idp.server.federation.sso.oidc;
 
 import java.util.Map;
-import org.idp.server.core.oidc.federation.sso.SsoProvider;
+import org.idp.server.core.openid.federation.sso.SsoProvider;
 import org.idp.server.platform.exception.UnSupportedException;
 
 public class OidcSsoExecutors {

@@ -22,7 +22,7 @@ import java.util.Map;
 import org.idp.server.authentication.interactors.AuthenticationExecutor;
 import org.idp.server.authentication.interactors.AuthenticationExecutorFactory;
 import org.idp.server.authentication.interactors.AuthenticationExecutors;
-import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;
+import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.plugin.PluginLoader;
 

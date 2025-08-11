@@ -16,8 +16,8 @@
 
 package org.idp.server.core.extension.ciba.exception;
 
-import org.idp.server.core.oidc.type.oauth.Error;
-import org.idp.server.core.oidc.type.oauth.ErrorDescription;
+import org.idp.server.core.openid.oauth.type.oauth.Error;
+import org.idp.server.core.openid.oauth.type.oauth.ErrorDescription;
 import org.idp.server.platform.exception.BadRequestException;
 
 public class CibaAuthorizeBadRequestException extends BadRequestException {

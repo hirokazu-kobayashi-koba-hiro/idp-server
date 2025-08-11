@@ -18,7 +18,7 @@ package org.idp.server.adapters.springboot.application.restapi;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.*;
-import org.idp.server.core.oidc.token.AuthorizationHeaderHandlerable;
+import org.idp.server.core.openid.token.AuthorizationHeaderHandlerable;
 import org.idp.server.platform.type.RequestAttributes;
 import org.springframework.util.MultiValueMap;
 

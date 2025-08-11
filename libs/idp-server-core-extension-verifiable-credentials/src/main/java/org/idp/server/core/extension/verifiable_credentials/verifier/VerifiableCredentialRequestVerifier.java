@@ -20,7 +20,7 @@ import org.idp.server.core.extension.verifiable_credentials.exception.Verifiable
 import org.idp.server.core.extension.verifiable_credentials.request.VerifiableCredentialProof;
 import org.idp.server.core.extension.verifiable_credentials.request.VerifiableCredentialRequest;
 import org.idp.server.core.extension.verifiable_credentials.request.VerifiableCredentialRequestTransformable;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 
 public class VerifiableCredentialRequestVerifier
     implements VerifiableCredentialRequestTransformable {

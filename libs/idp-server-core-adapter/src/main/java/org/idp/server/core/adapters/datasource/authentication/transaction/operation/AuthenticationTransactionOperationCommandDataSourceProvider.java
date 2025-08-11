@@ -16,7 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.authentication.transaction.operation;
 
-import org.idp.server.core.oidc.authentication.repository.AuthenticationTransactionOperationCommandRepository;
+import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionOperationCommandRepository;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 

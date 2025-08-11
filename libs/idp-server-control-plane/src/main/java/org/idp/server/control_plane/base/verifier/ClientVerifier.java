@@ -18,8 +18,8 @@ package org.idp.server.control_plane.base.verifier;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class ClientVerifier {

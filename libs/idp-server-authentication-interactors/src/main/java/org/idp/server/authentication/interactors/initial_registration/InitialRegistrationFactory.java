@@ -16,11 +16,11 @@
 
 package org.idp.server.authentication.interactors.initial_registration;
 
-import org.idp.server.core.oidc.authentication.AuthenticationInteractor;
-import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;
-import org.idp.server.core.oidc.authentication.plugin.AuthenticationInteractorFactory;
-import org.idp.server.core.oidc.authentication.repository.AuthenticationConfigurationQueryRepository;
-import org.idp.server.core.oidc.identity.authentication.PasswordEncodeDelegation;
+import org.idp.server.core.openid.authentication.AuthenticationInteractor;
+import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
+import org.idp.server.core.openid.authentication.plugin.AuthenticationInteractorFactory;
+import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
+import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegation;
 
 public class InitialRegistrationFactory implements AuthenticationInteractorFactory {
 

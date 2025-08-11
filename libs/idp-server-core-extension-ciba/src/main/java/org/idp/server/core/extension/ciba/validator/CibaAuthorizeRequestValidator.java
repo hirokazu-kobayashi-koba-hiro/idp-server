@@ -19,7 +19,7 @@ package org.idp.server.core.extension.ciba.validator;
 import java.util.Objects;
 import org.idp.server.core.extension.ciba.exception.CibaAuthorizeBadRequestException;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
-import org.idp.server.core.oidc.authentication.Authentication;
+import org.idp.server.core.openid.authentication.Authentication;
 
 public class CibaAuthorizeRequestValidator {
   BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier;

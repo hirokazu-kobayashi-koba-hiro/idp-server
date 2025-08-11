@@ -18,9 +18,9 @@ package org.idp.server.authentication.interactors.device;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.oidc.authentication.*;
-import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
-import org.idp.server.core.oidc.type.ciba.BindingMessage;
+import org.idp.server.core.openid.authentication.*;
+import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.core.openid.oauth.type.ciba.BindingMessage;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;

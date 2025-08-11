@@ -18,15 +18,15 @@ package org.idp.server.core.extension.verifiable_credentials.verifier;
 
 import java.time.LocalDateTime;
 import org.idp.server.core.extension.verifiable_credentials.exception.VerifiableCredentialTokenInvalidException;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
-import org.idp.server.core.oidc.mtls.ClientCertification;
-import org.idp.server.core.oidc.mtls.ClientCertificationThumbprint;
-import org.idp.server.core.oidc.mtls.ClientCertificationThumbprintCalculator;
-import org.idp.server.core.oidc.rar.AuthorizationDetails;
-import org.idp.server.core.oidc.token.AccessToken;
-import org.idp.server.core.oidc.token.OAuthToken;
-import org.idp.server.core.oidc.token.tokenintrospection.exception.TokenInvalidException;
-import org.idp.server.core.oidc.type.mtls.ClientCert;
+import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertification;
+import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertificationThumbprint;
+import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertificationThumbprintCalculator;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
+import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
+import org.idp.server.core.openid.token.AccessToken;
+import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.core.openid.token.tokenintrospection.exception.TokenInvalidException;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.x509.X509CertInvalidException;
 

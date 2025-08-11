@@ -19,7 +19,7 @@ package org.idp.server.federation.sso.oidc;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.oidc.federation.sso.SsoProvider;
+import org.idp.server.core.openid.federation.sso.SsoProvider;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.plugin.PluginLoader;
 

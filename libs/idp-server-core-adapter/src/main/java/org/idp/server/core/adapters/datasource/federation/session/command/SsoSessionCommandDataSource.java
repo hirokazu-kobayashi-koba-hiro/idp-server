@@ -16,8 +16,8 @@
 
 package org.idp.server.core.adapters.datasource.federation.session.command;
 
-import org.idp.server.core.oidc.federation.sso.SsoSessionCommandRepository;
-import org.idp.server.core.oidc.federation.sso.SsoSessionIdentifier;
+import org.idp.server.core.openid.federation.sso.SsoSessionCommandRepository;
+import org.idp.server.core.openid.federation.sso.SsoSessionIdentifier;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 

@@ -18,9 +18,9 @@ package org.idp.server.authentication.interactors.email.executor;
 
 import org.idp.server.authentication.interactors.AuthenticationExecutor;
 import org.idp.server.authentication.interactors.AuthenticationExecutorFactory;
-import org.idp.server.core.oidc.authentication.plugin.AuthenticationDependencyContainer;
-import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionCommandRepository;
-import org.idp.server.core.oidc.authentication.repository.AuthenticationInteractionQueryRepository;
+import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
+import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionCommandRepository;
+import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
 import org.idp.server.platform.notification.email.EmailSenders;
 
 public class EmailChallengeAuthenticationExecutorFactory implements AuthenticationExecutorFactory {

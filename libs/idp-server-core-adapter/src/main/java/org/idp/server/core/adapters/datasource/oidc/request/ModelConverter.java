@@ -17,18 +17,18 @@
 package org.idp.server.core.adapters.datasource.oidc.request;
 
 import java.util.Map;
-import org.idp.server.core.oidc.AuthorizationProfile;
-import org.idp.server.core.oidc.configuration.client.ClientAttributes;
-import org.idp.server.core.oidc.id_token.RequestedClaimsPayload;
-import org.idp.server.core.oidc.rar.AuthorizationDetails;
-import org.idp.server.core.oidc.request.AuthorizationRequest;
-import org.idp.server.core.oidc.request.AuthorizationRequestBuilder;
-import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
-import org.idp.server.core.oidc.type.extension.ExpiresAt;
-import org.idp.server.core.oidc.type.oauth.*;
-import org.idp.server.core.oidc.type.oidc.*;
-import org.idp.server.core.oidc.type.pkce.CodeChallenge;
-import org.idp.server.core.oidc.type.pkce.CodeChallengeMethod;
+import org.idp.server.core.openid.identity.id_token.RequestedClaimsPayload;
+import org.idp.server.core.openid.oauth.AuthorizationProfile;
+import org.idp.server.core.openid.oauth.configuration.client.ClientAttributes;
+import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
+import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
+import org.idp.server.core.openid.oauth.request.AuthorizationRequestBuilder;
+import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.openid.oauth.type.extension.ExpiresAt;
+import org.idp.server.core.openid.oauth.type.oauth.*;
+import org.idp.server.core.openid.oauth.type.oidc.*;
+import org.idp.server.core.openid.oauth.type.pkce.CodeChallenge;
+import org.idp.server.core.openid.oauth.type.pkce.CodeChallengeMethod;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 

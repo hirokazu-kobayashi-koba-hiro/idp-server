@@ -22,7 +22,7 @@ import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationErro
 import org.idp.server.core.extension.ciba.user.UserHint;
 import org.idp.server.core.extension.ciba.user.UserHintRelatedParams;
 import org.idp.server.core.extension.ciba.user.UserHintType;
-import org.idp.server.core.oidc.type.ContentType;
+import org.idp.server.core.openid.oauth.type.ContentType;
 
 public class CibaRequestResult {
   CibaRequestStatus status;

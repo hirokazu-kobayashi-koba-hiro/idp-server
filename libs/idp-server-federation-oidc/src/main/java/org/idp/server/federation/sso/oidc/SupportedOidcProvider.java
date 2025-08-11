@@ -16,7 +16,7 @@
 
 package org.idp.server.federation.sso.oidc;
 
-import org.idp.server.core.oidc.federation.sso.SsoProvider;
+import org.idp.server.core.openid.federation.sso.SsoProvider;
 
 public enum SupportedOidcProvider {
   Goggle("Standard"),

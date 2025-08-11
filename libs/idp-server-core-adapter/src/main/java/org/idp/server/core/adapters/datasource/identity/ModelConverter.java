@@ -18,12 +18,12 @@ package org.idp.server.core.adapters.datasource.identity;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.identity.UserIdentifier;
-import org.idp.server.core.oidc.identity.UserRole;
-import org.idp.server.core.oidc.identity.UserStatus;
-import org.idp.server.core.oidc.identity.address.Address;
-import org.idp.server.core.oidc.identity.device.AuthenticationDevice;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.UserIdentifier;
+import org.idp.server.core.openid.identity.UserRole;
+import org.idp.server.core.openid.identity.UserStatus;
+import org.idp.server.core.openid.identity.address.Address;
+import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.platform.date.LocalDateTimeParser;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;

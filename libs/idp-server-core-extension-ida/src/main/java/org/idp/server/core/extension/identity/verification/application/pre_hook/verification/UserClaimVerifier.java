@@ -27,7 +27,7 @@ import org.idp.server.core.extension.identity.verification.application.pre_hook.
 import org.idp.server.core.extension.identity.verification.application.pre_hook.UserClaimVerificationRule;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfig;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
-import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;

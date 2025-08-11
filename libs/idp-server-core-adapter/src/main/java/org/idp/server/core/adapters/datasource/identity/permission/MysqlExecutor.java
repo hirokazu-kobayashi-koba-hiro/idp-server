@@ -18,8 +18,8 @@ package org.idp.server.core.adapters.datasource.identity.permission;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.core.oidc.identity.permission.Permission;
-import org.idp.server.core.oidc.identity.permission.Permissions;
+import org.idp.server.core.openid.identity.permission.Permission;
+import org.idp.server.core.openid.identity.permission.Permissions;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 

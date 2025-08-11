@@ -22,7 +22,7 @@ import org.idp.server.core.extension.identity.verification.IdentityVerificationT
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.result.*;
 import org.idp.server.core.extension.identity.verified.VerifiedClaims;
-import org.idp.server.core.oidc.identity.UserIdentifier;
+import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.platform.date.LocalDateTimeParser;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;

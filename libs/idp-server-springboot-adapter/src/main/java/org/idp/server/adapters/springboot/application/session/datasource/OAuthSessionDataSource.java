@@ -17,9 +17,9 @@
 package org.idp.server.adapters.springboot.application.session.datasource;
 
 import jakarta.servlet.http.HttpSession;
-import org.idp.server.core.oidc.OAuthSession;
-import org.idp.server.core.oidc.OAuthSessionKey;
-import org.idp.server.core.oidc.repository.OAuthSessionRepository;
+import org.idp.server.core.openid.oauth.OAuthSession;
+import org.idp.server.core.openid.oauth.OAuthSessionKey;
+import org.idp.server.core.openid.oauth.repository.OAuthSessionRepository;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.springframework.stereotype.Repository;
 

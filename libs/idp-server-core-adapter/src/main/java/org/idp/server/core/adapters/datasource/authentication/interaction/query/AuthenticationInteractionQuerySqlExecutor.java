@@ -18,8 +18,8 @@ package org.idp.server.core.adapters.datasource.authentication.interaction.query
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
-import org.idp.server.core.oidc.authentication.interaction.AuthenticationInteractionQueries;
+import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.openid.authentication.interaction.AuthenticationInteractionQueries;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface AuthenticationInteractionQuerySqlExecutor {

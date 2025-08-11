@@ -18,7 +18,7 @@ package org.idp.server.federation.sso.oidc;
 
 import java.util.List;
 import java.util.Objects;
-import org.idp.server.core.oidc.federation.sso.SsoProvider;
+import org.idp.server.core.openid.federation.sso.SsoProvider;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.mapper.MappingRule;
 

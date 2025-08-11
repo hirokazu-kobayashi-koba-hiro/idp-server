@@ -23,10 +23,10 @@ import org.idp.server.control_plane.admin.operation.io.IdpServerOperationRespons
 import org.idp.server.control_plane.admin.operation.io.IdpServerOperationStatus;
 import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRequestOperationCommandRepository;
 import org.idp.server.core.extension.ciba.repository.CibaGrantOperationCommandRepository;
-import org.idp.server.core.oidc.authentication.repository.AuthenticationTransactionOperationCommandRepository;
-import org.idp.server.core.oidc.repository.AuthorizationCodeGrantOperationCommandRepository;
-import org.idp.server.core.oidc.repository.AuthorizationRequestOperationCommandRepository;
-import org.idp.server.core.oidc.token.repository.OAuthTokenOperationCommandRepository;
+import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionOperationCommandRepository;
+import org.idp.server.core.openid.oauth.repository.AuthorizationCodeGrantOperationCommandRepository;
+import org.idp.server.core.openid.oauth.repository.AuthorizationRequestOperationCommandRepository;
+import org.idp.server.core.openid.token.repository.OAuthTokenOperationCommandRepository;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;

@@ -18,8 +18,8 @@ package org.idp.server.core.extension.verifiable_credentials;
 
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.oidc.type.verifiablecredential.Format;
-import org.idp.server.core.oidc.type.verifiablecredential.TransactionId;
+import org.idp.server.core.openid.oauth.type.verifiablecredential.Format;
+import org.idp.server.core.openid.oauth.type.verifiablecredential.TransactionId;
 
 public class BatchVerifiableCredentialResponse {
   Format format;

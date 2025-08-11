@@ -26,15 +26,15 @@ import org.idp.server.core.extension.verifiable_credentials.verifier.BatchVerifi
 import org.idp.server.core.extension.verifiable_credentials.verifier.DeferredVerifiableCredentialRequestVerifier;
 import org.idp.server.core.extension.verifiable_credentials.verifier.DeferredVerifiableCredentialVerifier;
 import org.idp.server.core.extension.verifiable_credentials.verifier.VerifiableCredentialVerifier;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfigurationQueryRepository;
-import org.idp.server.core.oidc.configuration.client.ClientConfiguration;
-import org.idp.server.core.oidc.configuration.client.ClientConfigurationQueryRepository;
-import org.idp.server.core.oidc.token.AccessToken;
-import org.idp.server.core.oidc.token.OAuthToken;
-import org.idp.server.core.oidc.token.repository.OAuthTokenQueryRepository;
-import org.idp.server.core.oidc.type.oauth.AccessTokenEntity;
-import org.idp.server.core.oidc.type.vc.Credential;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
+import org.idp.server.core.openid.oauth.type.vc.Credential;
+import org.idp.server.core.openid.token.AccessToken;
+import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class CredentialHandler {

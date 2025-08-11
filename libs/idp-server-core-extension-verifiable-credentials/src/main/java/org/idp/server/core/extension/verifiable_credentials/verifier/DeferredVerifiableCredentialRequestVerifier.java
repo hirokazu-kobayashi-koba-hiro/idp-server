@@ -20,9 +20,9 @@ import org.idp.server.core.extension.verifiable_credentials.VerifiableCredential
 import org.idp.server.core.extension.verifiable_credentials.exception.VerifiableCredentialBadRequestException;
 import org.idp.server.core.extension.verifiable_credentials.request.DeferredCredentialRequestParameters;
 import org.idp.server.core.extension.verifiable_credentials.request.VerifiableCredentialRequestTransformable;
-import org.idp.server.core.oidc.configuration.AuthorizationServerConfiguration;
-import org.idp.server.core.oidc.token.OAuthToken;
-import org.idp.server.core.oidc.type.mtls.ClientCert;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
+import org.idp.server.core.openid.token.OAuthToken;
 
 public class DeferredVerifiableCredentialRequestVerifier
     implements VerifiableCredentialRequestTransformable {

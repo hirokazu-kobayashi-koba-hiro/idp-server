@@ -19,16 +19,16 @@ package org.idp.server.federation.sso.oidc;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import org.idp.server.core.oidc.federation.*;
-import org.idp.server.core.oidc.federation.io.*;
-import org.idp.server.core.oidc.federation.repository.FederationConfigurationQueryRepository;
-import org.idp.server.core.oidc.federation.sso.*;
-import org.idp.server.core.oidc.federation.sso.oidc.OidcSsoSession;
-import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.identity.UserStatus;
-import org.idp.server.core.oidc.identity.mapper.UserInfoMapper;
-import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
-import org.idp.server.core.oidc.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.openid.federation.*;
+import org.idp.server.core.openid.federation.io.*;
+import org.idp.server.core.openid.federation.repository.FederationConfigurationQueryRepository;
+import org.idp.server.core.openid.federation.sso.*;
+import org.idp.server.core.openid.federation.sso.oidc.OidcSsoSession;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.UserStatus;
+import org.idp.server.core.openid.identity.mapper.UserInfoMapper;
+import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OidcFederationInteractor implements FederationInteractor {

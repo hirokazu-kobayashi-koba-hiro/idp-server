@@ -17,9 +17,9 @@
 package org.idp.server.core.extension.verifiable_credentials.request;
 
 import java.util.Objects;
-import org.idp.server.core.oidc.type.verifiablecredential.DocType;
-import org.idp.server.core.oidc.type.verifiablecredential.Format;
-import org.idp.server.core.oidc.vc.CredentialDefinition;
+import org.idp.server.core.openid.oauth.type.vc.CredentialDefinition;
+import org.idp.server.core.openid.oauth.type.verifiablecredential.DocType;
+import org.idp.server.core.openid.oauth.type.verifiablecredential.Format;
 
 public class VerifiableCredentialRequest {
   Format format;

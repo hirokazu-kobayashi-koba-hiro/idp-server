@@ -16,15 +16,15 @@
 
 package org.idp.server.usecases.application.system;
 
-import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.identity.UserAuthenticationApi;
-import org.idp.server.core.oidc.identity.UserIdentifier;
-import org.idp.server.core.oidc.identity.repository.UserQueryRepository;
-import org.idp.server.core.oidc.token.OAuthToken;
-import org.idp.server.core.oidc.token.TokenProtocol;
-import org.idp.server.core.oidc.token.TokenProtocols;
-import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionInternalRequest;
-import org.idp.server.core.oidc.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.UserAuthenticationApi;
+import org.idp.server.core.openid.identity.UserIdentifier;
+import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.core.openid.token.TokenProtocol;
+import org.idp.server.core.openid.token.TokenProtocols;
+import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionInternalRequest;
+import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.exception.UnauthorizedException;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;

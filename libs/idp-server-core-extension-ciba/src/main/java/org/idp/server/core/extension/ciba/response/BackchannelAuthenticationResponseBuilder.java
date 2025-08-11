@@ -18,9 +18,9 @@ package org.idp.server.core.extension.ciba.response;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.oidc.type.ciba.AuthReqId;
-import org.idp.server.core.oidc.type.ciba.Interval;
-import org.idp.server.core.oidc.type.oauth.ExpiresIn;
+import org.idp.server.core.openid.oauth.type.ciba.AuthReqId;
+import org.idp.server.core.openid.oauth.type.ciba.Interval;
+import org.idp.server.core.openid.oauth.type.oauth.ExpiresIn;
 import org.idp.server.platform.json.JsonConverter;
 
 public class BackchannelAuthenticationResponseBuilder {

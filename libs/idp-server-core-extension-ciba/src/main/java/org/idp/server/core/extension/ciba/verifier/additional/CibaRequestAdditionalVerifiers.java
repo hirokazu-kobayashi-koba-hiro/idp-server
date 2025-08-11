@@ -20,8 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.plugin.CibaRequestAdditionalVerifierPluginLoader;
-import org.idp.server.core.oidc.identity.User;
-import org.idp.server.core.oidc.identity.authentication.PasswordVerificationDelegation;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.authentication.PasswordVerificationDelegation;
 
 public class CibaRequestAdditionalVerifiers {
 

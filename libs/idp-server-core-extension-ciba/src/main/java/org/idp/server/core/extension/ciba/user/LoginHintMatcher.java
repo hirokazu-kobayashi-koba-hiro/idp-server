@@ -16,7 +16,7 @@
 
 package org.idp.server.core.extension.ciba.user;
 
-import org.idp.server.core.oidc.identity.User;
+import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.type.Pairs;
 
 public interface LoginHintMatcher {

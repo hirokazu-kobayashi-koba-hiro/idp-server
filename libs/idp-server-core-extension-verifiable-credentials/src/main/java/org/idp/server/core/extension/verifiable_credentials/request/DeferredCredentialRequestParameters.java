@@ -17,9 +17,9 @@
 package org.idp.server.core.extension.verifiable_credentials.request;
 
 import java.util.Map;
-import org.idp.server.core.oidc.type.OAuthRequestKey;
-import org.idp.server.core.oidc.type.verifiablecredential.Format;
-import org.idp.server.core.oidc.type.verifiablecredential.TransactionId;
+import org.idp.server.core.openid.oauth.type.OAuthRequestKey;
+import org.idp.server.core.openid.oauth.type.verifiablecredential.Format;
+import org.idp.server.core.openid.oauth.type.verifiablecredential.TransactionId;
 
 public class DeferredCredentialRequestParameters {
   Map<String, Object> values;

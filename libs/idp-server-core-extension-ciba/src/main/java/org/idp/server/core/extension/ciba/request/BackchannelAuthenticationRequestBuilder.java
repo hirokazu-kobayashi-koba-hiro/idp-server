@@ -17,11 +17,16 @@
 package org.idp.server.core.extension.ciba.request;
 
 import org.idp.server.core.extension.ciba.CibaProfile;
-import org.idp.server.core.oidc.rar.AuthorizationDetails;
-import org.idp.server.core.oidc.type.ciba.*;
-import org.idp.server.core.oidc.type.extension.ExpiresAt;
-import org.idp.server.core.oidc.type.oauth.*;
-import org.idp.server.core.oidc.type.oidc.*;
+import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
+import org.idp.server.core.openid.oauth.type.ciba.*;
+import org.idp.server.core.openid.oauth.type.extension.ExpiresAt;
+import org.idp.server.core.openid.oauth.type.oauth.ExpiresIn;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
+import org.idp.server.core.openid.oauth.type.oauth.Scopes;
+import org.idp.server.core.openid.oauth.type.oidc.AcrValues;
+import org.idp.server.core.openid.oauth.type.oidc.IdTokenHint;
+import org.idp.server.core.openid.oauth.type.oidc.LoginHint;
+import org.idp.server.core.openid.oauth.type.oidc.RequestObject;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class BackchannelAuthenticationRequestBuilder {

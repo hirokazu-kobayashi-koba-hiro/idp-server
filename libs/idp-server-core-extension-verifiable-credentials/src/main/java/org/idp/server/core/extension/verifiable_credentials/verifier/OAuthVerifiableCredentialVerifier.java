@@ -16,12 +16,12 @@
 
 package org.idp.server.core.extension.verifiable_credentials.verifier;
 
-import org.idp.server.core.oidc.OAuthRequestContext;
-import org.idp.server.core.oidc.exception.OAuthRedirectableBadRequestException;
-import org.idp.server.core.oidc.rar.AuthorizationDetailsInvalidException;
-import org.idp.server.core.oidc.vc.VerifiableCredentialInvalidException;
-import org.idp.server.core.oidc.verifier.AuthorizationRequestExtensionVerifier;
-import org.idp.server.core.oidc.verifier.extension.VerifiableCredentialVerifier;
+import org.idp.server.core.openid.oauth.OAuthRequestContext;
+import org.idp.server.core.openid.oauth.exception.OAuthRedirectableBadRequestException;
+import org.idp.server.core.openid.oauth.rar.AuthorizationDetailsInvalidException;
+import org.idp.server.core.openid.oauth.type.vc.VerifiableCredentialInvalidException;
+import org.idp.server.core.openid.oauth.verifier.AuthorizationRequestExtensionVerifier;
+import org.idp.server.core.openid.oauth.verifier.extension.VerifiableCredentialVerifier;
 
 public class OAuthVerifiableCredentialVerifier implements AuthorizationRequestExtensionVerifier {
 
@@ -33,12 +33,11 @@ public class OAuthVerifiableCredentialVerifier implements AuthorizationRequestEx
   @Override
   public void verify(OAuthRequestContext context) {
     try {
-      org.idp.server.core.oidc.verifier.extension.VerifiableCredentialVerifier
-          verifiableCredentialVerifier =
-              new VerifiableCredentialVerifier(
-                  context.authorizationRequest().authorizationDetails(),
-                  context.serverConfiguration(),
-                  context.clientConfiguration());
+      VerifiableCredentialVerifier verifiableCredentialVerifier =
+          new VerifiableCredentialVerifier(
+              context.authorizationRequest().authorizationDetails(),
+              context.serverConfiguration(),
+              context.clientConfiguration());
       verifiableCredentialVerifier.verify();
     } catch (AuthorizationDetailsInvalidException exception) {
       throw new OAuthRedirectableBadRequestException(

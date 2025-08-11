@@ -19,13 +19,13 @@ package org.idp.server.core.adapters.datasource.authentication.transaction.query
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.idp.server.core.oidc.authentication.AuthenticationTransaction;
-import org.idp.server.core.oidc.authentication.AuthenticationTransactionIdentifier;
-import org.idp.server.core.oidc.authentication.AuthenticationTransactionQueries;
-import org.idp.server.core.oidc.authentication.AuthorizationIdentifier;
-import org.idp.server.core.oidc.authentication.exception.AuthenticationTransactionNotFoundException;
-import org.idp.server.core.oidc.authentication.repository.AuthenticationTransactionQueryRepository;
-import org.idp.server.core.oidc.identity.device.AuthenticationDeviceIdentifier;
+import org.idp.server.core.openid.authentication.AuthenticationTransaction;
+import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.openid.authentication.AuthenticationTransactionQueries;
+import org.idp.server.core.openid.authentication.AuthorizationIdentifier;
+import org.idp.server.core.openid.authentication.exception.AuthenticationTransactionNotFoundException;
+import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionQueryRepository;
+import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class AuthenticationTransactionQueryDataSource
