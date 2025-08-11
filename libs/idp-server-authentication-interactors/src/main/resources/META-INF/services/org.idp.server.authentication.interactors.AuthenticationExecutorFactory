@@ -1,3 +1,5 @@
+org.idp.server.authentication.interactors.HttpRequestAuthenticationExecutorFactory
+org.idp.server.authentication.interactors.HttpRequestsAuthenticationExecutorFactory
 org.idp.server.authentication.interactors.sms.executor.SmsChallengeAuthenticationExecutorFactory
 org.idp.server.authentication.interactors.sms.executor.SmsAuthenticationExecutorFactory
 org.idp.server.authentication.interactors.email.executor.EmailChallengeAuthenticationExecutorFactory

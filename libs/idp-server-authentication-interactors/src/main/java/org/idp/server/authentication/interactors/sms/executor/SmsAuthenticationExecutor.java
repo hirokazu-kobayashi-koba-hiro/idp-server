@@ -56,7 +56,8 @@ public class SmsAuthenticationExecutor implements AuthenticationExecutor {
       AuthenticationExecutionConfig configuration) {
 
     SmsVerificationChallenge verificationChallenge =
-        interactionQueryRepository.get(tenant, identifier, "sms", SmsVerificationChallenge.class);
+        interactionQueryRepository.get(
+            tenant, identifier, "sms-authentication-challenge", SmsVerificationChallenge.class);
 
     String verificationCode = request.optValueAsString("verification_code", "");
 
@@ -65,7 +66,8 @@ public class SmsAuthenticationExecutor implements AuthenticationExecutor {
     if (verificationResult.isFailure()) {
 
       SmsVerificationChallenge countUpVerificationChallenge = verificationChallenge.countUp();
-      interactionCommandRepository.update(tenant, identifier, "sms", countUpVerificationChallenge);
+      interactionCommandRepository.update(
+          tenant, identifier, "sms-authentication-challenge", countUpVerificationChallenge);
 
       return AuthenticationExecutionResult.clientError(verificationResult.response());
     }

@@ -416,10 +416,165 @@
       "type": "http",
       "documentation": "",
       "method": "post",
-      "endpoint": "users",
+      "endpoint": "user/overview",
       "responses": [
         {
           "uuid": "c6b47497-0160-4228-9afb-b6c1880c5a3a",
+          "body": "{\n  \"id\": \"{{ uuid }}\",\n  \"email\": \"{{ uuid }}@gmail.com\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "d6dc63e4-a4b8-4569-b1ed-305a95fb8ca7",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "user/details",
+      "responses": [
+        {
+          "uuid": "74d55a5d-0b46-4f3c-bed9-2d35a1a685c9",
+          "body": "{\n  \"birthdate\": \"2000-02-02\",\n  \"zoneinfo\": \"ja-jp\",\n  \"locale\": \"locale\",\n  \"phone_number\": \"09012345678\",\n  \"role\": \"Administrator\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "d9fdabe7-64b0-4204-83b7-58e33244e6f8",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "sms-authentication-challenge",
+      "responses": [
+        {
+          "uuid": "84f9dd0d-38e5-4581-84bc-4abd1f5a3bf2",
+          "body": "{\n  \"transaction_id\": \"{{ uuid }}\" \n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "a2e213af-1a06-4090-9759-d18cb8497091",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "sms-authentication",
+      "responses": [
+        {
+          "uuid": "37c5d4b8-2d49-4b59-aab4-f405ce13dfb6",
+          "body": "{\n  \"status\": \"ok\" \n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "5d5f703c-105e-41cf-b178-9011b2f1d74b",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "email-authentication-challenge",
+      "responses": [
+        {
+          "uuid": "1414662c-63e6-469d-9d82-f80fa02f8ccb",
+          "body": "{\n  \"transaction_id\": \"{{ uuid }}\" \n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "6f5729bd-7086-4c1a-863c-37f3cbb4e8c3",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "email-authentication",
+      "responses": [
+        {
+          "uuid": "385209ae-9162-4e2b-a547-50e7409331a9",
           "body": "{\n  \"status\": \"ok\" \n}",
           "latency": 0,
           "statusCode": 200,
@@ -491,6 +646,26 @@
     {
       "type": "route",
       "uuid": "5f0c6869-8be4-4515-959b-9671f2ccdb4e"
+    },
+    {
+      "type": "route",
+      "uuid": "74d55a5d-0b46-4f3c-bed9-2d35a1a685c9"
+    },
+    {
+      "type": "route",
+      "uuid": "84f9dd0d-38e5-4581-84bc-4abd1f5a3bf2"
+    },
+    {
+      "type": "route",
+      "uuid": "37c5d4b8-2d49-4b59-aab4-f405ce13dfb6"
+    },
+    {
+      "type": "route",
+      "uuid": "1414662c-63e6-469d-9d82-f80fa02f8ccb"
+    },
+    {
+      "type": "route",
+      "uuid": "385209ae-9162-4e2b-a547-50e7409331a9"
     }
   ],
   "proxyMode": false,
@@ -542,7 +717,7 @@
       "id": "dt8z",
       "name": "Users",
       "documentation": "",
-      "value": "[\n  {{#repeat 50}}\n  {\n    \"id\": \"{{faker 'string.uuid'}}\",\n    \"username\": \"{{faker 'internet.userName'}}\"\n  }\n  {{/repeat}}\n]"
+      "value": "[\n  {{#repeat 50}}\n  {\n    \"id\": \"{{faker 'string.uuid'}}\",\n]"
     }
   ],
   "callbacks": []

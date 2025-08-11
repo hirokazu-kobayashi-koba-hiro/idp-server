@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors.device;
+package org.idp.server.core.openid.authentication.config;
 
-import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
-import org.idp.server.core.openid.identity.device.AuthenticationDevice;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.notification.NotificationChannel;
+import org.idp.server.platform.json.JsonReadable;
 
-public interface AuthenticationDeviceNotifier {
+public class AuthenticationPreviousInteractionResolveConfig implements JsonReadable {
+  String key;
 
-  NotificationChannel chanel();
+  public AuthenticationPreviousInteractionResolveConfig() {}
 
-  void notify(
-      Tenant tenant, AuthenticationDevice device, AuthenticationExecutionConfig configuration);
+  public String key() {
+    return key;
+  }
+
+  public boolean exists() {
+    return key != null && !key.isEmpty();
+  }
 }

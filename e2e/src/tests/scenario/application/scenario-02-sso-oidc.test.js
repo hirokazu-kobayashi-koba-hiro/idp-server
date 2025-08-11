@@ -65,7 +65,7 @@ describe("sso oidc", () => {
           const transactionId = authenticationTransactionResponse.data.list[0].id;
 
           const interactionResponse = await get({
-            url: `${backendUrl}/v1/management/tenants/${federationServerConfig.tenantId}/authentication-interactions/${transactionId}/email`,
+            url: `${backendUrl}/v1/management/tenants/${federationServerConfig.tenantId}/authentication-interactions/${transactionId}/email-authentication-challenge`,
             headers: {
               Authorization: `Bearer ${accessToken}`
             }
@@ -200,7 +200,7 @@ describe("sso oidc", () => {
         const transactionId = authenticationTransactionResponse.data.list[0].id;
 
         const interactionResponse = await get({
-          url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/authentication-interactions/${transactionId}/email`,
+          url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/authentication-interactions/${transactionId}/email-authentication-challenge`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }

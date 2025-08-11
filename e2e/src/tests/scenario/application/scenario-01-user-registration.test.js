@@ -48,7 +48,7 @@ describe("user registration", () => {
         const transactionId = authenticationTransactionResponse.data.list[0].id;
 
         const interactionResponse = await get({
-          url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/email`,
+          url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/email-authentication-challenge`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -153,7 +153,7 @@ describe("user registration", () => {
         const transactionId = authenticationTransactionResponse.data.list[0].id;
 
         const interactionResponse = await get({
-          url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/sms`,
+          url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/sms-authentication-challenge`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -260,7 +260,7 @@ describe("user registration", () => {
         const transactionId = authenticationTransactionResponse.data.list[0].id;
 
         const interactionResponse = await get({
-          url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/sms`,
+          url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/sms-authentication-challenge`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -365,7 +365,7 @@ describe("user registration", () => {
         const transactionId = authenticationTransactionResponse.data.list[0].id;
 
         const interactionResponse = await get({
-          url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/sms`,
+          url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/sms-authentication-challenge`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -472,7 +472,7 @@ describe("user registration", () => {
         let transactionId = authenticationTransactionResponse.data.list[0].id;
 
         let interactionResponse = await get({
-          url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/email`,
+          url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/email-authentication-challenge`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -525,7 +525,7 @@ describe("user registration", () => {
         transactionId = authenticationTransactionResponse.data.list[0].id;
 
         interactionResponse = await get({
-          url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/sms`,
+          url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/sms-authentication-challenge`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -616,7 +616,7 @@ describe("user registration", () => {
         let transactionId = authenticationTransactionResponse.data.list[0].id;
 
         let interactionResponse = await get({
-          url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/sms`,
+          url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/sms-authentication-challenge`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -669,7 +669,7 @@ describe("user registration", () => {
         transactionId = authenticationTransactionResponse.data.list[0].id;
 
         interactionResponse = await get({
-          url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/email`,
+          url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/email-authentication-challenge`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }

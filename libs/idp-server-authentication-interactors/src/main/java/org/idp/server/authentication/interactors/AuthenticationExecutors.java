@@ -26,12 +26,6 @@ public class AuthenticationExecutors {
 
   public AuthenticationExecutors(Map<String, AuthenticationExecutor> additionalExecutors) {
     this.executors = new HashMap<>();
-    HttpRequestAuthenticationExecutor httpRequest = new HttpRequestAuthenticationExecutor();
-    executors.put(httpRequest.function(), httpRequest);
-
-    HttpRequestsAuthenticationExecutor httpRequests = new HttpRequestsAuthenticationExecutor();
-    executors.put(httpRequests.function(), httpRequests);
-
     NoActionAuthenticationExecutor noAction = new NoActionAuthenticationExecutor();
     executors.put(noAction.function(), noAction);
 

@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.idp.server.authentication.interactors.device.AuthenticationDeviceNotifier;
-import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
+import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -46,7 +46,7 @@ public class FcmNotifier implements AuthenticationDeviceNotifier {
 
   @Override
   public void notify(
-      Tenant tenant, AuthenticationDevice device, AuthenticationConfiguration configuration) {
+      Tenant tenant, AuthenticationDevice device, AuthenticationExecutionConfig configuration) {
 
     try {
       log.debug("Fcm notification channel called");
@@ -56,8 +56,8 @@ public class FcmNotifier implements AuthenticationDeviceNotifier {
         return;
       }
 
-      // TODO
-      FcmConfiguration fcmConfiguration = new FcmConfiguration();
+      FcmConfiguration fcmConfiguration =
+          jsonConverter.read(configuration.details(), FcmConfiguration.class);
       FirebaseMessaging firebaseMessaging = getOrInitFirebaseMessaging(tenant, fcmConfiguration);
 
       NotificationTemplate notificationTemplate = fcmConfiguration.findTemplate("default");

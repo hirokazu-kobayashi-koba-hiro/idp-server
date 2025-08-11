@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.authentication.*;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
+import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
+import org.idp.server.core.openid.authentication.config.AuthenticationInteractionConfig;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
@@ -55,7 +57,7 @@ public class AuthenticationDeviceNotificationInteractor implements Authenticatio
 
   @Override
   public String method() {
-    return "device-notification";
+    return "authentication-device-notification";
   }
 
   @Override
@@ -72,7 +74,10 @@ public class AuthenticationDeviceNotificationInteractor implements Authenticatio
       log.debug("AuthenticationDeviceNotificationInteractor called");
 
       AuthenticationConfiguration configuration =
-          configurationQueryRepository.get(tenant, "authentication-device");
+          configurationQueryRepository.get(tenant, "authentication-device-notification");
+      AuthenticationInteractionConfig authenticationConfig =
+          configuration.getAuthenticationConfig("authentication-device-notification");
+      AuthenticationExecutionConfig execution = authenticationConfig.execution();
 
       User user = transaction.user();
       if (!user.exists()) {
@@ -102,7 +107,7 @@ public class AuthenticationDeviceNotificationInteractor implements Authenticatio
 
       AuthenticationDeviceNotifier notifier = authenticationDeviceNotifiers.get(channel);
 
-      notifier.notify(tenant, authenticationDevice, configuration);
+      notifier.notify(tenant, authenticationDevice, execution);
 
       AuthenticationInteractionStatus status = AuthenticationInteractionStatus.SUCCESS;
       Map<String, Object> response = Map.of();

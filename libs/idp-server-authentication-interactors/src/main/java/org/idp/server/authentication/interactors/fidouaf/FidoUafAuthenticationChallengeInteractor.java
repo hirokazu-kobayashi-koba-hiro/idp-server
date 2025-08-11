@@ -85,6 +85,7 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
 
     String deviceId = extractDeviceId(transaction, request, requestAttributes);
 
+    // request
     if (deviceId == null || deviceId.isEmpty()) {
       Map<String, Object> contents = new HashMap<>();
       contents.put("error", "invalid_request");
@@ -98,7 +99,7 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
           DefaultSecurityEventType.fido_uaf_authentication_challenge_failure);
     }
 
-    // TODO
+    // TODO pre_hook
     Map<String, Object> executionRequest = new HashMap<>();
     executionRequest.put("device_id", deviceId);
 
@@ -108,6 +109,8 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
 
     AuthenticationExecutionRequest authenticationExecutionRequest =
         new AuthenticationExecutionRequest(executionRequest);
+
+    // execution
     AuthenticationExecutionResult executionResult =
         executor.execute(
             tenant,

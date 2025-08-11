@@ -34,16 +34,6 @@
           }
         }
       },
-      "pre_hook": {
-        "additional_parameters": [
-          {
-            "function": "message_template",
-            "details": {
-
-            }
-          }
-        ]
-      },
       "execution": {
         "function": "http_request",
         "http_request": {
@@ -69,17 +59,18 @@
               "to": "*"
             }
           ]
+        },
+        "http_request_store": {
+          "key": "sms-authentication-challenge",
+          "interaction_mapping_rules": [
+            {
+              "from": "$.response_body.transaction_id",
+              "to": "transaction_id"
+            }
+          ]
         }
       },
       "post_hook": {},
-      "store": {
-        "interaction_payload": [
-          {
-            "from": "$.response_body.transaction_id",
-            "to": "transaction_id"
-          }
-        ]
-      },
       "response": {
         "body_mapping_rules": [
           {
@@ -104,6 +95,9 @@
       },
       "execution": {
         "function": "http_request",
+        "previous_interaction": {
+          "key": "sms-authentication-challenge"
+        },
         "http_request": {
           "url": "http://localhost:4000/sms-authentication",
           "method": "POST",
@@ -129,6 +123,23 @@
             {
               "from": "$.interaction.transaction_id",
               "to": "transaction_id"
+            }
+          ]
+        },
+        "http_request_store": {
+          "key": "sms-authentication",
+          "interaction_mapping_rules": [
+            {
+              "from": "$.status_code",
+              "to": "status_code"
+            },
+            {
+              "from": "$.response_headers",
+              "to": "response_headers"
+            },
+            {
+              "from": "$.response_body",
+              "to": "response_body"
             }
           ]
         }

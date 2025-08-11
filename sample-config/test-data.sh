@@ -111,11 +111,11 @@ echo "authentication-config"
 
 authentication_config_files=(
   authentication-device/fcm.json
-  email/no-action.json
+  email/external.json
   fido-uaf/external.json
   legacy/mocky.json
   initial-registration/standard.json
-  sms/no-action.json
+  sms/external.json
   webauthn/webauthn4j.json
 )
 

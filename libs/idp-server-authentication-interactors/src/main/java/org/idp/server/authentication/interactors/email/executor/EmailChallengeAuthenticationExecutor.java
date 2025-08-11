@@ -97,7 +97,8 @@ public class EmailChallengeAuthenticationExecutor implements AuthenticationExecu
     SmsVerificationChallenge verificationChallenge =
         SmsVerificationChallenge.create(oneTimePassword, retryCountLimitation, expireSeconds);
 
-    interactionCommandRepository.register(tenant, identifier, "email", verificationChallenge);
+    interactionCommandRepository.register(
+        tenant, identifier, "email-authentication-challenge", verificationChallenge);
 
     return AuthenticationExecutionResult.success(Map.of());
   }

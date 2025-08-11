@@ -58,6 +58,7 @@ export const createFederatedUser = async ({
       });
       console.log(challengeResponse.status);
       console.log(challengeResponse.data);
+      expect(challengeResponse.status).toBe(200);
 
       const adminTokenResponse = await requestToken({
         endpoint: serverConfig.tokenEndpoint,
@@ -83,7 +84,7 @@ export const createFederatedUser = async ({
       const transactionId = authenticationTransactionResponse.data.list[0].id;
 
       const interactionResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${federationServerConfig.tenantId}/authentication-interactions/${transactionId}/email`,
+        url: `${backendUrl}/v1/management/tenants/${federationServerConfig.tenantId}/authentication-interactions/${transactionId}/email-authentication-challenge`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -101,6 +102,7 @@ export const createFederatedUser = async ({
 
       console.log(verificationResponse.status);
       console.log(verificationResponse.data);
+      expect(verificationResponse.status).toBe(200);
     };
 
     const viewResponse = await get({
