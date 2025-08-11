@@ -62,6 +62,7 @@
     "fragment"
   ],
   "acr_values_supported": [
+    "urn:mace:incommon:iap:gold",
     "urn:mace:incommon:iap:silver",
     "urn:mace:incommon:iap:bronze"
   ],
@@ -211,9 +212,9 @@
     ],
     "backchannel_authentication_request_expires_in": 60,
     "backchannel_authentication_polling_interval": 5,
-    "enabled_custom_claims_scope_mapping": true,
-    "enabled_access_token_user_custom_properties": true,
-    "enabled_access_token_selective_verified_claims": true,
+    "custom_claims_scope_mapping": true,
+    "access_token_user_custom_properties": true,
+    "access_token_selective_verified_claims": true,
     "authentication_policies": [
       {
         "id": "gold",
@@ -229,7 +230,7 @@
           "sms",
           "webauthn",
           "fido-uaf",
-          "legacy"
+          "external-token"
         ],
         "acr_mapping_rules": {
           "urn:mace:incommon:iap:gold": [
@@ -242,7 +243,7 @@
           ],
           "urn:mace:incommon:iap:bronze": [
             "password",
-            "legacy"
+            "external-token"
           ]
         },
         "level_of_authentication_scopes": {
@@ -297,25 +298,7 @@
           "sms",
           "webauthn",
           "fido-uaf",
-          "legacy"
-        ],
-        "step_definitions": [
-          {
-            "method": "password",
-            "order": 1
-          },
-          {
-            "method": "email",
-            "order": 2
-          },
-          {
-            "method": "sms",
-            "order": 3
-          },
-          {
-            "method": "fido-uaf",
-            "order": 4
-          }
+          "external-token"
         ],
         "acr_mapping_rules": {
           "urn:mace:incommon:iap:gold": [
@@ -328,7 +311,7 @@
           ],
           "urn:mace:incommon:iap:bronze": [
             "password",
-            "legacy"
+            "external-token"
           ]
         },
         "level_of_authentication_scopes": {
@@ -356,6 +339,10 @@
             },
             {
               "type": "fido-uaf-authentication",
+              "success_count": 1
+            },
+            {
+              "type": "external-token",
               "success_count": 1
             },
             {
