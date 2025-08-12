@@ -14,23 +14,31 @@
  * limitations under the License.
  */
 
-package org.idp.server.platform.notification.email;
+package org.idp.server.emai.aws.adapter;
 
-import java.util.Map;
-import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.json.JsonReadable;
 
-public class NoActionEmailSender implements EmailSender {
+public class AwsSesEmailSenderConfig implements JsonReadable {
+  String sender;
+  String regionName;
+  String accessKeyId;
+  String secretAccessKey;
 
-  LoggerWrapper log = LoggerWrapper.getLogger(this.getClass());
+  public AwsSesEmailSenderConfig() {}
 
-  public String function() {
-    return "no_action";
+  public String sender() {
+    return sender;
   }
 
-  public EmailSendResult send(EmailSendingRequest request, EmailSenderConfiguration setting) {
+  public String regionName() {
+    return regionName;
+  }
 
-    log.info("EmailSender: NoActionEmailSender sending request");
+  public String accessKeyId() {
+    return accessKeyId;
+  }
 
-    return new EmailSendResult(true, Map.of());
+  public String secretAccessKey() {
+    return secretAccessKey;
   }
 }

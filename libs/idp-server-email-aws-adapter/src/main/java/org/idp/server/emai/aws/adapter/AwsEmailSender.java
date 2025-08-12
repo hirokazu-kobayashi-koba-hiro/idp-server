@@ -18,6 +18,7 @@ package org.idp.server.emai.aws.adapter;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.notification.email.*;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -27,25 +28,26 @@ import software.amazon.awssdk.services.ses.model.*;
 
 public class AwsEmailSender implements EmailSender {
 
+  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+
   @Override
-  public EmailSenderType type() {
-    return new EmailSenderType("aws_ses");
+  public String function() {
+    return "aws_ses";
   }
 
   @Override
-  public EmailSendResult send(EmailSendingRequest request, EmailSenderSetting setting) {
-    String sender = setting.getValueAsString("sender");
-    String regionName = setting.optValueAsString("region", "ap-northeast-1");
-    String accessKeyId = setting.optValueAsString("access_key_id", "");
-    String secretAccessKey = setting.optValueAsString("secret_access_key", "");
+  public EmailSendResult send(EmailSendingRequest request, EmailSenderConfiguration configuration) {
+    Map<String, Object> details = configuration.details();
+    AwsSesEmailSenderConfig sesConfig = jsonConverter.read(details, AwsSesEmailSenderConfig.class);
 
-    Region region = Region.of(regionName);
+    Region region = Region.of(sesConfig.regionName());
 
     try (SesClient sesClient =
         SesClient.builder()
             .credentialsProvider(
                 StaticCredentialsProvider.create(
-                    AwsBasicCredentials.create(accessKeyId, secretAccessKey)))
+                    AwsBasicCredentials.create(
+                        sesConfig.accessKeyId(), sesConfig.secretAccessKey())))
             .region(region)
             .build()) {
       Destination destination = Destination.builder().toAddresses(request.to()).build();
@@ -60,7 +62,7 @@ public class AwsEmailSender implements EmailSender {
 
       SendEmailRequest emailRequest =
           SendEmailRequest.builder()
-              .source(sender)
+              .source(sesConfig.sender())
               .destination(destination)
               .message(message)
               .build();

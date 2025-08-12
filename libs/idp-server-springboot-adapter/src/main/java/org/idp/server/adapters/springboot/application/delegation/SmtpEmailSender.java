@@ -27,17 +27,18 @@ import org.idp.server.platform.notification.email.*;
 public class SmtpEmailSender implements EmailSender {
 
   @Override
-  public EmailSenderType type() {
-    return DefaultEmailSenderType.SMTP.toType();
+  public String function() {
+    return "smtp";
   }
 
   @Override
-  public EmailSendResult send(EmailSendingRequest request, EmailSenderSetting setting) {
+  public EmailSendResult send(EmailSendingRequest request, EmailSenderConfiguration configuration) {
+    SmtpEmailSenderConfig smtpConfig = configuration.smtp();
     Properties props = new Properties();
     props.put("mail.smtp.auth", "true");
     props.put("mail.smtp.starttls.enable", "true");
-    props.put("mail.smtp.host", setting.getValueAsString("host"));
-    props.put("mail.smtp.port", setting.getValueAsInt("port"));
+    props.put("mail.smtp.host", smtpConfig.host());
+    props.put("mail.smtp.port", smtpConfig.port());
 
     Session session =
         Session.getInstance(
@@ -45,8 +46,7 @@ public class SmtpEmailSender implements EmailSender {
             new Authenticator() {
               @Override
               protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(
-                    setting.getValueAsString("username"), setting.getValueAsString("password"));
+                return new PasswordAuthentication(smtpConfig.username(), smtpConfig.password());
               }
             });
 

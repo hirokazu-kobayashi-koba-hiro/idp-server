@@ -18,42 +18,38 @@ package org.idp.server.platform.notification.email;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.platform.json.JsonReadable;
 
-public class EmailSendingRequest {
-  String from;
-  String to;
-  String subject;
-  String body;
+public class SmtpEmailSenderConfig implements JsonReadable {
+  String host;
+  String port;
+  String username;
+  String password;
 
-  public EmailSendingRequest(String from, String to, String subject, String body) {
-    this.from = from;
-    this.to = to;
-    this.subject = subject;
-    this.body = body;
+  public SmtpEmailSenderConfig() {}
+
+  public String host() {
+    return host;
   }
 
-  public String from() {
-    return from;
+  public String port() {
+    return port;
   }
 
-  public String to() {
-    return to;
+  public String username() {
+    return username;
   }
 
-  public String subject() {
-    return subject;
-  }
-
-  public String body() {
-    return body;
+  public String password() {
+    return password;
   }
 
   public Map<String, Object> toMap() {
     HashMap<String, Object> result = new HashMap<>();
-    result.put("from", from);
-    result.put("to", to);
-    result.put("subject", subject);
-    result.put("body", body);
+    result.put("host", host);
+    result.put("port", port);
+    result.put("username", username);
+    result.put("password", password);
     return result;
   }
 }

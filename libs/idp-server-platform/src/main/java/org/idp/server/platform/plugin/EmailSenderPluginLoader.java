@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.notification.email.EmailSender;
-import org.idp.server.platform.notification.email.EmailSenderType;
 import org.idp.server.platform.notification.email.EmailSenders;
 
 public class EmailSenderPluginLoader extends PluginLoader {
@@ -30,17 +29,17 @@ public class EmailSenderPluginLoader extends PluginLoader {
 
   public static EmailSenders load() {
 
-    Map<EmailSenderType, EmailSender> senders = new HashMap<>();
+    Map<String, EmailSender> senders = new HashMap<>();
     List<EmailSender> internalEmailSenders = loadFromInternalModule(EmailSender.class);
     for (EmailSender emailSender : internalEmailSenders) {
-      senders.put(emailSender.type(), emailSender);
-      log.info("Dynamic Registered internal email sender: " + emailSender.type().name());
+      senders.put(emailSender.function(), emailSender);
+      log.info("Dynamic Registered internal email sender: " + emailSender.function());
     }
 
     List<EmailSender> externalEmailSenders = loadFromExternalModule(EmailSender.class);
     for (EmailSender emailSender : externalEmailSenders) {
-      senders.put(emailSender.type(), emailSender);
-      log.info("Dynamic Registered external email sender: " + emailSender.type().name());
+      senders.put(emailSender.function(), emailSender);
+      log.info("Dynamic Registered external email sender: " + emailSender.function());
     }
 
     return new EmailSenders(senders);

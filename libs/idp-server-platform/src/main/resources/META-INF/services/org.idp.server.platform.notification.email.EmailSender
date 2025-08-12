@@ -1,1 +1,2 @@
 org.idp.server.platform.notification.email.NoActionEmailSender
+org.idp.server.platform.notification.email.HttpRequestEmailSender
