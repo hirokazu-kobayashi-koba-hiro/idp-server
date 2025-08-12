@@ -21,17 +21,17 @@ import org.idp.server.platform.exception.UnSupportedException;
 
 public class EmailSenders {
 
-  Map<EmailSenderType, EmailSender> senders;
+  Map<String, EmailSender> senders;
 
-  public EmailSenders(Map<EmailSenderType, EmailSender> senders) {
+  public EmailSenders(Map<String, EmailSender> senders) {
     this.senders = senders;
   }
 
-  public EmailSender get(EmailSenderType type) {
-    EmailSender emailSender = senders.get(type);
+  public EmailSender get(String function) {
+    EmailSender emailSender = senders.get(function);
 
     if (emailSender == null) {
-      throw new UnSupportedException("No EmailSender found for type " + type);
+      throw new UnSupportedException("No EmailSender found for function " + function);
     }
 
     return emailSender;

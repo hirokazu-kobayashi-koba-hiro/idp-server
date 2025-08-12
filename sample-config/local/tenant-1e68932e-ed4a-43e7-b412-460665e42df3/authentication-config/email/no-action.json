@@ -28,7 +28,7 @@
       "execution": {
         "function": "email_authentication_challenge",
         "details": {
-          "sender_type": "no_action",
+          "function": "no_action",
           "sender": "test@gmail.com",
           "templates": {
             "registration": {

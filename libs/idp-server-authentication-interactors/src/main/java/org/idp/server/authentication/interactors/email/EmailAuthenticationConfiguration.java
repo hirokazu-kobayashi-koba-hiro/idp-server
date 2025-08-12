@@ -18,13 +18,12 @@ package org.idp.server.authentication.interactors.email;
 
 import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
-import org.idp.server.platform.notification.email.EmailSenderSetting;
-import org.idp.server.platform.notification.email.EmailSenderType;
+import org.idp.server.platform.notification.email.EmailSenderConfiguration;
 
 public class EmailAuthenticationConfiguration implements JsonReadable {
   String sender;
-  String senderType;
-  Map<String, Object> settings;
+  String function;
+  EmailSenderConfiguration senderConfig = new EmailSenderConfiguration();
   Map<String, EmailVerificationTemplate> templates;
   int retryCountLimitation;
   int expireSeconds;
@@ -42,8 +41,8 @@ public class EmailAuthenticationConfiguration implements JsonReadable {
     this.expireSeconds = expireSeconds;
   }
 
-  public EmailSenderType senderType() {
-    return new EmailSenderType(senderType);
+  public String function() {
+    return function;
   }
 
   public String sender() {
@@ -54,9 +53,11 @@ public class EmailAuthenticationConfiguration implements JsonReadable {
     return templates.getOrDefault(templateKey, new EmailVerificationTemplate());
   }
 
-  public EmailSenderSetting settings() {
-
-    return new EmailSenderSetting(settings);
+  public EmailSenderConfiguration senderConfig() {
+    if (senderConfig == null) {
+      return new EmailSenderConfiguration();
+    }
+    return senderConfig;
   }
 
   public int retryCountLimitation() {
@@ -68,6 +69,6 @@ public class EmailAuthenticationConfiguration implements JsonReadable {
   }
 
   public boolean exists() {
-    return senderType != null && !senderType.isEmpty();
+    return sender != null && !sender.isEmpty();
   }
 }

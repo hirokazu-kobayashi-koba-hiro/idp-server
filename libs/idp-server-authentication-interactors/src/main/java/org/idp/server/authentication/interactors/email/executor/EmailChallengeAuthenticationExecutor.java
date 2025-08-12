@@ -85,9 +85,9 @@ public class EmailChallengeAuthenticationExecutor implements AuthenticationExecu
 
     EmailSendingRequest sendingRequest = new EmailSendingRequest(sender, email, subject, body);
 
-    EmailSender emailSender = emailSenders.get(emailAuthenticationConfiguration.senderType());
+    EmailSender emailSender = emailSenders.get(emailAuthenticationConfiguration.function());
     EmailSendResult sendResult =
-        emailSender.send(sendingRequest, emailAuthenticationConfiguration.settings());
+        emailSender.send(sendingRequest, emailAuthenticationConfiguration.senderConfig());
 
     if (sendResult.isError()) {
 

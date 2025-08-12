@@ -18,7 +18,7 @@ package org.idp.server.platform.notification.email;
 
 public interface EmailSender {
 
-  EmailSenderType type();
+  String function();
 
-  EmailSendResult send(EmailSendingRequest request, EmailSenderSetting setting);
+  EmailSendResult send(EmailSendingRequest request, EmailSenderConfiguration setting);
 }
