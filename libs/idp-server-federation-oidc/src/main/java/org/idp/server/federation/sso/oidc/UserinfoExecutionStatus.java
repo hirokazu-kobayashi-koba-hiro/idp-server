@@ -39,6 +39,10 @@ public enum UserinfoExecutionStatus {
     return this == SERVER_ERROR;
   }
 
+  public boolean isError() {
+    return this == SERVER_ERROR || this == CLIENT_ERROR;
+  }
+
   public int code() {
     return statusCode;
   }

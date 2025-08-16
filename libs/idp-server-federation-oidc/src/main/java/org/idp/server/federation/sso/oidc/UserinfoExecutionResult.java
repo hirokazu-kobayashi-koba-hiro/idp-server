@@ -48,8 +48,8 @@ public class UserinfoExecutionResult {
     return status.isOk();
   }
 
-  public boolean isClientError() {
-    return status.isClientError();
+  public boolean isError() {
+    return status.isError();
   }
 
   public boolean isServerError() {

@@ -38,4 +38,14 @@ public enum FederationInteractionStatus {
   public boolean isError() {
     return this == CLIENT_ERROR || this == SERVER_ERROR;
   }
+
+  public static FederationInteractionStatus fromStatusCode(int statusCode) {
+    if (statusCode >= 200 && statusCode <= 299) {
+      return SUCCESS;
+    }
+    if (statusCode >= 400 && statusCode <= 499) {
+      return CLIENT_ERROR;
+    }
+    return SERVER_ERROR;
+  }
 }

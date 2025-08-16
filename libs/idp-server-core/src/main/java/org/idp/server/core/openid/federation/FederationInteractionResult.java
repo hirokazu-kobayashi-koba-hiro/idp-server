@@ -39,15 +39,16 @@ public class FederationInteractionResult {
   Map<String, Object> response;
   SecurityEventType eventType;
 
-  public static FederationInteractionResult serverError(
+  public static FederationInteractionResult error(
       FederationType federationType,
       SsoProvider ssoProvider,
       OidcSsoSession session,
+      int statusCode,
       Map<String, Object> response) {
 
     AuthorizationRequestIdentifier authorizationRequestIdentifier =
         new AuthorizationRequestIdentifier(session.authorizationRequestId());
-    FederationInteractionStatus status = FederationInteractionStatus.SERVER_ERROR;
+    FederationInteractionStatus status = FederationInteractionStatus.fromStatusCode(statusCode);
     TenantIdentifier tenantIdentifier = new TenantIdentifier(session.tenantId());
     DefaultSecurityEventType eventType = DefaultSecurityEventType.federation_failure;
 
