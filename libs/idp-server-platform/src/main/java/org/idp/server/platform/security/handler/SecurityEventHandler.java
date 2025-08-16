@@ -64,22 +64,20 @@ public class SecurityEventHandler {
       SecurityEventHook securityEventHookExecutor =
           securityEventHooks.get(hookConfiguration.hookType());
 
-      if (securityEventHookExecutor.shouldNotExecute(tenant, securityEvent, hookConfiguration)) {
-        continue;
+      if (securityEventHookExecutor.shouldExecute(tenant, securityEvent, hookConfiguration)) {
+        log.info(
+            String.format(
+                "security event hook execution trigger: %s, type: %s tenant: %s client: %s user: %s, ",
+                securityEvent.type().value(),
+                hookConfiguration.hookType().name(),
+                securityEvent.tenantIdentifierValue(),
+                securityEvent.clientIdentifierValue(),
+                securityEvent.userSub()));
+
+        SecurityEventHookResult hookResult =
+            securityEventHookExecutor.execute(tenant, securityEvent, hookConfiguration);
+        results.add(hookResult);
       }
-
-      log.info(
-          String.format(
-              "security event hook execution trigger: %s, type: %s tenant: %s client: %s user: %s, ",
-              securityEvent.type().value(),
-              hookConfiguration.hookType().name(),
-              securityEvent.tenantIdentifierValue(),
-              securityEvent.clientIdentifierValue(),
-              securityEvent.userSub()));
-
-      SecurityEventHookResult hookResult =
-          securityEventHookExecutor.execute(tenant, securityEvent, hookConfiguration);
-      results.add(hookResult);
     }
 
     if (!results.isEmpty()) {

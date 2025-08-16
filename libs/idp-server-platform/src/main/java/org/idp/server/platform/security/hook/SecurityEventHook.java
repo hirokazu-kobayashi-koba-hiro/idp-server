@@ -24,11 +24,16 @@ public interface SecurityEventHook {
 
   SecurityEventHookType type();
 
-  default boolean shouldNotExecute(
+  default boolean shouldExecute(
       Tenant tenant,
       SecurityEvent securityEvent,
       SecurityEventHookConfiguration hookConfiguration) {
-    return !hookConfiguration.containsTrigger(securityEvent.type().value());
+
+    if (!hookConfiguration.hasEvents()) {
+      return false;
+    }
+
+    return hookConfiguration.containsTrigger(securityEvent.type().value());
   }
 
   SecurityEventHookResult execute(

@@ -28,6 +28,7 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.mapper.UserInfoMapper;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OidcFederationInteractor implements FederationInteractor {
@@ -36,6 +37,7 @@ public class OidcFederationInteractor implements FederationInteractor {
   SsoSessionCommandRepository sessionCommandRepository;
   SsoSessionQueryRepository sessionQueryRepository;
   OidcSsoExecutors oidcSsoExecutors;
+  LoggerWrapper lpg = LoggerWrapper.getLogger(OidcFederationInteractor.class);
 
   public OidcFederationInteractor(
       OidcSsoExecutors oidcSsoExecutors,
@@ -99,9 +101,10 @@ public class OidcFederationInteractor implements FederationInteractor {
     OidcTokenResult tokenResult = oidcSsoExecutor.requestToken(tokenRequest);
 
     if (tokenResult.isError()) {
-
-      return FederationInteractionResult.serverError(
-          federationType, ssoProvider, session, tokenResult.bodyAsMap());
+      lpg.error(
+          "Error occurred while executing token request. tenantId: {}", tenant.identifierValue());
+      return FederationInteractionResult.error(
+          federationType, ssoProvider, session, tokenResult.statusCode(), tokenResult.bodyAsMap());
     }
 
     OidcJwksResult jwksResult =
@@ -112,16 +115,21 @@ public class OidcFederationInteractor implements FederationInteractor {
       response.put("error", "server_error");
       response.put("error_description", jwksResult.body());
 
-      return FederationInteractionResult.serverError(
-          federationType, ssoProvider, session, response);
+      lpg.error(
+          "Error occurred while executing jwk request. tenantId: {}", tenant.identifierValue());
+      return FederationInteractionResult.error(
+          federationType, ssoProvider, session, jwksResult.statusCode(), response);
     }
 
     IdTokenVerificationResult idTokenVerificationResult =
         oidcSsoExecutor.verifyIdToken(oidcSsoConfiguration, session, jwksResult, tokenResult);
     if (idTokenVerificationResult.isError()) {
 
-      return FederationInteractionResult.serverError(
-          federationType, ssoProvider, session, idTokenVerificationResult.data());
+      lpg.error(
+          "Error occurred while executing id_token validation. tenantId: {}",
+          tenant.identifierValue());
+      return FederationInteractionResult.error(
+          federationType, ssoProvider, session, 400, idTokenVerificationResult.data());
     }
 
     OidcUserinfoRequest userinfoRequest =
@@ -131,9 +139,17 @@ public class OidcFederationInteractor implements FederationInteractor {
             oidcSsoConfiguration.userinfoExecution());
     UserinfoExecutionResult userinfoResult = oidcSsoExecutor.requestUserInfo(userinfoRequest);
 
-    if (userinfoResult.isClientError()) {
-      return FederationInteractionResult.serverError(
-          federationType, ssoProvider, session, userinfoResult.contents());
+    if (userinfoResult.isError()) {
+
+      lpg.error(
+          "Error occurred while executing userinfo request. tenantId: {}",
+          tenant.identifierValue());
+      return FederationInteractionResult.error(
+          federationType,
+          ssoProvider,
+          session,
+          userinfoResult.statusCode(),
+          userinfoResult.contents());
     }
 
     UserInfoMapper userInfoMapper =

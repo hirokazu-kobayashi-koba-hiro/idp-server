@@ -16,6 +16,7 @@
 
 package org.idp.server.platform.security.hook.configuration;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,10 +30,10 @@ public class SecurityEventHookConfiguration implements JsonReadable {
   String type;
   Map<String, Object> attributes = new HashMap<>();
   Map<String, Object> metadata = new HashMap<>();
-  List<String> triggers;
-  int executionOrder;
-  Map<String, SecurityEventConfig> events;
-  boolean enabled;
+  List<String> triggers = new ArrayList<>();
+  int executionOrder = 100;
+  Map<String, SecurityEventConfig> events = new HashMap<>();
+  boolean enabled = false;
 
   public SecurityEventHookConfiguration() {}
 
@@ -110,6 +111,9 @@ public class SecurityEventHookConfiguration implements JsonReadable {
   }
 
   public SecurityEventConfig getEvent(SecurityEventType eventType) {
+    if (events == null) {
+      return new SecurityEventConfig();
+    }
     if (events.containsKey(eventType.value())) {
       return events.get(eventType.value());
     }
