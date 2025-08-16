@@ -30,6 +30,14 @@
             }
           ]
         }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_http_request.response_body",
+            "to": "*"
+          }
+        ]
       }
     },
     "fido-uaf-registration-challenge": {
@@ -60,6 +68,14 @@
             }
           ]
         }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_http_request.response_body",
+            "to": "*"
+          }
+        ]
       }
     },
     "fido-uaf-registration": {
@@ -90,6 +106,14 @@
             }
           ]
         }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_http_request.response_body",
+            "to": "*"
+          }
+        ]
       }
     },
     "fido-uaf-authentication-challenge": {
@@ -120,6 +144,14 @@
             }
           ]
         }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_http_request.response_body",
+            "to": "*"
+          }
+        ]
       }
     },
     "fido-uaf-authentication": {
@@ -150,6 +182,14 @@
             }
           ]
         }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_http_request.response_body",
+            "to": "*"
+          }
+        ]
       }
     },
     "fido-uaf-deregistration": {
@@ -180,6 +220,14 @@
             }
           ]
         }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_http_request.response_body",
+            "to": "*"
+          }
+        ]
       }
     }
   }

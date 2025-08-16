@@ -27,10 +27,14 @@ import org.idp.server.core.openid.authentication.*;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
 import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
 import org.idp.server.core.openid.authentication.config.AuthenticationInteractionConfig;
+import org.idp.server.core.openid.authentication.config.AuthenticationResponseConfig;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
@@ -119,9 +123,15 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
             requestAttributes,
             execution);
 
+    AuthenticationResponseConfig responseConfig = authenticationInteractionConfig.response();
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(executionResult.contents());
+    JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
+    Map<String, Object> contents =
+        MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
+
     if (executionResult.isClientError()) {
       return AuthenticationInteractionRequestResult.clientError(
-          executionResult.contents(),
+          contents,
           type,
           operationType(),
           method(),
@@ -130,7 +140,7 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
 
     if (executionResult.isServerError()) {
       return AuthenticationInteractionRequestResult.serverError(
-          executionResult.contents(),
+          contents,
           type,
           operationType(),
           method(),
@@ -143,7 +153,7 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
         operationType(),
         method(),
         transaction.user(),
-        executionResult.contents(),
+        contents,
         DefaultSecurityEventType.fido_uaf_authentication_challenge_success);
   }
 

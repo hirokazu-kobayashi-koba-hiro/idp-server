@@ -172,7 +172,7 @@
       "responses": [
         {
           "uuid": "d87bee34-a739-4400-b536-7288e3d550f5",
-          "body": "{\n  \"user_id\": \"{{ uuid }}\" \n}",
+          "body": "{\n  \"uafRequest\": [\n    {\n      \"header\": {\n        \"upv\": {\n          \"major\": 0,\n          \"minor\": 0\n        },\n        \"op\": \"string\",\n        \"appID\": \"string\"\n      },\n      \"challenge\": \"string\",\n      \"transaction\": \"string\"\n    }\n  ]\n}",
           "latency": 0,
           "statusCode": 200,
           "label": "",
@@ -203,7 +203,7 @@
       "responses": [
         {
           "uuid": "8c5fa788-7b59-46c5-ae35-a32fa9f616d7",
-          "body": "{\n  \"user_id\": \"{{ uuid }}\" \n}",
+          "body": "{\n  \"status\": \"string\",\n  \"message\": \"string\"\n}",
           "latency": 0,
           "statusCode": 200,
           "label": "",
@@ -234,7 +234,7 @@
       "responses": [
         {
           "uuid": "13b94c1c-42c8-4f0c-8a51-596590b599da",
-          "body": "{\n  \"user_id\": \"{{ uuid }}\" \n}",
+          "body": "{\n  \"uafRequest\": [\n    {\n      \"header\": {\n        \"upv\": {\n          \"major\": 0,\n          \"minor\": 0\n        },\n        \"op\": \"string\",\n        \"appID\": \"string\"\n      },\n      \"challenge\": \"string\",\n      \"transaction\": \"string\"\n    }\n  ]\n}",
           "latency": 0,
           "statusCode": 200,
           "label": "",
@@ -265,7 +265,7 @@
       "responses": [
         {
           "uuid": "479bd4e6-5295-45fa-96b5-bb9c58cb43aa",
-          "body": "{\n  \"user_id\": \"{{ uuid }}\" \n}",
+          "body": "{\n  \"status\": \"string\",\n  \"message\": \"string\"\n}",
           "latency": 0,
           "statusCode": 200,
           "label": "",

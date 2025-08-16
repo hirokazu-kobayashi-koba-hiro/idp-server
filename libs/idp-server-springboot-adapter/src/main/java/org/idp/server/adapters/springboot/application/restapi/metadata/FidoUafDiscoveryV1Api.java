@@ -19,7 +19,7 @@ package org.idp.server.adapters.springboot.application.restapi.metadata;
 import jakarta.servlet.http.HttpServletRequest;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
-import org.idp.server.authentication.interactors.AuthenticationExecutionResult;
+import org.idp.server.authentication.interactors.AuthenticationMetadataResponse;
 import org.idp.server.authentication.interactors.fidouaf.AuthenticationMetaDataApi;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
@@ -47,7 +47,7 @@ public class FidoUafDiscoveryV1Api implements ParameterTransformable {
 
     RequestAttributes requestAttributes = transform(request);
 
-    AuthenticationExecutionResult result =
+    AuthenticationMetadataResponse result =
         authenticationMetaDataApi.getFidoUafFacets(tenantId, requestAttributes);
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");

@@ -37,67 +37,19 @@
     },
     "revocation_endpoint": "https://oauth2.googleapis.com/revoke",
     "jwks_uri": "http://localhost:8080/1e68932e-ed4a-43e7-b412-460665e42df3/v1/jwks",
-    "response_types_supported": [
-      "code",
-      "token",
-      "id_token",
-      "code token",
-      "code id_token",
-      "token id_token",
-      "code token id_token",
-      "none"
-    ],
-    "subject_types_supported": [
-      "public"
-    ],
-    "id_token_signing_alg_values_supported": [
-      "RS256"
-    ],
-    "scopes_supported": [
-      "openid",
-      "email",
-      "profile"
-    ],
-    "token_endpoint_auth_methods_supported": [
-      "client_secret_post",
-      "client_secret_basic"
-    ],
-    "claims_supported": [
-      "aud",
-      "email",
-      "email_verified",
-      "exp",
-      "family_name",
-      "given_name",
-      "iat",
-      "iss",
-      "name",
-      "picture",
-      "sub"
-    ],
-    "code_challenge_methods_supported": [
-      "plain",
-      "S256"
-    ],
-    "grant_types_supported": [
-      "authorization_code",
-      "refresh_token",
-      "urn:ietf:params:oauth:grant-type:device_code",
-      "urn:ietf:params:oauth:grant-type:jwt-bearer"
-    ],
     "client_id": "clientSecretPost",
     "client_secret": "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890",
     "redirect_uri": "http://localhost:8080/signin/sso-callback/index.html",
     "userinfo_mapping_rules": [
       { "static_value": "mock-provider", "to": "provider_id" },
-      { "from": "$.http_requests[0].response_body.user_id", "to": "external_user_id" },
-      { "from": "$.http_requests[0].response_headers.cache-control", "to": "name" },
-      { "from": "$.http_requests[0].response_body.email", "to": "email" },
-      { "from": "$.http_requests[1].response_body.birthdate", "to": "birthdate" },
-      { "from": "$.http_requests[1].response_body.zoneinfo", "to": "zoneinfo" },
-      { "from": "$.http_requests[1].response_body.locale", "to": "locale" },
-      { "from": "$.http_requests[1].response_body.phone_number", "to": "phone_number" },
-      { "from": "$.http_requests[1].response_body.role", "to": "custom_properties.role" }
+      { "from": "$.userinfo_execution_http_requests[0].response_body.id", "to": "external_user_id" },
+      { "from": "$.userinfo_execution_http_requests[0].response_headers.cache-control", "to": "name" },
+      { "from": "$.userinfo_execution_http_requests[0].response_body.email", "to": "email" },
+      { "from": "$.userinfo_execution_http_requests[1].response_body.birthdate", "to": "birthdate" },
+      { "from": "$.userinfo_execution_http_requests[1].response_body.zoneinfo", "to": "zoneinfo" },
+      { "from": "$.userinfo_execution_http_requests[1].response_body.locale", "to": "locale" },
+      { "from": "$.userinfo_execution_http_requests[1].response_body.phone_number", "to": "phone_number" },
+      { "from": "$.userinfo_execution_http_requests[1].response_body.role", "to": "custom_properties.role" }
     ]
   }
 }

@@ -109,7 +109,7 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
 
     User user =
         toUser(
-            authenticationInteractionConfig.result().userMappingRules(),
+            authenticationInteractionConfig.userResolve().userMappingRules(),
             executionResult.contents());
 
     User exsitingUser =
