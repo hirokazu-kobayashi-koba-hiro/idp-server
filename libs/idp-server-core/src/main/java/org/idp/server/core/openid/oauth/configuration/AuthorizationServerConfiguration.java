@@ -586,10 +586,6 @@ public class AuthorizationServerConfiguration implements JsonReadable {
     return extension.enabledCustomClaimsScopeMapping();
   }
 
-  public boolean enabledAccessTokenUserCustomProperties() {
-    return extension.enabledAccessTokenUserCustomProperties();
-  }
-
   public boolean enabledAccessTokenSelectiveUserCustomProperties() {
     return extension.enabledAccessTokenSelectiveUserCustomProperties();
   }

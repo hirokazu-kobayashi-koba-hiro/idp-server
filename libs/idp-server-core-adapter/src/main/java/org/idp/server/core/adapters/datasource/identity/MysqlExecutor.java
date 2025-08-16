@@ -179,11 +179,6 @@ public class MysqlExecutor implements UserSqlExecutor {
       params.add(queries.providerId());
     }
 
-    if (queries.hasProviderUserId()) {
-      where.append(" AND idp_user.external_user_id = ?");
-      params.add(queries.providerUserId());
-    }
-
     if (queries.hasEmail()) {
       where.append(" AND idp_user.email = ?");
       params.add(queries.email());
@@ -280,11 +275,6 @@ public class MysqlExecutor implements UserSqlExecutor {
     if (queries.hasProviderId()) {
       where.append(" AND idp_user.provider_id = ?");
       params.add(queries.providerId());
-    }
-
-    if (queries.hasProviderUserId()) {
-      where.append(" AND idp_user.external_user_id = ?");
-      params.add(queries.providerUserId());
     }
 
     if (queries.hasEmail()) {

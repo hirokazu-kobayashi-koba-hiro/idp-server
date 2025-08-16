@@ -1,7 +1,7 @@
 {
   "sub": "${USER_ID}",
   "provider_id": "idp-server",
-  "external_user_id": "${USER_ID}",
+  "ex_sub": null,
   "name": "ito.ichiro",
   "given_name": "ichiro",
   "family_name": "ito",

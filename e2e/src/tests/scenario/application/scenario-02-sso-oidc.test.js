@@ -2,7 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 import { backendUrl, clientSecretPostClient, federationServerConfig, serverConfig } from "../../testConfig";
 import { faker } from "@faker-js/faker";
 import {
-  deny,
+  deny, getJwks,
   getUserinfo,
   postAuthentication,
   requestToken
@@ -226,7 +226,7 @@ describe("sso oidc", () => {
         clientId: clientSecretPostClient.clientId,
         responseType: "code",
         state: "aiueo",
-        scope: "openid profile phone email" + clientSecretPostClient.scope,
+        scope: "openid profile phone email claims:ex_sub " + clientSecretPostClient.scope,
         redirectUri: clientSecretPostClient.redirectUri,
         customParams: {
           organizationId: "123",
@@ -250,6 +250,14 @@ describe("sso oidc", () => {
       expect(signinTokenResponse.data).toHaveProperty("id_token");
 
       const accessToken = signinTokenResponse.data.access_token;
+
+      const decodedAccessToken = verifyAndDecodeJwt({
+        jwt: accessToken,
+        jwks: jwksResponse.data
+      });
+      console.log(JSON.stringify(decodedAccessToken, null, 2));
+      expect(decodedAccessToken.payload.sub).toEqual(registeredUser.sub);
+      expect(decodedAccessToken.payload.ex_sub).toEqual(registeredUser.external_user_id);
 
       let userinfoResponse = await getUserinfo({
         endpoint: serverConfig.userinfoEndpoint,
