@@ -44,13 +44,14 @@ public class UserinfoHttpRequestsExecutor implements UserinfoExecutor {
 
     Map<String, Object> param = new HashMap<>();
     param.put("request_body", request.toMap());
-    HttpRequestBaseParams httpRequestBaseParams = new HttpRequestBaseParams(param);
 
     List<HttpRequestExecutionConfig> httpRequestExecutionConfigs = configuration.httpRequests();
 
     Map<String, Object> results = new HashMap<>();
     List<HttpRequestResult> httpRequestResults = new ArrayList<>();
     for (HttpRequestExecutionConfig httpRequestExecutionConfig : httpRequestExecutionConfigs) {
+
+      HttpRequestBaseParams httpRequestBaseParams = new HttpRequestBaseParams(param);
       HttpRequestResult executionResult =
           httpRequestExecutor.execute(httpRequestExecutionConfig, httpRequestBaseParams);
 
@@ -63,10 +64,14 @@ public class UserinfoHttpRequestsExecutor implements UserinfoExecutor {
       }
 
       httpRequestResults.add(executionResult);
+      param.put(
+          "execution_http_requests",
+          httpRequestResults.stream().map(HttpRequestResult::toMap).toList());
     }
 
     results.put(
-        "http_requests", httpRequestResults.stream().map(HttpRequestResult::toMap).toList());
+        "userinfo_execution_http_requests",
+        httpRequestResults.stream().map(HttpRequestResult::toMap).toList());
 
     return UserinfoExecutionResult.success(results);
   }
