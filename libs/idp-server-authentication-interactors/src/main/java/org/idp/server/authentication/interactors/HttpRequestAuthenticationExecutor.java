@@ -101,7 +101,7 @@ public class HttpRequestAuthenticationExecutor implements AuthenticationExecutor
     }
 
     Map<String, Object> interactionMap = new HashMap<>();
-    interactionMap.put("http_request", executionResult.toMap());
+    interactionMap.put("execution_http_request", executionResult.toMap());
     return AuthenticationExecutionResult.success(interactionMap);
   }
 }

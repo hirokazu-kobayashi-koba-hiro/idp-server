@@ -27,21 +27,21 @@
               { "static_value": "test-client-id", "to": "x-client-id" }
             ],
             "body_mapping_rules": [
-              { "from": "$.request_body", "to": "*" }
+              { "from": "$.execution_http_requests[0].response_body.id", "to": "user_id" }
             ]
           }
         ]
       },
-      "result": {
+      "user_resolve": {
         "user_mapping_rules": [
           { "static_value": "mock-provider", "to": "provider_id" },
-          { "from": "$.http_requests[0].response_body.user_id", "to": "external_user_id" },
-          { "from": "$.http_requests[0].response_body.email", "to": "email" },
-          { "from": "$.http_requests[1].response_body.birthdate", "to": "birthdate" },
-          { "from": "$.http_requests[1].response_body.zoneinfo", "to": "zoneinfo" },
-          { "from": "$.http_requests[1].response_body.locale", "to": "locale" },
-          { "from": "$.http_requests[1].response_body.phone_number", "to": "phone_number" },
-          { "from": "$.http_requests[1].response_body.role", "to": "custom_properties.role" }
+          { "from": "$.execution_http_requests[0].response_body.id", "to": "external_user_id" },
+          { "from": "$.execution_http_requests[0].response_body.email", "to": "email" },
+          { "from": "$.execution_http_requests[1].response_body.birthdate", "to": "birthdate" },
+          { "from": "$.execution_http_requests[1].response_body.zoneinfo", "to": "zoneinfo" },
+          { "from": "$.execution_http_requests[1].response_body.locale", "to": "locale" },
+          { "from": "$.execution_http_requests[1].response_body.phone_number", "to": "phone_number" },
+          { "from": "$.execution_http_requests[1].response_body.role", "to": "custom_properties.role" }
         ]
       }
     }

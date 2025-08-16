@@ -74,7 +74,7 @@
       "response": {
         "body_mapping_rules": [
           {
-            "from": "$.response_body",
+            "from": "$.execution_http_request.response_body",
             "to": "*"
           }
         ]
@@ -148,7 +148,7 @@
       "response": {
         "body_mapping_rules": [
           {
-            "from": "$.response_body",
+            "from": "$.execution_http_request.response_body",
             "to": "*"
           }
         ]

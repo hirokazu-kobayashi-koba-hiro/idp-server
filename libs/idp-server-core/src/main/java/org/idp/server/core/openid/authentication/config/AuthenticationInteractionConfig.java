@@ -22,8 +22,11 @@ import org.idp.server.platform.json.JsonReadable;
 
 public class AuthenticationInteractionConfig implements JsonReadable {
   AuthenticationRequestConfig request = new AuthenticationRequestConfig();
+  AuthenticationPreHookConfig preHook = new AuthenticationPreHookConfig();
   AuthenticationExecutionConfig execution = new AuthenticationExecutionConfig();
-  AuthenticationResultConfig result = new AuthenticationResultConfig();
+  AuthenticationResultConfig userResolve = new AuthenticationResultConfig();
+  AuthenticationPostHookConfig postHook = new AuthenticationPostHookConfig();
+  AuthenticationResponseConfig response = new AuthenticationResponseConfig();
 
   public AuthenticationInteractionConfig() {}
 
@@ -34,6 +37,13 @@ public class AuthenticationInteractionConfig implements JsonReadable {
     return request;
   }
 
+  public AuthenticationPreHookConfig preHook() {
+    if (preHook == null) {
+      return new AuthenticationPreHookConfig();
+    }
+    return preHook;
+  }
+
   public AuthenticationExecutionConfig execution() {
     if (execution == null) {
       return new AuthenticationExecutionConfig();
@@ -41,18 +51,35 @@ public class AuthenticationInteractionConfig implements JsonReadable {
     return execution;
   }
 
-  public AuthenticationResultConfig result() {
-    if (result == null) {
+  public AuthenticationPostHookConfig postHook() {
+    if (postHook == null) {
+      return new AuthenticationPostHookConfig();
+    }
+    return postHook;
+  }
+
+  public AuthenticationResultConfig userResolve() {
+    if (userResolve == null) {
       return new AuthenticationResultConfig();
     }
-    return result;
+    return userResolve;
+  }
+
+  public AuthenticationResponseConfig response() {
+    if (response == null) {
+      return new AuthenticationResponseConfig();
+    }
+    return response;
   }
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("request", request().toMap());
+    map.put("pre_hook", preHook().toMap());
     map.put("execution", execution().toMap());
-    map.put("result", result().toMap());
+    map.put("post_hook", postHook().toMap());
+    map.put("user_resolve", userResolve().toMap());
+    map.put("response", response().toMap());
     return map;
   }
 }

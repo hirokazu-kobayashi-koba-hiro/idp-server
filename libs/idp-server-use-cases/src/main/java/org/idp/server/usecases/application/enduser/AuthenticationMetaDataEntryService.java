@@ -16,17 +16,19 @@
 
 package org.idp.server.usecases.application.enduser;
 
-import org.idp.server.authentication.interactors.AuthenticationExecutionRequest;
-import org.idp.server.authentication.interactors.AuthenticationExecutionResult;
-import org.idp.server.authentication.interactors.AuthenticationExecutor;
-import org.idp.server.authentication.interactors.AuthenticationExecutors;
+import java.util.Map;
+import org.idp.server.authentication.interactors.*;
 import org.idp.server.authentication.interactors.fidouaf.*;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
 import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
 import org.idp.server.core.openid.authentication.config.AuthenticationInteractionConfig;
+import org.idp.server.core.openid.authentication.config.AuthenticationResponseConfig;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.platform.datasource.Transaction;
+import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.path.JsonPathWrapper;
+import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -49,7 +51,7 @@ public class AuthenticationMetaDataEntryService implements AuthenticationMetaDat
   }
 
   @Override
-  public AuthenticationExecutionResult getFidoUafFacets(
+  public AuthenticationMetadataResponse getFidoUafFacets(
       TenantIdentifier tenantIdentifier, RequestAttributes requestAttributes) {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     AuthenticationConfiguration authenticationConfiguration =
@@ -59,11 +61,20 @@ public class AuthenticationMetaDataEntryService implements AuthenticationMetaDat
     AuthenticationExecutionConfig execution = authenticationInteractionConfig.execution();
     AuthenticationExecutor executor = authenticationExecutors.get(execution.function());
 
-    return executor.execute(
-        tenant,
-        new AuthenticationTransactionIdentifier(),
-        new AuthenticationExecutionRequest(),
-        requestAttributes,
-        execution);
+    AuthenticationExecutionResult executionResult =
+        executor.execute(
+            tenant,
+            new AuthenticationTransactionIdentifier(),
+            new AuthenticationExecutionRequest(),
+            requestAttributes,
+            execution);
+
+    AuthenticationResponseConfig responseConfig = authenticationInteractionConfig.response();
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(executionResult.contents());
+    JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
+    Map<String, Object> responseBody =
+        MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
+
+    return new AuthenticationMetadataResponse(executionResult.status(), responseBody);
   }
 }

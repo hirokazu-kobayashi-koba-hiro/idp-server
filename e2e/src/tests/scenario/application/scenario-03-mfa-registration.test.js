@@ -55,8 +55,15 @@ describe("user - mfa registration", () => {
           password: serverConfig.ciba.userCode,
         }
       });
-      console.log(authenticationResponse.data);
+      console.log(JSON.stringify(authenticationResponse.data, null, 2));
       expect(authenticationResponse.status).toBe(200);
+      expect(authenticationResponse.data).toHaveProperty("uafRequest");
+      expect(authenticationResponse.data).toHaveProperty("uafRequest[0].header.op");
+      expect(authenticationResponse.data).toHaveProperty("uafRequest[0].header.appID");
+      expect(authenticationResponse.data).toHaveProperty("uafRequest[0].header.upv.major");
+      expect(authenticationResponse.data).toHaveProperty("uafRequest[0].header.upv.minor");
+      expect(authenticationResponse.data).toHaveProperty("uafRequest[0].challenge");
+      expect(authenticationResponse.data).toHaveProperty("uafRequest[0].transaction");
 
       const fidoUafFacetsResponse = await get({
         url: serverConfig.fidoUafFacetsEndpoint,
@@ -64,8 +71,11 @@ describe("user - mfa registration", () => {
           "Content-Type": "application/json",
         }
       });
-      console.log(fidoUafFacetsResponse.data);
+      console.log(JSON.stringify(fidoUafFacetsResponse.data, null, 2));
       expect(fidoUafFacetsResponse.status).toBe(200);
+      expect(fidoUafFacetsResponse.data).toHaveProperty("trustedFacets");
+      expect(fidoUafFacetsResponse.data).toHaveProperty("trustedFacets[0].ids");
+      expect(fidoUafFacetsResponse.data).toHaveProperty("trustedFacets[0].version");
 
       authenticationResponse = await postAuthenticationDeviceInteraction({
         endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
