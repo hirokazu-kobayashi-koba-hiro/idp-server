@@ -34,7 +34,7 @@ public class AccessTokenCustomClaimsCreators {
 
   public AccessTokenCustomClaimsCreators() {
     this.creators = new ArrayList<>();
-    this.creators.add(new AccessTokenUserCustomPropertiesCreator());
+    this.creators.add(new ScopeMappingCustomClaimsCreator());
     creators.addAll(AccessTokenCustomClaimsCreationPluginLoader.load());
   }
 

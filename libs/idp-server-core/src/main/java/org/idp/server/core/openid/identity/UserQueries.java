@@ -89,14 +89,6 @@ public class UserQueries implements UuidConvertable {
     return values.get("provider_id");
   }
 
-  public boolean hasProviderUserId() {
-    return values.containsKey("external_user_id");
-  }
-
-  public String providerUserId() {
-    return values.get("external_user_id");
-  }
-
   public boolean hasName() {
     return values.containsKey("name");
   }

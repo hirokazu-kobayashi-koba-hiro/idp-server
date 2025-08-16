@@ -49,7 +49,6 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
   int oauthAuthorizationRequestExpiresIn = 1800;
   List<AuthenticationPolicy> authenticationPolicies = new ArrayList<>();
   boolean customClaimsScopeMapping = false;
-  boolean accessTokenUserCustomProperties = false;
   boolean accessTokenSelectiveUserCustomProperties = false;
   boolean accessTokenVerifiedClaims = false;
   boolean accessTokenSelectiveVerifiedClaims = false;
@@ -170,10 +169,6 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
 
   public boolean enabledCustomClaimsScopeMapping() {
     return customClaimsScopeMapping;
-  }
-
-  public boolean enabledAccessTokenUserCustomProperties() {
-    return accessTokenUserCustomProperties;
   }
 
   public boolean enabledAccessTokenSelectiveUserCustomProperties() {
