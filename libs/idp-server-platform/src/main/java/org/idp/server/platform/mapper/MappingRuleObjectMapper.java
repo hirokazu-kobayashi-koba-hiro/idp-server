@@ -20,8 +20,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.json.path.JsonPathWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.mapper.functions.FunctionRegistry;
+import org.idp.server.platform.mapper.functions.ValueFunction;
 
 public class MappingRuleObjectMapper {
+
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(MappingRuleObjectMapper.class);
+  private static final FunctionRegistry functionRegistry = new FunctionRegistry();
 
   public static Map<String, Object> execute(
       List<MappingRule> mappingRules, JsonPathWrapper jsonPath) {
@@ -30,13 +36,15 @@ public class MappingRuleObjectMapper {
     for (MappingRule rule : mappingRules) {
 
       if (rule.hasStaticValue()) {
-
+        log.debug("MappingRuleObjectMapper apply static value");
         Object value = rule.staticValue();
-        Object converted = TypeConverter.convert(value, rule.convertType());
-        flatMap.put(rule.to(), converted);
+        flatMap.put(rule.to(), value);
+      }
 
-      } else {
+      if (rule.hasFrom()) {
+        log.debug("MappingRuleObjectMapper apply from");
         Object value = jsonPath.readRaw(rule.from());
+
         if ("*".equals(rule.to())) {
           if (value instanceof Map<?, ?> mapValue) {
             for (Map.Entry<?, ?> entry : mapValue.entrySet()) {
@@ -44,7 +52,22 @@ public class MappingRuleObjectMapper {
                 flatMap.put(key, entry.getValue());
               }
             }
+          } else {
+            log.warn("mapping rule is *, but value is not a Map");
           }
+        }
+
+        if (rule.hasFunctions()) {
+          Object applyValue = value;
+          for (FunctionSpec spec : rule.functions()) {
+            ValueFunction fn = functionRegistry.get(spec.name());
+            if (fn == null) {
+              log.warn("mapping rule function " + spec.name() + " not found");
+              continue;
+            }
+            applyValue = fn.apply(applyValue, spec.args());
+          }
+          flatMap.put(rule.to(), applyValue);
         } else {
           Object converted = TypeConverter.convert(value, rule.convertType());
           flatMap.put(rule.to(), converted);

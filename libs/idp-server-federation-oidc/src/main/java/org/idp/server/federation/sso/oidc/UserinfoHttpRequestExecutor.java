@@ -59,6 +59,7 @@ public class UserinfoHttpRequestExecutor implements UserinfoExecutor {
       return UserinfoExecutionResult.serverError(executionResult.body().toMap());
     }
 
-    return UserinfoExecutionResult.success(Map.of("http_request", executionResult.toMap()));
+    return UserinfoExecutionResult.success(
+        Map.of("userinfo_execution_http_request", executionResult.toMap()));
   }
 }

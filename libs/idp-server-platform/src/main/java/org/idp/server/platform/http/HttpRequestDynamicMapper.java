@@ -62,7 +62,8 @@ public class HttpRequestDynamicMapper {
     Map<String, Object> executed = MappingRuleObjectMapper.execute(mappingRules, jsonPathWrapper);
 
     for (Map.Entry<String, Object> entry : executed.entrySet()) {
-      resolvedHeaders.put(entry.getKey(), entry.getValue().toString());
+      String value = entry.getValue() != null ? entry.getValue().toString() : "";
+      resolvedHeaders.put(entry.getKey(), value);
     }
 
     return resolvedHeaders;

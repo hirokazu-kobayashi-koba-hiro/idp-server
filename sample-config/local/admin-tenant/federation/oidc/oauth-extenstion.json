@@ -35,6 +35,11 @@
         }
       ]
     },
+    "scopes_supported": [
+      "openid",
+      "email",
+      "profile"
+    ],
     "revocation_endpoint": "https://oauth2.googleapis.com/revoke",
     "jwks_uri": "http://localhost:8080/1e68932e-ed4a-43e7-b412-460665e42df3/v1/jwks",
     "client_id": "clientSecretPost",

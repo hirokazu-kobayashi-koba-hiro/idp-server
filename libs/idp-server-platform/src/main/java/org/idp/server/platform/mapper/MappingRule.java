@@ -17,6 +17,7 @@
 package org.idp.server.platform.mapper;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
 
@@ -25,6 +26,7 @@ public class MappingRule implements JsonReadable {
   Object staticValue;
   String to;
   String convertType;
+  List<FunctionSpec> functions;
 
   public MappingRule() {}
 
@@ -56,6 +58,10 @@ public class MappingRule implements JsonReadable {
     return staticValue != null;
   }
 
+  public boolean hasFrom() {
+    return from != null && !from.isEmpty();
+  }
+
   public String to() {
     return to;
   }
@@ -64,12 +70,25 @@ public class MappingRule implements JsonReadable {
     return convertType;
   }
 
+  public boolean hasConvertType() {
+    return convertType != null && !convertType.isEmpty();
+  }
+
+  public boolean hasFunctions() {
+    return functions != null && !functions.isEmpty();
+  }
+
+  public List<FunctionSpec> functions() {
+    return functions;
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("from", from);
     map.put("static_value", staticValue);
     map.put("to", to);
     map.put("convert_type", convertType);
+    map.put("functions", functions());
     return map;
   }
 }
