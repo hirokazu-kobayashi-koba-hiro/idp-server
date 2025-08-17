@@ -62,9 +62,9 @@ public class HttpRequestParameterResolver implements AdditionalRequestParameterR
 
     HttpRequestBaseParams baseParams = resolveBaseParams(request, requestAttributes);
 
-    AdditionalParameterHttpRequestConfiguration configuration =
+    AdditionalParameterHttpRequestConfig configuration =
         jsonConverter.read(
-            additionalParameterConfig.details(), AdditionalParameterHttpRequestConfiguration.class);
+            additionalParameterConfig.details(), AdditionalParameterHttpRequestConfig.class);
 
     HttpRequestResult executionResult = httpRequestExecutor.execute(configuration, baseParams);
 

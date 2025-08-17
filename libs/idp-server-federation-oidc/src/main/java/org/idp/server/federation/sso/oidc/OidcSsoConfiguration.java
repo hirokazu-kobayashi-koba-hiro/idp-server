@@ -42,6 +42,9 @@ public class OidcSsoConfiguration implements JsonReadable {
   String privateKeys = "";
   List<MappingRule> userinfoMappingRules;
   String paramsDelimiter;
+  long accessTokenExpiresIn;
+  long refreshTokenExpiresIn;
+  boolean storeCredentials = false;
 
   public OidcSsoConfiguration() {}
 
@@ -61,7 +64,10 @@ public class OidcSsoConfiguration implements JsonReadable {
       OAuthExtensionUserinfoExecutionConfig userinfoExecution,
       String jwksUri,
       String privateKeys,
-      String paramsDelimiter) {
+      String paramsDelimiter,
+      long accessTokenExpiresIn,
+      long refreshTokenExpiresIn,
+      boolean storeCredentials) {
     this.type = type;
     this.issuer = issuer;
     this.issuerName = issuerName;
@@ -78,6 +84,9 @@ public class OidcSsoConfiguration implements JsonReadable {
     this.jwksUri = jwksUri;
     this.privateKeys = privateKeys;
     this.paramsDelimiter = paramsDelimiter;
+    this.accessTokenExpiresIn = accessTokenExpiresIn;
+    this.refreshTokenExpiresIn = refreshTokenExpiresIn;
+    this.storeCredentials = storeCredentials;
   }
 
   public String type() {
@@ -86,6 +95,10 @@ public class OidcSsoConfiguration implements JsonReadable {
 
   public String issuer() {
     return issuer;
+  }
+
+  public String provider() {
+    return provider;
   }
 
   public String issuerName() {
@@ -158,5 +171,17 @@ public class OidcSsoConfiguration implements JsonReadable {
 
   public List<MappingRule> userinfoMappingRules() {
     return userinfoMappingRules;
+  }
+
+  public boolean isStoreCredentials() {
+    return storeCredentials;
+  }
+
+  public long accessTokenExpiresIn() {
+    return accessTokenExpiresIn;
+  }
+
+  public long refreshTokenExpiresIn() {
+    return refreshTokenExpiresIn;
   }
 }

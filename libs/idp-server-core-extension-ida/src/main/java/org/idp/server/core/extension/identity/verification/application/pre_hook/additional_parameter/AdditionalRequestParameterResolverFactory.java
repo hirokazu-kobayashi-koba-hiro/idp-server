@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package org.idp.server.platform.oauth;
+package org.idp.server.core.extension.identity.verification.application.pre_hook.additional_parameter;
 
-public interface OAuthAuthorizationResolver {
-  String type();
+import org.idp.server.platform.dependency.ApplicationComponentContainer;
 
-  String resolve(OAuthAuthorizationConfiguration oAuthAuthorizationConfig);
+public interface AdditionalRequestParameterResolverFactory {
+
+  AdditionalRequestParameterResolver create(ApplicationComponentContainer container);
 }

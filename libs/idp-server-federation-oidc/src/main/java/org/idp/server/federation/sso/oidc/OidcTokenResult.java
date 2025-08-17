@@ -63,8 +63,9 @@ public class OidcTokenResult {
     return (String) body.get("id_token");
   }
 
-  public String expiresIn() {
-    return (String) body.get("expires_in");
+  public long expiresIn() {
+    String expiresInValue = body.get("expires_in").toString();
+    return Long.parseLong(expiresInValue);
   }
 
   public String scope() {

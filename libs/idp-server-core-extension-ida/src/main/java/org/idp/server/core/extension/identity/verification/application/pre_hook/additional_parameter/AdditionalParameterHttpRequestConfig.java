@@ -25,7 +25,7 @@ import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.mapper.MappingRule;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
-public class AdditionalParameterHttpRequestConfiguration
+public class AdditionalParameterHttpRequestConfig
     implements HttpRequestExecutionConfigInterface, JsonReadable {
   String url;
   String method;
@@ -38,7 +38,7 @@ public class AdditionalParameterHttpRequestConfiguration
   List<MappingRule> queryMappingRules = new ArrayList<>();
   Map<String, String> parameterNames = new HashMap<>();
 
-  public AdditionalParameterHttpRequestConfiguration() {}
+  public AdditionalParameterHttpRequestConfig() {}
 
   @Override
   public HttpRequestUrl httpRequestUrl() {

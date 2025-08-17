@@ -16,11 +16,11 @@
 
 package org.idp.server.core.extension.identity.verification.application.pre_hook.additional_parameter;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.idp.server.core.extension.identity.plugin.IdentityVerificationRequestAdditionalParameterPluginLoader;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplications;
@@ -38,16 +38,15 @@ public class AdditionalRequestParameterResolvers {
   Map<String, AdditionalRequestParameterResolver> resolvers;
   LoggerWrapper log = LoggerWrapper.getLogger(AdditionalRequestParameterResolvers.class);
 
-  public AdditionalRequestParameterResolvers() {
+  public AdditionalRequestParameterResolvers(
+      Map<String, AdditionalRequestParameterResolver> additional) {
     this.resolvers = new ConcurrentHashMap<>();
     ContinuousCustomerDueDiligenceParameterResolver customerDueDiligence =
         new ContinuousCustomerDueDiligenceParameterResolver();
     this.resolvers.put(customerDueDiligence.type(), customerDueDiligence);
     HttpRequestParameterResolver httpRequest = new HttpRequestParameterResolver();
     this.resolvers.put(httpRequest.type(), httpRequest);
-    Map<String, AdditionalRequestParameterResolver> loaded =
-        IdentityVerificationRequestAdditionalParameterPluginLoader.load();
-    this.resolvers.putAll(loaded);
+    this.resolvers.putAll(additional);
   }
 
   public Map<String, Object> resolve(
@@ -66,7 +65,7 @@ public class AdditionalRequestParameterResolvers {
         processConfig.preHook().additionalParameters();
 
     Map<String, Object> additionalParameters = new HashMap<>();
-
+    List<Map<String, Object>> additionalParameterValues = new ArrayList<>();
     for (IdentityVerificationConfig additionalParameterConfig : additionalParameterConfigs) {
 
       AdditionalRequestParameterResolver resolver =
@@ -91,8 +90,10 @@ public class AdditionalRequestParameterResolvers {
               request,
               requestAttributes,
               additionalParameterConfig);
-      additionalParameters.putAll(resolved);
+      additionalParameterValues.add(resolved);
     }
+
+    additionalParameters.put("pre_hook_additional_parameters", additionalParameterValues);
 
     return additionalParameters;
   }

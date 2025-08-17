@@ -16,6 +16,7 @@
 
 package org.idp.server.federation.sso.oidc;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -28,6 +29,7 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.mapper.UserInfoMapper;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -36,18 +38,21 @@ public class OidcFederationInteractor implements FederationInteractor {
   FederationConfigurationQueryRepository configurationQueryRepository;
   SsoSessionCommandRepository sessionCommandRepository;
   SsoSessionQueryRepository sessionQueryRepository;
+  SsoCredentialsCommandRepository ssoCredentialsCommandRepository;
   OidcSsoExecutors oidcSsoExecutors;
-  LoggerWrapper lpg = LoggerWrapper.getLogger(OidcFederationInteractor.class);
+  LoggerWrapper log = LoggerWrapper.getLogger(OidcFederationInteractor.class);
 
   public OidcFederationInteractor(
       OidcSsoExecutors oidcSsoExecutors,
       FederationConfigurationQueryRepository configurationQueryRepository,
       SsoSessionCommandRepository sessionCommandRepository,
-      SsoSessionQueryRepository sessionQueryRepository) {
+      SsoSessionQueryRepository sessionQueryRepository,
+      SsoCredentialsCommandRepository ssoCredentialsCommandRepository) {
     this.oidcSsoExecutors = oidcSsoExecutors;
     this.configurationQueryRepository = configurationQueryRepository;
     this.sessionCommandRepository = sessionCommandRepository;
     this.sessionQueryRepository = sessionQueryRepository;
+    this.ssoCredentialsCommandRepository = ssoCredentialsCommandRepository;
   }
 
   public FederationRequestResponse request(
@@ -101,7 +106,7 @@ public class OidcFederationInteractor implements FederationInteractor {
     OidcTokenResult tokenResult = oidcSsoExecutor.requestToken(tokenRequest);
 
     if (tokenResult.isError()) {
-      lpg.error(
+      log.error(
           "Error occurred while executing token request. tenantId: {}", tenant.identifierValue());
       return FederationInteractionResult.error(
           federationType, ssoProvider, session, tokenResult.statusCode(), tokenResult.bodyAsMap());
@@ -115,7 +120,7 @@ public class OidcFederationInteractor implements FederationInteractor {
       response.put("error", "server_error");
       response.put("error_description", jwksResult.body());
 
-      lpg.error(
+      log.error(
           "Error occurred while executing jwk request. tenantId: {}", tenant.identifierValue());
       return FederationInteractionResult.error(
           federationType, ssoProvider, session, jwksResult.statusCode(), response);
@@ -125,7 +130,7 @@ public class OidcFederationInteractor implements FederationInteractor {
         oidcSsoExecutor.verifyIdToken(oidcSsoConfiguration, session, jwksResult, tokenResult);
     if (idTokenVerificationResult.isError()) {
 
-      lpg.error(
+      log.error(
           "Error occurred while executing id_token validation. tenantId: {}",
           tenant.identifierValue());
       return FederationInteractionResult.error(
@@ -141,7 +146,7 @@ public class OidcFederationInteractor implements FederationInteractor {
 
     if (userinfoResult.isError()) {
 
-      lpg.error(
+      log.error(
           "Error occurred while executing userinfo request. tenantId: {}",
           tenant.identifierValue());
       return FederationInteractionResult.error(
@@ -170,6 +175,29 @@ public class OidcFederationInteractor implements FederationInteractor {
     }
 
     sessionCommandRepository.delete(tenant, session.ssoSessionIdentifier());
+
+    if (oidcSsoConfiguration.isStoreCredentials()) {
+      log.debug("Storing credential data into session. tenantId: {}", tenant.identifierValue());
+      String provider = oidcSsoConfiguration.provider();
+      String scope = oidcSsoConfiguration.scopeAsString();
+      String accessToken = tokenResult.accessToken();
+      String refreshToken = tokenResult.refreshToken();
+      long accessTokenExpiresIn = tokenResult.expiresIn();
+      LocalDateTime accessTokenExpiresAt = SystemDateTime.now().plusSeconds(accessTokenExpiresIn);
+      long refreshTokenExpiresIn = oidcSsoConfiguration.refreshTokenExpiresIn();
+      LocalDateTime refreshTokenExpiresAt = SystemDateTime.now().plusSeconds(refreshTokenExpiresIn);
+      SsoCredentials ssoCredentials =
+          new SsoCredentials(
+              provider,
+              scope,
+              accessToken,
+              refreshToken,
+              accessTokenExpiresIn,
+              accessTokenExpiresAt,
+              refreshTokenExpiresIn,
+              refreshTokenExpiresAt);
+      ssoCredentialsCommandRepository.register(tenant, user, ssoCredentials);
+    }
 
     return FederationInteractionResult.success(federationType, ssoProvider, session, user);
   }

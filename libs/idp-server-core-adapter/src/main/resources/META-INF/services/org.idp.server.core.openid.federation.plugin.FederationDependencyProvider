@@ -1,3 +1,4 @@
 org.idp.server.core.adapters.datasource.federation.config.query.FederationConfigurationQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.federation.session.command.SsoSessionCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.federation.session.query.SsoSessionQueryDataSourceProvider
+org.idp.server.core.adapters.datasource.federation.credentials.command.SsoCredentialsCommandDataSourceProvider
