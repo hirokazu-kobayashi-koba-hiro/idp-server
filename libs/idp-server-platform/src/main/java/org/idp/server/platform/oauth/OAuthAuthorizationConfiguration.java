@@ -32,6 +32,7 @@ public class OAuthAuthorizationConfiguration implements JsonReadable {
   String scope;
   String username;
   String password;
+  String refreshToken;
 
   public OAuthAuthorizationConfiguration() {}
 
@@ -43,7 +44,8 @@ public class OAuthAuthorizationConfiguration implements JsonReadable {
       String clientSecret,
       String scope,
       String username,
-      String password) {
+      String password,
+      String refreshToken) {
     this.type = type;
     this.tokenEndpoint = tokenEndpoint;
     this.clientAuthenticationType = clientAuthenticationType;
@@ -52,10 +54,11 @@ public class OAuthAuthorizationConfiguration implements JsonReadable {
     this.scope = scope;
     this.username = username;
     this.password = password;
+    this.refreshToken = refreshToken;
   }
 
-  public OAuthAuthorizationType type() {
-    return OAuthAuthorizationType.of(type);
+  public String type() {
+    return type;
   }
 
   public String tokenEndpoint() {
@@ -86,6 +89,10 @@ public class OAuthAuthorizationConfiguration implements JsonReadable {
     return password;
   }
 
+  public String refreshToken() {
+    return refreshToken;
+  }
+
   public boolean exists() {
     return type != null && !type.isEmpty();
   }
@@ -101,11 +108,11 @@ public class OAuthAuthorizationConfiguration implements JsonReadable {
   }
 
   public boolean isClientCredentials() {
-    return type() == OAuthAuthorizationType.CLIENT_CREDENTIALS;
+    return "client_credentials".equals(type);
   }
 
   public boolean isResourceOwnerPassword() {
-    return type() == OAuthAuthorizationType.RESOURCE_OWNER_PASSWORD_CREDENTIALS;
+    return "password".equals(type);
   }
 
   public String basicAuthenticationValue() {
@@ -143,6 +150,7 @@ public class OAuthAuthorizationConfiguration implements JsonReadable {
     result.put("scope", scope);
     result.put("username", username);
     result.put("password", password);
+    result.put("refresh_token", refreshToken);
     return result;
   }
 }

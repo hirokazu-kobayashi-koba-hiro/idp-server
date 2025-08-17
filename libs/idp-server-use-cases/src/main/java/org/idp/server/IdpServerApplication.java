@@ -16,6 +16,7 @@
 
 package org.idp.server;
 
+import java.util.Map;
 import org.idp.server.authentication.interactors.AuthenticationExecutors;
 import org.idp.server.authentication.interactors.device.AuthenticationDeviceNotifiers;
 import org.idp.server.authentication.interactors.fidouaf.AuthenticationMetaDataApi;
@@ -53,9 +54,11 @@ import org.idp.server.core.extension.ciba.CibaProtocol;
 import org.idp.server.core.extension.ciba.CibaProtocols;
 import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRequestOperationCommandRepository;
 import org.idp.server.core.extension.ciba.repository.CibaGrantOperationCommandRepository;
+import org.idp.server.core.extension.identity.plugin.IdentityVerificationRequestAdditionalParameterPluginLoader;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationApi;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationApi;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationCallbackApi;
+import org.idp.server.core.extension.identity.verification.application.pre_hook.additional_parameter.AdditionalRequestParameterResolver;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationCommandRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationQueryRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationCommandRepository;
@@ -323,6 +326,10 @@ public class IdpServerApplication {
     authenticationDependencyContainer.register(
         AuthenticationDeviceNotifiers.class, authenticationDeviceNotifiers);
 
+    Map<String, AdditionalRequestParameterResolver> additionalRequestParameterResolvers =
+        IdentityVerificationRequestAdditionalParameterPluginLoader.load(
+            applicationComponentContainer);
+
     FidoUafAdditionalRequestResolvers fidoUafAdditionalRequestResolvers =
         FidoUafAdditionalRequestResolverPluginLoader.load();
     authenticationDependencyContainer.register(
@@ -480,7 +487,8 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 userQueryRepository,
                 userCommandRepository,
-                tokenEventPublisher),
+                tokenEventPublisher,
+                additionalRequestParameterResolvers),
             IdentityVerificationApplicationApi.class,
             tenantDialectProvider);
 
@@ -494,7 +502,8 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 userQueryRepository,
                 userCommandRepository,
-                tokenEventPublisher),
+                tokenEventPublisher,
+                additionalRequestParameterResolvers),
             IdentityVerificationCallbackApi.class,
             tenantDialectProvider);
 

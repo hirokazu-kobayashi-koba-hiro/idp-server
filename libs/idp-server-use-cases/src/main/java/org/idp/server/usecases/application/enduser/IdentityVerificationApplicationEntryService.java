@@ -26,6 +26,7 @@ import org.idp.server.core.extension.identity.verification.application.model.Ide
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationQueries;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplications;
+import org.idp.server.core.extension.identity.verification.application.pre_hook.additional_parameter.AdditionalRequestParameterResolver;
 import org.idp.server.core.extension.identity.verification.application.validation.IdentityVerificationApplicationRequestValidator;
 import org.idp.server.core.extension.identity.verification.application.validation.IdentityVerificationApplicationValidationResult;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
@@ -72,7 +73,8 @@ public class IdentityVerificationApplicationEntryService
       TenantQueryRepository tenantQueryRepository,
       UserQueryRepository userQueryRepository,
       UserCommandRepository userCommandRepository,
-      TokenEventPublisher eventPublisher) {
+      TokenEventPublisher eventPublisher,
+      Map<String, AdditionalRequestParameterResolver> additional) {
     this.configurationQueryRepository = configurationQueryRepository;
     this.applicationCommandRepository = applicationCommandRepository;
     this.applicationQueryRepository = applicationQueryRepository;
@@ -80,7 +82,8 @@ public class IdentityVerificationApplicationEntryService
     this.resultCommandRepository = resultCommandRepository;
     this.userQueryRepository = userQueryRepository;
     this.userCommandRepository = userCommandRepository;
-    this.identityVerificationApplicationHandler = new IdentityVerificationApplicationHandler();
+    this.identityVerificationApplicationHandler =
+        new IdentityVerificationApplicationHandler(additional);
     this.eventPublisher = eventPublisher;
   }
 

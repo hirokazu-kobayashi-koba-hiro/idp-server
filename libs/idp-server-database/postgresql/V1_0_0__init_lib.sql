@@ -448,7 +448,7 @@ CREATE TABLE oauth_token
     tenant_id                       UUID                    NOT NULL,
     token_issuer                    TEXT                    NOT NULL,
     token_type                      VARCHAR(10)             NOT NULL,
-    encrypted_access_token          TEXT                    NOT NULL,
+    encrypted_access_token          JSONB                    NOT NULL,
     hashed_access_token             TEXT                    NOT NULL,
     user_id                         UUID,
     user_payload                    JSONB,
@@ -461,10 +461,10 @@ CREATE TABLE oauth_token
     userinfo_claims                 TEXT                    NOT NULL,
     custom_properties               JSONB,
     authorization_details           JSONB,
-    expires_in                      TEXT                    NOT NULL,
+    expires_in                      TEXT                  NOT NULL,
     access_token_expires_at         TIMESTAMP               NOT NULL,
     access_token_created_at         TIMESTAMP               NOT NULL,
-    encrypted_refresh_token         TEXT,
+    encrypted_refresh_token         JSONB,
     hashed_refresh_token            TEXT,
     refresh_token_expires_at        TIMESTAMP,
     refresh_token_created_at        TIMESTAMP,
@@ -509,7 +509,7 @@ CREATE TABLE backchannel_authentication_request
     requested_expiry          TEXT,
     request_object            TEXT,
     authorization_details     JSONB,
-    expires_in                TEXT                    NOT NULL,
+    expires_in                TEXT                  NOT NULL,
     expires_at                TIMESTAMP               NOT NULL,
     created_at                TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (id),
@@ -713,6 +713,26 @@ POLICY rls_federation_sso_session
   ON federation_sso_session
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE federation_sso_session FORCE ROW LEVEL SECURITY;
+
+CREATE TABLE idp_user_sso_credentials
+(
+    user_id         UUID                    NOT NULL,
+    tenant_id       UUID                    NOT NULL,
+    sso_provider    VARCHAR(255)            NOT NULL,
+    sso_credentials JSONB                   NOT NULL,
+    created_at      TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at      TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (user_id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
+);
+
+ALTER TABLE idp_user_sso_credentials ENABLE ROW LEVEL SECURITY;
+CREATE
+POLICY rls_idp_user_sso_credentials
+  ON idp_user_sso_credentials
+  USING (tenant_id = current_setting('app.tenant_id')::uuid);
+ALTER TABLE idp_user_sso_credentials FORCE ROW LEVEL SECURITY;
+
 
 CREATE TABLE authentication_configuration
 (

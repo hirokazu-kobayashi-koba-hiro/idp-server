@@ -43,6 +43,11 @@ public class ResourceOwnerPasswordCredentialsAuthorizationResolver
   }
 
   @Override
+  public String type() {
+    return "password";
+  }
+
+  @Override
   public String resolve(OAuthAuthorizationConfiguration config) {
     try {
 

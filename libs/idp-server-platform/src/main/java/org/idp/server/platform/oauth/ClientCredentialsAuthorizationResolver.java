@@ -41,6 +41,11 @@ public class ClientCredentialsAuthorizationResolver implements OAuthAuthorizatio
   }
 
   @Override
+  public String type() {
+    return "client_credentials";
+  }
+
+  @Override
   public String resolve(OAuthAuthorizationConfiguration config) {
     try {
 

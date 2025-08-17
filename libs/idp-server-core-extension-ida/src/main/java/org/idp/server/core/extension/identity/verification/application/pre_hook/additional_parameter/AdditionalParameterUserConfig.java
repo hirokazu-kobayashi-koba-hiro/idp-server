@@ -23,13 +23,13 @@ import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.mapper.MappingRule;
 
-public class AdditionalParameterUserConfiguration implements JsonReadable {
+public class AdditionalParameterUserConfig implements JsonReadable {
 
   List<MappingRule> mappingRules = new ArrayList<>();
 
-  public AdditionalParameterUserConfiguration() {}
+  public AdditionalParameterUserConfig() {}
 
-  public AdditionalParameterUserConfiguration(List<MappingRule> mappingRules) {
+  public AdditionalParameterUserConfig(List<MappingRule> mappingRules) {
     this.mappingRules = mappingRules;
   }
 

@@ -55,6 +55,9 @@
       { "from": "$.userinfo_execution_http_requests[1].response_body.locale", "to": "locale" },
       { "from": "$.userinfo_execution_http_requests[1].response_body.phone_number", "to": "phone_number" },
       { "from": "$.userinfo_execution_http_requests[1].response_body.role", "to": "custom_properties.role" }
-    ]
+    ],
+    "access_token_expires_in": 300,
+    "refresh_token_expires_in": 1800,
+    "store_credentials": true
   }
 }

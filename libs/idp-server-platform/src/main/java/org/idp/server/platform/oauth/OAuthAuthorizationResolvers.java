@@ -22,22 +22,31 @@ import org.idp.server.platform.exception.UnSupportedException;
 
 public class OAuthAuthorizationResolvers {
 
-  Map<OAuthAuthorizationType, OAuthAuthorizationResolver> resolvers;
+  Map<String, OAuthAuthorizationResolver> resolvers = new HashMap<>();
 
   public OAuthAuthorizationResolvers() {
-    this.resolvers = new HashMap<>();
-    resolvers.put(
-        OAuthAuthorizationType.CLIENT_CREDENTIALS, new ClientCredentialsAuthorizationResolver());
-    resolvers.put(
-        OAuthAuthorizationType.RESOURCE_OWNER_PASSWORD_CREDENTIALS,
-        new ResourceOwnerPasswordCredentialsAuthorizationResolver());
+    defaultResolvers();
   }
 
-  public OAuthAuthorizationResolver get(OAuthAuthorizationType type) {
+  public OAuthAuthorizationResolvers(Map<String, OAuthAuthorizationResolver> additionalResolvers) {
+    defaultResolvers();
+    this.resolvers.putAll(additionalResolvers);
+  }
+
+  private void defaultResolvers() {
+    ClientCredentialsAuthorizationResolver clientCredentials =
+        new ClientCredentialsAuthorizationResolver();
+    resolvers.put(clientCredentials.type(), clientCredentials);
+    ResourceOwnerPasswordCredentialsAuthorizationResolver password =
+        new ResourceOwnerPasswordCredentialsAuthorizationResolver();
+    resolvers.put(password.type(), password);
+  }
+
+  public OAuthAuthorizationResolver get(String type) {
     OAuthAuthorizationResolver resolver = resolvers.get(type);
 
     if (resolver == null) {
-      throw new UnSupportedException("Unsupported OAuth authorization type: " + type.name());
+      throw new UnSupportedException("Unsupported OAuth authorization type: " + type);
     }
 
     return resolver;

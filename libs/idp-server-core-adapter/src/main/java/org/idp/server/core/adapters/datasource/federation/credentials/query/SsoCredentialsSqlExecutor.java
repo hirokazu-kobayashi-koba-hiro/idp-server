@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-package org.idp.server.platform.oauth;
+package org.idp.server.core.adapters.datasource.federation.credentials.query;
 
-public interface OAuthAuthorizationResolver {
-  String type();
+import java.util.Map;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-  String resolve(OAuthAuthorizationConfiguration oAuthAuthorizationConfig);
+public interface SsoCredentialsSqlExecutor {
+
+  Map<String, String> selectBy(Tenant tenant, User user);
 }

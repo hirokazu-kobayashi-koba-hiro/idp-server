@@ -112,31 +112,13 @@
         ],
         "additional_parameters": [
           {
-            "type": "http_request",
+            "type": "sso_credentials",
             "details": {
-              "url": "http://localhost:4000/apply",
-              "method": "POST",
-              "static_headers": {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer dummy-token"
-              },
-              "body_mapping_rules": [
-                {
-                  "from": "$.request_body",
-                  "to": "*"
-                }
-              ],
-              "response_schema": {
-                "type": "object",
-                "required": [
-                  "application_id"
-                ],
-                "properties": {
-                  "application_id": {
-                    "type": "string"
-                  }
-                }
-              }
+              "token_endpoint": "http://localhost:8080/1e68932e-ed4a-43e7-b412-460665e42df3/v1/tokens",
+              "client_id": "clientSecretPost",
+              "client_secret": "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890",
+              "access_token_expires_in": 300,
+              "refresh_token_expires_in": 1800
             }
           }
         ]
@@ -152,8 +134,19 @@
               "to": "Content-Type"
             },
             {
-              "static_value": "Bearer dummy-token",
-              "to": "Authorization"
+              "from": "$.pre_hook_additional_parameters[0].access_token",
+              "to": "Authorization",
+              "functions": [
+                { "name": "format", "args": { "template": "Bearer {{value}}" } }
+              ]
+            },
+            {
+              "from": "$.unused",
+              "to": "x-request-id",
+              "functions": [
+                { "name": "randomString", "args": { "length": 6 } },
+                { "name": "format", "args": { "template": "trace-id-{{value}}" } }
+              ]
             }
           ],
           "body_mapping_rules": [

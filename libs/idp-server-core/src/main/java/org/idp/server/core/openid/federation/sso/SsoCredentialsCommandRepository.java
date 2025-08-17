@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-package org.idp.server.platform.oauth;
+package org.idp.server.core.openid.federation.sso;
 
-public interface OAuthAuthorizationResolver {
-  String type();
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-  String resolve(OAuthAuthorizationConfiguration oAuthAuthorizationConfig);
+public interface SsoCredentialsCommandRepository {
+
+  void register(Tenant tenant, User user, SsoCredentials ssoCredentials);
 }

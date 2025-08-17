@@ -21,6 +21,7 @@ import org.idp.server.core.extension.identity.verification.*;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationHandler;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
+import org.idp.server.core.extension.identity.verification.application.pre_hook.additional_parameter.AdditionalRequestParameterResolver;
 import org.idp.server.core.extension.identity.verification.callback.validation.IdentityVerificationCallbackRequestValidator;
 import org.idp.server.core.extension.identity.verification.callback.validation.IdentityVerificationCallbackValidationResult;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
@@ -63,7 +64,8 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
       TenantQueryRepository tenantQueryRepository,
       UserQueryRepository userQueryRepository,
       UserCommandRepository userCommandRepository,
-      TokenEventPublisher eventPublisher) {
+      TokenEventPublisher eventPublisher,
+      Map<String, AdditionalRequestParameterResolver> additional) {
     this.configurationQueryRepository = configurationQueryRepository;
     this.applicationCommandRepository = applicationCommandRepository;
     this.applicationQueryRepository = applicationQueryRepository;
@@ -71,7 +73,8 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
     this.resultCommandRepository = resultCommandRepository;
     this.userQueryRepository = userQueryRepository;
     this.userCommandRepository = userCommandRepository;
-    this.identityVerificationApplicationHandler = new IdentityVerificationApplicationHandler();
+    this.identityVerificationApplicationHandler =
+        new IdentityVerificationApplicationHandler(additional);
     this.eventPublisher = eventPublisher;
   }
 

@@ -32,15 +32,31 @@ import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 
 public class HttpRequestExecutor {
 
-  OAuthAuthorizationResolvers authorizationResolvers;
   HttpClient httpClient;
+  OAuthAuthorizationResolvers oAuthorizationResolvers;
   JsonConverter jsonConverter;
   LoggerWrapper log = LoggerWrapper.getLogger(HttpRequestExecutor.class);
 
   public HttpRequestExecutor(HttpClient httpClient) {
-    this.authorizationResolvers = new OAuthAuthorizationResolvers();
     this.httpClient = httpClient;
+    this.oAuthorizationResolvers = new OAuthAuthorizationResolvers();
     this.jsonConverter = JsonConverter.snakeCaseInstance();
+  }
+
+  public HttpRequestExecutor(
+      HttpClient httpClient, OAuthAuthorizationResolvers oAuthAuthorizationResolvers) {
+    this.httpClient = httpClient;
+    this.oAuthorizationResolvers = oAuthAuthorizationResolvers;
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
+  }
+
+  public HttpRequestExecutor(
+      HttpClient httpClient,
+      OAuthAuthorizationResolvers oAuthorizationResolvers,
+      JsonConverter jsonConverter) {
+    this.httpClient = httpClient;
+    this.oAuthorizationResolvers = oAuthorizationResolvers;
+    this.jsonConverter = jsonConverter;
   }
 
   public HttpRequestResult execute(
@@ -70,7 +86,7 @@ public class HttpRequestExecutor {
         OAuthAuthorizationConfiguration oAuthAuthorizationConfig =
             configuration.oauthAuthorization();
         OAuthAuthorizationResolver resolver =
-            authorizationResolvers.get(oAuthAuthorizationConfig.type());
+            oAuthorizationResolvers.get(oAuthAuthorizationConfig.type());
         String accessToken = resolver.resolve(oAuthAuthorizationConfig);
         headers.put("Authorization", "Bearer " + accessToken);
       }
@@ -122,7 +138,7 @@ public class HttpRequestExecutor {
     if (configuration.httpRequestAuthType().isOauth2()) {
       OAuthAuthorizationConfiguration oAuthAuthorizationConfig = configuration.oauthAuthorization();
       OAuthAuthorizationResolver resolver =
-          authorizationResolvers.get(oAuthAuthorizationConfig.type());
+          oAuthorizationResolvers.get(oAuthAuthorizationConfig.type());
       String accessToken = resolver.resolve(oAuthAuthorizationConfig);
       headers.put("Authorization", "Bearer " + accessToken);
     }

@@ -24,6 +24,7 @@ import org.idp.server.core.extension.identity.verification.IdentityVerificationT
 import org.idp.server.core.extension.identity.verification.application.execution.*;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplications;
+import org.idp.server.core.extension.identity.verification.application.pre_hook.additional_parameter.AdditionalRequestParameterResolver;
 import org.idp.server.core.extension.identity.verification.application.pre_hook.additional_parameter.AdditionalRequestParameterResolvers;
 import org.idp.server.core.extension.identity.verification.application.pre_hook.verification.IdentityVerificationApplicationRequestVerifiedResult;
 import org.idp.server.core.extension.identity.verification.application.pre_hook.verification.IdentityVerificationApplicationRequestVerifiers;
@@ -41,9 +42,10 @@ public class IdentityVerificationApplicationHandler {
   AdditionalRequestParameterResolvers additionalRequestParameterResolvers;
   IdentityVerificationApplicationExecutors executors;
 
-  public IdentityVerificationApplicationHandler() {
+  public IdentityVerificationApplicationHandler(
+      Map<String, AdditionalRequestParameterResolver> additional) {
     this.requestVerifiers = new IdentityVerificationApplicationRequestVerifiers();
-    this.additionalRequestParameterResolvers = new AdditionalRequestParameterResolvers();
+    this.additionalRequestParameterResolvers = new AdditionalRequestParameterResolvers(additional);
     this.executors = new IdentityVerificationApplicationExecutors();
   }
 

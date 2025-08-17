@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.application.pre_hook.additional_parameter.AdditionalRequestParameterResolver;
+import org.idp.server.core.extension.identity.verification.application.pre_hook.additional_parameter.AdditionalRequestParameterResolverFactory;
+import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.plugin.PluginLoader;
 
@@ -28,12 +30,14 @@ public class IdentityVerificationRequestAdditionalParameterPluginLoader extends 
   private static final LoggerWrapper log =
       LoggerWrapper.getLogger(IdentityVerificationRequestAdditionalParameterPluginLoader.class);
 
-  public static Map<String, AdditionalRequestParameterResolver> load() {
+  public static Map<String, AdditionalRequestParameterResolver> load(
+      ApplicationComponentContainer container) {
     Map<String, AdditionalRequestParameterResolver> resolvers = new HashMap<>();
 
-    List<AdditionalRequestParameterResolver> internals =
-        loadFromInternalModule(AdditionalRequestParameterResolver.class);
-    for (AdditionalRequestParameterResolver resolver : internals) {
+    List<AdditionalRequestParameterResolverFactory> internals =
+        loadFromInternalModule(AdditionalRequestParameterResolverFactory.class);
+    for (AdditionalRequestParameterResolverFactory resolverFactory : internals) {
+      AdditionalRequestParameterResolver resolver = resolverFactory.create(container);
       resolvers.put(resolver.type(), resolver);
       log.info(
           String.format(
@@ -41,9 +45,10 @@ public class IdentityVerificationRequestAdditionalParameterPluginLoader extends 
               resolver.getClass().getSimpleName()));
     }
 
-    List<AdditionalRequestParameterResolver> externals =
-        loadFromExternalModule(AdditionalRequestParameterResolver.class);
-    for (AdditionalRequestParameterResolver resolver : externals) {
+    List<AdditionalRequestParameterResolverFactory> externals =
+        loadFromInternalModule(AdditionalRequestParameterResolverFactory.class);
+    for (AdditionalRequestParameterResolverFactory resolverFactory : externals) {
+      AdditionalRequestParameterResolver resolver = resolverFactory.create(container);
       resolvers.put(resolver.type(), resolver);
       log.info(
           String.format(
