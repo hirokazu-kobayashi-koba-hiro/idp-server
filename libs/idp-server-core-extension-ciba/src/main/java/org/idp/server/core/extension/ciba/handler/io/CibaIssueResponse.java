@@ -16,8 +16,6 @@
 
 package org.idp.server.core.extension.ciba.handler.io;
 
-import java.util.Comparator;
-import java.util.List;
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
@@ -25,9 +23,7 @@ import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationErro
 import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationResponse;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
 import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.oauth.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.openid.oauth.configuration.client.ClientAttributes;
-import org.idp.server.core.openid.oauth.type.AuthFlow;
 import org.idp.server.core.openid.oauth.type.ContentType;
 import org.idp.server.core.openid.oauth.type.ciba.AuthReqId;
 import org.idp.server.core.openid.oauth.type.ciba.BindingMessage;
@@ -140,14 +136,6 @@ public class CibaIssueResponse {
 
   public ClientAttributes clientAttributes() {
     return cibaRequestContext.clientAttributes();
-  }
-
-  public AuthenticationPolicy findSatisfiedAuthenticationPolicy() {
-    List<AuthenticationPolicy> authenticationPolicies = cibaRequestContext.authenticationPolicies();
-    return authenticationPolicies.stream()
-        .filter(policy -> policy.anyMatch(AuthFlow.CIBA, request.acrValues(), request.scopes()))
-        .min(Comparator.comparingInt(AuthenticationPolicy::priority))
-        .orElse(new AuthenticationPolicy());
   }
 
   public AuthReqId authReqId() {

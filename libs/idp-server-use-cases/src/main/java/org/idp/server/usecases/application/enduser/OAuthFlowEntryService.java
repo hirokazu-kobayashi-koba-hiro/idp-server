@@ -21,6 +21,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.openid.authentication.*;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
+import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationQueryRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionQueryRepository;
 import org.idp.server.core.openid.federation.*;
@@ -36,11 +39,11 @@ import org.idp.server.core.openid.identity.event.UserLifecycleType;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.*;
-import org.idp.server.core.openid.oauth.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.openid.oauth.exception.OAuthAuthorizeBadRequestException;
 import org.idp.server.core.openid.oauth.io.*;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.openid.oauth.type.AuthFlow;
 import org.idp.server.core.openid.oauth.type.extension.OAuthDenyReason;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.date.SystemDateTime;
@@ -62,6 +65,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
   TenantQueryRepository tenantQueryRepository;
   AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository;
   AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository;
+  AuthenticationPolicyConfigurationQueryRepository authenticationPolicyConfigurationQueryRepository;
   OAuthFlowEventPublisher eventPublisher;
   UserLifecycleEventPublisher userLifecycleEventPublisher;
 
@@ -75,6 +79,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       TenantQueryRepository tenantQueryRepository,
       AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository,
       AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
+      AuthenticationPolicyConfigurationQueryRepository
+          authenticationPolicyConfigurationQueryRepository,
       OAuthFlowEventPublisher eventPublisher,
       UserLifecycleEventPublisher userLifecycleEventPublisher) {
     this.oAuthProtocols = oAuthProtocols;
@@ -86,6 +92,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     this.tenantQueryRepository = tenantQueryRepository;
     this.authenticationTransactionCommandRepository = authenticationTransactionCommandRepository;
     this.authenticationTransactionQueryRepository = authenticationTransactionQueryRepository;
+    this.authenticationPolicyConfigurationQueryRepository =
+        authenticationPolicyConfigurationQueryRepository;
     this.eventPublisher = eventPublisher;
     this.userLifecycleEventPublisher = userLifecycleEventPublisher;
   }
@@ -118,8 +126,11 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     OAuthRequestResponse requestResponse = oAuthProtocol.request(oAuthRequest);
 
     if (requestResponse.isOK()) {
+      AuthenticationPolicyConfiguration authenticationPolicyConfiguration =
+          authenticationPolicyConfigurationQueryRepository.find(tenant, AuthFlow.OAUTH);
       AuthenticationTransaction authenticationTransaction =
-          OAuthAuthenticationTransactionCreator.create(tenant, requestResponse);
+          OAuthAuthenticationTransactionCreator.create(
+              tenant, requestResponse, authenticationPolicyConfiguration);
       authenticationTransactionCommandRepository.register(tenant, authenticationTransaction);
     }
 

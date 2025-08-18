@@ -68,6 +68,22 @@ public class PostgresqlExecutor implements AuthenticationConfigSqlExecutor {
   }
 
   @Override
+  public Map<String, String> selectCount(Tenant tenant) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+                SELECT COUNT(id)
+                FROM authentication_configuration
+                WHERE tenant_id = ?::uuid
+            """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierUUID());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
+  @Override
   public List<Map<String, String>> selectList(Tenant tenant, int limit, int offset) {
 
     SqlExecutor sqlExecutor = new SqlExecutor();

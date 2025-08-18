@@ -755,7 +755,28 @@ POLICY rls_authentication_configuration
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE authentication_configuration FORCE ROW LEVEL SECURITY;
 
-CREATE INDEX idx_authentication_configuration_type ON authentication_configuration (tenant_id, type);
+CREATE TABLE authentication_policy
+(
+    id         UUID                    NOT NULL,
+    tenant_id  UUID                    NOT NULL,
+    flow       VARCHAR(255)            NOT NULL,
+    payload    JSONB                   NOT NULL,
+    enabled    BOOLEAN                 NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP DEFAULT now() NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
+    UNIQUE (tenant_id, flow)
+);
+
+ALTER TABLE authentication_policy ENABLE ROW LEVEL SECURITY;
+CREATE
+POLICY rls_authentication_policy
+  ON authentication_policy
+  USING (tenant_id = current_setting('app.tenant_id')::uuid);
+ALTER TABLE authentication_policy FORCE ROW LEVEL SECURITY;
+
+CREATE INDEX idx_authentication_policy_flow ON authentication_policy (tenant_id, flow);
 
 CREATE TABLE authentication_transaction
 (

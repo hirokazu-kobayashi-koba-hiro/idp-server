@@ -127,6 +127,23 @@ public enum AdminPermission {
       "authentication-config:delete",
       "Admin Delete authentication-config"),
 
+  AUTHENTICATION_POLICY_CONFIG_CREATE(
+      "b7220048-cc51-4219-a314-75e6fd9c9c10",
+      "authentication-policy-config:create",
+      "Admin Create a authentication-policy-config"),
+  AUTHENTICATION_POLICY_CONFIG_READ(
+      "acb99e61-0dff-476e-878a-b02883ac6b7b",
+      "authentication-policy-config:read",
+      "Admin Read authentication-policy-config information"),
+  AUTHENTICATION_POLICY_CONFIG_UPDATE(
+      "8bbbeae3-e3ef-4588-82c7-ea44aea696ee",
+      "authentication-policy-config:update",
+      "Admin Update authentication-policy-config"),
+  AUTHENTICATION_POLICY_CONFIG_DELETE(
+      "cdffc52d-d336-41d6-810c-e20b4e6440ad",
+      "authentication-policy-config:delete",
+      "Admin Delete authentication-policy-config"),
+
   IDENTITY_VERIFICATION_CONFIG_CREATE(
       "73d96f0e-6971-468d-b97c-59b3789c9479",
       "identity-verification-config:create",

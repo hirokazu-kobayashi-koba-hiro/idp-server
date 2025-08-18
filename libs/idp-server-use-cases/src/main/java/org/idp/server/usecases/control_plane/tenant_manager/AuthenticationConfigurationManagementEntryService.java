@@ -124,6 +124,17 @@ public class AuthenticationConfigurationManagementEntryService
     AdminPermissions permissions = getRequiredPermissions("findList");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    long totalCount = authenticationConfigurationQueryRepository.findTotalCount(tenant);
+    if (totalCount == 0) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("list", List.of());
+      response.put("total_count", 0);
+      response.put("limit", limit);
+      response.put("offset", offset);
+      return new AuthenticationConfigManagementResponse(
+          AuthenticationConfigManagementStatus.OK, response);
+    }
+
     List<AuthenticationConfiguration> configurations =
         authenticationConfigurationQueryRepository.findList(tenant, limit, offset);
 
@@ -152,6 +163,9 @@ public class AuthenticationConfigurationManagementEntryService
 
     Map<String, Object> response = new HashMap<>();
     response.put("list", configurations.stream().map(AuthenticationConfiguration::toMap).toList());
+    response.put("total_count", totalCount);
+    response.put("limit", limit);
+    response.put("offset", offset);
 
     return new AuthenticationConfigManagementResponse(
         AuthenticationConfigManagementStatus.OK, response);
@@ -302,6 +316,6 @@ public class AuthenticationConfigurationManagementEntryService
     authenticationConfigurationCommandRepository.delete(tenant, configuration);
 
     return new AuthenticationConfigManagementResponse(
-        AuthenticationConfigManagementStatus.OK, configuration.toMap());
+        AuthenticationConfigManagementStatus.NO_CONTENT, configuration.toMap());
   }
 }

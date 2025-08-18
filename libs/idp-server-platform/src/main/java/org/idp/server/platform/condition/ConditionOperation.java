@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.identity.verification.application.model;
+package org.idp.server.platform.condition;
 
 import java.util.Arrays;
 
-public enum Operator {
+public enum ConditionOperation {
   EQ("eq"),
   NE("ne"),
   GT("gt"),
@@ -35,14 +35,14 @@ public enum Operator {
 
   final String value;
 
-  Operator(String value) {
+  ConditionOperation(String value) {
     this.value = value;
   }
 
-  public static Operator from(String val) {
+  public static ConditionOperation from(String val) {
     return Arrays.stream(values())
         .filter(o -> o.value.equalsIgnoreCase(val))
         .findFirst()
-        .orElse(Operator.UNKNOWN);
+        .orElse(ConditionOperation.UNKNOWN);
   }
 }

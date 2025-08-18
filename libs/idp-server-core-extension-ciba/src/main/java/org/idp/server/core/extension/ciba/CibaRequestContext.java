@@ -27,7 +27,6 @@ import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
 import org.idp.server.core.openid.oauth.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.openid.oauth.clientauthenticator.BackchannelRequestParameters;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
-import org.idp.server.core.openid.oauth.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.openid.oauth.configuration.client.ClientAttributes;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
@@ -281,9 +280,5 @@ public class CibaRequestContext implements BackchannelRequestContext {
 
   public AuthorizationServerConfiguration authorizationServerConfiguration() {
     return authorizationServerConfiguration;
-  }
-
-  public List<AuthenticationPolicy> authenticationPolicies() {
-    return authorizationServerConfiguration.authenticationPolicies();
   }
 }

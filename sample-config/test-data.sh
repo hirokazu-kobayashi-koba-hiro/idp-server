@@ -131,6 +131,31 @@ for authentication_config_file in "${authentication_config_files[@]}"; do
 
 done
 
+##authentication-policy
+echo "-------------------------------------------------"
+echo ""
+echo "authentication-policy"
+
+authentication_policy_files=(
+  ciba.json
+  fido-uaf-deregistration.json
+  fido-uaf-registration.json
+  oauth.json
+)
+
+for authentication_policy_file in "${authentication_policy_files[@]}"; do
+  echo "🔧 Registering: $(basename "$authentication_policy_file")"
+
+./sample-config/upsert-authentication-policy.sh \
+  -t "${TENANT_ID}" \
+  -f "./sample-config/${ENV}/admin-tenant/authentication-policy/${authentication_policy_file}" \
+  -b "${BASE_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+done
+
+
 #identity-verification-config
 echo "-------------------------------------------------"
 echo ""

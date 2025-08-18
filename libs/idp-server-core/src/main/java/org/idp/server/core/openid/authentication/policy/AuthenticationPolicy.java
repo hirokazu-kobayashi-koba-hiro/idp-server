@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.openid.oauth.configuration.authentication;
+package org.idp.server.core.openid.authentication.policy;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,15 +27,15 @@ import org.idp.server.core.openid.oauth.type.oidc.AcrValues;
 import org.idp.server.platform.json.JsonReadable;
 
 public class AuthenticationPolicy implements JsonReadable {
-  String id;
+
   int priority;
   AuthenticationPolicyCondition conditions = new AuthenticationPolicyCondition();
   List<String> availableMethods = new ArrayList<>();
   Map<String, List<String>> acrMappingRules = new HashMap<>();
   Map<String, List<String>> levelOfAuthenticationScopes = new HashMap<>();
-  AuthenticationResultConditions successConditions = new AuthenticationResultConditions();
-  AuthenticationResultConditions failureConditions = new AuthenticationResultConditions();
-  AuthenticationResultConditions lockConditions = new AuthenticationResultConditions();
+  AuthenticationResultConditionConfig successConditions = new AuthenticationResultConditionConfig();
+  AuthenticationResultConditionConfig failureConditions = new AuthenticationResultConditionConfig();
+  AuthenticationResultConditionConfig lockConditions = new AuthenticationResultConditionConfig();
   AuthenticationDeviceRule authenticationDeviceRule = new AuthenticationDeviceRule();
   List<AuthenticationStepDefinition> stepDefinitions = new ArrayList<>();
 
@@ -43,10 +43,6 @@ public class AuthenticationPolicy implements JsonReadable {
 
   public boolean anyMatch(AuthFlow authFlow, AcrValues acrValues, Scopes scopes) {
     return conditions.anyMatch(authFlow, acrValues, scopes);
-  }
-
-  public AuthenticationPolicyIdentifier identifier() {
-    return new AuthenticationPolicyIdentifier(id);
   }
 
   public int priority() {
@@ -85,15 +81,15 @@ public class AuthenticationPolicy implements JsonReadable {
     return levelOfAuthenticationScopes != null;
   }
 
-  public AuthenticationResultConditions successConditions() {
+  public AuthenticationResultConditionConfig successConditions() {
     return successConditions;
   }
 
   public boolean hasSuccessConditions() {
-    return successConditions != null;
+    return successConditions != null && successConditions.exists();
   }
 
-  public AuthenticationResultConditions failureConditions() {
+  public AuthenticationResultConditionConfig failureConditions() {
     return failureConditions;
   }
 
@@ -101,7 +97,7 @@ public class AuthenticationPolicy implements JsonReadable {
     return failureConditions != null;
   }
 
-  public AuthenticationResultConditions lockConditions() {
+  public AuthenticationResultConditionConfig lockConditions() {
     return lockConditions;
   }
 
@@ -132,12 +128,11 @@ public class AuthenticationPolicy implements JsonReadable {
   }
 
   public boolean exists() {
-    return id != null && !id.isEmpty();
+    return hasSuccessConditions();
   }
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
-    map.put("id", id);
     if (hasPolicyConditions()) map.put("conditions", conditions.toMap());
     if (hasAvailableMethods()) map.put("available_methods", availableMethods);
     if (hasAcrMappingRules()) map.put("acr_mapping_rules", acrMappingRules);

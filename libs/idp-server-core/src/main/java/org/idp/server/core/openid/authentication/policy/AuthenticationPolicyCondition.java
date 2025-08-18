@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.openid.oauth.configuration.authentication;
+package org.idp.server.core.openid.authentication.policy;
 
 import java.util.ArrayList;
 import java.util.HashMap;

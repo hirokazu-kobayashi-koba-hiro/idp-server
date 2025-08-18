@@ -34,6 +34,7 @@ import org.idp.server.control_plane.base.schema.ControlPlaneSchemaReader;
 import org.idp.server.control_plane.management.audit.AuditLogManagementApi;
 import org.idp.server.control_plane.management.authentication.configuration.AuthenticationConfigurationManagementApi;
 import org.idp.server.control_plane.management.authentication.interaction.AuthenticationInteractionManagementApi;
+import org.idp.server.control_plane.management.authentication.policy.AuthenticationPolicyConfigurationManagementApi;
 import org.idp.server.control_plane.management.authentication.transaction.AuthenticationTransactionManagementApi;
 import org.idp.server.control_plane.management.federation.FederationConfigurationManagementApi;
 import org.idp.server.control_plane.management.identity.user.UserManagementApi;
@@ -163,6 +164,7 @@ public class IdpServerApplication {
   ClientManagementApi clientManagementApi;
   UserManagementApi userManagementApi;
   AuthenticationConfigurationManagementApi authenticationConfigurationManagementApi;
+  AuthenticationPolicyConfigurationManagementApi authenticationPolicyConfigurationManagementApi;
   FederationConfigurationManagementApi federationConfigurationManagementApi;
   IdentityVerificationConfigManagementApi identityVerificationConfigManagementApi;
   SecurityEventHookConfigurationManagementApi securityEventHookConfigurationManagementApi;
@@ -232,6 +234,14 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(AuthenticationTransactionCommandRepository.class);
     AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository =
         applicationComponentContainer.resolve(AuthenticationTransactionQueryRepository.class);
+    AuthenticationPolicyConfigurationCommandRepository
+        authenticationPolicyConfigurationCommandRepository =
+            applicationComponentContainer.resolve(
+                AuthenticationPolicyConfigurationCommandRepository.class);
+    AuthenticationPolicyConfigurationQueryRepository
+        authenticationPolicyConfigurationQueryRepository =
+            applicationComponentContainer.resolve(
+                AuthenticationPolicyConfigurationQueryRepository.class);
     IdentityVerificationConfigurationCommandRepository
         identityVerificationConfigurationCommandRepository =
             applicationComponentContainer.resolve(
@@ -410,6 +420,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 authenticationTransactionCommandRepository,
                 authenticationTransactionQueryRepository,
+                authenticationPolicyConfigurationQueryRepository,
                 oAuthFLowEventPublisher,
                 userLifecycleEventPublisher),
             OAuthFlowApi.class,
@@ -452,6 +463,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 authenticationTransactionCommandRepository,
                 authenticationTransactionQueryRepository,
+                authenticationPolicyConfigurationQueryRepository,
                 cibaFlowEventPublisher,
                 userLifecycleEventPublisher,
                 passwordVerificationDelegation),
@@ -559,6 +571,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 authenticationTransactionCommandRepository,
                 authenticationTransactionQueryRepository,
+                authenticationPolicyConfigurationQueryRepository,
                 authenticationInteractors,
                 tokenEventPublisher,
                 userOperationEventPublisher,
@@ -665,6 +678,16 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 auditLogWriters),
             AuthenticationConfigurationManagementApi.class,
+            tenantDialectProvider);
+
+    this.authenticationPolicyConfigurationManagementApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new AuthenticationPolicyConfigurationManagementEntryService(
+                authenticationPolicyConfigurationCommandRepository,
+                authenticationPolicyConfigurationQueryRepository,
+                tenantQueryRepository,
+                auditLogWriters),
+            AuthenticationPolicyConfigurationManagementApi.class,
             tenantDialectProvider);
 
     this.federationConfigurationManagementApi =
@@ -837,6 +860,11 @@ public class IdpServerApplication {
 
   public AuthenticationConfigurationManagementApi authenticationConfigurationManagementApi() {
     return authenticationConfigurationManagementApi;
+  }
+
+  public AuthenticationPolicyConfigurationManagementApi
+      authenticationPolicyConfigurationManagementApi() {
+    return authenticationPolicyConfigurationManagementApi;
   }
 
   public IdentityVerificationConfigManagementApi identityVerificationConfigManagementApi() {

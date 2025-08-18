@@ -23,9 +23,10 @@ import java.util.UUID;
 import org.idp.server.core.extension.ciba.handler.io.CibaIssueResponse;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.openid.authentication.*;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
-import org.idp.server.core.openid.oauth.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.openid.oauth.configuration.client.ClientAttributes;
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.openid.oauth.type.AuthFlow;
@@ -39,7 +40,9 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 public class CibaAuthenticationTransactionCreator {
 
   public static AuthenticationTransaction create(
-      Tenant tenant, CibaIssueResponse cibaIssueResponse) {
+      Tenant tenant,
+      CibaIssueResponse cibaIssueResponse,
+      AuthenticationPolicyConfiguration policyConfiguration) {
 
     AuthenticationTransactionIdentifier identifier =
         new AuthenticationTransactionIdentifier(UUID.randomUUID().toString());
@@ -50,7 +53,9 @@ public class CibaAuthenticationTransactionCreator {
     AuthenticationRequest authenticationRequest =
         toAuthenticationRequest(tenant, cibaIssueResponse);
     AuthenticationPolicy authenticationPolicy =
-        cibaIssueResponse.findSatisfiedAuthenticationPolicy();
+        policyConfiguration.findSatisfiedAuthenticationPolicy(
+            AuthFlow.CIBA, authenticationRequest.acrValues(), authenticationRequest.scopes());
+    ;
 
     Map<String, Object> attributes = new HashMap<>();
     attributes.put("auth_req_id", cibaIssueResponse.authReqId().value());

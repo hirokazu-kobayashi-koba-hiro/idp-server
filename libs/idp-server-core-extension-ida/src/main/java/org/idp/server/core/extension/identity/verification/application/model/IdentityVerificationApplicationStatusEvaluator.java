@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationContext;
 import org.idp.server.core.extension.identity.verification.configuration.process.*;
+import org.idp.server.platform.condition.ConditionOperationEvaluator;
+import org.idp.server.platform.condition.ConditionTransitionResult;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
 
@@ -29,7 +31,7 @@ public class IdentityVerificationApplicationStatusEvaluator {
       IdentityVerificationProcessConfiguration config, IdentityVerificationContext context) {
 
     IdentityVerificationConditionConfig approvedConfig = config.approved();
-    IdentityVerificationTransitionResult approvedRequestResult =
+    ConditionTransitionResult approvedRequestResult =
         isAnySatisfied(approvedConfig, context.toMap());
 
     if (approvedRequestResult.isSuccess()) {
@@ -37,7 +39,7 @@ public class IdentityVerificationApplicationStatusEvaluator {
     }
 
     IdentityVerificationConditionConfig rejectedConfig = config.rejected();
-    IdentityVerificationTransitionResult rejectedRequestResult =
+    ConditionTransitionResult rejectedRequestResult =
         isAnySatisfied(rejectedConfig, context.toMap());
 
     if (rejectedRequestResult.isSuccess()) {
@@ -45,7 +47,7 @@ public class IdentityVerificationApplicationStatusEvaluator {
     }
 
     IdentityVerificationConditionConfig cancellationConfig = config.canceled();
-    IdentityVerificationTransitionResult cancellationRequestResult =
+    ConditionTransitionResult cancellationRequestResult =
         isAnySatisfied(cancellationConfig, context.toMap());
 
     if (cancellationRequestResult.isSuccess()) {
@@ -59,7 +61,7 @@ public class IdentityVerificationApplicationStatusEvaluator {
       IdentityVerificationProcessConfiguration config, IdentityVerificationContext context) {
 
     IdentityVerificationConditionConfig approvedConfig = config.approved();
-    IdentityVerificationTransitionResult approvedRequestResult =
+    ConditionTransitionResult approvedRequestResult =
         isAnySatisfied(approvedConfig, context.toMap());
 
     if (approvedRequestResult.isSuccess()) {
@@ -67,7 +69,7 @@ public class IdentityVerificationApplicationStatusEvaluator {
     }
 
     IdentityVerificationConditionConfig rejectedConfig = config.rejected();
-    IdentityVerificationTransitionResult rejectedRequestResult =
+    ConditionTransitionResult rejectedRequestResult =
         isAnySatisfied(rejectedConfig, context.toMap());
 
     if (rejectedRequestResult.isSuccess()) {
@@ -75,7 +77,7 @@ public class IdentityVerificationApplicationStatusEvaluator {
     }
 
     IdentityVerificationConditionConfig cancellationConfig = config.canceled();
-    IdentityVerificationTransitionResult cancellationRequestResult =
+    ConditionTransitionResult cancellationRequestResult =
         isAnySatisfied(cancellationConfig, context.toMap());
 
     if (cancellationRequestResult.isSuccess()) {
@@ -85,11 +87,11 @@ public class IdentityVerificationApplicationStatusEvaluator {
     return IdentityVerificationApplicationStatus.EXAMINATION_PROCESSING;
   }
 
-  static IdentityVerificationTransitionResult isAnySatisfied(
+  static ConditionTransitionResult isAnySatisfied(
       IdentityVerificationConditionConfig conditionConfig, Map<String, Object> request) {
 
     if (!conditionConfig.exists()) {
-      return IdentityVerificationTransitionResult.UNDEFINED;
+      return ConditionTransitionResult.UNDEFINED;
     }
 
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request);
@@ -98,11 +100,11 @@ public class IdentityVerificationApplicationStatusEvaluator {
     for (List<IdentityVerificationCondition> resultConditions : conditionConfig.anyOf()) {
 
       if (isAllSatisfied(resultConditions, jsonPathWrapper)) {
-        return IdentityVerificationTransitionResult.SUCCESS;
+        return ConditionTransitionResult.SUCCESS;
       }
     }
 
-    return IdentityVerificationTransitionResult.FAILURE;
+    return ConditionTransitionResult.FAILURE;
   }
 
   static boolean isAllSatisfied(
@@ -111,7 +113,7 @@ public class IdentityVerificationApplicationStatusEvaluator {
 
       Object actualValue = jsonPathWrapper.readRaw(resultCondition.path());
 
-      if (!OperatorEvaluator.evaluate(
+      if (!ConditionOperationEvaluator.evaluate(
           actualValue, resultCondition.operation(), resultCondition.value())) {
         return false;
       }

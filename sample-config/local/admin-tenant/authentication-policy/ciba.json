@@ -1,0 +1,279 @@
+{
+  "id": "6eaa7647-abd6-4c94-9758-ef7f9fdcccdd",
+  "flow": "ciba",
+  "enabled": true,
+  "policies": [
+    {
+      "description": "default_authentication_policy",
+      "priority": 1,
+      "conditions": {
+        "scopes": [
+          "openid"
+        ]
+      },
+      "available_methods": [
+        "password",
+        "email",
+        "sms",
+        "webauthn",
+        "fido-uaf",
+        "external-token"
+      ],
+      "acr_mapping_rules": {
+        "urn:mace:incommon:iap:gold": [
+          "fido-uaf",
+          "webauthn"
+        ],
+        "urn:mace:incommon:iap:silver": [
+          "email",
+          "sms"
+        ],
+        "urn:mace:incommon:iap:bronze": [
+          "password",
+          "external-token"
+        ]
+      },
+      "level_of_authentication_scopes": {
+        "transfers": [
+          "fido-uaf", "webauthn"
+        ]
+      },
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.authentication-device-binding-message.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.sms-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.email-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.fido-uaf-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.external-token.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.oidc-google.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.oidc-facebook.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.oidc-b7481833-c95a-4c7a-9481-94b30008c8ef.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      },
+      "failure_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ],
+          [
+            {
+              "path": "$.authentication-device-binding-message.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ],
+          [
+            {
+              "path": "$.sms-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ],
+          [
+            {
+              "path": "$.email-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ],
+          [
+            {
+              "path": "$.fido-uaf-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      },
+      "lock_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ],
+          [
+            {
+              "path": "$.authentication-device-binding-message.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ],
+          [
+            {
+              "path": "$.sms-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ],
+          [
+            {
+              "path": "$.email-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ],
+          [
+            {
+              "path": "$.fido-uaf-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "description": "gold",
+      "priority": 10,
+      "conditions": {
+        "acr_values": [
+          "urn:mace:incommon:iap:gold"
+        ]
+      },
+      "available_methods": [
+        "password",
+        "email",
+        "sms",
+        "webauthn",
+        "fido-uaf",
+        "external-token"
+      ],
+      "acr_mapping_rules": {
+        "urn:mace:incommon:iap:gold": [
+          "fido-uaf",
+          "webauthn"
+        ],
+        "urn:mace:incommon:iap:silver": [
+          "email",
+          "sms"
+        ],
+        "urn:mace:incommon:iap:bronze": [
+          "password",
+          "external-token"
+        ]
+      },
+      "level_of_authentication_scopes": {
+        "transfers": [
+          "fido-uaf", "webauthn"
+        ]
+      },
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.fido-uaf-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      },
+      "failure_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.fido-uaf-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      },
+      "lock_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.fido-uaf-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      }
+    }
+  ]
+}

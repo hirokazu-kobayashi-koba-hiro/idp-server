@@ -560,6 +560,20 @@ CREATE TABLE authentication_configuration
 
 CREATE INDEX idx_authentication_configuration_type ON authentication_configuration (tenant_id, type);
 
+CREATE TABLE authentication_policy
+(
+    id         CHAR(36)                    NOT NULL,
+    tenant_id  CHAR(36)                    NOT NULL,
+    flow       VARCHAR(255)            NOT NULL,
+    payload    JSON                   NOT NULL,
+    enabled    TINYINT(1)                 NOT NULL DEFAULT TRUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
+    UNIQUE (tenant_id, flow)
+);
+
 CREATE TABLE authentication_transaction
 (
     id                                   CHAR(36)                           NOT NULL,

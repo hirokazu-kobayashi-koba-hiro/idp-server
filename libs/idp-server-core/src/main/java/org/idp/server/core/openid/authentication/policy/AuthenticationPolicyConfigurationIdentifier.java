@@ -14,21 +14,27 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.openid.oauth.configuration.authentication;
+package org.idp.server.core.openid.authentication.policy;
 
 import java.util.Objects;
+import java.util.UUID;
+import org.idp.server.platform.uuid.UuidConvertable;
 
-public class AuthenticationPolicyIdentifier {
+public class AuthenticationPolicyConfigurationIdentifier implements UuidConvertable {
   String value;
 
-  public AuthenticationPolicyIdentifier() {}
+  public AuthenticationPolicyConfigurationIdentifier() {}
 
-  public AuthenticationPolicyIdentifier(String value) {
+  public AuthenticationPolicyConfigurationIdentifier(String value) {
     this.value = value;
   }
 
   public String value() {
     return value;
+  }
+
+  public UUID valueAsUuid() {
+    return convertUuid(value);
   }
 
   public boolean exists() {
@@ -38,7 +44,8 @@ public class AuthenticationPolicyIdentifier {
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
-    AuthenticationPolicyIdentifier that = (AuthenticationPolicyIdentifier) o;
+    AuthenticationPolicyConfigurationIdentifier that =
+        (AuthenticationPolicyConfigurationIdentifier) o;
     return Objects.equals(value, that.value);
   }
 

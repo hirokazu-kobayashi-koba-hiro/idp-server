@@ -26,5 +26,7 @@ public interface AuthenticationConfigSqlExecutor {
 
   Map<String, String> selectOne(Tenant tenant, AuthenticationConfigurationIdentifier identifier);
 
+  Map<String, String> selectCount(Tenant tenant);
+
   List<Map<String, String>> selectList(Tenant tenant, int limit, int offset);
 }
