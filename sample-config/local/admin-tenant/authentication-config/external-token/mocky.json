@@ -36,7 +36,7 @@
                 "from": "$.unused",
                 "to": "x-request-id",
                 "functions": [
-                  { "name": "randomString", "args": { "length": 6 } },
+                  { "name": "random_string", "args": { "length": 6 } },
                   { "name": "format", "args": { "template": "trace-id-{{value}}" } }
                 ]
               },
@@ -88,7 +88,8 @@
           { "from": "$.execution_http_requests[1].response_body.zoneinfo", "to": "zoneinfo" },
           { "from": "$.execution_http_requests[1].response_body.locale", "to": "locale" },
           { "from": "$.execution_http_requests[1].response_body.phone_number", "to": "phone_number" },
-          { "from": "$.execution_http_requests[1].response_body.role", "to": "custom_properties.role" }
+          { "from": "$.execution_http_requests[1].response_body.role", "to": "custom_properties.role",
+            "functions": [{ "name": "exists", "args": {} }] }
         ]
       }
     }

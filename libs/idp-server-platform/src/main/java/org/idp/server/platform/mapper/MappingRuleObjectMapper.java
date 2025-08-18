@@ -33,50 +33,64 @@ public class MappingRuleObjectMapper {
       List<MappingRule> mappingRules, JsonPathWrapper jsonPath) {
 
     Map<String, Object> flatMap = new HashMap<>();
+
     for (MappingRule rule : mappingRules) {
-
-      if (rule.hasStaticValue()) {
-        log.debug("MappingRuleObjectMapper apply static value");
-        Object value = rule.staticValue();
-        flatMap.put(rule.to(), value);
-      }
-
-      if (rule.hasFrom()) {
-        log.debug("MappingRuleObjectMapper apply from");
-        Object value = jsonPath.readRaw(rule.from());
-
-        if ("*".equals(rule.to())) {
-          if (value instanceof Map<?, ?> mapValue) {
-            for (Map.Entry<?, ?> entry : mapValue.entrySet()) {
-              if (entry.getKey() instanceof String key) {
-                flatMap.put(key, entry.getValue());
-              }
-            }
-          } else {
-            log.warn("mapping rule is *, but value is not a Map");
-          }
-        }
-
-        if (rule.hasFunctions()) {
-          Object applyValue = value;
-          for (FunctionSpec spec : rule.functions()) {
-            ValueFunction fn = functionRegistry.get(spec.name());
-            if (fn == null) {
-              log.warn("mapping rule function " + spec.name() + " not found");
-              continue;
-            }
-            applyValue = fn.apply(applyValue, spec.args());
-          }
-          flatMap.put(rule.to(), applyValue);
-        } else {
-          Object converted = TypeConverter.convert(value, rule.convertType());
-          flatMap.put(rule.to(), converted);
-        }
-      }
+      Object baseValue = resolveBaseValue(rule, jsonPath);
+      Object finalValue = applyFunctions(rule, baseValue);
+      writeResult(rule, finalValue, flatMap);
     }
 
-    ObjectCompositor objectCompositor = new ObjectCompositor(flatMap);
+    return new ObjectCompositor(flatMap).composite();
+  }
 
-    return objectCompositor.composite();
+  /** Resolve base value from staticValue, from(JSONPath) or null. */
+  static Object resolveBaseValue(MappingRule rule, JsonPathWrapper jsonPath) {
+    if (rule.hasStaticValue()) {
+      log.debug("apply static value to=" + rule.to());
+      return rule.staticValue();
+    }
+    if (rule.hasFrom()) {
+      log.debug("read from JSONPath from=" + rule.from() + " to=" + rule.to());
+      return jsonPath.readRaw(rule.from());
+    }
+    // no static/from → start from null
+    return null;
+  }
+
+  /** Apply all configured functions sequentially. */
+  static Object applyFunctions(MappingRule rule, Object value) {
+    if (!rule.hasFunctions()) {
+      return value;
+    }
+    Object v = value;
+    for (FunctionSpec spec : rule.functions()) {
+      ValueFunction fn = functionRegistry.get(spec.name());
+      if (fn == null) {
+        log.warn("function not found: " + spec.name() + " (to=" + rule.to() + ")");
+        continue;
+      }
+      v = fn.apply(v, spec.args());
+    }
+    return v;
+  }
+
+  /** Write the final value to the map, supporting "*" expansion. */
+  static void writeResult(MappingRule rule, Object value, Map<String, Object> flatMap) {
+    if ("*".equals(rule.to())) {
+      if (value instanceof Map<?, ?> mapValue) {
+        for (Map.Entry<?, ?> entry : mapValue.entrySet()) {
+          if (entry.getKey() instanceof String key) {
+            flatMap.put(key, entry.getValue());
+          }
+        }
+      } else if (value == null) {
+        log.warn(
+            "'*' skipped: value is null (from=" + (rule.hasFrom() ? rule.from() : "n/a") + ")");
+      } else {
+        log.warn("'*' requires Map but got " + value.getClass().getSimpleName());
+      }
+    } else {
+      flatMap.put(rule.to(), value);
+    }
   }
 }

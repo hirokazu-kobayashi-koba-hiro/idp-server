@@ -40,6 +40,6 @@ public class RandomStringFunction implements ValueFunction {
 
   @Override
   public String name() {
-    return "randomString";
+    return "random_string";
   }
 }

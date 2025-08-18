@@ -144,7 +144,7 @@
               "from": "$.unused",
               "to": "x-request-id",
               "functions": [
-                { "name": "randomString", "args": { "length": 6 } },
+                { "name": "random_string", "args": { "length": 6 } },
                 { "name": "format", "args": { "template": "trace-id-{{value}}" } }
               ]
             }
