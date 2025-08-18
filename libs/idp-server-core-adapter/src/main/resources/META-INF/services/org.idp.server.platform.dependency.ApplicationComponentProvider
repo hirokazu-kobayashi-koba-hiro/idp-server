@@ -48,3 +48,5 @@ org.idp.server.core.adapters.datasource.audit.query.AuditLogQueryDataSourceProvi
 org.idp.server.core.adapters.datasource.authentication.interaction.query.AuthenticationInteractionQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.federation.credentials.query.SsoCredentialsQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.federation.credentials.command.SsoCredentialsCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.authentication.policy.command.AuthenticationPolicyConfigurationCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.authentication.policy.query.AuthenticationPolicyConfigurationQueryDataSourceProvider

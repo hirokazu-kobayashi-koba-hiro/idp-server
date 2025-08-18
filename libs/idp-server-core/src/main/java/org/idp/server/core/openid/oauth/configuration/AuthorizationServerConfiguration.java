@@ -18,7 +18,6 @@ package org.idp.server.core.openid.oauth.configuration;
 
 import java.util.*;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
-import org.idp.server.core.openid.oauth.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.openid.oauth.configuration.vc.VerifiableCredentialConfiguration;
 import org.idp.server.core.openid.oauth.type.oauth.GrantType;
 import org.idp.server.core.openid.oauth.type.oauth.ResponseType;
@@ -576,10 +575,6 @@ public class AuthorizationServerConfiguration implements JsonReadable {
 
   public int oauthAuthorizationRequestExpiresIn() {
     return extension.oauthAuthorizationRequestExpiresIn();
-  }
-
-  public List<AuthenticationPolicy> authenticationPolicies() {
-    return extension.authenticationPolicies();
   }
 
   public boolean enabledCustomClaimsScopeMapping() {

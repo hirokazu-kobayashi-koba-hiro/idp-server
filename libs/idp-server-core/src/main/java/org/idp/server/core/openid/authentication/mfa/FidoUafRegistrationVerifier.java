@@ -18,10 +18,10 @@ package org.idp.server.core.openid.authentication.mfa;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.openid.authentication.policy.AuthenticationDeviceRule;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.io.MfaRegistrationRequest;
-import org.idp.server.core.openid.oauth.configuration.authentication.AuthenticationDeviceRule;
-import org.idp.server.core.openid.oauth.configuration.authentication.AuthenticationPolicy;
 
 public class FidoUafRegistrationVerifier implements MfaRequestVerifier {
 

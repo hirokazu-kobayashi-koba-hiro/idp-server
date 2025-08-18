@@ -16,88 +16,87 @@
 
 package org.idp.server.core.openid.authentication.evaluator;
 
+import java.util.List;
+import java.util.Map;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionResults;
-import org.idp.server.core.openid.oauth.configuration.authentication.AuthenticationResultCondition;
-import org.idp.server.core.openid.oauth.configuration.authentication.AuthenticationResultConditions;
+import org.idp.server.core.openid.authentication.policy.AuthenticationResultCondition;
+import org.idp.server.core.openid.authentication.policy.AuthenticationResultConditionConfig;
+import org.idp.server.platform.condition.ConditionOperationEvaluator;
+import org.idp.server.platform.condition.ConditionTransitionResult;
+import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.path.JsonPathWrapper;
 
 public class MfaConditionEvaluator {
 
   public static boolean isSuccessSatisfied(
-      AuthenticationResultConditions config, AuthenticationInteractionResults results) {
+      AuthenticationResultConditionConfig config, AuthenticationInteractionResults results) {
     if (!config.exists() || !results.exists()) {
       return false;
     }
 
-    if (config.hasAllOf()) {
-      for (AuthenticationResultCondition condition : config.allOf()) {
-        if (!results.contains(condition.type())) return false;
-        if (results.get(condition.type()).successCount() < condition.successCount()) return false;
-      }
-      return true;
-    }
+    ConditionTransitionResult result = isAnySatisfied(config, results.toMapAsObject());
 
-    if (config.hasAnyOf()) {
-      for (AuthenticationResultCondition cond : config.anyOf()) {
-        if (!results.contains(cond.type())) continue;
-        if (results.get(cond.type()).successCount() >= cond.successCount()) return true;
-      }
-      return false;
-    }
-
-    return false;
+    return result.isSuccess();
   }
 
   public static boolean isFailureSatisfied(
-      AuthenticationResultConditions config, AuthenticationInteractionResults results) {
+      AuthenticationResultConditionConfig config, AuthenticationInteractionResults results) {
     if (!config.exists() || !results.exists()) {
       return false;
     }
 
+    // TODO to be more correct
     if (results.containsDenyInteraction()) {
       return true;
     }
 
-    if (config.hasAllOf()) {
-      for (AuthenticationResultCondition condition : config.allOf()) {
-        if (!results.contains(condition.type())) return false;
-        if (results.get(condition.type()).failureCount() < condition.failureCount()) return false;
-      }
-      return true;
-    }
+    ConditionTransitionResult result = isAnySatisfied(config, results.toMapAsObject());
 
-    if (config.hasAnyOf()) {
-      for (AuthenticationResultCondition cond : config.anyOf()) {
-        if (!results.contains(cond.type())) continue;
-        if (results.get(cond.type()).failureCount() >= cond.failureCount()) return true;
-      }
-      return false;
-    }
-
-    return false;
+    return result.isSuccess();
   }
 
   public static boolean isLockedSatisfied(
-      AuthenticationResultConditions config, AuthenticationInteractionResults results) {
+      AuthenticationResultConditionConfig config, AuthenticationInteractionResults results) {
     if (!config.exists() || !results.exists()) {
       return false;
     }
 
-    if (config.hasAllOf()) {
-      for (AuthenticationResultCondition condition : config.allOf()) {
-        if (!results.contains(condition.type())) return false;
-        if (results.get(condition.type()).failureCount() < condition.failureCount()) return false;
-      }
-      return true;
+    ConditionTransitionResult result = isAnySatisfied(config, results.toMapAsObject());
+
+    return result.isSuccess();
+  }
+
+  static ConditionTransitionResult isAnySatisfied(
+      AuthenticationResultConditionConfig conditionConfig, Map<String, Object> request) {
+
+    if (!conditionConfig.exists()) {
+      return ConditionTransitionResult.UNDEFINED;
     }
 
-    if (config.hasAnyOf()) {
-      for (AuthenticationResultCondition cond : config.anyOf()) {
-        if (!results.contains(cond.type())) continue;
-        if (results.get(cond.type()).failureCount() >= cond.failureCount()) return true;
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request);
+    JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
+
+    for (List<AuthenticationResultCondition> resultConditions : conditionConfig.anyOf()) {
+
+      if (isAllSatisfied(resultConditions, jsonPathWrapper)) {
+        return ConditionTransitionResult.SUCCESS;
       }
-      return false;
     }
 
-    return false;
+    return ConditionTransitionResult.FAILURE;
+  }
+
+  static boolean isAllSatisfied(
+      List<AuthenticationResultCondition> resultConditions, JsonPathWrapper jsonPathWrapper) {
+    for (AuthenticationResultCondition resultCondition : resultConditions) {
+
+      Object actualValue = jsonPathWrapper.readRaw(resultCondition.path());
+
+      if (!ConditionOperationEvaluator.evaluate(
+          actualValue, resultCondition.operation(), resultCondition.value())) {
+        return false;
+      }
+    }
+    return true;
   }
 }

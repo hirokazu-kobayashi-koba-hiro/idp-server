@@ -68,6 +68,22 @@ public class MysqlExecutor implements AuthenticationConfigSqlExecutor {
   }
 
   @Override
+  public Map<String, String> selectCount(Tenant tenant) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+                SELECT COUNT(id)
+                FROM authentication_configuration
+                WHERE tenant_id = ?
+            """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierValue());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
+  @Override
   public List<Map<String, String>> selectList(Tenant tenant, int limit, int offset) {
 
     SqlExecutor sqlExecutor = new SqlExecutor();

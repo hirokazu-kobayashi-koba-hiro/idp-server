@@ -25,6 +25,8 @@ import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationReque
 import org.idp.server.core.extension.ciba.user.UserHintResolvers;
 import org.idp.server.core.extension.ciba.verifier.additional.CibaRequestAdditionalVerifiers;
 import org.idp.server.core.openid.authentication.*;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
+import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationQueryRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionQueryRepository;
 import org.idp.server.core.openid.identity.authentication.PasswordVerificationDelegation;
@@ -32,6 +34,7 @@ import org.idp.server.core.openid.identity.event.UserLifecycleEvent;
 import org.idp.server.core.openid.identity.event.UserLifecycleEventPublisher;
 import org.idp.server.core.openid.identity.event.UserLifecycleType;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.core.openid.oauth.type.AuthFlow;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -50,6 +53,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
   TenantQueryRepository tenantQueryRepository;
   AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository;
   AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository;
+  AuthenticationPolicyConfigurationQueryRepository authenticationPolicyConfigurationQueryRepository;
   CibaFlowEventPublisher eventPublisher;
   UserLifecycleEventPublisher userLifecycleEventPublisher;
 
@@ -60,6 +64,8 @@ public class CibaFlowEntryService implements CibaFlowApi {
       TenantQueryRepository tenantQueryRepository,
       AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository,
       AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
+      AuthenticationPolicyConfigurationQueryRepository
+          authenticationPolicyConfigurationQueryRepository,
       CibaFlowEventPublisher eventPublisher,
       UserLifecycleEventPublisher userLifecycleEventPublisher,
       PasswordVerificationDelegation passwordVerificationDelegation) {
@@ -71,6 +77,8 @@ public class CibaFlowEntryService implements CibaFlowApi {
     this.tenantQueryRepository = tenantQueryRepository;
     this.authenticationTransactionCommandRepository = authenticationTransactionCommandRepository;
     this.authenticationTransactionQueryRepository = authenticationTransactionQueryRepository;
+    this.authenticationPolicyConfigurationQueryRepository =
+        authenticationPolicyConfigurationQueryRepository;
     this.eventPublisher = eventPublisher;
     this.userLifecycleEventPublisher = userLifecycleEventPublisher;
   }
@@ -100,8 +108,11 @@ public class CibaFlowEntryService implements CibaFlowApi {
         DefaultSecurityEventType.backchannel_authentication_request_success.toEventType(),
         requestAttributes);
 
+    AuthenticationPolicyConfiguration authenticationPolicyConfiguration =
+        authenticationPolicyConfigurationQueryRepository.find(tenant, AuthFlow.CIBA);
     AuthenticationTransaction authenticationTransaction =
-        CibaAuthenticationTransactionCreator.create(tenant, issueResponse);
+        CibaAuthenticationTransactionCreator.create(
+            tenant, issueResponse, authenticationPolicyConfiguration);
 
     AuthenticationInteractionType authenticationInteractionType =
         issueResponse.defaultCibaAuthenticationInteractionType();

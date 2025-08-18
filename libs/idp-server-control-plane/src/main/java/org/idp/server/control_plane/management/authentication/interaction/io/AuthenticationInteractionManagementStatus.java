@@ -18,6 +18,7 @@ package org.idp.server.control_plane.management.authentication.interaction.io;
 
 public enum AuthenticationInteractionManagementStatus {
   OK(200),
+  NO_CONTENT(204),
   INVALID_REQUEST(400),
   UNAUTHORIZED(401),
   FORBIDDEN(403),

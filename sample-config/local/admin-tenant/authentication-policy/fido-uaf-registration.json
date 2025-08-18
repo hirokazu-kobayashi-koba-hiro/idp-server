@@ -1,0 +1,54 @@
+{
+  "id": "956d7522-bacb-4bdb-939a-0166ff44df19",
+  "flow": "fido-uaf-registration",
+  "enabled": true,
+  "policies": [
+    {
+      "description": "default",
+      "priority": 1,
+      "available_methods": [
+        "fido-uaf"
+      ],
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.fido-uaf-registration.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      },
+      "failure_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.fido-uaf-registration.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      },
+      "lock_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.fido-uaf-registration.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      },
+      "authentication_device_rule": {
+        "max_devices": 100,
+        "required_identity_verification": true
+      }
+    }
+  ]
+}

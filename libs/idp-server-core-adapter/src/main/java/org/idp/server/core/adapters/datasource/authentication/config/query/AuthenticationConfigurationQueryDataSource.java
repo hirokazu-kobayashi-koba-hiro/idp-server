@@ -66,7 +66,28 @@ public class AuthenticationConfigurationQueryDataSource
   }
 
   @Override
+  public long findTotalCount(Tenant tenant) {
+    AuthenticationConfigSqlExecutor executor = executors.get(tenant.databaseType());
+    Map<String, String> result = executor.selectCount(tenant);
+
+    if (Objects.isNull(result) || result.isEmpty()) {
+      return 0;
+    }
+
+    return Long.parseLong(result.get("count"));
+  }
+
+  @Override
   public List<AuthenticationConfiguration> findList(Tenant tenant, int limit, int offset) {
-    return List.of();
+    AuthenticationConfigSqlExecutor executor = executors.get(tenant.databaseType());
+    List<Map<String, String>> results = executor.selectList(tenant, limit, offset);
+
+    if (Objects.isNull(results) || results.isEmpty()) {
+      return List.of();
+    }
+
+    return results.stream()
+        .map(result -> jsonConverter.read(result.get("payload"), AuthenticationConfiguration.class))
+        .toList();
   }
 }

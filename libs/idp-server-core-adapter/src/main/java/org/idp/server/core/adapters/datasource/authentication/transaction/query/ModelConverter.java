@@ -19,9 +19,9 @@ package org.idp.server.core.adapters.datasource.authentication.transaction.query
 import java.time.LocalDateTime;
 import java.util.*;
 import org.idp.server.core.openid.authentication.*;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
-import org.idp.server.core.openid.oauth.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.openid.oauth.configuration.client.ClientAttributes;
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetail;
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;

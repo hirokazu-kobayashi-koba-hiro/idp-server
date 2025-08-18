@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.identity.verification.application.model;
+package org.idp.server.platform.condition;
 
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.regex.Pattern;
 
-public class OperatorEvaluator {
+public class ConditionOperationEvaluator {
 
   public static boolean evaluate(Object target, String operatorStr, Object expected) {
-    Operator operator = Operator.from(operatorStr);
-    return evaluate(target, operator, expected);
+    ConditionOperation conditionOperation = ConditionOperation.from(operatorStr);
+    return evaluate(target, conditionOperation, expected);
   }
 
-  public static boolean evaluate(Object target, Operator operator, Object expected) {
-    return switch (operator) {
+  public static boolean evaluate(
+      Object target, ConditionOperation conditionOperation, Object expected) {
+    return switch (conditionOperation) {
       case EQ -> Objects.equals(target, expected);
       case NE -> !Objects.equals(target, expected);
       case GT -> target != null && compareNumbers(target, expected) > 0;

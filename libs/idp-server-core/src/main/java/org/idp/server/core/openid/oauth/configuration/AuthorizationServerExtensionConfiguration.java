@@ -18,7 +18,6 @@ package org.idp.server.core.openid.oauth.configuration;
 
 import java.util.*;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
-import org.idp.server.core.openid.oauth.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.platform.json.JsonReadable;
 
 public class AuthorizationServerExtensionConfiguration implements JsonReadable {
@@ -47,7 +46,6 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
   String backchannelAuthUserCodeType = "password";
   String defaultCibaAuthenticationInteractionType = "authentication-device-notification";
   int oauthAuthorizationRequestExpiresIn = 1800;
-  List<AuthenticationPolicy> authenticationPolicies = new ArrayList<>();
   boolean customClaimsScopeMapping = false;
   boolean accessTokenSelectiveUserCustomProperties = false;
   boolean accessTokenVerifiedClaims = false;
@@ -161,10 +159,6 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
 
   public boolean idTokenStrictMode() {
     return idTokenStrictMode;
-  }
-
-  public List<AuthenticationPolicy> authenticationPolicies() {
-    return authenticationPolicies;
   }
 
   public boolean enabledCustomClaimsScopeMapping() {

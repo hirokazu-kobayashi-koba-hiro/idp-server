@@ -16,19 +16,16 @@
 
 package org.idp.server.core.openid.oauth.io;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.OAuthRequestContext;
 import org.idp.server.core.openid.oauth.OAuthSession;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
-import org.idp.server.core.openid.oauth.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.openid.oauth.response.AuthorizationErrorResponse;
 import org.idp.server.core.openid.oauth.response.AuthorizationResponse;
-import org.idp.server.core.openid.oauth.type.AuthFlow;
 import org.idp.server.core.openid.oauth.type.oauth.Error;
 import org.idp.server.core.openid.oauth.type.oauth.ErrorDescription;
 
@@ -147,22 +144,18 @@ public class OAuthRequestResponse {
     return status.isSuccess();
   }
 
-  public List<AuthenticationPolicy> authenticationPolicies() {
-    return authorizationServerConfiguration.authenticationPolicies();
-  }
-
   // FIXME bad code
-  public AuthenticationPolicy findSatisfiedAuthenticationPolicy() {
-    List<AuthenticationPolicy> authenticationPolicies =
-        authorizationServerConfiguration.authenticationPolicies();
-    return authenticationPolicies.stream()
-        .filter(
-            authenticationPolicy ->
-                authenticationPolicy.anyMatch(
-                    AuthFlow.OAUTH,
-                    authorizationRequest.acrValues(),
-                    authorizationRequest.scopes()))
-        .max(Comparator.comparingInt(AuthenticationPolicy::priority))
-        .orElse(new AuthenticationPolicy());
-  }
+  //  public AuthenticationPolicy findSatisfiedAuthenticationPolicy() {
+  //    List<AuthenticationPolicy> authenticationPolicies =
+  //        authorizationServerConfiguration.authenticationPolicies();
+  //    return authenticationPolicies.stream()
+  //        .filter(
+  //            authenticationPolicy ->
+  //                authenticationPolicy.anyMatch(
+  //                    AuthFlow.OAUTH,
+  //                    authorizationRequest.acrValues(),
+  //                    authorizationRequest.scopes()))
+  //        .max(Comparator.comparingInt(AuthenticationPolicy::priority))
+  //        .orElse(new AuthenticationPolicy());
+  //  }
 }

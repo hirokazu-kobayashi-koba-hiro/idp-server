@@ -19,9 +19,10 @@ package org.idp.server.core.openid.oauth;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import org.idp.server.core.openid.authentication.*;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
-import org.idp.server.core.openid.oauth.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.openid.oauth.configuration.client.ClientAttributes;
 import org.idp.server.core.openid.oauth.io.OAuthRequestResponse;
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
@@ -37,7 +38,9 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 public class OAuthAuthenticationTransactionCreator {
 
   public static AuthenticationTransaction create(
-      Tenant tenant, OAuthRequestResponse requestResponse) {
+      Tenant tenant,
+      OAuthRequestResponse requestResponse,
+      AuthenticationPolicyConfiguration policyConfiguration) {
 
     AuthenticationTransactionIdentifier identifier =
         new AuthenticationTransactionIdentifier(UUID.randomUUID().toString());
@@ -45,7 +48,9 @@ public class OAuthAuthenticationTransactionCreator {
         new AuthorizationIdentifier(requestResponse.authorizationRequestIdentifier().value());
 
     AuthenticationRequest authenticationRequest = toAuthenticationRequest(tenant, requestResponse);
-    AuthenticationPolicy authenticationPolicy = requestResponse.findSatisfiedAuthenticationPolicy();
+    AuthenticationPolicy authenticationPolicy =
+        policyConfiguration.findSatisfiedAuthenticationPolicy(
+            AuthFlow.OAUTH, authenticationRequest.acrValues(), authenticationRequest.scopes());
     AuthenticationTransactionAttributes attributes = new AuthenticationTransactionAttributes();
 
     return new AuthenticationTransaction(

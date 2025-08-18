@@ -64,7 +64,7 @@ public class AuthenticationInteractionResults implements JsonReadable {
 
   public boolean containsAnySuccess() {
     for (AuthenticationInteractionResult result : values.values()) {
-      if (result.successCount() > 0) {
+      if (result.isAuthentication() && result.successCount() > 0) {
         return true;
       }
     }

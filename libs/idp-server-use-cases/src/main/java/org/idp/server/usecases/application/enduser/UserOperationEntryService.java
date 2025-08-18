@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.authentication.*;
 import org.idp.server.core.openid.authentication.mfa.*;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
+import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationQueryRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionQueryRepository;
 import org.idp.server.core.openid.identity.*;
@@ -34,7 +36,6 @@ import org.idp.server.core.openid.identity.io.MfaRegistrationRequest;
 import org.idp.server.core.openid.identity.io.UserOperationResponse;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
-import org.idp.server.core.openid.oauth.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.openid.oauth.type.AuthFlow;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.TokenEventPublisher;
@@ -54,7 +55,7 @@ public class UserOperationEntryService implements UserOperationApi {
   TenantQueryRepository tenantQueryRepository;
   AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository;
   AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository;
-  MfaPolicies mfaPolicies;
+  AuthenticationPolicyConfigurationQueryRepository authenticationPolicyConfigurationQueryRepository;
   MfaRegistrationVerifiers mfaRegistrationVerifiers;
   AuthenticationInteractors authenticationInteractors;
   TokenEventPublisher eventPublisher;
@@ -67,6 +68,8 @@ public class UserOperationEntryService implements UserOperationApi {
       TenantQueryRepository tenantQueryRepository,
       AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository,
       AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
+      AuthenticationPolicyConfigurationQueryRepository
+          authenticationPolicyConfigurationQueryRepository,
       AuthenticationInteractors authenticationInteractors,
       TokenEventPublisher eventPublisher,
       UserOperationEventPublisher userOperationEventPublisher,
@@ -76,7 +79,8 @@ public class UserOperationEntryService implements UserOperationApi {
     this.tenantQueryRepository = tenantQueryRepository;
     this.authenticationTransactionCommandRepository = authenticationTransactionCommandRepository;
     this.authenticationTransactionQueryRepository = authenticationTransactionQueryRepository;
-    this.mfaPolicies = new MfaPolicies();
+    this.authenticationPolicyConfigurationQueryRepository =
+        authenticationPolicyConfigurationQueryRepository;
     this.mfaRegistrationVerifiers = new MfaRegistrationVerifiers();
     this.authenticationInteractors = authenticationInteractors;
     this.eventPublisher = eventPublisher;
@@ -95,20 +99,22 @@ public class UserOperationEntryService implements UserOperationApi {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    // TODO to be more correct getting mfaPolicies
-    AuthenticationPolicy authenticationPolicy = mfaPolicies.get(authFlow);
+    AuthenticationPolicyConfiguration authenticationPolicyConfiguration =
+        authenticationPolicyConfigurationQueryRepository.find(tenant, authFlow);
+
+    // TODO to be more correct getting client attributes
+    AuthenticationTransaction authenticationTransaction =
+        MfaRegistrationTransactionCreator.create(
+            tenant, user, token, authFlow, request, authenticationPolicyConfiguration);
+
     MfaRequestVerifier mfaRequestVerifier = mfaRegistrationVerifiers.get(authFlow);
     MfaVerificationResult verificationResult =
-        mfaRequestVerifier.verify(user, request, authenticationPolicy);
+        mfaRequestVerifier.verify(user, request, authenticationTransaction.authenticationPolicy());
 
     if (verificationResult.isFailure()) {
       return UserOperationResponse.failure(verificationResult.errorContents());
     }
 
-    // TODO to be more correct getting client attributes
-    AuthenticationTransaction authenticationTransaction =
-        MfaRegistrationTransactionCreator.create(
-            tenant, user, token, authFlow, request, authenticationPolicy);
     authenticationTransactionCommandRepository.register(tenant, authenticationTransaction);
 
     Map<String, Object> contents = new HashMap<>();

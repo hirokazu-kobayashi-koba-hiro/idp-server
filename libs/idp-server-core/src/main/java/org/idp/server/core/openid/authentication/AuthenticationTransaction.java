@@ -23,11 +23,11 @@ import java.util.Map;
 import org.idp.server.core.openid.authentication.acr.AcrResolver;
 import org.idp.server.core.openid.authentication.evaluator.MfaConditionEvaluator;
 import org.idp.server.core.openid.authentication.loa.LoaDeniedScopeResolver;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
+import org.idp.server.core.openid.authentication.policy.AuthenticationResultConditionConfig;
 import org.idp.server.core.openid.federation.FederationInteractionResult;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
-import org.idp.server.core.openid.oauth.configuration.authentication.AuthenticationPolicy;
-import org.idp.server.core.openid.oauth.configuration.authentication.AuthenticationResultConditions;
 import org.idp.server.core.openid.oauth.type.AuthFlow;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.exception.BadRequestException;
@@ -217,30 +217,30 @@ public class AuthenticationTransaction {
 
   public boolean isSuccess() {
     if (hasAuthenticationPolicy()) {
-      AuthenticationResultConditions authenticationResultConditions =
+      AuthenticationResultConditionConfig authenticationResultConditionConfig =
           authenticationPolicy.successConditions();
       return MfaConditionEvaluator.isSuccessSatisfied(
-          authenticationResultConditions, interactionResults);
+          authenticationResultConditionConfig, interactionResults);
     }
     return interactionResults.containsAnySuccess();
   }
 
   public boolean isFailure() {
     if (hasAuthenticationPolicy()) {
-      AuthenticationResultConditions authenticationResultConditions =
+      AuthenticationResultConditionConfig authenticationResultConditionConfig =
           authenticationPolicy.failureConditions();
       return MfaConditionEvaluator.isFailureSatisfied(
-          authenticationResultConditions, interactionResults);
+          authenticationResultConditionConfig, interactionResults);
     }
     return interactionResults.containsDenyInteraction();
   }
 
   public boolean isLocked() {
     if (hasAuthenticationPolicy()) {
-      AuthenticationResultConditions authenticationResultConditions =
+      AuthenticationResultConditionConfig authenticationResultConditionConfig =
           authenticationPolicy.lockConditions();
       return MfaConditionEvaluator.isLockedSatisfied(
-          authenticationResultConditions, interactionResults);
+          authenticationResultConditionConfig, interactionResults);
     }
     return false;
   }

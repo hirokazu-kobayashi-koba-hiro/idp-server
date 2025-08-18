@@ -19,10 +19,11 @@ package org.idp.server.core.openid.authentication.mfa;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import org.idp.server.core.openid.authentication.*;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.core.openid.identity.io.MfaRegistrationRequest;
-import org.idp.server.core.openid.oauth.configuration.authentication.AuthenticationPolicy;
 import org.idp.server.core.openid.oauth.configuration.client.ClientAttributes;
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.openid.oauth.type.AuthFlow;
@@ -44,7 +45,7 @@ public class MfaRegistrationTransactionCreator {
       OAuthToken oAuthToken,
       AuthFlow authFlow,
       MfaRegistrationRequest mfaRegistrationRequest,
-      AuthenticationPolicy authenticationPolicy) {
+      AuthenticationPolicyConfiguration policyConfiguration) {
 
     AuthenticationTransactionIdentifier identifier =
         new AuthenticationTransactionIdentifier(UUID.randomUUID().toString());
@@ -54,6 +55,10 @@ public class MfaRegistrationTransactionCreator {
         toAuthenticationRequest(tenant, user, oAuthToken, authFlow);
     AuthenticationTransactionAttributes attributes =
         new AuthenticationTransactionAttributes(mfaRegistrationRequest.toMap());
+
+    AuthenticationPolicy authenticationPolicy =
+        policyConfiguration.findSatisfiedAuthenticationPolicy(
+            authFlow, authenticationRequest.acrValues(), authenticationRequest.scopes());
 
     return new AuthenticationTransaction(
         identifier,

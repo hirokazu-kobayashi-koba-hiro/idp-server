@@ -14,50 +14,53 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.openid.oauth.configuration.authentication;
+package org.idp.server.core.openid.authentication.policy;
 
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
 
 public class AuthenticationResultCondition implements JsonReadable {
+  String path;
   String type;
-  int successCount;
-  int failureCount;
+  String operation;
+  Object value;
 
   public AuthenticationResultCondition() {}
 
-  public AuthenticationResultCondition(String type, int successCount, int failureCount) {
+  public AuthenticationResultCondition(String path, String type, String operation, Object value) {
+    this.path = path;
     this.type = type;
-    this.successCount = successCount;
-    this.failureCount = failureCount;
+    this.operation = operation;
+    this.value = value;
+  }
+
+  public String path() {
+    return path;
   }
 
   public String type() {
     return type;
   }
 
-  public int successCount() {
-    return successCount;
+  public String operation() {
+    return operation;
   }
 
-  public int failureCount() {
-    return failureCount;
+  public Object value() {
+    return value;
   }
 
-  public boolean isSatisfiedSuccess(int successCount) {
-    return successCount >= this.successCount;
-  }
-
-  public boolean isSatisfiedFailure(int failureCount) {
-    return failureCount >= this.failureCount;
+  public boolean exists() {
+    return path != null && operation != null && value != null;
   }
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
+    map.put("path", path);
     map.put("type", type);
-    map.put("success_count", successCount);
-    map.put("failure_count", failureCount);
+    map.put("operation", operation);
+    map.put("value", value);
     return map;
   }
 }
