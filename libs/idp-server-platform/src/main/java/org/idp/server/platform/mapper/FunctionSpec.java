@@ -26,6 +26,11 @@ public class FunctionSpec implements JsonReadable {
 
   public FunctionSpec() {}
 
+  public FunctionSpec(String name, Map<String, Object> args) {
+    this.name = name;
+    this.args = args;
+  }
+
   public String name() {
     return name;
   }

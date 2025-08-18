@@ -16,29 +16,30 @@
 
 package org.idp.server.platform.mapper.functions;
 
-import java.util.HashMap;
 import java.util.Map;
 
-public class FunctionRegistry {
-  private final Map<String, ValueFunction> map = new HashMap<>();
+public class ExistsFunction implements ValueFunction {
 
-  public FunctionRegistry() {
-    register(new FormatFunction());
-    register(new RandomStringFunction());
-    register(new NowFunction());
-    register(new ExistsFunction());
-    register(new ConvertTypeFunction());
+  @Override
+  public Object apply(Object input, Map<String, Object> args) {
+    if (input == null) {
+      return false;
+    }
+    if (input instanceof String s) {
+      return !s.isEmpty();
+    }
+    if (input instanceof java.util.Collection<?> col) {
+      return !col.isEmpty();
+    }
+    if (input instanceof java.util.Map<?, ?> map) {
+      return !map.isEmpty();
+    }
+    // other pattern is true
+    return true;
   }
 
-  public void register(ValueFunction fn) {
-    map.put(fn.name(), fn);
-  }
-
-  public ValueFunction get(String name) {
-    return map.get(name);
-  }
-
-  public boolean exists(String name) {
-    return map.containsKey(name);
+  @Override
+  public String name() {
+    return "exists";
   }
 }

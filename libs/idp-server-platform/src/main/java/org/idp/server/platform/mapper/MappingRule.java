@@ -40,10 +40,16 @@ public class MappingRule implements JsonReadable {
     this.to = to;
   }
 
-  public MappingRule(String from, String to, String convertType) {
+  public MappingRule(String from, String to, List<FunctionSpec> functions) {
     this.from = from;
     this.to = to;
-    this.convertType = convertType;
+    this.functions = functions;
+  }
+
+  public MappingRule(Object staticValue, String to, List<FunctionSpec> functions) {
+    this.staticValue = staticValue;
+    this.to = to;
+    this.functions = functions;
   }
 
   public String from() {

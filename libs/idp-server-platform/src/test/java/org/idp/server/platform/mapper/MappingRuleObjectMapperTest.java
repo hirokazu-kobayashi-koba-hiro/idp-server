@@ -159,9 +159,18 @@ public class MappingRuleObjectMapperTest {
 
     List<MappingRule> rules =
         List.of(
-            new MappingRule("$.source.name", "user.name", "string"),
-            new MappingRule("$.source.age", "user.age", "integer"),
-            new MappingRule("$.source.active", "user.active", "boolean"));
+            new MappingRule(
+                "$.source.name",
+                "user.name",
+                List.of(new FunctionSpec("convert_type", Map.of("type", "string")))),
+            new MappingRule(
+                "$.source.age",
+                "user.age",
+                List.of(new FunctionSpec("convert_type", Map.of("type", "integer")))),
+            new MappingRule(
+                "$.source.active",
+                "user.active",
+                List.of(new FunctionSpec("convert_type", Map.of("type", "boolean")))));
 
     Map<String, Object> result = MappingRuleObjectMapper.execute(rules, pathWrapper);
 
@@ -183,8 +192,14 @@ public class MappingRuleObjectMapperTest {
 
     List<MappingRule> rules =
         List.of(
-            new MappingRule("$.[0].processName", "process", "string"),
-            new MappingRule("$.[0].requested_at", "requested_at", "datetime"));
+            new MappingRule(
+                "$.[0].processName",
+                "process",
+                List.of(new FunctionSpec("convert_type", Map.of("type", "string")))),
+            new MappingRule(
+                "$.[0].requested_at",
+                "requested_at",
+                List.of(new FunctionSpec("convert_type", Map.of("type", "datetime")))));
 
     Map<String, Object> result = MappingRuleObjectMapper.execute(rules, pathWrapper);
 
