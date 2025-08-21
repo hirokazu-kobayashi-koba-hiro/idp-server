@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors.plugin;
+package org.idp.server.core.openid.plugin.authentication;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.authentication.interactors.AuthenticationExecutor;
-import org.idp.server.authentication.interactors.AuthenticationExecutorFactory;
-import org.idp.server.authentication.interactors.AuthenticationExecutors;
+import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
+import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutorFactory;
+import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
 import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.plugin.PluginLoader;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors;
+package org.idp.server.core.openid.authentication.interaction.execution;
 
 import java.util.ArrayList;
 import java.util.HashMap;

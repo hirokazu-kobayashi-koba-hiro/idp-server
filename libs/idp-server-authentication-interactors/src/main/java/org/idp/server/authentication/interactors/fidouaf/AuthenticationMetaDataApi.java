@@ -16,7 +16,7 @@
 
 package org.idp.server.authentication.interactors.fidouaf;
 
-import org.idp.server.authentication.interactors.AuthenticationMetadataResponse;
+import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationMetadataResponse;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 
