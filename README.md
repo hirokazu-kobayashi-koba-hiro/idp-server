@@ -62,6 +62,11 @@ docker build -t idp-server:latest .
 ```
 
 ```shell
+cd ./libs/idp-server-database
+docker build -f ./Dockerfile-flyway -t idp-flyway-migrator:latest .
+```
+
+```shell
 docker compose up -d
 docker compose logs -f idp-server
 ```
