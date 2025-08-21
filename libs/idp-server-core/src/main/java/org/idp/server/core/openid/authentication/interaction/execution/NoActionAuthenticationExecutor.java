@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors;
+package org.idp.server.core.openid.authentication.interaction.execution;
 
 import java.util.Map;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;

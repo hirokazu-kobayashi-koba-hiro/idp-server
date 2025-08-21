@@ -16,7 +16,7 @@
 
 package org.idp.server.authentication.interactors.fidouaf.deletion;
 
-import org.idp.server.authentication.interactors.AuthenticationExecutors;
+import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
 import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.event.UserLifecycleEventExecutor;

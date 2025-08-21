@@ -17,14 +17,14 @@
 package org.idp.server.authentication.interactors.external_token;
 
 import java.util.*;
-import org.idp.server.authentication.interactors.AuthenticationExecutionRequest;
-import org.idp.server.authentication.interactors.AuthenticationExecutionResult;
-import org.idp.server.authentication.interactors.AuthenticationExecutor;
-import org.idp.server.authentication.interactors.AuthenticationExecutors;
 import org.idp.server.core.openid.authentication.*;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
 import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
 import org.idp.server.core.openid.authentication.config.AuthenticationInteractionConfig;
+import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionRequest;
+import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionResult;
+import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
+import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;

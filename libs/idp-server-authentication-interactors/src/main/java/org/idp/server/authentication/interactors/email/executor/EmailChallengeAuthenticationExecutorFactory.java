@@ -16,8 +16,8 @@
 
 package org.idp.server.authentication.interactors.email.executor;
 
-import org.idp.server.authentication.interactors.AuthenticationExecutor;
-import org.idp.server.authentication.interactors.AuthenticationExecutorFactory;
+import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
+import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutorFactory;
 import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;

@@ -17,12 +17,10 @@
 package org.idp.server;
 
 import java.util.Map;
-import org.idp.server.authentication.interactors.AuthenticationExecutors;
 import org.idp.server.authentication.interactors.device.AuthenticationDeviceNotifiers;
 import org.idp.server.authentication.interactors.fidouaf.AuthenticationMetaDataApi;
 import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditionalRequestResolvers;
 import org.idp.server.authentication.interactors.plugin.AuthenticationDeviceNotifiersPluginLoader;
-import org.idp.server.authentication.interactors.plugin.AuthenticationExecutorPluginLoader;
 import org.idp.server.authentication.interactors.plugin.FidoUafAdditionalRequestResolverPluginLoader;
 import org.idp.server.authentication.interactors.plugin.WebAuthnExecutorPluginLoader;
 import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutors;
@@ -68,6 +66,7 @@ import org.idp.server.core.extension.identity.verification.repository.IdentityVe
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationResultQueryRepository;
 import org.idp.server.core.openid.authentication.AuthenticationInteractors;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionApi;
+import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
 import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.openid.authentication.repository.*;
 import org.idp.server.core.openid.discovery.*;
@@ -94,6 +93,7 @@ import org.idp.server.core.openid.oauth.repository.AuthorizationRequestOperation
 import org.idp.server.core.openid.plugin.AuthenticationDependencyContainerPluginLoader;
 import org.idp.server.core.openid.plugin.FederationDependencyContainerPluginLoader;
 import org.idp.server.core.openid.plugin.UserLifecycleEventExecutorPluginLoader;
+import org.idp.server.core.openid.plugin.authentication.AuthenticationExecutorPluginLoader;
 import org.idp.server.core.openid.plugin.authentication.AuthenticationInteractorPluginLoader;
 import org.idp.server.core.openid.plugin.authentication.FederationInteractorPluginLoader;
 import org.idp.server.core.openid.token.*;
