@@ -11,6 +11,7 @@ services:
       - postgresql-reader
       - mysql
       - redis
+      - flyway-migrator
     deploy:
       resources:
         limits:
@@ -69,6 +70,7 @@ services:
       - postgresql-reader
       - mysql
       - redis
+      - flyway-migrator
     deploy:
       resources:
         limits:
@@ -138,9 +140,15 @@ services:
       - TZ=UTC
     ports:
       - "5432:5432"
-    command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements"]
+    command: [ "postgres", "-c", "shared_preload_libraries=pg_stat_statements" ]
     volumes:
       - ./libs/idp-server-database/postgresql/operation:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U idpserver -d idpserver" ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   postgresql-reader:
     image: postgres:15
     container_name: postgres-reader
@@ -150,7 +158,7 @@ services:
       - POSTGRES_DB=idpserver_reader
     ports:
       - "54321:5432"
-    command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements"]
+    command: [ "postgres", "-c", "shared_preload_libraries=pg_stat_statements" ]
     volumes:
       - ./libs/idp-server-database/postgresql/operation:/docker-entrypoint-initdb.d
 
@@ -166,6 +174,19 @@ services:
     ports:
       - "3306:3306"
     command: --default-authentication-plugin=mysql_native_password
+
+  flyway-migrator:
+    image: idp-flyway-migrator:latest
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    environment:
+      DB_TYPE: postgresql
+      DB_URL: jdbc:postgresql://postgresql:5432/idpserver
+      DB_USER_NAME: idpserver
+      DB_PASSWORD: idpserver
+    command: [ "migrate" ]    # info / repair / clean
+  #    profiles: [ "migrate" ]
 
   redis:
     image: redis:7.2-alpine
