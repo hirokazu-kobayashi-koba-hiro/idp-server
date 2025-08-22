@@ -37,6 +37,7 @@ public class AccessToken {
   AccessTokenEntity accessTokenEntity;
   AuthorizationGrant authorizationGrant;
   ClientCertificationThumbprint clientCertificationThumbprint;
+  AccessTokenCustomClaims customClaims;
   CreatedAt createdAt;
   ExpiresIn expiresIn;
   ExpiresAt expiresAt;
@@ -50,6 +51,7 @@ public class AccessToken {
       AccessTokenEntity accessTokenEntity,
       AuthorizationGrant authorizationGrant,
       ClientCertificationThumbprint clientCertificationThumbprint,
+      AccessTokenCustomClaims customClaims,
       CreatedAt createdAt,
       ExpiresIn expiresIn,
       ExpiresAt expiresAt) {
@@ -59,6 +61,7 @@ public class AccessToken {
     this.accessTokenEntity = accessTokenEntity;
     this.authorizationGrant = authorizationGrant;
     this.clientCertificationThumbprint = clientCertificationThumbprint;
+    this.customClaims = customClaims;
     this.createdAt = createdAt;
     this.expiresIn = expiresIn;
     this.expiresAt = expiresAt;
@@ -94,6 +97,14 @@ public class AccessToken {
 
   public boolean isSenderConstrained() {
     return clientCertificationThumbprint.exists();
+  }
+
+  public AccessTokenCustomClaims customClaims() {
+    return customClaims;
+  }
+
+  public boolean hasCustomClaims() {
+    return customClaims != null && customClaims.exists();
   }
 
   public boolean hasSubject() {

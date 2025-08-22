@@ -13,7 +13,8 @@ export const createFederatedUser = async ({
   serverConfig,
   federationServerConfig,
   client,
-  adminClient = clientSecretPostClient
+  adminClient = clientSecretPostClient,
+  scope = "openid profile phone email " + client.scope
 }) => {
 
   const registrationUser = {
@@ -141,7 +142,7 @@ export const createFederatedUser = async ({
     clientId: client.clientId,
     responseType: "code",
     state: "aiueo",
-    scope: "openid profile phone email " + client.scope,
+    scope: scope,
     redirectUri: client.redirectUri,
     customParams: {
       organizationId: "123",

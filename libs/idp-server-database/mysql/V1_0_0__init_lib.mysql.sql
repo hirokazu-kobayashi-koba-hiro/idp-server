@@ -331,6 +331,7 @@ CREATE TABLE oauth_token
     token_type                      VARCHAR(10)                        NOT NULL,
     encrypted_access_token          TEXT                               NOT NULL,
     hashed_access_token             VARCHAR(255)                       NOT NULL,
+    access_token_custom_claims      JSON,
     user_id                         CHAR(36),
     user_payload                    JSON,
     authentication                  JSON                               NOT NULL,
@@ -562,10 +563,10 @@ CREATE INDEX idx_authentication_configuration_type ON authentication_configurati
 
 CREATE TABLE authentication_policy
 (
-    id         CHAR(36)                    NOT NULL,
-    tenant_id  CHAR(36)                    NOT NULL,
-    flow       VARCHAR(255)            NOT NULL,
-    payload    JSON                   NOT NULL,
+    id         CHAR(36)                           NOT NULL,
+    tenant_id  CHAR(36)                           NOT NULL,
+    flow       VARCHAR(255)                       NOT NULL,
+    payload    JSON                               NOT NULL,
     enabled    TINYINT(1)                 NOT NULL DEFAULT TRUE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,

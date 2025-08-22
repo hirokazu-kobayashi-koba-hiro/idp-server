@@ -70,10 +70,6 @@ public class CibaGrantFactory {
             .add(authentication)
             .add(authorizationDetails);
 
-    if (user.hasCustomProperties()) {
-      builder.add(user.customProperties());
-    }
-
     AuthorizationGrant authorizationGrant = builder.build();
     AuthReqId authReqId = response.authReqId();
     BackchannelAuthenticationRequest backchannelAuthenticationRequest =

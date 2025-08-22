@@ -101,8 +101,8 @@ export const isBoolean = (value) => {
   return typeof value === "boolean" || value instanceof Boolean;
 };
 
-export const sleep = (m) => {
-  return new Promise((resolve) => setTimeout(resolve, m));
+export const sleep = (ms) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
 export const matchWithUSASCII = (value) => {

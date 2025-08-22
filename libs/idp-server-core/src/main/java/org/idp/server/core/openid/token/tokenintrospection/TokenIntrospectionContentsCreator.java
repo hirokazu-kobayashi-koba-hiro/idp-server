@@ -31,10 +31,10 @@ public class TokenIntrospectionContentsCreator {
     if (accessToken.hasSubject()) {
       contents.put("sub", accessToken.subject().value());
     }
-    contents.put("client_id", accessToken.clientIdentifier().value());
+    contents.put("client_id", accessToken.requestedClientId().value());
     contents.put("scope", accessToken.scopes().toStringValues());
-    if (accessToken.hasCustomProperties()) {
-      contents.putAll(accessToken.customProperties().values());
+    if (accessToken.hasCustomClaims()) {
+      contents.putAll(accessToken.customClaims().toMap());
     }
     if (accessToken.hasAuthorizationDetails()) {
       contents.put("authorization_details", accessToken.authorizationDetails().toMapValues());

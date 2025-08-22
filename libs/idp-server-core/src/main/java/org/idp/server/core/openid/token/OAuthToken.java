@@ -140,6 +140,10 @@ public class OAuthToken {
     return accessToken.hasClientCertification();
   }
 
+  public boolean hasCustomClaims() {
+    return accessToken.hasCustomClaims();
+  }
+
   public CNonce cNonce() {
     return cNonce;
   }

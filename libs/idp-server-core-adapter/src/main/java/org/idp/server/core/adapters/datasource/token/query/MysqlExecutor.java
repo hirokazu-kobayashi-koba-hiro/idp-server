@@ -74,6 +74,7 @@ public class MysqlExecutor implements OAuthTokenSqlExecutor {
                token_type,
                encrypted_access_token,
                hashed_access_token,
+               access_token_custom_claims,
                user_id,
                user_payload,
                authentication,

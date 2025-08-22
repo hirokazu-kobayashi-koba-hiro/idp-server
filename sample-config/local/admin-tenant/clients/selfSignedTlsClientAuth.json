@@ -30,7 +30,7 @@
     "client_credentials",
     "urn:openid:params:grant-type:ciba"
   ],
-  "scope": "openid profile email address phone management verified_claims:family_name claims:ex_sub claims:roles claims:permissions claims:assigned_tenant claims:assigned_organization claims:authentication_devices offline_access account transfers read write identity_verification_application identity_verification_application_delete identity_credentials_update",
+  "scope": "openid profile email address phone management verified_claims:family_name claims:ex_sub claims:roles claims:permissions claims:assigned_tenants claims:assigned_organizations claims:authentication_devices offline_access account transfers read write identity_verification_application identity_verification_application_delete identity_credentials_update",
   "client_name": "My Example Client",
   "client_name#ja-Jpan-JP": "クライアント名",
   "token_endpoint_auth_method": "self_signed_tls_client_auth",
@@ -43,11 +43,15 @@
   "backchannel_authentication_request_signing_alg": "ES256",
   "backchannel_user_code_parameter": true,
   "application_type": "web",
-  "authorization_details_types":[
+  "authorization_details_types": [
     "payment_initiation",
     "account_information",
     "openid_credential"
   ],
   "tls_client_certificate_bound_access_tokens": true,
-  "authorization_signed_response_alg": "ES256"
+  "authorization_signed_response_alg": "ES256",
+  "extension": {
+    "access_token_duration": 1,
+    "refresh_token_duration": 2
+  }
 }
