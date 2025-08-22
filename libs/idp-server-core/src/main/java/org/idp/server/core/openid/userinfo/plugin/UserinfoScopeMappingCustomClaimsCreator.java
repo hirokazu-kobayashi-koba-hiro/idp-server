@@ -14,31 +14,26 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.openid.identity.id_token.plugin;
+package org.idp.server.core.openid.userinfo.plugin;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.identity.id_token.IdTokenCustomClaims;
-import org.idp.server.core.openid.identity.id_token.RequestedClaimsPayload;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 
-public class ScopeMappingCustomClaimsCreator implements CustomIndividualClaimsCreator {
+public class UserinfoScopeMappingCustomClaimsCreator
+    implements UserinfoCustomIndividualClaimsCreator {
 
   private static final String prefix = "claims:";
 
   @Override
   public boolean shouldCreate(
       User user,
-      Authentication authentication,
       AuthorizationGrant authorizationGrant,
-      IdTokenCustomClaims customClaims,
-      RequestedClaimsPayload requestedClaimsPayload,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
 
@@ -56,10 +51,7 @@ public class ScopeMappingCustomClaimsCreator implements CustomIndividualClaimsCr
   @Override
   public Map<String, Object> create(
       User user,
-      Authentication authentication,
       AuthorizationGrant authorizationGrant,
-      IdTokenCustomClaims customClaims,
-      RequestedClaimsPayload requestedClaimsPayload,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
 

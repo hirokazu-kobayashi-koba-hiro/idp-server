@@ -97,7 +97,7 @@ describe("multi client", () => {
         await requestBackchannelAuthentications({
           endpoint: serverConfig.backchannelAuthenticationEndpoint,
           clientId: clientSecretPostClient.clientId,
-          scope: "openid profile phone email transfers " + clientSecretPostClient.identityVerificationScope,
+          scope: "openid profile phone email transfers claims:authentication_devices claims:ex_sub " + clientSecretPostClient.identityVerificationScope,
           bindingMessage: ciba.bindingMessage,
           loginHint: `sub:${user.sub}`,
           acrValues: "urn:mace:incommon:iap:gold",
@@ -340,7 +340,7 @@ describe("multi client", () => {
         await requestBackchannelAuthentications({
           endpoint: serverConfig.backchannelAuthenticationEndpoint,
           clientId: clientSecretPostClient.clientId,
-          scope: "openid profile phone email transfers " + clientSecretPostClient.identityVerificationScope,
+          scope: "openid profile phone email transfers claims:authentication_devices claims:ex_sub " + clientSecretPostClient.identityVerificationScope,
           bindingMessage: ciba.bindingMessage,
           loginHint: `device:${authenticationDeviceId},idp:${federationServerConfig.providerName}`,
           acrValues: "urn:mace:incommon:iap:gold",

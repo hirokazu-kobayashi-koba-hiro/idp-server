@@ -16,23 +16,48 @@
 
 package org.idp.server.core.openid.userinfo;
 
+import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.id_token.IndividualClaimsCreatable;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.userinfo.plugin.UserinfoCustomIndividualClaimsCreators;
 
 public class UserinfoClaimsCreator implements IndividualClaimsCreatable {
 
   User user;
   AuthorizationGrant authorizationGrant;
+  AuthorizationServerConfiguration authorizationServerConfiguration;
+  ClientConfiguration clientConfiguration;
+  UserinfoCustomIndividualClaimsCreators userinfoCustomIndividualClaimsCreators;
 
-  public UserinfoClaimsCreator(User user, AuthorizationGrant authorizationGrant) {
+  public UserinfoClaimsCreator(
+      User user,
+      AuthorizationGrant authorizationGrant,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
+      ClientConfiguration clientConfiguration,
+      UserinfoCustomIndividualClaimsCreators userinfoCustomIndividualClaimsCreators) {
     this.user = user;
     this.authorizationGrant = authorizationGrant;
+    this.authorizationServerConfiguration = authorizationServerConfiguration;
+    this.clientConfiguration = clientConfiguration;
+    this.userinfoCustomIndividualClaimsCreators = userinfoCustomIndividualClaimsCreators;
   }
 
   public Map<String, Object> createClaims() {
 
-    return createIndividualClaims(user, authorizationGrant.userinfoClaims());
+    Map<String, Object> claims = new HashMap<>();
+    Map<String, Object> individualClaims =
+        createIndividualClaims(user, authorizationGrant.userinfoClaims());
+    Map<String, Object> customIndividualClaims =
+        userinfoCustomIndividualClaimsCreators.createCustomIndividualClaims(
+            user, authorizationGrant, authorizationServerConfiguration, clientConfiguration);
+
+    claims.putAll(individualClaims);
+    claims.putAll(customIndividualClaims);
+
+    return claims;
   }
 }

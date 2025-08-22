@@ -158,31 +158,6 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
       claims.put("updated_at", user.updateAtAsLong());
     }
 
-    // TODO ↓ move plugin
-    if (user.hasExternalUserId()) {
-      claims.put("ex_sub", user.externalUserId());
-    }
-
-    if (user.hasRoles()) {
-      claims.put("roles", user.roleNameAsListString());
-    }
-
-    if (user.hasPermissions()) {
-      claims.put("permissions", user.permissions());
-    }
-
-    if (user.hasAssignedTenants()) {
-      claims.put("assigned_tenants", user.assignedTenants());
-    }
-
-    if (user.hasAuthenticationDevices()) {
-      claims.put("authentication_devices", user.authenticationDevices().toMapList());
-    }
-
-    if (user.hasCustomProperties()) {
-      claims.putAll(user.customPropertiesValue());
-    }
-
     return claims;
   }
 }

@@ -17,7 +17,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 id_token", () => {
         clientId: clientSecretPostClient.clientId,
         responseType: "id_token",
         state: "aiueo",
-        scope: "openid profile phone email claims:roles claims:permissions claims:assigned_tenant claims:assigned_organization " + clientSecretPostClient.scope,
+        scope: "openid profile phone email claims:roles claims:permissions claims:assigned_tenant claims:assigned_organization claims:authentication_devices " + clientSecretPostClient.scope,
         redirectUri: clientSecretPostClient.redirectUri,
         nonce: "nonce",
       });
