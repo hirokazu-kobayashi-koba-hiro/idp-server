@@ -41,8 +41,8 @@
     "management",
     "claims:roles",
     "claims:permissions",
-    "claims:assigned_tenant",
-    "claims:assigned_organization",
+    "claims:assigned_tenants",
+    "claims:assigned_organizations",
     "verified_claims:family_name"
   ],
   "response_types_supported": [
@@ -131,8 +131,8 @@
     "phone_number_verified",
     "roles",
     "permissions",
-    "assigned_tenant",
-    "assigned_organization"
+    "assigned_tenants",
+    "assigned_organizations"
   ],
   "claims_parameter_supported": true,
   "service_documentation": "http://server.example.com/connect/service_documentation.html",

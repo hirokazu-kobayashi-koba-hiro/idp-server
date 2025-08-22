@@ -163,6 +163,7 @@ public class AccessTokenCreator {
     Map<String, Object> accessTokenPayload = payloadBuilder.build();
     AccessTokenEntity accessTokenEntity =
         createAccessTokenEntity(authorizationServerConfiguration, accessTokenPayload);
+    AccessTokenCustomClaims accessTokenCustomClaims = new AccessTokenCustomClaims(customClaims);
 
     return new AccessToken(
         authorizationGrant.tenantIdentifier(),
@@ -171,6 +172,7 @@ public class AccessTokenCreator {
         accessTokenEntity,
         authorizationGrant,
         thumbprint,
+        accessTokenCustomClaims,
         createdAt,
         expiresIn,
         expiresAt);

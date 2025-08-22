@@ -34,14 +34,11 @@ import org.idp.server.core.openid.oauth.type.oauth.*;
 import org.idp.server.core.openid.oauth.type.oidc.IdToken;
 import org.idp.server.core.openid.oauth.type.verifiablecredential.CNonce;
 import org.idp.server.core.openid.oauth.type.verifiablecredential.CNonceExpiresIn;
-import org.idp.server.core.openid.token.AccessToken;
-import org.idp.server.core.openid.token.OAuthToken;
-import org.idp.server.core.openid.token.OAuthTokenBuilder;
-import org.idp.server.core.openid.token.OAuthTokenIdentifier;
-import org.idp.server.core.openid.token.RefreshToken;
+import org.idp.server.core.openid.token.*;
 import org.idp.server.platform.crypto.AesCipher;
 import org.idp.server.platform.crypto.EncryptedData;
 import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 class ModelConverter {
@@ -56,6 +53,9 @@ class ModelConverter {
     TokenType tokenType = TokenType.valueOf(stringMap.get("token_type"));
     AccessTokenEntity accessTokenEntity =
         new AccessTokenEntity(decrypt(stringMap.get("encrypted_access_token"), aesCipher));
+
+    AccessTokenCustomClaims accessTokenCustomClaims =
+        toAccessTokenCustomClaims(stringMap.get("access_token_custom_claims"));
 
     User user;
     if (Objects.nonNull(stringMap.get("user_payload"))
@@ -110,6 +110,7 @@ class ModelConverter {
             accessTokenEntity,
             authorizationGrant,
             thumbprint,
+            accessTokenCustomClaims,
             accessTokenCreatedAt,
             expiresIn,
             accessTokenExpiresAt);
@@ -129,6 +130,16 @@ class ModelConverter {
     CNonceExpiresIn cNonceExpiresIn = new CNonceExpiresIn(stringMap.get("c_nonce_expires_in"));
 
     return oAuthTokenBuilder.add(accessToken).add(idToken).add(cNonce).add(cNonceExpiresIn).build();
+  }
+
+  private static AccessTokenCustomClaims toAccessTokenCustomClaims(String value) {
+    if (value == null || value.isEmpty()) {
+      return new AccessTokenCustomClaims();
+    }
+
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(value);
+
+    return new AccessTokenCustomClaims(jsonNodeWrapper.toMap());
   }
 
   static String toJson(Object obj) {

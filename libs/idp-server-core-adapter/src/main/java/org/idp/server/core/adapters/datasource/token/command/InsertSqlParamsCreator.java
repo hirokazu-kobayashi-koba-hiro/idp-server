@@ -38,6 +38,11 @@ class InsertSqlParamsCreator {
     params.add(oAuthToken.tokenType().name());
     params.add(toEncryptedJson(oAuthToken.accessTokenEntity().value(), aesCipher));
     params.add(hmacHasher.hash(oAuthToken.accessTokenEntity().value()));
+    if (oAuthToken.hasCustomClaims()) {
+      params.add(jsonConverter.write(oAuthToken.accessToken().customClaims().toMap()));
+    } else {
+      params.add(null);
+    }
 
     if (authorizationGrant.hasUser()) {
       params.add((authorizationGrant.user().subAsUuid()));

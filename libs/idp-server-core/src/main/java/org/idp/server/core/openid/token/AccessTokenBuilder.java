@@ -33,6 +33,7 @@ public class AccessTokenBuilder {
   AccessTokenEntity accessTokenEntity;
   AuthorizationGrant authorizationGrant;
   ClientCertificationThumbprint clientCertificationThumbprint;
+  AccessTokenCustomClaims customClaims;
   CreatedAt createdAt;
   ExpiresIn expiresIn;
   ExpiresAt expiresAt;
@@ -66,6 +67,11 @@ public class AccessTokenBuilder {
     return this;
   }
 
+  public AccessTokenBuilder add(AccessTokenCustomClaims customClaims) {
+    this.customClaims = customClaims;
+    return this;
+  }
+
   public AccessTokenBuilder add(CreatedAt createdAt) {
     this.createdAt = createdAt;
     return this;
@@ -89,6 +95,7 @@ public class AccessTokenBuilder {
         accessTokenEntity,
         authorizationGrant,
         clientCertificationThumbprint,
+        customClaims,
         createdAt,
         expiresIn,
         expiresAt);

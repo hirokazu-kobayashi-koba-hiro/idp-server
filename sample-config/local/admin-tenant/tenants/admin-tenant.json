@@ -61,8 +61,8 @@
       "management",
       "claims:roles",
       "claims:permissions",
-      "claims:assigned_tenant",
-      "claims:assigned_organization",
+      "claims:assigned_tenants",
+      "claims:assigned_organizations",
       "claims:authentication_devices",
       "verified_claims:family_name"
     ],
@@ -153,8 +153,8 @@
       "phone_number_verified",
       "roles",
       "permissions",
-      "assigned_tenant",
-      "assigned_organization",
+      "assigned_tenants",
+      "assigned_organizations",
       "authentication_devices"
     ],
     "claims_parameter_supported": true,

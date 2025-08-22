@@ -88,13 +88,13 @@ public class ScopeMappingCustomClaimsCreator implements CustomIndividualClaimsCr
         claims.put("permissions", user.permissions());
       }
 
-      if (claimName.equals("assigned_tenant") && user.hasAssignedTenants()) {
+      if (claimName.equals("assigned_tenants") && user.hasAssignedTenants()) {
         claims.put("assigned_tenants", user.assignedTenants());
         claims.put("current_tenant_id", user.currentTenantIdentifier().value());
       }
 
-      if (claimName.equals("assigned_organization") && user.hasAssignedOrganizations()) {
-        claims.put("assigned_organization", user.assignedOrganizations());
+      if (claimName.equals("assigned_organizations") && user.hasAssignedOrganizations()) {
+        claims.put("assigned_organizations", user.assignedOrganizations());
         claims.put("current_organization_id", user.currentTenantIdentifier().value());
       }
 

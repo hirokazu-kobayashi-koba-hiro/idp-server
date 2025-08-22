@@ -171,7 +171,7 @@ ID トークンに含めることができます。
 
 対象スコープが `claims:roles` の場合、ユーザーが持つロール一覧（リスト形式）が `roles` クレームとして付加されます。
 
-同様に `claims:assigned_tenant` や `claims:assigned_organization` を指定することで、関連するテナントや組織のIDを含めることも可能です。
+同様に `claims:assigned_tenants` や `claims:assigned_organizations` を指定することで、関連するテナントや組織のIDを含めることも可能です。
 
 ### verified_claims:xx スコープによるアクセストークンのプロパティの動的設定
 
