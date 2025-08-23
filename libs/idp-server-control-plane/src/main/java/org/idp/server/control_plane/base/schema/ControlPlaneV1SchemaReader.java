@@ -100,4 +100,9 @@ public class ControlPlaneV1SchemaReader {
     String json = ResourceReader.readClasspath("/schema/1.0/role.json");
     return JsonSchemaDefinition.fromJson(json);
   }
+
+  public static JsonSchemaDefinition roleRemovePermissionsSchema() {
+    String json = ResourceReader.readClasspath("/schema/1.0/role-remove-permissions.json");
+    return JsonSchemaDefinition.fromJson(json);
+  }
 }

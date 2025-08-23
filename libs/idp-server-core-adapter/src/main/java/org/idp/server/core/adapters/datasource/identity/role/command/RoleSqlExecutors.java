@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.identity.role;
+package org.idp.server.core.adapters.datasource.identity.role.command;
 
 import java.util.HashMap;
 import java.util.Map;

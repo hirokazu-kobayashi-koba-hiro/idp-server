@@ -16,21 +16,40 @@
 
 package org.idp.server.control_plane.management.role.io;
 
+import java.util.List;
 import java.util.Map;
+import org.idp.server.platform.json.JsonNodeWrapper;
 
 public class RoleRequest {
 
-  Map<String, Object> values;
+  JsonNodeWrapper json;
 
   public RoleRequest(Map<String, Object> values) {
-    this.values = values;
+    this.json = JsonNodeWrapper.fromMap(values);
   }
 
   public Map<String, Object> toMap() {
-    return values;
+    return json.toMap();
   }
 
-  public Object get(String key) {
-    return values.get(key);
+  public String id() {
+    return json.getValueOrEmptyAsString("id");
+  }
+
+  public boolean hasId() {
+    return json.contains("id");
+  }
+
+  public String name() {
+    return json.getValueOrEmptyAsString("name");
+  }
+
+  public String description() {
+    return json.getValueOrEmptyAsString("description");
+  }
+
+  public List<String> permissions() {
+    JsonNodeWrapper permissions = json.getNode("permissions");
+    return permissions.toList();
   }
 }

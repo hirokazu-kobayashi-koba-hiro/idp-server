@@ -14,61 +14,61 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.identity.permission.query;
+package org.idp.server.core.adapters.datasource.identity.role.query;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.openid.identity.permission.*;
+import org.idp.server.core.openid.identity.role.*;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class PermissionQueryDataSource implements PermissionQueryRepository {
+public class RoleQueryDataSource implements RoleQueryRepository {
 
-  PermissionSqlExecutors executors;
+  RoleSqlExecutors executors;
 
-  public PermissionQueryDataSource() {
-    this.executors = new PermissionSqlExecutors();
+  public RoleQueryDataSource() {
+    this.executors = new RoleSqlExecutors();
   }
 
   @Override
-  public Permission find(Tenant tenant, PermissionIdentifier identifier) {
-    PermissionSqlExecutor executor = executors.get(tenant.databaseType());
+  public Role find(Tenant tenant, RoleIdentifier identifier) {
+    RoleSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, identifier);
 
     if (result == null || result.isEmpty()) {
-      return new Permission();
+      return new Role();
     }
 
     return ModelConverter.convert(result);
   }
 
   @Override
-  public Permission findByName(Tenant tenant, String name) {
-    PermissionSqlExecutor executor = executors.get(tenant.databaseType());
+  public Role findByName(Tenant tenant, String name) {
+    RoleSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOneByName(tenant, name);
 
     if (result == null || result.isEmpty()) {
-      return new Permission();
+      return new Role();
     }
 
     return ModelConverter.convert(result);
   }
 
   @Override
-  public Permissions findAll(Tenant tenant) {
-    PermissionSqlExecutor executor = executors.get(tenant.databaseType());
+  public Roles findAll(Tenant tenant) {
+    RoleSqlExecutor executor = executors.get(tenant.databaseType());
     List<Map<String, String>> results = executor.selectAll(tenant);
 
     if (results == null || results.isEmpty()) {
-      return new Permissions();
+      return new Roles();
     }
 
-    List<Permission> list = results.stream().map(ModelConverter::convert).toList();
-    return new Permissions(list);
+    List<Role> list = results.stream().map(ModelConverter::convert).toList();
+    return new Roles(list);
   }
 
   @Override
-  public long findTotalCount(Tenant tenant, PermissionQueries queries) {
-    PermissionSqlExecutor executor = executors.get(tenant.databaseType());
+  public long findTotalCount(Tenant tenant, RoleQueries queries) {
+    RoleSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectCount(tenant, queries);
 
     if (result == null || result.isEmpty()) {
@@ -79,8 +79,8 @@ public class PermissionQueryDataSource implements PermissionQueryRepository {
   }
 
   @Override
-  public List<Permission> findList(Tenant tenant, PermissionQueries queries) {
-    PermissionSqlExecutor executor = executors.get(tenant.databaseType());
+  public List<Role> findList(Tenant tenant, RoleQueries queries) {
+    RoleSqlExecutor executor = executors.get(tenant.databaseType());
     List<Map<String, String>> results = executor.selectList(tenant, queries);
 
     if (results == null || results.isEmpty()) {

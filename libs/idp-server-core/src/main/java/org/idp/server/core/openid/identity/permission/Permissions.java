@@ -19,6 +19,7 @@ package org.idp.server.core.openid.identity.permission;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Permissions implements Iterable<Permission> {
 
@@ -52,5 +53,21 @@ public class Permissions implements Iterable<Permission> {
 
   public List<Permission> toList() {
     return values;
+  }
+
+  public Permissions filterNoneMatch(List<String> permissionNames) {
+
+    return new Permissions(
+        values.stream()
+            .filter(permission -> !permissionNames.contains(permission.name()))
+            .toList());
+  }
+
+  public String permissionNamesAsString() {
+    return values.stream().map(Permission::name).collect(Collectors.joining(" "));
+  }
+
+  public int size() {
+    return values.size();
   }
 }

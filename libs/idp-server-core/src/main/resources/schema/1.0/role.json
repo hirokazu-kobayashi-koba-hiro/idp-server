@@ -1,0 +1,27 @@
+{
+  "type": "object",
+  "required": [
+    "name",
+    "description",
+    "permissions"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "description": {
+      "type": "string"
+    },
+    "permissions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

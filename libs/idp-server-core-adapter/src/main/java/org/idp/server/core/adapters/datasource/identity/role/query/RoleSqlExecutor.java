@@ -14,20 +14,23 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.openid.identity.role;
+package org.idp.server.core.adapters.datasource.identity.role.query;
 
-import org.idp.server.core.openid.identity.permission.Permissions;
+import java.util.List;
+import java.util.Map;
+import org.idp.server.core.openid.identity.role.RoleIdentifier;
+import org.idp.server.core.openid.identity.role.RoleQueries;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public interface RoleCommandRepository {
+public interface RoleSqlExecutor {
 
-  void register(Tenant tenant, Role role);
+  Map<String, String> selectOne(Tenant tenant, RoleIdentifier identifier);
 
-  void bulkRegister(Tenant tenant, Roles roles);
+  Map<String, String> selectOneByName(Tenant tenant, String name);
 
-  void update(Tenant tenant, Role role);
+  Map<String, String> selectCount(Tenant tenant, RoleQueries queries);
 
-  void removePermissions(Tenant tenant, Role role, Permissions removePermissions);
+  List<Map<String, String>> selectAll(Tenant tenant);
 
-  void delete(Tenant tenant, Role role);
+  List<Map<String, String>> selectList(Tenant tenant, RoleQueries queries);
 }

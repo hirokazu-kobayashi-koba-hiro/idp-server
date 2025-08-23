@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.identity.role;
+package org.idp.server.core.adapters.datasource.identity.role.command;
 
+import org.idp.server.core.openid.identity.permission.Permissions;
 import org.idp.server.core.openid.identity.role.Role;
 import org.idp.server.core.openid.identity.role.Roles;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -25,4 +26,10 @@ public interface RoleSqlExecutor {
   void insert(Tenant tenant, Role role);
 
   void bulkInsert(Tenant tenant, Roles roles);
+
+  void update(Tenant tenant, Role role);
+
+  void delete(Tenant tenant, Role role);
+
+  void deletePermissions(Tenant tenant, Role role, Permissions removedTarget);
 }
