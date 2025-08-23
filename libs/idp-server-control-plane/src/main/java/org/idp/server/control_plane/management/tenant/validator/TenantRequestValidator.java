@@ -16,7 +16,7 @@
 
 package org.idp.server.control_plane.management.tenant.validator;
 
-import org.idp.server.control_plane.base.schema.ControlPlaneSchemaReader;
+import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingRequest;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
@@ -31,9 +31,9 @@ public class TenantRequestValidator {
 
   public TenantRequestValidator(OnboardingRequest request, boolean dryRun) {
     this.request = request;
-    this.tenantSchemaValidator = new JsonSchemaValidator(ControlPlaneSchemaReader.tenantSchema());
+    this.tenantSchemaValidator = new JsonSchemaValidator(ControlPlaneV1SchemaReader.tenantSchema());
     this.authorizationServerSchemaValidator =
-        new JsonSchemaValidator(ControlPlaneSchemaReader.authorizationServerSchema());
+        new JsonSchemaValidator(ControlPlaneV1SchemaReader.authorizationServerSchema());
     this.dryRun = dryRun;
   }
 

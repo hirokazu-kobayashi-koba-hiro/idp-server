@@ -17,8 +17,7 @@
 package org.idp.server.core.openid.identity.role;
 
 import java.io.Serializable;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import org.idp.server.core.openid.identity.permission.Permission;
 import org.idp.server.platform.uuid.UuidConvertable;
 
@@ -57,6 +56,10 @@ public class Role implements Serializable, UuidConvertable {
     return permissions;
   }
 
+  public List<Map<String, Object>> permissionsAsMap() {
+    return permissions.stream().map(Permission::toMap).toList();
+  }
+
   public boolean exists() {
     return name != null && !name.isEmpty();
   }
@@ -65,5 +68,14 @@ public class Role implements Serializable, UuidConvertable {
     if (!exists()) return false;
 
     return this.name.equals(role.name());
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("id", id);
+    map.put("name", name);
+    map.put("description", description);
+    map.put("permissions", permissionsAsMap());
+    return map;
   }
 }

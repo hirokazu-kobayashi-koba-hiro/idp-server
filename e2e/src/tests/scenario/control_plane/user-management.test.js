@@ -3,7 +3,7 @@ import { deletion, get, patchWithJson, putWithJson, postWithJson } from "../../.
 import { backendUrl, clientSecretPostClient, serverConfig } from "../../testConfig";
 import { requestToken } from "../../../api/oauthClient";
 
-describe("audit log management api", () => {
+describe("user management api", () => {
 
   describe("success pattern", () => {
 

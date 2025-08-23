@@ -8,7 +8,7 @@ org.idp.server.core.adapters.datasource.oidc.configuration.client.query.ClientCo
 org.idp.server.core.adapters.datasource.oidc.configuration.client.command.ClientConfigurationCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.verifiable_credentials.VerifiableCredentialTransactionDataSourceProvider
 org.idp.server.core.adapters.datasource.grant_management.AuthorizationGrantedDataSourceProvider
-org.idp.server.core.adapters.datasource.identity.permission.PermissionCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.identity.permission.command.PermissionCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.identity.role.RoleCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.identity.UserDataSourceProvider
 org.idp.server.core.adapters.datasource.identity.command.UserCommandDataSourceProvider
@@ -50,3 +50,4 @@ org.idp.server.core.adapters.datasource.federation.credentials.query.SsoCredenti
 org.idp.server.core.adapters.datasource.federation.credentials.command.SsoCredentialsCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.authentication.policy.command.AuthenticationPolicyConfigurationCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.authentication.policy.query.AuthenticationPolicyConfigurationQueryDataSourceProvider
+org.idp.server.core.adapters.datasource.identity.permission.query.PermissionQueryDataSourceProvider

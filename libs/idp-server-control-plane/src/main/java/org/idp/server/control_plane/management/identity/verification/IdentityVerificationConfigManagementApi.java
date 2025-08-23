@@ -19,8 +19,8 @@ package org.idp.server.control_plane.management.identity.verification;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.idp.server.control_plane.base.definition.AdminPermission;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
+import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigRegistrationRequest;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigUpdateRequest;
@@ -37,17 +37,19 @@ public interface IdentityVerificationConfigManagementApi {
     Map<String, AdminPermissions> map = new HashMap<>();
     map.put(
         "create",
-        new AdminPermissions(Set.of(AdminPermission.IDENTITY_VERIFICATION_CONFIG_CREATE)));
+        new AdminPermissions(Set.of(DefaultAdminPermission.IDENTITY_VERIFICATION_CONFIG_CREATE)));
     map.put(
         "findList",
-        new AdminPermissions(Set.of(AdminPermission.IDENTITY_VERIFICATION_CONFIG_READ)));
-    map.put("get", new AdminPermissions(Set.of(AdminPermission.IDENTITY_VERIFICATION_CONFIG_READ)));
+        new AdminPermissions(Set.of(DefaultAdminPermission.IDENTITY_VERIFICATION_CONFIG_READ)));
+    map.put(
+        "get",
+        new AdminPermissions(Set.of(DefaultAdminPermission.IDENTITY_VERIFICATION_CONFIG_READ)));
     map.put(
         "update",
-        new AdminPermissions(Set.of(AdminPermission.IDENTITY_VERIFICATION_CONFIG_UPDATE)));
+        new AdminPermissions(Set.of(DefaultAdminPermission.IDENTITY_VERIFICATION_CONFIG_UPDATE)));
     map.put(
         "delete",
-        new AdminPermissions(Set.of(AdminPermission.IDENTITY_VERIFICATION_CONFIG_DELETE)));
+        new AdminPermissions(Set.of(DefaultAdminPermission.IDENTITY_VERIFICATION_CONFIG_DELETE)));
     AdminPermissions adminPermissions = map.get(method);
     if (adminPermissions == null) {
       throw new UnSupportedException("Method " + method + " not supported");

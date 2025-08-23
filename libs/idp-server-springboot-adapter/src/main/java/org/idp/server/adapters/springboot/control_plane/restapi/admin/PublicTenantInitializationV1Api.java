@@ -20,9 +20,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
-import org.idp.server.control_plane.admin.tenant.TenantInitializationApi;
-import org.idp.server.control_plane.admin.tenant.io.TenantInitializationRequest;
-import org.idp.server.control_plane.admin.tenant.io.TenantInitializationResponse;
+import org.idp.server.control_plane.admin.organization.OrganizationInitializationApi;
+import org.idp.server.control_plane.admin.organization.io.OrganizationInitializationRequest;
+import org.idp.server.control_plane.admin.organization.io.OrganizationInitializationResponse;
 import org.idp.server.platform.multi_tenancy.tenant.*;
 import org.idp.server.platform.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;
@@ -31,13 +31,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/v1/admin/public-tenant/initialization")
+@RequestMapping("/v1/admin/organization/initialization")
 public class PublicTenantInitializationV1Api implements ParameterTransformable {
 
-  TenantInitializationApi tenantInitializationApi;
+  OrganizationInitializationApi organizationInitializationApi;
 
   public PublicTenantInitializationV1Api(IdpServerApplication idpServerApplication) {
-    this.tenantInitializationApi = idpServerApplication.tenantInitializationApi();
+    this.organizationInitializationApi = idpServerApplication.tenantInitializationApi();
   }
 
   @PostMapping
@@ -48,10 +48,10 @@ public class PublicTenantInitializationV1Api implements ParameterTransformable {
 
     TenantIdentifier adminTenantIdentifier = AdminTenantContext.getTenantIdentifier();
     RequestAttributes requestAttributes = transform(httpServletRequest);
-    TenantInitializationResponse response =
-        tenantInitializationApi.initialize(
+    OrganizationInitializationResponse response =
+        organizationInitializationApi.initialize(
             adminTenantIdentifier,
-            new TenantInitializationRequest(body),
+            new OrganizationInitializationRequest(body),
             requestAttributes,
             dryRun);
 

@@ -16,7 +16,7 @@
 
 package org.idp.server.control_plane.management.oidc.client.validator;
 
-import org.idp.server.control_plane.base.schema.ControlPlaneSchemaReader;
+import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
 import org.idp.server.control_plane.management.oidc.client.io.ClientRegistrationRequest;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
@@ -31,7 +31,7 @@ public class ClientRegistrationRequestValidator {
   public ClientRegistrationRequestValidator(ClientRegistrationRequest request, boolean dryRun) {
     this.request = request;
     this.dryRun = dryRun;
-    this.clientSchemaValidator = new JsonSchemaValidator(ControlPlaneSchemaReader.clientSchema());
+    this.clientSchemaValidator = new JsonSchemaValidator(ControlPlaneV1SchemaReader.clientSchema());
   }
 
   public ClientRegistrationRequestValidationResult validate() {

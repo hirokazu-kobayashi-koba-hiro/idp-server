@@ -17,6 +17,8 @@
 package org.idp.server.core.openid.identity.permission;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import org.idp.server.platform.uuid.UuidConvertable;
 
@@ -37,6 +39,10 @@ public class Permission implements Serializable, UuidConvertable {
     return id;
   }
 
+  public PermissionIdentifier identifier() {
+    return new PermissionIdentifier(id);
+  }
+
   public UUID idAsUuid() {
     return convertUuid(id);
   }
@@ -50,12 +56,20 @@ public class Permission implements Serializable, UuidConvertable {
   }
 
   public boolean exists() {
-    return name != null && !name.isEmpty();
+    return id != null && !id.isEmpty();
   }
 
   public boolean match(Permission permission) {
     if (!exists()) return false;
 
     return this.name.equals(permission.name());
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("id", id);
+    map.put("name", name);
+    map.put("description", description);
+    return map;
   }
 }

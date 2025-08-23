@@ -16,10 +16,9 @@
 
 package org.idp.server.control_plane.base.definition;
 
-import org.idp.server.platform.exception.UnSupportedException;
-
 public enum IdpControlPlaneScope {
-  management;
+  management,
+  unknown;
 
   public static IdpControlPlaneScope of(String value) {
     for (IdpControlPlaneScope scope : IdpControlPlaneScope.values()) {
@@ -27,6 +26,6 @@ public enum IdpControlPlaneScope {
         return scope;
       }
     }
-    throw new UnSupportedException("Scope " + value + " is not supported");
+    return IdpControlPlaneScope.unknown;
   }
 }

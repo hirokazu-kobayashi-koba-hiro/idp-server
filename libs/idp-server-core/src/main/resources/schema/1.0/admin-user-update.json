@@ -155,12 +155,10 @@
       }
     },
     "custom_properties": {
-      "type": "object",
-      "additionalProperties": true
+      "type": "object"
     },
     "role": {
       "type": "string"
     }
-  },
-  "additionalProperties": true
+  }
 }

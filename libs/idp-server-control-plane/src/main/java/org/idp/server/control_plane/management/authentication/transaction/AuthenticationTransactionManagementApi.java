@@ -19,8 +19,8 @@ package org.idp.server.control_plane.management.authentication.transaction;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.idp.server.control_plane.base.definition.AdminPermission;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
+import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionManagementResponse;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionQueries;
@@ -34,8 +34,11 @@ public interface AuthenticationTransactionManagementApi {
   default AdminPermissions getRequiredPermissions(String method) {
     Map<String, AdminPermissions> map = new HashMap<>();
     map.put(
-        "findList", new AdminPermissions(Set.of(AdminPermission.AUTHENTICATION_TRANSACTION_READ)));
-    map.put("get", new AdminPermissions(Set.of(AdminPermission.AUTHENTICATION_TRANSACTION_READ)));
+        "findList",
+        new AdminPermissions(Set.of(DefaultAdminPermission.AUTHENTICATION_TRANSACTION_READ)));
+    map.put(
+        "get",
+        new AdminPermissions(Set.of(DefaultAdminPermission.AUTHENTICATION_TRANSACTION_READ)));
     AdminPermissions adminPermissions = map.get(method);
     if (adminPermissions == null) {
       throw new UnSupportedException("Method " + method + " not supported");

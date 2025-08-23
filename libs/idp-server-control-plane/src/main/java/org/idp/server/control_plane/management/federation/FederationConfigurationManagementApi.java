@@ -19,8 +19,8 @@ package org.idp.server.control_plane.management.federation;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.idp.server.control_plane.base.definition.AdminPermission;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
+import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
 import org.idp.server.control_plane.management.federation.io.FederationConfigRequest;
 import org.idp.server.core.openid.federation.FederationConfigurationIdentifier;
@@ -34,11 +34,15 @@ public interface FederationConfigurationManagementApi {
 
   default AdminPermissions getRequiredPermissions(String method) {
     Map<String, AdminPermissions> map = new HashMap<>();
-    map.put("create", new AdminPermissions(Set.of(AdminPermission.FEDERATION_CONFIG_CREATE)));
-    map.put("findList", new AdminPermissions(Set.of(AdminPermission.FEDERATION_CONFIG_READ)));
-    map.put("get", new AdminPermissions(Set.of(AdminPermission.FEDERATION_CONFIG_READ)));
-    map.put("update", new AdminPermissions(Set.of(AdminPermission.FEDERATION_CONFIG_UPDATE)));
-    map.put("delete", new AdminPermissions(Set.of(AdminPermission.FEDERATION_CONFIG_DELETE)));
+    map.put(
+        "create", new AdminPermissions(Set.of(DefaultAdminPermission.FEDERATION_CONFIG_CREATE)));
+    map.put(
+        "findList", new AdminPermissions(Set.of(DefaultAdminPermission.FEDERATION_CONFIG_READ)));
+    map.put("get", new AdminPermissions(Set.of(DefaultAdminPermission.FEDERATION_CONFIG_READ)));
+    map.put(
+        "update", new AdminPermissions(Set.of(DefaultAdminPermission.FEDERATION_CONFIG_UPDATE)));
+    map.put(
+        "delete", new AdminPermissions(Set.of(DefaultAdminPermission.FEDERATION_CONFIG_DELETE)));
     AdminPermissions adminPermissions = map.get(method);
     if (adminPermissions == null) {
       throw new UnSupportedException("Method " + method + " not supported");

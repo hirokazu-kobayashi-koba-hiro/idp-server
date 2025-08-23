@@ -172,6 +172,5 @@
     "role": {
       "type": "string"
     }
-  },
-  "additionalProperties": true
+  }
 }

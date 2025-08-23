@@ -25,10 +25,10 @@ import org.idp.server.authentication.interactors.plugin.FidoUafAdditionalRequest
 import org.idp.server.authentication.interactors.plugin.WebAuthnExecutorPluginLoader;
 import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutors;
 import org.idp.server.control_plane.admin.operation.IdpServerOperationApi;
+import org.idp.server.control_plane.admin.organization.OrganizationInitializationApi;
 import org.idp.server.control_plane.admin.starter.IdpServerStarterApi;
-import org.idp.server.control_plane.admin.tenant.TenantInitializationApi;
 import org.idp.server.control_plane.base.AdminDashboardUrl;
-import org.idp.server.control_plane.base.schema.ControlPlaneSchemaReader;
+import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
 import org.idp.server.control_plane.management.audit.AuditLogManagementApi;
 import org.idp.server.control_plane.management.authentication.configuration.AuthenticationConfigurationManagementApi;
 import org.idp.server.control_plane.management.authentication.interaction.AuthenticationInteractionManagementApi;
@@ -40,6 +40,7 @@ import org.idp.server.control_plane.management.identity.verification.IdentityVer
 import org.idp.server.control_plane.management.oidc.authorization.AuthorizationServerManagementApi;
 import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
+import org.idp.server.control_plane.management.permission.PermissionManagementApi;
 import org.idp.server.control_plane.management.security.event.SecurityEventManagementApi;
 import org.idp.server.control_plane.management.security.hook.SecurityEventHookConfigurationManagementApi;
 import org.idp.server.control_plane.management.tenant.TenantManagementApi;
@@ -80,6 +81,7 @@ import org.idp.server.core.openid.identity.authentication.PasswordVerificationDe
 import org.idp.server.core.openid.identity.authentication.UserPasswordAuthenticator;
 import org.idp.server.core.openid.identity.event.*;
 import org.idp.server.core.openid.identity.permission.PermissionCommandRepository;
+import org.idp.server.core.openid.identity.permission.PermissionQueryRepository;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.identity.role.RoleCommandRepository;
@@ -132,7 +134,7 @@ import org.idp.server.usecases.application.system.*;
 import org.idp.server.usecases.application.tenant_invitator.TenantInvitationMetaDataEntryService;
 import org.idp.server.usecases.control_plane.system_administrator.IdpServerOperationEntryService;
 import org.idp.server.usecases.control_plane.system_administrator.IdpServerStarterEntryService;
-import org.idp.server.usecases.control_plane.system_administrator.TenantInitializationEntryService;
+import org.idp.server.usecases.control_plane.system_administrator.OrganizationInitializationEntryService;
 import org.idp.server.usecases.control_plane.tenant_manager.*;
 
 /** IdpServerApplication */
@@ -157,7 +159,7 @@ public class IdpServerApplication {
   UserOperationApi userOperationApi;
   UserLifecycleEventApi userLifecycleEventApi;
   OnboardingApi onboardingApi;
-  TenantInitializationApi tenantInitializationApi;
+  OrganizationInitializationApi organizationInitializationApi;
   TenantManagementApi tenantManagementApi;
   TenantInvitationManagementApi tenantInvitationManagementApi;
   AuthorizationServerManagementApi authorizationServerManagementApi;
@@ -172,6 +174,7 @@ public class IdpServerApplication {
   AuditLogManagementApi auditLogManagementApi;
   AuthenticationInteractionManagementApi authenticationInteractionManagementApi;
   AuthenticationTransactionManagementApi authenticationTransactionManagementApi;
+  PermissionManagementApi permissionManagementApi;
   UserAuthenticationApi userAuthenticationApi;
 
   public IdpServerApplication(
@@ -279,6 +282,8 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(RoleCommandRepository.class);
     PermissionCommandRepository permissionCommandRepository =
         applicationComponentContainer.resolve(PermissionCommandRepository.class);
+    PermissionQueryRepository permissionQueryRepository =
+        applicationComponentContainer.resolve(PermissionQueryRepository.class);
     SecurityEventHookConfigurationQueryRepository hookQueryRepository =
         applicationComponentContainer.resolve(SecurityEventHookConfigurationQueryRepository.class);
     UserLifecycleEventResultCommandRepository userLifecycleEventResultCommandRepository =
@@ -403,7 +408,7 @@ public class IdpServerApplication {
     FederationInteractors federationInteractors =
         FederationInteractorPluginLoader.load(federationDependencyContainer);
 
-    ControlPlaneSchemaReader.initialValidate();
+    ControlPlaneV1SchemaReader.initialValidate();
 
     AuditLogWriters auditLogWriters =
         AuditLogWriterPluginLoader.load(applicationComponentContainer);
@@ -600,9 +605,9 @@ public class IdpServerApplication {
             OnboardingApi.class,
             tenantDialectProvider);
 
-    this.tenantInitializationApi =
+    this.organizationInitializationApi =
         TenantAwareEntryServiceProxy.createProxy(
-            new TenantInitializationEntryService(
+            new OrganizationInitializationEntryService(
                 tenantCommandRepository,
                 tenantQueryRepository,
                 organizationRepository,
@@ -612,7 +617,7 @@ public class IdpServerApplication {
                 clientConfigurationCommandRepository,
                 clientConfigurationQueryRepository,
                 passwordEncodeDelegation),
-            TenantInitializationApi.class,
+            OrganizationInitializationApi.class,
             tenantDialectProvider);
 
     this.tenantManagementApi =
@@ -748,6 +753,16 @@ public class IdpServerApplication {
             AuthenticationTransactionManagementApi.class,
             tenantDialectProvider);
 
+    this.permissionManagementApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new PermissionManagementEntryService(
+                tenantQueryRepository,
+                permissionQueryRepository,
+                permissionCommandRepository,
+                auditLogWriters),
+            PermissionManagementApi.class,
+            tenantDialectProvider);
+
     this.userAuthenticationApi =
         TenantAwareEntryServiceProxy.createProxy(
             new UserAuthenticationEntryService(
@@ -834,8 +849,8 @@ public class IdpServerApplication {
     return onboardingApi;
   }
 
-  public TenantInitializationApi tenantInitializationApi() {
-    return tenantInitializationApi;
+  public OrganizationInitializationApi tenantInitializationApi() {
+    return organizationInitializationApi;
   }
 
   public TenantManagementApi tenantManagementApi() {
@@ -893,6 +908,10 @@ public class IdpServerApplication {
 
   public AuthenticationInteractionManagementApi authenticationInteractionManagementApi() {
     return authenticationInteractionManagementApi;
+  }
+
+  public PermissionManagementApi permissionManagementApi() {
+    return permissionManagementApi;
   }
 
   public AuthenticationTransactionManagementApi authenticationTransactionManagementApi() {
