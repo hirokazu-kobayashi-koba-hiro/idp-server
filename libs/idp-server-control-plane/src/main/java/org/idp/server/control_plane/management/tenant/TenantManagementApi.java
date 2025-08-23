@@ -19,8 +19,8 @@ package org.idp.server.control_plane.management.tenant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.idp.server.control_plane.base.definition.AdminPermission;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
+import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
 import org.idp.server.control_plane.management.tenant.io.TenantRequest;
 import org.idp.server.core.openid.identity.User;
@@ -32,11 +32,11 @@ import org.idp.server.platform.type.RequestAttributes;
 public interface TenantManagementApi {
   default AdminPermissions getRequiredPermissions(String method) {
     Map<String, AdminPermissions> map = new HashMap<>();
-    map.put("create", new AdminPermissions(Set.of(AdminPermission.TENANT_CREATE)));
-    map.put("findList", new AdminPermissions(Set.of(AdminPermission.TENANT_READ)));
-    map.put("get", new AdminPermissions(Set.of(AdminPermission.TENANT_READ)));
-    map.put("update", new AdminPermissions(Set.of(AdminPermission.TENANT_UPDATE)));
-    map.put("delete", new AdminPermissions(Set.of(AdminPermission.TENANT_DELETE)));
+    map.put("create", new AdminPermissions(Set.of(DefaultAdminPermission.TENANT_CREATE)));
+    map.put("findList", new AdminPermissions(Set.of(DefaultAdminPermission.TENANT_READ)));
+    map.put("get", new AdminPermissions(Set.of(DefaultAdminPermission.TENANT_READ)));
+    map.put("update", new AdminPermissions(Set.of(DefaultAdminPermission.TENANT_UPDATE)));
+    map.put("delete", new AdminPermissions(Set.of(DefaultAdminPermission.TENANT_DELETE)));
     AdminPermissions adminPermissions = map.get(method);
     if (adminPermissions == null) {
       throw new UnSupportedException("Method " + method + " not supported");

@@ -19,8 +19,8 @@ package org.idp.server.control_plane.management.tenant.invitation;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.idp.server.control_plane.base.definition.AdminPermission;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
+import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.tenant.invitation.io.TenantInvitationManagementRequest;
 import org.idp.server.control_plane.management.tenant.invitation.io.TenantInvitationManagementResponse;
 import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitationIdentifier;
@@ -34,10 +34,13 @@ public interface TenantInvitationManagementApi {
 
   default AdminPermissions getRequiredPermissions(String method) {
     Map<String, AdminPermissions> map = new HashMap<>();
-    map.put("create", new AdminPermissions(Set.of(AdminPermission.TENANT_INVITATION_CREATE)));
-    map.put("findList", new AdminPermissions(Set.of(AdminPermission.TENANT_INVITATION_READ)));
-    map.put("get", new AdminPermissions(Set.of(AdminPermission.TENANT_INVITATION_READ)));
-    map.put("delete", new AdminPermissions(Set.of(AdminPermission.TENANT_INVITATION_DELETE)));
+    map.put(
+        "create", new AdminPermissions(Set.of(DefaultAdminPermission.TENANT_INVITATION_CREATE)));
+    map.put(
+        "findList", new AdminPermissions(Set.of(DefaultAdminPermission.TENANT_INVITATION_READ)));
+    map.put("get", new AdminPermissions(Set.of(DefaultAdminPermission.TENANT_INVITATION_READ)));
+    map.put(
+        "delete", new AdminPermissions(Set.of(DefaultAdminPermission.TENANT_INVITATION_DELETE)));
     AdminPermissions adminPermissions = map.get(method);
     if (adminPermissions == null) {
       throw new UnSupportedException("Method " + method + " not supported");

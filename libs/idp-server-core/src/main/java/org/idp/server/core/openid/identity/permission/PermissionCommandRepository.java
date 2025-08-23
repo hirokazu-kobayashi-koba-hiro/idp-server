@@ -23,4 +23,8 @@ public interface PermissionCommandRepository {
   void register(Tenant tenant, Permission permission);
 
   void bulkRegister(Tenant tenant, Permissions permissions);
+
+  void update(Tenant tenant, Permission permission);
+
+  void delete(Tenant tenant, Permission permission);
 }

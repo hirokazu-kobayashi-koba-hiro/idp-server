@@ -17,7 +17,7 @@
 package org.idp.server.control_plane.admin.starter.validator;
 
 import org.idp.server.control_plane.admin.starter.io.IdpServerStarterRequest;
-import org.idp.server.control_plane.base.schema.ControlPlaneSchemaReader;
+import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 import org.idp.server.platform.json.schema.JsonSchemaValidator;
@@ -35,13 +35,13 @@ public class IdpServerInitializeRequestValidator {
   public IdpServerInitializeRequestValidator(IdpServerStarterRequest request, boolean dryRun) {
     this.request = request;
     this.organizationSchemaValidator =
-        new JsonSchemaValidator(ControlPlaneSchemaReader.organizationSchema());
-    this.tenantSchemaValidator = new JsonSchemaValidator(ControlPlaneSchemaReader.tenantSchema());
+        new JsonSchemaValidator(ControlPlaneV1SchemaReader.organizationSchema());
+    this.tenantSchemaValidator = new JsonSchemaValidator(ControlPlaneV1SchemaReader.tenantSchema());
     this.authorizationServerSchemaValidator =
-        new JsonSchemaValidator(ControlPlaneSchemaReader.authorizationServerSchema());
+        new JsonSchemaValidator(ControlPlaneV1SchemaReader.authorizationServerSchema());
     this.adminUserSchemaValidator =
-        new JsonSchemaValidator(ControlPlaneSchemaReader.adminUserSchema());
-    this.clientSchemaValidator = new JsonSchemaValidator(ControlPlaneSchemaReader.clientSchema());
+        new JsonSchemaValidator(ControlPlaneV1SchemaReader.adminUserSchema());
+    this.clientSchemaValidator = new JsonSchemaValidator(ControlPlaneV1SchemaReader.clientSchema());
     this.dryRun = dryRun;
   }
 

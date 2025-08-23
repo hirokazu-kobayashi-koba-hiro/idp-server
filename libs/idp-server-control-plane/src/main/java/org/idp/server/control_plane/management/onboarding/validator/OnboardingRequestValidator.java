@@ -16,7 +16,7 @@
 
 package org.idp.server.control_plane.management.onboarding.validator;
 
-import org.idp.server.control_plane.base.schema.ControlPlaneSchemaReader;
+import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingRequest;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
@@ -34,11 +34,11 @@ public class OnboardingRequestValidator {
   public OnboardingRequestValidator(OnboardingRequest request, boolean dryRun) {
     this.request = request;
     this.organizationSchemaValidator =
-        new JsonSchemaValidator(ControlPlaneSchemaReader.organizationSchema());
-    this.tenantSchemaValidator = new JsonSchemaValidator(ControlPlaneSchemaReader.tenantSchema());
+        new JsonSchemaValidator(ControlPlaneV1SchemaReader.organizationSchema());
+    this.tenantSchemaValidator = new JsonSchemaValidator(ControlPlaneV1SchemaReader.tenantSchema());
     this.authorizationServerSchemaValidator =
-        new JsonSchemaValidator(ControlPlaneSchemaReader.authorizationServerSchema());
-    this.clientSchemaValidator = new JsonSchemaValidator(ControlPlaneSchemaReader.clientSchema());
+        new JsonSchemaValidator(ControlPlaneV1SchemaReader.authorizationServerSchema());
+    this.clientSchemaValidator = new JsonSchemaValidator(ControlPlaneV1SchemaReader.clientSchema());
     this.dryRun = dryRun;
   }
 

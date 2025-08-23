@@ -19,8 +19,8 @@ package org.idp.server.control_plane.management.audit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.idp.server.control_plane.base.definition.AdminPermission;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
+import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.audit.io.AuditLogManagementResponse;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -33,8 +33,8 @@ import org.idp.server.platform.type.RequestAttributes;
 public interface AuditLogManagementApi {
   default AdminPermissions getRequiredPermissions(String method) {
     Map<String, AdminPermissions> map = new HashMap<>();
-    map.put("findList", new AdminPermissions(Set.of(AdminPermission.AUDIT_LOG_READ)));
-    map.put("get", new AdminPermissions(Set.of(AdminPermission.AUDIT_LOG_READ)));
+    map.put("findList", new AdminPermissions(Set.of(DefaultAdminPermission.AUDIT_LOG_READ)));
+    map.put("get", new AdminPermissions(Set.of(DefaultAdminPermission.AUDIT_LOG_READ)));
     AdminPermissions adminPermissions = map.get(method);
     if (adminPermissions == null) {
       throw new UnSupportedException("Method " + method + " not supported");

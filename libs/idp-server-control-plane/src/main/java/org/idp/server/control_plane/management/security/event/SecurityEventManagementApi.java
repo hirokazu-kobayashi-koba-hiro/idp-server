@@ -19,8 +19,8 @@ package org.idp.server.control_plane.management.security.event;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.idp.server.control_plane.base.definition.AdminPermission;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
+import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementResponse;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -33,8 +33,8 @@ import org.idp.server.platform.type.RequestAttributes;
 public interface SecurityEventManagementApi {
   default AdminPermissions getRequiredPermissions(String method) {
     Map<String, AdminPermissions> map = new HashMap<>();
-    map.put("findList", new AdminPermissions(Set.of(AdminPermission.SECURITY_EVENT_READ)));
-    map.put("get", new AdminPermissions(Set.of(AdminPermission.SECURITY_EVENT_READ)));
+    map.put("findList", new AdminPermissions(Set.of(DefaultAdminPermission.SECURITY_EVENT_READ)));
+    map.put("get", new AdminPermissions(Set.of(DefaultAdminPermission.SECURITY_EVENT_READ)));
     AdminPermissions adminPermissions = map.get(method);
     if (adminPermissions == null) {
       throw new UnSupportedException("Method " + method + " not supported");

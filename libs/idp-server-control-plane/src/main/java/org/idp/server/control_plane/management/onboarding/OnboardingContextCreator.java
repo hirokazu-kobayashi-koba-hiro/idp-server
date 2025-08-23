@@ -17,8 +17,8 @@
 package org.idp.server.control_plane.management.onboarding;
 
 import java.util.List;
-import org.idp.server.control_plane.base.definition.AdminPermission;
-import org.idp.server.control_plane.base.definition.AdminRole;
+import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
+import org.idp.server.control_plane.base.definition.DefaultAdminRole;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingRequest;
 import org.idp.server.control_plane.management.onboarding.io.OrganizationRegistrationRequest;
 import org.idp.server.control_plane.management.onboarding.io.TenantRegistrationRequest;
@@ -61,8 +61,8 @@ public class OnboardingContextCreator {
     ClientConfiguration clientConfiguration =
         jsonConverter.read(request.get("client"), ClientConfiguration.class);
 
-    Permissions permissions = AdminPermission.toPermissions();
-    Roles roles = AdminRole.toRoles();
+    Permissions permissions = DefaultAdminPermission.toPermissions();
+    Roles roles = DefaultAdminRole.toRoles();
 
     Organization organization = organizationRequest.toOrganization();
     Tenant tenant =
