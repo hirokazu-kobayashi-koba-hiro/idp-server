@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.identity.role;
+package org.idp.server.core.adapters.datasource.identity.role.command;
 
+import org.idp.server.core.openid.identity.permission.Permissions;
 import org.idp.server.core.openid.identity.role.Role;
 import org.idp.server.core.openid.identity.role.RoleCommandRepository;
 import org.idp.server.core.openid.identity.role.Roles;
@@ -39,5 +40,23 @@ public class RoleCommandDataSource implements RoleCommandRepository {
   public void bulkRegister(Tenant tenant, Roles roles) {
     RoleSqlExecutor executor = executors.get(tenant.databaseType());
     executor.bulkInsert(tenant, roles);
+  }
+
+  @Override
+  public void update(Tenant tenant, Role role) {
+    RoleSqlExecutor executor = executors.get(tenant.databaseType());
+    executor.update(tenant, role);
+  }
+
+  @Override
+  public void removePermissions(Tenant tenant, Role role, Permissions removePermissions) {
+    RoleSqlExecutor executor = executors.get(tenant.databaseType());
+    executor.deletePermissions(tenant, role, removePermissions);
+  }
+
+  @Override
+  public void delete(Tenant tenant, Role role) {
+    RoleSqlExecutor executor = executors.get(tenant.databaseType());
+    executor.delete(tenant, role);
   }
 }

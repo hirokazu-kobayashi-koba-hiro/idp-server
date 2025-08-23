@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.identity.role;
+package org.idp.server.core.adapters.datasource.identity.role.command;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import org.idp.server.core.openid.identity.permission.Permission;
+import org.idp.server.core.openid.identity.permission.Permissions;
 import org.idp.server.core.openid.identity.role.Role;
 import org.idp.server.core.openid.identity.role.Roles;
 import org.idp.server.platform.datasource.SqlExecutor;
@@ -46,6 +49,7 @@ public class PostgresqlExecutor implements RoleSqlExecutor {
     params.add(role.description());
 
     sqlExecutor.execute(sqlTemplate, params);
+    registerPermission(tenant, role, sqlExecutor);
   }
 
   @Override
@@ -54,6 +58,69 @@ public class PostgresqlExecutor implements RoleSqlExecutor {
 
     bulkRegisterRole(tenant, roles, sqlExecutor);
     bulkRegisterPermission(tenant, roles, sqlExecutor);
+  }
+
+  @Override
+  public void update(Tenant tenant, Role role) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+                UPDATE role
+                SET name= ?,
+                description= ?
+                WHERE id = ?::uuid
+                AND tenant_id = ?::uuid;
+                """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(role.name());
+    params.add(role.description());
+    params.add(role.idAsUuid());
+    params.add(tenant.identifierUUID());
+
+    sqlExecutor.execute(sqlTemplate, params);
+    registerPermission(tenant, role, sqlExecutor);
+  }
+
+  @Override
+  public void delete(Tenant tenant, Role role) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+                DELETE FROM role
+                WHERE id = ?::uuid
+                AND tenant_id = ?::uuid;
+                """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(role.idAsUuid());
+    params.add(tenant.identifierUUID());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  @Override
+  public void deletePermissions(Tenant tenant, Role role, Permissions removedTarget) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+            DELETE FROM role_permission
+            WHERE tenant_id = ?::uuid
+            AND role_id = ?::uuid
+            AND permission_id IN (%s);
+            """;
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierUUID());
+    params.add(role.idAsUuid());
+
+    String placeholders = String.join(",", Collections.nCopies(removedTarget.size(), "?::uuid"));
+    String sql = String.format(sqlTemplate, placeholders);
+    for (Permission permission : removedTarget) {
+      params.add(permission.idAsUuid());
+    }
+
+    sqlExecutor.execute(sql, params);
   }
 
   private void bulkRegisterRole(Tenant tenant, Roles roles, SqlExecutor sqlExecutor) {
@@ -102,7 +169,31 @@ public class PostgresqlExecutor implements RoleSqlExecutor {
                       params.add(permission.idAsUuid());
                     }));
     sqlTemplateBuilder.append(String.join(",", sqlValues));
-    sqlTemplateBuilder.append(";");
+    sqlTemplateBuilder.append(" ON CONFLICT (role_id, permission_id) DO NOTHING;");
+
+    sqlExecutor.execute(sqlTemplateBuilder.toString(), params);
+  }
+
+  private void registerPermission(Tenant tenant, Role role, SqlExecutor sqlExecutor) {
+    StringBuilder sqlTemplateBuilder = new StringBuilder();
+    sqlTemplateBuilder.append(
+        """
+                            INSERT INTO role_permission (tenant_id, role_id, permission_id)
+                            VALUES
+                            """);
+
+    List<String> sqlValues = new ArrayList<>();
+    List<Object> params = new ArrayList<>();
+    role.permissions()
+        .forEach(
+            permission -> {
+              sqlValues.add("(?::uuid, ?::uuid, ?::uuid)");
+              params.add(tenant.identifierUUID());
+              params.add(role.idAsUuid());
+              params.add(permission.idAsUuid());
+            });
+    sqlTemplateBuilder.append(String.join(",", sqlValues));
+    sqlTemplateBuilder.append(" ON CONFLICT (role_id, permission_id) DO NOTHING;");
 
     sqlExecutor.execute(sqlTemplateBuilder.toString(), params);
   }

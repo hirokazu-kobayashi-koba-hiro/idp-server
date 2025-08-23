@@ -16,9 +16,18 @@
 
 package org.idp.server.core.openid.identity.role;
 
+import java.util.List;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface RoleQueryRepository {
 
+  Role find(Tenant tenant, RoleIdentifier identifier);
+
+  Role findByName(Tenant tenant, String name);
+
   Roles findAll(Tenant tenant);
+
+  long findTotalCount(Tenant tenant, RoleQueries queries);
+
+  List<Role> findList(Tenant tenant, RoleQueries queries);
 }

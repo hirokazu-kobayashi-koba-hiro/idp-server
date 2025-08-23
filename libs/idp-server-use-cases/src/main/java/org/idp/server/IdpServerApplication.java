@@ -41,6 +41,7 @@ import org.idp.server.control_plane.management.oidc.authorization.AuthorizationS
 import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
 import org.idp.server.control_plane.management.permission.PermissionManagementApi;
+import org.idp.server.control_plane.management.role.RoleManagementApi;
 import org.idp.server.control_plane.management.security.event.SecurityEventManagementApi;
 import org.idp.server.control_plane.management.security.hook.SecurityEventHookConfigurationManagementApi;
 import org.idp.server.control_plane.management.tenant.TenantManagementApi;
@@ -85,6 +86,7 @@ import org.idp.server.core.openid.identity.permission.PermissionQueryRepository;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.identity.role.RoleCommandRepository;
+import org.idp.server.core.openid.identity.role.RoleQueryRepository;
 import org.idp.server.core.openid.oauth.*;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
@@ -175,6 +177,7 @@ public class IdpServerApplication {
   AuthenticationInteractionManagementApi authenticationInteractionManagementApi;
   AuthenticationTransactionManagementApi authenticationTransactionManagementApi;
   PermissionManagementApi permissionManagementApi;
+  RoleManagementApi roleManagementApi;
   UserAuthenticationApi userAuthenticationApi;
 
   public IdpServerApplication(
@@ -280,6 +283,8 @@ public class IdpServerApplication {
 
     RoleCommandRepository roleCommandRepository =
         applicationComponentContainer.resolve(RoleCommandRepository.class);
+    RoleQueryRepository roleQueryRepository =
+        applicationComponentContainer.resolve(RoleQueryRepository.class);
     PermissionCommandRepository permissionCommandRepository =
         applicationComponentContainer.resolve(PermissionCommandRepository.class);
     PermissionQueryRepository permissionQueryRepository =
@@ -763,6 +768,17 @@ public class IdpServerApplication {
             PermissionManagementApi.class,
             tenantDialectProvider);
 
+    this.roleManagementApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new RoleManagementEntryService(
+                tenantQueryRepository,
+                roleQueryRepository,
+                roleCommandRepository,
+                permissionQueryRepository,
+                auditLogWriters),
+            RoleManagementApi.class,
+            tenantDialectProvider);
+
     this.userAuthenticationApi =
         TenantAwareEntryServiceProxy.createProxy(
             new UserAuthenticationEntryService(
@@ -912,6 +928,10 @@ public class IdpServerApplication {
 
   public PermissionManagementApi permissionManagementApi() {
     return permissionManagementApi;
+  }
+
+  public RoleManagementApi roleManagementApi() {
+    return roleManagementApi;
   }
 
   public AuthenticationTransactionManagementApi authenticationTransactionManagementApi() {

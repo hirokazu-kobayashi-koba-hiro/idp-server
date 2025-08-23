@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.identity.role;
+package org.idp.server.core.adapters.datasource.identity.role.command;
 
 import org.idp.server.core.openid.identity.role.RoleCommandRepository;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;

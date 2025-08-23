@@ -25,7 +25,7 @@ public interface PermissionQueryRepository {
 
   Permission findByName(Tenant tenant, String name);
 
-  List<Permission> findAll(Tenant tenant);
+  Permissions findAll(Tenant tenant);
 
   long findTotalCount(Tenant tenant, PermissionQueries queries);
 

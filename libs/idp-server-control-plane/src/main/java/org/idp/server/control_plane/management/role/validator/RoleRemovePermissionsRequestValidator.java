@@ -14,34 +14,35 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.management.permission.validator;
+package org.idp.server.control_plane.management.role.validator;
 
 import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
-import org.idp.server.control_plane.management.permission.io.PermissionRequest;
+import org.idp.server.control_plane.management.role.io.RoleRequest;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 import org.idp.server.platform.json.schema.JsonSchemaValidator;
 
-public class PermissionRequestValidator {
+public class RoleRemovePermissionsRequestValidator {
 
-  PermissionRequest request;
+  RoleRequest request;
   boolean dryRun;
   JsonSchemaValidator schemaValidator;
 
-  public PermissionRequestValidator(PermissionRequest request, boolean dryRun) {
+  public RoleRemovePermissionsRequestValidator(RoleRequest request, boolean dryRun) {
     this.request = request;
     this.dryRun = dryRun;
-    this.schemaValidator = new JsonSchemaValidator(ControlPlaneV1SchemaReader.permissionSchema());
+    this.schemaValidator =
+        new JsonSchemaValidator(ControlPlaneV1SchemaReader.roleRemovePermissionsSchema());
   }
 
-  public PermissionRequestValidationResult validate() {
+  public RoleRequestValidationResult validate() {
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request.toMap());
-    JsonSchemaValidationResult userResult = schemaValidator.validate(jsonNodeWrapper);
+    JsonSchemaValidationResult schemaResult = schemaValidator.validate(jsonNodeWrapper);
 
-    if (!userResult.isValid()) {
-      return PermissionRequestValidationResult.error(userResult, dryRun);
+    if (!schemaResult.isValid()) {
+      return RoleRequestValidationResult.error(schemaResult, dryRun);
     }
 
-    return PermissionRequestValidationResult.success(userResult, dryRun);
+    return RoleRequestValidationResult.success(schemaResult, dryRun);
   }
 }

@@ -16,29 +16,37 @@
 
 package org.idp.server.control_plane.management.role;
 
-import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.control_plane.base.ConfigRegistrationContext;
+import org.idp.server.control_plane.base.ConfigUpdateContext;
 import org.idp.server.control_plane.management.role.io.RoleManagementResponse;
 import org.idp.server.control_plane.management.role.io.RoleManagementStatus;
 import org.idp.server.control_plane.management.role.io.RoleRequest;
 import org.idp.server.core.openid.identity.permission.Permissions;
 import org.idp.server.core.openid.identity.role.Role;
+import org.idp.server.platform.json.JsonDiffCalculator;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class RoleRegistrationContext implements ConfigRegistrationContext {
+public class RoleUpdateContext implements ConfigUpdateContext {
 
   Tenant tenant;
+  Role before;
   RoleRequest request;
-  Role role;
+  Role after;
   Permissions permissions;
   boolean dryRun;
 
-  public RoleRegistrationContext(
-      Tenant tenant, RoleRequest request, Role role, Permissions permissions, boolean dryRun) {
+  public RoleUpdateContext(
+      Tenant tenant,
+      Role before,
+      RoleRequest request,
+      Role after,
+      Permissions permissions,
+      boolean dryRun) {
     this.tenant = tenant;
+    this.before = before;
     this.request = request;
-    this.role = role;
+    this.after = after;
     this.permissions = permissions;
     this.dryRun = dryRun;
   }
@@ -47,12 +55,16 @@ public class RoleRegistrationContext implements ConfigRegistrationContext {
     return tenant;
   }
 
+  public Role before() {
+    return before;
+  }
+
   public RoleRequest request() {
     return request;
   }
 
-  public Role role() {
-    return role;
+  public Role after() {
+    return after;
   }
 
   public Permissions permissions() {
@@ -65,8 +77,13 @@ public class RoleRegistrationContext implements ConfigRegistrationContext {
   }
 
   @Override
-  public Map<String, Object> payload() {
-    return role.toMap();
+  public Map<String, Object> beforePayload() {
+    return before.toMap();
+  }
+
+  @Override
+  public Map<String, Object> afterPayload() {
+    return after.toMap();
   }
 
   @Override
@@ -75,9 +92,10 @@ public class RoleRegistrationContext implements ConfigRegistrationContext {
   }
 
   public RoleManagementResponse toResponse() {
-    Map<String, Object> response = new HashMap<>();
-    response.put("result", role.toMap());
-    response.put("dry_run", dryRun);
-    return new RoleManagementResponse(RoleManagementStatus.CREATED, response);
+    JsonNodeWrapper beforeJson = JsonNodeWrapper.fromMap(before.toMap());
+    JsonNodeWrapper afterJson = JsonNodeWrapper.fromMap(after.toMap());
+    Map<String, Object> diff = JsonDiffCalculator.deepDiff(beforeJson, afterJson);
+    Map<String, Object> contents = Map.of("result", after.toMap(), "diff", diff, "dry_run", dryRun);
+    return new RoleManagementResponse(RoleManagementStatus.OK, contents);
   }
 }
