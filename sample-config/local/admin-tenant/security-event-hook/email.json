@@ -1,11 +1,11 @@
 {
-  "id": "00e9d1bd-c73c-42e9-bf67-2d8625b733e1",
-  "type": "SLACK",
+  "id": "4b809928-79fd-4e78-83e9-eb4f78c4b39d",
+  "type": "Email",
   "triggers": [
-    "user_signup",
+    "identity_verification_approved",
     "user_deletion"
   ],
-  "execution_order": 1,
+  "execution_order": 3,
   "attributes": {
     "label": "slack"
   },
@@ -15,7 +15,7 @@
   "events": {
     "default": {
       "execution": {
-        "type": "slack",
+        "function": "email",
         "details": {
           "description": "slack common notification",
           "incoming_webhook_url": "https://hooks.slack.com/services/xxx",
@@ -23,9 +23,9 @@
         }
       }
     },
-    "user_deletion": {
+    "identity_verification_approved": {
       "execution": {
-        "function": "slack",
+        "function": "email",
         "details": {
           "description": "slack user_deletion notification",
           "incoming_webhook_url": "https://hooks.slack.com/services/xxx",

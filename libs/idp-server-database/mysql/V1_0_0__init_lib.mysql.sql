@@ -70,7 +70,7 @@ CREATE TABLE permission
 (
     id          CHAR(36)                           NOT NULL,
     tenant_id   CHAR(36)                           NOT NULL,
-    name        VARCHAR(255)                       NOT NULL UNIQUE,
+    name        VARCHAR(255)                       NOT NULL,
     description TEXT,
     created_at  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,

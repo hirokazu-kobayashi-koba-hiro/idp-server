@@ -17,11 +17,7 @@
 package org.idp.server.authentication.interactors.email.executor;
 
 import java.util.Map;
-import org.idp.server.authentication.interactors.email.EmailAuthenticationConfiguration;
-import org.idp.server.authentication.interactors.email.EmailVerificationTemplate;
-import org.idp.server.authentication.interactors.email.OneTimePassword;
-import org.idp.server.authentication.interactors.email.OneTimePasswordGenerator;
-import org.idp.server.authentication.interactors.sms.executor.SmsVerificationChallenge;
+import org.idp.server.authentication.interactors.email.*;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionRequest;
@@ -94,8 +90,8 @@ public class EmailChallengeAuthenticationExecutor implements AuthenticationExecu
       return AuthenticationExecutionResult.clientError(sendResult.data());
     }
 
-    SmsVerificationChallenge verificationChallenge =
-        SmsVerificationChallenge.create(oneTimePassword, retryCountLimitation, expireSeconds);
+    EmailVerificationChallenge verificationChallenge =
+        EmailVerificationChallenge.create(oneTimePassword, retryCountLimitation, expireSeconds);
 
     interactionCommandRepository.register(
         tenant, identifier, "email-authentication-challenge", verificationChallenge);

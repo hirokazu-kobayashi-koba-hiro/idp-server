@@ -67,7 +67,7 @@ public class OrganizationInitializationContextCreator {
         jsonConverter.read(request.get("client"), ClientConfiguration.class);
 
     Permissions permissions = DefaultAdminPermission.toPermissions();
-    Roles roles = DefaultAdminRole.toRoles();
+    Roles roles = DefaultAdminRole.create(permissions);
 
     User user = jsonConverter.read(request.get("user"), User.class);
     String encode = passwordEncodeDelegation.encode(user.rawPassword());

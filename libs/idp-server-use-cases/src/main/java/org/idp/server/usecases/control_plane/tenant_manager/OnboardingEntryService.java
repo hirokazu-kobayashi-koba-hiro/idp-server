@@ -32,8 +32,10 @@ import org.idp.server.control_plane.management.onboarding.verifier.OnboardingVer
 import org.idp.server.control_plane.management.onboarding.verifier.OnboardingVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserRegistrator;
+import org.idp.server.core.openid.identity.permission.PermissionCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.core.openid.identity.role.RoleCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
@@ -49,6 +51,8 @@ public class OnboardingEntryService implements OnboardingApi {
   TenantCommandRepository tenantCommandRepository;
   TenantQueryRepository tenantQueryRepository;
   OrganizationRepository organizationRepository;
+  PermissionCommandRepository permissionCommandRepository;
+  RoleCommandRepository roleCommandRepository;
   UserRegistrator userRegistrator;
   AuthorizationServerConfigurationCommandRepository
       authorizationServerConfigurationCommandRepository;
@@ -61,6 +65,8 @@ public class OnboardingEntryService implements OnboardingApi {
       TenantCommandRepository tenantCommandRepository,
       TenantQueryRepository tenantQueryRepository,
       OrganizationRepository organizationRepository,
+      PermissionCommandRepository permissionCommandRepository,
+      RoleCommandRepository roleCommandRepository,
       UserQueryRepository userQueryRepository,
       UserCommandRepository userCommandRepository,
       AuthorizationServerConfigurationCommandRepository
@@ -70,6 +76,8 @@ public class OnboardingEntryService implements OnboardingApi {
     this.tenantCommandRepository = tenantCommandRepository;
     this.tenantQueryRepository = tenantQueryRepository;
     this.organizationRepository = organizationRepository;
+    this.permissionCommandRepository = permissionCommandRepository;
+    this.roleCommandRepository = roleCommandRepository;
     this.userRegistrator = new UserRegistrator(userQueryRepository, userCommandRepository);
     this.authorizationServerConfigurationCommandRepository =
         authorizationServerConfigurationCommandRepository;
@@ -124,6 +132,8 @@ public class OnboardingEntryService implements OnboardingApi {
         tenant, context.authorizationServerConfiguration());
     organizationRepository.register(tenant, context.organization());
     Tenant admin = tenantQueryRepository.getAdmin();
+    permissionCommandRepository.bulkRegister(tenant, context.permissions());
+    roleCommandRepository.bulkRegister(tenant, context.roles());
     userRegistrator.registerOrUpdate(admin, context.user());
     clientConfigurationCommandRepository.register(tenant, context.clientConfiguration());
 

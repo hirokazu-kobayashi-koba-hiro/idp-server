@@ -16,25 +16,30 @@
 
 package org.idp.server.platform.security.hook.configuration;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import org.idp.server.platform.http.HttpRequestExecutionConfig;
+import org.idp.server.platform.http.HttpRequestMockConfig;
 import org.idp.server.platform.json.JsonReadable;
 
 public class SecurityEventExecutionConfig implements JsonReadable {
-  String type;
-  SecurityEventHttpRequestConfig httpRequest = new SecurityEventHttpRequestConfig();
-  SecurityEventMockConfig mock = new SecurityEventMockConfig();
+  String function;
+  HttpRequestExecutionConfig httpRequest = new HttpRequestExecutionConfig();
+  List<HttpRequestExecutionConfig> httpRequests = new ArrayList<>();
+  HttpRequestMockConfig mock = new HttpRequestMockConfig();
   Map<String, Object> details = new HashMap<>();
 
   public SecurityEventExecutionConfig() {}
 
-  public String type() {
-    return type;
+  public String function() {
+    return function;
   }
 
-  public SecurityEventHttpRequestConfig httpRequest() {
+  public HttpRequestExecutionConfig httpRequest() {
     if (httpRequest == null) {
-      return new SecurityEventHttpRequestConfig();
+      return new HttpRequestExecutionConfig();
     }
     return httpRequest;
   }
@@ -43,9 +48,27 @@ public class SecurityEventExecutionConfig implements JsonReadable {
     return httpRequest != null && httpRequest.exists();
   }
 
-  public SecurityEventMockConfig mock() {
+  public List<HttpRequestExecutionConfig> httpRequests() {
+    if (httpRequests == null) {
+      return new ArrayList<>();
+    }
+    return httpRequests;
+  }
+
+  public List<Map<String, Object>> httpRequestsAsMap() {
+    if (httpRequests == null) {
+      return new ArrayList<>();
+    }
+    return httpRequests.stream().map(HttpRequestExecutionConfig::toMap).toList();
+  }
+
+  public boolean hasHttpRequests() {
+    return httpRequests != null && !httpRequests.isEmpty();
+  }
+
+  public HttpRequestMockConfig mock() {
     if (mock == null) {
-      return new SecurityEventMockConfig();
+      return new HttpRequestMockConfig();
     }
     return mock;
   }
@@ -63,13 +86,14 @@ public class SecurityEventExecutionConfig implements JsonReadable {
   }
 
   public boolean exists() {
-    return type != null && !type.isEmpty();
+    return function != null && !function.isEmpty();
   }
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
-    map.put("type", type);
-    if (hasHttpRequest()) map.put("httpRequest", httpRequest.toMap());
+    map.put("function", function);
+    if (hasHttpRequest()) map.put("http_request", httpRequest.toMap());
+    if (hasHttpRequests()) map.put("http_requests", httpRequestsAsMap());
     if (hasMock()) map.put("mock", mock.toMap());
     if (hasDetails()) map.put("details", details);
     return map;

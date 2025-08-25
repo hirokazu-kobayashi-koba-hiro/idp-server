@@ -164,7 +164,7 @@ public enum DefaultAdminPermission {
         .collect(Collectors.toSet());
   }
 
-  public Permission toPermission() {
+  private Permission toPermission() {
     return new Permission(UUID.randomUUID().toString(), value, description);
   }
 
