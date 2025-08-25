@@ -16,58 +16,50 @@
 
 package org.idp.server.control_plane.base.definition;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import org.idp.server.core.openid.identity.permission.Permission;
+import org.idp.server.core.openid.identity.permission.Permissions;
 import org.idp.server.core.openid.identity.role.Role;
 import org.idp.server.core.openid.identity.role.Roles;
 
 public enum DefaultAdminRole {
   ADMINISTRATOR(
-      "c6df7aaa-ab0f-4c31-839d-49b6874de144",
-      "administrator",
-      "administrator has all permissions",
-      DefaultAdminPermission.getAll()),
-  EDITOR(
-      "46a97eba-feb5-47a0-9b29-d17dca2e5b00",
-      "editor",
-      "editor has permissions for edition",
-      createEditorPermissions()),
-  VIEWER(
-      "c393adc2-f58b-47d5-b351-24b9615c8dc0",
-      "viewer",
-      "viewer has permissions for view",
-      DefaultAdminPermission.findReadPermissions());
+      "administrator", "administrator has all permissions", DefaultAdminPermission.getAll()),
+  EDITOR("editor", "editor has permissions for edition", createEditorPermissions()),
+  VIEWER("viewer", "viewer has permissions for view", DefaultAdminPermission.findReadPermissions());
 
-  private final String id;
   private final String name;
   private final String description;
   private final Set<DefaultAdminPermission> permissions;
 
-  DefaultAdminRole(
-      String id, String name, String description, Set<DefaultAdminPermission> permissions) {
-    this.id = id;
+  DefaultAdminRole(String name, String description, Set<DefaultAdminPermission> permissions) {
     this.name = name;
     this.description = description;
     this.permissions = permissions;
   }
 
-  public Role toRole() {
-    List<Permission> permissions =
-        this.permissions.stream().map(DefaultAdminPermission::toPermission).toList();
-    return new Role(id, name, description, permissions);
-  }
-
-  public static Roles toRoles() {
+  public static Roles create(Permissions allPermissions) {
     List<Role> roles = new ArrayList<>();
 
     for (DefaultAdminRole defaultAdminRole : values()) {
-      roles.add(defaultAdminRole.toRole());
+      Set<DefaultAdminPermission> rolePermissions = defaultAdminRole.permissions();
+      String id = UUID.randomUUID().toString();
+      String name = defaultAdminRole.name;
+      String description = defaultAdminRole.description;
+      List<Permission> permissions = convertToPermissions(allPermissions, rolePermissions);
+      Role role = new Role(id, name, description, permissions);
+      roles.add(role);
     }
 
     return new Roles(roles);
+  }
+
+  private static List<Permission> convertToPermissions(
+      Permissions allPermissions, Set<DefaultAdminPermission> defaultRolePermissions) {
+    Permissions filtered =
+        allPermissions.filter(
+            defaultRolePermissions.stream().map(DefaultAdminPermission::value).toList());
+    return filtered.toList();
   }
 
   public Set<DefaultAdminPermission> permissions() {

@@ -602,6 +602,8 @@ public class IdpServerApplication {
                 tenantCommandRepository,
                 tenantQueryRepository,
                 organizationRepository,
+                permissionCommandRepository,
+                roleCommandRepository,
                 userQueryRepository,
                 userCommandRepository,
                 authorizationServerConfigurationCommandRepository,

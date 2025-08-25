@@ -62,7 +62,7 @@ public class OnboardingContextCreator {
         jsonConverter.read(request.get("client"), ClientConfiguration.class);
 
     Permissions permissions = DefaultAdminPermission.toPermissions();
-    Roles roles = DefaultAdminRole.toRoles();
+    Roles roles = DefaultAdminRole.create(permissions);
 
     Organization organization = organizationRequest.toOrganization();
     Tenant tenant =

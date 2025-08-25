@@ -40,7 +40,7 @@
   "events": {
     "fido_uaf_registration_success": {
       "execution": {
-        "type": "ssf",
+        "function": "ssf",
         "details": {
           "security_event_type_identifier": "https://schemas.openid.net/secevent/risc/event-type/account-credential-change-required",
           "kid": "ssf-debug",
