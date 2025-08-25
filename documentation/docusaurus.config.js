@@ -88,31 +88,31 @@ const config = {
         specs: [
           {
             spec: 'openapi/swagger-rp-en.yaml',
-            route: '/docs/api-rp-en/',
+            route: '/docs/content_07_reference/api-rp-en/',
           },
           {
             spec: 'openapi/swagger-authentication-device-en.yaml',
-            route: '/docs/api-authentication-device-en/',
+            route: '/docs/content_07_reference/api-authentication-device-en/',
           },
           {
             spec: 'openapi/swagger-control-plane-en.yaml',
-            route: '/docs/control-plane-api-en/',
+            route: '/docs/content_07_reference/control-plane-api-en/',
           },
           {
             spec: 'openapi/swagger-rp-ja.yaml',
-            route: '/docs/api-rp-ja/',
+            route: '/docs/content_07_reference/api-rp-ja/',
           },
           {
             spec: 'openapi/swagger-authentication-device-ja.yaml',
-            route: '/docs/api-authentication-device-ja/',
+            route: '/docs/content_07_reference/api-authentication-device-ja/',
           },
           {
             spec: 'openapi/swagger-resource-owner-ja.yaml',
-            route: '/docs/api-resource-owner-ja/',
+            route: '/docs/content_07_reference/api-resource-owner-ja/',
           },
           {
             spec: 'openapi/swagger-internal-ja.yaml',
-            route: '/docs/api-internal-ja/',
+            route: '/docs/content_07_reference/api-internal-ja/',
           },
           {
             spec: 'openapi/swagger-control-plane-ja.yaml',
@@ -148,7 +148,7 @@ const config = {
           {
             label: 'Api Reference',
             position: 'left',
-            to: '/docs/api-reference',
+            to: 'docs/content_07_reference/api-reference',
           },
           // {to: '/blog', label: 'Blog', position: 'left'},
           {
