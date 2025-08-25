@@ -72,7 +72,8 @@ const sidebars = {
         "content_05_how-to/identity-verification-registration",
         "content_05_how-to/mfa-fido-uaf-registration",
         "content_05_how-to/mfa-fido-uaf-deregistration",
-        "content_05_how-to/ciba-flow-fido-uaf"
+        "content_05_how-to/ciba-flow-fido-uaf",
+        "content_05_how-to/token-strategy"
       ]
     },
     {
