@@ -67,14 +67,13 @@ docker build -f ./Dockerfile-flyway -t idp-flyway-migrator:latest .
 ```
 
 ```shell
-docker compose up -d
-docker compose logs -f idp-server
+docker compose up
 ```
 
 * init table
 
 ```shell
-./gradlew flywayClean flywayMigrate
+docker compose run flyway-migrator clean migrate
 ```
 
 ### health check
