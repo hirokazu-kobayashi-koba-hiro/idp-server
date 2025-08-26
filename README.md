@@ -91,32 +91,13 @@ curl -v http://localhost:8080/actuator/health
 * admin-tenant
 
 ```shell
-./sample-config/test-data.sh \
--e "local" \
--u ito.ichiro \
--p successUserCode001 \
--t 67e7eae6-62b0-4500-9eff-87459f63fc66 \
--b http://localhost:8080 \
--c clientSecretPost \
--s clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890 \
--d false
+./config-sample/test-data.sh
  ```
 
 * test-tenant
 
 ```shell
-./sample-config/test-tenant-data.sh \
--e "local" \
--u ito.ichiro \
--p successUserCode001 \
--t 67e7eae6-62b0-4500-9eff-87459f63fc66 \
--b http://localhost:8080 \
--c clientSecretPost \
--s clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890 \
--n 1e68932e-ed4a-43e7-b412-460665e42df3 \
--l clientSecretPost \
--m clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890 \
--d false
+./config-sample/test-tenant-data.sh -t 1e68932e-ed4a-43e7-b412-460665e42df3
  ```
 
 ### e2e

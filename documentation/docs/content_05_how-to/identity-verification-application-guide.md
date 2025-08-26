@@ -50,7 +50,7 @@ graph TD
 | ファイル名                                                                                             | 役割         | 目的                             |
 |---------------------------------------------------------------------------------------------------|------------|--------------------------------|
 | `E2Eテスト e2e/src/tests/scenario/application/scenario-05-identity_verification-application.test.js` | 実行テスト      | 実際の動作フローを確認。プロセスの順番やレスポンス確認に便利 |
-| `設定ファイル sample-config/local/admin-tenant/identity/investment-account-opening.json`                | 身元確認テンプレート | 身元確認の流れ・パラメータ・ルール全部ここに書く       |
+| `設定ファイル config-sample/local/admin-tenant/identity/investment-account-opening.json`                | 身元確認テンプレート | 身元確認の流れ・パラメータ・ルール全部ここに書く       |
 
 ---
 
