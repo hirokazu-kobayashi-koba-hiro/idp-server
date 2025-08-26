@@ -11,7 +11,7 @@
         "function": "http_requests",
         "http_requests": [
           {
-            "url": "http://localhost:4000/token",
+            "url": "http://mockoon:4000/token",
             "method": "GET",
             "header_mapping_rules": [
               { "static_value": "test-client-id", "to": "x-client-id" }
@@ -22,7 +22,7 @@
             "result_context_path": "authentication_token_result"
           },
           {
-            "url": "http://localhost:4000/users",
+            "url": "http://mockoon:4000/users",
             "method": "GET",
             "header_mapping_rules": [
               { "static_value": "test-client-id", "to": "x-client-id" }

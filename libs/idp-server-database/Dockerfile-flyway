@@ -33,5 +33,7 @@ RUN chmod +x /entrypoint.sh \
 # switch to non-root user
 USER runner
 
+RUN ./gradlew
+
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["migrate"]

@@ -1,3 +1,9 @@
+## docker build
+
+```shell
+docker build -f ./Dockerfile-flyway -t idp-flyway-migrator:latest .
+```
+
 ## migrate
 
 ```shell
