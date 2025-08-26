@@ -128,7 +128,7 @@ curl -v http://localhost:8080/actuator/health
 * admin-tenant
 
 ```shell
-./sample-config/test-data.sh \
+./config-sample/test-data.sh \
 -e "local" \
 -u ito.ichiro \
 -p successUserCode001 \
@@ -142,7 +142,7 @@ curl -v http://localhost:8080/actuator/health
 * test-tenant
 
 ```shell
-./sample-config/test-tenant-data.sh \
+./config-sample/test-tenant-data.sh \
 -e "local" \
 -u ito.ichiro \
 -p successUserCode001 \
