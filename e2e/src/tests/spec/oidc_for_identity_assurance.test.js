@@ -2,14 +2,11 @@ import { describe, expect, it, xit } from "@jest/globals";
 
 import { getJwks, requestToken } from "../../api/oauthClient";
 import {
-  clientSecretBasicClient,
   clientSecretPostClient,
   serverConfig,
 } from "../testConfig";
-import { requestAuthorizations, requestLogout } from "../../oauth/request";
-import { createJwtWithPrivateKey, verifyAndDecodeJwt } from "../../lib/jose";
-import { createBasicAuthHeader, toEpocTime } from "../../lib/util";
-import { calculateIdTokenClaimHashWithS256 } from "../../lib/oauth";
+import { requestAuthorizations } from "../../oauth/request";
+import { verifyAndDecodeJwt } from "../../lib/jose";
 
 describe("OpenID Connect for Identity Assurance 1.0 ", () => {
   it("success pattern", async () => {
