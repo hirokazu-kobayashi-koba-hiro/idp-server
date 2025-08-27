@@ -27,6 +27,10 @@
             {
               "static_value": "application/json",
               "to": "Content-Type"
+            },
+            {
+              "static_value": "test",
+              "to": "x-test"
             }
           ]
         }

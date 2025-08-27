@@ -144,11 +144,11 @@ public class SecurityEventHttpRequestConfig
     Map<String, Object> map = new HashMap<>();
     map.put("url", url);
     map.put("method", method);
-    map.put("authType", authType);
+    map.put("auth_type", authType);
     if (hasOAuthAuthorization()) map.put("oauth_authorization", oauthAuthorization.toMap());
     if (hasHmacAuthentication()) map.put("hmac_authentication", hmacAuthentication.toMap());
     if (hasPathMappingRules()) map.put("path_mapping_rules", pathMappingRulesMap());
-    if (hasBodyMappingRules()) map.put("header_mapping_rules", headerMappingRulesMap());
+    if (hasHeaderMappingRules()) map.put("header_mapping_rules", headerMappingRulesMap());
     if (hasBodyMappingRules()) map.put("body_mapping_rules", bodyMappingRulesMap());
     if (hasQueryMappingRules()) map.put("query_mapping_rules", queryMappingRulesMap());
     return map;
