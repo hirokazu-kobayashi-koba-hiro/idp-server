@@ -66,7 +66,7 @@ public class IdentityVerificationCommonConfiguration implements JsonReadable {
     Map<String, Object> map = new HashMap<>();
     if (hasCallbackApplicationIdParam())
       map.put("callback_application_id_param", callbackApplicationIdParam);
-    if (hasAuthType()) map.put("authType", authType);
+    if (hasAuthType()) map.put("auth_type", authType);
     if (hasOAuthAuthorization()) map.put("oauth_authorization", oauthAuthorization.toMap());
     if (hasHmacAuthentication()) map.put("hmac_authentication", hmacAuthentication.toMap());
     return map;
