@@ -67,7 +67,7 @@ docker build -f ./Dockerfile-flyway -t idp-flyway-migrator:latest .
 ```
 
 ```shell
-docker compose up
+docker compose --env-file .env.local up
 ```
 
 * init table
