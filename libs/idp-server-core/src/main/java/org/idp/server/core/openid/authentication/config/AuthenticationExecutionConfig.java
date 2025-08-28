@@ -112,6 +112,7 @@ public class AuthenticationExecutionConfig implements JsonReadable {
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("function", function);
+    map.put("previous_interaction", previousInteraction().toMap());
     map.put("http_request", httpRequest().toMap());
     map.put("http_requests", httpRequestsAsMap());
     map.put("mock", mock().toMap());

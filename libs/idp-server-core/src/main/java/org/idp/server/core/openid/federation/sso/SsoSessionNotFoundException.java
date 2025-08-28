@@ -16,7 +16,9 @@
 
 package org.idp.server.core.openid.federation.sso;
 
-public class SsoSessionNotFoundException extends RuntimeException {
+import org.idp.server.platform.exception.NotFoundException;
+
+public class SsoSessionNotFoundException extends NotFoundException {
   public SsoSessionNotFoundException(String message) {
     super(message);
   }
