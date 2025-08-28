@@ -24,7 +24,7 @@ import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier
 import org.idp.server.core.openid.identity.io.AuthenticationDevicePatchRequest;
 import org.idp.server.core.openid.identity.io.MfaRegistrationRequest;
 import org.idp.server.core.openid.identity.io.UserOperationResponse;
-import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
+import org.idp.server.core.openid.oauth.type.AuthFlow;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
@@ -35,7 +35,7 @@ public interface UserOperationApi {
       TenantIdentifier tenantIdentifier,
       User user,
       OAuthToken token,
-      StandardAuthFlow standardAuthFlow,
+      AuthFlow authFlow,
       MfaRegistrationRequest request,
       RequestAttributes requestAttributes);
 

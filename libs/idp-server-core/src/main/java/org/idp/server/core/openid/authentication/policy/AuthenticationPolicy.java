@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
+import org.idp.server.core.openid.oauth.type.AuthFlow;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 import org.idp.server.core.openid.oauth.type.oidc.AcrValues;
 import org.idp.server.platform.json.JsonReadable;
@@ -41,8 +41,8 @@ public class AuthenticationPolicy implements JsonReadable {
 
   public AuthenticationPolicy() {}
 
-  public boolean anyMatch(StandardAuthFlow standardAuthFlow, AcrValues acrValues, Scopes scopes) {
-    return conditions.anyMatch(standardAuthFlow, acrValues, scopes);
+  public boolean anyMatch(AuthFlow authFlow, AcrValues acrValues, Scopes scopes) {
+    return conditions.anyMatch(authFlow, acrValues, scopes);
   }
 
   public int priority() {

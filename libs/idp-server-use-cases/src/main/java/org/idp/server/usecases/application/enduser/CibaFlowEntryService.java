@@ -109,7 +109,8 @@ public class CibaFlowEntryService implements CibaFlowApi {
         requestAttributes);
 
     AuthenticationPolicyConfiguration authenticationPolicyConfiguration =
-        authenticationPolicyConfigurationQueryRepository.find(tenant, StandardAuthFlow.CIBA);
+        authenticationPolicyConfigurationQueryRepository.find(
+            tenant, StandardAuthFlow.CIBA.toAuthFlow());
     AuthenticationTransaction authenticationTransaction =
         CibaAuthenticationTransactionCreator.create(
             tenant, issueResponse, authenticationPolicyConfiguration);

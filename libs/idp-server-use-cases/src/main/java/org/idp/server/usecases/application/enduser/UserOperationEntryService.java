@@ -36,7 +36,7 @@ import org.idp.server.core.openid.identity.io.MfaRegistrationRequest;
 import org.idp.server.core.openid.identity.io.UserOperationResponse;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
-import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
+import org.idp.server.core.openid.oauth.type.AuthFlow;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.TokenEventPublisher;
 import org.idp.server.platform.datasource.Transaction;
@@ -93,21 +93,21 @@ public class UserOperationEntryService implements UserOperationApi {
       TenantIdentifier tenantIdentifier,
       User user,
       OAuthToken token,
-      StandardAuthFlow standardAuthFlow,
+      AuthFlow authFlow,
       MfaRegistrationRequest request,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     AuthenticationPolicyConfiguration authenticationPolicyConfiguration =
-        authenticationPolicyConfigurationQueryRepository.find(tenant, standardAuthFlow);
+        authenticationPolicyConfigurationQueryRepository.find(tenant, authFlow);
 
     // TODO to be more correct getting client attributes
     AuthenticationTransaction authenticationTransaction =
         MfaRegistrationTransactionCreator.create(
-            tenant, user, token, standardAuthFlow, request, authenticationPolicyConfiguration);
+            tenant, user, token, authFlow, request, authenticationPolicyConfiguration);
 
-    MfaRequestVerifier mfaRequestVerifier = mfaRegistrationVerifiers.get(standardAuthFlow);
+    MfaRequestVerifier mfaRequestVerifier = mfaRegistrationVerifiers.get(authFlow);
     MfaVerificationResult verificationResult =
         mfaRequestVerifier.verify(user, request, authenticationTransaction.authenticationPolicy());
 
