@@ -27,7 +27,7 @@ import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier
 import org.idp.server.core.openid.identity.io.AuthenticationDevicePatchRequest;
 import org.idp.server.core.openid.identity.io.MfaRegistrationRequest;
 import org.idp.server.core.openid.identity.io.UserOperationResponse;
-import org.idp.server.core.openid.oauth.type.AuthFlow;
+import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
@@ -60,10 +60,10 @@ public class UserV1Api implements ParameterTransformable {
     MfaRegistrationRequest request = new MfaRegistrationRequest(requestBody);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    AuthFlow authFlow = AuthFlow.of(mfaOperationType);
+    StandardAuthFlow standardAuthFlow = StandardAuthFlow.of(mfaOperationType);
     UserOperationResponse response =
         userOperationApi.requestMfaOperation(
-            tenantIdentifier, user, oAuthToken, authFlow, request, requestAttributes);
+            tenantIdentifier, user, oAuthToken, standardAuthFlow, request, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");

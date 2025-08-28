@@ -174,7 +174,7 @@ public class AuthenticationTransaction {
   }
 
   public AuthFlow flow() {
-    return request.authorizationFlow();
+    return request.authFlow();
   }
 
   public AuthenticationRequest request() {

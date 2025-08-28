@@ -34,7 +34,7 @@ import org.idp.server.core.openid.identity.event.UserLifecycleEvent;
 import org.idp.server.core.openid.identity.event.UserLifecycleEventPublisher;
 import org.idp.server.core.openid.identity.event.UserLifecycleType;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
-import org.idp.server.core.openid.oauth.type.AuthFlow;
+import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -109,7 +109,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
         requestAttributes);
 
     AuthenticationPolicyConfiguration authenticationPolicyConfiguration =
-        authenticationPolicyConfigurationQueryRepository.find(tenant, AuthFlow.CIBA);
+        authenticationPolicyConfigurationQueryRepository.find(tenant, StandardAuthFlow.CIBA);
     AuthenticationTransaction authenticationTransaction =
         CibaAuthenticationTransactionCreator.create(
             tenant, issueResponse, authenticationPolicyConfiguration);

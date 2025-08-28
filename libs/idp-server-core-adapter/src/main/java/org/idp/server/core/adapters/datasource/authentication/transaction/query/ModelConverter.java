@@ -43,7 +43,7 @@ public class ModelConverter {
   static AuthenticationTransaction convert(Map<String, String> map) {
     AuthenticationTransactionIdentifier identifier =
         new AuthenticationTransactionIdentifier(map.get("id"));
-    AuthFlow authFlow = AuthFlow.of(map.get("flow"));
+    AuthFlow authFlow = new AuthFlow(map.get("flow"));
     AuthorizationIdentifier authorizationIdentifier =
         new AuthorizationIdentifier(map.get("authorization_id"));
     TenantIdentifier tenantIdentifier = new TenantIdentifier(map.get("tenant_id"));

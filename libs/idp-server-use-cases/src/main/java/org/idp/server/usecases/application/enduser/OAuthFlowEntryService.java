@@ -43,7 +43,7 @@ import org.idp.server.core.openid.oauth.exception.OAuthAuthorizeBadRequestExcept
 import org.idp.server.core.openid.oauth.io.*;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
-import org.idp.server.core.openid.oauth.type.AuthFlow;
+import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 import org.idp.server.core.openid.oauth.type.extension.OAuthDenyReason;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.date.SystemDateTime;
@@ -127,7 +127,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
     if (requestResponse.isOK()) {
       AuthenticationPolicyConfiguration authenticationPolicyConfiguration =
-          authenticationPolicyConfigurationQueryRepository.find(tenant, AuthFlow.OAUTH);
+          authenticationPolicyConfigurationQueryRepository.find(tenant, StandardAuthFlow.OAUTH);
       AuthenticationTransaction authenticationTransaction =
           OAuthAuthenticationTransactionCreator.create(
               tenant, requestResponse, authenticationPolicyConfiguration);

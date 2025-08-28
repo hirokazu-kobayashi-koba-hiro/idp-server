@@ -19,12 +19,12 @@ package org.idp.server.core.openid.authentication.repository;
 import java.util.List;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfigurationIdentifier;
-import org.idp.server.core.openid.oauth.type.AuthFlow;
+import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface AuthenticationPolicyConfigurationQueryRepository {
 
-  AuthenticationPolicyConfiguration find(Tenant tenant, AuthFlow authFlow);
+  AuthenticationPolicyConfiguration find(Tenant tenant, StandardAuthFlow standardAuthFlow);
 
   AuthenticationPolicyConfiguration find(
       Tenant tenant, AuthenticationPolicyConfigurationIdentifier identifier);

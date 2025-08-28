@@ -22,7 +22,7 @@ import java.util.Objects;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfigurationIdentifier;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationQueryRepository;
-import org.idp.server.core.openid.oauth.type.AuthFlow;
+import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -38,7 +38,7 @@ public class AuthenticationPolicyConfigurationQueryDataSource
   }
 
   @Override
-  public AuthenticationPolicyConfiguration find(Tenant tenant, AuthFlow type) {
+  public AuthenticationPolicyConfiguration find(Tenant tenant, StandardAuthFlow type) {
     AuthenticationPolicyConfigurationSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, type);
 
