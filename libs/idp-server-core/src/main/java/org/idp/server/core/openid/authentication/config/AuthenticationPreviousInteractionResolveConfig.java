@@ -16,6 +16,8 @@
 
 package org.idp.server.core.openid.authentication.config;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
 
 public class AuthenticationPreviousInteractionResolveConfig implements JsonReadable {
@@ -29,5 +31,11 @@ public class AuthenticationPreviousInteractionResolveConfig implements JsonReada
 
   public boolean exists() {
     return key != null && !key.isEmpty();
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("key", key);
+    return map;
   }
 }
