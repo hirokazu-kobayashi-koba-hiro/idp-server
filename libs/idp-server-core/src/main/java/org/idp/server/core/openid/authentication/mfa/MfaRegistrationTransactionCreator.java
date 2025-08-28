@@ -26,7 +26,7 @@ import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.core.openid.identity.io.MfaRegistrationRequest;
 import org.idp.server.core.openid.oauth.configuration.client.ClientAttributes;
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
-import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
+import org.idp.server.core.openid.oauth.type.AuthFlow;
 import org.idp.server.core.openid.oauth.type.ciba.BindingMessage;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
@@ -43,7 +43,7 @@ public class MfaRegistrationTransactionCreator {
       Tenant tenant,
       User user,
       OAuthToken oAuthToken,
-      StandardAuthFlow standardAuthFlow,
+      AuthFlow authFlow,
       MfaRegistrationRequest mfaRegistrationRequest,
       AuthenticationPolicyConfiguration policyConfiguration) {
 
@@ -52,13 +52,13 @@ public class MfaRegistrationTransactionCreator {
     AuthorizationIdentifier authorizationIdentifier = new AuthorizationIdentifier();
 
     AuthenticationRequest authenticationRequest =
-        toAuthenticationRequest(tenant, user, oAuthToken, standardAuthFlow);
+        toAuthenticationRequest(tenant, user, oAuthToken, authFlow);
     AuthenticationTransactionAttributes attributes =
         new AuthenticationTransactionAttributes(mfaRegistrationRequest.toMap());
 
     AuthenticationPolicy authenticationPolicy =
         policyConfiguration.findSatisfiedAuthenticationPolicy(
-            standardAuthFlow, authenticationRequest.acrValues(), authenticationRequest.scopes());
+            authFlow, authenticationRequest.acrValues(), authenticationRequest.scopes());
 
     return new AuthenticationTransaction(
         identifier,
@@ -69,7 +69,7 @@ public class MfaRegistrationTransactionCreator {
   }
 
   private static AuthenticationRequest toAuthenticationRequest(
-      Tenant tenant, User user, OAuthToken oAuthToken, StandardAuthFlow standardAuthFlow) {
+      Tenant tenant, User user, OAuthToken oAuthToken, AuthFlow authFlow) {
 
     TenantIdentifier tenantIdentifier = tenant.identifier();
     TenantAttributes tenantAttributes = tenant.attributes();
@@ -84,7 +84,7 @@ public class MfaRegistrationTransactionCreator {
     LocalDateTime expiredAt = createdAt.plusSeconds(300);
 
     return new AuthenticationRequest(
-        standardAuthFlow.toAuthFlow(),
+        authFlow,
         tenantIdentifier,
         tenantAttributes,
         requestedClientId,

@@ -21,20 +21,23 @@ import java.util.Map;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.io.MfaRegistrationRequest;
+import org.idp.server.core.openid.oauth.type.AuthFlow;
 import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 
 public class MfaRegistrationVerifiers {
 
-  Map<StandardAuthFlow, MfaRequestVerifier> mfaVerifiers;
+  Map<AuthFlow, MfaRequestVerifier> mfaVerifiers;
 
   public MfaRegistrationVerifiers() {
     this.mfaVerifiers = new HashMap<>();
-    mfaVerifiers.put(StandardAuthFlow.FIDO_UAF_REGISTRATION, new FidoUafRegistrationVerifier());
-    mfaVerifiers.put(StandardAuthFlow.FIDO_UAF_DEREGISTRATION, new FidoUafDeRegistrationVerifier());
+    mfaVerifiers.put(
+        StandardAuthFlow.FIDO_UAF_REGISTRATION.toAuthFlow(), new FidoUafRegistrationVerifier());
+    mfaVerifiers.put(
+        StandardAuthFlow.FIDO_UAF_DEREGISTRATION.toAuthFlow(), new FidoUafDeRegistrationVerifier());
   }
 
-  public MfaRequestVerifier get(StandardAuthFlow standardAuthFlow) {
-    MfaRequestVerifier mfaVerifier = mfaVerifiers.get(standardAuthFlow);
+  public MfaRequestVerifier get(AuthFlow authFlow) {
+    MfaRequestVerifier mfaVerifier = mfaVerifiers.get(authFlow);
 
     if (mfaVerifier == null) {
 

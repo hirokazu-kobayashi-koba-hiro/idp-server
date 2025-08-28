@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfigurationIdentifier;
-import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
+import org.idp.server.core.openid.oauth.type.AuthFlow;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -33,7 +33,7 @@ public class MysqlExecutor implements AuthenticationPolicyConfigurationSqlExecut
               """;
 
   @Override
-  public Map<String, String> selectOne(Tenant tenant, StandardAuthFlow standardAuthFlow) {
+  public Map<String, String> selectOne(Tenant tenant, AuthFlow authFlow) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         selectSql
@@ -45,7 +45,7 @@ public class MysqlExecutor implements AuthenticationPolicyConfigurationSqlExecut
 
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierUUID());
-    params.add(standardAuthFlow.value());
+    params.add(authFlow.name());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
