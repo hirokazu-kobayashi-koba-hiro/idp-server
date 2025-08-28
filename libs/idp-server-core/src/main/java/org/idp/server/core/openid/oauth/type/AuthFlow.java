@@ -16,35 +16,35 @@
 
 package org.idp.server.core.openid.oauth.type;
 
-import org.idp.server.platform.exception.UnSupportedException;
+import java.util.Objects;
 
-public enum AuthFlow {
-  OAUTH("oauth"),
-  CIBA("ciba"),
-  FIDO_UAF_REGISTRATION("fido-uaf-registration"),
-  FIDO_UAF_DEREGISTRATION("fido-uaf-deregistration"),
-  WEBAUTHN_REGISTRATION("webauthn-registration"),
-  WEBAUTHN_DEREGISTRATION("webauthn-deregistration"),
-  MFA_SMS_REGISTRATION("mfa-sms-registration"),
-  MFA_EMAIL_REGISTRATION("mfa-email-registration");
+public class AuthFlow {
 
-  String value;
+  String name;
 
-  AuthFlow(String value) {
-    this.value = value;
+  public AuthFlow() {}
+
+  public AuthFlow(String name) {
+    this.name = name;
   }
 
-  public static AuthFlow of(String flow) {
-    for (AuthFlow authFlow : AuthFlow.values()) {
-      if (authFlow.value.equals(flow)) {
-        return authFlow;
-      }
-    }
-    throw new UnSupportedException(String.format("unsupported auth flow (%s)", flow));
+  public String name() {
+    return name;
   }
 
-  public String value() {
-    return value;
+  @Override
+  public boolean equals(Object object) {
+    if (object == null || getClass() != object.getClass()) return false;
+    AuthFlow authFlow = (AuthFlow) object;
+    return Objects.equals(name, authFlow.name);
   }
-  ;
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(name);
+  }
+
+  public boolean exists() {
+    return name != null && !name.isEmpty();
+  }
 }

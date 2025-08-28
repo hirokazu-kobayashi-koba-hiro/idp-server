@@ -68,7 +68,7 @@ public class AuthenticationRequest {
     this.expiresAt = expiresAt;
   }
 
-  public AuthFlow authorizationFlow() {
+  public AuthFlow authFlow() {
     return authFlow;
   }
 
@@ -129,7 +129,7 @@ public class AuthenticationRequest {
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
-    map.put("flow", authFlow.value());
+    map.put("flow", authFlow.name());
     map.put("tenant_id", tenantIdentifier.value());
     map.put("tenant_attributes", tenantAttributes.toMap());
     map.put("client_id", requestedClientId.value());
@@ -144,7 +144,7 @@ public class AuthenticationRequest {
 
   public Map<String, Object> toMapForPublic() {
     Map<String, Object> map = new HashMap<>();
-    map.put("flow", authFlow.value());
+    map.put("flow", authFlow.name());
     map.put("tenant_id", tenantIdentifier.value());
     map.put("tenant_attributes", tenantAttributes.toMap());
     map.put("client_id", requestedClientId.value());

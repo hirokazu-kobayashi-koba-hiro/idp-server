@@ -29,7 +29,7 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.core.openid.oauth.configuration.client.ClientAttributes;
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
-import org.idp.server.core.openid.oauth.type.AuthFlow;
+import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 import org.idp.server.core.openid.oauth.type.oauth.ExpiresIn;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.date.SystemDateTime;
@@ -54,7 +54,9 @@ public class CibaAuthenticationTransactionCreator {
         toAuthenticationRequest(tenant, cibaIssueResponse);
     AuthenticationPolicy authenticationPolicy =
         policyConfiguration.findSatisfiedAuthenticationPolicy(
-            AuthFlow.CIBA, authenticationRequest.acrValues(), authenticationRequest.scopes());
+            StandardAuthFlow.CIBA,
+            authenticationRequest.acrValues(),
+            authenticationRequest.scopes());
     ;
 
     Map<String, Object> attributes = new HashMap<>();
@@ -74,7 +76,7 @@ public class CibaAuthenticationTransactionCreator {
       Tenant tenant, CibaIssueResponse cibaIssueResponse) {
     BackchannelAuthenticationRequest backchannelAuthenticationRequest = cibaIssueResponse.request();
     ExpiresIn expiresIn = cibaIssueResponse.expiresIn();
-    AuthFlow authFlow = AuthFlow.CIBA;
+    StandardAuthFlow standardAuthFlow = StandardAuthFlow.CIBA;
     TenantIdentifier tenantIdentifier = tenant.identifier();
     TenantAttributes tenantAttributes = tenant.attributes();
 
@@ -93,7 +95,7 @@ public class CibaAuthenticationTransactionCreator {
     LocalDateTime createdAt = SystemDateTime.now();
     LocalDateTime expiredAt = createdAt.plusSeconds(expiresIn.value());
     return new AuthenticationRequest(
-        authFlow,
+        standardAuthFlow.toAuthFlow(),
         tenantIdentifier,
         tenantAttributes,
         requestedClientId,

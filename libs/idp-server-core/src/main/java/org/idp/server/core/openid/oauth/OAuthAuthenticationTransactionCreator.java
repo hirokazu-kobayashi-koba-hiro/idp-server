@@ -27,7 +27,7 @@ import org.idp.server.core.openid.oauth.configuration.client.ClientAttributes;
 import org.idp.server.core.openid.oauth.io.OAuthRequestResponse;
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
-import org.idp.server.core.openid.oauth.type.AuthFlow;
+import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 import org.idp.server.core.openid.oauth.type.ciba.BindingMessage;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.date.SystemDateTime;
@@ -50,7 +50,9 @@ public class OAuthAuthenticationTransactionCreator {
     AuthenticationRequest authenticationRequest = toAuthenticationRequest(tenant, requestResponse);
     AuthenticationPolicy authenticationPolicy =
         policyConfiguration.findSatisfiedAuthenticationPolicy(
-            AuthFlow.OAUTH, authenticationRequest.acrValues(), authenticationRequest.scopes());
+            StandardAuthFlow.OAUTH,
+            authenticationRequest.acrValues(),
+            authenticationRequest.scopes());
     AuthenticationTransactionAttributes attributes = new AuthenticationTransactionAttributes();
 
     return new AuthenticationTransaction(
@@ -65,7 +67,7 @@ public class OAuthAuthenticationTransactionCreator {
       Tenant tenant, OAuthRequestResponse requestResponse) {
 
     AuthorizationRequest authorizationRequest = requestResponse.authorizationRequest();
-    AuthFlow authFlow = AuthFlow.OAUTH;
+    StandardAuthFlow standardAuthFlow = StandardAuthFlow.OAUTH;
     TenantIdentifier tenantIdentifier = tenant.identifier();
     TenantAttributes tenantAttributes = tenant.attributes();
 
@@ -85,7 +87,7 @@ public class OAuthAuthenticationTransactionCreator {
     LocalDateTime expiredAt =
         createdAt.plusSeconds(requestResponse.oauthAuthorizationRequestExpiresIn());
     return new AuthenticationRequest(
-        authFlow,
+        standardAuthFlow.toAuthFlow(),
         tenantIdentifier,
         tenantAttributes,
         requestedClientId,

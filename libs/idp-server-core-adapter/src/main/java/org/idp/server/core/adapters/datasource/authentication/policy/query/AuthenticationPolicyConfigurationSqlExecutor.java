@@ -19,11 +19,11 @@ package org.idp.server.core.adapters.datasource.authentication.policy.query;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfigurationIdentifier;
-import org.idp.server.core.openid.oauth.type.AuthFlow;
+import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface AuthenticationPolicyConfigurationSqlExecutor {
-  Map<String, String> selectOne(Tenant tenant, AuthFlow authFlow);
+  Map<String, String> selectOne(Tenant tenant, StandardAuthFlow standardAuthFlow);
 
   Map<String, String> selectOne(
       Tenant tenant, AuthenticationPolicyConfigurationIdentifier identifier);

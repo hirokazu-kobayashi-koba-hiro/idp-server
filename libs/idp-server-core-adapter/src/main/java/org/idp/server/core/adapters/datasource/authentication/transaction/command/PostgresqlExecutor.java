@@ -84,7 +84,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
     params.add(authenticationTransaction.identifier().valueAsUuid());
     params.add(tenant.identifierUUID());
     params.add(jsonConverter.write(tenant.attributes().toMap()));
-    params.add(authenticationTransaction.request().authorizationFlow().value());
+    params.add(authenticationTransaction.request().authFlow().name());
     if (authenticationTransaction.hasAuthorizationIdentifier()) {
       params.add(authenticationTransaction.authorizationIdentifier().valueAsUuid());
     } else {

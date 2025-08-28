@@ -79,8 +79,8 @@ public class AuthenticationV1Api implements ParameterTransformable {
       AuthenticationInteractionRequest request,
       RequestAttributes requestAttributes) {
 
-    switch (authenticationTransaction.flow()) {
-      case OAUTH -> {
+    switch (authenticationTransaction.flow().name()) {
+      case "oauth" -> {
         return oAuthFlowApi.interact(
             tenantIdentifier,
             new AuthorizationRequestIdentifier(
@@ -90,7 +90,7 @@ public class AuthenticationV1Api implements ParameterTransformable {
             requestAttributes);
       }
 
-      case CIBA -> {
+      case "ciba" -> {
         return cibaFlowApi.interact(
             tenantIdentifier,
             new BackchannelAuthenticationRequestIdentifier(
