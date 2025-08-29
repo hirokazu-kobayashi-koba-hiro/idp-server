@@ -32,6 +32,12 @@ public class HttpQueryParams {
     this.values.putAll(values);
   }
 
+  public static HttpQueryParams fromMapObject(Map<String, Object> values) {
+    Map<String, String> map = new HashMap<>();
+    values.forEach((k, v) -> map.put(k, v.toString()));
+    return new HttpQueryParams(map);
+  }
+
   public void add(String key, String value) {
     String urlEncodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8);
     values.put(key, urlEncodedValue);

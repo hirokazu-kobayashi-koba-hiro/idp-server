@@ -111,7 +111,7 @@ public class HttpRequestExecutor {
         HttpRequest.newBuilder().uri(URI.create(interpolatedUrl.value()));
 
     setHeaders(httpRequestBuilder, headers);
-    setParams(httpRequestBuilder, configuration.httpMethod(), requestBody);
+    setParams(httpRequestBuilder, configuration.httpMethod(), headers, requestBody);
 
     HttpRequest httpRequest = httpRequestBuilder.build();
 
@@ -149,7 +149,7 @@ public class HttpRequestExecutor {
         HttpRequest.newBuilder().uri(URI.create(urlWithQueryParams));
 
     setHeaders(httpRequestBuilder, headers);
-    setParams(httpRequestBuilder, HttpMethod.GET, Map.of());
+    setParams(httpRequestBuilder, HttpMethod.GET, headers, Map.of());
 
     HttpRequest httpRequest = httpRequestBuilder.build();
 
@@ -202,7 +202,10 @@ public class HttpRequestExecutor {
   }
 
   private void setParams(
-      HttpRequest.Builder builder, HttpMethod httpMethod, Map<String, Object> requestBody) {
+      HttpRequest.Builder builder,
+      HttpMethod httpMethod,
+      Map<String, String> headers,
+      Map<String, Object> requestBody) {
 
     switch (httpMethod) {
       case GET:
@@ -211,18 +214,35 @@ public class HttpRequestExecutor {
       case POST:
         {
           log.debug("Http Request body: {}", requestBody);
-          builder.POST(HttpRequest.BodyPublishers.ofString(jsonConverter.write(requestBody)));
+          if ("application/x-www-form-urlencoded".equals(headers.get("Content-Type"))) {
+            HttpQueryParams httpQueryParams = HttpQueryParams.fromMapObject(requestBody);
+            builder.POST(HttpRequest.BodyPublishers.ofString(httpQueryParams.params()));
+          } else {
+            builder.POST(HttpRequest.BodyPublishers.ofString(jsonConverter.write(requestBody)));
+          }
           break;
         }
       case PUT:
         {
           log.debug("Http Request body: {}", requestBody);
-          builder.PUT(HttpRequest.BodyPublishers.ofString(jsonConverter.write(requestBody)));
+          if ("application/x-www-form-urlencoded".equals(headers.get("Content-Type"))) {
+            HttpQueryParams httpQueryParams = HttpQueryParams.fromMapObject(requestBody);
+            builder.PUT(HttpRequest.BodyPublishers.ofString(httpQueryParams.params()));
+          } else {
+            builder.PUT(HttpRequest.BodyPublishers.ofString(jsonConverter.write(requestBody)));
+          }
           break;
         }
       case DELETE:
         {
-          builder.DELETE();
+          log.debug("Http Request body: {}", requestBody);
+          if ("application/x-www-form-urlencoded".equals(headers.get("Content-Type"))) {
+            HttpQueryParams httpQueryParams = HttpQueryParams.fromMapObject(requestBody);
+            builder.method("DELETE", HttpRequest.BodyPublishers.ofString(httpQueryParams.params()));
+          } else {
+            builder.method(
+                "DELETE", HttpRequest.BodyPublishers.ofString(jsonConverter.write(requestBody)));
+          }
           break;
         }
     }
