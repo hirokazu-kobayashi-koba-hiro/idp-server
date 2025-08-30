@@ -34,6 +34,7 @@ public class PostgresqlExecutor implements AuthenticationInteractionQuerySqlExec
         """
             SELECT
             authentication_transaction_id,
+            interaction_type,
             payload
             FROM authentication_interactions
             WHERE authentication_transaction_id = ?::uuid

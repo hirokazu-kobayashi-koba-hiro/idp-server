@@ -24,7 +24,7 @@ public class ModelConvertor {
 
   static AuthenticationInteraction convert(Map<String, String> result) {
     String transactionId = result.get("authentication_transaction_id");
-    String type = result.get("type");
+    String type = result.get("interaction_type");
     Map<String, Object> payload = JsonNodeWrapper.fromString(result.get("payload")).toMap();
     return new AuthenticationInteraction(transactionId, type, payload);
   }

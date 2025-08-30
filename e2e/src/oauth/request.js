@@ -134,6 +134,8 @@ export const requestAuthorizations = async ({
       };
     } else {
 
+      await interaction(id, user);
+
       const denyResponse = await deny({
         endpoint: serverConfig.denyEndpoint,
         id,
