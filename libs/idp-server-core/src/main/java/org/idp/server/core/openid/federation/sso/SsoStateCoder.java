@@ -18,6 +18,7 @@ package org.idp.server.core.openid.federation.sso;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import org.idp.server.platform.exception.BadRequestException;
 import org.idp.server.platform.json.JsonConverter;
 
 public class SsoStateCoder {
@@ -31,7 +32,11 @@ public class SsoStateCoder {
   }
 
   public static SsoState decode(String state) {
-    String decoded = new String(Base64.getUrlDecoder().decode(state), StandardCharsets.UTF_8);
-    return jsonConverter.read(decoded, SsoState.class);
+    try {
+      String decoded = new String(Base64.getUrlDecoder().decode(state), StandardCharsets.UTF_8);
+      return jsonConverter.read(decoded, SsoState.class);
+    } catch (Exception e) {
+      throw new BadRequestException("Error while decoding SsoState", e);
+    }
   }
 }

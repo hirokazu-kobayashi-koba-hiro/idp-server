@@ -129,7 +129,7 @@ export const createFederatedUser = async ({
     console.log(params);
 
     const federationCallbackResponse = await post({
-      url: `${backendUrl}/${federationServerConfig.tenantId}/v1/authorizations/federations/oidc/callback`,
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/federations/oidc/callback`,
       body: params.toString()
     });
     console.log(federationCallbackResponse.data);
