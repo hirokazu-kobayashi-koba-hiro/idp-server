@@ -44,6 +44,7 @@
   ],
   "extension": {
     "access_token_duration": 10,
+    "refresh_token_duration": 60,
     "available_federations": [
       {
         "id": "b7481833-c95a-4c7a-9481-94b30008c8ef",

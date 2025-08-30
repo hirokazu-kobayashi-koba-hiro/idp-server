@@ -52,13 +52,13 @@ public interface RefreshTokenCreatable {
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
 
-    if (authorizationServerConfiguration.isExtendsAccessTokenStrategy()
+    if (authorizationServerConfiguration.isExtendsRefreshTokenStrategy()
         && authorizationServerConfiguration.isRotateRefreshToken()) {
 
       return createRefreshToken(authorizationServerConfiguration, clientConfiguration);
     }
 
-    if (authorizationServerConfiguration.isExtendsAccessTokenStrategy()) {
+    if (authorizationServerConfiguration.isExtendsRefreshTokenStrategy()) {
 
       LocalDateTime localDateTime = SystemDateTime.now();
       CreatedAt createdAt = new CreatedAt(localDateTime);

@@ -328,16 +328,16 @@ public class AuthorizationServerConfiguration implements JsonReadable {
     return extension.refreshTokenDuration();
   }
 
-  public AccessTokenStrategy accessTokenIssuingStrategy() {
-    return extension.accessTokenStrategy();
+  public RefreshTokenStrategy refreshTokenIssuingStrategy() {
+    return extension.refreshTokenStrategy();
   }
 
-  public boolean isFixedAccessTokenStrategy() {
-    return extension.isFixedAccessTokenStrategy();
+  public boolean isFixedRefreshTokenStrategy() {
+    return extension.isFixedRefreshTokenStrategy();
   }
 
-  public boolean isExtendsAccessTokenStrategy() {
-    return extension.isExtendsAccessTokenStrategy();
+  public boolean isExtendsRefreshTokenStrategy() {
+    return extension.isExtendsRefreshTokenStrategy();
   }
 
   public boolean isRotateRefreshToken() {
