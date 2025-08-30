@@ -175,7 +175,8 @@ export const createFederatedUser = async ({
   console.log(decodedIdToken);
   return  {
     user: decodedIdToken.payload,
-    accessToken: tokenResponse.data.access_token
+    accessToken: tokenResponse.data.access_token,
+    refreshToken: tokenResponse.data.refresh_token
   };
 };
 

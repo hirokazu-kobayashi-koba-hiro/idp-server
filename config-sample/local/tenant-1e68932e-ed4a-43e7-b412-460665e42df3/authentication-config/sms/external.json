@@ -47,11 +47,11 @@
       "execution": {
         "function": "http_request",
         "http_request": {
-          "url": "http://mockoon:4000/sms-authentication-challenge",
+          "url": "http://localhost:4000/sms-authentication-challenge",
           "method": "POST",
           "oauth_authorization": {
             "type": "password",
-            "token_endpoint": "http://mockoon:4000/token",
+            "token_endpoint": "http://localhost:4000/token",
             "client_id": "your-client-id",
             "username": "username",
             "password": "password",
@@ -105,11 +105,11 @@
       "execution": {
         "function": "http_request",
         "http_request": {
-          "url": "http://mockoon:4000/sms-authentication",
+          "url": "http://localhost:4000/sms-authentication",
           "method": "POST",
           "oauth_authorization": {
             "type": "password",
-            "token_endpoint": "http://mockoon:4000/token",
+            "token_endpoint": "http://localhost:4000/token",
             "client_id": "your-client-id",
             "username": "username",
             "password": "password",

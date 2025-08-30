@@ -93,27 +93,13 @@ public class AccessTokenCreator {
       LocalDateTime localDateTime = SystemDateTime.now();
       CreatedAt createdAt = new CreatedAt(localDateTime);
 
-      if (authorizationServerConfiguration.isExtendsAccessTokenStrategy()) {
+      long accessTokenDuration =
+          clientConfiguration.hasAccessTokenDuration()
+              ? clientConfiguration.accessTokenDuration()
+              : authorizationServerConfiguration.accessTokenDuration();
 
-        long accessTokenDuration =
-            clientConfiguration.hasAccessTokenDuration()
-                ? clientConfiguration.accessTokenDuration()
-                : authorizationServerConfiguration.accessTokenDuration();
-
-        ExpiresIn expiresIn = new ExpiresIn(accessTokenDuration);
-        ExpiresAt expiresAt = new ExpiresAt(localDateTime.plusSeconds(accessTokenDuration));
-        return issueAccessToken(
-            authorizationGrant,
-            authorizationServerConfiguration,
-            clientConfiguration,
-            clientCredentials,
-            createdAt,
-            expiresIn,
-            expiresAt);
-      }
-
-      ExpiresIn expiresIn = oldAccessToken.expiresIn();
-      ExpiresAt expiresAt = oldAccessToken.expiresAt();
+      ExpiresIn expiresIn = new ExpiresIn(accessTokenDuration);
+      ExpiresAt expiresAt = new ExpiresAt(localDateTime.plusSeconds(accessTokenDuration));
 
       return issueAccessToken(
           authorizationGrant,

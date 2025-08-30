@@ -12,12 +12,12 @@
       "execution": {
         "function": "http_request",
         "http_request": {
-          "url": "http://mockoon:4000/fido-uaf/facets",
+          "url": "http://localhost:4000/fido-uaf/facets",
           "method": "GET",
           "auth_type": "oauth2",
           "oauth_authorization": {
             "type": "password",
-            "token_endpoint": "http://mockoon:4000/token",
+            "token_endpoint": "http://localhost:4000/token",
             "client_id": "your-client-id",
             "username": "username",
             "password": "password",
@@ -48,12 +48,12 @@
       "execution": {
         "function": "http_request",
         "http_request": {
-          "url": "http://mockoon:4000/fido-uaf/registration-challenge",
+          "url": "http://localhost:4000/fido-uaf/registration-challenge",
           "method": "POST",
           "auth_type": "oauth2",
           "oauth_authorization": {
             "type": "password",
-            "token_endpoint": "http://mockoon:4000/token",
+            "token_endpoint": "http://localhost:4000/token",
             "client_id": "your-client-id",
             "username": "username",
             "password": "password",
@@ -86,12 +86,12 @@
       "execution": {
         "function": "http_request",
         "http_request": {
-          "url": "http://mockoon:4000/fido-uaf/registration",
+          "url": "http://localhost:4000/fido-uaf/registration",
           "method": "POST",
           "auth_type": "oauth2",
           "oauth_authorization": {
             "type": "password",
-            "token_endpoint": "http://mockoon:4000/token",
+            "token_endpoint": "http://localhost:4000/token",
             "client_id": "your-client-id",
             "username": "username",
             "password": "password",
@@ -124,12 +124,12 @@
       "execution": {
         "function": "http_request",
         "http_request": {
-          "url": "http://mockoon:4000/fido-uaf/authentication-challenge",
+          "url": "http://localhost:4000/fido-uaf/authentication-challenge",
           "method": "POST",
           "auth_type": "oauth2",
           "oauth_authorization": {
             "type": "password",
-            "token_endpoint": "http://mockoon:4000/token",
+            "token_endpoint": "http://localhost:4000/token",
             "client_id": "your-client-id",
             "username": "username",
             "password": "password",
@@ -162,12 +162,12 @@
       "execution": {
         "function": "http_request",
         "http_request": {
-          "url": "http://mockoon:4000/fido-uaf/authentication",
+          "url": "http://localhost:4000/fido-uaf/authentication",
           "method": "POST",
           "auth_type": "oauth2",
           "oauth_authorization": {
             "type": "password",
-            "token_endpoint": "http://mockoon:4000/token",
+            "token_endpoint": "http://localhost:4000/token",
             "client_id": "your-client-id",
             "username": "username",
             "password": "password",
@@ -200,12 +200,12 @@
       "execution": {
         "function": "http_request",
         "http_request": {
-          "url": "http://mockoon:4000/fido-uaf/delete-key",
+          "url": "http://localhost:4000/fido-uaf/delete-key",
           "method": "POST",
           "auth_type": "oauth2",
           "oauth_authorization": {
             "type": "password",
-            "token_endpoint": "http://mockoon:4000/token",
+            "token_endpoint": "http://localhost:4000/token",
             "client_id": "your-client-id",
             "username": "username",
             "password": "password",

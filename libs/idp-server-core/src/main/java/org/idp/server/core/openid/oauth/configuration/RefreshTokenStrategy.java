@@ -17,13 +17,13 @@
 package org.idp.server.core.openid.oauth.configuration;
 
 /** Strategy for determining the access token expiration behavior during refresh. */
-public enum AccessTokenStrategy {
+public enum RefreshTokenStrategy {
   EXTENDS("Extends the access token lifetime on every refresh request."),
   FIXED("Keeps the original expiration fixed regardless of refresh.");
 
   String description;
 
-  AccessTokenStrategy(String description) {
+  RefreshTokenStrategy(String description) {
     this.description = description;
   }
 
@@ -35,9 +35,9 @@ public enum AccessTokenStrategy {
     return this == EXTENDS;
   }
 
-  public static AccessTokenStrategy of(String value) {
+  public static RefreshTokenStrategy of(String value) {
 
-    for (AccessTokenStrategy strategy : AccessTokenStrategy.values()) {
+    for (RefreshTokenStrategy strategy : RefreshTokenStrategy.values()) {
       if (strategy.name().equalsIgnoreCase(value)) {
         return strategy;
       }
