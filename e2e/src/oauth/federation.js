@@ -1,10 +1,11 @@
+import {  expect } from "@jest/globals";
 import {
   authorize,
   deny,
 } from "../api/oauthClient";
 import { backendUrl, serverConfig } from "../tests/testConfig";
 import { convertNextAction, convertToAuthorizationResponse } from "../lib/util";
-import { get, post } from "../lib/http";
+import { get, post, postWithJson } from "../lib/http";
 
 export const requestFederation = async ({
   url,
@@ -61,20 +62,10 @@ export const requestFederation = async ({
 
     if (action === "authorize") {
 
+      await interaction(id, user);
 
-      const interactionResult = await interaction(id, user);
-      if (interactionResult) {
-        if (interactionResult === "deny") {
-          return {
-            result: "deny"
-          };
-        }
-      }
-
-      const authorizeResponse = await authorize({
-        endpoint: `${backendUrl}/${federationTenantId}/v1/authorizations/{id}/authorize`,
-        id,
-        body: {}
+      const authorizeResponse = await postWithJson({
+        endpoint: `${backendUrl}/${federationTenantId}/v1/authorizations/${id}/authorize`,
       });
 
       // console.log(authorizeResponse.headers);
@@ -91,17 +82,28 @@ export const requestFederation = async ({
         params,
       };
     } else {
-      const denyResponse = await deny({
-        endpoint: serverConfig.denyEndpoint,
-        id,
+
+      await interaction(id, user);
+
+      const denyResponse = await postWithJson({
+        url: `${backendUrl}/${federationTenantId}/v1/authorizations/${id}/deny`,
       });
       console.log(denyResponse.data);
+      expect(denyResponse.status).toBe(200);
       const authorizationResponse = convertToAuthorizationResponse(
         denyResponse.data.redirect_uri
       );
+
+      const redirectUri = denyResponse.data.redirect_uri;
+      const query = redirectUri.includes("?")
+        ? redirectUri.split("?")[1]
+        : redirectUri.split("#")[1];
+      const params = new URLSearchParams(query);
+
       return {
         status: denyResponse.status,
         authorizationResponse,
+        params
       };
     }
 

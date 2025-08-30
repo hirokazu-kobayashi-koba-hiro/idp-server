@@ -154,6 +154,7 @@ public class OAuthV1Api implements ParameterTransformable {
 
   @PostMapping("/federations/{federation-type}/callback")
   public ResponseEntity<?> callbackFederation(
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("federation-type") FederationType federationType,
       @RequestBody(required = false) MultiValueMap<String, String> body,
       HttpServletRequest httpServletRequest) {
@@ -164,7 +165,7 @@ public class OAuthV1Api implements ParameterTransformable {
 
     FederationInteractionResult result =
         oAuthFlowApi.callbackFederation(
-            federationCallbackRequest.tenantIdentifier(),
+            tenantIdentifier,
             federationType,
             federationCallbackRequest.ssoProvider(),
             federationCallbackRequest,

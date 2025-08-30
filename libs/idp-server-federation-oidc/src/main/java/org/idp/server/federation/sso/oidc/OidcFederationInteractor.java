@@ -89,8 +89,18 @@ public class OidcFederationInteractor implements FederationInteractor {
       FederationCallbackRequest federationCallbackRequest,
       UserQueryRepository userQueryRepository) {
 
-    SsoState ssoState = federationCallbackRequest.ssoState();
     FederationCallbackParameters parameters = federationCallbackRequest.parameters();
+
+    if (!parameters.hasCode() || parameters.hasError()) {
+      log.warn("Error occurred while federation callback. tenantId: {}", tenant.identifierValue());
+      Map<String, Object> errors = new HashMap<>();
+      errors.put("error", parameters.error());
+      errors.put("error_description", parameters.errorDescription());
+      return FederationInteractionResult.error(
+          federationType, ssoProvider, new OidcSsoSession(), 400, errors);
+    }
+
+    SsoState ssoState = federationCallbackRequest.ssoState();
     OidcSsoSession session =
         sessionQueryRepository.get(tenant, ssoState.ssoSessionIdentifier(), OidcSsoSession.class);
 

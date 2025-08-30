@@ -73,4 +73,20 @@ public class FederationCallbackParameters {
   public String code() {
     return getValueOrEmpty("code");
   }
+
+  public boolean hasCode() {
+    return contains("code");
+  }
+
+  public boolean hasError() {
+    return contains("error");
+  }
+
+  public String error() {
+    return getValueOrEmpty("error");
+  }
+
+  public String errorDescription() {
+    return getValueOrEmpty("error_description");
+  }
 }
