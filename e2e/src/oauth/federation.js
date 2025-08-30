@@ -65,7 +65,7 @@ export const requestFederation = async ({
       await interaction(id, user);
 
       const authorizeResponse = await postWithJson({
-        endpoint: `${backendUrl}/${federationTenantId}/v1/authorizations/${id}/authorize`,
+        url: `${backendUrl}/${federationTenantId}/v1/authorizations/${id}/authorize`,
       });
 
       // console.log(authorizeResponse.headers);
