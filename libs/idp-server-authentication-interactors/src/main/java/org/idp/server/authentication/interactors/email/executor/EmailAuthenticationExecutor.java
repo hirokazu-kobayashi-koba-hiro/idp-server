@@ -69,7 +69,7 @@ public class EmailAuthenticationExecutor implements AuthenticationExecutor {
 
       EmailVerificationChallenge countUpVerificationChallenge = verificationChallenge.countUp();
       interactionCommandRepository.update(
-          tenant, identifier, "email", countUpVerificationChallenge);
+          tenant, identifier, "email-authentication-challenge", countUpVerificationChallenge);
 
       return AuthenticationExecutionResult.clientError(verificationResult.response());
     }

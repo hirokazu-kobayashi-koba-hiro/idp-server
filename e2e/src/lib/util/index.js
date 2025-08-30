@@ -135,6 +135,14 @@ export const generatePassword = (length) => {
   return faker.helpers.shuffle([...raw]).join("");
 };
 
+export const generateRandomNumber = (length) => {
+  let result = "";
+  for (let i = 0; i < length; i++) {
+    result += Math.floor(Math.random() * 10).toString();
+  }
+  return result;
+};
+
 export const validateSchemeDefinition = ({ name, target, schemeDefinition }) => {
   let errors = [];
   Object.entries(schemeDefinition).forEach(([key, definition]) => {

@@ -4,6 +4,7 @@ import { faker } from "@faker-js/faker";
 import { postAuthentication, requestToken } from "../../../api/oauthClient";
 import { get } from "../../../lib/http";
 import { requestAuthorizations } from "../../../oauth/request";
+import { generateRandomNumber } from "../../../lib/util";
 
 describe("user registration", () => {
 
@@ -773,4 +774,112 @@ describe("user registration", () => {
     });
 
   });
+
+  describe("error pattern", () => {
+
+    it("email-authentication failure exceed 5 count", async () => {
+
+      const interaction = async (id, user) => {
+        const challengeResponse = await postAuthentication({
+          endpoint: serverConfig.authorizationIdEndpoint + "email-authentication-challenge",
+          id,
+          body: {
+            email: user.email,
+            template: "authentication"
+          },
+        });
+        console.log(challengeResponse.status);
+        console.log(challengeResponse.data);
+        expect(challengeResponse.status).toBe(200);
+
+        for (let i = 0; i < 5; i++) {
+          const verificationCode = generateRandomNumber(6);
+
+          const verificationResponse = await postAuthentication({
+            endpoint: serverConfig.authorizationIdEndpoint + "email-authentication",
+            id,
+            body: {
+              verification_code: verificationCode,
+            }
+          });
+
+          console.log(verificationResponse.status);
+          console.log(verificationResponse.data);
+          expect(verificationResponse.status).toBe(400);
+          expect(verificationResponse.data.error).toContain("invalid_request");
+        }
+
+        const adminTokenResponse = await requestToken({
+          endpoint: serverConfig.tokenEndpoint,
+          grantType: "password",
+          username: serverConfig.oauth.username,
+          password: serverConfig.oauth.password,
+          scope: clientSecretPostClient.scope,
+          clientId: clientSecretPostClient.clientId,
+          clientSecret: clientSecretPostClient.clientSecret
+        });
+        console.log(adminTokenResponse.data);
+        expect(adminTokenResponse.status).toBe(200);
+        const accessToken = adminTokenResponse.data.access_token;
+
+        const authenticationTransactionResponse = await get({
+          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        });
+        console.log(authenticationTransactionResponse.data);
+        const transactionId = authenticationTransactionResponse.data.list[0].id;
+
+        const interactionResponse = await get({
+          url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/authentication-interactions/${transactionId}/email-authentication-challenge`,
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        });
+        console.log(interactionResponse.data);
+        const verificationCode = interactionResponse.data.payload.verification_code;
+
+        const verificationResponse = await postAuthentication({
+          endpoint: serverConfig.authorizationIdEndpoint + "email-authentication",
+          id,
+          body: {
+            verification_code: verificationCode,
+          }
+        });
+
+        console.log(verificationResponse.status);
+        console.log(verificationResponse.data);
+        expect(verificationResponse.status).toBe(400);
+        expect(verificationResponse.data.error).toEqual("invalid_request");
+        expect(verificationResponse.data.error_description).toEqual("email challenge is reached limited to 5 attempts");
+      };
+
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "aiueo",
+        scope: "openid profile phone email" + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+        customParams: {
+          organizationId: "123",
+          organizationName: "test",
+        },
+        user: {
+          email: faker.internet.email(),
+          name: faker.person.fullName(),
+          zoneinfo: "Asia/Tokyo",
+          locale: "ja-JP",
+          phone_number: faker.phone.number("090-####-####"),
+        },
+        interaction,
+        action: "deny",
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.error).not.toBeNull();
+
+    });
+  });
+
 });

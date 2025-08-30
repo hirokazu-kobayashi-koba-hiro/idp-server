@@ -103,7 +103,7 @@ echo "authentication-config"
 
 authentication_config_files=(
   authentication-device/fcm.json
-  email/external.json
+  email/no-action.json
   external-token/mocky.json
   fido-uaf/external.json
   initial-registration/standard.json
