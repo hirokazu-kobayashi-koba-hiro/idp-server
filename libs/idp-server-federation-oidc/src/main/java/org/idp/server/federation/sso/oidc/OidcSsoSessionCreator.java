@@ -51,7 +51,9 @@ public class OidcSsoSessionCreator {
     String authorizationEndpoint = configuration.authorizationEndpoint();
     String sessionId = UUID.randomUUID().toString();
     String tenantId = tenant.identifierValue();
-    SsoState ssoState = new SsoState(sessionId, tenantId, ssoProvider.name());
+    SsoState ssoState =
+        new SsoState(
+            sessionId, authorizationRequestIdentifier.value(), tenantId, ssoProvider.name());
     String state = SsoStateCoder.encode(ssoState);
     String nonce = UUID.randomUUID().toString();
 

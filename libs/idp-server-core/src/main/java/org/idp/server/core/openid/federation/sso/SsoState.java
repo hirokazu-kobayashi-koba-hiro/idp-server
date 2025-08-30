@@ -17,18 +17,22 @@
 package org.idp.server.core.openid.federation.sso;
 
 import java.io.Serializable;
+import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class SsoState implements Serializable, JsonReadable {
   String sessionId;
+  String authorizationRequestId;
   String tenantId;
   String provider;
 
   public SsoState() {}
 
-  public SsoState(String sessionId, String tenantId, String provider) {
+  public SsoState(
+      String sessionId, String authorizationRequestId, String tenantId, String provider) {
     this.sessionId = sessionId;
+    this.authorizationRequestId = authorizationRequestId;
     this.tenantId = tenantId;
     this.provider = provider;
   }
@@ -39,6 +43,10 @@ public class SsoState implements Serializable, JsonReadable {
 
   public TenantIdentifier tenantIdentifier() {
     return new TenantIdentifier(tenantId);
+  }
+
+  public AuthorizationRequestIdentifier authorizationRequestIdentifier() {
+    return new AuthorizationRequestIdentifier(authorizationRequestId);
   }
 
   public SsoProvider ssoProvider() {
