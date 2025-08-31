@@ -75,6 +75,9 @@ public class ScopeMappingCustomClaimsCreator implements CustomIndividualClaimsCr
       if (customProperties.contains(claimName)) {
         claims.put(claimName, customProperties.getValue(claimName));
       }
+      if (claimName.equals("status")) {
+        claims.put("status", user.status().name());
+      }
 
       if (claimName.equals("ex_sub") && user.hasExternalUserId()) {
         claims.put("ex_sub", user.externalUserId());

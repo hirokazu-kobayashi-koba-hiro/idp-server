@@ -30,7 +30,7 @@
     "client_credentials",
     "urn:openid:params:grant-type:ciba"
   ],
-  "scope": "openid profile email address phone management verified_claims:family_name claims:ex_sub claims:roles claims:permissions claims:assigned_tenants claims:assigned_organizations claims:authentication_devices offline_access account transfers read write identity_verification_application identity_verification_application_delete identity_credentials_update",
+  "scope": "openid profile email address phone management verified_claims:family_name claims:ex_sub claims:status claims:authentication_devices claims:roles claims:permissions claims:assigned_tenants claims:assigned_organizations claims:authentication_devices offline_access account transfers read write identity_verification_application identity_verification_application_delete identity_credentials_update",
   "client_name": "My Example Client",
   "client_name#ja-Jpan-JP": "クライアント名",
   "token_endpoint_auth_method": "self_signed_tls_client_auth",
