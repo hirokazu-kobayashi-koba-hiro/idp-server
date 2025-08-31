@@ -36,12 +36,12 @@ import org.idp.server.platform.security.hook.configuration.SecurityEventHookConf
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc8935">Push-Based Security Event Token
  *     (SET) Delivery Using HTTP</a>
  */
-public class WebHookExecutor implements SecurityEventHook {
+public class WebHookSecurityEventExecutor implements SecurityEventHook {
 
   HttpClient httpClient;
   JsonConverter jsonConverter;
 
-  public WebHookExecutor() {
+  public WebHookSecurityEventExecutor() {
     this.httpClient = HttpClientFactory.defaultClient();
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }

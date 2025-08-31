@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package org.idp.server.platform.security.hook.executor;
+package org.idp.server.security.event.hooks.datadog;
 
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.security.SecurityEvent;
-import org.idp.server.platform.security.hook.SecurityEventHookResult;
-import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
+import org.idp.server.platform.dependency.ApplicationComponentContainer;
+import org.idp.server.platform.security.hook.SecurityEventHook;
+import org.idp.server.platform.security.hook.SecurityEventHookFactory;
 
-public interface SecurityEventExecutor {
+public class DatadogSecurityEventHookExecutorFactory implements SecurityEventHookFactory {
+  @Override
+  public SecurityEventHook create(ApplicationComponentContainer container) {
 
-  String type();
-
-  SecurityEventHookResult execute(
-      Tenant tenant, SecurityEvent securityEvent, SecurityEventHookConfiguration configuration);
+    return new DatadogSecurityEventHookExecutor();
+  }
 }

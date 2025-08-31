@@ -318,6 +318,11 @@ public class IdpServerApplication {
     AuthenticationInteractionQueryRepository authenticationInteractionQueryRepository =
         applicationComponentContainer.resolve(AuthenticationInteractionQueryRepository.class);
 
+    SmsSenders smsSenders = SmsSenderPluginLoader.load();
+    applicationComponentContainer.register(SmsSenders.class, smsSenders);
+    EmailSenders emailSenders = EmailSenderPluginLoader.load();
+    applicationComponentContainer.register(EmailSenders.class, emailSenders);
+
     applicationComponentContainer.register(
         PasswordCredentialsGrantDelegate.class,
         new UserPasswordAuthenticator(userQueryRepository, passwordVerificationDelegation));
@@ -325,7 +330,8 @@ public class IdpServerApplication {
     ProtocolContainer protocolContainer =
         ProtocolContainerPluginLoader.load(applicationComponentContainer);
 
-    SecurityEventHooks securityEventHooks = SecurityEventHooksPluginLoader.load();
+    SecurityEventHooks securityEventHooks =
+        SecurityEventHooksPluginLoader.load(applicationComponentContainer);
 
     // create authentication-interactor instance
     AuthenticationDependencyContainer authenticationDependencyContainer =
@@ -334,9 +340,8 @@ public class IdpServerApplication {
         PasswordEncodeDelegation.class, passwordEncodeDelegation);
     authenticationDependencyContainer.register(
         PasswordVerificationDelegation.class, passwordVerificationDelegation);
-    EmailSenders emailSenders = EmailSenderPluginLoader.load();
     authenticationDependencyContainer.register(EmailSenders.class, emailSenders);
-    SmsSenders smsSenders = SmslSenderPluginLoader.load();
+
     authenticationDependencyContainer.register(SmsSenders.class, smsSenders);
     WebAuthnExecutors webAuthnExecutors =
         WebAuthnExecutorPluginLoader.load(authenticationDependencyContainer);

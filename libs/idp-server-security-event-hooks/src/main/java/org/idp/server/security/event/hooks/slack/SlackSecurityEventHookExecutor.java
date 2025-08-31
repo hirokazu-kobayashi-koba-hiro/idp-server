@@ -33,12 +33,12 @@ import org.idp.server.platform.security.hook.*;
 import org.idp.server.platform.security.hook.SecurityEventHook;
 import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
 
-public class SlacklNotificationSecurityEventHookExecutor implements SecurityEventHook {
+public class SlackSecurityEventHookExecutor implements SecurityEventHook {
 
   HttpClient httpClient;
   JsonConverter jsonConverter;
 
-  public SlacklNotificationSecurityEventHookExecutor() {
+  public SlackSecurityEventHookExecutor() {
     this.httpClient = HttpClientFactory.defaultClient();
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }

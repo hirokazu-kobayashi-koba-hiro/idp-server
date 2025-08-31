@@ -16,28 +16,27 @@
 
 package org.idp.server.security.event.hooks.email;
 
-import java.net.http.HttpClient;
-import java.util.Map;
-import org.idp.server.platform.http.HttpClientFactory;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.notification.email.*;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.hook.SecurityEventHook;
 import org.idp.server.platform.security.hook.SecurityEventHookResult;
 import org.idp.server.platform.security.hook.SecurityEventHookType;
 import org.idp.server.platform.security.hook.StandardSecurityEventHookType;
 import org.idp.server.platform.security.hook.configuration.SecurityEventConfig;
+import org.idp.server.platform.security.hook.configuration.SecurityEventExecutionConfig;
 import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
 
-public class EmailHookExecutor implements SecurityEventHook {
+public class EmailSecurityEventHookExecutor implements SecurityEventHook {
 
-  LoggerWrapper log = LoggerWrapper.getLogger(EmailHookExecutor.class);
-  HttpClient httpClient;
+  LoggerWrapper log = LoggerWrapper.getLogger(EmailSecurityEventHookExecutor.class);
+  EmailSenders emailSenders;
   JsonConverter jsonConverter;
 
-  public EmailHookExecutor() {
-    this.httpClient = HttpClientFactory.defaultClient();
+  public EmailSecurityEventHookExecutor(EmailSenders emailSenders) {
+    this.emailSenders = emailSenders;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
@@ -52,8 +51,29 @@ public class EmailHookExecutor implements SecurityEventHook {
       SecurityEvent securityEvent,
       SecurityEventHookConfiguration hookConfiguration) {
 
-    SecurityEventConfig securityEventConfig = hookConfiguration.getEvent(securityEvent.type());
+    log.debug("EmailHookExecutor called");
 
-    return SecurityEventHookResult.success(type(), Map.of());
+    SecurityEventConfig securityEventConfig = hookConfiguration.getEvent(securityEvent.type());
+    SecurityEventExecutionConfig executionConfig = securityEventConfig.execution();
+    EmailSenderConfiguration emailSenderConfiguration =
+        jsonConverter.read(executionConfig.details(), EmailSenderConfiguration.class);
+
+    String sender = emailSenderConfiguration.sender();
+    String subject = emailSenderConfiguration.subject();
+    String body = emailSenderConfiguration.body();
+    // TODO email
+    String email = securityEvent.user().name();
+
+    EmailSendingRequest sendingRequest = new EmailSendingRequest(sender, email, subject, body);
+
+    EmailSender emailSender = emailSenders.get(emailSenderConfiguration.function());
+    EmailSendResult sendResult = emailSender.send(sendingRequest, emailSenderConfiguration);
+
+    if (sendResult.isError()) {
+      log.warn("EmailHookExecutor Email sending failed");
+      return SecurityEventHookResult.failure(type(), sendResult.data());
+    }
+
+    return SecurityEventHookResult.success(type(), sendResult.data());
   }
 }

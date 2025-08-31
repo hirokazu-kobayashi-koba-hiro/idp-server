@@ -24,9 +24,9 @@ import org.idp.server.platform.notification.sms.SmsSender;
 import org.idp.server.platform.notification.sms.SmsSenderType;
 import org.idp.server.platform.notification.sms.SmsSenders;
 
-public class SmslSenderPluginLoader extends PluginLoader {
+public class SmsSenderPluginLoader extends PluginLoader {
 
-  private static final LoggerWrapper log = LoggerWrapper.getLogger(SmslSenderPluginLoader.class);
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(SmsSenderPluginLoader.class);
 
   public static SmsSenders load() {
 

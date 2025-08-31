@@ -33,12 +33,12 @@ import org.idp.server.platform.security.hook.SecurityEventHook;
 import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
 import org.idp.server.security.event.hooks.webhook.WebHookConfiguration;
 
-public class DatadogLogStreamExecutorSecurityEvent implements SecurityEventHook {
+public class DatadogSecurityEventHookExecutor implements SecurityEventHook {
 
   HttpClient httpClient;
   JsonConverter jsonConverter;
 
-  public DatadogLogStreamExecutorSecurityEvent() {
+  public DatadogSecurityEventHookExecutor() {
     this.httpClient = HttpClientFactory.defaultClient();
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
