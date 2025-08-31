@@ -465,7 +465,7 @@ describe("OAuth 2.0 Token Introspection Extensions", () => {
         await requestBackchannelAuthentications({
           endpoint: serverConfig.backchannelAuthenticationEndpoint,
           clientId: clientSecretPostClient.clientId,
-          scope: "openid profile phone email claims:ex_sub claims:authentication_devices claims:roles claims:permissions",
+          scope: "openid profile phone email claims:ex_sub claims:authentication_devices claims:status claims:authentication_devices claims:roles claims:permissions",
           bindingMessage: serverConfig.ciba.bindingMessage,
           userCode: serverConfig.ciba.userCode,
           loginHint: serverConfig.ciba.loginHintDevice,
@@ -541,7 +541,7 @@ describe("OAuth 2.0 Token Introspection Extensions", () => {
         await requestBackchannelAuthentications({
           endpoint: serverConfig.backchannelAuthenticationEndpoint,
           clientId: clientSecretPostClient.clientId,
-          scope: "openid profile phone email claims:ex_sub claims:authentication_devices claims:roles claims:permissions claims:assigned_tenants",
+          scope: "openid profile phone email claims:ex_sub claims:authentication_devices claims:status claims:authentication_devices claims:roles claims:permissions claims:assigned_tenants",
           bindingMessage: serverConfig.ciba.bindingMessage,
           userCode: serverConfig.ciba.userCode,
           loginHint: serverConfig.ciba.loginHintDevice,
@@ -617,7 +617,7 @@ describe("OAuth 2.0 Token Introspection Extensions", () => {
         await requestBackchannelAuthentications({
           endpoint: serverConfig.backchannelAuthenticationEndpoint,
           clientId: clientSecretPostClient.clientId,
-          scope: "openid profile phone email claims:ex_sub claims:authentication_devices claims:roles claims:permissions claims:assigned_tenants claims:assigned_organizations",
+          scope: "openid profile phone email claims:ex_sub claims:authentication_devices claims:status claims:authentication_devices claims:roles claims:permissions claims:assigned_tenants claims:assigned_organizations",
           bindingMessage: serverConfig.ciba.bindingMessage,
           userCode: serverConfig.ciba.userCode,
           loginHint: serverConfig.ciba.loginHintDevice,

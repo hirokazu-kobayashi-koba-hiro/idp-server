@@ -97,7 +97,7 @@ describe("multi client", () => {
         await requestBackchannelAuthentications({
           endpoint: serverConfig.backchannelAuthenticationEndpoint,
           clientId: clientSecretPostClient.clientId,
-          scope: "openid profile phone email transfers claims:authentication_devices claims:ex_sub " + clientSecretPostClient.identityVerificationScope,
+          scope: "openid profile phone email transfers  claims:status claims:authentication_devices claims:ex_sub " + clientSecretPostClient.identityVerificationScope,
           bindingMessage: ciba.bindingMessage,
           loginHint: `sub:${user.sub}`,
           acrValues: "urn:mace:incommon:iap:gold",
@@ -340,7 +340,7 @@ describe("multi client", () => {
         await requestBackchannelAuthentications({
           endpoint: serverConfig.backchannelAuthenticationEndpoint,
           clientId: clientSecretPostClient.clientId,
-          scope: "openid profile phone email transfers claims:authentication_devices claims:ex_sub " + clientSecretPostClient.identityVerificationScope,
+          scope: "openid profile phone email transfers claims:status claims:authentication_devices claims:ex_sub " + clientSecretPostClient.identityVerificationScope,
           bindingMessage: ciba.bindingMessage,
           loginHint: `device:${authenticationDeviceId},idp:${federationServerConfig.providerName}`,
           acrValues: "urn:mace:incommon:iap:gold",
@@ -438,6 +438,7 @@ describe("multi client", () => {
       expect(userinfoResponse.data.sub).toEqual(user.sub);
       expect(userinfoResponse.data).toHaveProperty("authentication_devices");
       expect(userinfoResponse.data.authentication_devices.length).toBe(1);
+      expect(userinfoResponse.data.status).toEqual("IDENTITY_VERIFIED");
 
       let resultsResponse = await get({
         url: serverConfig.identityVerificationResultResourceOwnerEndpoint + `?application_id=${applicationId}&type=${type}`,
