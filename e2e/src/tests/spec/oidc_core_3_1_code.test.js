@@ -777,7 +777,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       expect(tokenResponse.status).toBe(400);
       expect(tokenResponse.data.error).toEqual("invalid_grant");
       expect(tokenResponse.data.error_description).toEqual(
-        "not found authorization code (authorizationResponse.code)"
+        "not found authorization code."
       );
     });
   });

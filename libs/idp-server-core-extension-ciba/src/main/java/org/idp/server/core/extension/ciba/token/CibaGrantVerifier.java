@@ -67,15 +67,15 @@ public class CibaGrantVerifier {
       throw new TokenBadRequestException(
           "invalid_grant",
           String.format(
-              "auth_req_id is invalid (%s) (%s)",
-              context.authReqId().value(), context.requestedClientId().value()));
+              "The auth_req_id is invalid or was issued to another Client. (%s)",
+              context.requestedClientId().value()));
     }
     if (!cibaGrant.isGrantedClient(context.clientIdentifier())) {
       throw new TokenBadRequestException(
           "invalid_grant",
           String.format(
-              "auth_req_id is invalid (%s) (%s)",
-              context.authReqId().value(), context.requestedClientId().value()));
+              "The auth_req_id is invalid or was issued to another Client. (%s)",
+              context.requestedClientId().value()));
     }
   }
 
