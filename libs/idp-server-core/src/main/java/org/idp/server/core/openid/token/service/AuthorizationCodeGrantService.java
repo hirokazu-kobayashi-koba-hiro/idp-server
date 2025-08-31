@@ -136,9 +136,7 @@ public class AuthorizationCodeGrantService
         authorizationCodeGrantRepository.find(tenant, code);
 
     if (!authorizationCodeGrant.exists()) {
-      throw new TokenBadRequestException(
-          "invalid_grant",
-          String.format("not found authorization code (%s)", tokenRequestContext.code().value()));
+      throw new TokenBadRequestException("invalid_grant", "not found authorization code.");
     }
 
     AuthorizationRequest authorizationRequest =

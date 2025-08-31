@@ -83,19 +83,13 @@ public class AuthorizationCodeGrantBaseVerifier {
       AuthorizationRequest authorizationRequest,
       AuthorizationCodeGrant authorizationCodeGrant) {
     if (!authorizationCodeGrant.exists()) {
-      throw new TokenBadRequestException(
-          "invalid_grant",
-          String.format("not found authorization code (%s)", tokenRequestContext.code().value()));
+      throw new TokenBadRequestException("invalid_grant", "not found authorization code.");
     }
     if (!authorizationRequest.exists()) {
-      throw new TokenBadRequestException(
-          "invalid_grant",
-          String.format("not found authorization code (%s)", tokenRequestContext.code().value()));
+      throw new TokenBadRequestException("invalid_grant", "not found authorization code.");
     }
     if (!authorizationCodeGrant.isGrantedClient(tokenRequestContext.clientIdentifier())) {
-      throw new TokenBadRequestException(
-          "invalid_grant",
-          String.format("not found authorization code (%s)", tokenRequestContext.code().value()));
+      throw new TokenBadRequestException("invalid_grant", "not found authorization code.");
     }
   }
 

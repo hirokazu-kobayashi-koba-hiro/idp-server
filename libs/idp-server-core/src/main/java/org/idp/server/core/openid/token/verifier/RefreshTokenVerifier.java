@@ -38,14 +38,10 @@ public class RefreshTokenVerifier {
 
   void throwINotFoundToken() {
     if (!oAuthToken.exists()) {
-      throw new TokenBadRequestException(
-          "invalid_grant",
-          String.format("refresh token does not exists (%s)", context.refreshToken().value()));
+      throw new TokenBadRequestException("invalid_grant", "refresh token does not exists.");
     }
     if (!oAuthToken.authorizationGrant().isGranted(context.clientIdentifier())) {
-      throw new TokenBadRequestException(
-          "invalid_grant",
-          String.format("refresh token does not exists (%s)", context.refreshToken().value()));
+      throw new TokenBadRequestException("invalid_grant", "refresh token does not exists.");
     }
   }
 
