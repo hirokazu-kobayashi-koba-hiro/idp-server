@@ -26,6 +26,9 @@ import org.idp.server.platform.http.HttpRequestMockConfig;
 public class EmailSenderConfiguration {
 
   String function;
+  String sender;
+  String subject;
+  String body;
   HttpRequestExecutionConfig httpRequest = new HttpRequestExecutionConfig();
   List<HttpRequestExecutionConfig> httpRequests = new ArrayList<>();
   HttpRequestMockConfig mock = new HttpRequestMockConfig();
@@ -36,6 +39,18 @@ public class EmailSenderConfiguration {
 
   public String function() {
     return function;
+  }
+
+  public String sender() {
+    return sender;
+  }
+
+  public String subject() {
+    return subject;
+  }
+
+  public String body() {
+    return body;
   }
 
   public HttpRequestExecutionConfig httpRequest() {

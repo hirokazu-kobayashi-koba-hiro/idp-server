@@ -19,8 +19,10 @@ package org.idp.server.platform.plugin;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.security.hook.SecurityEventHook;
+import org.idp.server.platform.security.hook.SecurityEventHookFactory;
 import org.idp.server.platform.security.hook.SecurityEventHookType;
 import org.idp.server.platform.security.hook.SecurityEventHooks;
 
@@ -29,18 +31,22 @@ public class SecurityEventHooksPluginLoader extends PluginLoader {
   private static final LoggerWrapper log =
       LoggerWrapper.getLogger(SecurityEventHooksPluginLoader.class);
 
-  public static SecurityEventHooks load() {
+  public static SecurityEventHooks load(ApplicationComponentContainer container) {
     Map<SecurityEventHookType, SecurityEventHook> hookExecutors = new HashMap<>();
 
-    List<SecurityEventHook> internalHookExecutors = loadFromInternalModule(SecurityEventHook.class);
-    for (SecurityEventHook executor : internalHookExecutors) {
-      hookExecutors.put(executor.type(), executor);
+    List<SecurityEventHookFactory> internalHookFactories =
+        loadFromInternalModule(SecurityEventHookFactory.class);
+    for (SecurityEventHookFactory factory : internalHookFactories) {
+
+      SecurityEventHook executor = factory.create(container);
       log.info(
           "Dynamic Registered internal security event hook executor: " + executor.type().name());
     }
 
-    List<SecurityEventHook> externalHookExecutors = loadFromExternalModule(SecurityEventHook.class);
-    for (SecurityEventHook executor : externalHookExecutors) {
+    List<SecurityEventHookFactory> externalHookFactories =
+        loadFromExternalModule(SecurityEventHookFactory.class);
+    for (SecurityEventHookFactory factory : externalHookFactories) {
+      SecurityEventHook executor = factory.create(container);
       hookExecutors.put(executor.type(), executor);
       log.info(
           "Dynamic Registered external security event hook executor: " + executor.type().name());
