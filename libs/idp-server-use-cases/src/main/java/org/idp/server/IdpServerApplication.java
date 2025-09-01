@@ -407,7 +407,7 @@ public class IdpServerApplication {
         new OAuthFlowEventPublisher(securityEventPublisher);
     CibaFlowEventPublisher cibaFlowEventPublisher =
         new CibaFlowEventPublisher(securityEventPublisher);
-    TokenEventPublisher tokenEventPublisher = new TokenEventPublisher(securityEventPublisher);
+    UserEventPublisher userEventPublisher = new UserEventPublisher(securityEventPublisher);
     UserOperationEventPublisher userOperationEventPublisher =
         new UserOperationEventPublisher(securityEventPublisher);
 
@@ -447,7 +447,7 @@ public class IdpServerApplication {
                 new TokenProtocols(protocolContainer.resolveAll(TokenProtocol.class)),
                 userQueryRepository,
                 tenantQueryRepository,
-                tokenEventPublisher),
+                userEventPublisher),
             TokenApi.class,
             tenantDialectProvider);
 
@@ -465,7 +465,7 @@ public class IdpServerApplication {
                 new UserinfoProtocols(protocolContainer.resolveAll(UserinfoProtocol.class)),
                 userQueryRepository,
                 tenantQueryRepository,
-                tokenEventPublisher),
+                userEventPublisher),
             UserinfoApi.class,
             tenantDialectProvider);
 
@@ -514,7 +514,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 userQueryRepository,
                 userCommandRepository,
-                tokenEventPublisher,
+                userEventPublisher,
                 additionalRequestParameterResolvers),
             IdentityVerificationApplicationApi.class,
             tenantDialectProvider);
@@ -529,7 +529,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 userQueryRepository,
                 userCommandRepository,
-                tokenEventPublisher,
+                userEventPublisher,
                 additionalRequestParameterResolvers),
             IdentityVerificationCallbackApi.class,
             tenantDialectProvider);
@@ -543,7 +543,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 userQueryRepository,
                 userCommandRepository,
-                tokenEventPublisher),
+                userEventPublisher),
             IdentityVerificationApi.class,
             tenantDialectProvider);
 
@@ -588,7 +588,7 @@ public class IdpServerApplication {
                 authenticationTransactionQueryRepository,
                 authenticationPolicyConfigurationQueryRepository,
                 authenticationInteractors,
-                tokenEventPublisher,
+                userEventPublisher,
                 userOperationEventPublisher,
                 userLifecycleEventPublisher),
             UserOperationApi.class,

@@ -195,12 +195,13 @@ for federation_config_file in "${federation_config_files[@]}"; do
 
 done
 
-#federation-oidc
+#security-event-hook
 echo "-------------------------------------------------"
 echo ""
-echo "federation-config oidc"
+echo "security-event-hook"
 
 security_event_hook_config_files=(
+  email.json
   slack.json
   ssf.json
 )

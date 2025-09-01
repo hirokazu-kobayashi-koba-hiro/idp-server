@@ -32,7 +32,7 @@ public class SecurityEventHooks {
     SecurityEventHook securityEventHookExecutor = values.get(type);
 
     if (securityEventHookExecutor == null) {
-      throw new UnSupportedException("No executor registered for type " + type);
+      throw new UnSupportedException("No executor registered for type " + type.name());
     }
 
     return securityEventHookExecutor;

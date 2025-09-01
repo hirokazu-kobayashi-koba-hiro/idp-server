@@ -39,6 +39,7 @@ public class SecurityEventHooksPluginLoader extends PluginLoader {
     for (SecurityEventHookFactory factory : internalHookFactories) {
 
       SecurityEventHook executor = factory.create(container);
+      hookExecutors.put(executor.type(), executor);
       log.info(
           "Dynamic Registered internal security event hook executor: " + executor.type().name());
     }

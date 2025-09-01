@@ -34,9 +34,11 @@ public class ModelConvertor {
         new SecurityEventTenant(result.get("tenant_id"), "", result.get("tenant_name"));
     SecurityEventClient client =
         new SecurityEventClient(result.get("client_id"), result.get("client_name"));
+
+    // TODO consider model
     SecurityEventUser user =
         new SecurityEventUser(
-            result.get("user_id"), result.get("user_name"), result.get("external_user_id"));
+            result.get("user_id"), result.get("user_name"), result.get("external_user_id"), "", "");
     IpAddress ipAddress = new IpAddress(result.get("ip_address"));
     UserAgent userAgent = new UserAgent(result.get("user_agent"));
     SecurityEventDetail detail =

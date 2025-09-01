@@ -268,6 +268,14 @@ public class IdentityVerificationApplication {
     return status.isApproved();
   }
 
+  public boolean isRejected() {
+    return status.isRejected();
+  }
+
+  public boolean isCancelled() {
+    return status.isCancelled();
+  }
+
   public boolean exists() {
     return identifier != null && identifier.exists();
   }

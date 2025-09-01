@@ -76,7 +76,8 @@ public class UserOperationEventCreator {
 
     if (user != null) {
       SecurityEventUser securityEventUser =
-          new SecurityEventUser(user.sub(), user.name(), user.externalUserId());
+          new SecurityEventUser(
+              user.sub(), user.name(), user.externalUserId(), user.email(), user.phoneNumber());
       builder.add(securityEventUser);
       detailsMap.put("user", user.toMap());
     }

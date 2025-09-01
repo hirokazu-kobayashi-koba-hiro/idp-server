@@ -340,6 +340,12 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     return this;
   }
 
+  // TODO to be more correct
+  public User mergeVerifiedClaims(Map<String, Object> verifiedClaims) {
+    this.verifiedClaims.putAll(verifiedClaims);
+    return this;
+  }
+
   public HashMap<String, Object> verifiedClaims() {
     return verifiedClaims;
   }

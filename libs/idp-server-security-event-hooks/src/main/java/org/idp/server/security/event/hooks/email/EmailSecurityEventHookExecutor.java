@@ -42,7 +42,7 @@ public class EmailSecurityEventHookExecutor implements SecurityEventHook {
 
   @Override
   public SecurityEventHookType type() {
-    return StandardSecurityEventHookType.SSF.toHookType();
+    return StandardSecurityEventHookType.Email.toHookType();
   }
 
   @Override
@@ -62,7 +62,7 @@ public class EmailSecurityEventHookExecutor implements SecurityEventHook {
     String subject = emailSenderConfiguration.subject();
     String body = emailSenderConfiguration.body();
     // TODO email
-    String email = securityEvent.user().name();
+    String email = securityEvent.user().email();
 
     EmailSendingRequest sendingRequest = new EmailSendingRequest(sender, email, subject, body);
 

@@ -23,11 +23,13 @@ import org.idp.server.platform.http.HttpRequestBaseParams;
 import org.idp.server.platform.http.HttpRequestExecutor;
 import org.idp.server.platform.http.HttpRequestResult;
 import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.log.LoggerWrapper;
 
 public class HttpRequestEmailSender implements EmailSender {
 
   HttpRequestExecutor httpRequestExecutor;
   JsonConverter jsonConverter;
+  LoggerWrapper log = LoggerWrapper.getLogger(HttpRequestEmailSender.class);
 
   public HttpRequestEmailSender() {
     this.httpRequestExecutor = new HttpRequestExecutor(HttpClientFactory.defaultClient());
@@ -41,23 +43,30 @@ public class HttpRequestEmailSender implements EmailSender {
 
   @Override
   public EmailSendResult send(EmailSendingRequest request, EmailSenderConfiguration configuration) {
+    try {
+      Map<String, Object> param = new HashMap<>();
+      param.put("request_body", request.toMap());
 
-    Map<String, Object> param = new HashMap<>();
-    param.put("request_body", request.toMap());
+      HttpRequestBaseParams httpRequestBaseParams = new HttpRequestBaseParams(param);
 
-    HttpRequestBaseParams httpRequestBaseParams = new HttpRequestBaseParams(param);
+      HttpRequestResult executionResult =
+          httpRequestExecutor.execute(configuration.httpRequest(), httpRequestBaseParams);
 
-    HttpRequestResult executionResult =
-        httpRequestExecutor.execute(configuration.httpRequest(), httpRequestBaseParams);
+      if (executionResult.isClientError()) {
+        return new EmailSendResult(false, Map.of("http_request", executionResult.toMap()));
+      }
 
-    if (executionResult.isClientError()) {
-      return new EmailSendResult(false, Map.of("http_request", executionResult.toMap()));
+      if (executionResult.isServerError()) {
+        return new EmailSendResult(false, Map.of("http_request", executionResult.toMap()));
+      }
+
+      return new EmailSendResult(true, Map.of("http_request", executionResult.toMap()));
+    } catch (Exception e) {
+
+      log.error(e.getMessage(), e);
+      return new EmailSendResult(
+          false,
+          Map.of("http_request", Map.of("error", "server_error", "error_message", e.getMessage())));
     }
-
-    if (executionResult.isServerError()) {
-      return new EmailSendResult(false, Map.of("http_request", executionResult.toMap()));
-    }
-
-    return new EmailSendResult(true, Map.of("http_request", executionResult.toMap()));
   }
 }

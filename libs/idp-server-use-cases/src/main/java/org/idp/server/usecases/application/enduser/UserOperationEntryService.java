@@ -38,7 +38,7 @@ import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.type.AuthFlow;
 import org.idp.server.core.openid.token.OAuthToken;
-import org.idp.server.core.openid.token.TokenEventPublisher;
+import org.idp.server.core.openid.token.UserEventPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -58,7 +58,7 @@ public class UserOperationEntryService implements UserOperationApi {
   AuthenticationPolicyConfigurationQueryRepository authenticationPolicyConfigurationQueryRepository;
   MfaRegistrationVerifiers mfaRegistrationVerifiers;
   AuthenticationInteractors authenticationInteractors;
-  TokenEventPublisher eventPublisher;
+  UserEventPublisher eventPublisher;
   UserOperationEventPublisher userOperationEventPublisher;
   UserLifecycleEventPublisher userLifecycleEventPublisher;
 
@@ -71,7 +71,7 @@ public class UserOperationEntryService implements UserOperationApi {
       AuthenticationPolicyConfigurationQueryRepository
           authenticationPolicyConfigurationQueryRepository,
       AuthenticationInteractors authenticationInteractors,
-      TokenEventPublisher eventPublisher,
+      UserEventPublisher eventPublisher,
       UserOperationEventPublisher userOperationEventPublisher,
       UserLifecycleEventPublisher userLifecycleEventPublisher) {
     this.userQueryRepository = userQueryRepository;

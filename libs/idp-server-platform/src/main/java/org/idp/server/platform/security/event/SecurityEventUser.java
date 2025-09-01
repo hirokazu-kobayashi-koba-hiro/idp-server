@@ -26,13 +26,17 @@ public class SecurityEventUser implements UuidConvertable {
   String id;
   String name;
   String exSub;
+  String email;
+  String phoneNumber;
 
   public SecurityEventUser() {}
 
-  public SecurityEventUser(String id, String name, String exSub) {
+  public SecurityEventUser(String id, String name, String exSub, String email, String phoneNumber) {
     this.id = id;
     this.name = name;
     this.exSub = exSub;
+    this.email = email;
+    this.phoneNumber = phoneNumber;
   }
 
   public Map<String, Object> toMap() {
@@ -45,6 +49,12 @@ public class SecurityEventUser implements UuidConvertable {
     }
     if (exSub != null) {
       result.put("sub", exSub);
+    }
+    if (email != null) {
+      result.put("email", email);
+    }
+    if (phoneNumber != null) {
+      result.put("phone_number", phoneNumber);
     }
     return result;
   }
@@ -63,6 +73,14 @@ public class SecurityEventUser implements UuidConvertable {
 
   public String exSub() {
     return exSub;
+  }
+
+  public String email() {
+    return email;
+  }
+
+  public String phoneNumber() {
+    return phoneNumber;
   }
 
   public boolean exists() {
