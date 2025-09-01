@@ -39,7 +39,7 @@ import org.idp.server.platform.security.event.SecurityEventIdentifier;
 import org.idp.server.platform.security.repository.SecurityEventQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
-@Transaction(readOnly = true)
+@Transaction
 public class SecurityEventManagementEntryService implements SecurityEventManagementApi {
 
   SecurityEventQueryRepository securityEventQueryRepository;

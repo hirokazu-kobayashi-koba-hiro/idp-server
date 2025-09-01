@@ -95,7 +95,7 @@ public class TenantInvitationManagementEntryService implements TenantInvitationM
     return context.toResponse();
   }
 
-  @Transaction(readOnly = true)
+  @Transaction
   @Override
   public TenantInvitationManagementResponse findList(
       TenantIdentifier tenantIdentifier,
@@ -114,7 +114,7 @@ public class TenantInvitationManagementEntryService implements TenantInvitationM
     return new TenantInvitationManagementResponse(TenantInvitationManagementStatus.OK, response);
   }
 
-  @Transaction(readOnly = true)
+  @Transaction
   @Override
   public TenantInvitationManagementResponse get(
       TenantIdentifier tenantIdentifier,
