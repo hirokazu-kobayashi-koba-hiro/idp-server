@@ -23,7 +23,7 @@ import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.event.*;
 import org.idp.server.platform.type.RequestAttributes;
 
-public class TokenEventCreator {
+public class UserEventCreator {
 
   Tenant tenant;
   OAuthToken oAuthToken;
@@ -31,7 +31,7 @@ public class TokenEventCreator {
   SecurityEventDescription securityEventDescription;
   RequestAttributes requestAttributes;
 
-  public TokenEventCreator(
+  public UserEventCreator(
       Tenant tenant,
       OAuthToken oAuthToken,
       DefaultSecurityEventType defaultSecurityEventType,
@@ -43,7 +43,7 @@ public class TokenEventCreator {
     this.requestAttributes = requestAttributes;
   }
 
-  public TokenEventCreator(
+  public UserEventCreator(
       Tenant tenant,
       OAuthToken oAuthToken,
       SecurityEventType securityEventType,
@@ -75,7 +75,8 @@ public class TokenEventCreator {
 
     if (user != null) {
       SecurityEventUser securityEventUser =
-          new SecurityEventUser(user.sub(), user.name(), user.externalUserId());
+          new SecurityEventUser(
+              user.sub(), user.name(), user.externalUserId(), user.email(), user.phoneNumber());
       builder.add(securityEventUser);
       detailsMap.put("user", user.toMap());
     }

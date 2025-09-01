@@ -22,8 +22,9 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.http.HttpRequestExecutionConfig;
 import org.idp.server.platform.http.HttpRequestMockConfig;
+import org.idp.server.platform.json.JsonReadable;
 
-public class EmailSenderConfiguration {
+public class EmailSenderConfiguration implements JsonReadable {
 
   String function;
   String sender;

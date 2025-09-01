@@ -44,7 +44,7 @@ import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
-import org.idp.server.core.openid.token.TokenEventPublisher;
+import org.idp.server.core.openid.token.UserEventPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -62,7 +62,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
   UserQueryRepository userQueryRepository;
   UserCommandRepository userCommandRepository;
   IdentityVerificationRequestVerifiers verifiers;
-  TokenEventPublisher eventPublisher;
+  UserEventPublisher eventPublisher;
 
   public IdentityVerificationEntryService(
       IdentityVerificationConfigurationQueryRepository configurationQueryRepository,
@@ -71,7 +71,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
       TenantQueryRepository tenantQueryRepository,
       UserQueryRepository userQueryRepository,
       UserCommandRepository userCommandRepository,
-      TokenEventPublisher eventPublisher) {
+      UserEventPublisher eventPublisher) {
     this.configurationQueryRepository = configurationQueryRepository;
     this.tenantQueryRepository = tenantQueryRepository;
     this.resultCommandRepository = resultCommandRepository;

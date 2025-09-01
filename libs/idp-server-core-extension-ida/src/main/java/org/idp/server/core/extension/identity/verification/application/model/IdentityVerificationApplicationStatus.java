@@ -54,4 +54,12 @@ public enum IdentityVerificationApplicationStatus {
   public boolean isApproved() {
     return this == APPROVED;
   }
+
+  public boolean isRejected() {
+    return this == REJECTED;
+  }
+
+  public boolean isCancelled() {
+    return this == CANCELLED;
+  }
 }

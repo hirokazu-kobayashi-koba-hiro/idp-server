@@ -18,7 +18,8 @@ package org.idp.server.platform.security.hook;
 
 public enum StandardSecurityEventHookType {
   WEBHOOK,
-  SSF;
+  SSF,
+  Email;
 
   public SecurityEventHookType toHookType() {
     return new SecurityEventHookType(name());

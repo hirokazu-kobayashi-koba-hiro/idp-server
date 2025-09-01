@@ -20,7 +20,7 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.type.oauth.Subject;
-import org.idp.server.core.openid.token.TokenEventPublisher;
+import org.idp.server.core.openid.token.UserEventPublisher;
 import org.idp.server.core.openid.userinfo.UserinfoApi;
 import org.idp.server.core.openid.userinfo.UserinfoProtocol;
 import org.idp.server.core.openid.userinfo.UserinfoProtocols;
@@ -40,13 +40,13 @@ public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
   UserinfoProtocols userinfoProtocols;
   UserQueryRepository userQueryRepository;
   TenantQueryRepository tenantQueryRepository;
-  TokenEventPublisher eventPublisher;
+  UserEventPublisher eventPublisher;
 
   public UserinfoEntryService(
       UserinfoProtocols userinfoProtocols,
       UserQueryRepository userQueryRepository,
       TenantQueryRepository tenantQueryRepository,
-      TokenEventPublisher eventPublisher) {
+      UserEventPublisher eventPublisher) {
     this.userinfoProtocols = userinfoProtocols;
     this.userQueryRepository = userQueryRepository;
     this.tenantQueryRepository = tenantQueryRepository;

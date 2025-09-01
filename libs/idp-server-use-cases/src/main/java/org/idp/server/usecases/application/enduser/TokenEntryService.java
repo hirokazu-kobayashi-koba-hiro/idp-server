@@ -19,9 +19,9 @@ package org.idp.server.usecases.application.enduser;
 import java.util.Map;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.token.TokenApi;
-import org.idp.server.core.openid.token.TokenEventPublisher;
 import org.idp.server.core.openid.token.TokenProtocol;
 import org.idp.server.core.openid.token.TokenProtocols;
+import org.idp.server.core.openid.token.UserEventPublisher;
 import org.idp.server.core.openid.token.handler.token.io.TokenRequest;
 import org.idp.server.core.openid.token.handler.token.io.TokenRequestResponse;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionExtensionRequest;
@@ -41,13 +41,13 @@ public class TokenEntryService implements TokenApi {
   TokenProtocols tokenProtocols;
   TenantQueryRepository tenantQueryRepository;
   UserQueryRepository userQueryRepository;
-  TokenEventPublisher eventPublisher;
+  UserEventPublisher eventPublisher;
 
   public TokenEntryService(
       TokenProtocols tokenProtocols,
       UserQueryRepository userQueryRepository,
       TenantQueryRepository tenantQueryRepository,
-      TokenEventPublisher eventPublisher) {
+      UserEventPublisher eventPublisher) {
     this.tokenProtocols = tokenProtocols;
     this.tenantQueryRepository = tenantQueryRepository;
     this.userQueryRepository = userQueryRepository;
