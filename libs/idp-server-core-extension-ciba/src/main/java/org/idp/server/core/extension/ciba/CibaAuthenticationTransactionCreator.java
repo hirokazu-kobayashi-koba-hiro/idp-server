@@ -54,7 +54,7 @@ public class CibaAuthenticationTransactionCreator {
         toAuthenticationRequest(tenant, cibaIssueResponse);
     AuthenticationPolicy authenticationPolicy =
         policyConfiguration.findSatisfiedAuthenticationPolicy(
-            StandardAuthFlow.CIBA.toAuthFlow(),
+            authenticationRequest.requestedClientId(),
             authenticationRequest.acrValues(),
             authenticationRequest.scopes());
     ;
