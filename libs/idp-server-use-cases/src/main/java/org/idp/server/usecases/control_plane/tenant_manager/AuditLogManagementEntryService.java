@@ -34,7 +34,7 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
-@Transaction(readOnly = true)
+@Transaction
 public class AuditLogManagementEntryService implements AuditLogManagementApi {
 
   AuditLogQueryRepository auditLogQueryRepository;
