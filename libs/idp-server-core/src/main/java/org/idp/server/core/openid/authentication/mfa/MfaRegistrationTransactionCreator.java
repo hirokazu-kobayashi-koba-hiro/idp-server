@@ -58,7 +58,9 @@ public class MfaRegistrationTransactionCreator {
 
     AuthenticationPolicy authenticationPolicy =
         policyConfiguration.findSatisfiedAuthenticationPolicy(
-            authFlow, authenticationRequest.acrValues(), authenticationRequest.scopes());
+            authenticationRequest.requestedClientId(),
+            authenticationRequest.acrValues(),
+            authenticationRequest.scopes());
 
     return new AuthenticationTransaction(
         identifier,

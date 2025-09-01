@@ -17,7 +17,7 @@
 package org.idp.server.core.openid.authentication.policy;
 
 import java.util.*;
-import org.idp.server.core.openid.oauth.type.AuthFlow;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 import org.idp.server.core.openid.oauth.type.oidc.AcrValues;
 import org.idp.server.platform.json.JsonReadable;
@@ -50,7 +50,7 @@ public class AuthenticationPolicyConfiguration implements JsonReadable, UuidConv
   }
 
   public AuthenticationPolicy findSatisfiedAuthenticationPolicy(
-      AuthFlow authFlow, AcrValues acrValues, Scopes scopes) {
+      RequestedClientId requestedClientId, AcrValues acrValues, Scopes scopes) {
 
     if (policies == null || policies.isEmpty()) {
       return new AuthenticationPolicy();
@@ -59,7 +59,8 @@ public class AuthenticationPolicyConfiguration implements JsonReadable, UuidConv
     AuthenticationPolicy filteredPolicy =
         policies.stream()
             .filter(
-                authenticationPolicy -> authenticationPolicy.anyMatch(authFlow, acrValues, scopes))
+                authenticationPolicy ->
+                    authenticationPolicy.anyMatch(requestedClientId, acrValues, scopes))
             .max(Comparator.comparingInt(AuthenticationPolicy::priority))
             .orElse(new AuthenticationPolicy());
 

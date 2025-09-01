@@ -50,7 +50,7 @@ public class OAuthAuthenticationTransactionCreator {
     AuthenticationRequest authenticationRequest = toAuthenticationRequest(tenant, requestResponse);
     AuthenticationPolicy authenticationPolicy =
         policyConfiguration.findSatisfiedAuthenticationPolicy(
-            StandardAuthFlow.OAUTH.toAuthFlow(),
+            authenticationRequest.requestedClientId(),
             authenticationRequest.acrValues(),
             authenticationRequest.scopes());
     AuthenticationTransactionAttributes attributes = new AuthenticationTransactionAttributes();
