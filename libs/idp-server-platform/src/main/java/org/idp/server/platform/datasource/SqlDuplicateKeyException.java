@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-package org.idp.server.platform.exception;
+package org.idp.server.platform.datasource;
 
-public class ConflictException extends RuntimeException {
-  public ConflictException(String message) {
+import org.idp.server.platform.exception.ConflictException;
+
+public class SqlDuplicateKeyException extends ConflictException {
+
+  public SqlDuplicateKeyException(String message) {
     super(message);
   }
 
-  public ConflictException(String message, Throwable cause) {
-    super(message, cause);
+  public SqlDuplicateKeyException(String message, Throwable throwable) {
+    super(message, throwable);
   }
 }

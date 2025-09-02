@@ -68,7 +68,13 @@ public class SqlExecutor {
       }
       return results.get(0);
     } catch (SQLException exception) {
-      throw new SqlRuntimeException(exception.getMessage(), exception);
+      switch (SqlErrorClassifier.classify(exception)) {
+        case UNIQUE_VIOLATION ->
+            throw new SqlDuplicateKeyException("Duplicate key violation", exception);
+        case NOT_NULL_VIOLATION, CHECK_VIOLATION ->
+            throw new SqlBadRequestException("Invalid data for", exception);
+        default -> throw new SqlRuntimeException("Sql execution is error", exception);
+      }
     }
   }
 
@@ -110,7 +116,13 @@ public class SqlExecutor {
       }
       return results;
     } catch (SQLException exception) {
-      throw new SqlRuntimeException(exception.getMessage(), exception);
+      switch (SqlErrorClassifier.classify(exception)) {
+        case UNIQUE_VIOLATION ->
+            throw new SqlDuplicateKeyException("Duplicate key violation", exception);
+        case NOT_NULL_VIOLATION, CHECK_VIOLATION ->
+            throw new SqlBadRequestException("Invalid data for", exception);
+        default -> throw new SqlRuntimeException("Sql execution is error", exception);
+      }
     }
   }
 
@@ -152,7 +164,13 @@ public class SqlExecutor {
       }
       return results;
     } catch (SQLException exception) {
-      throw new SqlRuntimeException(exception.getMessage(), exception);
+      switch (SqlErrorClassifier.classify(exception)) {
+        case UNIQUE_VIOLATION ->
+            throw new SqlDuplicateKeyException("Duplicate key violation", exception);
+        case NOT_NULL_VIOLATION, CHECK_VIOLATION ->
+            throw new SqlBadRequestException("Invalid data for", exception);
+        default -> throw new SqlRuntimeException("Sql execution is error", exception);
+      }
     }
   }
 
@@ -191,7 +209,13 @@ public class SqlExecutor {
       prepareStatement.executeUpdate();
 
     } catch (SQLException exception) {
-      throw new SqlRuntimeException(exception.getMessage(), exception);
+      switch (SqlErrorClassifier.classify(exception)) {
+        case UNIQUE_VIOLATION ->
+            throw new SqlDuplicateKeyException("Duplicate key violation", exception);
+        case NOT_NULL_VIOLATION, CHECK_VIOLATION ->
+            throw new SqlBadRequestException("Invalid data for", exception);
+        default -> throw new SqlRuntimeException("Sql execution is error", exception);
+      }
     }
   }
 
