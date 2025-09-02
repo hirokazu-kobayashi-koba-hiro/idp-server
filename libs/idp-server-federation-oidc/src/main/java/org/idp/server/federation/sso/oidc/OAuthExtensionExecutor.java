@@ -23,13 +23,16 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Map;
+import org.idp.server.core.openid.federation.FederationType;
 import org.idp.server.core.openid.federation.sso.SsoProvider;
 import org.idp.server.core.openid.federation.sso.oidc.OidcSsoSession;
+import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.platform.http.HttpClientFactory;
 import org.idp.server.platform.http.HttpQueryParams;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OAuthExtensionExecutor implements OidcSsoExecutor {
 
@@ -42,6 +45,25 @@ public class OAuthExtensionExecutor implements OidcSsoExecutor {
     this.httpClient = HttpClientFactory.defaultClient();
     this.userinfoExecutors = new UserinfoExecutors();
     this.jsonConverter = JsonConverter.snakeCaseInstance();
+  }
+
+  @Override
+  public OidcSsoSession createOidcSession(
+      Tenant tenant,
+      AuthorizationRequestIdentifier authorizationRequestIdentifier,
+      OidcSsoConfiguration oidcSsoConfiguration,
+      FederationType federationType,
+      SsoProvider ssoProvider) {
+
+    OAuthExtensionSsoSessionCreator sessionCreator =
+        new OAuthExtensionSsoSessionCreator(
+            oidcSsoConfiguration,
+            tenant,
+            authorizationRequestIdentifier,
+            federationType,
+            ssoProvider);
+
+    return sessionCreator.create();
   }
 
   @Override

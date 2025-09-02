@@ -19,17 +19,36 @@ package org.idp.server.federation.sso.oidc;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.openid.federation.FederationType;
 import org.idp.server.core.openid.federation.sso.SsoProvider;
 import org.idp.server.core.openid.federation.sso.oidc.OidcSsoSession;
+import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.jose.JoseContext;
 import org.idp.server.platform.jose.JoseHandler;
 import org.idp.server.platform.jose.JoseInvalidException;
 import org.idp.server.platform.jose.JsonWebTokenClaims;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface OidcSsoExecutor {
 
   SsoProvider type();
+
+  default OidcSsoSession createOidcSession(
+      Tenant tenant,
+      AuthorizationRequestIdentifier authorizationRequestIdentifier,
+      OidcSsoConfiguration oidcSsoConfiguration,
+      FederationType federationType,
+      SsoProvider ssoProvider) {
+    OidcSsoSessionCreator authorizationRequestCreator =
+        new OidcSsoSessionCreator(
+            oidcSsoConfiguration,
+            tenant,
+            authorizationRequestIdentifier,
+            federationType,
+            ssoProvider);
+    return authorizationRequestCreator.create();
+  }
 
   OidcTokenResult requestToken(OidcTokenRequest oidcTokenRequest);
 
