@@ -19,6 +19,7 @@ package org.idp.server.core.adapters.datasource.authentication.policy.query;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.idp.server.core.openid.authentication.exception.AuthenticationPolicyNotFoundException;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfigurationIdentifier;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationQueryRepository;
@@ -44,6 +45,19 @@ public class AuthenticationPolicyConfigurationQueryDataSource
 
     if (Objects.isNull(result) || result.isEmpty()) {
       return new AuthenticationPolicyConfiguration();
+    }
+
+    return jsonConverter.read(result.get("payload"), AuthenticationPolicyConfiguration.class);
+  }
+
+  @Override
+  public AuthenticationPolicyConfiguration get(Tenant tenant, AuthFlow authFlow) {
+    AuthenticationPolicyConfigurationSqlExecutor executor = executors.get(tenant.databaseType());
+    Map<String, String> result = executor.selectOne(tenant, authFlow);
+
+    if (Objects.isNull(result) || result.isEmpty()) {
+      throw new AuthenticationPolicyNotFoundException(
+          "Authentication policy configuration not found");
     }
 
     return jsonConverter.read(result.get("payload"), AuthenticationPolicyConfiguration.class);

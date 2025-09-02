@@ -26,6 +26,8 @@ public interface AuthenticationPolicyConfigurationQueryRepository {
 
   AuthenticationPolicyConfiguration find(Tenant tenant, AuthFlow authFlow);
 
+  AuthenticationPolicyConfiguration get(Tenant tenant, AuthFlow authFlow);
+
   AuthenticationPolicyConfiguration find(
       Tenant tenant, AuthenticationPolicyConfigurationIdentifier identifier);
 

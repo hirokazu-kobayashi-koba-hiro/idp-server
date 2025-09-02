@@ -100,7 +100,7 @@ public class UserOperationEntryService implements UserOperationApi {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     AuthenticationPolicyConfiguration authenticationPolicyConfiguration =
-        authenticationPolicyConfigurationQueryRepository.find(tenant, authFlow);
+        authenticationPolicyConfigurationQueryRepository.get(tenant, authFlow);
 
     // TODO to be more correct getting client attributes
     AuthenticationTransaction authenticationTransaction =
