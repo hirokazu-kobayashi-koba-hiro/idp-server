@@ -28,7 +28,9 @@ public class SsoStateCoder {
   public static String encode(SsoState ssoState) {
     String json = jsonConverter.write(ssoState);
 
-    return Base64.getUrlEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
+    return Base64.getUrlEncoder()
+        .withoutPadding()
+        .encodeToString(json.getBytes(StandardCharsets.UTF_8));
   }
 
   public static SsoState decode(String state) {
