@@ -65,14 +65,14 @@ public class OidcFederationInteractor implements FederationInteractor {
         configurationQueryRepository.get(
             tenant, federationType, ssoProvider, OidcSsoConfiguration.class);
 
-    OidcSsoSessionCreator authorizationRequestCreator =
-        new OidcSsoSessionCreator(
-            oidcSsoConfiguration,
+    OidcSsoExecutor oidcSsoExecutor = oidcSsoExecutors.get(oidcSsoConfiguration.ssoProvider());
+    OidcSsoSession oidcSsoSession =
+        oidcSsoExecutor.createOidcSession(
             tenant,
             authorizationRequestIdentifier,
+            oidcSsoConfiguration,
             federationType,
             ssoProvider);
-    OidcSsoSession oidcSsoSession = authorizationRequestCreator.create();
 
     sessionCommandRepository.register(
         tenant, oidcSsoSession.ssoSessionIdentifier(), oidcSsoSession);
