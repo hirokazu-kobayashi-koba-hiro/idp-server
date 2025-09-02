@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package org.idp.server.platform.exception;
+package org.idp.server.platform.datasource;
 
-public class ConflictException extends RuntimeException {
-  public ConflictException(String message) {
-    super(message);
-  }
-
-  public ConflictException(String message, Throwable cause) {
-    super(message, cause);
-  }
+public enum SqlError {
+  UNIQUE_VIOLATION, // 409
+  FK_VIOLATION, // 409 or 400
+  NOT_NULL_VIOLATION, // 400
+  CHECK_VIOLATION, // 400
+  SERIALIZATION_FAILURE, // 503 or 409
+  DEADLOCK_DETECTED, // 503
+  OTHER
 }

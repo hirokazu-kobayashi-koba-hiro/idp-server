@@ -18,6 +18,7 @@ package org.idp.server.adapters.springboot.application.restapi;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
+import org.idp.server.platform.datasource.SqlDuplicateKeyException;
 import org.idp.server.platform.exception.*;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.springframework.http.HttpStatus;
@@ -79,6 +80,12 @@ public class ApiExceptionHandler {
   @ExceptionHandler(ConflictException.class)
   public ResponseEntity<?> handleException(ConflictException exception) {
     log.warn(exception.getMessage());
+    return new ResponseEntity<>(HttpStatus.CONFLICT);
+  }
+
+  @ExceptionHandler(SqlDuplicateKeyException.class)
+  public ResponseEntity<?> handleException(SqlDuplicateKeyException exception) {
+    log.error(exception.getMessage(), exception);
     return new ResponseEntity<>(HttpStatus.CONFLICT);
   }
 
