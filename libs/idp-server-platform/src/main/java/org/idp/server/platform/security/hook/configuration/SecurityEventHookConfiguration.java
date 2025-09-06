@@ -34,6 +34,7 @@ public class SecurityEventHookConfiguration implements JsonReadable {
   int executionOrder = 100;
   Map<String, SecurityEventConfig> events = new HashMap<>();
   boolean enabled = false;
+  boolean storeExecutionPayload = true;
 
   public SecurityEventHookConfiguration() {}
 
@@ -45,7 +46,8 @@ public class SecurityEventHookConfiguration implements JsonReadable {
       List<String> triggers,
       int executionOrder,
       Map<String, SecurityEventConfig> events,
-      boolean enabled) {
+      boolean enabled,
+      boolean storeExecutionPayload) {
     this.id = id;
     this.type = type;
     this.attributes = attributes;
@@ -54,6 +56,7 @@ public class SecurityEventHookConfiguration implements JsonReadable {
     this.executionOrder = executionOrder;
     this.events = events;
     this.enabled = enabled;
+    this.storeExecutionPayload = storeExecutionPayload;
   }
 
   public SecurityEventHookConfigurationIdentifier identifier() {
@@ -149,6 +152,10 @@ public class SecurityEventHookConfiguration implements JsonReadable {
     return enabled;
   }
 
+  public boolean isStoreExecutionPayload() {
+    return storeExecutionPayload;
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> result = new HashMap<>();
     result.put("id", id);
@@ -159,6 +166,7 @@ public class SecurityEventHookConfiguration implements JsonReadable {
     result.put("execution_order", executionOrder);
     if (hasEvents()) result.put("events", eventsAsMap());
     result.put("enabled", enabled);
+    result.put("store_execution_payload", storeExecutionPayload);
     return result;
   }
 }
