@@ -28,11 +28,11 @@ public class RandomStringFunction implements ValueFunction {
   @Override
   public Object apply(Object input, Map<String, Object> args) {
     int length = ((Number) args.getOrDefault("length", 16)).intValue();
-    String alphabet = (String) args.getOrDefault("alphabet", DEFAULT_ALPHABET);
+    String charset = (String) args.getOrDefault("charset", DEFAULT_ALPHABET);
     StringBuilder sb = new StringBuilder(length);
     for (int i = 0; i < length; i++) {
-      int idx = random.nextInt(alphabet.length());
-      sb.append(alphabet.charAt(idx));
+      int idx = random.nextInt(charset.length());
+      sb.append(charset.charAt(idx));
     }
 
     return sb.toString();
