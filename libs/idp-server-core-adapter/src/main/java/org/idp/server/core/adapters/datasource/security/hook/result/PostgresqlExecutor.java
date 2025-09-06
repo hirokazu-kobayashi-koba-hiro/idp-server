@@ -18,7 +18,6 @@ package org.idp.server.core.adapters.datasource.security.hook.result;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -66,7 +65,8 @@ public class PostgresqlExecutor implements SecurityEventHoolResultSqlExecutor {
       params.add(result.type().name());
       params.add(eventPayload);
       // For backwards compatibility, always store execution payload
-      String executionPayload = result.contents().isEmpty() ? null : converter.write(result.contents());
+      String executionPayload =
+          result.contents().isEmpty() ? null : converter.write(result.contents());
       params.add(executionPayload);
       params.add(result.status().name());
     }
@@ -77,15 +77,16 @@ public class PostgresqlExecutor implements SecurityEventHoolResultSqlExecutor {
 
   /**
    * Insert security event hook results with option to control execution payload storage
+   *
    * @param tenant tenant information
    * @param securityEvent security event that triggered the hooks
    * @param results list of hook execution results
    * @param storeExecutionPayload whether to store the execution payload or not
    */
   public void insert(
-      Tenant tenant, 
-      SecurityEvent securityEvent, 
-      List<SecurityEventHookResult> results, 
+      Tenant tenant,
+      SecurityEvent securityEvent,
+      List<SecurityEventHookResult> results,
       boolean storeExecutionPayload) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     StringBuilder sql =
