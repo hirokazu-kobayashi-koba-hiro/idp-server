@@ -38,51 +38,151 @@ you’ll be up and running in just a few steps.
 - Docker & Docker Compose
 - Node.js 18 later（for e2e）
 
-### preparation
+### Quick Start Guide
 
-* set up generate api-key and api-secret
+Get idp-server running in just two commands:
 
-```shell
-./init.sh
-```
-
-※ fix your configuration
+#### Simple Setup (Recommended)
 
 ```shell
-export IDP_SERVER_DOMAIN=http://localhost:8080/
-export IDP_SERVER_API_KEY=xxx
-export IDP_SERVER_API_SECRET=xxx
-export ENCRYPTION_KEY=xxx
-export ENV=local or develop or ...
+# Build all services
+docker compose build
+
+# Start all services (includes automatic database initialization)
+docker compose up -d
 ```
 
+That's it! The setup includes:
+- ✅ Automatic image building
+- ✅ PostgreSQL Primary/Replica replication setup  
+- ✅ Database migration execution
+- ✅ All services with proper health checks
+- ✅ Default environment variables (no .env.local required)
 
-```shell
-docker build -t idp-server:latest .
-```
+#### Verify Setup
 
-```shell
-cd ./libs/idp-server-database
-docker build -f ./Dockerfile-flyway -t idp-flyway-migrator:latest .
-```
-
-```shell
-docker compose --env-file .env.local up
-```
-
-* init table
-
-```shell
-docker compose run flyway-migrator clean migrate
-```
-
-### health check
+Check service health:
 
 ```shell
 curl -v http://localhost:8080/actuator/health
 ```
 
-### setup configuration
+Verify PostgreSQL replication:
+
+```shell
+./scripts/verify-replication.sh
+```
+
+#### Advanced Setup (Optional)
+
+For custom environment variables, create `.env.local`:
+
+```shell
+./init.sh  # Generates .env.local with API keys
+docker compose --env-file .env.local up -d
+```
+
+#### Step-by-Step Setup (Debugging)
+
+If you need to troubleshoot, start services individually:
+
+```shell
+# 1. Start databases first
+docker compose up -d postgres-primary postgres-replica mysql redis
+
+# 2. Run database migration
+docker compose up flyway-migrator
+
+# 3. Start application services
+docker compose up -d idp-server-1 idp-server-2 nginx
+```
+
+---
+
+## Database Configuration
+
+### PostgreSQL Primary/Replica Setup
+
+The Docker Compose configuration includes PostgreSQL with streaming replication for development and testing of read/write separation.
+
+#### Architecture Overview
+
+```
+┌─────────────────┐    ┌─────────────────┐
+│  postgres-primary │    │ postgres-replica │
+│   (Write/Read)    │───▶│   (Read-only)   │
+│   Port: 5432      │    │   Port: 5433    │
+└─────────────────┘    └─────────────────┘
+      │                        │
+      └────────────────────────┘
+           Streaming WAL
+```
+
+#### Service Details
+
+| Service | Role | Port | Purpose | Connection |
+|---------|------|------|---------|------------|
+| `postgres-primary` | Primary | 5432 | Write + Read operations | `postgresql://idpserver:idpserver@localhost:5432/idpserver` |
+| `postgres-replica` | Standby | 5433 | Read-only operations | `postgresql://idpserver:idpserver@localhost:5433/idpserver` |
+
+#### Application Configuration
+
+The idp-server automatically uses the appropriate database:
+
+```yaml
+# docker-compose.yaml configuration
+DB_WRITER_URL: jdbc:postgresql://postgres-primary:5432/idpserver
+DB_READER_URL: jdbc:postgresql://postgres-replica:5432/idpserver
+```
+
+**Note:** While the external port is 5433, containers communicate internally on port 5432.
+
+#### Troubleshooting
+
+**Check replication status:**
+
+```shell
+# Verify replication is working
+./scripts/verify-replication.sh
+
+# Check primary status
+docker compose exec postgres-primary psql -U idpserver -d idpserver -c "SELECT pg_is_in_recovery();"
+
+# Check replica status
+docker compose exec postgres-replica psql -U idpserver -d idpserver -c "SELECT pg_is_in_recovery();"
+
+# View replication lag
+docker compose exec postgres-primary psql -U idpserver -d idpserver -c "SELECT slot_name, active, restart_lsn FROM pg_replication_slots;"
+```
+
+**Reset replication (if needed):**
+
+```shell
+# Stop services and remove volumes
+docker compose down -v
+
+# Restart services (replica will re-sync from primary)
+docker compose up -d postgres-primary postgres-replica
+```
+
+#### ⚠️ Important Notes
+
+- **Development Only**: Not suitable for production use
+- **No Automatic Failover**: Manual intervention required if primary fails  
+- **Replication Delay**: Small delay expected between writes and reads
+- **Data Persistence**: Uses Docker volumes - data survives container restarts
+
+---
+
+## Application Configuration
+
+### Health Check
+
+```shell
+curl -v http://localhost:8080/actuator/health
+```
+
+### Setup Configuration
 
 ```shell
 ./setup.sh

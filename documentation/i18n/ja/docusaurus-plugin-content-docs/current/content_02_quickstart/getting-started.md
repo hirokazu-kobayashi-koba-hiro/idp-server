@@ -27,7 +27,11 @@ idp2[🔥 idp-server-2]
 end
 
 subgraph Database
-pg[🧠 PostgreSQL]
+subgraph PostgreSQL Cluster
+pg_primary[🧠 PostgreSQL Primary<br>Write/Read]
+pg_replica[📖 PostgreSQL Replica<br>Read-Only]
+pg_primary -.->|Streaming WAL| pg_replica
+end
 mysql[🗄️ MySQL]
 redis[⚡ Redis]
 end
@@ -39,12 +43,14 @@ end
 nginx --> idp1
 nginx --> idp2
 
-idp1 --> pg
+idp1 --> pg_primary
+idp1 -.->|Read| pg_replica
 idp1 --> mysql
 idp1 --> redis
 idp1 --> mockoon
 
-idp2 --> pg
+idp2 --> pg_primary
+idp2 -.->|Read| pg_replica
 idp2 --> mysql
 idp2 --> redis
 idp2 --> mockoon
@@ -57,7 +63,8 @@ idp2 --> mockoon
 |-----------------------|-----------------------------------------------------------------------|
 | 🌐 **nginx**          | `idp-server-1`, `idp-server-2` にリバースプロキシ／ロードバランサーとしてルーティング（ポート: 8080） |
 | 🔥 **idp-server-1/2** | `idp-server` の本体。クラスタ構成でスケーラビリティ・冗長性を確認できるようにしてある（それぞれポート8081 / 8082） |
-| 🧠 **PostgreSQL**     | メインの永続化DB。ユーザー情報・セッション・トークンなどの保存に使用                                   |
+| 🧠 **PostgreSQL Primary** | メインの永続化DB（プライマリ）。書き込み・読み込み操作を処理（ポート: 5432） |
+| 📖 **PostgreSQL Replica** | 読み取り専用レプリカDB。ストリーミングレプリケーションによってプライマリと同期（ポート: 5433） |
 | 🗄️ **MySQL**         | 将来的なサポートに向けた評価用。PostgreSQLとの切替互換性を想定して導入                              |
 | ⚡ **Redis**           | セッション情報や一時データのキャッシュストアとして利用                                           |
 | 🧪 **Mockoon**        | 外部サービス連携を模擬するモックサーバー（eKYC / 通知サービスなどのテストに使用）                          |
@@ -65,7 +72,8 @@ idp2 --> mockoon
 
 ### 特徴
 - 複数台構成（HAテスト可）：2台の idp-server をクラスタで起動し、nginx 経由でルーティング
-- 柔軟なDB接続：PostgreSQLメイン、MySQLも選択可能な構成
+- PostgreSQL Primary/Replica構成：ストリーミングレプリケーションによる読み書き分離でパフォーマンステスト可能
+- 柔軟なDB接続：PostgreSQL Primary/Replicaメイン、MySQLも選択可能な構成
 - Redisによる高速キャッシュ：パフォーマンステストやセッション管理に最適
 - モック環境完備：Mockoon による外部連携模擬でE2E試験も可能
 
@@ -78,45 +86,68 @@ git clone https://github.com/hirokazu-kobayashi-koba-hiro/idp-server.git
 cd idp-server
 ```
 
-### 初期準備
+### シンプルセットアップ（推奨）
 
-* APIキーとシークレットの生成
-
-```shell
-./init.sh
-```
-
-※ init.shで生成した値に変更してください
+idp-serverをたった2つのコマンドで起動できます：
 
 ```shell
-export IDP_SERVER_DOMAIN=http://localhost:8080/
-export IDP_SERVER_API_KEY=xxx
-export IDP_SERVER_API_SECRET=xxx
-export ENCRYPTION_KEY=xxx
-export ENV=local または develop など
-```
+# 全サービスをビルド
+docker compose build
 
-* Dockerビルド
-
-```shell
-docker build -t idp-server:latest .
-```
-
-```shell
+# 全サービスを起動（データベース初期化も自動実行）
 docker compose up -d
-docker compose logs -f idp-server
 ```
 
-* テーブル初期化
+これで完了です！セットアップには以下が含まれます：
+- ✅ 自動イメージビルド
+- ✅ PostgreSQL Primary/Replicaレプリケーション構成  
+- ✅ データベースマイグレーション実行
+- ✅ 全サービスのヘルスチェック
+- ✅ デフォルト環境変数（.env.localファイル不要）
 
-```shell
-./gradlew flywayClean flywayMigrate
-```
+### セットアップ確認
 
-### health check
+サービスの健全性をチェック：
 
 ```shell
 curl -v http://localhost:8080/actuator/health
+```
+
+PostgreSQLレプリケーションの確認：
+
+```shell
+./scripts/verify-replication.sh
+```
+
+このスクリプトは以下のテストを実行します：
+- プライマリとレプリカの状態確認
+- レプリケーションスロットの確認  
+- データ同期テスト（プライマリに書き込み、レプリカから読み取り）
+- レプリカへの書き込み制限確認
+- 接続テスト（ポート 5432: プライマリ、ポート 5433: レプリカ）
+
+### 高度なセットアップ（オプション）
+
+カスタム環境変数が必要な場合は、`.env.local`を作成：
+
+```shell
+./init.sh  # API キーを含む .env.local を生成
+docker compose --env-file .env.local up -d
+```
+
+### ステップバイステップセットアップ（デバッグ用）
+
+トラブルシューティングが必要な場合は、サービスを個別に開始：
+
+```shell
+# 1. まずデータベースを起動
+docker compose up -d postgres-primary postgres-replica mysql redis
+
+# 2. データベースマイグレーション実行
+docker compose up flyway-migrator
+
+# 3. アプリケーションサービスを起動
+docker compose up -d idp-server-1 idp-server-2 nginx
 ```
 
 ### 設定の適用
@@ -128,35 +159,27 @@ curl -v http://localhost:8080/actuator/health
 * admin-tenant
 
 ```shell
-./config-sample/test-data.sh \
--e "local" \
--u ito.ichiro \
--p successUserCode001 \
--t 67e7eae6-62b0-4500-9eff-87459f63fc66 \
--b http://localhost:8080 \
--c clientSecretPost \
--s clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890 \
--d false
- ```
+./config-sample/test-data.sh
+```
 
 * test-tenant
 
 ```shell
-./config-sample/test-tenant-data.sh \
--e "local" \
--u ito.ichiro \
--p successUserCode001 \
--t 67e7eae6-62b0-4500-9eff-87459f63fc66 \
--b http://localhost:8080 \
--c clientSecretPost \
--s clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890 \
--n 1e68932e-ed4a-43e7-b412-460665e42df3 \
--l clientSecretPost \
--m clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890 \
--d false
- ```
+./config-sample/test-tenant-data.sh -t 1e68932e-ed4a-43e7-b412-460665e42df3
+```
 
 ### エンドツーエンドテスト（E2E）
+
+設定の適用が完了したら、すぐにE2Eテストを実行してIdPサーバーが正常に動作しているかを確認できます。
+
+#### テスト構成
+テストスイートは3つのカテゴリーに分かれています：
+
+* 📘 scenario/: 現実的なユーザーとシステムの動作 — ユーザー登録、SSOログイン、CIBAフロー、MFA登録など
+* 📕 spec/: OpenID Connect、FAPI、JARM、Verifiable Credentialsに基づく仕様準拠テスト
+* 🐒 monkey/: 障害注入とエッジケースの検証 — 意図的に無効なシーケンス、パラメータ、プロトコル違反
+
+#### 実行
 
 ```shell
 cd e2e
