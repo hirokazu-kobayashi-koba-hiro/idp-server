@@ -72,6 +72,8 @@ eventPublisher.publish(
   "triggers": [
     "user_signup"
   ],
+  "enabled": true,
+  "store_execution_payload": true,  // 🆕 実行結果ペイロード保存設定
   "details": {
     "base": {
       "description": "slack共通通知",
@@ -134,18 +136,44 @@ CREATE TABLE security_event
 ```sql
 CREATE TABLE security_event_hook_results
 (
-    id                     UUID                    NOT NULL,
-    tenant_id              UUID                    NOT NULL,
-    security_event_id      UUID                    NOT NULL,
-    security_event_type    VARCHAR(255)            NOT NULL,
-    security_event_hook    VARCHAR(255)            NOT NULL,
-    security_event_payload JSONB                   NOT NULL,
-    status                 VARCHAR(255)            NOT NULL,
-    created_at             TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at             TIMESTAMP DEFAULT now() NOT NULL,
+    id                                      UUID                    NOT NULL,
+    tenant_id                               UUID                    NOT NULL,
+    security_event_id                       UUID                    NOT NULL,
+    security_event_type                     VARCHAR(255)            NOT NULL,
+    security_event_hook                     VARCHAR(255)            NOT NULL,
+    security_event_payload                  JSONB                   NOT NULL,
+    security_event_hook_execution_payload   JSONB,                              -- 🆕 実行結果ペイロード
+    status                                  VARCHAR(255)            NOT NULL,
+    created_at                              TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at                              TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (id)
 );
 ```
+
+**新機能**: `security_event_hook_execution_payload` カラムにより、フック実行結果を保存可能となり、リトライ・デバッグ・監査を強化できます。
+
+### 実行結果ペイロード保存の制御
+
+各フック設定で `store_execution_payload` オプションを使用して、実行結果の保存を制御できます：
+
+```json
+{
+  "type": "SLACK",
+  "store_execution_payload": true,   // デフォルト: true
+  "triggers": ["user_login_success"],
+  "details": { ... }
+}
+```
+
+**設定値**:
+- `true`: 実行結果（レスポンス、エラー詳細等）をDBに保存
+- `false`: 実行結果は保存せず、ステータスのみ記録
+
+**用途**:
+- **デバッグ**: 失敗したフックの詳細な原因調査
+- **再送**: 失敗時のペイロードを使用した手動再送
+- **監査**: 外部システムとの通信履歴の完全な記録
+- **プライバシー**: 機密情報を含む場合の保存制御
 
 ---
 
