@@ -33,6 +33,7 @@ public class SecurityEventHookConfigurationRequest implements JsonReadable {
   int executionOrder;
   Map<String, SecurityEventConfig> events;
   boolean enabled;
+  boolean storeExecutionPayload = true;
 
   public SecurityEventHookConfigurationRequest() {}
 
@@ -47,6 +48,14 @@ public class SecurityEventHookConfigurationRequest implements JsonReadable {
   public SecurityEventHookConfiguration toConfiguration(String id) {
 
     return new SecurityEventHookConfiguration(
-        id, type, attributes, metadata, triggers, executionOrder, events, enabled);
+        id,
+        type,
+        attributes,
+        metadata,
+        triggers,
+        executionOrder,
+        events,
+        enabled,
+        storeExecutionPayload);
   }
 }
