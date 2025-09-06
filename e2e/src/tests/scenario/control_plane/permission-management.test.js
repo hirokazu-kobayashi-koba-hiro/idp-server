@@ -24,7 +24,7 @@ describe("permission management api", () => {
       const accessToken = tokenResponse.data.access_token;
 
       const createResponse = await postWithJson({
-        url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/permissions`,
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/permissions`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -40,7 +40,7 @@ describe("permission management api", () => {
       const permissionId = createResponse.data.result.id;
 
       const listResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/permissions?id=${permissionId}`,
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/permissions?id=${permissionId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -51,7 +51,7 @@ describe("permission management api", () => {
       expect(listResponse.data).toHaveProperty("list");
 
       const detailResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/permissions/${permissionId}`,
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/permissions/${permissionId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -61,7 +61,7 @@ describe("permission management api", () => {
       expect(detailResponse.data).toHaveProperty("id");
 
       const updateResponse = await putWithJson({
-        url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/permissions/${permissionId}`,
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/permissions/${permissionId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -76,7 +76,7 @@ describe("permission management api", () => {
       expect(updateResponse.data).toHaveProperty("diff");
 
       const deleteResponse = await deletion({
-        url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/permissions/${permissionId}`,
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/permissions/${permissionId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         }

@@ -1,6 +1,94 @@
 export const backendUrl = process.env.IDP_SERVER_URL || "http://localhost:8080";
 
-export const serverConfig = {
+// Default tenant IDs for backward compatibility
+const DEFAULT_TENANT_ID = "67e7eae6-62b0-4500-9eff-87459f63fc66";
+const DEFAULT_FEDERATION_TENANT_ID = "1e68932e-ed4a-43e7-b412-460665e42df3";
+const DEFAULT_UNSUPPORTED_TENANT_ID = "94d8598e-f238-4150-85c2-c4accf515784";
+
+// Environment variables with fallbacks
+const tenantId = process.env.IDP_SERVER_TENANT_ID || DEFAULT_TENANT_ID;
+const federationTenantId = process.env.IDP_SERVER_FEDERATION_TENANT_ID || DEFAULT_FEDERATION_TENANT_ID;
+const unsupportedTenantId = process.env.IDP_SERVER_UNSUPPORTED_TENANT_ID || DEFAULT_UNSUPPORTED_TENANT_ID;
+
+// CIBA test user configuration
+const cibaUserSub = process.env.CIBA_USER_SUB || "3ec055a8-8000-44a2-8677-e70ebff414e2";
+const cibaUserEmail = process.env.CIBA_USER_EMAIL || "ito.ichiro@gmail.com";
+const cibaUserDeviceId = process.env.CIBA_USER_DEVICE_ID || "7736a252-60b4-45f5-b817-65ea9a540860";
+const cibaUsername = process.env.CIBA_USERNAME || "ito.ichiro";
+const cibaPassword = process.env.CIBA_PASSWORD || "successUserCode001";
+
+/**
+ * Creates a server configuration object for the specified tenant ID
+ * @param {string} tenantId - The tenant ID to use for endpoints
+ * @param {string} baseUrl - The backend URL (defaults to backendUrl)
+ * @returns {object} Server configuration object
+ */
+function createServerConfig(tenantId, baseUrl = backendUrl) {
+  return {
+    issuer: `${baseUrl}/${tenantId}`,
+    tenantId,
+    authorizationEndpoint: `${baseUrl}/${tenantId}/v1/authorizations`,
+    authorizationIdEndpoint: `${baseUrl}/${tenantId}/v1/authorizations/{id}/`,
+    authenticationEndpoint: `${baseUrl}/v1/management/tenants/${tenantId}/authentication-transactions`,
+    authenticationDeviceEndpoint: `${baseUrl}/${tenantId}/v1/authentication-devices/{id}/authentications`,
+    authorizeEndpoint: `${baseUrl}/${tenantId}/v1/authorizations/{id}/authorize`,
+    denyEndpoint: `${baseUrl}/${tenantId}/v1/authorizations/{id}/deny`,
+    logoutEndpoint: `${baseUrl}/${tenantId}/v1/logout`,
+    tokenEndpoint: `${baseUrl}/${tenantId}/v1/tokens`,
+    tokenIntrospectionEndpoint: `${baseUrl}/${tenantId}/v1/tokens/introspection`,
+    tokenIntrospectionExtensionsEndpoint: `${baseUrl}/${tenantId}/v1/tokens/introspection-extensions`,
+    tokenRevocationEndpoint: `${baseUrl}/${tenantId}/v1/tokens/revocation`,
+    userinfoEndpoint: `${baseUrl}/${tenantId}/v1/userinfo`,
+    jwksEndpoint: `${baseUrl}/${tenantId}/v1/jwks`,
+    backchannelAuthenticationEndpoint: `${baseUrl}/${tenantId}/v1/backchannel/authentications`,
+    backchannelAuthenticationInvalidTenantIdEndpoint: `${baseUrl}/67e7/v1/backchannel/authentications`,
+    backchannelAuthenticationAutomatedCompleteEndpoint: `${baseUrl}/${tenantId}/v1/backchannel/authentications/automated-complete`,
+    authenticationDeviceInteractionEndpoint: `${baseUrl}/${tenantId}/v1/authentications/{id}/`,
+    fidoUafFacetsEndpoint: `${baseUrl}/${tenantId}/.well-known/fido/facets`,
+    identityVerificationApplyEndpoint: `${baseUrl}/${tenantId}/v1/me/identity-verification/applications/{type}/{process}`,
+    identityVerificationProcessEndpoint: `${baseUrl}/${tenantId}/v1/me/identity-verification/applications/{type}/{id}/{process}`,
+    identityVerificationApplicationsEndpoint: `${baseUrl}/${tenantId}/v1/me/identity-verification/applications`,
+    identityVerificationApplicationsDeletionEndpoint: `${baseUrl}/${tenantId}/v1/me/identity-verification/applications/{type}/{id}`,
+    identityVerificationApplicationsPublicCallbackEndpoint: `${baseUrl}/${tenantId}/internal/v1/identity-verification/callback/{type}/{callbackName}`,
+    identityVerificationApplicationsEvaluateResultEndpoint: `${baseUrl}/${tenantId}/v1/me/identity-verification/applications/{type}/{id}/evaluate-result`,
+    identityVerificationResultEndpoint: `${baseUrl}/${tenantId}/internal/v1/identity-verification/results/{type}/registration`,
+    identityVerificationResultResourceOwnerEndpoint: `${baseUrl}/${tenantId}/v1/me/identity-verification/results`,
+    discoveryEndpoint: `${baseUrl}/${tenantId}/.well-known/openid-configuration`,
+    ssfDiscoveryEndpoint: `${baseUrl}/${tenantId}/.well-known/ssf-configuration`,
+    ssfJwksEndpoint: `${baseUrl}/${tenantId}/v1/ssf/jwks`,
+    credentialEndpoint: `${baseUrl}/${tenantId}/v1/credentials`,
+    credentialBatchEndpoint: `${baseUrl}/${tenantId}/v1/credentials/batch-requests`,
+    resourceOwnerEndpoint: `${baseUrl}/${tenantId}/v1/me`,
+    enabledSsr: false,
+    ciba: {
+      sub: cibaUserSub,
+      loginHint: `email:${cibaUserEmail},idp:idp-server`,
+      loginHintSub: `sub:${cibaUserSub},idp:idp-server`,
+      loginHintDevice: `device:${cibaUserDeviceId},idp:idp-server`,
+      username: cibaUserEmail,
+      userCode: cibaPassword,
+      bindingMessage: "999",
+      invalidLoginHint: "invalid",
+      authenticationDeviceId: cibaUserDeviceId,
+    },
+    oauth: {
+      username: cibaUsername,
+      password: cibaPassword,
+    },
+    identityVerification: {
+      basicAuth: {
+        username: "test_user",
+        password: "test_user001"
+      }
+    },
+    acr: "urn:mace:incommon:iap:bronze",
+  };
+}
+
+export const serverConfig = createServerConfig(tenantId);
+
+// Legacy serverConfig structure for backward compatibility
+const legacyServerConfig = {
   issuer: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66`,
   tenantId: "67e7eae6-62b0-4500-9eff-87459f63fc66",
   authorizationEndpoint:
@@ -73,37 +161,24 @@ export const serverConfig = {
 };
 
 export const federationServerConfig = {
-  issuer: `${backendUrl}/1e68932e-ed4a-43e7-b412-460665e42df3`,
-  tenantId: "1e68932e-ed4a-43e7-b412-460665e42df3",
+  issuer: `${backendUrl}/${federationTenantId}`,
+  tenantId: federationTenantId,
   providerName: "test-provider"
 };
 
-export const unsupportedServerConfig = {
-  issuer: "https://server.example.com/94d8598e-f238-4150-85c2-c4accf515784",
-  authorizationEndpoint:
-    `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/v1/authorizations`,
-  authorizeEndpoint:
-    `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/v1/authorizations/{id}/authorize`,
-  tokenEndpoint: `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/v1/tokens`,
-  tokenIntrospectionEndpoint:
-    `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/v1/tokens/introspection`,
-  tokenRevocationEndpoint: `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/v1/tokens/revocation`,
-  userinfoEndpoint: `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/v1/userinfo`,
-  jwksEndpoint: `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/v1/jwks`,
-  backchannelAuthenticationEndpoint:
-    `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/v1/backchannel/authentications`,
-  backchannelAuthenticationAutomatedCompleteEndpoint:
-    `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/v1/backchannel/authentications/automated-complete`,
-  discoveryEndpoint:
-    `${backendUrl}/94d8598e-f238-4150-85c2-c4accf515784/.well-known/openid-configuration`,
-  enabledSsr: false,
-  ciba: {
-    loginHint: "001",
-    userCode: "successUserCode001",
-    bindingMessage: "999",
-    invalidLoginHint: "invalid",
-  },
-};
+export const unsupportedServerConfig = (() => {
+  const config = createServerConfig(unsupportedTenantId);
+  return {
+    ...config,
+    issuer: "https://server.example.com/" + unsupportedTenantId, // Override issuer for unsupported tests
+    ciba: {
+      loginHint: "001",
+      userCode: cibaPassword,
+      bindingMessage: "999",
+      invalidLoginHint: "invalid",
+    },
+  };
+})();
 export const clientSecretPostClient = {
   clientId: "clientSecretPost",
   clientSecret:
@@ -343,3 +418,36 @@ export const publicClient = {
     alg: "ES512"
   }
 };
+
+/**
+ * Helper function to create a custom server configuration for any tenant ID
+ * Useful for tests that need to work with different tenants dynamically
+ * 
+ * @param {string} tenantId - The tenant ID to create configuration for
+ * @param {string} [baseUrl] - Optional base URL (defaults to backendUrl)
+ * @returns {object} Server configuration object
+ * 
+ * @example
+ * // Create config for a specific tenant
+ * const myTenantConfig = createServerConfig('my-test-tenant-id');
+ * 
+ * // Create config with custom base URL
+ * const stagingConfig = createServerConfig('staging-tenant', 'https://staging.example.com');
+ */
+export { createServerConfig };
+
+/**
+ * Environment variables used for configuration:
+ * 
+ * - IDP_SERVER_URL: Backend server URL (default: http://localhost:8080)
+ * - IDP_SERVER_TENANT_ID: Main tenant ID for tests
+ * - IDP_SERVER_FEDERATION_TENANT_ID: Federation tenant ID for SSO tests
+ * - IDP_SERVER_UNSUPPORTED_TENANT_ID: Tenant ID for unsupported feature tests
+ * - CIBA_USER_SUB: CIBA test user subject identifier
+ * - CIBA_USER_EMAIL: CIBA test user email address
+ * - CIBA_USER_DEVICE_ID: CIBA test user device ID
+ * - CIBA_USERNAME: CIBA test username (for OAuth resource owner password credentials)
+ * - CIBA_PASSWORD: CIBA test password
+ * 
+ * All variables have sensible defaults for backward compatibility.
+ */
