@@ -26,7 +26,8 @@ public class NotificationTemplate implements JsonReadable {
 
   public NotificationTemplate() {}
 
-  public NotificationTemplate(String title, String body) {
+  public NotificationTemplate(String sender, String title, String body) {
+    this.sender = sender;
     this.title = title;
     this.body = body;
   }
