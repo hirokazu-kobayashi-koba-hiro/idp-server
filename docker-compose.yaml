@@ -2,16 +2,22 @@ version: '3'
 
 services:
   idp-server-1:
+    build: .
     image: idp-server:latest
     container_name: idp-server-1
     ports:
       - "8081:8080"
     depends_on:
-      - postgresql
-      - postgresql-reader
-      - mysql
-      - redis
-      - flyway-migrator
+      postgres-primary:
+        condition: service_healthy
+      postgres-replica:
+        condition: service_healthy
+      mysql: 
+        condition: service_healthy
+      redis:
+        condition: service_started
+      flyway-migrator:
+        condition: service_completed_successfully
     deploy:
       resources:
         limits:
@@ -22,10 +28,10 @@ services:
           memory: 1g
     environment:
       SERVER_URL: "http://localhost:8081"
-      IDP_SERVER_API_KEY: $IDP_SERVER_API_KEY
-      IDP_SERVER_API_SECRET: $IDP_SERVER_API_SECRET
-      ENCRYPTION_KEY: $ENCRYPTION_KEY
-      DB_WRITER_URL: jdbc:postgresql://postgresql:5432/idpserver
+      IDP_SERVER_API_KEY: ${IDP_SERVER_API_KEY:-30113151-4ee1-4f6a-a1ac-cc1be9eaf695}
+      IDP_SERVER_API_SECRET: ${IDP_SERVER_API_SECRET:-MTY5YjM3NmYtOTY0ZC00Nzg0LWIyOTMtOWQyNDhjMTkyNmIwCg==}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-JjN9c6N4STeA+g9d+TtBGp5MC3sbqOWs+S9qzJG42iY=}
+      DB_WRITER_URL: jdbc:postgresql://postgres-primary:5432/idpserver
       ADMIN_DB_WRITER_USER_NAME: idpserver
       ADMIN_DB_WRITER_PASSWORD: idpserver
       ADMIN_DB_READER_USER_NAME: idpserver
@@ -41,7 +47,7 @@ services:
       DB_WRITER_TIMEOUT: 2000
       DB_WRITER_MAX_POOL_SIZE: 30
       DB_WRITER_MIN_IDLE: 10
-      DB_READER_URL: jdbc:postgresql://postgresql:5432/idpserver
+      DB_READER_URL: jdbc:postgresql://postgres-replica:5432/idpserver
       DB_READER_USER_NAME: idp_app_user
       DB_READER_PASSWORD: idp_app_user
       DB_READER_TIMEOUT: 2000
@@ -61,16 +67,22 @@ services:
         -XX:MaxGCPauseMillis=100
 
   idp-server-2:
+    build: .
     image: idp-server:latest
     container_name: idp-server-2
     ports:
       - "8082:8080"
     depends_on:
-      - postgresql
-      - postgresql-reader
-      - mysql
-      - redis
-      - flyway-migrator
+      postgres-primary:
+        condition: service_healthy
+      postgres-replica:
+        condition: service_healthy
+      mysql: 
+        condition: service_healthy
+      redis:
+        condition: service_started
+      flyway-migrator:
+        condition: service_completed_successfully
     deploy:
       resources:
         limits:
@@ -81,10 +93,10 @@ services:
           memory: 1g
     environment:
       SERVER_URL: "http://localhost:8082"
-      IDP_SERVER_API_KEY: $IDP_SERVER_API_KEY
-      IDP_SERVER_API_SECRET: $IDP_SERVER_API_SECRET
-      ENCRYPTION_KEY: $ENCRYPTION_KEY
-      DB_WRITER_URL: jdbc:postgresql://postgresql:5432/idpserver
+      IDP_SERVER_API_KEY: ${IDP_SERVER_API_KEY:-30113151-4ee1-4f6a-a1ac-cc1be9eaf695}
+      IDP_SERVER_API_SECRET: ${IDP_SERVER_API_SECRET:-MTY5YjM3NmYtOTY0ZC00Nzg0LWIyOTMtOWQyNDhjMTkyNmIwCg==}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-JjN9c6N4STeA+g9d+TtBGp5MC3sbqOWs+S9qzJG42iY=}
+      DB_WRITER_URL: jdbc:postgresql://postgres-primary:5432/idpserver
       ADMIN_DB_WRITER_USER_NAME: idpserver
       ADMIN_DB_WRITER_PASSWORD: idpserver
       ADMIN_DB_READER_USER_NAME: idpserver
@@ -100,7 +112,7 @@ services:
       DB_WRITER_TIMEOUT: 2000
       DB_WRITER_MAX_POOL_SIZE: 30
       DB_WRITER_MIN_IDLE: 10
-      DB_READER_URL: jdbc:postgresql://postgresql:5432/idpserver
+      DB_READER_URL: jdbc:postgresql://postgres-replica:5432/idpserver
       DB_READER_USER_NAME: idp_app_user
       DB_READER_PASSWORD: idp_app_user
       DB_READER_TIMEOUT: 2000
@@ -130,9 +142,9 @@ services:
     ports:
       - "8080:80"
 
-  postgresql:
+  postgres-primary:
     image: postgres:15
-    container_name: postgres
+    container_name: postgres-primary
     environment:
       - POSTGRES_USER=idpserver
       - POSTGRES_PASSWORD=idpserver
@@ -143,24 +155,35 @@ services:
     command: [ "postgres", "-c", "shared_preload_libraries=pg_stat_statements" ]
     volumes:
       - ./libs/idp-server-database/postgresql/operation:/docker-entrypoint-initdb.d
+      - ./docker/postgresql/primary/init-replication.sh:/docker-entrypoint-initdb.d/99-init-replication.sh
+      - postgres_primary_data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U idpserver -d idpserver" ]
       interval: 5s
       timeout: 3s
       retries: 20
 
-  postgresql-reader:
-    image: postgres:15
-    container_name: postgres-reader
+  postgres-replica:
+    build:
+      context: ./docker/postgresql/replica
+    container_name: postgres-replica
     environment:
       - POSTGRES_USER=idpserver
       - POSTGRES_PASSWORD=idpserver
-      - POSTGRES_DB=idpserver_reader
+      - POSTGRES_DB=idpserver
+      - TZ=UTC
     ports:
-      - "54321:5432"
-    command: [ "postgres", "-c", "shared_preload_libraries=pg_stat_statements" ]
+      - "5433:5432"
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
     volumes:
-      - ./libs/idp-server-database/postgresql/operation:/docker-entrypoint-initdb.d
+      - postgres_replica_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U idpserver -d idpserver && psql -U idpserver -d idpserver -c 'SELECT pg_is_in_recovery();' | grep -q 't'" ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
 
   mysql:
     image: mysql:8.0
@@ -174,19 +197,27 @@ services:
     ports:
       - "3306:3306"
     command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   flyway-migrator:
+    build:
+      context: ./libs/idp-server-database
+      dockerfile: Dockerfile-flyway
     image: idp-flyway-migrator:latest
+    restart: "no"
     depends_on:
-      postgresql:
+      postgres-primary:
         condition: service_healthy
     environment:
       DB_TYPE: postgresql
-      DB_URL: jdbc:postgresql://postgresql:5432/idpserver
+      DB_URL: jdbc:postgresql://postgres-primary:5432/idpserver
       DB_USER_NAME: idpserver
       DB_PASSWORD: idpserver
     command: [ "migrate" ]    # info / repair / clean
-  #    profiles: [ "migrate" ]
 
   redis:
     image: redis:7.2-alpine
@@ -204,3 +235,7 @@ services:
     ]
     ports:
       - "4000:4000"
+
+volumes:
+  postgres_primary_data:
+  postgres_replica_data:
