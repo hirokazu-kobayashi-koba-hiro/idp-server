@@ -23,7 +23,7 @@ describe("security event management api", () => {
       const accessToken = tokenResponse.data.access_token;
 
       const securityEventResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/security-events`,
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/security-events`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -62,7 +62,7 @@ describe("security event management api", () => {
       const accessToken = tokenResponse.data.access_token;
 
       const securityEventResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/security-events?${param}=${value}`,
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/security-events?${param}=${value}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -97,7 +97,7 @@ describe("security event management api", () => {
     const accessToken = tokenResponse.data.access_token;
 
     const securityEventResponse = await get({
-      url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/security-events?${param}=${value}`,
+      url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/security-events?${param}=${value}`,
       headers: {
         Authorization: `Bearer ${accessToken}`
       }

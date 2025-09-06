@@ -24,7 +24,7 @@ describe("role management api", () => {
       const accessToken = tokenResponse.data.access_token;
 
       const createResponse = await postWithJson({
-        url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/roles`,
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/roles`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -46,7 +46,7 @@ describe("role management api", () => {
       const roleId = createResponse.data.result.id;
 
       const listResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/roles?id=${roleId}`,
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/roles?id=${roleId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -57,7 +57,7 @@ describe("role management api", () => {
       expect(listResponse.data).toHaveProperty("list");
 
       const detailResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/roles/${roleId}`,
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/roles/${roleId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -67,7 +67,7 @@ describe("role management api", () => {
       expect(detailResponse.data).toHaveProperty("id");
 
       const updateResponse = await putWithJson({
-        url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/roles/${roleId}`,
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/roles/${roleId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -92,7 +92,7 @@ describe("role management api", () => {
       expect(updateResponse.data).toHaveProperty("diff");
 
       const removeResponse = await putWithJson({
-        url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/roles/${roleId}/permissions:remove`,
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/roles/${roleId}/permissions:remove`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -111,7 +111,7 @@ describe("role management api", () => {
       expect(removeResponse.data).toHaveProperty("diff");
 
       const deleteResponse = await deletion({
-        url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/roles/${roleId}`,
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/roles/${roleId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         }

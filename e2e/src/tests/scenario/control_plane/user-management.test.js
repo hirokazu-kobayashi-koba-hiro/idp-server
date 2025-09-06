@@ -23,7 +23,7 @@ describe("user management api", () => {
       const accessToken = tokenResponse.data.access_token;
 
       const createResponse = await postWithJson({
-        url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/users`,
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -41,7 +41,7 @@ describe("user management api", () => {
       const userId = createResponse.data.result.sub;
 
       const listResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/users?user_id=${userId}`,
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users?user_id=${userId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -52,7 +52,7 @@ describe("user management api", () => {
       expect(listResponse.data).toHaveProperty("list");
 
       const detailResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/users/${userId}`,
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users/${userId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -62,7 +62,7 @@ describe("user management api", () => {
       expect(detailResponse.data).toHaveProperty("sub");
 
       const updateResponse = await putWithJson({
-        url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/users/${userId}`,
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users/${userId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -77,7 +77,7 @@ describe("user management api", () => {
       expect(updateResponse.data).toHaveProperty("result");
 
       const patchResponse = await patchWithJson({
-        url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/users/${userId}`,
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users/${userId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -91,7 +91,7 @@ describe("user management api", () => {
 
 
       const updatePasswordResponse = await putWithJson({
-        url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/users/${userId}/password`,
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users/${userId}/password`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -107,7 +107,7 @@ describe("user management api", () => {
       expect(updatePasswordResponse.data).toHaveProperty("result");
 
       const deleteResponse = await deletion({
-        url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/users/${userId}`,
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users/${userId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         }
@@ -166,7 +166,7 @@ describe("user management api", () => {
         const accessToken = tokenResponse.data.access_token;
 
         const listResponse = await get({
-          url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/users?${param}=${encodeURIComponent(value)}`,
+          url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users?${param}=${encodeURIComponent(value)}`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -205,7 +205,7 @@ describe("user management api", () => {
       const accessToken = tokenResponse.data.access_token;
 
       const listResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/users?${param}=${value}`,
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users?${param}=${value}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }

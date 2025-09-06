@@ -23,7 +23,7 @@ describe("audit log management api", () => {
       const accessToken = tokenResponse.data.access_token;
 
       const auditLogResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/audit-logs`,
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/audit-logs`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -62,7 +62,7 @@ describe("audit log management api", () => {
       const accessToken = tokenResponse.data.access_token;
 
       const auditLogResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/audit-logs?${param}=${value}`,
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/audit-logs?${param}=${value}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -97,7 +97,7 @@ describe("audit log management api", () => {
     const accessToken = tokenResponse.data.access_token;
 
     const auditLogResponse = await get({
-      url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/audit-logs?${param}=${value}`,
+      url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/audit-logs?${param}=${value}`,
       headers: {
         Authorization: `Bearer ${accessToken}`
       }

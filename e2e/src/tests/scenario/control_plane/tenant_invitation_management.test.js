@@ -21,7 +21,7 @@ describe("tenant invitation management api", () => {
       const accessToken = tokenResponse.data.access_token;
 
       const response = await post({
-        url: `${backendUrl}/v1/management/tenants/67e7eae6-62b0-4500-9eff-87459f63fc66/invitations`,
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/invitations`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json;charset=UTF-8",
@@ -38,7 +38,7 @@ describe("tenant invitation management api", () => {
       const { id } = response.data.result;
 
       const invitationMetaDataResponse = await get({
-        url: `${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/invitations/${id}`,
+        url: `${backendUrl}/${serverConfig.tenantId}/v1/invitations/${id}`,
         headers: {
           "Content-Type": "application/json;charset=UTF-8",
         },
