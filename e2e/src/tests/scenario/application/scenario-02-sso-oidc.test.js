@@ -11,7 +11,6 @@ import { get, post } from "../../../lib/http";
 import { requestFederation } from "../../../oauth/federation";
 import { requestAuthorizations } from "../../../oauth/request";
 import { verifyAndDecodeJwt } from "../../../lib/jose";
-import { convertToAuthorizationResponse } from "../../../lib/util";
 
 describe("sso oidc", () => {
 
@@ -226,7 +225,7 @@ describe("sso oidc", () => {
         clientId: clientSecretPostClient.clientId,
         responseType: "code",
         state: "aiueo",
-        scope: "openid profile phone email claims:ex_sub " + clientSecretPostClient.scope,
+        scope: "openid profile phone email claims:ex_sub claims:status " + clientSecretPostClient.scope,
         redirectUri: clientSecretPostClient.redirectUri,
         customParams: {
           organizationId: "123",
@@ -258,6 +257,7 @@ describe("sso oidc", () => {
       console.log(JSON.stringify(decodedAccessToken, null, 2));
       expect(decodedAccessToken.payload.sub).toEqual(registeredUser.sub);
       expect(decodedAccessToken.payload.ex_sub).toEqual(registeredUser.external_user_id);
+      expect(decodedAccessToken.payload.status).toEqual("INITIALIZED");
 
       let userinfoResponse = await getUserinfo({
         endpoint: serverConfig.userinfoEndpoint,
@@ -270,6 +270,7 @@ describe("sso oidc", () => {
 
       console.log(registeredUser);
       expect(userinfoResponse.data.sub).toEqual(registeredUser.sub);
+      expect(userinfoResponse.data.status).toEqual("REGISTERED");
 
     });
 

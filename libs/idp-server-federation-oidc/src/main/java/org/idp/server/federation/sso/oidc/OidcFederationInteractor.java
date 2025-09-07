@@ -26,6 +26,7 @@ import org.idp.server.core.openid.federation.repository.FederationConfigurationQ
 import org.idp.server.core.openid.federation.sso.*;
 import org.idp.server.core.openid.federation.sso.oidc.OidcSsoSession;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.identity.mapper.UserInfoMapper;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
@@ -167,22 +168,7 @@ public class OidcFederationInteractor implements FederationInteractor {
           userinfoResult.contents());
     }
 
-    UserInfoMapper userInfoMapper =
-        new UserInfoMapper(
-            oidcSsoConfiguration.userinfoMappingRules(),
-            userinfoResult.contents(),
-            oidcSsoConfiguration.issuerName());
-    User user = userInfoMapper.toUser();
-
-    User exsitingUser =
-        userQueryRepository.findByExternalIdpSubject(
-            tenant, user.externalUserId(), oidcSsoConfiguration.issuerName());
-
-    if (exsitingUser.exists()) {
-      user.setSub(exsitingUser.sub());
-    } else {
-      user.setSub(UUID.randomUUID().toString());
-    }
+    User user = resolveUser(tenant, userQueryRepository, oidcSsoConfiguration, userinfoResult);
 
     sessionCommandRepository.delete(tenant, session.ssoSessionIdentifier());
 
@@ -210,5 +196,31 @@ public class OidcFederationInteractor implements FederationInteractor {
     }
 
     return FederationInteractionResult.success(federationType, ssoProvider, session, user);
+  }
+
+  private static User resolveUser(
+      Tenant tenant,
+      UserQueryRepository userQueryRepository,
+      OidcSsoConfiguration oidcSsoConfiguration,
+      UserinfoExecutionResult userinfoResult) {
+    UserInfoMapper userInfoMapper =
+        new UserInfoMapper(
+            oidcSsoConfiguration.userinfoMappingRules(),
+            userinfoResult.contents(),
+            oidcSsoConfiguration.issuerName());
+    User user = userInfoMapper.toUser();
+
+    User exsitingUser =
+        userQueryRepository.findByExternalIdpSubject(
+            tenant, user.externalUserId(), oidcSsoConfiguration.issuerName());
+
+    if (exsitingUser.exists()) {
+      user.setSub(exsitingUser.sub());
+    } else {
+      user.setSub(UUID.randomUUID().toString());
+      user.setStatus(UserStatus.FEDERATED);
+    }
+
+    return user;
   }
 }

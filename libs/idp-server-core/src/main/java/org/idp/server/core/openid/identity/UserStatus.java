@@ -17,17 +17,18 @@
 package org.idp.server.core.openid.identity;
 
 public enum UserStatus {
-  UNREGISTERED("Account has not been created"),
-  REGISTERED("Registered but email not verified"),
+  INITIALIZED("User has initiated your account"),
+  FEDERATED("Federated External IdP"),
+  REGISTERED("Registered"),
   IDENTITY_VERIFIED("Identity verified"),
   IDENTITY_VERIFICATION_REQUIRED("Identity verification (ekyc) required"),
-  ACTIVATED("Account activated"),
   LOCKED("Temporarily locked due to failures"),
   DISABLED("Disabled by user or admin"),
   SUSPENDED("Suspended due to policy violations"),
   DEACTIVATED("Deactivation requested, in grace period"),
   DELETED_PENDING("Pending deletion after grace period"),
-  DELETED("Permanently deleted");
+  DELETED("Permanently deleted"),
+  UNKNOWN("Unknown");
 
   String description;
 
@@ -45,14 +46,14 @@ public enum UserStatus {
         return userStatus;
       }
     }
-    return UNREGISTERED;
+    return UNKNOWN;
   }
 
   public boolean isIdentityVerified() {
     return this == IDENTITY_VERIFIED;
   }
 
-  public boolean isUnregistered() {
-    return this == UNREGISTERED;
+  public boolean isInitialized() {
+    return this == INITIALIZED;
   }
 }

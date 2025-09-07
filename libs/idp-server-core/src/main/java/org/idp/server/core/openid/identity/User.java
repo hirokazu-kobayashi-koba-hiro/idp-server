@@ -69,7 +69,7 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
   String currentOrganizationId;
   List<String> assignedOrganizations = new ArrayList<>();
   HashMap<String, Object> verifiedClaims = new HashMap<>();
-  UserStatus status = UserStatus.UNREGISTERED;
+  UserStatus status = UserStatus.INITIALIZED;
 
   public static User notFound() {
     return new User();
