@@ -22,6 +22,7 @@ import java.util.Map;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
+import org.idp.server.platform.multi_tenancy.organization.OrganizationQueries;
 
 public class MysqlExecutor implements OrganizationSqlExecutor {
 
@@ -124,5 +125,53 @@ public class MysqlExecutor implements OrganizationSqlExecutor {
     params.add(identifier.value());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
+  @Override
+  public List<Map<String, String>> selectList(OrganizationQueries queries) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    StringBuilder sqlTemplate =
+        new StringBuilder(
+            """
+                SELECT
+                organization.id,
+                organization.name,
+                organization.description,
+                COALESCE(
+                JSON_ARRAYAGG(JSON_OBJECT('id', tenant.id, 'name', tenant.name, 'type', tenant.type)),
+                JSON_ARRAY()
+                ) AS tenants
+            FROM organization
+                LEFT JOIN organization_tenants ON organization_tenants.organization_id = organization.id
+                LEFT JOIN tenant ON organization_tenants.tenant_id = tenant.id
+            """);
+
+    List<Object> params = new ArrayList<>();
+
+    // Add WHERE clause for specific IDs if provided
+    if (queries.hasIds() && !queries.ids().isEmpty()) {
+      sqlTemplate.append("WHERE organization.id IN (");
+      for (int i = 0; i < queries.ids().size(); i++) {
+        if (i > 0) sqlTemplate.append(",");
+        sqlTemplate.append("?");
+        params.add(queries.ids().get(i));
+      }
+      sqlTemplate.append(") ");
+    }
+
+    sqlTemplate.append(
+        """
+            GROUP BY
+            organization.id,
+            organization.name,
+            organization.description
+            LIMIT ? OFFSET ?
+            """);
+
+    params.add(queries.limit());
+    params.add(queries.offset());
+
+    return sqlExecutor.selectList(sqlTemplate.toString(), params);
   }
 }

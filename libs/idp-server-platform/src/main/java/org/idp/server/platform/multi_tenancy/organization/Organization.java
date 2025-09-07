@@ -77,4 +77,8 @@ public class Organization {
   public boolean hasAssignedTenants() {
     return assignedTenants != null && assignedTenants.exists();
   }
+
+  public boolean exists() {
+    return identifier != null && identifier.exists();
+  }
 }

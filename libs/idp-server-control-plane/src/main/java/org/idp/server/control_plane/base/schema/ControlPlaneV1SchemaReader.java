@@ -105,4 +105,21 @@ public class ControlPlaneV1SchemaReader {
     String json = ResourceReader.readClasspath("/schema/1.0/role-remove-permissions.json");
     return JsonSchemaDefinition.fromJson(json);
   }
+
+  public static JsonSchemaDefinition adminUserRolesUpdateSchema() {
+    String json = ResourceReader.readClasspath("/schema/1.0/admin-user-roles-update.json");
+    return JsonSchemaDefinition.fromJson(json);
+  }
+
+  public static JsonSchemaDefinition adminUserTenantAssignmentsUpdateSchema() {
+    String json =
+        ResourceReader.readClasspath("/schema/1.0/admin-user-tenant-assignments-update.json");
+    return JsonSchemaDefinition.fromJson(json);
+  }
+
+  public static JsonSchemaDefinition adminUserOrganizationAssignmentsUpdateSchema() {
+    String json =
+        ResourceReader.readClasspath("/schema/1.0/admin-user-organization-assignments-update.json");
+    return JsonSchemaDefinition.fromJson(json);
+  }
 }

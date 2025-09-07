@@ -16,9 +16,11 @@
 
 package org.idp.server.core.adapters.datasource.multi_tenancy.organization;
 
+import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
+import org.idp.server.platform.multi_tenancy.organization.OrganizationQueries;
 
 public interface OrganizationSqlExecutor {
   void insert(Organization organization);
@@ -28,4 +30,6 @@ public interface OrganizationSqlExecutor {
   void update(Organization organization);
 
   Map<String, String> selectOne(OrganizationIdentifier identifier);
+
+  List<Map<String, String>> selectList(OrganizationQueries queries);
 }

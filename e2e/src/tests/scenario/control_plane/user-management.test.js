@@ -116,6 +116,138 @@ describe("user management api", () => {
       expect(deleteResponse.status).toBe(204);
     });
 
+    it("role and permission updates", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+        scope: clientSecretPostClient.scope,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      // Create a test user with unique email
+      const timestamp = Date.now();
+      const createResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          "provider_id": "idp-server",
+          "name": `role-test-user-${timestamp}`,
+          "email": `roletest-${timestamp}@example.com`,
+          "raw_password": "test@01234"
+        }
+      });
+      console.log(createResponse.data);
+      expect(createResponse.status).toBe(201);
+      const userId = createResponse.data.result.sub;
+
+      // Get existing roles from role management API
+      const rolesListResponse = await get({
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/roles`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      console.log("Available roles:", rolesListResponse.data);
+      expect(rolesListResponse.status).toBe(200);
+      
+      // Use existing roles if available, otherwise create test roles
+      let rolesToAssign = [];
+      if (rolesListResponse.data.list && rolesListResponse.data.list.length > 0) {
+        // Take first available role
+        const firstRole = rolesListResponse.data.list[0];
+        rolesToAssign = [{
+          "role_id": firstRole.id,
+          "role_name": firstRole.name
+        }];
+      } else {
+        // Fallback to test role structure (this might need adjustment)
+        rolesToAssign = [{
+          "role_id": "550e8400-e29b-41d4-a716-446655440000",
+          "role_name": "Test Role"
+        }];
+      }
+
+      console.log(rolesToAssign);
+
+      // Test role updates
+      const updateRolesResponse = await patchWithJson({
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users/${userId}/roles`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          "roles": rolesToAssign
+        }
+      });
+      console.log("updateRoles response:", updateRolesResponse.data);
+      expect(updateRolesResponse.status).toBe(200);
+      expect(updateRolesResponse.data).toHaveProperty("roles");
+
+
+      // Test tenant assignments update
+      const updateTenantAssignmentsResponse = await patchWithJson({
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users/${userId}/tenant-assignments`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          "current_tenant_id": serverConfig.tenantId,
+          "assigned_tenants": [serverConfig.tenantId]
+        }
+      });
+      console.log("updateTenantAssignments response:", updateTenantAssignmentsResponse.data);
+      expect(updateTenantAssignmentsResponse.status).toBe(200);
+      expect(updateTenantAssignmentsResponse.data).toHaveProperty("current_tenant_id");
+
+      // Test organization assignments update with valid UUIDs
+      const validOrgId = "9eb8eb8c-2615-4604-809f-5cae1c00a462";
+      const validSubOrgId = "9eb8eb8c-2615-4604-809f-5cae1c00a462";
+      const updateOrgAssignmentsResponse = await patchWithJson({
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users/${userId}/organization-assignments`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          "current_organization_id": validOrgId,
+          "assigned_organizations": [validOrgId, validSubOrgId]
+        }
+      });
+      console.log("updateOrgAssignments response:", updateOrgAssignmentsResponse.data);
+      expect(updateOrgAssignmentsResponse.status).toBe(200);
+      expect(updateOrgAssignmentsResponse.data).toHaveProperty("current_organization_id");
+
+      // Verify all updates by getting the user
+      const verifyResponse = await get({
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users/${userId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      console.log("Final user state:", JSON.stringify(verifyResponse.data, null, 2));
+      expect(verifyResponse.status).toBe(200);
+      expect(verifyResponse.data).toHaveProperty("roles");
+      expect(verifyResponse.data).toHaveProperty("permissions");
+      expect(verifyResponse.data).toHaveProperty("current_tenant_id");
+      expect(verifyResponse.data).toHaveProperty("assigned_tenants");
+
+      // Clean up - delete test user
+      const deleteResponse = await deletion({
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users/${userId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
+      expect(deleteResponse.status).toBe(204);
+    });
+
+
     describe("find list query pattern", () => {
       const validCases = [
         ["valid user_id", "user_id", "c9cfa3c3-8534-45a6-8905-7a1f9cd3fd18"],

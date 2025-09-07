@@ -50,4 +50,8 @@ public class OrganizationIdentifier implements UuidConvertable {
   public int hashCode() {
     return Objects.hashCode(value);
   }
+
+  public boolean exists() {
+    return value != null && !value.isEmpty();
+  }
 }

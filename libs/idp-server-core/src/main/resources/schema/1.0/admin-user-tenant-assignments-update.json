@@ -1,0 +1,18 @@
+{
+  "type": "object",
+  "properties": {
+    "current_tenant_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "assigned_tenants": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -16,6 +16,7 @@
 
 package org.idp.server.platform.multi_tenancy.organization;
 
+import java.util.List;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface OrganizationRepository {
@@ -24,4 +25,6 @@ public interface OrganizationRepository {
   void update(Tenant tenant, Organization organization);
 
   Organization get(Tenant tenant, OrganizationIdentifier identifier);
+
+  List<Organization> findList(Tenant tenant, OrganizationQueries queries);
 }
