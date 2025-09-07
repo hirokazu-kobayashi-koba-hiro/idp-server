@@ -41,6 +41,14 @@ public interface UserManagementApi {
     map.put("update", new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
     map.put("patch", new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
     map.put("updatePassword", new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
+    map.put("updateRoles", new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
+    map.put("updatePermissions", new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
+    map.put(
+        "updateTenantAssignments",
+        new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
+    map.put(
+        "updateOrganizationAssignments",
+        new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
     map.put("delete", new AdminPermissions(Set.of(DefaultAdminPermission.USER_DELETE)));
     AdminPermissions adminPermissions = map.get(method);
     if (adminPermissions == null) {
@@ -103,6 +111,42 @@ public interface UserManagementApi {
       User operator,
       OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
+      RequestAttributes requestAttributes,
+      boolean dryRun);
+
+  UserManagementResponse updateRoles(
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      UserIdentifier userIdentifier,
+      UserRegistrationRequest request,
+      RequestAttributes requestAttributes,
+      boolean dryRun);
+
+  UserManagementResponse updatePermissions(
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      UserIdentifier userIdentifier,
+      UserRegistrationRequest request,
+      RequestAttributes requestAttributes,
+      boolean dryRun);
+
+  UserManagementResponse updateTenantAssignments(
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      UserIdentifier userIdentifier,
+      UserRegistrationRequest request,
+      RequestAttributes requestAttributes,
+      boolean dryRun);
+
+  UserManagementResponse updateOrganizationAssignments(
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      UserIdentifier userIdentifier,
+      UserRegistrationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 }

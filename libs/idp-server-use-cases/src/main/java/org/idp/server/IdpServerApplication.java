@@ -681,6 +681,8 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 userQueryRepository,
                 userCommandRepository,
+                roleQueryRepository,
+                organizationRepository,
                 passwordEncodeDelegation,
                 userLifecycleEventPublisher,
                 auditLogWriters),

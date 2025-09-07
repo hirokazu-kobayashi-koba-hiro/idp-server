@@ -1,0 +1,18 @@
+{
+  "type": "object",
+  "properties": {
+    "current_organization_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "assigned_organizations": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -16,6 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.multi_tenancy.organization;
 
+import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.multi_tenancy.organization.*;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -56,5 +57,15 @@ public class OrganizationDataSource implements OrganizationRepository {
     }
 
     return ModelConvertor.convert(result);
+  }
+
+  @Override
+  public List<Organization> findList(Tenant tenant, OrganizationQueries queries) {
+    OrganizationSqlExecutor executor = executors.get(tenant.databaseType());
+
+    List<Map<String, String>> results = executor.selectList(queries);
+    return results.stream()
+        .map(ModelConvertor::convert)
+        .collect(java.util.stream.Collectors.toList());
   }
 }

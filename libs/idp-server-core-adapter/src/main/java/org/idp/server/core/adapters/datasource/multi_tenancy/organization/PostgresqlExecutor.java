@@ -124,4 +124,48 @@ public class PostgresqlExecutor implements OrganizationSqlExecutor {
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
+
+  @Override
+  public List<Map<String, String>> selectList(OrganizationQueries queries) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    StringBuilder sqlTemplate =
+        new StringBuilder(
+            """
+            SELECT
+                organization.id,
+                organization.name,
+                organization.description,
+                COALESCE(
+                JSON_AGG(JSON_BUILD_OBJECT('id', tenant.id, 'name', tenant.name, 'type', tenant.type))
+                FILTER (WHERE tenant.id IS NOT NULL),
+                '[]'
+                ) AS tenants
+            FROM organization
+                LEFT JOIN organization_tenants ON organization_tenants.organization_id = organization.id
+                LEFT JOIN tenant ON organization_tenants.tenant_id = tenant.id
+            """);
+
+    List<Object> params = new ArrayList<>();
+
+    // Add WHERE clause for specific IDs if provided
+    if (queries.hasIds() && !queries.ids().isEmpty()) {
+      sqlTemplate.append("WHERE organization.id = ANY(string_to_array(?, ',')::uuid[]) ");
+      params.add(String.join(",", queries.ids()));
+    }
+
+    sqlTemplate.append(
+        """
+            GROUP BY
+            organization.id,
+            organization.name,
+            organization.description
+            LIMIT ? OFFSET ?
+            """);
+
+    params.add(queries.limit());
+    params.add(queries.offset());
+
+    return sqlExecutor.selectList(sqlTemplate.toString(), params);
+  }
 }

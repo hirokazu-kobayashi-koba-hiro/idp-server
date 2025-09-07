@@ -1,0 +1,36 @@
+{
+  "type": "object",
+  "properties": {
+    "roles": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "type": "object",
+        "required": [
+          "role_id",
+          "role_name"
+        ],
+        "properties": {
+          "role_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role_name": {
+            "type": "string",
+            "maxLength": 255
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "permissions": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "type": "string",
+        "maxLength": 255
+      }
+    }
+  },
+  "additionalProperties": false
+}
