@@ -1,4 +1,4 @@
-import { describe, expect, it, xit } from "@jest/globals";
+import { describe, expect, it } from "@jest/globals";
 
 import {
   getAuthenticationDeviceAuthenticationTransaction,
@@ -9,15 +9,11 @@ import {
 import { clientSecretPostClient, serverConfig } from "../testConfig";
 import { requestAuthorizations } from "../../oauth/request";
 import {
-  createJwe,
-  createJwt,
-  createJwtWithNoneSignature,
   createJwtWithPrivateKey,
   generateJti,
   verifyAndDecodeJwt,
 } from "../../lib/jose";
 import { toEpocTime } from "../../lib/util";
-import { get } from "../../lib/http";
 import { generateCodeVerifier } from "../../lib/oauth";
 
 describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", () => {
@@ -639,6 +635,208 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
       expect(introspectionResponse.status).toBe(200);
       expect(introspectionResponse.data.active).toBe(false);
 
+    });
+  });
+
+  describe("error cases - type validation", () => {
+    it("should reject authorization details without type field", async () => {
+      const codeVerifier = generateCodeVerifier(64);
+      const codeChallenge = codeVerifier;
+      const authorizationDetails = [{
+        "actions": [
+          "list_accounts",
+          "read_balances"
+        ],
+        "locations": [
+          "https://example.com/accounts"
+        ]
+      }];
+
+      const { authorizationResponse } = await requestAuthorizations({
+        client_id: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "aiueo",
+        scope: "openid profile phone email " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+        aud: serverConfig.issuer,
+        iss: clientSecretPostClient.clientId,
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseMode: "query",
+        nonce: "nonce",
+        display: "page",
+        prompt: "login",
+        codeChallenge,
+        codeChallengeMethod: "plain",
+        authorizationDetails: JSON.stringify(authorizationDetails),
+      });
+      
+      console.log("Authorization response for missing type:", authorizationResponse);
+      expect(authorizationResponse.error).toBe("invalid_authorization_details");
+      expect(authorizationResponse.errorDescription).toContain("authorization details does not contains type");
+    });
+
+    it("should reject authorization details with empty type field", async () => {
+      const codeVerifier = generateCodeVerifier(64);
+      const codeChallenge = codeVerifier;
+      const authorizationDetails = [{
+        "type": "",
+        "actions": [
+          "list_accounts",
+          "read_balances"
+        ],
+        "locations": [
+          "https://example.com/accounts"
+        ]
+      }];
+
+      const { authorizationResponse } = await requestAuthorizations({
+        client_id: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "aiueo",
+        scope: "openid profile phone email " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+        aud: serverConfig.issuer,
+        iss: clientSecretPostClient.clientId,
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseMode: "query",
+        nonce: "nonce",
+        display: "page",
+        prompt: "login",
+        codeChallenge,
+        codeChallengeMethod: "plain",
+        authorizationDetails: JSON.stringify(authorizationDetails),
+      });
+      
+      console.log("Authorization response for empty type:", authorizationResponse);
+      expect(authorizationResponse.error).toBe("invalid_authorization_details");
+      expect(authorizationResponse.errorDescription).toContain("authorization details does not contains type");
+    });
+
+    it("should reject authorization details with unsupported type", async () => {
+      const codeVerifier = generateCodeVerifier(64);
+      const codeChallenge = codeVerifier;
+      const authorizationDetails = [{
+        "type": "unsupported_type",
+        "actions": [
+          "list_accounts",
+          "read_balances"
+        ],
+        "locations": [
+          "https://example.com/accounts"
+        ]
+      }];
+
+      const { authorizationResponse } = await requestAuthorizations({
+        client_id: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "aiueo",
+        scope: "openid profile phone email " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+        aud: serverConfig.issuer,
+        iss: clientSecretPostClient.clientId,
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseMode: "query",
+        nonce: "nonce",
+        display: "page",
+        prompt: "login",
+        codeChallenge,
+        codeChallengeMethod: "plain",
+        authorizationDetails: JSON.stringify(authorizationDetails),
+      });
+      
+      console.log("Authorization response for unsupported type:", authorizationResponse);
+      expect(authorizationResponse.error).toBe("invalid_authorization_details");
+      expect(authorizationResponse.errorDescription).toContain("unauthorized authorization details type (unsupported_type)");
+    });
+
+    it("should reject authorization details with null type field", async () => {
+      const codeVerifier = generateCodeVerifier(64);
+      const codeChallenge = codeVerifier;
+      const authorizationDetails = [{
+        "type": null,
+        "actions": [
+          "list_accounts",
+          "read_balances"
+        ],
+        "locations": [
+          "https://example.com/accounts"
+        ]
+      }];
+
+      const { authorizationResponse } = await requestAuthorizations({
+        client_id: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "aiueo",
+        scope: "openid profile phone email " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+        aud: serverConfig.issuer,
+        iss: clientSecretPostClient.clientId,
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseMode: "query",
+        nonce: "nonce",
+        display: "page",
+        prompt: "login",
+        codeChallenge,
+        codeChallengeMethod: "plain",
+        authorizationDetails: JSON.stringify(authorizationDetails),
+      });
+      
+      console.log("Authorization response for null type:", authorizationResponse);
+      expect(authorizationResponse.error).toBe("invalid_authorization_details");
+      expect(authorizationResponse.errorDescription).toContain("authorization details does not contains type");
+    });
+
+    it("should reject mixed valid and invalid authorization details", async () => {
+      const codeVerifier = generateCodeVerifier(64);
+      const codeChallenge = codeVerifier;
+      const authorizationDetails = [
+        {
+          "type": "account_information",
+          "actions": [
+            "list_accounts",
+            "read_balances"
+          ],
+          "locations": [
+            "https://example.com/accounts"
+          ]
+        },
+        {
+          "type": "invalid_type",
+          "actions": [
+            "invalid_action"
+          ],
+          "locations": [
+            "https://example.com/invalid"
+          ]
+        }
+      ];
+
+      const { authorizationResponse } = await requestAuthorizations({
+        client_id: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "aiueo",
+        scope: "openid profile phone email " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+        aud: serverConfig.issuer,
+        iss: clientSecretPostClient.clientId,
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseMode: "query",
+        nonce: "nonce",
+        display: "page",
+        prompt: "login",
+        codeChallenge,
+        codeChallengeMethod: "plain",
+        authorizationDetails: JSON.stringify(authorizationDetails),
+      });
+      
+      console.log("Authorization response for mixed valid/invalid types:", authorizationResponse);
+      expect(authorizationResponse.error).toBe("invalid_authorization_details");
+      expect(authorizationResponse.errorDescription).toContain("unauthorized authorization details type (invalid_type)");
     });
   });
 });
