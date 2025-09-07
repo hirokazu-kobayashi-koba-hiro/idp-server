@@ -69,6 +69,19 @@ public class SecurityEventHookConfigurationQueryDataSource
   }
 
   @Override
+  public SecurityEventHookConfiguration findWithDisabled(
+      Tenant tenant, SecurityEventHookConfigurationIdentifier identifier, boolean includeDisabled) {
+    SecurityEventHookConfigSqlExecutor executor = executors.get(tenant.databaseType());
+    Map<String, String> result = executor.selectOne(tenant, identifier, includeDisabled);
+
+    if (result == null || result.isEmpty()) {
+      return new SecurityEventHookConfiguration();
+    }
+
+    return jsonConverter.read(result.get("payload"), SecurityEventHookConfiguration.class);
+  }
+
+  @Override
   public SecurityEventHookConfiguration find(Tenant tenant, String type) {
     SecurityEventHookConfigSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, type);

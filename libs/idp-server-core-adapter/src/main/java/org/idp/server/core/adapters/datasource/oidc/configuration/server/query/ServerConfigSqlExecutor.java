@@ -21,4 +21,6 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public interface ServerConfigSqlExecutor {
   Map<String, String> selectOne(TenantIdentifier tenantIdentifier);
+
+  Map<String, String> selectOne(TenantIdentifier tenantIdentifier, boolean includeDisabled);
 }

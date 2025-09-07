@@ -71,6 +71,20 @@ public class FederationConfigurationQueryDataSource
   }
 
   @Override
+  public FederationConfiguration findWithDisabled(
+      Tenant tenant, FederationConfigurationIdentifier identifier, boolean includeDisabled) {
+    FederationConfigurationSqlExecutor executor = executors.get(tenant.databaseType());
+
+    Map<String, String> result = executor.selectOne(tenant, identifier, includeDisabled);
+
+    if (Objects.isNull(result) || result.isEmpty()) {
+      return new FederationConfiguration();
+    }
+
+    return ModelConverter.convert(result);
+  }
+
+  @Override
   public List<FederationConfiguration> findList(Tenant tenant, int limit, int offset) {
     FederationConfigurationSqlExecutor executor = executors.get(tenant.databaseType());
 

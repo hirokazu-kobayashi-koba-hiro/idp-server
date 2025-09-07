@@ -20,11 +20,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.platform.configuration.Configurable;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.security.event.SecurityEventType;
 import org.idp.server.platform.security.hook.SecurityEventHookType;
 
-public class SecurityEventHookConfiguration implements JsonReadable {
+public class SecurityEventHookConfiguration implements JsonReadable, Configurable {
 
   String id;
   String type;

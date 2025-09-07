@@ -28,7 +28,19 @@ public interface FederationConfigurationSqlExecutor {
   Map<String, String> selectOne(
       Tenant tenant, FederationType federationType, SsoProvider ssoProvider);
 
+  Map<String, String> selectOne(
+      Tenant tenant,
+      FederationType federationType,
+      SsoProvider ssoProvider,
+      boolean includeDisabled);
+
   Map<String, String> selectOne(Tenant tenant, FederationConfigurationIdentifier identifier);
 
+  Map<String, String> selectOne(
+      Tenant tenant, FederationConfigurationIdentifier identifier, boolean includeDisabled);
+
   List<Map<String, String>> selectList(Tenant tenant, int limit, int offset);
+
+  List<Map<String, String>> selectList(
+      Tenant tenant, int limit, int offset, boolean includeDisabled);
 }

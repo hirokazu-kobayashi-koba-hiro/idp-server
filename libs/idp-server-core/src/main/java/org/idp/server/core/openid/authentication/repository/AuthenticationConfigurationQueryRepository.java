@@ -26,6 +26,9 @@ public interface AuthenticationConfigurationQueryRepository {
 
   AuthenticationConfiguration find(Tenant tenant, AuthenticationConfigurationIdentifier identifier);
 
+  AuthenticationConfiguration findWithDisabled(
+      Tenant tenant, AuthenticationConfigurationIdentifier identifier, boolean includeDisabled);
+
   long findTotalCount(Tenant tenant);
 
   List<AuthenticationConfiguration> findList(Tenant tenant, int limit, int offset);

@@ -166,7 +166,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     ClientConfiguration clientConfiguration =
-        clientConfigurationQueryRepository.find(tenant, clientIdentifier);
+        clientConfigurationQueryRepository.findWithDisabled(tenant, clientIdentifier, true);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
@@ -205,7 +205,8 @@ public class ClientManagementEntryService implements ClientManagementApi {
     AdminPermissions permissions = getRequiredPermissions("update");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    ClientConfiguration before = clientConfigurationQueryRepository.find(tenant, clientIdentifier);
+    ClientConfiguration before =
+        clientConfigurationQueryRepository.findWithDisabled(tenant, clientIdentifier, true);
 
     ClientRegistrationRequestValidator validator =
         new ClientRegistrationRequestValidator(request, dryRun);
@@ -273,7 +274,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     ClientConfiguration clientConfiguration =
-        clientConfigurationQueryRepository.find(tenant, clientIdentifier);
+        clientConfigurationQueryRepository.findWithDisabled(tenant, clientIdentifier, true);
 
     AuditLog auditLog =
         AuditLogCreator.createOnDeletion(

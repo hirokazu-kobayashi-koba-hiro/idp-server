@@ -152,7 +152,7 @@ public class SecurityEventHookConfigurationManagementEntryService
 
     Map<String, Object> response = new HashMap<>();
     response.put(
-        "list", configurations.stream().map(SecurityEventHookConfiguration::events).toList());
+        "list", configurations.stream().map(SecurityEventHookConfiguration::toMap).toList());
 
     return new SecurityEventHookConfigManagementResponse(
         SecurityEventHookConfigManagementStatus.OK, response);
@@ -169,7 +169,7 @@ public class SecurityEventHookConfigurationManagementEntryService
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     SecurityEventHookConfiguration configuration =
-        securityEventHookConfigurationQueryRepository.find(tenant, identifier);
+        securityEventHookConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
@@ -216,7 +216,7 @@ public class SecurityEventHookConfigurationManagementEntryService
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     SecurityEventHookConfiguration before =
-        securityEventHookConfigurationQueryRepository.find(tenant, identifier);
+        securityEventHookConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
 
     SecurityEventHookConfigUpdateContextCreator contextCreator =
         new SecurityEventHookConfigUpdateContextCreator(
@@ -272,7 +272,7 @@ public class SecurityEventHookConfigurationManagementEntryService
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     SecurityEventHookConfiguration configuration =
-        securityEventHookConfigurationQueryRepository.find(tenant, identifier);
+        securityEventHookConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
 
     AuditLog auditLog =
         AuditLogCreator.createOnDeletion(
@@ -298,7 +298,7 @@ public class SecurityEventHookConfigurationManagementEntryService
           SecurityEventHookConfigManagementStatus.FORBIDDEN, response);
     }
 
-    if (configuration.exists()) {
+    if (!configuration.exists()) {
       return new SecurityEventHookConfigManagementResponse(
           SecurityEventHookConfigManagementStatus.NOT_FOUND, Map.of());
     }

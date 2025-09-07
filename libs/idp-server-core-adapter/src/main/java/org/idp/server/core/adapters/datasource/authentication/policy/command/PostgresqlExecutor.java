@@ -36,13 +36,15 @@ public class PostgresqlExecutor implements AuthenticationPolicyConfigurationSqlE
             id,
             tenant_id,
             flow,
-            payload
+            payload,
+            enabled
             )
             VALUES (
             ?::uuid,
             ?::uuid,
             ?,
-            ?::jsonb
+            ?::jsonb,
+            ?
             );
             """;
 
@@ -51,6 +53,7 @@ public class PostgresqlExecutor implements AuthenticationPolicyConfigurationSqlE
     params.add(tenant.identifierUUID());
     params.add(configuration.flow());
     params.add(jsonConverter.write(configuration.toMap()));
+    params.add(configuration.isEnabled());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -61,15 +64,17 @@ public class PostgresqlExecutor implements AuthenticationPolicyConfigurationSqlE
     String sqlTemplate =
         """
                 UPDATE authentication_policy
-                SET payload = ?::jsonb
+                SET payload = ?::jsonb,
+                enabled = ?
                 WHERE id = ?::uuid
                 AND tenant_id = ?::uuid
                 """;
 
     List<Object> params = new ArrayList<>();
     params.add(jsonConverter.write(configuration.toMap()));
+    params.add(configuration.isEnabled());
     params.add(configuration.idAsUUID());
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifierUUID());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

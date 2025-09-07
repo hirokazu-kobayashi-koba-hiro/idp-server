@@ -37,13 +37,15 @@ public class PostgresqlExecutor implements FederationConfigurationSqlExecutor {
             tenant_id,
             type,
             sso_provider,
-            payload
+            payload,
+            enabled
             ) VALUES (
             ?::uuid,
             ?::uuid,
             ?,
             ?,
-            ?::jsonb
+            ?::jsonb,
+            ?
             );
             """;
 
@@ -53,6 +55,7 @@ public class PostgresqlExecutor implements FederationConfigurationSqlExecutor {
     params.add(configuration.type().name());
     params.add(configuration.ssoProvider().name());
     params.add(jsonConverter.write(configuration.payload()));
+    params.add(configuration.isEnabled());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -64,7 +67,8 @@ public class PostgresqlExecutor implements FederationConfigurationSqlExecutor {
         """
             UPDATE federation_configurations
             SET payload = ?::jsonb,
-            sso_provider = ?
+            sso_provider = ?,
+            enabled = ?
             WHERE id = ?::uuid
             AND tenant_id = ?::uuid;
             """;
@@ -72,6 +76,7 @@ public class PostgresqlExecutor implements FederationConfigurationSqlExecutor {
     List<Object> params = new ArrayList<>();
     params.add(jsonConverter.write(configuration.payload()));
     params.add(configuration.ssoProvider().name());
+    params.add(configuration.isEnabled());
     params.add(configuration.identifier().valueAsUuid());
     params.add(tenant.identifier().valueAsUuid());
 

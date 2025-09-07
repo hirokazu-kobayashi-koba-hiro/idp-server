@@ -37,15 +37,17 @@ public class MysqlExecutor implements SecurityEventHookConfigSqlExecutor {
                     tenant_id,
                     type,
                     payload,
-                    execution_order
+                    execution_order,
+                    enabled
                     )
                     VALUES (
-                    ?::uuid,
-                    ?::uuid,
                     ?,
-                    ?::jsonb,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
                     ?
-                    ) ON CONFLICT DO NOTHING;
+                    ) ON DUPLICATE KEY UPDATE id=id;
                     """;
     List<Object> params = new ArrayList<>();
     params.add(configuration.identifier().value());
@@ -53,6 +55,7 @@ public class MysqlExecutor implements SecurityEventHookConfigSqlExecutor {
     params.add(configuration.hookType().name());
     params.add(jsonConverter.write(configuration));
     params.add(configuration.executionOrder());
+    params.add(configuration.isEnabled());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -63,14 +66,16 @@ public class MysqlExecutor implements SecurityEventHookConfigSqlExecutor {
     String sqlTemplate =
         """
                     UPDATE security_event_hook_configurations
-                    SET payload = ?::jsonb,
-                    execution_order = ?
-                    WHERE id = ?::uuid
-                    AND tenant_id = ?::uuid;
+                    SET payload = ?,
+                    execution_order = ?,
+                    enabled = ?
+                    WHERE id = ?
+                    AND tenant_id = ?;
                     """;
     List<Object> params = new ArrayList<>();
     params.add(jsonConverter.write(configuration));
     params.add(configuration.executionOrder());
+    params.add(configuration.isEnabled());
     params.add(configuration.identifier().value());
     params.add(tenant.identifier().value());
 
@@ -83,8 +88,8 @@ public class MysqlExecutor implements SecurityEventHookConfigSqlExecutor {
     String sqlTemplate =
         """
                     DELETE FROM security_event_hook_configurations
-                    WHERE id = ?::uuid
-                    AND tenant_id = ?::uuid;
+                    WHERE id = ?
+                    AND tenant_id = ?;
                     """;
     List<Object> params = new ArrayList<>();
     params.add(configuration.identifier().value());

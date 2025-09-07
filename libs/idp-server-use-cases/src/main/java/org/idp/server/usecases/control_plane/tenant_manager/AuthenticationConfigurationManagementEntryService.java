@@ -183,7 +183,7 @@ public class AuthenticationConfigurationManagementEntryService
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     AuthenticationConfiguration configuration =
-        authenticationConfigurationQueryRepository.find(tenant, identifier);
+        authenticationConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
@@ -231,7 +231,7 @@ public class AuthenticationConfigurationManagementEntryService
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     AuthenticationConfiguration before =
-        authenticationConfigurationQueryRepository.find(tenant, identifier);
+        authenticationConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
 
     AuthenticationConfigUpdateContextCreator contextCreator =
         new AuthenticationConfigUpdateContextCreator(tenant, before, request, dryRun);
@@ -282,7 +282,7 @@ public class AuthenticationConfigurationManagementEntryService
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     AuthenticationConfiguration configuration =
-        authenticationConfigurationQueryRepository.find(tenant, identifier);
+        authenticationConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
 
     AuditLog auditLog =
         AuditLogCreator.createOnDeletion(
@@ -308,7 +308,7 @@ public class AuthenticationConfigurationManagementEntryService
           AuthenticationConfigManagementStatus.FORBIDDEN, response);
     }
 
-    if (configuration.exists()) {
+    if (!configuration.exists()) {
       return new AuthenticationConfigManagementResponse(
           AuthenticationConfigManagementStatus.NOT_FOUND, Map.of());
     }

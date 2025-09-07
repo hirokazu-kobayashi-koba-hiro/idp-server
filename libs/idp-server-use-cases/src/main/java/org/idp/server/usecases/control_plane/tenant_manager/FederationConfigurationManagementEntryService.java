@@ -147,7 +147,7 @@ public class FederationConfigurationManagementEntryService
     }
 
     Map<String, Object> response = new HashMap<>();
-    response.put("list", configurations.stream().map(FederationConfiguration::payload).toList());
+    response.put("list", configurations.stream().map(FederationConfiguration::toMap).toList());
 
     return new FederationConfigManagementResponse(FederationConfigManagementStatus.OK, response);
   }
@@ -163,7 +163,7 @@ public class FederationConfigurationManagementEntryService
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     FederationConfiguration configuration =
-        federationConfigurationQueryRepository.find(tenant, identifier);
+        federationConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
@@ -194,7 +194,7 @@ public class FederationConfigurationManagementEntryService
     }
 
     return new FederationConfigManagementResponse(
-        FederationConfigManagementStatus.OK, configuration.payload());
+        FederationConfigManagementStatus.OK, configuration.toMap());
   }
 
   @Override
@@ -210,7 +210,7 @@ public class FederationConfigurationManagementEntryService
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     FederationConfiguration before =
-        federationConfigurationQueryRepository.find(tenant, identifier);
+        federationConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
 
     FederationConfigUpdateContextCreator contextCreator =
         new FederationConfigUpdateContextCreator(tenant, before, request, dryRun);
@@ -265,7 +265,7 @@ public class FederationConfigurationManagementEntryService
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     FederationConfiguration configuration =
-        federationConfigurationQueryRepository.find(tenant, identifier);
+        federationConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
 
     AuditLog auditLog =
         AuditLogCreator.createOnDeletion(

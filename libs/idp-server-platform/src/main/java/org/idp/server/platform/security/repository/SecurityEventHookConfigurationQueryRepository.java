@@ -29,6 +29,9 @@ public interface SecurityEventHookConfigurationQueryRepository {
   SecurityEventHookConfiguration find(
       Tenant tenant, SecurityEventHookConfigurationIdentifier identifier);
 
+  SecurityEventHookConfiguration findWithDisabled(
+      Tenant tenant, SecurityEventHookConfigurationIdentifier identifier, boolean includeDisabled);
+
   SecurityEventHookConfiguration find(Tenant tenant, String type);
 
   List<SecurityEventHookConfiguration> findList(Tenant tenant, int limit, int offset);

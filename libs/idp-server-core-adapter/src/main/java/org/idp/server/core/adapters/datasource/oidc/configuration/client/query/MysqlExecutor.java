@@ -56,40 +56,61 @@ public class MysqlExecutor implements ClientConfigSqlExecutor {
 
   @Override
   public Map<String, String> selectByAlias(Tenant tenant, RequestedClientId requestedClientId) {
+    return selectByAlias(tenant, requestedClientId, false);
+  }
+
+  @Override
+  public Map<String, String> selectByAlias(
+      Tenant tenant, RequestedClientId requestedClientId, boolean includeDisabled) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplateClientIdAlias =
         """
                         SELECT id, id_alias, tenant_id, payload
                         FROM client_configuration
-                        WHERE tenant_id = ? AND id_alias = ?;
-                        """;
+                        WHERE tenant_id = ? AND id_alias = ?"""
+            + (includeDisabled ? "" : " AND enabled = true")
+            + ";";
     List<Object> paramsClientIdAlias = List.of(tenant.identifierValue(), requestedClientId.value());
     return sqlExecutor.selectOne(sqlTemplateClientIdAlias, paramsClientIdAlias);
   }
 
   @Override
   public Map<String, String> selectById(Tenant tenant, ClientIdentifier clientIdentifier) {
+    return selectById(tenant, clientIdentifier, false);
+  }
+
+  @Override
+  public Map<String, String> selectById(
+      Tenant tenant, ClientIdentifier clientIdentifier, boolean includeDisabled) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
                         SELECT id, id_alias, tenant_id, payload
                         FROM client_configuration
-                        WHERE tenant_id = ? AND id = ?;
-                        """;
+                        WHERE tenant_id = ? AND id = ?"""
+            + (includeDisabled ? "" : " AND enabled = true")
+            + ";";
     List<Object> params = List.of(tenant.identifierValue(), clientIdentifier.value());
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
 
   @Override
   public List<Map<String, String>> selectList(Tenant tenant, int limit, int offset) {
+    return selectList(tenant, limit, offset, false);
+  }
+
+  @Override
+  public List<Map<String, String>> selectList(
+      Tenant tenant, int limit, int offset, boolean includeDisabled) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
                         SELECT id, id_alias, tenant_id, payload
                         FROM client_configuration
-                        WHERE tenant_id = ? limit ? offset ?;
-                        """;
+                        WHERE tenant_id = ?"""
+            + (includeDisabled ? "" : " AND enabled = true")
+            + " limit ? offset ?;";
     List<Object> params = List.of(tenant.identifierValue(), limit, offset);
     return sqlExecutor.selectList(sqlTemplate, params);
   }

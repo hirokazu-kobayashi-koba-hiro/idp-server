@@ -22,10 +22,11 @@ import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
 import org.idp.server.core.openid.oauth.type.ciba.BackchannelTokenDeliveryMode;
 import org.idp.server.core.openid.oauth.type.extension.RegisteredRedirectUris;
 import org.idp.server.core.openid.oauth.type.oauth.*;
+import org.idp.server.platform.configuration.Configurable;
 import org.idp.server.platform.json.JsonReadable;
 
 /** ClientConfiguration */
-public class ClientConfiguration implements JsonReadable {
+public class ClientConfiguration implements JsonReadable, Configurable {
   String clientId;
   String clientIdAlias;
   String clientSecret;
@@ -62,6 +63,7 @@ public class ClientConfiguration implements JsonReadable {
   String authorizationSignedResponseAlg;
   String authorizationEncryptedResponseAlg;
   String authorizationEncryptedResponseEnc;
+  boolean enabled = true;
   // extension
   ClientExtensionConfiguration extension = new ClientExtensionConfiguration();
 
@@ -341,6 +343,11 @@ public class ClientConfiguration implements JsonReadable {
     return clientId != null && !clientId.isEmpty();
   }
 
+  @Override
+  public boolean isEnabled() {
+    return enabled;
+  }
+
   public boolean hasAccessTokenDuration() {
     return extension.hasAccessTokenDuration();
   }
@@ -417,6 +424,7 @@ public class ClientConfiguration implements JsonReadable {
     map.put("authorization_signed_response_alg", authorizationSignedResponseAlg);
     map.put("authorization_encrypted_response_alg", authorizationEncryptedResponseAlg);
     map.put("authorization_encrypted_response_enc", authorizationEncryptedResponseEnc);
+    map.put("enabled", enabled);
     map.put("extension", extension.toMap());
     return map;
   }

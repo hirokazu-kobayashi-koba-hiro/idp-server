@@ -38,14 +38,15 @@ public class MysqlExecutor implements ServerConfigSqlExecutor {
 
     String sqlTemplate =
         """
-                    INSERT INTO authorization_server_configuration (tenant_id, token_issuer, payload)
-                    VALUES (?, ?, ?);
+                    INSERT INTO authorization_server_configuration (tenant_id, token_issuer, payload, enabled)
+                    VALUES (?, ?, ?, ?);
                     """;
     String payload = jsonConverter.write(authorizationServerConfiguration);
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
     params.add(authorizationServerConfiguration.tokenIssuer().value());
     params.add(payload);
+    params.add(authorizationServerConfiguration.isEnabled());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -58,13 +59,15 @@ public class MysqlExecutor implements ServerConfigSqlExecutor {
         """
                         UPDATE authorization_server_configuration
                         SET payload = ?,
-                        token_issuer = ?
+                        token_issuer = ?,
+                        enabled = ?
                         WHERE tenant_id = ?;
                         """;
     String payload = jsonConverter.write(authorizationServerConfiguration);
     List<Object> params = new ArrayList<>();
     params.add(payload);
     params.add(authorizationServerConfiguration.tokenIssuer().value());
+    params.add(authorizationServerConfiguration.isEnabled());
     params.add(tenant.identifierValue());
 
     sqlExecutor.execute(sqlTemplate, params);

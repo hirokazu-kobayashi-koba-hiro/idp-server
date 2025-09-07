@@ -78,7 +78,7 @@ public class AuthorizationServerManagementEntryService implements AuthorizationS
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     AuthorizationServerConfiguration authorizationServerConfiguration =
-        authorizationServerConfigurationQueryRepository.get(tenant);
+        authorizationServerConfigurationQueryRepository.getWithDisabled(tenant, true);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
@@ -120,7 +120,7 @@ public class AuthorizationServerManagementEntryService implements AuthorizationS
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     AuthorizationServerConfiguration before =
-        authorizationServerConfigurationQueryRepository.get(tenant);
+        authorizationServerConfigurationQueryRepository.getWithDisabled(tenant, true);
 
     AuthorizationServerRequestValidator validator =
         new AuthorizationServerRequestValidator(request, dryRun);

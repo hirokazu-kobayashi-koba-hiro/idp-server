@@ -32,13 +32,19 @@ public class MysqlExecutor implements ServerConfigSqlExecutor {
 
   @Override
   public Map<String, String> selectOne(TenantIdentifier tenantIdentifier) {
+    return selectOne(tenantIdentifier, false);
+  }
+
+  @Override
+  public Map<String, String> selectOne(TenantIdentifier tenantIdentifier, boolean includeDisabled) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
                     SELECT tenant_id, token_issuer, payload
                     FROM authorization_server_configuration
-                    WHERE tenant_id = ?;
-                    """;
+                    WHERE tenant_id = ?"""
+            + (includeDisabled ? "" : "\n                    AND enabled = true")
+            + ";";
     return sqlExecutor.selectOne(sqlTemplate, List.of(tenantIdentifier.value()));
   }
 }

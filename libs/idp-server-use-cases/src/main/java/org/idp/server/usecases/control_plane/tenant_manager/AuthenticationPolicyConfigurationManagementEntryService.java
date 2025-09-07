@@ -314,7 +314,7 @@ public class AuthenticationPolicyConfigurationManagementEntryService
           AuthenticationPolicyConfigManagementStatus.FORBIDDEN, response);
     }
 
-    if (configuration.exists()) {
+    if (!configuration.exists()) {
       return new AuthenticationPolicyConfigManagementResponse(
           AuthenticationPolicyConfigManagementStatus.NOT_FOUND, Map.of());
     }

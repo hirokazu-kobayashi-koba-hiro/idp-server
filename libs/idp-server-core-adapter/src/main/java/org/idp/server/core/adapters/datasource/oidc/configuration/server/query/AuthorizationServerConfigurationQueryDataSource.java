@@ -68,6 +68,21 @@ public class AuthorizationServerConfigurationQueryDataSource
     return convert;
   }
 
+  @Override
+  public AuthorizationServerConfiguration getWithDisabled(Tenant tenant, boolean includeDisabled) {
+    ServerConfigSqlExecutor executor = executors.get(tenant.databaseType());
+
+    Map<String, String> stringMap = executor.selectOne(tenant.identifier(), includeDisabled);
+
+    if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
+      throw new ServerConfigurationNotFoundException(
+          String.format("unregistered server configuration (%s)", tenant.identifierValue()),
+          tenant);
+    }
+
+    return ModelConverter.convert(stringMap);
+  }
+
   private String key(TenantIdentifier tenantIdentifier) {
     return "tenantId:"
         + tenantIdentifier.value()

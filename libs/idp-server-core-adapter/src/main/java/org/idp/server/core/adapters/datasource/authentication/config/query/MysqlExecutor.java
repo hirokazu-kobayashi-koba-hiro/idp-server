@@ -33,14 +33,19 @@ public class MysqlExecutor implements AuthenticationConfigSqlExecutor {
 
   @Override
   public Map<String, String> selectOne(Tenant tenant, String type) {
+    return selectOne(tenant, type, false);
+  }
+
+  @Override
+  public Map<String, String> selectOne(Tenant tenant, String type, boolean includeDisabled) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         selectSql
             + """
-                WHERE tenant_id = ?
-                AND type = ?
-                AND enabled = true
-                """;
+            WHERE tenant_id = ?
+            AND type = ?"""
+            + (includeDisabled ? "" : "\n            AND enabled = true")
+            + "\n            ";
 
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
@@ -52,13 +57,20 @@ public class MysqlExecutor implements AuthenticationConfigSqlExecutor {
   @Override
   public Map<String, String> selectOne(
       Tenant tenant, AuthenticationConfigurationIdentifier identifier) {
+    return selectOne(tenant, identifier, false);
+  }
+
+  @Override
+  public Map<String, String> selectOne(
+      Tenant tenant, AuthenticationConfigurationIdentifier identifier, boolean includeDisabled) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         selectSql
             + """
                 WHERE tenant_id = ?
-                AND id = ?
-                """;
+                AND id = ?"""
+            + (includeDisabled ? "" : "\n                AND enabled = true")
+            + "\n                ";
 
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
@@ -85,15 +97,19 @@ public class MysqlExecutor implements AuthenticationConfigSqlExecutor {
 
   @Override
   public List<Map<String, String>> selectList(Tenant tenant, int limit, int offset) {
+    return selectList(tenant, limit, offset, false);
+  }
 
+  @Override
+  public List<Map<String, String>> selectList(
+      Tenant tenant, int limit, int offset, boolean includeDisabled) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         selectSql
             + """
-                WHERE tenant_id = ?
-                limit ?
-                offset ?
-                """;
+                WHERE tenant_id = ?"""
+            + (includeDisabled ? "" : "\n                AND enabled = true")
+            + "\n                limit ?\n                offset ?\n                ";
 
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());

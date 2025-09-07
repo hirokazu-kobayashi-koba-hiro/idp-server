@@ -36,14 +36,24 @@ public class MysqlExecutor implements FederationConfigurationSqlExecutor {
   @Override
   public Map<String, String> selectOne(
       Tenant tenant, FederationType federationType, SsoProvider ssoProvider) {
+    return selectOne(tenant, federationType, ssoProvider, false);
+  }
+
+  @Override
+  public Map<String, String> selectOne(
+      Tenant tenant,
+      FederationType federationType,
+      SsoProvider ssoProvider,
+      boolean includeDisabled) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         selectSql
             + """
                     WHERE tenant_id = ?
                     AND type = ?
-                    AND sso_provider= ?
-                    """;
+                    AND sso_provider= ?"""
+            + (includeDisabled ? "" : "\n                    AND enabled = true")
+            + "\n                    ";
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
     params.add(federationType.name());
@@ -55,13 +65,20 @@ public class MysqlExecutor implements FederationConfigurationSqlExecutor {
   @Override
   public Map<String, String> selectOne(
       Tenant tenant, FederationConfigurationIdentifier identifier) {
+    return selectOne(tenant, identifier, false);
+  }
+
+  @Override
+  public Map<String, String> selectOne(
+      Tenant tenant, FederationConfigurationIdentifier identifier, boolean includeDisabled) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         selectSql
             + """
                     WHERE tenant_id = ?
-                    AND id = ?
-                    """;
+                    AND id = ?"""
+            + (includeDisabled ? "" : "\n                    AND enabled = true")
+            + "\n                    ";
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
     params.add(identifier.value());
@@ -71,14 +88,19 @@ public class MysqlExecutor implements FederationConfigurationSqlExecutor {
 
   @Override
   public List<Map<String, String>> selectList(Tenant tenant, int limit, int offset) {
+    return selectList(tenant, limit, offset, false);
+  }
+
+  @Override
+  public List<Map<String, String>> selectList(
+      Tenant tenant, int limit, int offset, boolean includeDisabled) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         selectSql
             + """
-                    WHERE tenant_id = ?
-                    limit ?
-                    offset ?
-                    """;
+                    WHERE tenant_id = ?"""
+            + (includeDisabled ? "" : "\n                    AND enabled = true")
+            + "\n                    limit ?\n                    offset ?\n                    ";
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
     params.add(limit);

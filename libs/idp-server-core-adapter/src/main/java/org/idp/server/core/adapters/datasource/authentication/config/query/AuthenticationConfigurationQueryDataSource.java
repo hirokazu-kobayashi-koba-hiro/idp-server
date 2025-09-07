@@ -66,6 +66,19 @@ public class AuthenticationConfigurationQueryDataSource
   }
 
   @Override
+  public AuthenticationConfiguration findWithDisabled(
+      Tenant tenant, AuthenticationConfigurationIdentifier identifier, boolean includeDisabled) {
+    AuthenticationConfigSqlExecutor executor = executors.get(tenant.databaseType());
+    Map<String, String> result = executor.selectOne(tenant, identifier, includeDisabled);
+
+    if (Objects.isNull(result) || result.isEmpty()) {
+      return new AuthenticationConfiguration();
+    }
+
+    return jsonConverter.read(result.get("payload"), AuthenticationConfiguration.class);
+  }
+
+  @Override
   public long findTotalCount(Tenant tenant) {
     AuthenticationConfigSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectCount(tenant);
