@@ -28,6 +28,12 @@ public class FidoUafRegistrationVerifier implements MfaRequestVerifier {
   @Override
   public MfaVerificationResult verify(
       User user, MfaRegistrationRequest registrationRequest, AuthenticationPolicy policy) {
+
+    // Skip device count limit check for reset action
+    if (registrationRequest.isResetAction()) {
+      return MfaVerificationResult.success();
+    }
+
     AuthenticationDeviceRule authenticationDeviceRule = policy.authenticationDeviceRule();
     int authenticationDeviceCount = user.authenticationDeviceCount();
     int maxDevices = authenticationDeviceRule.maxDevices();

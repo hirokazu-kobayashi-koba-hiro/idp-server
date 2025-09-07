@@ -74,6 +74,7 @@ Content-Type: application/json
 
 | パラメータ名                 | 必須 | 説明                                                                                 |
 |------------------------|----|------------------------------------------------------------------------------------|
+| `action`               | -  | 登録アクション。`"reset"` を指定すると既存のFIDO-UAFデバイスを全て削除してから新しいデバイスを登録する。                        |
 | `app_name`             | -  | アプリ名（例：◯◯アプリ）。                                                                     |
 | `platform`             | -  | デバイスのプラットフォーム名（例："Android", "iOS" など）。                                             |
 | `os`                   | -  | オペレーティングシステムのバージョン情報（例："Android15"）。                                               |
@@ -99,6 +100,38 @@ fido-uaf 認証デバイスの登録リクエストは、ポリシーに応じ�
 
 - 登録上限数
     - 登録条件数に達していた場合、ステータスコード 400エラーを返却します。
+    - ただし、`action=reset` の場合は既存デバイスが削除されるため、上限数チェックはスキップされます。
+
+### デバイスリセット機能
+
+`action=reset` パラメータを指定することで、既存のFIDO-UAFデバイスを全て削除してから新しいデバイスを登録できます。
+
+```http
+POST {tenant-id}/v1/me/mfa/fido-uaf-registration
+Authorization: Bearer {access_token}
+Content-Type: application/json
+
+{
+  "action": "reset",
+  "app_name": "新しいデバイス",  
+  "platform": "Android",
+  "os": "Android16",
+  "model": "galaxy z fold 7",
+  "locale": "ja",
+  "notification_channel": "fcm",
+  "notification_token": "new token",
+  "priority": 1
+}
+```
+
+この機能は以下のような場面で有用です：
+- デバイスを紛失・盗難された際の緊急時デバイス交換
+- 新しいデバイスに完全移行する際の一括置換
+
+**注意事項:**
+- `action=reset` を指定すると、現在登録されている全てのFIDO-UAFデバイスが削除されます
+- 削除されたデバイスは復元できません
+- 他の認証方式（WebAuthn、SMSなど）のデバイスには影響しません
 
 ---
 

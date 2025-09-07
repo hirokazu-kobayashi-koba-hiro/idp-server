@@ -49,4 +49,12 @@ public class MfaRegistrationRequest {
   public boolean exists() {
     return values != null && !values.isEmpty();
   }
+
+  public String getAction() {
+    return getValueOrEmpty("action");
+  }
+
+  public boolean isResetAction() {
+    return "reset".equals(getAction());
+  }
 }
