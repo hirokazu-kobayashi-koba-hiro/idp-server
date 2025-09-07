@@ -395,6 +395,100 @@ const generateRandomJsonLikeObject = () => {
 ### 結論
 このE2Eテストスイートは、**仕様準拠性・実用性・堅牢性**の3軸で包括的にカバーした、**エンタープライズグレードの品質保証体制**を構築している。特にOAuth/OIDC実装の複雑さに対し、標準仕様から実運用まで網羅的にテストする設計は秀逸。
 
+## 実装経験から得たアーキテクチャ洞察
+
+### セキュリティイベントシステムの拡張性設計 (Issue #292)
+
+#### TenantAttributes による設定の柔軟性
+- **Key-Value設定パターン**: `TenantAttributes` を使用したテナント別設定管理
+- **プレフィックス命名規則**: `security_event_user_` プレフィックスによる設定の分類
+- **デフォルト値戦略**: `optValueAsBoolean(key, defaultValue)` による後方互換性確保
+
+```java
+// 実装パターン例
+public boolean isIncludeGivenName() {
+  return tenantAttributes.optValueAsBoolean("security_event_user_include_given_name", false);
+}
+```
+
+#### インターフェースベース コード重複排除
+- **SecurityEventUserCreatable インターフェース**: 6つのEventCreator間での共通ロジック統一
+- **デフォルトメソッド活用**: Java 8+ のデフォルトメソッドによる実装の継承
+- **依存関係配慮**: `platform` → `core` 依存の制約を考慮した配置
+
+#### 拡張可能なセキュリティイベント設計
+- **属性の段階的拡張**: 5属性 → 15+属性への拡張
+- **OpenID Connect標準準拠**: 標準クレームとの整合性
+- **テナント別カスタマイズ**: セキュリティ要件に応じた属性選択
+
+### MFA デバイス管理の高度な制御機能 (Issue #401)
+
+#### アクションベース API 設計
+- **action パラメータパターン**: `action=reset` による動作の切り替え
+- **条件分岐の実装**: `isResetAction()` メソッドによる判定ロジック
+- **検証ロジックの柔軟性**: リセット時の上限チェックスキップ
+
+```java
+// 実装パターン例
+if (registrationRequest.isResetAction()) {
+  return MfaVerificationResult.success(); // 上限チェックスキップ
+}
+```
+
+#### デバイスライフサイクル管理
+- **選択的削除機能**: `removeAllAuthenticationDevicesOfType()` による特定タイプデバイス削除
+- **トランザクション整合性**: ユーザー更新処理との一体化
+- **原子性操作**: 削除→追加の一連の処理を単一トランザクションで実行
+
+#### 認証インタラクター設計パターン
+- **レイヤー分離**: Verifier (検証) → Interactor (実行) の責任分離
+- **属性受け渡し**: `AuthenticationTransactionAttributes` による拡張可能な属性管理
+- **エラーハンドリング**: 段階的エラー応答 (client_error, server_error)
+
+### テスト駆動開発の実践知見
+
+#### E2Eテストでの機能検証
+- **シナリオベーステスト**: 実際のユースケースに基づく統合テスト
+- **状態変化検証**: デバイス登録前→後の状態変化確認
+- **境界値テスト**: リセット機能の破壊的操作の安全性確認
+
+```javascript
+// テストパターン例
+// 2デバイス登録 → reset登録 → 1デバイスのみ残存確認
+expect(userinfoResponse.data.authentication_devices.length).toBe(1);
+expect(deviceIds).not.toContain(device1Id);  // 削除確認
+expect(deviceIds).not.toContain(device2Id);  // 削除確認
+```
+
+#### プロトコル準拠性の重要性
+- **RFC仕様テスト**: OAuth/OIDC標準への厳密な準拠確認
+- **エラー応答検証**: 標準的なエラーフォーマット (`error`, `error_description`) の維持
+- **拡張性テスト**: カスタム機能が標準機能に悪影響を与えないことの確認
+
+### アーキテクチャ設計原則の実践
+
+#### 1. **拡張性優先設計**
+- 既存機能を壊さない新機能追加
+- 設定による機能の有効/無効制御
+- インターフェースによる実装の抽象化
+
+#### 2. **テナント分離の徹底**
+- テナント別設定による機能カスタマイズ
+- データ分離とセキュリティ境界の維持
+- 管理機能とエンドユーザー機能の分離
+
+#### 3. **セキュリティファースト**
+- セキュリティイベントの包括的記録
+- 認証デバイス操作の監査証跡
+- エラー情報の適切なマスキング
+
+#### 4. **運用性重視**
+- 詳細なログ出力とトレーサビリティ
+- 段階的なロールアウト対応
+- 後方互換性の維持
+
 ## 現在の状況
 - 作業ディレクトリ: clean (コミット可能な変更なし)
+- 最新コミット: Add FIDO-UAF reset functionality for device replacement (Issue #401)
+- 完了したイシュー: #292 (SecurityEventUser拡張), #401 (FIDO-UAFリセット機能)
 - 最新コミット: Merge pull request #384 (MFA登録時のエラーハンドリング改善)

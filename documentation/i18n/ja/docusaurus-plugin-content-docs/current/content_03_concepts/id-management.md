@@ -140,7 +140,7 @@ sequenceDiagram
 
 | ステータス                            | 説明                                           |
 |----------------------------------|----------------------------------------------|
-| `UNREGISTERED`                   | アカウントが未作成の状態（初回アクセスや一時的ID）                   |
+| `INITIALIZED`                   | アカウントが未作成の状態（初回アクセスや一時的ID）                   |
 | `REGISTERED`                     | 登録済だが、メールアドレスなど連絡先が未確認の状態                    |
 | `IDENTITY_VERIFICATION_REQUIRED` | サービス利用にあたり本人確認が必要な状態                         |
 | `IDENTITY_VERIFIED`              | eKYCなどの本人確認が完了した状態                           |
@@ -151,7 +151,7 @@ sequenceDiagram
 #### ステータス遷移例
 
 ```plaintext
-UNREGISTERED
+INITIALIZED
    ↓ 登録
 REGISTERED
    ↓ 身元確認完了

@@ -42,7 +42,7 @@ public class UserRegistrator {
       return updatedUser;
     }
 
-    if (user.status().isUnregistered()) {
+    if (user.status().isInitialized()) {
       user.setStatus(UserStatus.REGISTERED);
     }
 

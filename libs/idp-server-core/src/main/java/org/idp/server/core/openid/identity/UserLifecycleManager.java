@@ -25,7 +25,7 @@ public class UserLifecycleManager {
 
   private static final Map<UserStatus, Set<UserStatus>> allowedTransitions =
       Map.of(
-          UserStatus.UNREGISTERED, EnumSet.of(UserStatus.REGISTERED),
+          UserStatus.INITIALIZED, EnumSet.of(UserStatus.REGISTERED),
           UserStatus.REGISTERED, EnumSet.of(UserStatus.IDENTITY_VERIFIED, UserStatus.DELETED),
           UserStatus.IDENTITY_VERIFIED,
               EnumSet.of(
