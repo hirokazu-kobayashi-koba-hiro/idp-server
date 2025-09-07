@@ -193,6 +193,190 @@ describe("user - mfa registration", () => {
 
   });
 
+  describe("reset pattern ", () => {
+    it("fido-uaf - reset removes all existing FIDO-UAF devices", async () => {
+      const { user, accessToken } = await createFederatedUser({
+        serverConfig: serverConfig,
+        federationServerConfig: federationServerConfig,
+        client: clientSecretPostClient,
+        adminClient: clientSecretPostClient
+      });
+
+      console.log(user);
+
+      // First device registration
+      let mfaRegistrationResponse =
+        await postWithJson({
+          url: serverConfig.resourceOwnerEndpoint + "/mfa/fido-uaf-registration",
+          body: {
+            "app_name": "device-1",
+            "platform": "Android",
+            "os": "Android15",
+            "model": "device 1",
+            "locale": "ja",
+            "notification_channel": "fcm",
+            "notification_token": "token1",
+            "priority": 1
+          },
+          headers: {
+            "Authorization": `Bearer ${accessToken}`
+          }
+        });
+      console.log(mfaRegistrationResponse.data);
+      expect(mfaRegistrationResponse.status).toBe(200);
+
+      let authenticationResponse;
+      const transactionId1 = mfaRegistrationResponse.data.id;
+      authenticationResponse = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        id: transactionId1,
+        interactionType: "fido-uaf-registration-challenge",
+        body: {
+          username: serverConfig.ciba.username,
+          password: serverConfig.ciba.userCode,
+        }
+      });
+      expect(authenticationResponse.status).toBe(200);
+
+      authenticationResponse = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        id: transactionId1,
+        interactionType: "fido-uaf-registration",
+        body: {
+          username: serverConfig.ciba.username,
+          password: serverConfig.ciba.userCode,
+        }
+      });
+      expect(authenticationResponse.status).toBe(200);
+      const device1Id = authenticationResponse.data.device_id;
+
+      // Second device registration (normal)
+      mfaRegistrationResponse =
+        await postWithJson({
+          url: serverConfig.resourceOwnerEndpoint + "/mfa/fido-uaf-registration",
+          body: {
+            "app_name": "device-2",
+            "platform": "iOS",
+            "os": "iOS18",
+            "model": "device 2",
+            "locale": "en",
+            "notification_channel": "apns",
+            "notification_token": "token2",
+            "priority": 2
+          },
+          headers: {
+            "Authorization": `Bearer ${accessToken}`
+          }
+        });
+      expect(mfaRegistrationResponse.status).toBe(200);
+
+      const transactionId2 = mfaRegistrationResponse.data.id;
+      authenticationResponse = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        id: transactionId2,
+        interactionType: "fido-uaf-registration-challenge",
+        body: {
+          username: serverConfig.ciba.username,
+          password: serverConfig.ciba.userCode,
+        }
+      });
+      expect(authenticationResponse.status).toBe(200);
+
+      authenticationResponse = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        id: transactionId2,
+        interactionType: "fido-uaf-registration",
+        body: {
+          username: serverConfig.ciba.username,
+          password: serverConfig.ciba.userCode,
+        }
+      });
+      expect(authenticationResponse.status).toBe(200);
+      const device2Id = authenticationResponse.data.device_id;
+
+      // Verify we have 2 devices
+      let userinfoResponse = await getUserinfo({
+        endpoint: serverConfig.userinfoEndpoint,
+        authorizationHeader: {
+          "Authorization": `Bearer ${accessToken}`
+        }
+      });
+      console.log("Before reset:", JSON.stringify(userinfoResponse.data.authentication_devices, null, 2));
+      expect(userinfoResponse.status).toBe(200);
+      expect(userinfoResponse.data.authentication_devices.length).toBe(2);
+
+      // Third device registration with reset action
+      mfaRegistrationResponse =
+        await postWithJson({
+          url: serverConfig.resourceOwnerEndpoint + "/mfa/fido-uaf-registration",
+          body: {
+            "action": "reset",
+            "app_name": "device-3-reset",
+            "platform": "Android",
+            "os": "Android16",
+            "model": "device 3 reset",
+            "locale": "ja",
+            "notification_channel": "fcm",
+            "notification_token": "token3",
+            "priority": 1
+          },
+          headers: {
+            "Authorization": `Bearer ${accessToken}`
+          }
+        });
+      console.log("Reset registration response:", mfaRegistrationResponse.data);
+      expect(mfaRegistrationResponse.status).toBe(200);
+
+      const transactionId3 = mfaRegistrationResponse.data.id;
+      authenticationResponse = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        id: transactionId3,
+        interactionType: "fido-uaf-registration-challenge",
+        body: {
+          username: serverConfig.ciba.username,
+          password: serverConfig.ciba.userCode,
+        }
+      });
+      expect(authenticationResponse.status).toBe(200);
+
+      authenticationResponse = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        id: transactionId3,
+        interactionType: "fido-uaf-registration",
+        body: {
+          username: serverConfig.ciba.username,
+          password: serverConfig.ciba.userCode,
+        }
+      });
+      expect(authenticationResponse.status).toBe(200);
+      const device3Id = authenticationResponse.data.device_id;
+
+      // Verify that only the reset device exists (previous devices removed)
+      userinfoResponse = await getUserinfo({
+        endpoint: serverConfig.userinfoEndpoint,
+        authorizationHeader: {
+          "Authorization": `Bearer ${accessToken}`
+        }
+      });
+      console.log("After reset:", JSON.stringify(userinfoResponse.data.authentication_devices, null, 2));
+      expect(userinfoResponse.status).toBe(200);
+      expect(userinfoResponse.data).toHaveProperty("authentication_devices");
+      expect(userinfoResponse.data.authentication_devices.length).toBe(1);
+      expect(userinfoResponse.data.authentication_devices[0].id).toEqual(device3Id);
+      expect(userinfoResponse.data.authentication_devices[0].app_name).toEqual("device-3-reset");
+      expect(userinfoResponse.data.authentication_devices[0].platform).toEqual("Android");
+      expect(userinfoResponse.data.authentication_devices[0].os).toEqual("Android16");
+      expect(userinfoResponse.data.authentication_devices[0].model).toEqual("device 3 reset");
+      expect(userinfoResponse.data.authentication_devices[0].available_methods).toContain("fido-uaf");
+
+      // Verify that device1Id and device2Id are no longer present
+      const deviceIds = userinfoResponse.data.authentication_devices.map(device => device.id);
+      expect(deviceIds).not.toContain(device1Id);
+      expect(deviceIds).not.toContain(device2Id);
+      expect(deviceIds).toContain(device3Id);
+    });
+  });
+
   describe("cancel pattern ", () => {
     it("fido-uaf", async () => {
       const { user, accessToken } = await createFederatedUser({

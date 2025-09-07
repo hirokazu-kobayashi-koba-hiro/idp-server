@@ -19,6 +19,7 @@ package org.idp.server.core.openid.identity;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 import org.idp.server.core.openid.identity.address.Address;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
@@ -421,6 +422,15 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     List<AuthenticationDevice> removed =
         authenticationDevices.stream().filter(device -> !device.id().equals(deviceId)).toList();
     this.authenticationDevices = removed;
+    return this;
+  }
+
+  public User removeAllAuthenticationDevicesOfType(String authenticationType) {
+    List<AuthenticationDevice> filtered =
+        authenticationDevices.stream()
+            .filter(device -> !device.availableMethods().contains(authenticationType))
+            .collect(Collectors.toList());
+    this.authenticationDevices = filtered;
     return this;
   }
 

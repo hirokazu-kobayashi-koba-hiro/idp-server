@@ -124,8 +124,14 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
         authenticationInteractionQueryRepository.get(
             tenant, transaction.identifier(), "fido-uaf", FidoUafRegistrationInteraction.class);
     String deviceId = interaction.deviceId();
-    User addedDeviceUser =
-        addAuthenticationDevice(transaction.user(), deviceId, transaction.attributes());
+
+    User baseUser = transaction.user();
+    // Handle reset action: remove existing FIDO-UAF devices before adding new one
+    if ("reset".equals(transaction.attributes().getValueOrEmpty("action"))) {
+      baseUser = baseUser.removeAllAuthenticationDevicesOfType("fido-uaf");
+    }
+
+    User addedDeviceUser = addAuthenticationDevice(baseUser, deviceId, transaction.attributes());
 
     AuthenticationPolicy authenticationPolicy = transaction.authenticationPolicy();
     if (authenticationPolicy.authenticationDeviceRule().requiredIdentityVerification()) {
