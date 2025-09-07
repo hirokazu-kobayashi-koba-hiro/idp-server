@@ -22,6 +22,7 @@ import java.util.Objects;
 import java.util.UUID;
 import org.idp.server.platform.datasource.DatabaseType;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
+import org.idp.server.platform.security.event.SecurityEventUserAttributeConfiguration;
 
 public class Tenant {
   TenantIdentifier identifier;
@@ -149,5 +150,9 @@ public class Tenant {
   public Tenant updateWithAttributes(TenantAttributes attributes) {
     return new Tenant(
         identifier, name, type, domain, authorizationProvider, databaseType, attributes);
+  }
+
+  public SecurityEventUserAttributeConfiguration getSecurityEventUserAttributeConfiguration() {
+    return SecurityEventUserAttributeConfiguration.fromTenantAttributes(this.attributes);
   }
 }

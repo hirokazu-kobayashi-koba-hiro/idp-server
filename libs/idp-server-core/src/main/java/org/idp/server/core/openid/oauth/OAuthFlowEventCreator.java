@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.oauth;
 
 import java.util.HashMap;
+import org.idp.server.core.openid.identity.SecurityEventUserCreatable;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -24,7 +25,7 @@ import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.event.*;
 import org.idp.server.platform.type.RequestAttributes;
 
-public class OAuthFlowEventCreator {
+public class OAuthFlowEventCreator implements SecurityEventUserCreatable {
 
   Tenant tenant;
   AuthorizationRequest authorizationRequest;
@@ -78,9 +79,7 @@ public class OAuthFlowEventCreator {
     builder.add(securityEventClient);
 
     if (user != null) {
-      SecurityEventUser securityEventUser =
-          new SecurityEventUser(
-              user.sub(), user.name(), user.externalUserId(), user.email(), user.phoneNumber());
+      SecurityEventUser securityEventUser = createSecurityEventUser(user, tenant);
       builder.add(securityEventUser);
       detailsMap.put("user", user.toMap());
     }

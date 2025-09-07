@@ -23,7 +23,7 @@ import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.event.*;
 import org.idp.server.platform.type.RequestAttributes;
 
-public class UserOperationEventCreator {
+public class UserOperationEventCreator implements SecurityEventUserCreatable {
 
   Tenant tenant;
   AuthenticationTransaction authenticationTransaction;
@@ -75,9 +75,7 @@ public class UserOperationEventCreator {
     User user = authenticationTransaction.request().user();
 
     if (user != null) {
-      SecurityEventUser securityEventUser =
-          new SecurityEventUser(
-              user.sub(), user.name(), user.externalUserId(), user.email(), user.phoneNumber());
+      SecurityEventUser securityEventUser = createSecurityEventUser(user, tenant);
       builder.add(securityEventUser);
       detailsMap.put("user", user.toMap());
     }

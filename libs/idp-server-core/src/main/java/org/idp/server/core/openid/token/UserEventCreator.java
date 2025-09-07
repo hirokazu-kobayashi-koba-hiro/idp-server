@@ -17,13 +17,14 @@
 package org.idp.server.core.openid.token;
 
 import java.util.HashMap;
+import org.idp.server.core.openid.identity.SecurityEventUserCreatable;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.event.*;
 import org.idp.server.platform.type.RequestAttributes;
 
-public class UserEventCreator {
+public class UserEventCreator implements SecurityEventUserCreatable {
 
   Tenant tenant;
   OAuthToken oAuthToken;
@@ -74,9 +75,7 @@ public class UserEventCreator {
     User user = oAuthToken.user();
 
     if (user != null) {
-      SecurityEventUser securityEventUser =
-          new SecurityEventUser(
-              user.sub(), user.name(), user.externalUserId(), user.email(), user.phoneNumber());
+      SecurityEventUser securityEventUser = createSecurityEventUser(user, tenant);
       builder.add(securityEventUser);
       detailsMap.put("user", user.toMap());
     }

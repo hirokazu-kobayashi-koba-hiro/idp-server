@@ -603,6 +603,10 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     return authenticationDevices != null && !authenticationDevices.isEmpty();
   }
 
+  public String currentTenant() {
+    return currentTenant;
+  }
+
   public TenantIdentifier currentTenantIdentifier() {
     return new TenantIdentifier(currentTenant);
   }

@@ -17,6 +17,7 @@
 package org.idp.server.platform.security.event;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -28,6 +29,22 @@ public class SecurityEventUser implements UuidConvertable {
   String exSub;
   String email;
   String phoneNumber;
+  String givenName;
+  String familyName;
+  String preferredUsername;
+  String profile;
+  String picture;
+  String website;
+  String gender;
+  String birthdate;
+  String zoneinfo;
+  String locale;
+  Map<String, Object> address;
+  List<String> roles;
+  List<String> permissions;
+  String currentTenant;
+  List<String> assignedTenants;
+  Map<String, Object> verifiedClaims;
 
   public SecurityEventUser() {}
 
@@ -37,6 +54,51 @@ public class SecurityEventUser implements UuidConvertable {
     this.exSub = exSub;
     this.email = email;
     this.phoneNumber = phoneNumber;
+  }
+
+  public SecurityEventUser(
+      String id,
+      String name,
+      String exSub,
+      String email,
+      String phoneNumber,
+      String givenName,
+      String familyName,
+      String preferredUsername,
+      String profile,
+      String picture,
+      String website,
+      String gender,
+      String birthdate,
+      String zoneinfo,
+      String locale,
+      Map<String, Object> address,
+      List<String> roles,
+      List<String> permissions,
+      String currentTenant,
+      List<String> assignedTenants,
+      Map<String, Object> verifiedClaims) {
+    this.id = id;
+    this.name = name;
+    this.exSub = exSub;
+    this.email = email;
+    this.phoneNumber = phoneNumber;
+    this.givenName = givenName;
+    this.familyName = familyName;
+    this.preferredUsername = preferredUsername;
+    this.profile = profile;
+    this.picture = picture;
+    this.website = website;
+    this.gender = gender;
+    this.birthdate = birthdate;
+    this.zoneinfo = zoneinfo;
+    this.locale = locale;
+    this.address = address;
+    this.roles = roles;
+    this.permissions = permissions;
+    this.currentTenant = currentTenant;
+    this.assignedTenants = assignedTenants;
+    this.verifiedClaims = verifiedClaims;
   }
 
   public Map<String, Object> toMap() {
@@ -55,6 +117,54 @@ public class SecurityEventUser implements UuidConvertable {
     }
     if (phoneNumber != null) {
       result.put("phone_number", phoneNumber);
+    }
+    if (givenName != null) {
+      result.put("given_name", givenName);
+    }
+    if (familyName != null) {
+      result.put("family_name", familyName);
+    }
+    if (preferredUsername != null) {
+      result.put("preferred_username", preferredUsername);
+    }
+    if (profile != null) {
+      result.put("profile", profile);
+    }
+    if (picture != null) {
+      result.put("picture", picture);
+    }
+    if (website != null) {
+      result.put("website", website);
+    }
+    if (gender != null) {
+      result.put("gender", gender);
+    }
+    if (birthdate != null) {
+      result.put("birthdate", birthdate);
+    }
+    if (zoneinfo != null) {
+      result.put("zoneinfo", zoneinfo);
+    }
+    if (locale != null) {
+      result.put("locale", locale);
+    }
+    if (address != null) {
+      result.put("address", address);
+    }
+    if (roles != null) {
+      result.put("roles", roles);
+    }
+    if (permissions != null) {
+      result.put("permissions", permissions);
+    }
+    if (currentTenant != null) {
+      result.put("current_tenant", currentTenant);
+    }
+    if (assignedTenants != null) {
+      result.put("assigned_tenants", assignedTenants);
+    }
+    if (verifiedClaims != null) {
+      result.put("verified_claims", verifiedClaims);
     }
     return result;
   }
@@ -81,6 +191,70 @@ public class SecurityEventUser implements UuidConvertable {
 
   public String phoneNumber() {
     return phoneNumber;
+  }
+
+  public String givenName() {
+    return givenName;
+  }
+
+  public String familyName() {
+    return familyName;
+  }
+
+  public String preferredUsername() {
+    return preferredUsername;
+  }
+
+  public String profile() {
+    return profile;
+  }
+
+  public String picture() {
+    return picture;
+  }
+
+  public String website() {
+    return website;
+  }
+
+  public String gender() {
+    return gender;
+  }
+
+  public String birthdate() {
+    return birthdate;
+  }
+
+  public String zoneinfo() {
+    return zoneinfo;
+  }
+
+  public String locale() {
+    return locale;
+  }
+
+  public Map<String, Object> address() {
+    return address;
+  }
+
+  public List<String> roles() {
+    return roles;
+  }
+
+  public List<String> permissions() {
+    return permissions;
+  }
+
+  public String currentTenant() {
+    return currentTenant;
+  }
+
+  public List<String> assignedTenants() {
+    return assignedTenants;
+  }
+
+  public Map<String, Object> verifiedClaims() {
+    return verifiedClaims;
   }
 
   public boolean exists() {
