@@ -69,14 +69,14 @@ public class TenantAttributes {
   }
 
   public boolean optValueAsBoolean(String key, boolean defaultValue) {
-    if (values == null || values.isEmpty()) {
+    if (values == null || values.isEmpty() || !containsKey(key)) {
       return defaultValue;
     }
     return (boolean) values.get(key);
   }
 
   public List<String> optValueAsStringList(String key, List<String> defaultValue) {
-    if (values == null || values.isEmpty()) {
+    if (values == null || values.isEmpty() || !containsKey(key)) {
       return defaultValue;
     }
     return (List<String>) values.get(key);
