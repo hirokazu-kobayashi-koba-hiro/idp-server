@@ -37,13 +37,15 @@ public class PostgresqlExecutor implements SecurityEventHookConfigSqlExecutor {
                     tenant_id,
                     type,
                     payload,
-                    execution_order
+                    execution_order,
+                    enabled
                     )
                     VALUES (
                     ?::uuid,
                     ?::uuid,
                     ?,
                     ?::jsonb,
+                    ?,
                     ?
                     ) ON CONFLICT DO NOTHING;
                     """;
@@ -53,6 +55,7 @@ public class PostgresqlExecutor implements SecurityEventHookConfigSqlExecutor {
     params.add(configuration.hookType().name());
     params.add(jsonConverter.write(configuration));
     params.add(configuration.executionOrder());
+    params.add(configuration.isEnabled());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -64,13 +67,15 @@ public class PostgresqlExecutor implements SecurityEventHookConfigSqlExecutor {
         """
                     UPDATE security_event_hook_configurations
                     SET payload = ?::jsonb,
-                    execution_order = ?
+                    execution_order = ?,
+                    enabled = ?
                     WHERE id = ?::uuid
                     AND tenant_id = ?::uuid;
                     """;
     List<Object> params = new ArrayList<>();
     params.add(jsonConverter.write(configuration));
     params.add(configuration.executionOrder());
+    params.add(configuration.isEnabled());
     params.add(configuration.identifier().valueAsUuid());
     params.add(tenant.identifier().valueAsUuid());
 

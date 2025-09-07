@@ -24,9 +24,17 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public interface AuthenticationConfigSqlExecutor {
   Map<String, String> selectOne(Tenant tenant, String key);
 
+  Map<String, String> selectOne(Tenant tenant, String key, boolean includeDisabled);
+
   Map<String, String> selectOne(Tenant tenant, AuthenticationConfigurationIdentifier identifier);
+
+  Map<String, String> selectOne(
+      Tenant tenant, AuthenticationConfigurationIdentifier identifier, boolean includeDisabled);
 
   Map<String, String> selectCount(Tenant tenant);
 
   List<Map<String, String>> selectList(Tenant tenant, int limit, int offset);
+
+  List<Map<String, String>> selectList(
+      Tenant tenant, int limit, int offset, boolean includeDisabled);
 }

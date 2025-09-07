@@ -20,13 +20,16 @@ import java.util.*;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 import org.idp.server.core.openid.oauth.type.oidc.AcrValues;
+import org.idp.server.platform.configuration.Configurable;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.uuid.UuidConvertable;
 
-public class AuthenticationPolicyConfiguration implements JsonReadable, UuidConvertable {
+public class AuthenticationPolicyConfiguration
+    implements JsonReadable, UuidConvertable, Configurable {
   String id;
   String flow;
   List<AuthenticationPolicy> policies;
+  boolean enabled = true;
 
   public AuthenticationPolicyConfiguration() {}
 
@@ -35,6 +38,15 @@ public class AuthenticationPolicyConfiguration implements JsonReadable, UuidConv
     this.id = id;
     this.flow = flow;
     this.policies = policies;
+    this.enabled = true;
+  }
+
+  public AuthenticationPolicyConfiguration(
+      String id, String flow, List<AuthenticationPolicy> policies, boolean enabled) {
+    this.id = id;
+    this.flow = flow;
+    this.policies = policies;
+    this.enabled = enabled;
   }
 
   public String id() {
@@ -78,11 +90,17 @@ public class AuthenticationPolicyConfiguration implements JsonReadable, UuidConv
     return policies.stream().map(AuthenticationPolicy::toMap).toList();
   }
 
+  @Override
+  public boolean isEnabled() {
+    return enabled;
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("id", id);
     map.put("flow", flow);
     map.put("policies", policiesAsMap());
+    map.put("enabled", enabled);
     return map;
   }
 

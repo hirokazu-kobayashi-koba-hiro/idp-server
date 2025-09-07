@@ -29,5 +29,8 @@ public interface FederationConfigurationQueryRepository {
 
   FederationConfiguration find(Tenant tenant, FederationConfigurationIdentifier identifier);
 
+  FederationConfiguration findWithDisabled(
+      Tenant tenant, FederationConfigurationIdentifier identifier, boolean includeDisabled);
+
   List<FederationConfiguration> findList(Tenant tenant, int limit, int offset);
 }

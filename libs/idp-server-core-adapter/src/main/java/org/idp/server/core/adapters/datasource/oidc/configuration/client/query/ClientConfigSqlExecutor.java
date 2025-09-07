@@ -29,9 +29,18 @@ public interface ClientConfigSqlExecutor {
 
   Map<String, String> selectByAlias(Tenant tenant, RequestedClientId requestedClientId);
 
+  Map<String, String> selectByAlias(
+      Tenant tenant, RequestedClientId requestedClientId, boolean includeDisabled);
+
   Map<String, String> selectById(Tenant tenant, ClientIdentifier clientIdentifier);
 
+  Map<String, String> selectById(
+      Tenant tenant, ClientIdentifier clientIdentifier, boolean includeDisabled);
+
   List<Map<String, String>> selectList(Tenant tenant, int limit, int offset);
+
+  List<Map<String, String>> selectList(
+      Tenant tenant, int limit, int offset, boolean includeDisabled);
 
   void update(Tenant tenant, ClientConfiguration clientConfiguration);
 

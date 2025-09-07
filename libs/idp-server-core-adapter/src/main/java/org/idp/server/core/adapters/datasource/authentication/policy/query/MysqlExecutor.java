@@ -59,6 +59,7 @@ public class MysqlExecutor implements AuthenticationPolicyConfigurationSqlExecut
             + """
                 WHERE tenant_id = ?
                 AND id = ?
+                AND enabled = true
                 """;
 
     List<Object> params = new ArrayList<>();

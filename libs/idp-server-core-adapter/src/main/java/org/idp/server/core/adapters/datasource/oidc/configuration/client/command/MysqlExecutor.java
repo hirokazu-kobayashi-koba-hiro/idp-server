@@ -38,8 +38,8 @@ public class MysqlExecutor implements ClientConfigCommandSqlExecutor {
 
     String sqlTemplate =
         """
-            INSERT INTO client_configuration (id, id_alias, tenant_id, payload)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO client_configuration (id, id_alias, tenant_id, payload, enabled)
+            VALUES (?, ?, ?, ?, ?)
             """;
 
     String payload = jsonConverter.write(clientConfiguration);
@@ -48,6 +48,7 @@ public class MysqlExecutor implements ClientConfigCommandSqlExecutor {
     params.add(clientConfiguration.clientIdAlias());
     params.add(tenant.identifierValue());
     params.add(payload);
+    params.add(clientConfiguration.isEnabled());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -60,7 +61,8 @@ public class MysqlExecutor implements ClientConfigCommandSqlExecutor {
         """
                 UPDATE client_configuration
                 SET id_alias = ?,
-                payload = ?
+                payload = ?,
+                enabled = ?
                 WHERE tenant_id = ?
                 AND id = ?
                 """;
@@ -69,6 +71,7 @@ public class MysqlExecutor implements ClientConfigCommandSqlExecutor {
     List<Object> params = new ArrayList<>();
     params.add(clientConfiguration.clientIdAlias());
     params.add(payload);
+    params.add(clientConfiguration.isEnabled());
     params.add(tenant.identifierValue());
     params.add(clientConfiguration.clientIdentifier().value());
 

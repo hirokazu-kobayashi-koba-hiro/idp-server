@@ -37,8 +37,10 @@ public class MysqlExecutor implements FederationConfigurationSqlExecutor {
             tenant_id,
             type,
             sso_provider,
-            payload
+            payload,
+            enabled
             ) VALUES (
+            ?,
             ?,
             ?,
             ?,
@@ -53,6 +55,7 @@ public class MysqlExecutor implements FederationConfigurationSqlExecutor {
     params.add(configuration.type().name());
     params.add(configuration.ssoProvider().name());
     params.add(jsonConverter.write(configuration.payload()));
+    params.add(configuration.isEnabled());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -64,7 +67,8 @@ public class MysqlExecutor implements FederationConfigurationSqlExecutor {
         """
             UPDATE federation_configurations
             SET payload = ?,
-            sso_provider = ?, = ?
+            sso_provider = ?,
+            enabled = ?
             WHERE id = ?
             AND tenant_id = ?;
             """;
@@ -72,6 +76,7 @@ public class MysqlExecutor implements FederationConfigurationSqlExecutor {
     List<Object> params = new ArrayList<>();
     params.add(jsonConverter.write(configuration.payload()));
     params.add(configuration.ssoProvider().name());
+    params.add(configuration.isEnabled());
     params.add(configuration.identifier().value());
     params.add(tenant.identifier().value());
 

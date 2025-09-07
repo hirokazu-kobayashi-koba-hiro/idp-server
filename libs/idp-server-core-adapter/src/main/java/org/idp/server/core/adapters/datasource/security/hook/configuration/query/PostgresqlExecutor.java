@@ -33,15 +33,19 @@ public class PostgresqlExecutor implements SecurityEventHookConfigSqlExecutor {
 
   @Override
   public List<Map<String, String>> selectListBy(Tenant tenant) {
+    return selectListBy(tenant, false);
+  }
+
+  @Override
+  public List<Map<String, String>> selectListBy(Tenant tenant, boolean includeDisabled) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         selectSql
             + """
-                WHERE tenant_id = ?::uuid
-                AND enabled = true
-                ORDER BY execution_order;
-                """;
+                WHERE tenant_id = ?::uuid"""
+            + (includeDisabled ? "" : "\n                AND enabled = true")
+            + "\n                ORDER BY execution_order;\n                ";
 
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierUUID());
@@ -52,14 +56,21 @@ public class PostgresqlExecutor implements SecurityEventHookConfigSqlExecutor {
   @Override
   public Map<String, String> selectOne(
       Tenant tenant, SecurityEventHookConfigurationIdentifier identifier) {
+    return selectOne(tenant, identifier, false);
+  }
+
+  @Override
+  public Map<String, String> selectOne(
+      Tenant tenant, SecurityEventHookConfigurationIdentifier identifier, boolean includeDisabled) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         selectSql
             + """
                 WHERE tenant_id = ?::uuid
-                AND id = ?::uuid;
-                """;
+                AND id = ?::uuid"""
+            + (includeDisabled ? "" : "\n                AND enabled = true")
+            + ";\n                ";
 
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierUUID());
@@ -70,14 +81,20 @@ public class PostgresqlExecutor implements SecurityEventHookConfigSqlExecutor {
 
   @Override
   public Map<String, String> selectOne(Tenant tenant, String type) {
+    return selectOne(tenant, type, false);
+  }
+
+  @Override
+  public Map<String, String> selectOne(Tenant tenant, String type, boolean includeDisabled) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         selectSql
             + """
                 WHERE tenant_id = ?::uuid
-                AND type = ?;
-                """;
+                AND type = ?"""
+            + (includeDisabled ? "" : "\n                AND enabled = true")
+            + ";\n                ";
 
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierUUID());
@@ -88,18 +105,25 @@ public class PostgresqlExecutor implements SecurityEventHookConfigSqlExecutor {
 
   @Override
   public List<Map<String, String>> selectList(Tenant tenant, int limit, int offset) {
+    return selectList(tenant, limit, offset, false);
+  }
+
+  @Override
+  public List<Map<String, String>> selectList(
+      Tenant tenant, int limit, int offset, boolean includeDisabled) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         selectSql
             + """
-                WHERE tenant_id = ?::uuid
-                ORDER BY execution_order
-                LIMIT ? OFFSET ?;
-                """;
+                WHERE tenant_id = ?::uuid"""
+            + (includeDisabled ? "" : "\n                AND enabled = true")
+            + "\n                ORDER BY execution_order\n                LIMIT ? OFFSET ?;\n                ";
 
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierUUID());
+    params.add(limit);
+    params.add(offset);
 
     return sqlExecutor.selectList(sqlTemplate, params);
   }

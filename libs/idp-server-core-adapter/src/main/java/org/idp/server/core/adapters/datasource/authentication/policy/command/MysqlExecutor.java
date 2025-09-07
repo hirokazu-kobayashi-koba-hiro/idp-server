@@ -36,9 +36,11 @@ public class MysqlExecutor implements AuthenticationPolicyConfigurationSqlExecut
             id,
             tenant_id,
             flow,
-            payload
+            payload,
+            enabled
             )
             VALUES (
+            ?,
             ?,
             ?,
             ?,
@@ -51,6 +53,7 @@ public class MysqlExecutor implements AuthenticationPolicyConfigurationSqlExecut
     params.add(tenant.identifierValue());
     params.add(configuration.flow());
     params.add(jsonConverter.write(configuration.toMap()));
+    params.add(configuration.isEnabled());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -61,13 +64,15 @@ public class MysqlExecutor implements AuthenticationPolicyConfigurationSqlExecut
     String sqlTemplate =
         """
                 UPDATE authentication_policy
-                SET payload = ?
+                SET payload = ?,
+                enabled = ?
                 WHERE id = ?
                 AND tenant_id = ?
                 """;
 
     List<Object> params = new ArrayList<>();
     params.add(jsonConverter.write(configuration.toMap()));
+    params.add(configuration.isEnabled());
     params.add(configuration.id());
     params.add(tenant.identifierValue());
 

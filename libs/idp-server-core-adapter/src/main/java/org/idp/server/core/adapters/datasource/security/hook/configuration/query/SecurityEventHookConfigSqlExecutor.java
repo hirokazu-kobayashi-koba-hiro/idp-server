@@ -24,9 +24,19 @@ import org.idp.server.platform.security.hook.configuration.SecurityEventHookConf
 public interface SecurityEventHookConfigSqlExecutor {
   List<Map<String, String>> selectListBy(Tenant tenant);
 
+  List<Map<String, String>> selectListBy(Tenant tenant, boolean includeDisabled);
+
   Map<String, String> selectOne(Tenant tenant, SecurityEventHookConfigurationIdentifier identifier);
+
+  Map<String, String> selectOne(
+      Tenant tenant, SecurityEventHookConfigurationIdentifier identifier, boolean includeDisabled);
 
   Map<String, String> selectOne(Tenant tenant, String type);
 
+  Map<String, String> selectOne(Tenant tenant, String type, boolean includeDisabled);
+
   List<Map<String, String>> selectList(Tenant tenant, int limit, int offset);
+
+  List<Map<String, String>> selectList(
+      Tenant tenant, int limit, int offset, boolean includeDisabled);
 }

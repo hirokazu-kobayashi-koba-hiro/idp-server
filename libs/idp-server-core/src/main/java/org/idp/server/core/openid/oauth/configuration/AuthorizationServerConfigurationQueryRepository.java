@@ -21,4 +21,6 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public interface AuthorizationServerConfigurationQueryRepository {
 
   AuthorizationServerConfiguration get(Tenant tenant);
+
+  AuthorizationServerConfiguration getWithDisabled(Tenant tenant, boolean includeDisabled);
 }

@@ -19,12 +19,14 @@ package org.idp.server.core.openid.federation;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.federation.sso.SsoProvider;
+import org.idp.server.platform.configuration.Configurable;
 
-public class FederationConfiguration {
+public class FederationConfiguration implements Configurable {
   String id;
   String type;
   String ssoProvider;
   Map<String, Object> payload;
+  boolean enabled = true;
 
   public FederationConfiguration() {}
 
@@ -34,6 +36,16 @@ public class FederationConfiguration {
     this.type = type;
     this.ssoProvider = ssoProvider;
     this.payload = payload;
+    this.enabled = true;
+  }
+
+  public FederationConfiguration(
+      String id, String type, String ssoProvider, Map<String, Object> payload, boolean enabled) {
+    this.id = id;
+    this.type = type;
+    this.ssoProvider = ssoProvider;
+    this.payload = payload;
+    this.enabled = enabled;
   }
 
   public FederationConfigurationIdentifier identifier() {
@@ -56,8 +68,14 @@ public class FederationConfiguration {
     return payload;
   }
 
+  @Override
   public boolean exists() {
     return id != null && !id.isEmpty();
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return enabled;
   }
 
   public Map<String, Object> toMap() {
@@ -65,6 +83,7 @@ public class FederationConfiguration {
     result.put("id", id);
     result.put("type", type);
     result.put("payload", payload);
+    result.put("enabled", enabled);
     return result;
   }
 }

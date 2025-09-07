@@ -61,6 +61,12 @@ public class PostgresqlExecutor implements ClientConfigSqlExecutor {
 
   @Override
   public Map<String, String> selectByAlias(Tenant tenant, RequestedClientId requestedClientId) {
+    return selectByAlias(tenant, requestedClientId, false);
+  }
+
+  @Override
+  public Map<String, String> selectByAlias(
+      Tenant tenant, RequestedClientId requestedClientId, boolean includeDisabled) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplateClientIdAlias =
@@ -68,8 +74,9 @@ public class PostgresqlExecutor implements ClientConfigSqlExecutor {
                         SELECT id, id_alias, tenant_id, payload
                         FROM client_configuration
                         WHERE tenant_id = ?::uuid
-                        AND id_alias = ?;
-                        """;
+                        AND id_alias = ?"""
+            + (includeDisabled ? "" : "\n                        AND enabled = true")
+            + ";";
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierUUID());
     params.add(requestedClientId.value());
@@ -79,14 +86,21 @@ public class PostgresqlExecutor implements ClientConfigSqlExecutor {
 
   @Override
   public Map<String, String> selectById(Tenant tenant, ClientIdentifier clientIdentifier) {
+    return selectById(tenant, clientIdentifier, false);
+  }
+
+  @Override
+  public Map<String, String> selectById(
+      Tenant tenant, ClientIdentifier clientIdentifier, boolean includeDisabled) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
                         SELECT id, id_alias, tenant_id, payload
                         FROM client_configuration
                         WHERE tenant_id = ?::uuid
-                        AND id = ?::uuid;
-                        """;
+                        AND id = ?::uuid"""
+            + (includeDisabled ? "" : "\n                        AND enabled = true")
+            + ";";
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifier().valueAsUuid());
     params.add(clientIdentifier.valueAsUuid());
@@ -96,15 +110,20 @@ public class PostgresqlExecutor implements ClientConfigSqlExecutor {
 
   @Override
   public List<Map<String, String>> selectList(Tenant tenant, int limit, int offset) {
+    return selectList(tenant, limit, offset, false);
+  }
+
+  @Override
+  public List<Map<String, String>> selectList(
+      Tenant tenant, int limit, int offset, boolean includeDisabled) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
                         SELECT id, id_alias, tenant_id, payload
                         FROM client_configuration
-                        WHERE tenant_id = ?::uuid
-                        limit ?
-                        offset ?;
-                        """;
+                        WHERE tenant_id = ?::uuid"""
+            + (includeDisabled ? "" : "\n                        AND enabled = true")
+            + "\n                        limit ?\n                        offset ?;";
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierUUID());
     params.add(limit);

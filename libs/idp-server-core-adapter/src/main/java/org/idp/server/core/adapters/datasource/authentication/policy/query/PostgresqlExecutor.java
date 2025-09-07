@@ -59,6 +59,7 @@ public class PostgresqlExecutor implements AuthenticationPolicyConfigurationSqlE
             + """
                 WHERE tenant_id = ?::uuid
                 AND id = ?::uuid
+                AND enabled = true
                 """;
 
     List<Object> params = new ArrayList<>();

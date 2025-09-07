@@ -22,10 +22,11 @@ import org.idp.server.core.openid.oauth.configuration.vc.VerifiableCredentialCon
 import org.idp.server.core.openid.oauth.type.oauth.GrantType;
 import org.idp.server.core.openid.oauth.type.oauth.ResponseType;
 import org.idp.server.core.openid.oauth.type.oauth.TokenIssuer;
+import org.idp.server.platform.configuration.Configurable;
 import org.idp.server.platform.json.JsonReadable;
 
 /** ServerConfiguration */
-public class AuthorizationServerConfiguration implements JsonReadable {
+public class AuthorizationServerConfiguration implements JsonReadable, Configurable {
   String issuer;
   String authorizationEndpoint;
   String tokenEndpoint = "";
@@ -85,6 +86,9 @@ public class AuthorizationServerConfiguration implements JsonReadable {
   List<String> idDocumentsSupported = new ArrayList<>();
   List<String> idDocumentsVerificationMethodsSupported = new ArrayList<>();
   List<String> claimsInVerifiedClaimsSupported = new ArrayList<>();
+
+  // enable/disable
+  boolean enabled = true;
 
   // vc
   VerifiableCredentialConfiguration credentialIssuerMetadata =
@@ -738,6 +742,17 @@ public class AuthorizationServerConfiguration implements JsonReadable {
     map.put("id_documents_supported", idDocumentsSupported);
     map.put("id_documents_verification_methods_supported", idDocumentsVerificationMethodsSupported);
     map.put("claims_in_verified_claims_supported", claimsInVerifiedClaimsSupported);
+    map.put("enabled", enabled);
     return map;
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return enabled;
+  }
+
+  @Override
+  public boolean exists() {
+    return issuer != null && !issuer.isEmpty();
   }
 }

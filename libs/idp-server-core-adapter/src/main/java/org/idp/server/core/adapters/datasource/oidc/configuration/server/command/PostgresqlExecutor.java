@@ -41,12 +41,14 @@ public class PostgresqlExecutor implements ServerConfigSqlExecutor {
                     INSERT INTO authorization_server_configuration (
                     tenant_id,
                     token_issuer,
-                    payload
+                    payload,
+                    enabled
                     )
                     VALUES (
                     ?::uuid,
                     ?,
-                    ?::jsonb
+                    ?::jsonb,
+                    ?
                     );
                     """;
     String payload = jsonConverter.write(authorizationServerConfiguration);
@@ -54,6 +56,7 @@ public class PostgresqlExecutor implements ServerConfigSqlExecutor {
     params.add(tenant.identifierUUID());
     params.add(authorizationServerConfiguration.tokenIssuer().value());
     params.add(payload);
+    params.add(authorizationServerConfiguration.isEnabled());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -66,13 +69,15 @@ public class PostgresqlExecutor implements ServerConfigSqlExecutor {
         """
                         UPDATE authorization_server_configuration
                         SET payload = ?::jsonb,
-                        token_issuer = ?
+                        token_issuer = ?,
+                        enabled = ?
                         WHERE tenant_id = ?::uuid;
                         """;
     String payload = jsonConverter.write(authorizationServerConfiguration);
     List<Object> params = new ArrayList<>();
     params.add(payload);
     params.add(authorizationServerConfiguration.tokenIssuer().value());
+    params.add(authorizationServerConfiguration.isEnabled());
     params.add(tenant.identifierUUID());
 
     sqlExecutor.execute(sqlTemplate, params);

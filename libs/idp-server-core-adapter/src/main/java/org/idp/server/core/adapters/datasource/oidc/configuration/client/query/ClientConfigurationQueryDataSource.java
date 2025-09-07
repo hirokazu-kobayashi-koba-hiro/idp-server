@@ -142,6 +142,30 @@ public class ClientConfigurationQueryDataSource implements ClientConfigurationQu
     return converted;
   }
 
+  @Override
+  public ClientConfiguration findWithDisabled(
+      Tenant tenant, ClientIdentifier clientIdentifier, boolean includeDisabled) {
+    String key = key(tenant.identifier(), clientIdentifier.value());
+    Optional<ClientConfiguration> optionalClientConfiguration =
+        cacheStore.find(key, ClientConfiguration.class);
+
+    if (optionalClientConfiguration.isPresent()) {
+      return optionalClientConfiguration.get();
+    }
+
+    ClientConfigSqlExecutor executor = executors.get(tenant.databaseType());
+    Map<String, String> result = executor.selectById(tenant, clientIdentifier, includeDisabled);
+
+    if (result == null || result.isEmpty()) {
+      return new ClientConfiguration();
+    }
+
+    ClientConfiguration converted = ModelConverter.convert(result);
+    cacheStore.put(key, converted);
+
+    return converted;
+  }
+
   private String key(TenantIdentifier tenantIdentifier, String clientId) {
     return "tenantId:"
         + tenantIdentifier.value()
