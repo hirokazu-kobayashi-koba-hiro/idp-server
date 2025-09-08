@@ -32,6 +32,7 @@ import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientIdentifier;
+import org.idp.server.core.openid.oauth.configuration.client.ClientQueries;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogWriters;
@@ -116,15 +117,12 @@ public class ClientManagementEntryService implements ClientManagementApi {
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      int limit,
-      int offset,
+      ClientQueries queries,
       RequestAttributes requestAttributes) {
 
     AdminPermissions permissions = getRequiredPermissions("findList");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    List<ClientConfiguration> clientConfigurations =
-        clientConfigurationQueryRepository.findList(tenant, limit, offset);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
@@ -148,8 +146,24 @@ public class ClientManagementEntryService implements ClientManagementApi {
       return new ClientManagementResponse(ClientManagementStatus.FORBIDDEN, response);
     }
 
+    long totalCount = clientConfigurationQueryRepository.findTotalCount(tenant, queries);
+    if (totalCount == 0) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("list", List.of());
+      response.put("total_count", totalCount);
+      response.put("limit", queries.limit());
+      response.put("offset", queries.offset());
+      return new ClientManagementResponse(ClientManagementStatus.OK, response);
+    }
+
+    List<ClientConfiguration> clientConfigurations =
+        clientConfigurationQueryRepository.findList(tenant, queries);
+
     Map<String, Object> response = new HashMap<>();
     response.put("list", clientConfigurations.stream().map(ClientConfiguration::toMap).toList());
+    response.put("total_count", totalCount);
+    response.put("limit", queries.limit());
+    response.put("offset", queries.offset());
 
     return new ClientManagementResponse(ClientManagementStatus.OK, response);
   }

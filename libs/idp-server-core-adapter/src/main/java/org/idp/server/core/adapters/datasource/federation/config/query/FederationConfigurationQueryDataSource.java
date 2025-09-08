@@ -20,10 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import org.idp.server.core.openid.federation.FederationConfiguration;
-import org.idp.server.core.openid.federation.FederationConfigurationIdentifier;
-import org.idp.server.core.openid.federation.FederationConfigurationNotFoundException;
-import org.idp.server.core.openid.federation.FederationType;
+import org.idp.server.core.openid.federation.*;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationQueryRepository;
 import org.idp.server.core.openid.federation.sso.SsoProvider;
 import org.idp.server.platform.json.JsonConverter;
@@ -85,10 +82,23 @@ public class FederationConfigurationQueryDataSource
   }
 
   @Override
-  public List<FederationConfiguration> findList(Tenant tenant, int limit, int offset) {
+  public long findTotalCount(Tenant tenant, FederationQueries queries) {
     FederationConfigurationSqlExecutor executor = executors.get(tenant.databaseType());
 
-    List<Map<String, String>> results = executor.selectList(tenant, limit, offset);
+    Map<String, String> result = executor.selectCount(tenant, queries);
+
+    if (Objects.isNull(result) || result.isEmpty()) {
+      return 0;
+    }
+
+    return Long.parseLong(result.get("count"));
+  }
+
+  @Override
+  public List<FederationConfiguration> findList(Tenant tenant, FederationQueries queries) {
+    FederationConfigurationSqlExecutor executor = executors.get(tenant.databaseType());
+
+    List<Map<String, String>> results = executor.selectList(tenant, queries);
 
     if (Objects.isNull(results) || results.isEmpty()) {
       return List.of();

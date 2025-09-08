@@ -28,6 +28,7 @@ import org.idp.server.control_plane.management.identity.verification.io.Identity
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigUpdateRequest;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationQueries;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationCommandRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
@@ -123,16 +124,11 @@ public class IdentityVerificationConfigManagementEntryService
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      int limit,
-      int offset,
+      IdentityVerificationQueries queries,
       RequestAttributes requestAttributes) {
 
     AdminPermissions permissions = getRequiredPermissions("findList");
-
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    List<IdentityVerificationConfiguration> configurations =
-        identityVerificationConfigurationQueryRepository.findList(tenant, limit, offset);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
@@ -157,9 +153,27 @@ public class IdentityVerificationConfigManagementEntryService
           IdentityVerificationConfigManagementStatus.FORBIDDEN, response);
     }
 
-    Map<String, Object> response =
-        Map.of(
-            "list", configurations.stream().map(IdentityVerificationConfiguration::toMap).toList());
+    long totalCount =
+        identityVerificationConfigurationQueryRepository.findTotalCount(tenant, queries);
+    if (totalCount == 0) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("list", List.of());
+      response.put("total_count", totalCount);
+      response.put("limit", queries.limit());
+      response.put("offset", queries.offset());
+      return new IdentityVerificationConfigManagementResponse(
+          IdentityVerificationConfigManagementStatus.OK, response);
+    }
+
+    List<IdentityVerificationConfiguration> configurations =
+        identityVerificationConfigurationQueryRepository.findList(tenant, queries);
+
+    Map<String, Object> response = new HashMap<>();
+    response.put(
+        "list", configurations.stream().map(IdentityVerificationConfiguration::toMap).toList());
+    response.put("total_count", totalCount);
+    response.put("limit", queries.limit());
+    response.put("offset", queries.offset());
 
     return new IdentityVerificationConfigManagementResponse(
         IdentityVerificationConfigManagementStatus.OK, response);

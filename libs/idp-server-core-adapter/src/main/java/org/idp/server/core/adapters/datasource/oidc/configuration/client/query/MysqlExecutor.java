@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientIdentifier;
+import org.idp.server.core.openid.oauth.configuration.client.ClientQueries;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.json.JsonConverter;
@@ -113,6 +114,258 @@ public class MysqlExecutor implements ClientConfigSqlExecutor {
             + " limit ? offset ?;";
     List<Object> params = List.of(tenant.identifierValue(), limit, offset);
     return sqlExecutor.selectList(sqlTemplate, params);
+  }
+
+  @Override
+  public List<Map<String, String>> selectList(Tenant tenant, ClientQueries queries) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    StringBuilder where = new StringBuilder("WHERE tenant_id = ?");
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierValue());
+
+    if (queries.hasFrom()) {
+      where.append(" AND created_at >= ?");
+      params.add(queries.from());
+    }
+
+    if (queries.hasTo()) {
+      where.append(" AND created_at <= ?");
+      params.add(queries.to());
+    }
+
+    if (queries.hasClientId()) {
+      where.append(" AND id = ?");
+      params.add(queries.clientId());
+    }
+
+    if (queries.hasClientIdAlias()) {
+      where.append(" AND id_alias = ?");
+      params.add(queries.clientIdAlias());
+    }
+
+    if (queries.hasClientName()) {
+      where.append(" AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.client_name')) LIKE ?");
+      params.add("%" + queries.clientName() + "%");
+    }
+
+    if (queries.hasClientUri()) {
+      where.append(" AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.client_uri')) LIKE ?");
+      params.add("%" + queries.clientUri() + "%");
+    }
+
+    if (queries.hasApplicationType()) {
+      where.append(" AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.application_type')) = ?");
+      params.add(queries.applicationType());
+    }
+
+    if (queries.hasGrantTypes()) {
+      where.append(" AND JSON_CONTAINS(JSON_EXTRACT(payload, '$.grant_types'), ?)");
+      params.add("\"" + queries.grantTypes() + "\"");
+    }
+
+    if (queries.hasResponseTypes()) {
+      where.append(" AND JSON_CONTAINS(JSON_EXTRACT(payload, '$.response_types'), ?)");
+      params.add("\"" + queries.responseTypes() + "\"");
+    }
+
+    if (queries.hasTokenEndpointAuthMethod()) {
+      where.append(" AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.token_endpoint_auth_method')) = ?");
+      params.add(queries.tokenEndpointAuthMethod());
+    }
+
+    if (queries.hasRedirectUris()) {
+      where.append(" AND JSON_CONTAINS(JSON_EXTRACT(payload, '$.redirect_uris'), ?)");
+      params.add("\"" + queries.redirectUris() + "\"");
+    }
+
+    if (queries.hasScope()) {
+      where.append(" AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.scope')) LIKE ?");
+      params.add("%" + queries.scope() + "%");
+    }
+
+    if (queries.hasEnabled()) {
+      where.append(" AND enabled = ?");
+      params.add(queries.enabled());
+    }
+
+    if (queries.hasBackchannelTokenDeliveryMode()) {
+      where.append(
+          " AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.backchannel_token_delivery_mode')) = ?");
+      params.add(queries.backchannelTokenDeliveryMode());
+    }
+
+    if (queries.hasBackchannelUserCodeParameter()) {
+      where.append(
+          " AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.backchannel_user_code_parameter')) = ?");
+      params.add(queries.backchannelUserCodeParameter());
+    }
+
+    if (queries.hasAuthorizationDetailsTypes()) {
+      where.append(" AND JSON_CONTAINS(JSON_EXTRACT(payload, '$.authorization_details_types'), ?)");
+      params.add("\"" + queries.authorizationDetailsTypes() + "\"");
+    }
+
+    if (queries.hasTlsClientAuthSubjectDn()) {
+      where.append(" AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.tls_client_auth_subject_dn')) = ?");
+      params.add(queries.tlsClientAuthSubjectDn());
+    }
+
+    if (queries.hasTlsClientCertificateBoundAccessTokens()) {
+      where.append(
+          " AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.tls_client_certificate_bound_access_tokens')) = ?");
+      params.add(queries.tlsClientCertificateBoundAccessTokens());
+    }
+
+    if (queries.hasSoftwareId()) {
+      where.append(" AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.software_id')) = ?");
+      params.add(queries.softwareId());
+    }
+
+    if (queries.hasSoftwareVersion()) {
+      where.append(" AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.software_version')) = ?");
+      params.add(queries.softwareVersion());
+    }
+
+    String sqlTemplate =
+        """
+        SELECT id, id_alias, tenant_id, payload
+        FROM client_configuration
+        """
+            + where
+            + """
+         LIMIT ?
+         OFFSET ?
+        """;
+
+    params.add(queries.limit());
+    params.add(queries.offset());
+
+    return sqlExecutor.selectList(sqlTemplate, params);
+  }
+
+  @Override
+  public long selectTotalCount(Tenant tenant, ClientQueries queries) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    StringBuilder where = new StringBuilder("WHERE tenant_id = ?");
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierValue());
+
+    if (queries.hasFrom()) {
+      where.append(" AND created_at >= ?");
+      params.add(queries.from());
+    }
+
+    if (queries.hasTo()) {
+      where.append(" AND created_at <= ?");
+      params.add(queries.to());
+    }
+
+    if (queries.hasClientId()) {
+      where.append(" AND id = ?");
+      params.add(queries.clientId());
+    }
+
+    if (queries.hasClientIdAlias()) {
+      where.append(" AND id_alias = ?");
+      params.add(queries.clientIdAlias());
+    }
+
+    if (queries.hasClientName()) {
+      where.append(" AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.client_name')) LIKE ?");
+      params.add("%" + queries.clientName() + "%");
+    }
+
+    if (queries.hasClientUri()) {
+      where.append(" AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.client_uri')) LIKE ?");
+      params.add("%" + queries.clientUri() + "%");
+    }
+
+    if (queries.hasApplicationType()) {
+      where.append(" AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.application_type')) = ?");
+      params.add(queries.applicationType());
+    }
+
+    if (queries.hasGrantTypes()) {
+      where.append(" AND JSON_CONTAINS(JSON_EXTRACT(payload, '$.grant_types'), ?)");
+      params.add("\"" + queries.grantTypes() + "\"");
+    }
+
+    if (queries.hasResponseTypes()) {
+      where.append(" AND JSON_CONTAINS(JSON_EXTRACT(payload, '$.response_types'), ?)");
+      params.add("\"" + queries.responseTypes() + "\"");
+    }
+
+    if (queries.hasTokenEndpointAuthMethod()) {
+      where.append(" AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.token_endpoint_auth_method')) = ?");
+      params.add(queries.tokenEndpointAuthMethod());
+    }
+
+    if (queries.hasRedirectUris()) {
+      where.append(" AND JSON_CONTAINS(JSON_EXTRACT(payload, '$.redirect_uris'), ?)");
+      params.add("\"" + queries.redirectUris() + "\"");
+    }
+
+    if (queries.hasScope()) {
+      where.append(" AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.scope')) LIKE ?");
+      params.add("%" + queries.scope() + "%");
+    }
+
+    if (queries.hasEnabled()) {
+      where.append(" AND enabled = ?");
+      params.add(queries.enabled());
+    }
+
+    if (queries.hasBackchannelTokenDeliveryMode()) {
+      where.append(
+          " AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.backchannel_token_delivery_mode')) = ?");
+      params.add(queries.backchannelTokenDeliveryMode());
+    }
+
+    if (queries.hasBackchannelUserCodeParameter()) {
+      where.append(
+          " AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.backchannel_user_code_parameter')) = ?");
+      params.add(queries.backchannelUserCodeParameter());
+    }
+
+    if (queries.hasAuthorizationDetailsTypes()) {
+      where.append(" AND JSON_CONTAINS(JSON_EXTRACT(payload, '$.authorization_details_types'), ?)");
+      params.add("\"" + queries.authorizationDetailsTypes() + "\"");
+    }
+
+    if (queries.hasTlsClientAuthSubjectDn()) {
+      where.append(" AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.tls_client_auth_subject_dn')) = ?");
+      params.add(queries.tlsClientAuthSubjectDn());
+    }
+
+    if (queries.hasTlsClientCertificateBoundAccessTokens()) {
+      where.append(
+          " AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.tls_client_certificate_bound_access_tokens')) = ?");
+      params.add(queries.tlsClientCertificateBoundAccessTokens());
+    }
+
+    if (queries.hasSoftwareId()) {
+      where.append(" AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.software_id')) = ?");
+      params.add(queries.softwareId());
+    }
+
+    if (queries.hasSoftwareVersion()) {
+      where.append(" AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.software_version')) = ?");
+      params.add(queries.softwareVersion());
+    }
+
+    String sqlTemplate =
+        """
+        SELECT COUNT(*) as count
+        FROM client_configuration
+        """ + where;
+
+    Map<String, String> result = sqlExecutor.selectOne(sqlTemplate, params);
+    if (result == null || result.isEmpty()) {
+      return 0;
+    }
+    return Long.parseLong(result.get("count"));
   }
 
   @Override

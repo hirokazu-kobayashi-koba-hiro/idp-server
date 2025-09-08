@@ -25,6 +25,7 @@ import org.idp.server.control_plane.management.federation.FederationConfiguratio
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
 import org.idp.server.control_plane.management.federation.io.FederationConfigRequest;
 import org.idp.server.core.openid.federation.FederationConfigurationIdentifier;
+import org.idp.server.core.openid.federation.FederationQueries;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;
@@ -73,8 +74,7 @@ public class FederationConfigurationManagementV1Api implements ParameterTransfor
   public ResponseEntity<?> getList(
       @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @RequestParam(value = "limit", defaultValue = "20") String limitValue,
-      @RequestParam(value = "offset", defaultValue = "0") String offsetValue,
+      @RequestParam Map<String, String> queryParams,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
@@ -84,8 +84,7 @@ public class FederationConfigurationManagementV1Api implements ParameterTransfor
             tenantIdentifier,
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),
-            Integer.parseInt(limitValue),
-            Integer.parseInt(offsetValue),
+            new FederationQueries(queryParams),
             requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();

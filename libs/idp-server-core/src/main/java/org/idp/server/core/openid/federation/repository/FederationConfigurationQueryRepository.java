@@ -19,6 +19,7 @@ package org.idp.server.core.openid.federation.repository;
 import java.util.List;
 import org.idp.server.core.openid.federation.FederationConfiguration;
 import org.idp.server.core.openid.federation.FederationConfigurationIdentifier;
+import org.idp.server.core.openid.federation.FederationQueries;
 import org.idp.server.core.openid.federation.FederationType;
 import org.idp.server.core.openid.federation.sso.SsoProvider;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -32,5 +33,7 @@ public interface FederationConfigurationQueryRepository {
   FederationConfiguration findWithDisabled(
       Tenant tenant, FederationConfigurationIdentifier identifier, boolean includeDisabled);
 
-  List<FederationConfiguration> findList(Tenant tenant, int limit, int offset);
+  long findTotalCount(Tenant tenant, FederationQueries queries);
+
+  List<FederationConfiguration> findList(Tenant tenant, FederationQueries queries);
 }

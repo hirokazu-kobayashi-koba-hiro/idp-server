@@ -23,6 +23,7 @@ import java.util.Optional;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientIdentifier;
+import org.idp.server.core.openid.oauth.configuration.client.ClientQueries;
 import org.idp.server.core.openid.oauth.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.datasource.cache.CacheStore;
@@ -117,6 +118,24 @@ public class ClientConfigurationQueryDataSource implements ClientConfigurationQu
     }
 
     return maps.stream().map(ModelConverter::convert).toList();
+  }
+
+  @Override
+  public List<ClientConfiguration> findList(Tenant tenant, ClientQueries queries) {
+    ClientConfigSqlExecutor executor = executors.get(tenant.databaseType());
+    List<Map<String, String>> maps = executor.selectList(tenant, queries);
+
+    if (Objects.isNull(maps) || maps.isEmpty()) {
+      return List.of();
+    }
+
+    return maps.stream().map(ModelConverter::convert).toList();
+  }
+
+  @Override
+  public long findTotalCount(Tenant tenant, ClientQueries queries) {
+    ClientConfigSqlExecutor executor = executors.get(tenant.databaseType());
+    return executor.selectTotalCount(tenant, queries);
   }
 
   @Override
