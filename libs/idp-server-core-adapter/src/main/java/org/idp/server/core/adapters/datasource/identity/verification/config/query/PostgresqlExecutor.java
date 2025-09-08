@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationQueries;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -70,22 +71,89 @@ public class PostgresqlExecutor implements IdentityVerificationConfigSqlExecutor
   }
 
   @Override
-  public List<Map<String, String>> selectList(Tenant tenant, int limit, int offset) {
+  public Map<String, String> selectCount(Tenant tenant, IdentityVerificationQueries queries) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        selectSql
-            + """
-                WHERE tenant_id = ?::uuid
-                AND id = ?::uuid
-                limit ?
-                offset ?
-                """;
+    String selectSql =
+        """
+            SELECT COUNT(*) FROM identity_verification_configuration
+            """;
+    StringBuilder sql = new StringBuilder(selectSql).append(" WHERE tenant_id = ?::uuid");
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierValue());
+
+    if (queries.hasFrom()) {
+      sql.append(" AND created_at >= ?");
+      params.add(queries.from());
+    }
+
+    if (queries.hasTo()) {
+      sql.append(" AND created_at <= ?");
+      params.add(queries.to());
+    }
+
+    if (queries.hasId()) {
+      sql.append(" AND id = ?");
+      params.add(queries.id());
+    }
+
+    if (queries.hasType()) {
+      sql.append(" AND type = ?");
+      params.add(queries.type());
+    }
+
+    if (queries.hasDetails()) {
+      for (Map.Entry<String, String> entry : queries.details().entrySet()) {
+        String key = entry.getKey();
+        String value = entry.getValue();
+        sql.append(" AND payload ->> ? = ?");
+        params.add(key);
+        params.add(value);
+      }
+    }
+
+    return sqlExecutor.selectOne(sql.toString(), params);
+  }
+
+  @Override
+  public List<Map<String, String>> selectList(Tenant tenant, IdentityVerificationQueries queries) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    StringBuilder sql = new StringBuilder(selectSql).append("\nWHERE tenant_id = ?::uuid");
 
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierUUID());
-    params.add(limit);
-    params.add(offset);
 
-    return sqlExecutor.selectList(sqlTemplate, params);
+    if (queries.hasFrom()) {
+      sql.append("\n  AND created_at >= ?");
+      params.add(queries.from());
+    }
+    if (queries.hasTo()) {
+      sql.append("\n  AND created_at <= ?");
+      params.add(queries.to());
+    }
+
+    if (queries.hasId()) {
+      sql.append("\n  AND id = ?::uuid");
+      params.add(queries.id());
+    }
+    if (queries.hasType()) {
+      sql.append("\n  AND type = ?");
+      params.add(queries.type());
+    }
+
+    if (queries.hasDetails()) {
+      for (Map.Entry<String, String> e : queries.details().entrySet()) {
+        sql.append("\n  AND payload ->> ? = ?");
+        params.add(e.getKey());
+        params.add(e.getValue());
+      }
+    }
+
+    sql.append("\nORDER BY created_at DESC, id DESC").append("\nLIMIT ?").append("\nOFFSET ?");
+
+    params.add(queries.limit());
+    params.add(queries.offset());
+
+    return sqlExecutor.selectList(sql.toString(), params);
   }
 }

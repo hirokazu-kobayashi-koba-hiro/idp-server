@@ -20,6 +20,7 @@ import java.util.List;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationQueries;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface IdentityVerificationConfigurationQueryRepository {
@@ -29,5 +30,8 @@ public interface IdentityVerificationConfigurationQueryRepository {
   IdentityVerificationConfiguration find(
       Tenant tenant, IdentityVerificationConfigurationIdentifier identifier);
 
-  List<IdentityVerificationConfiguration> findList(Tenant tenant, int limit, int offset);
+  long findTotalCount(Tenant tenant, IdentityVerificationQueries queries);
+
+  List<IdentityVerificationConfiguration> findList(
+      Tenant tenant, IdentityVerificationQueries queries);
 }

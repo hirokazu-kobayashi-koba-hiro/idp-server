@@ -28,6 +28,10 @@ public interface ClientConfigurationQueryRepository {
 
   List<ClientConfiguration> findList(Tenant tenant, int limit, int offset);
 
+  List<ClientConfiguration> findList(Tenant tenant, ClientQueries queries);
+
+  long findTotalCount(Tenant tenant, ClientQueries queries);
+
   ClientConfiguration find(Tenant tenant, ClientIdentifier clientIdentifier);
 
   ClientConfiguration findWithDisabled(

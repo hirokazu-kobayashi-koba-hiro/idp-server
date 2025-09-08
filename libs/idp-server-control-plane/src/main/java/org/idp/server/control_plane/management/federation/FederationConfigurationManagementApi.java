@@ -24,6 +24,7 @@ import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
 import org.idp.server.control_plane.management.federation.io.FederationConfigRequest;
 import org.idp.server.core.openid.federation.FederationConfigurationIdentifier;
+import org.idp.server.core.openid.federation.FederationQueries;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
@@ -62,8 +63,7 @@ public interface FederationConfigurationManagementApi {
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      int limit,
-      int offset,
+      FederationQueries queries,
       RequestAttributes requestAttributes);
 
   FederationConfigManagementResponse get(

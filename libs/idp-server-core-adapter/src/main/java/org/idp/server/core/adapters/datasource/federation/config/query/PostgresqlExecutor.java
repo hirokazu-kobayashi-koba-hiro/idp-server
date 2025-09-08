@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.federation.FederationConfigurationIdentifier;
+import org.idp.server.core.openid.federation.FederationQueries;
 import org.idp.server.core.openid.federation.FederationType;
 import org.idp.server.core.openid.federation.sso.SsoProvider;
 import org.idp.server.platform.datasource.SqlExecutor;
@@ -87,25 +88,109 @@ public class PostgresqlExecutor implements FederationConfigurationSqlExecutor {
   }
 
   @Override
-  public List<Map<String, String>> selectList(Tenant tenant, int limit, int offset) {
-    return selectList(tenant, limit, offset, false);
+  public Map<String, String> selectCount(Tenant tenant, FederationQueries queries) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String selectSql =
+        """
+            SELECT COUNT(*) FROM federation_configurations
+            """;
+    StringBuilder sql = new StringBuilder(selectSql).append(" WHERE tenant_id = ?::uuid");
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierValue());
+
+    if (queries.hasFrom()) {
+      sql.append(" AND created_at >= ?");
+      params.add(queries.from());
+    }
+
+    if (queries.hasTo()) {
+      sql.append(" AND created_at <= ?");
+      params.add(queries.to());
+    }
+
+    if (queries.hasId()) {
+      sql.append(" AND id = ?");
+      params.add(queries.id());
+    }
+
+    if (queries.hasType()) {
+      sql.append(" AND type = ?");
+      params.add(queries.type());
+    }
+
+    if (queries.hasSsoProvider()) {
+      sql.append(" AND sso_provider = ?");
+      params.add(queries.ssoProvider());
+    }
+
+    if (queries.hasDetails()) {
+      for (Map.Entry<String, String> entry : queries.details().entrySet()) {
+        String key = entry.getKey();
+        String value = entry.getValue();
+        sql.append(" AND payload ->> ? = ?");
+        params.add(key);
+        params.add(value);
+      }
+    }
+
+    return sqlExecutor.selectOne(sql.toString(), params);
+  }
+
+  @Override
+  public List<Map<String, String>> selectList(Tenant tenant, FederationQueries queries) {
+    return selectList(tenant, queries, false);
   }
 
   @Override
   public List<Map<String, String>> selectList(
-      Tenant tenant, int limit, int offset, boolean includeDisabled) {
+      Tenant tenant, FederationQueries queries, boolean includeDisabled) {
+
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        selectSql
-            + """
-                    WHERE tenant_id = ?::uuid"""
-            + (includeDisabled ? "" : "\n                    AND enabled = true")
-            + "\n                    limit ?\n                    offset ?\n                    ";
+
+    StringBuilder sql = new StringBuilder(selectSql).append("\nWHERE tenant_id = ?::uuid");
+
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierUUID());
-    params.add(limit);
-    params.add(offset);
 
-    return sqlExecutor.selectList(sqlTemplate, params);
+    if (!includeDisabled) {
+      sql.append("\n  AND enabled = true");
+    }
+
+    if (queries.hasFrom()) {
+      sql.append("\n  AND created_at >= ?");
+      params.add(queries.from());
+    }
+    if (queries.hasTo()) {
+      sql.append("\n  AND created_at <= ?");
+      params.add(queries.to());
+    }
+
+    if (queries.hasId()) {
+      sql.append("\n  AND id = ?::uuid");
+      params.add(queries.id());
+    }
+    if (queries.hasType()) {
+      sql.append("\n  AND type = ?");
+      params.add(queries.type());
+    }
+    if (queries.hasSsoProvider()) {
+      sql.append("\n  AND sso_provider = ?");
+      params.add(queries.ssoProvider());
+    }
+
+    if (queries.hasDetails()) {
+      for (Map.Entry<String, String> e : queries.details().entrySet()) {
+        sql.append("\n  AND payload ->> ? = ?");
+        params.add(e.getKey());
+        params.add(e.getValue());
+      }
+    }
+
+    sql.append("\nORDER BY created_at DESC, id DESC").append("\nLIMIT ?").append("\nOFFSET ?");
+
+    params.add(queries.limit());
+    params.add(queries.offset());
+
+    return sqlExecutor.selectList(sql.toString(), params);
   }
 }

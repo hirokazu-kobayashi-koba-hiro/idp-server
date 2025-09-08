@@ -27,6 +27,7 @@ import org.idp.server.control_plane.management.federation.io.FederationConfigMan
 import org.idp.server.control_plane.management.federation.io.FederationConfigRequest;
 import org.idp.server.core.openid.federation.FederationConfiguration;
 import org.idp.server.core.openid.federation.FederationConfigurationIdentifier;
+import org.idp.server.core.openid.federation.FederationQueries;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationCommandRepository;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
@@ -114,14 +115,11 @@ public class FederationConfigurationManagementEntryService
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      int limit,
-      int offset,
+      FederationQueries queries,
       RequestAttributes requestAttributes) {
     AdminPermissions permissions = getRequiredPermissions("findList");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    List<FederationConfiguration> configurations =
-        federationConfigurationQueryRepository.findList(tenant, limit, offset);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
@@ -146,8 +144,25 @@ public class FederationConfigurationManagementEntryService
           FederationConfigManagementStatus.FORBIDDEN, response);
     }
 
+    long totalCount = federationConfigurationQueryRepository.findTotalCount(tenant, queries);
+
+    if (totalCount == 0) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("list", List.of());
+      response.put("total_count", totalCount);
+      response.put("limit", queries.limit());
+      response.put("offset", queries.offset());
+      return new FederationConfigManagementResponse(FederationConfigManagementStatus.OK, response);
+    }
+
+    List<FederationConfiguration> configurations =
+        federationConfigurationQueryRepository.findList(tenant, queries);
+
     Map<String, Object> response = new HashMap<>();
     response.put("list", configurations.stream().map(FederationConfiguration::toMap).toList());
+    response.put("total_count", totalCount);
+    response.put("limit", queries.limit());
+    response.put("offset", queries.offset());
 
     return new FederationConfigManagementResponse(FederationConfigManagementStatus.OK, response);
   }

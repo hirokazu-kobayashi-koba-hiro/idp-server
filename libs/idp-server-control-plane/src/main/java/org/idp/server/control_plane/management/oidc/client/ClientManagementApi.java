@@ -25,6 +25,7 @@ import org.idp.server.control_plane.management.oidc.client.io.ClientManagementRe
 import org.idp.server.control_plane.management.oidc.client.io.ClientRegistrationRequest;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.configuration.client.ClientIdentifier;
+import org.idp.server.core.openid.oauth.configuration.client.ClientQueries;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -58,8 +59,7 @@ public interface ClientManagementApi {
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      int limit,
-      int offset,
+      ClientQueries queries,
       RequestAttributes requestAttributes);
 
   ClientManagementResponse get(

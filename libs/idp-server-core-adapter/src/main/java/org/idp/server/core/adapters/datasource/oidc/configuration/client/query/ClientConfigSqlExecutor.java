@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientIdentifier;
+import org.idp.server.core.openid.oauth.configuration.client.ClientQueries;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -38,6 +39,10 @@ public interface ClientConfigSqlExecutor {
       Tenant tenant, ClientIdentifier clientIdentifier, boolean includeDisabled);
 
   List<Map<String, String>> selectList(Tenant tenant, int limit, int offset);
+
+  List<Map<String, String>> selectList(Tenant tenant, ClientQueries queries);
+
+  long selectTotalCount(Tenant tenant, ClientQueries queries);
 
   List<Map<String, String>> selectList(
       Tenant tenant, int limit, int offset, boolean includeDisabled);

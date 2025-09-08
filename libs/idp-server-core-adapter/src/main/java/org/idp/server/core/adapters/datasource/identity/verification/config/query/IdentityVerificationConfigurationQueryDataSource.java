@@ -23,6 +23,7 @@ import org.idp.server.core.extension.identity.exception.IdentityVerificationConf
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationQueries;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -69,10 +70,24 @@ public class IdentityVerificationConfigurationQueryDataSource
   }
 
   @Override
-  public List<IdentityVerificationConfiguration> findList(Tenant tenant, int limit, int offset) {
+  public long findTotalCount(Tenant tenant, IdentityVerificationQueries queries) {
     IdentityVerificationConfigSqlExecutor executor = executors.get(tenant.databaseType());
 
-    List<Map<String, String>> results = executor.selectList(tenant, limit, offset);
+    Map<String, String> result = executor.selectCount(tenant, queries);
+
+    if (Objects.isNull(result) || result.isEmpty()) {
+      return 0;
+    }
+    return Long.parseLong(result.get("count"));
+  }
+
+  @Override
+  public List<IdentityVerificationConfiguration> findList(
+      Tenant tenant, IdentityVerificationQueries queries) {
+
+    IdentityVerificationConfigSqlExecutor executor = executors.get(tenant.databaseType());
+
+    List<Map<String, String>> results = executor.selectList(tenant, queries);
 
     if (Objects.isNull(results) || results.isEmpty()) {
       return List.of();

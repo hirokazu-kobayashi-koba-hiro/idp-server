@@ -26,6 +26,7 @@ import org.idp.server.control_plane.management.identity.verification.io.Identity
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigRegistrationRequest;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigUpdateRequest;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationQueries;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;
@@ -75,8 +76,7 @@ public class IdentityVerificationConfigurationManagementV1Api implements Paramet
   public ResponseEntity<?> getList(
       @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @RequestParam(value = "limit", defaultValue = "20") String limitValue,
-      @RequestParam(value = "offset", defaultValue = "0") String offsetValue,
+      @RequestParam Map<String, String> queryParams,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
@@ -86,8 +86,7 @@ public class IdentityVerificationConfigurationManagementV1Api implements Paramet
             tenantIdentifier,
             operatorPrincipal.getUser(),
             operatorPrincipal.getOAuthToken(),
-            Integer.parseInt(limitValue),
-            Integer.parseInt(offsetValue),
+            new IdentityVerificationQueries(queryParams),
             requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();

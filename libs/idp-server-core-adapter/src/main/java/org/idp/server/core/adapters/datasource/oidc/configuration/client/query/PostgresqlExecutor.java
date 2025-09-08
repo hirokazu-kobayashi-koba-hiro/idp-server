@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientIdentifier;
+import org.idp.server.core.openid.oauth.configuration.client.ClientQueries;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.json.JsonConverter;
@@ -130,6 +131,252 @@ public class PostgresqlExecutor implements ClientConfigSqlExecutor {
     params.add(offset);
 
     return sqlExecutor.selectList(sqlTemplate, params);
+  }
+
+  @Override
+  public List<Map<String, String>> selectList(Tenant tenant, ClientQueries queries) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    StringBuilder where = new StringBuilder("WHERE tenant_id = ?::uuid");
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierUUID());
+
+    if (queries.hasFrom()) {
+      where.append(" AND created_at >= ?");
+      params.add(queries.from());
+    }
+
+    if (queries.hasTo()) {
+      where.append(" AND created_at <= ?");
+      params.add(queries.to());
+    }
+
+    if (queries.hasClientId()) {
+      where.append(" AND id = ?::uuid");
+      params.add(queries.clientId());
+    }
+
+    if (queries.hasClientIdAlias()) {
+      where.append(" AND id_alias = ?");
+      params.add(queries.clientIdAlias());
+    }
+
+    if (queries.hasClientName()) {
+      where.append(" AND payload->>'client_name' ILIKE ?");
+      params.add("%" + queries.clientName() + "%");
+    }
+
+    if (queries.hasClientUri()) {
+      where.append(" AND payload->>'client_uri' ILIKE ?");
+      params.add("%" + queries.clientUri() + "%");
+    }
+
+    if (queries.hasApplicationType()) {
+      where.append(" AND payload->>'application_type' = ?");
+      params.add(queries.applicationType());
+    }
+
+    if (queries.hasGrantTypes()) {
+      where.append(" AND payload->'grant_types' @> ?::jsonb");
+      params.add("[\"" + queries.grantTypes() + "\"]");
+    }
+
+    if (queries.hasResponseTypes()) {
+      where.append(" AND payload->'response_types' @> ?::jsonb");
+      params.add("[\"" + queries.responseTypes() + "\"]");
+    }
+
+    if (queries.hasTokenEndpointAuthMethod()) {
+      where.append(" AND payload->>'token_endpoint_auth_method' = ?");
+      params.add(queries.tokenEndpointAuthMethod());
+    }
+
+    if (queries.hasRedirectUris()) {
+      where.append(" AND payload->'redirect_uris' @> ?::jsonb");
+      params.add("[\"" + queries.redirectUris() + "\"]");
+    }
+
+    if (queries.hasScope()) {
+      where.append(" AND payload->>'scope' ILIKE ?");
+      params.add("%" + queries.scope() + "%");
+    }
+
+    if (queries.hasEnabled()) {
+      where.append(" AND enabled = ?");
+      params.add(queries.enabled());
+    }
+
+    if (queries.hasBackchannelTokenDeliveryMode()) {
+      where.append(" AND payload->>'backchannel_token_delivery_mode' = ?");
+      params.add(queries.backchannelTokenDeliveryMode());
+    }
+
+    if (queries.hasBackchannelUserCodeParameter()) {
+      where.append(" AND payload->>'backchannel_user_code_parameter' = ?");
+      params.add(queries.backchannelUserCodeParameter());
+    }
+
+    if (queries.hasAuthorizationDetailsTypes()) {
+      where.append(" AND payload->'authorization_details_types' @> ?::jsonb");
+      params.add("[\"" + queries.authorizationDetailsTypes() + "\"]");
+    }
+
+    if (queries.hasTlsClientAuthSubjectDn()) {
+      where.append(" AND payload->>'tls_client_auth_subject_dn' = ?");
+      params.add(queries.tlsClientAuthSubjectDn());
+    }
+
+    if (queries.hasTlsClientCertificateBoundAccessTokens()) {
+      where.append(" AND payload->>'tls_client_certificate_bound_access_tokens' = ?");
+      params.add(queries.tlsClientCertificateBoundAccessTokens());
+    }
+
+    if (queries.hasSoftwareId()) {
+      where.append(" AND payload->>'software_id' = ?");
+      params.add(queries.softwareId());
+    }
+
+    if (queries.hasSoftwareVersion()) {
+      where.append(" AND payload->>'software_version' = ?");
+      params.add(queries.softwareVersion());
+    }
+
+    String sqlTemplate =
+        """
+        SELECT id, id_alias, tenant_id, payload
+        FROM client_configuration
+        """
+            + where
+            + """
+         LIMIT ?
+         OFFSET ?
+        """;
+
+    params.add(queries.limit());
+    params.add(queries.offset());
+
+    return sqlExecutor.selectList(sqlTemplate, params);
+  }
+
+  @Override
+  public long selectTotalCount(Tenant tenant, ClientQueries queries) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    StringBuilder where = new StringBuilder("WHERE tenant_id = ?::uuid");
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierUUID());
+
+    if (queries.hasFrom()) {
+      where.append(" AND created_at >= ?");
+      params.add(queries.from());
+    }
+
+    if (queries.hasTo()) {
+      where.append(" AND created_at <= ?");
+      params.add(queries.to());
+    }
+
+    if (queries.hasClientId()) {
+      where.append(" AND id = ?::uuid");
+      params.add(queries.clientId());
+    }
+
+    if (queries.hasClientIdAlias()) {
+      where.append(" AND id_alias = ?");
+      params.add(queries.clientIdAlias());
+    }
+
+    if (queries.hasClientName()) {
+      where.append(" AND payload->>'client_name' ILIKE ?");
+      params.add("%" + queries.clientName() + "%");
+    }
+
+    if (queries.hasClientUri()) {
+      where.append(" AND payload->>'client_uri' ILIKE ?");
+      params.add("%" + queries.clientUri() + "%");
+    }
+
+    if (queries.hasApplicationType()) {
+      where.append(" AND payload->>'application_type' = ?");
+      params.add(queries.applicationType());
+    }
+
+    if (queries.hasGrantTypes()) {
+      where.append(" AND payload->'grant_types' @> ?::jsonb");
+      params.add("[\"" + queries.grantTypes() + "\"]");
+    }
+
+    if (queries.hasResponseTypes()) {
+      where.append(" AND payload->'response_types' @> ?::jsonb");
+      params.add("[\"" + queries.responseTypes() + "\"]");
+    }
+
+    if (queries.hasTokenEndpointAuthMethod()) {
+      where.append(" AND payload->>'token_endpoint_auth_method' = ?");
+      params.add(queries.tokenEndpointAuthMethod());
+    }
+
+    if (queries.hasRedirectUris()) {
+      where.append(" AND payload->'redirect_uris' @> ?::jsonb");
+      params.add("[\"" + queries.redirectUris() + "\"]");
+    }
+
+    if (queries.hasScope()) {
+      where.append(" AND payload->>'scope' ILIKE ?");
+      params.add("%" + queries.scope() + "%");
+    }
+
+    if (queries.hasEnabled()) {
+      where.append(" AND enabled = ?");
+      params.add(queries.enabled());
+    }
+
+    if (queries.hasBackchannelTokenDeliveryMode()) {
+      where.append(" AND payload->>'backchannel_token_delivery_mode' = ?");
+      params.add(queries.backchannelTokenDeliveryMode());
+    }
+
+    if (queries.hasBackchannelUserCodeParameter()) {
+      where.append(" AND payload->>'backchannel_user_code_parameter' = ?");
+      params.add(queries.backchannelUserCodeParameter());
+    }
+
+    if (queries.hasAuthorizationDetailsTypes()) {
+      where.append(" AND payload->'authorization_details_types' @> ?::jsonb");
+      params.add("[\"" + queries.authorizationDetailsTypes() + "\"]");
+    }
+
+    if (queries.hasTlsClientAuthSubjectDn()) {
+      where.append(" AND payload->>'tls_client_auth_subject_dn' = ?");
+      params.add(queries.tlsClientAuthSubjectDn());
+    }
+
+    if (queries.hasTlsClientCertificateBoundAccessTokens()) {
+      where.append(" AND payload->>'tls_client_certificate_bound_access_tokens' = ?");
+      params.add(queries.tlsClientCertificateBoundAccessTokens());
+    }
+
+    if (queries.hasSoftwareId()) {
+      where.append(" AND payload->>'software_id' = ?");
+      params.add(queries.softwareId());
+    }
+
+    if (queries.hasSoftwareVersion()) {
+      where.append(" AND payload->>'software_version' = ?");
+      params.add(queries.softwareVersion());
+    }
+
+    String sqlTemplate =
+        """
+        SELECT COUNT(*) as count
+        FROM client_configuration
+        """ + where;
+
+    Map<String, String> result = sqlExecutor.selectOne(sqlTemplate, params);
+    if (result == null || result.isEmpty()) {
+      return 0;
+    }
+    return Long.parseLong(result.get("count"));
   }
 
   @Override

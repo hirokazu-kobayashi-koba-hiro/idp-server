@@ -19,6 +19,7 @@ package org.idp.server.core.adapters.datasource.federation.config.query;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.federation.FederationConfigurationIdentifier;
+import org.idp.server.core.openid.federation.FederationQueries;
 import org.idp.server.core.openid.federation.FederationType;
 import org.idp.server.core.openid.federation.sso.SsoProvider;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -39,8 +40,10 @@ public interface FederationConfigurationSqlExecutor {
   Map<String, String> selectOne(
       Tenant tenant, FederationConfigurationIdentifier identifier, boolean includeDisabled);
 
-  List<Map<String, String>> selectList(Tenant tenant, int limit, int offset);
+  Map<String, String> selectCount(Tenant tenant, FederationQueries queries);
+
+  List<Map<String, String>> selectList(Tenant tenant, FederationQueries queries);
 
   List<Map<String, String>> selectList(
-      Tenant tenant, int limit, int offset, boolean includeDisabled);
+      Tenant tenant, FederationQueries queries, boolean includeDisabled);
 }

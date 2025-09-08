@@ -192,4 +192,165 @@ describe("federation configuration management api", () => {
       }
     });
   });
+
+  describe("FederationQueries and Pagination", () => {
+
+    it("should support basic pagination with total_count", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+        scope: clientSecretPostClient.scope,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      // Test basic pagination
+      const listResponse = await get({
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/federation-configurations?limit=5&offset=0`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      console.log("Federation Pagination Response:", listResponse.data);
+      expect(listResponse.status).toBe(200);
+      expect(listResponse.data).toHaveProperty("list");
+      expect(listResponse.data).toHaveProperty("total_count");
+      expect(listResponse.data).toHaveProperty("limit");
+      expect(listResponse.data).toHaveProperty("offset");
+      expect(listResponse.data.limit).toBe(5);
+      expect(listResponse.data.offset).toBe(0);
+      expect(typeof listResponse.data.total_count).toBe("number");
+      console.log("✅ Federation basic pagination test passed");
+    });
+
+    it("should support filtering by type", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+        scope: clientSecretPostClient.scope,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      // Test filtering by type=oidc
+      const typeResponse = await get({
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/federation-configurations?type=oidc&limit=10`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      console.log("Federation Type Filter Response:", typeResponse.data);
+      expect(typeResponse.status).toBe(200);
+      expect(typeResponse.data).toHaveProperty("total_count");
+      
+      // All returned configurations should be of type 'oidc'
+      if (typeResponse.data.list.length > 0) {
+        typeResponse.data.list.forEach(config => {
+          expect(config.type).toBe("oidc");
+        });
+      }
+      console.log("✅ Federation type filtering test passed");
+    });
+
+    it("should support filtering by enabled status", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+        scope: clientSecretPostClient.scope,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      // Test filtering by enabled=true
+      const enabledResponse = await get({
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/federation-configurations?enabled=true&limit=10`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      console.log("Federation Enabled Filter Response:", enabledResponse.data);
+      expect(enabledResponse.status).toBe(200);
+      
+      // All returned configurations should be enabled
+      enabledResponse.data.list.forEach(config => {
+        expect(config.enabled).toBe(true);
+      });
+      console.log("✅ Federation enabled status filtering test passed");
+    });
+
+    it("should handle empty results with proper pagination info", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+        scope: clientSecretPostClient.scope,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      // Test with a query that should return no results
+      const emptyResponse = await get({
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/federation-configurations?sso_provider=NonExistentProvider12345&limit=10&offset=0`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      console.log("Federation Empty Results Response:", emptyResponse.data);
+      expect(emptyResponse.status).toBe(200);
+      expect(emptyResponse.data.list).toEqual([]);
+      expect(emptyResponse.data.total_count).toBe(0);
+      expect(emptyResponse.data.limit).toBe(10);
+      expect(emptyResponse.data.offset).toBe(0);
+      console.log("✅ Federation empty results test passed");
+    });
+
+    it("should support multiple query parameters", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+        scope: clientSecretPostClient.scope,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      // Test multiple query parameters
+      const multiFilterResponse = await get({
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/federation-configurations?type=oidc&enabled=true&limit=5&offset=0`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      console.log("Federation Multi Filter Response:", multiFilterResponse.data);
+      expect(multiFilterResponse.status).toBe(200);
+      expect(multiFilterResponse.data).toHaveProperty("total_count");
+      expect(multiFilterResponse.data.limit).toBe(5);
+      expect(multiFilterResponse.data.offset).toBe(0);
+      
+      // All returned configurations should match both conditions
+      multiFilterResponse.data.list.forEach(config => {
+        expect(config.type).toBe("oidc");
+        expect(config.enabled).toBe(true);
+      });
+      console.log("✅ Federation multiple query parameters test passed");
+    });
+  });
 });

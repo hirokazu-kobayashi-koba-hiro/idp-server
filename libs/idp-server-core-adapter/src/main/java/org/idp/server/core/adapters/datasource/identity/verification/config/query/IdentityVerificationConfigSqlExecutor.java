@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationQueries;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface IdentityVerificationConfigSqlExecutor {
@@ -28,5 +29,7 @@ public interface IdentityVerificationConfigSqlExecutor {
   Map<String, String> selectOne(
       Tenant tenant, IdentityVerificationConfigurationIdentifier identifier);
 
-  List<Map<String, String>> selectList(Tenant tenant, int limit, int offset);
+  Map<String, String> selectCount(Tenant tenant, IdentityVerificationQueries queries);
+
+  List<Map<String, String>> selectList(Tenant tenant, IdentityVerificationQueries queries);
 }
