@@ -46,6 +46,7 @@ const sidebars = {
         "content_03_concepts/multi-tenant",
         "content_03_concepts/id-management",
         "content_03_concepts/id-verified",
+        "content_03_concepts/enterprise-id",
         {
           type: "category",
           label: "基礎（読み物）",
