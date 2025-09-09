@@ -120,6 +120,7 @@ import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository
 import org.idp.server.platform.multi_tenancy.tenant.*;
 import org.idp.server.platform.notification.email.EmailSenders;
 import org.idp.server.platform.notification.sms.SmsSenders;
+import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 import org.idp.server.platform.plugin.*;
 import org.idp.server.platform.proxy.TenantAwareEntryServiceProxy;
 import org.idp.server.platform.security.SecurityEventApi;
@@ -205,6 +206,9 @@ public class IdpServerApplication {
     ApplicationComponentContainer applicationComponentContainer =
         ApplicationComponentContainerPluginLoader.load(dependencyContainer);
     applicationComponentContainer.register(OAuthSessionDelegate.class, oAuthSessionDelegate);
+    OAuthAuthorizationResolvers oAuthAuthorizationResolvers =
+        applicationComponentContainer.resolve(OAuthAuthorizationResolvers.class);
+    dependencyContainer.register(OAuthAuthorizationResolvers.class, oAuthAuthorizationResolvers);
 
     AuthorizationServerConfigurationCommandRepository
         authorizationServerConfigurationCommandRepository =
@@ -318,9 +322,9 @@ public class IdpServerApplication {
     AuthenticationInteractionQueryRepository authenticationInteractionQueryRepository =
         applicationComponentContainer.resolve(AuthenticationInteractionQueryRepository.class);
 
-    SmsSenders smsSenders = SmsSenderPluginLoader.load();
+    SmsSenders smsSenders = SmsSenderPluginLoader.load(dependencyContainer);
     applicationComponentContainer.register(SmsSenders.class, smsSenders);
-    EmailSenders emailSenders = EmailSenderPluginLoader.load();
+    EmailSenders emailSenders = EmailSenderPluginLoader.load(dependencyContainer);
     applicationComponentContainer.register(EmailSenders.class, emailSenders);
 
     applicationComponentContainer.register(
@@ -347,7 +351,7 @@ public class IdpServerApplication {
         WebAuthnExecutorPluginLoader.load(authenticationDependencyContainer);
     authenticationDependencyContainer.register(WebAuthnExecutors.class, webAuthnExecutors);
     AuthenticationDeviceNotifiers authenticationDeviceNotifiers =
-        AuthenticationDeviceNotifiersPluginLoader.load();
+        AuthenticationDeviceNotifiersPluginLoader.load(dependencyContainer);
     authenticationDependencyContainer.register(
         AuthenticationDeviceNotifiers.class, authenticationDeviceNotifiers);
 
@@ -359,6 +363,9 @@ public class IdpServerApplication {
         FidoUafAdditionalRequestResolverPluginLoader.load();
     authenticationDependencyContainer.register(
         FidoUafAdditionalRequestResolvers.class, fidoUafAdditionalRequestResolvers);
+
+    authenticationDependencyContainer.register(
+        OAuthAuthorizationResolvers.class, oAuthAuthorizationResolvers);
 
     AuthenticationExecutors authenticationExecutors =
         AuthenticationExecutorPluginLoader.load(authenticationDependencyContainer);
@@ -411,7 +418,7 @@ public class IdpServerApplication {
     UserOperationEventPublisher userOperationEventPublisher =
         new UserOperationEventPublisher(securityEventPublisher);
 
-    OidcSsoExecutors oidcSsoExecutors = OidcSsoExecutorPluginLoader.load();
+    OidcSsoExecutors oidcSsoExecutors = OidcSsoExecutorPluginLoader.load(dependencyContainer);
     FederationDependencyContainer federationDependencyContainer =
         FederationDependencyContainerPluginLoader.load();
     federationDependencyContainer.register(OidcSsoExecutors.class, oidcSsoExecutors);
@@ -515,7 +522,8 @@ public class IdpServerApplication {
                 userQueryRepository,
                 userCommandRepository,
                 userEventPublisher,
-                additionalRequestParameterResolvers),
+                additionalRequestParameterResolvers,
+                oAuthAuthorizationResolvers),
             IdentityVerificationApplicationApi.class,
             tenantDialectProvider);
 
@@ -530,7 +538,8 @@ public class IdpServerApplication {
                 userQueryRepository,
                 userCommandRepository,
                 userEventPublisher,
-                additionalRequestParameterResolvers),
+                additionalRequestParameterResolvers,
+                oAuthAuthorizationResolvers),
             IdentityVerificationCallbackApi.class,
             tenantDialectProvider);
 

@@ -41,6 +41,7 @@ import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
+import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -66,7 +67,8 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
       UserQueryRepository userQueryRepository,
       UserCommandRepository userCommandRepository,
       UserEventPublisher eventPublisher,
-      Map<String, AdditionalRequestParameterResolver> additional) {
+      Map<String, AdditionalRequestParameterResolver> additional,
+      OAuthAuthorizationResolvers oAuthAuthorizationResolvers) {
     this.configurationQueryRepository = configurationQueryRepository;
     this.applicationCommandRepository = applicationCommandRepository;
     this.applicationQueryRepository = applicationQueryRepository;
@@ -75,7 +77,7 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
     this.userQueryRepository = userQueryRepository;
     this.userCommandRepository = userCommandRepository;
     this.identityVerificationApplicationHandler =
-        new IdentityVerificationApplicationHandler(additional);
+        new IdentityVerificationApplicationHandler(additional, oAuthAuthorizationResolvers);
     this.eventPublisher = eventPublisher;
   }
 

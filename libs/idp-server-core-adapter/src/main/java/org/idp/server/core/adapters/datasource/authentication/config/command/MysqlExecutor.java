@@ -84,7 +84,7 @@ public class MysqlExecutor implements AuthenticationConfigCommandSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                DELETE authentication_configuration
+                DELETE FROM authentication_configuration
                 WHERE id = ?
                 AND tenant_id = ?
                 """;

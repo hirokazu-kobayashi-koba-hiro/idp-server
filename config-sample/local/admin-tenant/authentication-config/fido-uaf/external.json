@@ -21,7 +21,10 @@
             "client_id": "your-client-id",
             "username": "username",
             "password": "password",
-            "scope": "application"
+            "scope": "application",
+            "cache_buffer_seconds": 10,
+            "cache_ttl_seconds": 1800,
+            "cache_enabled": true
           },
           "header_mapping_rules": [
             {
@@ -57,7 +60,10 @@
             "client_id": "your-client-id",
             "username": "username",
             "password": "password",
-            "scope": "application"
+            "scope": "application",
+            "cache_buffer_seconds": 10,
+            "cache_ttl_seconds": 1800,
+            "cache_enabled": true
           },
           "header_mapping_rules": [
             {
@@ -95,7 +101,10 @@
             "client_id": "your-client-id",
             "username": "username",
             "password": "password",
-            "scope": "application"
+            "scope": "application",
+            "cache_buffer_seconds": 10,
+            "cache_ttl_seconds": 1800,
+            "cache_enabled": true
           },
           "header_mapping_rules": [
             {
@@ -133,7 +142,10 @@
             "client_id": "your-client-id",
             "username": "username",
             "password": "password",
-            "scope": "application"
+            "scope": "application",
+            "cache_buffer_seconds": 10,
+            "cache_ttl_seconds": 1800,
+            "cache_enabled": true
           },
           "header_mapping_rules": [
             {
@@ -171,7 +183,10 @@
             "client_id": "your-client-id",
             "username": "username",
             "password": "password",
-            "scope": "application"
+            "scope": "application",
+            "cache_buffer_seconds": 10,
+            "cache_ttl_seconds": 1800,
+            "cache_enabled": true
           },
           "header_mapping_rules": [
             {
@@ -209,7 +224,10 @@
             "client_id": "your-client-id",
             "username": "username",
             "password": "password",
-            "scope": "application"
+            "scope": "application",
+            "cache_buffer_seconds": 10,
+            "cache_ttl_seconds": 1800,
+            "cache_enabled": true
           },
           "header_mapping_rules": [
             {

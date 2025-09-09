@@ -33,6 +33,7 @@ import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 import org.idp.server.platform.type.RequestAttributes;
 
 public class HttpRequestsAuthenticationExecutor implements AuthenticationExecutor {
@@ -44,10 +45,12 @@ public class HttpRequestsAuthenticationExecutor implements AuthenticationExecuto
 
   public HttpRequestsAuthenticationExecutor(
       AuthenticationInteractionCommandRepository interactionCommandRepository,
-      AuthenticationInteractionQueryRepository interactionQueryRepository) {
+      AuthenticationInteractionQueryRepository interactionQueryRepository,
+      OAuthAuthorizationResolvers oauthAuthorizationResolvers) {
     this.interactionCommandRepository = interactionCommandRepository;
     this.interactionQueryRepository = interactionQueryRepository;
-    this.httpRequestExecutor = new HttpRequestExecutor(HttpClientFactory.defaultClient());
+    this.httpRequestExecutor =
+        new HttpRequestExecutor(HttpClientFactory.defaultClient(), oauthAuthorizationResolvers);
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 

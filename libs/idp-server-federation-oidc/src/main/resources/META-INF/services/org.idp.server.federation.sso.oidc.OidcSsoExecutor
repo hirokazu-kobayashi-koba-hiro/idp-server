@@ -1,3 +1,0 @@
-org.idp.server.federation.sso.oidc.StandardOidcExecutor
-org.idp.server.federation.sso.oidc.FacebookOidcExecutor
-org.idp.server.federation.sso.oidc.OAuthExtensionExecutor

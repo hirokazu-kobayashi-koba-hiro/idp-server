@@ -38,9 +38,10 @@ public class HttpRequestParameterResolver implements AdditionalRequestParameterR
   HttpRequestExecutor httpRequestExecutor;
   JsonConverter jsonConverter;
 
-  public HttpRequestParameterResolver() {
-    this.authorizationResolvers = new OAuthAuthorizationResolvers();
-    this.httpRequestExecutor = new HttpRequestExecutor(HttpClientFactory.defaultClient());
+  public HttpRequestParameterResolver(OAuthAuthorizationResolvers oAuthAuthorizationResolvers) {
+    this.authorizationResolvers = oAuthAuthorizationResolvers;
+    this.httpRequestExecutor =
+        new HttpRequestExecutor(HttpClientFactory.defaultClient(), authorizationResolvers);
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 

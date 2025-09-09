@@ -33,6 +33,9 @@ public class OAuthAuthorizationConfiguration implements JsonReadable {
   String username;
   String password;
   String refreshToken;
+  Integer cacheBufferSeconds;
+  Integer cacheTtlSeconds;
+  Boolean cacheEnabled;
 
   public OAuthAuthorizationConfiguration() {}
 
@@ -46,6 +49,34 @@ public class OAuthAuthorizationConfiguration implements JsonReadable {
       String username,
       String password,
       String refreshToken) {
+    this(
+        type,
+        tokenEndpoint,
+        clientAuthenticationType,
+        clientId,
+        clientSecret,
+        scope,
+        username,
+        password,
+        refreshToken,
+        null,
+        null,
+        null);
+  }
+
+  public OAuthAuthorizationConfiguration(
+      String type,
+      String tokenEndpoint,
+      String clientAuthenticationType,
+      String clientId,
+      String clientSecret,
+      String scope,
+      String username,
+      String password,
+      String refreshToken,
+      Integer cacheBufferSeconds,
+      Integer cacheTtlSeconds,
+      Boolean cacheEnabled) {
     this.type = type;
     this.tokenEndpoint = tokenEndpoint;
     this.clientAuthenticationType = clientAuthenticationType;
@@ -55,6 +86,9 @@ public class OAuthAuthorizationConfiguration implements JsonReadable {
     this.username = username;
     this.password = password;
     this.refreshToken = refreshToken;
+    this.cacheBufferSeconds = cacheBufferSeconds;
+    this.cacheTtlSeconds = cacheTtlSeconds;
+    this.cacheEnabled = cacheEnabled;
   }
 
   public String type() {
@@ -91,6 +125,30 @@ public class OAuthAuthorizationConfiguration implements JsonReadable {
 
   public String refreshToken() {
     return refreshToken;
+  }
+
+  public Integer cacheBufferSeconds() {
+    return cacheBufferSeconds;
+  }
+
+  public Integer cacheTtlSeconds() {
+    return cacheTtlSeconds;
+  }
+
+  public Boolean cacheEnabled() {
+    return cacheEnabled;
+  }
+
+  public boolean isCacheEnabled() {
+    return cacheEnabled != null && cacheEnabled;
+  }
+
+  public int getCacheBufferSeconds(int defaultValue) {
+    return cacheBufferSeconds != null ? cacheBufferSeconds : defaultValue;
+  }
+
+  public int getCacheTtlSeconds(int defaultValue) {
+    return cacheTtlSeconds != null ? cacheTtlSeconds : defaultValue;
   }
 
   public boolean exists() {
@@ -151,6 +209,9 @@ public class OAuthAuthorizationConfiguration implements JsonReadable {
     result.put("username", username);
     result.put("password", password);
     result.put("refresh_token", refreshToken);
+    result.put("cache_buffer_seconds", cacheBufferSeconds);
+    result.put("cache_ttl_seconds", cacheTtlSeconds);
+    result.put("cache_enabled", cacheEnabled);
     return result;
   }
 }

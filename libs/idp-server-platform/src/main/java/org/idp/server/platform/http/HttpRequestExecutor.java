@@ -37,12 +37,6 @@ public class HttpRequestExecutor {
   JsonConverter jsonConverter;
   LoggerWrapper log = LoggerWrapper.getLogger(HttpRequestExecutor.class);
 
-  public HttpRequestExecutor(HttpClient httpClient) {
-    this.httpClient = httpClient;
-    this.oAuthorizationResolvers = new OAuthAuthorizationResolvers();
-    this.jsonConverter = JsonConverter.snakeCaseInstance();
-  }
-
   public HttpRequestExecutor(
       HttpClient httpClient, OAuthAuthorizationResolvers oAuthAuthorizationResolvers) {
     this.httpClient = httpClient;
