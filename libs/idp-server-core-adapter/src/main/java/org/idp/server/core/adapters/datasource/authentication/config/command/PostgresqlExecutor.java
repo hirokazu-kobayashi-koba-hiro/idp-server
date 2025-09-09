@@ -84,14 +84,14 @@ public class PostgresqlExecutor implements AuthenticationConfigCommandSqlExecuto
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                DELETE authentication_configuration
+                DELETE FROM authentication_configuration
                 WHERE id = ?::uuid
                 AND tenant_id = ?::uuid
                 """;
 
     List<Object> params = new ArrayList<>();
     params.add(configuration.idAsUUID());
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifierUUID());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

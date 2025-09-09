@@ -27,13 +27,13 @@ import org.idp.server.adapters.springboot.application.property.AppDatabaseConfig
 import org.idp.server.adapters.springboot.application.session.OAuthSessionService;
 import org.idp.server.control_plane.base.AdminDashboardUrl;
 import org.idp.server.core.adapters.datasource.cache.JedisCacheStore;
-import org.idp.server.core.adapters.datasource.cache.NoOperationCacheStore;
 import org.idp.server.core.adapters.datasource.config.HikariConnectionProvider;
 import org.idp.server.platform.datasource.DatabaseConfig;
 import org.idp.server.platform.datasource.DatabaseType;
 import org.idp.server.platform.datasource.DbConfig;
 import org.idp.server.platform.datasource.cache.CacheConfiguration;
 import org.idp.server.platform.datasource.cache.CacheStore;
+import org.idp.server.platform.datasource.cache.NoOperationCacheStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -78,6 +78,12 @@ public class IdPServerConfiguration {
 
   @Value("${idp.cache.redis.minIdle}")
   int minIdle;
+
+  @Value("${idp.cache.oauth.bufferSeconds:60}")
+  int oauthBufferSeconds;
+
+  @Value("${idp.cache.oauth.defaultTtlSeconds:3600}")
+  int oauthDefaultTtlSeconds;
 
   @Autowired AdminDatabaseConfigProperties adminDatabaseConfigProperties;
   @Autowired AppDatabaseConfigProperties appDatabaseConfigProperties;

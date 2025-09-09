@@ -33,6 +33,7 @@ import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 
 public class OAuthExtensionExecutor implements OidcSsoExecutor {
 
@@ -41,9 +42,9 @@ public class OAuthExtensionExecutor implements OidcSsoExecutor {
   UserinfoExecutors userinfoExecutors;
   JsonConverter jsonConverter;
 
-  public OAuthExtensionExecutor() {
+  public OAuthExtensionExecutor(OAuthAuthorizationResolvers oAuthAuthorizationResolvers) {
     this.httpClient = HttpClientFactory.defaultClient();
-    this.userinfoExecutors = new UserinfoExecutors();
+    this.userinfoExecutors = new UserinfoExecutors(oAuthAuthorizationResolvers);
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 

@@ -24,6 +24,7 @@ import org.idp.server.platform.http.HttpRequestExecutor;
 import org.idp.server.platform.http.HttpRequestResult;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 
 public class HttpRequestEmailSender implements EmailSender {
 
@@ -31,9 +32,29 @@ public class HttpRequestEmailSender implements EmailSender {
   JsonConverter jsonConverter;
   LoggerWrapper log = LoggerWrapper.getLogger(HttpRequestEmailSender.class);
 
-  public HttpRequestEmailSender() {
-    this.httpRequestExecutor = new HttpRequestExecutor(HttpClientFactory.defaultClient());
+  /**
+   * Factory constructor with dependency injection support. This constructor enables OAuth token
+   * caching and proper DI integration.
+   *
+   * @param httpRequestExecutor the HTTP request executor with OAuth caching support
+   */
+  public HttpRequestEmailSender(HttpRequestExecutor httpRequestExecutor) {
+    this.httpRequestExecutor = httpRequestExecutor;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
+  }
+
+  /**
+   * Default constructor for legacy SPI compatibility.
+   *
+   * @deprecated Use {@link HttpRequestEmailSenderFactory} for proper DI and OAuth caching support.
+   *     This constructor creates OAuthAuthorizationResolvers without caching capability.
+   */
+  @Deprecated
+  public HttpRequestEmailSender() {
+    this(
+        new HttpRequestExecutor(
+            HttpClientFactory.defaultClient(),
+            new OAuthAuthorizationResolvers())); // No caching - legacy mode
   }
 
   @Override

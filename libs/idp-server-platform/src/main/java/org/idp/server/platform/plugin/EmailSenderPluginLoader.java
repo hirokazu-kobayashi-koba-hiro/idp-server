@@ -17,31 +17,75 @@
 package org.idp.server.platform.plugin;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.notification.email.EmailSender;
+import org.idp.server.platform.notification.email.EmailSenderFactory;
 import org.idp.server.platform.notification.email.EmailSenders;
 
-public class EmailSenderPluginLoader extends PluginLoader {
+public class EmailSenderPluginLoader
+    extends DependencyAwarePluginLoader<EmailSender, EmailSenderFactory> {
 
   private static final LoggerWrapper log = LoggerWrapper.getLogger(EmailSenderPluginLoader.class);
 
-  public static EmailSenders load() {
+  /**
+   * Loads EmailSender instances with dependency injection support. Supports both new Factory
+   * pattern (recommended) and legacy direct SPI (for compatibility).
+   *
+   * @param container the dependency injection container
+   * @return EmailSenders instance containing all loaded email senders
+   */
+  public static EmailSenders load(ApplicationComponentDependencyContainer container) {
 
     Map<String, EmailSender> senders = new HashMap<>();
-    List<EmailSender> internalEmailSenders = loadFromInternalModule(EmailSender.class);
-    for (EmailSender emailSender : internalEmailSenders) {
-      senders.put(emailSender.function(), emailSender);
-      log.info("Dynamic Registered internal email sender: " + emailSender.function());
+
+    // New approach: Factory pattern with DI support (recommended)
+    Map<String, EmailSender> factorySenders =
+        loadWithDependencies(EmailSenderFactory.class, container);
+    senders.putAll(factorySenders);
+    log.info(
+        "Loaded {} email senders via Factory pattern (with DI support)", factorySenders.size());
+
+    // Legacy approach: Direct SPI for backward compatibility (deprecated)
+    Map<String, EmailSender> legacySenders =
+        loadLegacyComponents(EmailSender.class, EmailSender::function);
+    for (Map.Entry<String, EmailSender> entry : legacySenders.entrySet()) {
+      if (!senders.containsKey(entry.getKey())) {
+        senders.put(entry.getKey(), entry.getValue());
+        log.warn(
+            "Using legacy EmailSender without DI: {} -> {} - Consider migrating to EmailSenderFactory",
+            entry.getKey(),
+            entry.getValue().getClass().getName());
+      } else {
+        log.info("Factory version takes precedence over legacy SPI for: {}", entry.getKey());
+      }
     }
 
-    List<EmailSender> externalEmailSenders = loadFromExternalModule(EmailSender.class);
-    for (EmailSender emailSender : externalEmailSenders) {
-      senders.put(emailSender.function(), emailSender);
-      log.info("Dynamic Registered external email sender: " + emailSender.function());
+    if (senders.isEmpty()) {
+      log.warn("No EmailSender instances loaded. Check SPI configuration.");
+    } else {
+      log.info("Total {} email sender(s) loaded successfully", senders.size());
     }
 
+    return new EmailSenders(senders);
+  }
+
+  /**
+   * Legacy load method without DI container (backward compatibility). This method creates
+   * EmailSenders without dependency injection support.
+   *
+   * @deprecated Use {@link #load(ApplicationComponentDependencyContainer)} for DI support
+   * @return EmailSenders instance with legacy loading
+   */
+  @Deprecated
+  public static EmailSenders load() {
+    log.warn(
+        "Using deprecated EmailSenderPluginLoader.load() without DI container. "
+            + "OAuth token caching will not be available for EmailSender instances.");
+
+    Map<String, EmailSender> senders =
+        loadLegacyComponents(EmailSender.class, EmailSender::function);
     return new EmailSenders(senders);
   }
 }

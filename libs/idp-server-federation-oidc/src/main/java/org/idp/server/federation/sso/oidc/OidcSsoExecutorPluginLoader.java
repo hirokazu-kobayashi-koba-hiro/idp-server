@@ -20,13 +20,39 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.federation.sso.SsoProvider;
+import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.plugin.PluginLoader;
+import org.idp.server.platform.plugin.DependencyAwarePluginLoader;
 
-public class OidcSsoExecutorPluginLoader extends PluginLoader {
+public class OidcSsoExecutorPluginLoader
+    extends DependencyAwarePluginLoader<OidcSsoExecutor, OidcSsoExecutorFactory> {
 
   private static final LoggerWrapper log =
       LoggerWrapper.getLogger(OidcSsoExecutorPluginLoader.class);
+
+  public static OidcSsoExecutors load(ApplicationComponentDependencyContainer container) {
+    Map<SsoProvider, OidcSsoExecutor> executors = new HashMap<>();
+
+    List<OidcSsoExecutorFactory> internalFactories =
+        loadFromInternalModule(OidcSsoExecutorFactory.class);
+    for (OidcSsoExecutorFactory factory : internalFactories) {
+      OidcSsoExecutor executor = factory.create(container);
+      SsoProvider provider = factory.ssoProvider();
+      executors.put(provider, executor);
+      log.info("Dynamic Registered internal SSO provider via factory " + provider.name());
+    }
+
+    List<OidcSsoExecutorFactory> externalFactories =
+        loadFromExternalModule(OidcSsoExecutorFactory.class);
+    for (OidcSsoExecutorFactory factory : externalFactories) {
+      OidcSsoExecutor executor = factory.create(container);
+      SsoProvider provider = factory.ssoProvider();
+      executors.put(provider, executor);
+      log.info("Dynamic Registered external SSO provider via factory " + provider.name());
+    }
+
+    return new OidcSsoExecutors(executors);
+  }
 
   public static OidcSsoExecutors load() {
     Map<SsoProvider, OidcSsoExecutor> executors = new HashMap<>();

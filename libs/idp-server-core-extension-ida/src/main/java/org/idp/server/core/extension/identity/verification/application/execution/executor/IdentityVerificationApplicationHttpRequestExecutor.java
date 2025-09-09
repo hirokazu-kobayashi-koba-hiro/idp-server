@@ -28,14 +28,17 @@ import org.idp.server.core.extension.identity.verification.configuration.process
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationHttpRequestConfig;
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
 import org.idp.server.platform.http.*;
+import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 
 public class IdentityVerificationApplicationHttpRequestExecutor
     implements IdentityVerificationApplicationExecutor {
 
   HttpRequestExecutor httpRequestExecutor;
 
-  public IdentityVerificationApplicationHttpRequestExecutor() {
-    this.httpRequestExecutor = new HttpRequestExecutor(HttpClientFactory.defaultClient());
+  public IdentityVerificationApplicationHttpRequestExecutor(
+      OAuthAuthorizationResolvers oAuthAuthorizationResolvers) {
+    this.httpRequestExecutor =
+        new HttpRequestExecutor(HttpClientFactory.defaultClient(), oAuthAuthorizationResolvers);
   }
 
   @Override

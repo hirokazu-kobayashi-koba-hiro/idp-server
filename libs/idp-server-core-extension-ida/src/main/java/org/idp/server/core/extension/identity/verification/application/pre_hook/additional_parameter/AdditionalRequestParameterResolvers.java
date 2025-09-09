@@ -31,6 +31,7 @@ import org.idp.server.core.extension.identity.verification.io.IdentityVerificati
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 import org.idp.server.platform.type.RequestAttributes;
 
 public class AdditionalRequestParameterResolvers {
@@ -39,12 +40,14 @@ public class AdditionalRequestParameterResolvers {
   LoggerWrapper log = LoggerWrapper.getLogger(AdditionalRequestParameterResolvers.class);
 
   public AdditionalRequestParameterResolvers(
-      Map<String, AdditionalRequestParameterResolver> additional) {
+      Map<String, AdditionalRequestParameterResolver> additional,
+      OAuthAuthorizationResolvers oAuthAuthorizationResolvers) {
     this.resolvers = new ConcurrentHashMap<>();
     ContinuousCustomerDueDiligenceParameterResolver customerDueDiligence =
         new ContinuousCustomerDueDiligenceParameterResolver();
     this.resolvers.put(customerDueDiligence.type(), customerDueDiligence);
-    HttpRequestParameterResolver httpRequest = new HttpRequestParameterResolver();
+    HttpRequestParameterResolver httpRequest =
+        new HttpRequestParameterResolver(oAuthAuthorizationResolvers);
     this.resolvers.put(httpRequest.type(), httpRequest);
     this.resolvers.putAll(additional);
   }

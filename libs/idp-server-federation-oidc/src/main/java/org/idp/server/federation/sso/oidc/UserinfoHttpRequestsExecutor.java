@@ -22,14 +22,16 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.http.*;
 import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 
 public class UserinfoHttpRequestsExecutor implements UserinfoExecutor {
 
   HttpRequestExecutor httpRequestExecutor;
   JsonConverter jsonConverter;
 
-  public UserinfoHttpRequestsExecutor() {
-    this.httpRequestExecutor = new HttpRequestExecutor(HttpClientFactory.defaultClient());
+  public UserinfoHttpRequestsExecutor(OAuthAuthorizationResolvers oAuthAuthorizationResolvers) {
+    this.httpRequestExecutor =
+        new HttpRequestExecutor(HttpClientFactory.defaultClient(), oAuthAuthorizationResolvers);
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 

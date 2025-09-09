@@ -14,21 +14,12 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.cache;
+package org.idp.server.federation.sso.oidc;
 
-import java.util.Optional;
-import org.idp.server.platform.datasource.cache.CacheStore;
+import org.idp.server.core.openid.federation.sso.SsoProvider;
+import org.idp.server.platform.dependency.ComponentFactory;
 
-public class NoOperationCacheStore implements CacheStore {
+public interface OidcSsoExecutorFactory extends ComponentFactory<OidcSsoExecutor> {
 
-  @Override
-  public <T> void put(String key, T value) {}
-
-  @Override
-  public <T> Optional<T> find(String key, Class<T> type) {
-    return Optional.empty();
-  }
-
-  @Override
-  public void delete(String key) {}
+  SsoProvider ssoProvider();
 }
