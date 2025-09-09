@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.identity;
 
 public enum UserStatus {
+  UNREGISTERED("Account has not been created"),
   INITIALIZED("User has initiated your account"),
   FEDERATED("Federated External IdP"),
   REGISTERED("Registered"),
@@ -55,5 +56,9 @@ public enum UserStatus {
 
   public boolean isInitialized() {
     return this == INITIALIZED;
+  }
+
+  public boolean isUnregistered() {
+    return this == UNREGISTERED;
   }
 }
