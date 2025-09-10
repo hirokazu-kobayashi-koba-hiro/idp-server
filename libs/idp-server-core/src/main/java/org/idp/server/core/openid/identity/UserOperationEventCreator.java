@@ -43,18 +43,6 @@ public class UserOperationEventCreator implements SecurityEventUserCreatable {
     this.requestAttributes = requestAttributes;
   }
 
-  public UserOperationEventCreator(
-      Tenant tenant,
-      AuthenticationTransaction authenticationTransaction,
-      SecurityEventType securityEventType,
-      SecurityEventDescription securityEventDescription,
-      RequestAttributes requestAttributes) {
-    this.authenticationTransaction = authenticationTransaction;
-    this.securityEventType = securityEventType;
-    this.securityEventDescription = securityEventDescription;
-    this.requestAttributes = requestAttributes;
-  }
-
   public SecurityEvent create() {
     HashMap<String, Object> detailsMap = new HashMap<>();
     SecurityEventBuilder builder = new SecurityEventBuilder();
@@ -77,7 +65,7 @@ public class UserOperationEventCreator implements SecurityEventUserCreatable {
     if (user != null) {
       SecurityEventUser securityEventUser = createSecurityEventUser(user, tenant);
       builder.add(securityEventUser);
-      detailsMap.put("user", user.toMap());
+      detailsMap.put("user", securityEventUser.toMap());
     }
 
     builder.add(requestAttributes.getIpAddress());

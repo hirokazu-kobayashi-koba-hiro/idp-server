@@ -26,6 +26,7 @@ import org.idp.server.platform.security.hook.SecurityEventHook;
 import org.idp.server.platform.security.hook.SecurityEventHooks;
 import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
 import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfigurations;
+import org.idp.server.platform.security.log.SecurityEventLogService;
 import org.idp.server.platform.security.repository.SecurityEventCommandRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookResultCommandRepository;
@@ -36,24 +37,25 @@ public class SecurityEventHandler {
   SecurityEventHookResultCommandRepository resultsCommandRepository;
   SecurityEventHooks securityEventHooks;
   SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository;
+  SecurityEventLogService logService;
 
   LoggerWrapper log = LoggerWrapper.getLogger(SecurityEventHandler.class);
 
   public SecurityEventHandler(
       SecurityEventHooks securityEventHooks,
-      SecurityEventCommandRepository securityEventCommandRepository,
       SecurityEventHookResultCommandRepository resultsCommandRepository,
-      SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository) {
+      SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository,
+      SecurityEventLogService logService) {
     this.securityEventHooks = securityEventHooks;
-    this.securityEventCommandRepository = securityEventCommandRepository;
     this.resultsCommandRepository = resultsCommandRepository;
     this.securityEventHookConfigurationQueryRepository =
         securityEventHookConfigurationQueryRepository;
+    this.logService = logService;
   }
 
   public void handle(Tenant tenant, SecurityEvent securityEvent) {
 
-    securityEventCommandRepository.register(tenant, securityEvent);
+    logService.logEvent(tenant, securityEvent);
 
     SecurityEventHookConfigurations securityEventHookConfigurations =
         securityEventHookConfigurationQueryRepository.find(tenant);
