@@ -18,6 +18,7 @@ package org.idp.server.platform.multi_tenancy.organization;
 
 import java.util.List;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public interface OrganizationRepository {
   void register(Tenant tenant, Organization organization);
@@ -27,4 +28,7 @@ public interface OrganizationRepository {
   Organization get(Tenant tenant, OrganizationIdentifier identifier);
 
   List<Organization> findList(Tenant tenant, OrganizationQueries queries);
+
+  AssignedTenant findAssignment(
+      Tenant adminTenant, OrganizationIdentifier organizationId, TenantIdentifier tenantId);
 }

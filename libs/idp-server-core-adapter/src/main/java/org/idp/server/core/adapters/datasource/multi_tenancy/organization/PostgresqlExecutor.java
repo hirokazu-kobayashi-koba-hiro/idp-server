@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.organization.*;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class PostgresqlExecutor implements OrganizationSqlExecutor {
 
@@ -167,5 +168,25 @@ public class PostgresqlExecutor implements OrganizationSqlExecutor {
     params.add(queries.offset());
 
     return sqlExecutor.selectList(sqlTemplate.toString(), params);
+  }
+
+  @Override
+  public Map<String, String> selectAssignedTenant(
+      OrganizationIdentifier organizationId, TenantIdentifier tenantId) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+        SELECT tenant.id, tenant.name, tenant.type
+        FROM tenant
+        JOIN organization_tenants ON organization_tenants.tenant_id = tenant.id
+        WHERE organization_tenants.organization_id = ?::uuid
+        AND tenant.id = ?::uuid
+        """;
+
+    List<Object> params = List.of(organizationId.value(), tenantId.value());
+    List<Map<String, String>> results = sqlExecutor.selectList(sqlTemplate, params);
+
+    return results.isEmpty() ? null : results.get(0);
   }
 }

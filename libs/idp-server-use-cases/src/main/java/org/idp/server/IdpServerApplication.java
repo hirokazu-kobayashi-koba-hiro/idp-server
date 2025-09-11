@@ -138,7 +138,7 @@ import org.idp.server.usecases.application.tenant_invitator.TenantInvitationMeta
 import org.idp.server.usecases.control_plane.system_administrator.IdpServerOperationEntryService;
 import org.idp.server.usecases.control_plane.system_administrator.IdpServerStarterEntryService;
 import org.idp.server.usecases.control_plane.system_administrator.OrganizationInitializationEntryService;
-import org.idp.server.usecases.control_plane.tenant_manager.*;
+import org.idp.server.usecases.control_plane.system_manager.*;
 
 /** IdpServerApplication */
 public class IdpServerApplication {
