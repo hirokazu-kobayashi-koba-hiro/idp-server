@@ -19,8 +19,6 @@ package org.idp.server.platform.datasource;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import org.idp.server.platform.multi_tenancy.tenant.AdminTenantContext;
-import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class DefaultDbDbConnectionProvider implements DbConnectionProvider {
   DatabaseConfig adminDatabaseConfig;
@@ -32,10 +30,10 @@ public class DefaultDbDbConnectionProvider implements DbConnectionProvider {
     this.appDatabaseConfig = appDatabaseConfig;
   }
 
-  public Connection getConnection(DatabaseType databaseType, TenantIdentifier tenantIdentifier) {
+  public Connection getConnection(DatabaseType databaseType, boolean admin) {
     OperationType type = OperationContext.get();
 
-    if (AdminTenantContext.isAdmin(tenantIdentifier)) {
+    if (admin) {
       DbConfig dbConfig =
           (type == OperationType.READ)
               ? adminDatabaseConfig.readerConfigs().get(databaseType)

@@ -16,10 +16,12 @@
 
 package org.idp.server.control_plane.management.tenant.validator;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import org.idp.server.control_plane.management.onboarding.io.OnboardingResponse;
-import org.idp.server.control_plane.management.onboarding.io.OnboardingStatus;
+import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
+import org.idp.server.control_plane.management.tenant.io.TenantManagementStatus;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 
 public class TenantRequestValidationResult {
@@ -59,20 +61,20 @@ public class TenantRequestValidationResult {
     return isValid;
   }
 
-  public OnboardingResponse errorResponse() {
+  public TenantManagementResponse errorResponse() {
     Map<String, Object> response = new HashMap<>();
     response.put("dry_run", dryRun);
     response.put("error", "invalid_request");
-    response.put("error_description", "Invalid request");
-    Map<String, Object> details = new HashMap<>();
+    response.put("error_description", "Tenant creation request is invalid.");
+    List<String> errorMessages = new ArrayList<>();
     if (!tenantResult.isValid()) {
-      details.put("tenant", tenantResult.errors());
+      errorMessages.addAll(tenantResult.errors());
     }
     if (!authorizationServerResult.isValid()) {
-      details.put("authorization_server", authorizationServerResult.errors());
+      errorMessages.addAll(authorizationServerResult.errors());
     }
 
-    response.put("details", details);
-    return new OnboardingResponse(OnboardingStatus.INVALID_REQUEST, response);
+    response.put("error_messages", errorMessages);
+    return new TenantManagementResponse(TenantManagementStatus.INVALID_REQUEST, response);
   }
 }

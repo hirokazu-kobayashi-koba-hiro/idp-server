@@ -27,6 +27,7 @@ import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntro
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.exception.UnauthorizedException;
+import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -38,14 +39,17 @@ public class UserAuthenticationEntryService implements UserAuthenticationApi {
   TokenProtocols tokenProtocols;
   TenantQueryRepository tenantQueryRepository;
   UserQueryRepository userQueryRepository;
+  OrganizationRepository organizationRepository;
 
   public UserAuthenticationEntryService(
       TokenProtocols tokenProtocols,
       TenantQueryRepository tenantQueryRepository,
-      UserQueryRepository userQueryRepository) {
+      UserQueryRepository userQueryRepository,
+      OrganizationRepository organizationRepository) {
     this.tokenProtocols = tokenProtocols;
     this.tenantQueryRepository = tenantQueryRepository;
     this.userQueryRepository = userQueryRepository;
+    this.organizationRepository = organizationRepository;
   }
 
   public Pairs<User, OAuthToken> authenticate(
@@ -61,7 +65,7 @@ public class UserAuthenticationEntryService implements UserAuthenticationApi {
         tokenProtocol.inspectForInternal(tokenIntrospectionInternalRequest);
 
     if (!introspectionResponse.isActive()) {
-      throw new UnauthorizedException("error=invalid_token error_description=token is undefined");
+      throw new UnauthorizedException("error=invalid_token error_description=token is not active");
     }
 
     if (introspectionResponse.isClientCredentialsGrant()) {

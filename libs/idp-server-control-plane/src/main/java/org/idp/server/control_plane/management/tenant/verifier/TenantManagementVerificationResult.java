@@ -52,7 +52,7 @@ public class TenantManagementVerificationResult {
     Map<String, Object> response = new HashMap<>();
     response.put("dry_run", dryRun);
     response.put("error", "invalid_request");
-    response.put("error_description", "idp-server starter verification is failed");
+    response.put("error_description", "tenant creation request is invalid");
     Map<String, Object> details = new HashMap<>();
     if (!tenantVerificationResult.isValid()) {
       details.put("tenant", tenantVerificationResult.errors());

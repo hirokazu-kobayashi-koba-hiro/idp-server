@@ -114,7 +114,7 @@ public class OrganizationInitializationEntryService implements OrganizationIniti
     tenantCommandRepository.register(tenant);
     authorizationServerConfigurationCommandRepository.register(
         tenant, context.authorizationServerConfiguration());
-    organizationRepository.register(tenant, context.organization());
+    organizationRepository.register(context.organization());
     Tenant admin = tenantQueryRepository.getAdmin();
     userRegistrator.registerOrUpdate(admin, context.user());
     clientConfigurationCommandRepository.register(tenant, context.clientConfiguration());

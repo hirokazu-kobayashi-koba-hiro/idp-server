@@ -30,6 +30,20 @@ echo "tenant-1"
   -d "${DRY_RUN}"
 
 
+# organizer-tenant
+
+echo "-------------------------------------------------"
+echo ""
+echo "organizer-tenant"
+
+./config-sample/onboarding.sh \
+  -t "${ADMIN_TENANT_ID}" \
+  -f "./config-sample/${ENV}/organizer-tenant/initial.json" \
+  -b "${BASE_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+
 ## admin-tenant
 
 echo "-------------------------------------------------"

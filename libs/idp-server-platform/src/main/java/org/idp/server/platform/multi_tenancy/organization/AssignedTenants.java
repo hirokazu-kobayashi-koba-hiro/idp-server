@@ -17,6 +17,8 @@
 package org.idp.server.platform.multi_tenancy.organization;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class AssignedTenants implements Iterable<AssignedTenant> {
 
@@ -57,5 +59,15 @@ public class AssignedTenants implements Iterable<AssignedTenant> {
 
   public boolean exists() {
     return values != null && !values.isEmpty();
+  }
+
+  public List<TenantIdentifier> tenantIdentifiers() {
+    return values.stream()
+        .map(tenant -> new TenantIdentifier(tenant.id()))
+        .collect(Collectors.toList());
+  }
+
+  public boolean contains(TenantIdentifier tenantIdentifier) {
+    return values.stream().anyMatch(tenant -> tenant.tenantIdentifier().equals(tenantIdentifier));
   }
 }
