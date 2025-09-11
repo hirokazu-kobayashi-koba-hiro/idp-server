@@ -35,7 +35,7 @@ describe("user management api", () => {
           "raw_password": "test@01234"
         }
       });
-      console.log(createResponse.data);
+      console.log(createResponse.headers);
       expect(createResponse.status).toBe(201);
       expect(createResponse.data).toHaveProperty("result");
 

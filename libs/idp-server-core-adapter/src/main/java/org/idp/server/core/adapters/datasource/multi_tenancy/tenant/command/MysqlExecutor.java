@@ -80,7 +80,7 @@ public class MysqlExecutor implements TenantCommandSqlExecutor {
     params.add(tenant.name().value());
     params.add(tenant.domain().value());
     params.add(jsonConverter.write(tenant.attributesAsMap()));
-    params.add(tenant.identifierUUID());
+    params.add(tenant.identifier().value());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -92,7 +92,7 @@ public class MysqlExecutor implements TenantCommandSqlExecutor {
     String sqlTemplate =
         """
                 DELETE FROM tenant
-                WHERE id = ?::uuid;
+                WHERE id = ?;
                 """;
     List<Object> params = new ArrayList<>();
     params.add(tenantIdentifier.value());

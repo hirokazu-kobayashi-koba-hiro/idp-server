@@ -26,7 +26,7 @@ import org.idp.server.platform.multi_tenancy.tenant.MissingRequiredTenantIdentif
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class TenantAwareEntryServiceProxy implements InvocationHandler {
-  private final Object target;
+  protected final Object target;
   private final ApplicationDatabaseTypeProvider applicationDatabaseTypeProvider;
   LoggerWrapper log = LoggerWrapper.getLogger(TenantAwareEntryServiceProxy.class);
 
@@ -143,7 +143,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
     }
   }
 
-  private TenantIdentifier resolveTenantIdentifier(Object[] args) {
+  protected TenantIdentifier resolveTenantIdentifier(Object[] args) {
     for (Object arg : args) {
       if (arg instanceof TenantIdentifier tenantId) {
         return tenantId;

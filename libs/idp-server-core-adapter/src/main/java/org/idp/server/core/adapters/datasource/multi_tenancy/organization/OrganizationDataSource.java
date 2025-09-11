@@ -19,7 +19,6 @@ package org.idp.server.core.adapters.datasource.multi_tenancy.organization;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.multi_tenancy.organization.*;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OrganizationDataSource implements OrganizationRepository {
 
@@ -30,7 +29,7 @@ public class OrganizationDataSource implements OrganizationRepository {
   }
 
   @Override
-  public void register(Tenant tenant, Organization organization) {
+  public void register(Organization organization) {
     executor.insert(organization);
     if (organization.hasAssignedTenants()) {
       executor.upsertAssignedTenants(organization);
@@ -38,7 +37,7 @@ public class OrganizationDataSource implements OrganizationRepository {
   }
 
   @Override
-  public void update(Tenant tenant, Organization organization) {
+  public void update(Organization organization) {
     executor.update(organization);
     if (organization.hasAssignedTenants()) {
       executor.upsertAssignedTenants(organization);
@@ -46,7 +45,7 @@ public class OrganizationDataSource implements OrganizationRepository {
   }
 
   @Override
-  public Organization get(Tenant tenant, OrganizationIdentifier identifier) {
+  public Organization get(OrganizationIdentifier identifier) {
     Map<String, String> result = executor.selectOne(identifier);
     if (result == null || result.isEmpty()) {
       throw new OrganizationNotFoundException("Organization not found");
@@ -56,7 +55,7 @@ public class OrganizationDataSource implements OrganizationRepository {
   }
 
   @Override
-  public List<Organization> findList(Tenant tenant, OrganizationQueries queries) {
+  public List<Organization> findList(OrganizationQueries queries) {
     List<Map<String, String>> results = executor.selectList(queries);
     return results.stream()
         .map(ModelConvertor::convert)

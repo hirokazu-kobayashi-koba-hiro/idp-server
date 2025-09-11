@@ -107,6 +107,9 @@ public class ManagementApiFilter extends OncePerRequestFilter {
 
   @Override
   protected boolean shouldNotFilter(HttpServletRequest request) {
+    if (request.getRequestURI().contains("/management/organizations/")) {
+      return true;
+    }
     return !request.getRequestURI().contains("/management/");
   }
 }

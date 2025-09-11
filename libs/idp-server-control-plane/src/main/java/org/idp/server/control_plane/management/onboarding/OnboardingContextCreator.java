@@ -24,6 +24,7 @@ import org.idp.server.control_plane.management.onboarding.io.OrganizationRegistr
 import org.idp.server.control_plane.management.onboarding.io.TenantRegistrationRequest;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserRole;
+import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.core.openid.identity.permission.Permissions;
 import org.idp.server.core.openid.identity.role.Role;
 import org.idp.server.core.openid.identity.role.Roles;
@@ -39,13 +40,16 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantType;
 public class OnboardingContextCreator {
 
   OnboardingRequest request;
-  User user;
+  PasswordEncodeDelegation passwordEncodeDelegation;
   boolean dryRun;
   JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
-  public OnboardingContextCreator(OnboardingRequest request, User user, boolean dryRun) {
+  public OnboardingContextCreator(
+      OnboardingRequest request,
+      PasswordEncodeDelegation passwordEncodeDelegation,
+      boolean dryRun) {
     this.request = request;
-    this.user = user;
+    this.passwordEncodeDelegation = passwordEncodeDelegation;
     this.dryRun = dryRun;
   }
 
@@ -58,6 +62,7 @@ public class OnboardingContextCreator {
     AuthorizationServerConfiguration authorizationServerConfiguration =
         jsonConverter.read(
             request.get("authorization_server"), AuthorizationServerConfiguration.class);
+    User user = jsonConverter.read(request.get("user"), User.class);
     ClientConfiguration clientConfiguration =
         jsonConverter.read(request.get("client"), ClientConfiguration.class);
 
@@ -69,7 +74,7 @@ public class OnboardingContextCreator {
         new Tenant(
             tenantRequest.tenantIdentifier(),
             tenantRequest.tenantName(),
-            TenantType.PUBLIC,
+            TenantType.ORGANIZER,
             tenantRequest.tenantDomain(),
             tenantRequest.authorizationProvider(),
             tenantRequest.databaseType(),
@@ -83,7 +88,11 @@ public class OnboardingContextCreator {
     List<UserRole> userRoles =
         rolesList.stream().map(role -> new UserRole(role.id(), role.name())).toList();
     User updatedUser =
-        user.setRoles(userRoles).setAssignedTenants(List.of(tenant.identifierValue()));
+        user.setRoles(userRoles)
+            .setAssignedTenants(List.of(tenant.identifierValue()))
+            .setAssignedOrganizations(List.of(organization.identifier().value()));
+    String encode = passwordEncodeDelegation.encode(user.rawPassword());
+    updatedUser.setHashedPassword(encode);
 
     return new OnboardingContext(
         tenant,

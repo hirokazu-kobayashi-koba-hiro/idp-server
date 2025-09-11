@@ -395,19 +395,22 @@ public class MysqlExecutor implements UserSqlExecutor {
         """
           SELECT
              COALESCE((
-               SELECT JSON_ARRAYAGG(t.organization_id)
-               FROM (
-                 SELECT DISTINCT idp_user_assigned_organizations.organization_id
-                 FROM idp_user_assigned_organizations
-                 WHERE idp_user_assigned_organizations.user_id = idp_user_current_organization.user_id
-               ) AS t
-             ), JSON_ARRAY()) AS assigned_organizations,
+                          SELECT JSON_ARRAYAGG(t.organization_id)
+                          FROM (
+                                   SELECT DISTINCT idp_user_assigned_organizations.organization_id
+                                   FROM idp_user_assigned_organizations
+                                   WHERE idp_user_assigned_organizations.user_id = ?
+                               ) AS t
+                      ), JSON_ARRAY()) AS assigned_organizations,
              idp_user_current_organization.organization_id AS current_organization_id
-           FROM idp_user_current_organization
-           WHERE idp_user_current_organization.user_id = ?;
+         FROM idp_user_assigned_organizations
+         JOIN idp_user_current_organization on idp_user_current_organization.user_id = idp_user_assigned_organizations.user_id
+         WHERE idp_user_assigned_organizations.user_id = ?
+         GROUP BY idp_user_assigned_organizations.user_id;
       """;
 
     List<Object> params = new ArrayList<>();
+    params.add(userIdentifier.value());
     params.add(userIdentifier.value());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
@@ -420,17 +423,20 @@ public class MysqlExecutor implements UserSqlExecutor {
     String sqlTemplate =
         """
           SELECT
-             COALESCE((
-               SELECT JSON_ARRAYAGG(t.tenant_id)
-               FROM idp_user_assigned_tenants AS t
-               WHERE t.user_id = idp_user_current_tenant.user_id
-             ), JSON_ARRAY()) AS assigned_tenants,
-             idp_user_current_tenant.tenant_id AS current_tenant_id
-           FROM idp_user_current_tenant
-           WHERE idp_user_current_tenant.user_id = ?;
+              COALESCE((
+                           SELECT JSON_ARRAYAGG(t.tenant_id)
+                           FROM idp_user_assigned_tenants AS t
+                           WHERE t.user_id = ?
+                       ), JSON_ARRAY()) AS assigned_tenants,
+              idp_user_current_tenant.tenant_id AS current_tenant_id
+          FROM idp_user_assigned_tenants
+          JOIN idp_user_current_tenant ON idp_user_current_tenant.user_id = idp_user_assigned_tenants.user_id
+          WHERE idp_user_assigned_tenants.user_id = ?
+          GROUP BY idp_user_assigned_tenants.user_id;
       """;
 
     List<Object> params = new ArrayList<>();
+    params.add(userIdentifier.value());
     params.add(userIdentifier.value());
 
     return sqlExecutor.selectOne(sqlTemplate, params);

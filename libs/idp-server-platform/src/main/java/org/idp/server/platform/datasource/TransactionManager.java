@@ -19,6 +19,7 @@ package org.idp.server.platform.datasource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.tenant.AdminTenantContext;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class TransactionManager {
@@ -36,10 +37,21 @@ public class TransactionManager {
       throw new SqlRuntimeException("Transaction already started");
     }
     OperationContext.set(OperationType.READ);
-    Connection conn = dbConnectionProvider.getConnection(databaseType, tenantIdentifier);
+    Connection conn =
+        dbConnectionProvider.getConnection(
+            databaseType, AdminTenantContext.isAdmin(tenantIdentifier));
     if (databaseType == DatabaseType.POSTGRESQL) {
       setTenantId(conn, tenantIdentifier);
     }
+    connectionHolder.set(conn);
+  }
+
+  public static void createConnection(DatabaseType databaseType) {
+    if (connectionHolder.get() != null) {
+      throw new SqlRuntimeException("Transaction already started");
+    }
+    OperationContext.set(OperationType.READ);
+    Connection conn = dbConnectionProvider.getConnection(databaseType, true);
     connectionHolder.set(conn);
   }
 
@@ -49,10 +61,21 @@ public class TransactionManager {
       throw new SqlRuntimeException("Transaction already started");
     }
     OperationContext.set(OperationType.WRITE);
-    Connection conn = dbConnectionProvider.getConnection(databaseType, tenantIdentifier);
+    Connection conn =
+        dbConnectionProvider.getConnection(
+            databaseType, AdminTenantContext.isAdmin(tenantIdentifier));
     if (databaseType == DatabaseType.POSTGRESQL) {
       setTenantId(conn, tenantIdentifier);
     }
+    connectionHolder.set(conn);
+  }
+
+  public static void beginTransaction(DatabaseType databaseType) {
+    if (connectionHolder.get() != null) {
+      throw new SqlRuntimeException("Transaction already started");
+    }
+    OperationContext.set(OperationType.WRITE);
+    Connection conn = dbConnectionProvider.getConnection(databaseType, true);
     connectionHolder.set(conn);
   }
 

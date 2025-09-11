@@ -17,19 +17,19 @@
 package org.idp.server.control_plane.management.tenant.validator;
 
 import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
-import org.idp.server.control_plane.management.onboarding.io.OnboardingRequest;
+import org.idp.server.control_plane.management.tenant.io.TenantRequest;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 import org.idp.server.platform.json.schema.JsonSchemaValidator;
 
 public class TenantRequestValidator {
 
-  OnboardingRequest request;
+  TenantRequest request;
   JsonSchemaValidator tenantSchemaValidator;
   JsonSchemaValidator authorizationServerSchemaValidator;
   boolean dryRun;
 
-  public TenantRequestValidator(OnboardingRequest request, boolean dryRun) {
+  public TenantRequestValidator(TenantRequest request, boolean dryRun) {
     this.request = request;
     this.tenantSchemaValidator = new JsonSchemaValidator(ControlPlaneV1SchemaReader.tenantSchema());
     this.authorizationServerSchemaValidator =

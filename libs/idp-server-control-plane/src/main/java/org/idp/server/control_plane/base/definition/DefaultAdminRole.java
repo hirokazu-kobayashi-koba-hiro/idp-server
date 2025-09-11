@@ -24,9 +24,7 @@ import org.idp.server.core.openid.identity.role.Roles;
 
 public enum DefaultAdminRole {
   ADMINISTRATOR(
-      "administrator", "administrator has all permissions", DefaultAdminPermission.getAll()),
-  EDITOR("editor", "editor has permissions for edition", createEditorPermissions()),
-  VIEWER("viewer", "viewer has permissions for view", DefaultAdminPermission.findReadPermissions());
+      "administrator", "administrator has all permissions", DefaultAdminPermission.getAll());
 
   private final String name;
   private final String description;
@@ -64,18 +62,5 @@ public enum DefaultAdminRole {
 
   public Set<DefaultAdminPermission> permissions() {
     return permissions;
-  }
-
-  public boolean hasPermission(DefaultAdminPermission permission) {
-    return permissions.contains(permission);
-  }
-
-  private static Set<DefaultAdminPermission> createEditorPermissions() {
-    Set<DefaultAdminPermission> editorPermissions = new HashSet<>();
-    Set<DefaultAdminPermission> readPermissions = DefaultAdminPermission.findReadPermissions();
-    Set<DefaultAdminPermission> updatePermissions = DefaultAdminPermission.findUpdatePermissions();
-    editorPermissions.addAll(readPermissions);
-    editorPermissions.addAll(updatePermissions);
-    return editorPermissions;
   }
 }
