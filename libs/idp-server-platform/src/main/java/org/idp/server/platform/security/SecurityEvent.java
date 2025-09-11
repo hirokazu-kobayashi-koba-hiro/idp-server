@@ -93,6 +93,13 @@ public class SecurityEvent {
     return user.id();
   }
 
+  public String userExSub() {
+    if (user == null) {
+      return null;
+    }
+    return user.exSub();
+  }
+
   public IpAddress ipAddress() {
     return ipAddress;
   }

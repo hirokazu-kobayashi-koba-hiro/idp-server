@@ -15,7 +15,15 @@
       "use_secure_cookie": false,
       "allow_origins": [
         "http://localhost:3000","http://localhost:3100","http://localhost:5173","https://idp-auth-frontend-ecru.vercel.app","https://idp-auth-frontend-diqt.vercel.app"
-      ]
+      ],
+      "security_event_log_format": "structured_json",
+      "security_event_log_stage": "processed",
+      "security_event_log_include_user_id": true,
+      "security_event_log_include_user_ex_sub": true,
+      "security_event_log_include_client_id": true,
+      "security_event_log_include_ip": true,
+      "security_event_log_persistence_enabled": true,
+      "security_event_log_include_detail": true
     }
   },
   "authorization_server": {

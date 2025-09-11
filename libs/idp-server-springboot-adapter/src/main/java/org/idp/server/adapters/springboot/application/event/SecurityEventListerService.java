@@ -43,7 +43,10 @@ public class SecurityEventListerService {
   @Async
   @EventListener
   public void onEvent(SecurityEvent securityEvent) {
-    log.info("TenantId {}, onEvent: {}", securityEvent.tenant().id(), securityEvent.toMap());
+    log.info(
+        "SecurityEventListerService.onEvent, TenantId {}, event_type: {}",
+        securityEvent.tenant().id(),
+        securityEvent.type().value());
 
     taskExecutor.execute(
         new SecurityEventRunnable(

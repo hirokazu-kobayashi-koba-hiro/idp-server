@@ -68,7 +68,7 @@ public class UserEventPublisher implements SecurityEventUserCreatable {
 
     SecurityEventUser securityEventUser = createSecurityEventUser(user, tenant);
     builder.add(securityEventUser);
-    detailsMap.put("user", user.toMap());
+    detailsMap.put("user", securityEventUser.toMap());
 
     builder.add(requestAttributes.getIpAddress());
     builder.add(requestAttributes.getUserAgent());

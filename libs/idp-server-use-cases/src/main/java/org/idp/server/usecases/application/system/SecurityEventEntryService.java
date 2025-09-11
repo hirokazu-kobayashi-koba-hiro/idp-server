@@ -24,6 +24,7 @@ import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.SecurityEventApi;
 import org.idp.server.platform.security.handler.SecurityEventHandler;
 import org.idp.server.platform.security.hook.SecurityEventHooks;
+import org.idp.server.platform.security.log.SecurityEventLogService;
 import org.idp.server.platform.security.repository.SecurityEventCommandRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookResultCommandRepository;
@@ -43,9 +44,9 @@ public class SecurityEventEntryService implements SecurityEventApi {
     this.securityEventHandler =
         new SecurityEventHandler(
             securityEventHooks,
-            securityEventCommandRepository,
             securityEventHookResultCommandRepository,
-            hookQueryRepository);
+            hookQueryRepository,
+            new SecurityEventLogService(securityEventCommandRepository));
     this.tenantQueryRepository = tenantQueryRepository;
   }
 
