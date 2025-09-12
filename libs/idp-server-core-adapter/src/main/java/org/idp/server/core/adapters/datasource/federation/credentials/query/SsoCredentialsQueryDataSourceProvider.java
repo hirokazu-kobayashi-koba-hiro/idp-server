@@ -17,8 +17,10 @@
 package org.idp.server.core.adapters.datasource.federation.credentials.query;
 
 import org.idp.server.core.openid.federation.sso.SsoCredentialsQueryRepository;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
+import org.idp.server.platform.json.JsonConverter;
 
 public class SsoCredentialsQueryDataSourceProvider
     implements ApplicationComponentProvider<SsoCredentialsQueryRepository> {
@@ -30,6 +32,11 @@ public class SsoCredentialsQueryDataSourceProvider
 
   @Override
   public SsoCredentialsQueryRepository provide(ApplicationComponentDependencyContainer container) {
-    return new SsoCredentialsQueryDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    SsoCredentialsSqlExecutors executors = new SsoCredentialsSqlExecutors();
+    SsoCredentialsSqlExecutor executor = executors.get(databaseTypeProvider.provide());
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+    return new SsoCredentialsQueryDataSource(executor, jsonConverter);
   }
 }

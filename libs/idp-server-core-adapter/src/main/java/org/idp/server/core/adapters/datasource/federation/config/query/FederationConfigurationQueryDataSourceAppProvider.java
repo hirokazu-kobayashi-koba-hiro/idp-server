@@ -17,6 +17,7 @@
 package org.idp.server.core.adapters.datasource.federation.config.query;
 
 import org.idp.server.core.openid.federation.repository.FederationConfigurationQueryRepository;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
@@ -31,6 +32,10 @@ public class FederationConfigurationQueryDataSourceAppProvider
   @Override
   public FederationConfigurationQueryRepository provide(
       ApplicationComponentDependencyContainer container) {
-    return new FederationConfigurationQueryDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    FederationConfigurationSqlExecutors executors = new FederationConfigurationSqlExecutors();
+    FederationConfigurationSqlExecutor executor = executors.get(databaseTypeProvider.provide());
+    return new FederationConfigurationQueryDataSource(executor);
   }
 }

@@ -23,15 +23,14 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class RoleQueryDataSource implements RoleQueryRepository {
 
-  RoleSqlExecutors executors;
+  RoleSqlExecutor executor;
 
-  public RoleQueryDataSource() {
-    this.executors = new RoleSqlExecutors();
+  public RoleQueryDataSource(RoleSqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public Role find(Tenant tenant, RoleIdentifier identifier) {
-    RoleSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, identifier);
 
     if (result == null || result.isEmpty()) {
@@ -43,7 +42,6 @@ public class RoleQueryDataSource implements RoleQueryRepository {
 
   @Override
   public Role findByName(Tenant tenant, String name) {
-    RoleSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOneByName(tenant, name);
 
     if (result == null || result.isEmpty()) {
@@ -55,7 +53,6 @@ public class RoleQueryDataSource implements RoleQueryRepository {
 
   @Override
   public Roles findAll(Tenant tenant) {
-    RoleSqlExecutor executor = executors.get(tenant.databaseType());
     List<Map<String, String>> results = executor.selectAll(tenant);
 
     if (results == null || results.isEmpty()) {
@@ -68,7 +65,6 @@ public class RoleQueryDataSource implements RoleQueryRepository {
 
   @Override
   public long findTotalCount(Tenant tenant, RoleQueries queries) {
-    RoleSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectCount(tenant, queries);
 
     if (result == null || result.isEmpty()) {
@@ -80,7 +76,6 @@ public class RoleQueryDataSource implements RoleQueryRepository {
 
   @Override
   public List<Role> findList(Tenant tenant, RoleQueries queries) {
-    RoleSqlExecutor executor = executors.get(tenant.databaseType());
     List<Map<String, String>> results = executor.selectList(tenant, queries);
 
     if (results == null || results.isEmpty()) {

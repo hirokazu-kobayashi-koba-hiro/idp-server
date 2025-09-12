@@ -23,15 +23,14 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class UserCommandDataSource implements UserCommandRepository {
 
-  UserCommandSqlExecutors executors;
+  UserCommandSqlExecutor executor;
 
-  public UserCommandDataSource() {
-    this.executors = new UserCommandSqlExecutors();
+  public UserCommandDataSource(UserCommandSqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public void register(Tenant tenant, User user) {
-    UserCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, user);
     if (user.hasRoles()) {
       executor.upsertRoles(tenant, user);
@@ -52,7 +51,6 @@ public class UserCommandDataSource implements UserCommandRepository {
 
   @Override
   public void update(Tenant tenant, User user) {
-    UserCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.update(tenant, user);
     if (user.hasRoles()) {
       executor.upsertRoles(tenant, user);
@@ -73,13 +71,11 @@ public class UserCommandDataSource implements UserCommandRepository {
 
   @Override
   public void updatePassword(Tenant tenant, User user) {
-    UserCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.updatePassword(tenant, user);
   }
 
   @Override
   public void delete(Tenant tenant, UserIdentifier userIdentifier) {
-    UserCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.delete(tenant, userIdentifier);
   }
 }

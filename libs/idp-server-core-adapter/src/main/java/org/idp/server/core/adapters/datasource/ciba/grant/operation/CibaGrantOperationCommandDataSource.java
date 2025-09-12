@@ -21,15 +21,14 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class CibaGrantOperationCommandDataSource implements CibaGrantOperationCommandRepository {
 
-  CibaGrantSqlExecutors executors;
+  CibaGrantSqlExecutor executor;
 
-  public CibaGrantOperationCommandDataSource() {
-    this.executors = new CibaGrantSqlExecutors();
+  public CibaGrantOperationCommandDataSource(CibaGrantSqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public void deleteExpiredGrant(Tenant tenant, int limit) {
-    CibaGrantSqlExecutor executor = executors.get(tenant.databaseType());
     executor.deleteExpiredGrant(limit);
   }
 }

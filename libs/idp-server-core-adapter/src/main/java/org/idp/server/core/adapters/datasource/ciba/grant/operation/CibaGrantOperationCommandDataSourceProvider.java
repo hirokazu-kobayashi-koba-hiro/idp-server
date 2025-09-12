@@ -17,6 +17,7 @@
 package org.idp.server.core.adapters.datasource.ciba.grant.operation;
 
 import org.idp.server.core.extension.ciba.repository.CibaGrantOperationCommandRepository;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
@@ -31,6 +32,10 @@ public class CibaGrantOperationCommandDataSourceProvider
   @Override
   public CibaGrantOperationCommandRepository provide(
       ApplicationComponentDependencyContainer container) {
-    return new CibaGrantOperationCommandDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    CibaGrantSqlExecutors executors = new CibaGrantSqlExecutors();
+    CibaGrantSqlExecutor executor = executors.get(databaseTypeProvider.provide());
+    return new CibaGrantOperationCommandDataSource(executor);
   }
 }

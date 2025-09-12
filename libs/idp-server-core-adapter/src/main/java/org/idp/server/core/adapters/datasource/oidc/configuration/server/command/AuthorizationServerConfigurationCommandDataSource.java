@@ -26,27 +26,26 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 public class AuthorizationServerConfigurationCommandDataSource
     implements AuthorizationServerConfigurationCommandRepository {
 
-  ServerConfigSqlExecutors executors;
+  ServerConfigSqlExecutor executor;
   JsonConverter jsonConverter;
   CacheStore cacheStore;
 
-  public AuthorizationServerConfigurationCommandDataSource(CacheStore cacheStore) {
-    this.executors = new ServerConfigSqlExecutors();
-    this.jsonConverter = JsonConverter.snakeCaseInstance();
+  public AuthorizationServerConfigurationCommandDataSource(
+      ServerConfigSqlExecutor executor, JsonConverter jsonConverter, CacheStore cacheStore) {
+    this.executor = executor;
+    this.jsonConverter = jsonConverter;
     this.cacheStore = cacheStore;
   }
 
   @Override
   public void register(
       Tenant tenant, AuthorizationServerConfiguration authorizationServerConfiguration) {
-    ServerConfigSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, authorizationServerConfiguration);
   }
 
   @Override
   public void update(
       Tenant tenant, AuthorizationServerConfiguration authorizationServerConfiguration) {
-    ServerConfigSqlExecutor executor = executors.get(tenant.databaseType());
     executor.update(tenant, authorizationServerConfiguration);
 
     String key = key(tenant.identifier());

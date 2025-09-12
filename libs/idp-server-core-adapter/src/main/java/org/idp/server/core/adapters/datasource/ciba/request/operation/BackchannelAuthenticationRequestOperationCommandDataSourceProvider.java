@@ -17,6 +17,7 @@
 package org.idp.server.core.adapters.datasource.ciba.request.operation;
 
 import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRequestOperationCommandRepository;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
@@ -32,6 +33,12 @@ public class BackchannelAuthenticationRequestOperationCommandDataSourceProvider
   @Override
   public BackchannelAuthenticationRequestOperationCommandRepository provide(
       ApplicationComponentDependencyContainer container) {
-    return new BackchannelAuthenticationRequestOperationCommandDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    BackchannelAuthenticationRequestSqlExecutors executors =
+        new BackchannelAuthenticationRequestSqlExecutors();
+    BackchannelAuthenticationRequestSqlExecutor executor =
+        executors.get(databaseTypeProvider.provide());
+    return new BackchannelAuthenticationRequestOperationCommandDataSource(executor);
   }
 }

@@ -22,27 +22,24 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class TenantInvitationCommandDataSource implements TenantInvitationCommandRepository {
 
-  TenantInvitationSqlExecutors executors;
+  TenantInvitationSqlExecutor executor;
 
-  public TenantInvitationCommandDataSource() {
-    this.executors = new TenantInvitationSqlExecutors();
+  public TenantInvitationCommandDataSource(TenantInvitationSqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public void register(Tenant tenant, TenantInvitation tenantInvitation) {
-    TenantInvitationSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, tenantInvitation);
   }
 
   @Override
   public void update(Tenant tenant, TenantInvitation tenantInvitation) {
-    TenantInvitationSqlExecutor executor = executors.get(tenant.databaseType());
     executor.update(tenant, tenantInvitation);
   }
 
   @Override
   public void delete(Tenant tenant, TenantInvitation tenantInvitation) {
-    TenantInvitationSqlExecutor executor = executors.get(tenant.databaseType());
     executor.delete(tenant, tenantInvitation);
   }
 }

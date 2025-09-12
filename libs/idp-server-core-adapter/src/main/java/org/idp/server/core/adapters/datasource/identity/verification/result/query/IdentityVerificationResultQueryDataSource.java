@@ -30,16 +30,14 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class IdentityVerificationResultQueryDataSource
     implements IdentityVerificationResultQueryRepository {
 
-  IdentityVerificationResultSqlExecutors executors;
+  IdentityVerificationResultSqlExecutor executor;
 
-  public IdentityVerificationResultQueryDataSource() {
-    this.executors = new IdentityVerificationResultSqlExecutors();
+  public IdentityVerificationResultQueryDataSource(IdentityVerificationResultSqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public long findTotalCount(Tenant tenant, User user, IdentityVerificationResultQueries queries) {
-    IdentityVerificationResultSqlExecutor executor = executors.get(tenant.databaseType());
-
     Map<String, String> result = executor.selectCount(tenant, user, queries);
 
     if (result == null || result.isEmpty()) {
@@ -52,8 +50,6 @@ public class IdentityVerificationResultQueryDataSource
   @Override
   public List<IdentityVerificationResult> findList(
       Tenant tenant, User user, IdentityVerificationResultQueries queries) {
-    IdentityVerificationResultSqlExecutor executor = executors.get(tenant.databaseType());
-
     List<Map<String, String>> result = executor.selectList(tenant, user, queries);
 
     if (result == null || result.isEmpty()) {
@@ -66,8 +62,6 @@ public class IdentityVerificationResultQueryDataSource
   @Override
   public IdentityVerificationResult get(
       Tenant tenant, User user, IdentityVerificationResultIdentifier identifier) {
-    IdentityVerificationResultSqlExecutor executor = executors.get(tenant.databaseType());
-
     Map<String, String> result = executor.selectOne(tenant, user, identifier);
 
     if (result == null || result.isEmpty()) {

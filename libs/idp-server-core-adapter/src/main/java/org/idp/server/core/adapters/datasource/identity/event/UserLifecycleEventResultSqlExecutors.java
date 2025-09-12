@@ -28,6 +28,7 @@ public class UserLifecycleEventResultSqlExecutors {
   public UserLifecycleEventResultSqlExecutors() {
     this.executors = new HashMap<>();
     executors.put(DatabaseType.POSTGRESQL, new PostgresqlExecutor());
+    executors.put(DatabaseType.MYSQL, new MysqlExecutor());
   }
 
   public UserLifecycleEventResultSqlExecutor get(DatabaseType databaseType) {

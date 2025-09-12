@@ -23,15 +23,14 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OrganizationDataSource implements OrganizationRepository {
 
-  OrganizationSqlExecutors executors;
+  OrganizationSqlExecutor executor;
 
-  public OrganizationDataSource() {
-    this.executors = new OrganizationSqlExecutors();
+  public OrganizationDataSource(OrganizationSqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public void register(Tenant tenant, Organization organization) {
-    OrganizationSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(organization);
     if (organization.hasAssignedTenants()) {
       executor.upsertAssignedTenants(organization);
@@ -40,7 +39,6 @@ public class OrganizationDataSource implements OrganizationRepository {
 
   @Override
   public void update(Tenant tenant, Organization organization) {
-    OrganizationSqlExecutor executor = executors.get(tenant.databaseType());
     executor.update(organization);
     if (organization.hasAssignedTenants()) {
       executor.upsertAssignedTenants(organization);
@@ -49,8 +47,6 @@ public class OrganizationDataSource implements OrganizationRepository {
 
   @Override
   public Organization get(Tenant tenant, OrganizationIdentifier identifier) {
-    OrganizationSqlExecutor executor = executors.get(tenant.databaseType());
-
     Map<String, String> result = executor.selectOne(identifier);
     if (result == null || result.isEmpty()) {
       throw new OrganizationNotFoundException("Organization not found");
@@ -61,8 +57,6 @@ public class OrganizationDataSource implements OrganizationRepository {
 
   @Override
   public List<Organization> findList(Tenant tenant, OrganizationQueries queries) {
-    OrganizationSqlExecutor executor = executors.get(tenant.databaseType());
-
     List<Map<String, String>> results = executor.selectList(queries);
     return results.stream()
         .map(ModelConvertor::convert)

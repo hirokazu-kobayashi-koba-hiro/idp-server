@@ -17,6 +17,7 @@
 package org.idp.server.core.adapters.datasource.identity.verification.application.command;
 
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationCommandRepository;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
@@ -31,6 +32,12 @@ public class IdentityVerificationApplicationCommandDataSourceProvider
   @Override
   public IdentityVerificationApplicationCommandRepository provide(
       ApplicationComponentDependencyContainer container) {
-    return new IdentityVerificationApplicationCommandDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    IdentityVerificationApplicationCommandSqlExecutors executors =
+        new IdentityVerificationApplicationCommandSqlExecutors();
+    IdentityVerificationApplicationCommandSqlExecutor executor =
+        executors.get(databaseTypeProvider.provide());
+    return new IdentityVerificationApplicationCommandDataSource(executor);
   }
 }

@@ -17,8 +17,10 @@
 package org.idp.server.core.adapters.datasource.grant_management;
 
 import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepository;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
+import org.idp.server.platform.json.JsonConverter;
 
 public class AuthorizationGrantedDataSourceProvider
     implements ApplicationComponentProvider<AuthorizationGrantedRepository> {
@@ -30,6 +32,11 @@ public class AuthorizationGrantedDataSourceProvider
 
   @Override
   public AuthorizationGrantedRepository provide(ApplicationComponentDependencyContainer container) {
-    return new AuthorizationGrantedDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    AuthorizationGrantedSqlExecutors executors = new AuthorizationGrantedSqlExecutors();
+    AuthorizationGrantedSqlExecutor executor = executors.get(databaseTypeProvider.provide());
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+    return new AuthorizationGrantedDataSource(executor, jsonConverter);
   }
 }

@@ -24,26 +24,24 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OAuthTokenOperationCommandDataSource implements OAuthTokenOperationCommandRepository {
 
-  OAuthTokenSqlExecutors executors;
+  OAuthTokenSqlExecutor executor;
   AesCipher aesCipher;
   HmacHasher hmacHasher;
 
-  public OAuthTokenOperationCommandDataSource(AesCipher aesCipher, HmacHasher hmacHasher) {
-    this.executors = new OAuthTokenSqlExecutors();
+  public OAuthTokenOperationCommandDataSource(
+      OAuthTokenSqlExecutor executor, AesCipher aesCipher, HmacHasher hmacHasher) {
+    this.executor = executor;
     this.aesCipher = aesCipher;
     this.hmacHasher = hmacHasher;
   }
 
   @Override
   public void deleteExpiredToken(Tenant tenant, int limit) {
-    // TODO database type
-    OAuthTokenSqlExecutor executor = executors.get(tenant.databaseType());
     executor.deleteExpiredToken(limit);
   }
 
   @Override
   public void deleteAll(Tenant tenant, User user) {
-    OAuthTokenSqlExecutor executor = executors.get(tenant.databaseType());
     executor.deleteAll(tenant, user);
   }
 }

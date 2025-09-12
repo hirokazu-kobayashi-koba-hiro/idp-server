@@ -17,6 +17,7 @@
 package org.idp.server.core.adapters.datasource.identity.event;
 
 import org.idp.server.core.openid.identity.event.UserLifecycleEventResultCommandRepository;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
@@ -31,6 +32,10 @@ public class UserLifecycleEventResultCommandDataSourceProvider
   @Override
   public UserLifecycleEventResultCommandRepository provide(
       ApplicationComponentDependencyContainer container) {
-    return new UserLifecycleEventResultCommandDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    UserLifecycleEventResultSqlExecutors executors = new UserLifecycleEventResultSqlExecutors();
+    UserLifecycleEventResultSqlExecutor executor = executors.get(databaseTypeProvider.provide());
+    return new UserLifecycleEventResultCommandDataSource(executor);
   }
 }

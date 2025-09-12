@@ -112,6 +112,7 @@ import org.idp.server.platform.audit.AuditLogWriters;
 import org.idp.server.platform.crypto.AesCipher;
 import org.idp.server.platform.crypto.HmacHasher;
 import org.idp.server.platform.datasource.*;
+import org.idp.server.platform.datasource.DatabaseTypeConfiguration;
 import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
@@ -183,9 +184,11 @@ public class IdpServerApplication {
 
   public IdpServerApplication(
       String adminTenantId,
+      ApplicationDatabaseTypeProvider databaseTypeProvider,
       AdminDashboardUrl adminDashboardUrl,
       DbConnectionProvider dbConnectionProvider,
       String encryptionKey,
+      String databaseType,
       CacheStore cacheStore,
       OAuthSessionDelegate oAuthSessionDelegate,
       PasswordEncodeDelegation passwordEncodeDelegation,
@@ -198,11 +201,14 @@ public class IdpServerApplication {
 
     ApplicationComponentDependencyContainer dependencyContainer =
         new ApplicationComponentDependencyContainer();
+    dependencyContainer.register(ApplicationDatabaseTypeProvider.class, databaseTypeProvider);
     AesCipher aesCipher = new AesCipher(encryptionKey);
     HmacHasher hmacHasher = new HmacHasher(encryptionKey);
     dependencyContainer.register(AesCipher.class, aesCipher);
     dependencyContainer.register(HmacHasher.class, hmacHasher);
     dependencyContainer.register(CacheStore.class, cacheStore);
+    DatabaseTypeConfiguration databaseTypeConfig = new DatabaseTypeConfiguration(databaseType);
+    dependencyContainer.register(DatabaseTypeConfiguration.class, databaseTypeConfig);
     ApplicationComponentContainer applicationComponentContainer =
         ApplicationComponentContainerPluginLoader.load(dependencyContainer);
     applicationComponentContainer.register(OAuthSessionDelegate.class, oAuthSessionDelegate);
@@ -339,7 +345,7 @@ public class IdpServerApplication {
 
     // create authentication-interactor instance
     AuthenticationDependencyContainer authenticationDependencyContainer =
-        AuthenticationDependencyContainerPluginLoader.load();
+        AuthenticationDependencyContainerPluginLoader.load(dependencyContainer);
     authenticationDependencyContainer.register(
         PasswordEncodeDelegation.class, passwordEncodeDelegation);
     authenticationDependencyContainer.register(
@@ -379,8 +385,6 @@ public class IdpServerApplication {
         UserLifecycleEventExecutorPluginLoader.load(
             applicationComponentContainer, authenticationDependencyContainer);
 
-    TenantDialectProvider tenantDialectProvider = new TenantDialectProvider(tenantQueryRepository);
-
     this.idpServerStarterApi =
         TenantAwareEntryServiceProxy.createProxy(
             new IdpServerStarterEntryService(
@@ -395,7 +399,7 @@ public class IdpServerApplication {
                 clientConfigurationQueryRepository,
                 passwordEncodeDelegation),
             IdpServerStarterApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.idpServerOperationApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -408,7 +412,7 @@ public class IdpServerApplication {
                 backchannelAuthenticationRequestOperationCommandRepository,
                 cibaGrantOperationCommandRepository),
             IdpServerOperationApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     OAuthFlowEventPublisher oAuthFLowEventPublisher =
         new OAuthFlowEventPublisher(securityEventPublisher);
@@ -420,7 +424,7 @@ public class IdpServerApplication {
 
     OidcSsoExecutors oidcSsoExecutors = OidcSsoExecutorPluginLoader.load(dependencyContainer);
     FederationDependencyContainer federationDependencyContainer =
-        FederationDependencyContainerPluginLoader.load();
+        FederationDependencyContainerPluginLoader.load(dependencyContainer);
     federationDependencyContainer.register(OidcSsoExecutors.class, oidcSsoExecutors);
     FederationInteractors federationInteractors =
         FederationInteractorPluginLoader.load(federationDependencyContainer);
@@ -446,7 +450,7 @@ public class IdpServerApplication {
                 oAuthFLowEventPublisher,
                 userLifecycleEventPublisher),
             OAuthFlowApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.tokenApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -456,7 +460,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 userEventPublisher),
             TokenApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.oidcMetaDataApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -464,7 +468,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 new DiscoveryProtocols(protocolContainer.resolveAll(DiscoveryProtocol.class))),
             OidcMetaDataApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.userinfoApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -474,7 +478,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 userEventPublisher),
             UserinfoApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.cibaFlowApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -490,7 +494,7 @@ public class IdpServerApplication {
                 userLifecycleEventPublisher,
                 passwordVerificationDelegation),
             CibaFlowApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.authenticationMetaDataApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -500,7 +504,7 @@ public class IdpServerApplication {
                 authenticationExecutors,
                 tenantQueryRepository),
             AuthenticationMetaDataApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.authenticationTransactionApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -509,7 +513,7 @@ public class IdpServerApplication {
                 authenticationTransactionCommandRepository,
                 authenticationTransactionQueryRepository),
             AuthenticationTransactionApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.identityVerificationApplicationApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -525,7 +529,7 @@ public class IdpServerApplication {
                 additionalRequestParameterResolvers,
                 oAuthAuthorizationResolvers),
             IdentityVerificationApplicationApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.identityVerificationCallbackApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -541,7 +545,7 @@ public class IdpServerApplication {
                 additionalRequestParameterResolvers,
                 oAuthAuthorizationResolvers),
             IdentityVerificationCallbackApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.identityVerificationApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -554,7 +558,7 @@ public class IdpServerApplication {
                 userCommandRepository,
                 userEventPublisher),
             IdentityVerificationApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.securityEventApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -565,27 +569,27 @@ public class IdpServerApplication {
                 hookQueryRepository,
                 tenantQueryRepository),
             SecurityEventApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.sharedSignalsFrameworkMetaDataApi =
         TenantAwareEntryServiceProxy.createProxy(
             new SharedSignalsFrameworkMetaDataEntryService(
                 securityEventHookConfigurationQueryRepository, tenantQueryRepository),
             SharedSignalsFrameworkMetaDataApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.tenantMetaDataApi =
         TenantAwareEntryServiceProxy.createProxy(
             new TenantMetaDataEntryService(tenantQueryRepository),
             TenantMetaDataApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.tenantInvitationMetaDataApi =
         TenantAwareEntryServiceProxy.createProxy(
             new TenantInvitationMetaDataEntryService(
                 tenantInvitationQueryRepository, tenantQueryRepository),
             TenantInvitationMetaDataApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.userOperationApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -601,14 +605,14 @@ public class IdpServerApplication {
                 userOperationEventPublisher,
                 userLifecycleEventPublisher),
             UserOperationApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.userLifecycleEventApi =
         TenantAwareEntryServiceProxy.createProxy(
             new UserLifecycleEventEntryService(
                 userLifecycleEventExecutorsMap, userLifecycleEventResultCommandRepository),
             UserLifecycleEventApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.onboardingApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -624,7 +628,7 @@ public class IdpServerApplication {
                 clientConfigurationCommandRepository,
                 clientConfigurationQueryRepository),
             OnboardingApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.organizationInitializationApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -639,7 +643,7 @@ public class IdpServerApplication {
                 clientConfigurationQueryRepository,
                 passwordEncodeDelegation),
             OrganizationInitializationApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.tenantManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -651,7 +655,7 @@ public class IdpServerApplication {
                 userCommandRepository,
                 auditLogWriters),
             TenantManagementApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.tenantInvitationManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -662,7 +666,7 @@ public class IdpServerApplication {
                 emailSenders,
                 adminDashboardUrl),
             TenantInvitationManagementApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.authorizationServerManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -672,7 +676,7 @@ public class IdpServerApplication {
                 authorizationServerConfigurationCommandRepository,
                 auditLogWriters),
             AuthorizationServerManagementApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.clientManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -682,7 +686,7 @@ public class IdpServerApplication {
                 clientConfigurationQueryRepository,
                 auditLogWriters),
             ClientManagementApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.userManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -696,7 +700,7 @@ public class IdpServerApplication {
                 userLifecycleEventPublisher,
                 auditLogWriters),
             UserManagementApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.authenticationConfigurationManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -706,7 +710,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 auditLogWriters),
             AuthenticationConfigurationManagementApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.authenticationPolicyConfigurationManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -716,7 +720,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 auditLogWriters),
             AuthenticationPolicyConfigurationManagementApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.federationConfigurationManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -726,7 +730,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 auditLogWriters),
             FederationConfigurationManagementApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.securityEventHookConfigurationManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -736,7 +740,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 auditLogWriters),
             SecurityEventHookConfigurationManagementApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.identityVerificationConfigManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -746,35 +750,35 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 auditLogWriters),
             IdentityVerificationConfigManagementApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.securityEventManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
             new SecurityEventManagementEntryService(
                 securityEventQueryRepository, tenantQueryRepository, auditLogWriters),
             SecurityEventManagementApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.auditLogManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
             new AuditLogManagementEntryService(
                 auditLogQueryRepository, tenantQueryRepository, auditLogWriters),
             AuditLogManagementApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.authenticationInteractionManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
             new AuthenticationInteractionManagementEntryService(
                 authenticationInteractionQueryRepository, tenantQueryRepository, auditLogWriters),
             AuthenticationInteractionManagementApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.authenticationTransactionManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
             new AuthenticationTransactionManagementEntryService(
                 authenticationTransactionQueryRepository, tenantQueryRepository, auditLogWriters),
             AuthenticationTransactionManagementApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.permissionManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -784,7 +788,7 @@ public class IdpServerApplication {
                 permissionCommandRepository,
                 auditLogWriters),
             PermissionManagementApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.roleManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -795,7 +799,7 @@ public class IdpServerApplication {
                 permissionQueryRepository,
                 auditLogWriters),
             RoleManagementApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
 
     this.userAuthenticationApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -804,7 +808,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 userQueryRepository),
             UserAuthenticationApi.class,
-            tenantDialectProvider);
+            databaseTypeProvider);
   }
 
   public IdpServerStarterApi idpServerStarterApi() {

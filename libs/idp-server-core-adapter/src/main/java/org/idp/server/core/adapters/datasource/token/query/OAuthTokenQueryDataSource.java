@@ -28,19 +28,19 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OAuthTokenQueryDataSource implements OAuthTokenQueryRepository {
 
-  OAuthTokenSqlExecutors executors;
+  OAuthTokenSqlExecutor executor;
   AesCipher aesCipher;
   HmacHasher hmacHasher;
 
-  public OAuthTokenQueryDataSource(AesCipher aesCipher, HmacHasher hmacHasher) {
-    this.executors = new OAuthTokenSqlExecutors();
+  public OAuthTokenQueryDataSource(
+      OAuthTokenSqlExecutor executor, AesCipher aesCipher, HmacHasher hmacHasher) {
+    this.executor = executor;
     this.aesCipher = aesCipher;
     this.hmacHasher = hmacHasher;
   }
 
   @Override
   public OAuthToken find(Tenant tenant, AccessTokenEntity accessTokenEntity) {
-    OAuthTokenSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> stringMap =
         executor.selectOneByAccessToken(tenant, accessTokenEntity, aesCipher, hmacHasher);
 
@@ -53,7 +53,6 @@ public class OAuthTokenQueryDataSource implements OAuthTokenQueryRepository {
 
   @Override
   public OAuthToken find(Tenant tenant, RefreshTokenEntity refreshTokenEntity) {
-    OAuthTokenSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> stringMap =
         executor.selectOneByRefreshToken(tenant, refreshTokenEntity, aesCipher, hmacHasher);
 

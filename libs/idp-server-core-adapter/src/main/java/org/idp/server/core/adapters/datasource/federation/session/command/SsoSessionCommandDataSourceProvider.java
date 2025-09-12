@@ -18,9 +18,14 @@ package org.idp.server.core.adapters.datasource.federation.session.command;
 
 import org.idp.server.core.openid.federation.plugin.FederationDependencyProvider;
 import org.idp.server.core.openid.federation.sso.SsoSessionCommandRepository;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
+import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
+import org.idp.server.platform.dependency.ApplicationComponentProvider;
+import org.idp.server.platform.json.JsonConverter;
 
 public class SsoSessionCommandDataSourceProvider
-    implements FederationDependencyProvider<SsoSessionCommandRepository> {
+    implements FederationDependencyProvider<SsoSessionCommandRepository>,
+        ApplicationComponentProvider<SsoSessionCommandRepository> {
 
   @Override
   public Class<SsoSessionCommandRepository> type() {
@@ -28,7 +33,12 @@ public class SsoSessionCommandDataSourceProvider
   }
 
   @Override
-  public SsoSessionCommandRepository provide() {
-    return new SsoSessionCommandDataSource();
+  public SsoSessionCommandRepository provide(ApplicationComponentDependencyContainer container) {
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    SsoSessionCommandSqlExecutors executors = new SsoSessionCommandSqlExecutors();
+    SsoSessionCommandSqlExecutor executor = executors.get(databaseTypeProvider.provide());
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+    return new SsoSessionCommandDataSource(executor, jsonConverter);
   }
 }

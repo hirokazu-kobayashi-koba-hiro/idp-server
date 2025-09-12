@@ -27,28 +27,24 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class CibaGrantDataSource implements CibaGrantRepository {
 
-  CibaGrantSqlExecutors executors;
+  CibaGrantSqlExecutor executor;
 
-  public CibaGrantDataSource() {
-    this.executors = new CibaGrantSqlExecutors();
+  public CibaGrantDataSource(CibaGrantSqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public void register(Tenant tenant, CibaGrant cibaGrant) {
-    CibaGrantSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(cibaGrant);
   }
 
   @Override
   public void update(Tenant tenant, CibaGrant cibaGrant) {
-    CibaGrantSqlExecutor executor = executors.get(tenant.databaseType());
     executor.update(cibaGrant);
   }
 
   @Override
   public CibaGrant find(Tenant tenant, AuthReqId authReqId) {
-    CibaGrantSqlExecutor executor = executors.get(tenant.databaseType());
-
     Map<String, String> stringMap = executor.selectOne(authReqId);
 
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
@@ -62,8 +58,6 @@ public class CibaGrantDataSource implements CibaGrantRepository {
   public CibaGrant get(
       Tenant tenant,
       BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier) {
-    CibaGrantSqlExecutor executor = executors.get(tenant.databaseType());
-
     Map<String, String> stringMap = executor.selectOne(backchannelAuthenticationRequestIdentifier);
 
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
@@ -77,7 +71,6 @@ public class CibaGrantDataSource implements CibaGrantRepository {
 
   @Override
   public void delete(Tenant tenant, CibaGrant cibaGrant) {
-    CibaGrantSqlExecutor executor = executors.get(tenant.databaseType());
     executor.delete(cibaGrant);
   }
 }

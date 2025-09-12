@@ -19,6 +19,7 @@ package org.idp.server.core.openid.plugin;
 import java.util.List;
 import org.idp.server.core.openid.federation.plugin.FederationDependencyContainer;
 import org.idp.server.core.openid.federation.plugin.FederationDependencyProvider;
+import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.plugin.PluginLoader;
 
@@ -27,20 +28,21 @@ public class FederationDependencyContainerPluginLoader extends PluginLoader {
   private static final LoggerWrapper log =
       LoggerWrapper.getLogger(FederationDependencyContainerPluginLoader.class);
 
-  public static FederationDependencyContainer load() {
+  public static FederationDependencyContainer load(
+      ApplicationComponentDependencyContainer appContainer) {
     FederationDependencyContainer container = new FederationDependencyContainer();
 
     List<FederationDependencyProvider> internals =
         loadFromInternalModule(FederationDependencyProvider.class);
     for (FederationDependencyProvider<?> provider : internals) {
-      container.register(provider.type(), provider.provide());
+      container.register(provider.type(), provider.provide(appContainer));
       log.info("Dynamic Registered internal federation dependency provider " + provider.type());
     }
 
     List<FederationDependencyProvider> externals =
         loadFromExternalModule(FederationDependencyProvider.class);
     for (FederationDependencyProvider<?> provider : externals) {
-      container.register(provider.type(), provider.provide());
+      container.register(provider.type(), provider.provide(appContainer));
       log.info("Dynamic Registered external federation dependency provider " + provider.type());
     }
 

@@ -18,9 +18,14 @@ package org.idp.server.core.adapters.datasource.authentication.interaction.comma
 
 import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyProvider;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionCommandRepository;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
+import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
+import org.idp.server.platform.dependency.ApplicationComponentProvider;
+import org.idp.server.platform.json.JsonConverter;
 
 public class AuthenticationInteractionCommandDataSourceProvider
-    implements AuthenticationDependencyProvider<AuthenticationInteractionCommandRepository> {
+    implements AuthenticationDependencyProvider<AuthenticationInteractionCommandRepository>,
+        ApplicationComponentProvider<AuthenticationInteractionCommandRepository> {
 
   @Override
   public Class<AuthenticationInteractionCommandRepository> type() {
@@ -29,6 +34,20 @@ public class AuthenticationInteractionCommandDataSourceProvider
 
   @Override
   public AuthenticationInteractionCommandRepository provide() {
-    return new AuthenticationInteractionCommandDataSource();
+    throw new UnsupportedOperationException(
+        "Default provide() method is not supported. Use provide(ApplicationComponentDependencyContainer) instead.");
+  }
+
+  @Override
+  public AuthenticationInteractionCommandRepository provide(
+      ApplicationComponentDependencyContainer container) {
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    AuthenticationInteractionCommandSqlExecutors executors =
+        new AuthenticationInteractionCommandSqlExecutors();
+    AuthenticationInteractionCommandSqlExecutor executor =
+        executors.get(databaseTypeProvider.provide());
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+    return new AuthenticationInteractionCommandDataSource(executor, jsonConverter);
   }
 }

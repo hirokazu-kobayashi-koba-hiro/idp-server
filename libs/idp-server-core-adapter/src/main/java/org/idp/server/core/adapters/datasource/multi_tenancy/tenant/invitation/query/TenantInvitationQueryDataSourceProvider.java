@@ -17,6 +17,7 @@
 package org.idp.server.core.adapters.datasource.multi_tenancy.tenant.invitation.query;
 
 import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitationQueryRepository;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
@@ -31,6 +32,10 @@ public class TenantInvitationQueryDataSourceProvider
   @Override
   public TenantInvitationQueryRepository provide(
       ApplicationComponentDependencyContainer container) {
-    return new TenantInvitationQueryDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    TenantInvitationSqlExecutors executors = new TenantInvitationSqlExecutors();
+    TenantInvitationSqlExecutor executor = executors.get(databaseTypeProvider.provide());
+    return new TenantInvitationQueryDataSource(executor);
   }
 }

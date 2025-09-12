@@ -67,7 +67,7 @@ public class MysqlExecutor implements AuthenticationInteractionCommandSqlExecuto
                 SET payload = ?,
                 updated_at = now()
                 WHERE authentication_transaction_id = ?
-                AND tenant_id =
+                AND tenant_id = ?
                 AND interaction_type = ?
                 """;
 

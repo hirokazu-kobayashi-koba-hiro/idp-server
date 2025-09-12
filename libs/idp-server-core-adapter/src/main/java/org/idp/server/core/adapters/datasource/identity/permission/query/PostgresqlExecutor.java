@@ -72,7 +72,7 @@ public class PostgresqlExecutor implements PermissionSqlExecutor {
     StringBuilder sqlBuilder =
         new StringBuilder(
             """
-                SELECT count(*) FROM permission
+                SELECT count(*) as count FROM permission
                  WHERE tenant_id = ?::uuid
                 """);
 

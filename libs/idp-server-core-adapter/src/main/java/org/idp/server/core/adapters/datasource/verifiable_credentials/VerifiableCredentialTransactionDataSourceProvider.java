@@ -17,6 +17,7 @@
 package org.idp.server.core.adapters.datasource.verifiable_credentials;
 
 import org.idp.server.core.extension.verifiable_credentials.repository.VerifiableCredentialTransactionRepository;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
@@ -31,6 +32,12 @@ public class VerifiableCredentialTransactionDataSourceProvider
   @Override
   public VerifiableCredentialTransactionRepository provide(
       ApplicationComponentDependencyContainer container) {
-    return new VerifiableCredentialTransactionDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    VerifiableCredentialTransactionSqlExecutors executors =
+        new VerifiableCredentialTransactionSqlExecutors();
+    VerifiableCredentialTransactionSqlExecutor executor =
+        executors.get(databaseTypeProvider.provide());
+    return new VerifiableCredentialTransactionDataSource(executor);
   }
 }

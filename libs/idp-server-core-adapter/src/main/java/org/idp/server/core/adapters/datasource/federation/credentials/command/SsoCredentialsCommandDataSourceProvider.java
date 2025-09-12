@@ -18,8 +18,10 @@ package org.idp.server.core.adapters.datasource.federation.credentials.command;
 
 import org.idp.server.core.openid.federation.plugin.FederationDependencyProvider;
 import org.idp.server.core.openid.federation.sso.SsoCredentialsCommandRepository;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
+import org.idp.server.platform.json.JsonConverter;
 
 public class SsoCredentialsCommandDataSourceProvider
     implements FederationDependencyProvider<SsoCredentialsCommandRepository>,
@@ -33,11 +35,11 @@ public class SsoCredentialsCommandDataSourceProvider
   @Override
   public SsoCredentialsCommandRepository provide(
       ApplicationComponentDependencyContainer container) {
-    return new SsoCredentialsCommandDataSource();
-  }
-
-  @Override
-  public SsoCredentialsCommandRepository provide() {
-    return new SsoCredentialsCommandDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    SsoCredentialsSqlExecutors executors = new SsoCredentialsSqlExecutors();
+    SsoCredentialsSqlExecutor executor = executors.get(databaseTypeProvider.provide());
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+    return new SsoCredentialsCommandDataSource(executor, jsonConverter);
   }
 }

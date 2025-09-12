@@ -42,8 +42,8 @@ public class MysqlExecutor implements SsoCredentialsSqlExecutor {
         """;
 
     List<Object> params = new ArrayList<>();
+    params.add(tenant.identifier().value());
     params.add(user.sub());
-    params.add(tenant.identifierValue());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }

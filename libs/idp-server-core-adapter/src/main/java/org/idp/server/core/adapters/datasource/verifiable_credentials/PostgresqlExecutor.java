@@ -22,9 +22,12 @@ import java.util.Map;
 import org.idp.server.core.extension.verifiable_credentials.VerifiableCredentialTransaction;
 import org.idp.server.core.openid.oauth.type.verifiablecredential.TransactionId;
 import org.idp.server.platform.datasource.SqlExecutor;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class PostgresqlExecutor implements VerifiableCredentialTransactionSqlExecutor {
+
+  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   @Override
   public void insert(
@@ -36,9 +39,19 @@ public class PostgresqlExecutor implements VerifiableCredentialTransactionSqlExe
                     (id, tenant_id, credential_issuer, client_id, user_id, verifiable_credential, status)
                     VALUES (?::uuid, ?, ?, ?, ?::jsonb, ?);
                     """;
-    List<Object> params = InsertSqlParamsCreator.create(verifiableCredentialTransaction);
+    List<Object> params = new ArrayList<>();
+    params.add(verifiableCredentialTransaction.transactionId().valueAsUuid());
+    params.add(verifiableCredentialTransaction.credentialIssuer().value());
+    params.add(verifiableCredentialTransaction.clientId().value());
+    params.add(verifiableCredentialTransaction.subject().value());
+    params.add(toJson(verifiableCredentialTransaction.verifiableCredential().values()));
+    params.add(verifiableCredentialTransaction.status().name());
 
     sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  private String toJson(Object value) {
+    return jsonConverter.write(value);
   }
 
   @Override

@@ -18,8 +18,10 @@ package org.idp.server.core.adapters.datasource.authentication.interaction.query
 
 import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyProvider;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
+import org.idp.server.platform.json.JsonConverter;
 
 public class AuthenticationInteractionQueryDataSourceProvider
     implements AuthenticationDependencyProvider<AuthenticationInteractionQueryRepository>,
@@ -33,11 +35,19 @@ public class AuthenticationInteractionQueryDataSourceProvider
   @Override
   public AuthenticationInteractionQueryRepository provide(
       ApplicationComponentDependencyContainer container) {
-    return new AuthenticationInteractionQueryDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    AuthenticationInteractionQuerySqlExecutors executors =
+        new AuthenticationInteractionQuerySqlExecutors();
+    AuthenticationInteractionQuerySqlExecutor executor =
+        executors.get(databaseTypeProvider.provide());
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+    return new AuthenticationInteractionQueryDataSource(executor, jsonConverter);
   }
 
   @Override
   public AuthenticationInteractionQueryRepository provide() {
-    return new AuthenticationInteractionQueryDataSource();
+    throw new UnsupportedOperationException(
+        "Default provide() method is not supported. Use provide(ApplicationComponentDependencyContainer) instead.");
   }
 }

@@ -25,17 +25,17 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class SsoCredentialsQueryDataSource implements SsoCredentialsQueryRepository {
 
-  SsoCredentialsSqlExecutors executors;
+  SsoCredentialsSqlExecutor executor;
   JsonConverter jsonConverter;
 
-  public SsoCredentialsQueryDataSource() {
-    this.executors = new SsoCredentialsSqlExecutors();
-    this.jsonConverter = JsonConverter.snakeCaseInstance();
+  public SsoCredentialsQueryDataSource(
+      SsoCredentialsSqlExecutor executor, JsonConverter jsonConverter) {
+    this.executor = executor;
+    this.jsonConverter = jsonConverter;
   }
 
   @Override
   public SsoCredentials find(Tenant tenant, User user) {
-    SsoCredentialsSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectBy(tenant, user);
 
     if (result == null || result.isEmpty()) {

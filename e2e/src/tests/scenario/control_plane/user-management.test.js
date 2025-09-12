@@ -2,6 +2,7 @@ import { describe, expect, it, test } from "@jest/globals";
 import { deletion, get, patchWithJson, putWithJson, postWithJson } from "../../../lib/http";
 import { backendUrl, clientSecretPostClient, serverConfig } from "../../testConfig";
 import { requestToken } from "../../../api/oauthClient";
+import { generateRandomNumber } from "../../../lib/util";
 
 describe("user management api", () => {
 
@@ -30,7 +31,7 @@ describe("user management api", () => {
         body: {
           "provider_id": "idp-server",
           "name": "test",
-          "email": "test",
+          "email": generateRandomNumber(10) +"t@mail.com",
           "raw_password": "test@01234"
         }
       });

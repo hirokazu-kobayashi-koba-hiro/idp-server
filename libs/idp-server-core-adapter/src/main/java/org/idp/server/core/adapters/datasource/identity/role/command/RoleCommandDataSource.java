@@ -24,39 +24,34 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class RoleCommandDataSource implements RoleCommandRepository {
 
-  RoleSqlExecutors executors;
+  RoleSqlExecutor executor;
 
-  public RoleCommandDataSource() {
-    this.executors = new RoleSqlExecutors();
+  public RoleCommandDataSource(RoleSqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public void register(Tenant tenant, Role role) {
-    RoleSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, role);
   }
 
   @Override
   public void bulkRegister(Tenant tenant, Roles roles) {
-    RoleSqlExecutor executor = executors.get(tenant.databaseType());
     executor.bulkInsert(tenant, roles);
   }
 
   @Override
   public void update(Tenant tenant, Role role) {
-    RoleSqlExecutor executor = executors.get(tenant.databaseType());
     executor.update(tenant, role);
   }
 
   @Override
   public void removePermissions(Tenant tenant, Role role, Permissions removePermissions) {
-    RoleSqlExecutor executor = executors.get(tenant.databaseType());
     executor.deletePermissions(tenant, role, removePermissions);
   }
 
   @Override
   public void delete(Tenant tenant, Role role) {
-    RoleSqlExecutor executor = executors.get(tenant.databaseType());
     executor.delete(tenant, role);
   }
 }

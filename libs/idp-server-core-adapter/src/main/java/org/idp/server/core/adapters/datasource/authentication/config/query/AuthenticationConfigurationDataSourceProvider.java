@@ -18,9 +18,13 @@ package org.idp.server.core.adapters.datasource.authentication.config.query;
 
 import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyProvider;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
+import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
+import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
 public class AuthenticationConfigurationDataSourceProvider
-    implements AuthenticationDependencyProvider<AuthenticationConfigurationQueryRepository> {
+    implements AuthenticationDependencyProvider<AuthenticationConfigurationQueryRepository>,
+        ApplicationComponentProvider<AuthenticationConfigurationQueryRepository> {
 
   @Override
   public Class<AuthenticationConfigurationQueryRepository> type() {
@@ -28,7 +32,18 @@ public class AuthenticationConfigurationDataSourceProvider
   }
 
   @Override
+  public AuthenticationConfigurationQueryRepository provide(
+      ApplicationComponentDependencyContainer container) {
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    AuthenticationConfigSqlExecutors executors = new AuthenticationConfigSqlExecutors();
+    AuthenticationConfigSqlExecutor executor = executors.get(databaseTypeProvider.provide());
+    return new AuthenticationConfigurationQueryDataSource(executor);
+  }
+
+  @Override
   public AuthenticationConfigurationQueryRepository provide() {
-    return new AuthenticationConfigurationQueryDataSource();
+    throw new UnsupportedOperationException(
+        "Default provide() method is not supported. Use provide(ApplicationComponentDependencyContainer) instead.");
   }
 }

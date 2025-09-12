@@ -5,6 +5,7 @@ idp:
    apiKey: ${IDP_SERVER_API_KEY}
    apiSecret: ${IDP_SERVER_API_SECRET}
    encryptionKey: ${ENCRYPTION_KEY}
+   databaseType: "${DATABASE_TYPE:MYSQL}"
   datasource:
     admin:
       postgresql:

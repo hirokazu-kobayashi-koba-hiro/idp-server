@@ -17,8 +17,10 @@
 package org.idp.server.core.adapters.datasource.identity.verification.config.command;
 
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationCommandRepository;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
+import org.idp.server.platform.json.JsonConverter;
 
 public class IdentityVerificationConfigurationCommandDataSourceProvider
     implements ApplicationComponentProvider<IdentityVerificationConfigurationCommandRepository> {
@@ -31,6 +33,13 @@ public class IdentityVerificationConfigurationCommandDataSourceProvider
   @Override
   public IdentityVerificationConfigurationCommandRepository provide(
       ApplicationComponentDependencyContainer container) {
-    return new IdentityVerificationConfigurationCommandDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    IdentityVerificationConfigCommandSqlExecutors executors =
+        new IdentityVerificationConfigCommandSqlExecutors();
+    IdentityVerificationConfigCommandSqlExecutor executor =
+        executors.get(databaseTypeProvider.provide());
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+    return new IdentityVerificationConfigurationCommandDataSource(executor, jsonConverter);
   }
 }

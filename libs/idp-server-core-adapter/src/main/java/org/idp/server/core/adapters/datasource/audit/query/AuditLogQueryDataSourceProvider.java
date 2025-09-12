@@ -17,6 +17,7 @@
 package org.idp.server.core.adapters.datasource.audit.query;
 
 import org.idp.server.platform.audit.AuditLogQueryRepository;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
@@ -30,6 +31,10 @@ public class AuditLogQueryDataSourceProvider
 
   @Override
   public AuditLogQueryRepository provide(ApplicationComponentDependencyContainer container) {
-    return new AuditLogQueryDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    AuditLogSqlExecutors executors = new AuditLogSqlExecutors();
+    AuditLogSqlExecutor executor = executors.get(databaseTypeProvider.provide());
+    return new AuditLogQueryDataSource(executor);
   }
 }

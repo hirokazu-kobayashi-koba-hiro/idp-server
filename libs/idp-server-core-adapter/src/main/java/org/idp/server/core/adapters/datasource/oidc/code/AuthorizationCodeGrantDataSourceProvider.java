@@ -17,6 +17,7 @@
 package org.idp.server.core.adapters.datasource.oidc.code;
 
 import org.idp.server.core.openid.oauth.repository.AuthorizationCodeGrantRepository;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
@@ -31,6 +32,10 @@ public class AuthorizationCodeGrantDataSourceProvider
   @Override
   public AuthorizationCodeGrantRepository provide(
       ApplicationComponentDependencyContainer container) {
-    return new AuthorizationCodeGrantDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    AuthorizationCodeGrantExecutors executors = new AuthorizationCodeGrantExecutors();
+    AuthorizationCodeGrantExecutor executor = executors.get(databaseTypeProvider.provide());
+    return new AuthorizationCodeGrantDataSource(executor);
   }
 }

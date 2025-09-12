@@ -17,6 +17,7 @@
 package org.idp.server.core.adapters.datasource.identity.permission.command;
 
 import org.idp.server.core.openid.identity.permission.PermissionCommandRepository;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
@@ -30,6 +31,10 @@ public class PermissionCommandDataSourceProvider
 
   @Override
   public PermissionCommandRepository provide(ApplicationComponentDependencyContainer container) {
-    return new PermissionCommandDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    PermissionSqlExecutors executors = new PermissionSqlExecutors();
+    PermissionSqlExecutor executor = executors.get(databaseTypeProvider.provide());
+    return new PermissionCommandDataSource(executor);
   }
 }

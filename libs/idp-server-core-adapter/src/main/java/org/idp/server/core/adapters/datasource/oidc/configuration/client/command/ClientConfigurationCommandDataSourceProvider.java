@@ -17,9 +17,11 @@
 package org.idp.server.core.adapters.datasource.oidc.configuration.client.command;
 
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationCommandRepository;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
+import org.idp.server.platform.json.JsonConverter;
 
 public class ClientConfigurationCommandDataSourceProvider
     implements ApplicationComponentProvider<ClientConfigurationCommandRepository> {
@@ -32,7 +34,12 @@ public class ClientConfigurationCommandDataSourceProvider
   @Override
   public ClientConfigurationCommandRepository provide(
       ApplicationComponentDependencyContainer container) {
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    ClientConfigCommandSqlExecutors executors = new ClientConfigCommandSqlExecutors();
+    ClientConfigCommandSqlExecutor executor = executors.get(databaseTypeProvider.provide());
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
     CacheStore cacheStore = container.resolve(CacheStore.class);
-    return new ClientConfigurationCommandDataSource(cacheStore);
+    return new ClientConfigurationCommandDataSource(executor, jsonConverter, cacheStore);
   }
 }

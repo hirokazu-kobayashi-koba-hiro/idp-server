@@ -16,6 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.security.event.query;
 
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 import org.idp.server.platform.security.repository.SecurityEventQueryRepository;
@@ -30,6 +31,10 @@ public class SecurityEventQueryDataSourceProvider
 
   @Override
   public SecurityEventQueryRepository provide(ApplicationComponentDependencyContainer container) {
-    return new SecurityEventQueryDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    SecurityEventSqlExecutors executors = new SecurityEventSqlExecutors();
+    SecurityEventSqlExecutor executor = executors.get(databaseTypeProvider.provide());
+    return new SecurityEventQueryDataSource(executor);
   }
 }

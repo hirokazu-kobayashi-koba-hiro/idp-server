@@ -1,1 +1,2 @@
 org.idp.server.platform.oauth.OAuthAuthorizationResolversProvider
+org.idp.server.platform.datasource.ApplicationDatabaseTypeProviderProvider

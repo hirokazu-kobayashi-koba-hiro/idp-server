@@ -25,12 +25,13 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class IdentityVerificationConfigurationCommandDataSource
     implements IdentityVerificationConfigurationCommandRepository {
 
-  IdentityVerificationConfigCommandSqlExecutors executors;
+  IdentityVerificationConfigCommandSqlExecutor executor;
   JsonConverter jsonConverter;
 
-  public IdentityVerificationConfigurationCommandDataSource() {
-    this.executors = new IdentityVerificationConfigCommandSqlExecutors();
-    this.jsonConverter = JsonConverter.snakeCaseInstance();
+  public IdentityVerificationConfigurationCommandDataSource(
+      IdentityVerificationConfigCommandSqlExecutor executor, JsonConverter jsonConverter) {
+    this.executor = executor;
+    this.jsonConverter = jsonConverter;
   }
 
   @Override
@@ -38,7 +39,6 @@ public class IdentityVerificationConfigurationCommandDataSource
       Tenant tenant,
       IdentityVerificationType type,
       IdentityVerificationConfiguration configuration) {
-    IdentityVerificationConfigCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, type, configuration);
   }
 
@@ -47,7 +47,6 @@ public class IdentityVerificationConfigurationCommandDataSource
       Tenant tenant,
       IdentityVerificationType type,
       IdentityVerificationConfiguration configuration) {
-    IdentityVerificationConfigCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.update(tenant, type, configuration);
   }
 
@@ -56,7 +55,6 @@ public class IdentityVerificationConfigurationCommandDataSource
       Tenant tenant,
       IdentityVerificationType type,
       IdentityVerificationConfiguration configuration) {
-    IdentityVerificationConfigCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.delete(tenant, type, configuration);
   }
 }

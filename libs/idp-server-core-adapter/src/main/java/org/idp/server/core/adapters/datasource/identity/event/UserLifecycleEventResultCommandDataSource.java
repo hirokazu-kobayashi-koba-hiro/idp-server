@@ -25,10 +25,10 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class UserLifecycleEventResultCommandDataSource
     implements UserLifecycleEventResultCommandRepository {
 
-  UserLifecycleEventResultSqlExecutors executors;
+  UserLifecycleEventResultSqlExecutor executor;
 
-  public UserLifecycleEventResultCommandDataSource() {
-    this.executors = new UserLifecycleEventResultSqlExecutors();
+  public UserLifecycleEventResultCommandDataSource(UserLifecycleEventResultSqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
@@ -39,7 +39,6 @@ public class UserLifecycleEventResultCommandDataSource
     if (userLifecycleEventResults.isEmpty()) {
       return;
     }
-    UserLifecycleEventResultSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, userLifecycleEvent, userLifecycleEventResults);
   }
 }

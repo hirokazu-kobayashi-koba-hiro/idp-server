@@ -23,33 +23,29 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class PermissionCommandDataSource implements PermissionCommandRepository {
 
-  PermissionSqlExecutors executors;
+  PermissionSqlExecutor executor;
 
-  public PermissionCommandDataSource() {
-    this.executors = new PermissionSqlExecutors();
+  public PermissionCommandDataSource(PermissionSqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public void register(Tenant tenant, Permission permission) {
-    PermissionSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, permission);
   }
 
   @Override
   public void bulkRegister(Tenant tenant, Permissions permissions) {
-    PermissionSqlExecutor executor = executors.get(tenant.databaseType());
     executor.bulkInsert(tenant, permissions);
   }
 
   @Override
   public void update(Tenant tenant, Permission permission) {
-    PermissionSqlExecutor executor = executors.get(tenant.databaseType());
     executor.update(tenant, permission);
   }
 
   @Override
   public void delete(Tenant tenant, Permission permission) {
-    PermissionSqlExecutor executor = executors.get(tenant.databaseType());
     executor.delete(tenant, permission);
   }
 }

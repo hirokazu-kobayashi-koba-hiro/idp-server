@@ -17,8 +17,10 @@
 package org.idp.server.core.adapters.datasource.identity.verification.config.query;
 
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationQueryRepository;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
+import org.idp.server.platform.json.JsonConverter;
 
 public class IdentityVerificationConfigurationDataSourceProvider
     implements ApplicationComponentProvider<IdentityVerificationConfigurationQueryRepository> {
@@ -31,6 +33,11 @@ public class IdentityVerificationConfigurationDataSourceProvider
   @Override
   public IdentityVerificationConfigurationQueryRepository provide(
       ApplicationComponentDependencyContainer container) {
-    return new IdentityVerificationConfigurationQueryDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    IdentityVerificationConfigSqlExecutors executors = new IdentityVerificationConfigSqlExecutors();
+    IdentityVerificationConfigSqlExecutor executor = executors.get(databaseTypeProvider.provide());
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+    return new IdentityVerificationConfigurationQueryDataSource(executor, jsonConverter);
   }
 }

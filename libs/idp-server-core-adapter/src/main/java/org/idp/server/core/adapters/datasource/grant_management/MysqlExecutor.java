@@ -80,6 +80,7 @@ public class MysqlExecutor implements AuthorizationGrantedSqlExecutor {
     params.add(toJson(authorizationGrant.authentication()));
     params.add(authorizationGrant.requestedClientId().value());
     params.add(toJson(authorizationGrant.clientAttributes()));
+    params.add(authorizationGrant.grantType().name());
     params.add(authorizationGrant.scopes().toStringValues());
 
     if (authorizationGrant.hasIdTokenClaims()) {
@@ -138,9 +139,9 @@ public class MysqlExecutor implements AuthorizationGrantedSqlExecutor {
                   authorization_details,
                   consent_claims
                   FROM authorization_granted
-                  WHERE tenant_id = ?::uuid
+                  WHERE tenant_id = ?
                   AND client_id = ?
-                  AND user_id = ?::uuid
+                  AND user_id = ?
                   limit 1;
                   """;
     List<Object> params = new ArrayList<>();

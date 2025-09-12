@@ -17,6 +17,7 @@
 package org.idp.server.core.adapters.datasource.oidc.request.operation;
 
 import org.idp.server.core.openid.oauth.repository.AuthorizationRequestOperationCommandRepository;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
@@ -31,6 +32,10 @@ public class AuthorizationRequestOperationCommandDataSourceProvider
   @Override
   public AuthorizationRequestOperationCommandRepository provide(
       ApplicationComponentDependencyContainer container) {
-    return new AuthorizationRequestOperationCommandDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    AuthorizationRequestSqlExecutors executors = new AuthorizationRequestSqlExecutors();
+    AuthorizationRequestSqlExecutor executor = executors.get(databaseTypeProvider.provide());
+    return new AuthorizationRequestOperationCommandDataSource(executor);
   }
 }

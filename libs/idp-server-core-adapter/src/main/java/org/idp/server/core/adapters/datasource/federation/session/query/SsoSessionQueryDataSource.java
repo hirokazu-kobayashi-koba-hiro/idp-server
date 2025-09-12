@@ -26,18 +26,17 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class SsoSessionQueryDataSource implements SsoSessionQueryRepository {
 
-  SsoSessionQuerySqlExecutors executors;
+  SsoSessionQuerySqlExecutor executor;
   JsonConverter jsonConverter;
 
-  public SsoSessionQueryDataSource() {
-    this.executors = new SsoSessionQuerySqlExecutors();
-    this.jsonConverter = JsonConverter.snakeCaseInstance();
+  public SsoSessionQueryDataSource(
+      SsoSessionQuerySqlExecutor executor, JsonConverter jsonConverter) {
+    this.executor = executor;
+    this.jsonConverter = jsonConverter;
   }
 
   @Override
   public <T> T get(Tenant tenant, SsoSessionIdentifier ssoSessionIdentifier, Class<T> clazz) {
-    SsoSessionQuerySqlExecutor executor = executors.get(tenant.databaseType());
-
     Map<String, String> result = executor.selectOne(ssoSessionIdentifier);
 
     if (Objects.isNull(result) || result.isEmpty()) {

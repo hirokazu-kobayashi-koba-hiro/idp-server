@@ -22,15 +22,14 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class AuditLogCommandDataSource implements AuditLogCommandRepository {
 
-  AuditLogSqlExecutors executors;
+  AuditLogSqlExecutor executor;
 
-  public AuditLogCommandDataSource() {
-    this.executors = new AuditLogSqlExecutors();
+  public AuditLogCommandDataSource(AuditLogSqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public void register(Tenant tenant, AuditLog auditLog) {
-    AuditLogSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, auditLog);
   }
 }

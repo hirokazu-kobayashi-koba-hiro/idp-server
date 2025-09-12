@@ -53,7 +53,8 @@ public class MysqlExecutor implements AuthenticationInteractionQuerySqlExecutor 
   @Override
   public Map<String, String> selectCount(Tenant tenant, AuthenticationInteractionQueries queries) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM authentication_interactions");
+    StringBuilder sql =
+        new StringBuilder("SELECT COUNT(*) as count FROM authentication_interactions");
     sql.append(" WHERE tenant_id = ?");
     sql.append(" AND created_at BETWEEN ? AND ?");
     List<Object> params = new ArrayList<>();

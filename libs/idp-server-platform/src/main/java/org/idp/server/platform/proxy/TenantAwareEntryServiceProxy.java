@@ -22,18 +22,18 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import org.idp.server.platform.datasource.*;
 import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.tenant.DialectProvider;
 import org.idp.server.platform.multi_tenancy.tenant.MissingRequiredTenantIdentifierException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class TenantAwareEntryServiceProxy implements InvocationHandler {
   private final Object target;
-  private final DialectProvider dialectProvider;
+  private final ApplicationDatabaseTypeProvider applicationDatabaseTypeProvider;
   LoggerWrapper log = LoggerWrapper.getLogger(TenantAwareEntryServiceProxy.class);
 
-  public TenantAwareEntryServiceProxy(Object target, DialectProvider dialectProvider) {
+  public TenantAwareEntryServiceProxy(
+      Object target, ApplicationDatabaseTypeProvider applicationDatabaseTypeProvider) {
     this.target = target;
-    this.dialectProvider = dialectProvider;
+    this.applicationDatabaseTypeProvider = applicationDatabaseTypeProvider;
   }
 
   @Override
@@ -63,10 +63,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         OperationContext.set(operationType);
         log.debug("READ start: " + target.getClass().getName() + ": " + method.getName() + " ...");
         TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
-        TransactionManager.createConnection(DatabaseType.POSTGRESQL, tenantIdentifier);
-        DatabaseType databaseType = dialectProvider.provide(tenantIdentifier);
-        TransactionManager.closeConnection();
-
+        DatabaseType databaseType = applicationDatabaseTypeProvider.provide();
         TransactionManager.createConnection(databaseType, tenantIdentifier);
         Object result = method.invoke(target, args);
 
@@ -96,10 +93,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         log.debug("WRITE start: " + target.getClass().getName() + ": " + method.getName() + " ...");
         TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
 
-        TransactionManager.createConnection(DatabaseType.POSTGRESQL, tenantIdentifier);
-        DatabaseType databaseType = dialectProvider.provide(tenantIdentifier);
-        TransactionManager.closeConnection();
-
+        DatabaseType databaseType = applicationDatabaseTypeProvider.provide();
         TransactionManager.beginTransaction(databaseType, tenantIdentifier);
 
         log.debug(
@@ -160,7 +154,8 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
   }
 
   @SuppressWarnings("unchecked")
-  public static <T> T createProxy(T target, Class<T> interfaceType, DialectProvider provider) {
+  public static <T> T createProxy(
+      T target, Class<T> interfaceType, ApplicationDatabaseTypeProvider provider) {
     return (T)
         Proxy.newProxyInstance(
             interfaceType.getClassLoader(),

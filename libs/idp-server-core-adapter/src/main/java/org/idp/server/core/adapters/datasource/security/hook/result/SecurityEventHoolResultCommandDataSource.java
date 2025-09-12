@@ -25,16 +25,15 @@ import org.idp.server.platform.security.repository.SecurityEventHookResultComman
 public class SecurityEventHoolResultCommandDataSource
     implements SecurityEventHookResultCommandRepository {
 
-  SecurityEventHoolResultSqlExecutors executors;
+  SecurityEventHoolResultSqlExecutor executor;
 
-  public SecurityEventHoolResultCommandDataSource() {
-    this.executors = new SecurityEventHoolResultSqlExecutors();
+  public SecurityEventHoolResultCommandDataSource(SecurityEventHoolResultSqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public void register(
       Tenant tenant, SecurityEvent securityEvent, List<SecurityEventHookResult> results) {
-    SecurityEventHoolResultSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, securityEvent, results);
   }
 }

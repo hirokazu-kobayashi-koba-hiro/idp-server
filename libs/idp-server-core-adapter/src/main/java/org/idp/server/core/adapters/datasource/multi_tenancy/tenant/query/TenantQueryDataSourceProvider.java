@@ -16,6 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.multi_tenancy.tenant.query;
 
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
@@ -31,7 +32,11 @@ public class TenantQueryDataSourceProvider
 
   @Override
   public TenantQueryRepository provide(ApplicationComponentDependencyContainer container) {
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
     CacheStore cacheStore = container.resolve(CacheStore.class);
-    return new TenantQueryDataSource(cacheStore);
+    TenantQuerySqlExecutors executors = new TenantQuerySqlExecutors();
+    TenantQuerySqlExecutor executor = executors.get(databaseTypeProvider.provide());
+    return new TenantQueryDataSource(executor, cacheStore);
   }
 }

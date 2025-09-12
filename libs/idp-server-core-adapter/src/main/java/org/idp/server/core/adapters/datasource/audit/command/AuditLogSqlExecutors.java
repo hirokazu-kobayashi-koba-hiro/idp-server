@@ -28,6 +28,7 @@ public class AuditLogSqlExecutors {
   public AuditLogSqlExecutors() {
     this.executors = new HashMap<>();
     executors.put(DatabaseType.POSTGRESQL, new PostgresqlExecutor());
+    executors.put(DatabaseType.MYSQL, new MysqlExecutor());
   }
 
   public AuditLogSqlExecutor get(DatabaseType databaseType) {

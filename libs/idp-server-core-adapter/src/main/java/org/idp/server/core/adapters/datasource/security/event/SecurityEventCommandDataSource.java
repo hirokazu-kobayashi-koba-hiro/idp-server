@@ -23,17 +23,16 @@ import org.idp.server.platform.security.repository.SecurityEventCommandRepositor
 
 public class SecurityEventCommandDataSource implements SecurityEventCommandRepository {
 
-  SecurityEventSqlExecutors executors;
+  SecurityEventSqlExecutor executor;
   JsonConverter converter;
 
-  public SecurityEventCommandDataSource() {
-    this.executors = new SecurityEventSqlExecutors();
+  public SecurityEventCommandDataSource(SecurityEventSqlExecutor executor) {
+    this.executor = executor;
     this.converter = JsonConverter.snakeCaseInstance();
   }
 
   @Override
   public void register(Tenant tenant, SecurityEvent securityEvent) {
-    SecurityEventSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(securityEvent);
   }
 }

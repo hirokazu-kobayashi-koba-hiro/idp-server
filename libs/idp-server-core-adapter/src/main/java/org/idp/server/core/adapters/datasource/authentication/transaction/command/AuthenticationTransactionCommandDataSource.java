@@ -24,27 +24,25 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class AuthenticationTransactionCommandDataSource
     implements AuthenticationTransactionCommandRepository {
 
-  AuthenticationTransactionCommandSqlExecutors executors;
+  AuthenticationTransactionCommandSqlExecutor executor;
 
-  public AuthenticationTransactionCommandDataSource() {
-    this.executors = new AuthenticationTransactionCommandSqlExecutors();
+  public AuthenticationTransactionCommandDataSource(
+      AuthenticationTransactionCommandSqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public void register(Tenant tenant, AuthenticationTransaction authenticationTransaction) {
-    AuthenticationTransactionCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, authenticationTransaction);
   }
 
   @Override
   public void update(Tenant tenant, AuthenticationTransaction authenticationTransaction) {
-    AuthenticationTransactionCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.update(tenant, authenticationTransaction);
   }
 
   @Override
   public void delete(Tenant tenant, AuthenticationTransactionIdentifier identifier) {
-    AuthenticationTransactionCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.delete(tenant, identifier);
   }
 }
