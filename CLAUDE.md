@@ -230,6 +230,115 @@ const configId = uuidv4(); // 必須: UUIDv4形式
 
 **教訓**: 「不確実な実装より確実な設計確認を優先」
 
+## 🚨 想像ドキュメント作成防止の重要教訓
+
+### 💀 今回の重大な失敗事例（Issue #426 deployment.md）
+**問題**: 実際のコードを確認せずに想像でドキュメントを作成 → 大量の誤情報
+
+#### ❌ 具体的な誤り
+1. **テーブル名誤り**: `tenants/users/clients` → 実際は `tenant/idp_user/client_configuration`
+2. **組織関係誤解**: `tenants.organization_id`列想定 → 実際は `organization_tenants` 中間テーブル
+3. **RLS複雑化**: 組織レベル複雑ポリシー想定 → 実際はシンプルなテナント分離のみ
+4. **存在しないユーザー**: `idp_admin_user`作成指示 → 実際は `idp_app_user` のみ
+5. **不要な設定**: 管理API用DataSource設定 → 実際は不要
+
+### 🛡️ 絶対必須の事前確認手順
+
+#### Phase 1: 実装確認（ドキュメント作成前必須）
+```bash
+# データベース関連ドキュメント作成時
+echo "=== 事前調査必須コマンド ==="
+
+# 1. DDL確認（30秒）
+find . -name "*.sql" -path "*/postgresql/*" | head -5
+grep "CREATE TABLE" libs/idp-server-database/postgresql/V1_0_0__init_lib.sql | head -10
+
+# 2. ユーザー作成スクリプト確認（30秒）
+find . -name "*user*.sql" -path "*/operation/*"
+cat libs/idp-server-database/postgresql/operation/app_user.sql
+
+# 3. RLS設定確認（1分）
+grep -A 5 "ROW LEVEL SECURITY" libs/idp-server-database/postgresql/V1_0_0__init_lib.sql
+
+# 4. 設定ファイル確認（1分）
+find . -name "*.properties" -o -name "*.yml" | grep -v node_modules | head -5
+```
+
+#### Phase 2: 情報源の明記（必須）
+```markdown
+## 各セクション冒頭に必ず記載
+**情報源**: `/libs/idp-server-database/postgresql/V1_0_0__init_lib.sql:11-24`
+**確認日**: 2024-01-15
+**確認方法**: `grep "CREATE TABLE tenant" V1_0_0__init_lib.sql`
+**注意**: テーブル名は `tenant`（`tenants` ではない）
+```
+
+#### Phase 3: 不明点の明示（必須）
+```markdown
+❓ **要確認**: この設定値は推測です。実際の値は以下で確認：
+`find . -name "*.properties" | xargs grep redis.password`
+
+⚠️ **実装依存**: この手順は実際のアプリケーション実装により異なる可能性があります。
+```
+
+### 🎯 実践的防止ルール
+
+#### ✅ ドキュメント作成時の必須行動
+1. **コードファーストの原則**: 必ずソースコードを先に確認
+2. **情報源記録**: 参照ファイル・確認方法を明記
+3. **段階的確認**: テーブル名→設定値→手順の順で段階的に確認
+4. **不明点明示**: 推測・仮定を明確に区別
+
+#### ❌ 絶対禁止行動
+1. **想像優先**: 「たぶんこうだろう」でドキュメント作成
+2. **一般論適用**: 「Spring Bootなら通常は...」で推測
+3. **確認省略**: 「時間がないから後で確認」
+4. **エラー無視**: 確認コマンドのエラーを放置
+
+### 🔍 品質チェック自動化
+
+#### ドキュメント公開前チェックスクリプト
+```bash
+#!/bin/bash
+# doc-validation.sh
+
+echo "=== ドキュメント品質チェック ==="
+
+# テーブル名検証
+DOC_TABLES=$(grep -o "CREATE TABLE [a-zA-Z_]*" documentation/**.md)
+ACTUAL_TABLES=$(grep "CREATE TABLE" $(find . -name "*.sql"))
+
+# 設定値検証
+DOC_CONFIGS=$(grep -o "SPRING_[A-Z_]*" documentation/**.md)
+
+# ファイルパス検証
+grep -o "/[a-zA-Z0-9/_.-]*\.(sql\|properties\|yml)" documentation/**.md | while read path; do
+    [ ! -f "$path" ] && echo "❌ ファイル不存在: $path"
+done
+```
+
+### 📚 学習リソース優先順位
+
+#### コードベース理解の正しい順序
+1. **DDL/スキーマ**: `V1_0_0__init_lib.sql` → テーブル構造理解
+2. **設定例**: `operation/*.sql`, `docker-compose.yml` → 実際の設定値
+3. **アプリケーション実装**: `*Repository.java`, `*Service.java` → 使用パターン
+4. **テストコード**: `*test.js` → 期待動作確認
+
+### 🚨 危険信号 - 即座にドキュメント作成停止
+- 「まあ、こんな感じだろう」思考
+- ファイル確認コマンドを実行していない
+- エラーメッセージを無視している
+- 他プロジェクトの経験で補完している
+
+### ✅ 成功パターン - 安全なドキュメント作成
+- 各記述に対応するソースコードが特定できる
+- 確認コマンドが正常終了している
+- 不明点が明確に分離されている
+- 情報源が明記されている
+
+**重要教訓**: 「ドキュメント作成は調査タスクであり、創作タスクではない」
+
 ---
 
 ## 身元確認申込み機能（Identity Verification Application）
