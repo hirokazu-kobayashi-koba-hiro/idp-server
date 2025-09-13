@@ -1,0 +1,1063 @@
+openapi: 3.0.3
+info:
+  title: 認証・認可画面用API
+  version: 1.0.0
+  description: |
+    認証画面・認可画面からの処理を行うためのAPI群。
+
+    ## 認証インタラクションAPI
+    このAPIを使用することで、以下の認証インタラクションを実行できます：
+    - パスワード認証
+    - SMS認証（チャレンジ・認証）
+    - メール認証（チャレンジ・認証）
+    - FIDO-UAF認証（チャレンジ・認証・登録・登録解除）
+    - WebAuthn認証（チャレンジ・認証・登録・登録解除）
+    - 初期ユーザー登録
+    - 認証キャンセル
+    - 認証デバイス通知
+
+    ## 認可画面データAPI
+    認可画面で表示するためのクライアント情報、スコープ情報などを取得できます。
+
+    各インタラクションタイプに応じたリクエストボディとレスポンス形式を提供します。
+
+servers:
+  - url: https://idp-server.example.com
+    description: 本番環境
+  - url: http://localhost:8080
+    description: 開発環境
+
+tags:
+  - name: 認証インタラクション
+    description: |
+      認証画面からの各種認証処理。
+
+      認証フローは以下の通りです：
+      1. 認可エンドポイントから認証トランザクションIDを取得
+      2. 認証インタラクションAPIで認証処理を実行
+      3. 認証完了後、認可コードまたはエラーレスポンスを受信
+  - name: 認可画面データ
+    description: |
+      認可画面で表示するためのデータ取得API。
+
+      認可画面データ取得フローは以下の通りです：
+      1. 認可リクエストから認可リクエストIDを取得
+      2. View Data APIでクライアント情報、スコープ情報を取得
+      3. 認可画面にデータを表示
+  - name: 認可リクエスト
+    description: |
+      OAuth 2.0/OpenID Connect認可リクエスト関連API。
+
+      - 標準的な認可リクエスト処理
+      - 認可承認・拒否処理
+  - name: フェデレーション
+    description: |
+      外部IdPとの連携認証API。
+
+      OIDC、SAMLなどの外部アイデンティティプロバイダーとの
+      フェデレーション認証を行うためのAPI群。
+
+paths:
+  /{tenant-id}/v1/authentications/{id}/{interaction-type}:
+    post:
+      tags:
+        - 認証インタラクション
+      summary: 認証インタラクション実行
+      description: |
+        指定された認証トランザクションIDと認証インタラクションタイプに基づいて認証処理を実行します。
+
+        ## サポートされている認証インタラクションタイプ
+
+        ### パスワード認証
+        - `password-authentication` - パスワードによる認証
+
+        ### SMS認証
+        - `sms-authentication-challenge` - SMS認証チャレンジ（認証コード送信）
+        - `sms-authentication` - SMS認証（認証コード検証）
+
+        ### メール認証
+        - `email-authentication-challenge` - メール認証チャレンジ（認証コード送信）
+        - `email-authentication` - メール認証（認証コード検証）
+
+        ### FIDO-UAF認証
+        - `fido-uaf-registration-challenge` - FIDO-UAF登録チャレンジ
+        - `fido-uaf-registration` - FIDO-UAF登録
+        - `fido-uaf-authentication-challenge` - FIDO-UAF認証チャレンジ
+        - `fido-uaf-authentication` - FIDO-UAF認証
+        - `fido-uaf-deregistration` - FIDO-UAF登録解除
+        - `fido-uaf-cancel` - FIDO-UAF処理キャンセル
+
+        ### WebAuthn認証
+        - `webauthn-registration-challenge` - WebAuthn登録チャレンジ
+        - `webauthn-registration` - WebAuthn登録
+        - `webauthn-authentication-challenge` - WebAuthn認証チャレンジ
+        - `webauthn-authentication` - WebAuthn認証
+        - `webauthn-deregistration` - WebAuthn登録解除
+
+        ### その他
+        - `initial-registration` - 初期ユーザー登録
+        - `authentication-cancel` - 認証キャンセル
+        - `authentication-device-notification` - 認証デバイス通知
+        - `authentication-device-deny` - 認証デバイス拒否
+        - `authentication-device-binding-message` - 認証デバイスバインディングメッセージ
+
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/AuthenticationTransactionId'
+        - $ref: '#/components/parameters/InteractionType'
+      requestBody:
+        description: |
+          認証インタラクションタイプに応じたリクエストボディ。
+          各インタラクションタイプで必要なパラメータが異なります。
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/PasswordAuthenticationRequest'
+                - $ref: '#/components/schemas/SmsAuthenticationChallengeRequest'
+                - $ref: '#/components/schemas/SmsAuthenticationRequest'
+                - $ref: '#/components/schemas/EmailAuthenticationChallengeRequest'
+                - $ref: '#/components/schemas/EmailAuthenticationRequest'
+                - $ref: '#/components/schemas/FidoUafRegistrationChallengeRequest'
+                - $ref: '#/components/schemas/FidoUafRegistrationRequest'
+                - $ref: '#/components/schemas/FidoUafAuthenticationChallengeRequest'
+                - $ref: '#/components/schemas/FidoUafAuthenticationRequest'
+                - $ref: '#/components/schemas/InitialRegistrationRequest'
+                - $ref: '#/components/schemas/WebAuthnChallengeRequest'
+                - $ref: '#/components/schemas/WebAuthnAuthenticationRequest'
+                - $ref: '#/components/schemas/EmptyRequest'
+            examples:
+              password-authentication:
+                summary: パスワード認証の例
+                value:
+                  username: "user@example.com"
+                  password: "securePassword123"
+              email-authentication-challenge:
+                summary: メール認証チャレンジの例
+                value:
+                  email: "user@example.com"
+                  template: "authentication"
+              email-authentication:
+                summary: メール認証の例
+                value:
+                  verification_code: "123456"
+              initial-registration:
+                summary: 初期ユーザー登録の例
+                value:
+                  email: "newuser@example.com"
+                  name: "田中太郎"
+                  phone_number: "090-1234-5678"
+                  locale: "ja-JP"
+                  zoneinfo: "Asia/Tokyo"
+      responses:
+        '200':
+          description: |
+            認証インタラクション成功。
+            レスポンス内容はインタラクションタイプによって異なります。
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/AuthenticationSuccessResponse'
+                  - $ref: '#/components/schemas/AuthenticationChallengeResponse'
+                  - $ref: '#/components/schemas/RegistrationChallengeResponse'
+              examples:
+                authentication-success:
+                  summary: 認証成功
+                  value:
+                    status: "success"
+                    redirect_uri: "https://client.example.com/callback?code=xyz123&state=abc"
+                challenge-response:
+                  summary: チャレンジレスポンス
+                  value:
+                    status: "challenge"
+                    challenge: "eyJhbGciOiJIUzI1NiJ9..."
+                    timeout: 300
+                registration-challenge:
+                  summary: 登録チャレンジ
+                  value:
+                    status: "registration_challenge"
+                    registration_request: "eyJhbGciOiJIUzI1NiJ9..."
+        '400':
+          description: リクエストが不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid-credentials:
+                  summary: 認証情報が不正
+                  value:
+                    error: "invalid_request"
+                    error_description: "Invalid username or password"
+                missing-parameter:
+                  summary: 必須パラメータが不足
+                  value:
+                    error: "invalid_request"
+                    error_description: "Missing required parameter: username"
+        '401':
+          description: 認証に失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                authentication-failed:
+                  summary: 認証失敗
+                  value:
+                    error: "access_denied"
+                    error_description: "Authentication failed"
+        '404':
+          description: 認証トランザクションが見つからない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                transaction-not-found:
+                  summary: 認証トランザクションが見つからない
+                  value:
+                    error: "invalid_request"
+                    error_description: "Authentication transaction not found"
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                server-error:
+                  summary: サーバーエラー
+                  value:
+                    error: "server_error"
+                    error_description: "Internal server error occurred"
+
+  /{tenant-id}/v1/authorizations/{id}/view-data:
+    get:
+      tags:
+        - 認可画面データ
+      summary: 認可画面データ取得
+      description: |
+        指定された認可リクエストIDに基づいて、認可画面で表示するためのデータを取得します。
+
+        ## レスポンスデータ
+        - **クライアント情報**: クライアント名、ロゴURI、利用規約URIなど
+        - **スコープ情報**: 要求されているスコープの一覧
+        - **セッション情報**: セッション有効化フラグ
+        - **フェデレーション情報**: 利用可能な外部IdP連携情報
+        - **カスタムパラメータ**: クライアント固有のカスタムパラメータ
+
+        このAPIは認可画面のレンダリング時に使用され、ユーザーに表示する情報を提供します。
+
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/AuthorizationRequestId'
+      responses:
+        '200':
+          description: |
+            認可画面データ取得成功。
+            クライアント情報、スコープ情報、フェデレーション情報などが含まれます。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationViewDataResponse'
+              examples:
+                basic-view-data:
+                  summary: 基本的な認可画面データ
+                  value:
+                    client_id: "client123"
+                    client_name: "サンプルアプリケーション"
+                    client_uri: "https://client.example.com"
+                    logo_uri: "https://client.example.com/logo.png"
+                    contacts: "support@client.example.com"
+                    tos_uri: "https://client.example.com/terms"
+                    policy_uri: "https://client.example.com/privacy"
+                    scopes: ["openid", "profile", "email"]
+                    session_enabled: true
+                    custom_params:
+                      organization_id: "org123"
+                      organization_name: "テスト組織"
+                federation-enabled:
+                  summary: フェデレーション有効時の認可画面データ
+                  value:
+                    client_id: "client123"
+                    client_name: "サンプルアプリケーション"
+                    client_uri: "https://client.example.com"
+                    scopes: ["openid", "profile", "email"]
+                    session_enabled: false
+                    available_federations:
+                      - type: "oidc"
+                        provider_name: "google"
+                        display_name: "Googleでログイン"
+                        logo_uri: "https://google.com/logo.png"
+                      - type: "saml"
+                        provider_name: "azure-ad"
+                        display_name: "Azure ADでログイン"
+                        logo_uri: "https://microsoft.com/logo.png"
+                    custom_params: {}
+        '400':
+          description: リクエストが不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid-request-id:
+                  summary: 認可リクエストIDが不正
+                  value:
+                    error: "invalid_request"
+                    error_description: "Invalid authorization request ID"
+        '404':
+          description: 認可リクエストが見つからない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                request-not-found:
+                  summary: 認可リクエストが見つからない
+                  value:
+                    error: "invalid_request"
+                    error_description: "Authorization request not found"
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                server-error:
+                  summary: サーバーエラー
+                  value:
+                    error: "server_error"
+                    error_description: "Internal server error occurred"
+
+
+  /{tenant-id}/v1/authorizations/{id}/authorize:
+    post:
+      tags:
+        - 認可リクエスト
+      summary: 認可承認
+      description: |
+        ユーザーが認証完了後、認可画面で「許可」を選択した際に呼び出すAPI。
+
+        認可承認により認可コードが発行され、クライアントのredirect_uriに
+        リダイレクトされます。
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/AuthorizationRequestId'
+      responses:
+        '200':
+          description: 認可承認成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationResponse'
+              examples:
+                success:
+                  summary: 認可承認成功
+                  value:
+                    status: "success"
+                    redirect_uri: "https://client.example.com/callback?code=abc123&state=xyz"
+        '400':
+          description: リクエストが不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /{tenant-id}/v1/authorizations/{id}/deny:
+    post:
+      tags:
+        - 認可リクエスト
+      summary: 認可拒否
+      description: |
+        ユーザーが認可画面で「拒否」を選択した際に呼び出すAPI。
+
+        認可拒否によりaccess_deniedエラーがクライアントのredirect_uriに
+        返却されます。
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/AuthorizationRequestId'
+      responses:
+        '200':
+          description: 認可拒否成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationResponse'
+              examples:
+                denied:
+                  summary: 認可拒否
+                  value:
+                    status: "denied"
+                    redirect_uri: "https://client.example.com/callback?error=access_denied&state=xyz"
+        '400':
+          description: リクエストが不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /{tenant-id}/v1/authorizations/{id}/federations/{federation-type}/{sso-provider-name}:
+    post:
+      tags:
+        - フェデレーション
+      summary: フェデレーション認証開始
+      description: |
+        外部IdPとのフェデレーション認証を開始します。
+
+        指定されたSSOプロバイダーに対してリダイレクト先URLを生成し、
+        外部IdPの認証画面に遷移させます。
+
+        ## サポートされるフェデレーションタイプ
+        - `oidc` - OpenID Connect
+        - `saml` - SAML 2.0
+
+        ## 一般的なSSOプロバイダー
+        - Google (OIDC)
+        - Azure AD (OIDC/SAML)
+        - Okta (OIDC/SAML)
+        - Auth0 (OIDC)
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/AuthorizationRequestId'
+        - $ref: '#/components/parameters/FederationType'
+        - $ref: '#/components/parameters/SsoProviderName'
+      responses:
+        '200':
+          description: フェデレーション認証開始成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FederationResponse'
+              examples:
+                oidc-redirect:
+                  summary: OIDC フェデレーション
+                  value:
+                    status: "redirect"
+                    redirect_uri: "https://accounts.google.com/oauth2/auth?client_id=...&redirect_uri=..."
+                saml-redirect:
+                  summary: SAML フェデレーション
+                  value:
+                    status: "redirect"
+                    redirect_uri: "https://login.microsoftonline.com/saml2?SAMLRequest=..."
+        '400':
+          description: リクエストが不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                unsupported-provider:
+                  summary: サポートされていないプロバイダー
+                  value:
+                    error: "invalid_request"
+                    error_description: "Unsupported SSO provider"
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /{tenant-id}/v1/authorizations/federations/{federation-type}/callback:
+    post:
+      tags:
+        - フェデレーション
+      summary: フェデレーション認証コールバック
+      description: |
+        外部IdPからのコールバックを処理します。
+
+        外部IdPでの認証完了後、認可コードやSAMLレスポンスを受信し、
+        ユーザー情報を取得して認証を完了させます。
+
+        ## 処理フロー
+        1. 外部IdPからのコールバック受信
+        2. 認可コードまたはSAMLレスポンスの検証
+        3. ユーザー情報取得
+        4. 内部ユーザーとのマッピング
+        5. 認証完了またはユーザー登録画面へリダイレクト
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/FederationType'
+      requestBody:
+        required: true
+        description: |
+          外部IdPからのコールバックパラメータ。
+          フェデレーションタイプによって形式が異なります。
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FederationCallbackRequest'
+            examples:
+              oidc-callback:
+                summary: OIDC コールバック
+                value:
+                  code: "abc123"
+                  state: "xyz456"
+              saml-callback:
+                summary: SAML コールバック
+                value:
+                  SAMLResponse: "PHNhbWxwOlJlc3BvbnNl..."
+                  RelayState: "xyz456"
+      responses:
+        '200':
+          description: フェデレーション認証成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FederationCallbackResponse'
+              examples:
+                authentication-success:
+                  summary: 認証完了
+                  value:
+                    status: "success"
+                    redirect_uri: "https://client.example.com/callback?code=def789&state=original_state"
+                user-registration:
+                  summary: ユーザー登録が必要
+                  value:
+                    status: "user_registration_required"
+                    redirect_uri: "/signup/index.html?id=auth_req_123&federation_data=..."
+        '400':
+          description: コールバックパラメータが不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid-code:
+                  summary: 無効な認可コード
+                  value:
+                    error: "invalid_grant"
+                    error_description: "Invalid authorization code"
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  parameters:
+    TenantId:
+      name: tenant-id
+      in: path
+      required: true
+      description: テナントID
+      schema:
+        type: string
+        format: uuid
+        example: "67e7eae6-62b0-4500-9eff-87459f63fc66"
+
+    AuthenticationTransactionId:
+      name: id
+      in: path
+      required: true
+      description: 認証トランザクションID
+      schema:
+        type: string
+        example: "auth_txn_12345"
+
+    AuthorizationRequestId:
+      name: id
+      in: path
+      required: true
+      description: 認可リクエストID
+      schema:
+        type: string
+        example: "authz_req_67890"
+
+    InteractionType:
+      name: interaction-type
+      in: path
+      required: true
+      description: 認証インタラクションタイプ
+      schema:
+        type: string
+        enum:
+          - password-authentication
+          - sms-authentication-challenge
+          - sms-authentication
+          - email-authentication-challenge
+          - email-authentication
+          - fido-uaf-registration-challenge
+          - fido-uaf-registration
+          - fido-uaf-authentication-challenge
+          - fido-uaf-authentication
+          - fido-uaf-deregistration
+          - fido-uaf-cancel
+          - webauthn-registration-challenge
+          - webauthn-registration
+          - webauthn-authentication-challenge
+          - webauthn-authentication
+          - webauthn-deregistration
+          - initial-registration
+          - authentication-cancel
+          - authentication-device-notification
+          - authentication-device-deny
+          - authentication-device-binding-message
+        example: "password-authentication"
+
+    FederationType:
+      name: federation-type
+      in: path
+      required: true
+      description: フェデレーションタイプ
+      schema:
+        type: string
+        enum: ["oidc", "saml"]
+        example: "oidc"
+
+    SsoProviderName:
+      name: sso-provider-name
+      in: path
+      required: true
+      description: SSOプロバイダー名
+      schema:
+        type: string
+        example: "google"
+
+  schemas:
+    # リクエストスキーマ
+    PasswordAuthenticationRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: ユーザー名またはメールアドレス
+          example: "user@example.com"
+        password:
+          type: string
+          description: パスワード
+          example: "securePassword123"
+          format: password
+
+    SmsAuthenticationChallengeRequest:
+      type: object
+      required:
+        - phone_number
+      properties:
+        phone_number:
+          type: string
+          description: SMS送信先電話番号
+          example: "090-1234-5678"
+        template:
+          type: string
+          description: SMSテンプレート名
+          example: "authentication"
+
+    SmsAuthenticationRequest:
+      type: object
+      required:
+        - verification_code
+      properties:
+        verification_code:
+          type: string
+          description: SMS認証コード
+          example: "123456"
+
+    EmailAuthenticationChallengeRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: メール送信先アドレス
+          example: "user@example.com"
+        template:
+          type: string
+          description: メールテンプレート名
+          example: "authentication"
+
+    EmailAuthenticationRequest:
+      type: object
+      required:
+        - verification_code
+      properties:
+        verification_code:
+          type: string
+          description: メール認証コード
+          example: "123456"
+
+    FidoUafRegistrationChallengeRequest:
+      type: object
+      properties:
+        app_name:
+          type: string
+          description: アプリケーション名
+          example: "idp-server-app"
+
+    FidoUafRegistrationRequest:
+      type: object
+      required:
+        - uaf_response
+      properties:
+        uaf_response:
+          type: string
+          description: FIDO-UAF登録レスポンス
+          example: "eyJhbGciOiJIUzI1NiJ9..."
+
+    FidoUafAuthenticationChallengeRequest:
+      type: object
+      properties:
+        app_name:
+          type: string
+          description: アプリケーション名
+          example: "idp-server-app"
+
+    FidoUafAuthenticationRequest:
+      type: object
+      required:
+        - uaf_response
+      properties:
+        uaf_response:
+          type: string
+          description: FIDO-UAF認証レスポンス
+          example: "eyJhbGciOiJIUzI1NiJ9..."
+
+    WebAuthnChallengeRequest:
+      type: object
+      properties:
+        user_verification:
+          type: string
+          enum: ["required", "preferred", "discouraged"]
+          description: ユーザー検証要求レベル
+          example: "preferred"
+
+    WebAuthnAuthenticationRequest:
+      type: object
+      required:
+        - credential
+      properties:
+        credential:
+          type: object
+          description: WebAuthn認証レスポンス
+          properties:
+            id:
+              type: string
+              description: クレデンシャルID
+            rawId:
+              type: string
+              description: 生のクレデンシャルID
+            response:
+              type: object
+              description: 認証レスポンス
+            type:
+              type: string
+              description: クレデンシャルタイプ
+              example: "public-key"
+
+    InitialRegistrationRequest:
+      type: object
+      required:
+        - email
+        - name
+      properties:
+        email:
+          type: string
+          format: email
+          description: メールアドレス
+          example: "newuser@example.com"
+        name:
+          type: string
+          description: 氏名
+          example: "田中太郎"
+        phone_number:
+          type: string
+          description: 電話番号
+          example: "090-1234-5678"
+        locale:
+          type: string
+          description: ロケール
+          example: "ja-JP"
+        zoneinfo:
+          type: string
+          description: タイムゾーン
+          example: "Asia/Tokyo"
+        organization_id:
+          type: string
+          description: 組織ID
+          example: "org123"
+        organization_name:
+          type: string
+          description: 組織名
+          example: "テスト組織"
+
+    EmptyRequest:
+      type: object
+      description: リクエストボディが不要なインタラクション
+
+    # レスポンススキーマ
+    AuthenticationSuccessResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: ["success"]
+          description: 認証成功ステータス
+        redirect_uri:
+          type: string
+          format: uri
+          description: リダイレクト先URI（認可コード付き）
+          example: "https://client.example.com/callback?code=xyz123&state=abc"
+
+    AuthenticationChallengeResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: ["challenge"]
+          description: チャレンジステータス
+        challenge:
+          type: string
+          description: チャレンジデータ
+        timeout:
+          type: integer
+          description: チャレンジタイムアウト（秒）
+          example: 300
+
+    RegistrationChallengeResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: ["registration_challenge"]
+          description: 登録チャレンジステータス
+        registration_request:
+          type: string
+          description: 登録リクエストデータ
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: エラーコード
+          enum:
+            - invalid_request
+            - access_denied
+            - server_error
+          example: "invalid_request"
+        error_description:
+          type: string
+          description: エラー詳細説明
+          example: "Invalid username or password"
+
+    # 認可画面データレスポンススキーマ
+    AuthorizationViewDataResponse:
+      type: object
+      required:
+        - client_id
+        - client_name
+        - scopes
+        - session_enabled
+      properties:
+        client_id:
+          type: string
+          description: クライアントID
+          example: "client123"
+        client_name:
+          type: string
+          description: クライアント名
+          example: "サンプルアプリケーション"
+        client_uri:
+          type: string
+          format: uri
+          description: クライアントURI
+          example: "https://client.example.com"
+        logo_uri:
+          type: string
+          format: uri
+          description: ロゴURI
+          example: "https://client.example.com/logo.png"
+        contacts:
+          type: string
+          description: 連絡先
+          example: "support@client.example.com"
+        tos_uri:
+          type: string
+          format: uri
+          description: 利用規約URI
+          example: "https://client.example.com/terms"
+        policy_uri:
+          type: string
+          format: uri
+          description: プライバシーポリシーURI
+          example: "https://client.example.com/privacy"
+        scopes:
+          type: array
+          items:
+            type: string
+          description: 要求されているスコープ一覧
+          example: ["openid", "profile", "email"]
+        session_enabled:
+          type: boolean
+          description: セッション有効化フラグ
+          example: true
+        available_federations:
+          type: array
+          items:
+            $ref: '#/components/schemas/FederationInfo'
+          description: 利用可能なフェデレーション情報
+        custom_params:
+          type: object
+          additionalProperties:
+            type: string
+          description: カスタムパラメータ
+          example:
+            organization_id: "org123"
+            organization_name: "テスト組織"
+
+    FederationInfo:
+      type: object
+      required:
+        - type
+        - provider_name
+        - display_name
+      properties:
+        type:
+          type: string
+          enum: ["oidc", "saml"]
+          description: フェデレーションタイプ
+          example: "oidc"
+        provider_name:
+          type: string
+          description: プロバイダー名
+          example: "google"
+        display_name:
+          type: string
+          description: 表示名
+          example: "Googleでログイン"
+        logo_uri:
+          type: string
+          format: uri
+          description: プロバイダーのロゴURI
+          example: "https://google.com/logo.png"
+
+
+    # 認可レスポンス関連スキーマ
+    AuthorizationResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: ["success", "denied"]
+          description: ステータス
+        redirect_uri:
+          type: string
+          format: uri
+          description: リダイレクトURI
+          example: "https://client.example.com/callback?code=abc123&state=xyz"
+
+    # フェデレーション関連スキーマ
+    FederationResponse:
+      type: object
+      required:
+        - status
+        - redirect_uri
+      properties:
+        status:
+          type: string
+          enum: ["redirect"]
+          description: ステータス
+        redirect_uri:
+          type: string
+          format: uri
+          description: 外部IdPへのリダイレクトURI
+          example: "https://accounts.google.com/oauth2/auth?client_id=...&redirect_uri=..."
+
+    FederationCallbackRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          description: OIDC認可コード
+          example: "abc123"
+        state:
+          type: string
+          description: 状態パラメータ
+          example: "xyz456"
+        SAMLResponse:
+          type: string
+          description: SAMLレスポンス
+          example: "PHNhbWxwOlJlc3BvbnNl..."
+        RelayState:
+          type: string
+          description: SAMLリレー状態
+          example: "xyz456"
+        error:
+          type: string
+          description: エラーコード
+          example: "access_denied"
+        error_description:
+          type: string
+          description: エラー詳細
+          example: "User denied access"
+
+    FederationCallbackResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: ["success", "user_registration_required", "error"]
+          description: ステータス
+        redirect_uri:
+          type: string
+          format: uri
+          description: リダイレクトURI
+          example: "https://client.example.com/callback?code=def789&state=original_state"
+        user_info:
+          type: object
+          description: 外部IdPから取得したユーザー情報
+          properties:
+            sub:
+              type: string
+              description: Subject Identifier
+            email:
+              type: string
+              format: email
+              description: メールアドレス
+            name:
+              type: string
+              description: 表示名
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        認証トランザクションの管理API呼び出し時に使用するJWTベアラートークン。
+        認証画面からの直接呼び出しでは不要です。
+
+security: []

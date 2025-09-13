@@ -8,6 +8,12 @@ info:
 
 servers:
   - url: https://xxx/{tenant-id}
+    description: IdP Server API エンドポイント
+    variables:
+      tenant-id:
+        description: テナント識別子（UUID形式）
+        default: "67e7eae6-62b0-4500-9eff-87459f63fc66"
+        example: "67e7eae6-62b0-4500-9eff-87459f63fc66"
 
 tags:
   - name: CIBAフロー
@@ -85,7 +91,169 @@ tags:
 
       📘 仕様: [RFC 8935 - Push-Based Event Delivery](https://www.rfc-editor.org/rfc/rfc8935.html)
 
+
 paths:
+  /v1/authorizations/push:
+    post:
+      summary: Pushed Authorization Request (PAR)
+      tags:
+        - 認可コードフロー
+      description: |
+        RFC 9126 に準拠した Pushed Authorization Request エンドポイント。
+
+        認可リクエストのパラメータを事前に送信し、`request_uri` を取得します。
+        この `request_uri` を使用して通常の認可エンドポイントにリクエストを送信できます。
+
+        **セキュリティ上の利点**：
+        - 認可パラメータの URL 経由での漏洩を防止
+        - クライアント認証と認可リクエストを分離
+        - 大きなリクエストパラメータ（RAR等）への対応
+
+        **クライアント認証**：
+        このエンドポイントは以下のクライアント認証方式に対応しています：
+        - `client_secret_basic` - HTTP Basic 認証
+        - `client_secret_post` - POST パラメータ
+        - `tls_client_auth` - Mutual TLS (mTLS)
+
+      parameters:
+        - name: Authorization
+          in: header
+          required: false
+          description: |
+            `client_secret_basic` 認証方式の場合に使用。
+            `Basic base64(client_id:client_secret)` 形式。
+          schema:
+            type: string
+            example: "Basic Y2xpZW50OnNlY3JldA=="
+        - name: x-ssl-cert
+          in: header
+          required: false
+          description: |
+            Mutual TLS (mTLS) 認証用のクライアント証明書。
+            リバースプロキシから転送される場合に使用。
+          schema:
+            type: string
+      requestBody:
+        required: true
+        description: |
+          通常の OAuth 2.0/OpenID Connect 認可リクエストと同じパラメータ。
+          `authorization_details` (RAR) や大きなパラメータも安全に送信可能。
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PushedAuthorizationRequest'
+            examples:
+              openid-connect-basic:
+                summary: 基本的な OpenID Connect リクエスト
+                value:
+                  client_id: "example_client"
+                  response_type: "code"
+                  scope: "openid profile email"
+                  redirect_uri: "https://client.example.com/callback"
+                  state: "af0ifjsldkj"
+                  nonce: "n-0S6_WzA2Mj"
+              pkce-flow:
+                summary: PKCE を使用したリクエスト
+                value:
+                  client_id: "example_client"
+                  response_type: "code"
+                  scope: "openid"
+                  redirect_uri: "https://client.example.com/callback"
+                  state: "af0ifjsldkj"
+                  code_challenge: "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"
+                  code_challenge_method: "S256"
+              rich-authorization:
+                summary: RAR (Rich Authorization Requests) を使用
+                value:
+                  client_id: "example_client"
+                  response_type: "code"
+                  scope: "openid"
+                  redirect_uri: "https://client.example.com/callback"
+                  state: "af0ifjsldkj"
+                  authorization_details: |
+                    [
+                      {
+                        "type": "payment_initiation",
+                        "locations": ["https://example.com/payments"],
+                        "instructedAmount": {
+                          "currency": "EUR",
+                          "amount": "123.50"
+                        },
+                        "creditorName": "Merchant A",
+                        "creditorAccount": {
+                          "iban": "DE02370501980001802057"
+                        },
+                        "remittanceInformationUnstructured": "Ref Number Merchant"
+                      }
+                    ]
+      responses:
+        '201':
+          description: |
+            PAR 成功。`request_uri` と有効期限が返却されます。
+
+            クライアントはこの `request_uri` を使用して認可エンドポイントにリダイレクトします：
+            ```
+            https://idp-server.example.com/{tenant-id}/v1/authorizations?request_uri={request_uri}&client_id={client_id}
+            ```
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PushedAuthorizationResponse'
+              examples:
+                success:
+                  summary: PAR 成功レスポンス
+                  value:
+                    request_uri: "urn:ietf:params:oauth:request_uri:bwc4JK-ESC0w8acc191e-Y1LtdVcSU"
+                    expires_in: 300
+        '400':
+          description: |
+            リクエストパラメータが不正、またはクライアント認証に失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_request:
+                  summary: 必須パラメータが不足
+                  value:
+                    error: "invalid_request"
+                    error_description: "Missing required parameter: client_id"
+                invalid_client:
+                  summary: クライアント認証失敗
+                  value:
+                    error: "invalid_client"
+                    error_description: "Client authentication failed"
+                invalid_redirect_uri:
+                  summary: 無効なリダイレクト URI
+                  value:
+                    error: "invalid_request"
+                    error_description: "Invalid redirect_uri"
+        '401':
+          description: |
+            クライアント認証が必要、または認証情報が無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                unauthorized:
+                  summary: 認証が必要
+                  value:
+                    error: "invalid_client"
+                    error_description: "Client authentication required"
+        '500':
+          description: |
+            サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                server_error:
+                  summary: サーバーエラー
+                  value:
+                    error: "server_error"
+                    error_description: "The authorization server encountered an unexpected condition"
   /v1/backchannel/authentications:
     post:
       summary: バックチャンネル認証リクエスト
@@ -538,6 +706,234 @@ paths:
         '401':
           description: 認証エラー（トークンが無効、署名検証失敗）
 
+  /v1/logout:
+    get:
+      summary: RP-Initiated Logout エンドポイント
+      description: |
+        OpenID Connect RP-Initiated Logout 1.0 に準拠したログアウトエンドポイント。
+
+        Relying Party（RP）からの要求に応じて、エンドユーザーを OpenID Provider（OP）から
+        ログアウトさせ、オプションで `post_logout_redirect_uri` にリダイレクトします。
+
+        **仕様のポイント**:
+        - **冪等性**: 同じログアウトリクエストを複数回実行しても安全
+        - **推奨パラメータ**: `id_token_hint` による適切なセッション特定
+        - **セキュリティ**: 無効なパラメータでも処理を継続（DoS攻撃防止）
+
+        **処理フロー**:
+        1. リクエストパラメータの検証
+        2. `id_token_hint` によるセッション特定（推奨）
+        3. エンドユーザーのセッション終了
+        4. `post_logout_redirect_uri` が有効な場合はリダイレクト
+
+        **エンドユーザー体験**:
+        - OPでのログアウト確認画面表示（推奨）
+        - 適切な言語でのメッセージ表示（`ui_locales` 対応）
+
+        📘 関連仕様: [OpenID Connect RP-Initiated Logout 1.0](https://openid.net/specs/openid-connect-rpinitiated-1_0.html)
+      tags:
+        - OIDC
+      parameters:
+        - name: tenant-id
+          in: path
+          required: true
+          description: テナント識別子
+          schema:
+            type: string
+          example: "67e7eae6-62b0-4500-9eff-87459f63fc66"
+        - name: post_logout_redirect_uri
+          in: query
+          required: false
+          description: |
+            ログアウト完了後のリダイレクト先URI。
+
+            **検証事項**:
+            - 事前に登録されたクライアントのリダイレクトURIと一致すること
+            - HTTPS URIであること（本番環境）
+            - オープンリダイレクト脆弱性の防止
+          schema:
+            type: string
+            format: uri
+          example: "https://client.example.com/logout-callback"
+        - name: id_token_hint
+          in: query
+          required: false
+          description: |
+            OPが以前にRPに発行したIDトークン（推奨パラメータ）。
+
+            **RP-Initiated Logout 1.0 仕様での位置づけ**:
+            - エンドユーザーの現在のセッションを示すヒント
+            - セッション特定の精度向上
+            - セキュリティ強化（正当なログアウト要求の証明）
+
+            **注意事項**:
+            - 提供されない場合もログアウト処理は継続（DoS攻撃防止）
+            - 無効なトークンでも処理を中断しない
+          schema:
+            type: string
+          example: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+        - name: logout_hint
+          in: query
+          required: false
+          description: |
+            エンドユーザーに関する追加のログアウトヒント（オプション）。
+
+            **用途**:
+            - ユーザー識別の補助情報
+            - 特定のアカウントやセッションの指定
+            - カスタムログアウト処理のトリガー
+
+            **実装依存**: OPの実装により具体的な利用方法が決定されます。
+          schema:
+            type: string
+          example: "user123@example.com"
+        - name: client_id
+          in: query
+          required: false
+          description: |
+            OAuth 2.0 クライアント識別子（オプション）。
+
+            **使用ケース**:
+            - 複数クライアント環境でのログアウト元の特定
+            - クライアント別のログアウト処理
+            - 監査ログでのクライアント追跡
+
+            通常は `id_token_hint` からクライアントを特定できるため、
+            明示的な指定は必須ではありません。
+          schema:
+            type: string
+          example: "my-client-app"
+        - name: state
+          in: query
+          required: false
+          description: |
+            RPが生成する不透明な状態値（オプション）。
+
+            **RP-Initiated Logout 1.0 での役割**:
+            - リクエスト・レスポンスの関連付け
+            - CSRF攻撃の防止
+            - RPでのセッション状態管理
+
+            ログアウト完了時にリダイレクトURIにそのまま付加されます。
+          schema:
+            type: string
+          example: "xyz789state"
+        - name: ui_locales
+          in: query
+          required: false
+          description: |
+            エンドユーザーインターフェースの優先言語（オプション）。
+
+            **仕様対応**:
+            - RFC 5646 言語タグ形式
+            - スペース区切りで優先順位指定
+            - ログアウト確認画面の言語制御
+
+            **例**: "ja JP en US" （日本語優先、英語フォールバック）
+          schema:
+            type: string
+          example: "ja JP en US"
+      responses:
+        '200':
+          description: |
+            ログアウト処理が正常に完了し、リダイレクトが不要な場合のレスポンス。
+
+            通常は、`post_logout_redirect_uri` が指定されていない場合や、
+            デフォルトのログアウト画面を表示する場合に使用されます。
+        '302':
+          description: |
+            ログアウト処理完了後、指定されたURIへのリダイレクト。
+
+            `Location` ヘッダーに `post_logout_redirect_uri` および `state` パラメータが設定されます。
+          headers:
+            Location:
+              description: リダイレクト先URI（post_logout_redirect_uri + state）
+              schema:
+                type: string
+                format: uri
+              example: "https://client.example.com/logout-callback?state=abc123xyz"
+        '400':
+          description: |
+            不正なリクエストパラメータ。
+
+            **発生ケース**:
+            - 無効な `post_logout_redirect_uri`（未登録URI）
+            - 形式不正な `id_token_hint`
+            - 必要なパラメータの不足
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_request:
+                  summary: 無効なリクエストパラメータ
+                  value:
+                    error: "invalid_request"
+                    error_description: "Invalid post_logout_redirect_uri"
+                invalid_id_token:
+                  summary: 無効なIDトークン
+                  value:
+                    error: "invalid_request"
+                    error_description: "Invalid id_token_hint format"
+        '500':
+          description: |
+            サーバー内部エラー。
+
+            セッション処理やストレージアクセスに関する予期しないエラーが発生した場合。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                server_error:
+                  summary: サーバー内部エラー
+                  value:
+                    error: "server_error"
+                    error_description: "An unexpected error occurred during logout processing"
+
+  /.well-known/ssf-configuration:
+    get:
+      summary: SSF Discovery Configuration
+      description: |
+        Shared Signals Framework (SSF) の Discovery 情報を提供します。
+
+        SSF 1.0 仕様に基づき、受信者（Receiver）が送信者（Transmitter）から
+        SSF 関連のメタデータ情報を取得するために使用されます。
+
+        このエンドポイントは RFC 8935 および SSF Discovery の仕様に準拠し、
+        Push-Based Delivery に関する設定情報を提供します。
+
+        **テナント識別方式**:
+        - パス形式: `/{tenant-id}/.well-known/ssf-configuration`
+        - クエリ形式: `/.well-known/ssf-configuration/{tenant-id}`
+
+        📘 関連仕様:
+        - [RFC 8935 - Shared Signals and Events Framework](https://datatracker.ietf.org/doc/html/rfc8935)
+        - [OpenID Shared Signals and Events Framework Specification 1.0](https://openid.net/specs/openid-sse-framework-1_0.html)
+      tags:
+        - SSF
+      responses:
+        '200':
+          description: |
+            SSF Discovery Configuration の取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SSFConfiguration'
+              examples:
+                ssf-config:
+                  summary: SSF Configuration レスポンス例
+                  value:
+                    issuer: "https://idp-server.example.com"
+                    jwks_uri: "https://idp-server.example.com/v1/ssf/jwks"
+                    delivery_methods_supported: ["https://schemas.openid.net/secevent/risc/delivery-method/push"]
+                    configuration_endpoint: "https://idp-server.example.com/.well-known/ssf-configuration"
+                    status_endpoint: "https://idp-server.example.com/v1/ssf/status"
+                    add_subject_endpoint: "https://idp-server.example.com/v1/ssf/add-subject"
+                    remove_subject_endpoint: "https://idp-server.example.com/v1/ssf/remove-subject"
+                    verification_endpoint: "https://idp-server.example.com/v1/ssf/verification"
+                    critical_subject_members: ["sub", "email"]
+
   /v1/ssf/jwks:
     get:
       summary: JSON Web Key Set (JWKS)
@@ -553,6 +949,30 @@ paths:
                 $ref: '#/components/schemas/JWKS'
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: |
+        OAuth 2.0 アクセストークンを使用したBearer認証。
+
+        **使用方法**:
+        ```
+        Authorization: Bearer {access_token}
+        ```
+
+        **適用エンドポイント**:
+        - UserInfo エンドポイント
+        - 保護されたリソースへのアクセス
+
+        **サポートされるトークン形式**:
+        - **JWT (JSON Web Token)**: 構造化されたJWTフォーマット
+        - **識別子型トークン**: ランダム文字列による参照型トークン
+
+        **取得方法**: OAuth 2.0 / OpenID Connect フローを通じて取得
+
+        📘 関連仕様: [RFC 6750 - OAuth 2.0 Bearer Token Usage](https://datatracker.ietf.org/doc/html/rfc6750)
+
   parameters:
     response_type:
       name: response_type
@@ -772,6 +1192,50 @@ components:
 #        $ref: '#/components/schemas/AuthorizationDetails'
 
   schemas:
+    ErrorResponse:
+      type: object
+      description: |
+        OAuth 2.0 / OpenID Connect エラーレスポンスの標準形式。
+        RFC 6749 および関連仕様に準拠したエラー情報を提供します。
+      properties:
+        error:
+          type: string
+          description: |
+            エラーコード。OAuth 2.0 / OpenID Connect 仕様で定義された標準エラーコード。
+
+            **主なエラーコード**:
+            - `invalid_request` - リクエストパラメータが不正
+            - `invalid_client` - クライアント認証失敗
+            - `invalid_grant` - 無効なグラント
+            - `unauthorized_client` - 認可されていないクライアント
+            - `unsupported_grant_type` - サポートされていないグラント
+            - `invalid_scope` - 無効なスコープ
+          example: "invalid_request"
+        error_description:
+          type: string
+          description: |
+            エラーの詳細説明（オプション）。
+            開発者向けの追加情報を提供し、デバッグを支援します。
+          example: "The request is missing a required parameter"
+        error_uri:
+          type: string
+          format: uri
+          description: |
+            エラーに関する詳細情報を提供するWebページのURI（オプション）。
+            エンドユーザーや開発者がエラーの詳細を確認できます。
+          example: "https://docs.example.com/errors/invalid_request"
+        state:
+          type: string
+          description: |
+            リクエストに含まれていた state パラメータ（該当する場合）。
+            CSRF攻撃防止とリクエスト・レスポンス対応のために返却されます。
+          example: "xyz123state"
+      required:
+        - error
+      example:
+        error: "invalid_request"
+        error_description: "The post_logout_redirect_uri parameter is invalid"
+
     AuthorizationCodeTokenRequest:
       type: object
       description: |
@@ -1770,5 +2234,279 @@ components:
         詳細は [RFC 8417](https://www.rfc-editor.org/rfc/rfc8417.html) を参照。
       example: >
         eyJhbGciOiJSUzI1NiIsInR5cCI6InN...（省略された署名付きJWT）
+
+    # PAR (Pushed Authorization Request) 関連スキーマ
+    PushedAuthorizationRequest:
+      type: object
+      required:
+        - client_id
+        - response_type
+        - scope
+        - redirect_uri
+      properties:
+        client_id:
+          type: string
+          description: |
+            クライアント識別子。事前に認可サーバーに登録されたもの。
+          example: "example_client"
+        client_secret:
+          type: string
+          description: |
+            `client_secret_post` 認証方式の場合に使用するクライアントシークレット。
+            `client_secret_basic` を使用する場合は Authorization ヘッダーで送信。
+          example: "client_secret_value"
+          format: password
+        response_type:
+          type: string
+          description: |
+            OAuth 2.0 レスポンスタイプ。認可コードフローでは `code`。
+          enum: ["code"]
+          example: "code"
+        scope:
+          type: string
+          description: |
+            要求するスコープのスペース区切りリスト。
+            OpenID Connect では `openid` が必須。
+          example: "openid profile email"
+        redirect_uri:
+          type: string
+          format: uri
+          description: |
+            認可完了後のリダイレクト先URI。
+            クライアント登録時に指定されたもののいずれかである必要があります。
+          example: "https://client.example.com/callback"
+        state:
+          type: string
+          description: |
+            CSRF攻撃を防ぐための不透明な値。認可レスポンスでそのまま返却されます。
+          example: "af0ifjsldkj"
+        response_mode:
+          type: string
+          description: |
+            認可レスポンスの返却方法。
+          enum: ["query", "fragment", "form_post"]
+          example: "query"
+        nonce:
+          type: string
+          description: |
+            OpenID Connect でリプレイ攻撃を防ぐための値。
+            ID Token の nonce クレームに含まれます。
+          example: "n-0S6_WzA2Mj"
+        display:
+          type: string
+          description: |
+            認証・同意画面の表示方法を指定。
+          enum: ["page", "popup", "touch", "wap"]
+          example: "page"
+        prompt:
+          type: string
+          description: |
+            ユーザー認証・同意の要求方法。
+          example: "consent"
+        max_age:
+          type: integer
+          description: |
+            許容される認証の最大経過時間（秒）。
+          example: 3600
+        ui_locales:
+          type: string
+          description: |
+            UI表示に使用する言語の優先順位（BCP47形式、スペース区切り）。
+          example: "ja-JP en-US"
+        id_token_hint:
+          type: string
+          description: |
+            以前に取得したID Tokenをヒントとして渡す場合。
+          example: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+        login_hint:
+          type: string
+          description: |
+            ログイン識別子のヒント（メールアドレスなど）。
+          example: "user@example.com"
+        acr_values:
+          type: string
+          description: |
+            要求する認証コンテキストクラス参照値（スペース区切り）。
+          example: "urn:mace:incommon:iap:silver"
+        claims:
+          type: string
+          description: |
+            要求する個々のクレームを指定するJSONオブジェクト。
+          example: '{"userinfo":{"name":{"essential":true},"email":null}}'
+        registration:
+          type: string
+          description: |
+            動的クライアント登録情報（JSON形式）。
+          example: '{"client_name":"Example Client","redirect_uris":["https://client.example.com/callback"]}'
+        request:
+          type: string
+          description: |
+            署名済みリクエストオブジェクト（JWT形式）。
+          example: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+        request_uri:
+          type: string
+          format: uri
+          description: |
+            リクエストオブジェクトを取得するためのURI。
+          example: "https://client.example.com/request.jwt"
+        # PKCE パラメータ
+        code_challenge:
+          type: string
+          description: |
+            PKCE code challenge（RFC 7636）。
+            code_verifier から生成されたハッシュ値。
+          example: "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"
+        code_challenge_method:
+          type: string
+          description: |
+            PKCE code challenge の生成方法。S256 を推奨。
+          enum: ["plain", "S256"]
+          example: "S256"
+        # RAR (Rich Authorization Requests) パラメータ
+        authorization_details:
+          type: string
+          description: |
+            Rich Authorization Requests (RFC 9396) で定義される詳細な認可要求。
+            JSON配列形式の文字列。
+          example: |
+            [
+              {
+                "type": "payment_initiation",
+                "locations": ["https://example.com/payments"],
+                "instructedAmount": {
+                  "currency": "EUR",
+                  "amount": "123.50"
+                },
+                "creditorName": "Merchant A",
+                "creditorAccount": {
+                  "iban": "DE02370501980001802057"
+                },
+                "remittanceInformationUnstructured": "Ref Number Merchant"
+              }
+            ]
+
+    PushedAuthorizationResponse:
+      type: object
+      required:
+        - request_uri
+        - expires_in
+      properties:
+        request_uri:
+          type: string
+          format: uri
+          description: |
+            認可リクエストを識別するURI。
+            このURIを使用して通常の認可エンドポイントにリクエストを送信します。
+
+            形式: `urn:ietf:params:oauth:request_uri:<unique-identifier>`
+          example: "urn:ietf:params:oauth:request_uri:bwc4JK-ESC0w8acc191e-Y1LtdVcSU"
+        expires_in:
+          type: integer
+          description: |
+            `request_uri` の有効期限（秒）。
+            通常は短時間（300秒など）に設定されます。
+          example: 300
+          minimum: 1
+          maximum: 3600
+
+    # SSF Configuration 関連スキーマ
+    SSFConfiguration:
+      type: object
+      required:
+        - issuer
+        - jwks_uri
+        - delivery_methods_supported
+      properties:
+        issuer:
+          type: string
+          format: uri
+          description: |
+            SSF の発行者（Issuer）を識別するURI。
+            通常はIdP サーバーのベースURLになります。
+          example: "https://idp-server.example.com"
+        jwks_uri:
+          type: string
+          format: uri
+          description: |
+            SET（Security Event Token）の署名検証に使用する
+            JSON Web Key Set (JWKS) のエンドポイントURI。
+          example: "https://idp-server.example.com/v1/ssf/jwks"
+        delivery_methods_supported:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: |
+            サポートされる配信方法のリスト。
+            Push-Based Delivery Method の URI を含みます。
+          example:
+            - "https://schemas.openid.net/secevent/risc/delivery-method/push"
+        configuration_endpoint:
+          type: string
+          format: uri
+          description: |
+            SSF 設定エンドポイントのURI（オプション）。
+            受信者がストリーム設定を管理するために使用します。
+          example: "https://idp-server.example.com/.well-known/ssf-configuration"
+        status_endpoint:
+          type: string
+          format: uri
+          description: |
+            SSF ステータス確認エンドポイントのURI（オプション）。
+            配信ステータスやエラー情報を取得するために使用します。
+          example: "https://idp-server.example.com/v1/ssf/status"
+        add_subject_endpoint:
+          type: string
+          format: uri
+          description: |
+            Subject 追加エンドポイントのURI（オプション）。
+            新しい監視対象Subjectを追加するために使用します。
+          example: "https://idp-server.example.com/v1/ssf/add-subject"
+        remove_subject_endpoint:
+          type: string
+          format: uri
+          description: |
+            Subject 削除エンドポイントのURI（オプション）。
+            監視対象Subjectを削除するために使用します。
+          example: "https://idp-server.example.com/v1/ssf/remove-subject"
+        verification_endpoint:
+          type: string
+          format: uri
+          description: |
+            検証エンドポイントのURI（オプション）。
+            SSF 設定の検証やテスト配信に使用します。
+          example: "https://idp-server.example.com/v1/ssf/verification"
+        critical_subject_members:
+          type: array
+          items:
+            type: string
+          description: |
+            重要なSubject メンバーのリスト（オプション）。
+            SET の subject クレーム内で必須とみなされるメンバー名。
+          example:
+            - "sub"
+            - "email"
+        authorization_schemes_supported:
+          type: array
+          items:
+            type: string
+          description: |
+            サポートされる認証スキームのリスト（オプション）。
+            Bearer Token、Basic認証などが含まれます。
+          example:
+            - "Bearer"
+            - "Basic"
+        event_types_supported:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: |
+            サポートされるセキュリティイベントタイプのリスト（オプション）。
+            RISC イベントタイプのURIを含みます。
+          example:
+            - "https://schemas.openid.net/secevent/risc/event-type/account-purged"
+            - "https://schemas.openid.net/secevent/risc/event-type/account-disabled"
+            - "https://schemas.openid.net/secevent/risc/event-type/session-revoked"
 
 
