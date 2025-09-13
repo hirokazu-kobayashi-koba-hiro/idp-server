@@ -14,26 +14,25 @@
  * limitations under the License.
  */
 
-package org.idp.server.usecases.control_plane.tenant_manager;
+package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
-import org.idp.server.control_plane.management.identity.user.*;
-import org.idp.server.control_plane.management.permission.*;
-import org.idp.server.control_plane.management.permission.io.PermissionManagementResponse;
-import org.idp.server.control_plane.management.permission.io.PermissionManagementStatus;
-import org.idp.server.control_plane.management.permission.io.PermissionRequest;
-import org.idp.server.control_plane.management.permission.validator.PermissionRequestValidationResult;
-import org.idp.server.control_plane.management.permission.validator.PermissionRequestValidator;
-import org.idp.server.control_plane.management.permission.validator.PermissionUpdateRequestValidator;
-import org.idp.server.control_plane.management.permission.verifier.PermissionRegistrationVerificationResult;
-import org.idp.server.control_plane.management.permission.verifier.PermissionRegistrationVerifier;
-import org.idp.server.control_plane.management.permission.verifier.PermissionVerifier;
+import org.idp.server.control_plane.management.role.*;
+import org.idp.server.control_plane.management.role.io.RoleManagementResponse;
+import org.idp.server.control_plane.management.role.io.RoleManagementStatus;
+import org.idp.server.control_plane.management.role.io.RoleRequest;
+import org.idp.server.control_plane.management.role.validator.RoleRemovePermissionsRequestValidator;
+import org.idp.server.control_plane.management.role.validator.RoleRequestValidationResult;
+import org.idp.server.control_plane.management.role.validator.RoleRequestValidator;
+import org.idp.server.control_plane.management.role.verifier.RoleRegistrationVerificationResult;
+import org.idp.server.control_plane.management.role.verifier.RoleRegistrationVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.permission.*;
+import org.idp.server.core.openid.identity.role.*;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogWriters;
@@ -45,34 +44,34 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
 @Transaction
-public class PermissionManagementEntryService implements PermissionManagementApi {
+public class RoleManagementEntryService implements RoleManagementApi {
 
   TenantQueryRepository tenantQueryRepository;
+  RoleQueryRepository roleQueryRepository;
+  RoleCommandRepository roleCommandRepository;
   PermissionQueryRepository permissionQueryRepository;
-  PermissionCommandRepository permissionCommandRepository;
-  PermissionRegistrationVerifier verifier;
   AuditLogWriters auditLogWriters;
-  LoggerWrapper log = LoggerWrapper.getLogger(PermissionManagementEntryService.class);
+  LoggerWrapper log = LoggerWrapper.getLogger(RoleManagementEntryService.class);
 
-  public PermissionManagementEntryService(
+  public RoleManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
+      RoleQueryRepository roleQueryRepository,
+      RoleCommandRepository roleCommandRepository,
       PermissionQueryRepository permissionQueryRepository,
-      PermissionCommandRepository permissionCommandRepository,
       AuditLogWriters auditLogWriters) {
     this.tenantQueryRepository = tenantQueryRepository;
+    this.roleQueryRepository = roleQueryRepository;
+    this.roleCommandRepository = roleCommandRepository;
     this.permissionQueryRepository = permissionQueryRepository;
-    this.permissionCommandRepository = permissionCommandRepository;
-    PermissionVerifier permissionVerifier = new PermissionVerifier(permissionQueryRepository);
-    this.verifier = new PermissionRegistrationVerifier(permissionVerifier);
     this.auditLogWriters = auditLogWriters;
   }
 
   @Override
-  public PermissionManagementResponse create(
+  public RoleManagementResponse create(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      PermissionRequest request,
+      RoleRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
@@ -80,23 +79,20 @@ public class PermissionManagementEntryService implements PermissionManagementApi
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    PermissionRequestValidator validator = new PermissionRequestValidator(request, dryRun);
-    PermissionRequestValidationResult validate = validator.validate();
+    RoleRequestValidator validator = new RoleRequestValidator(request, dryRun);
+    RoleRequestValidationResult validate = validator.validate();
 
-    PermissionRegistrationContextCreator permissionRegistrationContextCreator =
-        new PermissionRegistrationContextCreator(tenant, request, dryRun);
-    PermissionRegistrationContext context = permissionRegistrationContextCreator.create();
+    Permissions permissionList = permissionQueryRepository.findAll(tenant);
+    RoleRegistrationContextCreator registrationContextCreator =
+        new RoleRegistrationContextCreator(tenant, request, permissionList, dryRun);
+    RoleRegistrationContext context = registrationContextCreator.create();
 
-    PermissionRegistrationVerificationResult verificationResult = verifier.verify(context);
+    RoleRegistrationVerifier verifier = new RoleRegistrationVerifier();
+    RoleRegistrationVerificationResult verificationResult = verifier.verify(context);
 
     AuditLog auditLog =
         AuditLogCreator.create(
-            "PermissionManagementApi.create",
-            tenant,
-            operator,
-            oAuthToken,
-            context,
-            requestAttributes);
+            "RoleManagementApi.create", tenant, operator, oAuthToken, context, requestAttributes);
     auditLogWriters.write(tenant, auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
@@ -108,7 +104,7 @@ public class PermissionManagementEntryService implements PermissionManagementApi
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new PermissionManagementResponse(PermissionManagementStatus.FORBIDDEN, response);
+      return new RoleManagementResponse(RoleManagementStatus.FORBIDDEN, response);
     }
 
     if (!validate.isValid()) {
@@ -123,17 +119,17 @@ public class PermissionManagementEntryService implements PermissionManagementApi
       return context.toResponse();
     }
 
-    permissionCommandRepository.register(tenant, context.permission());
+    roleCommandRepository.register(tenant, context.role());
 
     return context.toResponse();
   }
 
   @Override
-  public PermissionManagementResponse findList(
+  public RoleManagementResponse findList(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      PermissionQueries queries,
+      RoleQueries queries,
       RequestAttributes requestAttributes) {
 
     AdminPermissions permissions = getRequiredPermissions("findList");
@@ -142,7 +138,7 @@ public class PermissionManagementEntryService implements PermissionManagementApi
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
-            "PermissionManagementApi.findList",
+            "RoleManagementApi.findList",
             "findList",
             tenant,
             operator,
@@ -159,45 +155,45 @@ public class PermissionManagementEntryService implements PermissionManagementApi
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new PermissionManagementResponse(PermissionManagementStatus.FORBIDDEN, response);
+      return new RoleManagementResponse(RoleManagementStatus.FORBIDDEN, response);
     }
 
-    long totalCount = permissionQueryRepository.findTotalCount(tenant, queries);
+    long totalCount = roleQueryRepository.findTotalCount(tenant, queries);
     if (totalCount == 0) {
       Map<String, Object> response = new HashMap<>();
       response.put("list", List.of());
       response.put("total_count", 0);
       response.put("limit", queries.limit());
       response.put("offset", queries.offset());
-      return new PermissionManagementResponse(PermissionManagementStatus.OK, response);
+      return new RoleManagementResponse(RoleManagementStatus.OK, response);
     }
 
-    List<Permission> permissionList = permissionQueryRepository.findList(tenant, queries);
+    List<Role> permissionList = roleQueryRepository.findList(tenant, queries);
     Map<String, Object> response = new HashMap<>();
-    response.put("list", permissionList.stream().map(Permission::toMap).toList());
+    response.put("list", permissionList.stream().map(Role::toMap).toList());
     response.put("total_count", totalCount);
     response.put("limit", queries.limit());
     response.put("offset", queries.offset());
 
-    return new PermissionManagementResponse(PermissionManagementStatus.OK, response);
+    return new RoleManagementResponse(RoleManagementStatus.OK, response);
   }
 
   @Override
-  public PermissionManagementResponse get(
+  public RoleManagementResponse get(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      PermissionIdentifier identifier,
+      RoleIdentifier identifier,
       RequestAttributes requestAttributes) {
 
     AdminPermissions permissions = getRequiredPermissions("get");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    Permission permission = permissionQueryRepository.find(tenant, identifier);
+    Role role = roleQueryRepository.find(tenant, identifier);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
-            "PermissionManagementApi.get", "get", tenant, operator, oAuthToken, requestAttributes);
+            "RoleManagementApi.get", "get", tenant, operator, oAuthToken, requestAttributes);
     auditLogWriters.write(tenant, auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
@@ -209,47 +205,42 @@ public class PermissionManagementEntryService implements PermissionManagementApi
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new PermissionManagementResponse(PermissionManagementStatus.FORBIDDEN, response);
+      return new RoleManagementResponse(RoleManagementStatus.FORBIDDEN, response);
     }
 
-    if (!permission.exists()) {
-      return new PermissionManagementResponse(PermissionManagementStatus.NOT_FOUND, Map.of());
+    if (!role.exists()) {
+      return new RoleManagementResponse(RoleManagementStatus.NOT_FOUND, Map.of());
     }
 
-    return new PermissionManagementResponse(PermissionManagementStatus.OK, permission.toMap());
+    return new RoleManagementResponse(RoleManagementStatus.OK, role.toMap());
   }
 
   @Override
-  public PermissionManagementResponse update(
+  public RoleManagementResponse update(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      PermissionIdentifier identifier,
-      PermissionRequest request,
+      RoleIdentifier identifier,
+      RoleRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
     AdminPermissions permissions = getRequiredPermissions("update");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    Permission before = permissionQueryRepository.find(tenant, identifier);
+    Role before = roleQueryRepository.find(tenant, identifier);
 
-    PermissionUpdateRequestValidator validator =
-        new PermissionUpdateRequestValidator(request, dryRun);
-    PermissionRequestValidationResult validate = validator.validate();
+    RoleRequestValidator validator = new RoleRequestValidator(request, dryRun);
+    RoleRequestValidationResult validate = validator.validate();
 
-    PermissionUpdateContextCreator permissionUpdateContextCreator =
-        new PermissionUpdateContextCreator(tenant, before, request, dryRun);
-    PermissionUpdateContext context = permissionUpdateContextCreator.create();
+    Permissions permissionList = permissionQueryRepository.findAll(tenant);
+    RoleUpdateContextCreator updateContextCreator =
+        new RoleUpdateContextCreator(tenant, before, request, permissionList, dryRun);
+    RoleUpdateContext context = updateContextCreator.create();
 
     AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "PermissionManagementApi.update",
-            "update",
-            tenant,
-            operator,
-            oAuthToken,
-            requestAttributes);
+        AuditLogCreator.createOnUpdate(
+            "RoleManagementApi.update", tenant, operator, oAuthToken, context, requestAttributes);
     auditLogWriters.write(tenant, auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
@@ -261,11 +252,11 @@ public class PermissionManagementEntryService implements PermissionManagementApi
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new PermissionManagementResponse(PermissionManagementStatus.FORBIDDEN, response);
+      return new RoleManagementResponse(RoleManagementStatus.FORBIDDEN, response);
     }
 
     if (!before.exists()) {
-      return new PermissionManagementResponse(PermissionManagementStatus.NOT_FOUND, Map.of());
+      return new RoleManagementResponse(RoleManagementStatus.NOT_FOUND, Map.of());
     }
 
     if (!validate.isValid()) {
@@ -275,33 +266,42 @@ public class PermissionManagementEntryService implements PermissionManagementApi
     if (context.isDryRun()) {
       return context.toResponse();
     }
-    permissionCommandRepository.update(tenant, context.after());
+    roleCommandRepository.update(tenant, context.after());
 
     return context.toResponse();
   }
 
   @Override
-  public PermissionManagementResponse delete(
+  public RoleManagementResponse removePermissions(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      PermissionIdentifier identifier,
+      RoleIdentifier identifier,
+      RoleRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    AdminPermissions permissions = getRequiredPermissions("delete");
+    AdminPermissions permissions = getRequiredPermissions("update");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    Permission permission = permissionQueryRepository.find(tenant, identifier);
+    Role before = roleQueryRepository.find(tenant, identifier);
+
+    RoleRemovePermissionsRequestValidator validator =
+        new RoleRemovePermissionsRequestValidator(request, dryRun);
+    RoleRequestValidationResult validate = validator.validate();
+
+    Permissions permissionList = permissionQueryRepository.findAll(tenant);
+    RoleRemovePermissionContextCreator updateContextCreator =
+        new RoleRemovePermissionContextCreator(tenant, before, request, permissionList, dryRun);
+    RoleRemovePermissionContext context = updateContextCreator.create();
 
     AuditLog auditLog =
-        AuditLogCreator.createOnDeletion(
-            "PermissionManagementApi.delete",
-            "delete",
+        AuditLogCreator.createOnUpdate(
+            "RoleManagementApi.removePermissions",
             tenant,
             operator,
             oAuthToken,
-            permission.toMap(),
+            context,
             requestAttributes);
     auditLogWriters.write(tenant, auditLog);
 
@@ -314,19 +314,72 @@ public class PermissionManagementEntryService implements PermissionManagementApi
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new PermissionManagementResponse(PermissionManagementStatus.FORBIDDEN, response);
+      return new RoleManagementResponse(RoleManagementStatus.FORBIDDEN, response);
     }
 
-    if (!permission.exists()) {
-      return new PermissionManagementResponse(PermissionManagementStatus.NOT_FOUND, Map.of());
+    if (!before.exists()) {
+      return new RoleManagementResponse(RoleManagementStatus.NOT_FOUND, Map.of());
+    }
+
+    if (!validate.isValid()) {
+      return validate.errorResponse();
+    }
+
+    if (context.isDryRun()) {
+      return context.toResponse();
+    }
+    roleCommandRepository.removePermissions(tenant, context.after(), context.removedPermissions());
+
+    return context.toResponse();
+  }
+
+  @Override
+  public RoleManagementResponse delete(
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      RoleIdentifier identifier,
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
+
+    AdminPermissions permissions = getRequiredPermissions("delete");
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    Role role = roleQueryRepository.find(tenant, identifier);
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnDeletion(
+            "RoleManagementApi.delete",
+            "delete",
+            tenant,
+            operator,
+            oAuthToken,
+            role.toMap(),
+            requestAttributes);
+    auditLogWriters.write(tenant, auditLog);
+
+    if (!permissions.includesAll(operator.permissionsAsSet())) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put(
+          "error_description",
+          String.format(
+              "permission denied required permission %s, but %s",
+              permissions.valuesAsString(), operator.permissionsAsString()));
+      log.warn(response.toString());
+      return new RoleManagementResponse(RoleManagementStatus.FORBIDDEN, response);
+    }
+
+    if (!role.exists()) {
+      return new RoleManagementResponse(RoleManagementStatus.NOT_FOUND, Map.of());
     }
 
     if (dryRun) {
-      return new PermissionManagementResponse(PermissionManagementStatus.NO_CONTENT, Map.of());
+      return new RoleManagementResponse(RoleManagementStatus.NO_CONTENT, Map.of());
     }
 
-    permissionCommandRepository.delete(tenant, permission);
+    roleCommandRepository.delete(tenant, role);
 
-    return new PermissionManagementResponse(PermissionManagementStatus.NO_CONTENT, Map.of());
+    return new RoleManagementResponse(RoleManagementStatus.NO_CONTENT, Map.of());
   }
 }

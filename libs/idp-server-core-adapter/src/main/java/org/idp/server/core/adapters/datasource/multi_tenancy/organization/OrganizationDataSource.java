@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.multi_tenancy.organization.*;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class OrganizationDataSource implements OrganizationRepository {
 
@@ -61,5 +62,16 @@ public class OrganizationDataSource implements OrganizationRepository {
     return results.stream()
         .map(ModelConvertor::convert)
         .collect(java.util.stream.Collectors.toList());
+  }
+
+  @Override
+  public AssignedTenant findAssignment(
+      Tenant adminTenant, OrganizationIdentifier organizationId, TenantIdentifier tenantId) {
+    OrganizationSqlExecutor executor = executors.get(adminTenant.databaseType());
+    Map<String, String> result = executor.selectAssignedTenant(organizationId, tenantId);
+    if (result == null || result.isEmpty()) {
+      return new AssignedTenant();
+    }
+    return new AssignedTenant(result.get("id"), result.get("name"), result.get("type"));
   }
 }

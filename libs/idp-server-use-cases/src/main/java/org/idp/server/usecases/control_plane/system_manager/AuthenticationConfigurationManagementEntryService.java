@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.usecases.control_plane.tenant_manager;
+package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
 import java.util.List;
@@ -22,14 +22,13 @@ import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.authentication.configuration.*;
-import org.idp.server.control_plane.management.authentication.policy.*;
-import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementResponse;
-import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementStatus;
-import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigRequest;
-import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
-import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfigurationIdentifier;
-import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationCommandRepository;
-import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationQueryRepository;
+import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementResponse;
+import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementStatus;
+import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigRequest;
+import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
+import org.idp.server.core.openid.authentication.config.AuthenticationConfigurationIdentifier;
+import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationCommandRepository;
+import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
@@ -42,38 +41,34 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
 @Transaction
-public class AuthenticationPolicyConfigurationManagementEntryService
-    implements AuthenticationPolicyConfigurationManagementApi {
+public class AuthenticationConfigurationManagementEntryService
+    implements AuthenticationConfigurationManagementApi {
 
-  AuthenticationPolicyConfigurationCommandRepository
-      authenticationPolicyConfigurationCommandRepository;
-  AuthenticationPolicyConfigurationQueryRepository authenticationPolicyConfigurationQueryRepository;
+  AuthenticationConfigurationCommandRepository authenticationConfigurationCommandRepository;
+  AuthenticationConfigurationQueryRepository authenticationConfigurationQueryRepository;
   TenantQueryRepository tenantQueryRepository;
   AuditLogWriters auditLogWriters;
   LoggerWrapper log =
-      LoggerWrapper.getLogger(AuthenticationPolicyConfigurationManagementEntryService.class);
+      LoggerWrapper.getLogger(AuthenticationConfigurationManagementEntryService.class);
 
-  public AuthenticationPolicyConfigurationManagementEntryService(
-      AuthenticationPolicyConfigurationCommandRepository
-          authenticationPolicyConfigurationCommandRepository,
-      AuthenticationPolicyConfigurationQueryRepository
-          authenticationPolicyConfigurationQueryRepository,
+  public AuthenticationConfigurationManagementEntryService(
+      AuthenticationConfigurationCommandRepository authenticationConfigurationCommandRepository,
+      AuthenticationConfigurationQueryRepository authenticationConfigurationQueryRepository,
       TenantQueryRepository tenantQueryRepository,
       AuditLogWriters auditLogWriters) {
-    this.authenticationPolicyConfigurationCommandRepository =
-        authenticationPolicyConfigurationCommandRepository;
-    this.authenticationPolicyConfigurationQueryRepository =
-        authenticationPolicyConfigurationQueryRepository;
+    this.authenticationConfigurationCommandRepository =
+        authenticationConfigurationCommandRepository;
+    this.authenticationConfigurationQueryRepository = authenticationConfigurationQueryRepository;
     this.tenantQueryRepository = tenantQueryRepository;
     this.auditLogWriters = auditLogWriters;
   }
 
   @Override
-  public AuthenticationPolicyConfigManagementResponse create(
+  public AuthenticationConfigManagementResponse create(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      AuthenticationPolicyConfigRequest request,
+      AuthenticationConfigRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
@@ -81,13 +76,13 @@ public class AuthenticationPolicyConfigurationManagementEntryService
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    AuthenticationPolicyConfigRegistrationContextCreator contextCreator =
-        new AuthenticationPolicyConfigRegistrationContextCreator(tenant, request, dryRun);
-    AuthenticationPolicyConfigRegistrationContext context = contextCreator.create();
+    AuthenticationConfigRegistrationContextCreator contextCreator =
+        new AuthenticationConfigRegistrationContextCreator(tenant, request, dryRun);
+    AuthenticationConfigRegistrationContext context = contextCreator.create();
 
     AuditLog auditLog =
         AuditLogCreator.create(
-            "AuthenticationPolicyConfigurationManagementApi.create",
+            "AuthenticationConfigurationManagementApi.create",
             tenant,
             operator,
             oAuthToken,
@@ -104,21 +99,21 @@ public class AuthenticationPolicyConfigurationManagementEntryService
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new AuthenticationPolicyConfigManagementResponse(
-          AuthenticationPolicyConfigManagementStatus.FORBIDDEN, response);
+      return new AuthenticationConfigManagementResponse(
+          AuthenticationConfigManagementStatus.FORBIDDEN, response);
     }
 
     if (context.isDryRun()) {
       return context.toResponse();
     }
 
-    authenticationPolicyConfigurationCommandRepository.register(tenant, context.configuration());
+    authenticationConfigurationCommandRepository.register(tenant, context.configuration());
 
     return context.toResponse();
   }
 
   @Override
-  public AuthenticationPolicyConfigManagementResponse findList(
+  public AuthenticationConfigManagementResponse findList(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
@@ -129,23 +124,23 @@ public class AuthenticationPolicyConfigurationManagementEntryService
     AdminPermissions permissions = getRequiredPermissions("findList");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    long totalCount = authenticationPolicyConfigurationQueryRepository.findTotalCount(tenant);
+    long totalCount = authenticationConfigurationQueryRepository.findTotalCount(tenant);
     if (totalCount == 0) {
       Map<String, Object> response = new HashMap<>();
       response.put("list", List.of());
       response.put("total_count", 0);
       response.put("limit", limit);
       response.put("offset", offset);
-      return new AuthenticationPolicyConfigManagementResponse(
-          AuthenticationPolicyConfigManagementStatus.OK, response);
+      return new AuthenticationConfigManagementResponse(
+          AuthenticationConfigManagementStatus.OK, response);
     }
 
-    List<AuthenticationPolicyConfiguration> configurations =
-        authenticationPolicyConfigurationQueryRepository.findList(tenant, limit, offset);
+    List<AuthenticationConfiguration> configurations =
+        authenticationConfigurationQueryRepository.findList(tenant, limit, offset);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
-            "AuthenticationPolicyConfigurationManagementApi.findList",
+            "AuthenticationConfigurationManagementApi.findList",
             "findList",
             tenant,
             operator,
@@ -162,38 +157,37 @@ public class AuthenticationPolicyConfigurationManagementEntryService
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new AuthenticationPolicyConfigManagementResponse(
-          AuthenticationPolicyConfigManagementStatus.FORBIDDEN, response);
+      return new AuthenticationConfigManagementResponse(
+          AuthenticationConfigManagementStatus.FORBIDDEN, response);
     }
 
     Map<String, Object> response = new HashMap<>();
-    response.put(
-        "list", configurations.stream().map(AuthenticationPolicyConfiguration::toMap).toList());
+    response.put("list", configurations.stream().map(AuthenticationConfiguration::toMap).toList());
     response.put("total_count", totalCount);
     response.put("limit", limit);
     response.put("offset", offset);
 
-    return new AuthenticationPolicyConfigManagementResponse(
-        AuthenticationPolicyConfigManagementStatus.OK, response);
+    return new AuthenticationConfigManagementResponse(
+        AuthenticationConfigManagementStatus.OK, response);
   }
 
   @Override
-  public AuthenticationPolicyConfigManagementResponse get(
+  public AuthenticationConfigManagementResponse get(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      AuthenticationPolicyConfigurationIdentifier identifier,
+      AuthenticationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes) {
 
     AdminPermissions permissions = getRequiredPermissions("get");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    AuthenticationPolicyConfiguration configuration =
-        authenticationPolicyConfigurationQueryRepository.find(tenant, identifier);
+    AuthenticationConfiguration configuration =
+        authenticationConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
-            "AuthenticationPolicyConfigurationManagementApi.get",
+            "AuthenticationConfigurationManagementApi.get",
             "get",
             tenant,
             operator,
@@ -210,42 +204,42 @@ public class AuthenticationPolicyConfigurationManagementEntryService
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new AuthenticationPolicyConfigManagementResponse(
-          AuthenticationPolicyConfigManagementStatus.FORBIDDEN, response);
+      return new AuthenticationConfigManagementResponse(
+          AuthenticationConfigManagementStatus.FORBIDDEN, response);
     }
 
     if (!configuration.exists()) {
-      return new AuthenticationPolicyConfigManagementResponse(
-          AuthenticationPolicyConfigManagementStatus.NOT_FOUND, Map.of());
+      return new AuthenticationConfigManagementResponse(
+          AuthenticationConfigManagementStatus.NOT_FOUND, Map.of());
     }
 
-    return new AuthenticationPolicyConfigManagementResponse(
-        AuthenticationPolicyConfigManagementStatus.OK, configuration.toMap());
+    return new AuthenticationConfigManagementResponse(
+        AuthenticationConfigManagementStatus.OK, configuration.toMap());
   }
 
   @Override
-  public AuthenticationPolicyConfigManagementResponse update(
+  public AuthenticationConfigManagementResponse update(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      AuthenticationPolicyConfigurationIdentifier identifier,
-      AuthenticationPolicyConfigRequest request,
+      AuthenticationConfigurationIdentifier identifier,
+      AuthenticationConfigRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
     AdminPermissions permissions = getRequiredPermissions("update");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    AuthenticationPolicyConfiguration before =
-        authenticationPolicyConfigurationQueryRepository.find(tenant, identifier);
+    AuthenticationConfiguration before =
+        authenticationConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
 
-    AuthenticationPolicyConfigUpdateContextCreator contextCreator =
-        new AuthenticationPolicyConfigUpdateContextCreator(tenant, before, request, dryRun);
-    AuthenticationPolicyConfigUpdateContext context = contextCreator.create();
+    AuthenticationConfigUpdateContextCreator contextCreator =
+        new AuthenticationConfigUpdateContextCreator(tenant, before, request, dryRun);
+    AuthenticationConfigUpdateContext context = contextCreator.create();
 
     AuditLog auditLog =
         AuditLogCreator.createOnUpdate(
-            "AuthenticationPolicyConfigurationManagementApi.update",
+            "AuthenticationConfigurationManagementApi.update",
             tenant,
             operator,
             oAuthToken,
@@ -262,37 +256,37 @@ public class AuthenticationPolicyConfigurationManagementEntryService
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new AuthenticationPolicyConfigManagementResponse(
-          AuthenticationPolicyConfigManagementStatus.FORBIDDEN, response);
+      return new AuthenticationConfigManagementResponse(
+          AuthenticationConfigManagementStatus.FORBIDDEN, response);
     }
 
     if (context.isDryRun()) {
       return context.toResponse();
     }
 
-    authenticationPolicyConfigurationCommandRepository.update(tenant, context.after());
+    authenticationConfigurationCommandRepository.update(tenant, context.after());
 
     return context.toResponse();
   }
 
   @Override
-  public AuthenticationPolicyConfigManagementResponse delete(
+  public AuthenticationConfigManagementResponse delete(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      AuthenticationPolicyConfigurationIdentifier identifier,
+      AuthenticationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
     AdminPermissions permissions = getRequiredPermissions("delete");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    AuthenticationPolicyConfiguration configuration =
-        authenticationPolicyConfigurationQueryRepository.find(tenant, identifier);
+    AuthenticationConfiguration configuration =
+        authenticationConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
 
     AuditLog auditLog =
         AuditLogCreator.createOnDeletion(
-            "AuthenticationPolicyConfigurationManagementApi.delete",
+            "AuthenticationConfigurationManagementApi.delete",
             "delete",
             tenant,
             operator,
@@ -310,18 +304,18 @@ public class AuthenticationPolicyConfigurationManagementEntryService
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new AuthenticationPolicyConfigManagementResponse(
-          AuthenticationPolicyConfigManagementStatus.FORBIDDEN, response);
+      return new AuthenticationConfigManagementResponse(
+          AuthenticationConfigManagementStatus.FORBIDDEN, response);
     }
 
     if (!configuration.exists()) {
-      return new AuthenticationPolicyConfigManagementResponse(
-          AuthenticationPolicyConfigManagementStatus.NOT_FOUND, Map.of());
+      return new AuthenticationConfigManagementResponse(
+          AuthenticationConfigManagementStatus.NOT_FOUND, Map.of());
     }
 
-    authenticationPolicyConfigurationCommandRepository.delete(tenant, configuration);
+    authenticationConfigurationCommandRepository.delete(tenant, configuration);
 
-    return new AuthenticationPolicyConfigManagementResponse(
-        AuthenticationPolicyConfigManagementStatus.NO_CONTENT, configuration.toMap());
+    return new AuthenticationConfigManagementResponse(
+        AuthenticationConfigManagementStatus.NO_CONTENT, configuration.toMap());
   }
 }

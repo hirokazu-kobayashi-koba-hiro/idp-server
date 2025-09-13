@@ -50,6 +50,10 @@ public class AssignedTenant implements UuidConvertable {
     return type;
   }
 
+  public boolean exists() {
+    return id != null && !id.isEmpty();
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("id", id);

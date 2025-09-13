@@ -14,19 +14,24 @@
  * limitations under the License.
  */
 
-package org.idp.server.usecases.control_plane.tenant_manager;
+package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
-import org.idp.server.control_plane.management.audit.AuditLogManagementApi;
-import org.idp.server.control_plane.management.audit.io.AuditLogManagementResponse;
-import org.idp.server.control_plane.management.audit.io.AuditLogManagementStatus;
+import org.idp.server.control_plane.management.authentication.transaction.AuthenticationTransactionManagementApi;
+import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionManagementResponse;
+import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionManagementStatus;
+import org.idp.server.core.openid.authentication.AuthenticationTransaction;
+import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.openid.authentication.AuthenticationTransactionQueries;
+import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
-import org.idp.server.platform.audit.*;
+import org.idp.server.platform.audit.AuditLog;
+import org.idp.server.platform.audit.AuditLogWriters;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -35,35 +40,37 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
 @Transaction
-public class AuditLogManagementEntryService implements AuditLogManagementApi {
+public class AuthenticationTransactionManagementEntryService
+    implements AuthenticationTransactionManagementApi {
 
-  AuditLogQueryRepository auditLogQueryRepository;
+  AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository;
   TenantQueryRepository tenantQueryRepository;
   AuditLogWriters auditLogWriters;
-  LoggerWrapper log = LoggerWrapper.getLogger(AuditLogManagementEntryService.class);
+  LoggerWrapper log =
+      LoggerWrapper.getLogger(AuthenticationTransactionManagementEntryService.class);
 
-  public AuditLogManagementEntryService(
-      AuditLogQueryRepository auditLogQueryRepository,
+  public AuthenticationTransactionManagementEntryService(
+      AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
       TenantQueryRepository tenantQueryRepository,
       AuditLogWriters auditLogWriters) {
-    this.auditLogQueryRepository = auditLogQueryRepository;
+    this.authenticationTransactionQueryRepository = authenticationTransactionQueryRepository;
     this.tenantQueryRepository = tenantQueryRepository;
     this.auditLogWriters = auditLogWriters;
   }
 
   @Override
-  public AuditLogManagementResponse findList(
+  public AuthenticationTransactionManagementResponse findList(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      AuditLogQueries queries,
+      AuthenticationTransactionQueries queries,
       RequestAttributes requestAttributes) {
     AdminPermissions permissions = getRequiredPermissions("findList");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
-            "AuditLogManagementApi.findList",
+            "AuthenticationInteractionManagementApi.findList",
             "findList",
             tenant,
             operator,
@@ -80,45 +87,57 @@ public class AuditLogManagementEntryService implements AuditLogManagementApi {
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new AuditLogManagementResponse(AuditLogManagementStatus.FORBIDDEN, response);
+      return new AuthenticationTransactionManagementResponse(
+          AuthenticationTransactionManagementStatus.FORBIDDEN, response);
     }
 
-    long totalCount = auditLogQueryRepository.findTotalCount(tenant, queries);
+    long totalCount = authenticationTransactionQueryRepository.findTotalCount(tenant, queries);
     if (totalCount == 0) {
       Map<String, Object> response = new HashMap<>();
       response.put("list", List.of());
       response.put("total_count", 0);
       response.put("limit", queries.limit());
       response.put("offset", queries.offset());
-      return new AuditLogManagementResponse(AuditLogManagementStatus.OK, response);
+      return new AuthenticationTransactionManagementResponse(
+          AuthenticationTransactionManagementStatus.OK, response);
     }
 
-    List<AuditLog> auditLogs = auditLogQueryRepository.findList(tenant, queries);
+    List<AuthenticationTransaction> authenticationTransactions =
+        authenticationTransactionQueryRepository.findList(tenant, queries);
 
     Map<String, Object> response = new HashMap<>();
-    response.put("list", auditLogs.stream().map(AuditLog::toMap).toList());
+    response.put(
+        "list",
+        authenticationTransactions.stream().map(AuthenticationTransaction::toRequestMap).toList());
     response.put("total_count", totalCount);
     response.put("limit", queries.limit());
     response.put("offset", queries.offset());
 
-    return new AuditLogManagementResponse(AuditLogManagementStatus.OK, response);
+    return new AuthenticationTransactionManagementResponse(
+        AuthenticationTransactionManagementStatus.OK, response);
   }
 
   @Override
-  public AuditLogManagementResponse get(
+  public AuthenticationTransactionManagementResponse get(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      AuditLogIdentifier identifier,
+      AuthenticationTransactionIdentifier identifier,
       RequestAttributes requestAttributes) {
     AdminPermissions permissions = getRequiredPermissions("get");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    AuditLog findAuditLog = auditLogQueryRepository.find(tenant, identifier);
+    AuthenticationTransaction authenticationTransaction =
+        authenticationTransactionQueryRepository.find(tenant, identifier);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
-            "AuditLogManagementApi.get", "get", tenant, operator, oAuthToken, requestAttributes);
+            "AuthenticationInteractionManagementApi.get",
+            "get",
+            tenant,
+            operator,
+            oAuthToken,
+            requestAttributes);
     auditLogWriters.write(tenant, auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
@@ -130,13 +149,16 @@ public class AuditLogManagementEntryService implements AuditLogManagementApi {
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new AuditLogManagementResponse(AuditLogManagementStatus.FORBIDDEN, response);
+      return new AuthenticationTransactionManagementResponse(
+          AuthenticationTransactionManagementStatus.FORBIDDEN, response);
     }
 
-    if (!findAuditLog.exists()) {
-      return new AuditLogManagementResponse(AuditLogManagementStatus.NOT_FOUND, Map.of());
+    if (!authenticationTransaction.exists()) {
+      return new AuthenticationTransactionManagementResponse(
+          AuthenticationTransactionManagementStatus.NOT_FOUND, Map.of());
     }
 
-    return new AuditLogManagementResponse(AuditLogManagementStatus.OK, findAuditLog.toMap());
+    return new AuthenticationTransactionManagementResponse(
+        AuthenticationTransactionManagementStatus.OK, authenticationTransaction.toRequestMap());
   }
 }

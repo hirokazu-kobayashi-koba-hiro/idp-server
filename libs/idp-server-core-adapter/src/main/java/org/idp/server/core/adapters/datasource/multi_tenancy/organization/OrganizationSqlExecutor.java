@@ -21,6 +21,7 @@ import java.util.Map;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationQueries;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public interface OrganizationSqlExecutor {
   void insert(Organization organization);
@@ -32,4 +33,7 @@ public interface OrganizationSqlExecutor {
   Map<String, String> selectOne(OrganizationIdentifier identifier);
 
   List<Map<String, String>> selectList(OrganizationQueries queries);
+
+  Map<String, String> selectAssignedTenant(
+      OrganizationIdentifier organizationId, TenantIdentifier tenantId);
 }

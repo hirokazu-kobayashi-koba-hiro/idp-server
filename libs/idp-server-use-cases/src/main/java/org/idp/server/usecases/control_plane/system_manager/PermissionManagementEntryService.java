@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
-package org.idp.server.usecases.control_plane.tenant_manager;
+package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
-import org.idp.server.control_plane.management.oidc.client.*;
-import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
-import org.idp.server.control_plane.management.oidc.client.io.ClientManagementStatus;
-import org.idp.server.control_plane.management.oidc.client.io.ClientRegistrationRequest;
-import org.idp.server.control_plane.management.oidc.client.validator.ClientRegistrationRequestValidationResult;
-import org.idp.server.control_plane.management.oidc.client.validator.ClientRegistrationRequestValidator;
+import org.idp.server.control_plane.management.permission.*;
+import org.idp.server.control_plane.management.permission.io.PermissionManagementResponse;
+import org.idp.server.control_plane.management.permission.io.PermissionManagementStatus;
+import org.idp.server.control_plane.management.permission.io.PermissionRequest;
+import org.idp.server.control_plane.management.permission.validator.PermissionRequestValidationResult;
+import org.idp.server.control_plane.management.permission.validator.PermissionRequestValidator;
+import org.idp.server.control_plane.management.permission.validator.PermissionUpdateRequestValidator;
+import org.idp.server.control_plane.management.permission.verifier.PermissionRegistrationVerificationResult;
+import org.idp.server.control_plane.management.permission.verifier.PermissionRegistrationVerifier;
+import org.idp.server.control_plane.management.permission.verifier.PermissionVerifier;
 import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
-import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationCommandRepository;
-import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
-import org.idp.server.core.openid.oauth.configuration.client.ClientIdentifier;
-import org.idp.server.core.openid.oauth.configuration.client.ClientQueries;
+import org.idp.server.core.openid.identity.permission.*;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogWriters;
@@ -44,47 +44,58 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
 @Transaction
-public class ClientManagementEntryService implements ClientManagementApi {
+public class PermissionManagementEntryService implements PermissionManagementApi {
 
   TenantQueryRepository tenantQueryRepository;
-  ClientConfigurationCommandRepository clientConfigurationCommandRepository;
-  ClientConfigurationQueryRepository clientConfigurationQueryRepository;
+  PermissionQueryRepository permissionQueryRepository;
+  PermissionCommandRepository permissionCommandRepository;
+  PermissionRegistrationVerifier verifier;
   AuditLogWriters auditLogWriters;
-  LoggerWrapper log = LoggerWrapper.getLogger(ClientManagementEntryService.class);
+  LoggerWrapper log = LoggerWrapper.getLogger(PermissionManagementEntryService.class);
 
-  public ClientManagementEntryService(
+  public PermissionManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
-      ClientConfigurationCommandRepository clientConfigurationCommandRepository,
-      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      PermissionQueryRepository permissionQueryRepository,
+      PermissionCommandRepository permissionCommandRepository,
       AuditLogWriters auditLogWriters) {
     this.tenantQueryRepository = tenantQueryRepository;
-    this.clientConfigurationCommandRepository = clientConfigurationCommandRepository;
-    this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
+    this.permissionQueryRepository = permissionQueryRepository;
+    this.permissionCommandRepository = permissionCommandRepository;
+    PermissionVerifier permissionVerifier = new PermissionVerifier(permissionQueryRepository);
+    this.verifier = new PermissionRegistrationVerifier(permissionVerifier);
     this.auditLogWriters = auditLogWriters;
   }
 
-  public ClientManagementResponse create(
+  @Override
+  public PermissionManagementResponse create(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      ClientRegistrationRequest request,
+      PermissionRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
     AdminPermissions permissions = getRequiredPermissions("create");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    ClientRegistrationRequestValidator validator =
-        new ClientRegistrationRequestValidator(request, dryRun);
-    ClientRegistrationRequestValidationResult validate = validator.validate();
 
-    ClientRegistrationContextCreator contextCreator =
-        new ClientRegistrationContextCreator(tenant, request, dryRun);
-    ClientRegistrationContext context = contextCreator.create();
+    PermissionRequestValidator validator = new PermissionRequestValidator(request, dryRun);
+    PermissionRequestValidationResult validate = validator.validate();
+
+    PermissionRegistrationContextCreator permissionRegistrationContextCreator =
+        new PermissionRegistrationContextCreator(tenant, request, dryRun);
+    PermissionRegistrationContext context = permissionRegistrationContextCreator.create();
+
+    PermissionRegistrationVerificationResult verificationResult = verifier.verify(context);
 
     AuditLog auditLog =
         AuditLogCreator.create(
-            "ClientManagementApi.create", tenant, operator, oAuthToken, context, requestAttributes);
+            "PermissionManagementApi.create",
+            tenant,
+            operator,
+            oAuthToken,
+            context,
+            requestAttributes);
     auditLogWriters.write(tenant, auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
@@ -96,28 +107,32 @@ public class ClientManagementEntryService implements ClientManagementApi {
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new ClientManagementResponse(ClientManagementStatus.FORBIDDEN, response);
+      return new PermissionManagementResponse(PermissionManagementStatus.FORBIDDEN, response);
     }
 
     if (!validate.isValid()) {
       return validate.errorResponse();
     }
 
+    if (!verificationResult.isValid()) {
+      return verificationResult.errorResponse();
+    }
+
     if (dryRun) {
       return context.toResponse();
     }
 
-    clientConfigurationCommandRepository.register(tenant, context.configuration());
+    permissionCommandRepository.register(tenant, context.permission());
 
     return context.toResponse();
   }
 
   @Override
-  public ClientManagementResponse findList(
+  public PermissionManagementResponse findList(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      ClientQueries queries,
+      PermissionQueries queries,
       RequestAttributes requestAttributes) {
 
     AdminPermissions permissions = getRequiredPermissions("findList");
@@ -126,7 +141,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
-            "ClientManagementApi.findList",
+            "PermissionManagementApi.findList",
             "findList",
             tenant,
             operator,
@@ -143,48 +158,45 @@ public class ClientManagementEntryService implements ClientManagementApi {
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new ClientManagementResponse(ClientManagementStatus.FORBIDDEN, response);
+      return new PermissionManagementResponse(PermissionManagementStatus.FORBIDDEN, response);
     }
 
-    long totalCount = clientConfigurationQueryRepository.findTotalCount(tenant, queries);
+    long totalCount = permissionQueryRepository.findTotalCount(tenant, queries);
     if (totalCount == 0) {
       Map<String, Object> response = new HashMap<>();
       response.put("list", List.of());
-      response.put("total_count", totalCount);
+      response.put("total_count", 0);
       response.put("limit", queries.limit());
       response.put("offset", queries.offset());
-      return new ClientManagementResponse(ClientManagementStatus.OK, response);
+      return new PermissionManagementResponse(PermissionManagementStatus.OK, response);
     }
 
-    List<ClientConfiguration> clientConfigurations =
-        clientConfigurationQueryRepository.findList(tenant, queries);
-
+    List<Permission> permissionList = permissionQueryRepository.findList(tenant, queries);
     Map<String, Object> response = new HashMap<>();
-    response.put("list", clientConfigurations.stream().map(ClientConfiguration::toMap).toList());
+    response.put("list", permissionList.stream().map(Permission::toMap).toList());
     response.put("total_count", totalCount);
     response.put("limit", queries.limit());
     response.put("offset", queries.offset());
 
-    return new ClientManagementResponse(ClientManagementStatus.OK, response);
+    return new PermissionManagementResponse(PermissionManagementStatus.OK, response);
   }
 
   @Override
-  public ClientManagementResponse get(
+  public PermissionManagementResponse get(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      ClientIdentifier clientIdentifier,
+      PermissionIdentifier identifier,
       RequestAttributes requestAttributes) {
 
     AdminPermissions permissions = getRequiredPermissions("get");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    ClientConfiguration clientConfiguration =
-        clientConfigurationQueryRepository.findWithDisabled(tenant, clientIdentifier, true);
+    Permission permission = permissionQueryRepository.find(tenant, identifier);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
-            "ClientManagementApi.get", "get", tenant, operator, oAuthToken, requestAttributes);
+            "PermissionManagementApi.get", "get", tenant, operator, oAuthToken, requestAttributes);
     auditLogWriters.write(tenant, auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
@@ -196,43 +208,47 @@ public class ClientManagementEntryService implements ClientManagementApi {
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new ClientManagementResponse(ClientManagementStatus.FORBIDDEN, response);
+      return new PermissionManagementResponse(PermissionManagementStatus.FORBIDDEN, response);
     }
 
-    if (!clientConfiguration.exists()) {
-      return new ClientManagementResponse(ClientManagementStatus.NOT_FOUND, Map.of());
+    if (!permission.exists()) {
+      return new PermissionManagementResponse(PermissionManagementStatus.NOT_FOUND, Map.of());
     }
 
-    return new ClientManagementResponse(ClientManagementStatus.OK, clientConfiguration.toMap());
+    return new PermissionManagementResponse(PermissionManagementStatus.OK, permission.toMap());
   }
 
   @Override
-  public ClientManagementResponse update(
+  public PermissionManagementResponse update(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      ClientIdentifier clientIdentifier,
-      ClientRegistrationRequest request,
+      PermissionIdentifier identifier,
+      PermissionRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
     AdminPermissions permissions = getRequiredPermissions("update");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    ClientConfiguration before =
-        clientConfigurationQueryRepository.findWithDisabled(tenant, clientIdentifier, true);
+    Permission before = permissionQueryRepository.find(tenant, identifier);
 
-    ClientRegistrationRequestValidator validator =
-        new ClientRegistrationRequestValidator(request, dryRun);
-    ClientRegistrationRequestValidationResult validate = validator.validate();
+    PermissionUpdateRequestValidator validator =
+        new PermissionUpdateRequestValidator(request, dryRun);
+    PermissionRequestValidationResult validate = validator.validate();
 
-    ClientUpdateContextCreator contextCreator =
-        new ClientUpdateContextCreator(tenant, before, request, dryRun);
-    ClientUpdateContext context = contextCreator.create();
+    PermissionUpdateContextCreator permissionUpdateContextCreator =
+        new PermissionUpdateContextCreator(tenant, before, request, dryRun);
+    PermissionUpdateContext context = permissionUpdateContextCreator.create();
 
     AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "ClientManagementApi.update", tenant, operator, oAuthToken, context, requestAttributes);
+        AuditLogCreator.createOnRead(
+            "PermissionManagementApi.update",
+            "update",
+            tenant,
+            operator,
+            oAuthToken,
+            requestAttributes);
     auditLogWriters.write(tenant, auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
@@ -244,36 +260,50 @@ public class ClientManagementEntryService implements ClientManagementApi {
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new ClientManagementResponse(ClientManagementStatus.FORBIDDEN, response);
+      return new PermissionManagementResponse(PermissionManagementStatus.FORBIDDEN, response);
     }
 
     if (!before.exists()) {
-      return new ClientManagementResponse(ClientManagementStatus.NOT_FOUND, Map.of());
+      return new PermissionManagementResponse(PermissionManagementStatus.NOT_FOUND, Map.of());
     }
 
     if (!validate.isValid()) {
       return validate.errorResponse();
     }
 
-    if (dryRun) {
+    if (context.isDryRun()) {
       return context.toResponse();
     }
-
-    clientConfigurationCommandRepository.update(tenant, context.after());
+    permissionCommandRepository.update(tenant, context.after());
 
     return context.toResponse();
   }
 
   @Override
-  public ClientManagementResponse delete(
+  public PermissionManagementResponse delete(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      ClientIdentifier clientIdentifier,
+      PermissionIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
     AdminPermissions permissions = getRequiredPermissions("delete");
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    Permission permission = permissionQueryRepository.find(tenant, identifier);
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnDeletion(
+            "PermissionManagementApi.delete",
+            "delete",
+            tenant,
+            operator,
+            oAuthToken,
+            permission.toMap(),
+            requestAttributes);
+    auditLogWriters.write(tenant, auditLog);
+
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "access_denied");
@@ -283,30 +313,19 @@ public class ClientManagementEntryService implements ClientManagementApi {
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new ClientManagementResponse(ClientManagementStatus.FORBIDDEN, response);
+      return new PermissionManagementResponse(PermissionManagementStatus.FORBIDDEN, response);
     }
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    ClientConfiguration clientConfiguration =
-        clientConfigurationQueryRepository.findWithDisabled(tenant, clientIdentifier, true);
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnDeletion(
-            "ClientManagementApi.delete",
-            "delete",
-            tenant,
-            operator,
-            oAuthToken,
-            clientConfiguration.toMap(),
-            requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
-
-    if (!clientConfiguration.exists()) {
-      return new ClientManagementResponse(ClientManagementStatus.NOT_FOUND, Map.of());
+    if (!permission.exists()) {
+      return new PermissionManagementResponse(PermissionManagementStatus.NOT_FOUND, Map.of());
     }
 
-    clientConfigurationCommandRepository.delete(tenant, clientConfiguration);
+    if (dryRun) {
+      return new PermissionManagementResponse(PermissionManagementStatus.NO_CONTENT, Map.of());
+    }
 
-    return new ClientManagementResponse(ClientManagementStatus.NO_CONTENT, Map.of());
+    permissionCommandRepository.delete(tenant, permission);
+
+    return new PermissionManagementResponse(PermissionManagementStatus.NO_CONTENT, Map.of());
   }
 }

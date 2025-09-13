@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 
-package org.idp.server.usecases.control_plane.tenant_manager;
+package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
-import org.idp.server.control_plane.management.identity.verification.*;
-import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
-import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementStatus;
-import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigRegistrationRequest;
-import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigUpdateRequest;
-import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
-import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
-import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationQueries;
-import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationCommandRepository;
-import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationQueryRepository;
+import org.idp.server.control_plane.management.federation.*;
+import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
+import org.idp.server.control_plane.management.federation.io.FederationConfigManagementStatus;
+import org.idp.server.control_plane.management.federation.io.FederationConfigRequest;
+import org.idp.server.core.openid.federation.FederationConfiguration;
+import org.idp.server.core.openid.federation.FederationConfigurationIdentifier;
+import org.idp.server.core.openid.federation.FederationQueries;
+import org.idp.server.core.openid.federation.repository.FederationConfigurationCommandRepository;
+import org.idp.server.core.openid.federation.repository.FederationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
@@ -43,52 +42,45 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
 @Transaction
-public class IdentityVerificationConfigManagementEntryService
-    implements IdentityVerificationConfigManagementApi {
+public class FederationConfigurationManagementEntryService
+    implements FederationConfigurationManagementApi {
 
-  IdentityVerificationConfigurationCommandRepository
-      identityVerificationConfigurationCommandRepository;
-  IdentityVerificationConfigurationQueryRepository identityVerificationConfigurationQueryRepository;
+  FederationConfigurationQueryRepository federationConfigurationQueryRepository;
+  FederationConfigurationCommandRepository federationConfigurationCommandRepository;
   TenantQueryRepository tenantQueryRepository;
   AuditLogWriters auditLogWriters;
-  LoggerWrapper log =
-      LoggerWrapper.getLogger(IdentityVerificationConfigManagementEntryService.class);
+  LoggerWrapper log = LoggerWrapper.getLogger(FederationConfigurationManagementEntryService.class);
 
-  public IdentityVerificationConfigManagementEntryService(
-      IdentityVerificationConfigurationCommandRepository
-          identityVerificationConfigurationCommandRepository,
-      IdentityVerificationConfigurationQueryRepository
-          identityVerificationConfigurationQueryRepository,
+  public FederationConfigurationManagementEntryService(
+      FederationConfigurationQueryRepository federationConfigurationQueryRepository,
+      FederationConfigurationCommandRepository federationConfigurationCommandRepository,
       TenantQueryRepository tenantQueryRepository,
       AuditLogWriters auditLogWriters) {
-    this.identityVerificationConfigurationCommandRepository =
-        identityVerificationConfigurationCommandRepository;
-    this.identityVerificationConfigurationQueryRepository =
-        identityVerificationConfigurationQueryRepository;
+    this.federationConfigurationQueryRepository = federationConfigurationQueryRepository;
+    this.federationConfigurationCommandRepository = federationConfigurationCommandRepository;
     this.tenantQueryRepository = tenantQueryRepository;
     this.auditLogWriters = auditLogWriters;
   }
 
   @Override
-  public IdentityVerificationConfigManagementResponse create(
+  public FederationConfigManagementResponse create(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      IdentityVerificationConfigRegistrationRequest request,
+      FederationConfigRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
-
     AdminPermissions permissions = getRequiredPermissions("create");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    IdentityVerificationConfigRegistrationContextCreator contextCreator =
-        new IdentityVerificationConfigRegistrationContextCreator(tenant, request, dryRun);
-    IdentityVerificationConfigRegistrationContext context = contextCreator.create();
+    FederationConfigRegistrationContextCreator contextCreator =
+        new FederationConfigRegistrationContextCreator(tenant, request, dryRun);
+    FederationConfigRegistrationContext context = contextCreator.create();
 
     AuditLog auditLog =
         AuditLogCreator.create(
-            "IdentityVerificationConfigManagementApi.create",
+            "FederationConfigurationManagementApi.create",
             tenant,
             operator,
             oAuthToken,
@@ -105,34 +97,33 @@ public class IdentityVerificationConfigManagementEntryService
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new IdentityVerificationConfigManagementResponse(
-          IdentityVerificationConfigManagementStatus.FORBIDDEN, response);
+      return new FederationConfigManagementResponse(
+          FederationConfigManagementStatus.FORBIDDEN, response);
     }
 
-    if (dryRun) {
+    if (context.isDryRun()) {
       return context.toResponse();
     }
 
-    identityVerificationConfigurationCommandRepository.register(
-        tenant, context.identityVerificationType(), context.configuration());
+    federationConfigurationCommandRepository.register(tenant, context.configuration());
 
     return context.toResponse();
   }
 
   @Override
-  public IdentityVerificationConfigManagementResponse findList(
+  public FederationConfigManagementResponse findList(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      IdentityVerificationQueries queries,
+      FederationQueries queries,
       RequestAttributes requestAttributes) {
-
     AdminPermissions permissions = getRequiredPermissions("findList");
+
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
-            "IdentityVerificationConfigManagementApi.findList",
+            "FederationConfigurationManagementApi.findList",
             "findList",
             tenant,
             operator,
@@ -149,53 +140,49 @@ public class IdentityVerificationConfigManagementEntryService
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new IdentityVerificationConfigManagementResponse(
-          IdentityVerificationConfigManagementStatus.FORBIDDEN, response);
+      return new FederationConfigManagementResponse(
+          FederationConfigManagementStatus.FORBIDDEN, response);
     }
 
-    long totalCount =
-        identityVerificationConfigurationQueryRepository.findTotalCount(tenant, queries);
+    long totalCount = federationConfigurationQueryRepository.findTotalCount(tenant, queries);
+
     if (totalCount == 0) {
       Map<String, Object> response = new HashMap<>();
       response.put("list", List.of());
       response.put("total_count", totalCount);
       response.put("limit", queries.limit());
       response.put("offset", queries.offset());
-      return new IdentityVerificationConfigManagementResponse(
-          IdentityVerificationConfigManagementStatus.OK, response);
+      return new FederationConfigManagementResponse(FederationConfigManagementStatus.OK, response);
     }
 
-    List<IdentityVerificationConfiguration> configurations =
-        identityVerificationConfigurationQueryRepository.findList(tenant, queries);
+    List<FederationConfiguration> configurations =
+        federationConfigurationQueryRepository.findList(tenant, queries);
 
     Map<String, Object> response = new HashMap<>();
-    response.put(
-        "list", configurations.stream().map(IdentityVerificationConfiguration::toMap).toList());
+    response.put("list", configurations.stream().map(FederationConfiguration::toMap).toList());
     response.put("total_count", totalCount);
     response.put("limit", queries.limit());
     response.put("offset", queries.offset());
 
-    return new IdentityVerificationConfigManagementResponse(
-        IdentityVerificationConfigManagementStatus.OK, response);
+    return new FederationConfigManagementResponse(FederationConfigManagementStatus.OK, response);
   }
 
   @Override
-  public IdentityVerificationConfigManagementResponse get(
+  public FederationConfigManagementResponse get(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      IdentityVerificationConfigurationIdentifier identifier,
+      FederationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes) {
-
     AdminPermissions permissions = getRequiredPermissions("get");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    IdentityVerificationConfiguration configuration =
-        identityVerificationConfigurationQueryRepository.find(tenant, identifier);
+    FederationConfiguration configuration =
+        federationConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
-            "IdentityVerificationConfigManagementApi.get",
+            "FederationConfigurationManagementApi.get",
             "get",
             tenant,
             operator,
@@ -212,42 +199,41 @@ public class IdentityVerificationConfigManagementEntryService
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new IdentityVerificationConfigManagementResponse(
-          IdentityVerificationConfigManagementStatus.FORBIDDEN, response);
+      return new FederationConfigManagementResponse(
+          FederationConfigManagementStatus.FORBIDDEN, response);
     }
 
     if (!configuration.exists()) {
-      return new IdentityVerificationConfigManagementResponse(
-          IdentityVerificationConfigManagementStatus.NOT_FOUND, Map.of());
+      return new FederationConfigManagementResponse(
+          FederationConfigManagementStatus.NOT_FOUND, Map.of());
     }
 
-    return new IdentityVerificationConfigManagementResponse(
-        IdentityVerificationConfigManagementStatus.OK, configuration.toMap());
+    return new FederationConfigManagementResponse(
+        FederationConfigManagementStatus.OK, configuration.toMap());
   }
 
   @Override
-  public IdentityVerificationConfigManagementResponse update(
+  public FederationConfigManagementResponse update(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      IdentityVerificationConfigurationIdentifier identifier,
-      IdentityVerificationConfigUpdateRequest request,
+      FederationConfigurationIdentifier identifier,
+      FederationConfigRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
-
     AdminPermissions permissions = getRequiredPermissions("update");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    IdentityVerificationConfiguration configuration =
-        identityVerificationConfigurationQueryRepository.find(tenant, identifier);
+    FederationConfiguration before =
+        federationConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
 
-    IdentityVerificationConfigUpdateContextCreator contextCreator =
-        new IdentityVerificationConfigUpdateContextCreator(tenant, request, configuration, dryRun);
-    IdentityVerificationConfigUpdateContext context = contextCreator.create();
+    FederationConfigUpdateContextCreator contextCreator =
+        new FederationConfigUpdateContextCreator(tenant, before, request, dryRun);
+    FederationConfigUpdateContext context = contextCreator.create();
 
     AuditLog auditLog =
         AuditLogCreator.createOnUpdate(
-            "IdentityVerificationConfigManagementApi.update",
+            "FederationConfigurationManagementApi.update",
             tenant,
             operator,
             oAuthToken,
@@ -264,48 +250,46 @@ public class IdentityVerificationConfigManagementEntryService
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new IdentityVerificationConfigManagementResponse(
-          IdentityVerificationConfigManagementStatus.FORBIDDEN, response);
+      return new FederationConfigManagementResponse(
+          FederationConfigManagementStatus.FORBIDDEN, response);
     }
 
-    if (!configuration.exists()) {
-      return new IdentityVerificationConfigManagementResponse(
-          IdentityVerificationConfigManagementStatus.NOT_FOUND, Map.of());
+    if (!before.exists()) {
+      return new FederationConfigManagementResponse(
+          FederationConfigManagementStatus.NOT_FOUND, Map.of());
     }
 
     if (context.isDryRun()) {
       return context.toResponse();
     }
 
-    identityVerificationConfigurationCommandRepository.update(
-        tenant, context.afterType(), context.after());
+    federationConfigurationCommandRepository.update(tenant, context.after());
 
     return context.toResponse();
   }
 
   @Override
-  public IdentityVerificationConfigManagementResponse delete(
+  public FederationConfigManagementResponse delete(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      IdentityVerificationConfigurationIdentifier identifier,
+      FederationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun) {
-
     AdminPermissions permissions = getRequiredPermissions("delete");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    IdentityVerificationConfiguration configuration =
-        identityVerificationConfigurationQueryRepository.find(tenant, identifier);
+    FederationConfiguration configuration =
+        federationConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
 
     AuditLog auditLog =
         AuditLogCreator.createOnDeletion(
-            "IdentityVerificationConfigManagementApi.delete",
+            "FederationConfigurationManagementApi.delete",
             "delete",
             tenant,
             operator,
             oAuthToken,
-            configuration.toMap(),
+            configuration.payload(),
             requestAttributes);
     auditLogWriters.write(tenant, auditLog);
 
@@ -318,24 +302,18 @@ public class IdentityVerificationConfigManagementEntryService
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new IdentityVerificationConfigManagementResponse(
-          IdentityVerificationConfigManagementStatus.FORBIDDEN, response);
+      return new FederationConfigManagementResponse(
+          FederationConfigManagementStatus.FORBIDDEN, response);
     }
 
     if (!configuration.exists()) {
-      return new IdentityVerificationConfigManagementResponse(
-          IdentityVerificationConfigManagementStatus.NOT_FOUND, Map.of());
+      return new FederationConfigManagementResponse(
+          FederationConfigManagementStatus.NOT_FOUND, Map.of());
     }
 
-    if (dryRun) {
-      return new IdentityVerificationConfigManagementResponse(
-          IdentityVerificationConfigManagementStatus.NO_CONTENT, Map.of());
-    }
+    federationConfigurationCommandRepository.delete(tenant, configuration);
 
-    identityVerificationConfigurationCommandRepository.delete(
-        tenant, configuration.type(), configuration);
-
-    return new IdentityVerificationConfigManagementResponse(
-        IdentityVerificationConfigManagementStatus.NO_CONTENT, Map.of());
+    return new FederationConfigManagementResponse(
+        FederationConfigManagementStatus.OK, configuration.payload());
   }
 }

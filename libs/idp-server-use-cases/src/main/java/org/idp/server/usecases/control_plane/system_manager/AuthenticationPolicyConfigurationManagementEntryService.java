@@ -14,17 +14,21 @@
  * limitations under the License.
  */
 
-package org.idp.server.usecases.control_plane.tenant_manager;
+package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
-import org.idp.server.control_plane.management.security.hook.*;
-import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
-import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementStatus;
-import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookRequest;
+import org.idp.server.control_plane.management.authentication.policy.*;
+import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementResponse;
+import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementStatus;
+import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigRequest;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfigurationIdentifier;
+import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationCommandRepository;
+import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
@@ -34,56 +38,55 @@ import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
-import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
-import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfigurationIdentifier;
-import org.idp.server.platform.security.repository.SecurityEventHookConfigurationCommandRepository;
-import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
 @Transaction
-public class SecurityEventHookConfigurationManagementEntryService
-    implements SecurityEventHookConfigurationManagementApi {
+public class AuthenticationPolicyConfigurationManagementEntryService
+    implements AuthenticationPolicyConfigurationManagementApi {
 
-  SecurityEventHookConfigurationCommandRepository securityEventHookConfigurationCommandRepository;
-  SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository;
+  AuthenticationPolicyConfigurationCommandRepository
+      authenticationPolicyConfigurationCommandRepository;
+  AuthenticationPolicyConfigurationQueryRepository authenticationPolicyConfigurationQueryRepository;
   TenantQueryRepository tenantQueryRepository;
   AuditLogWriters auditLogWriters;
   LoggerWrapper log =
-      LoggerWrapper.getLogger(SecurityEventHookConfigurationManagementEntryService.class);
+      LoggerWrapper.getLogger(AuthenticationPolicyConfigurationManagementEntryService.class);
 
-  public SecurityEventHookConfigurationManagementEntryService(
-      SecurityEventHookConfigurationCommandRepository
-          securityEventHookConfigurationCommandRepository,
-      SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository,
+  public AuthenticationPolicyConfigurationManagementEntryService(
+      AuthenticationPolicyConfigurationCommandRepository
+          authenticationPolicyConfigurationCommandRepository,
+      AuthenticationPolicyConfigurationQueryRepository
+          authenticationPolicyConfigurationQueryRepository,
       TenantQueryRepository tenantQueryRepository,
       AuditLogWriters auditLogWriters) {
-    this.securityEventHookConfigurationCommandRepository =
-        securityEventHookConfigurationCommandRepository;
-    this.securityEventHookConfigurationQueryRepository =
-        securityEventHookConfigurationQueryRepository;
+    this.authenticationPolicyConfigurationCommandRepository =
+        authenticationPolicyConfigurationCommandRepository;
+    this.authenticationPolicyConfigurationQueryRepository =
+        authenticationPolicyConfigurationQueryRepository;
     this.tenantQueryRepository = tenantQueryRepository;
     this.auditLogWriters = auditLogWriters;
   }
 
   @Override
-  public SecurityEventHookConfigManagementResponse create(
+  public AuthenticationPolicyConfigManagementResponse create(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      SecurityEventHookRequest request,
+      AuthenticationPolicyConfigRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
+
     AdminPermissions permissions = getRequiredPermissions("create");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    SecurityEventHookConfigRegistrationContextCreator contextCreator =
-        new SecurityEventHookConfigRegistrationContextCreator(tenant, request, dryRun);
-    SecurityEventHookConfigRegistrationContext context = contextCreator.create();
+    AuthenticationPolicyConfigRegistrationContextCreator contextCreator =
+        new AuthenticationPolicyConfigRegistrationContextCreator(tenant, request, dryRun);
+    AuthenticationPolicyConfigRegistrationContext context = contextCreator.create();
 
     AuditLog auditLog =
         AuditLogCreator.create(
-            "SecurityEventHookConfigurationManagementApi.create",
+            "AuthenticationPolicyConfigurationManagementApi.create",
             tenant,
             operator,
             oAuthToken,
@@ -100,36 +103,48 @@ public class SecurityEventHookConfigurationManagementEntryService
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new SecurityEventHookConfigManagementResponse(
-          SecurityEventHookConfigManagementStatus.FORBIDDEN, response);
+      return new AuthenticationPolicyConfigManagementResponse(
+          AuthenticationPolicyConfigManagementStatus.FORBIDDEN, response);
     }
 
     if (context.isDryRun()) {
       return context.toResponse();
     }
 
-    securityEventHookConfigurationCommandRepository.register(tenant, context.configuration());
+    authenticationPolicyConfigurationCommandRepository.register(tenant, context.configuration());
 
     return context.toResponse();
   }
 
   @Override
-  public SecurityEventHookConfigManagementResponse findList(
+  public AuthenticationPolicyConfigManagementResponse findList(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
       int limit,
       int offset,
       RequestAttributes requestAttributes) {
+
     AdminPermissions permissions = getRequiredPermissions("findList");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    List<SecurityEventHookConfiguration> configurations =
-        securityEventHookConfigurationQueryRepository.findList(tenant, limit, offset);
+    long totalCount = authenticationPolicyConfigurationQueryRepository.findTotalCount(tenant);
+    if (totalCount == 0) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("list", List.of());
+      response.put("total_count", 0);
+      response.put("limit", limit);
+      response.put("offset", offset);
+      return new AuthenticationPolicyConfigManagementResponse(
+          AuthenticationPolicyConfigManagementStatus.OK, response);
+    }
+
+    List<AuthenticationPolicyConfiguration> configurations =
+        authenticationPolicyConfigurationQueryRepository.findList(tenant, limit, offset);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
-            "SecurityEventHookConfigurationManagementApi.findList",
+            "AuthenticationPolicyConfigurationManagementApi.findList",
             "findList",
             tenant,
             operator,
@@ -146,34 +161,38 @@ public class SecurityEventHookConfigurationManagementEntryService
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new SecurityEventHookConfigManagementResponse(
-          SecurityEventHookConfigManagementStatus.FORBIDDEN, response);
+      return new AuthenticationPolicyConfigManagementResponse(
+          AuthenticationPolicyConfigManagementStatus.FORBIDDEN, response);
     }
 
     Map<String, Object> response = new HashMap<>();
     response.put(
-        "list", configurations.stream().map(SecurityEventHookConfiguration::toMap).toList());
+        "list", configurations.stream().map(AuthenticationPolicyConfiguration::toMap).toList());
+    response.put("total_count", totalCount);
+    response.put("limit", limit);
+    response.put("offset", offset);
 
-    return new SecurityEventHookConfigManagementResponse(
-        SecurityEventHookConfigManagementStatus.OK, response);
+    return new AuthenticationPolicyConfigManagementResponse(
+        AuthenticationPolicyConfigManagementStatus.OK, response);
   }
 
   @Override
-  public SecurityEventHookConfigManagementResponse get(
+  public AuthenticationPolicyConfigManagementResponse get(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      SecurityEventHookConfigurationIdentifier identifier,
+      AuthenticationPolicyConfigurationIdentifier identifier,
       RequestAttributes requestAttributes) {
+
     AdminPermissions permissions = getRequiredPermissions("get");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    SecurityEventHookConfiguration configuration =
-        securityEventHookConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
+    AuthenticationPolicyConfiguration configuration =
+        authenticationPolicyConfigurationQueryRepository.find(tenant, identifier);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
-            "SecurityEventHookConfigurationManagementApi.get",
+            "AuthenticationPolicyConfigurationManagementApi.get",
             "get",
             tenant,
             operator,
@@ -190,42 +209,42 @@ public class SecurityEventHookConfigurationManagementEntryService
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new SecurityEventHookConfigManagementResponse(
-          SecurityEventHookConfigManagementStatus.FORBIDDEN, response);
+      return new AuthenticationPolicyConfigManagementResponse(
+          AuthenticationPolicyConfigManagementStatus.FORBIDDEN, response);
     }
 
     if (!configuration.exists()) {
-      return new SecurityEventHookConfigManagementResponse(
-          SecurityEventHookConfigManagementStatus.NOT_FOUND, Map.of());
+      return new AuthenticationPolicyConfigManagementResponse(
+          AuthenticationPolicyConfigManagementStatus.NOT_FOUND, Map.of());
     }
 
-    return new SecurityEventHookConfigManagementResponse(
-        SecurityEventHookConfigManagementStatus.OK, configuration.toMap());
+    return new AuthenticationPolicyConfigManagementResponse(
+        AuthenticationPolicyConfigManagementStatus.OK, configuration.toMap());
   }
 
   @Override
-  public SecurityEventHookConfigManagementResponse update(
+  public AuthenticationPolicyConfigManagementResponse update(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      SecurityEventHookConfigurationIdentifier identifier,
-      SecurityEventHookRequest request,
+      AuthenticationPolicyConfigurationIdentifier identifier,
+      AuthenticationPolicyConfigRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
+
     AdminPermissions permissions = getRequiredPermissions("update");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    SecurityEventHookConfiguration before =
-        securityEventHookConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
+    AuthenticationPolicyConfiguration before =
+        authenticationPolicyConfigurationQueryRepository.find(tenant, identifier);
 
-    SecurityEventHookConfigUpdateContextCreator contextCreator =
-        new SecurityEventHookConfigUpdateContextCreator(
-            tenant, before, identifier, request, dryRun);
-    SecurityEventHookConfigUpdateContext context = contextCreator.create();
+    AuthenticationPolicyConfigUpdateContextCreator contextCreator =
+        new AuthenticationPolicyConfigUpdateContextCreator(tenant, before, request, dryRun);
+    AuthenticationPolicyConfigUpdateContext context = contextCreator.create();
 
     AuditLog auditLog =
         AuditLogCreator.createOnUpdate(
-            "SecurityEventHookConfigurationManagementApi.update",
+            "AuthenticationPolicyConfigurationManagementApi.update",
             tenant,
             operator,
             oAuthToken,
@@ -242,41 +261,37 @@ public class SecurityEventHookConfigurationManagementEntryService
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new SecurityEventHookConfigManagementResponse(
-          SecurityEventHookConfigManagementStatus.FORBIDDEN, response);
-    }
-
-    if (!before.exists()) {
-      return new SecurityEventHookConfigManagementResponse(
-          SecurityEventHookConfigManagementStatus.NOT_FOUND, Map.of());
+      return new AuthenticationPolicyConfigManagementResponse(
+          AuthenticationPolicyConfigManagementStatus.FORBIDDEN, response);
     }
 
     if (context.isDryRun()) {
       return context.toResponse();
     }
 
-    securityEventHookConfigurationCommandRepository.update(tenant, context.after());
+    authenticationPolicyConfigurationCommandRepository.update(tenant, context.after());
 
     return context.toResponse();
   }
 
   @Override
-  public SecurityEventHookConfigManagementResponse delete(
+  public AuthenticationPolicyConfigManagementResponse delete(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      SecurityEventHookConfigurationIdentifier identifier,
+      AuthenticationPolicyConfigurationIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun) {
+
     AdminPermissions permissions = getRequiredPermissions("delete");
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    SecurityEventHookConfiguration configuration =
-        securityEventHookConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
+    AuthenticationPolicyConfiguration configuration =
+        authenticationPolicyConfigurationQueryRepository.find(tenant, identifier);
 
     AuditLog auditLog =
         AuditLogCreator.createOnDeletion(
-            "SecurityEventHookConfigurationManagementApi.delete",
+            "AuthenticationPolicyConfigurationManagementApi.delete",
             "delete",
             tenant,
             operator,
@@ -294,18 +309,18 @@ public class SecurityEventHookConfigurationManagementEntryService
               "permission denied required permission %s, but %s",
               permissions.valuesAsString(), operator.permissionsAsString()));
       log.warn(response.toString());
-      return new SecurityEventHookConfigManagementResponse(
-          SecurityEventHookConfigManagementStatus.FORBIDDEN, response);
+      return new AuthenticationPolicyConfigManagementResponse(
+          AuthenticationPolicyConfigManagementStatus.FORBIDDEN, response);
     }
 
     if (!configuration.exists()) {
-      return new SecurityEventHookConfigManagementResponse(
-          SecurityEventHookConfigManagementStatus.NOT_FOUND, Map.of());
+      return new AuthenticationPolicyConfigManagementResponse(
+          AuthenticationPolicyConfigManagementStatus.NOT_FOUND, Map.of());
     }
 
-    securityEventHookConfigurationCommandRepository.delete(tenant, configuration);
+    authenticationPolicyConfigurationCommandRepository.delete(tenant, configuration);
 
-    return new SecurityEventHookConfigManagementResponse(
-        SecurityEventHookConfigManagementStatus.NO_CONTENT, null);
+    return new AuthenticationPolicyConfigManagementResponse(
+        AuthenticationPolicyConfigManagementStatus.NO_CONTENT, configuration.toMap());
   }
 }
