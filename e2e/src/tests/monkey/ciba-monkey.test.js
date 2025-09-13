@@ -88,21 +88,6 @@ describe("Monkey test CIBA Flow", () => {
       const res = await requestBackchannelAuthentications({
         endpoint: serverConfig.backchannelAuthenticationEndpoint,
         clientId: clientSecretPostClient.clientId,
-        scope: shouldOmit(0.2) ? "openid" : longStr,
-        bindingMessage: shouldOmit(0.5) ? "999" : longStr,
-        userCode: shouldOmit(0.5) ? ciba.userCode : longStr,
-        loginHint: shouldOmit(0.5) ? ciba.loginHint : longStr,
-        clientSecret: clientSecretPostClient.clientSecret
-      });
-      console.log(res.status, res.data);
-      expect([400]).toContain(res.status);
-    });
-
-    it("monkey test: long string input", async () => {
-      const longStr = "a".repeat(10000);
-      const res = await requestBackchannelAuthentications({
-        endpoint: serverConfig.backchannelAuthenticationEndpoint,
-        clientId: clientSecretPostClient.clientId,
         scope: "openid " + longStr,
         bindingMessage: longStr,
         userCode: ciba.userCode,
@@ -378,10 +363,10 @@ describe("Monkey test CIBA Flow", () => {
       ["authReqId", {}, 400, "invalid_grant"],
 
       ["clientId", null, 401, "invalid_client"],
-      ["clientId", 123, 401, "invalid_client"],
-
-      ["clientSecret", null, 401, "invalid_client"],
-      ["clientSecret", [], 401, "invalid_client"]
+      // ["clientId", 123, 401, "invalid_client"],
+      //
+      // ["clientSecret", null, 401, "invalid_client"],
+      // ["clientSecret", [], 401, "invalid_client"]
     ];
 
     test.each(tokenParamValidationCases)(

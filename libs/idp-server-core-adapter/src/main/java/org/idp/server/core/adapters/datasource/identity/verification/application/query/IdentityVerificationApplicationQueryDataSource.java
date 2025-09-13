@@ -32,18 +32,17 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class IdentityVerificationApplicationQueryDataSource
     implements IdentityVerificationApplicationQueryRepository {
 
-  IdentityVerificationApplicationQuerySqlExecutors executors;
+  IdentityVerificationApplicationQuerySqlExecutor executor;
   LoggerWrapper log = LoggerWrapper.getLogger(IdentityVerificationApplicationQueryDataSource.class);
 
-  public IdentityVerificationApplicationQueryDataSource() {
-    this.executors = new IdentityVerificationApplicationQuerySqlExecutors();
+  public IdentityVerificationApplicationQueryDataSource(
+      IdentityVerificationApplicationQuerySqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public IdentityVerificationApplication get(
       Tenant tenant, User user, IdentityVerificationApplicationIdentifier identifier) {
-    IdentityVerificationApplicationQuerySqlExecutor executor = executors.get(tenant.databaseType());
-
     Map<String, String> result = executor.selectOne(tenant, user, identifier);
 
     if (result == null || result.isEmpty()) {
@@ -57,8 +56,6 @@ public class IdentityVerificationApplicationQueryDataSource
   @Override
   public IdentityVerificationApplication get(
       Tenant tenant, IdentityVerificationApplicationIdentifier identifier) {
-    IdentityVerificationApplicationQuerySqlExecutor executor = executors.get(tenant.databaseType());
-
     Map<String, String> result = executor.selectOne(tenant, identifier);
 
     if (result == null || result.isEmpty()) {
@@ -73,9 +70,6 @@ public class IdentityVerificationApplicationQueryDataSource
   @Override
   public IdentityVerificationApplication get(Tenant tenant, String key, String identifier) {
     try {
-      IdentityVerificationApplicationQuerySqlExecutor executor =
-          executors.get(tenant.databaseType());
-
       Map<String, String> result = executor.selectOneByDetail(tenant, key, identifier);
 
       if (result == null || result.isEmpty()) {
@@ -96,9 +90,6 @@ public class IdentityVerificationApplicationQueryDataSource
 
   @Override
   public IdentityVerificationApplications findAll(Tenant tenant, User user) {
-
-    IdentityVerificationApplicationQuerySqlExecutor executor = executors.get(tenant.databaseType());
-
     List<Map<String, String>> result = executor.selectList(tenant, user);
 
     if (result == null || result.isEmpty()) {
@@ -113,8 +104,6 @@ public class IdentityVerificationApplicationQueryDataSource
   @Override
   public IdentityVerificationApplications findList(
       Tenant tenant, User user, IdentityVerificationApplicationQueries queries) {
-    IdentityVerificationApplicationQuerySqlExecutor executor = executors.get(tenant.databaseType());
-
     List<Map<String, String>> result = executor.selectList(tenant, user, queries);
 
     if (result == null || result.isEmpty()) {
@@ -129,8 +118,6 @@ public class IdentityVerificationApplicationQueryDataSource
   @Override
   public long findTotalCount(
       Tenant tenant, User user, IdentityVerificationApplicationQueries queries) {
-    IdentityVerificationApplicationQuerySqlExecutor executor = executors.get(tenant.databaseType());
-
     Map<String, String> result = executor.selectCount(tenant, user, queries);
 
     if (result == null || result.isEmpty()) {

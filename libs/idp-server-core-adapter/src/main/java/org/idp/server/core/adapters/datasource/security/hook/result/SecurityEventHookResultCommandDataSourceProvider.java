@@ -16,6 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.security.hook.result;
 
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 import org.idp.server.platform.security.repository.SecurityEventHookResultCommandRepository;
@@ -31,6 +32,10 @@ public class SecurityEventHookResultCommandDataSourceProvider
   @Override
   public SecurityEventHookResultCommandRepository provide(
       ApplicationComponentDependencyContainer container) {
-    return new SecurityEventHoolResultCommandDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    SecurityEventHoolResultSqlExecutors executors = new SecurityEventHoolResultSqlExecutors();
+    SecurityEventHoolResultSqlExecutor executor = executors.get(databaseTypeProvider.provide());
+    return new SecurityEventHoolResultCommandDataSource(executor);
   }
 }

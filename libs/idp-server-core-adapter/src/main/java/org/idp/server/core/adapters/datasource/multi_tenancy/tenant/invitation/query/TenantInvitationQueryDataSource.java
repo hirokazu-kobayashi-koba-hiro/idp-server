@@ -25,15 +25,14 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class TenantInvitationQueryDataSource implements TenantInvitationQueryRepository {
 
-  TenantInvitationSqlExecutors executors;
+  TenantInvitationSqlExecutor executor;
 
-  public TenantInvitationQueryDataSource() {
-    this.executors = new TenantInvitationSqlExecutors();
+  public TenantInvitationQueryDataSource(TenantInvitationSqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public List<TenantInvitation> findList(Tenant tenant, int limit, int offset) {
-    TenantInvitationSqlExecutor executor = executors.get(tenant.databaseType());
     List<Map<String, String>> results = executor.selectList(tenant, limit, offset);
 
     if (results == null || results.isEmpty()) {
@@ -45,7 +44,6 @@ public class TenantInvitationQueryDataSource implements TenantInvitationQueryRep
 
   @Override
   public TenantInvitation find(Tenant tenant, TenantInvitationIdentifier identifier) {
-    TenantInvitationSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, identifier);
 
     if (result == null || result.isEmpty()) {

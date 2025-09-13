@@ -28,6 +28,7 @@ public class OAuthTokenSqlExecutors {
   public OAuthTokenSqlExecutors() {
     this.executors = new HashMap<>();
     executors.put(DatabaseType.POSTGRESQL, new PostgresqlExecutor());
+    executors.put(DatabaseType.MYSQL, new MysqlExecutor());
   }
 
   public OAuthTokenSqlExecutor get(DatabaseType databaseType) {

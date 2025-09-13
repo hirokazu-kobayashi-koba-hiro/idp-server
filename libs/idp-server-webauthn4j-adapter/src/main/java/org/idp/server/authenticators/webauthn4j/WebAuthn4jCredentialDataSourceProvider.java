@@ -17,10 +17,16 @@
 package org.idp.server.authenticators.webauthn4j;
 
 import org.idp.server.authenticators.webauthn4j.datasource.credential.WebAuthn4jCredentialDataSource;
+import org.idp.server.authenticators.webauthn4j.datasource.credential.WebAuthn4jCredentialSqlExecutor;
+import org.idp.server.authenticators.webauthn4j.datasource.credential.WebAuthn4jCredentialSqlExecutors;
 import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyProvider;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
+import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
+import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
 public class WebAuthn4jCredentialDataSourceProvider
-    implements AuthenticationDependencyProvider<WebAuthn4jCredentialRepository> {
+    implements AuthenticationDependencyProvider<WebAuthn4jCredentialRepository>,
+        ApplicationComponentProvider<WebAuthn4jCredentialRepository> {
 
   @Override
   public Class<WebAuthn4jCredentialRepository> type() {
@@ -28,7 +34,17 @@ public class WebAuthn4jCredentialDataSourceProvider
   }
 
   @Override
+  public WebAuthn4jCredentialRepository provide(ApplicationComponentDependencyContainer container) {
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    WebAuthn4jCredentialSqlExecutors executors = new WebAuthn4jCredentialSqlExecutors();
+    WebAuthn4jCredentialSqlExecutor executor = executors.get(databaseTypeProvider.provide());
+    return new WebAuthn4jCredentialDataSource(executor);
+  }
+
+  @Override
   public WebAuthn4jCredentialRepository provide() {
-    return new WebAuthn4jCredentialDataSource();
+    throw new UnsupportedOperationException(
+        "Default provide() method is not supported. Use provide(ApplicationComponentDependencyContainer) instead.");
   }
 }

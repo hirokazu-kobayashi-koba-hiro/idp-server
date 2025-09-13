@@ -27,15 +27,14 @@ import org.idp.server.platform.security.repository.SecurityEventQueryRepository;
 
 public class SecurityEventQueryDataSource implements SecurityEventQueryRepository {
 
-  SecurityEventSqlExecutors executors;
+  SecurityEventSqlExecutor executor;
 
-  public SecurityEventQueryDataSource() {
-    this.executors = new SecurityEventSqlExecutors();
+  public SecurityEventQueryDataSource(SecurityEventSqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public long findTotalCount(Tenant tenant, SecurityEventQueries queries) {
-    SecurityEventSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectCount(tenant, queries);
 
     if (result == null || result.isEmpty()) {
@@ -47,7 +46,6 @@ public class SecurityEventQueryDataSource implements SecurityEventQueryRepositor
 
   @Override
   public List<SecurityEvent> findList(Tenant tenant, SecurityEventQueries queries) {
-    SecurityEventSqlExecutor executor = executors.get(tenant.databaseType());
     List<Map<String, String>> results = executor.selectList(tenant, queries);
 
     if (results == null || results.isEmpty()) {
@@ -59,7 +57,6 @@ public class SecurityEventQueryDataSource implements SecurityEventQueryRepositor
 
   @Override
   public SecurityEvent find(Tenant tenant, SecurityEventIdentifier identifier) {
-    SecurityEventSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, identifier);
     return ModelConvertor.convert(result);
   }

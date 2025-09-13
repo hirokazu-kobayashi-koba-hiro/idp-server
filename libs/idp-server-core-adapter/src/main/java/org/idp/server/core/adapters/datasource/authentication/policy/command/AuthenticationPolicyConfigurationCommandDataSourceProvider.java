@@ -17,8 +17,10 @@
 package org.idp.server.core.adapters.datasource.authentication.policy.command;
 
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationCommandRepository;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
+import org.idp.server.platform.json.JsonConverter;
 
 public class AuthenticationPolicyConfigurationCommandDataSourceProvider
     implements ApplicationComponentProvider<AuthenticationPolicyConfigurationCommandRepository> {
@@ -31,6 +33,13 @@ public class AuthenticationPolicyConfigurationCommandDataSourceProvider
   @Override
   public AuthenticationPolicyConfigurationCommandRepository provide(
       ApplicationComponentDependencyContainer container) {
-    return new AuthenticationPolicyConfigurationCommandDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    AuthenticationPolicyConfigurationSqlExecutors executors =
+        new AuthenticationPolicyConfigurationSqlExecutors();
+    AuthenticationPolicyConfigurationSqlExecutor executor =
+        executors.get(databaseTypeProvider.provide());
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+    return new AuthenticationPolicyConfigurationCommandDataSource(executor, jsonConverter);
   }
 }

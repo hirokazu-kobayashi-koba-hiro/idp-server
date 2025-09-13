@@ -72,8 +72,11 @@ public class MysqlExecutor implements ClientConfigSqlExecutor {
                         WHERE tenant_id = ? AND id_alias = ?"""
             + (includeDisabled ? "" : " AND enabled = true")
             + ";";
-    List<Object> paramsClientIdAlias = List.of(tenant.identifierValue(), requestedClientId.value());
-    return sqlExecutor.selectOne(sqlTemplateClientIdAlias, paramsClientIdAlias);
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifier().value());
+    params.add(requestedClientId.value());
+
+    return sqlExecutor.selectOne(sqlTemplateClientIdAlias, params);
   }
 
   @Override
@@ -245,7 +248,7 @@ public class MysqlExecutor implements ClientConfigSqlExecutor {
   }
 
   @Override
-  public long selectTotalCount(Tenant tenant, ClientQueries queries) {
+  public Map<String, String> selectTotalCount(Tenant tenant, ClientQueries queries) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     StringBuilder where = new StringBuilder("WHERE tenant_id = ?");
@@ -361,11 +364,7 @@ public class MysqlExecutor implements ClientConfigSqlExecutor {
         FROM client_configuration
         """ + where;
 
-    Map<String, String> result = sqlExecutor.selectOne(sqlTemplate, params);
-    if (result == null || result.isEmpty()) {
-      return 0;
-    }
-    return Long.parseLong(result.get("count"));
+    return sqlExecutor.selectOne(sqlTemplate, params);
   }
 
   @Override

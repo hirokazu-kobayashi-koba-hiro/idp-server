@@ -17,6 +17,7 @@
 package org.idp.server.core.adapters.datasource.authentication.policy.query;
 
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationQueryRepository;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
@@ -31,6 +32,12 @@ public class AuthenticationPolicyConfigurationQueryDataSourceProvider
   @Override
   public AuthenticationPolicyConfigurationQueryRepository provide(
       ApplicationComponentDependencyContainer container) {
-    return new AuthenticationPolicyConfigurationQueryDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    AuthenticationPolicyConfigurationSqlExecutors executors =
+        new AuthenticationPolicyConfigurationSqlExecutors();
+    AuthenticationPolicyConfigurationSqlExecutor executor =
+        executors.get(databaseTypeProvider.provide());
+    return new AuthenticationPolicyConfigurationQueryDataSource(executor);
   }
 }

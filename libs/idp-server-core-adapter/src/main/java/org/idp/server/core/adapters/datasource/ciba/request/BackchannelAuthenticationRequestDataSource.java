@@ -28,25 +28,23 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class BackchannelAuthenticationRequestDataSource
     implements BackchannelAuthenticationRequestRepository {
 
-  BackchannelAuthenticationRequestSqlExecutors executors;
+  BackchannelAuthenticationRequestSqlExecutor executor;
   JsonConverter jsonConverter;
 
-  public BackchannelAuthenticationRequestDataSource() {
-    this.executors = new BackchannelAuthenticationRequestSqlExecutors();
+  public BackchannelAuthenticationRequestDataSource(
+      BackchannelAuthenticationRequestSqlExecutor executor) {
+    this.executor = executor;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override
   public void register(Tenant tenant, BackchannelAuthenticationRequest request) {
-    BackchannelAuthenticationRequestSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(request);
   }
 
   @Override
   public BackchannelAuthenticationRequest find(
       Tenant tenant, BackchannelAuthenticationRequestIdentifier identifier) {
-    BackchannelAuthenticationRequestSqlExecutor executor = executors.get(tenant.databaseType());
-
     Map<String, String> stringMap = executor.selectOne(identifier);
 
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
@@ -58,8 +56,6 @@ public class BackchannelAuthenticationRequestDataSource
 
   @Override
   public void delete(Tenant tenant, BackchannelAuthenticationRequestIdentifier identifier) {
-    BackchannelAuthenticationRequestSqlExecutor executor = executors.get(tenant.databaseType());
-
     executor.delete(identifier);
   }
 }

@@ -47,13 +47,13 @@ public class MysqlExecutor implements SsoCredentialsSqlExecutor {
                 ?
                 )
                 ON DUPLICATE KEY
-                UPDATE SET sso_credentials = ?::jsonb, updated_at = now();
+                UPDATE sso_credentials = ?, updated_at = now();
                 """;
 
     String json = jsonConverter.write(ssoCredentials);
     List<Object> params = new ArrayList<>();
     params.add(user.sub());
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifier().value());
     params.add(ssoCredentials.provider());
     params.add(json);
     params.add(json);

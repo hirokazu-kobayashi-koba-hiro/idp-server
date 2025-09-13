@@ -24,15 +24,14 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class AuditLogQueryDataSource implements AuditLogQueryRepository {
 
-  AuditLogSqlExecutors executors;
+  AuditLogSqlExecutor executor;
 
-  public AuditLogQueryDataSource() {
-    this.executors = new AuditLogSqlExecutors();
+  public AuditLogQueryDataSource(AuditLogSqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public long findTotalCount(Tenant tenant, AuditLogQueries queries) {
-    AuditLogSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectCount(tenant, queries);
 
     if (result == null || result.isEmpty()) {
@@ -44,7 +43,6 @@ public class AuditLogQueryDataSource implements AuditLogQueryRepository {
 
   @Override
   public List<AuditLog> findList(Tenant tenant, AuditLogQueries queries) {
-    AuditLogSqlExecutor executor = executors.get(tenant.databaseType());
     List<Map<String, String>> results = executor.selectList(tenant, queries);
 
     if (results == null || results.isEmpty()) {
@@ -56,7 +54,6 @@ public class AuditLogQueryDataSource implements AuditLogQueryRepository {
 
   @Override
   public AuditLog find(Tenant tenant, AuditLogIdentifier identifier) {
-    AuditLogSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, identifier);
 
     if (result == null || result.isEmpty()) {

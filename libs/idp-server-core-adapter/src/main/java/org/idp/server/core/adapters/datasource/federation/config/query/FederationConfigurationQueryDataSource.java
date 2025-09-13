@@ -29,19 +29,17 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class FederationConfigurationQueryDataSource
     implements FederationConfigurationQueryRepository {
 
-  FederationConfigurationSqlExecutors executors;
+  FederationConfigurationSqlExecutor executor;
   JsonConverter jsonConverter;
 
-  public FederationConfigurationQueryDataSource() {
-    this.executors = new FederationConfigurationSqlExecutors();
+  public FederationConfigurationQueryDataSource(FederationConfigurationSqlExecutor executor) {
+    this.executor = executor;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override
   public <T> T get(
       Tenant tenant, FederationType federationType, SsoProvider ssoProvider, Class<T> clazz) {
-    FederationConfigurationSqlExecutor executor = executors.get(tenant.databaseType());
-
     Map<String, String> result = executor.selectOne(tenant, federationType, ssoProvider);
 
     if (Objects.isNull(result) || result.isEmpty()) {
@@ -56,8 +54,6 @@ public class FederationConfigurationQueryDataSource
 
   @Override
   public FederationConfiguration find(Tenant tenant, FederationConfigurationIdentifier identifier) {
-    FederationConfigurationSqlExecutor executor = executors.get(tenant.databaseType());
-
     Map<String, String> result = executor.selectOne(tenant, identifier);
 
     if (Objects.isNull(result) || result.isEmpty()) {
@@ -70,8 +66,6 @@ public class FederationConfigurationQueryDataSource
   @Override
   public FederationConfiguration findWithDisabled(
       Tenant tenant, FederationConfigurationIdentifier identifier, boolean includeDisabled) {
-    FederationConfigurationSqlExecutor executor = executors.get(tenant.databaseType());
-
     Map<String, String> result = executor.selectOne(tenant, identifier, includeDisabled);
 
     if (Objects.isNull(result) || result.isEmpty()) {
@@ -83,8 +77,6 @@ public class FederationConfigurationQueryDataSource
 
   @Override
   public long findTotalCount(Tenant tenant, FederationQueries queries) {
-    FederationConfigurationSqlExecutor executor = executors.get(tenant.databaseType());
-
     Map<String, String> result = executor.selectCount(tenant, queries);
 
     if (Objects.isNull(result) || result.isEmpty()) {
@@ -96,8 +88,6 @@ public class FederationConfigurationQueryDataSource
 
   @Override
   public List<FederationConfiguration> findList(Tenant tenant, FederationQueries queries) {
-    FederationConfigurationSqlExecutor executor = executors.get(tenant.databaseType());
-
     List<Map<String, String>> results = executor.selectList(tenant, queries);
 
     if (Objects.isNull(results) || results.isEmpty()) {

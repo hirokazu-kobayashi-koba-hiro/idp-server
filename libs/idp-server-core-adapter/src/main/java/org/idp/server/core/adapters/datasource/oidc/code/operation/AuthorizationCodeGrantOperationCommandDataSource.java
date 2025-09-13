@@ -22,15 +22,14 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class AuthorizationCodeGrantOperationCommandDataSource
     implements AuthorizationCodeGrantOperationCommandRepository {
 
-  AuthorizationCodeGrantExecutors executors;
+  AuthorizationCodeGrantExecutor executor;
 
-  public AuthorizationCodeGrantOperationCommandDataSource() {
-    this.executors = new AuthorizationCodeGrantExecutors();
+  public AuthorizationCodeGrantOperationCommandDataSource(AuthorizationCodeGrantExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public void deleteExpiredCodeGrant(Tenant tenant, int authorizationCodeGrant) {
-    AuthorizationCodeGrantExecutor executor = executors.get(tenant.databaseType());
     executor.deleteExpiredCodeGrant(authorizationCodeGrant);
   }
 }

@@ -42,8 +42,8 @@ public class MysqlExecutor implements PermissionSqlExecutor {
                 """;
 
     List<Object> params = new ArrayList<>();
-    params.add(identifier.valueAsUuid());
-    params.add(tenant.identifier().valueAsUuid());
+    params.add(identifier.value());
+    params.add(tenant.identifier().value());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
@@ -61,7 +61,7 @@ public class MysqlExecutor implements PermissionSqlExecutor {
 
     List<Object> params = new ArrayList<>();
     params.add(name);
-    params.add(tenant.identifier().valueAsUuid());
+    params.add(tenant.identifier().value());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
@@ -72,12 +72,12 @@ public class MysqlExecutor implements PermissionSqlExecutor {
     StringBuilder sqlBuilder =
         new StringBuilder(
             """
-                SELECT count(*) FROM permission
+                SELECT count(*) as count FROM permission
                  WHERE tenant_id = ?
                 """);
 
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierUUID());
+    params.add(tenant.identifier().value());
 
     if (queries.hasFrom()) {
       sqlBuilder.append(" AND created_at >= ?");
@@ -91,7 +91,7 @@ public class MysqlExecutor implements PermissionSqlExecutor {
 
     if (queries.hasId()) {
       sqlBuilder.append(" AND id = ?");
-      params.add(queries.idAsUuid());
+      params.add(queries.id());
     }
 
     if (queries.hasName()) {
@@ -109,7 +109,7 @@ public class MysqlExecutor implements PermissionSqlExecutor {
     String sqlTemplate = selectSql + " WHERE tenant_id = ?";
 
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierUUID());
+    params.add(tenant.identifier().value());
 
     return sqlExecutor.selectList(sqlTemplate, params);
   }
@@ -120,7 +120,7 @@ public class MysqlExecutor implements PermissionSqlExecutor {
     StringBuilder sqlBuilder = new StringBuilder(selectSql + " WHERE tenant_id = ?");
 
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierUUID());
+    params.add(tenant.identifier().value());
 
     if (queries.hasFrom()) {
       sqlBuilder.append(" AND created_at >= ?");
@@ -134,7 +134,7 @@ public class MysqlExecutor implements PermissionSqlExecutor {
 
     if (queries.hasId()) {
       sqlBuilder.append(" AND id = ?");
-      params.add(queries.idAsUuid());
+      params.add(queries.id());
     }
 
     if (queries.hasName()) {

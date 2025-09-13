@@ -92,7 +92,7 @@ public class MysqlExecutor implements FederationConfigurationSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String selectSql =
         """
-            SELECT COUNT(*) FROM federation_configurations
+            SELECT COUNT(*) as count FROM federation_configurations
             """;
     StringBuilder sql = new StringBuilder(selectSql).append(" WHERE tenant_id = ?");
     List<Object> params = new ArrayList<>();

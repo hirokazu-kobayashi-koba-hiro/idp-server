@@ -50,6 +50,7 @@ public class MysqlExecutor implements SsoSessionCommandSqlExecutor {
     String json = jsonConverter.write(payload);
     List<Object> params = new ArrayList<>();
     params.add(identifier.value());
+    params.add(tenant.identifier().value());
     params.add(json);
     params.add(json);
 

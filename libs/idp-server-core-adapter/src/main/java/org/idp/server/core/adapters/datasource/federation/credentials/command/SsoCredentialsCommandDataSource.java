@@ -24,17 +24,17 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class SsoCredentialsCommandDataSource implements SsoCredentialsCommandRepository {
 
-  SsoCredentialsSqlExecutors executors;
+  SsoCredentialsSqlExecutor executor;
   JsonConverter jsonConverter;
 
-  public SsoCredentialsCommandDataSource() {
-    this.executors = new SsoCredentialsSqlExecutors();
-    this.jsonConverter = JsonConverter.snakeCaseInstance();
+  public SsoCredentialsCommandDataSource(
+      SsoCredentialsSqlExecutor executor, JsonConverter jsonConverter) {
+    this.executor = executor;
+    this.jsonConverter = jsonConverter;
   }
 
   @Override
   public void register(Tenant tenant, User user, SsoCredentials ssoCredentials) {
-    SsoCredentialsSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, user, ssoCredentials);
   }
 }

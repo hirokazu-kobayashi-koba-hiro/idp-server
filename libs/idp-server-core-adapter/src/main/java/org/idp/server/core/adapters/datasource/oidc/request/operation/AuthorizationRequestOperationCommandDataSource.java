@@ -22,10 +22,10 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class AuthorizationRequestOperationCommandDataSource
     implements AuthorizationRequestOperationCommandRepository {
 
-  AuthorizationRequestSqlExecutors executors;
+  AuthorizationRequestSqlExecutor executor;
 
-  public AuthorizationRequestOperationCommandDataSource() {
-    this.executors = new AuthorizationRequestSqlExecutors();
+  public AuthorizationRequestOperationCommandDataSource(AuthorizationRequestSqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override

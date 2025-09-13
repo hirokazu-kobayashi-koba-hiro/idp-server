@@ -28,6 +28,7 @@ public class AuthorizationCodeGrantExecutors {
   public AuthorizationCodeGrantExecutors() {
     this.executors = new HashMap<>();
     executors.put(DatabaseType.POSTGRESQL, new PostgresqlExecutor());
+    executors.put(DatabaseType.MYSQL, new MysqlExecutor());
   }
 
   public AuthorizationCodeGrantExecutor get(DatabaseType databaseType) {

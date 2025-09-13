@@ -28,6 +28,7 @@ public class SecurityEventSqlExecutors {
   public SecurityEventSqlExecutors() {
     this.executors = new HashMap<>();
     executors.put(DatabaseType.POSTGRESQL, new PostgresqlExecutor());
+    executors.put(DatabaseType.MYSQL, new MysqlExecutor());
   }
 
   public SecurityEventSqlExecutor get(DatabaseType databaseType) {

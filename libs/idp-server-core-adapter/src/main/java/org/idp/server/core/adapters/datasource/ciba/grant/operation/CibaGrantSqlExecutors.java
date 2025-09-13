@@ -28,6 +28,7 @@ public class CibaGrantSqlExecutors {
   public CibaGrantSqlExecutors() {
     this.executors = new HashMap<>();
     executors.put(DatabaseType.POSTGRESQL, new PostgresqlExecutor());
+    executors.put(DatabaseType.MYSQL, new MysqlExecutor());
   }
 
   public CibaGrantSqlExecutor get(DatabaseType databaseType) {

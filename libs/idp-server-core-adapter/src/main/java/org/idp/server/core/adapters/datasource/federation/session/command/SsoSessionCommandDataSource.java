@@ -23,23 +23,22 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class SsoSessionCommandDataSource implements SsoSessionCommandRepository {
 
-  SsoSessionCommandSqlExecutors executors;
+  SsoSessionCommandSqlExecutor executor;
   JsonConverter jsonConverter;
 
-  public SsoSessionCommandDataSource() {
-    this.executors = new SsoSessionCommandSqlExecutors();
-    this.jsonConverter = JsonConverter.snakeCaseInstance();
+  public SsoSessionCommandDataSource(
+      SsoSessionCommandSqlExecutor executor, JsonConverter jsonConverter) {
+    this.executor = executor;
+    this.jsonConverter = jsonConverter;
   }
 
   @Override
   public <T> void register(Tenant tenant, SsoSessionIdentifier identifier, T payload) {
-    SsoSessionCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, identifier, payload);
   }
 
   @Override
   public void delete(Tenant tenant, SsoSessionIdentifier identifier) {
-    SsoSessionCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.delete(tenant, identifier);
   }
 }

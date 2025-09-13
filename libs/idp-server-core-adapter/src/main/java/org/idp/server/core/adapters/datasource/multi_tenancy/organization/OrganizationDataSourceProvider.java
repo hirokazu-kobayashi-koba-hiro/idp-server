@@ -16,6 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.multi_tenancy.organization;
 
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
@@ -30,6 +31,10 @@ public class OrganizationDataSourceProvider
 
   @Override
   public OrganizationRepository provide(ApplicationComponentDependencyContainer container) {
-    return new OrganizationDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    OrganizationSqlExecutors executors = new OrganizationSqlExecutors();
+    OrganizationSqlExecutor executor = executors.get(databaseTypeProvider.provide());
+    return new OrganizationDataSource(executor);
   }
 }

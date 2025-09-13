@@ -31,18 +31,17 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class IdentityVerificationConfigurationQueryDataSource
     implements IdentityVerificationConfigurationQueryRepository {
 
-  IdentityVerificationConfigSqlExecutors executors;
+  IdentityVerificationConfigSqlExecutor executor;
   JsonConverter jsonConverter;
 
-  public IdentityVerificationConfigurationQueryDataSource() {
-    this.executors = new IdentityVerificationConfigSqlExecutors();
-    this.jsonConverter = JsonConverter.snakeCaseInstance();
+  public IdentityVerificationConfigurationQueryDataSource(
+      IdentityVerificationConfigSqlExecutor executor, JsonConverter jsonConverter) {
+    this.executor = executor;
+    this.jsonConverter = jsonConverter;
   }
 
   @Override
   public IdentityVerificationConfiguration get(Tenant tenant, IdentityVerificationType type) {
-    IdentityVerificationConfigSqlExecutor executor = executors.get(tenant.databaseType());
-
     Map<String, String> result = executor.selectOne(tenant, type);
 
     if (Objects.isNull(result) || result.isEmpty()) {
@@ -58,8 +57,6 @@ public class IdentityVerificationConfigurationQueryDataSource
   @Override
   public IdentityVerificationConfiguration find(
       Tenant tenant, IdentityVerificationConfigurationIdentifier identifier) {
-    IdentityVerificationConfigSqlExecutor executor = executors.get(tenant.databaseType());
-
     Map<String, String> result = executor.selectOne(tenant, identifier);
 
     if (Objects.isNull(result) || result.isEmpty()) {
@@ -71,8 +68,6 @@ public class IdentityVerificationConfigurationQueryDataSource
 
   @Override
   public long findTotalCount(Tenant tenant, IdentityVerificationQueries queries) {
-    IdentityVerificationConfigSqlExecutor executor = executors.get(tenant.databaseType());
-
     Map<String, String> result = executor.selectCount(tenant, queries);
 
     if (Objects.isNull(result) || result.isEmpty()) {
@@ -84,9 +79,6 @@ public class IdentityVerificationConfigurationQueryDataSource
   @Override
   public List<IdentityVerificationConfiguration> findList(
       Tenant tenant, IdentityVerificationQueries queries) {
-
-    IdentityVerificationConfigSqlExecutor executor = executors.get(tenant.databaseType());
-
     List<Map<String, String>> results = executor.selectList(tenant, queries);
 
     if (Objects.isNull(results) || results.isEmpty()) {

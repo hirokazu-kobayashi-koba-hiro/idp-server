@@ -33,8 +33,7 @@ public class MysqlExecutor implements SecurityEventSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                INSERT IGNORE INTO security_event
-               　(
+           INSERT IGNORE INTO security_event (
                id,
                type,
                description,
@@ -47,7 +46,8 @@ public class MysqlExecutor implements SecurityEventSqlExecutor {
                external_user_id,
                ip_address,
                user_agent,
-               detail)
+               detail
+               )
                VALUES (
                ?,
                ?,

@@ -42,7 +42,7 @@ public interface ClientConfigSqlExecutor {
 
   List<Map<String, String>> selectList(Tenant tenant, ClientQueries queries);
 
-  long selectTotalCount(Tenant tenant, ClientQueries queries);
+  Map<String, String> selectTotalCount(Tenant tenant, ClientQueries queries);
 
   List<Map<String, String>> selectList(
       Tenant tenant, int limit, int offset, boolean includeDisabled);

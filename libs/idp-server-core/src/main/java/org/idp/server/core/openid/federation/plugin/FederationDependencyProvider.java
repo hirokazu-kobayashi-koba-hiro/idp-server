@@ -16,8 +16,10 @@
 
 package org.idp.server.core.openid.federation.plugin;
 
+import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
+
 public interface FederationDependencyProvider<T> {
   Class<T> type();
 
-  T provide();
+  T provide(ApplicationComponentDependencyContainer container);
 }

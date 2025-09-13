@@ -34,13 +34,14 @@ import org.idp.server.platform.uuid.UuidMatcher;
 
 public class ClientConfigurationQueryDataSource implements ClientConfigurationQueryRepository {
 
-  ClientConfigSqlExecutors executors;
+  ClientConfigSqlExecutor executor;
   JsonConverter jsonConverter;
   CacheStore cacheStore;
 
-  public ClientConfigurationQueryDataSource(CacheStore cacheStore) {
-    this.executors = new ClientConfigSqlExecutors();
-    this.jsonConverter = JsonConverter.snakeCaseInstance();
+  public ClientConfigurationQueryDataSource(
+      ClientConfigSqlExecutor executor, JsonConverter jsonConverter, CacheStore cacheStore) {
+    this.executor = executor;
+    this.jsonConverter = jsonConverter;
     this.cacheStore = cacheStore;
   }
 
@@ -54,7 +55,6 @@ public class ClientConfigurationQueryDataSource implements ClientConfigurationQu
       return optionalClientConfiguration.get();
     }
 
-    ClientConfigSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> resultClientIdAlias = executor.selectByAlias(tenant, requestedClientId);
 
     if (resultClientIdAlias != null && !resultClientIdAlias.isEmpty()) {
@@ -94,7 +94,6 @@ public class ClientConfigurationQueryDataSource implements ClientConfigurationQu
       return optionalClientConfiguration.get();
     }
 
-    ClientConfigSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectById(tenant, clientIdentifier);
 
     if (result == null || result.isEmpty()) {
@@ -110,7 +109,6 @@ public class ClientConfigurationQueryDataSource implements ClientConfigurationQu
 
   @Override
   public List<ClientConfiguration> findList(Tenant tenant, int limit, int offset) {
-    ClientConfigSqlExecutor executor = executors.get(tenant.databaseType());
     List<Map<String, String>> maps = executor.selectList(tenant, limit, offset);
 
     if (Objects.isNull(maps) || maps.isEmpty()) {
@@ -122,7 +120,6 @@ public class ClientConfigurationQueryDataSource implements ClientConfigurationQu
 
   @Override
   public List<ClientConfiguration> findList(Tenant tenant, ClientQueries queries) {
-    ClientConfigSqlExecutor executor = executors.get(tenant.databaseType());
     List<Map<String, String>> maps = executor.selectList(tenant, queries);
 
     if (Objects.isNull(maps) || maps.isEmpty()) {
@@ -134,8 +131,13 @@ public class ClientConfigurationQueryDataSource implements ClientConfigurationQu
 
   @Override
   public long findTotalCount(Tenant tenant, ClientQueries queries) {
-    ClientConfigSqlExecutor executor = executors.get(tenant.databaseType());
-    return executor.selectTotalCount(tenant, queries);
+    Map<String, String> result = executor.selectTotalCount(tenant, queries);
+
+    if (result == null || result.isEmpty()) {
+      return 0;
+    }
+
+    return Long.parseLong(result.get("count"));
   }
 
   @Override
@@ -148,7 +150,6 @@ public class ClientConfigurationQueryDataSource implements ClientConfigurationQu
       return optionalClientConfiguration.get();
     }
 
-    ClientConfigSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectById(tenant, clientIdentifier);
 
     if (result == null || result.isEmpty()) {
@@ -172,7 +173,6 @@ public class ClientConfigurationQueryDataSource implements ClientConfigurationQu
       return optionalClientConfiguration.get();
     }
 
-    ClientConfigSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectById(tenant, clientIdentifier, includeDisabled);
 
     if (result == null || result.isEmpty()) {

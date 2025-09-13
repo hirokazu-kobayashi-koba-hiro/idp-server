@@ -30,13 +30,14 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 public class AuthorizationServerConfigurationQueryDataSource
     implements AuthorizationServerConfigurationQueryRepository {
 
-  ServerConfigSqlExecutors executors;
+  ServerConfigSqlExecutor executor;
   JsonConverter jsonConverter;
   CacheStore cacheStore;
 
-  public AuthorizationServerConfigurationQueryDataSource(CacheStore cacheStore) {
-    this.executors = new ServerConfigSqlExecutors();
-    this.jsonConverter = JsonConverter.snakeCaseInstance();
+  public AuthorizationServerConfigurationQueryDataSource(
+      ServerConfigSqlExecutor executor, JsonConverter jsonConverter, CacheStore cacheStore) {
+    this.executor = executor;
+    this.jsonConverter = jsonConverter;
     this.cacheStore = cacheStore;
   }
 
@@ -50,8 +51,6 @@ public class AuthorizationServerConfigurationQueryDataSource
 
       return authorizationServerConfiguration.get();
     }
-
-    ServerConfigSqlExecutor executor = executors.get(tenant.databaseType());
 
     Map<String, String> stringMap = executor.selectOne(tenant.identifier());
 
@@ -70,8 +69,6 @@ public class AuthorizationServerConfigurationQueryDataSource
 
   @Override
   public AuthorizationServerConfiguration getWithDisabled(Tenant tenant, boolean includeDisabled) {
-    ServerConfigSqlExecutor executor = executors.get(tenant.databaseType());
-
     Map<String, String> stringMap = executor.selectOne(tenant.identifier(), includeDisabled);
 
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {

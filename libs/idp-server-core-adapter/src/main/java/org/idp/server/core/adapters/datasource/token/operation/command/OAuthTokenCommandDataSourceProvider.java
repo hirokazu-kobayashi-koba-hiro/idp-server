@@ -19,6 +19,7 @@ package org.idp.server.core.adapters.datasource.token.operation.command;
 import org.idp.server.core.openid.token.repository.OAuthTokenOperationCommandRepository;
 import org.idp.server.platform.crypto.AesCipher;
 import org.idp.server.platform.crypto.HmacHasher;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
@@ -33,8 +34,12 @@ public class OAuthTokenCommandDataSourceProvider
   @Override
   public OAuthTokenOperationCommandRepository provide(
       ApplicationComponentDependencyContainer container) {
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    OAuthTokenSqlExecutors executors = new OAuthTokenSqlExecutors();
+    OAuthTokenSqlExecutor executor = executors.get(databaseTypeProvider.provide());
     AesCipher aesCipher = container.resolve(AesCipher.class);
     HmacHasher hmacHasher = container.resolve(HmacHasher.class);
-    return new OAuthTokenOperationCommandDataSource(aesCipher, hmacHasher);
+    return new OAuthTokenOperationCommandDataSource(executor, aesCipher, hmacHasher);
   }
 }

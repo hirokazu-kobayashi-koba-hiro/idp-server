@@ -20,19 +20,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import org.idp.server.platform.datasource.DatabaseType;
 import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.*;
 
 public class TenantQueryDataSource implements TenantQueryRepository {
 
-  TenantQuerySqlExecutors executors;
+  TenantQuerySqlExecutor executor;
   JsonConverter jsonConverter;
   CacheStore cacheStore;
 
-  public TenantQueryDataSource(CacheStore cacheStore) {
-    this.executors = new TenantQuerySqlExecutors();
+  public TenantQueryDataSource(TenantQuerySqlExecutor executor, CacheStore cacheStore) {
+    this.executor = executor;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
     this.cacheStore = cacheStore;
   }
@@ -45,8 +44,6 @@ public class TenantQueryDataSource implements TenantQueryRepository {
     if (optionalTenant.isPresent()) {
       return optionalTenant.get();
     }
-
-    TenantQuerySqlExecutor executor = executors.get(DatabaseType.POSTGRESQL);
 
     Map<String, String> result = executor.selectOne(tenantIdentifier);
 
@@ -71,8 +68,6 @@ public class TenantQueryDataSource implements TenantQueryRepository {
       return optionalTenant.get();
     }
 
-    TenantQuerySqlExecutor executor = executors.get(DatabaseType.POSTGRESQL);
-
     Map<String, String> result = executor.selectOne(tenantIdentifier);
 
     if (Objects.isNull(result) || result.isEmpty()) {
@@ -88,7 +83,6 @@ public class TenantQueryDataSource implements TenantQueryRepository {
 
   @Override
   public Tenant getAdmin() {
-    TenantQuerySqlExecutor executor = executors.get(DatabaseType.POSTGRESQL);
 
     Map<String, String> result = executor.selectAdmin();
 
@@ -101,7 +95,6 @@ public class TenantQueryDataSource implements TenantQueryRepository {
 
   @Override
   public Tenant findAdmin() {
-    TenantQuerySqlExecutor executor = executors.get(DatabaseType.POSTGRESQL);
 
     Map<String, String> result = executor.selectAdmin();
 
@@ -114,7 +107,6 @@ public class TenantQueryDataSource implements TenantQueryRepository {
 
   @Override
   public List<Tenant> findList(List<TenantIdentifier> tenantIdentifiers) {
-    TenantQuerySqlExecutor executor = executors.get(DatabaseType.POSTGRESQL);
 
     List<Map<String, String>> results = executor.selectList(tenantIdentifiers);
 

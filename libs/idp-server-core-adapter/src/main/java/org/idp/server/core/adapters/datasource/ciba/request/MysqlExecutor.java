@@ -34,8 +34,45 @@ public class MysqlExecutor implements BackchannelAuthenticationRequestSqlExecuto
     String sqlTemplate =
         """
                 INSERT INTO backchannel_authentication_request
-                (id, tenant_id, profile, delivery_mode, scopes, client_id, id_token_hint, login_hint, login_hint_token, acr_values, user_code, client_notification_token, binding_message, requested_expiry, request_object, authorization_details)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                (
+                id,
+                tenant_id,
+                profile,
+                delivery_mode,
+                scopes,
+                client_id,
+                id_token_hint,
+                login_hint,
+                login_hint_token,
+                acr_values,
+                user_code,
+                client_notification_token,
+                binding_message,
+                requested_expiry,
+                request_object,
+                authorization_details,
+                expires_in,
+                expires_at
+                )
+                VALUES (
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?);
                 """;
 
     List<Object> params = new ArrayList<>();
@@ -97,6 +134,9 @@ public class MysqlExecutor implements BackchannelAuthenticationRequestSqlExecuto
       params.add("[]");
     }
 
+    params.add(request.expiresIn().value());
+    params.add(request.expiresAt().toLocalDateTime());
+
     sqlExecutor.execute(sqlTemplate, params);
   }
 
@@ -105,7 +145,25 @@ public class MysqlExecutor implements BackchannelAuthenticationRequestSqlExecuto
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                        SELECT id, tenant_id, profile, delivery_mode, scopes, client_id, id_token_hint, login_hint, login_hint_token, acr_values, user_code, client_notification_token, binding_message, requested_expiry, request_object, authorization_details
+                        SELECT
+                        id,
+                        tenant_id,
+                        profile,
+                        delivery_mode,
+                        scopes,
+                        client_id,
+                        id_token_hint,
+                        login_hint,
+                        login_hint_token,
+                        acr_values,
+                        user_code,
+                        client_notification_token,
+                        binding_message,
+                        requested_expiry,
+                        request_object,
+                        authorization_details,
+                        expires_in,
+                        expires_at
                         FROM backchannel_authentication_request
                         WHERE id = ?;
                         """;
@@ -121,7 +179,8 @@ public class MysqlExecutor implements BackchannelAuthenticationRequestSqlExecuto
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-            DELETE FROM backchannel_authentication_request WHERE id = ?;
+            DELETE FROM backchannel_authentication_request
+            WHERE id = ?;
             """;
     List<Object> params = new ArrayList<>();
     params.add(identifier.value());

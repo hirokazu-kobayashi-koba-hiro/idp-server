@@ -22,15 +22,15 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class AuthenticationTransactionOperationCommandDataSource
     implements AuthenticationTransactionOperationCommandRepository {
 
-  AuthenticationTransactionSqlExecutors executors;
+  AuthenticationTransactionSqlExecutor executor;
 
-  public AuthenticationTransactionOperationCommandDataSource() {
-    this.executors = new AuthenticationTransactionSqlExecutors();
+  public AuthenticationTransactionOperationCommandDataSource(
+      AuthenticationTransactionSqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public void deleteExpiredTransaction(Tenant tenant, int limit) {
-    AuthenticationTransactionSqlExecutor executor = executors.get(tenant.databaseType());
     executor.deleteExpiredTransaction(limit);
   }
 }

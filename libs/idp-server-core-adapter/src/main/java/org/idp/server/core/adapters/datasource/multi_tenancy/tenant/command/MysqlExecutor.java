@@ -73,8 +73,8 @@ public class MysqlExecutor implements TenantCommandSqlExecutor {
                 UPDATE tenant
                 SET name = ?,
                 domain = ?,
-                attributes = ?::jsonb
-                WHERE id = ?::uuid;
+                attributes = ?
+                WHERE id = ?;
                 """;
     List<Object> params = new ArrayList<>();
     params.add(tenant.name().value());
@@ -95,7 +95,7 @@ public class MysqlExecutor implements TenantCommandSqlExecutor {
                 WHERE id = ?::uuid;
                 """;
     List<Object> params = new ArrayList<>();
-    params.add(tenantIdentifier.valueAsUuid());
+    params.add(tenantIdentifier.value());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

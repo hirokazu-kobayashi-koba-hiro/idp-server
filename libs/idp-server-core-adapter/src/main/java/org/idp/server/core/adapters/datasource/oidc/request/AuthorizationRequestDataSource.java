@@ -26,23 +26,20 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class AuthorizationRequestDataSource implements AuthorizationRequestRepository {
 
-  AuthorizationRequestSqlExecutors executors;
+  AuthorizationRequestSqlExecutor executor;
 
-  public AuthorizationRequestDataSource() {
-    this.executors = new AuthorizationRequestSqlExecutors();
+  public AuthorizationRequestDataSource(AuthorizationRequestSqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public void register(Tenant tenant, AuthorizationRequest authorizationRequest) {
-
-    AuthorizationRequestSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, authorizationRequest);
   }
 
   @Override
   public AuthorizationRequest get(
       Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier) {
-    AuthorizationRequestSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> stringMap = executor.selectOne(tenant, authorizationRequestIdentifier);
 
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
@@ -57,7 +54,6 @@ public class AuthorizationRequestDataSource implements AuthorizationRequestRepos
   @Override
   public AuthorizationRequest find(
       Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier) {
-    AuthorizationRequestSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> stringMap = executor.selectOne(tenant, authorizationRequestIdentifier);
 
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
@@ -69,7 +65,6 @@ public class AuthorizationRequestDataSource implements AuthorizationRequestRepos
 
   @Override
   public void delete(Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier) {
-    AuthorizationRequestSqlExecutor executor = executors.get(tenant.databaseType());
     executor.delete(tenant, authorizationRequestIdentifier);
   }
 }

@@ -24,25 +24,24 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class AuthenticationInteractionCommandDataSource
     implements AuthenticationInteractionCommandRepository {
 
-  AuthenticationInteractionCommandSqlExecutors executors;
+  AuthenticationInteractionCommandSqlExecutor executor;
   JsonConverter jsonConverter;
 
-  public AuthenticationInteractionCommandDataSource() {
-    this.executors = new AuthenticationInteractionCommandSqlExecutors();
-    this.jsonConverter = JsonConverter.snakeCaseInstance();
+  public AuthenticationInteractionCommandDataSource(
+      AuthenticationInteractionCommandSqlExecutor executor, JsonConverter jsonConverter) {
+    this.executor = executor;
+    this.jsonConverter = jsonConverter;
   }
 
   @Override
   public <T> void register(
       Tenant tenant, AuthenticationTransactionIdentifier identifier, String type, T payload) {
-    AuthenticationInteractionCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, identifier, type, payload);
   }
 
   @Override
   public <T> void update(
       Tenant tenant, AuthenticationTransactionIdentifier identifier, String type, T payload) {
-    AuthenticationInteractionCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.update(tenant, identifier, type, payload);
   }
 }

@@ -16,13 +16,19 @@
 
 package org.idp.server.core.adapters.datasource.token.command;
 
+import java.util.ArrayList;
 import java.util.List;
+import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.crypto.AesCipher;
+import org.idp.server.platform.crypto.EncryptedData;
 import org.idp.server.platform.crypto.HmacHasher;
 import org.idp.server.platform.datasource.SqlExecutor;
+import org.idp.server.platform.json.JsonConverter;
 
 public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
+
+  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   @Override
   public void insert(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher) {
@@ -94,8 +100,109 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
                             ?
                             );
                           """;
-    List<Object> params = InsertSqlParamsCreator.create(oAuthToken, aesCipher, hmacHasher);
+
+    AuthorizationGrant authorizationGrant = oAuthToken.accessToken().authorizationGrant();
+    List<Object> params = new ArrayList<>();
+    params.add(oAuthToken.identifier().valueAsUuid());
+    params.add(oAuthToken.tenantIdentifier().valueAsUuid());
+    params.add(oAuthToken.tokenIssuer().value());
+    params.add(oAuthToken.tokenType().name());
+    params.add(toEncryptedJson(oAuthToken.accessTokenEntity().value(), aesCipher));
+    params.add(hmacHasher.hash(oAuthToken.accessTokenEntity().value()));
+    if (oAuthToken.hasCustomClaims()) {
+      params.add(jsonConverter.write(oAuthToken.accessToken().customClaims().toMap()));
+    } else {
+      params.add(null);
+    }
+
+    if (authorizationGrant.hasUser()) {
+      params.add((authorizationGrant.user().subAsUuid()));
+      params.add(toJson(authorizationGrant.user()));
+    } else {
+      params.add(null);
+      params.add(null);
+    }
+
+    params.add(toJson(authorizationGrant.authentication()));
+    params.add(authorizationGrant.requestedClientId().value());
+    params.add(toJson(authorizationGrant.clientAttributes()));
+    params.add(authorizationGrant.grantType().name());
+    params.add(authorizationGrant.scopes().toStringValues());
+
+    if (authorizationGrant.hasIdTokenClaims()) {
+      params.add(authorizationGrant.idTokenClaims().toStringValues());
+    } else {
+      params.add("");
+    }
+
+    if (authorizationGrant.hasUserinfoClaim()) {
+      params.add(authorizationGrant.userinfoClaims().toStringValues());
+    } else {
+      params.add("");
+    }
+
+    if (authorizationGrant.hasCustomProperties()) {
+      params.add(toJson(authorizationGrant.customProperties().values()));
+    } else {
+      params.add("{}");
+    }
+
+    if (authorizationGrant.hasAuthorizationDetails()) {
+      params.add(toJson(authorizationGrant.authorizationDetails().toMapValues()));
+    } else {
+      params.add("[]");
+    }
+
+    params.add(oAuthToken.accessToken().expiresIn().toStringValue());
+    params.add(oAuthToken.accessToken().expiresAt().toLocalDateTime());
+    params.add(oAuthToken.accessToken().createdAt().toLocalDateTime());
+
+    if (oAuthToken.hasRefreshToken()) {
+      params.add(toEncryptedJson(oAuthToken.refreshTokenEntity().value(), aesCipher));
+      params.add(hmacHasher.hash(oAuthToken.refreshTokenEntity().value()));
+      params.add(oAuthToken.refreshToken().createdAt().toLocalDateTime());
+      params.add(oAuthToken.refreshToken().expiresAt().toLocalDateTime());
+    } else {
+      params.add(null);
+      params.add(null);
+      params.add(null);
+      params.add(null);
+    }
+
+    if (oAuthToken.hasIdToken()) {
+      params.add(oAuthToken.idToken().value());
+    } else {
+      params.add("");
+    }
+    if (oAuthToken.hasClientCertification()) {
+      params.add(oAuthToken.accessToken().clientCertificationThumbprint().value());
+    } else {
+      params.add("");
+    }
+
+    if (oAuthToken.hasCNonce()) {
+      params.add(oAuthToken.cNonce().value());
+    } else {
+      params.add("");
+    }
+
+    if (oAuthToken.hasCNonceExpiresIn()) {
+      params.add(oAuthToken.cNonceExpiresIn().toStringValue());
+    } else {
+      params.add("");
+    }
+    params.add(oAuthToken.expiresAt().toLocalDateTime());
+
     sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  private String toJson(Object value) {
+    return jsonConverter.write(value);
+  }
+
+  private String toEncryptedJson(String value, AesCipher aesCipher) {
+    EncryptedData encrypted = aesCipher.encrypt(value);
+    return toJson(encrypted);
   }
 
   @Override

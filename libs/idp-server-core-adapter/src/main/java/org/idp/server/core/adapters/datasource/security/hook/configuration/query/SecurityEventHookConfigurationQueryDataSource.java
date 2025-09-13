@@ -28,17 +28,17 @@ import org.idp.server.platform.security.repository.SecurityEventHookConfiguratio
 public class SecurityEventHookConfigurationQueryDataSource
     implements SecurityEventHookConfigurationQueryRepository {
 
-  SecurityEventHookConfigSqlExecutors executors;
+  SecurityEventHookConfigSqlExecutor executor;
   JsonConverter jsonConverter;
 
-  public SecurityEventHookConfigurationQueryDataSource() {
-    this.executors = new SecurityEventHookConfigSqlExecutors();
+  public SecurityEventHookConfigurationQueryDataSource(
+      SecurityEventHookConfigSqlExecutor executor) {
+    this.executor = executor;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override
   public SecurityEventHookConfigurations find(Tenant tenant) {
-    SecurityEventHookConfigSqlExecutor executor = executors.get(tenant.databaseType());
     List<Map<String, String>> results = executor.selectListBy(tenant);
 
     if (results == null || results.isEmpty()) {
@@ -58,7 +58,6 @@ public class SecurityEventHookConfigurationQueryDataSource
   @Override
   public SecurityEventHookConfiguration find(
       Tenant tenant, SecurityEventHookConfigurationIdentifier identifier) {
-    SecurityEventHookConfigSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, identifier);
 
     if (result == null || result.isEmpty()) {
@@ -71,7 +70,6 @@ public class SecurityEventHookConfigurationQueryDataSource
   @Override
   public SecurityEventHookConfiguration findWithDisabled(
       Tenant tenant, SecurityEventHookConfigurationIdentifier identifier, boolean includeDisabled) {
-    SecurityEventHookConfigSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, identifier, includeDisabled);
 
     if (result == null || result.isEmpty()) {
@@ -83,7 +81,6 @@ public class SecurityEventHookConfigurationQueryDataSource
 
   @Override
   public SecurityEventHookConfiguration find(Tenant tenant, String type) {
-    SecurityEventHookConfigSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, type);
 
     if (result == null || result.isEmpty()) {
@@ -95,7 +92,6 @@ public class SecurityEventHookConfigurationQueryDataSource
 
   @Override
   public List<SecurityEventHookConfiguration> findList(Tenant tenant, int limit, int offset) {
-    SecurityEventHookConfigSqlExecutor executor = executors.get(tenant.databaseType());
     List<Map<String, String>> results = executor.selectList(tenant, limit, offset);
 
     if (results == null || results.isEmpty()) {

@@ -23,15 +23,14 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class PermissionQueryDataSource implements PermissionQueryRepository {
 
-  PermissionSqlExecutors executors;
+  PermissionSqlExecutor executor;
 
-  public PermissionQueryDataSource() {
-    this.executors = new PermissionSqlExecutors();
+  public PermissionQueryDataSource(PermissionSqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public Permission find(Tenant tenant, PermissionIdentifier identifier) {
-    PermissionSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, identifier);
 
     if (result == null || result.isEmpty()) {
@@ -43,7 +42,6 @@ public class PermissionQueryDataSource implements PermissionQueryRepository {
 
   @Override
   public Permission findByName(Tenant tenant, String name) {
-    PermissionSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOneByName(tenant, name);
 
     if (result == null || result.isEmpty()) {
@@ -55,7 +53,6 @@ public class PermissionQueryDataSource implements PermissionQueryRepository {
 
   @Override
   public Permissions findAll(Tenant tenant) {
-    PermissionSqlExecutor executor = executors.get(tenant.databaseType());
     List<Map<String, String>> results = executor.selectAll(tenant);
 
     if (results == null || results.isEmpty()) {
@@ -68,7 +65,6 @@ public class PermissionQueryDataSource implements PermissionQueryRepository {
 
   @Override
   public long findTotalCount(Tenant tenant, PermissionQueries queries) {
-    PermissionSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectCount(tenant, queries);
 
     if (result == null || result.isEmpty()) {
@@ -80,7 +76,6 @@ public class PermissionQueryDataSource implements PermissionQueryRepository {
 
   @Override
   public List<Permission> findList(Tenant tenant, PermissionQueries queries) {
-    PermissionSqlExecutor executor = executors.get(tenant.databaseType());
     List<Map<String, String>> results = executor.selectList(tenant, queries);
 
     if (results == null || results.isEmpty()) {

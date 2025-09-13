@@ -29,17 +29,16 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class AuthenticationConfigurationQueryDataSource
     implements AuthenticationConfigurationQueryRepository {
 
-  AuthenticationConfigSqlExecutors executors;
+  AuthenticationConfigSqlExecutor executor;
   JsonConverter jsonConverter;
 
-  public AuthenticationConfigurationQueryDataSource() {
-    this.executors = new AuthenticationConfigSqlExecutors();
+  public AuthenticationConfigurationQueryDataSource(AuthenticationConfigSqlExecutor executor) {
+    this.executor = executor;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override
   public AuthenticationConfiguration get(Tenant tenant, String type) {
-    AuthenticationConfigSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, type);
 
     if (Objects.isNull(result) || result.isEmpty()) {
@@ -55,7 +54,6 @@ public class AuthenticationConfigurationQueryDataSource
   @Override
   public AuthenticationConfiguration find(
       Tenant tenant, AuthenticationConfigurationIdentifier identifier) {
-    AuthenticationConfigSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, identifier);
 
     if (Objects.isNull(result) || result.isEmpty()) {
@@ -68,7 +66,6 @@ public class AuthenticationConfigurationQueryDataSource
   @Override
   public AuthenticationConfiguration findWithDisabled(
       Tenant tenant, AuthenticationConfigurationIdentifier identifier, boolean includeDisabled) {
-    AuthenticationConfigSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, identifier, includeDisabled);
 
     if (Objects.isNull(result) || result.isEmpty()) {
@@ -80,7 +77,6 @@ public class AuthenticationConfigurationQueryDataSource
 
   @Override
   public long findTotalCount(Tenant tenant) {
-    AuthenticationConfigSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectCount(tenant);
 
     if (Objects.isNull(result) || result.isEmpty()) {
@@ -92,7 +88,6 @@ public class AuthenticationConfigurationQueryDataSource
 
   @Override
   public List<AuthenticationConfiguration> findList(Tenant tenant, int limit, int offset) {
-    AuthenticationConfigSqlExecutor executor = executors.get(tenant.databaseType());
     List<Map<String, String>> results = executor.selectList(tenant, limit, offset);
 
     if (Objects.isNull(results) || results.isEmpty()) {

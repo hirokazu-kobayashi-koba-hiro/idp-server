@@ -259,7 +259,7 @@ public class PostgresqlExecutor implements ClientConfigSqlExecutor {
   }
 
   @Override
-  public long selectTotalCount(Tenant tenant, ClientQueries queries) {
+  public Map<String, String> selectTotalCount(Tenant tenant, ClientQueries queries) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     StringBuilder where = new StringBuilder("WHERE tenant_id = ?::uuid");
@@ -372,11 +372,7 @@ public class PostgresqlExecutor implements ClientConfigSqlExecutor {
         FROM client_configuration
         """ + where;
 
-    Map<String, String> result = sqlExecutor.selectOne(sqlTemplate, params);
-    if (result == null || result.isEmpty()) {
-      return 0;
-    }
-    return Long.parseLong(result.get("count"));
+    return sqlExecutor.selectOne(sqlTemplate, params);
   }
 
   @Override

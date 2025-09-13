@@ -23,15 +23,15 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class IdentityVerificationResultCommandDataSource
     implements IdentityVerificationResultCommandRepository {
 
-  IdentityVerificationResultCommandSqlExecutors executors;
+  IdentityVerificationResultCommandSqlExecutor executor;
 
-  public IdentityVerificationResultCommandDataSource() {
-    this.executors = new IdentityVerificationResultCommandSqlExecutors();
+  public IdentityVerificationResultCommandDataSource(
+      IdentityVerificationResultCommandSqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public void register(Tenant tenant, IdentityVerificationResult result) {
-    IdentityVerificationResultCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, result);
   }
 }

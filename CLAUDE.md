@@ -73,6 +73,7 @@
 5. `./setup.sh` - 初期設定
 
 ## ビルド・テストコマンド
+- **フォーマット修正**: `./gradlew spotlessApply` (ビルド前に必ず実行)
 - ビルド: `./gradlew build`
 - テスト: `./gradlew test`
 - E2Eテスト: `cd e2e && npm test`

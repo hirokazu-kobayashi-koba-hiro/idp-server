@@ -27,23 +27,21 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class AuthorizationGrantedDataSource implements AuthorizationGrantedRepository {
 
   JsonConverter jsonConverter;
-  AuthorizationGrantedSqlExecutors executors;
+  AuthorizationGrantedSqlExecutor executor;
 
-  public AuthorizationGrantedDataSource() {
-    this.executors = new AuthorizationGrantedSqlExecutors();
-    this.jsonConverter = JsonConverter.snakeCaseInstance();
+  public AuthorizationGrantedDataSource(
+      AuthorizationGrantedSqlExecutor executor, JsonConverter jsonConverter) {
+    this.executor = executor;
+    this.jsonConverter = jsonConverter;
   }
 
   @Override
   public void register(Tenant tenant, AuthorizationGranted authorizationGranted) {
-    AuthorizationGrantedSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(authorizationGranted);
   }
 
   @Override
   public AuthorizationGranted find(Tenant tenant, RequestedClientId requestedClientId, User user) {
-    AuthorizationGrantedSqlExecutor executor = executors.get(tenant.databaseType());
-
     Map<String, String> result = executor.selectOne(tenant.identifier(), requestedClientId, user);
 
     if (result == null || result.isEmpty()) {
@@ -55,7 +53,6 @@ public class AuthorizationGrantedDataSource implements AuthorizationGrantedRepos
 
   @Override
   public void update(Tenant tenant, AuthorizationGranted authorizationGranted) {
-    AuthorizationGrantedSqlExecutor executor = executors.get(tenant.databaseType());
     executor.update(tenant, authorizationGranted);
   }
 

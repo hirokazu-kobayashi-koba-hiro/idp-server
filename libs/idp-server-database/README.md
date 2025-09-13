@@ -15,7 +15,7 @@ DB_TYPE=postgresql DB_URL=jdbc:postgresql://localhost:54321/idpserver_reader ./g
 ```
 
 ```shell
-DB_TYPE=mysql ./gradlew flywayClean flywayMigrate --info
+DB_TYPE=mysql ./gradlew flywayClean flywayMigrate
 ```
 
 

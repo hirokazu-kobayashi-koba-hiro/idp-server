@@ -19,6 +19,8 @@ package org.idp.server.core.openid.plugin;
 import java.util.List;
 import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyProvider;
+import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
+import org.idp.server.platform.dependency.ApplicationComponentProvider;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.plugin.PluginLoader;
 
@@ -28,22 +30,39 @@ public class AuthenticationDependencyContainerPluginLoader extends PluginLoader 
       LoggerWrapper.getLogger(AuthenticationDependencyContainerPluginLoader.class);
 
   public static AuthenticationDependencyContainer load() {
+    return load(null);
+  }
+
+  public static AuthenticationDependencyContainer load(
+      ApplicationComponentDependencyContainer appContainer) {
     AuthenticationDependencyContainer container = new AuthenticationDependencyContainer();
 
     List<AuthenticationDependencyProvider> internals =
         loadFromInternalModule(AuthenticationDependencyProvider.class);
     for (AuthenticationDependencyProvider<?> provider : internals) {
-      container.register(provider.type(), provider.provide());
+      Object instance = createInstance(provider, appContainer);
+      container.register(provider.type(), instance);
       log.info("Dynamic Registered internal Authentication dependency provider " + provider.type());
     }
 
     List<AuthenticationDependencyProvider> externals =
         loadFromExternalModule(AuthenticationDependencyProvider.class);
     for (AuthenticationDependencyProvider<?> provider : externals) {
-      container.register(provider.type(), provider.provide());
+      Object instance = createInstance(provider, appContainer);
+      container.register(provider.type(), instance);
       log.info("Dynamic Registered external Authentication dependency provider " + provider.type());
     }
 
     return container;
+  }
+
+  private static Object createInstance(
+      AuthenticationDependencyProvider<?> provider,
+      ApplicationComponentDependencyContainer appContainer) {
+    if (provider instanceof ApplicationComponentProvider && appContainer != null) {
+      return ((ApplicationComponentProvider<?>) provider).provide(appContainer);
+    } else {
+      return provider.provide();
+    }
   }
 }

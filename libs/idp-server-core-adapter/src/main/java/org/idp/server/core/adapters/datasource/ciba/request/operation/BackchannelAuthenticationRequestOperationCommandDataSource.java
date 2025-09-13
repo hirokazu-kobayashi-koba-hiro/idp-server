@@ -22,15 +22,15 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class BackchannelAuthenticationRequestOperationCommandDataSource
     implements BackchannelAuthenticationRequestOperationCommandRepository {
 
-  BackchannelAuthenticationRequestSqlExecutors executors;
+  BackchannelAuthenticationRequestSqlExecutor executor;
 
-  public BackchannelAuthenticationRequestOperationCommandDataSource() {
-    this.executors = new BackchannelAuthenticationRequestSqlExecutors();
+  public BackchannelAuthenticationRequestOperationCommandDataSource(
+      BackchannelAuthenticationRequestSqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public void deleteExpiredRequest(Tenant tenant, int limit) {
-    BackchannelAuthenticationRequestSqlExecutor executor = executors.get(tenant.databaseType());
     executor.deleteExpiredRequest(limit);
   }
 }

@@ -69,12 +69,12 @@ public class MysqlExecutor implements UserSqlExecutor {
         String.format(
             selectSql,
             """
-                                WHERE idp_user.tenant_id = ?::uuid
+                                WHERE idp_user.tenant_id = ?
                                 AND idp_user.name = ?
                                 AND idp_user.provider_id = ?
                             """);
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierUUID());
+    params.add(tenant.identifier().value());
     params.add(name);
     params.add(providerId);
 
@@ -90,16 +90,14 @@ public class MysqlExecutor implements UserSqlExecutor {
         String.format(
             selectSql,
             """
-                        WHERE idp_user.tenant_id = ?
-                        AND EXISTS (
-                            SELECT 1
-                            FROM jsonb_array_elements(idp_user.authentication_devices) AS device
-                            WHERE device->>'id' = ?
-                        )
-                        AND idp_user.provider_id = ?
-                    """);
+                  WHERE idp_user.tenant_id = ?
+                  AND JSON_CONTAINS(COALESCE(idp_user.authentication_devices, JSON_ARRAY()),
+                                    JSON_OBJECT('id', ?),
+                                    '$')
+                  AND idp_user.provider_id = ?
+              """);
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifier().value());
     params.add(deviceId.value());
     params.add(providerId);
 
@@ -150,9 +148,9 @@ public class MysqlExecutor implements UserSqlExecutor {
   public Map<String, String> selectCount(Tenant tenant, UserQueries queries) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    StringBuilder where = new StringBuilder("WHERE idp_user.tenant_id = ?::uuid");
+    StringBuilder where = new StringBuilder("WHERE idp_user.tenant_id = ?");
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierUUID());
+    params.add(tenant.identifier().value());
 
     if (queries.hasFrom()) {
       where.append(" AND idp_user.created_at >= ?");
@@ -165,8 +163,8 @@ public class MysqlExecutor implements UserSqlExecutor {
     }
 
     if (queries.hasUserId()) {
-      where.append(" AND idp_user.id = ?::uuid");
-      params.add(queries.userIdAsUuid());
+      where.append(" AND idp_user.id = ?");
+      params.add(queries.userId());
     }
 
     if (queries.hasExternalUserId()) {
@@ -234,7 +232,7 @@ public class MysqlExecutor implements UserSqlExecutor {
 
     String sql =
         """
-    SELECT COUNT(DISTINCT idp_user.id)
+    SELECT COUNT(DISTINCT idp_user.id) as count
     FROM idp_user
     LEFT JOIN idp_user_roles ON idp_user.id = idp_user_roles.user_id
     LEFT JOIN role ON idp_user_roles.role_id = role.id
@@ -248,23 +246,23 @@ public class MysqlExecutor implements UserSqlExecutor {
   public List<Map<String, String>> selectList(Tenant tenant, UserQueries queries) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    StringBuilder where = new StringBuilder("WHERE idp_user.tenant_id = ?::uuid");
+    StringBuilder where = new StringBuilder("WHERE idp_user.tenant_id = ?");
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierUUID());
+    params.add(tenant.identifier().value());
 
     if (queries.hasFrom()) {
-      where.append(" AND created_at >= ?");
+      where.append(" AND idp_user.created_at >= ?");
       params.add(queries.from());
     }
 
     if (queries.hasTo()) {
-      where.append(" AND created_at <= ?");
+      where.append(" AND idp_user.created_at <= ?");
       params.add(queries.to());
     }
 
     if (queries.hasUserId()) {
-      where.append(" AND idp_user.id = ?::uuid");
-      params.add(queries.userIdAsUuid());
+      where.append(" AND idp_user.id = ?");
+      params.add(queries.userId());
     }
 
     if (queries.hasExternalUserId()) {
@@ -395,20 +393,18 @@ public class MysqlExecutor implements UserSqlExecutor {
 
     String sqlTemplate =
         """
-      SELECT
-      COALESCE(
-       JSON_AGG(idp_user_assigned_organizations.organization_id)
-       FILTER (WHERE idp_user_assigned_organizations.organization_id IS NOT NULL),
-       '[]'
-     ) AS assigned_organizations,
-     idp_user_current_organization.organization_id AS current_organization_id
-      FROM idp_user_assigned_organizations
-      JOIN idp_user_current_organization
-       ON idp_user_assigned_organizations.user_id = idp_user_current_organization.user_id
-      WHERE idp_user_assigned_organizations.user_id = ?:: uuid
-      GROUP BY
-      idp_user_assigned_organizations.user_id,
-      idp_user_current_organization.organization_id
+          SELECT
+             COALESCE((
+               SELECT JSON_ARRAYAGG(t.organization_id)
+               FROM (
+                 SELECT DISTINCT idp_user_assigned_organizations.organization_id
+                 FROM idp_user_assigned_organizations
+                 WHERE idp_user_assigned_organizations.user_id = idp_user_current_organization.user_id
+               ) AS t
+             ), JSON_ARRAY()) AS assigned_organizations,
+             idp_user_current_organization.organization_id AS current_organization_id
+           FROM idp_user_current_organization
+           WHERE idp_user_current_organization.user_id = ?;
       """;
 
     List<Object> params = new ArrayList<>();
@@ -423,19 +419,15 @@ public class MysqlExecutor implements UserSqlExecutor {
 
     String sqlTemplate =
         """
-      SELECT
-        COALESCE(
-        JSON_AGG(idp_user_assigned_tenants.tenant_id)
-        FILTER (WHERE idp_user_assigned_tenants.tenant_id IS NOT NULL),
-        '[]'
-      ) AS assigned_tenants,
-      idp_user_current_tenant.tenant_id AS current_tenant_id
-      FROM idp_user_assigned_tenants
-      JOIN idp_user_current_tenant
-       ON idp_user_assigned_tenants.user_id = idp_user_current_tenant.user_id
-      WHERE user_id = ?::uuid
-      GROUP BY
-
+          SELECT
+             COALESCE((
+               SELECT JSON_ARRAYAGG(t.tenant_id)
+               FROM idp_user_assigned_tenants AS t
+               WHERE t.user_id = idp_user_current_tenant.user_id
+             ), JSON_ARRAY()) AS assigned_tenants,
+             idp_user_current_tenant.tenant_id AS current_tenant_id
+           FROM idp_user_current_tenant
+           WHERE idp_user_current_tenant.user_id = ?;
       """;
 
     List<Object> params = new ArrayList<>();
@@ -446,72 +438,96 @@ public class MysqlExecutor implements UserSqlExecutor {
 
   String selectSql =
       """
-                  SELECT
-                               idp_user.id,
-                               idp_user.provider_id,
-                               idp_user.external_user_id,
-                               idp_user.external_user_original_payload,
-                               idp_user.name,
-                               idp_user.given_name,
-                               idp_user.family_name,
-                               idp_user.middle_name,
-                               idp_user.nickname,
-                               idp_user.preferred_username,
-                               idp_user.profile,
-                               idp_user.picture,
-                               idp_user.website,
-                               idp_user.email,
-                               idp_user.email_verified,
-                               idp_user.gender,
-                               idp_user.birthdate,
-                               idp_user.zoneinfo,
-                               idp_user.locale,
-                               idp_user.phone_number,
-                               idp_user.phone_number_verified,
-                               idp_user.address,
-                               idp_user.custom_properties,
-                               idp_user.credentials,
-                               idp_user.hashed_password,
-                               idp_user.authentication_devices,
-                               idp_user.verified_claims,
-                               idp_user.status,
-                               idp_user.created_at,
-                               idp_user.updated_at,
-                               JSON_ARRAYAGG(role.name) roles,
-                               JSON_ARRAYAGG(user_effective_permissions_view.permission_name) AS permissions
-                             FROM idp_user
-                             LEFT JOIN idp_user_roles ON idp_user.id = idp_user_roles.user_id
-                             LEFT JOIN role ON idp_user_roles.role_id = role.id
-                             LEFT JOIN user_effective_permissions_view ON idp_user.id = user_effective_permissions_view.user_id
-                             %s
-                             GROUP BY
-                               idp_user.id,
-                               idp_user.provider_id,
-                               idp_user.external_user_id,
-                               idp_user.external_user_original_payload,
-                               idp_user.name,
-                               idp_user.given_name,
-                               idp_user.family_name,
-                               idp_user.middle_name,
-                               idp_user.nickname,
-                               idp_user.preferred_username,
-                               idp_user.profile,
-                               idp_user.picture,
-                               idp_user.website,
-                               idp_user.email,
-                               idp_user.email_verified,
-                               idp_user.gender,
-                               idp_user.birthdate,
-                               idp_user.zoneinfo,
-                               idp_user.locale,
-                               idp_user.phone_number,
-                               idp_user.phone_number_verified,
-                               idp_user.address,
-                               idp_user.custom_properties,
-                               idp_user.credentials,
-                               idp_user.hashed_password,
-                               idp_user.status,
-                               idp_user.created_at,
-                               idp_user.updated_at
+              SELECT
+                   idp_user.id,
+                   idp_user.provider_id,
+                   idp_user.external_user_id,
+                   idp_user.external_user_original_payload,
+                   idp_user.name,
+                   idp_user.given_name,
+                   idp_user.family_name,
+                   idp_user.middle_name,
+                   idp_user.nickname,
+                   idp_user.preferred_username,
+                   idp_user.profile,
+                   idp_user.picture,
+                   idp_user.website,
+                   idp_user.email,
+                   idp_user.email_verified,
+                   idp_user.gender,
+                   idp_user.birthdate,
+                   idp_user.zoneinfo,
+                   idp_user.locale,
+                   idp_user.phone_number,
+                   idp_user.phone_number_verified,
+                   idp_user.address,
+                   idp_user.custom_properties,
+                   idp_user.credentials,
+                   idp_user.hashed_password,
+                   idp_user.authentication_devices,
+                   idp_user.verified_claims,
+                   idp_user.status,
+                   idp_user.created_at,
+                   idp_user.updated_at,
+                   COALESCE((
+                                SELECT JSON_ARRAYAGG(JSON_OBJECT('role_id', r.id, 'role_name', r.name))
+                                FROM (
+                                         SELECT DISTINCT role.id AS id, role.name AS name
+                                         FROM idp_user_roles
+                                                  JOIN role ON role.id = idp_user_roles.role_id
+                                         WHERE idp_user_roles.user_id = idp_user.id
+                                     ) AS r
+                            ), JSON_ARRAY()) AS roles,
+                   COALESCE((
+                                SELECT JSON_ARRAYAGG(p.permission_name)
+                                FROM (
+                                         SELECT DISTINCT permission.name AS permission_name
+                                         FROM idp_user_roles
+                                                  JOIN role_permission ON role_permission.role_id = idp_user_roles.role_id
+                                                  JOIN permission ON permission.id = role_permission.permission_id
+                                         WHERE idp_user_roles.user_id = idp_user.id
+                                     ) AS p
+                            ), JSON_ARRAY()) AS permissions
+                 FROM idp_user
+                 LEFT JOIN idp_user_roles
+                         ON idp_user.id = idp_user_roles.user_id
+                     LEFT JOIN role
+                             ON idp_user_roles.role_id = role.id
+                                  LEFT JOIN role_permission
+                 ON role.id = role_permission.role_id
+                     LEFT JOIN permission
+                     ON role_permission.permission_id = permission.id
+                 %s
+                 GROUP BY
+                   idp_user.id,
+                   idp_user.provider_id,
+                   idp_user.external_user_id,
+                   idp_user.external_user_original_payload,
+                   idp_user.name,
+                   idp_user.given_name,
+                   idp_user.family_name,
+                   idp_user.middle_name,
+                   idp_user.nickname,
+                   idp_user.preferred_username,
+                   idp_user.profile,
+                   idp_user.picture,
+                   idp_user.website,
+                   idp_user.email,
+                   idp_user.email_verified,
+                   idp_user.gender,
+                   idp_user.birthdate,
+                   idp_user.zoneinfo,
+                   idp_user.locale,
+                   idp_user.phone_number,
+                   idp_user.phone_number_verified,
+                   idp_user.address,
+                   idp_user.custom_properties,
+                   idp_user.credentials,
+                   idp_user.hashed_password,
+                   idp_user.authentication_devices,
+                   idp_user.verified_claims,
+                   idp_user.status,
+                   idp_user.created_at,
+                   idp_user.updated_at
                   """;
 }

@@ -16,7 +16,6 @@
 
 package org.idp.server.core.adapters.datasource.multi_tenancy.tenant.command;
 
-import org.idp.server.platform.datasource.DatabaseType;
 import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantCommandRepository;
@@ -24,17 +23,16 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class TenantCommandDataSource implements TenantCommandRepository {
 
-  TenantCommandSqlExecutors executors;
+  TenantCommandSqlExecutor executor;
   CacheStore cacheStore;
 
-  public TenantCommandDataSource(CacheStore cacheStore) {
-    this.executors = new TenantCommandSqlExecutors();
+  public TenantCommandDataSource(TenantCommandSqlExecutor executor, CacheStore cacheStore) {
+    this.executor = executor;
     this.cacheStore = cacheStore;
   }
 
   @Override
   public void register(Tenant tenant) {
-    TenantCommandSqlExecutor executor = executors.get(DatabaseType.POSTGRESQL);
     executor.insert(tenant);
   }
 
@@ -42,7 +40,6 @@ public class TenantCommandDataSource implements TenantCommandRepository {
   public void update(Tenant tenant) {
     String key = key(tenant.identifier());
     cacheStore.delete(key);
-    TenantCommandSqlExecutor executor = executors.get(DatabaseType.POSTGRESQL);
     executor.update(tenant);
   }
 
@@ -50,7 +47,6 @@ public class TenantCommandDataSource implements TenantCommandRepository {
   public void delete(TenantIdentifier tenantIdentifier) {
     String key = key(tenantIdentifier);
     cacheStore.delete(key);
-    TenantCommandSqlExecutor executor = executors.get(DatabaseType.POSTGRESQL);
     executor.delete(tenantIdentifier);
   }
 

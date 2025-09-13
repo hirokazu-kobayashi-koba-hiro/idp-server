@@ -28,6 +28,7 @@ public class BackchannelAuthenticationRequestSqlExecutors {
   public BackchannelAuthenticationRequestSqlExecutors() {
     this.executors = new HashMap<>();
     executors.put(DatabaseType.POSTGRESQL, new PostgresqlExecutor());
+    executors.put(DatabaseType.MYSQL, new MysqlExecutor());
   }
 
   public BackchannelAuthenticationRequestSqlExecutor get(DatabaseType databaseType) {

@@ -19,6 +19,7 @@ package org.idp.server.core.adapters.datasource.multi_tenancy.organization;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
@@ -50,6 +51,7 @@ public class MysqlExecutor implements OrganizationSqlExecutor {
         new StringBuilder(
             """
                                  INSERT INTO organization_tenants(
+                                 id,
                                  organization_id,
                                  tenant_id
                                  )
@@ -62,7 +64,8 @@ public class MysqlExecutor implements OrganizationSqlExecutor {
         .assignedTenants()
         .forEach(
             organizationTenant -> {
-              sqlValues.add("(?, ?)");
+              sqlValues.add("(?, ?, ?)");
+              tenantParams.add(UUID.randomUUID().toString());
               tenantParams.add(organization.identifier().value());
               tenantParams.add(organizationTenant.id());
             });
@@ -83,7 +86,7 @@ public class MysqlExecutor implements OrganizationSqlExecutor {
     String sqlTemplate =
         """
                 UPDATE organization
-                SET name = ?
+                SET name = ?,
                 description = ?
                 WHERE
                 id = ?
@@ -103,23 +106,28 @@ public class MysqlExecutor implements OrganizationSqlExecutor {
 
     String sqlTemplate =
         """
-                SELECT
-                organization.id,
-                organization.name,
-                organization.description,
-                COALESCE(
-                JSON_AGG(JSON_BUILD_OBJECT('id', tenant.id, 'name', tenant.name, 'type', tenant.type))
-                FILTER (WHERE tenant.id IS NOT NULL),
-                '[]'
-                ) AS tenants
+            SELECT
+              organization.id,
+              organization.name,
+              organization.description,
+              COALESCE(
+                JSON_ARRAYAGG(
+                  IF(tenant.id IS NOT NULL,
+                     JSON_OBJECT('id', tenant.id, 'name', tenant.name, 'type', tenant.type),
+                     NULL)
+                ),
+                JSON_ARRAY()
+              ) AS tenants
             FROM organization
-                LEFT JOIN organization_tenants ON organization_tenants.organization_id = organization.id
-                LEFT JOIN tenant ON organization_tenants.tenant_id = tenant.id
+            LEFT JOIN organization_tenants
+              ON organization_tenants.organization_id = organization.id
+            LEFT JOIN tenant
+              ON tenant.id = organization_tenants.tenant_id
             WHERE organization.id = ?
             GROUP BY
-            organization.id,
-            organization.name,
-            organization.description
+              organization.id,
+              organization.name,
+              organization.description;
           """;
     List<Object> params = new ArrayList<>();
     params.add(identifier.value());

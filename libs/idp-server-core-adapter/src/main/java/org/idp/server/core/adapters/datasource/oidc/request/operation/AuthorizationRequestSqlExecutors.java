@@ -28,6 +28,7 @@ public class AuthorizationRequestSqlExecutors {
   public AuthorizationRequestSqlExecutors() {
     this.executors = new HashMap<>();
     executors.put(DatabaseType.POSTGRESQL, new PostgresqlSqlExecutor());
+    executors.put(DatabaseType.MYSQL, new MysqlSqlExecutor());
   }
 
   public AuthorizationRequestSqlExecutor get(DatabaseType databaseType) {

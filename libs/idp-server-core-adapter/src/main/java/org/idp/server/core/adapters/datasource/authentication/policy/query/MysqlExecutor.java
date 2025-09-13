@@ -44,7 +44,7 @@ public class MysqlExecutor implements AuthenticationPolicyConfigurationSqlExecut
             """;
 
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierUUID());
+    params.add(tenant.identifier().value());
     params.add(authFlow.name());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
@@ -63,8 +63,8 @@ public class MysqlExecutor implements AuthenticationPolicyConfigurationSqlExecut
                 """;
 
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierUUID());
-    params.add(identifier.valueAsUuid());
+    params.add(tenant.identifier().value());
+    params.add(identifier.value());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
@@ -98,7 +98,7 @@ public class MysqlExecutor implements AuthenticationPolicyConfigurationSqlExecut
                 """;
 
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierUUID());
+    params.add(tenant.identifier().value());
     params.add(limit);
     params.add(offset);
 

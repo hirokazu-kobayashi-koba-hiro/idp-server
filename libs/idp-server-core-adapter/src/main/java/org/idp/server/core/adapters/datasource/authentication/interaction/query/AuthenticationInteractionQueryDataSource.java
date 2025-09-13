@@ -32,19 +32,18 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class AuthenticationInteractionQueryDataSource
     implements AuthenticationInteractionQueryRepository {
 
-  AuthenticationInteractionQuerySqlExecutors executors;
+  AuthenticationInteractionQuerySqlExecutor executor;
   JsonConverter jsonConverter;
 
-  public AuthenticationInteractionQueryDataSource() {
-    this.executors = new AuthenticationInteractionQuerySqlExecutors();
-    this.jsonConverter = JsonConverter.snakeCaseInstance();
+  public AuthenticationInteractionQueryDataSource(
+      AuthenticationInteractionQuerySqlExecutor executor, JsonConverter jsonConverter) {
+    this.executor = executor;
+    this.jsonConverter = jsonConverter;
   }
 
   @Override
   public <T> T get(
       Tenant tenant, AuthenticationTransactionIdentifier identifier, String type, Class<T> clazz) {
-    AuthenticationInteractionQuerySqlExecutor executor = executors.get(tenant.databaseType());
-
     Map<String, String> result = executor.selectOne(tenant, identifier, type);
 
     if (Objects.isNull(result) || result.isEmpty()) {
@@ -58,7 +57,6 @@ public class AuthenticationInteractionQueryDataSource
 
   @Override
   public long findTotalCount(Tenant tenant, AuthenticationInteractionQueries queries) {
-    AuthenticationInteractionQuerySqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectCount(tenant, queries);
 
     if (Objects.isNull(result) || result.isEmpty()) {
@@ -71,7 +69,6 @@ public class AuthenticationInteractionQueryDataSource
   @Override
   public List<AuthenticationInteraction> findList(
       Tenant tenant, AuthenticationInteractionQueries queries) {
-    AuthenticationInteractionQuerySqlExecutor executor = executors.get(tenant.databaseType());
     List<Map<String, String>> results = executor.selectList(tenant, queries);
 
     if (Objects.isNull(results) || results.isEmpty()) {
@@ -84,7 +81,6 @@ public class AuthenticationInteractionQueryDataSource
   @Override
   public AuthenticationInteraction find(
       Tenant tenant, AuthenticationTransactionIdentifier identifier, String type) {
-    AuthenticationInteractionQuerySqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, identifier, type);
 
     if (Objects.isNull(result) || result.isEmpty()) {

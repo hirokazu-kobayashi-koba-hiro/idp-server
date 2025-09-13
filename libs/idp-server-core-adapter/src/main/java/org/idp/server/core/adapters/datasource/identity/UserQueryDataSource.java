@@ -29,22 +29,18 @@ import org.idp.server.core.openid.identity.exception.UserNotFoundException;
 import org.idp.server.core.openid.identity.exception.UserTooManyFoundResultException;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.platform.datasource.SqlTooManyResultsException;
-import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class UserQueryDataSource implements UserQueryRepository {
 
-  JsonConverter jsonConverter;
-  UserSqlExecutors executors;
+  UserSqlExecutor executor;
 
-  public UserQueryDataSource() {
-    this.executors = new UserSqlExecutors();
-    this.jsonConverter = JsonConverter.snakeCaseInstance();
+  public UserQueryDataSource(UserSqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public User get(Tenant tenant, UserIdentifier userIdentifier) {
-    UserSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, userIdentifier);
 
     if (Objects.isNull(result) || result.isEmpty()) {
@@ -56,7 +52,6 @@ public class UserQueryDataSource implements UserQueryRepository {
 
   @Override
   public User findById(Tenant tenant, UserIdentifier userIdentifier) {
-    UserSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, userIdentifier);
 
     if (Objects.isNull(result) || result.isEmpty()) {
@@ -77,7 +72,6 @@ public class UserQueryDataSource implements UserQueryRepository {
   public User findByExternalIdpSubject(
       Tenant tenant, String externalIdpSubject, String providerId) {
     try {
-      UserSqlExecutor executor = executors.get(tenant.databaseType());
       Map<String, String> result =
           executor.selectByExternalIdpSubject(tenant, externalIdpSubject, providerId);
 
@@ -96,7 +90,6 @@ public class UserQueryDataSource implements UserQueryRepository {
   @Override
   public User findByName(Tenant tenant, String name, String providerId) {
     try {
-      UserSqlExecutor executor = executors.get(tenant.databaseType());
       Map<String, String> result = executor.selectByName(tenant, name, providerId);
 
       if (Objects.isNull(result) || result.isEmpty()) {
@@ -115,7 +108,6 @@ public class UserQueryDataSource implements UserQueryRepository {
   public User findByDeviceId(
       Tenant tenant, AuthenticationDeviceIdentifier deviceId, String providerId) {
     try {
-      UserSqlExecutor executor = executors.get(tenant.databaseType());
       Map<String, String> result = executor.selectByDeviceId(tenant, deviceId, providerId);
 
       if (Objects.isNull(result) || result.isEmpty()) {
@@ -133,7 +125,6 @@ public class UserQueryDataSource implements UserQueryRepository {
   @Override
   public User findByEmail(Tenant tenant, String email, String providerId) {
     try {
-      UserSqlExecutor executor = executors.get(tenant.databaseType());
       Map<String, String> result = executor.selectByEmail(tenant, email, providerId);
 
       if (Objects.isNull(result) || result.isEmpty()) {
@@ -151,7 +142,6 @@ public class UserQueryDataSource implements UserQueryRepository {
   @Override
   public User findByPhone(Tenant tenant, String phone, String providerId) {
     try {
-      UserSqlExecutor executor = executors.get(tenant.databaseType());
       Map<String, String> result = executor.selectByPhone(tenant, phone, providerId);
 
       if (Objects.isNull(result) || result.isEmpty()) {
@@ -168,7 +158,6 @@ public class UserQueryDataSource implements UserQueryRepository {
 
   @Override
   public long findTotalCount(Tenant tenant, UserQueries queries) {
-    UserSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectCount(tenant, queries);
 
     if (Objects.isNull(result) || result.isEmpty()) {
@@ -180,7 +169,6 @@ public class UserQueryDataSource implements UserQueryRepository {
 
   @Override
   public List<User> findList(Tenant tenant, UserQueries queries) {
-    UserSqlExecutor executor = executors.get(tenant.databaseType());
     List<Map<String, String>> results = executor.selectList(tenant, queries);
 
     if (Objects.isNull(results) || results.isEmpty()) {
@@ -192,7 +180,6 @@ public class UserQueryDataSource implements UserQueryRepository {
 
   @Override
   public User findByProvider(Tenant tenant, String providerId, String providerUserId) {
-    UserSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectByProvider(tenant, providerId, providerUserId);
 
     if (Objects.isNull(result) || result.isEmpty()) {
@@ -205,7 +192,6 @@ public class UserQueryDataSource implements UserQueryRepository {
 
   @Override
   public User findByAuthenticationDevice(Tenant tenant, String deviceId) {
-    UserSqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectByAuthenticationDevice(tenant, deviceId);
 
     if (Objects.isNull(result) || result.isEmpty()) {

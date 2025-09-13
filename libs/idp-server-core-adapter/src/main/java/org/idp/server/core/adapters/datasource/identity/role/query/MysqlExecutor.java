@@ -28,10 +28,22 @@ public class MysqlExecutor implements RoleSqlExecutor {
 
   String selectSql =
       """
-            SELECT role.id, role.name, role.description
-            FROM role
-            LEFT JOIN permission ON role_id = permission.id
-            """;
+        SELECT
+          role.id, role.name, role.description, role.created_at,
+          COALESCE((
+            SELECT JSON_ARRAYAGG(JSON_OBJECT(
+                     'permission_id', p.id,
+                     'permission_name', p.name,
+                     'permission_description', p.description))
+            FROM (
+              SELECT DISTINCT permission.id, permission.name, permission.description
+              FROM role_permission
+              JOIN permission ON permission.id = role_permission.permission_id
+              WHERE role_permission.role_id = role.id
+            ) AS p
+          ), JSON_ARRAY()) AS permissions
+        FROM role
+      """;
 
   @Override
   public Map<String, String> selectOne(Tenant tenant, RoleIdentifier identifier) {
@@ -45,8 +57,8 @@ public class MysqlExecutor implements RoleSqlExecutor {
                 """;
 
     List<Object> params = new ArrayList<>();
-    params.add(identifier.valueAsUuid());
-    params.add(tenant.identifier().valueAsUuid());
+    params.add(identifier.value());
+    params.add(tenant.identifier().value());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
@@ -64,7 +76,7 @@ public class MysqlExecutor implements RoleSqlExecutor {
 
     List<Object> params = new ArrayList<>();
     params.add(name);
-    params.add(tenant.identifier().valueAsUuid());
+    params.add(tenant.identifier().value());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
@@ -75,13 +87,12 @@ public class MysqlExecutor implements RoleSqlExecutor {
     StringBuilder sqlBuilder =
         new StringBuilder(
             """
-                        SELECT count(*) FROM role
-                        LEFT JOIN permission ON role_id = permission.id
-                        WHERE tenant_id = ?
+                        SELECT COUNT(*) as count FROM role
+                        WHERE role.tenant_id = ?
                         """);
 
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierUUID());
+    params.add(tenant.identifier().value());
 
     if (queries.hasFrom()) {
       sqlBuilder.append(" AND role.created_at >= ?");
@@ -95,7 +106,7 @@ public class MysqlExecutor implements RoleSqlExecutor {
 
     if (queries.hasId()) {
       sqlBuilder.append(" AND role.id = ?");
-      params.add(queries.idAsUuid());
+      params.add(queries.id());
     }
 
     if (queries.hasName()) {
@@ -113,7 +124,7 @@ public class MysqlExecutor implements RoleSqlExecutor {
     String sqlTemplate = selectSql + " WHERE tenant_id = ?";
 
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierUUID());
+    params.add(tenant.identifier().value());
 
     return sqlExecutor.selectList(sqlTemplate, params);
   }
@@ -124,7 +135,7 @@ public class MysqlExecutor implements RoleSqlExecutor {
     StringBuilder sqlBuilder = new StringBuilder(selectSql + " WHERE role.tenant_id = ?");
 
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierUUID());
+    params.add(tenant.identifier().value());
 
     if (queries.hasFrom()) {
       sqlBuilder.append(" AND role.created_at >= ?");
@@ -138,7 +149,7 @@ public class MysqlExecutor implements RoleSqlExecutor {
 
     if (queries.hasId()) {
       sqlBuilder.append(" AND role.id = ?");
-      params.add(queries.idAsUuid());
+      params.add(queries.id());
     }
 
     if (queries.hasName()) {

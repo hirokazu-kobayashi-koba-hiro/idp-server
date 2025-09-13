@@ -28,6 +28,7 @@ public class IdentityVerificationResultSqlExecutors {
   public IdentityVerificationResultSqlExecutors() {
     this.executors = new HashMap<>();
     executors.put(DatabaseType.POSTGRESQL, new PostgresqlExecutor());
+    executors.put(DatabaseType.MYSQL, new MysqlExecutor());
   }
 
   public IdentityVerificationResultSqlExecutor get(DatabaseType databaseType) {

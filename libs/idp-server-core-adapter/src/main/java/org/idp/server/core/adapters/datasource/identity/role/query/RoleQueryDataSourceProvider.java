@@ -17,6 +17,7 @@
 package org.idp.server.core.adapters.datasource.identity.role.query;
 
 import org.idp.server.core.openid.identity.role.RoleQueryRepository;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
@@ -30,6 +31,10 @@ public class RoleQueryDataSourceProvider
 
   @Override
   public RoleQueryRepository provide(ApplicationComponentDependencyContainer container) {
-    return new RoleQueryDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    RoleSqlExecutors executors = new RoleSqlExecutors();
+    RoleSqlExecutor executor = executors.get(databaseTypeProvider.provide());
+    return new RoleQueryDataSource(executor);
   }
 }

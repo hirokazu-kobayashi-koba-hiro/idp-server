@@ -23,27 +23,24 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class FederationConfigurationCommandDataSource
     implements FederationConfigurationCommandRepository {
 
-  FederationConfigurationSqlExecutors executors;
+  FederationConfigurationSqlExecutor executor;
 
-  public FederationConfigurationCommandDataSource() {
-    this.executors = new FederationConfigurationSqlExecutors();
+  public FederationConfigurationCommandDataSource(FederationConfigurationSqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public void register(Tenant tenant, FederationConfiguration configuration) {
-    FederationConfigurationSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, configuration);
   }
 
   @Override
   public void update(Tenant tenant, FederationConfiguration configuration) {
-    FederationConfigurationSqlExecutor executor = executors.get(tenant.databaseType());
     executor.update(tenant, configuration);
   }
 
   @Override
   public void delete(Tenant tenant, FederationConfiguration configuration) {
-    FederationConfigurationSqlExecutor executor = executors.get(tenant.databaseType());
     executor.delete(tenant, configuration);
   }
 }

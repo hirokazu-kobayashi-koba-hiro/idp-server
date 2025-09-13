@@ -31,16 +31,16 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class AuthenticationTransactionQueryDataSource
     implements AuthenticationTransactionQueryRepository {
 
-  AuthenticationTransactionQuerySqlExecutors executors;
+  AuthenticationTransactionQuerySqlExecutor executor;
 
-  public AuthenticationTransactionQueryDataSource() {
-    this.executors = new AuthenticationTransactionQuerySqlExecutors();
+  public AuthenticationTransactionQueryDataSource(
+      AuthenticationTransactionQuerySqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public AuthenticationTransaction get(
       Tenant tenant, AuthenticationTransactionIdentifier identifier) {
-    AuthenticationTransactionQuerySqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, identifier);
 
     if (result == null || result.isEmpty()) {
@@ -53,7 +53,6 @@ public class AuthenticationTransactionQueryDataSource
 
   @Override
   public AuthenticationTransaction get(Tenant tenant, AuthorizationIdentifier identifier) {
-    AuthenticationTransactionQuerySqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, identifier);
 
     if (result == null || result.isEmpty()) {
@@ -71,7 +70,6 @@ public class AuthenticationTransactionQueryDataSource
       AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
       AuthenticationTransactionQueries queries) {
 
-    AuthenticationTransactionQuerySqlExecutor executor = executors.get(tenant.databaseType());
     List<Map<String, String>> results =
         executor.selectListByDeviceId(tenant, authenticationDeviceIdentifier, queries);
 
@@ -88,7 +86,6 @@ public class AuthenticationTransactionQueryDataSource
       AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
       AuthenticationTransactionQueries queries) {
 
-    AuthenticationTransactionQuerySqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result =
         executor.selectCountByDeviceId(tenant, authenticationDeviceIdentifier, queries);
 
@@ -102,7 +99,6 @@ public class AuthenticationTransactionQueryDataSource
   @Override
   public long findTotalCount(Tenant tenant, AuthenticationTransactionQueries queries) {
 
-    AuthenticationTransactionQuerySqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectCount(tenant, queries);
 
     if (result == null || result.isEmpty()) {
@@ -116,7 +112,6 @@ public class AuthenticationTransactionQueryDataSource
   public List<AuthenticationTransaction> findList(
       Tenant tenant, AuthenticationTransactionQueries queries) {
 
-    AuthenticationTransactionQuerySqlExecutor executor = executors.get(tenant.databaseType());
     List<Map<String, String>> results = executor.selectList(tenant, queries);
 
     if (results == null || results.isEmpty()) {
@@ -129,7 +124,6 @@ public class AuthenticationTransactionQueryDataSource
   @Override
   public AuthenticationTransaction find(
       Tenant tenant, AuthenticationTransactionIdentifier identifier) {
-    AuthenticationTransactionQuerySqlExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> result = executor.selectOne(tenant, identifier);
 
     if (result == null || result.isEmpty()) {

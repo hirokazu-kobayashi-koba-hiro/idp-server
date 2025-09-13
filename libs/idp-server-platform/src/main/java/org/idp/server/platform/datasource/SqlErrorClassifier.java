@@ -40,7 +40,7 @@ public class SqlErrorClassifier {
       if (vendorCode == 1452 || vendorCode == 1451)
         return SqlError.FK_VIOLATION; // add/update child/parent row
       if (vendorCode == 1048) return SqlError.NOT_NULL_VIOLATION; // Column cannot be null
-      // CHECKはバージョン依存
+      // depend on version
     }
     if (vendorCode == 1213) return SqlError.DEADLOCK_DETECTED; // ER_LOCK_DEADLOCK
     if (vendorCode == 1205) return SqlError.SERIALIZATION_FAILURE; // ER_LOCK_WAIT_TIMEOUT

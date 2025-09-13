@@ -93,8 +93,8 @@ public class MysqlExecutor implements PermissionSqlExecutor {
     List<Object> params = new ArrayList<>();
     params.add(permission.name());
     params.add(permission.description());
-    params.add(permission.idAsUuid());
-    params.add(tenant.identifierUUID());
+    params.add(permission.id());
+    params.add(tenant.identifier().value());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -111,8 +111,8 @@ public class MysqlExecutor implements PermissionSqlExecutor {
                         """;
 
     List<Object> params = new ArrayList<>();
-    params.add(permission.idAsUuid());
-    params.add(tenant.identifierUUID());
+    params.add(permission.id());
+    params.add(tenant.identifier().value());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

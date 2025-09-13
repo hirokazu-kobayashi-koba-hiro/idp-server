@@ -30,7 +30,7 @@ public class PostgresqlExecutor implements AuditLogSqlExecutor {
   public Map<String, String> selectCount(Tenant tenant, AuditLogQueries queries) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String selectSql = """
-            SELECT COUNT(*) FROM audit_log
+            SELECT COUNT(*) as count FROM audit_log
             """;
     StringBuilder sql = new StringBuilder(selectSql).append(" WHERE tenant_id = ?::uuid");
     List<Object> params = new ArrayList<>();

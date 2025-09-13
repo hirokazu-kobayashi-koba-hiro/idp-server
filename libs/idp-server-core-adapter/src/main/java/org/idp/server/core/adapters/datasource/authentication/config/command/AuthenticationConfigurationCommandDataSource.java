@@ -24,29 +24,27 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class AuthenticationConfigurationCommandDataSource
     implements AuthenticationConfigurationCommandRepository {
 
-  AuthenticationConfigCommandSqlExecutors executors;
+  AuthenticationConfigCommandSqlExecutor executor;
   JsonConverter jsonConverter;
 
-  public AuthenticationConfigurationCommandDataSource() {
-    this.executors = new AuthenticationConfigCommandSqlExecutors();
-    this.jsonConverter = JsonConverter.snakeCaseInstance();
+  public AuthenticationConfigurationCommandDataSource(
+      AuthenticationConfigCommandSqlExecutor executor, JsonConverter jsonConverter) {
+    this.executor = executor;
+    this.jsonConverter = jsonConverter;
   }
 
   @Override
   public void register(Tenant tenant, AuthenticationConfiguration configuration) {
-    AuthenticationConfigCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, configuration);
   }
 
   @Override
   public void update(Tenant tenant, AuthenticationConfiguration configuration) {
-    AuthenticationConfigCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.update(tenant, configuration);
   }
 
   @Override
   public void delete(Tenant tenant, AuthenticationConfiguration configuration) {
-    AuthenticationConfigCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.delete(tenant, configuration);
   }
 }

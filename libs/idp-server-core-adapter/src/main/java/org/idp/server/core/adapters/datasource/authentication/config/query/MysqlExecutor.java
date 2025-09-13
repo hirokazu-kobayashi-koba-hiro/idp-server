@@ -84,7 +84,7 @@ public class MysqlExecutor implements AuthenticationConfigSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                SELECT COUNT(id)
+                SELECT COUNT(*) as count
                 FROM authentication_configuration
                 WHERE tenant_id = ?
             """;

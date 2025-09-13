@@ -17,6 +17,7 @@
 package org.idp.server.core.adapters.datasource.authentication.transaction.command;
 
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionCommandRepository;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
@@ -31,6 +32,12 @@ public class AuthenticationTransactionCommandDataSourceProvider
   @Override
   public AuthenticationTransactionCommandRepository provide(
       ApplicationComponentDependencyContainer container) {
-    return new AuthenticationTransactionCommandDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    AuthenticationTransactionCommandSqlExecutors executors =
+        new AuthenticationTransactionCommandSqlExecutors();
+    AuthenticationTransactionCommandSqlExecutor executor =
+        executors.get(databaseTypeProvider.provide());
+    return new AuthenticationTransactionCommandDataSource(executor);
   }
 }

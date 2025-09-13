@@ -25,23 +25,19 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class AuthorizationCodeGrantDataSource implements AuthorizationCodeGrantRepository {
 
-  AuthorizationCodeGrantExecutors executors;
+  AuthorizationCodeGrantExecutor executor;
 
-  public AuthorizationCodeGrantDataSource() {
-    this.executors = new AuthorizationCodeGrantExecutors();
-    ;
+  public AuthorizationCodeGrantDataSource(AuthorizationCodeGrantExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public void register(Tenant tenant, AuthorizationCodeGrant authorizationCodeGrant) {
-
-    AuthorizationCodeGrantExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, authorizationCodeGrant);
   }
 
   @Override
   public AuthorizationCodeGrant find(Tenant tenant, AuthorizationCode authorizationCode) {
-    AuthorizationCodeGrantExecutor executor = executors.get(tenant.databaseType());
     Map<String, String> stringMap = executor.selectOne(tenant, authorizationCode);
 
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
@@ -52,7 +48,6 @@ public class AuthorizationCodeGrantDataSource implements AuthorizationCodeGrantR
 
   @Override
   public void delete(Tenant tenant, AuthorizationCodeGrant authorizationCodeGrant) {
-    AuthorizationCodeGrantExecutor executor = executors.get(tenant.databaseType());
     executor.delete(tenant, authorizationCodeGrant);
   }
 }

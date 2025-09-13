@@ -28,6 +28,8 @@ import org.idp.server.adapters.springboot.application.session.OAuthSessionServic
 import org.idp.server.control_plane.base.AdminDashboardUrl;
 import org.idp.server.core.adapters.datasource.cache.JedisCacheStore;
 import org.idp.server.core.adapters.datasource.config.HikariConnectionProvider;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
+import org.idp.server.platform.datasource.ConfigurableApplicationDatabaseTypeProvider;
 import org.idp.server.platform.datasource.DatabaseConfig;
 import org.idp.server.platform.datasource.DatabaseType;
 import org.idp.server.platform.datasource.DbConfig;
@@ -58,6 +60,9 @@ public class IdPServerConfiguration {
   @Value("${idp.configurations.encryptionKey}")
   String encryptionKey;
 
+  @Value("${idp.configurations.databaseType}")
+  String databaseType;
+
   @Value("${idp.cache.enabled}")
   boolean enabledCache;
 
@@ -79,12 +84,6 @@ public class IdPServerConfiguration {
   @Value("${idp.cache.redis.minIdle}")
   int minIdle;
 
-  @Value("${idp.cache.oauth.bufferSeconds:60}")
-  int oauthBufferSeconds;
-
-  @Value("${idp.cache.oauth.defaultTtlSeconds:3600}")
-  int oauthDefaultTtlSeconds;
-
   @Autowired AdminDatabaseConfigProperties adminDatabaseConfigProperties;
   @Autowired AppDatabaseConfigProperties appDatabaseConfigProperties;
 
@@ -93,6 +92,9 @@ public class IdPServerConfiguration {
       OAuthSessionService oAuthSessionService,
       SecurityEventPublisherService eventPublisherService,
       UserLifecycleEventPublisherService userLifecycleEventPublisherService) {
+
+    ApplicationDatabaseTypeProvider applicationDatabaseTypeProvider =
+        new ConfigurableApplicationDatabaseTypeProvider(databaseType);
 
     HikariConnectionProvider dbConnectionProvider = createHikariConnectionProvider();
 
@@ -105,9 +107,11 @@ public class IdPServerConfiguration {
 
     return new IdpServerApplication(
         adminTenantId,
+        applicationDatabaseTypeProvider,
         adminDashboardUrl1,
         dbConnectionProvider,
         encryptionKey,
+        databaseType,
         cacheStore,
         oAuthSessionService,
         passwordEncoder,

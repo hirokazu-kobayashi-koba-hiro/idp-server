@@ -19,6 +19,7 @@ package org.idp.server.core.adapters.datasource.identity.role.command;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import org.idp.server.core.openid.identity.permission.Permission;
 import org.idp.server.core.openid.identity.permission.Permissions;
 import org.idp.server.core.openid.identity.role.Role;
@@ -75,8 +76,8 @@ public class MysqlExecutor implements RoleSqlExecutor {
     List<Object> params = new ArrayList<>();
     params.add(role.name());
     params.add(role.description());
-    params.add(role.idAsUuid());
-    params.add(tenant.identifierUUID());
+    params.add(role.id());
+    params.add(tenant.identifier().value());
 
     sqlExecutor.execute(sqlTemplate, params);
     registerPermission(tenant, role, sqlExecutor);
@@ -88,13 +89,13 @@ public class MysqlExecutor implements RoleSqlExecutor {
     String sqlTemplate =
         """
                 DELETE FROM role
-                WHERE id = ?;
+                WHERE id = ?
                 AND tenant_id = ?;
                 """;
 
     List<Object> params = new ArrayList<>();
-    params.add(role.idAsUuid());
-    params.add(tenant.identifierUUID());
+    params.add(role.id());
+    params.add(tenant.identifier().value());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -106,18 +107,18 @@ public class MysqlExecutor implements RoleSqlExecutor {
     String sqlTemplate =
         """
             DELETE FROM role_permission
-            WHERE tenant_id = ?::uuid
-            AND role_id = ?::uuid
+            WHERE tenant_id = ?
+            AND role_id = ?
             AND permission_id IN (%s);
             """;
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierUUID());
-    params.add(role.idAsUuid());
+    params.add(tenant.identifier().value());
+    params.add(role.id());
 
-    String placeholders = String.join(",", Collections.nCopies(removedTarget.size(), "?::uuid"));
+    String placeholders = String.join(",", Collections.nCopies(removedTarget.size(), "?"));
     String sql = String.format(sqlTemplate, placeholders);
     for (Permission permission : removedTarget) {
-      params.add(permission.idAsUuid());
+      params.add(permission.id());
     }
 
     sqlExecutor.execute(sql, params);
@@ -152,7 +153,7 @@ public class MysqlExecutor implements RoleSqlExecutor {
     StringBuilder sqlTemplateBuilder = new StringBuilder();
     sqlTemplateBuilder.append(
         """
-                        INSERT INTO role_permission (tenant_id, role_id, permission_id)
+                        INSERT INTO role_permission (id, tenant_id, role_id, permission_id)
                         VALUES
                         """);
 
@@ -163,13 +164,14 @@ public class MysqlExecutor implements RoleSqlExecutor {
             role.permissions()
                 .forEach(
                     permission -> {
-                      sqlValues.add("(?::uuid, ?::uuid, ?::uuid)");
-                      params.add(tenant.identifierUUID());
-                      params.add(role.idAsUuid());
-                      params.add(permission.idAsUuid());
+                      sqlValues.add("(?, ?, ?, ?)");
+                      params.add(UUID.randomUUID().toString());
+                      params.add(tenant.identifier().value());
+                      params.add(role.id());
+                      params.add(permission.id());
                     }));
     sqlTemplateBuilder.append(String.join(",", sqlValues));
-    sqlTemplateBuilder.append(" ON CONFLICT (role_id, permission_id) DO NOTHING;");
+    sqlTemplateBuilder.append(" ON DUPLICATE KEY UPDATE id = id;");
 
     sqlExecutor.execute(sqlTemplateBuilder.toString(), params);
   }
@@ -178,7 +180,7 @@ public class MysqlExecutor implements RoleSqlExecutor {
     StringBuilder sqlTemplateBuilder = new StringBuilder();
     sqlTemplateBuilder.append(
         """
-                            INSERT INTO role_permission (tenant_id, role_id, permission_id)
+                            INSERT INTO role_permission (id, tenant_id, role_id, permission_id)
                             VALUES
                             """);
 
@@ -187,13 +189,14 @@ public class MysqlExecutor implements RoleSqlExecutor {
     role.permissions()
         .forEach(
             permission -> {
-              sqlValues.add("(?::uuid, ?::uuid, ?::uuid)");
-              params.add(tenant.identifierUUID());
-              params.add(role.idAsUuid());
-              params.add(permission.idAsUuid());
+              sqlValues.add("(?, ?, ?, ?)");
+              params.add(UUID.randomUUID().toString());
+              params.add(tenant.identifier().value());
+              params.add(role.id());
+              params.add(permission.id());
             });
     sqlTemplateBuilder.append(String.join(",", sqlValues));
-    sqlTemplateBuilder.append(" ON CONFLICT (role_id, permission_id) DO NOTHING;");
+    sqlTemplateBuilder.append(" ON DUPLICATE KEY UPDATE created_at = now();");
 
     sqlExecutor.execute(sqlTemplateBuilder.toString(), params);
   }

@@ -27,23 +27,21 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class VerifiableCredentialTransactionDataSource
     implements VerifiableCredentialTransactionRepository {
 
-  VerifiableCredentialTransactionSqlExecutors executors;
+  VerifiableCredentialTransactionSqlExecutor executor;
 
-  public VerifiableCredentialTransactionDataSource() {
-    this.executors = new VerifiableCredentialTransactionSqlExecutors();
+  public VerifiableCredentialTransactionDataSource(
+      VerifiableCredentialTransactionSqlExecutor executor) {
+    this.executor = executor;
   }
 
   @Override
   public void register(
       Tenant tenant, VerifiableCredentialTransaction verifiableCredentialTransaction) {
-    VerifiableCredentialTransactionSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, verifiableCredentialTransaction);
   }
 
   @Override
   public VerifiableCredentialTransaction find(Tenant tenant, TransactionId transactionId) {
-    VerifiableCredentialTransactionSqlExecutor executor = executors.get(tenant.databaseType());
-
     Map<String, String> stringMap = executor.selectOne(tenant, transactionId);
 
     if (Objects.isNull(stringMap) || stringMap.isEmpty()) {

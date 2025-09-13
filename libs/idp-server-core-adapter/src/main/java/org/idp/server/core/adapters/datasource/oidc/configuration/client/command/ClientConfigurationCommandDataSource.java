@@ -25,25 +25,24 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class ClientConfigurationCommandDataSource implements ClientConfigurationCommandRepository {
 
-  ClientConfigCommandSqlExecutors executors;
+  ClientConfigCommandSqlExecutor executor;
   JsonConverter jsonConverter;
   CacheStore cacheStore;
 
-  public ClientConfigurationCommandDataSource(CacheStore cacheStore) {
-    this.executors = new ClientConfigCommandSqlExecutors();
-    this.jsonConverter = JsonConverter.snakeCaseInstance();
+  public ClientConfigurationCommandDataSource(
+      ClientConfigCommandSqlExecutor executor, JsonConverter jsonConverter, CacheStore cacheStore) {
+    this.executor = executor;
+    this.jsonConverter = jsonConverter;
     this.cacheStore = cacheStore;
   }
 
   @Override
   public void register(Tenant tenant, ClientConfiguration clientConfiguration) {
-    ClientConfigCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.insert(tenant, clientConfiguration);
   }
 
   @Override
   public void update(Tenant tenant, ClientConfiguration clientConfiguration) {
-    ClientConfigCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.update(tenant, clientConfiguration);
     String key = key(tenant.identifier(), clientConfiguration.clientIdentifier().value());
     cacheStore.delete(key);
@@ -55,7 +54,6 @@ public class ClientConfigurationCommandDataSource implements ClientConfiguration
 
   @Override
   public void delete(Tenant tenant, ClientConfiguration clientConfiguration) {
-    ClientConfigCommandSqlExecutor executor = executors.get(tenant.databaseType());
     executor.delete(tenant, clientConfiguration.clientIdentifier());
     String key = key(tenant.identifier(), clientConfiguration.clientIdentifier().value());
     cacheStore.delete(key);
