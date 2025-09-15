@@ -84,7 +84,7 @@ public class PostgresqlExecutor implements AuthenticationPolicyConfigurationSqlE
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                DELETE authentication_policy
+                DELETE FROM authentication_policy
                 WHERE id = ?::uuid
                 AND tenant_id = ?::uuid
                 """;

@@ -29,6 +29,7 @@ import org.idp.server.control_plane.base.definition.IdpControlPlaneScope;
 import org.idp.server.core.openid.identity.OrganizationUserAuthenticationApi;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.exception.BadRequestException;
 import org.idp.server.platform.exception.UnauthorizedException;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
@@ -130,6 +131,13 @@ public class OrgManagementFilter extends OncePerRequestFilter {
       logger.warn("Organization management authentication failed: {}", e.getMessage());
       respondWithError(
           response, HttpServletResponse.SC_NOT_FOUND, "invalid_request", "not found organization");
+    } catch (BadRequestException e) {
+      logger.warn("Organization management authentication failed: {}", e.getMessage());
+      respondWithError(
+          response,
+          HttpServletResponse.SC_BAD_REQUEST,
+          "invalid_request",
+          "invalid request. unexpected parameter.");
     } catch (Exception e) {
       logger.error("Unexpected error in organization management filter", e);
       respondWithError(

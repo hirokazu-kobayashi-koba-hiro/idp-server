@@ -177,316 +177,7 @@
    - エラーハンドリング
    - 監査ログ対応
 
-## ドキュメント解析結果
 
-### プロジェクトのビジョン・価値提案
-**「信頼できるIDを、すべてのサービスへ。」**
-
-- **身元確認済みIDの発行・連携**が核心価値
-- eKYC + Verifiable Credential による **本人確認済みID基盤**
-- **マルチテナント対応**による企業・組織単位での運用
-
-### 主要な特徴（ドキュメントより）
-
-#### 1. 身元確認・ID検証
-- **OIDC IDA (Identity Assurance)** 完全対応
-- **verified_claims** によるOIDC標準準拠の身元情報連携  
-- **eKYCサービス連携**: 外部身元確認サービスとのAPI統合
-- **Verifiable Credential**: VC形式でのID発行・検証
-
-#### 2. 包括的プロトコルサポート
-- **OAuth 2.0 / OpenID Connect** 全フロー対応
-- **CIBA** (Client Initiated Backchannel Authentication): Poll/Push/Ping
-- **FAPI Baseline/Advanced**: 金融グレードセキュリティ
-- **拡張仕様**: PKCE, JAR, JARM, RAR, PAR
-
-#### 3. 高度なマルチテナント機能
-- **テナント別分離**: データ・設定・UI完全分離
-- **ブランディング**: テナント別テーマ・文言カスタマイズ
-- **認証ポリシー**: テナント別MFA・セキュリティ設定
-
-#### 4. 豊富な認証方式
-- **パスワード**: 強度・リトライ制限設定
-- **MFA**: SMS・Email・FIDO2・TOTP
-- **WebAuthn/FIDO2**: Webauthn4j による完全実装
-- **外部連携**: OIDC/SAML連携、レガシーシステム対応
-- **カスタム認証**: プラグイン拡張可能
-
-#### 5. エンタープライズ機能
-- **セキュリティ監査**: 操作ログ・イベント追跡
-- **外部通知**: Slack・Webhook・SSF(Shared Signals Framework)
-- **分散セッション**: Redis によるスケーラブル構成
-- **データベース**: PostgreSQL(推奨)・MySQL対応
-
-### 想定利用ケース（ドキュメントより）
-
-#### 🏦 金融機関
-- オンライン口座開設での本人確認
-- eKYC → verified_claims → 信頼性の高いID連携
-- FAPI準拠による金融グレードセキュリティ
-
-#### 🏢 企業グループ  
-- グループ会社間での共通ID基盤
-- テナント分離による子会社別運用
-- ブランド別UI・認証ポリシー
-
-#### 🧾 行政・公的機関
-- デジタル住民サービスID基盤
-- Verifiable Credential による証明書発行
-- マイナンバー連携対応
-
-#### 🛍️ SaaS/Webサービス
-- 信頼性の高いユーザーID導入
-- パスワードレス認証(WebAuthn/Passkey)
-- 年齢確認・職業確認機能
-
-### 技術アーキテクチャ洞察
-
-#### 身元確認フロー
-1. **申込みパターン**: idp-server経由でeKYC申込み → 審査結果反映
-2. **直接登録パターン**: 外部eKYC結果を直接登録
-
-#### verified_claims 取得方式
-1. **OIDC4IDA標準**: claims パラメータ → IDトークン内埋め込み
-2. **独自仕様**: `verified_claims:name` スコープ → アクセストークン内埋め込み
-
-#### 設定の柔軟性
-- **120以上の設定項目**による詳細制御
-- テナント・クライアント単位での個別設定
-- プラグインによる無制限拡張
-
-### 結論
-idp-serverは単なるIdPではなく、**身元確認済みIDを軸とした包括的なアイデンティティプラットフォーム**として設計されている。特に日本の金融・行政分野でのデジタルID基盤として、eKYC・OIDC IDA・VCを統合したエンタープライズグレードのソリューション。
-
-## E2Eテスト解析結果
-
-### テスト構成・アーキテクチャ
-
-**技術スタック**
-- **Jest** - テストフレームワーク
-- **axios** - HTTP クライアント
-- **jose** - JWT/JWS/JWE 処理
-- **openid-client** - OpenID Connect クライアント
-- **@faker-js/faker** - テストデータ生成（Monkeyテスト用）
-
-### 3層テスト戦略
-
-#### 📘 spec/ - 仕様準拠テスト（32ファイル）
-**RFC・標準仕様の厳密な実装検証**
-
-- **OAuth 2.0**: `rfc6749_4_1_code.test.js` (認可コード)、`rfc6749_4_4_client_credentials.test.js`
-- **OpenID Connect**: `oidc_core_3_1_code.test.js`、`oidc_core_2_id_token.test.js`、`oidc_discovery.test.js`
-- **FAPI**: `fapi_baseline.test.js`、`fapi_advance.test.js` - 金融グレード
-- **CIBA**: `ciba_authentication_request.test.js`、`ciba_token_request.test.js` - バックチャネル認証
-- **拡張仕様**: 
-  - `rfc9396_rar.test.js` (Rich Authorization Requests)
-  - `rfc9126_par.test.js` (Pushed Authorization Requests)
-  - `rfc7662_token_introspection.test.js`
-  - `jarm.test.js` - JWT形式レスポンス
-
-#### 📕 scenario/ - 現実的シナリオテスト（17ファイル）
-**実際のユースケースベース統合テスト**
-
-**アプリケーション統合**:
-- `scenario-03-mfa-registration.test.js` - MFA登録フロー
-- `scenario-08-multi-app_fido-authn.test.js` - FIDO認証
-
-**コントロールプレーン管理**:
-- `client_management.test.js` - クライアント管理
-- `user-management.test.js` - ユーザー管理
-- `role-management.test.js` - ロール・権限管理
-- `security-event-management.test.js` - セキュリティイベント
-- `audit-log-management.test.js` - 監査ログ
-
-**リソースサーバー**:
-- `token_introspection_extensions.test.js` - 拡張トークン検証
-
-#### 🐒 monkey/ - 故障注入テスト（1ファイル）
-**異常系・エッジケース検証**
-
-- `ciba-monkey.test.js` - CIBA異常パターン
-- **Faker.js**による ランダムデータ生成
-- **不正パラメータ**注入による堅牢性テスト
-
-### テストインフラ・ライブラリ設計
-
-#### 共通ライブラリ (`src/lib/`)
-- **jose/**: JWT署名・検証・暗号化
-- **oauth/**: OAuth フロー支援
-- **http/**: HTTP通信ラッパー  
-- **pki/**: 公開鍵基盤操作
-- **webauthn/**: WebAuthn/FIDO2 
-- **vc/**: Verifiable Credential
-
-#### 設定管理 (`testConfig.js`)
-```javascript
-serverConfig = {
-  issuer: "${backendUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66",
-  authorizationEndpoint: "...",
-  tokenEndpoint: "...",
-  // 40以上のエンドポイント定義
-}
-```
-
-#### クライアント設定
-- **clientSecretPostClient** - POST認証
-- **clientSecretBasicClient** - Basic認証
-- **federationServerConfig** - フェデレーション連携
-
-### 特徴的テストパターン
-
-#### 1. **包括的プロトコルカバレッジ**
-```javascript
-// OIDC Core認可コードフロー完全検証
-const { authorizationResponse } = await requestAuthorizations({
-  endpoint: serverConfig.authorizationEndpoint,
-  clientId: clientSecretPostClient.clientId,
-  responseType: "code",
-  scope: "openid profile phone email"
-});
-
-const tokenResponse = await requestToken({
-  endpoint: serverConfig.tokenEndpoint,
-  code: authorizationResponse.code,
-  grantType: "authorization_code"
-});
-```
-
-#### 2. **エンタープライズ機能テスト**
-```javascript
-// MFA登録シナリオ
-await postWithJson({
-  url: serverConfig.resourceOwnerEndpoint + "/mfa/fido-uaf-registration",
-  body: {
-    "app_name": "idp-server-app",
-    "platform": "Android",
-    "notification_channel": "fcm"
-  }
-});
-```
-
-#### 3. **Monkey テスティング**
-```javascript
-// ランダム異常データ生成
-const generateRandomJsonLikeObject = () => {
-  return {
-    [faker.lorem.word()]: faker.person.firstName(),
-    [faker.lorem.word()]: faker.phone.number()
-  };
-};
-```
-
-### 品質保証の観点
-
-#### **仕様適合性**
-- RFC準拠の厳密なテストケース
-- 標準プロトコルの実装検証
-- エラーレスポンス形式の検証
-
-#### **現実的統合性**  
-- エンドツーエンドの業務フロー
-- 管理機能の操作性確認
-- マルチテナント動作確認
-
-#### **堅牢性**
-- 異常データ耐性
-- 境界値テスト
-- セキュリティ攻撃パターン
-
-### 結論
-このE2Eテストスイートは、**仕様準拠性・実用性・堅牢性**の3軸で包括的にカバーした、**エンタープライズグレードの品質保証体制**を構築している。特にOAuth/OIDC実装の複雑さに対し、標準仕様から実運用まで網羅的にテストする設計は秀逸。
-
-## 実装経験から得たアーキテクチャ洞察
-
-### セキュリティイベントシステムの拡張性設計 (Issue #292)
-
-#### TenantAttributes による設定の柔軟性
-- **Key-Value設定パターン**: `TenantAttributes` を使用したテナント別設定管理
-- **プレフィックス命名規則**: `security_event_user_` プレフィックスによる設定の分類
-- **デフォルト値戦略**: `optValueAsBoolean(key, defaultValue)` による後方互換性確保
-
-```java
-// 実装パターン例
-public boolean isIncludeGivenName() {
-  return tenantAttributes.optValueAsBoolean("security_event_user_include_given_name", false);
-}
-```
-
-#### インターフェースベース コード重複排除
-- **SecurityEventUserCreatable インターフェース**: 6つのEventCreator間での共通ロジック統一
-- **デフォルトメソッド活用**: Java 8+ のデフォルトメソッドによる実装の継承
-- **依存関係配慮**: `platform` → `core` 依存の制約を考慮した配置
-
-#### 拡張可能なセキュリティイベント設計
-- **属性の段階的拡張**: 5属性 → 15+属性への拡張
-- **OpenID Connect標準準拠**: 標準クレームとの整合性
-- **テナント別カスタマイズ**: セキュリティ要件に応じた属性選択
-
-### MFA デバイス管理の高度な制御機能 (Issue #401)
-
-#### アクションベース API 設計
-- **action パラメータパターン**: `action=reset` による動作の切り替え
-- **条件分岐の実装**: `isResetAction()` メソッドによる判定ロジック
-- **検証ロジックの柔軟性**: リセット時の上限チェックスキップ
-
-```java
-// 実装パターン例
-if (registrationRequest.isResetAction()) {
-  return MfaVerificationResult.success(); // 上限チェックスキップ
-}
-```
-
-#### デバイスライフサイクル管理
-- **選択的削除機能**: `removeAllAuthenticationDevicesOfType()` による特定タイプデバイス削除
-- **トランザクション整合性**: ユーザー更新処理との一体化
-- **原子性操作**: 削除→追加の一連の処理を単一トランザクションで実行
-
-#### 認証インタラクター設計パターン
-- **レイヤー分離**: Verifier (検証) → Interactor (実行) の責任分離
-- **属性受け渡し**: `AuthenticationTransactionAttributes` による拡張可能な属性管理
-- **エラーハンドリング**: 段階的エラー応答 (client_error, server_error)
-
-### テスト駆動開発の実践知見
-
-#### E2Eテストでの機能検証
-- **シナリオベーステスト**: 実際のユースケースに基づく統合テスト
-- **状態変化検証**: デバイス登録前→後の状態変化確認
-- **境界値テスト**: リセット機能の破壊的操作の安全性確認
-
-```javascript
-// テストパターン例
-// 2デバイス登録 → reset登録 → 1デバイスのみ残存確認
-expect(userinfoResponse.data.authentication_devices.length).toBe(1);
-expect(deviceIds).not.toContain(device1Id);  // 削除確認
-expect(deviceIds).not.toContain(device2Id);  // 削除確認
-```
-
-#### プロトコル準拠性の重要性
-- **RFC仕様テスト**: OAuth/OIDC標準への厳密な準拠確認
-- **エラー応答検証**: 標準的なエラーフォーマット (`error`, `error_description`) の維持
-- **拡張性テスト**: カスタム機能が標準機能に悪影響を与えないことの確認
-
-### アーキテクチャ設計原則の実践
-
-#### 1. **拡張性優先設計**
-- 既存機能を壊さない新機能追加
-- 設定による機能の有効/無効制御
-- インターフェースによる実装の抽象化
-
-#### 2. **テナント分離の徹底**
-- テナント別設定による機能カスタマイズ
-- データ分離とセキュリティ境界の維持
-- 管理機能とエンドユーザー機能の分離
-
-#### 3. **セキュリティファースト**
-- セキュリティイベントの包括的記録
-- 認証デバイス操作の監査証跡
-- エラー情報の適切なマスキング
-
-#### 4. **運用性重視**
-- 詳細なログ出力とトレーサビリティ
-- 段階的なロールアウト対応
-- 後方互換性の維持
 
 ## コード規約・実装パターン分析 (idp-server 設計原則準拠)
 
@@ -839,450 +530,382 @@ public interface {Domain}ManagementApi {
 - レスポンス構造の統一
 - テストケース追加
 
-## idp-server vs 一般的OSS IdP の設計思想比較
-
-### Keycloak等 一般的IdPとの根本的違い
-
-#### 1. **アーキテクチャ哲学の違い**
-
-**一般的IdP (Keycloak等):**
-```
-Presentation → Business → Data (3層)
-- 管理UI中心設計
-- 設定ファイル・GUI重視
-- モノリシックな構成
-```
-
-**idp-server:**
-```
-Controller → UseCase → Core → Adapter (Hexagonal)
-- プロトコル中心設計  
-- コード・型安全性重視
-- モジュラー・差し替え可能
-```
-
-#### 2. **プロトコル準拠への姿勢**
-
-**一般的IdP:**
-- 互換性重視、実装上の妥協あり
-- 拡張機能が標準仕様と混在
-- 設定による動作変更が主流
-
-**idp-server:**
-- **仕様への厳密準拠が設計原則**
-- 標準逸脱の厳格禁止
-- 拡張機能の完全カプセル化
-- OIDC世界観の完全尊重
-
-#### 3. **マルチテナント設計**
-
-**一般的IdP (Realm概念):**
-- UI・設定レベルの分離
-- データベースレベルでの共有
-- 管理者権限の粗い粒度
-
-**idp-server:**
-- **Row Level Security による完全分離**
-- 組織・テナント2層階層
-- 細粒度権限制御 (15+権限種別)
-- エンタープライズグレード監査証跡
-
-#### 4. **身元確認・ID保証への取り組み**
-
-**一般的IdP:**
-- 認証機能に留まる
-- 外部連携は付加機能
-- 身元確認は外部委託
-
-**idp-server:**
-- **身元確認済みIDが核心価値**
-- eKYC・Verifiable Credential 統合
-- OIDC IDA (Identity Assurance) 完全対応
-- verified_claims ネイティブサポート
-
-#### 5. **拡張性・保守性**
-
-**一般的IdP:**
-- SPI (Service Provider Interface) 
-- プラグイン機構
-- 設定ベース拡張
-
-**idp-server:**
-- **Plugin Loader + Strategy パターン**
-- 型安全な拡張ポイント
-- コンパイル時検証
-- テスト駆動開発前提
-
-### idp-server 独自の価値提案
-
-#### 1. **「信頼できるIDの発行・連携」**
-- 単なる認証ではなく **身元確認済みID基盤**
-- 金融・行政レベルの本人確認対応
-- 日本の規制・法制度への対応
-
-#### 2. **エンタープライズアーキテクチャ**
-- **Clean Architecture 準拠**
-- ドメイン駆動設計 (DDD)
-- 高い可読性・保守性・拡張性
-- 型安全性によるバグ抑制
-
-#### 3. **プロトコル準拠の徹底**
-```
-「OIDC の世界観を尊重することが設計原則」
-```
-- RFC厳密準拠
-- 標準化団体認定レベル品質
-- 金融グレード (FAPI) 対応
-
-#### 4. **運用品質の追求**
-- **3層E2Eテスト戦略**: spec/scenario/monkey
-- 包括的監査ログ
-- Dry-run プレビュー機能
-- セキュリティイベント統合
-
-#### 5. **日本特化・規制対応**
-- マイナンバー連携想定
-- 金融業界向けFAPI準拠
-- eKYC事業者との連携
-- 行政手続きデジタル化対応
-
-### アーキテクチャ比較詳細
-
-#### **コード品質への取り組み**
-
-**一般的IdP:**
-```java
-// 典型的な実装
-public class UserService {
-  public Map<String, Object> createUser(Map<String, Object> userData) {
-    // Map操作、型安全性なし
-    // ビジネスロジックがサービス層に混在
-  }
-}
-```
-
-**idp-server:**
-```java
-// 型安全・責務分離
-public class UserManagementHandler {
-  public UserManagementResponse handle(UserManagementRequest request) {
-    // 1. 型安全なドメインオブジェクト
-    // 2. 単一責務の原則
-    // 3. 検証ロジックの分離
-  }
-}
-```
-
-#### **テスト戦略の違い**
-
-**一般的IdP:**
-- 手動テスト中心
-- UI操作テスト
-- 統合テスト限定
-
-**idp-server:**
-```
-ユニット → ユースケース → E2E → 認定テスト
-32spec + 17scenario + 1monkey = 50+テストファイル
-```
-
-#### **設定管理アプローチ**
-
-**一般的IdP:**
-- GUI設定画面
-- 設定ファイル変更
-- 動的設定変更
-
-**idp-server:**
-- **コード定義中心**
-- TenantAttributes key-value
-- 型安全な設定管理
-- 変更履歴・監査対応
-
-### 想定するユースケースの違い
-
-#### **一般的IdP対象**
-- **汎用的な認証基盤**
-- 社内システム統合
-- 開発者向けAPI提供
-- スタートアップ・中小企業
-
-#### **idp-server対象**
-- **身元確認済みID基盤**
-- 金融機関・大企業グループ
-- 行政・公的機関
-- 規制対応が必要な業界
-
-### 結論: idp-serverの独自性
-
-idp-serverは **「汎用IdP」ではなく「身元確認済みID基盤」** として設計された、エンタープライズ特化のプロフェッショナル・グレード実装。
-
-**Keycloak等**: 「認証の民主化」（誰でも使える）
-**idp-server**: 「身元確認の高度化」（金融・行政レベル）
-
-この思想の違いが、アーキテクチャ・実装品質・機能特化すべてに一貫して反映されている。
-
-## idp-server実装の評価分析
-
-### 🟢 優れている点（Strengths）
-
-#### 1. **アーキテクチャ設計の秀逸性**
-**理由**: Hexagonal Architecture + DDD の徹底適用
-- **層分離の明確性**: Controller→UseCase→Core→Adapter の責務分離が徹底
-- **依存関係の健全性**: 外部依存を適切に抽象化、テスタビリティ確保
-- **拡張性**: Plugin Loader + Strategy パターンによる差し替え可能設計
-- **保守性**: 単一責務原則により、変更時の影響範囲を最小化
-
-#### 2. **型安全性とコード品質の徹底**
-**理由**: Java型システムを最大限活用した堅牢な設計
-- **意味のある型**: `ClientId`, `TenantIdentifier` 等の値オブジェクト活用
-- **Map<String, Object>濫用回避**: 専用クラスによる明示的な構造定義
-- **コンパイル時検証**: キャスト不要設計、型不整合をコンパイル時に検出
-- **Null安全性**: Optional活用と適切なnullチェック
-
-```java
-// 良い例: 型安全な設計
-public TenantManagementResponse create(
-  TenantIdentifier tenantId,      // 明示的な型
-  TenantRegistrationRequest request,  // 構造化された入力
-  RequestAttributes attributes    // 意味のある型
-) {
-  // キャスト不要、型安全な処理
-}
-```
-
-#### 3. **プロトコル準拠の厳密性**
-**理由**: OIDC/OAuth仕様への妥協なき準拠
-- **RFC厳密実装**: 仕様書との完全対応、相互運用性確保
-- **標準逸脱禁止**: 拡張機能の適切なカプセル化
-- **エラーレスポンス**: OAuth標準エラー形式の徹底
-- **認定テスト対応**: FAPI等の認定を想定した品質
-
-#### 4. **包括的テスト戦略**
-**理由**: 多層防御による品質保証
-- **仕様準拠テスト**: 32ファイルのRFC準拠検証
-- **現実シナリオ**: 17ファイルの実用ケーステスト  
-- **異常系検証**: Monkey テストによる堅牢性確認
-- **E2E自動化**: CI/CD での継続的品質確保
-
-#### 5. **エンタープライズ運用対応**
-**理由**: 本格運用を前提とした機能充実
-- **監査証跡**: 包括的なSecurityEventとAuditLog
-- **Dry-run機能**: 変更前プレビューによる安全な運用
-- **細粒度権限**: 15+権限種別による詳細な認可制御
-- **マルチテナント**: Row Level Security による完全分離
-
-#### 6. **日本特化・規制対応**
-**理由**: 国内法制度・業界要件への深い理解
-- **eKYC統合**: 身元確認事業者との連携
-- **verified_claims**: OIDC IDA準拠の身元情報連携
-- **FAPI対応**: 金融業界セキュリティ要件
-- **マイナンバー想定**: 行政手続きデジタル化対応
-
-### 🔴 実際の改善点（ドキュメント調査後の修正評価）
-
-**重要**: 初期分析で指摘した「弱み」の多くは、**詳細なドキュメントで既に対応済み**でした。
-
-#### ✅ **誤って「弱み」とした点の実際の状況**
-
-##### ~~1. 学習コストの高さ~~ → **包括的学習支援完備**
-- ✅ `getting-started.md`: 2コマンド簡単セットアップ、Mermaidアーキテクチャ図
-- ✅ `basic-01-identity-management-basics.md`: 認証・認可基礎から段階的説明
-- ✅ 初心者〜上級者向け多段階ガイド
-
-##### ~~2. 過度な抽象化~~ → **設計意図の明確なドキュメント化**
-- ✅ `dependency-injection.md`: フレームワークレス設計の理由と利点
-- ✅ **明示的DI**: 透明性・テスト性・拡張性・ポータビリティの説明
-- ✅ プラグイン機構の詳細な拡張ガイド
-
-##### ~~3. 文書化不足~~ → **developer-guide充実**
-- ✅ 包括的な`content_06_developer-guide/`ディレクトリ
-- ✅ アーキテクチャ・設定・拡張の詳細説明
-- ✅ 視覚的なシステム構成図
-
-##### ~~4. パフォーマンス軽視~~ → **包括的パフォーマンス最適化**  
-- ✅ `caching.md`: テナント・クライアント設定の戦略的キャッシュ
-- ✅ `performance-test.md`: **k6による詳細ストレステスト結果**
-  - **9種類エンドポイント・フロー**: 30秒高負荷テスト実施
-  - **詳細メトリクス**: リクエスト数・平均時間・P95・スループット・エラー率
-  - **ボトルネック特定**: bcrypt処理、インデックス最適化、GC戦略の影響測定
-  - **劇的改善実証**: 本人確認フロー 1311ms→231ms (インデックス最適化)
-  - **高性能確認**: トークンイントロスペクション 2,993 req/sec
-- ✅ 実環境想定テスト・具体的改善提案
-
-#### 🔴 **実際に残る改善点**
-
-##### 1. **実装品質の不整合** 
-**理由**: ドキュメントと実装の乖離
-- **例外処理**: 一部でのtry-catch濫用
-- **命名規約**: Util的実装の残存
-- **責務境界**: Layer横断ロジックの混在
-- **コード品質**: 理想設計と現実実装のギャップ
-
-##### 2. **部分的ドキュメント未完成**
-**理由**: 一部のドキュメントファイルが空
-- `authentication-interactor.md` 等の未完成
-- 拡張ガイドの一部不備
-
-##### 3. **開発生産性の課題** 
-**理由**: 高品質設計による開発負荷
-- **型定義コスト**: 新機能追加時のボイラープレート
-- **テスト負荷**: 多層テスト維持コスト
-- **ビルド時間**: 大量コンパイル時検証
-
-**注**: これらは**設計トレードオフ**であり、エンタープライズ品質確保のための必要コストとして理解すべき
-
-### ⚖️ 総合評価
-
-#### **適用場面での優劣**
-
-**🎯 idp-serverが優れる場面:**
-- 金融・行政等の高信頼性要求システム
-- 長期運用・大規模システム
-- 規制対応・監査要求の厳しい環境
-- 複雑なマルチテナント要件
-
-**⚠️ idp-serverが不適な場面:**
-- プロトタイプ・MVP開発
-- 小規模チーム・短期開発
-- パフォーマンス最優先システム
-- 学習コスト許容不可環境
-
-#### **改善提案の優先度**
-
-**優先度1 (即時改善):**
-1. ドキュメント整備 - 設計意図・アーキテクチャ図作成
-2. 実装不整合修正 - 既存コードの規約準拠
-3. パフォーマンス測定 - ボトルネック特定
-
-**優先度2 (中期改善):**
-1. 開発者体験向上 - IDE支援・ボイラープレート削減
-2. 監視・メトリクス追加 - 運用時の可視性向上
-3. チュートリアル作成 - 新規開発者向け教材
 
 ## 次のAI開発者への重要なコンテキスト
 
-### 🎯 **このプロジェクトの正しい理解**
-
-#### **idp-serverの真の正体**
-❌ **「単なるOSS IdP」ではない**  
-✅ **「身元確認特化エンタープライズ・ローコードプラットフォーム」**
-
-**比較対象**:
-- Salesforce Identity, Microsoft Azure AD B2C
-- Auth0 + 高額カスタム開発
-- 数千万円の商用eKYC統合ソリューション
-
-#### **圧倒的な完成度**
-- **7,800行OpenAPI仕様**: 59エンドポイント、4API群（RP・ResourceOwner・ControlPlane・Internal）
-- **1,500行eKYC設定例**: 証券口座開設完全フロー
-- **k6パフォーマンステスト**: 2,993 req/sec、劇的最適化実証
-- **50+E2Eテスト**: spec/scenario/monkey 3層戦略
-- **包括的ドキュメント**: getting-started からアーキテクチャまで完備
-
-### 🚨 **開発時の重要な注意事項**
-
-#### **1. アーキテクチャの正しい理解**
+### 🎯 **アーキテクチャ理解**
 ```
 Controller → UseCase (EntryService) → Core → Adapter
              ↑ control-plane APIs (契約定義のみ)
 ```
-- **Control-Plane**: インターフェース定義層（実装は use-cases にある）
-- **UseCase層**: トランザクション制御・オーケストレーション専用
-- **Core層**: OIDC仕様準拠・ドメインロジック
-- **Adapter層**: 永続化カプセル化
 
-#### **2. 設計原則の理解**
-```
-「OIDC の世界観を尊重することが設計原則」
-```
-- **RFC厳密準拠**: 標準逸脱の厳格禁止
+### 🚨 **設計原則**
+- **OIDC世界観尊重**: RFC厳密準拠、標準逸脱禁止
 - **型安全性**: `String`/`Map`濫用禁止、意味のある型優先
-- **責務分離**: 各層での禁止事項の明文化
-- **拡張性**: Plugin Loader + Strategy パターン
+- **責務分離**: Handler-Service-Repository パターン
+- **テスト品質**: spec(RFC準拠)/scenario(実用)/monkey(異常系)
 
-#### **3. テスト品質への理解**
-- **spec/**: 32ファイル、RFC準拠検証
-- **scenario/**: 17ファイル、実用ケーステスト
-- **monkey/**: 異常系・エッジケース検証
-
-### 🛠️ **開発パターンとツール**
-
-#### **身元確認システムの核心**
-- **7フェーズ処理**: request → pre_hook → execution → post_hook → transition → store → response
-- **JsonPath活用**: 複雑データ変換のコードレス実現
-- **HotReload**: テンプレート更新即時反映
-- **動的API生成**: `/{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{verification-process}`
-
-#### **よく使う開発コマンド**
-```bash
-# ビルド・実行
-./gradlew build
-docker compose up -d
-
-# テスト
-./gradlew test
-cd e2e && npm test
-
-# パフォーマンステスト
-cd performance-test && k6 run
-
-# 品質チェック  
-./gradlew spotlessCheck
-```
-
-### 📁 **重要ファイル・ディレクトリ**
-
-#### **アーキテクチャ理解必須**
-- `libs/idp-server-core/`: コアロジック・Handler-Service-Repository
+### 🛠️ **重要ファイル**
+- `libs/idp-server-core/`: Handler-Service-Repository
 - `libs/idp-server-control-plane/`: API契約定義
 - `libs/idp-server-use-cases/`: EntryService実装
 
-#### **設定・ドキュメント**
-- `documentation/`: Docusaurus、7,800行OpenAPI仕様
-- `config-sample/`: eKYC設定例（1,500行）
-- `e2e/`: 50+テストファイル
+### 📋 **開発コマンド**
+```bash
+./gradlew spotlessApply  # 必須: フォーマット修正
+./gradlew build
+./gradlew test
+cd e2e && npm test
+```
 
-#### **身元確認システム**
-- `identity-verification-application.md`: 1,500行設定ガイド
-- `identity-verification-application-guide.md`: 導入ガイド
-- `investment-account-opening.json`: 証券口座開設設定例
+## 🚨 **Java defaultメソッド実装アンチパターンの教訓**
 
-### 🏆 **このプロジェクトの真の価値**
+### **発生した問題 (2025年1月実例)**
 
-#### **市場価値**
-- **金融機関eKYC統合**: 数千万〜億円規模プロジェクト
-- **行政デジタル化**: マイナンバー連携・住民サービス基盤
-- **規制完全対応**: FAPI・OIDC IDA・JP_AML準拠
+**OrgAuthenticationConfigManagementEntryService** の実装で、インターフェースに `default` メソッドがあるにも関わらず、実装クラスで不要なオーバーライドを行った。
 
-#### **技術価値**  
-- **Hexagonal Architecture**: Clean Architecture徹底実装
-- **DDD**: ドメイン駆動設計による高保守性
-- **型安全性**: Java型システム最大限活用
-- **国際標準準拠**: RFC・OpenID仕様厳密実装
+#### **❌ アンチパターン実装**
 
-### ⚠️ **よくある誤解の回避**
+**インターフェース**:
+```java
+public interface OrgAuthenticationConfigManagementApi {
+  default AdminPermissions getRequiredPermissions(String method) {
+    Map<String, AdminPermissions> map = new HashMap<>();
+    map.put("create", new AdminPermissions(Set.of(DefaultAdminPermission.AUTHENTICATION_CONFIG_CREATE)));
+    // ... 完璧な実装
+    AdminPermissions adminPermissions = map.get(method);
+    if (adminPermissions == null) {
+      throw new UnSupportedException("Method " + method + " not supported");
+    }
+    return adminPermissions;
+  }
+}
+```
 
-#### **❌ 誤った認識**
-- 「学習コストが高い」→ 段階的ガイド・2コマンド起動完備
-- 「ドキュメント不足」→ 7,800行OpenAPI + 包括的ガイド
-- 「パフォーマンス軽視」→ k6詳細テスト + 最適化実証
-- 「単なるIdP」→ 身元確認特化エンタープライズプラットフォーム
+**実装クラス (不要な重複)**:
+```java
+@Override
+public AdminPermissions getRequiredPermissions(String method) {
+  Map<String, AdminPermissions> map = new HashMap<>();
+  map.put("create", new AdminPermissions(Set.of(DefaultAdminPermission.AUTHENTICATION_CONFIG_CREATE)));
+  // ... 全く同じロジックを重複実装
+  return map.getOrDefault(method, new AdminPermissions(Set.of())); // しかもエラーハンドリングが劣化
+}
+```
 
-#### **✅ 正しい理解**
-- **商用製品レベル**: OSSとは思えない完成度
-- **エンタープライズ特化**: 金融・行政向け高品質設計
-- **ローコード統合**: eKYC統合の完全カスタマイズ
-- **開発者中心**: 優れたDX（Developer Experience）
+### **問題の根本原因**
 
-### 🎯 **開発アプローチの推奨**
+#### **1. Java 8 defaultメソッドの理解不足**
+- **defaultメソッドの目的**: インターフェースに標準実装を提供し、実装クラスでの重複を避ける
+- **オーバーライドが必要な場合**: カスタマイズが本当に必要な場合のみ
+- **基本原則**: **defaultメソッドがある = 標準実装で十分**
 
-1. **まず全体理解**: `getting-started.md` → アーキテクチャ図確認
-2. **E2Eテスト実行**: 動作確認で設計思想の理解
-3. **設定例研究**: `investment-account-opening.json` で実装パターン学習
-4. **段階的実装**: 既存パターンに従った拡張
+#### **2. DRY原則違反の深刻性**
+- **コードの重複**: 全く同じロジックを2箇所で保持
+- **保守性の悪化**: 権限変更時に2箇所修正が必要
+- **バグの温床**: 一方だけ修正して不整合が発生するリスク
 
-**このプロジェクトは、OSSの枠を超えた「商用製品レベルの包括的アイデンティティプラットフォーム」です。**
+#### **3. エラーハンドリングの劣化**
+- **インターフェース**: `UnSupportedException` - 厳密なエラー検出
+- **実装クラス**: 空の `AdminPermissions` 返却 - エラーを隠蔽
+
+### **✅ 正しい設計パターン**
+
+#### **defaultメソッドの適切な活用**
+```java
+// インターフェース: 標準実装を提供
+public interface SomeManagementApi {
+  default AdminPermissions getRequiredPermissions(String method) {
+    // 標準的な権限マッピング
+    return standardPermissionMapping.get(method);
+  }
+}
+
+// 実装クラス: defaultメソッドをそのまま使用
+public class SomeManagementEntryService implements SomeManagementApi {
+  // getRequiredPermissions は実装不要！インターフェースのdefaultメソッドを使用
+
+  public SomeResponse someOperation(...) {
+    AdminPermissions permissions = getRequiredPermissions("someOperation"); // defaultメソッド使用
+    // ... 処理続行
+  }
+}
+
+// カスタマイズが必要な場合のみオーバーライド
+public class CustomManagementEntryService implements SomeManagementApi {
+  @Override
+  public AdminPermissions getRequiredPermissions(String method) {
+    if ("specialOperation".equals(method)) {
+      return new AdminPermissions(Set.of(CustomPermission.SPECIAL_OPERATION)); // カスタム権限
+    }
+    return SomeManagementApi.super.getRequiredPermissions(method); // 他は標準実装を使用
+  }
+}
+```
+
+### **🛡️ 再発防止チェックリスト**
+
+#### **実装前の必須確認**
+- [ ] **インターフェースにdefaultメソッドはあるか？**
+- [ ] **そのdefaultメソッドで要件を満たせるか？**
+- [ ] **オーバーライドする特別な理由はあるか？**
+- [ ] **重複したコードになっていないか？**
+
+#### **オーバーライドが正当化される場合**
+- [ ] **明確にカスタマイズが必要**（権限体系が異なる、特別な検証ロジックなど）
+- [ ] **defaultメソッドでは実現不可能な要件がある**
+- [ ] **パフォーマンス最適化が必要**
+
+#### **実装後の品質チェック**
+- [ ] **コードの重複がないか？**
+- [ ] **エラーハンドリングが適切か？**
+- [ ] **defaultメソッドの設計意図を尊重しているか？**
+
+### **💡 設計哲学への理解**
+
+#### **idp-serverにおけるdefaultメソッドの役割**
+1. **統一フレームワーク**: 全組織レベルAPIで同一の権限管理パターン
+2. **実装負荷軽減**: EntryServiceでの重複実装を回避
+3. **一貫性確保**: 権限マッピングロジックの中央集約
+4. **拡張性**: 特別な要件がある場合のカスタマイズ余地
+
+#### **Clean Architecture原則との整合性**
+- **Interface Segregation**: 必要な機能のみをインターフェースで定義
+- **DRY (Don't Repeat Yourself)**: defaultメソッドによる重複排除
+- **Open/Closed Principle**: デフォルト動作は提供、カスタマイズは可能
+
+### **🎯 未来のAI開発者への伝言**
+
+**「defaultメソッドがあるインターフェースを実装する時は、まずdefaultメソッドで要件を満たせるかを確認せよ。不要なオーバーライドはコードの品質を著しく劣化させる。」**
+
+**実装の前に自問自答:**
+1. このオーバーライドは本当に必要か？
+2. defaultメソッドでは実現不可能な要件があるか？
+3. コードの重複を生み出していないか？
+4. 設計者の意図を理解しているか？
+
+この教訓を忘れずに、常にシンプルで保守しやすいコードを心がけること。
+
+## 🆔 **Authentication Configuration ID要件 - UUID必須**
+
+### **重要:** Authentication Configuration の `id` フィールドは必ずUUIDでなければならない
+
+#### **✅ 正しいID形式**
+```javascript
+// E2Eテストでの正しい例
+import { v4 as uuidv4 } from "uuid";
+
+const configId = uuidv4(); // "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+
+const createRequest = {
+  "id": configId,  // UUIDを使用
+  "type": "password",
+  "attributes": { ... },
+  "metadata": { ... },
+  "interactions": {}
+};
+```
+
+#### **❌ 間違ったID形式**
+```javascript
+// これらは全てエラーになる
+const badExamples = [
+  "test-auth-config-123",           // 文字列 + タイムスタンプ
+  "simple-string-id",               // 単純な文字列
+  "auth-config-" + Date.now(),      // プレフィックス + タイムスタンプ
+  123456,                           // 数値
+  ""                                // 空文字列
+];
+```
+
+#### **📋 UUID検証パターン (E2Eテスト用)**
+```javascript
+// UUIDの形式をテストで検証する場合
+expect(response.data.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+```
+
+#### **🔧 実装での注意点**
+
+1. **フロントエンド**: JavaScriptの`uuid`ライブラリを使用
+2. **E2Eテスト**: 全てのAuthentication Config IDはUUIDv4で生成
+3. **バリデーション**: サーバー側でUUID形式の検証が行われる
+4. **データベース**: UUIDとしてストレージに保存
+
+#### **理由**
+- **AuthenticationConfigurationIdentifier**の仕様でUUID形式が要求される
+- **一意性保証**: UUIDによる確実な一意性確保
+- **分散環境対応**: 複数インスタンス間での衝突回避
+- **セキュリティ**: 予測困難なIDによるセキュリティ向上
+
+### **🎯 開発者への注意**
+
+Authentication Configuration を扱う際は、必ずUUIDv4でIDを生成すること。この要件を忘れると実装時にバリデーションエラーが発生する。
+
+#### **📝 レスポンス構造の注意**
+
+Authentication Config Management APIのレスポンスは、以下の構造になる：
+
+```javascript
+// 成功レスポンス (create/update)
+{
+  "dry_run": false,  // dry-runの場合はtrue
+  "result": {
+    "id": "7a107ffa-5637-43f1-a686-a315c16a83c0",
+    "type": "password",
+    "attributes": { ... },
+    "metadata": { ... },
+    "interactions": {},
+    "enabled": true
+  }
+}
+
+// E2Eテストでの正しい検証例
+expect(response.data).toHaveProperty("result");
+expect(response.data.result).toHaveProperty("id");
+expect(response.data.result.id).toBeDefined();
+
+// Dry-runレスポンス
+expect(response.data).toHaveProperty("dry_run", true);
+expect(response.data.result).toHaveProperty("id");
+```
+
+**注意**: レスポンスのAuthentication Configurationは`result`フィールド内に格納される。直接ルートレベルには配置されない。
+
+#### **⚠️ 重複エラー回避のためのtype設定**
+
+Authentication Configurationの`type`フィールドは重複不可のため、E2Eテストでは`id`と同じ値を使用して重複を避ける：
+
+```javascript
+const configId = uuidv4();
+
+const createRequest = {
+  "id": configId,
+  "type": configId,  // IDと同じ値を使用して重複を避ける
+  "attributes": { ... },
+  "metadata": { ... },
+  "interactions": {}
+};
+```
+
+**理由**:
+- 同じ`type`値（例："password"）を複数回使用すると重複エラーが発生
+- テストの失敗後、再実行時に同じ`type`で競合する
+- UUIDを`type`として使用することで完全に一意性を保証
+
+#### **🏷️ 組織レベルAPIパラメータ命名の重要な修正**
+
+**問題**: 初期実装で組織レベルAPIのメソッドシグネチャが不適切だった
+
+```java
+// ❌ 間違った命名 (初期実装)
+AuthenticationConfigManagementResponse create(
+    OrganizationIdentifier organizationIdentifier,
+    TenantIdentifier adminTenant,  // "admin" は不適切
+    User operator,
+    // ...
+);
+
+// ✅ 正しい命名 (修正後)
+AuthenticationConfigManagementResponse create(
+    OrganizationIdentifier organizationIdentifier,
+    TenantIdentifier tenantIdentifier,  // 意味的に正確
+    User operator,
+    // ...
+);
+```
+
+**理由**:
+- **`adminTenant`は誤解を招く**: テナント自体がadminという意味ではない
+- **実際の意味**: 「組織内の対象テナント」を指定するパラメータ
+- **一貫性**: 他の組織レベルAPIとの命名統一
+
+**正しい理解**:
+- **OrganizationIdentifier**: どの組織で操作するか
+- **TenantIdentifier**: その組織内のどのテナントで操作するか
+- **User operator**: 操作実行者（組織の管理者権限を持つユーザー）
+
+**未来の開発者への注意**: 組織レベルAPIでは「管理者テナント」ではなく「対象テナント」として理解すること。
+
+## 🚨 **Organization-Level API実装時の重要注意事項**
+
+### **❌ 致命的な誤解パターン（必読）**
+
+#### **誤解1: 「組織レベル = システムレベルの簡易版」**
+```
+❌ 危険な思考: 組織レベルAPIは簡単だから適当に実装してもよい
+✅ 正しい理解: 組織レベルAPI = システムレベルAPI + 組織アクセス制御（より複雑）
+```
+
+#### **誤解2: Context Creator パターンの軽視**
+```
+❌ 失敗例: コンパイルエラーを避けるためにTODOコメントで済ませる
+❌ 手抜き例: 「適当なメッセージ返却」で実装した気になる
+✅ 正解: 既存のAuthenticationConfigRegistrationContextCreatorを必ず使用
+```
+
+#### **誤解3: Audit Log実装の手抜き**
+```
+❌ 手抜き: createOnRead()で統一してコンパイルエラーを回避
+✅ 正解: create(), createOnUpdate(), createOnDeletion()を適切に使い分け
+```
+
+### **✅ 組織レベルAPI実装の絶対ルール**
+
+#### **実装前必須チェック（これを怠ると失敗確定）**
+1. **システムレベル実装を完全に理解**
+   ```java
+   // 必ず詳細確認するファイル
+   /libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/control_plane/system_manager/AuthenticationConfigurationManagementEntryService.java
+   ```
+
+2. **他の組織レベルAPI実装を参考にする**
+   ```java
+   // 参考実装（同じパターンを必ず踏襲）
+   /libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/control_plane/organization_manager/OrgUserManagementEntryService.java
+   /libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/control_plane/organization_manager/OrgClientManagementEntryService.java
+   ```
+
+3. **組織アクセス制御の正しい統合**
+   ```java
+   // 正しいパターン（これ以外は禁止）
+   OrganizationAccessControlResult accessResult =
+       organizationAccessVerifier.verifyAccess(organization, adminTenant, operator, permissions);
+
+   if (!accessResult.isSuccess()) {
+       // アクセス拒否レスポンス
+       return new AuthenticationConfigManagementResponse(
+           AuthenticationConfigManagementStatus.FORBIDDEN, response);
+   }
+
+   // この後は既存のシステムレベル実装と同じフロー
+   AuthenticationConfigRegistrationContextCreator contextCreator =
+       new AuthenticationConfigRegistrationContextCreator(targetTenant, request, dryRun);
+   AuthenticationConfigRegistrationContext context = contextCreator.create();
+   ```
+
+### **🎯 実装品質チェック（リリース前必須）**
+
+#### **🚨 Red Flags（これがあったら絶対に修正）**
+- [ ] TODOコメントで済ませている箇所がある
+- [ ] createOnRead()でAudit Logを統一している
+- [ ] Context Creatorを使っていない
+- [ ] 「簡単だから」と手抜きしている箇所がある
+- [ ] 適当なメッセージ返却で実装した気になっている
+
+#### **✅ Green Flags（良い実装の証拠）**
+- [ ] システムレベル実装と同じContext Creatorパターン使用
+- [ ] 適切なAudit Log作成（create/update/delete別）
+- [ ] 実際のRepository操作実装
+- [ ] 既存の組織レベルAPIと一貫性のあるパターン
+
+### **⚠️ 「コンパイルが通る ≠ 正しい実装」の教訓**
+
+**最悪のパターン**: コンパイルエラーを避けるために手抜きする
+- 適当な実装でコンパイルを通すより、正しい実装方法を調べる
+- Context Creator等の必要なクラスが見つからない場合は、既存実装を詳細確認
+- 不明な点があれば実装を止めて確認する
+
+**重要**: この教訓は実際のissue対応で発生した失敗例から学んだものです。同じ過ちを繰り返さないよう、**「組織レベルAPIは複雑で、システムレベル実装の完全な理解が前提」**という認識で必ず取り組んでください。
 
 ## Javadoc ドキュメント要件
 
@@ -1480,6 +1103,188 @@ cd performance-test && k6 run
 - JavadocがHTML生成時にエラーにならないことを確認
 - `./gradlew javadoc` でのビルド成功を検証
 - 生成されたHTMLドキュメントの可読性確認
+
+## 🚨 **「Conversation compacted」対処マニュアル - 実装品質維持の生命線**
+
+### **💀 危険シグナル: 「Conversation compacted」が表示された場合**
+
+**🔥 緊急事態宣言**: 技術的詳細コンテキストが**大幅に失われた状態**。この状態での開発は**極めて危険**。
+
+### **📊 「Conversation compacted」による被害分析**
+
+#### **1. 失われる重要な情報**
+```
+🗂️  Before Compacted:
+├── 詳細な実装パターンの分析・議論
+├── エラーと修正の試行錯誤プロセス
+├── なぜその実装パターンを選択したかの経緯
+├── 実装中に発見した細かな注意点
+├── 型システム・権限システムの詳細な理解
+└── アーキテクチャ層間の責任分離の詳細
+
+📝  After Compacted (残る情報):
+└── 要約された結果のみ（「組織レベル管理APIの実装パターンに従う」など）
+```
+
+#### **2. 実装品質劣化のメカニズム**
+```mermaid
+graph TD
+    A[Conversation Compacted] --> B[詳細コンテキスト喪失]
+    B --> C[参考コード選択の誤判断]
+    B --> D[型システム理解の曖昧化]
+    B --> E[段階的修正の悪循環]
+
+    C --> F[不適切な参考実装を選択]
+    D --> G[権限・レスポンス型の混乱]
+    E --> H[部分修正→エラー→さらに部分修正]
+
+    F --> I[実装がめちゃめちゃ]
+    G --> I
+    H --> I
+
+    I --> J[🔥 プロダクション品質の実装が不可能]
+```
+
+### **🛡️ 緊急対処プロトコル**
+
+#### **Phase 1: 即座停止 (STOP IMMEDIATELY)**
+```bash
+# ⚠️  compacted検出時は実装を即座に停止
+echo "🚨 CONVERSATION COMPACTED DETECTED - STOPPING ALL IMPLEMENTATION"
+```
+
+**絶対にやってはいけないこと:**
+- [ ] ❌ 「とりあえず」で実装を続ける
+- [ ] ❌ エラーが出たら「部分修正」で対処
+- [ ] ❌ 「簡単だから」と既存パターンを適当に参考にする
+
+#### **Phase 2: 全体設計の再確認 (ARCHITECTURE REVALIDATION)**
+```bash
+# 1. 既存実装パターンの完全な再分析
+find . -name "*Management*Api.java" | head -10
+find . -name "*EntryService.java" | head -10
+
+# 2. 権限システムの完全理解
+grep -r "AdminPermissions\|OrganizationAdminPermissions" --include="*.java" | head -20
+grep -r "getRequiredPermissions" --include="*.java" | head -10
+
+# 3. レスポンス型システムの理解
+find . -name "*ManagementResponse.java"
+grep -r "ManagementStatus" --include="*.java" | head -10
+```
+
+#### **Phase 3: 型システムの完全検証 (TYPE SYSTEM VERIFICATION)**
+```java
+// compacted後は特に以下の整合性を確認
+1. 権限型: AdminPermissions vs OrganizationAdminPermissions
+2. レスポンス型: 各Management APIのレスポンス型の一貫性
+3. アクセス制御: OrganizationAccessVerifier の正しい使用方法
+4. Context Creator: 各ドメインに対応するContextCreatorの存在確認
+```
+
+#### **Phase 4: 参考実装の詳細比較 (REFERENCE IMPLEMENTATION ANALYSIS)**
+```bash
+# システムレベル vs 組織レベルの実装差異を詳細分析
+# 例: Authentication Config Management
+diff /libs/.../system_manager/AuthenticationConfigurationManagementEntryService.java \
+     /libs/.../organization_manager/OrgAuthenticationConfigurationManagementEntryService.java
+
+# 複数の組織レベル実装の共通パターン抽出
+ls /libs/.../organization_manager/Org*ManagementEntryService.java
+```
+
+### **🎯 実装再開の判断基準**
+
+#### **✅ Green Light (実装再開OK) の条件**
+- [ ] **型システム完全理解**: 権限・レスポンス・識別子型の整合性確認済み
+- [ ] **パターン完全把握**: システムレベルと組織レベルの実装差異を詳細理解
+- [ ] **参考実装選択**: 適切な参考実装を特定し、なぜそれが適切かを説明可能
+- [ ] **アクセス制御理解**: 組織アクセス制御の4ステップ検証プロセスを理解
+
+#### **❌ Red Light (実装継続危険) のシグナル**
+- [ ] **曖昧な理解**: 「たぶん」「だいたい」「適当に」の言葉が思い浮かぶ
+- [ ] **エラー依存**: コンパイルエラーで実装の正誤を判断しようとする
+- [ ] **パターン混在**: システムレベルと組織レベルのパターンが混在
+- [ ] **型システム混乱**: 権限型やレスポンス型を「とりあえず」で選択
+
+### **📋 実装チェックリスト (compacted環境専用)**
+
+#### **🔍 実装前必須確認 (Pre-Implementation Verification)**
+```java
+// 1. 参考実装の詳細分析
+□ システムレベル実装を完全に理解したか？
+□ 組織レベル実装の共通パターンを抽出したか？
+□ なぜその実装パターンが適切かを説明できるか？
+
+// 2. 型システムの整合性確認
+□ 権限型は何を使うべきか？(AdminPermissions? OrganizationAdminPermissions?)
+□ レスポンス型は何を返すべきか？
+□ アクセス制御の結果をどう変換すべきか？
+
+// 3. Context Creator確認
+□ 対象ドメイン用のContextCreatorが存在するか？
+□ ContextCreatorの使用方法を理解しているか？
+```
+
+#### **🧪 実装中品質チェック (During Implementation)**
+```java
+// 設計の一貫性チェック
+□ 部分修正でなく全体設計で実装しているか？
+□ 既存パターンと一貫性があるか？
+□ エラーハンドリングが適切か？
+
+// コード品質チェック
+□ TODOコメントで済ませていないか？
+□ 「適当なメッセージ」で実装していないか？
+□ Context Creatorパターンを使用しているか？
+```
+
+### **🎯 未来の自分への重要メッセージ**
+
+#### **💡 compacted環境での開発哲学**
+```
+「Conversation compactedは技術詳細の文脈喪失により、
+ AIの判断精度を大幅に下げる重要な危険要因である。
+
+ この環境では：
+ 1. 慎重さを2倍に増やす
+ 2. 確信のない実装は絶対に行わない
+ 3. 部分修正ではなく全体再設計を選択する
+ 4. エラー修正時は根本原因を徹底追求する」
+```
+
+#### **🔬 実装品質の科学的アプローチ**
+```bash
+# compacted後は「科学的な実装」を心がける
+1. 仮説: この実装パターンが正しいと思う理由
+2. 検証: 既存実装との比較分析
+3. 実験: 小さな単位での実装テスト
+4. 評価: 全体設計との一貫性確認
+```
+
+### **📚 compacted対処の成功パターン**
+
+#### **✅ 成功例: 正しい対処フロー**
+```
+1. compacted検出 → 実装停止
+2. 既存実装の詳細再分析 → パターン完全理解
+3. 型システムの整合性確認 → 混乱要因を排除
+4. 全体設計での実装 → 一貫性のある品質確保
+```
+
+#### **❌ 失敗例: 避けるべきフロー**
+```
+1. compacted後も実装継続
+2. エラー発生 → 部分修正
+3. さらなるエラー → さらに部分修正
+4. 実装がめちゃめちゃ → 🔥
+```
+
+### **🎖️ 品質保証の誓い**
+
+**「Conversation compacted環境においても、idp-serverの品質基準を絶対に下げない。不確実な実装よりも、確実な設計確認を優先する。未来のユーザーと開発者のために、妥協のない品質を追求する。」**
+
+---
 
 ## 現在の状況
 - 作業ディレクトリ: clean (コミット可能な変更なし)

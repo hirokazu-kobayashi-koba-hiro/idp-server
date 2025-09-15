@@ -70,6 +70,30 @@ public class PostgresqlExecutor implements AuthenticationPolicyConfigurationSqlE
   }
 
   @Override
+  public Map<String, String> selectOne(
+      Tenant tenant,
+      AuthenticationPolicyConfigurationIdentifier identifier,
+      boolean includeDisabled) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        selectSql
+            + """
+                WHERE tenant_id = ?::uuid
+                AND id = ?::uuid
+                """;
+
+    if (!includeDisabled) {
+      sqlTemplate += " AND enabled = true";
+    }
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierUUID());
+    params.add(identifier.valueAsUuid());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
+  @Override
   public Map<String, String> selectCount(Tenant tenant) {
 
     SqlExecutor sqlExecutor = new SqlExecutor();
