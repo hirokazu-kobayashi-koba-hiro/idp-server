@@ -49,7 +49,7 @@ public class AuthenticationPolicyConfigRegistrationContext implements ConfigRegi
 
   @Override
   public String type() {
-    return configuration().flow();
+    return "authentication_policy_config";
   }
 
   @Override

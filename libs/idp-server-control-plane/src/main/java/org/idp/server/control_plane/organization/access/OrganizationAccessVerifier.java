@@ -17,7 +17,6 @@
 package org.idp.server.control_plane.organization.access;
 
 import org.idp.server.control_plane.base.definition.AdminPermissions;
-import org.idp.server.control_plane.base.definition.OrganizationAdminPermissions;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
