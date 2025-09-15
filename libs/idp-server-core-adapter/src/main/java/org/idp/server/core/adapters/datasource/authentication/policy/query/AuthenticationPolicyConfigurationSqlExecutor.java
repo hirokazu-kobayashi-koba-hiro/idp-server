@@ -28,6 +28,11 @@ public interface AuthenticationPolicyConfigurationSqlExecutor {
   Map<String, String> selectOne(
       Tenant tenant, AuthenticationPolicyConfigurationIdentifier identifier);
 
+  Map<String, String> selectOne(
+      Tenant tenant,
+      AuthenticationPolicyConfigurationIdentifier identifier,
+      boolean includeDisabled);
+
   Map<String, String> selectCount(Tenant tenant);
 
   List<Map<String, String>> selectList(Tenant tenant, int limit, int offset);

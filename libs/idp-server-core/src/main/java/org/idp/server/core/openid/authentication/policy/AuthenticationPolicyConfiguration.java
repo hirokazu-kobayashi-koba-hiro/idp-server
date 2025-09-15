@@ -57,6 +57,10 @@ public class AuthenticationPolicyConfiguration
     return convertUuid(id);
   }
 
+  public AuthenticationPolicyConfigurationIdentifier identifier() {
+    return new AuthenticationPolicyConfigurationIdentifier(id);
+  }
+
   public String flow() {
     return flow;
   }

@@ -70,6 +70,30 @@ public class MysqlExecutor implements AuthenticationPolicyConfigurationSqlExecut
   }
 
   @Override
+  public Map<String, String> selectOne(
+      Tenant tenant,
+      AuthenticationPolicyConfigurationIdentifier identifier,
+      boolean includeDisabled) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        selectSql
+            + """
+                WHERE tenant_id = ?
+                AND id = ?
+                """;
+
+    if (!includeDisabled) {
+      sqlTemplate += " AND enabled = true";
+    }
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifier().value());
+    params.add(identifier.value());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
+  @Override
   public Map<String, String> selectCount(Tenant tenant) {
 
     SqlExecutor sqlExecutor = new SqlExecutor();

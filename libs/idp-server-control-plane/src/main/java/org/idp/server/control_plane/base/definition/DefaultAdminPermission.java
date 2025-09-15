@@ -52,11 +52,8 @@ public enum DefaultAdminPermission {
   USER_READ("user:read", "Admin Read user information"),
   USER_UPDATE("user:update", "Admin Update user"),
   USER_DELETE("user:delete", "Admin Delete user"),
-
-  PAYMENT_CREATE("payment:create", "Admin Create a payment"),
-  PAYMENT_READ("payment:read", "Admin Read payment information"),
-  PAYMENT_UPDATE("payment:update", "Admin Update payment"),
-  PAYMENT_DELETE("payment:delete", "Admin Delete payment"),
+  USER_INVITE("user:invite", "Admin Invite a user"),
+  USER_SUSPEND("user:suspend", "Admin Suspend user account"),
 
   PERMISSION_CREATE("permission:create", "Admin Create a permission"),
   PERMISSION_READ("permission:read", "Admin Read permission information"),
@@ -161,6 +158,12 @@ public enum DefaultAdminPermission {
   public static Set<DefaultAdminPermission> findDeletePermissions() {
     return Arrays.stream(values())
         .filter(p -> p.value.endsWith(":delete"))
+        .collect(Collectors.toSet());
+  }
+
+  public static Set<DefaultAdminPermission> findByResource(String resource) {
+    return Arrays.stream(values())
+        .filter(p -> p.value.startsWith(resource + ":"))
         .collect(Collectors.toSet());
   }
 

@@ -58,7 +58,7 @@ public class AuthenticationPolicyConfigUpdateContext implements ConfigUpdateCont
 
   @Override
   public String type() {
-    return after.flow();
+    return "authentication_policy_config";
   }
 
   @Override

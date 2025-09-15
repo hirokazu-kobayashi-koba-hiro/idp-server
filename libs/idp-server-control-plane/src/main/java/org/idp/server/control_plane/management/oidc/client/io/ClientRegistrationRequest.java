@@ -33,4 +33,12 @@ public class ClientRegistrationRequest {
   public Object get(String key) {
     return values.get(key);
   }
+
+  public boolean hasId() {
+    return values.containsKey("id");
+  }
+
+  public String getId() {
+    return (String) values.get("id");
+  }
 }

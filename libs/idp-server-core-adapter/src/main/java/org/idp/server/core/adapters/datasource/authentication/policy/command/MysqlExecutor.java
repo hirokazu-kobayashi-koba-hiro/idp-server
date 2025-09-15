@@ -84,7 +84,7 @@ public class MysqlExecutor implements AuthenticationPolicyConfigurationSqlExecut
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                DELETE authentication_policy
+                DELETE FROM authentication_policy
                 WHERE id = ?
                 AND tenant_id = ?
                 """;

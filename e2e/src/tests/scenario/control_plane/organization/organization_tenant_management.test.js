@@ -1,7 +1,7 @@
 import { describe, expect, it, test } from "@jest/globals";
-import { deletion, get, postWithJson, putWithJson } from "../../../lib/http";
-import { backendUrl, clientSecretPostClient, serverConfig } from "../../testConfig";
-import { requestToken } from "../../../api/oauthClient";
+import { deletion, get, postWithJson, putWithJson } from "../../../../lib/http";
+import { backendUrl, clientSecretPostClient, serverConfig } from "../../../testConfig";
+import { requestToken } from "../../../../api/oauthClient";
 import { v4 as uuidv4 } from "uuid";
 
 describe("organization tenant management api", () => {

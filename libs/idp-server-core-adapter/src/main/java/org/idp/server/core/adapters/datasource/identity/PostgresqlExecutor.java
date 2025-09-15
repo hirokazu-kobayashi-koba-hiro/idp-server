@@ -35,7 +35,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
         String.format(selectSql, "WHERE idp_user.tenant_id = ?::uuid AND idp_user.id = ?::uuid");
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
-    params.add(userIdentifier.value());
+    params.add(userIdentifier.valueAsUuid());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
@@ -393,7 +393,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
      ) AS assigned_organizations,
      idp_user_current_organization.organization_id AS current_organization_id
       FROM idp_user_assigned_organizations
-      JOIN idp_user_current_organization
+      LEFT JOIN idp_user_current_organization
        ON idp_user_assigned_organizations.user_id = idp_user_current_organization.user_id
       WHERE idp_user_assigned_organizations.user_id = ?:: uuid
       GROUP BY
@@ -421,9 +421,9 @@ public class PostgresqlExecutor implements UserSqlExecutor {
                 ) AS assigned_tenants,
                 idp_user_current_tenant.tenant_id AS current_tenant_id
             FROM idp_user_assigned_tenants
-                     JOIN idp_user_current_tenant
+                     LEFT JOIN idp_user_current_tenant
                           ON idp_user_assigned_tenants.user_id = idp_user_current_tenant.user_id
-            WHERE idp_user_current_tenant.user_id = ?::uuid
+            WHERE idp_user_assigned_tenants.user_id = ?::uuid
             GROUP BY
                 idp_user_assigned_tenants.user_id,
                 idp_user_current_tenant.tenant_id

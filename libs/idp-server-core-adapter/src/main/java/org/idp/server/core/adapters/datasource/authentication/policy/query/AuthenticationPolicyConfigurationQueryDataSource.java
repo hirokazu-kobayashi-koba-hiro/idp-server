@@ -75,6 +75,20 @@ public class AuthenticationPolicyConfigurationQueryDataSource
   }
 
   @Override
+  public AuthenticationPolicyConfiguration findWithDisabled(
+      Tenant tenant,
+      AuthenticationPolicyConfigurationIdentifier identifier,
+      boolean includeDisabled) {
+    Map<String, String> result = executor.selectOne(tenant, identifier, includeDisabled);
+
+    if (Objects.isNull(result) || result.isEmpty()) {
+      return new AuthenticationPolicyConfiguration();
+    }
+
+    return jsonConverter.read(result.get("payload"), AuthenticationPolicyConfiguration.class);
+  }
+
+  @Override
   public long findTotalCount(Tenant tenant) {
     Map<String, String> result = executor.selectCount(tenant);
 
