@@ -145,6 +145,7 @@ public class SecurityEvent {
       result.put("user", user().toMap());
     }
     result.put("detail", detail.toMap());
+    result.put("created_at", createdAt.valueAsString());
     return result;
   }
 
