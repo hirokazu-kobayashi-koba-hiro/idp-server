@@ -54,11 +54,7 @@ public class ClientRegistrationRequestValidationResult {
     response.put("dry_run", dryRun);
     response.put("error", "invalid_request");
     response.put("error_description", "Invalid request");
-    Map<String, Object> details = new HashMap<>();
-    if (!clientResult.isValid()) {
-      details.put("client", clientResult.errors());
-    }
-    response.put("details", details);
+    response.put("error_messages", clientResult.errors());
     return new ClientManagementResponse(ClientManagementStatus.INVALID_REQUEST, response);
   }
 }

@@ -2,7 +2,7 @@
 title: "Management API Development Roadmap"
 author: "Claude Code"
 created: "2025-01-15"
-updated: "2025-01-15"
+updated: "2025-01-16"
 status: "draft"
 related_issues: ["#409", "#442"]
 reviewers: []
@@ -23,7 +23,6 @@ idp-serverの組織レベルの管理系API開発ロードマップ。統一さ�
 | **Organization Tenant Management** | 🔴 High | ✅ 実装済み | `TENANT_*` | `/v1/management/organizations/{organizationId}/tenants` | 組織内テナント管理 | 🚧 | 🚧 | 🚧 | ✅ | #409 | #434 |
 | **Organization Client Management** | 🔴 High | ✅ 実装済み | `CLIENT_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/clients` | 組織内クライアント管理 | 🚧 | 🚧 | 🚧 | 🚧 | #409 | #434 |
 | **Organization User Management** | 🔴 High | ✅ 実装済み | `USER_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/users` | 組織内ユーザー管理・招待・停止 | 🚧 | 🚧 | 🚧 | 🚧 | - | #446 |
-| **System Tenant Management** | 🟡 Medium | 🚧 部分実装 | `TENANT_*` | `/v1/management/tenants/{tenant-id}` | システムレベルテナント管理 | ✅ | 🚧 | 🚧 | 🚧 | - | - |
 
 ### 📊 **Phase 2: Security & Monitoring APIs**
 
@@ -31,28 +30,26 @@ idp-serverの組織レベルの管理系API開発ロードマップ。統一さ�
 |-----|-------|----------|---------|---------|------|--------|-----------|------------|-----------|-------|-----|
 | **Organization Security Event Management** | 🔴 High | ✅ 実装済み | `SECURITY_EVENT_READ` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/security-events` | 組織内セキュリティイベント閲覧 | 🚧 | 🚧 | 🚧 | 🚧 | #442 | - |
 | **Organization Audit Log Management** | 🔴 High | ✅ 実装済み | `AUDIT_LOG_READ` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/audit-logs` | 組織内監査ログ管理 | 🚧 | 🚧 | 🚧 | 🚧 | - | - |
-| **System Security Event Management** | 🟡 Medium | 🚧 部分実装 | `SECURITY_EVENT_READ` | `/v1/management/tenants/{tenant-id}/security-events` | システムレベルセキュリティイベント | ✅ | 🚧 | 🚧 | 🚧 | - | - |
-| **System Audit Log Management** | 🟡 Medium | ✅ 実装済み | `AUDIT_LOG_READ` | `/v1/management/tenants/{tenant-id}/audit-logs` | システムレベル監査ログ | 🚧 | 🚧 | 🚧 | 🚧 | - | - |
 
 ### 📊 **Phase 3: Configuration APIs**
 
 | API | 優先度 | ステータス | 必要権限 | APIパス | 説明 | API仕様 | JsonSchema | データ整合性 | E2Eテスト | Issue | PR |
-|-----|-------|----------|---------|---------|------|--------|-----------|------------|-----------|-------|-----|
+|-----|-------|----------|---------|---------|------|------|---------|----------|-----------|-------|-----|
 | **Organization Authentication Config** | 🟡 Medium | ✅ 実装済み | `AUTHENTICATION_CONFIG_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/authentication-configs` | 組織内認証設定管理 | 🚧 | 🚧 | 🚧 | 🚧 | - | - |
 | **Organization Authentication Policy Config** | 🟡 Medium | ✅ 実装済み | `AUTHENTICATION_POLICY_CONFIG_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/authentication-policy-configs` | 組織内認証ポリシー設定 | 🚧 | 🚧 | 🚧 | 🚧 | - | - |
 | **Organization Identity Verification Config** | 🟡 Medium | ✅ 実装済み | `IDENTITY_VERIFICATION_CONFIG_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/identity-verification-configs` | 組織内身元確認設定 | 🚧 | 🚧 | 🚧 | 🚧 | - | - |
-| **Organization Federation Config** | 🟡 Medium | ❌ 未実装 | `FEDERATION_CONFIG_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/federation-configs` | 組織内フェデレーション設定 | ❌ | ❌ | ❌ | ❌ | - | - |
-| **Organization Security Event Hook Config** | 🟡 Medium | ❌ 未実装 | `SECURITY_EVENT_HOOK_CONFIG_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/security-event-hook-configs` | 組織内セキュリティイベントフック設定 | ❌ | ❌ | ❌ | ❌ | - | - |
-| **Organization Authentication Interaction Management** | 🟡 Medium | ❌ 未実装 | `AUTHENTICATION_INTERACTION_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/authentication-interactions` | 組織内認証インタラクション管理 | ❌ | ❌ | ❌ | ❌ | - | - |
-| **Organization Authentication Transaction Management** | 🟡 Medium | ❌ 未実装 | `AUTHENTICATION_TRANSACTION_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/authentication-transactions` | 組織内認証トランザクション管理 | ❌ | ❌ | ❌ | ❌ | - | - |
-| **Organization Authorization Server Management** | 🟡 Medium | ❌ 未実装 | `AUTHORIZATION_SERVER_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/authorization-server` | 組織内認可サーバー管理 | ❌ | ❌ | ❌ | ❌ | - | - |
+| **Organization Federation Config** | 🟡 Medium | ✅ 実装済み | `FEDERATION_CONFIG_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/federation-configs` | 組織内フェデレーション設定 | 🚧 | 🚧 | 🚧 | ✅ | - | #447 |
+| **Organization Security Event Hook Config** | 🟡 Medium | ✅ 実装済み | `SECURITY_EVENT_HOOK_CONFIG_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/security-event-hook-configs` | 組織内セキュリティイベントフック設定 | 🚧 | 🚧 | 🚧 | ✅ | - | - |
+| **Organization Authentication Interaction Management** | 🟡 Medium | ✅ 実装済み | `AUTHENTICATION_INTERACTION_READ` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/authentication-interactions` | 組織内認証インタラクション監視 (読み取り専用) | 🚧 | 🚧 | 🚧 | 🚧 | - | - |
+| **Organization Authentication Transaction Management** | 🟡 Medium | ✅ 実装済み | `AUTHENTICATION_TRANSACTION_READ` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/authentication-transactions` | 組織内認証トランザクション監視 (読み取り専用) | 🚧 | 🚧 | 🚧 | 🚧 | - | - |
+| **Organization Authorization Server Management** | 🟡 Medium | ✅ 実装済み | `AUTHORIZATION_SERVER_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/authorization-server` | 組織内認可サーバー管理 | 🚧 | 🚧 | 🚧 | ✅ | - | - |
 
 ### 📊 **Phase 4: Advanced Management APIs**
 
 | API | 優先度 | ステータス | 必要権限 | APIパス | 説明 | API仕様 | JsonSchema | データ整合性 | E2Eテスト | Issue | PR |
 |-----|-------|----------|---------|---------|------|--------|-----------|------------|-----------|-------|-----|
-| **Organization Permission Management** | 🟢 Low | ❌ 未実装 | `PERMISSION_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/permissions` | 組織内権限管理 | ❌ | ❌ | ❌ | ❌ | - | - |
-| **Organization Role Management** | 🟢 Low | ❌ 未実装 | `ROLE_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/roles` | 組織内ロール管理 | ❌ | ❌ | ❌ | ❌ | - | - |
+| **Organization Permission Management** | 🟢 Low | ✅ 実装済み | `PERMISSION_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/permissions` | 組織内権限管理 | 🚧 | 🚧 | 🚧 | ✅ | - | - |
+| **Organization Role Management** | 🟢 Low | ✅ 実装済み | `ROLE_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/roles` | 組織内ロール管理 | 🚧 | 🚧 | 🚧 | ✅ | - | - |
 | **Organization Tenant Invitation Management** | 🟢 Low | ❌ 未実装 | `TENANT_INVITATION_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/tenant-invitations` | 組織内テナント招待管理 | ❌ | ❌ | ❌ | ❌ | - | - |
 | **Organization Onboarding Management** | 🟢 Low | ❌ 未実装 | `ONBOARDING_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/onboarding` | 組織内オンボーディング管理 | ❌ | ❌ | ❌ | ❌ | - | - |
 | **System Organization Management** | 🟢 Low | 🚧 部分実装 | `ORGANIZATION_*` | `/v1/management/organizations` | システムレベル組織管理 | 🚧 | 🚧 | 🚧 | 🚧 | - | - |
@@ -80,13 +77,13 @@ idp-serverの組織レベルの管理系API開発ロードマップ。統一さ�
 
 | 未実装組織API | 優先度 | 参考実装ファイル | 推定実装工数 |
 |-------------|-------|----------------|-------------|
-| **Organization Federation Config** | 🟡 Medium | `management/FederationConfigurationManagementV1Api.java` | 1-2日 |
-| **Organization Security Event Hook Config** | 🟡 Medium | `management/SecurityEventHookConfigurationManagementV1Api.java` | 1-2日 |
+| ~~**Organization Federation Config**~~ | ~~🟡 Medium~~ | ~~`management/FederationConfigurationManagementV1Api.java`~~ | ~~✅ 実装完了~~ |
+| ~~**Organization Security Event Hook Config**~~ | ~~🟡 Medium~~ | ~~`management/SecurityEventHookConfigurationManagementV1Api.java`~~ | ~~✅ 実装完了~~ |
 | **Organization Authentication Interaction** | 🟡 Medium | `management/AuthenticationInteractionManagementV1Api.java` | 1-2日 |
 | **Organization Authentication Transaction** | 🟡 Medium | `management/AuthenticationTransactionManagementV1Api.java` | 1-2日 |
-| **Organization Authorization Server** | 🟡 Medium | `management/AuthorizationServerManagementV1Api.java` | 1-2日 |
-| **Organization Permission Management** | 🟢 Low | `management/PermissionManagementV1Api.java` | 1-2日 |
-| **Organization Role Management** | 🟢 Low | `management/RoleManagementV1Api.java` | 1-2日 |
+| ~~**Organization Authorization Server**~~ | ~~🟡 Medium~~ | ~~`management/AuthorizationServerManagementV1Api.java`~~ | ~~✅ 実装完了~~ |
+| ~~**Organization Permission Management**~~ | ~~🟢 Low~~ | ~~`management/PermissionManagementV1Api.java`~~ | ~~✅ 実装完了~~ |
+| ~~**Organization Role Management**~~ | ~~🟢 Low~~ | ~~`management/RoleManagementV1Api.java`~~ | ~~✅ 実装完了~~ |
 | **Organization Tenant Invitation** | 🟢 Low | `management/TenantInvitationManagementV1Api.java` | 1-2日 |
 | **Organization Onboarding** | 🟢 Low | `management/OnboardingV1Api.java` | 1-2日 |
 
@@ -302,12 +299,51 @@ Phase 1 → Phase 2 → Phase 3 → Phase 4
 | 日付 | 更新内容 | 担当者 |
 |------|---------|-------|
 | 2025-01-15 | 初版作成、Phase 1-4定義 | Claude Code |
+| 2025-09-16 | 品質項目完成定義追加 | Claude Code |
+| 2025-01-16 | Organization Role/Permission/Authorization Server Management API実装完了 | Claude Code |
+
+### **品質項目完成定義**
+
+各APIの品質項目（API仕様、JsonSchema、データ整合性、E2Eテスト）の完成基準を以下に定義する：
+
+#### **📋 API仕様 (✅ 完成基準)**
+- [ ] **OpenAPI 3.0.3形式**での仕様書追加 (`swagger-control-plane-ja.yaml`)
+- [ ] **エンドポイント定義**: 組織レベルパス、パラメータ、レスポンスの完全定義
+- [ ] **エラーレスポンス**: 401, 403, 404, 500の標準レスポンス定義
+- [ ] **タグ・説明**: 適切な分類と日本語説明文
+
+#### **🔍 JsonSchema (✅ 完成基準)**
+- [ ] **リクエストスキーマ**: クエリパラメータの完全バリデーション定義
+- [ ] **レスポンススキーマ**: 全フィールドの型・制約・必須属性定義
+- [ ] **エラースキーマ**: 標準エラーレスポンス形式の統一
+- [ ] **条件付きスキーマ**: oneOf/anyOf による分岐ロジック対応
+
+#### **🔒 データ整合性 (✅ 完成基準)**
+- [ ] **アクセス制御**: 組織レベル4段階検証プロセスの完全実装
+- [ ] **データスコープ**: 組織境界内データのみ返却保証
+- [ ] **監査ログ**: 全操作の包括的ログ記録・追跡可能性
+- [ ] **入力検証**: 無効パラメータの適切な処理とエラーレスポンス
+
+#### **🧪 E2Eテスト (✅ 完成基準)**
+- [ ] **正常系カバレッジ**: 全基本機能パス（一覧・詳細・フィルタリング・ページネーション）
+- [ ] **異常系カバレッジ**: エラーケース網羅（401, 403, 404, 400）
+- [ ] **境界値テスト**: 組織アクセス制御の境界ケース検証
+- [ ] **データ検証**: レスポンス構造・データ型の完全検証
+
+#### **🎯 実装優先順位**
+| 品質項目 | 優先度 | 工数見積もり | 影響度 |
+|---------|--------|------------|--------|
+| **API仕様** | 🔴 High | 4-6時間 | 開発者体験・保守性 |
+| **JsonSchema** | 🟡 Medium | 2-3時間 | API品質・バリデーション |
+| **E2Eテスト** | 🟡 Medium | 3-4時間 | 品質保証・回帰防止 |
+| **データ整合性** | 🟢 Low | 1-2時間 | セキュリティ・監査 |
 
 ### **マイルストーン**
 
 - [ ] **Phase 1 完了**: Core Infrastructure APIs統一 (目標: 2025-01-31)
 - [ ] **Phase 2 完了**: Security & Monitoring APIs実装 (目標: 2025-02-28)
 - [ ] **Phase 3 開始**: Configuration APIs着手 (目標: 2025-03-01)
+- [ ] **品質向上**: 部分実装APIの品質項目完成 (継続的実施)
 
 ---
 
