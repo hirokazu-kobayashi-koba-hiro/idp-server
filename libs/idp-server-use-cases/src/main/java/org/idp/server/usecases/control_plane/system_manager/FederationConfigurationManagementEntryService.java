@@ -314,6 +314,6 @@ public class FederationConfigurationManagementEntryService
     federationConfigurationCommandRepository.delete(tenant, configuration);
 
     return new FederationConfigManagementResponse(
-        FederationConfigManagementStatus.OK, configuration.payload());
+        FederationConfigManagementStatus.NO_CONTENT, Map.of());
   }
 }

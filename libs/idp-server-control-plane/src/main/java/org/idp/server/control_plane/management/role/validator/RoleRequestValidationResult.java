@@ -54,13 +54,7 @@ public class RoleRequestValidationResult {
     response.put("dry_run", dryRun);
     response.put("error", "invalid_request");
     response.put("error_description", "role registration validation is failed");
-    Map<String, Object> details = new HashMap<>();
-    if (!validationResult.isValid()) {
-      {
-        details.put("massages", validationResult.errors());
-      }
-    }
-    response.put("error_details", details);
+    response.put("error_massages", validationResult.errors());
     return new RoleManagementResponse(RoleManagementStatus.INVALID_REQUEST, response);
   }
 }
