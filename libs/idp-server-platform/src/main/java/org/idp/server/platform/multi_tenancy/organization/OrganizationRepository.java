@@ -17,14 +17,13 @@
 package org.idp.server.platform.multi_tenancy.organization;
 
 import java.util.List;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface OrganizationRepository {
-  void register(Tenant tenant, Organization organization);
+  void register(Organization organization);
 
-  void update(Tenant tenant, Organization organization);
+  void update(Organization organization);
 
-  Organization get(Tenant tenant, OrganizationIdentifier identifier);
+  Organization get(OrganizationIdentifier identifier);
 
-  List<Organization> findList(Tenant tenant, OrganizationQueries queries);
+  List<Organization> findList(OrganizationQueries queries);
 }

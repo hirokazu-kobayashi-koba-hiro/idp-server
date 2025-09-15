@@ -29,8 +29,8 @@ class ModelConvertor {
     OrganizationDescription description =
         new OrganizationDescription(result.getOrDefault("description", ""));
     List<AssignedTenant> assignedTenantList = new ArrayList<>();
-    if (result.containsKey("assigned_tenants") && result.get("assigned_tenants").equals("[]")) {
-      JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(result.get("assigned_tenants"));
+    if (result.containsKey("tenants") && !result.get("tenants").equals("[]")) {
+      JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(result.get("tenants"));
       Collection<AssignedTenant> distinctTenants =
           jsonNodeWrapper.elements().stream()
               .map(

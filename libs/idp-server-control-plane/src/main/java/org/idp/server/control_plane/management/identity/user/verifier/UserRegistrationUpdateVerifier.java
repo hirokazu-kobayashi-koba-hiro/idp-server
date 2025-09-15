@@ -278,8 +278,7 @@ public class UserRegistrationUpdateVerifier {
       if (!allOrgIds.isEmpty()) {
         try {
           OrganizationQueries queries = OrganizationQueries.ids(allOrgIds);
-          List<Organization> existingOrganizations =
-              organizationRepository.findList(tenant, queries);
+          List<Organization> existingOrganizations = organizationRepository.findList(queries);
           Set<String> existingOrgIds =
               existingOrganizations.stream()
                   .filter(Organization::exists)

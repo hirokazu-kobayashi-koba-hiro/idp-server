@@ -211,10 +211,14 @@ public class SqlExecutor {
     } catch (SQLException exception) {
       switch (SqlErrorClassifier.classify(exception)) {
         case UNIQUE_VIOLATION ->
-            throw new SqlDuplicateKeyException("Duplicate key violation", exception);
+            throw new SqlDuplicateKeyException(
+                "Duplicate key violation: " + exception.getMessage(), exception);
         case NOT_NULL_VIOLATION, CHECK_VIOLATION ->
-            throw new SqlBadRequestException("Invalid data for", exception);
-        default -> throw new SqlRuntimeException("Sql execution is error", exception);
+            throw new SqlBadRequestException(
+                "Invalid data for: " + exception.getMessage(), exception);
+        default ->
+            throw new SqlRuntimeException(
+                "Sql execution is error: " + exception.getMessage(), exception);
       }
     }
   }

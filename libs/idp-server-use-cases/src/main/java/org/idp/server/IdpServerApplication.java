@@ -44,6 +44,7 @@ import org.idp.server.control_plane.management.permission.PermissionManagementAp
 import org.idp.server.control_plane.management.role.RoleManagementApi;
 import org.idp.server.control_plane.management.security.event.SecurityEventManagementApi;
 import org.idp.server.control_plane.management.security.hook.SecurityEventHookConfigurationManagementApi;
+import org.idp.server.control_plane.management.tenant.OrgTenantManagementApi;
 import org.idp.server.control_plane.management.tenant.TenantManagementApi;
 import org.idp.server.control_plane.management.tenant.invitation.TenantInvitationManagementApi;
 import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitationCommandRepository;
@@ -123,6 +124,7 @@ import org.idp.server.platform.notification.email.EmailSenders;
 import org.idp.server.platform.notification.sms.SmsSenders;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 import org.idp.server.platform.plugin.*;
+import org.idp.server.platform.proxy.OrganizationAwareEntryServiceProxy;
 import org.idp.server.platform.proxy.TenantAwareEntryServiceProxy;
 import org.idp.server.platform.security.SecurityEventApi;
 import org.idp.server.platform.security.SecurityEventPublisher;
@@ -136,10 +138,11 @@ import org.idp.server.usecases.application.relying_party.OidcMetaDataEntryServic
 import org.idp.server.usecases.application.relying_party.SharedSignalsFrameworkMetaDataEntryService;
 import org.idp.server.usecases.application.system.*;
 import org.idp.server.usecases.application.tenant_invitator.TenantInvitationMetaDataEntryService;
+import org.idp.server.usecases.control_plane.organization_manager.OrgTenantManagementEntryService;
 import org.idp.server.usecases.control_plane.system_administrator.IdpServerOperationEntryService;
 import org.idp.server.usecases.control_plane.system_administrator.IdpServerStarterEntryService;
 import org.idp.server.usecases.control_plane.system_administrator.OrganizationInitializationEntryService;
-import org.idp.server.usecases.control_plane.tenant_manager.*;
+import org.idp.server.usecases.control_plane.system_manager.*;
 
 /** IdpServerApplication */
 public class IdpServerApplication {
@@ -165,6 +168,7 @@ public class IdpServerApplication {
   OnboardingApi onboardingApi;
   OrganizationInitializationApi organizationInitializationApi;
   TenantManagementApi tenantManagementApi;
+
   TenantInvitationManagementApi tenantInvitationManagementApi;
   AuthorizationServerManagementApi authorizationServerManagementApi;
   ClientManagementApi clientManagementApi;
@@ -181,6 +185,9 @@ public class IdpServerApplication {
   PermissionManagementApi permissionManagementApi;
   RoleManagementApi roleManagementApi;
   UserAuthenticationApi userAuthenticationApi;
+
+  OrgTenantManagementApi orgTenantManagementApi;
+  OrganizationUserAuthenticationApi organizationUserAuthenticationApi;
 
   public IdpServerApplication(
       String adminTenantId,
@@ -626,7 +633,8 @@ public class IdpServerApplication {
                 userCommandRepository,
                 authorizationServerConfigurationCommandRepository,
                 clientConfigurationCommandRepository,
-                clientConfigurationQueryRepository),
+                clientConfigurationQueryRepository,
+                passwordEncodeDelegation),
             OnboardingApi.class,
             databaseTypeProvider);
 
@@ -806,8 +814,32 @@ public class IdpServerApplication {
             new UserAuthenticationEntryService(
                 new TokenProtocols(protocolContainer.resolveAll(TokenProtocol.class)),
                 tenantQueryRepository,
-                userQueryRepository),
+                userQueryRepository,
+                organizationRepository),
             UserAuthenticationApi.class,
+            databaseTypeProvider);
+
+    // organization
+    this.organizationUserAuthenticationApi =
+        OrganizationAwareEntryServiceProxy.createProxy(
+            new OrganizationUserAuthenticationEntryService(
+                new TokenProtocols(protocolContainer.resolveAll(TokenProtocol.class)),
+                tenantQueryRepository,
+                userQueryRepository,
+                organizationRepository),
+            OrganizationUserAuthenticationApi.class,
+            databaseTypeProvider);
+
+    this.orgTenantManagementApi =
+        OrganizationAwareEntryServiceProxy.createProxy(
+            new OrgTenantManagementEntryService(
+                tenantCommandRepository,
+                tenantQueryRepository,
+                organizationRepository,
+                authorizationServerConfigurationCommandRepository,
+                userCommandRepository,
+                auditLogWriters),
+            OrgTenantManagementApi.class,
             databaseTypeProvider);
   }
 
@@ -958,5 +990,13 @@ public class IdpServerApplication {
 
   public AuthenticationTransactionManagementApi authenticationTransactionManagementApi() {
     return authenticationTransactionManagementApi;
+  }
+
+  public OrganizationUserAuthenticationApi organizationUserAuthenticationApi() {
+    return organizationUserAuthenticationApi;
+  }
+
+  public OrgTenantManagementApi orgTenantManagementApi() {
+    return orgTenantManagementApi;
   }
 }

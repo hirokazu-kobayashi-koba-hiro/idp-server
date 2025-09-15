@@ -110,7 +110,7 @@ public class IdpServerStarterEntryService implements IdpServerStarterApi {
     tenantCommandRepository.register(tenant);
     authorizationServerConfigurationCommandRepository.register(
         tenant, context.authorizationServerConfiguration());
-    organizationRepository.register(tenant, context.organization());
+    organizationRepository.register(context.organization());
     permissionCommandRepository.bulkRegister(tenant, context.permissions());
     roleCommandRepository.bulkRegister(tenant, context.roles());
     userCommandRepository.register(tenant, context.user());

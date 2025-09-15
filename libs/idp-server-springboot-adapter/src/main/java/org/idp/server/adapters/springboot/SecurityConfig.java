@@ -38,16 +38,19 @@ import org.springframework.session.web.http.CookieSerializer;
 public class SecurityConfig {
 
   ManagementApiFilter managementApiFilter;
+  OrgManagementFilter orgManagementFilter;
   ProtectedResourceApiFilter protectedResourceApiFilter;
   DynamicCorsFilter dynamicCorsFilter;
   TenantMetaDataApi tenantMetaDataApi;
 
   public SecurityConfig(
       ManagementApiFilter managementApiFilter,
+      OrgManagementFilter orgManagementFilter,
       ProtectedResourceApiFilter protectedResourceApiFilter,
       DynamicCorsFilter dynamicCorsFilter,
       IdpServerApplication idpServerApplication) {
     this.managementApiFilter = managementApiFilter;
+    this.orgManagementFilter = orgManagementFilter;
     this.protectedResourceApiFilter = protectedResourceApiFilter;
     this.dynamicCorsFilter = dynamicCorsFilter;
     this.tenantMetaDataApi = idpServerApplication.tenantMetadataApi();
@@ -78,6 +81,9 @@ public class SecurityConfig {
                 .anyRequest()
                 .permitAll());
 
+    // Organization-level management API filter (handles /organizations/* and /org-management/*)
+    http.addFilterBefore(orgManagementFilter, BasicAuthenticationFilter.class);
+    // System-level management API filter (handles /management/*)
     http.addFilterBefore(managementApiFilter, BasicAuthenticationFilter.class);
     http.addFilterBefore(protectedResourceApiFilter, ManagementApiFilter.class);
     http.addFilterBefore(dynamicCorsFilter, ProtectedResourceApiFilter.class);

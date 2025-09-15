@@ -19,6 +19,7 @@ package org.idp.server.platform.multi_tenancy.organization;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.uuid.UuidConvertable;
 
 public class AssignedTenant implements UuidConvertable {
@@ -48,6 +49,14 @@ public class AssignedTenant implements UuidConvertable {
 
   public String type() {
     return type;
+  }
+
+  public TenantIdentifier tenantIdentifier() {
+    return new TenantIdentifier(id);
+  }
+
+  public boolean exists() {
+    return id != null && !id.isEmpty();
   }
 
   public Map<String, Object> toMap() {

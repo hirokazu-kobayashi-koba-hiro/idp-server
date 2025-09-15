@@ -60,7 +60,7 @@ public class TenantRegistrationRequest implements JsonReadable {
   }
 
   public DatabaseType databaseType() {
-    return DatabaseType.of(databaseType);
+    return DatabaseType.POSTGRESQL;
   }
 
   public Map<String, Object> attributes() {

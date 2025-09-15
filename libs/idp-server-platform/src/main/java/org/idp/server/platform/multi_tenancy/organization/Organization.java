@@ -17,6 +17,7 @@
 package org.idp.server.platform.multi_tenancy.organization;
 
 import java.util.HashMap;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class Organization {
   OrganizationIdentifier identifier;
@@ -80,5 +81,25 @@ public class Organization {
 
   public boolean exists() {
     return identifier != null && identifier.exists();
+  }
+
+  /**
+   * Finds the admin tenant for this organization.
+   *
+   * @return the admin tenant
+   * @throws AdminTenantNotFoundException if no admin tenant is found
+   */
+  public AssignedTenant findOrgTenant() {
+    for (AssignedTenant tenant : assignedTenants()) {
+      if ("ORGANIZER".equals(tenant.type())) {
+        return tenant;
+      }
+    }
+    throw new AdminTenantNotFoundException(
+        "No admin tenant (type=ORGANIZER) found for organization: " + identifier.value());
+  }
+
+  public boolean hasAssignedTenant(TenantIdentifier tenantIdentifier) {
+    return assignedTenants.contains(tenantIdentifier);
   }
 }

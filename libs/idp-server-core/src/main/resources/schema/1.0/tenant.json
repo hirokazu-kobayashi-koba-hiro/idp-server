@@ -4,8 +4,7 @@
     "id",
     "name",
     "domain",
-    "authorization_provider",
-    "database_type"
+    "authorization_provider"
   ],
   "properties": {
     "id": {
@@ -22,17 +21,6 @@
       "type": "string",
       "format": "uri",
       "minLength": 1
-    },
-    "database_type": {
-      "type": "string",
-      "enum": [
-        "POSTGRESQL",
-        "MYSQL",
-        "SPANNER",
-        "postgresql",
-        "mysql",
-        "spanner"
-      ]
     },
     "authorization_provider": {
       "type": "string",
