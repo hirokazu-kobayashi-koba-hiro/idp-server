@@ -51,7 +51,7 @@ public class MysqlExecutor implements SecurityEventSqlExecutor {
 
     if (queries.hasUserId()) {
       sql.append(" AND user_id = ?");
-      params.add(queries.userIdAsUuid());
+      params.add(queries.userId());
     }
 
     if (queries.hasExternalUserId()) {
@@ -95,7 +95,7 @@ public class MysqlExecutor implements SecurityEventSqlExecutor {
 
     if (queries.hasUserId()) {
       sql.append(" AND user_id = ?");
-      params.add(queries.userIdAsUuid());
+      params.add(queries.userId());
     }
 
     if (queries.hasExternalUserId()) {
@@ -127,8 +127,8 @@ public class MysqlExecutor implements SecurityEventSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate = selectSql + " WHERE tenant_id = ? AND id = ?";
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierUUID());
-    params.add(identifier.valueAsUuid());
+    params.add(tenant.identifier().value());
+    params.add(identifier.value());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }

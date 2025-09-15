@@ -58,6 +58,11 @@ public class SecurityEventQueryDataSource implements SecurityEventQueryRepositor
   @Override
   public SecurityEvent find(Tenant tenant, SecurityEventIdentifier identifier) {
     Map<String, String> result = executor.selectOne(tenant, identifier);
+
+    if (result == null || result.isEmpty()) {
+      return new SecurityEvent();
+    }
+
     return ModelConvertor.convert(result);
   }
 }
