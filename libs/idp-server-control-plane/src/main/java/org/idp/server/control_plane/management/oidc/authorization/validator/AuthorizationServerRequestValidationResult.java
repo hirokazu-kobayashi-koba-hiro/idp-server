@@ -25,7 +25,7 @@ import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 public class AuthorizationServerRequestValidationResult {
 
   boolean isValid;
-  JsonSchemaValidationResult clientResult;
+  JsonSchemaValidationResult validationResult;
   boolean dryRun;
 
   public static AuthorizationServerRequestValidationResult success(
@@ -39,9 +39,9 @@ public class AuthorizationServerRequestValidationResult {
   }
 
   private AuthorizationServerRequestValidationResult(
-      boolean isValid, JsonSchemaValidationResult clientResult, boolean dryRun) {
+      boolean isValid, JsonSchemaValidationResult validationResult, boolean dryRun) {
     this.isValid = isValid;
-    this.clientResult = clientResult;
+    this.validationResult = validationResult;
     this.dryRun = dryRun;
   }
 
@@ -54,11 +54,7 @@ public class AuthorizationServerRequestValidationResult {
     response.put("dry_run", dryRun);
     response.put("error", "invalid_request");
     response.put("error_description", "Invalid request");
-    Map<String, Object> details = new HashMap<>();
-    if (!clientResult.isValid()) {
-      details.put("client", clientResult.errors());
-    }
-    response.put("details", details);
+    response.put("error_messages", validationResult.errors());
     return new AuthorizationServerManagementResponse(
         AuthorizationServerManagementStatus.INVALID_REQUEST, response);
   }

@@ -34,22 +34,29 @@ import org.idp.server.control_plane.management.audit.OrgAuditLogManagementApi;
 import org.idp.server.control_plane.management.authentication.configuration.AuthenticationConfigurationManagementApi;
 import org.idp.server.control_plane.management.authentication.configuration.OrgAuthenticationConfigManagementApi;
 import org.idp.server.control_plane.management.authentication.interaction.AuthenticationInteractionManagementApi;
+import org.idp.server.control_plane.management.authentication.interaction.OrgAuthenticationInteractionManagementApi;
 import org.idp.server.control_plane.management.authentication.policy.AuthenticationPolicyConfigurationManagementApi;
 import org.idp.server.control_plane.management.authentication.policy.OrgAuthenticationPolicyConfigManagementApi;
 import org.idp.server.control_plane.management.authentication.transaction.AuthenticationTransactionManagementApi;
+import org.idp.server.control_plane.management.authentication.transaction.OrgAuthenticationTransactionManagementApi;
 import org.idp.server.control_plane.management.federation.FederationConfigurationManagementApi;
+import org.idp.server.control_plane.management.federation.OrgFederationConfigManagementApi;
 import org.idp.server.control_plane.management.identity.user.OrgUserManagementApi;
 import org.idp.server.control_plane.management.identity.user.UserManagementApi;
 import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigManagementApi;
 import org.idp.server.control_plane.management.identity.verification.OrgIdentityVerificationConfigManagementApi;
 import org.idp.server.control_plane.management.oidc.authorization.AuthorizationServerManagementApi;
+import org.idp.server.control_plane.management.oidc.authorization.OrgAuthorizationServerManagementApi;
 import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
 import org.idp.server.control_plane.management.oidc.client.OrgClientManagementApi;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
+import org.idp.server.control_plane.management.permission.OrgPermissionManagementApi;
 import org.idp.server.control_plane.management.permission.PermissionManagementApi;
+import org.idp.server.control_plane.management.role.OrgRoleManagementApi;
 import org.idp.server.control_plane.management.role.RoleManagementApi;
 import org.idp.server.control_plane.management.security.event.OrgSecurityEventManagementApi;
 import org.idp.server.control_plane.management.security.event.SecurityEventManagementApi;
+import org.idp.server.control_plane.management.security.hook.OrgSecurityEventHookConfigManagementApi;
 import org.idp.server.control_plane.management.security.hook.SecurityEventHookConfigurationManagementApi;
 import org.idp.server.control_plane.management.tenant.OrgTenantManagementApi;
 import org.idp.server.control_plane.management.tenant.TenantManagementApi;
@@ -147,9 +154,16 @@ import org.idp.server.usecases.application.system.*;
 import org.idp.server.usecases.application.tenant_invitator.TenantInvitationMetaDataEntryService;
 import org.idp.server.usecases.control_plane.organization_manager.OrgAuditLogManagementEntryService;
 import org.idp.server.usecases.control_plane.organization_manager.OrgAuthenticationConfigManagementEntryService;
+import org.idp.server.usecases.control_plane.organization_manager.OrgAuthenticationInteractionManagementEntryService;
 import org.idp.server.usecases.control_plane.organization_manager.OrgAuthenticationPolicyConfigManagementEntryService;
+import org.idp.server.usecases.control_plane.organization_manager.OrgAuthenticationTransactionManagementEntryService;
+import org.idp.server.usecases.control_plane.organization_manager.OrgAuthorizationServerManagementEntryService;
 import org.idp.server.usecases.control_plane.organization_manager.OrgClientManagementEntryService;
+import org.idp.server.usecases.control_plane.organization_manager.OrgFederationConfigManagementEntryService;
 import org.idp.server.usecases.control_plane.organization_manager.OrgIdentityVerificationConfigManagementEntryService;
+import org.idp.server.usecases.control_plane.organization_manager.OrgPermissionManagementEntryService;
+import org.idp.server.usecases.control_plane.organization_manager.OrgRoleManagementEntryService;
+import org.idp.server.usecases.control_plane.organization_manager.OrgSecurityEventHookConfigManagementEntryService;
 import org.idp.server.usecases.control_plane.organization_manager.OrgSecurityEventManagementEntryService;
 import org.idp.server.usecases.control_plane.organization_manager.OrgTenantManagementEntryService;
 import org.idp.server.usecases.control_plane.organization_manager.OrgUserManagementEntryService;
@@ -206,6 +220,13 @@ public class IdpServerApplication {
   OrgAuthenticationConfigManagementApi orgAuthenticationConfigManagementApi;
   OrgAuthenticationPolicyConfigManagementApi orgAuthenticationPolicyConfigManagementApi;
   OrgIdentityVerificationConfigManagementApi orgIdentityVerificationConfigManagementApi;
+  OrgFederationConfigManagementApi orgFederationConfigManagementApi;
+  OrgSecurityEventHookConfigManagementApi orgSecurityEventHookConfigManagementApi;
+  OrgAuthenticationInteractionManagementApi orgAuthenticationInteractionManagementApi;
+  OrgAuthenticationTransactionManagementApi orgAuthenticationTransactionManagementApi;
+  OrgAuthorizationServerManagementApi orgAuthorizationServerManagementApi;
+  OrgPermissionManagementApi orgPermissionManagementApi;
+  OrgRoleManagementApi orgRoleManagementApi;
   OrgSecurityEventManagementApi orgSecurityEventManagementApi;
   OrgAuditLogManagementApi orgAuditLogManagementApi;
   OrganizationUserAuthenticationApi organizationUserAuthenticationApi;
@@ -909,6 +930,82 @@ public class IdpServerApplication {
             OrgAuthenticationConfigManagementApi.class,
             databaseTypeProvider);
 
+    this.orgFederationConfigManagementApi =
+        OrganizationAwareEntryServiceProxy.createProxy(
+            new OrgFederationConfigManagementEntryService(
+                tenantQueryRepository,
+                organizationRepository,
+                federationConfigurationCommandRepository,
+                federationConfigurationQueryRepository,
+                auditLogWriters),
+            OrgFederationConfigManagementApi.class,
+            databaseTypeProvider);
+
+    this.orgSecurityEventHookConfigManagementApi =
+        OrganizationAwareEntryServiceProxy.createProxy(
+            new OrgSecurityEventHookConfigManagementEntryService(
+                tenantQueryRepository,
+                organizationRepository,
+                securityEventHookConfigurationCommandRepository,
+                securityEventHookConfigurationQueryRepository,
+                auditLogWriters),
+            OrgSecurityEventHookConfigManagementApi.class,
+            databaseTypeProvider);
+
+    this.orgAuthenticationInteractionManagementApi =
+        OrganizationAwareEntryServiceProxy.createProxy(
+            new OrgAuthenticationInteractionManagementEntryService(
+                tenantQueryRepository,
+                organizationRepository,
+                authenticationInteractionQueryRepository,
+                auditLogWriters),
+            OrgAuthenticationInteractionManagementApi.class,
+            databaseTypeProvider);
+
+    this.orgAuthenticationTransactionManagementApi =
+        OrganizationAwareEntryServiceProxy.createProxy(
+            new OrgAuthenticationTransactionManagementEntryService(
+                tenantQueryRepository,
+                organizationRepository,
+                authenticationTransactionQueryRepository,
+                auditLogWriters),
+            OrgAuthenticationTransactionManagementApi.class,
+            databaseTypeProvider);
+
+    this.orgAuthorizationServerManagementApi =
+        OrganizationAwareEntryServiceProxy.createProxy(
+            new OrgAuthorizationServerManagementEntryService(
+                tenantQueryRepository,
+                organizationRepository,
+                authorizationServerConfigurationQueryRepository,
+                authorizationServerConfigurationCommandRepository,
+                auditLogWriters),
+            OrgAuthorizationServerManagementApi.class,
+            databaseTypeProvider);
+
+    this.orgPermissionManagementApi =
+        OrganizationAwareEntryServiceProxy.createProxy(
+            new OrgPermissionManagementEntryService(
+                tenantQueryRepository,
+                organizationRepository,
+                permissionQueryRepository,
+                permissionCommandRepository,
+                auditLogWriters),
+            OrgPermissionManagementApi.class,
+            databaseTypeProvider);
+
+    this.orgRoleManagementApi =
+        OrganizationAwareEntryServiceProxy.createProxy(
+            new OrgRoleManagementEntryService(
+                tenantQueryRepository,
+                organizationRepository,
+                roleQueryRepository,
+                roleCommandRepository,
+                permissionQueryRepository,
+                auditLogWriters),
+            OrgRoleManagementApi.class,
+            databaseTypeProvider);
+
     this.orgAuthenticationPolicyConfigManagementApi =
         OrganizationAwareEntryServiceProxy.createProxy(
             new OrgAuthenticationPolicyConfigManagementEntryService(
@@ -1113,6 +1210,34 @@ public class IdpServerApplication {
 
   public OrgAuthenticationConfigManagementApi orgAuthenticationConfigManagementApi() {
     return orgAuthenticationConfigManagementApi;
+  }
+
+  public OrgFederationConfigManagementApi orgFederationConfigManagementApi() {
+    return orgFederationConfigManagementApi;
+  }
+
+  public OrgSecurityEventHookConfigManagementApi orgSecurityEventHookConfigManagementApi() {
+    return orgSecurityEventHookConfigManagementApi;
+  }
+
+  public OrgAuthenticationInteractionManagementApi orgAuthenticationInteractionManagementApi() {
+    return orgAuthenticationInteractionManagementApi;
+  }
+
+  public OrgAuthenticationTransactionManagementApi orgAuthenticationTransactionManagementApi() {
+    return orgAuthenticationTransactionManagementApi;
+  }
+
+  public OrgAuthorizationServerManagementApi orgAuthorizationServerManagementApi() {
+    return orgAuthorizationServerManagementApi;
+  }
+
+  public OrgPermissionManagementApi orgPermissionManagementApi() {
+    return orgPermissionManagementApi;
+  }
+
+  public OrgRoleManagementApi orgRoleManagementApi() {
+    return orgRoleManagementApi;
   }
 
   public OrgAuthenticationPolicyConfigManagementApi orgAuthenticationPolicyConfigManagementApi() {
