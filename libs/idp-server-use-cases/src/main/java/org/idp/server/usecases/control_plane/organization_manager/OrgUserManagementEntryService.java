@@ -22,14 +22,13 @@ import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.verifier.UserVerifier;
+import org.idp.server.control_plane.base.verifier.VerificationResult;
 import org.idp.server.control_plane.management.identity.user.*;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
-import org.idp.server.control_plane.management.identity.user.validator.UserRegistrationRequestValidator;
-import org.idp.server.control_plane.management.identity.user.validator.UserRequestValidationResult;
-import org.idp.server.control_plane.management.identity.user.validator.UserUpdateRequestValidator;
-import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationUpdateVerifier;
+import org.idp.server.control_plane.management.identity.user.validator.*;
+import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationRelatedDataVerifier;
 import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationVerificationResult;
 import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationVerifier;
 import org.idp.server.control_plane.organization.access.OrganizationAccessControlResult;
@@ -87,7 +86,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
   RoleQueryRepository roleQueryRepository;
   PasswordEncodeDelegation passwordEncodeDelegation;
   UserRegistrationVerifier verifier;
-  UserRegistrationUpdateVerifier updateVerifier;
+  UserRegistrationRelatedDataVerifier updateVerifier;
   UserLifecycleEventPublisher userLifecycleEventPublisher;
   AuditLogWriters auditLogWriters;
   OrganizationAccessVerifier organizationAccessVerifier;
@@ -121,12 +120,12 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     this.userCommandRepository = userCommandRepository;
     this.roleQueryRepository = roleQueryRepository;
     this.passwordEncodeDelegation = passwordEncodeDelegation;
-
-    UserVerifier userVerifier = new UserVerifier(userQueryRepository);
-    this.verifier = new UserRegistrationVerifier(userVerifier);
-    this.updateVerifier =
-        new UserRegistrationUpdateVerifier(
+    UserRegistrationRelatedDataVerifier userRegistrationRelatedDataVerifier =
+        new UserRegistrationRelatedDataVerifier(
             roleQueryRepository, tenantQueryRepository, organizationRepository);
+    UserVerifier userVerifier = new UserVerifier(userQueryRepository);
+    this.verifier = new UserRegistrationVerifier(userVerifier, userRegistrationRelatedDataVerifier);
+    this.updateVerifier = userRegistrationRelatedDataVerifier;
     this.userLifecycleEventPublisher = userLifecycleEventPublisher;
     this.auditLogWriters = auditLogWriters;
     this.organizationAccessVerifier = new OrganizationAccessVerifier();
@@ -152,6 +151,14 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
         organizationAccessVerifier.verifyAccess(
             organization, tenantIdentifier, operator, permissions);
 
+    UserRegistrationRequestValidator validator =
+        new UserRegistrationRequestValidator(request, dryRun);
+    UserRequestValidationResult validate = validator.validate();
+
+    if (!validate.isValid()) {
+      return validate.errorResponse();
+    }
+
     UserRegistrationContextCreator contextCreator =
         new UserRegistrationContextCreator(targetTenant, request, dryRun, passwordEncodeDelegation);
     UserRegistrationContext context = contextCreator.create();
@@ -171,14 +178,6 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
       response.put("error", "access_denied");
       response.put("error_description", accessResult.getReason());
       return new UserManagementResponse(UserManagementStatus.FORBIDDEN, response);
-    }
-
-    UserRegistrationRequestValidator validator =
-        new UserRegistrationRequestValidator(request, dryRun);
-    UserRequestValidationResult validate = validator.validate();
-
-    if (!validate.isValid()) {
-      return validate.errorResponse();
     }
 
     UserRegistrationVerificationResult verify = verifier.verify(context);
@@ -440,5 +439,335 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     //    userLifecycleEventPublisher.publish(event);
 
     return new UserManagementResponse(UserManagementStatus.NO_CONTENT, Map.of());
+  }
+
+  @Override
+  public UserManagementResponse patch(
+      OrganizationIdentifier organizationIdentifier,
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      UserIdentifier userIdentifier,
+      UserRegistrationRequest request,
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
+
+    AdminPermissions permissions = getRequiredPermissions("patch");
+
+    Organization organization = organizationRepository.get(organizationIdentifier);
+    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
+
+    // Organization-level access control
+    OrganizationAccessControlResult accessResult =
+        organizationAccessVerifier.verifyAccess(
+            organization, tenantIdentifier, operator, permissions);
+
+    User before = userQueryRepository.get(targetTenant, userIdentifier);
+
+    UserUpdateRequestValidator validator = new UserUpdateRequestValidator(request, dryRun);
+    UserRequestValidationResult validate = validator.validate();
+
+    if (!validate.isValid()) {
+      return validate.errorResponse();
+    }
+
+    UserPatchContextCreator contextCreator =
+        new UserPatchContextCreator(targetTenant, before, request, dryRun);
+    UserUpdateContext context = contextCreator.create();
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnUpdate(
+            "OrgUserManagementApi.patch",
+            targetTenant,
+            operator,
+            oAuthToken,
+            context,
+            requestAttributes);
+    auditLogWriters.write(targetTenant, auditLog);
+
+    if (!accessResult.isSuccess()) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put("error_description", accessResult.getReason());
+      return new UserManagementResponse(UserManagementStatus.FORBIDDEN, response);
+    }
+
+    if (!before.exists()) {
+      return new UserManagementResponse(UserManagementStatus.NOT_FOUND, Map.of());
+    }
+
+    if (dryRun) {
+      return context.toResponse();
+    }
+
+    userCommandRepository.update(targetTenant, context.after());
+
+    return context.toResponse();
+  }
+
+  @Override
+  public UserManagementResponse updatePassword(
+      OrganizationIdentifier organizationIdentifier,
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      UserIdentifier userIdentifier,
+      UserRegistrationRequest request,
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
+
+    AdminPermissions permissions = getRequiredPermissions("updatePassword");
+
+    Organization organization = organizationRepository.get(organizationIdentifier);
+    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
+
+    // Organization-level access control
+    OrganizationAccessControlResult accessResult =
+        organizationAccessVerifier.verifyAccess(
+            organization, tenantIdentifier, operator, permissions);
+
+    User before = userQueryRepository.get(targetTenant, userIdentifier);
+
+    UserPasswordUpdateRequestValidator validator =
+        new UserPasswordUpdateRequestValidator(request, dryRun);
+    UserRequestValidationResult validate = validator.validate();
+
+    if (!validate.isValid()) {
+      return validate.errorResponse();
+    }
+
+    UserPasswordUpdateContextCreator contextCreator =
+        new UserPasswordUpdateContextCreator(
+            targetTenant, before, request, dryRun, passwordEncodeDelegation);
+    UserUpdateContext context = contextCreator.create();
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnUpdate(
+            "OrgUserManagementApi.updatePassword",
+            targetTenant,
+            operator,
+            oAuthToken,
+            context,
+            requestAttributes);
+    auditLogWriters.write(targetTenant, auditLog);
+
+    if (!accessResult.isSuccess()) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put("error_description", accessResult.getReason());
+      return new UserManagementResponse(UserManagementStatus.FORBIDDEN, response);
+    }
+
+    if (!before.exists()) {
+      return new UserManagementResponse(UserManagementStatus.NOT_FOUND, Map.of());
+    }
+
+    if (dryRun) {
+      return context.toResponse();
+    }
+
+    userCommandRepository.updatePassword(targetTenant, context.after());
+    return context.toResponse();
+  }
+
+  @Override
+  public UserManagementResponse updateRoles(
+      OrganizationIdentifier organizationIdentifier,
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      UserIdentifier userIdentifier,
+      UserRegistrationRequest request,
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
+
+    AdminPermissions permissions = getRequiredPermissions("updateRoles");
+
+    Organization organization = organizationRepository.get(organizationIdentifier);
+    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
+
+    // Organization-level access control
+    OrganizationAccessControlResult accessResult =
+        organizationAccessVerifier.verifyAccess(
+            organization, tenantIdentifier, operator, permissions);
+
+    User before = userQueryRepository.get(targetTenant, userIdentifier);
+
+    UserRolesUpdateRequestValidator validator =
+        new UserRolesUpdateRequestValidator(request, dryRun);
+    UserRequestValidationResult validate = validator.validate();
+
+    if (!validate.isValid()) {
+      return validate.errorResponse();
+    }
+
+    UserRolesUpdateContextCreator contextCreator =
+        new UserRolesUpdateContextCreator(targetTenant, before, request, dryRun);
+    UserUpdateContext context = contextCreator.create();
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnUpdate(
+            "OrgUserManagementApi.updateRoles",
+            targetTenant,
+            operator,
+            oAuthToken,
+            context,
+            requestAttributes);
+    auditLogWriters.write(targetTenant, auditLog);
+
+    if (!accessResult.isSuccess()) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put("error_description", accessResult.getReason());
+      return new UserManagementResponse(UserManagementStatus.FORBIDDEN, response);
+    }
+
+    if (!before.exists()) {
+      return new UserManagementResponse(UserManagementStatus.NOT_FOUND, Map.of());
+    }
+
+    // Validate roles
+    VerificationResult roleValidation = updateVerifier.verifyRoles(targetTenant, request);
+
+    if (!roleValidation.isValid()) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "invalid_request");
+      response.put("error_description", "roles verification is failed");
+      response.put("error_messages", roleValidation.errors());
+      return new UserManagementResponse(UserManagementStatus.INVALID_REQUEST, response);
+    }
+
+    if (dryRun) {
+      return context.toResponse();
+    }
+
+    userCommandRepository.update(targetTenant, context.after());
+    return context.toResponse();
+  }
+
+  @Override
+  public UserManagementResponse updateTenantAssignments(
+      OrganizationIdentifier organizationIdentifier,
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      UserIdentifier userIdentifier,
+      UserRegistrationRequest request,
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
+
+    AdminPermissions permissions = getRequiredPermissions("updateTenantAssignments");
+
+    Organization organization = organizationRepository.get(organizationIdentifier);
+    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
+
+    UserTenantAssignmentsUpdateRequestValidator validator =
+        new UserTenantAssignmentsUpdateRequestValidator(request, dryRun);
+    UserRequestValidationResult validate = validator.validate();
+    if (!validate.isValid()) {
+      return validate.errorResponse();
+    }
+
+    // Organization-level access control
+    OrganizationAccessControlResult accessResult =
+        organizationAccessVerifier.verifyAccess(
+            organization, tenantIdentifier, operator, permissions);
+
+    User before = userQueryRepository.get(targetTenant, userIdentifier);
+
+    UserTenantAssignmentsUpdateContextCreator contextCreator =
+        new UserTenantAssignmentsUpdateContextCreator(targetTenant, before, request, dryRun);
+    UserUpdateContext context = contextCreator.create();
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnUpdate(
+            "OrgUserManagementApi.updateTenantAssignments",
+            targetTenant,
+            operator,
+            oAuthToken,
+            context,
+            requestAttributes);
+    auditLogWriters.write(targetTenant, auditLog);
+
+    if (!accessResult.isSuccess()) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put("error_description", accessResult.getReason());
+      return new UserManagementResponse(UserManagementStatus.FORBIDDEN, response);
+    }
+
+    if (!before.exists()) {
+      return new UserManagementResponse(UserManagementStatus.NOT_FOUND, Map.of());
+    }
+
+    if (dryRun) {
+      return context.toResponse();
+    }
+
+    userCommandRepository.update(targetTenant, context.after());
+    return context.toResponse();
+  }
+
+  @Override
+  public UserManagementResponse updateOrganizationAssignments(
+      OrganizationIdentifier organizationIdentifier,
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      UserIdentifier userIdentifier,
+      UserRegistrationRequest request,
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
+
+    AdminPermissions permissions = getRequiredPermissions("updateOrganizationAssignments");
+
+    Organization organization = organizationRepository.get(organizationIdentifier);
+    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
+
+    UserOrganizationAssignmentsUpdateRequestValidator validator =
+        new UserOrganizationAssignmentsUpdateRequestValidator(request, dryRun);
+    UserRequestValidationResult validate = validator.validate();
+    if (!validate.isValid()) {
+      return validate.errorResponse();
+    }
+
+    // Organization-level access control
+    OrganizationAccessControlResult accessResult =
+        organizationAccessVerifier.verifyAccess(
+            organization, tenantIdentifier, operator, permissions);
+
+    User before = userQueryRepository.get(targetTenant, userIdentifier);
+
+    UserOrganizationAssignmentsUpdateContextCreator contextCreator =
+        new UserOrganizationAssignmentsUpdateContextCreator(targetTenant, before, request, dryRun);
+    UserUpdateContext context = contextCreator.create();
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnUpdate(
+            "OrgUserManagementApi.updateOrganizationAssignments",
+            targetTenant,
+            operator,
+            oAuthToken,
+            context,
+            requestAttributes);
+    auditLogWriters.write(targetTenant, auditLog);
+
+    if (!accessResult.isSuccess()) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put("error_description", accessResult.getReason());
+      return new UserManagementResponse(UserManagementStatus.FORBIDDEN, response);
+    }
+
+    if (!before.exists()) {
+      return new UserManagementResponse(UserManagementStatus.NOT_FOUND, Map.of());
+    }
+
+    if (dryRun) {
+      return context.toResponse();
+    }
+
+    userCommandRepository.update(targetTenant, context.after());
+    return context.toResponse();
   }
 }

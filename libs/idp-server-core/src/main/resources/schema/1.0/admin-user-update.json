@@ -61,13 +61,7 @@
       "type": "boolean"
     },
     "gender": {
-      "type": "string",
-      "enum": [
-        "male",
-        "female",
-        "other",
-        "unknown"
-      ]
+      "type": "string"
     },
     "birthdate": {
       "type": "string",
@@ -148,17 +142,55 @@
             "type": "string",
             "maxLength": 512
           },
-          "preferred_for_notification": {
-            "type": "boolean"
+          "priority": {
+            "type": "integer",
+            "minimum": 1
           }
         }
       }
     },
     "custom_properties": {
-      "type": "object"
+      "type": "object",
+      "additionalProperties": true
     },
-    "role": {
-      "type": "string"
+    "roles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["role_id", "role_name"],
+        "properties": {
+          "role_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role_name": {
+            "type": "string",
+            "maxLength": 255
+          }
+        }
+      }
+    },
+    "assigned_tenants": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      }
+    },
+    "current_tenant": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "assigned_organizations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      }
+    },
+    "current_organization": {
+      "type": "string",
+      "format": "uuid"
     }
   }
 }

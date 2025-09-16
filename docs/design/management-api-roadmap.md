@@ -20,23 +20,23 @@ idp-serverの組織レベルの管理系API開発ロードマップ。統一さ�
 
 | API | 優先度 | ステータス | 必要権限 | APIパス | 説明 | API仕様 | JsonSchema | データ整合性 | E2Eテスト | Issue | PR |
 |-----|-------|----------|---------|---------|------|--------|-----------|------------|-----------|-------|-----|
-| **Organization Tenant Management** | 🔴 High | ✅ 実装済み | `TENANT_*` | `/v1/management/organizations/{organizationId}/tenants` | 組織内テナント管理 | 🚧 | 🚧 | 🚧 | ✅ | #409 | #434 |
-| **Organization Client Management** | 🔴 High | ✅ 実装済み | `CLIENT_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/clients` | 組織内クライアント管理 | 🚧 | 🚧 | 🚧 | 🚧 | #409 | #434 |
-| **Organization User Management** | 🔴 High | ✅ 実装済み | `USER_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/users` | 組織内ユーザー管理・招待・停止 | 🚧 | 🚧 | 🚧 | 🚧 | - | #446 |
+| **Organization Tenant Management** | 🔴 High | ✅ 実装済み | `TENANT_*` | `/v1/management/organizations/{organizationId}/tenants` | 組織内テナント管理 | ✅ | ✅ | 🚧 | ✅ | #409 | #434 |
+| **Organization Client Management** | 🔴 High | ✅ 実装済み | `CLIENT_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/clients` | 組織内クライアント管理 | ✅ | ✅ | 🚧 | ✅ | #409 | #434 |
+| **Organization User Management** | 🔴 High | ✅ 実装済み | `USER_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/users` | 組織内ユーザー管理・招待・停止 | ✅ | ✅ | ✅ | ✅ | - | #446 |
 
 ### 📊 **Phase 2: Security & Monitoring APIs**
 
 | API | 優先度 | ステータス | 必要権限 | APIパス | 説明 | API仕様 | JsonSchema | データ整合性 | E2Eテスト | Issue | PR |
 |-----|-------|----------|---------|---------|------|--------|-----------|------------|-----------|-------|-----|
-| **Organization Security Event Management** | 🔴 High | ✅ 実装済み | `SECURITY_EVENT_READ` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/security-events` | 組織内セキュリティイベント閲覧 | 🚧 | 🚧 | 🚧 | 🚧 | #442 | - |
-| **Organization Audit Log Management** | 🔴 High | ✅ 実装済み | `AUDIT_LOG_READ` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/audit-logs` | 組織内監査ログ管理 | 🚧 | 🚧 | 🚧 | 🚧 | - | - |
+| **Organization Security Event Management** | 🔴 High | ✅ 実装済み | `SECURITY_EVENT_READ` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/security-events` | 組織内セキュリティイベント閲覧 | ✅ | ✅ | ✅ | ✅ | #442 | - |
+| **Organization Audit Log Management** | 🔴 High | ✅ 実装済み | `AUDIT_LOG_READ` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/audit-logs` | 組織内監査ログ管理 | ✅ | ✅ | ✅ | ✅ | - | - |
 
 ### 📊 **Phase 3: Configuration APIs**
 
 | API | 優先度 | ステータス | 必要権限 | APIパス | 説明 | API仕様 | JsonSchema | データ整合性 | E2Eテスト | Issue | PR |
 |-----|-------|----------|---------|---------|------|------|---------|----------|-----------|-------|-----|
 | **Organization Authentication Config** | 🟡 Medium | ✅ 実装済み | `AUTHENTICATION_CONFIG_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/authentication-configs` | 組織内認証設定管理 | 🚧 | 🚧 | 🚧 | 🚧 | - | - |
-| **Organization Authentication Policy Config** | 🟡 Medium | ✅ 実装済み | `AUTHENTICATION_POLICY_CONFIG_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/authentication-policy-configs` | 組織内認証ポリシー設定 | 🚧 | 🚧 | 🚧 | 🚧 | - | - |
+| **Organization Authentication Policy Config** | 🟡 Medium | ✅ 実装済み | `AUTHENTICATION_POLICY_CONFIG_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/authentication-policy-configs` | 組織内認証ポリシー設定 | ✅ | ✅ | 🚧 | ✅ | - | - |
 | **Organization Identity Verification Config** | 🟡 Medium | ✅ 実装済み | `IDENTITY_VERIFICATION_CONFIG_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/identity-verification-configs` | 組織内身元確認設定 | 🚧 | 🚧 | 🚧 | 🚧 | - | - |
 | **Organization Federation Config** | 🟡 Medium | ✅ 実装済み | `FEDERATION_CONFIG_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/federation-configs` | 組織内フェデレーション設定 | 🚧 | 🚧 | 🚧 | ✅ | - | #447 |
 | **Organization Security Event Hook Config** | 🟡 Medium | ✅ 実装済み | `SECURITY_EVENT_HOOK_CONFIG_*` | `/v1/management/organizations/{organizationId}/tenants/{tenantId}/security-event-hook-configs` | 組織内セキュリティイベントフック設定 | 🚧 | 🚧 | 🚧 | ✅ | - | - |
@@ -301,6 +301,8 @@ Phase 1 → Phase 2 → Phase 3 → Phase 4
 | 2025-01-15 | 初版作成、Phase 1-4定義 | Claude Code |
 | 2025-09-16 | 品質項目完成定義追加 | Claude Code |
 | 2025-01-16 | Organization Role/Permission/Authorization Server Management API実装完了 | Claude Code |
+| 2025-09-18 | Phase 2完了: Organization Security Event & Audit Log Management API品質完成 | Claude Code |
+| 2025-09-18 | Organization Authentication Policy Config Management API品質完成: OpenAPI仕様・E2Eテスト完備 | Claude Code |
 
 ### **品質項目完成定義**
 

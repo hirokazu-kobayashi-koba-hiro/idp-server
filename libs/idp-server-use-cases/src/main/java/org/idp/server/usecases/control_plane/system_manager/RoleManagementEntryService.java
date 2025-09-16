@@ -82,9 +82,10 @@ public class RoleManagementEntryService implements RoleManagementApi {
     RoleRequestValidator validator = new RoleRequestValidator(request, dryRun);
     RoleRequestValidationResult validate = validator.validate();
 
+    Roles roles = roleQueryRepository.findAll(tenant);
     Permissions permissionList = permissionQueryRepository.findAll(tenant);
     RoleRegistrationContextCreator registrationContextCreator =
-        new RoleRegistrationContextCreator(tenant, request, permissionList, dryRun);
+        new RoleRegistrationContextCreator(tenant, request, roles, permissionList, dryRun);
     RoleRegistrationContext context = registrationContextCreator.create();
 
     RoleRegistrationVerifier verifier = new RoleRegistrationVerifier();
@@ -233,10 +234,18 @@ public class RoleManagementEntryService implements RoleManagementApi {
     RoleRequestValidator validator = new RoleRequestValidator(request, dryRun);
     RoleRequestValidationResult validate = validator.validate();
 
+    if (!validate.isValid()) {
+      return validate.errorResponse();
+    }
+
+    Roles roles = roleQueryRepository.findAll(tenant);
     Permissions permissionList = permissionQueryRepository.findAll(tenant);
-    RoleUpdateContextCreator updateContextCreator =
-        new RoleUpdateContextCreator(tenant, before, request, permissionList, dryRun);
-    RoleUpdateContext context = updateContextCreator.create();
+    RoleUpdateContextCreator contextCreator =
+        new RoleUpdateContextCreator(tenant, before, request, roles, permissionList, dryRun);
+    RoleUpdateContext context = contextCreator.create();
+
+    RoleRegistrationVerifier verifier = new RoleRegistrationVerifier();
+    RoleRegistrationVerificationResult verificationResult = verifier.verify(context);
 
     AuditLog auditLog =
         AuditLogCreator.createOnUpdate(
@@ -259,8 +268,8 @@ public class RoleManagementEntryService implements RoleManagementApi {
       return new RoleManagementResponse(RoleManagementStatus.NOT_FOUND, Map.of());
     }
 
-    if (!validate.isValid()) {
-      return validate.errorResponse();
+    if (!verificationResult.isValid()) {
+      return verificationResult.errorResponse();
     }
 
     if (context.isDryRun()) {

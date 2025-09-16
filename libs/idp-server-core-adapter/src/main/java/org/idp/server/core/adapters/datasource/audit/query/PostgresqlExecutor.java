@@ -60,7 +60,7 @@ public class PostgresqlExecutor implements AuditLogSqlExecutor {
     }
 
     if (queries.hasTargetAction()) {
-      sql.append(" AND target_action = ?");
+      sql.append(" AND target_resource_action = ?");
       params.add(queries.targetAction());
     }
 
@@ -124,7 +124,7 @@ public class PostgresqlExecutor implements AuditLogSqlExecutor {
     }
 
     if (queries.hasTargetAction()) {
-      sql.append(" AND target_action = ?");
+      sql.append(" AND target_resource_action = ?");
       params.add(queries.targetAction());
     }
 

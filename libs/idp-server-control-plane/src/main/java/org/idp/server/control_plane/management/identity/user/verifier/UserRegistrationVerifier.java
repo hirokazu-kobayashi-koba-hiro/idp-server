@@ -23,9 +23,13 @@ import org.idp.server.control_plane.management.identity.user.UserRegistrationCon
 public class UserRegistrationVerifier {
 
   UserVerifier userVerifier;
+  UserRegistrationRelatedDataVerifier userRegistrationRelatedDataVerifier;
 
-  public UserRegistrationVerifier(UserVerifier userVerifier) {
+  public UserRegistrationVerifier(
+      UserVerifier userVerifier,
+      UserRegistrationRelatedDataVerifier userRegistrationRelatedDataVerifier) {
     this.userVerifier = userVerifier;
+    this.userRegistrationRelatedDataVerifier = userRegistrationRelatedDataVerifier;
   }
 
   public UserRegistrationVerificationResult verify(UserRegistrationContext context) {
@@ -33,6 +37,24 @@ public class UserRegistrationVerifier {
     VerificationResult verificationResult = userVerifier.verify(context.tenant(), context.user());
 
     if (!verificationResult.isValid()) {
+      return UserRegistrationVerificationResult.error(verificationResult, context.isDryRun());
+    }
+    VerificationResult rolesResult =
+        userRegistrationRelatedDataVerifier.verifyRoles(context.tenant(), context.request());
+    if (!rolesResult.isValid()) {
+      return UserRegistrationVerificationResult.error(verificationResult, context.isDryRun());
+    }
+
+    VerificationResult tenantAssignmentsResult =
+        userRegistrationRelatedDataVerifier.verifyTenantAssignments(context.request());
+    if (!tenantAssignmentsResult.isValid()) {
+      return UserRegistrationVerificationResult.error(verificationResult, context.isDryRun());
+    }
+
+    VerificationResult organizationAssignmentsResult =
+        userRegistrationRelatedDataVerifier.verifyOrganizationAssignments(
+            context.tenant(), context.request());
+    if (!organizationAssignmentsResult.isValid()) {
       return UserRegistrationVerificationResult.error(verificationResult, context.isDryRun());
     }
 

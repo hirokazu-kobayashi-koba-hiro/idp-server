@@ -54,13 +54,7 @@ public class UserRequestValidationResult {
     response.put("dry_run", dryRun);
     response.put("error", "invalid_request");
     response.put("error_description", "user registration validation is failed");
-    Map<String, Object> details = new HashMap<>();
-    if (!userResult.isValid()) {
-      {
-        details.put("user", userResult.errors());
-      }
-    }
-    response.put("details", details);
+    response.put("error_messages", userResult.errors());
     return new UserManagementResponse(UserManagementStatus.INVALID_REQUEST, response);
   }
 }

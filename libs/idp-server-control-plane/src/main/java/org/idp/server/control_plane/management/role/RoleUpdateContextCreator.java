@@ -19,6 +19,7 @@ package org.idp.server.control_plane.management.role;
 import org.idp.server.control_plane.management.role.io.RoleRequest;
 import org.idp.server.core.openid.identity.permission.Permissions;
 import org.idp.server.core.openid.identity.role.Role;
+import org.idp.server.core.openid.identity.role.Roles;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -27,16 +28,23 @@ public class RoleUpdateContextCreator {
   Tenant tenant;
   Role before;
   RoleRequest request;
+  Roles roles;
   Permissions permissions;
   boolean dryRun;
   JsonConverter jsonConverter;
 
   public RoleUpdateContextCreator(
-      Tenant tenant, Role before, RoleRequest request, Permissions permissions, boolean dryRun) {
+      Tenant tenant,
+      Role before,
+      RoleRequest request,
+      Roles roles,
+      Permissions permissions,
+      boolean dryRun) {
     this.tenant = tenant;
     this.before = before;
     this.request = request;
     this.dryRun = dryRun;
+    this.roles = roles;
     this.permissions = permissions;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
@@ -46,10 +54,10 @@ public class RoleUpdateContextCreator {
     String name = request.name();
     String description = request.description();
 
-    Permissions filtered = this.permissions.filter(request.permissions());
+    Permissions filtered = this.permissions.filterById(request.permissions());
 
     Role role = new Role(id, name, description, filtered.toList());
 
-    return new RoleUpdateContext(tenant, before, request, role, permissions, dryRun);
+    return new RoleUpdateContext(tenant, before, request, role, roles, permissions, dryRun);
   }
 }

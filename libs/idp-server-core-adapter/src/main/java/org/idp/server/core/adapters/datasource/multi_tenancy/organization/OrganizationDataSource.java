@@ -57,8 +57,6 @@ public class OrganizationDataSource implements OrganizationRepository {
   @Override
   public List<Organization> findList(OrganizationQueries queries) {
     List<Map<String, String>> results = executor.selectList(queries);
-    return results.stream()
-        .map(ModelConvertor::convert)
-        .collect(java.util.stream.Collectors.toList());
+    return results.stream().map(ModelConvertor::convert).toList();
   }
 }

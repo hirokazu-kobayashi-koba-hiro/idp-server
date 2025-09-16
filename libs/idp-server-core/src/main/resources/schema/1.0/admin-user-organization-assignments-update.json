@@ -1,5 +1,8 @@
 {
   "type": "object",
+  "required": [
+    "assigned_organizations"
+  ],
   "properties": {
     "current_organization_id": {
       "type": "string",
@@ -13,6 +16,5 @@
         "format": "uuid"
       }
     }
-  },
-  "additionalProperties": false
+  }
 }

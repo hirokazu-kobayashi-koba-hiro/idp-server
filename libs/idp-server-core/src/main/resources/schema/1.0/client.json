@@ -266,6 +266,64 @@
     "software_version": {
       "type": "string",
       "description": ""
+    },
+    "extension": {
+      "type": "object",
+      "description": "OPTIONAL. Extension properties for client configuration",
+      "properties": {
+        "access_token_duration": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "OPTIONAL. Duration of access tokens in seconds"
+        },
+        "refresh_token_duration": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "OPTIONAL. Duration of refresh tokens in seconds"
+        },
+        "supported_jar": {
+          "type": "boolean",
+          "default": false,
+          "description": "OPTIONAL. JWT Authorization Request (JAR) support flag"
+        },
+        "available_federations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Federation identifier"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["oauth2", "saml2", "oidc"],
+                "description": "Federation type"
+              },
+              "sso_provider": {
+                "type": "string",
+                "description": "SSO provider name"
+              },
+              "auto_selected": {
+                "type": "boolean",
+                "default": false,
+                "description": "Auto-selection flag for federation"
+              }
+            },
+            "required": ["id", "type"]
+          },
+          "description": "OPTIONAL. List of available federation configurations"
+        },
+        "default_ciba_authentication_interaction_type": {
+          "type": "string",
+          "enum": [
+            "authentication-device-notification-no-action",
+            "authentication-device-notification"
+          ],
+          "default": "authentication-device-notification",
+          "description": "OPTIONAL. Default CIBA authentication interaction type"
+        }
+      }
     }
   }
 }

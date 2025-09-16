@@ -123,15 +123,6 @@ public interface UserManagementApi {
       RequestAttributes requestAttributes,
       boolean dryRun);
 
-  UserManagementResponse updatePermissions(
-      TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      UserIdentifier userIdentifier,
-      UserRegistrationRequest request,
-      RequestAttributes requestAttributes,
-      boolean dryRun);
-
   UserManagementResponse updateTenantAssignments(
       TenantIdentifier tenantIdentifier,
       User operator,

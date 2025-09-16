@@ -17,7 +17,6 @@
 package org.idp.server.adapters.springboot.control_plane.restapi.organization;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
@@ -69,9 +68,8 @@ public class OrganizationSecurityEventManagementV1Api implements ParameterTransf
    * @param organizationOperatorPrincipal the authenticated organization operator
    * @param organizationId the organization identifier from path
    * @param tenantId the tenant identifier from path
-   * @param limitValue the maximum number of results to return
-   * @param offsetValue the offset for pagination
-   * @param eventType optional event type filter
+   * @param queryParams all query parameters including limit, offset, event_type, from, to,
+   *     client_id, user_id, external_user_id, details.*
    * @param httpServletRequest the HTTP request
    * @return the security event list response
    */
@@ -80,21 +78,13 @@ public class OrganizationSecurityEventManagementV1Api implements ParameterTransf
       @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
       @PathVariable String organizationId,
       @PathVariable String tenantId,
-      @RequestParam(value = "limit", defaultValue = "20") String limitValue,
-      @RequestParam(value = "offset", defaultValue = "0") String offsetValue,
-      @RequestParam(value = "event_type", required = false) String eventType,
+      @RequestParam Map<String, String> queryParams,
       HttpServletRequest httpServletRequest) {
 
     OrganizationIdentifier organizationIdentifier =
         organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    Map<String, String> queryParams = new HashMap<>();
-    queryParams.put("limit", limitValue);
-    queryParams.put("offset", offsetValue);
-    if (eventType != null) {
-      queryParams.put("event_type", eventType);
-    }
     SecurityEventQueries queries = new SecurityEventQueries(queryParams);
 
     SecurityEventManagementResponse response =
