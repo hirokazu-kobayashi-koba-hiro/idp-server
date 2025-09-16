@@ -38,7 +38,7 @@ public class ClientConfiguration implements JsonReadable, Configurable {
   String clientUri = "";
   String logoUri = "";
   String scope;
-  String contacts = "";
+  List<String> contacts = new ArrayList<>();
   String tosUri = "";
   String policyUri = "";
   String jwksUri;
@@ -141,7 +141,7 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     return scope;
   }
 
-  public String contacts() {
+  public List<String> contacts() {
     return contacts;
   }
 

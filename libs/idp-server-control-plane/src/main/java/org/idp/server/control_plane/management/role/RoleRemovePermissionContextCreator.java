@@ -46,7 +46,7 @@ public class RoleRemovePermissionContextCreator {
     String name = request.name();
     String description = request.description();
 
-    Permissions removedPermission = this.allPermissions.filter(request.permissions());
+    Permissions removedPermission = this.allPermissions.filterByName(request.permissions());
 
     Role role = new Role(id, name, description, removedPermission.toList());
 

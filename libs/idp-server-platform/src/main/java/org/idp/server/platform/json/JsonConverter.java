@@ -21,6 +21,9 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.cfg.CoercionAction;
+import com.fasterxml.jackson.databind.cfg.CoercionInputShape;
+import com.fasterxml.jackson.databind.type.LogicalType;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import java.time.LocalDateTime;
@@ -47,9 +50,19 @@ public class JsonConverter {
   }
 
   private static JsonConverter create() {
+    JavaTimeModule javaTimeModule = new JavaTimeModule();
+    javaTimeModule.addDeserializer(
+        LocalDateTime.class,
+        new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")));
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE);
     objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
+    // TODO compatibility - client configuration contacts is string array, but it was string at
+    // 2025-09-17.
+    objectMapper
+        .coercionConfigFor(LogicalType.Collection)
+        .setCoercion(CoercionInputShape.String, CoercionAction.AsNull)
+        .setCoercion(CoercionInputShape.EmptyString, CoercionAction.AsNull);
     return new JsonConverter(objectMapper);
   }
 
@@ -63,6 +76,12 @@ public class JsonConverter {
     objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
     objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
     objectMapper.registerModule(javaTimeModule);
+    // TODO compatibility - client configuration contacts is string array, but it was string at
+    // 2025-09-17.
+    objectMapper
+        .coercionConfigFor(LogicalType.Collection)
+        .setCoercion(CoercionInputShape.String, CoercionAction.AsNull)
+        .setCoercion(CoercionInputShape.EmptyString, CoercionAction.AsNull);
     return new JsonConverter(objectMapper);
   }
 

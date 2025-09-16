@@ -72,6 +72,8 @@ eventPublisher.publish(
   "triggers": [
     "user_signup"
   ],
+  "enabled": true,
+  "store_execution_payload": true,  // 🆕 実行結果ペイロード保存設定
   "details": {
     "base": {
       "description": "slack共通通知",
@@ -134,184 +136,210 @@ CREATE TABLE security_event
 ```sql
 CREATE TABLE security_event_hook_results
 (
-    id                     UUID                    NOT NULL,
-    tenant_id              UUID                    NOT NULL,
-    security_event_id      UUID                    NOT NULL,
-    security_event_type    VARCHAR(255)            NOT NULL,
-    security_event_hook    VARCHAR(255)            NOT NULL,
-    security_event_payload JSONB                   NOT NULL,
-    status                 VARCHAR(255)            NOT NULL,
-    created_at             TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at             TIMESTAMP DEFAULT now() NOT NULL,
+    id                                      UUID                    NOT NULL,
+    tenant_id                               UUID                    NOT NULL,
+    security_event_id                       UUID                    NOT NULL,
+    security_event_type                     VARCHAR(255)            NOT NULL,
+    security_event_hook                     VARCHAR(255)            NOT NULL,
+    security_event_payload                  JSONB                   NOT NULL,
+    security_event_hook_execution_payload   JSONB,                              -- 🆕 実行結果ペイロード
+    status                                  VARCHAR(255)            NOT NULL,
+    created_at                              TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at                              TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (id)
 );
 ```
 
+**新機能**: `security_event_hook_execution_payload` カラムにより、フック実行結果を保存可能となり、リトライ・デバッグ・監査を強化できます。
+
+### 実行結果ペイロード保存の制御
+
+各フック設定で `store_execution_payload` オプションを使用して、実行結果の保存を制御できます：
+
+```json
+{
+  "type": "SLACK",
+  "store_execution_payload": true,   // デフォルト: true
+  "triggers": ["user_login_success"],
+  "details": { ... }
+}
+```
+
+**設定値**:
+- `true`: 実行結果（レスポンス、エラー詳細等）をDBに保存
+- `false`: 実行結果は保存せず、ステータスのみ記録
+
+**用途**:
+- **デバッグ**: 失敗したフックの詳細な原因調査
+- **再送**: 失敗時のペイロードを使用した手動再送
+- **監査**: 外部システムとの通信履歴の完全な記録
+- **プライバシー**: 機密情報を含む場合の保存制御
+
 ---
 
-## 📋 Available Security Event Types
+## 📋 利用可能なセキュリティイベント一覧
 
-Below is a comprehensive list of all security events available in `idp-server`. These events can be used as triggers for security event hooks.
+以下は `idp-server` で発生する全セキュリティイベントの包括的な一覧です。これらのイベントをトリガーとしてセキュリティフックを設定できます。
 
-### 👤 User Authentication
+### 👤 ユーザー認証関連
 
-#### Password Authentication  
-- `password_success` - Password authentication successful
-- `password_failure` - Password authentication failed
-- `password_reset` - Password reset
-- `password_change` - Password changed
+#### パスワード認証
+- `password_success` - パスワード認証成功
+- `password_failure` - パスワード認証失敗
+- `password_reset` - パスワードリセット
+- `password_change` - パスワード変更
 
-#### Email Authentication
-- `email_verification_request_success` - Email verification request successful
-- `email_verification_request_failure` - Email verification request failed
-- `email_verification_success` - Email verification successful
-- `email_verification_failure` - Email verification failed
+#### メール認証
+- `email_verification_request_success` - メール認証リクエスト成功
+- `email_verification_request_failure` - メール認証リクエスト失敗
+- `email_verification_success` - メール認証成功
+- `email_verification_failure` - メール認証失敗
 
-#### SMS Authentication
-- `sms_verification_challenge_success` - SMS verification challenge successful
-- `sms_verification_challenge_failure` - SMS verification challenge failed
-- `sms_verification_success` - SMS verification successful
-- `sms_verification_failure` - SMS verification failed
+#### SMS認証
+- `sms_verification_challenge_success` - SMS認証チャレンジ成功
+- `sms_verification_challenge_failure` - SMS認証チャレンジ失敗
+- `sms_verification_success` - SMS認証成功
+- `sms_verification_failure` - SMS認証失敗
 
-#### FIDO UAF Authentication
-- `fido_uaf_registration_challenge_success` - FIDO UAF registration challenge successful
-- `fido_uaf_registration_challenge_failure` - FIDO UAF registration challenge failed
-- `fido_uaf_registration_success` - FIDO UAF registration successful
-- `fido_uaf_registration_failure` - FIDO UAF registration failed
-- `fido_uaf_authentication_challenge_success` - FIDO UAF authentication challenge successful
-- `fido_uaf_authentication_challenge_failure` - FIDO UAF authentication challenge failed
-- `fido_uaf_authentication_success` - FIDO UAF authentication successful
-- `fido_uaf_authentication_failure` - FIDO UAF authentication failed
-- `fido_uaf_deregistration_success` - FIDO UAF deregistration successful
-- `fido_uaf_deregistration_failure` - FIDO UAF deregistration failed
-- `fido_uaf_cancel_success` - FIDO UAF cancellation successful
-- `fido_uaf_cancel_failure` - FIDO UAF cancellation failed
+#### FIDO UAF認証
+- `fido_uaf_registration_challenge_success` - FIDO UAF登録チャレンジ成功
+- `fido_uaf_registration_challenge_failure` - FIDO UAF登録チャレンジ失敗
+- `fido_uaf_registration_success` - FIDO UAF登録成功
+- `fido_uaf_registration_failure` - FIDO UAF登録失敗
+- `fido_uaf_authentication_challenge_success` - FIDO UAF認証チャレンジ成功
+- `fido_uaf_authentication_challenge_failure` - FIDO UAF認証チャレンジ失敗
+- `fido_uaf_authentication_success` - FIDO UAF認証成功
+- `fido_uaf_authentication_failure` - FIDO UAF認証失敗
+- `fido_uaf_deregistration_success` - FIDO UAF登録解除成功
+- `fido_uaf_deregistration_failure` - FIDO UAF登録解除失敗
+- `fido_uaf_cancel_success` - FIDO UAFキャンセル成功
+- `fido_uaf_cancel_failure` - FIDO UAFキャンセル失敗
 
-#### WebAuthn Authentication
-- `webauthn_registration_challenge_success` - WebAuthn registration challenge successful
-- `webauthn_registration_challenge_failure` - WebAuthn registration challenge failed
-- `webauthn_registration_success` - WebAuthn registration successful
-- `webauthn_registration_failure` - WebAuthn registration failed
-- `webauthn_authentication_challenge_success` - WebAuthn authentication challenge successful
-- `webauthn_authentication_challenge_failure` - WebAuthn authentication challenge failed
-- `webauthn_authentication_success` - WebAuthn authentication successful
-- `webauthn_authentication_failure` - WebAuthn authentication failed
+#### WebAuthn認証
+- `webauthn_registration_challenge_success` - WebAuthn登録チャレンジ成功
+- `webauthn_registration_challenge_failure` - WebAuthn登録チャレンジ失敗
+- `webauthn_registration_success` - WebAuthn登録成功
+- `webauthn_registration_failure` - WebAuthn登録失敗
+- `webauthn_authentication_challenge_success` - WebAuthn認証チャレンジ成功
+- `webauthn_authentication_challenge_failure` - WebAuthn認証チャレンジ失敗
+- `webauthn_authentication_success` - WebAuthn認証成功
+- `webauthn_authentication_failure` - WebAuthn認証失敗
 
-#### External Authentication & Federation
-- `external_token_authentication_success` - External token authentication successful
-- `external_token_authentication_failure` - External token authentication failed
-- `legacy_authentication_success` - Legacy authentication successful
-- `legacy_authentication_failure` - Legacy authentication failed
-- `federation_request` - Federation request
-- `federation_success` - Federation successful
-- `federation_failure` - Federation failed
+#### 外部認証・連携
+- `external_token_authentication_success` - 外部トークン認証成功
+- `external_token_authentication_failure` - 外部トークン認証失敗
+- `legacy_authentication_success` - レガシー認証成功
+- `legacy_authentication_failure` - レガシー認証失敗
+- `federation_request` - フェデレーションリクエスト
+- `federation_success` - フェデレーション成功
+- `federation_failure` - フェデレーション失敗
 
-### 📱 Authentication Device Management
+### 📱 認証デバイス管理
 
-#### Device Notifications
-- `authentication_device_notification_success` - Device notification successful
-- `authentication_device_notification_cancel` - Device notification canceled
-- `authentication_device_notification_failure` - Device notification failed
-- `authentication_device_notification_no_action_success` - Device notification no action successful
+#### デバイス通知
+- `authentication_device_notification_success` - デバイス通知成功
+- `authentication_device_notification_cancel` - デバイス通知キャンセル
+- `authentication_device_notification_failure` - デバイス通知失敗
+- `authentication_device_notification_no_action_success` - デバイス通知無動作成功
 
-#### Device Operations
-- `authentication_device_allow_success` - Device allow successful
-- `authentication_device_allow_failure` - Device allow failed
-- `authentication_device_deny_success` - Device deny successful
-- `authentication_device_deny_failure` - Device deny failed
-- `authentication_device_binding_message_success` - Device binding successful
-- `authentication_device_binding_message_failure` - Device binding failed
+#### デバイス操作
+- `authentication_device_allow_success` - デバイス許可成功
+- `authentication_device_allow_failure` - デバイス許可失敗
+- `authentication_device_deny_success` - デバイス拒否成功
+- `authentication_device_deny_failure` - デバイス拒否失敗
+- `authentication_device_binding_message_success` - デバイスバインディング成功
+- `authentication_device_binding_message_failure` - デバイスバインディング失敗
 
-#### Device Registration
-- `authentication_device_registration_success` - Device registration successful
-- `authentication_device_registration_failure` - Device registration failed
-- `authentication_device_deregistration_success` - Device deregistration successful
-- `authentication_device_deregistration_failure` - Device deregistration failed
-- `authentication_device_registration_challenge_success` - Device registration challenge successful
+#### デバイス登録
+- `authentication_device_registration_success` - デバイス登録成功
+- `authentication_device_registration_failure` - デバイス登録失敗
+- `authentication_device_deregistration_success` - デバイス登録解除成功
+- `authentication_device_deregistration_failure` - デバイス登録解除失敗
+- `authentication_device_registration_challenge_success` - デバイス登録チャレンジ成功
 
 ### 🔐 OAuth/OpenID Connect
 
-#### Authorization Flow
-- `oauth_authorize` - OAuth authorization successful
-- `oauth_authorize_with_session` - OAuth authorization with session successful
-- `oauth_deny` - OAuth authorization denied
-- `authorize_failure` - Authorization failed
+#### 認可フロー
+- `oauth_authorize` - OAuth認可成功
+- `oauth_authorize_with_session` - セッション付きOAuth認可成功
+- `oauth_deny` - OAuth認可拒否成功
+- `authorize_failure` - 認可失敗
 
-#### Token Management
-- `issue_token_success` - Token issuance successful
-- `issue_token_failure` - Token issuance failed
-- `refresh_token_success` - Token refresh successful
-- `refresh_token_failure` - Token refresh failed
-- `revoke_token_success` - Token revocation successful
-- `revoke_token_failure` - Token revocation failed
+#### トークン管理
+- `issue_token_success` - トークン発行成功
+- `issue_token_failure` - トークン発行失敗
+- `refresh_token_success` - トークンリフレッシュ成功
+- `refresh_token_failure` - トークンリフレッシュ失敗
+- `revoke_token_success` - トークン取り消し成功
+- `revoke_token_failure` - トークン取り消し失敗
 
-#### Token Introspection
-- `inspect_token_success` - Token inspection successful
-- `inspect_token_failure` - Token inspection failed
-- `inspect_token_expired` - Token expired
+#### トークン検証
+- `inspect_token_success` - トークン検証成功
+- `inspect_token_failure` - トークン検証失敗
+- `inspect_token_expired` - トークン期限切れ
 
-#### User Information
-- `userinfo_success` - User info retrieval successful
-- `userinfo_failure` - User info retrieval failed
+#### ユーザー情報
+- `userinfo_success` - ユーザー情報取得成功
+- `userinfo_failure` - ユーザー情報取得失敗
 
 ### 🔒 CIBA (Client Initiated Backchannel Authentication)
 
-- `backchannel_authentication_request_success` - Backchannel authentication request successful
-- `backchannel_authentication_request_failure` - Backchannel authentication request failed
-- `backchannel_authentication_authorize` - Backchannel authentication authorized
-- `backchannel_authentication_deny` - Backchannel authentication denied
+- `backchannel_authentication_request_success` - バックチャネル認証リクエスト成功
+- `backchannel_authentication_request_failure` - バックチャネル認証リクエスト失敗
+- `backchannel_authentication_authorize` - バックチャネル認証許可
+- `backchannel_authentication_deny` - バックチャネル認証拒否
 
-### 👥 User Management
+### 👥 ユーザー管理
 
-#### User Lifecycle
-- `user_signup` - User signup
-- `user_signup_failure` - User signup failed
-- `user_signup_conflict` - User signup conflict
-- `user_create` - User created
-- `user_get` - User information retrieved
-- `user_edit` - User edited
-- `user_delete` - User deleted
-- `user_deletion` - User deletion
-- `user_lock` - User locked
-- `user_disabled` - User disabled
-- `user_enabled` - User enabled
+#### ユーザーライフサイクル
+- `user_signup` - ユーザー登録
+- `user_signup_failure` - ユーザー登録失敗
+- `user_signup_conflict` - ユーザー登録競合
+- `user_create` - ユーザー作成
+- `user_get` - ユーザー情報取得
+- `user_edit` - ユーザー編集
+- `user_delete` - ユーザー削除
+- `user_deletion` - ユーザー削除
+- `user_lock` - ユーザーロック
+- `user_disabled` - ユーザー無効化
+- `user_enabled` - ユーザー有効化
 
-#### Session Management
-- `login_success` - Login successful
-- `logout` - User logged out
-- `authentication_cancel_success` - Authentication cancellation successful
-- `authentication_cancel_failure` - Authentication cancellation failed
+#### セッション管理
+- `login_success` - ログイン成功
+- `logout` - ログアウト
+- `authentication_cancel_success` - 認証キャンセル成功
+- `authentication_cancel_failure` - 認証キャンセル失敗
 
-### 🏢 Organization & Tenant Management
+### 🏢 組織・テナント管理
 
-#### Member Management
-- `member_invite` - Member invited
-- `member_join` - Member joined
-- `member_leave` - Member left
+#### メンバー管理
+- `member_invite` - メンバー招待
+- `member_join` - メンバー参加
+- `member_leave` - メンバー脱退
 
-#### System Management
-- `server_create` - Server created
-- `server_get` - Server information retrieved
-- `server_edit` - Server edited
-- `server_delete` - Server deleted
-- `application_create` - Application created
-- `application_get` - Application information retrieved
-- `application_edit` - Application edited
-- `application_delete` - Application deleted
+#### システム管理
+- `server_create` - サーバー作成
+- `server_get` - サーバー情報取得
+- `server_edit` - サーバー編集
+- `server_delete` - サーバー削除
+- `application_create` - アプリケーション作成
+- `application_get` - アプリケーション情報取得
+- `application_edit` - アプリケーション編集
+- `application_delete` - アプリケーション削除
 
-### 📋 Identity Verification
+### 📋 身元確認
 
-- `identity_verification_application_apply` - Identity verification application applied
-- `identity_verification_application_failure` - Identity verification application failed
-- `identity_verification_application_cancel` - Identity verification application canceled
-- `identity_verification_application_delete` - Identity verification application deleted
-- `identity_verification_application_findList` - Identity verification application list retrieved
-- `identity_verification_application_approved` - Identity verification application approved
-- `identity_verification_application_rejected` - Identity verification application rejected
-- `identity_verification_application_cancelled` - Identity verification application cancelled
-- `identity_verification_result_findList` - Identity verification result list retrieved
+- `identity_verification_application_apply` - 身元確認申請
+- `identity_verification_application_failure` - 身元確認申請失敗
+- `identity_verification_application_cancel` - 身元確認申請キャンセル
+- `identity_verification_application_delete` - 身元確認申請削除
+- `identity_verification_application_findList` - 身元確認申請一覧取得
+- `identity_verification_application_approved` - 身元確認承認
+- `identity_verification_application_rejected` - 身元確認拒否
+- `identity_verification_application_cancelled` - 身元確認キャンセル
+- `identity_verification_result_findList` - 身元確認結果一覧取得
 
-### 💡 Event Configuration Example
+### 💡 イベント設定例
 
 ```json
 {
@@ -334,16 +362,16 @@ Below is a comprehensive list of all security events available in `idp-server`. 
 }
 ```
 
-### 🔄 Custom Event Extension
+### 🔄 カスタムイベント拡張
 
-To add application-specific events:
+アプリケーション固有のイベントを追加する場合：
 
-1. Extend `SecurityEventType`
-2. Implement custom event creator (EventCreator)
-3. Publish events at appropriate points (EventPublisher)
+1. `SecurityEventType` を継承
+2. カスタムイベント作成者（EventCreator）を実装
+3. 適切な場所でイベント発行（EventPublisher）
 
 ```java
-// Custom event type example
+// カスタムイベントタイプの例
 public enum CustomSecurityEventType {
     custom_business_logic_success("Custom business logic executed successfully"),
     custom_integration_failure("External integration failed");
@@ -354,11 +382,11 @@ public enum CustomSecurityEventType {
 
 ---
 
-## 🧪 Testability
+## 🧪 テスト容易性
 
-- All hooks are defined through `HookExecutor` interfaces
-- External integrations can be tested using tools like WireMock
-- Retry and fallback strategies are configurable
+- すべてのフックは `HookExecutor` インターフェース経由で定義
+- WireMockなどのモックサーバーを使って外部連携のテスト可能
+- リトライやフォールバック戦略は設定可能
 
 ---
 

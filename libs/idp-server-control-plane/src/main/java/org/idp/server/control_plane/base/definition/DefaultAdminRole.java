@@ -55,7 +55,7 @@ public enum DefaultAdminRole {
   private static List<Permission> convertToPermissions(
       Permissions allPermissions, Set<DefaultAdminPermission> defaultRolePermissions) {
     Permissions filtered =
-        allPermissions.filter(
+        allPermissions.filterByName(
             defaultRolePermissions.stream().map(DefaultAdminPermission::value).toList());
     return filtered.toList();
   }

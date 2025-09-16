@@ -2,7 +2,6 @@
   "type": "object",
   "required": [
     "name",
-    "description",
     "permissions"
   ],
   "properties": {
@@ -15,12 +14,14 @@
       "maxLength": 255
     },
     "description": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 255
     },
     "permissions": {
       "type": "array",
       "items": {
-        "type": "string"
+        "type": "string",
+        "format": "uuid"
       }
     }
   }

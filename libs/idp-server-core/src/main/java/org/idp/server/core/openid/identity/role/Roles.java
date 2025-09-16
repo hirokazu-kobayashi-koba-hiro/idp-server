@@ -40,6 +40,10 @@ public class Roles implements Iterable<Role> {
     return values.stream().anyMatch(value -> value.match((role)));
   }
 
+  public boolean containsByName(String name) {
+    return values.stream().anyMatch(value -> value.name().equals(name));
+  }
+
   @Override
   public Iterator<Role> iterator() {
     return values.iterator();

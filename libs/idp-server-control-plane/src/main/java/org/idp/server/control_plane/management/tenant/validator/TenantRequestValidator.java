@@ -16,6 +16,8 @@
 
 package org.idp.server.control_plane.management.tenant.validator;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
 import org.idp.server.control_plane.management.tenant.io.TenantRequest;
 import org.idp.server.platform.json.JsonNodeWrapper;
@@ -39,6 +41,18 @@ public class TenantRequestValidator {
 
   public TenantRequestValidationResult validate() {
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request.toMap());
+    if (!jsonNodeWrapper.contains("tenant")) {
+      List<String> errors = new ArrayList<>();
+      errors.add("tenant is required.");
+      return TenantRequestValidationResult.error(
+          JsonSchemaValidationResult.failure(errors), JsonSchemaValidationResult.empty(), dryRun);
+    }
+    if (!jsonNodeWrapper.contains("authorization_server")) {
+      List<String> errors = new ArrayList<>();
+      errors.add("authorization_server is required.");
+      return TenantRequestValidationResult.error(
+          JsonSchemaValidationResult.failure(errors), JsonSchemaValidationResult.empty(), dryRun);
+    }
     JsonSchemaValidationResult tenantResult =
         tenantSchemaValidator.validate(jsonNodeWrapper.getValueAsJsonNode("tenant"));
     JsonSchemaValidationResult authorizationServerResult =

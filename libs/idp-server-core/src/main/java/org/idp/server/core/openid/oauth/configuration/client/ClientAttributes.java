@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.oauth.configuration.client;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
 
@@ -27,7 +28,7 @@ public class ClientAttributes implements JsonReadable {
   String clientName;
   String clientUri;
   String logoUri;
-  String contacts;
+  List<String> contacts;
   String tosUri;
   String policyUri;
 
@@ -39,7 +40,7 @@ public class ClientAttributes implements JsonReadable {
       String clientName,
       String clientUri,
       String logoUri,
-      String contacts,
+      List<String> contacts,
       String tosUri,
       String policyUri) {
     this.clientId = clientId;
@@ -88,7 +89,7 @@ public class ClientAttributes implements JsonReadable {
     return logoUri != null && !logoUri.isEmpty();
   }
 
-  public String contacts() {
+  public List<String> contacts() {
     return contacts;
   }
 

@@ -250,6 +250,92 @@ public class OrganizationUserManagementV1Api implements ParameterTransformable {
    * @param httpServletRequest the HTTP request
    * @return the user deletion response
    */
+  /**
+   * Partially updates a specific user within the organization.
+   *
+   * @param organizationOperatorPrincipal the authenticated organization operator
+   * @param organizationId the organization identifier from path
+   * @param tenantId the tenant identifier from path
+   * @param userId the user identifier from path
+   * @param body the user partial update request body
+   * @param dryRun whether to perform a dry run (validation only)
+   * @param httpServletRequest the HTTP request
+   * @return the user update response
+   */
+  @PatchMapping("/{userId}")
+  public ResponseEntity<?> patch(
+      @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
+      @PathVariable String organizationId,
+      @PathVariable String tenantId,
+      @PathVariable String userId,
+      @RequestBody(required = false) Map<String, Object> body,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
+      HttpServletRequest httpServletRequest) {
+
+    OrganizationIdentifier organizationIdentifier =
+        organizationOperatorPrincipal.getOrganizationId();
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    UserManagementResponse response =
+        orgUserManagementApi.patch(
+            organizationIdentifier,
+            new TenantIdentifier(tenantId),
+            organizationOperatorPrincipal.getUser(),
+            organizationOperatorPrincipal.getOAuthToken(),
+            new UserIdentifier(userId),
+            new UserRegistrationRequest(body),
+            requestAttributes,
+            dryRun);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("content-type", "application/json");
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  /**
+   * Updates the password of a specific user within the organization.
+   *
+   * @param organizationOperatorPrincipal the authenticated organization operator
+   * @param organizationId the organization identifier from path
+   * @param tenantId the tenant identifier from path
+   * @param userId the user identifier from path
+   * @param body the password update request body
+   * @param dryRun whether to perform a dry run (validation only)
+   * @param httpServletRequest the HTTP request
+   * @return the password update response
+   */
+  @PutMapping("/{userId}/password")
+  public ResponseEntity<?> updatePassword(
+      @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
+      @PathVariable String organizationId,
+      @PathVariable String tenantId,
+      @PathVariable String userId,
+      @RequestBody(required = false) Map<String, Object> body,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
+      HttpServletRequest httpServletRequest) {
+
+    OrganizationIdentifier organizationIdentifier =
+        organizationOperatorPrincipal.getOrganizationId();
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    UserManagementResponse response =
+        orgUserManagementApi.updatePassword(
+            organizationIdentifier,
+            new TenantIdentifier(tenantId),
+            organizationOperatorPrincipal.getUser(),
+            organizationOperatorPrincipal.getOAuthToken(),
+            new UserIdentifier(userId),
+            new UserRegistrationRequest(body),
+            requestAttributes,
+            dryRun);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("content-type", "application/json");
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
   @DeleteMapping("/{userId}")
   public ResponseEntity<?> delete(
       @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
@@ -270,6 +356,135 @@ public class OrganizationUserManagementV1Api implements ParameterTransformable {
             organizationOperatorPrincipal.getUser(),
             organizationOperatorPrincipal.getOAuthToken(),
             new UserIdentifier(userId),
+            requestAttributes,
+            dryRun);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("content-type", "application/json");
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  /**
+   * Updates the roles of a specific user within the organization.
+   *
+   * @param organizationOperatorPrincipal the authenticated organization operator
+   * @param organizationId the organization identifier from path
+   * @param tenantId the tenant identifier from path
+   * @param userId the user identifier from path
+   * @param body the roles update request body
+   * @param dryRun whether to perform a dry run (validation only)
+   * @param httpServletRequest the HTTP request
+   * @return the roles update response
+   */
+  @PatchMapping("/{userId}/roles")
+  public ResponseEntity<?> updateRoles(
+      @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
+      @PathVariable String organizationId,
+      @PathVariable String tenantId,
+      @PathVariable String userId,
+      @RequestBody(required = false) Map<String, Object> body,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
+      HttpServletRequest httpServletRequest) {
+
+    OrganizationIdentifier organizationIdentifier =
+        organizationOperatorPrincipal.getOrganizationId();
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    UserManagementResponse response =
+        orgUserManagementApi.updateRoles(
+            organizationIdentifier,
+            new TenantIdentifier(tenantId),
+            organizationOperatorPrincipal.getUser(),
+            organizationOperatorPrincipal.getOAuthToken(),
+            new UserIdentifier(userId),
+            new UserRegistrationRequest(body),
+            requestAttributes,
+            dryRun);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("content-type", "application/json");
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  /**
+   * Updates the tenant assignments of a specific user within the organization.
+   *
+   * @param organizationOperatorPrincipal the authenticated organization operator
+   * @param organizationId the organization identifier from path
+   * @param tenantId the tenant identifier from path
+   * @param userId the user identifier from path
+   * @param body the tenant assignments update request body
+   * @param dryRun whether to perform a dry run (validation only)
+   * @param httpServletRequest the HTTP request
+   * @return the tenant assignments update response
+   */
+  @PatchMapping("/{userId}/tenant-assignments")
+  public ResponseEntity<?> updateTenantAssignments(
+      @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
+      @PathVariable String organizationId,
+      @PathVariable String tenantId,
+      @PathVariable String userId,
+      @RequestBody(required = false) Map<String, Object> body,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
+      HttpServletRequest httpServletRequest) {
+
+    OrganizationIdentifier organizationIdentifier =
+        organizationOperatorPrincipal.getOrganizationId();
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    UserManagementResponse response =
+        orgUserManagementApi.updateTenantAssignments(
+            organizationIdentifier,
+            new TenantIdentifier(tenantId),
+            organizationOperatorPrincipal.getUser(),
+            organizationOperatorPrincipal.getOAuthToken(),
+            new UserIdentifier(userId),
+            new UserRegistrationRequest(body),
+            requestAttributes,
+            dryRun);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("content-type", "application/json");
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  /**
+   * Updates the organization assignments of a specific user within the organization.
+   *
+   * @param organizationOperatorPrincipal the authenticated organization operator
+   * @param organizationId the organization identifier from path
+   * @param tenantId the tenant identifier from path
+   * @param userId the user identifier from path
+   * @param body the organization assignments update request body
+   * @param dryRun whether to perform a dry run (validation only)
+   * @param httpServletRequest the HTTP request
+   * @return the organization assignments update response
+   */
+  @PatchMapping("/{userId}/organization-assignments")
+  public ResponseEntity<?> updateOrganizationAssignments(
+      @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
+      @PathVariable String organizationId,
+      @PathVariable String tenantId,
+      @PathVariable String userId,
+      @RequestBody(required = false) Map<String, Object> body,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
+      HttpServletRequest httpServletRequest) {
+
+    OrganizationIdentifier organizationIdentifier =
+        organizationOperatorPrincipal.getOrganizationId();
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    UserManagementResponse response =
+        orgUserManagementApi.updateOrganizationAssignments(
+            organizationIdentifier,
+            new TenantIdentifier(tenantId),
+            organizationOperatorPrincipal.getUser(),
+            organizationOperatorPrincipal.getOAuthToken(),
+            new UserIdentifier(userId),
+            new UserRegistrationRequest(body),
             requestAttributes,
             dryRun);
 

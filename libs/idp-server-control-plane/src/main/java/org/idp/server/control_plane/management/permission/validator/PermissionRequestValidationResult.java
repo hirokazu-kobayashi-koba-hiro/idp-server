@@ -54,7 +54,7 @@ public class PermissionRequestValidationResult {
     response.put("dry_run", dryRun);
     response.put("error", "invalid_request");
     response.put("error_description", "permission registration validation is failed");
-    response.put("error_massages", validationResult.errors());
+    response.put("error_messages", validationResult.errors());
     return new PermissionManagementResponse(PermissionManagementStatus.INVALID_REQUEST, response);
   }
 }

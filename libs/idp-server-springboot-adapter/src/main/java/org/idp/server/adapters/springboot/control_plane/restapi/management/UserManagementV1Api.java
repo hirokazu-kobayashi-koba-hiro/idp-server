@@ -254,34 +254,6 @@ public class UserManagementV1Api implements ParameterTransformable {
         response.contents(), headers, HttpStatus.valueOf(response.statusCode()));
   }
 
-  @PatchMapping("/{user-id}/permissions")
-  public ResponseEntity<?> updatePermissions(
-      @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
-      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @PathVariable("user-id") UserIdentifier userIdentifier,
-      @RequestBody(required = false) Map<String, Object> body,
-      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
-      HttpServletRequest httpServletRequest) {
-
-    RequestAttributes requestAttributes = transform(httpServletRequest);
-
-    UserManagementResponse response =
-        userManagementApi.updatePermissions(
-            tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
-            userIdentifier,
-            new UserRegistrationRequest(body),
-            requestAttributes,
-            dryRun);
-
-    HttpHeaders headers = new HttpHeaders();
-    headers.add("Content-Type", "application/json");
-
-    return new ResponseEntity<>(
-        response.contents(), headers, HttpStatus.valueOf(response.statusCode()));
-  }
-
   @PatchMapping("/{user-id}/tenant-assignments")
   public ResponseEntity<?> updateTenantAssignments(
       @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,

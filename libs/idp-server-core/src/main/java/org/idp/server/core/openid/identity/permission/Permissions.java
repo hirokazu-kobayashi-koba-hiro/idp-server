@@ -46,9 +46,14 @@ public class Permissions implements Iterable<Permission> {
     return values.iterator();
   }
 
-  public Permissions filter(List<String> permissionNames) {
+  public Permissions filterByName(List<String> permissionNames) {
     return new Permissions(
         values.stream().filter(permission -> permissionNames.contains(permission.name())).toList());
+  }
+
+  public Permissions filterById(List<String> permissionIds) {
+    return new Permissions(
+        values.stream().filter(permission -> permissionIds.contains(permission.id())).toList());
   }
 
   public List<Permission> toList() {
@@ -56,15 +61,23 @@ public class Permissions implements Iterable<Permission> {
   }
 
   public Permissions filterNoneMatch(List<String> permissionNames) {
-
     return new Permissions(
         values.stream()
             .filter(permission -> !permissionNames.contains(permission.name()))
             .toList());
   }
 
+  public Permissions filterNoneMatchById(List<String> permissionIds) {
+    return new Permissions(
+        values.stream().filter(permission -> !permissionIds.contains(permission.id())).toList());
+  }
+
   public String permissionNamesAsString() {
     return values.stream().map(Permission::name).collect(Collectors.joining(" "));
+  }
+
+  public String permissionIdsAsString() {
+    return values.stream().map(Permission::id).collect(Collectors.joining(" "));
   }
 
   public int size() {

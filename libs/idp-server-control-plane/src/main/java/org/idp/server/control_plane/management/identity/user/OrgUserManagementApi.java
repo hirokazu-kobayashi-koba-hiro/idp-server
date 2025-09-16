@@ -90,6 +90,16 @@ public interface OrgUserManagementApi {
     map.put("findList", new AdminPermissions(Set.of(DefaultAdminPermission.USER_READ)));
     map.put("get", new AdminPermissions(Set.of(DefaultAdminPermission.USER_READ)));
     map.put("update", new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
+    map.put("patch", new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
+    map.put("updatePassword", new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
+    map.put("updateRoles", new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
+    map.put("updatePermissions", new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
+    map.put(
+        "updateTenantAssignments",
+        new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
+    map.put(
+        "updateOrganizationAssignments",
+        new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
     map.put("delete", new AdminPermissions(Set.of(DefaultAdminPermission.USER_DELETE)));
     AdminPermissions adminPermissions = map.get(method);
     if (adminPermissions == null) {
@@ -198,6 +208,121 @@ public interface OrgUserManagementApi {
       User operator,
       OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
+      RequestAttributes requestAttributes,
+      boolean dryRun);
+
+  /**
+   * Partially updates a user within the organization.
+   *
+   * @param organizationIdentifier the organization containing the user
+   * @param tenantIdentifier the tenant for database access
+   * @param operator the user performing the operation
+   * @param oAuthToken the OAuth token for the request
+   * @param userIdentifier the user to update
+   * @param request the partial update request
+   * @param requestAttributes additional request attributes
+   * @param dryRun if true, performs validation without updating the user
+   * @return user management response with update result
+   */
+  UserManagementResponse patch(
+      OrganizationIdentifier organizationIdentifier,
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      UserIdentifier userIdentifier,
+      UserRegistrationRequest request,
+      RequestAttributes requestAttributes,
+      boolean dryRun);
+
+  /**
+   * Updates a user's password within the organization.
+   *
+   * @param organizationIdentifier the organization containing the user
+   * @param tenantIdentifier the tenant for database access
+   * @param operator the user performing the operation
+   * @param oAuthToken the OAuth token for the request
+   * @param userIdentifier the user to update
+   * @param request the password update request
+   * @param requestAttributes additional request attributes
+   * @param dryRun if true, performs validation without updating the password
+   * @return user management response with update result
+   */
+  UserManagementResponse updatePassword(
+      OrganizationIdentifier organizationIdentifier,
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      UserIdentifier userIdentifier,
+      UserRegistrationRequest request,
+      RequestAttributes requestAttributes,
+      boolean dryRun);
+
+  /**
+   * Updates a user's roles within the organization.
+   *
+   * @param organizationIdentifier the organization containing the user
+   * @param tenantIdentifier the tenant for database access
+   * @param operator the user performing the operation
+   * @param oAuthToken the OAuth token for the request
+   * @param userIdentifier the user to update
+   * @param request the roles update request
+   * @param requestAttributes additional request attributes
+   * @param dryRun if true, performs validation without updating the roles
+   * @return user management response with update result
+   */
+  UserManagementResponse updateRoles(
+      OrganizationIdentifier organizationIdentifier,
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      UserIdentifier userIdentifier,
+      UserRegistrationRequest request,
+      RequestAttributes requestAttributes,
+      boolean dryRun);
+
+  /**
+   * Updates a user's tenant assignments within the organization.
+   *
+   * @param organizationIdentifier the organization containing the user
+   * @param tenantIdentifier the tenant for database access
+   * @param operator the user performing the operation
+   * @param oAuthToken the OAuth token for the request
+   * @param userIdentifier the user to update
+   * @param request the tenant assignments update request
+   * @param requestAttributes additional request attributes
+   * @param dryRun if true, performs validation without updating the assignments
+   * @return user management response with update result
+   */
+  UserManagementResponse updateTenantAssignments(
+      OrganizationIdentifier organizationIdentifier,
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      UserIdentifier userIdentifier,
+      UserRegistrationRequest request,
+      RequestAttributes requestAttributes,
+      boolean dryRun);
+
+  /**
+   * Updates a user's organization assignments within the organization.
+   *
+   * @param organizationIdentifier the organization containing the user
+   * @param tenantIdentifier the tenant for database access
+   * @param operator the user performing the operation
+   * @param oAuthToken the OAuth token for the request
+   * @param userIdentifier the user to update
+   * @param request the organization assignments update request
+   * @param requestAttributes additional request attributes
+   * @param dryRun if true, performs validation without updating the assignments
+   * @return user management response with update result
+   */
+  UserManagementResponse updateOrganizationAssignments(
+      OrganizationIdentifier organizationIdentifier,
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      UserIdentifier userIdentifier,
+      UserRegistrationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 }

@@ -18,6 +18,7 @@ package org.idp.server.control_plane.management.role.verifier;
 
 import org.idp.server.control_plane.base.verifier.VerificationResult;
 import org.idp.server.control_plane.management.role.RoleRegistrationContext;
+import org.idp.server.control_plane.management.role.RoleUpdateContext;
 
 public class RoleRegistrationVerifier {
 
@@ -26,7 +27,20 @@ public class RoleRegistrationVerifier {
   public RoleRegistrationVerificationResult verify(RoleRegistrationContext context) {
 
     RolePermissionVerifier rolePermissionVerifier =
-        new RolePermissionVerifier(context.request(), context.permissions());
+        new RolePermissionVerifier(context.request(), context.roles(), context.permissions());
+    VerificationResult verificationResult = rolePermissionVerifier.verify();
+
+    if (!verificationResult.isValid()) {
+      return RoleRegistrationVerificationResult.error(verificationResult, context.isDryRun());
+    }
+
+    return RoleRegistrationVerificationResult.success(verificationResult, context.isDryRun());
+  }
+
+  public RoleRegistrationVerificationResult verify(RoleUpdateContext context) {
+
+    RolePermissionVerifier rolePermissionVerifier =
+        new RolePermissionVerifier(context.request(), context.roles(), context.permissions());
     VerificationResult verificationResult = rolePermissionVerifier.verify();
 
     if (!verificationResult.isValid()) {

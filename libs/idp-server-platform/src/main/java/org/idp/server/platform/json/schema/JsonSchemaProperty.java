@@ -63,9 +63,6 @@ public class JsonSchemaProperty {
     return propertySchema.contains("maxLength");
   }
 
-  // "minimum": 0,
-  //  "maximum": 100
-
   public int minimum() {
     return propertySchema.getValueAsInt("minimum");
   }
@@ -182,5 +179,9 @@ public class JsonSchemaProperty {
 
   public boolean shouldRespond() {
     return propertySchema.optValueAsBoolean("respond", true);
+  }
+
+  public String toJson() {
+    return propertySchema.toJson();
   }
 }

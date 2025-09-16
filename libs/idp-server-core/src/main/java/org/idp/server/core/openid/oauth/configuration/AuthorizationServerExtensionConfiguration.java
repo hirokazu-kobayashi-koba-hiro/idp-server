@@ -180,4 +180,38 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
   public AuthenticationInteractionType defaultCibaAuthenticationInteractionType() {
     return new AuthenticationInteractionType(defaultCibaAuthenticationInteractionType);
   }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("access_token_type", accessTokenType);
+    map.put("authorization_code_valid_duration", authorizationCodeValidDuration);
+    map.put("token_signed_key_id", tokenSignedKeyId);
+    map.put("id_token_signed_key_id", idTokenSignedKeyId);
+    map.put("access_token_duration", accessTokenDuration);
+    map.put("refresh_token_duration", refreshTokenDuration);
+    map.put("refresh_token_strategy", refreshTokenStrategy);
+    map.put("rotate_refresh_token", rotateRefreshToken);
+    map.put("id_token_duration", idTokenDuration);
+    map.put("id_token_strict_mode", idTokenStrictMode);
+    map.put("default_max_age", defaultMaxAge);
+    map.put("authorization_response_duration", authorizationResponseDuration);
+    map.put(
+        "backchannel_authentication_request_expires_in", backchannelAuthenticationRequestExpiresIn);
+    map.put(
+        "backchannel_authentication_polling_interval", backchannelAuthenticationPollingInterval);
+    map.put("required_backchannel_auth_user_code", requiredBackchannelAuthUserCode);
+    map.put("backchannel_auth_user_code_type", backchannelAuthUserCodeType);
+    map.put(
+        "default_ciba_authentication_interaction_type", defaultCibaAuthenticationInteractionType);
+    map.put("oauth_authorization_request_expires_in", oauthAuthorizationRequestExpiresIn);
+    map.put("fapi_baseline_scopes", fapiBaselineScopes);
+    map.put("fapi_advance_scopes", fapiAdvanceScopes);
+    map.put("required_identity_verification_scopes", requiredIdentityVerificationScopes);
+    map.put("custom_claims_scope_mapping", customClaimsScopeMapping);
+    map.put(
+        "access_token_selective_user_custom_properties", accessTokenSelectiveUserCustomProperties);
+    map.put("access_token_verified_claims", accessTokenVerifiedClaims);
+    map.put("access_token_selective_verified_claims", accessTokenSelectiveVerifiedClaims);
+    return map;
+  }
 }

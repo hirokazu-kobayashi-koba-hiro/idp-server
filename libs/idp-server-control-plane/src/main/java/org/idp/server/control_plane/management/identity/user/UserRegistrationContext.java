@@ -20,6 +20,7 @@ import java.util.Map;
 import org.idp.server.control_plane.base.ConfigRegistrationContext;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
+import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -27,11 +28,14 @@ public class UserRegistrationContext implements ConfigRegistrationContext {
 
   Tenant tenant;
   User user;
+  UserRegistrationRequest request;
   boolean dryRun;
 
-  public UserRegistrationContext(Tenant tenant, User user, boolean dryRun) {
+  public UserRegistrationContext(
+      Tenant tenant, User user, UserRegistrationRequest request, boolean dryRun) {
     this.tenant = tenant;
     this.user = user;
+    this.request = request;
     this.dryRun = dryRun;
   }
 
@@ -41,6 +45,10 @@ public class UserRegistrationContext implements ConfigRegistrationContext {
 
   public User user() {
     return user;
+  }
+
+  public UserRegistrationRequest request() {
+    return request;
   }
 
   @Override

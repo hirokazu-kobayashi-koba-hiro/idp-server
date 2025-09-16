@@ -85,11 +85,11 @@ public class AuditLogQueries implements UuidConvertable {
   }
 
   public boolean hasTargetAction() {
-    return values.containsKey("target_action");
+    return values.containsKey("target_resource_action");
   }
 
   public String targetAction() {
-    return values.get("target_action");
+    return values.get("target_resource_action");
   }
 
   public boolean hasClientId() {

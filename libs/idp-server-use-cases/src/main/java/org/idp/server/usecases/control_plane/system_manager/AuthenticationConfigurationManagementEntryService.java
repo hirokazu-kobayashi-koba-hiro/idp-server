@@ -313,9 +313,18 @@ public class AuthenticationConfigurationManagementEntryService
           AuthenticationConfigManagementStatus.NOT_FOUND, Map.of());
     }
 
+    if (dryRun) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("message", "Authentication configuration deletion simulated successfully");
+      response.put("config_id", configuration.identifier().value());
+      response.put("dry_run", true);
+      return new AuthenticationConfigManagementResponse(
+          AuthenticationConfigManagementStatus.OK, response);
+    }
+
     authenticationConfigurationCommandRepository.delete(tenant, configuration);
 
     return new AuthenticationConfigManagementResponse(
-        AuthenticationConfigManagementStatus.NO_CONTENT, configuration.toMap());
+        AuthenticationConfigManagementStatus.NO_CONTENT, Map.of());
   }
 }

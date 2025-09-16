@@ -25,7 +25,7 @@ public class OAuthViewData {
   String clientName;
   String clientUri;
   String logoUri;
-  String contacts;
+  List<String> contacts;
   String tosUri;
   String policyUri;
   List<String> scopes;
@@ -39,7 +39,7 @@ public class OAuthViewData {
       String clientName,
       String clientUri,
       String logoUri,
-      String contacts,
+      List<String> contacts,
       String tosUri,
       String policyUri,
       List<String> scopes,
@@ -77,7 +77,7 @@ public class OAuthViewData {
     return logoUri;
   }
 
-  public String contacts() {
+  public List<String> contacts() {
     return contacts;
   }
 

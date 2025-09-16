@@ -24,6 +24,7 @@ import org.idp.server.control_plane.management.role.io.RoleManagementStatus;
 import org.idp.server.control_plane.management.role.io.RoleRequest;
 import org.idp.server.core.openid.identity.permission.Permissions;
 import org.idp.server.core.openid.identity.role.Role;
+import org.idp.server.core.openid.identity.role.Roles;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class RoleRegistrationContext implements ConfigRegistrationContext {
@@ -31,14 +32,21 @@ public class RoleRegistrationContext implements ConfigRegistrationContext {
   Tenant tenant;
   RoleRequest request;
   Role role;
+  Roles roles;
   Permissions permissions;
   boolean dryRun;
 
   public RoleRegistrationContext(
-      Tenant tenant, RoleRequest request, Role role, Permissions permissions, boolean dryRun) {
+      Tenant tenant,
+      RoleRequest request,
+      Role role,
+      Roles roles,
+      Permissions permissions,
+      boolean dryRun) {
     this.tenant = tenant;
     this.request = request;
     this.role = role;
+    this.roles = roles;
     this.permissions = permissions;
     this.dryRun = dryRun;
   }
@@ -53,6 +61,10 @@ public class RoleRegistrationContext implements ConfigRegistrationContext {
 
   public Role role() {
     return role;
+  }
+
+  public Roles roles() {
+    return roles;
   }
 
   public Permissions permissions() {

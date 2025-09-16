@@ -50,14 +50,14 @@ class ModelConverter {
     user.setPicture(stringMap.getOrDefault("picture", ""));
     user.setWebsite(stringMap.getOrDefault("website", ""));
     user.setEmail(stringMap.getOrDefault("email", ""));
-    user.setEmailVerified(Boolean.parseBoolean(stringMap.getOrDefault("email_verified", "false")));
+    user.setEmailVerified(parseDatabaseBoolean(stringMap.get("email_verified"), false));
     user.setGender(stringMap.getOrDefault("gender", ""));
     user.setBirthdate(stringMap.getOrDefault("birthdate", ""));
     user.setZoneinfo(stringMap.getOrDefault("zoneinfo", ""));
     user.setLocale(stringMap.getOrDefault("locale", ""));
     user.setPhoneNumber(stringMap.getOrDefault("phone_number", ""));
     user.setPhoneNumberVerified(
-        Boolean.parseBoolean(stringMap.getOrDefault("phone_number_verified", "false")));
+        parseDatabaseBoolean(stringMap.get("phone_number_verified"), false));
     user.setHashedPassword(stringMap.getOrDefault("hashed_password", ""));
 
     if (stringMap.containsKey("updated_at")) {
@@ -202,5 +202,29 @@ class ModelConverter {
   static UserIdentifier extractUserIdentifier(Map<String, String> stringMap) {
     String id = stringMap.get("id");
     return new UserIdentifier(id);
+  }
+
+  /**
+   * Parses database boolean values to Java boolean.
+   *
+   * <p>Handles different database boolean representations:
+   *
+   * <ul>
+   *   <li>PostgreSQL: "t"/"f" or "true"/"false"
+   *   <li>MySQL: "1"/"0" or "true"/"false"
+   *   <li>Standard: "true"/"false"
+   * </ul>
+   *
+   * @param value the database boolean value as string
+   * @param defaultValue the default value if parsing fails
+   * @return parsed boolean value
+   */
+  static boolean parseDatabaseBoolean(String value, boolean defaultValue) {
+    if (value == null || value.isEmpty()) {
+      return defaultValue;
+    }
+
+    String normalized = value.toLowerCase().trim();
+    return "t".equals(normalized) || "true".equals(normalized) || "1".equals(normalized);
   }
 }

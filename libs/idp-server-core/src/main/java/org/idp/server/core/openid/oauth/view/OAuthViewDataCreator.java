@@ -49,7 +49,7 @@ public class OAuthViewDataCreator {
     String clientName = clientConfiguration.clientNameValue();
     String clientUri = clientConfiguration.clientUri();
     String logoUri = clientConfiguration.logoUri();
-    String contacts = clientConfiguration.contacts();
+    List<String> contacts = clientConfiguration.contacts();
     String tosUri = clientConfiguration.tosUri();
     String policyUri = clientConfiguration.policyUri();
     Map<String, String> customParams = authorizationRequest.customParams().values();
