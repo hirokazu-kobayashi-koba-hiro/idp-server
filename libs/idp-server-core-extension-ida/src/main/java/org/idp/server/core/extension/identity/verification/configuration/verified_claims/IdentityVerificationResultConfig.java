@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.mapper.MappingRule;
 
@@ -43,11 +44,25 @@ public class IdentityVerificationResultConfig implements JsonReadable {
     return verifiedClaimsMappingRules;
   }
 
+  public List<Map<String, Object>> verifiedClaimsMappingRulesAsMap() {
+    if (verifiedClaimsMappingRules == null) {
+      return new ArrayList<>();
+    }
+    return verifiedClaimsMappingRules.stream().map(MappingRule::toMap).collect(Collectors.toList());
+  }
+
   public List<MappingRule> sourceDetailsMappingRules() {
     if (sourceDetailsMappingRules == null) {
       return new ArrayList<>();
     }
     return sourceDetailsMappingRules;
+  }
+
+  public List<Map<String, Object>> sourceDetailsMappingRulesAsMap() {
+    if (sourceDetailsMappingRules == null) {
+      return new ArrayList<>();
+    }
+    return sourceDetailsMappingRules.stream().map(MappingRule::toMap).collect(Collectors.toList());
   }
 
   public boolean exists() {
@@ -56,8 +71,8 @@ public class IdentityVerificationResultConfig implements JsonReadable {
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
-    map.put("verified_claims_mapping_rules", verifiedClaimsMappingRules);
-    map.put("source_details_mapping_rules", sourceDetailsMappingRules);
+    map.put("verified_claims_mapping_rules", verifiedClaimsMappingRulesAsMap());
+    map.put("source_details_mapping_rules", sourceDetailsMappingRulesAsMap());
     return map;
   }
 }

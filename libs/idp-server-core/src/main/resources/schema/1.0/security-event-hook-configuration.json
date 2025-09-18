@@ -1,0 +1,160 @@
+{
+  "type": "object",
+  "required": ["type", "enabled", "events", "triggers"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for the security event hook configuration"
+    },
+    "type": {
+      "type": "string",
+      "description": "Type of security event hook (WEBHOOK, SSF, Email)"
+    },
+    "attributes": {
+      "type": "object",
+      "description": "Hook type specific attributes (webhook URL, email addresses, etc.)",
+      "additionalProperties": true
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Custom metadata associated with the hook configuration",
+      "additionalProperties": true
+    },
+    "triggers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Custom trigger conditions for hook execution"
+    },
+    "execution_order": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Order in which this hook should be executed relative to others"
+    },
+    "events": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/SecurityEventConfig"
+      },
+      "description": "Per-event execution configurations keyed by event type"
+    },
+    "enabled": {
+      "type": "boolean",
+      "description": "Whether this hook configuration is enabled"
+    },
+    "store_execution_payload": {
+      "type": "boolean",
+      "description": "Whether to store execution payloads for audit purposes"
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "SecurityEventConfig": {
+      "type": "object",
+      "properties": {
+        "execution": {
+          "$ref": "#/definitions/SecurityEventExecutionConfig"
+        }
+      },
+      "additionalProperties": false
+    },
+    "SecurityEventExecutionConfig": {
+      "type": "object",
+      "properties": {
+        "function": {
+          "type": "string",
+          "description": "Function to execute for this security event"
+        },
+        "http_request": {
+          "$ref": "#/definitions/SecurityEventHttpRequestConfig"
+        },
+        "http_requests": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SecurityEventHttpRequestConfig"
+          },
+          "description": "Multiple HTTP request configurations"
+        },
+        "mock": {
+          "type": "object",
+          "description": "Mock configuration for testing",
+          "additionalProperties": true
+        },
+        "details": {
+          "type": "object",
+          "description": "Additional execution details",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "SecurityEventHttpRequestConfig": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Target webhook URL"
+        },
+        "method": {
+          "type": "string",
+          "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"],
+          "description": "HTTP method for the request"
+        },
+        "auth_type": {
+          "type": "string",
+          "description": "Authentication type"
+        },
+        "oauth_authorization": {
+          "type": "object",
+          "description": "OAuth authorization configuration",
+          "additionalProperties": true
+        },
+        "hmac_authentication": {
+          "type": "object",
+          "description": "HMAC authentication configuration",
+          "additionalProperties": true
+        },
+        "path_mapping_rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "description": "Path mapping rule",
+            "additionalProperties": true
+          },
+          "description": "Path mapping rules"
+        },
+        "header_mapping_rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "description": "Header mapping rule",
+            "additionalProperties": true
+          },
+          "description": "Header mapping rules"
+        },
+        "body_mapping_rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "description": "Body mapping rule",
+            "additionalProperties": true
+          },
+          "description": "Body mapping rules"
+        },
+        "query_mapping_rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "description": "Query mapping rule",
+            "additionalProperties": true
+          },
+          "description": "Query mapping rules"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

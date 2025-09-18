@@ -128,6 +128,18 @@ public class OrgAuthenticationInteractionManagementEntryService
     // Use existing system-level logic with target tenant
     Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
 
+    long totalCount =
+        authenticationInteractionQueryRepository.findTotalCount(targetTenant, queries);
+    if (totalCount == 0) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("list", List.of());
+      response.put("total_count", 0);
+      response.put("limit", queries.limit());
+      response.put("offset", queries.offset());
+      return new AuthenticationInteractionManagementResponse(
+          AuthenticationInteractionManagementStatus.OK, response);
+    }
+
     List<AuthenticationInteraction> interactions =
         authenticationInteractionQueryRepository.findList(targetTenant, queries);
 
@@ -142,7 +154,8 @@ public class OrgAuthenticationInteractionManagementEntryService
     auditLogWriters.write(targetTenant, auditLog);
 
     Map<String, Object> response = new HashMap<>();
-    response.put("results", interactions.stream().map(AuthenticationInteraction::toMap).toList());
+    response.put("list", interactions.stream().map(AuthenticationInteraction::toMap).toList());
+    response.put("total_count", totalCount);
     return new AuthenticationInteractionManagementResponse(
         AuthenticationInteractionManagementStatus.OK, response);
   }
