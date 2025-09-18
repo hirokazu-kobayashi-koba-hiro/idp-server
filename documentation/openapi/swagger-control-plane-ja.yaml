@@ -10,7 +10,23 @@ servers:
   - url: http://localhost:8080
 
 tags:
+  - name: organization-tenant
+    description: Organization-level tenant management
+  - name: organization-client
+    description: Organization-level client management
+  - name: organization-user
+    description: Organization-level user management
   - name: authorization-server
+  - name: organization-authorization-server
+    description: Organization-level authorization server management
+  - name: organization-role
+    description: Organization-level role management
+  - name: organization-permission
+    description: Organization-level permission management
+  - name: organization-security-event
+    description: Organization-level security event management
+  - name: organization-audit-log
+    description: Organization-level audit log management
 
 paths:
   /v1/management/tenants/{tenant-id}/authorization-server:
@@ -142,6 +158,1957 @@ paths:
               schema:
                 type: object
 
+  # Organization-level Authentication Configuration Management API
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-configs:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+    post:
+      summary: Create authentication configuration within organization
+      description: Creates a new authentication configuration for a specific tenant within an organization
+      tags:
+        - organization-authentication-config
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthenticationConfigurationRequest'
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: Created authentication configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: Whether this was a dry run
+                  result:
+                    $ref: '#/components/schemas/AuthenticationConfig'
+        '400':
+          description: Invalid request data or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions or invalid organization/tenant access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      summary: List authentication configurations within organization
+      description: Retrieves authentication configurations for a specific tenant within an organization
+      tags:
+        - organization-authentication-config
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Authentication configuration list retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuthenticationConfig'
+                  total_count:
+                    type: integer
+                    description: Total number of authentication configurations
+                  limit:
+                    type: integer
+                    description: Maximum number of results returned
+                  offset:
+                    type: integer
+                    description: Number of results skipped
+        '403':
+          description: Insufficient permissions or invalid organization/tenant access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-configs/{config-id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/AuthenticationConfigId'
+    get:
+      summary: Get authentication configuration by ID within organization
+      description: Retrieves a specific authentication configuration for a tenant within an organization
+      tags:
+        - organization-authentication-config
+      responses:
+        '200':
+          description: Authentication configuration retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationConfig'
+        '403':
+          description: Insufficient permissions or invalid organization/tenant access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization, tenant, or authentication configuration not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update authentication configuration by ID within organization
+      description: Updates a specific authentication configuration for a tenant within an organization
+      tags:
+        - organization-authentication-config
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthenticationConfigurationRequest'
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: Authentication configuration updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: Whether this was a dry run
+                  result:
+                    $ref: '#/components/schemas/AuthenticationConfig'
+        '400':
+          description: Invalid request data or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions or invalid organization/tenant access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization, tenant, or authentication configuration not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete authentication configuration by ID within organization
+      description: Deletes a specific authentication configuration for a tenant within an organization
+      tags:
+        - organization-authentication-config
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: Authentication configuration deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: Whether this was a dry run
+                  result:
+                    type: object
+                    description: Deletion confirmation
+        '403':
+          description: Insufficient permissions or invalid organization/tenant access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization, tenant, or authentication configuration not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Organization-level Authentication Policy Configuration Management API
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-policy-configs:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: List authentication policy configurations within organization
+      description: Retrieves a list of authentication policy configurations for a tenant within an organization
+      tags:
+        - organization-authentication-policy-config
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Authentication policy configuration list retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuthenticationPolicyConfig'
+                  total_count:
+                    type: integer
+                    description: Total number of authentication policy configurations
+                  limit:
+                    type: integer
+                    description: Maximum number of results per page
+                  offset:
+                    type: integer
+                    description: Number of results skipped
+        '403':
+          description: Insufficient permissions or invalid organization/tenant access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Create authentication policy configuration within organization
+      description: Creates a new authentication policy configuration for a tenant within an organization
+      tags:
+        - organization-authentication-policy-config
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthenticationPolicyConfigurationRequest'
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '201':
+          description: Authentication policy configuration created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    example: false
+                  result:
+                    $ref: '#/components/schemas/AuthenticationPolicyConfig'
+        '400':
+          description: Invalid request parameters or body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions or invalid organization/tenant access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-policy-configs/{config-id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/AuthenticationPolicyConfigId'
+    get:
+      summary: Get authentication policy configuration by ID within organization
+      description: Retrieves a specific authentication policy configuration for a tenant within an organization
+      tags:
+        - organization-authentication-policy-config
+      responses:
+        '200':
+          description: Authentication policy configuration retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationPolicyConfig'
+        '403':
+          description: Insufficient permissions or invalid organization/tenant access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization, tenant, or authentication policy configuration not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update authentication policy configuration by ID within organization
+      description: Updates a specific authentication policy configuration for a tenant within an organization
+      tags:
+        - organization-authentication-policy-config
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthenticationPolicyConfigurationRequest'
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: Authentication policy configuration updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                  result:
+                    $ref: '#/components/schemas/AuthenticationPolicyConfig'
+        '400':
+          description: Invalid request parameters or body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions or invalid organization/tenant access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization, tenant, or authentication policy configuration not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete authentication policy configuration by ID within organization
+      description: Deletes a specific authentication policy configuration for a tenant within an organization
+      tags:
+        - organization-authentication-policy-config
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: Authentication policy configuration deleted successfully
+        '403':
+          description: Insufficient permissions or invalid organization/tenant access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization, tenant, or authentication policy configuration not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Organization-level Tenant Management API
+  /v1/management/organizations/{organization-id}/tenants:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+    get:
+      summary: List tenants within organization
+      description: Retrieves a list of tenants for a specific organization
+      tags:
+        - organization-tenant
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Tenant list retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tenant'
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Create tenant within organization
+      description: Creates a new tenant for a specific organization
+      tags:
+        - organization-tenant
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantCreateRequest'
+      responses:
+        '201':
+          description: Tenant created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: Whether this was a dry run
+                  result:
+                    $ref: '#/components/schemas/Tenant'
+        '400':
+          description: Invalid request data or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: Get tenant within organization
+      description: Retrieves a specific tenant for an organization
+      tags:
+        - organization-tenant
+      responses:
+        '200':
+          description: Tenant retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+        '403':
+          description: Insufficient permissions or invalid organization/tenant access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update tenant within organization
+      description: Updates a specific tenant for an organization
+      tags:
+        - organization-tenant
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantUpdateRequest'
+      responses:
+        '200':
+          description: Tenant updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: Whether this was a dry run
+                  result:
+                    $ref: '#/components/schemas/Tenant'
+        '400':
+          description: Invalid request data or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions or invalid organization/tenant access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete tenant within organization
+      description: Deletes a specific tenant for an organization
+      tags:
+        - organization-tenant
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: Tenant deleted successfully
+        '403':
+          description: Insufficient permissions or invalid organization/tenant access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Organization-level Client Management API
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/clients:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: List clients within organization tenant
+      description: Retrieves a list of OAuth/OIDC clients for a specific tenant within an organization
+      tags:
+        - organization-client
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - name: client_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by specific client ID
+        - name: client_name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by client name
+      responses:
+        '200':
+          description: Client list retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Client'
+                  total_count:
+                    type: integer
+                    description: Total number of clients
+                  limit:
+                    type: integer
+                    description: Maximum number of results returned
+                  offset:
+                    type: integer
+                    description: Number of results skipped
+        '403':
+          description: Insufficient permissions or invalid organization/tenant access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Create client within organization tenant
+      description: Creates a new OAuth/OIDC client for a specific tenant within an organization
+      tags:
+        - organization-client
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientCreateRequest'
+      responses:
+        '201':
+          description: Client created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: Whether this was a dry run
+                  result:
+                    $ref: '#/components/schemas/Client'
+        '400':
+          description: Invalid request data or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions or invalid organization/tenant access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/clients/{client-id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/ClientId'
+    get:
+      summary: Get client within organization tenant
+      description: Retrieves a specific OAuth/OIDC client for a tenant within an organization
+      tags:
+        - organization-client
+      responses:
+        '200':
+          description: Client retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '403':
+          description: Insufficient permissions or invalid organization/tenant access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization, tenant, or client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update client within organization tenant
+      description: Updates a specific OAuth/OIDC client for a tenant within an organization
+      tags:
+        - organization-client
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientUpdateRequest'
+      responses:
+        '200':
+          description: Client updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: Whether this was a dry run
+                  result:
+                    $ref: '#/components/schemas/Client'
+        '400':
+          description: Invalid request data or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions or invalid organization/tenant access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization, tenant, or client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete client within organization tenant
+      description: Deletes a specific OAuth/OIDC client for a tenant within an organization
+      tags:
+        - organization-client
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: Client deleted successfully
+        '200':
+          description: Dry run deletion completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Confirmation message
+                  client_id:
+                    type: string
+                    description: ID of the client that would be deleted
+        '403':
+          description: Insufficient permissions or invalid organization/tenant access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization, tenant, or client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Organization-level Authorization Server Management API
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authorization-server:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: Get authorization server configuration for organization tenant
+      description: Retrieves the authorization server configuration for a specific tenant within an organization
+      tags:
+        - organization-authorization-server
+      responses:
+        '200':
+          description: Authorization server configuration retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenIDConfiguration'
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update authorization server configuration for organization tenant
+      description: Updates the authorization server configuration for a specific tenant within an organization
+      tags:
+        - organization-authorization-server
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenIDConfiguration'
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: Authorization server configuration updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: Indicates if this was a dry run operation
+                  result:
+                    $ref: '#/components/schemas/OpenIDConfiguration'
+        '400':
+          description: Invalid request body or validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Organization-level Permission Management API
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/permissions:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: List permissions within organization tenant
+      description: Retrieves a list of permissions for a specific tenant within an organization
+      tags:
+        - organization-permission
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Permissions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Permission'
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Create permission within organization tenant
+      description: Creates a new permission for a specific tenant within an organization
+      tags:
+        - organization-permission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionCreateRequest'
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '201':
+          description: Permission created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: Indicates if this was a dry run operation
+                  result:
+                    $ref: '#/components/schemas/Permission'
+        '400':
+          description: Invalid request body or validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/permissions/{permission-id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/PermissionId'
+    get:
+      summary: Get permission within organization tenant
+      description: Retrieves a specific permission for a tenant within an organization
+      tags:
+        - organization-permission
+      responses:
+        '200':
+          description: Permission retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Permission, organization, or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update permission within organization tenant
+      description: Updates a specific permission for a tenant within an organization
+      tags:
+        - organization-permission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionUpdateRequest'
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: Permission updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: Indicates if this was a dry run operation
+                  result:
+                    $ref: '#/components/schemas/Permission'
+        '400':
+          description: Invalid request body or validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Permission, organization, or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete permission within organization tenant
+      description: Deletes a specific permission for a tenant within an organization
+      tags:
+        - organization-permission
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: Permission deleted successfully
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Permission, organization, or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Organization-level User Management API
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: List users within organization tenant
+      description: Retrieves a list of users for a specific tenant within an organization
+      tags:
+        - organization-user
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Users retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OrganizationUser'
+                  total_count:
+                    type: integer
+                    description: Total number of users
+                  limit:
+                    type: integer
+                    description: Number of items per page
+                  offset:
+                    type: integer
+                    description: Starting position
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Create user within organization tenant
+      description: Creates a new user for a specific tenant within an organization
+      tags:
+        - organization-user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationUserCreateRequest'
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: Indicates if this was a dry run operation
+                  result:
+                    $ref: '#/components/schemas/OrganizationUser'
+        '400':
+          description: Invalid request body or validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserValidationErrorResponse'
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/UserId'
+    get:
+      summary: Get user within organization tenant
+      description: Retrieves a specific user for a tenant within an organization
+      tags:
+        - organization-user
+      responses:
+        '200':
+          description: User retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationUser'
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User, organization, or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update user within organization tenant
+      description: Updates a specific user for a tenant within an organization
+      tags:
+        - organization-user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationUserUpdateRequest'
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: Indicates if this was a dry run operation
+                  result:
+                    $ref: '#/components/schemas/OrganizationUser'
+        '400':
+          description: Invalid request body or validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserValidationErrorResponse'
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User, organization, or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete user within organization tenant
+      description: Deletes a specific user for a tenant within an organization
+      tags:
+        - organization-user
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: User deleted successfully
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User, organization, or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      summary: Partially update user within organization tenant
+      description: Partially updates a specific user for a tenant within an organization
+      tags:
+        - organization-user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationUserUpdateRequest'
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: Indicates if this was a dry run operation
+                  result:
+                    $ref: '#/components/schemas/OrganizationUser'
+        '400':
+          description: Invalid request body or validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserValidationErrorResponse'
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User, organization, or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/password:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/UserId'
+    put:
+      summary: Update user password within organization tenant
+      description: Updates a specific user's password for a tenant within an organization
+      tags:
+        - organization-user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationUserPasswordUpdateRequest'
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: User password updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: Indicates if this was a dry run operation
+                  result:
+                    $ref: '#/components/schemas/OrganizationUser'
+        '400':
+          description: Invalid request body or validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserValidationErrorResponse'
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User, organization, or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/roles:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/UserId'
+    patch:
+      summary: Update user roles within organization tenant
+      description: Updates a specific user's roles for a tenant within an organization
+      tags:
+        - organization-user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationUserRolesUpdateRequest'
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: User roles updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: Indicates if this was a dry run operation
+                  result:
+                    $ref: '#/components/schemas/OrganizationUser'
+        '400':
+          description: Invalid request body or validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserValidationErrorResponse'
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User, organization, or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/tenant-assignments:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/UserId'
+    patch:
+      summary: Update user tenant assignments within organization
+      description: Updates a specific user's tenant assignments within an organization
+      tags:
+        - organization-user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationUserTenantAssignmentsUpdateRequest'
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: User tenant assignments updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: Indicates if this was a dry run operation
+                  result:
+                    $ref: '#/components/schemas/OrganizationUser'
+        '400':
+          description: Invalid request body or validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserValidationErrorResponse'
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User, organization, or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/organization-assignments:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/UserId'
+    patch:
+      summary: Update user organization assignments
+      description: Updates a specific user's organization assignments
+      tags:
+        - organization-user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationUserOrganizationAssignmentsUpdateRequest'
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: User organization assignments updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: Indicates if this was a dry run operation
+                  result:
+                    $ref: '#/components/schemas/OrganizationUser'
+        '400':
+          description: Invalid request body or validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserValidationErrorResponse'
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User, organization, or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Organization-level Role Management API
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/roles:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: List roles within organization tenant
+      description: Retrieves a list of roles for a specific tenant within an organization
+      tags:
+        - organization-role
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Roles retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Role'
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Create role within organization tenant
+      description: Creates a new role for a specific tenant within an organization
+      tags:
+        - organization-role
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleCreateRequest'
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '201':
+          description: Role created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: Indicates if this was a dry run operation
+                  result:
+                    $ref: '#/components/schemas/Role'
+        '400':
+          description: Invalid request body or validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/roles/{role-id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/RoleId'
+    get:
+      summary: Get role within organization tenant
+      description: Retrieves a specific role for a tenant within an organization
+      tags:
+        - organization-role
+      responses:
+        '200':
+          description: Role retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Role, organization, or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update role within organization tenant
+      description: Updates a specific role for a tenant within an organization
+      tags:
+        - organization-role
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleUpdateRequest'
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: Role updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: Indicates if this was a dry run operation
+                  result:
+                    $ref: '#/components/schemas/Role'
+        '400':
+          description: Invalid request body or validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Role, organization, or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete role within organization tenant
+      description: Deletes a specific role for a tenant within an organization
+      tags:
+        - organization-role
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: Role deleted successfully
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Role, organization, or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/security-events:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: List organization security events
+      description: Retrieves a list of security events within an organization tenant
+      tags:
+        - organization-security-event
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of security events to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: Number of security events to skip for pagination
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: event_type
+          in: query
+          description: Filter by security event type
+          schema:
+            type: string
+        - name: from
+          in: query
+          description: Start timestamp for filtering security events (ISO 8601 format)
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          description: End timestamp for filtering security events (ISO 8601 format)
+          schema:
+            type: string
+            format: date-time
+        - name: client_id
+          in: query
+          description: Filter by client identifier
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          description: Filter by user identifier
+          schema:
+            type: string
+            format: uuid
+        - name: external_user_id
+          in: query
+          description: Filter by external user identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of organization security events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SecurityEvent'
+                  total_count:
+                    type: integer
+                    description: Total number of security events
+                  limit:
+                    type: integer
+                    description: Maximum number of events per page
+                  offset:
+                    type: integer
+                    description: Number of events skipped
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Organization or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/security-events/{event-id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - name: event-id
+        in: path
+        required: true
+        description: Security event identifier
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get organization security event details
+      description: Retrieves detailed information about a specific security event within an organization tenant
+      tags:
+        - organization-security-event
+      responses:
+        '200':
+          description: Security event details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityEvent'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions or invalid organization access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Security event, organization, or tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Organization-level Audit Log Management API
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/audit-logs:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: List organization audit logs
+      description: |
+        組織レベルでの監査ログ一覧を取得します。指定された組織とテナントに関連する監査ログを検索条件に基づいて取得できます。
+
+        **動的属性フィルタ**: `attributes.*` パラメータを使用して監査ログの属性による絞り込みが可能です。
+        例：`attributes.resource_type=user`, `attributes.operation=create`
+      tags:
+        - organization-audit-log
+      parameters:
+        - name: limit
+          in: query
+          description: 取得する監査ログの最大件数
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: ページネーション用のオフセット（スキップする監査ログ数）
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: from
+          in: query
+          description: 監査ログ検索の開始日時（ISO 8601形式）。デフォルトは7日前
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          description: 監査ログ検索の終了日時（ISO 8601形式）。デフォルトは明日
+          schema:
+            type: string
+            format: date-time
+        - name: type
+          in: query
+          description: 監査ログタイプによるフィルタ
+          schema:
+            type: string
+        - name: description
+          in: query
+          description: 説明テキストによるフィルタ
+          schema:
+            type: string
+        - name: target_resource
+          in: query
+          description: 対象リソースによるフィルタ
+          schema:
+            type: string
+        - name: target_action
+          in: query
+          description: 対象アクションによるフィルタ
+          schema:
+            type: string
+        - name: client_id
+          in: query
+          description: クライアント識別子によるフィルタ
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          description: 内部ユーザIDによるフィルタ
+          schema:
+            type: string
+            format: uuid
+        - name: external_user_id
+          in: query
+          description: 外部ユーザ識別子によるフィルタ
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 監査ログ一覧が正常に取得されました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+                  total_count:
+                    type: integer
+                    description: 総監査ログ数
+                  limit:
+                    type: integer
+                    description: 要求された最大件数
+                  offset:
+                    type: integer
+                    description: 要求されたオフセット
+        '401':
+          description: 認証が必要です
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足または組織アクセス無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 内部サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/audit-logs/{log-id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - name: log-id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: 監査ログの識別子
+    get:
+      summary: Get organization audit log details
+      description: 組織レベルでの特定の監査ログの詳細情報を取得します。
+      tags:
+        - organization-audit-log
+      responses:
+        '200':
+          description: 監査ログ詳細が正常に取得されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLog'
+        '401':
+          description: 認証が必要です
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足または組織アクセス無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 監査ログ、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 内部サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   parameters:
     TenantId:
@@ -151,14 +2118,61 @@ components:
       schema:
         type: string
       description: Identifier of the tenant
+    OrganizationId:
+      name: organization-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Identifier of the organization
+    PermissionId:
+      name: permission-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Identifier of the permission
+    RoleId:
+      name: role-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Identifier of the role
+    ClientId:
+      name: client-id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Identifier of the OAuth/OIDC client
+    UserId:
+      name: user-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Identifier of the user
     AuthenticationConfigId:
-      name: id
+      name: config-id
       in: path
       required: true
       schema:
         type: string
         format: uuid
       description: Identifier of the authentication configuration
+    AuthenticationPolicyConfigId:
+      name: config-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Identifier of the authentication policy configuration
     DryRun:
       name: dry_run
       in: query
@@ -185,6 +2199,154 @@ components:
       description: Index to start returning items from
 
   schemas:
+    SecurityEvent:
+      type: object
+      required:
+        - id
+        - type
+        - description
+        - tenant
+        - client
+        - detail
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the security event
+        type:
+          type: string
+          description: Type of security event (e.g., authentication_failure, suspicious_login)
+        description:
+          type: string
+          description: Human-readable description of the security event
+        tenant:
+          type: object
+          required:
+            - id
+            - issuer
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: Tenant identifier
+            issuer:
+              type: string
+              format: uri
+              description: Tenant issuer URL
+        client:
+          type: object
+          required:
+            - id
+            - client_id
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: Internal client identifier
+            client_id:
+              type: string
+              description: OAuth client identifier
+        user:
+          type: object
+          description: User information if available
+          properties:
+            id:
+              type: string
+              description: User identifier
+            ex_sub:
+              type: string
+              description: External subject identifier
+        detail:
+          type: object
+          description: Additional event-specific details
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the security event occurred
+
+    AuditLog:
+      type: object
+      required:
+        - id
+        - type
+        - description
+        - tenant_id
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 監査ログの一意識別子
+        type:
+          type: string
+          description: 監査ログの種別（例：user_create, permission_update, authentication_failure）
+        description:
+          type: string
+          description: 監査ログの説明文
+        tenant_id:
+          type: string
+          format: uuid
+          description: テナント識別子
+        client_id:
+          type: string
+          nullable: true
+          description: クライアント識別子（該当する場合）
+        user_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: 内部ユーザ識別子（該当する場合）
+        external_user_id:
+          type: string
+          nullable: true
+          description: 外部ユーザ識別子（該当する場合）
+        user_payload:
+          type: object
+          nullable: true
+          description: ユーザに関する追加情報
+          additionalProperties: true
+        target_resource:
+          type: string
+          nullable: true
+          description: 操作対象のリソース名
+        target_resource_action:
+          type: string
+          nullable: true
+          description: 操作対象のリソースに対するアクション
+        ip_address:
+          type: string
+          nullable: true
+          description: 操作元のIPアドレス
+        user_agent:
+          type: string
+          nullable: true
+          description: 操作元のユーザエージェント文字列
+        before:
+          type: object
+          nullable: true
+          description: 変更前の状態（該当する場合）
+          additionalProperties: true
+        after:
+          type: object
+          nullable: true
+          description: 変更後の状態（該当する場合）
+          additionalProperties: true
+        attributes:
+          type: object
+          nullable: true
+          description: 監査ログの追加属性
+          additionalProperties: true
+        dry_run:
+          type: boolean
+          description: ドライランかどうか
+          default: false
+        created_at:
+          type: string
+          format: date-time
+          description: 監査ログが作成された日時
+
     OpenIDConfiguration:
       type: object
       required:
@@ -436,7 +2598,7 @@ components:
           format: uri
           description: OPTIONAL. URL of a page containing human-readable information that developers might want or need to know when using the OpenID Provider. In particular, if the OpenID Provider does not support Dynamic Client Registration, then information on how to register Clients needs to be provided in this documentation.
         claims_locales_supported:
-          type: string
+          type: array
           items:
             type: string
           description: OPTIONAL. Languages and scripts supported for values in Claims being returned, represented as a JSON array of BCP47 [RFC5646] language tag values. Not all languages and scripts are necessarily supported for all Claim values.
@@ -531,87 +2693,104 @@ components:
           type: object
           description: Extension configuration parameters for authorization server behavior.
           properties:
-            accessTokenType:
+            access_token_type:
               type: string
               enum:
                 - opaque
                 - jwt
               default: opaque
               description: Specifies the format of issued access tokens. Either 'opaque' or 'jwt'.
-            authorizationCodeValidDuration:
+            authorization_code_valid_duration:
               type: integer
               default: 600
               description: Authorization code validity duration in seconds.
-            tokenSignedKeyId:
+            token_signed_key_id:
               type: string
               description: Key ID used for signing access tokens.
-            idTokenSignedKeyId:
+            id_token_signed_key_id:
               type: string
               description: Key ID used for signing ID tokens.
-            accessTokenDuration:
+            access_token_duration:
               type: integer
               default: 1800
               description: Access token validity duration in seconds.
-            refreshTokenDuration:
+            refresh_token_duration:
               type: integer
               default: 3600
               description: Refresh token validity duration in seconds.
-            idTokenDuration:
+            refresh_token_strategy:
+              type: string
+              default: FIXED
+              description: Refresh token issuing strategy.
+            rotate_refresh_token:
+              type: boolean
+              default: true
+              description: Whether to rotate refresh tokens.
+            id_token_duration:
               type: integer
               default: 3600
               description: ID token validity duration in seconds.
-            idTokenStrictMode:
+            id_token_strict_mode:
               type: boolean
               default: false
               description: Enforces strict validation on ID token claims.
-            defaultMaxAge:
+            default_max_age:
               type: integer
               default: 86400
               description: Default maximum authentication age in seconds.
-            authorizationResponseDuration:
+            authorization_response_duration:
               type: integer
               default: 60
               description: Authorization response lifetime in seconds.
-            backchannelAuthRequestExpiresIn:
+            backchannel_authentication_request_expires_in:
               type: integer
               default: 300
               description: CIBA backchannel auth request expiration time.
-            backchannelAuthPollingInterval:
+            backchannel_authentication_polling_interval:
               type: integer
               default: 5
               description: CIBA backchannel auth polling interval.
-            oauthAuthorizationRequestExpiresIn:
+            required_backchannel_auth_user_code:
+              type: boolean
+              default: false
+              description: Whether backchannel auth user code is required.
+            backchannel_auth_user_code_type:
+              type: string
+              default: password
+              description: Type of backchannel auth user code.
+            default_ciba_authentication_interaction_type:
+              type: string
+              default: authentication-device-notification
+              description: Default CIBA authentication interaction type.
+            oauth_authorization_request_expires_in:
               type: integer
               default: 1800
               description: OAuth authorization request expiration time.
-            fapiBaselineScopes:
+            fapi_baseline_scopes:
               type: array
               items:
                 type: string
               description: List of scopes indicating FAPI Baseline conformance.
-            fapiAdvanceScopes:
+            fapi_advance_scopes:
               type: array
               items:
                 type: string
               description: List of scopes indicating FAPI Advanced conformance.
-            authenticationPolicies:
+            required_identity_verification_scopes:
               type: array
               items:
-                type: object
-              description: Authentication policies applied to this tenant.
-            enabledCustomClaimsScopeMapping:
+                type: string
+              description: List of scopes requiring identity verification.
+            custom_claims_scope_mapping:
               type: boolean
               description: Enables mapping of custom claims based on scope.
-            enabledAccessTokenUserCustomProperties:
-              type: boolean
-              description: Enables embedding user custom properties in access token.
-            enabledAccessTokenSelectiveUserCustomProperties:
+            access_token_selective_user_custom_properties:
               type: boolean
               description: Enables selective inclusion of user custom properties in access token.
-            enabledAccessTokenVerifiedClaims:
+            access_token_verified_claims:
               type: boolean
               description: Enables inclusion of verified claims in access token.
-            enabledAccessTokenSelectiveVerifiedClaims:
+            access_token_selective_verified_claims:
               type: boolean
               description: Enables selective inclusion of verified claims in access token.
 
@@ -828,132 +3007,244 @@ components:
         software_version:
           type: string
           description: ""
+        extension:
+          type: object
+          description: OPTIONAL. Extension properties for client configuration
+          properties:
+            access_token_duration:
+              type: integer
+              minimum: 1
+              description: OPTIONAL. Duration of access tokens in seconds
+            refresh_token_duration:
+              type: integer
+              minimum: 1
+              description: OPTIONAL. Duration of refresh tokens in seconds
+            supported_jar:
+              type: boolean
+              default: false
+              description: OPTIONAL. JWT Authorization Request (JAR) support flag
+            available_federations:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Federation identifier
+                  type:
+                    type: string
+                    enum: [oauth2, saml2, oidc]
+                    description: Federation type
+                  sso_provider:
+                    type: string
+                    description: SSO provider name
+                  auto_selected:
+                    type: boolean
+                    default: false
+                    description: Auto-selection flag for federation
+                required: [id, type]
+              description: OPTIONAL. List of available federation configurations
+            default_ciba_authentication_interaction_type:
+              type: string
+              enum:
+                - authentication-device-notification-no-action
+                - authentication-device-notification
+              default: authentication-device-notification
+              description: OPTIONAL. Default CIBA authentication interaction type
 
 
     AuthenticationConfig:
       type: object
+      description: Authentication configuration response based on AuthenticationConfigurationRequest Java class
       required:
         - id
         - type
-        - payload
       properties:
         id:
           type: string
           format: uuid
+          description: Configuration identifier
         type:
           type: string
-          enum:
-            - password
-            - sms
-            - email
-            - fido-uaf
-            - webauthn
-            - legacy
-            - authentication-device
-        payload:
+          description: Authentication configuration type
+        tenant_id:
+          type: string
+          format: uuid
+          description: Tenant identifier
+        attributes:
           type: object
-          oneOf:
-            - $ref: '#/components/schemas/InitialRegistrationConfig'
-            - $ref: '#/components/schemas/SmsAuthenticationExternalServiceConfig'
-            - $ref: '#/components/schemas/EmailAuthenticationSmtpConfig'
-            - $ref: '#/components/schemas/FidoUafExternalServiceConfig'
-            - $ref: '#/components/schemas/WebAuthn4jConfig'
-            - $ref: '#/components/schemas/AuthenticationDeviceConfig'
-            - $ref: '#/components/schemas/LegacyAuthnConfig'
-          discriminator:
-            propertyName: type
-            mapping:
-              authentication-device: '#/components/schemas/AuthenticationDeviceConfig'
-              smtp: '#/components/schemas/EmailAuthenticationSmtpConfig'
-              fido-uaf: '#/components/schemas/FidoUafExternalServiceConfig'
-              legacy-authn: '#/components/schemas/LegacyAuthnConfig'
+          description: Configuration attributes
+          additionalProperties: true
+        metadata:
+          type: object
+          description: Configuration metadata
+          additionalProperties: true
+        interactions:
+          type: object
+          description: Authentication interaction configurations
+          additionalProperties:
+            $ref: '#/components/schemas/AuthenticationInteractionConfig'
+        created_at:
+          type: string
+          format: date-time
+          description: Configuration creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Configuration last update timestamp
+      additionalProperties: false
 
-
-    InitialRegistrationConfig:
-      required:
-        - id
-        - type
-        - payload
+    AuthenticationConfigurationRequest:
+      type: object
+      description: Authentication configuration request based on AuthenticationConfigurationRequest Java class
       properties:
         id:
           type: string
           format: uuid
+          description: Configuration identifier
+        type:
+          type: string
+          description: Authentication configuration type
+        attributes:
+          type: object
+          description: Configuration-specific attributes
+          additionalProperties: true
+        metadata:
+          type: object
+          description: Configuration metadata
+          additionalProperties: true
+        interactions:
+          type: object
+          description: Authentication interaction configurations mapping
+          additionalProperties:
+            $ref: '#/components/schemas/AuthenticationInteractionConfig'
+      additionalProperties: true
+
+    AuthenticationInteractionConfig:
+      type: object
+      description: Authentication interaction configuration based on AuthenticationInteractionConfig Java class
+      properties:
+        request:
+          type: object
+          description: Request configuration settings (AuthenticationRequestConfig)
+          properties:
+            schema:
+              type: object
+              description: JSON schema definition for request validation
+              additionalProperties: true
+          additionalProperties: true
+        preHook:
+          type: object
+          description: Pre-processing hook configuration (AuthenticationPreHookConfig)
+          properties:
+            additional_parameters:
+              type: array
+              description: Additional parameter configurations
+              items:
+                type: object
+                additionalProperties: true
+          additionalProperties: true
+        execution:
+          type: object
+          description: Execution configuration settings (AuthenticationExecutionConfig)
+          properties:
+            function:
+              type: string
+              description: Execution function name
+            previous_interaction:
+              type: object
+              description: Previous interaction resolution config
+              additionalProperties: true
+            http_request:
+              type: object
+              description: HTTP request execution configuration
+              additionalProperties: true
+            http_requests:
+              type: array
+              description: Multiple HTTP request configurations
+              items:
+                type: object
+                additionalProperties: true
+            mock:
+              type: object
+              description: Mock configuration for testing
+              additionalProperties: true
+            details:
+              type: object
+              description: Additional execution details
+              additionalProperties: true
+            http_request_store:
+              type: object
+              description: HTTP request store configuration
+              additionalProperties: true
+            http_requests_store:
+              type: object
+              description: Multiple HTTP requests store configuration
+              additionalProperties: true
+          additionalProperties: true
+        userResolve:
+          type: object
+          description: User resolution configuration (AuthenticationResultConfig)
+          properties:
+            user_mapping_rules:
+              type: array
+              description: ユーザーマッピングルール
+              items:
+                $ref: '#/components/schemas/MappingRule'
+          additionalProperties: true
+        postHook:
+          type: object
+          description: Post-processing hook configuration (AuthenticationPostHookConfig)
+          properties:
+            additional_parameters:
+              type: array
+              description: 追加パラメータ設定
+              items:
+                $ref: '#/components/schemas/AuthenticationAdditionalParameterConfig'
+          additionalProperties: true
+        response:
+          type: object
+          description: Response configuration settings (AuthenticationResponseConfig)
+          properties:
+            body_mapping_rules:
+              type: array
+              description: ボディマッピングルール
+              items:
+                $ref: '#/components/schemas/MappingRule'
+          additionalProperties: true
+      additionalProperties: true
+
+    InitialRegistrationConfig:
+      type: object
+      description: Initial registration authentication configuration
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Configuration identifier
         type:
           type: string
           enum:
             - initial-registration
-        payload:
+          description: Configuration type
+        email:
+          type: string
+          format: email
+          description: User email for registration
+        provider_id:
+          type: string
+          description: Identity provider identifier
+          default: idp-server
+        attributes:
           type: object
-          description: Standard user registration or update request containing user profile and credential attributes.
-          required:
-            - type
-            - details
-          properties:
-            type:
-              type: string
-              enum:
-                - standard
-              description: Must be 'standard' for this schema.
-            details:
-              type: object
-              description: Container for the schema definition of user attributes to be registered or updated.
-              required:
-                - standard
-              properties:
-                standard:
-                  type: object
-                  description: A JsonSchema-based definition of user attributes including required fields, type constraints, and validation rules.
-                  required:
-                    - required
-                    - properties
-                  properties:
-                    required:
-                      type: array
-                      items:
-                        type: string
-                    properties:
-                      additionalProperties:
-                        type: object
-                        required:
-                          - type
-                        properties:
-                          type:
-                            type: string
-                            enum:
-                              - string
-                              - object
-                              - array
-                              - integer
-                              - boolean
-                            description: The JSON type of the attribute.
-                          items:
-                            type: string
-                            description: Data type of array elements if the type is 'array'.
-                          enum:
-                            type: array
-                            description: Set of allowed values for the attribute.
-                          minLength:
-                            type: integer
-                            description: Minimum length constraint for string values.
-                          maxLength:
-                            type: integer
-                            description: Maximum length constraint for string values.
-                          pattern:
-                            type: string
-                            description: Regular expression that string values must match.
-                          format:
-                            type: string
-                            enum:
-                              - uri
-                              - uuid
-                              - date
-                              - email
-                              - mobile_phone_number
-                            description: Semantic format of the attribute, e.g., 'email', 'uri', 'date'.
-                          description:
-                            type: string
-                            description: Human-readable explanation of the attribute's purpose.
-
+          description: Additional configuration attributes
+        metadata:
+          type: object
+          description: Configuration metadata
+        interactions:
+          type: object
+          description: Authentication interaction configurations
+      additionalProperties: true
 
     AuthenticationDeviceConfig:
       required:
@@ -1465,7 +3756,1575 @@ components:
                               - list.number
                               - address
 
+    # Organization-level API Schemas
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error code
+        error_description:
+          type: string
+          description: Human-readable error description
+        error_messages:
+          type: array
+          description: Human-readable validation error message.
+        error_details:
+          type: object
+          additionalProperties: true
+          description: Additional error details
 
+    Permission:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the permission
+        name:
+          type: string
+          maxLength: 255
+          description: Permission name (must be unique within tenant)
+        description:
+          type: string
+          description: Human-readable description of the permission
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
 
+    PermissionCreateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Permission name (must be unique within tenant)
+        description:
+          type: string
+          description: Human-readable description of the permission
 
+    PermissionUpdateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Permission name (must be unique within tenant)
+        description:
+          type: string
+          description: Human-readable description of the permission
+
+    Tenant:
+      type: object
+      required:
+        - id
+        - name
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the tenant
+        name:
+          type: string
+          maxLength: 255
+          description: Tenant name
+        type:
+          type: string
+          enum:
+            - BUSINESS
+            - PERSONAL
+          description: Tenant type
+        domain:
+          type: string
+          format: uri
+          description: Tenant domain URL
+        description:
+          type: string
+          description: Human-readable description of the tenant
+        authorization_provider:
+          type: string
+          description: Authorization provider identifier
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    TenantCreateRequest:
+      type: object
+      required:
+        - tenant
+        - authorization_server
+      properties:
+        tenant:
+          type: object
+          required:
+            - id
+            - name
+            - tenant_type
+            - domain
+            - authorization_provider
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: Unique identifier for the tenant
+            name:
+              type: string
+              maxLength: 255
+              description: Tenant name
+            tenant_type:
+              type: string
+              enum:
+                - BUSINESS
+                - PERSONAL
+              description: Tenant type
+            domain:
+              type: string
+              format: uri
+              description: Tenant domain URL
+            description:
+              type: string
+              description: Human-readable description of the tenant
+            authorization_provider:
+              type: string
+              description: Authorization provider identifier
+        authorization_server:
+          $ref: '#/components/schemas/OpenIDConfiguration'
+
+    TenantUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Tenant name
+        tenant_type:
+          type: string
+          enum:
+            - BUSINESS
+            - PERSONAL
+          description: Tenant type
+        description:
+          type: string
+          description: Human-readable description of the tenant
+
+    ClientCreateRequest:
+      type: object
+      required:
+        - redirect_uris
+      properties:
+        client_id:
+          type: string
+          format: uuid
+          description: Unique Client Identifier. It MUST NOT be currently valid for any other registered Client.
+        client_id_alias:
+          type: string
+          maxLength: 255
+          description: Unique Client Id Alias
+        client_secret:
+          type: string
+          description: OPTIONAL. Client Secret. The same Client Secret value MUST NOT be assigned to multiple Clients.
+        client_name:
+          type: string
+          description: OPTIONAL. Name of the Client to be presented to the End-User.
+        client_uri:
+          type: string
+          format: uri
+          description: OPTIONAL. URL of the home page of the Client.
+        logo_uri:
+          type: string
+          format: uri
+          description: OPTIONAL. URL that references a logo for the Client application.
+        contacts:
+          type: array
+          items:
+            type: string
+          description: OPTIONAL. Array of e-mail addresses of people responsible for this Client.
+        policy_uri:
+          type: string
+          format: uri
+          description: OPTIONAL. URL that the Relying Party Client provides to the End-User to read about how the profile data will be used.
+        tos_uri:
+          type: string
+          format: uri
+          description: OPTIONAL. URL that the Relying Party Client provides to the End-User to read about the Relying Party's terms of service.
+        jwks_uri:
+          type: string
+          format: uri
+          description: OPTIONAL. URL for the Client's JWK Set document, which MUST use the https scheme.
+        jwks:
+          type: string
+          description: OPTIONAL. Client's JWK Set document, passed by value.
+        application_type:
+          type: string
+          enum:
+            - native
+            - web
+          default: web
+          description: OPTIONAL. Kind of the application. The default, if omitted, is web.
+        grant_types:
+          type: array
+          items:
+            type: string
+            enum:
+              - authorization_code
+              - implicit
+              - refresh_token
+              - password
+              - client_credentials
+              - urn:openid:params:grant-type:ciba
+          description: List of OAuth 2.0 grant types the client can use
+        redirect_uris:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: List of valid redirect URIs for the client
+        response_types:
+          type: array
+          items:
+            type: string
+            enum:
+              - code
+              - token
+              - id_token
+              - "code token"
+              - "code id_token"
+              - "token id_token"
+              - "code token id_token"
+              - none
+          description: List of OAuth 2.0 response types the client can use
+        scope:
+          type: string
+          description: Space-separated list of OAuth 2.0 scopes
+        token_endpoint_auth_method:
+          type: string
+          enum:
+            - client_secret_post
+            - client_secret_basic
+            - client_secret_jwt
+            - private_key_jwt
+            - none
+          description: Authentication method for the token endpoint
+        subject_type:
+          type: string
+          enum:
+            - pairwise
+            - public
+          description: OPTIONAL. subject_type requested for responses to this Client.
+        sector_identifier_uri:
+          type: string
+          format: uri
+          description: OPTIONAL. URL using the https scheme to be used in calculating Pseudonymous Identifiers by the OP.
+        id_token_signed_response_alg:
+          type: string
+          enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: OPTIONAL. JWS alg algorithm REQUIRED for signing the ID Token issued to this Client.
+        id_token_encrypted_response_alg:
+          type: string
+          enum:
+            - RSA1_5
+            - A128KW
+          description: OPTIONAL. JWE alg algorithm REQUIRED for encrypting the ID Token issued to this Client.
+        id_token_encrypted_response_enc:
+          type: string
+          enum:
+            - A128CBC-HS256
+            - A128GCM
+            - A256GCM
+          description: OPTIONAL. JWE enc algorithm REQUIRED for encrypting the ID Token issued to this Client.
+        userinfo_signed_response_alg:
+          type: string
+          enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: OPTIONAL. JWS alg algorithm REQUIRED for signing UserInfo Responses.
+        userinfo_encrypted_response_alg:
+          type: string
+          enum:
+            - RSA1_5
+            - A128KW
+          description: OPTIONAL. JWE alg algorithm REQUIRED for encrypting UserInfo Responses.
+        userinfo_encrypted_response_enc:
+          type: string
+          enum:
+            - A128CBC-HS256
+            - A128GCM
+            - A256GCM
+          description: OPTIONAL. JWE enc algorithm REQUIRED for encrypting UserInfo Responses.
+        request_object_signing_alg:
+          type: string
+          enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: OPTIONAL. JWS alg algorithm that MUST be used for signing Request Objects sent to the OP.
+        request_object_encryption_alg:
+          type: string
+          enum:
+            - RSA1_5
+            - A128KW
+          description: OPTIONAL. JWE alg algorithm the RP is declaring that it may use for encrypting Request Objects sent to the OP.
+        request_object_encryption_enc:
+          type: string
+          enum:
+            - A128CBC-HS256
+            - A128GCM
+            - A256GCM
+          description: OPTIONAL. JWE enc algorithm the RP is declaring that it may use for encrypting Request Objects sent to the OP.
+        token_endpoint_auth_signing_alg:
+          type: string
+          enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: OPTIONAL. JWS alg algorithm that MUST be used for signing the JWT used to authenticate the Client at the Token Endpoint.
+        default_max_age:
+          type: integer
+          description: OPTIONAL. Default Maximum Authentication Age.
+        require_auth_time:
+          type: boolean
+          default: false
+          description: OPTIONAL. Boolean value specifying whether the auth_time Claim in the ID Token is REQUIRED.
+        default_acr_values:
+          type: array
+          items:
+            type: string
+          description: OPTIONAL. Default requested Authentication Context Class Reference values.
+        initiate_login_uri:
+          type: string
+          format: uri
+          description: OPTIONAL. URI using the https scheme that a third party can use to initiate a login by the RP.
+        request_uris:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: OPTIONAL. Array of request_uri values that are pre-registered by the RP for use at the OP.
+        software_id:
+          type: string
+          format: uuid
+          description: OPTIONAL. Software identifier
+        software_version:
+          type: string
+          description: OPTIONAL. Software version
+        extension:
+          type: object
+          description: OPTIONAL. Extension properties for client configuration
+          properties:
+            access_token_duration:
+              type: integer
+              minimum: 1
+              description: OPTIONAL. Duration of access tokens in seconds
+            refresh_token_duration:
+              type: integer
+              minimum: 1
+              description: OPTIONAL. Duration of refresh tokens in seconds
+            supported_jar:
+              type: boolean
+              default: false
+              description: OPTIONAL. JWT Authorization Request (JAR) support flag
+            available_federations:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Federation identifier
+                  type:
+                    type: string
+                    enum: [oauth2, saml2, oidc]
+                    description: Federation type
+                  sso_provider:
+                    type: string
+                    description: SSO provider name
+                  auto_selected:
+                    type: boolean
+                    default: false
+                    description: Auto-selection flag for federation
+                required: [id, type]
+              description: OPTIONAL. List of available federation configurations
+            default_ciba_authentication_interaction_type:
+              type: string
+              enum:
+                - authentication-device-notification-no-action
+                - authentication-device-notification
+              default: authentication-device-notification-no-action
+              description: OPTIONAL. Default CIBA authentication interaction type
+
+    ClientUpdateRequest:
+      type: object
+      properties:
+        client_name:
+          type: string
+          description: OPTIONAL. Name of the Client to be presented to the End-User.
+        client_id_alias:
+          type: string
+          maxLength: 255
+          description: Unique Client Id Alias
+        client_secret:
+          type: string
+          description: OPTIONAL. Client Secret. The same Client Secret value MUST NOT be assigned to multiple Clients.
+        client_uri:
+          type: string
+          format: uri
+          description: OPTIONAL. URL of the home page of the Client.
+        logo_uri:
+          type: string
+          format: uri
+          description: OPTIONAL. URL that references a logo for the Client application.
+        contacts:
+          type: array
+          items:
+            type: string
+          description: OPTIONAL. Array of e-mail addresses of people responsible for this Client.
+        policy_uri:
+          type: string
+          format: uri
+          description: OPTIONAL. URL that the Relying Party Client provides to the End-User to read about how the profile data will be used.
+        tos_uri:
+          type: string
+          format: uri
+          description: OPTIONAL. URL that the Relying Party Client provides to the End-User to read about the Relying Party's terms of service.
+        jwks_uri:
+          type: string
+          format: uri
+          description: OPTIONAL. URL for the Client's JWK Set document, which MUST use the https scheme.
+        jwks:
+          type: string
+          description: OPTIONAL. Client's JWK Set document, passed by value.
+        application_type:
+          type: string
+          enum:
+            - native
+            - web
+          default: web
+          description: OPTIONAL. Kind of the application. The default, if omitted, is web.
+        grant_types:
+          type: array
+          items:
+            type: string
+            enum:
+              - authorization_code
+              - implicit
+              - refresh_token
+              - password
+              - client_credentials
+              - urn:openid:params:grant-type:ciba
+          description: List of OAuth 2.0 grant types the client can use
+        redirect_uris:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: List of valid redirect URIs for the client
+        response_types:
+          type: array
+          items:
+            type: string
+            enum:
+              - code
+              - token
+              - id_token
+              - "code token"
+              - "code id_token"
+              - "token id_token"
+              - "code token id_token"
+              - none
+          description: List of OAuth 2.0 response types the client can use
+        scope:
+          type: string
+          description: Space-separated list of OAuth 2.0 scopes
+        token_endpoint_auth_method:
+          type: string
+          enum:
+            - client_secret_post
+            - client_secret_basic
+            - client_secret_jwt
+            - private_key_jwt
+            - none
+          description: Authentication method for the token endpoint
+        subject_type:
+          type: string
+          enum:
+            - pairwise
+            - public
+          description: OPTIONAL. subject_type requested for responses to this Client.
+        sector_identifier_uri:
+          type: string
+          format: uri
+          description: OPTIONAL. URL using the https scheme to be used in calculating Pseudonymous Identifiers by the OP.
+        id_token_signed_response_alg:
+          type: string
+          enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: OPTIONAL. JWS alg algorithm REQUIRED for signing the ID Token issued to this Client.
+        id_token_encrypted_response_alg:
+          type: string
+          enum:
+            - RSA1_5
+            - A128KW
+          description: OPTIONAL. JWE alg algorithm REQUIRED for encrypting the ID Token issued to this Client.
+        id_token_encrypted_response_enc:
+          type: string
+          enum:
+            - A128CBC-HS256
+            - A128GCM
+            - A256GCM
+          description: OPTIONAL. JWE enc algorithm REQUIRED for encrypting the ID Token issued to this Client.
+        userinfo_signed_response_alg:
+          type: string
+          enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: OPTIONAL. JWS alg algorithm REQUIRED for signing UserInfo Responses.
+        userinfo_encrypted_response_alg:
+          type: string
+          enum:
+            - RSA1_5
+            - A128KW
+          description: OPTIONAL. JWE alg algorithm REQUIRED for encrypting UserInfo Responses.
+        userinfo_encrypted_response_enc:
+          type: string
+          enum:
+            - A128CBC-HS256
+            - A128GCM
+            - A256GCM
+          description: OPTIONAL. JWE enc algorithm REQUIRED for encrypting UserInfo Responses.
+        request_object_signing_alg:
+          type: string
+          enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: OPTIONAL. JWS alg algorithm that MUST be used for signing Request Objects sent to the OP.
+        request_object_encryption_alg:
+          type: string
+          enum:
+            - RSA1_5
+            - A128KW
+          description: OPTIONAL. JWE alg algorithm the RP is declaring that it may use for encrypting Request Objects sent to the OP.
+        request_object_encryption_enc:
+          type: string
+          enum:
+            - A128CBC-HS256
+            - A128GCM
+            - A256GCM
+          description: OPTIONAL. JWE enc algorithm the RP is declaring that it may use for encrypting Request Objects sent to the OP.
+        token_endpoint_auth_signing_alg:
+          type: string
+          enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: OPTIONAL. JWS alg algorithm that MUST be used for signing the JWT used to authenticate the Client at the Token Endpoint.
+        default_max_age:
+          type: integer
+          description: OPTIONAL. Default Maximum Authentication Age.
+        require_auth_time:
+          type: boolean
+          default: false
+          description: OPTIONAL. Boolean value specifying whether the auth_time Claim in the ID Token is REQUIRED.
+        default_acr_values:
+          type: array
+          items:
+            type: string
+          description: OPTIONAL. Default requested Authentication Context Class Reference values.
+        initiate_login_uri:
+          type: string
+          format: uri
+          description: OPTIONAL. URI using the https scheme that a third party can use to initiate a login by the RP.
+        request_uris:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: OPTIONAL. Array of request_uri values that are pre-registered by the RP for use at the OP.
+        software_id:
+          type: string
+          format: uuid
+          description: OPTIONAL. Software identifier
+        software_version:
+          type: string
+          description: OPTIONAL. Software version
+        extension:
+          type: object
+          description: OPTIONAL. Extension properties for client configuration
+          properties:
+            access_token_duration:
+              type: integer
+              minimum: 1
+              description: OPTIONAL. Duration of access tokens in seconds
+            refresh_token_duration:
+              type: integer
+              minimum: 1
+              description: OPTIONAL. Duration of refresh tokens in seconds
+            supported_jar:
+              type: boolean
+              default: false
+              description: OPTIONAL. JWT Authorization Request (JAR) support flag
+            available_federations:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Federation identifier
+                  type:
+                    type: string
+                    enum: [oauth2, saml2, oidc]
+                    description: Federation type
+                  sso_provider:
+                    type: string
+                    description: SSO provider name
+                  auto_selected:
+                    type: boolean
+                    default: false
+                    description: Auto-selection flag for federation
+                required: [id, type]
+              description: OPTIONAL. List of available federation configurations
+            default_ciba_authentication_interaction_type:
+              type: string
+              enum:
+                - authentication-device-notification-no-action
+                - authentication-device-notification
+              default: authentication-device-notification-no-action
+              description: OPTIONAL. Default CIBA authentication interaction type
+
+    Role:
+      type: object
+      required:
+        - id
+        - name
+        - permissions
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the role
+        name:
+          type: string
+          maxLength: 255
+          description: Role name (must be unique within tenant)
+        description:
+          type: string
+          maxLength: 255
+          description: Human-readable description of the role
+        permissions:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              name:
+                type: string
+          description: List of permissions assigned to this role
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    RoleCreateRequest:
+      type: object
+      required:
+        - name
+        - permissions
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Role name (must be unique within tenant)
+        description:
+          type: string
+          maxLength: 255
+          description: Human-readable description of the role
+        permissions:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of permission IDs to assign to this role
+
+    RoleUpdateRequest:
+      type: object
+      required:
+        - name
+        - permissions
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Role name (must be unique within tenant)
+        description:
+          type: string
+          maxLength: 255
+          description: Human-readable description of the role
+        permissions:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of permission IDs to assign to this role
+
+    # Organization User Management Schemas
+    OrganizationUser:
+      type: object
+      required:
+        - sub
+        - provider_id
+        - name
+        - email
+        - status
+      properties:
+        sub:
+          type: string
+          format: uuid
+          description: Unique subject identifier for the user
+        provider_id:
+          type: string
+          maxLength: 255
+          description: Identity provider identifier
+        external_user_id:
+          type: string
+          maxLength: 255
+          description: External user identifier from identity provider
+        username:
+          type: string
+          maxLength: 255
+          description: Username for authentication
+        name:
+          type: string
+          maxLength: 255
+          description: Full display name of the user
+        given_name:
+          type: string
+          maxLength: 255
+          description: Given name (first name) of the user
+        family_name:
+          type: string
+          maxLength: 255
+          description: Family name (last name) of the user
+        middle_name:
+          type: string
+          maxLength: 255
+          description: Middle name of the user
+        nickname:
+          type: string
+          maxLength: 255
+          description: Casual name of the user
+        preferred_username:
+          type: string
+          maxLength: 255
+          description: Preferred username for display
+        profile:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's profile page
+        picture:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's profile picture
+        website:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's website
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: Email address of the user
+        email_verified:
+          type: boolean
+          description: Whether the email address has been verified
+        gender:
+          type: string
+          description: Gender identity of the user
+        birthdate:
+          type: string
+          format: date
+          description: Date of birth (YYYY-MM-DD format)
+        zoneinfo:
+          type: string
+          maxLength: 255
+          description: Time zone information
+        locale:
+          type: string
+          description: Locale preference
+        phone_number:
+          type: string
+          pattern: "^\\+?[0-9\\- ]{7,20}$"
+          description: Phone number in E.164 format
+        phone_number_verified:
+          type: boolean
+          description: Whether the phone number has been verified
+        address:
+          type: object
+          properties:
+            street_address:
+              type: string
+              maxLength: 255
+              description: Street address
+            locality:
+              type: string
+              maxLength: 255
+              description: City or locality
+            region:
+              type: string
+              maxLength: 255
+              description: State or region
+            postal_code:
+              type: string
+              maxLength: 255
+              description: Postal or ZIP code
+            country:
+              type: string
+              maxLength: 255
+              description: Country
+          description: Physical address of the user
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        status:
+          type: string
+          enum:
+            - REGISTERED
+            - IDENTITY_VERIFIED
+            - SUSPENDED
+            - DELETED
+          description: User account status
+        hashed_password:
+          type: string
+          description: Masked password field (always shows ****)
+        verified_claims:
+          type: object
+          additionalProperties: true
+          description: Verified identity claims
+        custom_properties:
+          type: object
+          additionalProperties: true
+          description: Custom user properties
+        authentication_devices:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              type:
+                type: string
+              enabled:
+                type: boolean
+          description: Registered authentication devices
+        roles:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              name:
+                type: string
+          description: Assigned roles
+        permissions:
+          type: array
+          items:
+            type: string
+          description: User permissions
+        assigned_tenants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of assigned tenant IDs
+        assigned_organizations:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of assigned organization IDs
+
+    OrganizationUserCreateRequest:
+      type: object
+      required:
+        - provider_id
+        - name
+        - email
+        - raw_password
+      properties:
+        sub:
+          type: string
+          format: uuid
+          description: Unique subject identifier (optional, auto-generated if not provided)
+        provider_id:
+          type: string
+          maxLength: 255
+          description: Identity provider identifier
+          example: "idp-server"
+        external_user_id:
+          type: string
+          maxLength: 255
+          description: External user identifier from identity provider
+        username:
+          type: string
+          maxLength: 255
+          description: Username for authentication
+        name:
+          type: string
+          maxLength: 255
+          description: Full display name of the user
+        given_name:
+          type: string
+          maxLength: 255
+          description: Given name (first name) of the user
+        family_name:
+          type: string
+          maxLength: 255
+          description: Family name (last name) of the user
+        middle_name:
+          type: string
+          maxLength: 255
+          description: Middle name of the user
+        nickname:
+          type: string
+          maxLength: 255
+          description: Casual name of the user
+        preferred_username:
+          type: string
+          maxLength: 255
+          description: Preferred username for display
+        profile:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's profile page
+        picture:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's profile picture
+        website:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's website
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: Email address of the user
+        email_verified:
+          type: boolean
+          description: Whether the email address has been verified
+        gender:
+          type: string
+          description: Gender identity of the user
+        birthdate:
+          type: string
+          format: date
+          description: Date of birth (YYYY-MM-DD format)
+        zoneinfo:
+          type: string
+          maxLength: 255
+          description: Time zone information
+        locale:
+          type: string
+          description: Locale preference
+        phone_number:
+          type: string
+          pattern: "^\\+?[0-9\\- ]{7,20}$"
+          description: Phone number in E.164 format
+        phone_number_verified:
+          type: boolean
+          description: Whether the phone number has been verified
+        address:
+          type: object
+          properties:
+            street_address:
+              type: string
+              maxLength: 255
+              description: Street address
+            locality:
+              type: string
+              maxLength: 255
+              description: City or locality
+            region:
+              type: string
+              maxLength: 255
+              description: State or region
+            postal_code:
+              type: string
+              maxLength: 255
+              description: Postal or ZIP code
+            country:
+              type: string
+              maxLength: 255
+              description: Country
+          description: Physical address of the user
+        raw_password:
+          type: string
+          minLength: 8
+          maxLength: 255
+          description: Plain text password (will be hashed on server)
+        custom_properties:
+          type: object
+          additionalProperties: true
+          description: Custom user properties
+        roles:
+          type: array
+          items:
+            type: object
+            required: ["role_id", "role_name"]
+            properties:
+              role_id:
+                type: string
+                format: uuid
+                description: Unique role identifier
+              role_name:
+                type: string
+                maxLength: 255
+                description: Role name
+          description: User roles
+        assigned_tenants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of tenant IDs the user is assigned to
+        current_tenant:
+          type: string
+          format: uuid
+          description: Current primary tenant ID
+        assigned_organizations:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of organization IDs the user is assigned to
+        current_organization:
+          type: string
+          format: uuid
+          description: Current primary organization ID
+
+    OrganizationUserUpdateRequest:
+      type: object
+      required:
+        - provider_id
+        - name
+        - email
+      properties:
+        provider_id:
+          type: string
+          maxLength: 255
+          description: Identity provider identifier
+        external_user_id:
+          type: string
+          maxLength: 255
+          description: External user identifier from identity provider
+        username:
+          type: string
+          maxLength: 255
+          description: Username for authentication
+        name:
+          type: string
+          maxLength: 255
+          description: Full display name of the user
+        given_name:
+          type: string
+          maxLength: 255
+          description: Given name (first name) of the user
+        family_name:
+          type: string
+          maxLength: 255
+          description: Family name (last name) of the user
+        middle_name:
+          type: string
+          maxLength: 255
+          description: Middle name of the user
+        nickname:
+          type: string
+          maxLength: 255
+          description: Casual name of the user
+        preferred_username:
+          type: string
+          maxLength: 255
+          description: Preferred username for display
+        profile:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's profile page
+        picture:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's profile picture
+        website:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's website
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: Email address of the user
+        email_verified:
+          type: boolean
+          description: Whether the email address has been verified
+        gender:
+          type: string
+          description: Gender identity of the user
+        birthdate:
+          type: string
+          format: date
+          description: Date of birth (YYYY-MM-DD format)
+        zoneinfo:
+          type: string
+          maxLength: 255
+          description: Time zone information
+        locale:
+          type: string
+          description: Locale preference
+        phone_number:
+          type: string
+          pattern: "^\\+?[0-9\\- ]{7,20}$"
+          description: Phone number in E.164 format
+        phone_number_verified:
+          type: boolean
+          description: Whether the phone number has been verified
+        address:
+          type: object
+          properties:
+            street_address:
+              type: string
+              maxLength: 255
+              description: Street address
+            locality:
+              type: string
+              maxLength: 255
+              description: City or locality
+            region:
+              type: string
+              maxLength: 255
+              description: State or region
+            postal_code:
+              type: string
+              maxLength: 255
+              description: Postal or ZIP code
+            country:
+              type: string
+              maxLength: 255
+              description: Country
+          description: Physical address of the user
+        custom_properties:
+          type: object
+          additionalProperties: true
+          description: Custom user properties
+        roles:
+          type: array
+          items:
+            type: object
+            required: ["role_id", "role_name"]
+            properties:
+              role_id:
+                type: string
+                format: uuid
+                description: Unique role identifier
+              role_name:
+                type: string
+                maxLength: 255
+                description: Role name
+          description: User roles
+        assigned_tenants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of tenant IDs the user is assigned to
+        current_tenant:
+          type: string
+          format: uuid
+          description: Current primary tenant ID
+        assigned_organizations:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of organization IDs the user is assigned to
+        current_organization:
+          type: string
+          format: uuid
+          description: Current primary organization ID
+
+    UserValidationErrorResponse:
+      type: object
+      required:
+        - error
+        - error_description
+      properties:
+        error:
+          type: string
+          description: Error code
+          example: "invalid_request"
+        error_description:
+          type: string
+          description: Human-readable error description
+          example: "user registration validation is failed"
+        dry_run:
+          type: boolean
+          description: Indicates if this was a dry run operation
+        details:
+          type: object
+          properties:
+            user:
+              type: array
+              items:
+                type: string
+              description: List of user validation error messages
+          description: Detailed validation error information
+          example:
+            user:
+              - "provider_id is missing"
+              - "email format is invalid"
+
+    OrganizationUserPasswordUpdateRequest:
+      type: object
+      required:
+        - raw_password
+      properties:
+        raw_password:
+          type: string
+          minLength: 8
+          pattern: '^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+=-]{8,}$'
+          description: Plain text password (will be hashed on server)
+
+    OrganizationUserRolesUpdateRequest:
+      type: object
+      properties:
+        roles:
+          type: array
+          maxItems: 50
+          items:
+            type: object
+            required:
+              - role_id
+              - role_name
+            properties:
+              role_id:
+                type: string
+                format: uuid
+                description: Unique role identifier
+              role_name:
+                type: string
+                maxLength: 255
+                description: Role name
+            additionalProperties: false
+          description: User roles
+        permissions:
+          type: array
+          maxItems: 100
+          items:
+            type: string
+            maxLength: 255
+          description: Direct permissions assigned to user
+      additionalProperties: false
+
+    OrganizationUserTenantAssignmentsUpdateRequest:
+      type: object
+      required:
+        - assigned_tenants
+      properties:
+        current_tenant_id:
+          type: string
+          format: uuid
+          description: Current primary tenant ID
+        assigned_tenants:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+            format: uuid
+          description: List of tenant IDs the user is assigned to
+
+    OrganizationUserOrganizationAssignmentsUpdateRequest:
+      type: object
+      required:
+        - assigned_organizations
+      properties:
+        current_organization_id:
+          type: string
+          format: uuid
+          description: Current primary organization ID
+        assigned_organizations:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+            format: uuid
+          description: List of organization IDs the user is assigned to
+
+    MappingRule:
+      type: object
+      description: Mapping rule configuration based on MappingRule Java class
+      properties:
+        from:
+          type: string
+          description: Source field path for mapping
+        static_value:
+          description: Static value to use instead of mapping from source
+        to:
+          type: string
+          description: Target field path for mapping
+        convert_type:
+          type: string
+          description: Data conversion type
+        functions:
+          type: array
+          description: List of transformation functions
+          items:
+            type: object
+            additionalProperties: true
+      additionalProperties: false
+
+    AuthenticationAdditionalParameterConfig:
+      type: object
+      description: Additional parameter configuration based on AuthenticationAdditionalParameterConfig Java class
+      properties:
+        function:
+          type: string
+          description: Function name for parameter processing
+        http_request:
+          type: object
+          description: HTTP request configuration for parameter retrieval
+          additionalProperties: true
+        http_requests:
+          type: array
+          description: Multiple HTTP requests configuration
+          items:
+            type: object
+            additionalProperties: true
+        mock:
+          type: object
+          description: Mock configuration for testing
+          additionalProperties: true
+        details:
+          type: object
+          description: Additional configuration details
+          additionalProperties: true
+      additionalProperties: false
+
+    AuthenticationPolicyConfig:
+      type: object
+      description: Authentication policy configuration based on AuthenticationPolicyConfiguration Java class
+      required:
+        - id
+        - flow
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Authentication policy configuration identifier
+        flow:
+          type: string
+          description: Authentication flow type
+        policies:
+          type: array
+          description: List of authentication policies
+          items:
+            $ref: '#/components/schemas/AuthenticationPolicy'
+        enabled:
+          type: boolean
+          description: Whether the policy configuration is enabled
+          default: true
+        tenant_id:
+          type: string
+          format: uuid
+          description: Tenant identifier
+        created_at:
+          type: string
+          format: date-time
+          description: Configuration creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Configuration last update timestamp
+      additionalProperties: false
+
+    AuthenticationPolicyConfigurationRequest:
+      type: object
+      description: Authentication policy configuration request based on AuthenticationPolicyConfigRequest Java class
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Authentication policy configuration identifier
+        flow:
+          type: string
+          description: Authentication flow type
+        policies:
+          type: array
+          description: List of authentication policies
+          items:
+            $ref: '#/components/schemas/AuthenticationPolicy'
+        enabled:
+          type: boolean
+          description: Whether the policy configuration is enabled
+          default: true
+      additionalProperties: true
+
+    AuthenticationPolicy:
+      type: object
+      description: Authentication policy based on AuthenticationPolicy Java class
+      properties:
+        priority:
+          type: integer
+          description: Policy priority (higher values take precedence)
+        conditions:
+          $ref: '#/components/schemas/AuthenticationPolicyCondition'
+        available_methods:
+          type: array
+          description: List of available authentication methods
+          items:
+            type: string
+        acr_mapping_rules:
+          type: object
+          description: ACR (Authentication Context Class Reference) mapping rules
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        level_of_authentication_scopes:
+          type: object
+          description: Level of authentication scope mappings
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        success_conditions:
+          $ref: '#/components/schemas/AuthenticationResultConditionConfig'
+        failure_conditions:
+          $ref: '#/components/schemas/AuthenticationResultConditionConfig'
+        lock_conditions:
+          $ref: '#/components/schemas/AuthenticationResultConditionConfig'
+        authentication_device_rule:
+          $ref: '#/components/schemas/AuthenticationDeviceRule'
+        step_definitions:
+          type: array
+          description: List of authentication step definitions
+          items:
+            $ref: '#/components/schemas/AuthenticationStepDefinition'
+      additionalProperties: false
+
+    AuthenticationPolicyCondition:
+      type: object
+      description: Authentication policy conditions
+      properties:
+        client_ids:
+          type: array
+          description: List of client IDs this policy applies to
+          items:
+            type: string
+        acr_values:
+          type: array
+          description: List of ACR values this policy applies to
+          items:
+            type: string
+        scopes:
+          type: array
+          description: List of scopes this policy applies to
+          items:
+            type: string
+      additionalProperties: true
+
+    AuthenticationResultConditionConfig:
+      type: object
+      description: Authentication result condition configuration
+      properties:
+        conditions:
+          type: array
+          description: List of result conditions
+          items:
+            type: object
+            additionalProperties: true
+      additionalProperties: true
+
+    AuthenticationDeviceRule:
+      type: object
+      description: Authentication device rule configuration
+      properties:
+        require_device_registration:
+          type: boolean
+          description: Whether device registration is required
+        trusted_devices_only:
+          type: boolean
+          description: Whether only trusted devices are allowed
+        device_verification_required:
+          type: boolean
+          description: Whether device verification is required
+      additionalProperties: true
+
+    AuthenticationStepDefinition:
+      type: object
+      description: Authentication step definition
+      properties:
+        step:
+          type: integer
+          description: Step number in the authentication flow
+        method:
+          type: string
+          description: Authentication method for this step
+        required:
+          type: boolean
+          description: Whether this step is required
+        configuration:
+          type: object
+          description: Step-specific configuration
+          additionalProperties: true
+      additionalProperties: false
 

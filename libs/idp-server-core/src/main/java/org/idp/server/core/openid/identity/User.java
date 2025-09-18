@@ -322,6 +322,10 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     return this;
   }
 
+  public boolean hasRawPassword() {
+    return Objects.nonNull(rawPassword) && !rawPassword.isEmpty();
+  }
+
   public boolean hasPassword() {
     return Objects.nonNull(hashedPassword) && !hashedPassword.isEmpty();
   }

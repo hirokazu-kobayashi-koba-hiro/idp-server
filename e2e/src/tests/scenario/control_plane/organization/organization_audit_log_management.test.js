@@ -204,7 +204,7 @@ describe("organization audit log management api", () => {
         }
       });
       console.log("Invalid tenant response:", invalidTenantResponse.data);
-      expect([400, 403, 404]).toContain(invalidTenantResponse.status);
+      expect([400, 404]).toContain(invalidTenantResponse.status);
     });
   });
 

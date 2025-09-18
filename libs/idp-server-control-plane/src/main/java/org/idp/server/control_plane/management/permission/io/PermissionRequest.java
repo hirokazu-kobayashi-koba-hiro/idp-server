@@ -37,4 +37,11 @@ public class PermissionRequest {
   public String getValueAsString(String key) {
     return values.get(key).toString();
   }
+
+  public String optValueAsString(String key, String defaultValue) {
+    if (values.containsKey(key)) {
+      return values.get(key).toString();
+    }
+    return defaultValue;
+  }
 }

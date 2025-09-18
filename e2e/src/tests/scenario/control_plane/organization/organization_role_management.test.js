@@ -77,6 +77,7 @@ describe("organization role management api", () => {
         }
       });
       expect(createPermission1Response.status).toBe(201);
+      const permission1Id = createPermission1Response.data.result.id;
 
       const createPermission2Response = await postWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}/permissions`,
@@ -89,6 +90,7 @@ describe("organization role management api", () => {
         }
       });
       expect(createPermission2Response.status).toBe(201);
+      const permission2Id = createPermission2Response.data.result.id;
 
       const createPermission3Response = await postWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}/permissions`,
@@ -101,6 +103,7 @@ describe("organization role management api", () => {
         }
       });
       expect(createPermission3Response.status).toBe(201);
+      const permission3Id = createPermission3Response.data.result.id;
       console.log("✅ Test permissions created successfully");
 
       // Step 3: Create a new role within the organization/tenant
@@ -114,9 +117,9 @@ describe("organization role management api", () => {
           "name": roleName,
           "description": "Test organization role",
           "permissions": [
-            permission1Name,
-            permission2Name,
-            permission3Name
+            permission1Id,
+            permission2Id,
+            permission3Id
           ]
         }
       });
@@ -139,7 +142,7 @@ describe("organization role management api", () => {
         body: {
           "name": `dry-run-role-${generateRandomString(10)}`,
           "description": "Dry run test role",
-          "permissions": [permission2Name]
+          "permissions": [permission2Id]
         }
       });
       console.log("Dry run create response:", dryRunCreateResponse.data);
@@ -189,9 +192,9 @@ describe("organization role management api", () => {
           "name": `${roleName}-updated`,
           "description": "Updated test organization role",
           "permissions": [
-            permission1Name,
-            permission2Name,
-            permission3Name
+            permission1Id,
+            permission2Id,
+            permission3Id
           ]
         }
       });
@@ -210,9 +213,9 @@ describe("organization role management api", () => {
           "name": `${roleName}-updated`,
           "description": "Updated test organization role",
           "permissions": [
-            permission1Name,
-            permission2Name,
-            permission3Name
+            permission1Id,
+            permission2Id,
+            permission3Id
           ]
         }
       });

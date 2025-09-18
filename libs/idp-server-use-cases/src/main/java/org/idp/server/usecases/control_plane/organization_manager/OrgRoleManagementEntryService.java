@@ -141,9 +141,10 @@ public class OrgRoleManagementEntryService implements OrgRoleManagementApi {
       return validate.errorResponse();
     }
 
+    Roles roles = roleQueryRepository.findAll(targetTenant);
     Permissions permissionList = permissionQueryRepository.findAll(targetTenant);
     RoleRegistrationContextCreator contextCreator =
-        new RoleRegistrationContextCreator(targetTenant, request, permissionList, dryRun);
+        new RoleRegistrationContextCreator(targetTenant, request, roles, permissionList, dryRun);
     RoleRegistrationContext context = contextCreator.create();
 
     RoleRegistrationVerifier verifier = new RoleRegistrationVerifier();
@@ -331,10 +332,14 @@ public class OrgRoleManagementEntryService implements OrgRoleManagementApi {
       return validate.errorResponse();
     }
 
+    Roles roles = roleQueryRepository.findAll(targetTenant);
     Permissions permissionList = permissionQueryRepository.findAll(targetTenant);
     RoleUpdateContextCreator contextCreator =
-        new RoleUpdateContextCreator(targetTenant, before, request, permissionList, dryRun);
+        new RoleUpdateContextCreator(targetTenant, before, request, roles, permissionList, dryRun);
     RoleUpdateContext context = contextCreator.create();
+
+    RoleRegistrationVerifier verifier = new RoleRegistrationVerifier();
+    RoleRegistrationVerificationResult verificationResult = verifier.verify(context);
 
     AuditLog auditLog =
         AuditLogCreator.createOnUpdate(
@@ -345,6 +350,10 @@ public class OrgRoleManagementEntryService implements OrgRoleManagementApi {
             context,
             requestAttributes);
     auditLogWriters.write(targetTenant, auditLog);
+
+    if (!verificationResult.isValid()) {
+      return verificationResult.errorResponse();
+    }
 
     if (dryRun) {
       return context.toResponse();

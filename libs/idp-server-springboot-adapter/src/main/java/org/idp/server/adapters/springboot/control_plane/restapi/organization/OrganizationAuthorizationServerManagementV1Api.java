@@ -52,7 +52,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping(
-    "/v1/management/organizations/{organizationId}/tenants/{tenantId}/authorization-server")
+    "/v1/management/organizations/{organization-id}/tenants/{tenant-id}/authorization-server")
 public class OrganizationAuthorizationServerManagementV1Api implements ParameterTransformable {
 
   OrgAuthorizationServerManagementApi orgAuthorizationServerManagementApi;
@@ -74,8 +74,8 @@ public class OrganizationAuthorizationServerManagementV1Api implements Parameter
   @GetMapping
   public ResponseEntity<?> get(
       @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
-      @PathVariable("organizationId") OrganizationIdentifier organizationId,
-      @PathVariable("tenantId") TenantIdentifier tenantId,
+      @PathVariable("organization-id") OrganizationIdentifier organizationId,
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
@@ -98,7 +98,7 @@ public class OrganizationAuthorizationServerManagementV1Api implements Parameter
   /**
    * Updates authorization server configuration for a tenant within an organization.
    *
-   * @param operatorPrincipal the authenticated operator
+   * @param organizationOperatorPrincipal the authenticated operator
    * @param organizationId the organization identifier
    * @param tenantId the tenant identifier
    * @param body the update request body
@@ -109,8 +109,8 @@ public class OrganizationAuthorizationServerManagementV1Api implements Parameter
   @PutMapping
   public ResponseEntity<?> put(
       @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
-      @PathVariable("organizationId") OrganizationIdentifier organizationId,
-      @PathVariable("tenantId") TenantIdentifier tenantId,
+      @PathVariable("organization-id") OrganizationIdentifier organizationId,
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
       @RequestBody(required = false) Map<String, Object> body,
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {

@@ -319,7 +319,7 @@
       "description": "OPTIONAL. URL of a page containing human-readable information that developers might want or need to know when using the OpenID Provider. In particular, if the OpenID Provider does not support Dynamic Client Registration, then information on how to register Clients needs to be provided in this documentation."
     },
     "claims_locales_supported": {
-      "type": "string",
+      "type": "array",
       "items": {
         "type": "string"
       },
@@ -441,111 +441,132 @@
       "type": "object",
       "description": "Extension configuration parameters for authorization server behavior.",
       "properties": {
-        "accessTokenType": {
+        "access_token_type": {
           "type": "string",
           "enum": [
             "opaque",
-            "jwt"
+            "JWT"
           ],
           "default": "opaque",
-          "description": "Specifies the format of issued access tokens. Either 'opaque' or 'jwt'."
+          "description": "Specifies the format of issued access tokens. Either 'opaque' or 'JWT'."
         },
-        "authorizationCodeValidDuration": {
+        "authorization_code_valid_duration": {
           "type": "integer",
           "default": 600,
           "description": "Authorization code validity duration in seconds."
         },
-        "tokenSignedKeyId": {
+        "token_signed_key_id": {
           "type": "string",
           "description": "Key ID used for signing access tokens."
         },
-        "idTokenSignedKeyId": {
+        "id_token_signed_key_id": {
           "type": "string",
           "description": "Key ID used for signing ID tokens."
         },
-        "accessTokenDuration": {
+        "access_token_duration": {
           "type": "integer",
           "default": 1800,
           "description": "Access token validity duration in seconds."
         },
-        "refreshTokenDuration": {
+        "refresh_token_duration": {
           "type": "integer",
           "default": 3600,
           "description": "Refresh token validity duration in seconds."
         },
-        "idTokenDuration": {
+        "id_token_duration": {
           "type": "integer",
           "default": 3600,
           "description": "ID token validity duration in seconds."
         },
-        "idTokenStrictMode": {
+        "id_token_strict_mode": {
           "type": "boolean",
           "default": false,
           "description": "Enforces strict validation on ID token claims."
         },
-        "defaultMaxAge": {
+        "default_max_age": {
           "type": "integer",
           "default": 86400,
           "description": "Default maximum authentication age in seconds."
         },
-        "authorizationResponseDuration": {
+        "authorization_response_duration": {
           "type": "integer",
           "default": 60,
           "description": "Authorization response lifetime in seconds."
         },
-        "backchannelAuthRequestExpiresIn": {
+        "refresh_token_strategy": {
+          "type": "string",
+          "default": "FIXED",
+          "description": "Refresh token issuing strategy."
+        },
+        "rotate_refresh_token": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to rotate refresh tokens."
+        },
+        "backchannel_authentication_request_expires_in": {
           "type": "integer",
           "default": 300,
           "description": "CIBA backchannel auth request expiration time."
         },
-        "backchannelAuthPollingInterval": {
+        "backchannel_authentication_polling_interval": {
           "type": "integer",
           "default": 5,
           "description": "CIBA backchannel auth polling interval."
         },
-        "oauthAuthorizationRequestExpiresIn": {
+        "required_backchannel_auth_user_code": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether backchannel auth user code is required."
+        },
+        "backchannel_auth_user_code_type": {
+          "type": "string",
+          "default": "password",
+          "description": "Type of backchannel auth user code."
+        },
+        "default_ciba_authentication_interaction_type": {
+          "type": "string",
+          "default": "authentication-device-notification",
+          "description": "Default CIBA authentication interaction type."
+        },
+        "oauth_authorization_request_expires_in": {
           "type": "integer",
           "default": 1800,
           "description": "OAuth authorization request expiration time."
         },
-        "fapiBaselineScopes": {
+        "fapi_baseline_scopes": {
           "type": "array",
           "items": {
             "type": "string"
           },
           "description": "List of scopes indicating FAPI Baseline conformance."
         },
-        "fapiAdvanceScopes": {
+        "fapi_advance_scopes": {
           "type": "array",
           "items": {
             "type": "string"
           },
           "description": "List of scopes indicating FAPI Advanced conformance."
         },
-        "authenticationPolicies": {
+        "required_identity_verification_scopes": {
           "type": "array",
           "items": {
-            "type": "object"
+            "type": "string"
           },
-          "description": "Authentication policies applied to this tenant."
+          "description": "List of scopes requiring identity verification."
         },
-        "enabledCustomClaimsScopeMapping": {
+        "enabled_custom_claims_scope_mapping": {
           "type": "boolean",
           "description": "Enables mapping of custom claims based on scope."
         },
-        "enabledAccessTokenUserCustomProperties": {
-          "type": "boolean",
-          "description": "Enables embedding user custom properties in access token."
-        },
-        "enabledAccessTokenSelectiveUserCustomProperties": {
+        "enabled_access_token_selective_user_custom_properties": {
           "type": "boolean",
           "description": "Enables selective inclusion of user custom properties in access token."
         },
-        "enabledAccessTokenVerifiedClaims": {
+        "enabled_access_token_verified_claims": {
           "type": "boolean",
           "description": "Enables inclusion of verified claims in access token."
         },
-        "enabledAccessTokenSelectiveVerifiedClaims": {
+        "enabled_access_token_selective_verified_claims": {
           "type": "boolean",
           "description": "Enables selective inclusion of verified claims in access token."
         }

@@ -31,7 +31,7 @@ import org.idp.server.control_plane.management.identity.user.validator.UserPassw
 import org.idp.server.control_plane.management.identity.user.validator.UserRegistrationRequestValidator;
 import org.idp.server.control_plane.management.identity.user.validator.UserRequestValidationResult;
 import org.idp.server.control_plane.management.identity.user.validator.UserUpdateRequestValidator;
-import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationUpdateVerifier;
+import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationRelatedDataVerifier;
 import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationVerificationResult;
 import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationVerifier;
 import org.idp.server.core.openid.identity.User;
@@ -65,7 +65,7 @@ public class UserManagementEntryService implements UserManagementApi {
   OrganizationRepository organizationRepository;
   PasswordEncodeDelegation passwordEncodeDelegation;
   UserRegistrationVerifier verifier;
-  UserRegistrationUpdateVerifier updateVerifier;
+  UserRegistrationRelatedDataVerifier updateVerifier;
   UserLifecycleEventPublisher userLifecycleEventPublisher;
   AuditLogWriters auditLogWriters;
   LoggerWrapper log = LoggerWrapper.getLogger(UserManagementEntryService.class);
@@ -85,11 +85,12 @@ public class UserManagementEntryService implements UserManagementApi {
     this.roleQueryRepository = roleQueryRepository;
     this.organizationRepository = organizationRepository;
     this.passwordEncodeDelegation = passwordEncodeDelegation;
-    UserVerifier userVerifier = new UserVerifier(userQueryRepository);
-    this.verifier = new UserRegistrationVerifier(userVerifier);
-    this.updateVerifier =
-        new UserRegistrationUpdateVerifier(
+    UserRegistrationRelatedDataVerifier userRegistrationRelatedDataVerifier =
+        new UserRegistrationRelatedDataVerifier(
             roleQueryRepository, tenantQueryRepository, organizationRepository);
+    UserVerifier userVerifier = new UserVerifier(userQueryRepository);
+    this.verifier = new UserRegistrationVerifier(userVerifier, userRegistrationRelatedDataVerifier);
+    this.updateVerifier = userRegistrationRelatedDataVerifier;
     this.userLifecycleEventPublisher = userLifecycleEventPublisher;
     this.auditLogWriters = auditLogWriters;
   }
@@ -503,54 +504,6 @@ public class UserManagementEntryService implements UserManagementApi {
   }
 
   @Override
-  public UserManagementResponse updatePermissions(
-      TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      UserIdentifier userIdentifier,
-      UserRegistrationRequest request,
-      RequestAttributes requestAttributes,
-      boolean dryRun) {
-
-    AdminPermissions permissions = getRequiredPermissions("updatePermissions");
-
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    User before = userQueryRepository.findById(tenant, userIdentifier);
-
-    //    AuditLog auditLog =
-    //        AuditLogCreator.createOnUpdate(
-    //            "UserManagementApi.updatePermissions", "updatePermissions", tenant, operator,
-    // oAuthToken, requestAttributes);
-    //    auditLogWriters.write(tenant, auditLog);
-
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new UserManagementResponse(UserManagementStatus.FORBIDDEN, response);
-    }
-
-    if (!before.exists()) {
-      return new UserManagementResponse(UserManagementStatus.NOT_FOUND, Map.of());
-    }
-
-    User updatedUser = before.setPermissions(request.permissions());
-
-    if (dryRun) {
-      return new UserManagementResponse(UserManagementStatus.OK, updatedUser.toMap());
-    }
-
-    userCommandRepository.update(tenant, updatedUser);
-
-    return new UserManagementResponse(UserManagementStatus.OK, updatedUser.toMap());
-  }
-
-  @Override
   public UserManagementResponse updateTenantAssignments(
       TenantIdentifier tenantIdentifier,
       User operator,
@@ -634,11 +587,12 @@ public class UserManagementEntryService implements UserManagementApi {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     User before = userQueryRepository.findById(tenant, userIdentifier);
 
-    //    AuditLog auditLog =
-    //        AuditLogCreator.createOnUpdate(
-    //            "UserManagementApi.updateOrganizationAssignments", tenant, operator, oAuthToken,
-    // requestAttributes);
-    //    auditLogWriters.write(tenant, auditLog);
+    //        AuditLog auditLog =
+    //            AuditLogCreator.createOnUpdate(
+    //                "UserManagementApi.updateOrganizationAssignments", tenant, operator,
+    // oAuthToken,
+    //     requestAttributes);
+    //        auditLogWriters.write(tenant, auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();

@@ -181,19 +181,21 @@ public class JsonSchemaValidator {
       return;
     }
 
-    int value = valueObject.asInt();
     String composedFiledName = composeFiledName(prefix, field);
 
     if (!valueObject.isInt()) {
       errors.add(composedFiledName + " is not a integer");
+      return;
     }
 
+    int value = valueObject.asInt();
+
     if (schemaProperty.hasMinimum() && value < schemaProperty.minimum()) {
-      errors.add(composedFiledName + " minimum is " + schemaProperty.minLength());
+      errors.add(composedFiledName + " minimum is " + schemaProperty.minimum());
     }
 
     if (schemaProperty.hasMaxLength() && value > schemaProperty.maximum()) {
-      errors.add(composedFiledName + " maximum is " + schemaProperty.maxLength());
+      errors.add(composedFiledName + " maximum is " + schemaProperty.maximum());
     }
   }
 
@@ -243,6 +245,20 @@ public class JsonSchemaValidator {
     for (JsonNodeWrapper element : elements) {
       if (itemsSchema.isStringType()) {
         validateStringConstraints(prefix, field, element, itemsSchema, errors);
+      }
+      if (itemsSchema.isIntegerType()) {
+        validateIntegerConstraints(prefix, field, element, itemsSchema, errors);
+      }
+      if (itemsSchema.isObjectType()) {
+        JsonSchemaDefinition jsonSchemaDefinition =
+            JsonSchemaDefinition.fromJson(itemsSchema.toJson());
+        validateObjectConstraints(prefix, element, jsonSchemaDefinition, errors);
+      }
+      if (itemsSchema.isArrayType()) {
+        validateArrayConstraints(prefix, field, element, itemsSchema, errors);
+      }
+      if (itemsSchema.isBooleanType()) {
+        validateBooleanConstraints(prefix, field, element, itemsSchema, errors);
       }
     }
   }

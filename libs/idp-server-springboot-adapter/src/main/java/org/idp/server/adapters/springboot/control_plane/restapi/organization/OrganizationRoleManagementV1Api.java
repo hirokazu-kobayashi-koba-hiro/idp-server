@@ -55,7 +55,7 @@ import org.springframework.web.bind.annotation.*;
  * @see OrgRoleManagementApi
  */
 @RestController
-@RequestMapping("/v1/management/organizations/{organizationId}/tenants/{tenantId}/roles")
+@RequestMapping("/v1/management/organizations/{organization-id}/tenants/{tenant-id}/roles")
 public class OrganizationRoleManagementV1Api implements ParameterTransformable {
 
   OrgRoleManagementApi orgRoleManagementApi;
@@ -78,8 +78,8 @@ public class OrganizationRoleManagementV1Api implements ParameterTransformable {
   @PostMapping
   public ResponseEntity<?> post(
       @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
-      @PathVariable("organizationId") OrganizationIdentifier organizationId,
-      @PathVariable("tenantId") TenantIdentifier tenantId,
+      @PathVariable("organization-id") OrganizationIdentifier organizationId,
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
       @RequestBody(required = false) Map<String, Object> body,
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
@@ -115,8 +115,8 @@ public class OrganizationRoleManagementV1Api implements ParameterTransformable {
   @GetMapping
   public ResponseEntity<?> getList(
       @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
-      @PathVariable("organizationId") OrganizationIdentifier organizationId,
-      @PathVariable("tenantId") TenantIdentifier tenantId,
+      @PathVariable("organization-id") OrganizationIdentifier organizationId,
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
       @RequestParam Map<String, String> queryParams,
       HttpServletRequest httpServletRequest) {
 
@@ -150,8 +150,8 @@ public class OrganizationRoleManagementV1Api implements ParameterTransformable {
   @GetMapping("/{id}")
   public ResponseEntity<?> get(
       @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
-      @PathVariable("organizationId") OrganizationIdentifier organizationId,
-      @PathVariable("tenantId") TenantIdentifier tenantId,
+      @PathVariable("organization-id") OrganizationIdentifier organizationId,
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
       @PathVariable("id") RoleIdentifier identifier,
       HttpServletRequest httpServletRequest) {
 
@@ -187,8 +187,8 @@ public class OrganizationRoleManagementV1Api implements ParameterTransformable {
   @PutMapping("/{id}")
   public ResponseEntity<?> put(
       @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
-      @PathVariable("organizationId") OrganizationIdentifier organizationId,
-      @PathVariable("tenantId") TenantIdentifier tenantId,
+      @PathVariable("organization-id") OrganizationIdentifier organizationId,
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
       @PathVariable("id") RoleIdentifier identifier,
       @RequestBody(required = false) Map<String, Object> body,
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
@@ -226,8 +226,8 @@ public class OrganizationRoleManagementV1Api implements ParameterTransformable {
   @DeleteMapping("/{id}")
   public ResponseEntity<?> delete(
       @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
-      @PathVariable("organizationId") OrganizationIdentifier organizationId,
-      @PathVariable("tenantId") TenantIdentifier tenantId,
+      @PathVariable("organization-id") OrganizationIdentifier organizationId,
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
       @PathVariable("id") RoleIdentifier identifier,
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {

@@ -270,6 +270,66 @@ payload
 }
 ```
 
+## 身元確認チェック：`required_identity_verification_scopes`
+
+`required_identity_verification_scopes` は、**身元確認（verified_claims）を済ませたユーザーだけが取得できるスコープ**を定義する設定です。  
+CIBA（Backchannel Authentication Flow）における認証リクエストでこのスコープが含まれていた場合、ユーザーが必要な検証済みクレームを持っているかをチェックし、満たしていなければ認証エラーを返します。
+
+### 条件
+* CIBA 認証リクエスト（`/backchannel-authentication`）の `scope` に `required_identity_verification_scopes` で列挙したスコープが含まれていること
+* ユーザーが該当の **verified_claims を保有**していること
+    * `verified_claims:` プレフィックス付きスコープ（例：`verified_claims:birthdate`）は、**その属性が verified であること**を要求
+* （オプション）業務スコープ（例：`transfers`）に対して、**追加の検証要件（ポリシー）**を設定している場合はその条件を満たすこと
+
+> この発行要件チェックは **IDトークン / アクセストークンへの埋め込み**とは独立しています（CIBA結果通知時のトークンに verified_claims を入れるかどうかは別設定）。
+
+### CIBA 認証リクエスト例
+
+
+* `transfers` →　`required_identity_verification_scopes` に含める
+
+```
+POST /{tenant}/v1/backchannel-authentication
+Content-Type: application/x-www-form-urlencoded
+
+client_id=clientSecretPost
+&scope=openid%20profile%20transfers%20verified_claims%3Abirthdate
+&login_hint_token=eyJhbGciOiJSUzI1NiIsInR5cCI...
+&binding_message=auth123
+```
+
+### 失敗レスポンス例
+
+
+```json
+{
+  "error": "access_denied",
+  "error_description": "identity verification is required for requested scope(s): transfers, verified_claims:birthdate"
+}
+```
+
+
+### 成功時の挙動
+* 発行要件チェックを通過 → 通常通り CIBA 認証処理が進み、コード/トークンを発行
+* **埋め込み先**は別レイヤで決まる
+    * **IDトークン**：`claims` パラメータ指定に従い `verified_claims` を `id_token` に含める
+    * **アクセストークン（独自仕様）**： `verified_claims:` スコープが含まれている場合、該当属性のみを `access_token` に含める（例：`verified_claims:birthdate` → `{"verified_claims":{"birthdate":"..."}}`）
+
+## 設定例（抜粋）
+```json
+"extension": {
+  "required_identity_verification_scopes": [
+    "transfers"
+  ],
+  "access_token_selective_verified_claims": true
+}
+```
+
+## テストのヒント
+* 未検証ユーザーで `scope=openid transfers` → `/backchannel-authentication` は `access_denied`、
+* 検証済みユーザーで同スコープ → 成功 transfersのスコープを含めたトークンを取得できる
+
+
 ## 参考
 
 * https://openid-foundation-japan.github.io/openid-connect-4-identity-assurance.html

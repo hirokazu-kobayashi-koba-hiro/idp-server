@@ -1,5 +1,8 @@
 {
   "type": "object",
+  "required": [
+    "assigned_tenants"
+  ],
   "properties": {
     "current_tenant_id": {
       "type": "string",
@@ -13,6 +16,5 @@
         "format": "uuid"
       }
     }
-  },
-  "additionalProperties": false
+  }
 }

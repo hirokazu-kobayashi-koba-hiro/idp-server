@@ -54,6 +54,6 @@ public class UserRegistrationContextCreator {
     user.setHashedPassword(encoded);
     user.setStatus(UserStatus.REGISTERED);
 
-    return new UserRegistrationContext(tenant, user, dryRun);
+    return new UserRegistrationContext(tenant, user, request, dryRun);
   }
 }

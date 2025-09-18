@@ -39,7 +39,7 @@ public class PermissionUpdateContextCreator {
 
     String id = before.id();
     String name = request.getValueAsString("name");
-    String description = request.getValueAsString("description");
+    String description = request.optValueAsString("description", "");
     Permission newPermission = new Permission(id, name, description);
 
     return new PermissionUpdateContext(tenant, before, newPermission, dryRun);

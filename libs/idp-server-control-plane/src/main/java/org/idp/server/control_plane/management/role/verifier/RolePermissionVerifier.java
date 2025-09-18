@@ -20,28 +20,40 @@ import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.control_plane.base.verifier.VerificationResult;
 import org.idp.server.control_plane.management.role.io.RoleRequest;
+import org.idp.server.core.openid.identity.permission.Permission;
 import org.idp.server.core.openid.identity.permission.Permissions;
+import org.idp.server.core.openid.identity.role.Roles;
 
 public class RolePermissionVerifier {
 
   RoleRequest roleRequest;
+  Roles roles;
   Permissions permissions;
 
-  public RolePermissionVerifier(RoleRequest roleRequest, Permissions permissions) {
+  public RolePermissionVerifier(RoleRequest roleRequest, Roles roles, Permissions permissions) {
     this.roleRequest = roleRequest;
+    this.roles = roles;
     this.permissions = permissions;
   }
 
   public VerificationResult verify() {
 
-    Permissions filtered = permissions.filter(roleRequest.permissions());
+    if (roles.containsByName(roleRequest.name())) {
+      List<String> errors = new ArrayList<>();
+      errors.add(String.format("Role is already exists: %s", roleRequest.name()));
+      return VerificationResult.failure(errors);
+    }
 
-    if (!filtered.exists()) {
-      Permissions noneMatch = permissions.filterNoneMatch(roleRequest.permissions());
+    Permissions filtered = permissions.filterById(roleRequest.permissions());
+
+    if (filtered.size() != roleRequest.permissions().size()) {
+      List<String> existingIds = filtered.toList().stream().map(Permission::id).toList();
+      List<String> nonExistentIds =
+          roleRequest.permissions().stream().filter(id -> !existingIds.contains(id)).toList();
 
       List<String> errors = new ArrayList<>();
       errors.add(
-          String.format("Permission does not contains. (%s)", noneMatch.permissionNamesAsString()));
+          String.format("Permission does not exists: %s", String.join(", ", nonExistentIds)));
       return VerificationResult.failure(errors);
     }
 

@@ -94,7 +94,7 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
   VerifiableCredentialConfiguration credentialIssuerMetadata =
       new VerifiableCredentialConfiguration();
 
-  AuthorizationServerExtensionConfiguration extension =
+  public AuthorizationServerExtensionConfiguration extension =
       new AuthorizationServerExtensionConfiguration();
 
   public AuthorizationServerConfiguration() {}
@@ -365,7 +365,7 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
   }
 
   public boolean hasRegistrationEndpoint() {
-    return Objects.nonNull(revocationEndpoint) && !registrationEndpoint.isEmpty();
+    return Objects.nonNull(registrationEndpoint) && !registrationEndpoint.isEmpty();
   }
 
   public boolean isSupportedResponseType(ResponseType responseType) {
@@ -650,29 +650,29 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
       map.put("token_endpoint", tokenEndpoint);
     }
     if (hasUserinfoEndpoint()) {
-      map.put("userinfo_endpoint", userinfoEndpoint());
+      map.put("userinfo_endpoint", userinfoEndpoint);
     }
     if (hasRegistrationEndpoint()) {
-      map.put("registration_endpoint", registrationEndpoint());
+      map.put("registration_endpoint", registrationEndpoint);
     }
     map.put("jwks_uri", jwksUri());
     if (hasScopesSupported()) {
-      map.put("scopes_supported", scopesSupported());
+      map.put("scopes_supported", scopesSupported);
     }
-    map.put("response_types_supported", responseTypesSupported());
+    map.put("response_types_supported", responseTypesSupported);
     if (hasResponseModesSupported()) {
-      map.put("response_modes_supported", responseModesSupported());
+      map.put("response_modes_supported", responseModesSupported);
     }
     if (hasGrantTypesSupported()) {
-      map.put("grant_types_supported", grantTypesSupported());
+      map.put("grant_types_supported", grantTypesSupported);
     }
     if (hasAcrValuesSupported()) {
-      map.put("acr_values_supported", acrValuesSupported());
+      map.put("acr_values_supported", acrValuesSupported);
     }
-    map.put("subject_types_supported", subjectTypesSupported());
+    map.put("subject_types_supported", subjectTypesSupported);
     map.put("id_token_signing_alg_values_supported", idTokenSigningAlgValuesSupported);
-    if (hasIdTokenEncryptionEncValuesSupported()) {
-      map.put("id_token_encryption_alg_values_supported", idTokenEncryptionEncValuesSupported);
+    if (hasIdTokenEncryptionAlgValuesSupported()) {
+      map.put("id_token_encryption_alg_values_supported", idTokenEncryptionAlgValuesSupported);
     }
     if (hasIdTokenEncryptionEncValuesSupported()) {
       map.put("id_token_encryption_enc_values_supported", idTokenEncryptionEncValuesSupported);
@@ -705,7 +705,8 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     }
     if (hasTokenEndpointAuthSigningAlgValuesSupported()) {
       map.put(
-          "token_endpoint_auth_signing_alg_values_supported", tokenEndpointAuthMethodsSupported);
+          "token_endpoint_auth_signing_alg_values_supported",
+          tokenEndpointAuthSigningAlgValuesSupported);
     }
     if (hasDisplayValuesSupported()) {
       map.put("display_values_supported", displayValuesSupported);
@@ -722,11 +723,10 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     map.put("require_request_uri_registration", requireRequestUriRegistration);
 
     if (hasBackchannelTokenDeliveryModesSupported()) {
-      map.put(
-          "backchannel_token_delivery_modes_supported", backchannelTokenDeliveryModesSupported());
+      map.put("backchannel_token_delivery_modes_supported", backchannelTokenDeliveryModesSupported);
     }
     if (hasBackchannelAuthenticationEndpoint()) {
-      map.put("backchannel_authentication_endpoint", hasBackchannelAuthenticationEndpoint());
+      map.put("backchannel_authentication_endpoint", backchannelAuthenticationEndpoint);
     }
     if (hasBackchannelAuthenticationRequestSigningAlgValuesSupported()) {
       map.put(
@@ -743,6 +743,7 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     map.put("id_documents_verification_methods_supported", idDocumentsVerificationMethodsSupported);
     map.put("claims_in_verified_claims_supported", claimsInVerifiedClaimsSupported);
     map.put("enabled", enabled);
+    map.put("extension", extension.toMap());
     return map;
   }
 

@@ -23,6 +23,7 @@ import org.idp.server.control_plane.management.role.io.RoleManagementStatus;
 import org.idp.server.control_plane.management.role.io.RoleRequest;
 import org.idp.server.core.openid.identity.permission.Permissions;
 import org.idp.server.core.openid.identity.role.Role;
+import org.idp.server.core.openid.identity.role.Roles;
 import org.idp.server.platform.json.JsonDiffCalculator;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -33,6 +34,7 @@ public class RoleUpdateContext implements ConfigUpdateContext {
   Role before;
   RoleRequest request;
   Role after;
+  Roles roles;
   Permissions permissions;
   boolean dryRun;
 
@@ -41,12 +43,14 @@ public class RoleUpdateContext implements ConfigUpdateContext {
       Role before,
       RoleRequest request,
       Role after,
+      Roles roles,
       Permissions permissions,
       boolean dryRun) {
     this.tenant = tenant;
     this.before = before;
     this.request = request;
     this.after = after;
+    this.roles = roles;
     this.permissions = permissions;
     this.dryRun = dryRun;
   }
@@ -65,6 +69,10 @@ public class RoleUpdateContext implements ConfigUpdateContext {
 
   public Role after() {
     return after;
+  }
+
+  public Roles roles() {
+    return roles;
   }
 
   public Permissions permissions() {

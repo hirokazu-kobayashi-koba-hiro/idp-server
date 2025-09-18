@@ -101,6 +101,13 @@ public class OrgTenantManagementEntryService implements OrgTenantManagementApi {
         organizationAccessVerifier.verifyAccess(
             organization, new TenantIdentifier(), operator, permissions);
 
+    TenantRequestValidator tenantRequestValidator = new TenantRequestValidator(request, dryRun);
+    TenantRequestValidationResult validateResult = tenantRequestValidator.validate();
+
+    if (!validateResult.isValid()) {
+      return validateResult.errorResponse();
+    }
+
     TenantManagementRegistrationContextCreator contextCreator =
         new TenantManagementRegistrationContextCreator(
             orgTenant, request, organization, operator, dryRun);
@@ -121,13 +128,6 @@ public class OrgTenantManagementEntryService implements OrgTenantManagementApi {
 
     if (!accessResult.isSuccess()) {
       return accessResult.toErrorResponse();
-    }
-
-    TenantRequestValidator tenantRequestValidator = new TenantRequestValidator(request, dryRun);
-    TenantRequestValidationResult validateResult = tenantRequestValidator.validate();
-
-    if (!validateResult.isValid()) {
-      return validateResult.errorResponse();
     }
 
     if (!verificationResult.isValid()) {

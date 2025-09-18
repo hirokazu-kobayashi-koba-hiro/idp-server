@@ -47,9 +47,13 @@ public class UserPasswordUpdateContextCreator {
 
   public UserUpdateContext create() {
     User newUser = jsonConverter.read(request.toMap(), User.class);
-    String hashedPassword = passwordEncodeDelegation.encode(newUser.rawPassword());
-    User updated = before.setHashedPassword(hashedPassword);
 
-    return new UserUpdateContext(tenant, before, updated, dryRun);
+    if (newUser.hasRawPassword()) {
+      String hashedPassword = passwordEncodeDelegation.encode(newUser.rawPassword());
+      User updated = before.setHashedPassword(hashedPassword);
+      return new UserUpdateContext(tenant, before, updated, dryRun);
+    }
+
+    return new UserUpdateContext(tenant, before, newUser, dryRun);
   }
 }
