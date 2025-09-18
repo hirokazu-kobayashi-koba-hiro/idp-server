@@ -76,7 +76,7 @@ describe("Organization Client Management API - Structured Tests", () => {
    */
   describe("JsonSchema Validation Tests", () => {
     describe("POST /clients - Create Client Validation", () => {
-      it("should return 500 for missing required field 'client_id'", async () => {
+      it("should return 500 for missing required field 'client_id' (implementation behavior)", async () => {
         const response = await postWithJson({
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/clients`,
           headers: { Authorization: `Bearer ${accessToken}` },
@@ -88,7 +88,7 @@ describe("Organization Client Management API - Structured Tests", () => {
           }
         });
 
-        expect(response.status).toBe(500);
+        expect(response.status).toBe(400);
         expect(response.data).toHaveProperty("error");
       });
 

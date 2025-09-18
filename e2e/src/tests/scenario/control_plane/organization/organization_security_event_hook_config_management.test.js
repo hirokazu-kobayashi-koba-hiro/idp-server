@@ -99,9 +99,9 @@ describe("organization security event hook configuration management api", () => 
         });
         console.log("List Response 1:", listResponse1.data);
         expect(listResponse1.status).toBe(200);
-        expect(listResponse1.data).toHaveProperty("results");
+        expect(listResponse1.data).toHaveProperty("list");
 
-        const configs = listResponse1.data.results.filter(config => config.id === createdConfigId);
+        const configs = listResponse1.data.list.filter(config => config.id === createdConfigId);
         expect(configs.length).toBe(1);
         console.log("✅ Security event hook config found in list");
 
@@ -114,8 +114,7 @@ describe("organization security event hook configuration management api", () => 
         });
         console.log("Detail Response 1:", detailResponse1.data);
         expect(detailResponse1.status).toBe(200);
-        expect(detailResponse1.data).toHaveProperty("result");
-        expect(detailResponse1.data.result.id).toBe(createdConfigId);
+        expect(detailResponse1.data.id).toBe(createdConfigId);
         console.log("✅ Security event hook config detail retrieved");
 
         // Step 5: Update security event hook config
@@ -181,7 +180,7 @@ describe("organization security event hook configuration management api", () => 
         console.log("List Response 2:", listResponse2.data);
         expect(listResponse2.status).toBe(200);
 
-        const configsAfterUpdate = listResponse2.data.results.filter(config => config.id === createdConfigId);
+        const configsAfterUpdate = listResponse2.data.list.filter(config => config.id === createdConfigId);
         expect(configsAfterUpdate.length).toBe(1);
         console.log("✅ Security event hook config still appears in list after update");
 
@@ -194,8 +193,7 @@ describe("organization security event hook configuration management api", () => 
         });
         console.log("Detail Response 2:", detailResponse2.data);
         expect(detailResponse2.status).toBe(200);
-        expect(detailResponse2.data).toHaveProperty("result");
-        expect(detailResponse2.data.result.id).toBe(createdConfigId);
+        expect(detailResponse2.data.id).toBe(createdConfigId);
         console.log("✅ Security event hook config detail still accessible after update");
 
         // Step 9: Delete the security event hook configuration
@@ -221,9 +219,6 @@ describe("organization security event hook configuration management api", () => 
         expect(detailResponse3.status).toBe(404);
         console.log("✅ Security event hook config no longer accessible after deletion");
 
-      } catch (error) {
-        console.error("Test failed:", error);
-        throw error;
       } finally {
         // Cleanup: ensure test security event hook config is removed
         if (configCreated) {

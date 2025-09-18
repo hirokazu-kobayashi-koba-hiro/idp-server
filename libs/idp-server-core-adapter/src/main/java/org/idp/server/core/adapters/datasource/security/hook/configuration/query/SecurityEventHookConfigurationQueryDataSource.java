@@ -91,6 +91,15 @@ public class SecurityEventHookConfigurationQueryDataSource
   }
 
   @Override
+  public long findTotalCount(Tenant tenant) {
+    Map<String, String> result = executor.selectCount(tenant);
+    if (result == null || result.isEmpty()) {
+      return 0L;
+    }
+    return Long.parseLong(result.get("count"));
+  }
+
+  @Override
   public List<SecurityEventHookConfiguration> findList(Tenant tenant, int limit, int offset) {
     List<Map<String, String>> results = executor.selectList(tenant, limit, offset);
 
