@@ -39,4 +39,6 @@ public interface SecurityEventHookConfigSqlExecutor {
 
   List<Map<String, String>> selectList(
       Tenant tenant, int limit, int offset, boolean includeDisabled);
+
+  Map<String, String> selectCount(Tenant tenant);
 }

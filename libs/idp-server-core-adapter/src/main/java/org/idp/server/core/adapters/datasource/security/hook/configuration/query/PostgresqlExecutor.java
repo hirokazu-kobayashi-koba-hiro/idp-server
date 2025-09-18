@@ -127,4 +127,22 @@ public class PostgresqlExecutor implements SecurityEventHookConfigSqlExecutor {
 
     return sqlExecutor.selectList(sqlTemplate, params);
   }
+
+  @Override
+  public Map<String, String> selectCount(Tenant tenant) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+                SELECT COUNT(*) as count
+                FROM security_event_hook_configurations
+                WHERE tenant_id = ?::uuid
+                AND enabled = true;
+                """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierUUID());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
 }

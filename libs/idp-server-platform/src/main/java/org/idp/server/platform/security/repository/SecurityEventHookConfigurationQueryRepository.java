@@ -34,5 +34,7 @@ public interface SecurityEventHookConfigurationQueryRepository {
 
   SecurityEventHookConfiguration find(Tenant tenant, String type);
 
+  long findTotalCount(Tenant tenant);
+
   List<SecurityEventHookConfiguration> findList(Tenant tenant, int limit, int offset);
 }

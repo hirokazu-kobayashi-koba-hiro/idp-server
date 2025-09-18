@@ -39,6 +39,8 @@ public class ControlPlaneV1SchemaReader {
     log.info("Admin User Schema is valid");
     tenantInvitationSchema();
     log.info("Tenant Invitation Schema is valid");
+    securityEventHookConfigurationSchema();
+    log.info("Security Event Hook Configuration Schema is valid");
   }
 
   public static JsonSchemaDefinition organizationSchema() {
@@ -120,6 +122,12 @@ public class ControlPlaneV1SchemaReader {
   public static JsonSchemaDefinition adminUserOrganizationAssignmentsUpdateSchema() {
     String json =
         ResourceReader.readClasspath("/schema/1.0/admin-user-organization-assignments-update.json");
+    return JsonSchemaDefinition.fromJson(json);
+  }
+
+  public static JsonSchemaDefinition securityEventHookConfigurationSchema() {
+    String json =
+        ResourceReader.readClasspath("/schema/1.0/security-event-hook-configuration.json");
     return JsonSchemaDefinition.fromJson(json);
   }
 }

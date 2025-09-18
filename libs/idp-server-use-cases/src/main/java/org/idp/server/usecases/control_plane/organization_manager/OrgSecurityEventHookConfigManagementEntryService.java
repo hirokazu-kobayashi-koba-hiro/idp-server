@@ -25,6 +25,8 @@ import org.idp.server.control_plane.management.security.hook.*;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementStatus;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookRequest;
+import org.idp.server.control_plane.management.security.hook.validator.SecurityEventConfigRequestValidationResult;
+import org.idp.server.control_plane.management.security.hook.validator.SecurityEventHookRequestValidator;
 import org.idp.server.control_plane.organization.access.OrganizationAccessControlResult;
 import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
 import org.idp.server.core.openid.identity.User;
@@ -139,6 +141,13 @@ public class OrgSecurityEventHookConfigManagementEntryService
     // Use existing system-level logic with target tenant
     Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
 
+    SecurityEventHookRequestValidator validator =
+        new SecurityEventHookRequestValidator(request, dryRun);
+    SecurityEventConfigRequestValidationResult validate = validator.validate();
+    if (!validate.isValid()) {
+      return validate.errorResponse();
+    }
+
     SecurityEventHookConfigRegistrationContextCreator contextCreator =
         new SecurityEventHookConfigRegistrationContextCreator(targetTenant, request, dryRun);
     SecurityEventHookConfigRegistrationContext context = contextCreator.create();
@@ -180,19 +189,7 @@ public class OrgSecurityEventHookConfigManagementEntryService
         organizationAccessVerifier.verifyAccess(
             organization, tenantIdentifier, operator, permissions);
 
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", "access_denied");
-      errorResponse.put("error_description", accessResult.getReason());
-      return new SecurityEventHookConfigManagementResponse(
-          SecurityEventHookConfigManagementStatus.FORBIDDEN, errorResponse);
-    }
-
-    // Use existing system-level logic with target tenant
     Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
-
-    List<SecurityEventHookConfiguration> configurations =
-        securityEventHookConfigurationQueryRepository.findList(targetTenant, limit, offset);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
@@ -204,9 +201,35 @@ public class OrgSecurityEventHookConfigManagementEntryService
             requestAttributes);
     auditLogWriters.write(targetTenant, auditLog);
 
+    if (!accessResult.isSuccess()) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put("error_description", accessResult.getReason());
+      return new SecurityEventHookConfigManagementResponse(
+          SecurityEventHookConfigManagementStatus.FORBIDDEN, response);
+    }
+
+    long totalCount = securityEventHookConfigurationQueryRepository.findTotalCount(targetTenant);
+    if (totalCount == 0) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("list", List.of());
+      response.put("total_count", 0);
+      response.put("limit", limit);
+      response.put("offset", offset);
+      return new SecurityEventHookConfigManagementResponse(
+          SecurityEventHookConfigManagementStatus.OK, response);
+    }
+
+    List<SecurityEventHookConfiguration> configurations =
+        securityEventHookConfigurationQueryRepository.findList(targetTenant, limit, offset);
+
     Map<String, Object> response = new HashMap<>();
     response.put(
-        "results", configurations.stream().map(SecurityEventHookConfiguration::toMap).toList());
+        "list", configurations.stream().map(SecurityEventHookConfiguration::toMap).toList());
+    response.put("total_count", totalCount);
+    response.put("limit", limit);
+    response.put("offset", offset);
+
     return new SecurityEventHookConfigManagementResponse(
         SecurityEventHookConfigManagementStatus.OK, response);
   }
@@ -227,27 +250,10 @@ public class OrgSecurityEventHookConfigManagementEntryService
         organizationAccessVerifier.verifyAccess(
             organization, tenantIdentifier, operator, permissions);
 
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", "access_denied");
-      errorResponse.put("error_description", accessResult.getReason());
-      return new SecurityEventHookConfigManagementResponse(
-          SecurityEventHookConfigManagementStatus.FORBIDDEN, errorResponse);
-    }
-
-    // Use existing system-level logic with target tenant
     Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
 
     SecurityEventHookConfiguration configuration =
         securityEventHookConfigurationQueryRepository.find(targetTenant, identifier);
-
-    if (!configuration.exists()) {
-      Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", "not_found");
-      errorResponse.put("error_description", "Security event hook configuration not found");
-      return new SecurityEventHookConfigManagementResponse(
-          SecurityEventHookConfigManagementStatus.NOT_FOUND, errorResponse);
-    }
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
@@ -259,10 +265,21 @@ public class OrgSecurityEventHookConfigManagementEntryService
             requestAttributes);
     auditLogWriters.write(targetTenant, auditLog);
 
-    Map<String, Object> response = new HashMap<>();
-    response.put("result", configuration.toMap());
+    if (!accessResult.isSuccess()) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put("error_description", accessResult.getReason());
+      return new SecurityEventHookConfigManagementResponse(
+          SecurityEventHookConfigManagementStatus.FORBIDDEN, response);
+    }
+
+    if (!configuration.exists()) {
+      return new SecurityEventHookConfigManagementResponse(
+          SecurityEventHookConfigManagementStatus.NOT_FOUND, Map.of());
+    }
+
     return new SecurityEventHookConfigManagementResponse(
-        SecurityEventHookConfigManagementStatus.OK, response);
+        SecurityEventHookConfigManagementStatus.OK, configuration.toMap());
   }
 
   @Override
@@ -343,15 +360,6 @@ public class OrgSecurityEventHookConfigManagementEntryService
         organizationAccessVerifier.verifyAccess(
             organization, tenantIdentifier, operator, permissions);
 
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", "access_denied");
-      errorResponse.put("error_description", accessResult.getReason());
-      return new SecurityEventHookConfigManagementResponse(
-          SecurityEventHookConfigManagementStatus.FORBIDDEN, errorResponse);
-    }
-
-    // Use existing system-level logic with target tenant
     Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
     SecurityEventHookConfiguration configuration =
         securityEventHookConfigurationQueryRepository.find(targetTenant, identifier);
@@ -367,9 +375,26 @@ public class OrgSecurityEventHookConfigManagementEntryService
             requestAttributes);
     auditLogWriters.write(targetTenant, auditLog);
 
+    if (!accessResult.isSuccess()) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "access_denied");
+      response.put("error_description", accessResult.getReason());
+      return new SecurityEventHookConfigManagementResponse(
+          SecurityEventHookConfigManagementStatus.FORBIDDEN, response);
+    }
+
     if (!configuration.exists()) {
       return new SecurityEventHookConfigManagementResponse(
           SecurityEventHookConfigManagementStatus.NOT_FOUND, Map.of());
+    }
+
+    if (dryRun) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("message", "Security event hook configuration deletion simulated successfully");
+      response.put("config_id", configuration.identifier().value());
+      response.put("dry_run", true);
+      return new SecurityEventHookConfigManagementResponse(
+          SecurityEventHookConfigManagementStatus.OK, response);
     }
 
     securityEventHookConfigurationCommandRepository.delete(targetTenant, configuration);
