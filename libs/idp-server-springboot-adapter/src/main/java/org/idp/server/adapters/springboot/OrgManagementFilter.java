@@ -32,6 +32,7 @@ import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.BadRequestException;
 import org.idp.server.platform.exception.UnauthorizedException;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.log.TenantLoggingContext;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationNotFoundException;
 import org.idp.server.platform.type.Pairs;
@@ -86,6 +87,7 @@ public class OrgManagementFilter extends OncePerRequestFilter {
 
       User user = authResult.getLeft();
       OAuthToken oAuthToken = authResult.getRight();
+      TenantLoggingContext.setTenant(oAuthToken.tenantIdentifier());
 
       // 4. Validate token type (no client credentials for management API)
       if (oAuthToken.isClientCredentialsGrant()) {
@@ -145,6 +147,8 @@ public class OrgManagementFilter extends OncePerRequestFilter {
           HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
           "server_error",
           "unexpected error occurred");
+    } finally {
+      TenantLoggingContext.clear();
     }
   }
 

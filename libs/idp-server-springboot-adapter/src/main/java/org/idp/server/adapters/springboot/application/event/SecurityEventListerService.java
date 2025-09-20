@@ -18,6 +18,7 @@ package org.idp.server.adapters.springboot.application.event;
 
 import org.idp.server.IdpServerApplication;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.log.TenantLoggingContext;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.SecurityEventApi;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -43,16 +44,18 @@ public class SecurityEventListerService {
   @Async
   @EventListener
   public void onEvent(SecurityEvent securityEvent) {
-    log.info(
-        "SecurityEventListerService.onEvent, TenantId {}, event_type: {}",
-        securityEvent.tenant().id(),
-        securityEvent.type().value());
+    TenantLoggingContext.setTenant(securityEvent.tenantIdentifier());
+    try {
+      log.info("SecurityEventListerService.onEvent, event_type: {}", securityEvent.type().value());
 
-    taskExecutor.execute(
-        new SecurityEventRunnable(
-            securityEvent,
-            event -> {
-              securityEventApi.handle(event.tenantIdentifier(), event);
-            }));
+      taskExecutor.execute(
+          new SecurityEventRunnable(
+              securityEvent,
+              event -> {
+                securityEventApi.handle(event.tenantIdentifier(), event);
+              }));
+    } finally {
+      TenantLoggingContext.clear();
+    }
   }
 }

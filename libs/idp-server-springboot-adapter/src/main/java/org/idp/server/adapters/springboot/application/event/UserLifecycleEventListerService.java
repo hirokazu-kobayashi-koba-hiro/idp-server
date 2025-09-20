@@ -20,6 +20,7 @@ import org.idp.server.IdpServerApplication;
 import org.idp.server.core.openid.identity.event.UserLifecycleEvent;
 import org.idp.server.core.openid.identity.event.UserLifecycleEventApi;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.log.TenantLoggingContext;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.task.TaskExecutor;
@@ -43,17 +44,21 @@ public class UserLifecycleEventListerService {
   @Async
   @EventListener
   public void onEvent(UserLifecycleEvent userLifecycleEvent) {
-    log.info(
-        "tenantId: {}, user: {}, onEvent: {}",
-        userLifecycleEvent.tenant().identifier().value(),
-        userLifecycleEvent.user().sub(),
-        userLifecycleEvent.lifecycleType().name());
+    TenantLoggingContext.setTenant(userLifecycleEvent.tenantIdentifier());
+    try {
+      log.info(
+          "user: {}, onEvent: {}",
+          userLifecycleEvent.user().sub(),
+          userLifecycleEvent.lifecycleType().name());
 
-    taskExecutor.execute(
-        new UserLifecycleEventRunnable(
-            userLifecycleEvent,
-            event -> {
-              userLifecycleEventApi.handle(event.tenantIdentifier(), event);
-            }));
+      taskExecutor.execute(
+          new UserLifecycleEventRunnable(
+              userLifecycleEvent,
+              event -> {
+                userLifecycleEventApi.handle(event.tenantIdentifier(), event);
+              }));
+    } finally {
+      TenantLoggingContext.clear();
+    }
   }
 }

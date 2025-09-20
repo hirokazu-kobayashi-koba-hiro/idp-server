@@ -18,6 +18,7 @@ package org.idp.server.adapters.springboot.application.event;
 
 import java.util.function.Consumer;
 import org.idp.server.core.openid.identity.event.UserLifecycleEvent;
+import org.idp.server.platform.log.TenantLoggingContext;
 
 public class UserLifecycleEventRunnable implements Runnable {
 
@@ -36,6 +37,11 @@ public class UserLifecycleEventRunnable implements Runnable {
 
   @Override
   public void run() {
-    handler.accept(userLifecycleEvent);
+    TenantLoggingContext.setTenant(userLifecycleEvent.tenantIdentifier());
+    try {
+      handler.accept(userLifecycleEvent);
+    } finally {
+      TenantLoggingContext.clear();
+    }
   }
 }
