@@ -40,7 +40,7 @@ public class SecurityEventRunnable implements Runnable {
     try {
       handler.accept(securityEvent);
     } finally {
-      TenantLoggingContext.clear();
+      TenantLoggingContext.clearAll();
     }
   }
 }

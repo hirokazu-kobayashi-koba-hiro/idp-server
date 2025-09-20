@@ -55,7 +55,7 @@ public class SecurityEventListerService {
                 securityEventApi.handle(event.tenantIdentifier(), event);
               }));
     } finally {
-      TenantLoggingContext.clear();
+      TenantLoggingContext.clearAll();
     }
   }
 }

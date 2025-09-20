@@ -18,6 +18,8 @@ package org.idp.server.platform.oauth;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.idp.server.platform.datasource.DatabaseType;
+import org.idp.server.platform.datasource.DatabaseTypeConfiguration;
 import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.datasource.cache.NoOperationCacheStore;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
@@ -51,6 +53,8 @@ public class OAuthAuthorizationResolversProviderTest {
     ApplicationComponentDependencyContainer dependencyContainer =
         new ApplicationComponentDependencyContainer();
     dependencyContainer.register(CacheStore.class, new NoOperationCacheStore());
+    dependencyContainer.register(
+        DatabaseTypeConfiguration.class, new DatabaseTypeConfiguration(DatabaseType.POSTGRESQL));
 
     // When
     var applicationComponentContainer =
