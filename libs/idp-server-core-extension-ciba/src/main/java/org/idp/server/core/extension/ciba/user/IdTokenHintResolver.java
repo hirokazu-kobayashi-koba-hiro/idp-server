@@ -51,7 +51,7 @@ public class IdTokenHintResolver implements UserHintResolver {
 
       return userQueryRepository.get(tenant, userIdentifier);
     } catch (Exception e) {
-      log.error("invalid id_token_hint: " + e.getMessage());
+      log.error("Invalid id_token_hint: error={}", e.getMessage(), e);
       return User.notFound();
     }
   }

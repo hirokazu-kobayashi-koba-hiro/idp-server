@@ -64,7 +64,8 @@ public class CustomIndividualClaimsCreators {
               authorizationServerConfiguration,
               clientConfiguration)) {
 
-            log.info("Execute CustomIndividualClaimsCreator : " + creator.getClass().getName());
+            log.info(
+                "Execute CustomIndividualClaimsCreator: class={}", creator.getClass().getName());
             Map<String, Object> customIndividualClaims =
                 creator.create(
                     user,

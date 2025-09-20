@@ -100,7 +100,7 @@ public class StandardOidcExecutor implements OidcSsoExecutor {
           httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
       String body = httpResponse.body();
-      log.debug("jwks response:" + body);
+      log.debug("JWKS response: {}", body);
 
       return new OidcJwksResult(httpResponse.statusCode(), httpResponse.headers().map(), body);
     } catch (IOException | InterruptedException | URISyntaxException e) {

@@ -32,7 +32,7 @@ public class PluginLoader {
 
     List<T> extensions = new ArrayList<>();
     for (T impl : serviceLoader) {
-      log.info("PluginLoader Loaded internal module: " + impl.getClass().getName());
+      log.info("PluginLoader loaded internal module: class={}", impl.getClass().getName());
       extensions.add(impl);
     }
     return extensions;
@@ -74,10 +74,12 @@ public class PluginLoader {
 
         // external only load
         if (loaderOfImpl != contextClassLoader) {
-          log.info("ExtensionJarLoader Loaded external module " + impl.getClass().getName());
+          log.info(
+              "ExtensionJarLoader loaded external module: class={}", impl.getClass().getName());
           extensions.add(impl);
         } else {
-          log.debug("Skipped internal module from external loader: " + impl.getClass().getName());
+          log.debug(
+              "Skipped internal module from external loader: class={}", impl.getClass().getName());
         }
       }
       return extensions;

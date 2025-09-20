@@ -35,14 +35,14 @@ public class ApplicationComponentContainerPluginLoader extends PluginLoader {
         loadFromInternalModule(ApplicationComponentProvider.class);
     for (ApplicationComponentProvider<?> provider : internals) {
       container.register(provider.type(), provider.provide(dependencyContainer));
-      log.info("Dynamic Registered internal application component " + provider.type());
+      log.info("Dynamic registered internal application component: type={}", provider.type());
     }
 
     List<ApplicationComponentProvider> externals =
         loadFromExternalModule(ApplicationComponentProvider.class);
     for (ApplicationComponentProvider<?> provider : externals) {
       container.register(provider.type(), provider.provide(dependencyContainer));
-      log.info("Dynamic Registered external application component " + provider.type());
+      log.info("Dynamic registered external application component: type={}", provider.type());
     }
 
     return container;

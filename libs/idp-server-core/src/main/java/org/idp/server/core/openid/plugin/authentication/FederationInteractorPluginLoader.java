@@ -42,7 +42,7 @@ public class FederationInteractorPluginLoader extends PluginLoader {
       FederationType type = federationInteractorFactory.type();
       FederationInteractor federationInteractor = federationInteractorFactory.create(container);
       executors.put(type, federationInteractor);
-      log.info("Dynamic Registered internal sso executor " + type.name());
+      log.info("Dynamic registered internal SSO executor: type={}", type.name());
     }
 
     List<FederationInteractorFactory> externalSsoExecutorServiceLoaders =
@@ -52,7 +52,7 @@ public class FederationInteractorPluginLoader extends PluginLoader {
       FederationType type = federationInteractorFactory.type();
       FederationInteractor federationInteractor = federationInteractorFactory.create(container);
       executors.put(type, federationInteractor);
-      log.info("Dynamic Registered external sso executor " + type.name());
+      log.info("Dynamic registered external SSO executor: type={}", type.name());
     }
 
     return new FederationInteractors(executors);
