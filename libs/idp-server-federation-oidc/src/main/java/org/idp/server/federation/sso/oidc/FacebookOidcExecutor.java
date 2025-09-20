@@ -100,7 +100,7 @@ public class FacebookOidcExecutor implements OidcSsoExecutor {
           httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
       String body = httpResponse.body();
-      log.info("jwks response:" + body);
+      log.info("JWKS response: {}", body);
 
       return new OidcJwksResult(httpResponse.statusCode(), httpResponse.headers().map(), body);
     } catch (IOException | InterruptedException | URISyntaxException e) {

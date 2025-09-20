@@ -39,7 +39,9 @@ public class UserLifecycleEventEntryService implements UserLifecycleEventApi {
 
   @Override
   public void handle(TenantIdentifier tenantIdentifier, UserLifecycleEvent userLifecycleEvent) {
-    log.info("UserLifecycleEventEntryService.handle: " + userLifecycleEvent.lifecycleType().name());
+    log.info(
+        "UserLifecycleEventEntryService.handle: type={}",
+        userLifecycleEvent.lifecycleType().name());
 
     List<UserLifecycleEventResult> results = new ArrayList<>();
     UserLifecycleEventExecutors userLifecycleEventExecutors =
@@ -48,7 +50,7 @@ public class UserLifecycleEventEntryService implements UserLifecycleEventApi {
     for (UserLifecycleEventExecutor executor : userLifecycleEventExecutors) {
 
       if (executor.shouldExecute(userLifecycleEvent)) {
-        log.info("UserLifecycleEventEntryService.execute: " + executor.name());
+        log.info("UserLifecycleEventEntryService.execute: executor={}", executor.name());
         UserLifecycleEventResult deletionResult = executor.execute(userLifecycleEvent);
         results.add(deletionResult);
       }

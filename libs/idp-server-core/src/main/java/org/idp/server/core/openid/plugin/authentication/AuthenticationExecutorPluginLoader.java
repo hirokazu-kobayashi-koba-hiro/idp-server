@@ -39,7 +39,8 @@ public class AuthenticationExecutorPluginLoader extends PluginLoader {
     for (AuthenticationExecutorFactory factory : internals) {
       AuthenticationExecutor executor = factory.create(container);
       executors.put(executor.function(), executor);
-      log.info("Dynamic Registered internal AuthenticationExecutor " + executor.function());
+      log.info(
+          "Dynamic registered internal AuthenticationExecutor: function={}", executor.function());
     }
 
     List<AuthenticationExecutorFactory> externals =
@@ -47,7 +48,8 @@ public class AuthenticationExecutorPluginLoader extends PluginLoader {
     for (AuthenticationExecutorFactory factory : externals) {
       AuthenticationExecutor executor = factory.create(container);
       executors.put(executor.function(), executor);
-      log.info("Dynamic Registered external AuthenticationExecutor " + executor.function());
+      log.info(
+          "Dynamic registered external AuthenticationExecutor: function={}", executor.function());
     }
 
     return new AuthenticationExecutors(executors);

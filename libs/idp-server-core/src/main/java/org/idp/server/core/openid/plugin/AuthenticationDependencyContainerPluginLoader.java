@@ -42,7 +42,9 @@ public class AuthenticationDependencyContainerPluginLoader extends PluginLoader 
     for (AuthenticationDependencyProvider<?> provider : internals) {
       Object instance = createInstance(provider, appContainer);
       container.register(provider.type(), instance);
-      log.info("Dynamic Registered internal Authentication dependency provider " + provider.type());
+      log.info(
+          "Dynamic registered internal Authentication dependency provider: type={}",
+          provider.type());
     }
 
     List<AuthenticationDependencyProvider> externals =
@@ -50,7 +52,9 @@ public class AuthenticationDependencyContainerPluginLoader extends PluginLoader 
     for (AuthenticationDependencyProvider<?> provider : externals) {
       Object instance = createInstance(provider, appContainer);
       container.register(provider.type(), instance);
-      log.info("Dynamic Registered external Authentication dependency provider " + provider.type());
+      log.info(
+          "Dynamic registered external Authentication dependency provider: type={}",
+          provider.type());
     }
 
     return container;

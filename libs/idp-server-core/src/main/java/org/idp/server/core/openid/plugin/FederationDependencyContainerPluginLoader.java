@@ -36,14 +36,16 @@ public class FederationDependencyContainerPluginLoader extends PluginLoader {
         loadFromInternalModule(FederationDependencyProvider.class);
     for (FederationDependencyProvider<?> provider : internals) {
       container.register(provider.type(), provider.provide(appContainer));
-      log.info("Dynamic Registered internal federation dependency provider " + provider.type());
+      log.info(
+          "Dynamic registered internal federation dependency provider: type={}", provider.type());
     }
 
     List<FederationDependencyProvider> externals =
         loadFromExternalModule(FederationDependencyProvider.class);
     for (FederationDependencyProvider<?> provider : externals) {
       container.register(provider.type(), provider.provide(appContainer));
-      log.info("Dynamic Registered external federation dependency provider " + provider.type());
+      log.info(
+          "Dynamic registered external federation dependency provider: type={}", provider.type());
     }
 
     return container;

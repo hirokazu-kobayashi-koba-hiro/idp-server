@@ -59,7 +59,7 @@ public class SecurityEventLogService {
       try {
         repository.register(tenant, securityEvent);
       } catch (Exception e) {
-        log.error("Failed to persist security event to database: " + e.getMessage());
+        log.error("Failed to persist security event to database: error={}", e.getMessage(), e);
       }
     }
   }

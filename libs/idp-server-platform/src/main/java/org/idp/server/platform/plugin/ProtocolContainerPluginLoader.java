@@ -34,13 +34,13 @@ public class ProtocolContainerPluginLoader extends PluginLoader {
     List<ProtocolProvider> internals = loadFromInternalModule(ProtocolProvider.class);
     for (ProtocolProvider<?> provider : internals) {
       container.register(provider.type(), provider.provide(applicationComponentContainer));
-      log.info("Dynamic Registered internal Protocol provider " + provider.type());
+      log.info("Dynamic registered internal Protocol provider: type={}", provider.type());
     }
 
     List<ProtocolProvider> externals = loadFromExternalModule(ProtocolProvider.class);
     for (ProtocolProvider<?> provider : externals) {
       container.register(provider.type(), provider.provide(applicationComponentContainer));
-      log.info("Dynamic Registered external Protocol provider " + provider.type());
+      log.info("Dynamic registered external Protocol provider: type={}", provider.type());
     }
 
     return container;

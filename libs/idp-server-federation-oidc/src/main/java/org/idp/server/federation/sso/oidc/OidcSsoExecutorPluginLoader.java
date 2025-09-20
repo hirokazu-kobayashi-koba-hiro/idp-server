@@ -39,7 +39,7 @@ public class OidcSsoExecutorPluginLoader
       OidcSsoExecutor executor = factory.create(container);
       SsoProvider provider = factory.ssoProvider();
       executors.put(provider, executor);
-      log.info("Dynamic Registered internal SSO provider via factory " + provider.name());
+      log.info("Dynamic registered internal SSO provider via factory: name={}", provider.name());
     }
 
     List<OidcSsoExecutorFactory> externalFactories =
@@ -48,7 +48,7 @@ public class OidcSsoExecutorPluginLoader
       OidcSsoExecutor executor = factory.create(container);
       SsoProvider provider = factory.ssoProvider();
       executors.put(provider, executor);
-      log.info("Dynamic Registered external SSO provider via factory " + provider.name());
+      log.info("Dynamic registered external SSO provider via factory: name={}", provider.name());
     }
 
     return new OidcSsoExecutors(executors);
@@ -61,14 +61,14 @@ public class OidcSsoExecutorPluginLoader
     for (OidcSsoExecutor executor : internals) {
       SsoProvider provider = executor.type();
       executors.put(provider, executor);
-      log.info("Dynamic Registered internal SSO provider " + provider.name());
+      log.info("Dynamic registered internal SSO provider: name={}", provider.name());
     }
 
     List<OidcSsoExecutor> externals = loadFromExternalModule(OidcSsoExecutor.class);
     for (OidcSsoExecutor executor : externals) {
       SsoProvider provider = executor.type();
       executors.put(provider, executor);
-      log.info("Dynamic Registered external SSO provider " + provider.name());
+      log.info("Dynamic registered external SSO provider: name={}", provider.name());
     }
 
     return new OidcSsoExecutors(executors);

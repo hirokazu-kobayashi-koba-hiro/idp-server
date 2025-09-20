@@ -46,11 +46,11 @@ public class MappingRuleObjectMapper {
   /** Resolve base value from staticValue, from(JSONPath) or null. */
   static Object resolveBaseValue(MappingRule rule, JsonPathWrapper jsonPath) {
     if (rule.hasStaticValue()) {
-      log.debug("apply static value to=" + rule.to());
+      log.debug("Apply static value: to={}", rule.to());
       return rule.staticValue();
     }
     if (rule.hasFrom()) {
-      log.debug("read from JSONPath from=" + rule.from() + " to=" + rule.to());
+      log.debug("Read from JSONPath: from={}, to={}", rule.from(), rule.to());
       return jsonPath.readRaw(rule.from());
     }
     // no static/from → start from null
@@ -66,7 +66,7 @@ public class MappingRuleObjectMapper {
     for (FunctionSpec spec : rule.functions()) {
       ValueFunction fn = functionRegistry.get(spec.name());
       if (fn == null) {
-        log.warn("function not found: " + spec.name() + " (to=" + rule.to() + ")");
+        log.warn("Function not found: name={}, to={}", spec.name(), rule.to());
         continue;
       }
       v = fn.apply(v, spec.args());
@@ -87,7 +87,7 @@ public class MappingRuleObjectMapper {
         log.warn(
             "'*' skipped: value is null (from=" + (rule.hasFrom() ? rule.from() : "n/a") + ")");
       } else {
-        log.warn("'*' requires Map but got " + value.getClass().getSimpleName());
+        log.warn("'*' requires Map but got: type={}", value.getClass().getSimpleName());
       }
     } else {
       flatMap.put(rule.to(), value);

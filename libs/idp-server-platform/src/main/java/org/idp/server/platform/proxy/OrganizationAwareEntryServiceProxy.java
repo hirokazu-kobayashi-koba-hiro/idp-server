@@ -94,14 +94,14 @@ public class OrganizationAwareEntryServiceProxy implements InvocationHandler {
     if (isTransactional && operationType == OperationType.READ) {
       try {
         OperationContext.set(operationType);
-        log.debug("READ start: " + target.getClass().getName() + ": " + method.getName() + " ...");
+        log.debug("READ start: class={}, method={}", target.getClass().getName(), method.getName());
 
         DatabaseType databaseType = applicationDatabaseTypeProvider.provide();
         TransactionManager.createConnection(databaseType);
         Object result = method.invoke(target, args);
 
         TransactionManager.closeConnection();
-        log.debug("READ end: " + target.getClass().getName() + ": " + method.getName() + " ...");
+        log.debug("READ end: class={}, method={}", target.getClass().getName(), method.getName());
 
         return result;
       } catch (InvocationTargetException e) {
@@ -123,7 +123,8 @@ public class OrganizationAwareEntryServiceProxy implements InvocationHandler {
     } else if (isTransactional && operationType == OperationType.WRITE) {
       try {
         OperationContext.set(operationType);
-        log.debug("WRITE start: " + target.getClass().getName() + ": " + method.getName() + " ...");
+        log.debug(
+            "WRITE start: class={}, method={}", target.getClass().getName(), method.getName());
 
         DatabaseType databaseType = applicationDatabaseTypeProvider.provide();
         TransactionManager.beginTransaction(databaseType);
@@ -144,7 +145,7 @@ public class OrganizationAwareEntryServiceProxy implements InvocationHandler {
                 + ": "
                 + method.getName());
 
-        log.debug("WRITE end: " + target.getClass().getName() + ": " + method.getName() + " ...");
+        log.debug("WRITE end: class={}, method={}", target.getClass().getName(), method.getName());
 
         return result;
       } catch (InvocationTargetException e) {
