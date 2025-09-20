@@ -16,12 +16,62 @@
 
 package org.idp.server.core.openid.oauth.clientauthenticator.exception;
 
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
+
 public class ClientUnAuthorizedException extends RuntimeException {
+  private final String method;
+  private final RequestedClientId clientId;
+  private final String reason;
+
   public ClientUnAuthorizedException(String message) {
     super(message);
+    this.method = null;
+    this.clientId = null;
+    this.reason = null;
   }
 
   public ClientUnAuthorizedException(String message, Throwable throwable) {
     super(message, throwable);
+    this.method = null;
+    this.clientId = null;
+    this.reason = null;
+  }
+
+  public ClientUnAuthorizedException(String method, RequestedClientId clientId, String reason) {
+    super(
+        String.format(
+            "Client authentication failed: method=%s, client_id=%s, reason=%s",
+            method, clientId != null ? clientId.value() : "unknown", reason));
+    this.method = method;
+    this.clientId = clientId;
+    this.reason = reason;
+  }
+
+  public ClientUnAuthorizedException(
+      String method, RequestedClientId clientId, String reason, Throwable throwable) {
+    super(
+        String.format(
+            "Client authentication failed: method=%s, client_id=%s, reason=%s",
+            method, clientId != null ? clientId.value() : "unknown", reason),
+        throwable);
+    this.method = method;
+    this.clientId = clientId;
+    this.reason = reason;
+  }
+
+  public String getMethod() {
+    return method;
+  }
+
+  public RequestedClientId getClientId() {
+    return clientId;
+  }
+
+  public String getReason() {
+    return reason;
+  }
+
+  public boolean hasStructuredData() {
+    return method != null && clientId != null && reason != null;
   }
 }

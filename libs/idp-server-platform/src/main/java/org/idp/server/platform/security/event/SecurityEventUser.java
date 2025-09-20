@@ -44,7 +44,6 @@ public class SecurityEventUser implements UuidConvertable {
   List<String> permissions;
   String currentTenant;
   List<String> assignedTenants;
-  Map<String, Object> verifiedClaims;
 
   public SecurityEventUser() {}
 
@@ -72,12 +71,10 @@ public class SecurityEventUser implements UuidConvertable {
       String birthdate,
       String zoneinfo,
       String locale,
-      Map<String, Object> address,
       List<String> roles,
       List<String> permissions,
       String currentTenant,
-      List<String> assignedTenants,
-      Map<String, Object> verifiedClaims) {
+      List<String> assignedTenants) {
     this.id = id;
     this.name = name;
     this.exSub = exSub;
@@ -93,12 +90,10 @@ public class SecurityEventUser implements UuidConvertable {
     this.birthdate = birthdate;
     this.zoneinfo = zoneinfo;
     this.locale = locale;
-    this.address = address;
     this.roles = roles;
     this.permissions = permissions;
     this.currentTenant = currentTenant;
     this.assignedTenants = assignedTenants;
-    this.verifiedClaims = verifiedClaims;
   }
 
   public Map<String, Object> toMap() {
@@ -148,9 +143,6 @@ public class SecurityEventUser implements UuidConvertable {
     if (locale != null) {
       result.put("locale", locale);
     }
-    if (address != null) {
-      result.put("address", address);
-    }
     if (roles != null) {
       result.put("roles", roles);
     }
@@ -163,9 +155,7 @@ public class SecurityEventUser implements UuidConvertable {
     if (assignedTenants != null) {
       result.put("assigned_tenants", assignedTenants);
     }
-    if (verifiedClaims != null) {
-      result.put("verified_claims", verifiedClaims);
-    }
+
     return result;
   }
 
@@ -233,10 +223,6 @@ public class SecurityEventUser implements UuidConvertable {
     return locale;
   }
 
-  public Map<String, Object> address() {
-    return address;
-  }
-
   public List<String> roles() {
     return roles;
   }
@@ -251,10 +237,6 @@ public class SecurityEventUser implements UuidConvertable {
 
   public List<String> assignedTenants() {
     return assignedTenants;
-  }
-
-  public Map<String, Object> verifiedClaims() {
-    return verifiedClaims;
   }
 
   public boolean exists() {

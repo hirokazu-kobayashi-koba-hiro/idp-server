@@ -161,14 +161,9 @@ public class StructuredJsonLogFormatter implements SecurityEventLogFormatter {
   }
 
   private boolean shouldScrubKey(String key, List<String> scrubKeys) {
-    String lowerKey = key.toLowerCase();
+    String lowerKey = key.toLowerCase().trim();
     return scrubKeys.stream()
-        .map(String::toLowerCase)
-        .map(String::trim)
-        .anyMatch(
-            scrubKey ->
-                lowerKey.equals(scrubKey)
-                    || lowerKey.contains(scrubKey)
-                    || scrubKey.contains(lowerKey));
+        .map(s -> s.toLowerCase().trim())
+        .anyMatch(scrubKey -> lowerKey.equals(scrubKey) || lowerKey.startsWith(scrubKey));
   }
 }

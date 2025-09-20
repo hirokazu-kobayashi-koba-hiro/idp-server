@@ -44,11 +44,13 @@ import org.idp.server.core.openid.oauth.validator.OAuthAuthorizeRequestValidator
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.OAuthTokenFactory;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /** OAuthAuthorizeHandler */
 public class OAuthAuthorizeHandler {
 
+  LoggerWrapper log = LoggerWrapper.getLogger(OAuthAuthorizeHandler.class);
   AuthorizationResponseCreators creators;
   AuthorizationRequestRepository authorizationRequestRepository;
   AuthorizationCodeGrantRepository authorizationCodeGrantRepository;

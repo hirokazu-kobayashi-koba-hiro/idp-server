@@ -93,7 +93,7 @@ public class OidcFederationInteractor implements FederationInteractor {
     FederationCallbackParameters parameters = federationCallbackRequest.parameters();
 
     if (!parameters.hasCode() || parameters.hasError()) {
-      log.warn("Error occurred while federation callback. tenantId: {}", tenant.identifierValue());
+      log.warn("Error occurred while federation callback");
       Map<String, Object> errors = new HashMap<>();
       errors.put("error", parameters.error());
       errors.put("error_description", parameters.errorDescription());
@@ -117,8 +117,7 @@ public class OidcFederationInteractor implements FederationInteractor {
     OidcTokenResult tokenResult = oidcSsoExecutor.requestToken(tokenRequest);
 
     if (tokenResult.isError()) {
-      log.error(
-          "Error occurred while executing token request. tenantId: {}", tenant.identifierValue());
+      log.error("Error occurred while executing token request");
       return FederationInteractionResult.error(
           federationType, ssoProvider, session, tokenResult.statusCode(), tokenResult.bodyAsMap());
     }
@@ -131,8 +130,7 @@ public class OidcFederationInteractor implements FederationInteractor {
       response.put("error", "server_error");
       response.put("error_description", jwksResult.body());
 
-      log.error(
-          "Error occurred while executing jwk request. tenantId: {}", tenant.identifierValue());
+      log.error("Error occurred while executing jwk request");
       return FederationInteractionResult.error(
           federationType, ssoProvider, session, jwksResult.statusCode(), response);
     }
@@ -141,9 +139,7 @@ public class OidcFederationInteractor implements FederationInteractor {
         oidcSsoExecutor.verifyIdToken(oidcSsoConfiguration, session, jwksResult, tokenResult);
     if (idTokenVerificationResult.isError()) {
 
-      log.error(
-          "Error occurred while executing id_token validation. tenantId: {}",
-          tenant.identifierValue());
+      log.error("Error occurred while executing id_token validation");
       return FederationInteractionResult.error(
           federationType, ssoProvider, session, 400, idTokenVerificationResult.data());
     }
@@ -157,9 +153,7 @@ public class OidcFederationInteractor implements FederationInteractor {
 
     if (userinfoResult.isError()) {
 
-      log.error(
-          "Error occurred while executing userinfo request. tenantId: {}",
-          tenant.identifierValue());
+      log.error("Error occurred while executing userinfo request");
       return FederationInteractionResult.error(
           federationType,
           ssoProvider,
@@ -173,7 +167,7 @@ public class OidcFederationInteractor implements FederationInteractor {
     sessionCommandRepository.delete(tenant, session.ssoSessionIdentifier());
 
     if (oidcSsoConfiguration.isStoreCredentials()) {
-      log.debug("Storing credential data into session. tenantId: {}", tenant.identifierValue());
+      log.debug("Storing credential data into session");
       String provider = oidcSsoConfiguration.provider();
       String scope = oidcSsoConfiguration.scopeAsString();
       String accessToken = tokenResult.accessToken();

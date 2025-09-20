@@ -75,6 +75,29 @@ public class SecurityEventLogConfiguration {
     return tenantAttributes.optValueAsBoolean("security_event_log_include_detail", false);
   }
 
+  public boolean includeUserDetail() {
+    return tenantAttributes.optValueAsBoolean("security_event_log_include_user_detail", false);
+  }
+
+  public boolean includeUserPii() {
+    return tenantAttributes.optValueAsBoolean("security_event_log_include_user_pii", false);
+  }
+
+  public List<String> getAllowedUserPiiKeys() {
+    String allowedKeysValue =
+        tenantAttributes.optValueAsString("security_event_log_allowed_user_pii_keys", "");
+
+    if (allowedKeysValue.isEmpty()) {
+      return List.of(); // デフォルトでは何も許可しない
+    }
+
+    return Arrays.asList(allowedKeysValue.split(","));
+  }
+
+  public boolean hasAllowedUserPiiKeys() {
+    return !getAllowedUserPiiKeys().isEmpty();
+  }
+
   public boolean includeTraceContext() {
     return tenantAttributes.optValueAsBoolean("security_event_log_include_trace_context", false);
   }
@@ -107,8 +130,18 @@ public class SecurityEventLogConfiguration {
     String scrubKeysValue =
         tenantAttributes.optValueAsString("security_event_log_detail_scrub_keys", "");
 
-    // Always ensure essential security keys are included
-    List<String> essentialKeys = List.of("authorization", "cookie", "password", "secret", "token");
+    // Always ensure essential security and PII keys are included
+    List<String> essentialKeys =
+        List.of(
+            "authorization",
+            "cookie",
+            "password",
+            "secret",
+            "token",
+            "access_token",
+            "refresh_token",
+            "api_key",
+            "api_secret");
 
     if (scrubKeysValue.isEmpty()) {
       return essentialKeys;
