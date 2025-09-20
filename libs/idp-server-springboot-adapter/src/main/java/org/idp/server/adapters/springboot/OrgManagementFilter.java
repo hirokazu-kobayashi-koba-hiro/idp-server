@@ -88,6 +88,7 @@ public class OrgManagementFilter extends OncePerRequestFilter {
       User user = authResult.getLeft();
       OAuthToken oAuthToken = authResult.getRight();
       TenantLoggingContext.setTenant(oAuthToken.tenantIdentifier());
+      TenantLoggingContext.setClientId(oAuthToken.requestedClientId().value());
 
       // 4. Validate token type (no client credentials for management API)
       if (oAuthToken.isClientCredentialsGrant()) {
@@ -148,7 +149,7 @@ public class OrgManagementFilter extends OncePerRequestFilter {
           "server_error",
           "unexpected error occurred");
     } finally {
-      TenantLoggingContext.clear();
+      TenantLoggingContext.clearAll();
     }
   }
 

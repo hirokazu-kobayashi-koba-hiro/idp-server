@@ -70,6 +70,11 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
         TenantLoggingContext.setTenant(tenantIdentifier);
 
+        String clientId = resolveClientIdAsString(args);
+        if (clientId != null) {
+          TenantLoggingContext.setClientId(clientId);
+        }
+
         log.trace(
             "Transaction started: operation={}, service={}, method={}",
             operationType,
@@ -112,7 +117,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
             e);
         throw e;
       } finally {
-        TenantLoggingContext.clear();
+        TenantLoggingContext.clearAll();
         TransactionManager.closeConnection();
       }
     } else if (isTransactional && operationType == OperationType.WRITE) {
@@ -121,6 +126,11 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         OperationContext.set(operationType);
         TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
         TenantLoggingContext.setTenant(tenantIdentifier);
+
+        String clientId = resolveClientIdAsString(args);
+        if (clientId != null) {
+          TenantLoggingContext.setClientId(clientId);
+        }
 
         DatabaseType databaseType = applicationDatabaseTypeProvider.provide();
         TransactionManager.beginTransaction(databaseType, tenantIdentifier);
@@ -166,7 +176,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
             e);
         throw e;
       } finally {
-        TenantLoggingContext.clear();
+        TenantLoggingContext.clearAll();
         TransactionManager.closeConnection();
       }
     } else {
@@ -182,6 +192,40 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
     }
     throw new MissingRequiredTenantIdentifierException(
         "Missing required TenantIdentifier. Please ensure it is explicitly passed to the service.");
+  }
+
+  protected String resolveClientIdAsString(Object[] args) {
+    for (Object arg : args) {
+      // Extract from Map<String, String[]> params
+      if (arg instanceof java.util.Map<?, ?> params) {
+        @SuppressWarnings("unchecked")
+        java.util.Map<String, String[]> paramMap = (java.util.Map<String, String[]>) params;
+        String[] clientIds = paramMap.get("client_id");
+        if (clientIds != null && clientIds.length > 0 && !clientIds[0].isEmpty()) {
+          return clientIds[0];
+        }
+      }
+
+      // Extract from Authorization header (Basic auth)
+      if (arg instanceof String authHeader && authHeader.startsWith("Basic ")) {
+        return extractClientIdFromBasicAuth(authHeader);
+      }
+    }
+    return null;
+  }
+
+  private String extractClientIdFromBasicAuth(String authHeader) {
+    try {
+      String basic = authHeader.substring(6);
+      String decoded = new String(java.util.Base64.getDecoder().decode(basic));
+      String[] parts = decoded.split(":", 2);
+      if (parts.length > 0 && !parts[0].isEmpty()) {
+        return parts[0];
+      }
+    } catch (Exception e) {
+      log.debug("Failed to extract client_id from Basic auth header: {}", e.getMessage());
+    }
+    return null;
   }
 
   @SuppressWarnings("unchecked")

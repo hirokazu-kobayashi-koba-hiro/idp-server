@@ -35,7 +35,7 @@ class SecurityEventLogConfigurationTest {
     List<String> result = config.getDetailScrubKeys();
 
     // Then
-    assertEquals(5, result.size());
+    assertEquals(9, result.size());
     assertTrue(result.contains("authorization"));
     assertTrue(result.contains("cookie"));
     assertTrue(result.contains("password"));
@@ -55,7 +55,7 @@ class SecurityEventLogConfigurationTest {
     List<String> result = config.getDetailScrubKeys();
 
     // Then
-    assertEquals(5, result.size());
+    assertEquals(9, result.size());
     assertTrue(result.contains("authorization"));
     assertTrue(result.contains("cookie"));
     assertTrue(result.contains("password"));
@@ -76,7 +76,7 @@ class SecurityEventLogConfigurationTest {
     List<String> result = config.getDetailScrubKeys();
 
     // Then
-    assertEquals(5, result.size()); // 4 configured + 1 additional essential (token)
+    assertEquals(9, result.size()); // 4 configured + 1 additional essential (token)
     assertTrue(result.contains("authorization"));
     assertTrue(result.contains("cookie"));
     assertTrue(result.contains("password"));
@@ -96,7 +96,7 @@ class SecurityEventLogConfigurationTest {
     List<String> result = config.getDetailScrubKeys();
 
     // Then
-    assertEquals(6, result.size()); // 1 configured + 5 essential keys
+    assertEquals(10, result.size()); // 1 configured + 5 essential keys
     assertTrue(result.contains("custom_key"));
     assertTrue(result.contains("authorization"));
     assertTrue(result.contains("cookie"));
@@ -120,7 +120,7 @@ class SecurityEventLogConfigurationTest {
     List<String> result = config.getDetailScrubKeys();
 
     // Then
-    assertEquals(13, result.size());
+    assertEquals(14, result.size());
     assertTrue(result.contains("authorization"));
     assertTrue(result.contains("cookie"));
     assertTrue(result.contains("set-cookie"));

@@ -23,6 +23,7 @@ import org.slf4j.MDC;
 public class TenantLoggingContext {
 
   private static final String TENANT_ID_KEY = "tenantId";
+  private static final String CLIENT_ID_KEY = "clientId";
 
   public static void setTenant(TenantIdentifier tenantIdentifier) {
     if (Objects.nonNull(tenantIdentifier) && tenantIdentifier.exists()) {
@@ -38,8 +39,26 @@ public class TenantLoggingContext {
     return Objects.nonNull(MDC.get(TENANT_ID_KEY));
   }
 
-  public static void clear() {
+  public static void setClientId(String clientId) {
+    if (Objects.nonNull(clientId) && !clientId.isEmpty()) {
+      MDC.put(CLIENT_ID_KEY, clientId);
+    }
+  }
+
+  public static String getCurrentClientId() {
+    return MDC.get(CLIENT_ID_KEY);
+  }
+
+  public static boolean hasClientId() {
+    return Objects.nonNull(MDC.get(CLIENT_ID_KEY));
+  }
+
+  public static void clearTenant() {
     MDC.remove(TENANT_ID_KEY);
+  }
+
+  public static void clearClientId() {
+    MDC.remove(CLIENT_ID_KEY);
   }
 
   public static void clearAll() {
@@ -48,5 +67,9 @@ public class TenantLoggingContext {
 
   public static String getTenantIdKey() {
     return TENANT_ID_KEY;
+  }
+
+  public static String getClientIdKey() {
+    return CLIENT_ID_KEY;
   }
 }

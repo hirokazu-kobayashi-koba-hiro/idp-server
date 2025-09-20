@@ -58,7 +58,7 @@ public class UserLifecycleEventListerService {
                 userLifecycleEventApi.handle(event.tenantIdentifier(), event);
               }));
     } finally {
-      TenantLoggingContext.clear();
+      TenantLoggingContext.clearAll();
     }
   }
 }

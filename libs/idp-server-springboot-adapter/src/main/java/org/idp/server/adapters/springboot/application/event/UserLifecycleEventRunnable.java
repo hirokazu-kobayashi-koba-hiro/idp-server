@@ -41,7 +41,7 @@ public class UserLifecycleEventRunnable implements Runnable {
     try {
       handler.accept(userLifecycleEvent);
     } finally {
-      TenantLoggingContext.clear();
+      TenantLoggingContext.clearAll();
     }
   }
 }
