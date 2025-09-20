@@ -54,7 +54,6 @@ public class OrganizationAwareEntryServiceProxy implements InvocationHandler {
    * @param target the target service instance
    * @param interfaceType the service interface type
    * @param databaseTypeProvider the database type provider
-   * @param organizationRepository the organization repository for validation
    * @param <T> the service interface type
    * @return the proxied service instance
    */

@@ -17,6 +17,7 @@
 package org.idp.server.adapters.springboot.application.event;
 
 import java.util.function.Consumer;
+import org.idp.server.platform.log.TenantLoggingContext;
 import org.idp.server.platform.security.SecurityEvent;
 
 public class SecurityEventRunnable implements Runnable {
@@ -35,6 +36,11 @@ public class SecurityEventRunnable implements Runnable {
 
   @Override
   public void run() {
-    handler.accept(securityEvent);
+    TenantLoggingContext.setTenant(securityEvent.tenantIdentifier());
+    try {
+      handler.accept(securityEvent);
+    } finally {
+      TenantLoggingContext.clear();
+    }
   }
 }

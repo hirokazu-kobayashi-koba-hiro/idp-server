@@ -22,6 +22,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import org.idp.server.platform.datasource.*;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.log.TenantLoggingContext;
 import org.idp.server.platform.multi_tenancy.tenant.MissingRequiredTenantIdentifierException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
@@ -61,8 +62,10 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
     if (isTransactional && operationType == OperationType.READ) {
       try {
         OperationContext.set(operationType);
-        log.debug("READ start: " + target.getClass().getName() + ": " + method.getName() + " ...");
         TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
+        TenantLoggingContext.setTenant(tenantIdentifier);
+
+        log.debug("READ start: " + target.getClass().getName() + ": " + method.getName() + " ...");
         DatabaseType databaseType = applicationDatabaseTypeProvider.provide();
         TransactionManager.createConnection(databaseType, tenantIdentifier);
         Object result = method.invoke(target, args);
@@ -85,14 +88,16 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
             "fail: " + target.getClass().getName() + ": " + method.getName() + ", cause: " + e);
         throw e;
       } finally {
+        TenantLoggingContext.clear();
         TransactionManager.closeConnection();
       }
     } else if (isTransactional && operationType == OperationType.WRITE) {
       try {
         OperationContext.set(operationType);
-        log.debug("WRITE start: " + target.getClass().getName() + ": " + method.getName() + " ...");
         TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
+        TenantLoggingContext.setTenant(tenantIdentifier);
 
+        log.debug("WRITE start: " + target.getClass().getName() + ": " + method.getName() + " ...");
         DatabaseType databaseType = applicationDatabaseTypeProvider.provide();
         TransactionManager.beginTransaction(databaseType, tenantIdentifier);
 
@@ -136,6 +141,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
                 + e);
         throw e;
       } finally {
+        TenantLoggingContext.clear();
         TransactionManager.closeConnection();
       }
     } else {
