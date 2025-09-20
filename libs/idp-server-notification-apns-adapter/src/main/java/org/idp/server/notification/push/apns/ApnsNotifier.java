@@ -96,17 +96,13 @@ public class ApnsNotifier implements AuthenticationDeviceNotifier {
       String apnsId = response.headers().firstValue("apns-id").orElse("unknown");
 
       if (response.statusCode() == 200) {
-        log.info(
-            "APNs notification sent successfully, apns-id: {}, tenant: {}",
-            apnsId,
-            tenant.identifierValue());
+        log.info("APNs notification sent successfully, apns-id: {}", apnsId);
       } else {
         handleApnsError(response, apnsId, tenant);
       }
 
     } catch (Exception e) {
-      log.error(
-          "APNs notification failed: {}, tenant: {}", e.getMessage(), tenant.identifierValue());
+      log.error("APNs notification failed: {}", e.getMessage());
     }
   }
 
@@ -124,30 +120,23 @@ public class ApnsNotifier implements AuthenticationDeviceNotifier {
         }
 
         log.warn(
-            "APNs notification failed - Status: {}, Reason: {}, APNs-ID: {}, Tenant: {}, Body: {}",
+            "APNs notification failed - Status: {}, Reason: {}, APNs-ID: {}, Body: {}",
             statusCode,
             reason,
             apnsId,
-            tenant.identifierValue(),
             responseBody);
 
         // Handle specific error cases
         switch (reason) {
-          case "BadDeviceToken" ->
-              log.warn("Invalid device token for tenant: {}", tenant.identifierValue());
-          case "TopicDisallowed" ->
-              log.warn("Topic not allowed for tenant: {}", tenant.identifierValue());
+          case "BadDeviceToken" -> log.warn("Invalid device token");
+          case "TopicDisallowed" -> log.warn("Topic not allowed");
           case "ExpiredProviderToken" -> {
-            log.warn("JWT token expired, clearing cache for tenant: {}", tenant.identifierValue());
+            log.warn("JWT token expired, clearing cache");
             jwtTokenCache.remove(createCacheKey(tenant));
           }
         }
       } else {
-        log.warn(
-            "APNs notification failed - Status: {}, APNs-ID: {}, Tenant: {}",
-            statusCode,
-            apnsId,
-            tenant.identifierValue());
+        log.warn("APNs notification failed - Status: {}, APNs-ID: {}", statusCode, apnsId);
       }
     } catch (Exception e) {
       log.error("Error parsing APNs error response: {}", e.getMessage());

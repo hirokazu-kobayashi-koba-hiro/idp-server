@@ -28,10 +28,13 @@ import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.openid.oauth.type.oauth.ClientSecret;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.x509.X509CertInvalidException;
 import org.idp.server.platform.x509.X509Certification;
 
 public class TlsClientAuthAuthenticator implements ClientAuthenticator {
+
+  LoggerWrapper log = LoggerWrapper.getLogger(TlsClientAuthAuthenticator.class);
 
   @Override
   public ClientAuthenticationType type() {
@@ -40,11 +43,19 @@ public class TlsClientAuthAuthenticator implements ClientAuthenticator {
 
   @Override
   public ClientCredentials authenticate(BackchannelRequestContext context) {
+    RequestedClientId requestedClientId = context.requestedClientId();
+
     throwExceptionIfNotContainsClientCert(context);
     X509Certification x509Certification = parseOrThrowExceptionIfNoneMatch(context);
-    RequestedClientId requestedClientId = context.requestedClientId();
+
     ClientSecret clientSecret = new ClientSecret();
     ClientCertification clientCertification = new ClientCertification(x509Certification);
+
+    log.info(
+        "Client authentication succeeded: method={}, client_id={}",
+        ClientAuthenticationType.tls_client_auth.name(),
+        requestedClientId.value());
+
     return new ClientCredentials(
         requestedClientId,
         ClientAuthenticationType.tls_client_auth,
@@ -56,7 +67,13 @@ public class TlsClientAuthAuthenticator implements ClientAuthenticator {
 
   void throwExceptionIfNotContainsClientCert(BackchannelRequestContext context) {
     ClientCert clientCert = context.clientCert();
+    RequestedClientId clientId = context.requestedClientId();
     if (!clientCert.exists()) {
+      log.warn(
+          "Client authentication failed: method={}, client_id={}, reason={}",
+          ClientAuthenticationType.tls_client_auth.name(),
+          clientId.value(),
+          "request does not contain client_cert");
       throw new ClientUnAuthorizedException(
           "client authentication type is tls_client_auth, but request does not contains client_cert");
     }
@@ -93,8 +110,20 @@ public class TlsClientAuthAuthenticator implements ClientAuthenticator {
           && x509Certification.rfc822Name().equals(clientConfiguration.tlsClientAuthSanEmail())) {
         return x509Certification;
       }
+      RequestedClientId clientId = context.requestedClientId();
+      log.warn(
+          "Client authentication failed: method={}, client_id={}, reason={}",
+          ClientAuthenticationType.tls_client_auth.name(),
+          clientId.value(),
+          "client_cert does not match any subject names");
       throw new ClientUnAuthorizedException("client_cert does not match any subject names");
     } catch (X509CertInvalidException e) {
+      RequestedClientId clientId = context.requestedClientId();
+      log.warn(
+          "Client authentication failed: method={}, client_id={}, reason={}",
+          ClientAuthenticationType.tls_client_auth.name(),
+          clientId.value(),
+          "client_cert is malformed: " + e.getMessage());
       throw new ClientUnAuthorizedException("client_cert is malformed");
     }
   }

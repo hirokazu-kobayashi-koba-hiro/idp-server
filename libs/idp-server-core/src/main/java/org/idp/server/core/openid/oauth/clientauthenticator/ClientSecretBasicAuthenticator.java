@@ -27,6 +27,7 @@ import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.openid.oauth.type.oauth.ClientSecret;
 import org.idp.server.core.openid.oauth.type.oauth.ClientSecretBasic;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
+import org.idp.server.platform.log.LoggerWrapper;
 
 /**
  * client secret basic
@@ -46,6 +47,8 @@ import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
  */
 class ClientSecretBasicAuthenticator implements ClientAuthenticator {
 
+  LoggerWrapper log = LoggerWrapper.getLogger(ClientSecretBasicAuthenticator.class);
+
   @Override
   public ClientAuthenticationType type() {
     return ClientAuthenticationType.client_secret_basic;
@@ -53,10 +56,18 @@ class ClientSecretBasicAuthenticator implements ClientAuthenticator {
 
   @Override
   public ClientCredentials authenticate(BackchannelRequestContext context) {
+    RequestedClientId requestedClientId = context.requestedClientId();
+
     throwExceptionIfNotContainsClientSecretBasic(context);
     throwExceptionIfUnMatchClientSecret(context);
-    RequestedClientId requestedClientId = context.requestedClientId();
+
     ClientSecret clientSecret = context.clientSecretBasic().clientSecret();
+
+    log.info(
+        "Client authentication succeeded: method={}, client_id={}",
+        ClientAuthenticationType.client_secret_basic.name(),
+        requestedClientId.value());
+
     return new ClientCredentials(
         requestedClientId,
         ClientAuthenticationType.client_secret_basic,
@@ -69,16 +80,22 @@ class ClientSecretBasicAuthenticator implements ClientAuthenticator {
   void throwExceptionIfUnMatchClientSecret(BackchannelRequestContext context) {
     ClientSecretBasic clientSecretBasic = context.clientSecretBasic();
     ClientConfiguration clientConfiguration = context.clientConfiguration();
+    RequestedClientId clientId = context.requestedClientId();
     if (!clientConfiguration.matchClientSecret(clientSecretBasic.clientSecret().value())) {
       throw new ClientUnAuthorizedException(
-          "client authentication type is client_secret_basic, but request client_secret does not match client_secret");
+          ClientAuthenticationType.client_secret_basic.name(),
+          clientId,
+          "client_secret does not match");
     }
   }
 
   void throwExceptionIfNotContainsClientSecretBasic(BackchannelRequestContext context) {
+    RequestedClientId clientId = context.requestedClientId();
     if (!context.hasClientSecretBasic()) {
       throw new ClientUnAuthorizedException(
-          "client authentication type is client_secret_basic, but request does not contains client_secret_basic");
+          ClientAuthenticationType.client_secret_basic.name(),
+          clientId,
+          "request does not contain client_secret_basic");
     }
   }
 }

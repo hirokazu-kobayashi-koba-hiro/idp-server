@@ -31,28 +31,28 @@ public class LoggerWrapper {
     this.logger = LoggerFactory.getLogger(clazz);
   }
 
+  public void trace(String message, Object... args) {
+    logger.trace(message, args);
+  }
+
+  public void trace(String message) {
+    logger.trace(message);
+  }
+
+  public boolean isTraceEnabled() {
+    return logger.isTraceEnabled();
+  }
+
+  public boolean isDebugEnabled() {
+    return logger.isDebugEnabled();
+  }
+
   public void debug(String message, Object... args) {
     logger.debug(message, args);
   }
 
   public void debug(String message) {
     logger.debug(message);
-  }
-
-  public void debugWithTenant(String message, Object... args) {
-    if (TenantLoggingContext.hasTenant()) {
-      logger.debug("[{}] " + message, prependTenant(args));
-    } else {
-      logger.debug(message, args);
-    }
-  }
-
-  public void debugWithTenant(String message) {
-    if (TenantLoggingContext.hasTenant()) {
-      logger.debug("[{}] " + message, TenantLoggingContext.getCurrentTenant());
-    } else {
-      logger.debug(message);
-    }
   }
 
   public void info(String message) {
@@ -63,44 +63,12 @@ public class LoggerWrapper {
     logger.info(message, args);
   }
 
-  public void infoWithTenant(String message, Object... args) {
-    if (TenantLoggingContext.hasTenant()) {
-      logger.info("[{}] " + message, prependTenant(args));
-    } else {
-      logger.info(message, args);
-    }
-  }
-
-  public void infoWithTenant(String message) {
-    if (TenantLoggingContext.hasTenant()) {
-      logger.info("[{}] " + message, TenantLoggingContext.getCurrentTenant());
-    } else {
-      logger.info(message);
-    }
-  }
-
   public void warn(String message, Object... args) {
     logger.warn(message, args);
   }
 
   public void warn(String message) {
     logger.warn(message);
-  }
-
-  public void warnWithTenant(String message, Object... args) {
-    if (TenantLoggingContext.hasTenant()) {
-      logger.warn("[{}] " + message, prependTenant(args));
-    } else {
-      logger.warn(message, args);
-    }
-  }
-
-  public void warnWithTenant(String message) {
-    if (TenantLoggingContext.hasTenant()) {
-      logger.warn("[{}] " + message, TenantLoggingContext.getCurrentTenant());
-    } else {
-      logger.warn(message);
-    }
   }
 
   public void error(String message, Object... args) {
@@ -113,37 +81,5 @@ public class LoggerWrapper {
 
   public void error(String message, Throwable throwable) {
     logger.error(message, throwable);
-  }
-
-  public void errorWithTenant(String message, Object... args) {
-    if (TenantLoggingContext.hasTenant()) {
-      logger.error("[{}] " + message, prependTenant(args));
-    } else {
-      logger.error(message, args);
-    }
-  }
-
-  public void errorWithTenant(String message) {
-    if (TenantLoggingContext.hasTenant()) {
-      logger.error("[{}] " + message, TenantLoggingContext.getCurrentTenant());
-    } else {
-      logger.error(message);
-    }
-  }
-
-  public void errorWithTenant(String message, Throwable throwable) {
-    if (TenantLoggingContext.hasTenant()) {
-      logger.error("[{}] " + message, TenantLoggingContext.getCurrentTenant(), throwable);
-    } else {
-      logger.error(message, throwable);
-    }
-  }
-
-  private Object[] prependTenant(Object[] args) {
-    String tenantId = TenantLoggingContext.getCurrentTenant();
-    Object[] newArgs = new Object[args.length + 1];
-    newArgs[0] = tenantId;
-    System.arraycopy(args, 0, newArgs, 1, args.length);
-    return newArgs;
   }
 }

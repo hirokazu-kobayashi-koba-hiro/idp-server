@@ -37,7 +37,7 @@ public class SecurityEventUserAttributeConfiguration {
   }
 
   public boolean isIncludeName() {
-    return tenantAttributes.optValueAsBoolean(PREFIX + "include_name", true);
+    return tenantAttributes.optValueAsBoolean(PREFIX + "include_name", false);
   }
 
   public boolean isIncludeExternalUserId() {
@@ -45,11 +45,11 @@ public class SecurityEventUserAttributeConfiguration {
   }
 
   public boolean isIncludeEmail() {
-    return tenantAttributes.optValueAsBoolean(PREFIX + "include_email", true);
+    return tenantAttributes.optValueAsBoolean(PREFIX + "include_email", false);
   }
 
   public boolean isIncludePhoneNumber() {
-    return tenantAttributes.optValueAsBoolean(PREFIX + "include_phone_number", true);
+    return tenantAttributes.optValueAsBoolean(PREFIX + "include_phone_number", false);
   }
 
   public boolean isIncludeGivenName() {

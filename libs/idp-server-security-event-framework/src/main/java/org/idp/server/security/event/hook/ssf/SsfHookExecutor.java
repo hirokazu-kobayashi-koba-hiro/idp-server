@@ -57,6 +57,8 @@ public class SsfHookExecutor implements SecurityEventHook {
       SecurityEvent securityEvent,
       SecurityEventHookConfiguration hookConfiguration) {
 
+    log.trace("SSF hook execution started: event_type={}", securityEvent.type().value());
+
     SecurityEventConfig securityEventConfig = hookConfiguration.getEvent(securityEvent.type());
     SharedSignalFrameworkMetadataConfig metadataConfig =
         jsonConverter.read(hookConfiguration.metadata(), SharedSignalFrameworkMetadataConfig.class);
@@ -68,6 +70,8 @@ public class SsfHookExecutor implements SecurityEventHook {
     SecurityEventTokenCreator securityEventTokenCreator =
         new SecurityEventTokenCreator(securityEvent, metadataConfig, transmissionConfig);
     SecurityEventToken securityEventToken = securityEventTokenCreator.create();
+
+    log.trace("SSF token created, sending to endpoint: url={}", transmissionConfig.url());
 
     return send(
         new SharedSignalEventRequest(transmissionConfig.url(), Map.of(), securityEventToken));
@@ -95,28 +99,45 @@ public class SsfHookExecutor implements SecurityEventHook {
       HttpResponse<String> httpResponse =
           httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
+      log.trace(
+          "SSF HTTP response received: status={}, endpoint={}",
+          httpResponse.statusCode(),
+          sharedSignalEventRequest.endpoint());
+
       String body = httpResponse.body();
       if (httpResponse.statusCode() >= 400 && httpResponse.statusCode() < 500) {
-
-        log.warn("ssf response:" + body);
+        log.warn(
+            "SSF transmission client error: endpoint={}, status={}, response={}",
+            sharedSignalEventRequest.endpoint(),
+            httpResponse.statusCode(),
+            body);
         Map<String, Object> response = new HashMap<>();
         response.put("message", body);
         return SecurityEventHookResult.failure(type(), response);
       }
 
       if (httpResponse.statusCode() >= 500) {
-        log.error("ssf response:" + body);
+        log.error(
+            "SSF transmission server error: endpoint={}, status={}, response={}",
+            sharedSignalEventRequest.endpoint(),
+            httpResponse.statusCode(),
+            body);
         Map<String, Object> response = new HashMap<>();
         response.put("message", body);
         return SecurityEventHookResult.failure(type(), response);
       }
 
+      log.trace("SSF transmission successful: endpoint={}", sharedSignalEventRequest.endpoint());
       Map<String, Object> response = new HashMap<>();
       response.put("message", body);
       return SecurityEventHookResult.success(type(), response);
 
     } catch (IOException | InterruptedException | URISyntaxException e) {
-      log.error(e.getMessage());
+      log.error(
+          "SSF transmission failed: endpoint={}, error={}",
+          sharedSignalEventRequest.endpoint(),
+          e.getMessage(),
+          e);
       Map<String, Object> response = new HashMap<>();
       response.put("message", e.getMessage());
       return SecurityEventHookResult.failure(type(), response);

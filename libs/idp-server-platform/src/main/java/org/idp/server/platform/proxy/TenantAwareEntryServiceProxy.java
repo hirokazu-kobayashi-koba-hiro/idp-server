@@ -50,7 +50,11 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
             target.getClass().getMethod(method.getName(), method.getParameterTypes());
         tx = implMethod.getAnnotation(Transaction.class);
       } catch (NoSuchMethodException e) {
-        log.error(e.getMessage(), e);
+        log.debug(
+            "Method not found for transaction annotation lookup: class={}, method={}, error={}",
+            target.getClass().getSimpleName(),
+            method.getName(),
+            e.getMessage());
       }
     }
     if (tx == null) {
@@ -60,85 +64,106 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
     OperationType operationType = readOnly ? OperationType.READ : OperationType.WRITE;
 
     if (isTransactional && operationType == OperationType.READ) {
+      long startTime = System.currentTimeMillis();
       try {
         OperationContext.set(operationType);
         TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
         TenantLoggingContext.setTenant(tenantIdentifier);
 
-        log.debug("READ start: " + target.getClass().getName() + ": " + method.getName() + " ...");
+        log.trace(
+            "Transaction started: operation={}, service={}, method={}",
+            operationType,
+            target.getClass().getSimpleName(),
+            method.getName());
+
         DatabaseType databaseType = applicationDatabaseTypeProvider.provide();
         TransactionManager.createConnection(databaseType, tenantIdentifier);
         Object result = method.invoke(target, args);
 
         TransactionManager.closeConnection();
-        log.debug("READ end: " + target.getClass().getName() + ": " + method.getName() + " ...");
+
+        long duration = System.currentTimeMillis() - startTime;
+        if (duration > 1000) {
+          log.debug(
+              "Long-running transaction completed: operation={}, service={}, method={}, duration={}ms",
+              operationType,
+              target.getClass().getSimpleName(),
+              method.getName(),
+              duration);
+        }
 
         return result;
       } catch (InvocationTargetException e) {
         log.warn(
-            "fail (InvocationTargetException): "
-                + target.getClass().getName()
-                + ": "
-                + method.getName()
-                + ", cause: "
-                + e.getTargetException().toString());
+            "Transaction failed: operation={}, service={}, method={}, error={}",
+            operationType,
+            target.getClass().getSimpleName(),
+            method.getName(),
+            e.getTargetException().getMessage(),
+            e.getTargetException());
         throw e.getTargetException();
       } catch (Throwable e) {
         log.error(
-            "fail: " + target.getClass().getName() + ": " + method.getName() + ", cause: " + e);
+            "Transaction failed: operation={}, service={}, method={}, error={}",
+            operationType,
+            target.getClass().getSimpleName(),
+            method.getName(),
+            e.getMessage(),
+            e);
         throw e;
       } finally {
         TenantLoggingContext.clear();
         TransactionManager.closeConnection();
       }
     } else if (isTransactional && operationType == OperationType.WRITE) {
+      long startTime = System.currentTimeMillis();
       try {
         OperationContext.set(operationType);
         TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
         TenantLoggingContext.setTenant(tenantIdentifier);
 
-        log.debug("WRITE start: " + target.getClass().getName() + ": " + method.getName() + " ...");
         DatabaseType databaseType = applicationDatabaseTypeProvider.provide();
         TransactionManager.beginTransaction(databaseType, tenantIdentifier);
 
-        log.debug(
-            databaseType.name()
-                + ": begin transaction: "
-                + target.getClass().getName()
-                + ": "
-                + method.getName());
+        log.trace(
+            "Transaction started: operation={}, service={}, method={}, db_type={}",
+            operationType,
+            target.getClass().getSimpleName(),
+            method.getName(),
+            databaseType.name());
 
         Object result = method.invoke(target, args);
         TransactionManager.commitTransaction();
-        log.debug(
-            databaseType.name()
-                + ": commit transaction: "
-                + target.getClass().getName()
-                + ": "
-                + method.getName());
 
-        log.debug("WRITE end: " + target.getClass().getName() + ": " + method.getName() + " ...");
+        long duration = System.currentTimeMillis() - startTime;
+        log.debug(
+            "Transaction committed: operation={}, service={}, method={}, db_type={}, duration={}ms",
+            operationType,
+            target.getClass().getSimpleName(),
+            method.getName(),
+            databaseType.name(),
+            duration);
 
         return result;
       } catch (InvocationTargetException e) {
         TransactionManager.rollbackTransaction();
         log.error(
-            "rollback transaction (InvocationTargetException): "
-                + target.getClass().getName()
-                + ": "
-                + method.getName()
-                + ", cause: "
-                + e.getTargetException().toString());
+            "Transaction rollback: operation={}, service={}, method={}, error={}",
+            operationType,
+            target.getClass().getSimpleName(),
+            method.getName(),
+            e.getTargetException().getMessage(),
+            e.getTargetException());
         throw e.getTargetException();
       } catch (Throwable e) {
         TransactionManager.rollbackTransaction();
         log.error(
-            "rollback transaction: "
-                + target.getClass().getName()
-                + ": "
-                + method.getName()
-                + ", cause: "
-                + e);
+            "Transaction rollback: operation={}, service={}, method={}, error={}",
+            operationType,
+            target.getClass().getSimpleName(),
+            method.getName(),
+            e.getMessage(),
+            e);
         throw e;
       } finally {
         TenantLoggingContext.clear();

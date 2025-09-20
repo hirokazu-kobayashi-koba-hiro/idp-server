@@ -42,10 +42,12 @@ import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.openid.token.service.*;
 import org.idp.server.core.openid.token.validator.TokenRequestValidator;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class TokenRequestHandler {
 
+  LoggerWrapper log = LoggerWrapper.getLogger(TokenRequestHandler.class);
   OAuthTokenCreationServices oAuthTokenCreationServices;
   ClientAuthenticationHandler clientAuthenticationHandler;
   OAuthTokenCommandRepository oAuthTokenCommandRepository;

@@ -34,20 +34,30 @@ public class TokenRequestErrorHandler {
   LoggerWrapper log = LoggerWrapper.getLogger(TokenRequestErrorHandler.class);
 
   public TokenRequestResponse handle(Exception exception) {
+    log.trace(
+        "Token request error handling started: exception_type={}",
+        exception.getClass().getSimpleName());
+
     if (exception instanceof TokenBadRequestException badRequest) {
-      log.warn(exception.getMessage());
+      log.warn(
+          "Token request validation failed: error={}, description={}",
+          badRequest.error().value(),
+          badRequest.errorDescription().value());
       return new TokenRequestResponse(
           BAD_REQUEST, new TokenErrorResponse(badRequest.error(), badRequest.errorDescription()));
     }
 
     if (exception instanceof TokenUnSupportedGrantException badRequest) {
-      log.warn(exception.getMessage());
+      log.warn(
+          "Unsupported grant type: error={}, description={}",
+          badRequest.error().value(),
+          badRequest.errorDescription().value());
       return new TokenRequestResponse(
           BAD_REQUEST, new TokenErrorResponse(badRequest.error(), badRequest.errorDescription()));
     }
 
     if (exception instanceof ClientUnAuthorizedException) {
-      log.warn(exception.getMessage());
+      log.warn("Client authentication failed: reason={}", exception.getMessage());
       return new TokenRequestResponse(
           UNAUTHORIZE,
           new TokenErrorResponse(
@@ -55,7 +65,7 @@ public class TokenRequestErrorHandler {
     }
 
     if (exception instanceof ClientConfigurationNotFoundException) {
-      log.warn(exception.getMessage());
+      log.warn("Client configuration not found: error={}", exception.getMessage());
       return new TokenRequestResponse(
           UNAUTHORIZE,
           new TokenErrorResponse(
@@ -63,14 +73,14 @@ public class TokenRequestErrorHandler {
     }
 
     if (exception instanceof ServerConfigurationNotFoundException) {
-      log.warn(exception.getMessage());
+      log.warn("Server configuration not found: error={}", exception.getMessage());
       return new TokenRequestResponse(
           BAD_REQUEST,
           new TokenErrorResponse(
               new Error("invalid_request"), new ErrorDescription(exception.getMessage())));
     }
 
-    log.error(exception.getMessage(), exception);
+    log.error("Token request server error: error={}", exception.getMessage(), exception);
     Error error = new Error("server_error");
     ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
     TokenErrorResponse tokenErrorResponse = new TokenErrorResponse(error, errorDescription);

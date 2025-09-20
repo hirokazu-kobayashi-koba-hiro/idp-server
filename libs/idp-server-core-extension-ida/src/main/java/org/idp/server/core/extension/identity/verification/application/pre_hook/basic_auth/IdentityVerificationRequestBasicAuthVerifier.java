@@ -63,10 +63,7 @@ public class IdentityVerificationRequestBasicAuthVerifier
 
     if (!basicAuth.exists()) {
 
-      log.error(
-          "TenantId: {} identity-verification: {}. BasicAuth does not exist",
-          tenant.identifierValue(),
-          type.name());
+      log.error("identity-verification: {}. BasicAuth does not exist", type.name());
 
       List<String> errors = new ArrayList<>();
       errors.add("The identity verification request requires a basic authentication");
@@ -74,10 +71,7 @@ public class IdentityVerificationRequestBasicAuthVerifier
     }
 
     if (!configurationBasicAuth.equals(basicAuth)) {
-      log.error(
-          "TenantId: {} identity-verification: {}. unmatch a basic authentication",
-          tenant.identifierValue(),
-          type.name());
+      log.error("identity-verification: {}. unmatch a basic authentication", type.name());
 
       List<String> errors = new ArrayList<>();
       errors.add("The identity verification request unmatch a basic authentication");

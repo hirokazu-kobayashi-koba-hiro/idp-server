@@ -51,6 +51,7 @@ public class EmailSecurityEventHookExecutor implements SecurityEventHook {
       SecurityEvent securityEvent,
       SecurityEventHookConfiguration hookConfiguration) {
 
+    log.trace("Email hook execution started: event_type={}", securityEvent.type().value());
     log.debug("EmailHookExecutor called");
 
     SecurityEventConfig securityEventConfig = hookConfiguration.getEvent(securityEvent.type());
@@ -61,19 +62,34 @@ public class EmailSecurityEventHookExecutor implements SecurityEventHook {
     String sender = emailSenderConfiguration.sender();
     String subject = emailSenderConfiguration.subject();
     String body = emailSenderConfiguration.body();
-    // TODO email
     String email = securityEvent.user().email();
 
     EmailSendingRequest sendingRequest = new EmailSendingRequest(sender, email, subject, body);
 
     EmailSender emailSender = emailSenders.get(emailSenderConfiguration.function());
+
+    log.trace(
+        "Sending email: recipient={}, sender={}, subject={}, function={}",
+        email,
+        sender,
+        subject,
+        emailSenderConfiguration.function());
+
     EmailSendResult sendResult = emailSender.send(sendingRequest, emailSenderConfiguration);
 
     if (sendResult.isError()) {
-      log.warn("EmailHookExecutor Email sending failed");
+      log.warn(
+          "Email notification failed: event_type={}, recipient={}, sender={}, subject={}, function={}, error={}",
+          securityEvent.type().value(),
+          email,
+          sender,
+          subject,
+          emailSenderConfiguration.function(),
+          sendResult.data());
       return SecurityEventHookResult.failure(type(), sendResult.data());
     }
 
+    log.trace("Email notification sent successfully: recipient={}", email);
     return SecurityEventHookResult.success(type(), sendResult.data());
   }
 }

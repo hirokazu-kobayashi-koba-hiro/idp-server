@@ -26,6 +26,7 @@ import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.openid.oauth.type.oauth.ClientSecret;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
+import org.idp.server.platform.log.LoggerWrapper;
 
 /**
  * client secret post
@@ -41,6 +42,8 @@ import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
  */
 class ClientSecretPostAuthenticator implements ClientAuthenticator {
 
+  LoggerWrapper log = LoggerWrapper.getLogger(ClientSecretPostAuthenticator.class);
+
   @Override
   public ClientAuthenticationType type() {
     return ClientAuthenticationType.client_secret_post;
@@ -48,10 +51,18 @@ class ClientSecretPostAuthenticator implements ClientAuthenticator {
 
   @Override
   public ClientCredentials authenticate(BackchannelRequestContext context) {
+    RequestedClientId requestedClientId = context.requestedClientId();
+
     throwExceptionIfNotContainsClientSecretPost(context);
     throwExceptionIfUnMatchClientSecret(context);
-    RequestedClientId requestedClientId = context.requestedClientId();
+
     ClientSecret clientSecret = context.parameters().clientSecret();
+
+    log.info(
+        "Client authentication succeeded: method={}, client_id={}",
+        ClientAuthenticationType.client_secret_post.name(),
+        requestedClientId.value());
+
     return new ClientCredentials(
         requestedClientId,
         ClientAuthenticationType.client_secret_post,
@@ -65,17 +76,23 @@ class ClientSecretPostAuthenticator implements ClientAuthenticator {
     BackchannelRequestParameters parameters = context.parameters();
     ClientSecret clientSecret = parameters.clientSecret();
     ClientConfiguration clientConfiguration = context.clientConfiguration();
+    RequestedClientId clientId = context.requestedClientId();
     if (!clientConfiguration.matchClientSecret(clientSecret.value())) {
       throw new ClientUnAuthorizedException(
-          "client authentication type is client_secret_post, but request client_secret does not match client_secret");
+          ClientAuthenticationType.client_secret_post.name(),
+          clientId,
+          "client_secret does not match");
     }
   }
 
   void throwExceptionIfNotContainsClientSecretPost(BackchannelRequestContext context) {
     BackchannelRequestParameters parameters = context.parameters();
+    RequestedClientId clientId = context.requestedClientId();
     if (!parameters.hasClientSecret()) {
       throw new ClientUnAuthorizedException(
-          "client authentication type is client_secret_post, but request does not contains client_secret_post");
+          ClientAuthenticationType.client_secret_post.name(),
+          clientId,
+          "request does not contain client_secret");
     }
   }
 }

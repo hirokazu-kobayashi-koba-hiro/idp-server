@@ -63,9 +63,9 @@ public class UserOperationEventCreator implements SecurityEventUserCreatable {
     User user = authenticationTransaction.request().user();
 
     if (user != null) {
-      SecurityEventUser securityEventUser = createSecurityEventUser(user, tenant);
+      SecurityEventUser securityEventUser = createSecurityEventUser(user);
       builder.add(securityEventUser);
-      detailsMap.put("user", securityEventUser.toMap());
+      detailsMap.put("user", toDetailWithSensitiveData(user, tenant));
     }
 
     builder.add(requestAttributes.getIpAddress());

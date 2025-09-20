@@ -32,10 +32,13 @@ import org.idp.server.platform.jose.JsonWebKey;
 import org.idp.server.platform.jose.JsonWebKeyInvalidException;
 import org.idp.server.platform.jose.JsonWebKeys;
 import org.idp.server.platform.jose.JwkParser;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.x509.X509CertInvalidException;
 import org.idp.server.platform.x509.X509Certification;
 
 public class SelfSignedTlsClientAuthAuthenticator implements ClientAuthenticator {
+
+  LoggerWrapper log = LoggerWrapper.getLogger(SelfSignedTlsClientAuthAuthenticator.class);
 
   @Override
   public ClientAuthenticationType type() {
@@ -44,11 +47,19 @@ public class SelfSignedTlsClientAuthAuthenticator implements ClientAuthenticator
 
   @Override
   public ClientCredentials authenticate(BackchannelRequestContext context) {
+    RequestedClientId requestedClientId = context.requestedClientId();
+
     throwExceptionIfNotContainsClientCert(context);
     ClientCertification clientCertification =
         parseOrThrowExceptionIfUnSpecifiedOrUnMatchKey(context);
-    RequestedClientId requestedClientId = context.requestedClientId();
+
     ClientSecret clientSecret = new ClientSecret();
+
+    log.info(
+        "Client authentication succeeded: method={}, client_id={}",
+        ClientAuthenticationType.self_signed_tls_client_auth.name(),
+        requestedClientId.value());
+
     return new ClientCredentials(
         requestedClientId,
         ClientAuthenticationType.self_signed_tls_client_auth,
@@ -60,7 +71,13 @@ public class SelfSignedTlsClientAuthAuthenticator implements ClientAuthenticator
 
   void throwExceptionIfNotContainsClientCert(BackchannelRequestContext context) {
     ClientCert clientCert = context.clientCert();
+    RequestedClientId clientId = context.requestedClientId();
     if (!clientCert.exists()) {
+      log.warn(
+          "Client authentication failed: method={}, client_id={}, reason={}",
+          ClientAuthenticationType.self_signed_tls_client_auth.name(),
+          clientId.value(),
+          "request does not contain client_cert");
       throw new ClientUnAuthorizedException(
           "client authentication type is self_signed_tls_client_auth, but request does not contains client_cert");
     }
@@ -72,10 +89,21 @@ public class SelfSignedTlsClientAuthAuthenticator implements ClientAuthenticator
       String jwks = context.clientConfiguration().jwks();
       JsonWebKeys jsonWebKeys = JwkParser.parseKeys(jwks);
       JsonWebKeys filterWithX5c = jsonWebKeys.filterWithX5c();
+      RequestedClientId clientId = context.requestedClientId();
       if (!filterWithX5c.exists()) {
+        log.warn(
+            "Client authentication failed: method={}, client_id={}, reason={}",
+            ClientAuthenticationType.self_signed_tls_client_auth.name(),
+            clientId.value(),
+            "unregistered jwk with x5c");
         throw new ClientUnAuthorizedException("unregistered jwk with x5c");
       }
       if (filterWithX5c.isMultiValues()) {
+        log.warn(
+            "Client authentication failed: method={}, client_id={}, reason={}",
+            ClientAuthenticationType.self_signed_tls_client_auth.name(),
+            clientId.value(),
+            "multi registered jwk with x5c");
         throw new ClientUnAuthorizedException("multi registered jwk with x5c");
       }
       JsonWebKey jsonWebKey = filterWithX5c.getFirst();
@@ -84,12 +112,29 @@ public class SelfSignedTlsClientAuthAuthenticator implements ClientAuthenticator
       X509Certification x509Certification = X509Certification.parse(clientCert.plainValue());
       String der = x509Certification.derWithBase64();
       if (!x5cList.contains(der)) {
+        log.warn(
+            "Client authentication failed: method={}, client_id={}, reason={}",
+            ClientAuthenticationType.self_signed_tls_client_auth.name(),
+            clientId.value(),
+            "client cert does not match registered jwk");
         throw new ClientUnAuthorizedException("client cert does not match registered jwk");
       }
       return new ClientCertification(x509Certification);
     } catch (JsonWebKeyInvalidException e) {
+      RequestedClientId clientId = context.requestedClientId();
+      log.warn(
+          "Client authentication failed: method={}, client_id={}, reason={}",
+          ClientAuthenticationType.self_signed_tls_client_auth.name(),
+          clientId.value(),
+          "registered jwk is invalid: " + e.getMessage());
       throw new ClientUnAuthorizedException("registered jwk is invalid");
     } catch (X509CertInvalidException e) {
+      RequestedClientId clientId = context.requestedClientId();
+      log.warn(
+          "Client authentication failed: method={}, client_id={}, reason={}",
+          ClientAuthenticationType.self_signed_tls_client_auth.name(),
+          clientId.value(),
+          "invalid client cert: " + e.getMessage());
       throw new ClientUnAuthorizedException("invalid client cert");
     }
   }

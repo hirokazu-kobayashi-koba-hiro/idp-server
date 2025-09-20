@@ -36,8 +36,12 @@ public class NotificationClient implements ClientNotificationGateway {
   @Override
   public void notify(ClientNotificationRequest clientNotificationRequest) {
     try {
-      log.info("notification endpoint: " + clientNotificationRequest.endpoint());
-      log.info("notification body: " + clientNotificationRequest.body());
+      log.trace(
+          "CIBA client notification started: endpoint={}", clientNotificationRequest.endpoint());
+      log.info(
+          "CIBA client notification: endpoint={}, body={}",
+          clientNotificationRequest.endpoint(),
+          clientNotificationRequest.body());
 
       HttpRequest request =
           HttpRequest.newBuilder()
@@ -46,10 +50,15 @@ public class NotificationClient implements ClientNotificationGateway {
               .POST(HttpRequest.BodyPublishers.ofString(clientNotificationRequest.body()))
               .build();
 
-      httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+      HttpResponse<String> response =
+          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+      log.trace("CIBA client notification completed: status={}", response.statusCode());
     } catch (Exception exception) {
-      // TODO
-      log.error(exception.getMessage());
+      log.error(
+          "CIBA client notification failed: endpoint={}, error={}",
+          clientNotificationRequest.endpoint(),
+          exception.getMessage(),
+          exception);
     }
   }
 }

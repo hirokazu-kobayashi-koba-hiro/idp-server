@@ -93,10 +93,10 @@ public class FcmNotifier implements AuthenticationDeviceNotifier {
 
       String result = firebaseMessaging.send(message);
 
-      log.info("fcm result: {}, tenant: {}", result, tenant.identifierValue());
+      log.info("fcm result: {}", result);
     } catch (Exception e) {
 
-      log.error("Fcm is failed: {}, tenant: {}", e.getMessage(), tenant.identifierValue());
+      log.error("Fcm is failed: {}", e.getMessage());
     }
   }
 

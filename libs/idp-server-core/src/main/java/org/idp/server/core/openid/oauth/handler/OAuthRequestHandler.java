@@ -34,11 +34,13 @@ import org.idp.server.core.openid.oauth.repository.AuthorizationRequestRepositor
 import org.idp.server.core.openid.oauth.request.OAuthRequestParameters;
 import org.idp.server.core.openid.oauth.validator.OAuthRequestValidator;
 import org.idp.server.core.openid.oauth.verifier.OAuthRequestVerifier;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /** OAuthRequestHandler */
 public class OAuthRequestHandler {
 
+  LoggerWrapper log = LoggerWrapper.getLogger(OAuthRequestHandler.class);
   OAuthRequestContextCreators oAuthRequestContextCreators;
   OAuthRequestVerifier verifier;
   ClientAuthenticationHandler clientAuthenticationHandler;
@@ -70,6 +72,11 @@ public class OAuthRequestHandler {
   public OAuthPushedRequestContext handlePushedRequest(OAuthPushedRequest pushedRequest) {
     OAuthRequestParameters requestParameters = pushedRequest.toOAuthRequestParameters();
     Tenant tenant = pushedRequest.tenant();
+
+    log.trace(
+        "OAuth pushed request started: client={}, response_type={}",
+        requestParameters.clientId().value(),
+        requestParameters.responseType().value());
     OAuthRequestValidator validator = new OAuthRequestValidator(tenant, requestParameters);
     validator.validate();
 
@@ -97,6 +104,11 @@ public class OAuthRequestHandler {
 
     authorizationRequestRepository.register(tenant, context.authorizationRequest());
 
+    log.info(
+        "OAuth pushed request completed: client={}, request_uri={}",
+        requestParameters.clientId().value(),
+        context.authorizationRequest().identifier().value());
+
     return oAuthPushedRequestContext;
   }
 
@@ -104,6 +116,11 @@ public class OAuthRequestHandler {
       OAuthRequest oAuthRequest, OAuthSessionDelegate delegate) {
     OAuthRequestParameters parameters = oAuthRequest.toParameters();
     Tenant tenant = oAuthRequest.tenant();
+
+    log.trace(
+        "OAuth request started: client={}, response_type={}",
+        parameters.clientId().value(),
+        parameters.responseType().value());
     OAuthRequestValidator validator = new OAuthRequestValidator(tenant, parameters);
     validator.validate();
 
@@ -134,6 +151,12 @@ public class OAuthRequestHandler {
           grantedRepository.find(tenant, parameters.clientId(), session.user());
       context.setAuthorizationGranted(authorizationGranted);
     }
+
+    log.info(
+        "OAuth request completed: client={}, session_exists={}, auto_authorize={}",
+        parameters.clientId().value(),
+        session.exists(),
+        context.canAutomaticallyAuthorize());
 
     return context;
   }
