@@ -31,6 +31,11 @@ public class FunctionRegistry {
     register(new Uuid4Function());
     register(new Uuid5Function());
     register(new UuidShortFunction());
+    register(new SubstringFunction());
+    register(new ReplaceFunction());
+    register(new RegexReplaceFunction());
+    register(new CaseFunction());
+    register(new TrimFunction());
   }
 
   public void register(ValueFunction fn) {
