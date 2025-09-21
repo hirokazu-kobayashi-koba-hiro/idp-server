@@ -186,9 +186,7 @@ public class UserOperationEntryService implements UserOperationApi {
       Map<String, Object> contents = new HashMap<>();
       contents.put("error", "invalid_request");
       contents.put("error_description", "authentication device patch is failed");
-      Map<String, Object> details = new HashMap<>();
-      details.put("messages", validate.errors());
-      contents.put("error_details", details);
+      contents.put("error_messages", validate.errors());
       return UserOperationResponse.failure(contents);
     }
 

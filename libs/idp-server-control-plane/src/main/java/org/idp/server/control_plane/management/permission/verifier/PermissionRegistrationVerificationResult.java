@@ -53,11 +53,7 @@ public class PermissionRegistrationVerificationResult {
     response.put("dry_run", dryRun);
     response.put("error", "invalid_request");
     response.put("error_description", "permission registration verification is failed");
-    Map<String, Object> details = new HashMap<>();
-    if (!verificationResult.isValid()) {
-      details.put("messages", verificationResult.errors());
-    }
-    response.put("error_details", details);
+    response.put("error_messages", verificationResult.errors());
     return new PermissionManagementResponse(PermissionManagementStatus.INVALID_REQUEST, response);
   }
 }

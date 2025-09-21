@@ -602,7 +602,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       expect(tokenResponse.status).toBe(401);
       expect(tokenResponse.data.error).toEqual("invalid_client");
       expect(tokenResponse.data.error_description).toEqual(
-        "client authentication type is client_secret_post, but request client_secret does not match client_secret"
+        "Client authentication failed: method=client_secret_post, client_id=clientSecretPost, reason=client_secret does not match"
       );
     });
 

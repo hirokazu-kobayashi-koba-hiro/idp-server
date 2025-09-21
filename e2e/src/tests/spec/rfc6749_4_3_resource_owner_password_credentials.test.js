@@ -94,7 +94,7 @@ describe("The OAuth 2.0 Authorization Framework resource owner password credenti
       console.log(tokenResponse.data);
       expect(tokenResponse.status).toBe(401);
       expect(tokenResponse.data.error).toEqual("invalid_client");
-      expect(tokenResponse.data.error_description).toEqual("client authentication type is client_secret_post, but request client_secret does not match client_secret");
+      expect(tokenResponse.data.error_description).toEqual("Client authentication failed: method=client_secret_post, client_id=clientSecretPost, reason=client_secret does not match");
     });
   });
 });

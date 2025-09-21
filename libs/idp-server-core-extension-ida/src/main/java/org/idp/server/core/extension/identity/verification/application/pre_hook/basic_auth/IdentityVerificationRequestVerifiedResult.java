@@ -61,7 +61,7 @@ public class IdentityVerificationRequestVerifiedResult {
     response.put(
         "error_description",
         "The identity verification request could not be completed due to a business rule violation.");
-    response.put("error_details", errors);
+    response.put("error_messages", errors);
     return IdentityVerificationResponse.CLIENT_ERROR(response);
   }
 }
