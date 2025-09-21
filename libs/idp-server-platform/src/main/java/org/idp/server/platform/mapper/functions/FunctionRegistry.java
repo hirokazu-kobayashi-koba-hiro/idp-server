@@ -36,6 +36,8 @@ public class FunctionRegistry {
     register(new RegexReplaceFunction());
     register(new CaseFunction());
     register(new TrimFunction());
+    register(new IfFunction());
+    register(new SwitchFunction());
   }
 
   public void register(ValueFunction fn) {
