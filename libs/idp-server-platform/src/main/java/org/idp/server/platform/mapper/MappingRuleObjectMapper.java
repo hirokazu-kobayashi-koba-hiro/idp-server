@@ -35,6 +35,12 @@ public class MappingRuleObjectMapper {
     Map<String, Object> flatMap = new HashMap<>();
 
     for (MappingRule rule : mappingRules) {
+      // Check condition before executing the rule
+      if (!rule.shouldExecute(jsonPath)) {
+        log.debug("Rule skipped due to condition: to={}", rule.to());
+        continue;
+      }
+
       Object baseValue = resolveBaseValue(rule, jsonPath);
       Object finalValue = applyFunctions(rule, baseValue);
       writeResult(rule, finalValue, flatMap);
