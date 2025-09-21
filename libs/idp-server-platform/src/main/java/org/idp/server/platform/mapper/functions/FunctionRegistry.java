@@ -28,6 +28,9 @@ public class FunctionRegistry {
     register(new NowFunction());
     register(new ExistsFunction());
     register(new ConvertTypeFunction());
+    register(new Uuid4Function());
+    register(new Uuid5Function());
+    register(new UuidShortFunction());
   }
 
   public void register(ValueFunction fn) {
