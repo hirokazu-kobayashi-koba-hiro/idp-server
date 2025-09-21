@@ -92,7 +92,7 @@ public class InitialRegistrationInteractor implements AuthenticationInteractor {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "invalid_request");
       response.put("error_description", "invalid request.");
-      response.put("error_details", validationResult.errors());
+      response.put("error_messages", validationResult.errors());
 
       return AuthenticationInteractionRequestResult.clientError(
           response, type, operationType(), method(), DefaultSecurityEventType.user_signup_failure);

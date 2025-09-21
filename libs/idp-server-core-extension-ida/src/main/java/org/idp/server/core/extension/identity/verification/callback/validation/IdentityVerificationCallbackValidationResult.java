@@ -53,7 +53,7 @@ public class IdentityVerificationCallbackValidationResult {
     Map<String, Object> response = new HashMap<>();
     response.put("error", "invalid_request");
     response.put("error_description", "identity verification callback is invalid.");
-    response.put("error_details", errors);
+    response.put("error_messages", errors);
     return IdentityVerificationCallbackResponse.CLIENT_ERROR(response);
   }
 }

@@ -56,7 +56,8 @@ public class IdentityVerificationApplicationValidationResult {
     response.put(
         "error_description",
         "The identity verification request is invalid. Please review your input for missing or incorrect fields.");
-    response.put("error_details", errors);
+    response.put("error_messages", errors);
+
     return IdentityVerificationApplicationResponse.CLIENT_ERROR(response);
   }
 }

@@ -910,16 +910,16 @@ describe("identity-verification application", () => {
       expect(applyResponse.status).toBe(400);
       expect(applyResponse.data.error).toEqual("invalid_request");
       expect(applyResponse.data.error_description).toEqual("The identity verification request is invalid. Please review your input for missing or incorrect fields.");
-      expect(applyResponse.data.error_details).toContain("last_name is missing");
-      expect(applyResponse.data.error_details).toContain("last_name is missing");
-      expect(applyResponse.data.error_details).toContain("first_name is missing");
-      expect(applyResponse.data.error_details).toContain("last_name_kana is missing");
-      expect(applyResponse.data.error_details).toContain("first_name_kana is missing");
-      expect(applyResponse.data.error_details).toContain("birthdate is missing");
-      expect(applyResponse.data.error_details).toContain("nationality is missing");
-      expect(applyResponse.data.error_details).toContain("email_address is missing");
-      expect(applyResponse.data.error_details).toContain("mobile_phone_number is missing");
-      expect(applyResponse.data.error_details).toContain("address is missing");
+      expect(applyResponse.data.error_messages).toContain("last_name is missing");
+      expect(applyResponse.data.error_messages).toContain("last_name is missing");
+      expect(applyResponse.data.error_messages).toContain("first_name is missing");
+      expect(applyResponse.data.error_messages).toContain("last_name_kana is missing");
+      expect(applyResponse.data.error_messages).toContain("first_name_kana is missing");
+      expect(applyResponse.data.error_messages).toContain("birthdate is missing");
+      expect(applyResponse.data.error_messages).toContain("nationality is missing");
+      expect(applyResponse.data.error_messages).toContain("email_address is missing");
+      expect(applyResponse.data.error_messages).toContain("mobile_phone_number is missing");
+      expect(applyResponse.data.error_messages).toContain("address is missing");
     });
 
     it("invalid type params investment-account-opening", async () => {
@@ -967,20 +967,20 @@ describe("identity-verification application", () => {
       expect(applyResponse.status).toBe(400);
       expect(applyResponse.data.error).toEqual("invalid_request");
       expect(applyResponse.data.error_description).toEqual("The identity verification request is invalid. Please review your input for missing or incorrect fields.");
-      expect(applyResponse.data.error_details).toContain("last_name is not a string");
-      expect(applyResponse.data.error_details).toContain("last_name is not a string");
-      expect(applyResponse.data.error_details).toContain("first_name is not a string");
-      expect(applyResponse.data.error_details).toContain("last_name_kana is not a string");
-      expect(applyResponse.data.error_details).toContain("first_name_kana is not a string");
-      expect(applyResponse.data.error_details).toContain("birthdate is not a string");
-      expect(applyResponse.data.error_details).toContain("nationality is not a string");
-      expect(applyResponse.data.error_details).toContain("email_address is not a string");
-      expect(applyResponse.data.error_details).toContain("mobile_phone_number is not a string");
-      expect(applyResponse.data.error_details).toContain("address.region is not a string");
-      expect(applyResponse.data.error_details).toContain("address.country is not a string");
-      expect(applyResponse.data.error_details).toContain("address.locality is not a string");
-      expect(applyResponse.data.error_details).toContain("address.postal_code is not a string");
-      expect(applyResponse.data.error_details).toContain("address.street_address is not a string");
+      expect(applyResponse.data.error_messages).toContain("last_name is not a string");
+      expect(applyResponse.data.error_messages).toContain("last_name is not a string");
+      expect(applyResponse.data.error_messages).toContain("first_name is not a string");
+      expect(applyResponse.data.error_messages).toContain("last_name_kana is not a string");
+      expect(applyResponse.data.error_messages).toContain("first_name_kana is not a string");
+      expect(applyResponse.data.error_messages).toContain("birthdate is not a string");
+      expect(applyResponse.data.error_messages).toContain("nationality is not a string");
+      expect(applyResponse.data.error_messages).toContain("email_address is not a string");
+      expect(applyResponse.data.error_messages).toContain("mobile_phone_number is not a string");
+      expect(applyResponse.data.error_messages).toContain("address.region is not a string");
+      expect(applyResponse.data.error_messages).toContain("address.country is not a string");
+      expect(applyResponse.data.error_messages).toContain("address.locality is not a string");
+      expect(applyResponse.data.error_messages).toContain("address.postal_code is not a string");
+      expect(applyResponse.data.error_messages).toContain("address.street_address is not a string");
     });
 
     it("email unmatched continuous-customer-due-diligence", async () => {
@@ -1027,9 +1027,9 @@ describe("identity-verification application", () => {
 
       console.log(applyResponse.data);
       expect(applyResponse.status).toBe(400);
-      expect(applyResponse.data.error).toEqual("invalid_request");
-      expect(applyResponse.data.error_description).toEqual("The identity verification request could not be completed due to a business rule violation.");
-      expect(applyResponse.data.error_details[0]).toContain("User claim verification failed. unmatched: $.request_body.email_address, user:email");
+      expect(applyResponse.data.error).toEqual("pre_hook_validation_failed");
+      expect(applyResponse.data.error_description).toEqual("Pre-hook validation failed for identity verification request");
+      expect(applyResponse.data.error_messages[0]).toContain("User claim verification failed. unmatched: $.request_body.email_address, user:email");
     });
   });
 });

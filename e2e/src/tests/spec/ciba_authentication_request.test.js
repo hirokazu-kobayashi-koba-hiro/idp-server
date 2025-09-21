@@ -360,7 +360,7 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
         expect(
           backchannelAuthenticationResponse.data.error_description
         ).toEqual(
-          "client authentication type is client_secret_post, but request does not contains client_secret_post"
+          "Client authentication failed: method=client_secret_post, client_id=clientSecretPost, reason=request does not contain client_secret"
         );
       });
 
@@ -904,7 +904,7 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
       console.log(backchannelAuthenticationResponse.data);
       expect(backchannelAuthenticationResponse.status).toBe(401);
       expect(backchannelAuthenticationResponse.data.error).toEqual("invalid_client");
-      expect(backchannelAuthenticationResponse.data.error_description).toEqual("client authentication type is client_secret_post, but request does not contains client_secret_post");
+      expect(backchannelAuthenticationResponse.data.error_description).toEqual("Client authentication failed: method=client_secret_post, client_id=clientSecretPost, reason=request does not contain client_secret");
     });
 
   });

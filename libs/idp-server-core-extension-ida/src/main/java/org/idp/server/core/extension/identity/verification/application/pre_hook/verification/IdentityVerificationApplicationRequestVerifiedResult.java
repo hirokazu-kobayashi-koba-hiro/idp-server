@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationResponse;
+import org.idp.server.core.extension.identity.verification.io.IdentityVerificationErrorDetails;
 
 public class IdentityVerificationApplicationRequestVerifiedResult {
 
@@ -56,12 +57,27 @@ public class IdentityVerificationApplicationRequestVerifiedResult {
   }
 
   public IdentityVerificationApplicationResponse errorResponse() {
-    Map<String, Object> response = new HashMap<>();
-    response.put("error", "invalid_request");
-    response.put(
-        "error_description",
-        "The identity verification request could not be completed due to a business rule violation.");
-    response.put("error_details", errors);
-    return IdentityVerificationApplicationResponse.CLIENT_ERROR(response);
+    IdentityVerificationErrorDetails.Builder builder =
+        IdentityVerificationErrorDetails.builder()
+            .error(IdentityVerificationErrorDetails.ErrorTypes.PRE_HOOK_VALIDATION_FAILED)
+            .errorDescription("Pre-hook validation failed for identity verification request")
+            .errorMessages(errors);
+
+    // Classify and structure errors
+    Map<String, Object> errorDetails = new HashMap<>();
+    for (String error : errors) {
+      if (error.contains("verification")) {
+        errorDetails.put("verification_failure", true);
+      }
+      if (error.contains("parameter")) {
+        errorDetails.put("parameter_issue", true);
+      }
+    }
+
+    if (!errorDetails.isEmpty()) {
+      builder.errorDetails(errorDetails);
+    }
+
+    return IdentityVerificationApplicationResponse.CLIENT_ERROR(builder.build().toMap());
   }
 }

@@ -27,6 +27,7 @@ import org.idp.server.core.extension.identity.verification.configuration.Identit
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationExecutionConfig;
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationHttpRequestConfig;
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
+import org.idp.server.core.extension.identity.verification.io.IdentityVerificationErrorDetails;
 import org.idp.server.platform.http.*;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 
@@ -78,11 +79,52 @@ public class IdentityVerificationApplicationHttpRequestExecutor
   }
 
   private Map<String, Object> resolveResult(HttpRequestResult httpRequestResult) {
+    if (httpRequestResult.isSuccess()) {
+      // Success case: return safe response data
+      return createSuccessResponse(httpRequestResult);
+    } else {
+      // Error case: return sanitized error information
+      return createErrorResponse(httpRequestResult);
+    }
+  }
+
+  /** Creates success response with safe data extraction. */
+  private Map<String, Object> createSuccessResponse(HttpRequestResult httpRequestResult) {
     Map<String, Object> result = new HashMap<>();
+    result.put("status", "success");
     result.put("response_status", httpRequestResult.statusCode());
     result.put("response_headers", httpRequestResult.headers());
-    result.put("response_body", httpRequestResult.body().toMap());
+
+    // Only include safe response body data
+    if (httpRequestResult.body() != null) {
+      result.put("response_body", httpRequestResult.body().toMap());
+    }
 
     return result;
+  }
+
+  /**
+   * Creates sanitized error response using unified error format. Prevents internal system
+   * information leakage.
+   */
+  private Map<String, Object> createErrorResponse(HttpRequestResult httpRequestResult) {
+    String statusCategory = httpRequestResult.isClientError() ? "client_error" : "server_error";
+
+    IdentityVerificationErrorDetails.Builder builder =
+        IdentityVerificationErrorDetails.builder()
+            .error(IdentityVerificationErrorDetails.ErrorTypes.EXECUTION_FAILED)
+            .errorDescription("Identity verification execution failed")
+            .addErrorDetail("execution_type", "http_request")
+            .addErrorDetail("status_category", statusCategory)
+            .addErrorMessage("External verification service returned an error")
+            .addErrorDetail("status_code", httpRequestResult.statusCode());
+
+    if (httpRequestResult.body() != null) {
+      builder.addErrorDetail("response_body", httpRequestResult.body().toMap());
+    }
+
+    IdentityVerificationErrorDetails errorDetails = builder.build();
+
+    return errorDetails.toMap();
   }
 }

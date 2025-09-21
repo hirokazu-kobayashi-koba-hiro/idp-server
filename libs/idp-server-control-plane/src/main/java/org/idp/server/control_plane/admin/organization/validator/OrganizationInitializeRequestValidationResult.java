@@ -112,8 +112,7 @@ public class OrganizationInitializeRequestValidationResult {
     if (!clientResult.isValid()) {
       errors.addAll(clientResult.errors());
     }
-    details.put("messages", errors);
-    response.put("error_details", details);
+    response.put("error_messages", errors);
     return new OrganizationInitializationResponse(
         OrganizationInitializationStatus.INVALID_REQUEST, response);
   }
