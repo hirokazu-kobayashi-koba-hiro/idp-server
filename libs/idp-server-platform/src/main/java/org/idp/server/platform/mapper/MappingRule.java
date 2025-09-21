@@ -20,13 +20,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
+import org.idp.server.platform.json.path.JsonPathWrapper;
 
 public class MappingRule implements JsonReadable {
   String from;
   Object staticValue;
   String to;
-  String convertType;
   List<FunctionSpec> functions;
+  ConditionSpec condition;
 
   public MappingRule() {}
 
@@ -52,6 +53,34 @@ public class MappingRule implements JsonReadable {
     this.functions = functions;
   }
 
+  public MappingRule(String from, String to, ConditionSpec condition) {
+    this.from = from;
+    this.to = to;
+    this.condition = condition;
+  }
+
+  public MappingRule(Object staticValue, String to, ConditionSpec condition) {
+    this.staticValue = staticValue;
+    this.to = to;
+    this.condition = condition;
+  }
+
+  public MappingRule(
+      String from, String to, List<FunctionSpec> functions, ConditionSpec condition) {
+    this.from = from;
+    this.to = to;
+    this.functions = functions;
+    this.condition = condition;
+  }
+
+  public MappingRule(
+      Object staticValue, String to, List<FunctionSpec> functions, ConditionSpec condition) {
+    this.staticValue = staticValue;
+    this.to = to;
+    this.functions = functions;
+    this.condition = condition;
+  }
+
   public String from() {
     return from;
   }
@@ -72,14 +101,6 @@ public class MappingRule implements JsonReadable {
     return to;
   }
 
-  public String convertType() {
-    return convertType;
-  }
-
-  public boolean hasConvertType() {
-    return convertType != null && !convertType.isEmpty();
-  }
-
   public boolean hasFunctions() {
     return functions != null && !functions.isEmpty();
   }
@@ -88,13 +109,40 @@ public class MappingRule implements JsonReadable {
     return functions;
   }
 
+  public ConditionSpec condition() {
+    return condition;
+  }
+
+  public boolean hasCondition() {
+    return condition != null;
+  }
+
+  /**
+   * Determines whether this mapping rule should be executed based on its condition.
+   *
+   * @param jsonPath the JSONPath wrapper containing the source data
+   * @return true if the rule should be executed, false otherwise
+   */
+  public boolean shouldExecute(JsonPathWrapper jsonPath) {
+    if (!hasCondition()) {
+      return true; // No condition means always execute
+    }
+
+    try {
+      return condition.evaluate(jsonPath);
+    } catch (Exception e) {
+      // Log the error and default to not executing the rule for safety
+      return false;
+    }
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("from", from);
     map.put("static_value", staticValue);
     map.put("to", to);
-    map.put("convert_type", convertType);
     map.put("functions", functions());
+    map.put("condition", condition != null ? condition.toMap() : null);
     return map;
   }
 }
