@@ -38,6 +38,15 @@ public class FunctionRegistry {
     register(new TrimFunction());
     register(new IfFunction());
     register(new SwitchFunction());
+
+    // Collection operation functions
+    MapFunction mapFunction = new MapFunction();
+    register(mapFunction);
+    mapFunction.setFunctionRegistry(this);
+
+    register(new FilterFunction());
+    register(new JoinFunction());
+    register(new SplitFunction());
   }
 
   public void register(ValueFunction fn) {

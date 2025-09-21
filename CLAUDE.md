@@ -25,6 +25,31 @@ Controller → UseCase (EntryService) → Core (Handler-Service-Repository) → 
 cd e2e && npm test
 ```
 
+## コードレビュー（Codex AI）
+**自動レビュー機能**: コミットメッセージに `@codex review` を含めることで、AIによる自動コードレビューが実行される
+
+### コミットメッセージ例
+```bash
+git commit -m "実装内容の説明
+
+@codex review
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+Co-Authored-By: Claude <noreply@anthropic.com>"
+```
+
+### レビュー観点
+- **boolean演算子優先順位**: `&&` が `||` より高い優先順位であることを確認
+- **複雑な条件式**: 混在演算子の正しい評価順序をチェック
+- **アーキテクチャ準拠**: 層責任・パターン違反の検出
+- **コード品質**: 型安全性・例外処理・テストカバレッジ
+
+### コメント修正依頼
+```bash
+# 未解決のレビューコメントを修正する場合
+@codex fix comments
+```
+
 ## 設計原則（OIDC世界観の尊重）
 - **プロトコル準拠**: OAuth 2.0/OIDC仕様への厳密準拠、標準逸脱禁止
 - **型安全性**: `String`/`Map`濫用禁止、意味のある値オブジェクト優先
