@@ -1,0 +1,188 @@
+{
+  "request": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "user_id": { "type": "string" },
+        "transaction_amount": { "type": "number" },
+        "transaction_type": { "type": "string" },
+        "client_ip": { "type": "string" },
+        "device_fingerprint": { "type": "string" }
+      }
+    }
+  },
+  "pre_hook": {
+    "verifications": [
+      {
+        "type": "fraud_detection",
+        "details": {
+          "threshold": "high"
+        },
+        "condition": {
+          "operation": "allOf",
+          "value": [
+            {
+              "operation": "gte",
+              "path": "$.request.transaction_amount",
+              "value": 10000
+            },
+            {
+              "operation": "anyOf",
+              "value": [
+                {
+                  "operation": "eq",
+                  "path": "$.request.transaction_type",
+                  "value": "wire_transfer"
+                },
+                {
+                  "operation": "eq",
+                  "path": "$.request.transaction_type",
+                  "value": "crypto_purchase"
+                }
+              ]
+            },
+            {
+              "operation": "regex",
+              "path": "$.request.client_ip",
+              "value": "^(?!192\\.168\\.|10\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.).*"
+            }
+          ]
+        }
+      },
+      {
+        "type": "device_verification",
+        "details": {
+          "required_trust_level": "high"
+        },
+        "condition": {
+          "operation": "allOf",
+          "value": [
+            {
+              "operation": "exists",
+              "path": "$.request.device_fingerprint"
+            },
+            {
+              "operation": "missing",
+              "path": "$.user.trusted_devices[?(@.fingerprint == '${request.device_fingerprint}')]"
+            }
+          ]
+        }
+      },
+      {
+        "type": "time_based_restriction",
+        "details": {
+          "allowed_hours": [9, 10, 11, 12, 13, 14, 15, 16, 17]
+        },
+        "condition": {
+          "operation": "anyOf",
+          "value": [
+            {
+              "operation": "eq",
+              "path": "$.user.account_type",
+              "value": "business"
+            },
+            {
+              "operation": "gte",
+              "path": "$.request.transaction_amount",
+              "value": 50000
+            }
+          ]
+        }
+      }
+    ],
+    "additional_parameters": [
+      {
+        "type": "risk_scoring",
+        "details": {
+          "scoring_model": "ml_enhanced",
+          "include_behavioral_analysis": true
+        },
+        "condition": {
+          "operation": "allOf",
+          "value": [
+            {
+              "operation": "gte",
+              "path": "$.request.transaction_amount",
+              "value": 5000
+            },
+            {
+              "operation": "ne",
+              "path": "$.user.risk_profile",
+              "value": "low"
+            }
+          ]
+        }
+      },
+      {
+        "type": "geolocation_verification",
+        "details": {
+          "max_distance_km": 100,
+          "reference_location": "user_registered_address"
+        },
+        "condition": {
+          "operation": "allOf",
+          "value": [
+            {
+              "operation": "exists",
+              "path": "$.request.client_ip"
+            },
+            {
+              "operation": "in",
+              "path": "$.user.compliance_level",
+              "value": ["enhanced", "premium"]
+            }
+          ]
+        }
+      },
+      {
+        "type": "sanctions_screening",
+        "details": {
+          "screening_lists": ["OFAC", "EU_SANCTIONS", "UN_SANCTIONS"],
+          "match_threshold": 0.8
+        },
+        "condition": {
+          "operation": "anyOf",
+          "value": [
+            {
+              "operation": "gte",
+              "path": "$.request.transaction_amount",
+              "value": 25000
+            },
+            {
+              "operation": "contains",
+              "path": "$.user.nationalities",
+              "value": "high_risk"
+            },
+            {
+              "operation": "regex",
+              "path": "$.user.occupation",
+              "value": ".*(politician|government|diplomatic).*"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "execution": {
+    "type": "http_request",
+    "http_request": {
+      "url": "https://api.advanced-kyc.example.com/verify",
+      "method": "POST",
+      "auth_type": "hmac_sha256",
+      "body_mapping_rules": [
+        {
+          "from": "$.user.sub",
+          "to": "$.customer_id"
+        },
+        {
+          "from": "$.request",
+          "to": "$.transaction_details"
+        },
+        {
+          "from": "$.pre_hook_additional_parameters",
+          "to": "$.risk_assessment"
+        }
+      ]
+    }
+  }
+}

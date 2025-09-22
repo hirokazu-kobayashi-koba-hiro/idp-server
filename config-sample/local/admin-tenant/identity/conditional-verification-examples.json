@@ -1,0 +1,160 @@
+{
+  "request": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "user_id": { "type": "string" },
+        "verification_level": { "type": "string", "enum": ["basic", "enhanced", "premium"] },
+        "document_type": { "type": "string" },
+        "risk_score": { "type": "number" },
+        "region": { "type": "string" }
+      },
+      "required": ["user_id", "verification_level"]
+    }
+  },
+  "pre_hook": {
+    "verifications": [
+      {
+        "type": "user_claim",
+        "details": {
+          "verification_parameters": [
+            {
+              "request_json_path": "$.user_id",
+              "user_claim_json_path": "$.sub"
+            }
+          ]
+        },
+        "condition": {
+          "operation": "eq",
+          "path": "$.user.role",
+          "value": "admin"
+        }
+      },
+      {
+        "type": "deny_duplicate",
+        "details": {},
+        "condition": {
+          "operation": "anyOf",
+          "value": [
+            {
+              "operation": "eq",
+              "path": "$.request.verification_level",
+              "value": "enhanced"
+            },
+            {
+              "operation": "eq",
+              "path": "$.request.verification_level",
+              "value": "premium"
+            }
+          ]
+        }
+      },
+      {
+        "type": "risk_assessment",
+        "details": {
+          "max_risk_score": 50
+        },
+        "condition": {
+          "operation": "allOf",
+          "value": [
+            {
+              "operation": "gte",
+              "path": "$.request.risk_score",
+              "value": 30
+            },
+            {
+              "operation": "ne",
+              "path": "$.user.region",
+              "value": "trusted_zone"
+            }
+          ]
+        }
+      }
+    ],
+    "additional_parameters": [
+      {
+        "type": "http_request",
+        "details": {
+          "url": "https://api.premium-kyc.example.com/verify",
+          "method": "POST",
+          "auth_type": "oauth2",
+          "body_mapping_rules": [
+            {
+              "from": "$.user.sub",
+              "to": "$.customer_id"
+            },
+            {
+              "from": "$.request.document_type",
+              "to": "$.document.type"
+            }
+          ]
+        },
+        "condition": {
+          "operation": "eq",
+          "path": "$.request.verification_level",
+          "value": "premium"
+        }
+      },
+      {
+        "type": "continuous_customer_due_diligence",
+        "details": {},
+        "condition": {
+          "operation": "allOf",
+          "value": [
+            {
+              "operation": "eq",
+              "path": "$.user.role",
+              "value": "business"
+            },
+            {
+              "operation": "in",
+              "path": "$.request.region",
+              "value": ["US", "EU", "UK"]
+            }
+          ]
+        }
+      },
+      {
+        "type": "enhanced_document_verification",
+        "details": {
+          "required_documents": ["passport", "utility_bill"]
+        },
+        "condition": {
+          "operation": "regex",
+          "path": "$.user.email",
+          "value": "^.*@(company|enterprise)\\..*$"
+        }
+      }
+    ]
+  },
+  "execution": {
+    "type": "http_request",
+    "http_request": {
+      "url": "https://api.identity-provider.example.com/verify",
+      "method": "POST",
+      "auth_type": "oauth2",
+      "body_mapping_rules": [
+        {
+          "from": "$.user.sub",
+          "to": "$.user_id"
+        },
+        {
+          "from": "$.request.verification_level",
+          "to": "$.level"
+        }
+      ]
+    }
+  },
+  "response": {
+    "body_mapping_rules": [
+      {
+        "from": "$.verification_id",
+        "to": "$.id"
+      },
+      {
+        "from": "$.status",
+        "to": "$.verification_status"
+      }
+    ]
+  }
+}

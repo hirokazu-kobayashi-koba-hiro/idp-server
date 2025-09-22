@@ -97,6 +97,180 @@ POST /{tenant-id}/internal/v1/identity-verification/callback/{verification-type}
 
 [外部ステム連携用インターナルAPI仕様（身元確認関連のコールバックAPIを含む）](api-internal-ja)
 
+## 条件付き実行機能 (Conditional Execution)
+
+身元確認のpre_hookコンポーネント（検証とパラメータ解決）に条件を設定することで、アプリケーションのコンテキストに応じて実行を制御できます。
+
+### 概要
+
+条件付き実行機能により、以下の利点があります：
+
+- **パフォーマンス最適化**: 不要な処理をスキップ
+- **柔軟な制御**: ユーザー属性や申込み内容に応じた動的な処理
+- **コスト削減**: 外部API呼び出しの最適化
+- **セキュリティ向上**: リスクベースの認証制御
+
+### 設定方法
+
+pre_hookコンポーネントに `condition` フィールドを追加します：
+
+```json
+{
+  "pre_hook": {
+    "verifications": [
+      {
+        "type": "user_claim",
+        "details": { ... },
+        "condition": {
+          "operation": "eq",
+          "path": "$.user.role",
+          "value": "admin"
+        }
+      }
+    ],
+    "additional_parameters": [
+      {
+        "type": "http_request",
+        "details": { ... },
+        "condition": {
+          "operation": "gte",
+          "path": "$.request.amount",
+          "value": 10000
+        }
+      }
+    ]
+  }
+}
+```
+
+### 条件演算子
+
+| 演算子 | 説明 | 例 |
+|-------|------|---|
+| `eq` | 等しい | `{"operation": "eq", "path": "$.user.role", "value": "admin"}` |
+| `ne` | 等しくない | `{"operation": "ne", "path": "$.user.status", "value": "suspended"}` |
+| `gt` | より大きい | `{"operation": "gt", "path": "$.request.amount", "value": 1000}` |
+| `gte` | 以上 | `{"operation": "gte", "path": "$.user.age", "value": 18}` |
+| `lt` | より小さい | `{"operation": "lt", "path": "$.risk_score", "value": 50}` |
+| `lte` | 以下 | `{"operation": "lte", "path": "$.retry_count", "value": 3}` |
+| `in` | 含まれる | `{"operation": "in", "path": "$.user.region", "value": ["US", "EU"]}` |
+| `nin` | 含まれない | `{"operation": "nin", "path": "$.user.status", "value": ["banned", "suspended"]}` |
+| `exists` | 存在する | `{"operation": "exists", "path": "$.user.verified"}` |
+| `missing` | 存在しない | `{"operation": "missing", "path": "$.user.temp_flag"}` |
+| `contains` | 文字列を含む | `{"operation": "contains", "path": "$.user.email", "value": "@company.com"}` |
+| `regex` | 正規表現 | `{"operation": "regex", "path": "$.user.phone", "value": "^\\+81"}` |
+| `allOf` | 全て真 | `{"operation": "allOf", "value": [条件1, 条件2]}` |
+| `anyOf` | いずれか真 | `{"operation": "anyOf", "value": [条件1, 条件2]}` |
+
+### コンテキストデータ
+
+条件評価で利用可能なコンテキストデータ：
+
+```json
+{
+  "tenant": {
+    "id": "テナントID",
+    "type": "テナント種別"
+  },
+  "user": {
+    "sub": "ユーザーID",
+    "claims": {
+      "role": "admin",
+      "verified": true,
+      "age": 25
+    }
+  },
+  "application": {
+    "id": "申込みID",
+    "type": "申込み種別",
+    "process": "プロセス種別",
+    "status": "申込みステータス"
+  },
+  "request": {
+    "user_id": "リクエストデータ",
+    "amount": 50000
+  },
+  "requestAttributes": {
+    "ip": "クライアントIP",
+    "user_agent": "ユーザーエージェント"
+  }
+}
+```
+
+### 実用例
+
+#### 1. 管理者のみ実行
+
+```json
+{
+  "type": "enhanced_verification",
+  "details": { ... },
+  "condition": {
+    "operation": "eq",
+    "path": "$.user.role",
+    "value": "admin"
+  }
+}
+```
+
+#### 2. 高額取引時のみ実行
+
+```json
+{
+  "type": "additional_risk_check",
+  "details": { ... },
+  "condition": {
+    "operation": "gte",
+    "path": "$.request.amount",
+    "value": 100000
+  }
+}
+```
+
+#### 3. 複合条件
+
+```json
+{
+  "type": "premium_verification",
+  "details": { ... },
+  "condition": {
+    "operation": "allOf",
+    "value": [
+      {
+        "operation": "eq",
+        "path": "$.user.tier",
+        "value": "premium"
+      },
+      {
+        "operation": "gte",
+        "path": "$.user.age",
+        "value": 18
+      }
+    ]
+  }
+}
+```
+
+#### 4. 地域ベースの条件
+
+```json
+{
+  "type": "geo_compliance_check",
+  "details": { ... },
+  "condition": {
+    "operation": "in",
+    "path": "$.user.country",
+    "value": ["US", "CA", "GB"]
+  }
+}
+```
+
+### 後方互換性
+
+- 既存設定（condition未指定）は変更なく動作
+- 新規設定のみconditionフィールドを追加
+- 段階的な移行が可能
+
 ## 申込みフロー例
 
 1. アプリから身元確認の申込みを行い、idp-server経由で外部身元確認サービスに連携する
