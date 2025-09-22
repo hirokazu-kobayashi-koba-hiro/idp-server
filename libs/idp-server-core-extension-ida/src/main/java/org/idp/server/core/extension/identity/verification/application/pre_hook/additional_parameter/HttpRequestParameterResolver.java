@@ -26,7 +26,6 @@ import org.idp.server.core.extension.identity.verification.io.IdentityVerificati
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.http.*;
 import org.idp.server.platform.json.JsonConverter;
-import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 import org.idp.server.platform.type.RequestAttributes;
@@ -67,22 +66,12 @@ public class HttpRequestParameterResolver implements AdditionalRequestParameterR
         jsonConverter.read(
             additionalParameterConfig.details(), AdditionalParameterHttpRequestConfig.class);
 
-    HttpRequestResult executionResult = httpRequestExecutor.execute(configuration, baseParams);
+    HttpRequestResult httpRequestResult = httpRequestExecutor.execute(configuration, baseParams);
 
-    JsonNodeWrapper body = executionResult.body();
     Map<String, Object> parameters = new HashMap<>();
-    String statusCodeName =
-        configuration.optValueFromAdditionalParameterNames(
-            "status_code", "additional_parameter_status_code");
-    parameters.put(statusCodeName, executionResult.headers());
-    String headerName =
-        configuration.optValueFromAdditionalParameterNames(
-            "header", "additional_parameter_http_header");
-    parameters.put(headerName, executionResult.headers());
-    String bodyName =
-        configuration.optValueFromAdditionalParameterNames(
-            "body", "additional_parameter_http_body");
-    parameters.put(bodyName, body.toMap());
+    parameters.put("response_status", httpRequestResult.statusCode());
+    parameters.put("response_headers", httpRequestResult.headers());
+    parameters.put("response_body", httpRequestResult.body().toMap());
 
     return parameters;
   }

@@ -429,12 +429,7 @@ flowchart TD
         "from": "$.request_body",
         "to": "*"
       }
-    ],
-    "parameterNames": {
-      "status_code": "resolve_status_code",
-      "header": "resolve_header",
-      "body": "resolve_body"
-    }
+    ]
   }
 }
 
