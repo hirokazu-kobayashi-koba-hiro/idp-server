@@ -19,16 +19,25 @@ package org.idp.server.core.extension.identity.verification.configuration;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
+import org.idp.server.platform.mapper.ConditionSpec;
 
 public class IdentityVerificationConfig implements JsonReadable {
   String type;
   Map<String, Object> details;
+  ConditionSpec condition;
 
   public IdentityVerificationConfig() {}
 
   public IdentityVerificationConfig(String type, Map<String, Object> details) {
     this.type = type;
     this.details = details;
+  }
+
+  public IdentityVerificationConfig(
+      String type, Map<String, Object> details, ConditionSpec condition) {
+    this.type = type;
+    this.details = details;
+    this.condition = condition;
   }
 
   public String type() {
@@ -39,10 +48,21 @@ public class IdentityVerificationConfig implements JsonReadable {
     return details;
   }
 
+  public ConditionSpec condition() {
+    return condition;
+  }
+
+  public boolean hasCondition() {
+    return condition != null;
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("type", type);
     map.put("details", details);
+    if (hasCondition()) {
+      map.put("condition", condition.toMap());
+    }
     return map;
   }
 }

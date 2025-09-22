@@ -29,6 +29,8 @@ import org.idp.server.core.extension.identity.verification.configuration.Identit
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
@@ -71,6 +73,18 @@ public class AdditionalRequestParameterResolvers {
     List<Map<String, Object>> additionalParameterValues = new ArrayList<>();
     for (IdentityVerificationConfig additionalParameterConfig : additionalParameterConfigs) {
 
+      // Check if condition is specified and evaluate it
+      if (additionalParameterConfig.hasCondition()) {
+        JsonPathWrapper jsonPath =
+            createJsonPathContext(tenant, user, applications, request, requestAttributes);
+        if (!additionalParameterConfig.condition().evaluate(jsonPath)) {
+          log.debug(
+              "Skipping additional parameter due to condition evaluation: type={}",
+              additionalParameterConfig.type());
+          continue;
+        }
+      }
+
       AdditionalRequestParameterResolver resolver =
           this.resolvers.get(additionalParameterConfig.type());
       if (resolver == null) {
@@ -99,5 +113,40 @@ public class AdditionalRequestParameterResolvers {
     additionalParameters.put("pre_hook_additional_parameters", additionalParameterValues);
 
     return additionalParameters;
+  }
+
+  private JsonPathWrapper createJsonPathContext(
+      Tenant tenant,
+      User user,
+      IdentityVerificationApplications applications,
+      IdentityVerificationRequest request,
+      RequestAttributes requestAttributes) {
+
+    Map<String, Object> context = new HashMap<>();
+
+    // Add tenant information
+    context.put(
+        "tenant",
+        Map.of(
+            "id", tenant.identifier().value(),
+            "type", tenant.type()));
+
+    // Add user information
+    context.put(
+        "user",
+        Map.of(
+            "sub", user.sub(),
+            "claims", user.toMap()));
+
+    // Add applications information
+    //    context.put("applications", applications.toMap());
+
+    // Add request information
+    context.put("request", request.toMap());
+
+    // Add request attributes
+    context.put("requestAttributes", requestAttributes.toMap());
+
+    return new JsonPathWrapper(JsonNodeWrapper.fromMap(context).toJson());
   }
 }

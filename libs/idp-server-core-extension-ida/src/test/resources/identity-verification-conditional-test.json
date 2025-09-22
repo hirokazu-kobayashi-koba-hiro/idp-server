@@ -1,0 +1,84 @@
+{
+  "request": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "user_id": { "type": "string" },
+        "document_type": { "type": "string" }
+      }
+    }
+  },
+  "pre_hook": {
+    "verifications": [
+      {
+        "type": "user_claim",
+        "details": {
+          "verification_parameters": [
+            {
+              "request_json_path": "$.user_id",
+              "user_claim_json_path": "$.sub"
+            }
+          ]
+        },
+        "condition": {
+          "operation": "eq",
+          "path": "$.user.role",
+          "value": "admin"
+        }
+      },
+      {
+        "type": "deny_duplicate",
+        "details": {},
+        "condition": {
+          "operation": "exists",
+          "path": "$.user.verified"
+        }
+      }
+    ],
+    "additional_parameters": [
+      {
+        "type": "http_request",
+        "details": {
+          "url": "https://api.example.com/user-data",
+          "method": "GET",
+          "auth_type": "none"
+        },
+        "condition": {
+          "operation": "eq",
+          "path": "$.request.document_type",
+          "value": "passport"
+        }
+      },
+      {
+        "type": "continuous_customer_due_diligence",
+        "details": {},
+        "condition": {
+          "operation": "allOf",
+          "value": [
+            {
+              "operation": "eq",
+              "path": "$.user.role",
+              "value": "premium"
+            },
+            {
+              "operation": "gte",
+              "path": "$.user.age",
+              "value": 18
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "execution": {
+    "type": "no_action"
+  },
+  "response": {
+    "body_mapping_rules": [
+      {
+        "from": "$.status",
+        "to": "$.verification_status"
+      }
+    ]
+  }
+}

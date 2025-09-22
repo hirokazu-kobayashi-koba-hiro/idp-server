@@ -29,6 +29,8 @@ import org.idp.server.core.extension.identity.verification.configuration.Identit
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
@@ -67,6 +69,18 @@ public class IdentityVerificationApplicationRequestVerifiers {
     List<IdentityVerificationConfig> verifications = processConfig.preHook().verifications();
     for (IdentityVerificationConfig verificationConfig : verifications) {
 
+      // Check if condition is specified and evaluate it
+      if (verificationConfig.hasCondition()) {
+        JsonPathWrapper jsonPath =
+            createJsonPathContext(tenant, user, currentApplication, request, requestAttributes);
+        if (!verificationConfig.condition().evaluate(jsonPath)) {
+          log.debug(
+              "Skipping verification due to condition evaluation: type={}",
+              verificationConfig.type());
+          continue;
+        }
+      }
+
       IdentityVerificationApplicationRequestVerifier verifier =
           verifiers.get(verificationConfig.type());
       if (verifier == null) {
@@ -94,5 +108,48 @@ public class IdentityVerificationApplicationRequestVerifiers {
     }
 
     return IdentityVerificationApplicationRequestVerifiedResult.success();
+  }
+
+  private JsonPathWrapper createJsonPathContext(
+      Tenant tenant,
+      User user,
+      IdentityVerificationApplication application,
+      IdentityVerificationRequest request,
+      RequestAttributes requestAttributes) {
+
+    Map<String, Object> context = new HashMap<>();
+
+    // Add tenant information
+    context.put(
+        "tenant",
+        Map.of(
+            "id", tenant.identifier().value(),
+            "type", tenant.type()));
+
+    // Add user information
+    context.put(
+        "user",
+        Map.of(
+            "sub", user.sub(),
+            "claims", user.toMap()));
+
+    // Add application information
+    if (application.exists()) {
+      context.put(
+          "application",
+          Map.of(
+              "id", application.identifier().value(),
+              "type", application.identityVerificationType().name(),
+              "process", application.processes(),
+              "status", application.status().value()));
+    }
+
+    // Add request information
+    context.put("request", request.toMap());
+
+    // Add request attributes
+    context.put("requestAttributes", requestAttributes.toMap());
+
+    return new JsonPathWrapper(JsonNodeWrapper.fromMap(context).toJson());
   }
 }
