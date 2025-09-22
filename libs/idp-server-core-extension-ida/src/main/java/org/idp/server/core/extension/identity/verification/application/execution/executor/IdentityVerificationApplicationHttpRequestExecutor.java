@@ -94,11 +94,7 @@ public class IdentityVerificationApplicationHttpRequestExecutor
     result.put("status", "success");
     result.put("response_status", httpRequestResult.statusCode());
     result.put("response_headers", httpRequestResult.headers());
-
-    // Only include safe response body data
-    if (httpRequestResult.body() != null) {
-      result.put("response_body", httpRequestResult.body().toMap());
-    }
+    result.put("response_body", httpRequestResult.body().toMap());
 
     return result;
   }

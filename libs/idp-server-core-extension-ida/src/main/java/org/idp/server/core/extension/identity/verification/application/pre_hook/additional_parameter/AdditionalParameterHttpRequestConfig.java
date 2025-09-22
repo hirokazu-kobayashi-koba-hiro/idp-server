@@ -17,9 +17,7 @@
 package org.idp.server.core.extension.identity.verification.application.pre_hook.additional_parameter;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import org.idp.server.platform.http.*;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.mapper.MappingRule;
@@ -36,7 +34,6 @@ public class AdditionalParameterHttpRequestConfig
   List<MappingRule> headerMappingRules = new ArrayList<>();
   List<MappingRule> bodyMappingRules = new ArrayList<>();
   List<MappingRule> queryMappingRules = new ArrayList<>();
-  Map<String, String> parameterNames = new HashMap<>();
 
   public AdditionalParameterHttpRequestConfig() {}
 
@@ -103,12 +100,5 @@ public class AdditionalParameterHttpRequestConfig
   @Override
   public HttpRequestMappingRules queryMappingRules() {
     return new HttpRequestMappingRules(queryMappingRules);
-  }
-
-  public String optValueFromAdditionalParameterNames(String key, String defaultValue) {
-    if (parameterNames == null) {
-      return defaultValue;
-    }
-    return parameterNames.getOrDefault(key, defaultValue);
   }
 }
