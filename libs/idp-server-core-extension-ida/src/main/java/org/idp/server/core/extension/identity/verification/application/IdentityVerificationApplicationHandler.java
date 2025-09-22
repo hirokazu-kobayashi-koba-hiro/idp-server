@@ -135,6 +135,7 @@ public class IdentityVerificationApplicationHandler {
         additionalRequestParameterResolvers.resolve(
             tenant,
             user,
+            currentApplication,
             previousApplications,
             type,
             processes,
