@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfig;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
@@ -53,14 +54,16 @@ public class HttpRequestParameterResolver implements AdditionalRequestParameterR
   public Map<String, Object> resolve(
       Tenant tenant,
       User user,
-      IdentityVerificationApplications applications,
+      IdentityVerificationApplication currentApplication,
+      IdentityVerificationApplications previousApplications,
       IdentityVerificationType type,
       IdentityVerificationProcess processes,
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes,
       IdentityVerificationConfig additionalParameterConfig) {
 
-    HttpRequestBaseParams baseParams = resolveBaseParams(request, requestAttributes);
+    HttpRequestBaseParams baseParams =
+        resolveBaseParams(tenant, user, currentApplication, request, requestAttributes);
 
     AdditionalParameterHttpRequestConfig configuration =
         jsonConverter.read(
@@ -77,8 +80,14 @@ public class HttpRequestParameterResolver implements AdditionalRequestParameterR
   }
 
   private HttpRequestBaseParams resolveBaseParams(
-      IdentityVerificationRequest request, RequestAttributes requestAttributes) {
+      Tenant tenant,
+      User user,
+      IdentityVerificationApplication application,
+      IdentityVerificationRequest request,
+      RequestAttributes requestAttributes) {
     Map<String, Object> parameters = new HashMap<>();
+    parameters.put("user", user.toMap());
+    parameters.put("application", application.toMap());
     parameters.put("request_body", request.toMap());
     parameters.put("request_attributes", requestAttributes.toMap());
 
