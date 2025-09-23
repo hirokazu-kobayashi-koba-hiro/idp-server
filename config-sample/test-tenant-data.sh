@@ -113,9 +113,9 @@ echo ""
 echo "authentication-config"
 
 authentication_config_files=(
-  authentication-device/fcm.json
+  authentication-device/multi-push-notification.json
   email/no-action.json
-   external-token/mocky.json
+  external-token/mocky.json
   fido-uaf/external.json
   initial-registration/standard.json
   sms/no-action.json

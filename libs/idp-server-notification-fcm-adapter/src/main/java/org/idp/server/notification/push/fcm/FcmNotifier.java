@@ -31,6 +31,7 @@ import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.notification.NotificationChannel;
+import org.idp.server.platform.notification.NotificationResult;
 import org.idp.server.platform.notification.NotificationTemplate;
 
 public class FcmNotifier implements AuthenticationDeviceNotifier {
@@ -45,7 +46,7 @@ public class FcmNotifier implements AuthenticationDeviceNotifier {
   }
 
   @Override
-  public void notify(
+  public NotificationResult notify(
       Tenant tenant, AuthenticationDevice device, AuthenticationExecutionConfig configuration) {
 
     try {
@@ -53,11 +54,16 @@ public class FcmNotifier implements AuthenticationDeviceNotifier {
 
       if (!device.hasNotificationToken()) {
         log.debug("Device has no notification token");
-        return;
+        return NotificationResult.failure("fcm", "Device has no notification token");
       }
 
-      FcmConfiguration fcmConfiguration =
-          jsonConverter.read(configuration.details(), FcmConfiguration.class);
+      Object fcmConfigData = configuration.details().get("fcm");
+      if (fcmConfigData == null) {
+        log.error("FCM configuration not found in details");
+        return NotificationResult.failure("fcm", "FCM configuration not found");
+      }
+
+      FcmConfiguration fcmConfiguration = jsonConverter.read(fcmConfigData, FcmConfiguration.class);
       FirebaseMessaging firebaseMessaging = getOrInitFirebaseMessaging(tenant, fcmConfiguration);
 
       NotificationTemplate notificationTemplate = fcmConfiguration.findTemplate("default");
@@ -94,9 +100,10 @@ public class FcmNotifier implements AuthenticationDeviceNotifier {
       String result = firebaseMessaging.send(message);
 
       log.info("fcm result: {}", result);
+      return NotificationResult.success("fcm", Map.of("result", result));
     } catch (Exception e) {
-
       log.error("Fcm is failed: {}", e.getMessage());
+      return NotificationResult.failure("fcm", e.getMessage());
     }
   }
 

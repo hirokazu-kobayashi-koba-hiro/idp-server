@@ -20,11 +20,12 @@ import org.idp.server.core.openid.authentication.config.AuthenticationExecutionC
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.notification.NotificationChannel;
+import org.idp.server.platform.notification.NotificationResult;
 
 public interface AuthenticationDeviceNotifier {
 
   NotificationChannel chanel();
 
-  void notify(
+  NotificationResult notify(
       Tenant tenant, AuthenticationDevice device, AuthenticationExecutionConfig configuration);
 }
