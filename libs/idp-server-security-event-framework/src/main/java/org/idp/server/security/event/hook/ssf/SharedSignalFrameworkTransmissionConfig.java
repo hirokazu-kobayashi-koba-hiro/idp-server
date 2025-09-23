@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.mapper.MappingRule;
+import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
 public class SharedSignalFrameworkTransmissionConfig implements JsonReadable {
 
@@ -30,6 +31,7 @@ public class SharedSignalFrameworkTransmissionConfig implements JsonReadable {
   Map<String, Object> securityEventTokenHeaders = new HashMap<>();
   String kid;
   List<MappingRule> securityEventTokenAdditionalPayloadMappingRules = new ArrayList<>();
+  OAuthAuthorizationConfiguration oauthAuthorization;
 
   public SharedSignalFrameworkTransmissionConfig() {}
 
@@ -64,5 +66,9 @@ public class SharedSignalFrameworkTransmissionConfig implements JsonReadable {
 
   public SecurityEventTypeIdentifier securityEventTypeIdentifier() {
     return new SecurityEventTypeIdentifier(securityEventTypeIdentifier);
+  }
+
+  public OAuthAuthorizationConfiguration oauthAuthorization() {
+    return oauthAuthorization;
   }
 }
