@@ -18,13 +18,13 @@ package org.idp.server.authentication.interactors.fidouaf;
 
 import org.idp.server.platform.json.JsonReadable;
 
-public class FidoUafRegistrationInteraction implements JsonReadable {
+public class FidoUafInteraction implements JsonReadable {
 
   String deviceId;
 
-  public FidoUafRegistrationInteraction() {}
+  public FidoUafInteraction() {}
 
-  public FidoUafRegistrationInteraction(String deviceId) {
+  public FidoUafInteraction(String deviceId) {
     this.deviceId = deviceId;
   }
 

@@ -120,16 +120,24 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
           DefaultSecurityEventType.fido_uaf_registration_failure);
     }
 
-    FidoUafRegistrationInteraction interaction =
+    FidoUafInteraction interaction =
         authenticationInteractionQueryRepository.get(
-            tenant, transaction.identifier(), "fido-uaf", FidoUafRegistrationInteraction.class);
+            tenant,
+            transaction.identifier(),
+            "fido-uaf-registration-challenge",
+            FidoUafInteraction.class);
     String deviceId = interaction.deviceId();
 
     User baseUser = transaction.user();
     // Handle reset action: remove existing FIDO-UAF devices before adding new one
-    if ("reset".equals(transaction.attributes().getValueOrEmpty("action"))) {
+    if (isRestAction(transaction)) {
       baseUser = baseUser.removeAllAuthenticationDevicesOfType("fido-uaf");
     }
+
+    DefaultSecurityEventType eventType =
+        isRestAction(transaction)
+            ? DefaultSecurityEventType.fido_uaf_reset_success
+            : DefaultSecurityEventType.fido_uaf_registration_success;
 
     User addedDeviceUser = addAuthenticationDevice(baseUser, deviceId, transaction.attributes());
 
@@ -148,7 +156,11 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
         method(),
         addedDeviceUser,
         contents,
-        DefaultSecurityEventType.fido_uaf_registration_success);
+        eventType);
+  }
+
+  private boolean isRestAction(AuthenticationTransaction transaction) {
+    return "reset".equals(transaction.attributes().getValueOrEmpty("action"));
   }
 
   private User addAuthenticationDevice(

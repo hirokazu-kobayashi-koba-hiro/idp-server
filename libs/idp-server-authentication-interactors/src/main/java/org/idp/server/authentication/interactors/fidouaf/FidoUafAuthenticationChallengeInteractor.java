@@ -29,6 +29,7 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
+import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.platform.json.JsonNodeWrapper;
@@ -43,15 +44,18 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
 
   AuthenticationExecutors authenticationExecutors;
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
+  AuthenticationInteractionCommandRepository authenticationInteractionCommandRepository;
   FidoUafAdditionalRequestResolvers additionalRequestResolvers;
   LoggerWrapper log = LoggerWrapper.getLogger(FidoUafAuthenticationChallengeInteractor.class);
 
   public FidoUafAuthenticationChallengeInteractor(
       AuthenticationExecutors authenticationExecutors,
       AuthenticationConfigurationQueryRepository configurationQueryRepository,
+      AuthenticationInteractionCommandRepository authenticationInteractionCommandRepository,
       FidoUafAdditionalRequestResolvers additionalRequestResolvers) {
     this.authenticationExecutors = authenticationExecutors;
     this.configurationQueryRepository = configurationQueryRepository;
+    this.authenticationInteractionCommandRepository = authenticationInteractionCommandRepository;
     this.additionalRequestResolvers = additionalRequestResolvers;
   }
 
@@ -102,6 +106,10 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
           method(),
           DefaultSecurityEventType.fido_uaf_authentication_challenge_failure);
     }
+
+    FidoUafInteraction fidoUafInteraction = new FidoUafInteraction(deviceId);
+    authenticationInteractionCommandRepository.register(
+        tenant, transaction.identifier(), "fido-uaf-authentication-challenge", fidoUafInteraction);
 
     // TODO pre_hook
     Map<String, Object> executionRequest = new HashMap<>();

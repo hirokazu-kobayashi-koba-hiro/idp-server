@@ -22,6 +22,7 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.openid.authentication.plugin.AuthenticationInteractorFactory;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
+import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
 
 public class FidoUafAuthenticationInteractorFactory implements AuthenticationInteractorFactory {
 
@@ -32,9 +33,14 @@ public class FidoUafAuthenticationInteractorFactory implements AuthenticationInt
         container.resolve(AuthenticationExecutors.class);
     AuthenticationConfigurationQueryRepository configurationQueryRepository =
         container.resolve(AuthenticationConfigurationQueryRepository.class);
+    AuthenticationInteractionQueryRepository authenticationInteractionQueryRepository =
+        container.resolve(AuthenticationInteractionQueryRepository.class);
     FidoUafAdditionalRequestResolvers additionalRequestResolvers =
         container.resolve(FidoUafAdditionalRequestResolvers.class);
     return new FidoUafAuthenticationInteractor(
-        authenticationExecutors, configurationQueryRepository, additionalRequestResolvers);
+        authenticationExecutors,
+        configurationQueryRepository,
+        authenticationInteractionQueryRepository,
+        additionalRequestResolvers);
   }
 }
