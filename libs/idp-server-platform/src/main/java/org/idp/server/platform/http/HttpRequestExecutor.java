@@ -176,6 +176,40 @@ public class HttpRequestExecutor {
     }
   }
 
+  public HttpRequestResult executeWithOAuth(
+      HttpRequest httpRequest, OAuthAuthorizationConfiguration oAuthConfig) {
+    if (oAuthConfig == null) {
+      return execute(httpRequest);
+    }
+
+    OAuthAuthorizationResolver resolver = oAuthorizationResolvers.get(oAuthConfig.type());
+    String accessToken = resolver.resolve(oAuthConfig);
+
+    HttpRequest.Builder builder =
+        HttpRequest.newBuilder()
+            .uri(httpRequest.uri())
+            .method(
+                httpRequest.method(),
+                httpRequest.bodyPublisher().orElse(HttpRequest.BodyPublishers.noBody()));
+
+    // Copy existing headers
+    httpRequest
+        .headers()
+        .map()
+        .forEach(
+            (name, values) -> {
+              for (String value : values) {
+                builder.header(name, value);
+              }
+            });
+
+    // Add OAuth authorization header
+    builder.header("Authorization", "Bearer " + accessToken);
+
+    HttpRequest enhancedRequest = builder.build();
+    return execute(enhancedRequest);
+  }
+
   private JsonNodeWrapper resolveResponseBody(HttpResponse<String> httpResponse) {
     if (httpResponse.body() == null || httpResponse.body().isEmpty()) {
       return JsonNodeWrapper.empty();
