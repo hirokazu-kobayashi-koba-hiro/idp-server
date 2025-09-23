@@ -29,7 +29,6 @@ import org.idp.server.core.extension.identity.verification.configuration.process
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationErrorDetails;
 import org.idp.server.platform.http.*;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 
 public class IdentityVerificationApplicationHttpRequestExecutor
     implements IdentityVerificationApplicationExecutor {
@@ -37,9 +36,8 @@ public class IdentityVerificationApplicationHttpRequestExecutor
   HttpRequestExecutor httpRequestExecutor;
 
   public IdentityVerificationApplicationHttpRequestExecutor(
-      OAuthAuthorizationResolvers oAuthAuthorizationResolvers) {
-    this.httpRequestExecutor =
-        new HttpRequestExecutor(HttpClientFactory.defaultClient(), oAuthAuthorizationResolvers);
+      HttpRequestExecutor httpRequestExecutor) {
+    this.httpRequestExecutor = httpRequestExecutor;
   }
 
   @Override

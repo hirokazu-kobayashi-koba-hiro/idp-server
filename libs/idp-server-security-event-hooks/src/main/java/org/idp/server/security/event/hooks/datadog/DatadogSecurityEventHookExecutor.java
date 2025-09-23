@@ -16,12 +16,8 @@
 
 package org.idp.server.security.event.hooks.datadog;
 
-import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.platform.http.*;
@@ -35,11 +31,11 @@ import org.idp.server.security.event.hooks.webhook.WebHookConfiguration;
 
 public class DatadogSecurityEventHookExecutor implements SecurityEventHook {
 
-  HttpClient httpClient;
+  HttpRequestExecutor httpRequestExecutor;
   JsonConverter jsonConverter;
 
-  public DatadogSecurityEventHookExecutor() {
-    this.httpClient = HttpClientFactory.defaultClient();
+  public DatadogSecurityEventHookExecutor(HttpRequestExecutor httpRequestExecutor) {
+    this.httpRequestExecutor = httpRequestExecutor;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
@@ -77,38 +73,25 @@ public class DatadogSecurityEventHookExecutor implements SecurityEventHook {
 
       String body = jsonConverter.write(requestBodyMap);
 
-      HttpRequest request =
+      HttpRequest httpRequest =
           HttpRequest.newBuilder()
-              .uri(new URI(httpRequestUrl.value()))
+              .uri(URI.create(httpRequestUrl.value()))
               .header("Content-Type", "application/json")
               .header("DD-API-KEY", httpRequestStaticHeaders.getValueAsString("DD-API-KEY"))
               .POST(HttpRequest.BodyPublishers.ofString(body))
               .build();
 
-      HttpResponse<String> response =
-          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+      HttpRequestResult httpResult = httpRequestExecutor.execute(httpRequest);
 
       Map<String, Object> result = new HashMap<>();
-      result.put("status", response.statusCode());
-      result.put("body", response.body());
+      result.put("status", httpResult.statusCode());
+      result.put("body", httpResult.body());
 
       return SecurityEventHookResult.success(type(), result);
 
-    } catch (URISyntaxException e) {
-
-      Map<String, Object> response = new HashMap<>();
-      response.put("message", "Datadog url is invalid.");
-      return SecurityEventHookResult.failure(type(), response);
-
-    } catch (IOException | InterruptedException e) {
-
-      Map<String, Object> response = new HashMap<>();
-      response.put("message", "Datadog log stream is failed." + e.getMessage());
-      return SecurityEventHookResult.failure(type(), response);
     } catch (Exception e) {
-
       Map<String, Object> response = new HashMap<>();
-      response.put("message", "Unexpected error. Datadog log stream is failed." + e.getMessage());
+      response.put("message", "Datadog log stream failed: " + e.getMessage());
       return SecurityEventHookResult.failure(type(), response);
     }
   }

@@ -19,6 +19,7 @@ package org.idp.server.core.extension.identity.verification.application.pre_hook
 import org.idp.server.core.openid.federation.sso.SsoCredentialsCommandRepository;
 import org.idp.server.core.openid.federation.sso.SsoCredentialsQueryRepository;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
+import org.idp.server.platform.http.HttpRequestExecutor;
 
 public class SsoCredentialsParameterResolverFactory
     implements AdditionalRequestParameterResolverFactory {
@@ -29,7 +30,8 @@ public class SsoCredentialsParameterResolverFactory
         container.resolve(SsoCredentialsQueryRepository.class);
     SsoCredentialsCommandRepository ssoCredentialsCommandRepository =
         container.resolve(SsoCredentialsCommandRepository.class);
+    HttpRequestExecutor httpRequestExecutor = container.resolve(HttpRequestExecutor.class);
     return new SsoCredentialsParameterResolver(
-        ssoCredentialsQueryRepository, ssoCredentialsCommandRepository);
+        ssoCredentialsQueryRepository, ssoCredentialsCommandRepository, httpRequestExecutor);
   }
 }

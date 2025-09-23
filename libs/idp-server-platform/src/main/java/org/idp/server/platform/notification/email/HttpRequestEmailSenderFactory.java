@@ -17,14 +17,11 @@
 package org.idp.server.platform.notification.email;
 
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
-import org.idp.server.platform.http.HttpClientFactory;
 import org.idp.server.platform.http.HttpRequestExecutor;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 
 /**
  * Factory for creating HttpRequestEmailSender instances with dependency injection support. This
- * factory enables OAuth token caching by injecting OAuthAuthorizationResolvers from the DI
- * container.
+ * factory enables OAuth token caching by injecting HttpRequestExecutor from the DI container.
  *
  * <p>Benefits of using this factory:
  *
@@ -38,13 +35,8 @@ public class HttpRequestEmailSenderFactory implements EmailSenderFactory {
 
   @Override
   public EmailSender create(ApplicationComponentDependencyContainer container) {
-    // Resolve OAuth authorization resolvers from DI container (with caching support)
-    OAuthAuthorizationResolvers oauthResolvers =
-        container.resolve(OAuthAuthorizationResolvers.class);
-
-    // Create HttpRequestExecutor with OAuth caching capability
-    HttpRequestExecutor httpRequestExecutor =
-        new HttpRequestExecutor(HttpClientFactory.defaultClient(), oauthResolvers);
+    // Resolve HttpRequestExecutor from DI container (with OAuth caching support)
+    HttpRequestExecutor httpRequestExecutor = container.resolve(HttpRequestExecutor.class);
 
     // Create EmailSender with DI-injected dependencies
     return new HttpRequestEmailSender(httpRequestExecutor);

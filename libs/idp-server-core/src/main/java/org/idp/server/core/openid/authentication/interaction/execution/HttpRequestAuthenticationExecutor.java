@@ -25,7 +25,6 @@ import org.idp.server.core.openid.authentication.config.AuthenticationPreviousIn
 import org.idp.server.core.openid.authentication.interaction.AuthenticationInteraction;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
-import org.idp.server.platform.http.HttpClientFactory;
 import org.idp.server.platform.http.HttpRequestBaseParams;
 import org.idp.server.platform.http.HttpRequestExecutor;
 import org.idp.server.platform.http.HttpRequestResult;
@@ -34,7 +33,6 @@ import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 import org.idp.server.platform.type.RequestAttributes;
 
 public class HttpRequestAuthenticationExecutor implements AuthenticationExecutor {
@@ -47,11 +45,10 @@ public class HttpRequestAuthenticationExecutor implements AuthenticationExecutor
   public HttpRequestAuthenticationExecutor(
       AuthenticationInteractionCommandRepository interactionCommandRepository,
       AuthenticationInteractionQueryRepository interactionQueryRepository,
-      OAuthAuthorizationResolvers oAuthAuthorizationResolvers) {
+      HttpRequestExecutor httpRequestExecutor) {
     this.interactionCommandRepository = interactionCommandRepository;
     this.interactionQueryRepository = interactionQueryRepository;
-    this.httpRequestExecutor =
-        new HttpRequestExecutor(HttpClientFactory.defaultClient(), oAuthAuthorizationResolvers);
+    this.httpRequestExecutor = httpRequestExecutor;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 

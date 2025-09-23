@@ -19,19 +19,18 @@ package org.idp.server.federation.sso.oidc;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.platform.exception.UnSupportedException;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
+import org.idp.server.platform.http.HttpRequestExecutor;
 
 public class UserinfoExecutors {
 
   Map<String, UserinfoExecutor> executors;
 
-  public UserinfoExecutors(OAuthAuthorizationResolvers oAuthAuthorizationResolvers) {
+  public UserinfoExecutors(HttpRequestExecutor httpRequestExecutor) {
     this.executors = new HashMap<>();
-    UserinfoHttpRequestExecutor httpRequest =
-        new UserinfoHttpRequestExecutor(oAuthAuthorizationResolvers);
+    UserinfoHttpRequestExecutor httpRequest = new UserinfoHttpRequestExecutor(httpRequestExecutor);
     executors.put(httpRequest.function(), httpRequest);
     UserinfoHttpRequestsExecutor httpRequests =
-        new UserinfoHttpRequestsExecutor(oAuthAuthorizationResolvers);
+        new UserinfoHttpRequestsExecutor(httpRequestExecutor);
     executors.put(httpRequests.function(), httpRequests);
   }
 

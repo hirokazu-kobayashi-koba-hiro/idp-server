@@ -16,12 +16,9 @@
 
 package org.idp.server.security.event.hooks.webhook;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.platform.http.*;
@@ -38,11 +35,11 @@ import org.idp.server.platform.security.hook.configuration.SecurityEventHookConf
  */
 public class WebHookSecurityEventExecutor implements SecurityEventHook {
 
-  HttpClient httpClient;
+  HttpRequestExecutor httpRequestExecutor;
   JsonConverter jsonConverter;
 
-  public WebHookSecurityEventExecutor() {
-    this.httpClient = HttpClientFactory.defaultClient();
+  public WebHookSecurityEventExecutor(HttpRequestExecutor httpRequestExecutor) {
+    this.httpRequestExecutor = httpRequestExecutor;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
@@ -87,29 +84,20 @@ public class WebHookSecurityEventExecutor implements SecurityEventHook {
 
       HttpRequest httpRequest = httpRequestBuilder.build();
 
-      HttpResponse<String> httpResponse =
-          httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+      HttpRequestResult httpResult = httpRequestExecutor.execute(httpRequest);
 
       Map<String, Object> result = new HashMap<>();
-      result.put("status", httpResponse.statusCode());
-      result.put("body", httpResponse.body());
+      result.put("status", httpResult.statusCode());
+      result.put("body", httpResult.body());
 
       return SecurityEventHookResult.success(type(), result);
     } catch (URISyntaxException e) {
-
       Map<String, Object> response = new HashMap<>();
       response.put("message", "WebhookUrl is invalid.");
       return SecurityEventHookResult.failure(type(), response);
-
-    } catch (IOException | InterruptedException e) {
-
-      Map<String, Object> response = new HashMap<>();
-      response.put("message", "Webhook request is failed." + e.getMessage());
-      return SecurityEventHookResult.failure(type(), response);
     } catch (Exception e) {
-
       Map<String, Object> response = new HashMap<>();
-      response.put("message", "Unexpected error. Webhook request is failed." + e.getMessage());
+      response.put("message", "Webhook request failed: " + e.getMessage());
       return SecurityEventHookResult.failure(type(), response);
     }
   }

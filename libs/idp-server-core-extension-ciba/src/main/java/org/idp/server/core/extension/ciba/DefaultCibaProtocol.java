@@ -34,6 +34,7 @@ import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.platform.dependency.protocol.DefaultAuthorizationProvider;
+import org.idp.server.platform.http.HttpRequestExecutor;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -57,7 +58,8 @@ public class DefaultCibaProtocol implements CibaProtocol {
       OAuthTokenCommandRepository oAuthTokenCommandRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
-      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      HttpRequestExecutor httpRequestExecutor) {
     this.cibaRequestHandler =
         new CibaRequestHandler(
             backchannelAuthenticationRequestRepository,
@@ -70,7 +72,7 @@ public class DefaultCibaProtocol implements CibaProtocol {
             cibaGrantRepository,
             authorizationGrantedRepository,
             oAuthTokenCommandRepository,
-            new NotificationClient(),
+            new NotificationClient(httpRequestExecutor),
             authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository);
     this.denyHandler =

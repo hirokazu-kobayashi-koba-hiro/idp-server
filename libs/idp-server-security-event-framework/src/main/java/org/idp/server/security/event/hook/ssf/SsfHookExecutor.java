@@ -20,13 +20,11 @@ import java.net.URI;
 import java.net.http.HttpRequest;
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.platform.http.HttpClientFactory;
 import org.idp.server.platform.http.HttpRequestExecutor;
 import org.idp.server.platform.http.HttpRequestResult;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.hook.*;
 import org.idp.server.platform.security.hook.SecurityEventHook;
@@ -40,9 +38,8 @@ public class SsfHookExecutor implements SecurityEventHook {
   HttpRequestExecutor httpRequestExecutor;
   JsonConverter jsonConverter;
 
-  public SsfHookExecutor(OAuthAuthorizationResolvers oAuthAuthorizationResolvers) {
-    this.httpRequestExecutor =
-        new HttpRequestExecutor(HttpClientFactory.defaultClient(), oAuthAuthorizationResolvers);
+  public SsfHookExecutor(HttpRequestExecutor httpRequestExecutor) {
+    this.httpRequestExecutor = httpRequestExecutor;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 

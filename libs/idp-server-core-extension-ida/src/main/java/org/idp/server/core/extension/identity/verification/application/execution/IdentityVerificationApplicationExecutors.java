@@ -21,20 +21,19 @@ import java.util.Map;
 import org.idp.server.core.extension.identity.verification.application.execution.executor.IdentityVerificationApplicationHttpRequestExecutor;
 import org.idp.server.core.extension.identity.verification.application.execution.executor.IdentityVerificationApplicationNoActionExecutor;
 import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.platform.http.HttpRequestExecutor;
 import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 
 public class IdentityVerificationApplicationExecutors {
 
   Map<String, IdentityVerificationApplicationExecutor> executors;
   LoggerWrapper log = LoggerWrapper.getLogger(IdentityVerificationApplicationExecutors.class);
 
-  public IdentityVerificationApplicationExecutors(
-      OAuthAuthorizationResolvers oAuthAuthorizationResolvers) {
+  public IdentityVerificationApplicationExecutors(HttpRequestExecutor httpRequestExecutor) {
     this.executors = new HashMap<>();
-    IdentityVerificationApplicationHttpRequestExecutor httpRequestExecutor =
-        new IdentityVerificationApplicationHttpRequestExecutor(oAuthAuthorizationResolvers);
-    this.executors.put(httpRequestExecutor.type(), httpRequestExecutor);
+    IdentityVerificationApplicationHttpRequestExecutor appHttpRequestExecutor =
+        new IdentityVerificationApplicationHttpRequestExecutor(httpRequestExecutor);
+    this.executors.put(appHttpRequestExecutor.type(), appHttpRequestExecutor);
     IdentityVerificationApplicationNoActionExecutor noActionExecutor =
         new IdentityVerificationApplicationNoActionExecutor();
     this.executors.put(noActionExecutor.type(), noActionExecutor);

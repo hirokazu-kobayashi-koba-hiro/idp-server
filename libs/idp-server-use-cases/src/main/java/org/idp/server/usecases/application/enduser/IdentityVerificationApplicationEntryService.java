@@ -44,10 +44,10 @@ import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.UserEventPublisher;
 import org.idp.server.platform.datasource.Transaction;
+import org.idp.server.platform.http.HttpRequestExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.security.event.SecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
@@ -76,7 +76,7 @@ public class IdentityVerificationApplicationEntryService
       UserCommandRepository userCommandRepository,
       UserEventPublisher eventPublisher,
       Map<String, AdditionalRequestParameterResolver> additional,
-      OAuthAuthorizationResolvers oAuthAuthorizationResolvers) {
+      HttpRequestExecutor httpRequestExecutor) {
     this.configurationQueryRepository = configurationQueryRepository;
     this.applicationCommandRepository = applicationCommandRepository;
     this.applicationQueryRepository = applicationQueryRepository;
@@ -85,7 +85,7 @@ public class IdentityVerificationApplicationEntryService
     this.userQueryRepository = userQueryRepository;
     this.userCommandRepository = userCommandRepository;
     this.identityVerificationApplicationHandler =
-        new IdentityVerificationApplicationHandler(additional, oAuthAuthorizationResolvers);
+        new IdentityVerificationApplicationHandler(additional, httpRequestExecutor);
     this.eventPublisher = eventPublisher;
   }
 
