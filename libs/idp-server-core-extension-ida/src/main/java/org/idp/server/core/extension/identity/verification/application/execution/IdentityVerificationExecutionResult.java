@@ -17,6 +17,7 @@
 package org.idp.server.core.extension.identity.verification.application.execution;
 
 import java.util.Map;
+import org.idp.server.core.extension.identity.verification.io.IdentityVerificationErrorDetails;
 
 public class IdentityVerificationExecutionResult {
   IdentityVerificationExecutionStatus status;
@@ -28,6 +29,12 @@ public class IdentityVerificationExecutionResult {
       IdentityVerificationExecutionStatus status, Map<String, Object> result) {
     this.status = status;
     this.result = result;
+  }
+
+  public static IdentityVerificationExecutionResult preHookError(
+      IdentityVerificationErrorDetails errorDetails) {
+    return new IdentityVerificationExecutionResult(
+        IdentityVerificationExecutionStatus.CLIENT_ERROR, errorDetails.toMap());
   }
 
   public boolean isOk() {

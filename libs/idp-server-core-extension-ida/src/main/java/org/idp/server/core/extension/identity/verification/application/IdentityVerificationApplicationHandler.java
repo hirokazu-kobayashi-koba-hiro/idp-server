@@ -24,6 +24,7 @@ import org.idp.server.core.extension.identity.verification.IdentityVerificationT
 import org.idp.server.core.extension.identity.verification.application.execution.*;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplications;
+import org.idp.server.core.extension.identity.verification.application.pre_hook.additional_parameter.AdditionalParameterResolveResult;
 import org.idp.server.core.extension.identity.verification.application.pre_hook.additional_parameter.AdditionalRequestParameterResolver;
 import org.idp.server.core.extension.identity.verification.application.pre_hook.additional_parameter.AdditionalRequestParameterResolvers;
 import org.idp.server.core.extension.identity.verification.application.pre_hook.verification.IdentityVerificationApplicationRequestVerifiedResult;
@@ -33,11 +34,15 @@ import org.idp.server.core.extension.identity.verification.configuration.process
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 import org.idp.server.platform.type.RequestAttributes;
 
 public class IdentityVerificationApplicationHandler {
+
+  private static final LoggerWrapper log =
+      LoggerWrapper.getLogger(IdentityVerificationApplicationHandler.class);
 
   IdentityVerificationApplicationRequestVerifiers requestVerifiers;
   AdditionalRequestParameterResolvers additionalRequestParameterResolvers;
@@ -80,8 +85,8 @@ public class IdentityVerificationApplicationHandler {
       return IdentityVerificationApplyingResult.requestVerificationError(verifyResult);
     }
 
-    IdentityVerificationContextBuilder contextBuilder =
-        resolveBaseParams(
+    AdditionalParameterResolveResult resolverResult =
+        additionalRequestParameterResolvers.resolve(
             tenant,
             user,
             currentApplication,
@@ -91,6 +96,18 @@ public class IdentityVerificationApplicationHandler {
             request,
             requestAttributes,
             verificationConfiguration);
+
+    // Check for fail-fast errors in pre-hook phase
+    if (resolverResult.isFailFast()) {
+      log.error(
+          "Fail-fast error detected in pre-hook phase: {}",
+          resolverResult.getErrorDetails().toMap());
+      return IdentityVerificationApplyingResult.preHookError(verifyResult, resolverResult);
+    }
+
+    IdentityVerificationContextBuilder contextBuilder =
+        buildContext(
+            user, currentApplication, request, requestAttributes, resolverResult.getData());
 
     IdentityVerificationProcessConfiguration processConfig =
         verificationConfiguration.getProcessConfig(processes);
@@ -111,16 +128,12 @@ public class IdentityVerificationApplicationHandler {
         contextBuilder.build(), verifyResult, executionResult);
   }
 
-  private IdentityVerificationContextBuilder resolveBaseParams(
-      Tenant tenant,
+  private IdentityVerificationContextBuilder buildContext(
       User user,
       IdentityVerificationApplication currentApplication,
-      IdentityVerificationApplications previousApplications,
-      IdentityVerificationType type,
-      IdentityVerificationProcess processes,
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes,
-      IdentityVerificationConfiguration verificationConfiguration) {
+      Map<String, Object> additionalParams) {
 
     IdentityVerificationContextBuilder builder = new IdentityVerificationContextBuilder();
     builder.request(request);
@@ -131,18 +144,7 @@ public class IdentityVerificationApplicationHandler {
       builder.application(currentApplication);
     }
 
-    Map<String, Object> additionalParameters =
-        additionalRequestParameterResolvers.resolve(
-            tenant,
-            user,
-            currentApplication,
-            previousApplications,
-            type,
-            processes,
-            request,
-            requestAttributes,
-            verificationConfiguration);
-    builder.additionalParams(additionalParameters);
+    builder.additionalParams(additionalParams);
 
     return builder;
   }

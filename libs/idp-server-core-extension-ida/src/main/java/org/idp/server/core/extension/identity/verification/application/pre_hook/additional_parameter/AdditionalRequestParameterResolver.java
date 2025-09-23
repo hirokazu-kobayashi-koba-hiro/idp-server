@@ -16,7 +16,6 @@
 
 package org.idp.server.core.extension.identity.verification.application.pre_hook.additional_parameter;
 
-import java.util.Map;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
@@ -31,7 +30,7 @@ public interface AdditionalRequestParameterResolver {
 
   String type();
 
-  Map<String, Object> resolve(
+  AdditionalParameterResolveResult resolve(
       Tenant tenant,
       User user,
       IdentityVerificationApplication currentApplication,

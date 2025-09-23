@@ -37,7 +37,7 @@ public class ContinuousCustomerDueDiligenceParameterResolver
   }
 
   @Override
-  public Map<String, Object> resolve(
+  public AdditionalParameterResolveResult resolve(
       Tenant tenant,
       User user,
       IdentityVerificationApplication currentApplication,
@@ -50,6 +50,6 @@ public class ContinuousCustomerDueDiligenceParameterResolver
 
     Map<String, Object> additionalParameters = new HashMap<>();
 
-    return additionalParameters;
+    return AdditionalParameterResolveResult.success(additionalParameters);
   }
 }

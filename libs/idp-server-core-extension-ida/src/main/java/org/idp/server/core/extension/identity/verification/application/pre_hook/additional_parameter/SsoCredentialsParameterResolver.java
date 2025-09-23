@@ -28,7 +28,9 @@ import org.idp.server.core.extension.identity.verification.IdentityVerificationP
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplications;
+import org.idp.server.core.extension.identity.verification.configuration.ErrorHandlingStrategy;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfig;
+import org.idp.server.core.extension.identity.verification.io.IdentityVerificationErrorDetails;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.core.openid.federation.sso.SsoCredentials;
 import org.idp.server.core.openid.federation.sso.SsoCredentialsCommandRepository;
@@ -64,7 +66,7 @@ public class SsoCredentialsParameterResolver implements AdditionalRequestParamet
   }
 
   @Override
-  public Map<String, Object> resolve(
+  public AdditionalParameterResolveResult resolve(
       Tenant tenant,
       User user,
       IdentityVerificationApplication currentApplication,
@@ -116,16 +118,32 @@ public class SsoCredentialsParameterResolver implements AdditionalRequestParamet
           ssoCredentials.updateWithToken(accessToken, refreshToken, expiresIn);
       ssoCredentialsCommandRepository.register(tenant, user, updateWithToken);
 
-      return json.toMap();
+      return AdditionalParameterResolveResult.success(json.toMap());
     } catch (IOException | InterruptedException | URISyntaxException e) {
-      log.error(e.getMessage(), e);
-      return Map.of(
-          "status_code",
-          500,
-          "error",
-          "server_error",
-          "error_description",
-          "unexpected network error");
+      log.error("SSO credentials parameter resolution failed: {}", e.getMessage(), e);
+
+      IdentityVerificationErrorDetails errorDetails =
+          IdentityVerificationErrorDetails.builder()
+              .error("sso_credentials_error")
+              .errorDescription("SSO credentials parameter resolution failed: " + e.getMessage())
+              .addErrorDetail("phase", "pre_hook")
+              .addErrorDetail("component", "sso_credentials_resolver")
+              .addErrorDetail("error_type", "NETWORK_ERROR")
+              .addErrorDetail("retryable", true)
+              .build();
+
+      ErrorHandlingStrategy strategy = additionalParameterConfig.errorHandlingStrategy();
+
+      if (strategy == ErrorHandlingStrategy.FAIL_FAST) {
+        return AdditionalParameterResolveResult.failFastError(errorDetails);
+      } else {
+        Map<String, Object> fallbackData =
+            Map.of(
+                "status_code", 500,
+                "error", "server_error",
+                "error_description", "SSO credentials unavailable");
+        return AdditionalParameterResolveResult.resilientError(errorDetails, fallbackData);
+      }
     }
   }
 }
