@@ -29,6 +29,7 @@ import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.notification.NotificationChannel;
+import org.idp.server.platform.notification.NotificationResult;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -107,7 +108,19 @@ public class AuthenticationDeviceNotificationInteractor implements Authenticatio
 
       AuthenticationDeviceNotifier notifier = authenticationDeviceNotifiers.get(channel);
 
-      notifier.notify(tenant, authenticationDevice, execution);
+      NotificationResult result = notifier.notify(tenant, authenticationDevice, execution);
+
+      if (result.isFailure()) {
+        log.warn("Notification failed for channel {}: {}", result.channel(), result.errorMessage());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("error", "invalid_request");
+        response.put("error_description", result.errorMessage());
+        DefaultSecurityEventType eventType =
+            DefaultSecurityEventType.authentication_device_notification_failure;
+        return AuthenticationInteractionRequestResult.clientError(
+            response, type, operationType(), method(), eventType);
+      }
 
       AuthenticationInteractionStatus status = AuthenticationInteractionStatus.SUCCESS;
       Map<String, Object> response = Map.of();

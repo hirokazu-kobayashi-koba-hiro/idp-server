@@ -35,6 +35,7 @@ import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.notification.NotificationChannel;
+import org.idp.server.platform.notification.NotificationResult;
 import org.idp.server.platform.notification.NotificationTemplate;
 
 public class ApnsNotifier implements AuthenticationDeviceNotifier {
@@ -55,7 +56,7 @@ public class ApnsNotifier implements AuthenticationDeviceNotifier {
   }
 
   @Override
-  public void notify(
+  public NotificationResult notify(
       Tenant tenant, AuthenticationDevice device, AuthenticationExecutionConfig configuration) {
 
     try {
@@ -63,11 +64,17 @@ public class ApnsNotifier implements AuthenticationDeviceNotifier {
 
       if (!device.hasNotificationToken()) {
         log.debug("Device has no notification token");
-        return;
+        return NotificationResult.failure("apns", "Device has no notification token");
+      }
+
+      Object apnsConfigData = configuration.details().get("apns");
+      if (apnsConfigData == null) {
+        log.error("APNs configuration not found in details");
+        return NotificationResult.failure("apns", "APNs configuration not found");
       }
 
       ApnsConfiguration apnsConfiguration =
-          jsonConverter.read(configuration.details(), ApnsConfiguration.class);
+          jsonConverter.read(apnsConfigData, ApnsConfiguration.class);
       String jwtToken = getOrCreateJwtToken(tenant, apnsConfiguration);
 
       NotificationTemplate notificationTemplate = apnsConfiguration.findTemplate("default");
@@ -97,16 +104,19 @@ public class ApnsNotifier implements AuthenticationDeviceNotifier {
 
       if (response.statusCode() == 200) {
         log.info("APNs notification sent successfully, apns-id: {}", apnsId);
+        return NotificationResult.success("apns", Map.of("apns-id", apnsId));
       } else {
-        handleApnsError(response, apnsId, tenant);
+        String errorMessage = handleApnsError(response, apnsId, tenant);
+        return NotificationResult.failure("apns", errorMessage);
       }
 
     } catch (Exception e) {
       log.error("APNs notification failed: {}", e.getMessage());
+      return NotificationResult.failure("apns", e.getMessage());
     }
   }
 
-  void handleApnsError(HttpResponse<String> response, String apnsId, Tenant tenant) {
+  String handleApnsError(HttpResponse<String> response, String apnsId, Tenant tenant) {
     try {
       int statusCode = response.statusCode();
       String responseBody = response.body();
@@ -135,11 +145,14 @@ public class ApnsNotifier implements AuthenticationDeviceNotifier {
             jwtTokenCache.remove(createCacheKey(tenant));
           }
         }
+        return "Status: " + statusCode + ", Reason: " + reason;
       } else {
         log.warn("APNs notification failed - Status: {}, APNs-ID: {}", statusCode, apnsId);
+        return "Status: " + statusCode + ", APNs-ID: " + apnsId;
       }
     } catch (Exception e) {
       log.error("Error parsing APNs error response: {}", e.getMessage());
+      return "Error parsing APNs response: " + e.getMessage();
     }
   }
 
