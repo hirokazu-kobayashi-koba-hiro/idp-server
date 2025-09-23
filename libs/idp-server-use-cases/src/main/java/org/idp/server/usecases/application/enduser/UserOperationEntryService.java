@@ -147,10 +147,11 @@ public class UserOperationEntryService implements UserOperationApi {
 
     AuthenticationTransaction updatedTransaction = authenticationTransaction.updateWith(result);
 
+    userOperationEventPublisher.publish(
+        tenant, authenticationTransaction, type, result.isSuccess(), requestAttributes);
+
     if (updatedTransaction.isSuccess()) {
-      // TODO to be more correctly
-      userOperationEventPublisher.publish(
-          tenant, authenticationTransaction, type, true, requestAttributes);
+      // TODO to be more correctly. no verification update is danger.
       userCommandRepository.update(tenant, authenticationTransaction.user());
     }
 

@@ -28,6 +28,7 @@ public enum DefaultSecurityEventType {
   fido_uaf_registration_challenge_success("User challenge registration fido-uaf"),
   fido_uaf_registration_challenge_failure("User challenge failed registration fido-uaf"),
   fido_uaf_registration_success("User successfully registration fido-uaf"),
+  fido_uaf_reset_success("User successfully reset fido-uaf"),
   fido_uaf_registration_failure("User failed registration fido-uaf"),
   fido_uaf_authentication_challenge_success(
       "User challenge authentication using fido-uaf is success"),

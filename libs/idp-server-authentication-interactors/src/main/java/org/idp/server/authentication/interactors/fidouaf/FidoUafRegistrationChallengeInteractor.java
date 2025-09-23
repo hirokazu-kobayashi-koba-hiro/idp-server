@@ -94,7 +94,7 @@ public class FidoUafRegistrationChallengeInteractor implements AuthenticationInt
     AuthenticationDeviceIdentifier authenticationDeviceIdentifier =
         AuthenticationDeviceIdentifier.generate();
 
-    // TODO
+    // TODO to be more flexible
     Map<String, Object> executionRequest =
         new HashMap<>(Map.of("device_id", authenticationDeviceIdentifier.value()));
     Map<String, Object> additionalRequests =
@@ -135,10 +135,10 @@ public class FidoUafRegistrationChallengeInteractor implements AuthenticationInt
           DefaultSecurityEventType.fido_uaf_registration_challenge_failure);
     }
 
-    FidoUafRegistrationInteraction fidoUafRegistrationInteraction =
-        new FidoUafRegistrationInteraction(authenticationDeviceIdentifier.value());
+    FidoUafInteraction fidoUafInteraction =
+        new FidoUafInteraction(authenticationDeviceIdentifier.value());
     authenticationInteractionCommandRepository.register(
-        tenant, transaction.identifier(), "fido-uaf", fidoUafRegistrationInteraction);
+        tenant, transaction.identifier(), "fido-uaf-registration-challenge", fidoUafInteraction);
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
