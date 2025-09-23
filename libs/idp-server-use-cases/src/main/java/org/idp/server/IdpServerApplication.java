@@ -479,7 +479,8 @@ public class IdpServerApplication {
     UserOperationEventPublisher userOperationEventPublisher =
         new UserOperationEventPublisher(securityEventPublisher);
 
-    OidcSsoExecutors oidcSsoExecutors = OidcSsoExecutorPluginLoader.load(dependencyContainer);
+    OidcSsoExecutors oidcSsoExecutors =
+        OidcSsoExecutorPluginLoader.load(applicationComponentContainer);
     FederationDependencyContainer federationDependencyContainer =
         FederationDependencyContainerPluginLoader.load(dependencyContainer);
     federationDependencyContainer.register(OidcSsoExecutors.class, oidcSsoExecutors);

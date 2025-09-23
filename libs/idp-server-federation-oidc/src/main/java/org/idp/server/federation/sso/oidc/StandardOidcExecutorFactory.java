@@ -17,13 +17,15 @@
 package org.idp.server.federation.sso.oidc;
 
 import org.idp.server.core.openid.federation.sso.SsoProvider;
-import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
+import org.idp.server.platform.dependency.ApplicationComponentContainer;
+import org.idp.server.platform.http.HttpRequestExecutor;
 
 public class StandardOidcExecutorFactory implements OidcSsoExecutorFactory {
 
   @Override
-  public OidcSsoExecutor create(ApplicationComponentDependencyContainer container) {
-    return new StandardOidcExecutor();
+  public OidcSsoExecutor create(ApplicationComponentContainer container) {
+    HttpRequestExecutor httpRequestExecutor = container.resolve(HttpRequestExecutor.class);
+    return new StandardOidcExecutor(httpRequestExecutor);
   }
 
   @Override
