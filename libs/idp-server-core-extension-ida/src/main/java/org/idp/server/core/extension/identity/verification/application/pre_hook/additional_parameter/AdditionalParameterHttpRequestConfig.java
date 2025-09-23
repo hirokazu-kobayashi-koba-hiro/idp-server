@@ -17,7 +17,9 @@
 package org.idp.server.core.extension.identity.verification.application.pre_hook.additional_parameter;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.idp.server.platform.http.*;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.mapper.MappingRule;
@@ -34,6 +36,7 @@ public class AdditionalParameterHttpRequestConfig
   List<MappingRule> headerMappingRules = new ArrayList<>();
   List<MappingRule> bodyMappingRules = new ArrayList<>();
   List<MappingRule> queryMappingRules = new ArrayList<>();
+  HttpRetryConfiguration retryConfiguration = HttpRetryConfiguration.noRetry();
 
   public AdditionalParameterHttpRequestConfig() {}
 
@@ -100,5 +103,33 @@ public class AdditionalParameterHttpRequestConfig
   @Override
   public HttpRequestMappingRules queryMappingRules() {
     return new HttpRequestMappingRules(queryMappingRules);
+  }
+
+  @Override
+  public boolean hasRetryConfiguration() {
+    return retryConfiguration != null && retryConfiguration.maxRetries() > 0;
+  }
+
+  @Override
+  public HttpRetryConfiguration retryConfiguration() {
+    if (retryConfiguration == null) {
+      return HttpRetryConfiguration.noRetry();
+    }
+    return retryConfiguration;
+  }
+
+  public boolean exists() {
+    return url != null && !url.isEmpty();
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("url", url);
+    map.put("method", method);
+    map.put("auth_type", authType);
+    if (hasOAuthAuthorization()) map.put("oauth_authorization", oauthAuthorization.toMap());
+    if (hasHmacAuthentication()) map.put("hmac_authentication", hmacAuthentication.toMap());
+    if (hasRetryConfiguration()) map.put("retry_configuration", retryConfiguration.toMap());
+    return map;
   }
 }
