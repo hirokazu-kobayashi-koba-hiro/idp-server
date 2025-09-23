@@ -36,6 +36,7 @@ public class SecurityEventHttpRequestConfig
   List<MappingRule> headerMappingRules = new ArrayList<>();
   List<MappingRule> bodyMappingRules = new ArrayList<>();
   List<MappingRule> queryMappingRules = new ArrayList<>();
+  HttpRetryConfiguration retryConfiguration = HttpRetryConfiguration.noRetry();
 
   public SecurityEventHttpRequestConfig() {}
 
@@ -136,6 +137,19 @@ public class SecurityEventHttpRequestConfig
     return queryMappingRules.stream().map(MappingRule::toMap).toList();
   }
 
+  @Override
+  public boolean hasRetryConfiguration() {
+    return retryConfiguration != null && retryConfiguration.maxRetries() > 0;
+  }
+
+  @Override
+  public HttpRetryConfiguration retryConfiguration() {
+    if (retryConfiguration == null) {
+      return HttpRetryConfiguration.noRetry();
+    }
+    return retryConfiguration;
+  }
+
   public boolean exists() {
     return url != null && !url.isEmpty();
   }
@@ -151,6 +165,7 @@ public class SecurityEventHttpRequestConfig
     if (hasHeaderMappingRules()) map.put("header_mapping_rules", headerMappingRulesMap());
     if (hasBodyMappingRules()) map.put("body_mapping_rules", bodyMappingRulesMap());
     if (hasQueryMappingRules()) map.put("query_mapping_rules", queryMappingRulesMap());
+    if (hasRetryConfiguration()) map.put("retry_configuration", retryConfiguration.toMap());
     return map;
   }
 }
