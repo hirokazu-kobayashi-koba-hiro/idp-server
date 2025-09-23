@@ -232,6 +232,109 @@ const configId = uuidv4(); // 必須: UUIDv4形式
 
 ---
 
+## 身元確認申込み機能（Identity Verification Application）
+
+### 🎯 アーキテクチャ概要
+```
+Control Plane API → Template登録 → 動的API生成 → HttpRequestExecutor → 外部サービス
+```
+
+### 📋 フロー設計
+1. **Template登録**: Control Plane APIでテンプレートを事前登録
+2. **動的ルーティング**: `{verification-type}/{process}` でAPIが動的生成
+3. **7フェーズ処理**: Request → Pre Hook → Execution → Post Hook → Transition → Store → Response
+4. **外部連携**: ExecutionフェーズでHttpRequestExecutorが外部APIを呼び出し
+
+### 🛠️ API構造
+
+#### Management API（設定用）
+```
+POST /v1/management/organizations/{orgId}/tenants/{tenantId}/identity-verification-configs
+```
+
+#### 動的生成API（実行用）
+```
+POST /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{process}
+※リソースオーナーのアクセストークン必須
+```
+
+#### コールバックAPI（外部サービス用）
+```
+POST /{tenant-id}/internal/v1/identity-verification/callback/{verification-type}/{process}
+```
+
+### ⚙️ HttpRequestExecutor統合
+
+#### Execution設定例
+```json
+{
+  "processes": {
+    "external_verification": {
+      "execution": {
+        "type": "http_request",
+        "http_request": {
+          "url": "https://external-service.com/verify",
+          "method": "POST",
+          "auth_type": "oauth2",
+          "retry_configuration": {
+            "max_retries": 3,
+            "retryable_status_codes": [502, 503, 504],
+            "idempotency_required": true,
+            "backoff_delays": ["PT1S", "PT2S", "PT4S"]
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+### 🧪 テスト戦略
+
+#### E2Eテストの正しいアプローチ
+1. **Management API**でリトライ設定付きconfigurationを作成
+2. **リソースオーナートークン**取得
+3. **動的生成API**でidentity verification実行
+4. **外部サービス503エラー**でリトライ動作を検証
+5. **レスポンス時間**でリトライ実行を確認
+
+#### ❌ 誤ったテストアプローチ
+- 直接MockoonのAPIを呼び出す（HttpRequestExecutorを経由しない）
+- Basic認証を使用（リソースオーナートークンが必要）
+- Management APIを使わずに設定なしでテスト
+
+### 🔍 重要ポイント
+
+#### データ形式統一
+- **スネークケース**: `http_request` (toMapメソッドで正しく出力)
+- **UUID必須**: configuration IDは必ずUUIDv4形式
+
+#### マッピングルール
+- **JSONPath**: `$.request_body.field` でデータ参照
+- **静的値**: `static_value` で固定値設定
+- **ネスト対応**: `to: "nested.field"` でオブジェクト構築
+
+#### 認証パターン
+- **OAuth2**: `auth_type: "oauth2"` + `oauth_authorization`設定
+- **HMAC**: `auth_type: "hmac_sha256"` + `hmac_authentication`設定
+- **なし**: `auth_type: "none"`
+
+### 🚨 実装時の注意事項
+
+#### 設定検証
+- テンプレート登録後に取得APIで設定内容確認必須
+- `retry_configuration`が正しく保存されているか検証
+
+#### エラーハンドリング
+- 外部サービスエラーは適切にマッピングして内部処理
+- ステータス遷移（approved/rejected/cancelled）の条件設定
+
+#### パフォーマンス
+- リトライ動作はレスポンス時間で間接的に検証
+- 過度なリトライでタイムアウトしないよう上限設定
+
+---
+
 ## 現在の状況
 - **ステータス**: Clean（コミット可能変更なし）
 - **最新コミット**: Implement comprehensive security event logging system

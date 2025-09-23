@@ -49,6 +49,10 @@ public class IdentityVerificationExecutionResult {
     return status.isServerError();
   }
 
+  public boolean isError() {
+    return isClientError() || isServerError();
+  }
+
   public Map<String, Object> result() {
     return result;
   }

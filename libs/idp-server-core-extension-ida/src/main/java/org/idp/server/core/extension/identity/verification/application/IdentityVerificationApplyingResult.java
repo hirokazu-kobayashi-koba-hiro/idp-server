@@ -69,7 +69,7 @@ public class IdentityVerificationApplyingResult {
   }
 
   public boolean isError() {
-    return verifyResult.isError() || executionResult.isClientError();
+    return verifyResult.isError() || executionResult.isError();
   }
 
   public IdentityVerificationApplicationResponse errorResponse() {
@@ -80,6 +80,10 @@ public class IdentityVerificationApplyingResult {
 
     if (executionResult.isClientError()) {
       return IdentityVerificationApplicationResponse.CLIENT_ERROR(executionResult.result());
+    }
+
+    if (executionResult.isServerError()) {
+      return IdentityVerificationApplicationResponse.SERVER_ERROR(executionResult.result());
     }
 
     return IdentityVerificationApplicationResponse.SERVER_ERROR(executionResult.result());
