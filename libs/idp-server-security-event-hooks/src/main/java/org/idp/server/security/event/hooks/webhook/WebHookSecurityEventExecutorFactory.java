@@ -17,6 +17,7 @@
 package org.idp.server.security.event.hooks.webhook;
 
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
+import org.idp.server.platform.http.HttpRequestExecutor;
 import org.idp.server.platform.security.hook.SecurityEventHook;
 import org.idp.server.platform.security.hook.SecurityEventHookFactory;
 
@@ -24,6 +25,7 @@ public class WebHookSecurityEventExecutorFactory implements SecurityEventHookFac
 
   @Override
   public SecurityEventHook create(ApplicationComponentContainer container) {
-    return new WebHookSecurityEventExecutor();
+    HttpRequestExecutor httpRequestExecutor = container.resolve(HttpRequestExecutor.class);
+    return new WebHookSecurityEventExecutor(httpRequestExecutor);
   }
 }

@@ -16,6 +16,7 @@
 
 package org.idp.server;
 
+import java.net.http.HttpClient;
 import java.util.Map;
 import org.idp.server.authentication.interactors.device.AuthenticationDeviceNotifiers;
 import org.idp.server.authentication.interactors.fidouaf.AuthenticationMetaDataApi;
@@ -132,6 +133,8 @@ import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.protocol.ProtocolContainer;
+import org.idp.server.platform.http.HttpClientFactory;
+import org.idp.server.platform.http.HttpRequestExecutor;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.*;
 import org.idp.server.platform.notification.email.EmailSenders;
@@ -381,6 +384,11 @@ public class IdpServerApplication {
     applicationComponentContainer.register(SmsSenders.class, smsSenders);
     EmailSenders emailSenders = EmailSenderPluginLoader.load(dependencyContainer);
     applicationComponentContainer.register(EmailSenders.class, emailSenders);
+
+    HttpClient httpClient = HttpClientFactory.defaultClient();
+    HttpRequestExecutor httpRequestExecutor =
+        new HttpRequestExecutor(httpClient, oAuthAuthorizationResolvers);
+    applicationComponentContainer.register(HttpRequestExecutor.class, httpRequestExecutor);
 
     applicationComponentContainer.register(
         PasswordCredentialsGrantDelegate.class,

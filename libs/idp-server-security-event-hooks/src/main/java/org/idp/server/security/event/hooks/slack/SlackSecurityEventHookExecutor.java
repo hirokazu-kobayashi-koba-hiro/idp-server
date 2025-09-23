@@ -16,15 +16,12 @@
 
 package org.idp.server.security.event.hooks.slack;
 
-import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.platform.http.HttpClientFactory;
+import org.idp.server.platform.http.HttpRequestExecutor;
+import org.idp.server.platform.http.HttpRequestResult;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.notification.NotificationTemplateInterpolator;
@@ -35,11 +32,11 @@ import org.idp.server.platform.security.hook.configuration.SecurityEventHookConf
 
 public class SlackSecurityEventHookExecutor implements SecurityEventHook {
 
-  HttpClient httpClient;
+  HttpRequestExecutor httpRequestExecutor;
   JsonConverter jsonConverter;
 
-  public SlackSecurityEventHookExecutor() {
-    this.httpClient = HttpClientFactory.defaultClient();
+  public SlackSecurityEventHookExecutor(HttpRequestExecutor httpRequestExecutor) {
+    this.httpRequestExecutor = httpRequestExecutor;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
@@ -76,34 +73,21 @@ public class SlackSecurityEventHookExecutor implements SecurityEventHook {
     try {
       HttpRequest httpRequest =
           HttpRequest.newBuilder()
-              .uri(new URI(incomingWebhookUrl))
+              .uri(URI.create(incomingWebhookUrl))
               .header("Content-Type", "application/json")
               .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
               .build();
 
-      HttpResponse<Void> httpResponse =
-          httpClient.send(httpRequest, HttpResponse.BodyHandlers.discarding());
+      HttpRequestResult httpResult = httpRequestExecutor.execute(httpRequest);
 
       Map<String, Object> result = new HashMap<>();
-      result.put("status", httpResponse.statusCode());
-      result.put("body", httpResponse.body());
+      result.put("status", httpResult.statusCode());
+      result.put("body", httpResult.body());
 
       return SecurityEventHookResult.success(type(), result);
-    } catch (URISyntaxException e) {
-
-      Map<String, Object> response = new HashMap<>();
-      response.put("message", "SlackUrl is invalid.");
-      return SecurityEventHookResult.failure(type(), response);
-
-    } catch (IOException | InterruptedException e) {
-
-      Map<String, Object> response = new HashMap<>();
-      response.put("message", "Slack request is failed." + e.getMessage());
-      return SecurityEventHookResult.failure(type(), response);
     } catch (Exception e) {
-
       Map<String, Object> response = new HashMap<>();
-      response.put("message", "Unexpected error. Slack request is failed." + e.getMessage());
+      response.put("message", "Slack request failed: " + e.getMessage());
       return SecurityEventHookResult.failure(type(), response);
     }
   }
