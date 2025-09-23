@@ -19,6 +19,7 @@ package org.idp.server.core.extension.identity.verification.application;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationContext;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationContextBuilder;
 import org.idp.server.core.extension.identity.verification.application.execution.IdentityVerificationExecutionResult;
+import org.idp.server.core.extension.identity.verification.application.pre_hook.additional_parameter.AdditionalParameterResolveResult;
 import org.idp.server.core.extension.identity.verification.application.pre_hook.verification.IdentityVerificationApplicationRequestVerifiedResult;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationApplicationResponse;
 
@@ -43,6 +44,15 @@ public class IdentityVerificationApplyingResult {
       IdentityVerificationExecutionResult executionResult) {
     return new IdentityVerificationApplyingResult(
         new IdentityVerificationContextBuilder().build(), verifyResult, executionResult);
+  }
+
+  public static IdentityVerificationApplyingResult preHookError(
+      IdentityVerificationApplicationRequestVerifiedResult verifyResult,
+      AdditionalParameterResolveResult resolverResult) {
+    return new IdentityVerificationApplyingResult(
+        new IdentityVerificationContextBuilder().build(),
+        verifyResult,
+        IdentityVerificationExecutionResult.preHookError(resolverResult.getErrorDetails()));
   }
 
   public IdentityVerificationApplyingResult(

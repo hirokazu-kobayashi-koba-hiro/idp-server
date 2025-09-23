@@ -39,6 +39,19 @@ public class IdentityVerificationConfig implements JsonReadable {
     return details;
   }
 
+  /**
+   * Get error handling strategy from configuration.
+   *
+   * @return ErrorHandlingStrategy (default: FAIL_FAST for document compliance)
+   */
+  public ErrorHandlingStrategy errorHandlingStrategy() {
+    if (details == null) {
+      return ErrorHandlingStrategy.FAIL_FAST;
+    }
+    String strategyValue = (String) details.get("error_strategy");
+    return ErrorHandlingStrategy.of(strategyValue);
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("type", type);

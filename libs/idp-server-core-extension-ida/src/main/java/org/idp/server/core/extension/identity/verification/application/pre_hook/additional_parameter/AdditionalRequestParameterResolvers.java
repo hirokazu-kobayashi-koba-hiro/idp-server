@@ -53,7 +53,7 @@ public class AdditionalRequestParameterResolvers {
     this.resolvers.putAll(additional);
   }
 
-  public Map<String, Object> resolve(
+  public AdditionalParameterResolveResult resolve(
       Tenant tenant,
       User user,
       IdentityVerificationApplication currentApplication,
@@ -69,7 +69,6 @@ public class AdditionalRequestParameterResolvers {
     List<IdentityVerificationConfig> additionalParameterConfigs =
         processConfig.preHook().additionalParameters();
 
-    Map<String, Object> additionalParameters = new HashMap<>();
     List<Map<String, Object>> additionalParameterValues = new ArrayList<>();
     for (IdentityVerificationConfig additionalParameterConfig : additionalParameterConfigs) {
 
@@ -85,7 +84,7 @@ public class AdditionalRequestParameterResolvers {
 
       log.info("Identity additional parameter resolver execute: {}", resolver.type());
 
-      Map<String, Object> resolved =
+      AdditionalParameterResolveResult result =
           resolver.resolve(
               tenant,
               user,
@@ -96,11 +95,22 @@ public class AdditionalRequestParameterResolvers {
               request,
               requestAttributes,
               additionalParameterConfig);
-      additionalParameterValues.add(resolved);
+
+      // Check for fail-fast errors that should stop processing immediately
+      if (result.isFailFast()) {
+        log.warn("Fail-fast error occurred in resolver: {}", resolver.type());
+        return result;
+      }
+
+      // For success or resilient errors, add the data to results
+      if (result.getData() != null) {
+        additionalParameterValues.add(result.getData());
+      }
     }
 
-    additionalParameters.put("pre_hook_additional_parameters", additionalParameterValues);
+    Map<String, Object> combinedData = new HashMap<>();
+    combinedData.put("pre_hook_additional_parameters", additionalParameterValues);
 
-    return additionalParameters;
+    return AdditionalParameterResolveResult.success(combinedData);
   }
 }
