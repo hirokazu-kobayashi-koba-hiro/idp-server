@@ -24,6 +24,10 @@ dependencies {
 	testImplementation 'org.junit.jupiter:junit-jupiter'
 	testImplementation 'org.mockito:mockito-core:5.7.0'
 	testImplementation 'org.mockito:mockito-junit-jupiter:5.7.0'
+	// WireMock for E2E testing
+	testImplementation 'com.github.tomakehurst:wiremock-jre8:2.35.0'
+	// SLF4J implementation for testing
+	testRuntimeOnly 'ch.qos.logback:logback-classic:1.4.14'
 }
 
 test {

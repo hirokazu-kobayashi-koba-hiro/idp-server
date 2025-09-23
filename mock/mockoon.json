@@ -596,6 +596,360 @@
       "responseMode": null,
       "streamingMode": null,
       "streamingInterval": 0
+    },
+    {
+      "uuid": "e2e-retry-test-503-then-200",
+      "type": "http",
+      "documentation": "E2E test: 503 → 503 → 200 retry scenario",
+      "method": "post",
+      "endpoint": "e2e/retry/503-then-200",
+      "responses": [
+        {
+          "uuid": "retry-first-503",
+          "body": "{\n  \"error\": \"Service Temporarily Unavailable\",\n  \"retryable\": true,\n  \"attempt\": 1\n}",
+          "latency": 100,
+          "statusCode": 503,
+          "label": "First attempt - 503",
+          "headers": [
+            {
+              "key": "Retry-After",
+              "value": "2"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "X-Attempt-Count",
+              "value": "1",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "retry-second-503",
+          "body": "{\n  \"error\": \"Service Temporarily Unavailable\",\n  \"retryable\": true,\n  \"attempt\": 2\n}",
+          "latency": 100,
+          "statusCode": 503,
+          "label": "Second attempt - 503",
+          "headers": [
+            {
+              "key": "Retry-After",
+              "value": "1"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "X-Attempt-Count",
+              "value": "2",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "retry-third-200",
+          "body": "{\n  \"status\": \"success\",\n  \"data\": \"Request completed successfully\",\n  \"attempt\": 3,\n  \"retried\": true\n}",
+          "latency": 50,
+          "statusCode": 200,
+          "label": "Third attempt - Success",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "X-Attempt-Count",
+              "value": "3",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "e2e-retry-test-499-dynamic",
+      "type": "http",
+      "documentation": "E2E test: 499 dynamic retryability test",
+      "method": "get",
+      "endpoint": "e2e/retry/499-dynamic",
+      "responses": [
+        {
+          "uuid": "499-retryable-false",
+          "body": "{\n  \"error\": \"Client Closed Request\",\n  \"retryable\": false,\n  \"reason\": \"User cancelled operation\"\n}",
+          "latency": 50,
+          "statusCode": 499,
+          "label": "499 Non-retryable",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "query",
+              "modifier": "retryable",
+              "value": "false",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "499-retryable-true",
+          "body": "{\n  \"error\": \"Client Closed Request\",\n  \"retryable\": true,\n  \"reason\": \"Network interruption\"\n}",
+          "latency": 50,
+          "statusCode": 499,
+          "label": "499 Retryable",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "query",
+              "modifier": "retryable",
+              "value": "true",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "e2e-retry-test-timeout",
+      "type": "http",
+      "documentation": "E2E test: Timeout simulation",
+      "method": "get",
+      "endpoint": "e2e/retry/timeout",
+      "responses": [
+        {
+          "uuid": "timeout-response",
+          "body": "{\n  \"status\": \"delayed\",\n  \"message\": \"This response is intentionally delayed\"\n}",
+          "latency": 5000,
+          "statusCode": 200,
+          "label": "Timeout simulation - 5s delay",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "e2e-retry-identity-verification",
+      "type": "http",
+      "documentation": "E2E test: Identity verification with retry scenario",
+      "method": "post",
+      "endpoint": "e2e/retry/identity-verification",
+      "responses": [
+        {
+          "uuid": "identity-verification-503-first",
+          "body": "{\n  \"error\": \"service_temporarily_unavailable\",\n  \"message\": \"Identity verification service is temporarily down\",\n  \"retryable\": true,\n  \"attempt\": 1\n}",
+          "latency": 200,
+          "statusCode": 503,
+          "label": "First attempt - 503 Service Unavailable",
+          "headers": [
+            {
+              "key": "Retry-After",
+              "value": "2"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "X-Attempt-Count",
+              "value": "1",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "identity-verification-503-second",
+          "body": "{\n  \"error\": \"service_temporarily_unavailable\",\n  \"message\": \"Identity verification service is still recovering\",\n  \"retryable\": true,\n  \"attempt\": 2\n}",
+          "latency": 200,
+          "statusCode": 503,
+          "label": "Second attempt - 503 Service Unavailable",
+          "headers": [
+            {
+              "key": "Retry-After",
+              "value": "1"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "X-Attempt-Count",
+              "value": "2",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "identity-verification-200-success",
+          "body": "{\n  \"verification_result\": \"verified\",\n  \"confidence_level\": \"high\",\n  \"user_id\": \"{{ body 'user_id' }}\",\n  \"trust_framework\": \"{{ body 'trust_framework' }}\",\n  \"verification_timestamp\": \"{{ now 'iso' }}\",\n  \"evidence_processed\": {{ body 'evidence.length' }},\n  \"attempt\": 3,\n  \"final_attempt\": true\n}",
+          "latency": 100,
+          "statusCode": 200,
+          "label": "Third attempt - Success",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "X-Attempt-Count",
+              "value": "3",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "identity-verification-default",
+          "body": "{\n  \"verification_result\": \"verified\",\n  \"confidence_level\": \"medium\",\n  \"user_id\": \"{{ body 'user_id' }}\",\n  \"trust_framework\": \"{{ body 'trust_framework' }}\",\n  \"verification_timestamp\": \"{{ now 'iso' }}\",\n  \"evidence_processed\": {{ body 'evidence.length' }},\n  \"direct_success\": true\n}",
+          "latency": 100,
+          "statusCode": 200,
+          "label": "Default - Immediate Success",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "enabled": true,
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "e2e-retry-test-performance",
+      "type": "http",
+      "documentation": "E2E test: Performance measurement endpoint",
+      "method": "post",
+      "endpoint": "e2e/retry/performance",
+      "responses": [
+        {
+          "uuid": "performance-response",
+          "body": "{\n  \"timestamp\": \"{{ now 'iso' }}\",\n  \"processing_time_ms\": {{ int 50 200 }},\n  \"status\": \"processed\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "Performance test endpoint",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
     }
   ],
   "rootChildren": [
@@ -666,6 +1020,26 @@
     {
       "type": "route",
       "uuid": "385209ae-9162-4e2b-a547-50e7409331a9"
+    },
+    {
+      "type": "route",
+      "uuid": "e2e-retry-test-503-then-200"
+    },
+    {
+      "type": "route",
+      "uuid": "e2e-retry-test-499-dynamic"
+    },
+    {
+      "type": "route",
+      "uuid": "e2e-retry-test-timeout"
+    },
+    {
+      "type": "route",
+      "uuid": "e2e-retry-identity-verification"
+    },
+    {
+      "type": "route",
+      "uuid": "e2e-retry-test-performance"
     }
   ],
   "proxyMode": false,

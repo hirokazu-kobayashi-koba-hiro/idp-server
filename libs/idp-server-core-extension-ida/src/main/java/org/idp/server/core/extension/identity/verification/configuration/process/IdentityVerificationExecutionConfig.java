@@ -61,7 +61,7 @@ public class IdentityVerificationExecutionConfig implements JsonReadable {
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("type", type);
-    if (hasHttpRequest()) map.put("httpRequest", httpRequest.toMap());
+    if (hasHttpRequest()) map.put("http_request", httpRequest.toMap());
     if (hasMock()) map.put("mock", mock);
     return map;
   }
