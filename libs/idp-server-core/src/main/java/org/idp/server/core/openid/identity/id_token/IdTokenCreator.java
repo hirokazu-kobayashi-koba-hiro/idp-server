@@ -121,7 +121,7 @@ public class IdTokenCreator implements IndividualClaimsCreatable, ClaimHashable 
     claims.put("iss", tokenIssuer.value());
     claims.put("aud", authorizationGrant.requestedClientId().value());
     claims.put("exp", expiresAt.toEpochSecondWithUtc());
-    claims.put("iat", now.toEpochSecond(SystemDateTime.zoneOffset));
+    claims.put("iat", SystemDateTime.toEpochSecond(now));
 
     if (idTokenCustomClaims.hasNonce()) {
       claims.put("nonce", idTokenCustomClaims.nonce().value());
@@ -137,7 +137,7 @@ public class IdTokenCreator implements IndividualClaimsCreatable, ClaimHashable 
       claims.put("at_hash", hash(idTokenCustomClaims.accessTokenValue().value(), "ES256"));
     }
     if (authentication.hasAuthenticationTime()) {
-      claims.put("auth_time", authentication.time().toEpochSecond(SystemDateTime.zoneOffset));
+      claims.put("auth_time", SystemDateTime.toEpochSecond(authentication.time()));
     }
     if (authentication.hasMethod()) {
       claims.put("amr", authentication.methods());

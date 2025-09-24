@@ -99,7 +99,7 @@ public interface ClientAuthenticationJwtValidatable {
       throw new ClientUnAuthorizedException(
           "client assertion is invalid, must contains exp claim in jwt payload");
     }
-    if (claims.getExp().before(new Date(SystemDateTime.epochMilliSecond()))) {
+    if (claims.getExp().before(new Date(SystemDateTime.currentEpochMilliSecond()))) {
       throw new ClientUnAuthorizedException("client assertion is invalid, jwt is expired");
     }
   }
