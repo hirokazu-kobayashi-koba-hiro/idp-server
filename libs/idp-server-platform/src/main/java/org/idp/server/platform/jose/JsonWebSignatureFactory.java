@@ -22,13 +22,17 @@ import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.crypto.ECDSASigner;
 import com.nimbusds.jose.crypto.RSASSASigner;
-import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import java.io.StringReader;
 import java.security.PrivateKey;
 import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.RSAPrivateKey;
 import java.text.ParseException;
 import java.util.Map;
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.idp.server.platform.exception.UnSupportedException;
 
 // FIXME refactor
@@ -107,75 +111,13 @@ public class JsonWebSignatureFactory {
   public JsonWebSignature createWithAsymmetricKeyForPem(
       String claims, Map<String, Object> customHeaders, String pemPrivateKey)
       throws JoseInvalidException {
-    try {
-      JWK jwk = JWK.parseFromPEMEncodedObjects(pemPrivateKey);
-      JsonWebKey jsonWebKey = new JsonWebKey(jwk);
-
-      // Determine algorithm based on key type if not already set
-      JWSAlgorithm jwsAlgorithm;
-      if (jsonWebKey.algorithm() != null) {
-        jwsAlgorithm = JWSAlgorithm.parse(jsonWebKey.algorithm());
-      } else {
-        // Default algorithms based on key type
-        JsonWebKeyType keyType = jsonWebKey.keyType();
-        switch (keyType) {
-          case EC -> jwsAlgorithm = JWSAlgorithm.ES256;
-          case RSA -> jwsAlgorithm = JWSAlgorithm.RS256;
-          default -> throw new JoseInvalidException("Unsupported key type: " + keyType);
-        }
-      }
-
-      JWSHeader jwsHeader =
-          new JWSHeader.Builder(jwsAlgorithm)
-              .keyID(jsonWebKey.keyId())
-              .customParams(customHeaders)
-              .build();
-
-      JWTClaimsSet claimsSet = JWTClaimsSet.parse(claims);
-      SignedJWT signedJWT = new SignedJWT(jwsHeader, claimsSet);
-      JWSSigner jwsSigner = of(jsonWebKey);
-      signedJWT.sign(jwsSigner);
-      return new JsonWebSignature(signedJWT);
-    } catch (Exception e) {
-      throw new JoseInvalidException(e.getMessage(), e);
-    }
+    return createJwsFromPem(claims, customHeaders, pemPrivateKey);
   }
 
   public JsonWebSignature createWithAsymmetricKeyForPem(
       Map<String, Object> claims, Map<String, Object> customHeaders, String pemPrivateKey)
       throws JoseInvalidException {
-    try {
-      JWK jwk = JWK.parseFromPEMEncodedObjects(pemPrivateKey);
-      JsonWebKey jsonWebKey = new JsonWebKey(jwk);
-
-      // Determine algorithm based on key type if not already set
-      JWSAlgorithm jwsAlgorithm;
-      if (jsonWebKey.algorithm() != null) {
-        jwsAlgorithm = JWSAlgorithm.parse(jsonWebKey.algorithm());
-      } else {
-        // Default algorithms based on key type
-        JsonWebKeyType keyType = jsonWebKey.keyType();
-        switch (keyType) {
-          case EC -> jwsAlgorithm = JWSAlgorithm.ES256;
-          case RSA -> jwsAlgorithm = JWSAlgorithm.RS256;
-          default -> throw new JoseInvalidException("Unsupported key type: " + keyType);
-        }
-      }
-
-      JWSHeader jwsHeader =
-          new JWSHeader.Builder(jwsAlgorithm)
-              .keyID(jsonWebKey.keyId())
-              .customParams(customHeaders)
-              .build();
-
-      JWTClaimsSet claimsSet = JWTClaimsSet.parse(claims);
-      SignedJWT signedJWT = new SignedJWT(jwsHeader, claimsSet);
-      JWSSigner jwsSigner = of(jsonWebKey);
-      signedJWT.sign(jwsSigner);
-      return new JsonWebSignature(signedJWT);
-    } catch (Exception e) {
-      throw new JoseInvalidException(e.getMessage(), e);
-    }
+    return createJwsFromPem(claims, customHeaders, pemPrivateKey);
   }
 
   JsonWebSignature createWithAsymmetricKey(
@@ -217,6 +159,68 @@ public class JsonWebSignatureFactory {
       return new JsonWebSignature(signedJWT);
     } catch (JsonWebKeyInvalidException | JOSEException | ParseException e) {
       throw new JoseInvalidException(e.getMessage(), e);
+    }
+  }
+
+  private <T> JsonWebSignature createJwsFromPem(
+      T claims, Map<String, Object> customHeaders, String pemPrivateKey)
+      throws JoseInvalidException {
+    try {
+      PrivateKey privateKey = parseP8PrivateKey(pemPrivateKey);
+      JWSAlgorithm algorithm = determineAlgorithm(privateKey);
+      JWSSigner signer = createSigner(privateKey);
+
+      JWSHeader header = new JWSHeader.Builder(algorithm).customParams(customHeaders).build();
+
+      JWTClaimsSet claimsSet = parseClaimsSet(claims);
+      SignedJWT signedJWT = new SignedJWT(header, claimsSet);
+      signedJWT.sign(signer);
+
+      return new JsonWebSignature(signedJWT);
+    } catch (Exception e) {
+      throw new JoseInvalidException("Failed to create JWS from PEM key: " + e.getMessage(), e);
+    }
+  }
+
+  private JWSAlgorithm determineAlgorithm(PrivateKey privateKey) throws JoseInvalidException {
+    return switch (privateKey) {
+      case ECPrivateKey ignored -> JWSAlgorithm.ES256;
+      case RSAPrivateKey ignored -> JWSAlgorithm.RS256;
+      default ->
+          throw new JoseInvalidException("Unsupported private key type: " + privateKey.getClass());
+    };
+  }
+
+  private JWSSigner createSigner(PrivateKey privateKey) throws JOSEException {
+    return switch (privateKey) {
+      case ECPrivateKey ecPrivateKey -> new ECDSASigner(ecPrivateKey);
+      case RSAPrivateKey rsaPrivateKey -> new RSASSASigner(rsaPrivateKey);
+      default ->
+          throw new IllegalArgumentException(
+              "Unsupported private key type: " + privateKey.getClass());
+    };
+  }
+
+  private <T> JWTClaimsSet parseClaimsSet(T claims) throws ParseException {
+    return switch (claims) {
+      case String stringClaims -> JWTClaimsSet.parse(stringClaims);
+      case Map<?, ?> mapClaims -> JWTClaimsSet.parse((Map<String, Object>) mapClaims);
+      default ->
+          throw new IllegalArgumentException("Unsupported claims type: " + claims.getClass());
+    };
+  }
+
+  /** Parse P8 private key from PEM format using BouncyCastle */
+  private PrivateKey parseP8PrivateKey(String pemContent) throws Exception {
+    try (PEMParser pemParser = new PEMParser(new StringReader(pemContent))) {
+      Object object = pemParser.readObject();
+
+      if (object instanceof PrivateKeyInfo privateKeyInfo) {
+        JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
+        return converter.getPrivateKey(privateKeyInfo);
+      } else {
+        throw new IllegalArgumentException("PEM content does not contain a valid private key");
+      }
     }
   }
 
