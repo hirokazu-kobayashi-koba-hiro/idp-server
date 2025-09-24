@@ -117,7 +117,13 @@ public class OidcFederationInteractor implements FederationInteractor {
     OidcTokenResult tokenResult = oidcSsoExecutor.requestToken(tokenRequest);
 
     if (tokenResult.isError()) {
-      log.error("Error occurred while executing token request");
+      log.error(
+          "Token request failed for federation callback. Provider: {}, Status: {}, Response: {}. "
+              + "Check: 1) Token endpoint configuration, 2) Client credentials, 3) Authorization code validity, "
+              + "4) Redirect URI mismatch",
+          ssoProvider.name(),
+          tokenResult.statusCode(),
+          tokenResult.bodyAsMap());
       return FederationInteractionResult.error(
           federationType, ssoProvider, session, tokenResult.statusCode(), tokenResult.bodyAsMap());
     }
@@ -130,7 +136,14 @@ public class OidcFederationInteractor implements FederationInteractor {
       response.put("error", "server_error");
       response.put("error_description", jwksResult.body());
 
-      log.error("Error occurred while executing jwk request");
+      log.error(
+          "JWKS request failed for federation callback. Provider: {}, JWKS URI: {}, Status: {}, Response: {}. "
+              + "Check: 1) JWKS endpoint availability, 2) Network connectivity, 3) SSL/TLS configuration, "
+              + "4) Provider's public key rotation",
+          ssoProvider.name(),
+          oidcSsoConfiguration.jwksUri(),
+          jwksResult.statusCode(),
+          jwksResult.body());
       return FederationInteractionResult.error(
           federationType, ssoProvider, session, jwksResult.statusCode(), response);
     }
@@ -139,7 +152,12 @@ public class OidcFederationInteractor implements FederationInteractor {
         oidcSsoExecutor.verifyIdToken(oidcSsoConfiguration, session, jwksResult, tokenResult);
     if (idTokenVerificationResult.isError()) {
 
-      log.error("Error occurred while executing id_token validation");
+      log.error(
+          "ID token validation failed for federation callback. Provider: {}, Error: {}. "
+              + "Check: 1) ID token signature verification, 2) Token expiration, 3) Audience claim, "
+              + "4) Issuer claim, 5) Client ID configuration",
+          ssoProvider.name(),
+          idTokenVerificationResult.data());
       return FederationInteractionResult.error(
           federationType, ssoProvider, session, 400, idTokenVerificationResult.data());
     }
@@ -153,7 +171,14 @@ public class OidcFederationInteractor implements FederationInteractor {
 
     if (userinfoResult.isError()) {
 
-      log.error("Error occurred while executing userinfo request");
+      log.error(
+          "Userinfo request failed for federation callback. Provider: {}, Endpoint: {}, Status: {}, Response: {}. "
+              + "Check: 1) Userinfo endpoint configuration, 2) Access token validity, 3) Scope permissions, "
+              + "4) Rate limiting, 5) Bearer token format",
+          ssoProvider.name(),
+          oidcSsoConfiguration.userinfoEndpoint(),
+          userinfoResult.statusCode(),
+          userinfoResult.contents());
       return FederationInteractionResult.error(
           federationType,
           ssoProvider,
