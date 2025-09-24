@@ -18,23 +18,28 @@ package org.idp.server.platform.date;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 
-// FIXME consider
 public class SystemDateTime {
 
-  public static Clock clock = Clock.systemUTC();
-  public static ZoneOffset zoneOffset = ZoneOffset.UTC;
+  private static Clock clock = Clock.systemUTC();
+
+  public static void configure(ZoneId zone) {
+    if (zone == null) {
+      throw new IllegalArgumentException("Zone cannot be null");
+    }
+    clock = Clock.system(zone);
+  }
 
   public static LocalDateTime now() {
     return LocalDateTime.now(clock);
   }
 
   public static long toEpochSecond(LocalDateTime localDateTime) {
-    return localDateTime.toEpochSecond(zoneOffset);
+    return localDateTime.atZone(clock.getZone()).toEpochSecond();
   }
 
-  public static long epochMilliSecond() {
-    return now().toEpochSecond(zoneOffset) * 1000;
+  public static long currentEpochMilliSecond() {
+    return now().atZone(clock.getZone()).toInstant().toEpochMilli();
   }
 }

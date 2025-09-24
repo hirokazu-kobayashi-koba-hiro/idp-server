@@ -55,7 +55,7 @@ public class SecurityEventTokenCreator {
       Map<String, Object> claims = new HashMap<>();
       claims.put("iss", securityEventTokenEntity.issuerValue());
       claims.put("jti", UUID.randomUUID().toString());
-      claims.put("iat", SystemDateTime.now().toEpochSecond(SystemDateTime.zoneOffset));
+      claims.put("iat", SystemDateTime.toEpochSecond(SystemDateTime.now()));
       claims.put("aud", securityEventTokenEntity.clientIdValue());
       claims.put("events", securityEventTokenEntity.eventAsMap());
 
