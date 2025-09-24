@@ -16,15 +16,16 @@
 
 package org.idp.server.notification.push.apns;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Objects;
+import org.idp.server.platform.date.SystemDateTime;
 
 public class JwtTokenCache {
 
   private final String token;
-  private final Instant expiresAt;
+  private final LocalDateTime expiresAt;
 
-  public JwtTokenCache(String token, Instant expiresAt) {
+  public JwtTokenCache(String token, LocalDateTime expiresAt) {
     this.token = token;
     this.expiresAt = expiresAt;
   }
@@ -34,12 +35,12 @@ public class JwtTokenCache {
   }
 
   public boolean isExpired() {
-    return Instant.now().isAfter(expiresAt);
+    return SystemDateTime.now().isAfter(expiresAt);
   }
 
   public boolean shouldRefresh() {
     // Refresh 5 minutes before expiration (55 minutes after creation for 1-hour tokens)
-    return Instant.now().isAfter(expiresAt.minusSeconds(300));
+    return SystemDateTime.now().isAfter(expiresAt.minusSeconds(300));
   }
 
   @Override
