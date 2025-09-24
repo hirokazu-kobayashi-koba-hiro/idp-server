@@ -282,16 +282,36 @@ public class IdentityVerificationApplication {
 
   public Map<String, Object> toMap() {
     HashMap<String, Object> map = new HashMap<>();
-    map.put("id", identifier.value());
-    map.put("type", identityVerificationType.name());
-    map.put("tenant_id", tenantIdentifier.value());
-    map.put("client_id", requestedClientId.value());
-    map.put("user_id", userIdentifier.value());
-    map.put("application_details", applicationDetails.toMap());
-    map.put("status", status.value());
-    map.put("processes", processes.toMapAsObject());
-    if (hasAttributes()) map.put("attributes", attributes.toMap());
-    map.put("requested_at", requestedAt.toString());
+    if (identifier != null) {
+      map.put("id", identifier.value());
+    }
+    if (identityVerificationType != null) {
+      map.put("type", identityVerificationType.name());
+    }
+    if (tenantIdentifier != null) {
+      map.put("tenant_id", tenantIdentifier.value());
+    }
+    if (requestedClientId != null) {
+      map.put("client_id", requestedClientId.value());
+    }
+    if (userIdentifier != null) {
+      map.put("user_id", userIdentifier.value());
+    }
+    if (applicationDetails != null) {
+      map.put("application_details", applicationDetails.toMap());
+    }
+    if (status != null) {
+      map.put("status", status.value());
+    }
+    if (processes != null) {
+      map.put("processes", processes.toMapAsObject());
+    }
+    if (hasAttributes()) {
+      map.put("attributes", attributes.toMap());
+    }
+    if (requestedAt != null) {
+      map.put("requested_at", requestedAt.toString());
+    }
     return map;
   }
 }
