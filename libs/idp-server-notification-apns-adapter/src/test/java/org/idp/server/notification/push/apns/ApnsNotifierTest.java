@@ -83,7 +83,7 @@ class ApnsNotifierTest {
   }
 
   @Test
-  void testCreateApnsPayloadWithNullTemplate() {
+  void testCreateApnsPayloadWithEmptyTemplate() {
     // Create tenant
     Tenant tenant =
         new Tenant(
@@ -94,7 +94,8 @@ class ApnsNotifierTest {
             new AuthorizationProvider("idp-server"),
             DatabaseType.POSTGRESQL);
 
-    String payload = apnsNotifier.createApnsPayload(null, tenant);
+    NotificationTemplate emptyTemplate = new NotificationTemplate();
+    String payload = apnsNotifier.createApnsPayload(emptyTemplate, tenant);
 
     // Should not throw exception and should create valid JSON with defaults
     JsonNodeWrapper payloadJson = JsonNodeWrapper.fromString(payload);

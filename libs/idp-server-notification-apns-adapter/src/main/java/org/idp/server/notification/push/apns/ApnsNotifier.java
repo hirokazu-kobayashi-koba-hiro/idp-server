@@ -20,7 +20,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.idp.server.authentication.interactors.device.AuthenticationDeviceNotifier;
 import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
+import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.jose.JsonWebSignature;
 import org.idp.server.platform.jose.JsonWebSignatureFactory;
 import org.idp.server.platform.json.JsonConverter;
@@ -161,18 +162,9 @@ public class ApnsNotifier implements AuthenticationDeviceNotifier {
       Map<String, Object> aps = new HashMap<>();
       Map<String, String> alert = new HashMap<>();
 
-      String title =
-          template != null
-              ? template.optTitle("Transaction Authentication")
-              : "Transaction Authentication";
-      String body =
-          template != null
-              ? template.optBody("Please approve the transaction to continue.")
-              : "Please approve the transaction to continue.";
-      String sender =
-          template != null
-              ? template.optSender(tenant.identifierValue())
-              : tenant.identifierValue();
+      String title = template.optTitle("Transaction Authentication");
+      String body = template.optBody("Please approve the transaction to continue.");
+      String sender = template.optSender(tenant.identifierValue());
 
       alert.put("title", title);
       alert.put("body", body);
@@ -199,12 +191,12 @@ public class ApnsNotifier implements AuthenticationDeviceNotifier {
 
     // Create new JWT token
     try {
-      Instant now = Instant.now();
-      Instant expiresAt = now.plusSeconds(TOKEN_DURATION_SECONDS);
+      LocalDateTime now = SystemDateTime.now();
+      LocalDateTime expiresAt = now.plusSeconds(TOKEN_DURATION_SECONDS);
 
       Map<String, Object> claims = new HashMap<>();
       claims.put("iss", config.teamId());
-      claims.put("iat", now.getEpochSecond());
+      claims.put("iat", SystemDateTime.toEpochSecond(now));
 
       Map<String, Object> customHeaders = new HashMap<>();
       customHeaders.put("kid", config.keyId());

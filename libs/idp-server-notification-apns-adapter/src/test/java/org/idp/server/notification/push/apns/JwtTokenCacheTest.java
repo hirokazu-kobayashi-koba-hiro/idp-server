@@ -18,14 +18,15 @@ package org.idp.server.notification.push.apns;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
+import org.idp.server.platform.date.SystemDateTime;
 import org.junit.jupiter.api.Test;
 
 class JwtTokenCacheTest {
 
   @Test
   void testTokenCacheNotExpired() {
-    Instant futureExpiry = Instant.now().plusSeconds(3600); // 1 hour future
+    LocalDateTime futureExpiry = SystemDateTime.now().plusSeconds(3600); // 1 hour future
     JwtTokenCache cache = new JwtTokenCache("test-token", futureExpiry);
 
     assertFalse(cache.isExpired());
@@ -34,7 +35,7 @@ class JwtTokenCacheTest {
 
   @Test
   void testTokenCacheExpired() {
-    Instant pastExpiry = Instant.now().minusSeconds(60); // 1 minute past
+    LocalDateTime pastExpiry = SystemDateTime.now().minusSeconds(60); // 1 minute past
     JwtTokenCache cache = new JwtTokenCache("test-token", pastExpiry);
 
     assertTrue(cache.isExpired());
@@ -43,7 +44,7 @@ class JwtTokenCacheTest {
   @Test
   void testTokenShouldRefresh() {
     // Token expires in 4 minutes (240 seconds) - should refresh (refresh threshold is 5 minutes)
-    Instant soonExpiry = Instant.now().plusSeconds(240);
+    LocalDateTime soonExpiry = SystemDateTime.now().plusSeconds(240);
     JwtTokenCache cache = new JwtTokenCache("test-token", soonExpiry);
 
     assertTrue(cache.shouldRefresh());
@@ -52,7 +53,7 @@ class JwtTokenCacheTest {
   @Test
   void testTokenShouldNotRefresh() {
     // Token expires in 10 minutes - should not refresh yet
-    Instant laterExpiry = Instant.now().plusSeconds(600);
+    LocalDateTime laterExpiry = SystemDateTime.now().plusSeconds(600);
     JwtTokenCache cache = new JwtTokenCache("test-token", laterExpiry);
 
     assertFalse(cache.shouldRefresh());
