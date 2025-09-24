@@ -19,7 +19,7 @@ package org.idp.server.core.openid.authentication.interaction.execution;
 import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
+import org.idp.server.platform.http.HttpRequestExecutor;
 
 public class HttpRequestsAuthenticationExecutorFactory implements AuthenticationExecutorFactory {
 
@@ -30,9 +30,8 @@ public class HttpRequestsAuthenticationExecutorFactory implements Authentication
         container.resolve(AuthenticationInteractionCommandRepository.class);
     AuthenticationInteractionQueryRepository interactionQueryRepository =
         container.resolve(AuthenticationInteractionQueryRepository.class);
-    OAuthAuthorizationResolvers oAuthAuthorizationResolvers =
-        container.resolve(OAuthAuthorizationResolvers.class);
+    HttpRequestExecutor httpRequestExecutor = container.resolve(HttpRequestExecutor.class);
     return new HttpRequestsAuthenticationExecutor(
-        interactionCommandRepository, interactionQueryRepository, oAuthAuthorizationResolvers);
+        interactionCommandRepository, interactionQueryRepository, httpRequestExecutor);
   }
 }

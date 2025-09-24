@@ -17,6 +17,7 @@
 package org.idp.server.core.extension.ciba;
 
 import org.idp.server.core.extension.ciba.clientnotification.NotificationClient;
+import org.idp.server.platform.http.HttpRequestExecutor;
 import org.idp.server.core.extension.ciba.handler.*;
 import org.idp.server.core.extension.ciba.handler.io.*;
 import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRequestRepository;
@@ -57,7 +58,8 @@ public class DefaultCibaProtocol implements CibaProtocol {
       OAuthTokenCommandRepository oAuthTokenCommandRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
-      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      HttpRequestExecutor httpRequestExecutor) {
     this.cibaRequestHandler =
         new CibaRequestHandler(
             backchannelAuthenticationRequestRepository,
@@ -70,7 +72,7 @@ public class DefaultCibaProtocol implements CibaProtocol {
             cibaGrantRepository,
             authorizationGrantedRepository,
             oAuthTokenCommandRepository,
-            new NotificationClient(),
+            new NotificationClient(httpRequestExecutor),
             authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository);
     this.denyHandler =

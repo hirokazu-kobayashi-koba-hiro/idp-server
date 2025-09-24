@@ -22,15 +22,22 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import org.idp.server.core.extension.ciba.gateway.ClientNotificationGateway;
 import org.idp.server.platform.http.HttpClientFactory;
+import org.idp.server.platform.http.HttpRequestExecutor;
+import org.idp.server.platform.http.HttpRequestResult;
 import org.idp.server.platform.log.LoggerWrapper;
 
 public class NotificationClient implements ClientNotificationGateway {
 
   LoggerWrapper log = LoggerWrapper.getLogger(NotificationClient.class);
   HttpClient httpClient;
+  HttpRequestExecutor httpRequestExecutor;
 
   public NotificationClient() {
     this.httpClient = HttpClientFactory.defaultClient();
+  }
+
+  public NotificationClient(HttpRequestExecutor httpRequestExecutor) {
+    this.httpRequestExecutor = httpRequestExecutor;
   }
 
   @Override
@@ -50,9 +57,14 @@ public class NotificationClient implements ClientNotificationGateway {
               .POST(HttpRequest.BodyPublishers.ofString(clientNotificationRequest.body()))
               .build();
 
-      HttpResponse<String> response =
-          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-      log.trace("CIBA client notification completed: status={}", response.statusCode());
+      if (httpRequestExecutor != null) {
+        HttpRequestResult response = httpRequestExecutor.execute(request);
+        log.trace("CIBA client notification completed: status={}", response.statusCode());
+      } else {
+        HttpResponse<String> response =
+            httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        log.trace("CIBA client notification completed: status={}", response.statusCode());
+      }
     } catch (Exception exception) {
       log.error(
           "CIBA client notification failed: endpoint={}, error={}",
