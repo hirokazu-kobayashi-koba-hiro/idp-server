@@ -210,7 +210,7 @@ public class ApnsNotifier implements AuthenticationDeviceNotifier {
       customHeaders.put("kid", config.keyId());
 
       JsonWebSignature jws =
-          jwsFactory.createWithAsymmetricKey(claims, customHeaders, config.keyContent());
+          jwsFactory.createWithAsymmetricKeyForPem(claims, customHeaders, config.keyContent());
       String token = jws.serialize();
 
       // Cache the new token
