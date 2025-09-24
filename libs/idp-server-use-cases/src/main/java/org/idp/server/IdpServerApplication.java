@@ -130,6 +130,8 @@ import org.idp.server.platform.crypto.HmacHasher;
 import org.idp.server.platform.datasource.*;
 import org.idp.server.platform.datasource.DatabaseTypeConfiguration;
 import org.idp.server.platform.datasource.cache.CacheStore;
+import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.date.TimeConfig;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.protocol.ProtocolContainer;
@@ -246,10 +248,12 @@ public class IdpServerApplication {
       PasswordEncodeDelegation passwordEncodeDelegation,
       PasswordVerificationDelegation passwordVerificationDelegation,
       SecurityEventPublisher securityEventPublisher,
-      UserLifecycleEventPublisher userLifecycleEventPublisher) {
+      UserLifecycleEventPublisher userLifecycleEventPublisher,
+      TimeConfig timeConfig) {
 
     AdminTenantContext.configure(adminTenantId);
     TransactionManager.configure(dbConnectionProvider);
+    SystemDateTime.configure(java.time.ZoneId.of(timeConfig.zone()));
 
     ApplicationComponentDependencyContainer dependencyContainer =
         new ApplicationComponentDependencyContainer();

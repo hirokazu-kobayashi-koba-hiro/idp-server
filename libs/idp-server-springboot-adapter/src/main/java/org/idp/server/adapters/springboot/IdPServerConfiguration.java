@@ -36,6 +36,7 @@ import org.idp.server.platform.datasource.DbConfig;
 import org.idp.server.platform.datasource.cache.CacheConfiguration;
 import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.datasource.cache.NoOperationCacheStore;
+import org.idp.server.platform.date.TimeConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -84,6 +85,9 @@ public class IdPServerConfiguration {
   @Value("${idp.cache.redis.minIdle}")
   int minIdle;
 
+  @Value("${idp.time.zone}")
+  String timeZone;
+
   @Autowired AdminDatabaseConfigProperties adminDatabaseConfigProperties;
   @Autowired AppDatabaseConfigProperties appDatabaseConfigProperties;
 
@@ -104,6 +108,7 @@ public class IdPServerConfiguration {
     PasswordEncoder passwordEncoder = new PasswordEncoder(bCryptPasswordEncoder);
     PasswordVerification passwordVerification = new PasswordVerification(bCryptPasswordEncoder);
     AdminDashboardUrl adminDashboardUrl1 = new AdminDashboardUrl(adminDashboardUrl);
+    TimeConfig timeConfig = new TimeConfig(timeZone);
 
     return new IdpServerApplication(
         adminTenantId,
@@ -117,7 +122,8 @@ public class IdPServerConfiguration {
         passwordEncoder,
         passwordVerification,
         eventPublisherService,
-        userLifecycleEventPublisherService);
+        userLifecycleEventPublisherService,
+        timeConfig);
   }
 
   private HikariConnectionProvider createHikariConnectionProvider() {

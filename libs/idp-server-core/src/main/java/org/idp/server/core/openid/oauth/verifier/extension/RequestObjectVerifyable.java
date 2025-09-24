@@ -111,7 +111,7 @@ public interface RequestObjectVerifyable {
           "invalid_request_object",
           "request object is invalid, must contains exp claim in jwt payload");
     }
-    Date date = new Date(SystemDateTime.epochMilliSecond());
+    Date date = new Date(SystemDateTime.currentEpochMilliSecond());
     if (claims.getExp().before(date)) {
       throw new RequestObjectInvalidException(
           "invalid_request_object", "request object is invalid, jwt is expired");

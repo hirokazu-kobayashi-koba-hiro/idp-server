@@ -310,7 +310,7 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
   }
 
   public long updateAtAsLong() {
-    return updatedAt.toEpochSecond(SystemDateTime.zoneOffset);
+    return SystemDateTime.toEpochSecond(updatedAt);
   }
 
   public String hashedPassword() {

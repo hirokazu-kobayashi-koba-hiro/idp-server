@@ -6,6 +6,8 @@ idp:
    apiSecret: ${IDP_SERVER_API_SECRET}
    encryptionKey: ${ENCRYPTION_KEY}
    databaseType: "${DATABASE_TYPE:POSTGRESQL}"
+  time:
+   zone: "${TIME_ZONE:UTC}"
   datasource:
     admin:
       postgresql:

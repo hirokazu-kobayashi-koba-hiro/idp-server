@@ -139,7 +139,7 @@ public interface OidcSsoExecutor {
         return new IdTokenVerificationResult(false, data);
       }
 
-      Date date = new Date(SystemDateTime.epochMilliSecond());
+      Date date = new Date(SystemDateTime.currentEpochMilliSecond());
       if (claims.getExp().before(date)) {
         Map<String, Object> data = new HashMap<>();
         data.put("error", "server_error");

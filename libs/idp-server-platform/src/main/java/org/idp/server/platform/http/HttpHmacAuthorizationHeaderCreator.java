@@ -17,12 +17,12 @@
 package org.idp.server.platform.http;
 
 import java.net.URI;
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.idp.server.platform.crypto.HmacHasher;
+import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.log.LoggerWrapper;
 
@@ -44,7 +44,7 @@ public class HttpHmacAuthorizationHeaderCreator {
       List<String> signingFields,
       String signatureFormat) {
 
-    String timestamp = Instant.now().toString();
+    String timestamp = SystemDateTime.now().toString();
     String path = URI.create(url).getPath();
     String bodyJson = JsonConverter.snakeCaseInstance().write(body != null ? body : Map.of());
 
