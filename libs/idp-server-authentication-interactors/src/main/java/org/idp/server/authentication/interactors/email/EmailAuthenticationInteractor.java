@@ -86,7 +86,7 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
           type,
           operationType(),
           method(),
-          DefaultSecurityEventType.sms_verification_failure);
+          DefaultSecurityEventType.email_verification_failure);
     }
 
     if (executionResult.isServerError()) {
