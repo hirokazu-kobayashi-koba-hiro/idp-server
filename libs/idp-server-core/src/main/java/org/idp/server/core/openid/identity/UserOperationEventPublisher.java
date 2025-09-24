@@ -16,7 +16,6 @@
 
 package org.idp.server.core.openid.identity;
 
-import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
 import org.idp.server.core.openid.authentication.AuthenticationTransaction;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
@@ -35,23 +34,12 @@ public class UserOperationEventPublisher {
   public void publish(
       Tenant tenant,
       AuthenticationTransaction authenticationTransaction,
-      AuthenticationInteractionType type,
-      boolean result,
+      SecurityEventType securityEventType,
       RequestAttributes requestAttributes) {
-    SecurityEventType securityEventType = formatSecurityEventType(type, result);
     UserOperationEventCreator eventCreator =
         new UserOperationEventCreator(
             tenant, authenticationTransaction, securityEventType, requestAttributes);
     SecurityEvent securityEvent = eventCreator.create();
     securityEventPublisher.publish(securityEvent);
-  }
-
-  private SecurityEventType formatSecurityEventType(
-      AuthenticationInteractionType type, boolean result) {
-    String prefix = type.formatSnakeCase();
-    if (result) {
-      return new SecurityEventType(prefix + "_success");
-    }
-    return new SecurityEventType(prefix + "_failure");
   }
 }
