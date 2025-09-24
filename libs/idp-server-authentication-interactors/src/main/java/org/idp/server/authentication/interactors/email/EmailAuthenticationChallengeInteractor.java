@@ -126,7 +126,7 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
             type,
             operationType(),
             method(),
-            DefaultSecurityEventType.sms_verification_challenge_failure);
+            DefaultSecurityEventType.email_verification_request_failure);
       }
 
       if (executionResult.isServerError()) {
@@ -135,7 +135,7 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
             type,
             operationType(),
             method(),
-            DefaultSecurityEventType.sms_verification_challenge_failure);
+            DefaultSecurityEventType.email_verification_request_failure);
       }
 
       String providerId = request.optValueAsString("provider_id", "idp-server");
