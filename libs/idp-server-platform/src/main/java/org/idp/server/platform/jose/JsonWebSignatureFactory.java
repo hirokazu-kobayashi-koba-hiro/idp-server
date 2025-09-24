@@ -22,6 +22,7 @@ import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.crypto.ECDSASigner;
 import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import java.security.PrivateKey;
@@ -99,6 +100,80 @@ public class JsonWebSignatureFactory {
       signedJWT.sign(jwsSigner);
       return new JsonWebSignature(signedJWT);
     } catch (JsonWebKeyInvalidException | JOSEException | ParseException e) {
+      throw new JoseInvalidException(e.getMessage(), e);
+    }
+  }
+
+  public JsonWebSignature createWithAsymmetricKeyForPem(
+      String claims, Map<String, Object> customHeaders, String pemPrivateKey)
+      throws JoseInvalidException {
+    try {
+      JWK jwk = JWK.parseFromPEMEncodedObjects(pemPrivateKey);
+      JsonWebKey jsonWebKey = new JsonWebKey(jwk);
+
+      // Determine algorithm based on key type if not already set
+      JWSAlgorithm jwsAlgorithm;
+      if (jsonWebKey.algorithm() != null) {
+        jwsAlgorithm = JWSAlgorithm.parse(jsonWebKey.algorithm());
+      } else {
+        // Default algorithms based on key type
+        JsonWebKeyType keyType = jsonWebKey.keyType();
+        switch (keyType) {
+          case EC -> jwsAlgorithm = JWSAlgorithm.ES256;
+          case RSA -> jwsAlgorithm = JWSAlgorithm.RS256;
+          default -> throw new JoseInvalidException("Unsupported key type: " + keyType);
+        }
+      }
+
+      JWSHeader jwsHeader =
+          new JWSHeader.Builder(jwsAlgorithm)
+              .keyID(jsonWebKey.keyId())
+              .customParams(customHeaders)
+              .build();
+
+      JWTClaimsSet claimsSet = JWTClaimsSet.parse(claims);
+      SignedJWT signedJWT = new SignedJWT(jwsHeader, claimsSet);
+      JWSSigner jwsSigner = of(jsonWebKey);
+      signedJWT.sign(jwsSigner);
+      return new JsonWebSignature(signedJWT);
+    } catch (Exception e) {
+      throw new JoseInvalidException(e.getMessage(), e);
+    }
+  }
+
+  public JsonWebSignature createWithAsymmetricKeyForPem(
+      Map<String, Object> claims, Map<String, Object> customHeaders, String pemPrivateKey)
+      throws JoseInvalidException {
+    try {
+      JWK jwk = JWK.parseFromPEMEncodedObjects(pemPrivateKey);
+      JsonWebKey jsonWebKey = new JsonWebKey(jwk);
+
+      // Determine algorithm based on key type if not already set
+      JWSAlgorithm jwsAlgorithm;
+      if (jsonWebKey.algorithm() != null) {
+        jwsAlgorithm = JWSAlgorithm.parse(jsonWebKey.algorithm());
+      } else {
+        // Default algorithms based on key type
+        JsonWebKeyType keyType = jsonWebKey.keyType();
+        switch (keyType) {
+          case EC -> jwsAlgorithm = JWSAlgorithm.ES256;
+          case RSA -> jwsAlgorithm = JWSAlgorithm.RS256;
+          default -> throw new JoseInvalidException("Unsupported key type: " + keyType);
+        }
+      }
+
+      JWSHeader jwsHeader =
+          new JWSHeader.Builder(jwsAlgorithm)
+              .keyID(jsonWebKey.keyId())
+              .customParams(customHeaders)
+              .build();
+
+      JWTClaimsSet claimsSet = JWTClaimsSet.parse(claims);
+      SignedJWT signedJWT = new SignedJWT(jwsHeader, claimsSet);
+      JWSSigner jwsSigner = of(jsonWebKey);
+      signedJWT.sign(jwsSigner);
+      return new JsonWebSignature(signedJWT);
+    } catch (Exception e) {
       throw new JoseInvalidException(e.getMessage(), e);
     }
   }
