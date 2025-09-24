@@ -109,7 +109,9 @@ public class HttpRequestParameterResolver implements AdditionalRequestParameterR
       RequestAttributes requestAttributes) {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("user", user.toMap());
-    parameters.put("application", application.toMap());
+    if (application != null && application.exists()) {
+      parameters.put("application", application.toMap());
+    }
     parameters.put("request_body", request.toMap());
     parameters.put("request_attributes", requestAttributes.toMap());
 
