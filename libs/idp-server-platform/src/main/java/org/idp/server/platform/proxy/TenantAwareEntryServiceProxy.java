@@ -99,17 +99,15 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
 
         return result;
       } catch (InvocationTargetException e) {
-        log.warn(
-            "Transaction failed: operation={}, service={}, method={}, error={}",
+        log.debug(
+            "Transaction failed: operation={}, service={}, method={}",
             operationType,
             target.getClass().getSimpleName(),
-            method.getName(),
-            e.getTargetException().getMessage(),
-            e.getTargetException());
+            method.getName());
         throw e.getTargetException();
       } catch (Throwable e) {
         log.error(
-            "Transaction failed: operation={}, service={}, method={}, error={}",
+            "Transaction failed: operation={}, service={}, method={}, cause={}",
             operationType,
             target.getClass().getSimpleName(),
             method.getName(),
@@ -157,18 +155,16 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         return result;
       } catch (InvocationTargetException e) {
         TransactionManager.rollbackTransaction();
-        log.error(
-            "Transaction rollback: operation={}, service={}, method={}, error={}",
+        log.debug(
+            "Transaction rollback: operation={}, service={}, method={}",
             operationType,
             target.getClass().getSimpleName(),
-            method.getName(),
-            e.getTargetException().getMessage(),
-            e.getTargetException());
+            method.getName());
         throw e.getTargetException();
       } catch (Throwable e) {
         TransactionManager.rollbackTransaction();
         log.error(
-            "Transaction rollback: operation={}, service={}, method={}, error={}",
+            "Transaction rollback: operation={}, service={}, method={}, cause={}",
             operationType,
             target.getClass().getSimpleName(),
             method.getName(),
