@@ -49,18 +49,6 @@ public class AuthenticationTransactionEntryService implements AuthenticationTran
     this.authenticationTransactionQueryRepository = authenticationTransactionQueryRepository;
   }
 
-  @Override
-  public AuthenticationTransaction request(
-      TenantIdentifier tenantIdentifier, RequestAttributes requestAttributes) {
-
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    AuthenticationTransaction authenticationTransaction = new AuthenticationTransaction();
-    authenticationTransactionCommandRepository.register(tenant, authenticationTransaction);
-
-    return null;
-  }
-
   public AuthenticationTransaction get(
       TenantIdentifier tenantIdentifier,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier) {
