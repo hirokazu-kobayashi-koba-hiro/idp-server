@@ -23,9 +23,6 @@ import org.idp.server.platform.type.RequestAttributes;
 
 public interface AuthenticationTransactionApi {
 
-  AuthenticationTransaction request(
-      TenantIdentifier tenantIdentifier, RequestAttributes requestAttributes);
-
   AuthenticationTransaction get(
       TenantIdentifier tenantIdentifier,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier);
