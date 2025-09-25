@@ -262,7 +262,9 @@ public class HttpRequestExecutor {
     }
 
     HttpRequest.Builder httpRequestBuilder =
-        HttpRequest.newBuilder().uri(URI.create(interpolatedUrl.value()));
+        HttpRequest.newBuilder()
+            .uri(URI.create(interpolatedUrl.value()))
+            .timeout(Duration.ofSeconds(configuration.requestTimeoutSeconds()));
 
     setHeaders(httpRequestBuilder, headers);
     setParams(httpRequestBuilder, configuration.httpMethod(), headers, requestBody);
@@ -270,7 +272,7 @@ public class HttpRequestExecutor {
     return httpRequestBuilder.build();
   }
 
-  private HttpRequestResult get(
+  public HttpRequestResult get(
       HttpRequestExecutionConfigInterface configuration,
       HttpRequestBaseParams httpRequestBaseParams) {
     HttpRequest httpRequest = buildGetRequest(configuration, httpRequestBaseParams);
@@ -305,7 +307,9 @@ public class HttpRequestExecutor {
     String urlWithQueryParams = interpolatedUrl.withQueryParams(new HttpQueryParams(queryParams));
 
     HttpRequest.Builder httpRequestBuilder =
-        HttpRequest.newBuilder().uri(URI.create(urlWithQueryParams));
+        HttpRequest.newBuilder()
+            .uri(URI.create(urlWithQueryParams))
+            .timeout(Duration.ofSeconds(configuration.requestTimeoutSeconds()));
 
     setHeaders(httpRequestBuilder, headers);
     setParams(httpRequestBuilder, HttpMethod.GET, headers, Map.of());

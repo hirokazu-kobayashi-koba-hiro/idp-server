@@ -37,6 +37,7 @@ public class AdditionalParameterHttpRequestConfig
   List<MappingRule> bodyMappingRules = new ArrayList<>();
   List<MappingRule> queryMappingRules = new ArrayList<>();
   HttpRetryConfiguration retryConfiguration = HttpRetryConfiguration.noRetry();
+  Integer requestTimeoutSeconds;
 
   public AdditionalParameterHttpRequestConfig() {}
 
@@ -118,6 +119,16 @@ public class AdditionalParameterHttpRequestConfig
     return retryConfiguration;
   }
 
+  @Override
+  public boolean hasRequestTimeout() {
+    return requestTimeoutSeconds != null && requestTimeoutSeconds > 0;
+  }
+
+  @Override
+  public int requestTimeoutSeconds() {
+    return requestTimeoutSeconds != null ? requestTimeoutSeconds : 30;
+  }
+
   public boolean exists() {
     return url != null && !url.isEmpty();
   }
@@ -130,6 +141,7 @@ public class AdditionalParameterHttpRequestConfig
     if (hasOAuthAuthorization()) map.put("oauth_authorization", oauthAuthorization.toMap());
     if (hasHmacAuthentication()) map.put("hmac_authentication", hmacAuthentication.toMap());
     if (hasRetryConfiguration()) map.put("retry_configuration", retryConfiguration.toMap());
+    if (hasRequestTimeout()) map.put("request_timeout_seconds", requestTimeoutSeconds);
     return map;
   }
 }
