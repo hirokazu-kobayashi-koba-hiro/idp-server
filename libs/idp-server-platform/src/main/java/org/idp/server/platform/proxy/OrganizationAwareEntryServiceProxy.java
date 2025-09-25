@@ -82,7 +82,7 @@ public class OrganizationAwareEntryServiceProxy implements InvocationHandler {
             target.getClass().getMethod(method.getName(), method.getParameterTypes());
         tx = implMethod.getAnnotation(Transaction.class);
       } catch (NoSuchMethodException e) {
-        log.error(e.getMessage(), e);
+        log.debug("Method not found for transaction annotation lookup: {}", e.getMessage());
       }
     }
     if (tx == null) {
@@ -105,17 +105,18 @@ public class OrganizationAwareEntryServiceProxy implements InvocationHandler {
 
         return result;
       } catch (InvocationTargetException e) {
-        log.warn(
-            "fail (InvocationTargetException): "
-                + target.getClass().getName()
-                + ": "
-                + method.getName()
-                + ", cause: "
-                + e.getTargetException().toString());
+        log.debug(
+            "transaction failed: class={}, method={}",
+            target.getClass().getSimpleName(),
+            method.getName());
         throw e.getTargetException();
       } catch (Throwable e) {
         log.error(
-            "fail: " + target.getClass().getName() + ": " + method.getName() + ", cause: " + e);
+            "transaction failed: class={}, method={}, cause={}",
+            target.getClass().getSimpleName(),
+            method.getName(),
+            e.getMessage(),
+            e);
         throw e;
       } finally {
         TransactionManager.closeConnection();
@@ -150,23 +151,19 @@ public class OrganizationAwareEntryServiceProxy implements InvocationHandler {
         return result;
       } catch (InvocationTargetException e) {
         TransactionManager.rollbackTransaction();
-        log.error(
-            "rollback transaction (InvocationTargetException): "
-                + target.getClass().getName()
-                + ": "
-                + method.getName()
-                + ", cause: "
-                + e.getTargetException().toString());
+        log.debug(
+            "rollback transaction: class={}, method={}",
+            target.getClass().getSimpleName(),
+            method.getName());
         throw e.getTargetException();
       } catch (Throwable e) {
         TransactionManager.rollbackTransaction();
         log.error(
-            "rollback transaction: "
-                + target.getClass().getName()
-                + ": "
-                + method.getName()
-                + ", cause: "
-                + e);
+            "rollback transaction: class={}, method={}, cause={}",
+            target.getClass().getSimpleName(),
+            method.getName(),
+            e.getMessage(),
+            e);
         throw e;
       } finally {
         TransactionManager.closeConnection();
