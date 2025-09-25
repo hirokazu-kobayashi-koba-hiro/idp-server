@@ -966,7 +966,7 @@ public class HttpRequestExecutor {
   private void setHeaders(
       HttpRequest.Builder httpRequestBuilder, Map<String, String> httpRequestStaticHeaders) {
 
-    log.debug("Http Request headers: {}", httpRequestStaticHeaders);
+    log.debug("Http Request headers: {}", jsonConverter.write(httpRequestStaticHeaders));
 
     httpRequestStaticHeaders.forEach(httpRequestBuilder::header);
     if (!httpRequestStaticHeaders.containsKey("Content-Type")) {
@@ -986,7 +986,7 @@ public class HttpRequestExecutor {
         break;
       case POST:
         {
-          log.debug("Http Request body: {}", requestBody);
+          log.debug("Http Request body: {}", jsonConverter.write(requestBody));
           if ("application/x-www-form-urlencoded".equals(headers.get("Content-Type"))) {
             HttpQueryParams httpQueryParams = HttpQueryParams.fromMapObject(requestBody);
             builder.POST(HttpRequest.BodyPublishers.ofString(httpQueryParams.params()));
@@ -997,7 +997,7 @@ public class HttpRequestExecutor {
         }
       case PUT:
         {
-          log.debug("Http Request body: {}", requestBody);
+          log.debug("Http Request body: {}", jsonConverter.write(requestBody));
           if ("application/x-www-form-urlencoded".equals(headers.get("Content-Type"))) {
             HttpQueryParams httpQueryParams = HttpQueryParams.fromMapObject(requestBody);
             builder.PUT(HttpRequest.BodyPublishers.ofString(httpQueryParams.params()));
@@ -1008,7 +1008,7 @@ public class HttpRequestExecutor {
         }
       case DELETE:
         {
-          log.debug("Http Request body: {}", requestBody);
+          log.debug("Http Request body: {}", jsonConverter.write(requestBody));
           if ("application/x-www-form-urlencoded".equals(headers.get("Content-Type"))) {
             HttpQueryParams httpQueryParams = HttpQueryParams.fromMapObject(requestBody);
             builder.method("DELETE", HttpRequest.BodyPublishers.ofString(httpQueryParams.params()));
