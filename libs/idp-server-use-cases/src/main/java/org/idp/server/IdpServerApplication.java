@@ -16,6 +16,7 @@
 
 package org.idp.server;
 
+import java.net.http.HttpClient;
 import java.util.Map;
 import org.idp.server.authentication.interactors.device.AuthenticationDeviceNotifiers;
 import org.idp.server.authentication.interactors.fidouaf.AuthenticationMetaDataApi;
@@ -134,6 +135,8 @@ import org.idp.server.platform.date.TimeConfig;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.protocol.ProtocolContainer;
+import org.idp.server.platform.http.HttpClientFactory;
+import org.idp.server.platform.http.HttpRequestExecutor;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.*;
 import org.idp.server.platform.notification.email.EmailSenders;
@@ -381,6 +384,12 @@ public class IdpServerApplication {
     AuthenticationInteractionQueryRepository authenticationInteractionQueryRepository =
         applicationComponentContainer.resolve(AuthenticationInteractionQueryRepository.class);
 
+    HttpClient httpClient = HttpClientFactory.defaultClient();
+    HttpRequestExecutor httpRequestExecutor =
+        new HttpRequestExecutor(httpClient, oAuthAuthorizationResolvers);
+    applicationComponentContainer.register(HttpRequestExecutor.class, httpRequestExecutor);
+    dependencyContainer.register(HttpRequestExecutor.class, httpRequestExecutor);
+
     SmsSenders smsSenders = SmsSenderPluginLoader.load(dependencyContainer);
     applicationComponentContainer.register(SmsSenders.class, smsSenders);
     EmailSenders emailSenders = EmailSenderPluginLoader.load(dependencyContainer);
@@ -425,6 +434,7 @@ public class IdpServerApplication {
 
     authenticationDependencyContainer.register(
         OAuthAuthorizationResolvers.class, oAuthAuthorizationResolvers);
+    authenticationDependencyContainer.register(HttpRequestExecutor.class, httpRequestExecutor);
 
     AuthenticationExecutors authenticationExecutors =
         AuthenticationExecutorPluginLoader.load(authenticationDependencyContainer);
@@ -475,7 +485,8 @@ public class IdpServerApplication {
     UserOperationEventPublisher userOperationEventPublisher =
         new UserOperationEventPublisher(securityEventPublisher);
 
-    OidcSsoExecutors oidcSsoExecutors = OidcSsoExecutorPluginLoader.load(dependencyContainer);
+    OidcSsoExecutors oidcSsoExecutors =
+        OidcSsoExecutorPluginLoader.load(applicationComponentContainer);
     FederationDependencyContainer federationDependencyContainer =
         FederationDependencyContainerPluginLoader.load(dependencyContainer);
     federationDependencyContainer.register(OidcSsoExecutors.class, oidcSsoExecutors);
@@ -580,7 +591,7 @@ public class IdpServerApplication {
                 userCommandRepository,
                 userEventPublisher,
                 additionalRequestParameterResolvers,
-                oAuthAuthorizationResolvers),
+                httpRequestExecutor),
             IdentityVerificationApplicationApi.class,
             databaseTypeProvider);
 
@@ -596,7 +607,7 @@ public class IdpServerApplication {
                 userCommandRepository,
                 userEventPublisher,
                 additionalRequestParameterResolvers,
-                oAuthAuthorizationResolvers),
+                httpRequestExecutor),
             IdentityVerificationCallbackApi.class,
             databaseTypeProvider);
 

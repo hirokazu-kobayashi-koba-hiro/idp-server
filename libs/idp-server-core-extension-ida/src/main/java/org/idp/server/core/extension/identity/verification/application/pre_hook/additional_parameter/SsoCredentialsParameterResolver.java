@@ -16,12 +16,8 @@
 
 package org.idp.server.core.extension.identity.verification.application.pre_hook.additional_parameter;
 
-import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
@@ -36,8 +32,7 @@ import org.idp.server.core.openid.federation.sso.SsoCredentials;
 import org.idp.server.core.openid.federation.sso.SsoCredentialsCommandRepository;
 import org.idp.server.core.openid.federation.sso.SsoCredentialsQueryRepository;
 import org.idp.server.core.openid.identity.User;
-import org.idp.server.platform.http.HttpClientFactory;
-import org.idp.server.platform.http.HttpQueryParams;
+import org.idp.server.platform.http.*;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -48,16 +43,17 @@ public class SsoCredentialsParameterResolver implements AdditionalRequestParamet
 
   SsoCredentialsQueryRepository ssoCredentialsQueryRepository;
   SsoCredentialsCommandRepository ssoCredentialsCommandRepository;
-  HttpClient httpClient;
+  HttpRequestExecutor httpRequestExecutor;
   JsonConverter jsonConverter;
   LoggerWrapper log = LoggerWrapper.getLogger(SsoCredentialsParameterResolver.class);
 
   public SsoCredentialsParameterResolver(
       SsoCredentialsQueryRepository ssoCredentialsQueryRepository,
-      SsoCredentialsCommandRepository ssoCredentialsCommandRepository) {
+      SsoCredentialsCommandRepository ssoCredentialsCommandRepository,
+      HttpRequestExecutor httpRequestExecutor) {
     this.ssoCredentialsQueryRepository = ssoCredentialsQueryRepository;
     this.ssoCredentialsCommandRepository = ssoCredentialsCommandRepository;
-    this.httpClient = HttpClientFactory.defaultClient();
+    this.httpRequestExecutor = httpRequestExecutor;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
@@ -91,7 +87,7 @@ public class SsoCredentialsParameterResolver implements AdditionalRequestParamet
 
       HttpRequest.Builder builder =
           HttpRequest.newBuilder()
-              .uri(new URI(ssoCredentialsParameterConfig.tokenEndpoint()))
+              .uri(URI.create(ssoCredentialsParameterConfig.tokenEndpoint()))
               .header("Content-Type", "application/x-www-form-urlencoded")
               .header("Accept", "application/json");
 
@@ -100,16 +96,18 @@ public class SsoCredentialsParameterResolver implements AdditionalRequestParamet
       } else {
         params.put("client_secret", ssoCredentialsParameterConfig.clientSecret());
       }
+
       HttpQueryParams httpQueryParams = new HttpQueryParams(params);
       builder.POST(HttpRequest.BodyPublishers.ofString(httpQueryParams.params()));
 
       HttpRequest httpRequest = builder.build();
+      HttpRequestResult httpRequestResult = httpRequestExecutor.execute(httpRequest);
 
-      HttpResponse<String> httpResponse =
-          httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-      String body = httpResponse.body();
+      if (httpRequestResult.isClientError() || httpRequestResult.isServerError()) {
+        throw new RuntimeException("Token refresh failed: " + httpRequestResult.statusCode());
+      }
 
-      JsonNodeWrapper json = JsonNodeWrapper.fromString(body);
+      JsonNodeWrapper json = JsonNodeWrapper.fromString(httpRequestResult.body().toString());
       String accessToken = json.getValueOrEmptyAsString("access_token");
       String refreshToken = json.getValueOrEmptyAsString("refresh_token");
       long expiresIn = Long.parseLong(json.getValueOrEmptyAsString("expires_in"));
@@ -119,7 +117,7 @@ public class SsoCredentialsParameterResolver implements AdditionalRequestParamet
       ssoCredentialsCommandRepository.register(tenant, user, updateWithToken);
 
       return AdditionalParameterResolveResult.success(json.toMap());
-    } catch (IOException | InterruptedException | URISyntaxException e) {
+    } catch (Exception e) {
       log.error("SSO credentials parameter resolution failed: {}", e.getMessage(), e);
 
       IdentityVerificationErrorDetails errorDetails =

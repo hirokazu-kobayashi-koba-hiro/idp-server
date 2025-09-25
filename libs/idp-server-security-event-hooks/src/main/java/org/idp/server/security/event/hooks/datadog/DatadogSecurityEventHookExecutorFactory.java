@@ -17,13 +17,14 @@
 package org.idp.server.security.event.hooks.datadog;
 
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
+import org.idp.server.platform.http.HttpRequestExecutor;
 import org.idp.server.platform.security.hook.SecurityEventHook;
 import org.idp.server.platform.security.hook.SecurityEventHookFactory;
 
 public class DatadogSecurityEventHookExecutorFactory implements SecurityEventHookFactory {
   @Override
   public SecurityEventHook create(ApplicationComponentContainer container) {
-
-    return new DatadogSecurityEventHookExecutor();
+    HttpRequestExecutor httpRequestExecutor = container.resolve(HttpRequestExecutor.class);
+    return new DatadogSecurityEventHookExecutor(httpRequestExecutor);
   }
 }

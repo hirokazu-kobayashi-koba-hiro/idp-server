@@ -20,21 +20,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.federation.sso.SsoProvider;
-import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
+import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.plugin.DependencyAwarePluginLoader;
+import org.idp.server.platform.plugin.PluginLoader;
 
-public class OidcSsoExecutorPluginLoader
-    extends DependencyAwarePluginLoader<OidcSsoExecutor, OidcSsoExecutorFactory> {
+public class OidcSsoExecutorPluginLoader {
 
   private static final LoggerWrapper log =
       LoggerWrapper.getLogger(OidcSsoExecutorPluginLoader.class);
 
-  public static OidcSsoExecutors load(ApplicationComponentDependencyContainer container) {
+  public static OidcSsoExecutors load(ApplicationComponentContainer container) {
     Map<SsoProvider, OidcSsoExecutor> executors = new HashMap<>();
 
     List<OidcSsoExecutorFactory> internalFactories =
-        loadFromInternalModule(OidcSsoExecutorFactory.class);
+        PluginLoader.loadFromInternalModule(OidcSsoExecutorFactory.class);
     for (OidcSsoExecutorFactory factory : internalFactories) {
       OidcSsoExecutor executor = factory.create(container);
       SsoProvider provider = factory.ssoProvider();
@@ -43,32 +42,12 @@ public class OidcSsoExecutorPluginLoader
     }
 
     List<OidcSsoExecutorFactory> externalFactories =
-        loadFromExternalModule(OidcSsoExecutorFactory.class);
+        PluginLoader.loadFromExternalModule(OidcSsoExecutorFactory.class);
     for (OidcSsoExecutorFactory factory : externalFactories) {
       OidcSsoExecutor executor = factory.create(container);
       SsoProvider provider = factory.ssoProvider();
       executors.put(provider, executor);
       log.info("Dynamic registered external SSO provider via factory: name={}", provider.name());
-    }
-
-    return new OidcSsoExecutors(executors);
-  }
-
-  public static OidcSsoExecutors load() {
-    Map<SsoProvider, OidcSsoExecutor> executors = new HashMap<>();
-
-    List<OidcSsoExecutor> internals = loadFromInternalModule(OidcSsoExecutor.class);
-    for (OidcSsoExecutor executor : internals) {
-      SsoProvider provider = executor.type();
-      executors.put(provider, executor);
-      log.info("Dynamic registered internal SSO provider: name={}", provider.name());
-    }
-
-    List<OidcSsoExecutor> externals = loadFromExternalModule(OidcSsoExecutor.class);
-    for (OidcSsoExecutor executor : externals) {
-      SsoProvider provider = executor.type();
-      executors.put(provider, executor);
-      log.info("Dynamic registered external SSO provider: name={}", provider.name());
     }
 
     return new OidcSsoExecutors(executors);

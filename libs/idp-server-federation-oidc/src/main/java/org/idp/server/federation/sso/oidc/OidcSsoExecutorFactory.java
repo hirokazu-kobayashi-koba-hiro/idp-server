@@ -17,9 +17,13 @@
 package org.idp.server.federation.sso.oidc;
 
 import org.idp.server.core.openid.federation.sso.SsoProvider;
-import org.idp.server.platform.dependency.ComponentFactory;
+import org.idp.server.platform.dependency.ApplicationComponentContainer;
 
-public interface OidcSsoExecutorFactory extends ComponentFactory<OidcSsoExecutor> {
+public interface OidcSsoExecutorFactory {
+
+  OidcSsoExecutor create(ApplicationComponentContainer container);
+
+  String type();
 
   SsoProvider ssoProvider();
 }

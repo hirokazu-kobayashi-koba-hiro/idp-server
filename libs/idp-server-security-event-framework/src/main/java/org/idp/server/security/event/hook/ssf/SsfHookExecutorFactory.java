@@ -17,15 +17,14 @@
 package org.idp.server.security.event.hook.ssf;
 
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
+import org.idp.server.platform.http.HttpRequestExecutor;
 import org.idp.server.platform.security.hook.SecurityEventHook;
 import org.idp.server.platform.security.hook.SecurityEventHookFactory;
 
 public class SsfHookExecutorFactory implements SecurityEventHookFactory {
   @Override
   public SecurityEventHook create(ApplicationComponentContainer container) {
-    OAuthAuthorizationResolvers oAuthAuthorizationResolvers =
-        container.resolve(OAuthAuthorizationResolvers.class);
-    return new SsfHookExecutor(oAuthAuthorizationResolvers);
+    HttpRequestExecutor httpRequestExecutor = container.resolve(HttpRequestExecutor.class);
+    return new SsfHookExecutor(httpRequestExecutor);
   }
 }

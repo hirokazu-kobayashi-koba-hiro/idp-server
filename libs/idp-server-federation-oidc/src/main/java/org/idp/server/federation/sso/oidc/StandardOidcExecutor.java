@@ -16,17 +16,14 @@
 
 package org.idp.server.federation.sso.oidc;
 
-import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.federation.sso.SsoProvider;
-import org.idp.server.platform.http.HttpClientFactory;
 import org.idp.server.platform.http.HttpQueryParams;
+import org.idp.server.platform.http.HttpRequestExecutor;
+import org.idp.server.platform.http.HttpRequestResult;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -34,11 +31,11 @@ import org.idp.server.platform.log.LoggerWrapper;
 public class StandardOidcExecutor implements OidcSsoExecutor {
 
   LoggerWrapper log = LoggerWrapper.getLogger(StandardOidcExecutor.class);
-  HttpClient httpClient;
+  HttpRequestExecutor httpRequestExecutor;
   JsonConverter jsonConverter;
 
-  public StandardOidcExecutor() {
-    this.httpClient = HttpClientFactory.defaultClient();
+  public StandardOidcExecutor(HttpRequestExecutor httpRequestExecutor) {
+    this.httpRequestExecutor = httpRequestExecutor;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
@@ -66,15 +63,11 @@ public class StandardOidcExecutor implements OidcSsoExecutor {
 
       HttpRequest request = builder.build();
 
-      HttpResponse<String> httpResponse =
-          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-      String body = httpResponse.body();
+      HttpRequestResult httpResult = httpRequestExecutor.execute(request);
+      JsonNodeWrapper json = httpResult.body();
 
-      JsonNodeWrapper json = JsonNodeWrapper.fromString(body);
-
-      return new OidcTokenResult(
-          httpResponse.statusCode(), httpResponse.headers().map(), json.toMap());
-    } catch (IOException | InterruptedException | URISyntaxException e) {
+      return new OidcTokenResult(httpResult.statusCode(), httpResult.headers(), json.toMap());
+    } catch (Exception e) {
       log.error(e.getMessage(), e);
       return new OidcTokenResult(
           500,
@@ -96,14 +89,13 @@ public class StandardOidcExecutor implements OidcSsoExecutor {
               .GET()
               .build();
 
-      HttpResponse<String> httpResponse =
-          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+      HttpRequestResult httpResult = httpRequestExecutor.execute(request);
 
-      String body = httpResponse.body();
+      String body = httpResult.body().toString();
       log.debug("JWKS response: {}", body);
 
-      return new OidcJwksResult(httpResponse.statusCode(), httpResponse.headers().map(), body);
-    } catch (IOException | InterruptedException | URISyntaxException e) {
+      return new OidcJwksResult(httpResult.statusCode(), httpResult.headers(), body);
+    } catch (Exception e) {
       log.error(e.getMessage(), e);
       return new OidcJwksResult(500, Map.of(), "unexpected network error");
     }
@@ -123,27 +115,24 @@ public class StandardOidcExecutor implements OidcSsoExecutor {
               .GET()
               .build();
 
-      HttpResponse<String> httpResponse =
-          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+      HttpRequestResult httpResult = httpRequestExecutor.execute(request);
 
-      String body = httpResponse.body();
-
-      JsonNodeWrapper json = JsonNodeWrapper.fromString(body);
+      JsonNodeWrapper json = httpResult.body();
       HashMap<String, Object> map = new HashMap<>();
-      map.put("staus_code", httpResponse.statusCode());
-      map.put("response_headers", httpResponse.headers());
+      map.put("staus_code", httpResult.statusCode());
+      map.put("response_headers", httpResult.headers());
       map.put("response_body", json.toMap());
 
-      if (httpResponse.statusCode() >= 400 && httpResponse.statusCode() < 500) {
+      if (httpResult.statusCode() >= 400 && httpResult.statusCode() < 500) {
         return UserinfoExecutionResult.clientError(map);
       }
 
-      if (httpResponse.statusCode() >= 500) {
+      if (httpResult.statusCode() >= 500) {
         return UserinfoExecutionResult.serverError(map);
       }
 
       return UserinfoExecutionResult.success(Map.of("http_request", map));
-    } catch (IOException | InterruptedException | URISyntaxException e) {
+    } catch (Exception e) {
       log.error(e.getMessage(), e);
       return UserinfoExecutionResult.serverError(
           Map.of("error", "server_error", "error_description", "unexpected network error"));

@@ -17,16 +17,16 @@
 package org.idp.server.federation.sso.oidc;
 
 import org.idp.server.core.openid.federation.sso.SsoProvider;
-import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
+import org.idp.server.platform.dependency.ApplicationComponentContainer;
+import org.idp.server.platform.http.HttpRequestExecutor;
 
 public class OAuthExtensionExecutorFactory implements OidcSsoExecutorFactory {
 
   @Override
-  public OidcSsoExecutor create(ApplicationComponentDependencyContainer container) {
-    OAuthAuthorizationResolvers oAuthAuthorizationResolvers =
-        container.resolve(OAuthAuthorizationResolvers.class);
-    return new OAuthExtensionExecutor(oAuthAuthorizationResolvers);
+  public OidcSsoExecutor create(ApplicationComponentContainer container) {
+    HttpRequestExecutor httpRequestExecutor = container.resolve(HttpRequestExecutor.class);
+    UserinfoExecutors userinfoExecutors = new UserinfoExecutors(httpRequestExecutor);
+    return new OAuthExtensionExecutor(httpRequestExecutor, userinfoExecutors);
   }
 
   @Override

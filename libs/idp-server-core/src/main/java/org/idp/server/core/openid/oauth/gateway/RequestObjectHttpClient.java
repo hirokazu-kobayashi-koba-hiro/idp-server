@@ -16,23 +16,20 @@
 
 package org.idp.server.core.openid.oauth.gateway;
 
-import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import org.idp.server.core.openid.oauth.type.oauth.RequestUri;
 import org.idp.server.core.openid.oauth.type.oidc.RequestObject;
-import org.idp.server.platform.http.HttpClientFactory;
+import org.idp.server.platform.http.HttpRequestExecutor;
+import org.idp.server.platform.http.HttpRequestResult;
 
 /** RequestObjectHttpClient */
 public class RequestObjectHttpClient implements RequestObjectGateway {
 
-  HttpClient httpClient;
+  HttpRequestExecutor httpRequestExecutor;
 
-  public RequestObjectHttpClient() {
-    this.httpClient = HttpClientFactory.defaultClient();
+  public RequestObjectHttpClient(HttpRequestExecutor httpRequestExecutor) {
+    this.httpRequestExecutor = httpRequestExecutor;
   }
 
   @Override
@@ -40,15 +37,19 @@ public class RequestObjectHttpClient implements RequestObjectGateway {
     try {
       HttpRequest request =
           HttpRequest.newBuilder()
-              .uri(new URI(requestUri.value()))
+              .uri(URI.create(requestUri.value()))
               .GET()
               .header("Content-Type", "application/json")
               .build();
-      HttpResponse<String> response =
-          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-      String body = response.body();
-      return new RequestObject(body);
-    } catch (URISyntaxException | IOException | InterruptedException e) {
+
+      HttpRequestResult result = httpRequestExecutor.execute(request);
+
+      if (result.isClientError() || result.isServerError()) {
+        throw new RuntimeException("Failed to fetch request object: " + result.statusCode());
+      }
+
+      return new RequestObject(result.body().toString());
+    } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }

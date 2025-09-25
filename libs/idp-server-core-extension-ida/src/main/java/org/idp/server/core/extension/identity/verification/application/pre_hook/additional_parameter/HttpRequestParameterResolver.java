@@ -31,7 +31,6 @@ import org.idp.server.platform.http.*;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 import org.idp.server.platform.type.RequestAttributes;
 
 public class HttpRequestParameterResolver implements AdditionalRequestParameterResolver {
@@ -39,14 +38,11 @@ public class HttpRequestParameterResolver implements AdditionalRequestParameterR
   private static final LoggerWrapper log =
       LoggerWrapper.getLogger(HttpRequestParameterResolver.class);
 
-  OAuthAuthorizationResolvers authorizationResolvers;
   HttpRequestExecutor httpRequestExecutor;
   JsonConverter jsonConverter;
 
-  public HttpRequestParameterResolver(OAuthAuthorizationResolvers oAuthAuthorizationResolvers) {
-    this.authorizationResolvers = oAuthAuthorizationResolvers;
-    this.httpRequestExecutor =
-        new HttpRequestExecutor(HttpClientFactory.defaultClient(), authorizationResolvers);
+  public HttpRequestParameterResolver(HttpRequestExecutor httpRequestExecutor) {
+    this.httpRequestExecutor = httpRequestExecutor;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 

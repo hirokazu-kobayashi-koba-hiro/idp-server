@@ -18,21 +18,18 @@ package org.idp.server.federation.sso.oidc;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.platform.http.HttpClientFactory;
 import org.idp.server.platform.http.HttpRequestBaseParams;
 import org.idp.server.platform.http.HttpRequestExecutor;
 import org.idp.server.platform.http.HttpRequestResult;
 import org.idp.server.platform.json.JsonConverter;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 
 public class UserinfoHttpRequestExecutor implements UserinfoExecutor {
 
   HttpRequestExecutor httpRequestExecutor;
   JsonConverter jsonConverter;
 
-  public UserinfoHttpRequestExecutor(OAuthAuthorizationResolvers oAuthAuthorizationResolvers) {
-    this.httpRequestExecutor =
-        new HttpRequestExecutor(HttpClientFactory.defaultClient(), oAuthAuthorizationResolvers);
+  public UserinfoHttpRequestExecutor(HttpRequestExecutor httpRequestExecutor) {
+    this.httpRequestExecutor = httpRequestExecutor;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 

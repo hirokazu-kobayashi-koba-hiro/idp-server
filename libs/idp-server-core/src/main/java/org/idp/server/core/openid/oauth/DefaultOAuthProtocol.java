@@ -31,6 +31,7 @@ import org.idp.server.core.openid.oauth.response.AuthorizationResponse;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.platform.dependency.protocol.DefaultAuthorizationProvider;
+import org.idp.server.platform.http.HttpRequestExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /** OAuthApi */
@@ -52,13 +53,14 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
       AuthorizationGrantedRepository authorizationGrantedRepository,
       AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
       OAuthTokenCommandRepository oAuthTokenCommandRepository,
-      OAuthSessionDelegate oAuthSessionDelegate) {
+      OAuthSessionDelegate oAuthSessionDelegate,
+      HttpRequestExecutor httpRequestExecutor) {
     this.requestHandler =
         new OAuthRequestHandler(
             authorizationRequestRepository,
             authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository,
-            new RequestObjectHttpClient(),
+            new RequestObjectHttpClient(httpRequestExecutor),
             new RequestObjectFactories(),
             authorizationGrantedRepository);
     this.authorizeHandler =

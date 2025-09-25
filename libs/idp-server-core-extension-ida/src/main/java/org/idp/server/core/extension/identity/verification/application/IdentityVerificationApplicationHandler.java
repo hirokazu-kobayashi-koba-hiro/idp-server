@@ -34,9 +34,9 @@ import org.idp.server.core.extension.identity.verification.configuration.process
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.platform.http.HttpRequestExecutor;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 import org.idp.server.platform.type.RequestAttributes;
 
 public class IdentityVerificationApplicationHandler {
@@ -50,11 +50,11 @@ public class IdentityVerificationApplicationHandler {
 
   public IdentityVerificationApplicationHandler(
       Map<String, AdditionalRequestParameterResolver> additional,
-      OAuthAuthorizationResolvers oAuthAuthorizationResolvers) {
+      HttpRequestExecutor httpRequestExecutor) {
     this.requestVerifiers = new IdentityVerificationApplicationRequestVerifiers();
     this.additionalRequestParameterResolvers =
-        new AdditionalRequestParameterResolvers(additional, oAuthAuthorizationResolvers);
-    this.executors = new IdentityVerificationApplicationExecutors(oAuthAuthorizationResolvers);
+        new AdditionalRequestParameterResolvers(additional, httpRequestExecutor);
+    this.executors = new IdentityVerificationApplicationExecutors(httpRequestExecutor);
   }
 
   public IdentityVerificationApplyingResult executeRequest(

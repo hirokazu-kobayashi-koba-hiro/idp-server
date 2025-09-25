@@ -16,35 +16,33 @@
 
 package org.idp.server.federation.sso.oidc;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.Map;
 import org.idp.server.core.openid.federation.FederationType;
 import org.idp.server.core.openid.federation.sso.SsoProvider;
 import org.idp.server.core.openid.federation.sso.oidc.OidcSsoSession;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
-import org.idp.server.platform.http.HttpClientFactory;
 import org.idp.server.platform.http.HttpQueryParams;
+import org.idp.server.platform.http.HttpRequestExecutor;
+import org.idp.server.platform.http.HttpRequestResult;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 
 public class OAuthExtensionExecutor implements OidcSsoExecutor {
 
   LoggerWrapper log = LoggerWrapper.getLogger(OAuthExtensionExecutor.class);
-  HttpClient httpClient;
+  HttpRequestExecutor httpRequestExecutor;
   UserinfoExecutors userinfoExecutors;
   JsonConverter jsonConverter;
 
-  public OAuthExtensionExecutor(OAuthAuthorizationResolvers oAuthAuthorizationResolvers) {
-    this.httpClient = HttpClientFactory.defaultClient();
-    this.userinfoExecutors = new UserinfoExecutors(oAuthAuthorizationResolvers);
+  public OAuthExtensionExecutor(
+      HttpRequestExecutor httpRequestExecutor, UserinfoExecutors userinfoExecutors) {
+    this.httpRequestExecutor = httpRequestExecutor;
+    this.userinfoExecutors = userinfoExecutors;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
@@ -91,15 +89,11 @@ public class OAuthExtensionExecutor implements OidcSsoExecutor {
 
       HttpRequest request = builder.build();
 
-      HttpResponse<String> httpResponse =
-          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-      String body = httpResponse.body();
+      HttpRequestResult httpResult = httpRequestExecutor.execute(request);
+      JsonNodeWrapper json = httpResult.body();
 
-      JsonNodeWrapper json = JsonNodeWrapper.fromString(body);
-
-      return new OidcTokenResult(
-          httpResponse.statusCode(), httpResponse.headers().map(), json.toMap());
-    } catch (IOException | InterruptedException | URISyntaxException e) {
+      return new OidcTokenResult(httpResult.statusCode(), httpResult.headers(), json.toMap());
+    } catch (URISyntaxException e) {
       log.error(e.getMessage(), e);
       return new OidcTokenResult(
           500,
