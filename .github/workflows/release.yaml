@@ -1,0 +1,133 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION=${{ inputs.version }}
+          else
+            VERSION=${GITHUB_REF#refs/tags/}
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "version_number=${VERSION#v}" >> $GITHUB_OUTPUT
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Run quality checks
+        run: |
+          ./gradlew spotlessCheck
+
+      - name: Run tests
+        run: ./gradlew test
+
+      - name: Build all modules (app bootJar + libs jars)
+        run: ./gradlew build -x test -PreleaseVersion=${{ steps.version.outputs.version_number }}
+
+      - name: Collect and package library modules
+        run: |
+          mkdir -p release-artifacts
+          echo "Collecting library modules..."
+          find libs -name '*.jar' -path '*/build/libs/*' -not -name '*-plain.jar' -exec cp {} release-artifacts/ \;
+
+          # Check if any JARs were found
+          JAR_COUNT=$(ls release-artifacts/*.jar 2>/dev/null | wc -l)
+          if [ $JAR_COUNT -eq 0 ]; then
+            echo "Error: No library JARs found to package"
+            exit 1
+          fi
+
+          echo "Found $JAR_COUNT library JARs:"
+          ls -la release-artifacts/
+          echo "Creating libraries zip archive..."
+          cd release-artifacts
+          zip -r "../idp-server-libs-${{ steps.version.outputs.version_number }}.zip" *.jar
+          cd ..
+          ls -la idp-server-libs-*.zip
+
+      - name: Generate checksums
+        run: |
+          echo "Generating SHA256 checksums..."
+          # Use dynamic JAR detection
+          APP_JAR=$(ls app/build/libs/idp-server-*.jar)
+          LIBS_ZIP=$(ls idp-server-libs-*.zip)
+
+          sha256sum "$APP_JAR" > checksums.txt
+          sha256sum "$LIBS_ZIP" >> checksums.txt
+          echo "Generated checksums:"
+          cat checksums.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: Release ${{ steps.version.outputs.version }}
+          body: |
+            ## 🚀 Release ${{ steps.version.outputs.version }}
+
+            ### 📦 Assets
+            - **idp-server-${{ steps.version.outputs.version_number }}.jar**: Main application jar
+            - **idp-server-libs-${{ steps.version.outputs.version_number }}.zip**: Library modules archive
+            - **checksums.txt**: SHA256 checksums for verification
+
+            ### 📋 Changes
+            This release includes all changes from the latest commits. See commit history for detailed changes.
+
+            ### 🔧 Usage
+            1. Download the main application jar
+            2. Download the libraries zip if you need separate modules
+            3. Verify integrity using the provided checksums
+
+          files: |
+            app/build/libs/idp-server-${{ steps.version.outputs.version_number }}.jar
+            idp-server-libs-${{ steps.version.outputs.version_number }}.zip
+            checksums.txt
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+
+      - name: Release summary
+        run: |
+          echo "✅ Release ${{ steps.version.outputs.version }} created successfully!"
+          echo "📦 Artifacts uploaded:"
+          echo "  - Main application: app/build/libs/idp-server-*.jar"
+          echo "  - Library modules: idp-server-libs-${{ steps.version.outputs.version_number }}.zip"
+          echo "  - Checksums: checksums.txt"
+          echo "🔗 Release URL: https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.version }}"
