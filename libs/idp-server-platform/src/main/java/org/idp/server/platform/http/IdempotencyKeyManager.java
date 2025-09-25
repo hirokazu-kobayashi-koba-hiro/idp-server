@@ -94,6 +94,9 @@ public class IdempotencyKeyManager {
                 request.method(),
                 request.bodyPublisher().orElse(HttpRequest.BodyPublishers.noBody()));
 
+    // Copy timeout if present
+    request.timeout().ifPresent(builder::timeout);
+
     // Copy existing headers
     request
         .headers()
