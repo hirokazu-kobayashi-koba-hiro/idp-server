@@ -2067,6 +2067,9 @@ components:
         acr_values:
           type: string
           description: "要求する認証強度（ACR値）"
+        user_code:
+          type: string
+          description: "ユーザー認証デバイスでの認証リクエスト送信を許可するためのコード。悪意のある認証リクエストからユーザーを保護するためのオプショナルパラメータ。"
         authorization_details:
           $ref: '#/components/schemas/AuthorizationDetails'
       required:
