@@ -18,7 +18,7 @@
     },
     "notification_channel": {
       "type": "string",
-      "enum": ["fcm"]
+      "enum": ["fcm", "apns"]
     },
     "notification_token": {
       "type": "string"
