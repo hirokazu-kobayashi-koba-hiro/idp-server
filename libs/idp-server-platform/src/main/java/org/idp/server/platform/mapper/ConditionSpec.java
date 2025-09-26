@@ -123,6 +123,26 @@ public class ConditionSpec implements JsonReadable {
   }
 
   /**
+   * Creates a ConditionSpec from a Map representation (typically from JSON deserialization).
+   *
+   * @param map the map containing condition data
+   * @return a new ConditionSpec instance
+   * @throws IllegalArgumentException if the map is missing required fields
+   */
+  public static ConditionSpec fromMap(Map<String, Object> map) {
+    if (map == null) {
+      throw new IllegalArgumentException("condition map cannot be null");
+    }
+    String operation = (String) map.get("operation");
+    if (operation == null || operation.isEmpty()) {
+      throw new IllegalArgumentException("condition: operation is required");
+    }
+    String path = (String) map.get("path");
+    Object value = map.get("value");
+    return new ConditionSpec(operation, path, value);
+  }
+
+  /**
    * Evaluates the condition against the provided JSONPath context.
    *
    * <p>Supports both simple conditions (using {@link ConditionOperationEvaluator}) and compound
@@ -195,13 +215,14 @@ public class ConditionSpec implements JsonReadable {
     }
 
     @SuppressWarnings("unchecked")
-    List<ConditionSpec> conditions = (List<ConditionSpec>) value;
+    List<Object> rawConditions = (List<Object>) value;
 
-    if (conditions.isEmpty()) {
+    if (rawConditions.isEmpty()) {
       return true; // Empty allOf is considered true
     }
 
-    for (ConditionSpec condition : conditions) {
+    for (Object rawCondition : rawConditions) {
+      ConditionSpec condition = convertToConditionSpec(rawCondition);
       if (!condition.evaluate(jsonPath, depth)) {
         return false; // Short-circuit on first false
       }
@@ -216,18 +237,40 @@ public class ConditionSpec implements JsonReadable {
     }
 
     @SuppressWarnings("unchecked")
-    List<ConditionSpec> conditions = (List<ConditionSpec>) value;
+    List<Object> rawConditions = (List<Object>) value;
 
-    if (conditions.isEmpty()) {
+    if (rawConditions.isEmpty()) {
       return false; // Empty anyOf is considered false
     }
 
-    for (ConditionSpec condition : conditions) {
+    for (Object rawCondition : rawConditions) {
+      ConditionSpec condition = convertToConditionSpec(rawCondition);
       if (condition.evaluate(jsonPath, depth)) {
         return true; // Short-circuit on first true
       }
     }
     return false;
+  }
+
+  /**
+   * Converts a raw object (from JSON deserialization) to ConditionSpec.
+   *
+   * @param rawCondition the raw condition object
+   * @return a ConditionSpec instance
+   * @throws IllegalArgumentException if the object cannot be converted
+   */
+  private ConditionSpec convertToConditionSpec(Object rawCondition) {
+    if (rawCondition instanceof ConditionSpec) {
+      return (ConditionSpec) rawCondition;
+    } else if (rawCondition instanceof Map) {
+      @SuppressWarnings("unchecked")
+      Map<String, Object> conditionMap = (Map<String, Object>) rawCondition;
+      return ConditionSpec.fromMap(conditionMap);
+    } else {
+      throw new IllegalArgumentException(
+          "Invalid condition format: expected ConditionSpec or Map, got "
+              + (rawCondition != null ? rawCondition.getClass().getSimpleName() : "null"));
+    }
   }
 
   /**

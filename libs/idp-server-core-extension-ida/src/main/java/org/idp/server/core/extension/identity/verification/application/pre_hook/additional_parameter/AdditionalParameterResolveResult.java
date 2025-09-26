@@ -38,7 +38,7 @@ public class AdditionalParameterResolveResult {
       IdentityVerificationErrorDetails errorDetails,
       boolean failFast) {
     this.success = success;
-    this.data = data;
+    this.data = data != null ? data : Map.of();
     this.errorDetails = errorDetails;
     this.failFast = failFast;
   }
@@ -72,7 +72,7 @@ public class AdditionalParameterResolveResult {
    */
   public static AdditionalParameterResolveResult failFastError(
       IdentityVerificationErrorDetails errorDetails) {
-    return new AdditionalParameterResolveResult(false, null, errorDetails, true);
+    return new AdditionalParameterResolveResult(false, Map.of(), errorDetails, true);
   }
 
   /**

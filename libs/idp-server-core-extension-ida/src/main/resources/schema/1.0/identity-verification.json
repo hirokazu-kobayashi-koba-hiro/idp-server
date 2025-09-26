@@ -45,7 +45,8 @@
                     }
                   }
                 }
-              }
+              },
+              "condition": { "$ref": "#/definitions/ConditionSpec" }
             },
             "required": ["type"]
           }
@@ -79,7 +80,8 @@
                   }
                 },
                 "required": ["url", "method"]
-              }
+              },
+              "condition": { "$ref": "#/definitions/ConditionSpec" }
             },
             "required": ["type", "details"]
           }
@@ -210,6 +212,22 @@
         }
       },
       "required": ["to"]
+    },
+    "ConditionSpec": {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "type": "string",
+          "enum": [
+            "eq", "ne", "gt", "gte", "lt", "lte",
+            "in", "nin", "exists", "missing", "contains", "regex",
+            "allOf", "anyOf"
+          ]
+        },
+        "path": { "type": "string" },
+        "value": {}
+      },
+      "required": ["operation"]
     },
     "TransitionCondition": {
       "type": "object",
