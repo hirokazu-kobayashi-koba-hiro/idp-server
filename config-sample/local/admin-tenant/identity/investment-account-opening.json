@@ -119,6 +119,21 @@
               "client_secret": "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890",
               "access_token_expires_in": 300,
               "refresh_token_expires_in": 1800
+            },
+            "condition": {
+              "operation": "anyOf",
+              "value": [
+                {
+                  "operation": "EXISTS",
+                  "path": "$.request_body.mobile_phone_number",
+                  "value": "enhanced"
+                },
+                {
+                  "operation": "eq",
+                  "path": "$.request_body.verification_level",
+                  "value": "premium"
+                }
+              ]
             }
           }
         ]

@@ -18,6 +18,7 @@ package org.idp.server.platform.mapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.json.path.JsonPathWrapper;
@@ -856,5 +857,83 @@ class ConditionSpecTest {
     ConditionSpec condition = new ConditionSpec("eq", "$.invalid[syntax", "John");
 
     assertFalse(condition.evaluate(jsonPath));
+  }
+
+  @Test
+  void fromMap_shouldCreateConditionSpecFromValidMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("operation", "eq");
+    map.put("path", "$.user.role");
+    map.put("value", "admin");
+
+    ConditionSpec condition = ConditionSpec.fromMap(map);
+
+    assertEquals("eq", condition.operation());
+    assertEquals("$.user.role", condition.path());
+    assertEquals("admin", condition.value());
+  }
+
+  @Test
+  void fromMap_shouldCreateConditionSpecWithoutPath() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("operation", "exists");
+    map.put("path", "$.user.verified");
+
+    ConditionSpec condition = ConditionSpec.fromMap(map);
+
+    assertEquals("exists", condition.operation());
+    assertEquals("$.user.verified", condition.path());
+    assertNull(condition.value());
+  }
+
+  @Test
+  void fromMap_shouldThrowExceptionForNullMap() {
+    assertThrows(IllegalArgumentException.class, () -> ConditionSpec.fromMap(null));
+  }
+
+  @Test
+  void fromMap_shouldThrowExceptionForMissingOperation() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("path", "$.user.role");
+    map.put("value", "admin");
+
+    assertThrows(IllegalArgumentException.class, () -> ConditionSpec.fromMap(map));
+  }
+
+  @Test
+  void fromMap_shouldThrowExceptionForEmptyOperation() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("operation", "");
+    map.put("path", "$.user.role");
+    map.put("value", "admin");
+
+    assertThrows(IllegalArgumentException.class, () -> ConditionSpec.fromMap(map));
+  }
+
+  @Test
+  void fromMap_shouldWorkForCompoundConditions() {
+    Map<String, Object> innerCondition1 = new HashMap<>();
+    innerCondition1.put("operation", "eq");
+    innerCondition1.put("path", "$.user.role");
+    innerCondition1.put("value", "admin");
+
+    Map<String, Object> innerCondition2 = new HashMap<>();
+    innerCondition2.put("operation", "exists");
+    innerCondition2.put("path", "$.user.verified");
+
+    Map<String, Object> outerMap = new HashMap<>();
+    outerMap.put("operation", "allOf");
+    outerMap.put("value", List.of(innerCondition1, innerCondition2));
+
+    ConditionSpec condition = ConditionSpec.fromMap(outerMap);
+
+    assertEquals("allOf", condition.operation());
+    assertNull(condition.path());
+    assertTrue(condition.value() instanceof List);
+
+    // Test evaluation works with fromMap created condition
+    JsonPathWrapper jsonPath =
+        new JsonPathWrapper("{\"user\": {\"role\": \"admin\", \"verified\": true}}");
+    assertTrue(condition.evaluate(jsonPath));
   }
 }

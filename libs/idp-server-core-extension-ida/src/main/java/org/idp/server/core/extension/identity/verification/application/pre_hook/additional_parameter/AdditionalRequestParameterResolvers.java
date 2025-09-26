@@ -31,6 +31,8 @@ import org.idp.server.core.extension.identity.verification.configuration.process
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.http.HttpRequestExecutor;
+import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
@@ -72,6 +74,18 @@ public class AdditionalRequestParameterResolvers {
     List<Map<String, Object>> additionalParameterValues = new ArrayList<>();
     for (IdentityVerificationConfig additionalParameterConfig : additionalParameterConfigs) {
 
+      // Check if condition is specified and evaluate it
+      if (additionalParameterConfig.hasCondition()) {
+        JsonPathWrapper jsonPath =
+            createJsonPathContext(tenant, user, currentApplication, request, requestAttributes);
+        if (!additionalParameterConfig.condition().evaluate(jsonPath)) {
+          log.debug(
+              "Skipping additional parameter due to condition evaluation: type={}",
+              additionalParameterConfig.type());
+          continue;
+        }
+      }
+
       AdditionalRequestParameterResolver resolver =
           this.resolvers.get(additionalParameterConfig.type());
       if (resolver == null) {
@@ -102,15 +116,40 @@ public class AdditionalRequestParameterResolvers {
         return result;
       }
 
-      // For success or resilient errors, add the data to results
-      if (result.getData() != null) {
-        additionalParameterValues.add(result.getData());
-      }
+      // For success or resilient errors, always add the data to results
+      // (getData() is guaranteed to be non-null by constructor)
+      additionalParameterValues.add(result.getData());
     }
 
     Map<String, Object> combinedData = new HashMap<>();
     combinedData.put("pre_hook_additional_parameters", additionalParameterValues);
 
     return AdditionalParameterResolveResult.success(combinedData);
+  }
+
+  private JsonPathWrapper createJsonPathContext(
+      Tenant tenant,
+      User user,
+      IdentityVerificationApplication application,
+      IdentityVerificationRequest request,
+      RequestAttributes requestAttributes) {
+
+    Map<String, Object> context = new HashMap<>();
+
+    // Add user information (consistent with execution context)
+    context.put("user", user.toMap());
+
+    // Add application information (consistent with execution context)
+    if (application != null && application.exists()) {
+      context.put("application", application.toMap());
+    }
+
+    // Add request information (consistent with execution context)
+    context.put("request_body", request.toMap());
+
+    // Add request attributes (consistent with execution context)
+    context.put("request_attributes", requestAttributes.toMap());
+
+    return new JsonPathWrapper(JsonNodeWrapper.fromMap(context).toJson());
   }
 }
