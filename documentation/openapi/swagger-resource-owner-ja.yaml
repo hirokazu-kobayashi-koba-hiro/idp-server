@@ -717,8 +717,8 @@ components:
           description: 言語設定。（例：ja, en）
         notification_channel:
           type: string
-          enum: [ fcm ]
-          description: 通知チャネル（"fcm" など）。※現在サポートしているPush通知チャネルはfcmのみ。
+          enum: [ fcm, apns ]
+          description: 通知チャネル（"fcm", "apns"）。Firebase Cloud Messaging（Android）またはApple Push Notification Service（iOS）を指定。
         notification_token:
           type: string
           description: 通知を送信するためのトークン（例：FCMトークン）。
