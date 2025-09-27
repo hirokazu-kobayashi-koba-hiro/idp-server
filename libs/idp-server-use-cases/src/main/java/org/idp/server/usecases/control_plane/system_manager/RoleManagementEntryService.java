@@ -35,7 +35,7 @@ import org.idp.server.core.openid.identity.permission.*;
 import org.idp.server.core.openid.identity.role.*;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
-import org.idp.server.platform.audit.AuditLogWriters;
+import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -50,7 +50,7 @@ public class RoleManagementEntryService implements RoleManagementApi {
   RoleQueryRepository roleQueryRepository;
   RoleCommandRepository roleCommandRepository;
   PermissionQueryRepository permissionQueryRepository;
-  AuditLogWriters auditLogWriters;
+  AuditLogPublisher auditLogPublisher;
   LoggerWrapper log = LoggerWrapper.getLogger(RoleManagementEntryService.class);
 
   public RoleManagementEntryService(
@@ -58,12 +58,12 @@ public class RoleManagementEntryService implements RoleManagementApi {
       RoleQueryRepository roleQueryRepository,
       RoleCommandRepository roleCommandRepository,
       PermissionQueryRepository permissionQueryRepository,
-      AuditLogWriters auditLogWriters) {
+      AuditLogPublisher auditLogPublisher) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.roleQueryRepository = roleQueryRepository;
     this.roleCommandRepository = roleCommandRepository;
     this.permissionQueryRepository = permissionQueryRepository;
-    this.auditLogWriters = auditLogWriters;
+    this.auditLogPublisher = auditLogPublisher;
   }
 
   @Override
@@ -94,7 +94,7 @@ public class RoleManagementEntryService implements RoleManagementApi {
     AuditLog auditLog =
         AuditLogCreator.create(
             "RoleManagementApi.create", tenant, operator, oAuthToken, context, requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -126,6 +126,7 @@ public class RoleManagementEntryService implements RoleManagementApi {
   }
 
   @Override
+  @Transaction(readOnly = true)
   public RoleManagementResponse findList(
       TenantIdentifier tenantIdentifier,
       User operator,
@@ -145,7 +146,7 @@ public class RoleManagementEntryService implements RoleManagementApi {
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -180,6 +181,7 @@ public class RoleManagementEntryService implements RoleManagementApi {
   }
 
   @Override
+  @Transaction(readOnly = true)
   public RoleManagementResponse get(
       TenantIdentifier tenantIdentifier,
       User operator,
@@ -195,7 +197,7 @@ public class RoleManagementEntryService implements RoleManagementApi {
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "RoleManagementApi.get", "get", tenant, operator, oAuthToken, requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -250,7 +252,7 @@ public class RoleManagementEntryService implements RoleManagementApi {
     AuditLog auditLog =
         AuditLogCreator.createOnUpdate(
             "RoleManagementApi.update", tenant, operator, oAuthToken, context, requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -312,7 +314,7 @@ public class RoleManagementEntryService implements RoleManagementApi {
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -365,7 +367,7 @@ public class RoleManagementEntryService implements RoleManagementApi {
             oAuthToken,
             role.toMap(),
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();

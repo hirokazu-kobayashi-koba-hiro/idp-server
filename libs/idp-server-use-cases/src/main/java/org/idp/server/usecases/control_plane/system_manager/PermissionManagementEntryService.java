@@ -35,7 +35,7 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.permission.*;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
-import org.idp.server.platform.audit.AuditLogWriters;
+import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -50,20 +50,20 @@ public class PermissionManagementEntryService implements PermissionManagementApi
   PermissionQueryRepository permissionQueryRepository;
   PermissionCommandRepository permissionCommandRepository;
   PermissionRegistrationVerifier verifier;
-  AuditLogWriters auditLogWriters;
+  AuditLogPublisher auditLogPublisher;
   LoggerWrapper log = LoggerWrapper.getLogger(PermissionManagementEntryService.class);
 
   public PermissionManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
       PermissionQueryRepository permissionQueryRepository,
       PermissionCommandRepository permissionCommandRepository,
-      AuditLogWriters auditLogWriters) {
+      AuditLogPublisher auditLogPublisher) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.permissionQueryRepository = permissionQueryRepository;
     this.permissionCommandRepository = permissionCommandRepository;
     PermissionVerifier permissionVerifier = new PermissionVerifier(permissionQueryRepository);
     this.verifier = new PermissionRegistrationVerifier(permissionVerifier);
-    this.auditLogWriters = auditLogWriters;
+    this.auditLogPublisher = auditLogPublisher;
   }
 
   @Override
@@ -96,7 +96,7 @@ public class PermissionManagementEntryService implements PermissionManagementApi
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -128,6 +128,7 @@ public class PermissionManagementEntryService implements PermissionManagementApi
   }
 
   @Override
+  @Transaction(readOnly = true)
   public PermissionManagementResponse findList(
       TenantIdentifier tenantIdentifier,
       User operator,
@@ -147,7 +148,7 @@ public class PermissionManagementEntryService implements PermissionManagementApi
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -182,6 +183,7 @@ public class PermissionManagementEntryService implements PermissionManagementApi
   }
 
   @Override
+  @Transaction(readOnly = true)
   public PermissionManagementResponse get(
       TenantIdentifier tenantIdentifier,
       User operator,
@@ -197,7 +199,7 @@ public class PermissionManagementEntryService implements PermissionManagementApi
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "PermissionManagementApi.get", "get", tenant, operator, oAuthToken, requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -249,7 +251,7 @@ public class PermissionManagementEntryService implements PermissionManagementApi
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -302,7 +304,7 @@ public class PermissionManagementEntryService implements PermissionManagementApi
             oAuthToken,
             permission.toMap(),
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();

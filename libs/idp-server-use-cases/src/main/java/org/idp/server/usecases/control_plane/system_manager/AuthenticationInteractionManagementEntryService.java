@@ -44,20 +44,21 @@ public class AuthenticationInteractionManagementEntryService
 
   AuthenticationInteractionQueryRepository authenticationInteractionQueryRepository;
   TenantQueryRepository tenantQueryRepository;
-  AuditLogWriters auditLogWriters;
+  AuditLogPublisher auditLogPublisher;
   LoggerWrapper log =
       LoggerWrapper.getLogger(AuthenticationInteractionManagementEntryService.class);
 
   public AuthenticationInteractionManagementEntryService(
       AuthenticationInteractionQueryRepository authenticationInteractionQueryRepository,
       TenantQueryRepository tenantQueryRepository,
-      AuditLogWriters auditLogWriters) {
+      AuditLogPublisher auditLogPublisher) {
     this.authenticationInteractionQueryRepository = authenticationInteractionQueryRepository;
     this.tenantQueryRepository = tenantQueryRepository;
-    this.auditLogWriters = auditLogWriters;
+    this.auditLogPublisher = auditLogPublisher;
   }
 
   @Override
+  @Transaction(readOnly = true)
   public AuthenticationInteractionManagementResponse findList(
       TenantIdentifier tenantIdentifier,
       User operator,
@@ -75,7 +76,7 @@ public class AuthenticationInteractionManagementEntryService
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -116,6 +117,7 @@ public class AuthenticationInteractionManagementEntryService
   }
 
   @Override
+  @Transaction(readOnly = true)
   public AuthenticationInteractionManagementResponse get(
       TenantIdentifier tenantIdentifier,
       User operator,
@@ -137,7 +139,7 @@ public class AuthenticationInteractionManagementEntryService
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();

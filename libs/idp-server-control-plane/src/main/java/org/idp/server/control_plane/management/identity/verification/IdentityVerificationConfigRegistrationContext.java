@@ -40,7 +40,7 @@ public class IdentityVerificationConfigRegistrationContext implements ConfigRegi
   }
 
   public Tenant tenant() {
-    return null;
+    return tenant;
   }
 
   public IdentityVerificationConfiguration configuration() {

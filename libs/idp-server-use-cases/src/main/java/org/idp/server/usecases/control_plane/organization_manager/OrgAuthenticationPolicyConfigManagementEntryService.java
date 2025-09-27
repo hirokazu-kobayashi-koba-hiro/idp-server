@@ -38,7 +38,7 @@ import org.idp.server.core.openid.authentication.repository.AuthenticationPolicy
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
-import org.idp.server.platform.audit.AuditLogWriters;
+import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
@@ -82,7 +82,7 @@ public class OrgAuthenticationPolicyConfigManagementEntryService
   AuthenticationPolicyConfigurationCommandRepository
       authenticationPolicyConfigurationCommandRepository;
   AuthenticationPolicyConfigurationQueryRepository authenticationPolicyConfigurationQueryRepository;
-  AuditLogWriters auditLogWriters;
+  AuditLogPublisher auditLogPublisher;
   OrganizationAccessVerifier organizationAccessVerifier;
 
   LoggerWrapper log =
@@ -97,7 +97,7 @@ public class OrgAuthenticationPolicyConfigManagementEntryService
    *     configuration command repository
    * @param authenticationPolicyConfigurationQueryRepository the authentication policy configuration
    *     query repository
-   * @param auditLogWriters the audit log writers
+   * @param auditLogPublisher the audit log publisher
    */
   public OrgAuthenticationPolicyConfigManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
@@ -106,14 +106,14 @@ public class OrgAuthenticationPolicyConfigManagementEntryService
           authenticationPolicyConfigurationCommandRepository,
       AuthenticationPolicyConfigurationQueryRepository
           authenticationPolicyConfigurationQueryRepository,
-      AuditLogWriters auditLogWriters) {
+      AuditLogPublisher auditLogPublisher) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.organizationRepository = organizationRepository;
     this.authenticationPolicyConfigurationCommandRepository =
         authenticationPolicyConfigurationCommandRepository;
     this.authenticationPolicyConfigurationQueryRepository =
         authenticationPolicyConfigurationQueryRepository;
-    this.auditLogWriters = auditLogWriters;
+    this.auditLogPublisher = auditLogPublisher;
     this.organizationAccessVerifier = new OrganizationAccessVerifier();
   }
 
@@ -158,7 +158,7 @@ public class OrgAuthenticationPolicyConfigManagementEntryService
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (context.isDryRun()) {
       return context.toResponse();
@@ -170,7 +170,7 @@ public class OrgAuthenticationPolicyConfigManagementEntryService
     return context.toResponse();
   }
 
-  @Override
+  @Transaction(readOnly = true)
   public AuthenticationPolicyConfigManagementResponse findList(
       OrganizationIdentifier organizationIdentifier,
       TenantIdentifier tenantIdentifier,
@@ -198,7 +198,7 @@ public class OrgAuthenticationPolicyConfigManagementEntryService
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!accessResult.isSuccess()) {
       Map<String, Object> response = new HashMap<>();
@@ -234,6 +234,7 @@ public class OrgAuthenticationPolicyConfigManagementEntryService
   }
 
   @Override
+  @Transaction(readOnly = true)
   public AuthenticationPolicyConfigManagementResponse get(
       OrganizationIdentifier organizationIdentifier,
       TenantIdentifier tenantIdentifier,
@@ -264,7 +265,7 @@ public class OrgAuthenticationPolicyConfigManagementEntryService
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!accessResult.isSuccess()) {
       Map<String, Object> response = new HashMap<>();
@@ -334,7 +335,7 @@ public class OrgAuthenticationPolicyConfigManagementEntryService
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (context.isDryRun()) {
       return context.toResponse();
@@ -378,7 +379,7 @@ public class OrgAuthenticationPolicyConfigManagementEntryService
             oAuthToken,
             configuration.toMap(),
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!accessResult.isSuccess()) {
       Map<String, Object> response = new HashMap<>();

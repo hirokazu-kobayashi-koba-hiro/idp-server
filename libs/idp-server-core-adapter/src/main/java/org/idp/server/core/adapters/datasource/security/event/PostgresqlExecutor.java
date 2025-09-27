@@ -21,8 +21,6 @@ import java.util.List;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.security.SecurityEvent;
-import org.idp.server.platform.security.SecurityEvents;
-import org.idp.server.platform.security.event.SecurityEventSearchCriteria;
 
 public class PostgresqlExecutor implements SecurityEventSqlExecutor {
 
@@ -89,15 +87,5 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
     params.add(converter.write(securityEvent.detail().toMap()));
 
     sqlExecutor.execute(sqlTemplate, params);
-  }
-
-  @Override
-  public SecurityEvents selectListByUser(String eventServerId, String userId) {
-    return null;
-  }
-
-  @Override
-  public SecurityEvents selectList(String eventServerId, SecurityEventSearchCriteria criteria) {
-    return null;
   }
 }

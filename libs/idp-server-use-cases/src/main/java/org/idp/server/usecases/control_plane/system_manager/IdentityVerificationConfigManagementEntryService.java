@@ -34,7 +34,7 @@ import org.idp.server.core.extension.identity.verification.repository.IdentityVe
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
-import org.idp.server.platform.audit.AuditLogWriters;
+import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -50,7 +50,7 @@ public class IdentityVerificationConfigManagementEntryService
       identityVerificationConfigurationCommandRepository;
   IdentityVerificationConfigurationQueryRepository identityVerificationConfigurationQueryRepository;
   TenantQueryRepository tenantQueryRepository;
-  AuditLogWriters auditLogWriters;
+  AuditLogPublisher auditLogPublisher;
   LoggerWrapper log =
       LoggerWrapper.getLogger(IdentityVerificationConfigManagementEntryService.class);
 
@@ -60,13 +60,13 @@ public class IdentityVerificationConfigManagementEntryService
       IdentityVerificationConfigurationQueryRepository
           identityVerificationConfigurationQueryRepository,
       TenantQueryRepository tenantQueryRepository,
-      AuditLogWriters auditLogWriters) {
+      AuditLogPublisher auditLogPublisher) {
     this.identityVerificationConfigurationCommandRepository =
         identityVerificationConfigurationCommandRepository;
     this.identityVerificationConfigurationQueryRepository =
         identityVerificationConfigurationQueryRepository;
     this.tenantQueryRepository = tenantQueryRepository;
-    this.auditLogWriters = auditLogWriters;
+    this.auditLogPublisher = auditLogPublisher;
   }
 
   @Override
@@ -94,7 +94,7 @@ public class IdentityVerificationConfigManagementEntryService
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -120,6 +120,7 @@ public class IdentityVerificationConfigManagementEntryService
   }
 
   @Override
+  @Transaction(readOnly = true)
   public IdentityVerificationConfigManagementResponse findList(
       TenantIdentifier tenantIdentifier,
       User operator,
@@ -138,7 +139,7 @@ public class IdentityVerificationConfigManagementEntryService
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -180,6 +181,7 @@ public class IdentityVerificationConfigManagementEntryService
   }
 
   @Override
+  @Transaction(readOnly = true)
   public IdentityVerificationConfigManagementResponse get(
       TenantIdentifier tenantIdentifier,
       User operator,
@@ -201,7 +203,7 @@ public class IdentityVerificationConfigManagementEntryService
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -253,7 +255,7 @@ public class IdentityVerificationConfigManagementEntryService
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -307,7 +309,7 @@ public class IdentityVerificationConfigManagementEntryService
             oAuthToken,
             configuration.toMap(),
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();

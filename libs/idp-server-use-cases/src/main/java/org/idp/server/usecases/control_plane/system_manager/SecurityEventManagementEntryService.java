@@ -27,7 +27,7 @@ import org.idp.server.control_plane.management.security.event.io.SecurityEventMa
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
-import org.idp.server.platform.audit.AuditLogWriters;
+import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -44,19 +44,20 @@ public class SecurityEventManagementEntryService implements SecurityEventManagem
 
   SecurityEventQueryRepository securityEventQueryRepository;
   TenantQueryRepository tenantQueryRepository;
-  AuditLogWriters auditLogWriters;
+  AuditLogPublisher auditLogPublisher;
   LoggerWrapper log = LoggerWrapper.getLogger(SecurityEventManagementEntryService.class);
 
   public SecurityEventManagementEntryService(
       SecurityEventQueryRepository securityEventQueryRepository,
       TenantQueryRepository tenantQueryRepository,
-      AuditLogWriters auditLogWriters) {
+      AuditLogPublisher auditLogPublisher) {
     this.securityEventQueryRepository = securityEventQueryRepository;
     this.tenantQueryRepository = tenantQueryRepository;
-    this.auditLogWriters = auditLogWriters;
+    this.auditLogPublisher = auditLogPublisher;
   }
 
   @Override
+  @Transaction(readOnly = true)
   public SecurityEventManagementResponse findList(
       TenantIdentifier tenantIdentifier,
       User operator,
@@ -74,7 +75,7 @@ public class SecurityEventManagementEntryService implements SecurityEventManagem
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -110,6 +111,7 @@ public class SecurityEventManagementEntryService implements SecurityEventManagem
   }
 
   @Override
+  @Transaction(readOnly = true)
   public SecurityEventManagementResponse get(
       TenantIdentifier tenantIdentifier,
       User operator,
@@ -129,7 +131,7 @@ public class SecurityEventManagementEntryService implements SecurityEventManagem
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();

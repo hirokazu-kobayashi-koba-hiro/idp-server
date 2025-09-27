@@ -123,6 +123,8 @@ import org.idp.server.core.openid.userinfo.UserinfoProtocol;
 import org.idp.server.core.openid.userinfo.UserinfoProtocols;
 import org.idp.server.federation.sso.oidc.OidcSsoExecutorPluginLoader;
 import org.idp.server.federation.sso.oidc.OidcSsoExecutors;
+import org.idp.server.platform.audit.AuditLogApi;
+import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.audit.AuditLogQueryRepository;
 import org.idp.server.platform.audit.AuditLogWriters;
 import org.idp.server.platform.crypto.AesCipher;
@@ -193,6 +195,7 @@ public class IdpServerApplication {
   IdentityVerificationCallbackApi identityVerificationCallbackApi;
   IdentityVerificationApi identityVerificationApi;
   SecurityEventApi securityEventApi;
+  AuditLogApi auditLogApi;
   SharedSignalsFrameworkMetaDataApi sharedSignalsFrameworkMetaDataApi;
   TenantMetaDataApi tenantMetaDataApi;
   TenantInvitationMetaDataApi tenantInvitationMetaDataApi;
@@ -248,6 +251,7 @@ public class IdpServerApplication {
       PasswordEncodeDelegation passwordEncodeDelegation,
       PasswordVerificationDelegation passwordVerificationDelegation,
       SecurityEventPublisher securityEventPublisher,
+      AuditLogPublisher auditLogPublisher,
       UserLifecycleEventPublisher userLifecycleEventPublisher,
       TimeConfig timeConfig) {
 
@@ -635,6 +639,12 @@ public class IdpServerApplication {
             SecurityEventApi.class,
             databaseTypeProvider);
 
+    this.auditLogApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new AuditLogEntryService(auditLogWriters, tenantQueryRepository),
+            AuditLogApi.class,
+            databaseTypeProvider);
+
     this.sharedSignalsFrameworkMetaDataApi =
         TenantAwareEntryServiceProxy.createProxy(
             new SharedSignalsFrameworkMetaDataEntryService(
@@ -718,7 +728,7 @@ public class IdpServerApplication {
                 organizationRepository,
                 authorizationServerConfigurationCommandRepository,
                 userCommandRepository,
-                auditLogWriters),
+                auditLogPublisher),
             TenantManagementApi.class,
             databaseTypeProvider);
 
@@ -739,7 +749,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 authorizationServerConfigurationQueryRepository,
                 authorizationServerConfigurationCommandRepository,
-                auditLogWriters),
+                auditLogPublisher),
             AuthorizationServerManagementApi.class,
             databaseTypeProvider);
 
@@ -749,7 +759,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 clientConfigurationCommandRepository,
                 clientConfigurationQueryRepository,
-                auditLogWriters),
+                auditLogPublisher),
             ClientManagementApi.class,
             databaseTypeProvider);
 
@@ -763,7 +773,7 @@ public class IdpServerApplication {
                 organizationRepository,
                 passwordEncodeDelegation,
                 userLifecycleEventPublisher,
-                auditLogWriters),
+                auditLogPublisher),
             UserManagementApi.class,
             databaseTypeProvider);
 
@@ -773,7 +783,7 @@ public class IdpServerApplication {
                 authenticationConfigurationCommandRepository,
                 authenticationConfigurationQueryRepository,
                 tenantQueryRepository,
-                auditLogWriters),
+                auditLogPublisher),
             AuthenticationConfigurationManagementApi.class,
             databaseTypeProvider);
 
@@ -783,7 +793,7 @@ public class IdpServerApplication {
                 authenticationPolicyConfigurationCommandRepository,
                 authenticationPolicyConfigurationQueryRepository,
                 tenantQueryRepository,
-                auditLogWriters),
+                auditLogPublisher),
             AuthenticationPolicyConfigurationManagementApi.class,
             databaseTypeProvider);
 
@@ -793,7 +803,7 @@ public class IdpServerApplication {
                 federationConfigurationQueryRepository,
                 federationConfigurationCommandRepository,
                 tenantQueryRepository,
-                auditLogWriters),
+                auditLogPublisher),
             FederationConfigurationManagementApi.class,
             databaseTypeProvider);
 
@@ -803,7 +813,7 @@ public class IdpServerApplication {
                 securityEventHookConfigurationCommandRepository,
                 securityEventHookConfigurationQueryRepository,
                 tenantQueryRepository,
-                auditLogWriters),
+                auditLogPublisher),
             SecurityEventHookConfigurationManagementApi.class,
             databaseTypeProvider);
 
@@ -813,35 +823,35 @@ public class IdpServerApplication {
                 identityVerificationConfigurationCommandRepository,
                 identityVerificationConfigurationQueryRepository,
                 tenantQueryRepository,
-                auditLogWriters),
+                auditLogPublisher),
             IdentityVerificationConfigManagementApi.class,
             databaseTypeProvider);
 
     this.securityEventManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
             new SecurityEventManagementEntryService(
-                securityEventQueryRepository, tenantQueryRepository, auditLogWriters),
+                securityEventQueryRepository, tenantQueryRepository, auditLogPublisher),
             SecurityEventManagementApi.class,
             databaseTypeProvider);
 
     this.auditLogManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
             new AuditLogManagementEntryService(
-                auditLogQueryRepository, tenantQueryRepository, auditLogWriters),
+                auditLogQueryRepository, tenantQueryRepository, auditLogPublisher),
             AuditLogManagementApi.class,
             databaseTypeProvider);
 
     this.authenticationInteractionManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
             new AuthenticationInteractionManagementEntryService(
-                authenticationInteractionQueryRepository, tenantQueryRepository, auditLogWriters),
+                authenticationInteractionQueryRepository, tenantQueryRepository, auditLogPublisher),
             AuthenticationInteractionManagementApi.class,
             databaseTypeProvider);
 
     this.authenticationTransactionManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
             new AuthenticationTransactionManagementEntryService(
-                authenticationTransactionQueryRepository, tenantQueryRepository, auditLogWriters),
+                authenticationTransactionQueryRepository, tenantQueryRepository, auditLogPublisher),
             AuthenticationTransactionManagementApi.class,
             databaseTypeProvider);
 
@@ -851,7 +861,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 permissionQueryRepository,
                 permissionCommandRepository,
-                auditLogWriters),
+                auditLogPublisher),
             PermissionManagementApi.class,
             databaseTypeProvider);
 
@@ -862,7 +872,7 @@ public class IdpServerApplication {
                 roleQueryRepository,
                 roleCommandRepository,
                 permissionQueryRepository,
-                auditLogWriters),
+                auditLogPublisher),
             RoleManagementApi.class,
             databaseTypeProvider);
 
@@ -895,7 +905,7 @@ public class IdpServerApplication {
                 organizationRepository,
                 authorizationServerConfigurationCommandRepository,
                 userCommandRepository,
-                auditLogWriters),
+                auditLogPublisher),
             OrgTenantManagementApi.class,
             databaseTypeProvider);
 
@@ -906,7 +916,7 @@ public class IdpServerApplication {
                 organizationRepository,
                 clientConfigurationCommandRepository,
                 clientConfigurationQueryRepository,
-                auditLogWriters),
+                auditLogPublisher),
             OrgClientManagementApi.class,
             databaseTypeProvider);
 
@@ -920,7 +930,7 @@ public class IdpServerApplication {
                 roleQueryRepository,
                 passwordEncodeDelegation,
                 userLifecycleEventPublisher,
-                auditLogWriters),
+                auditLogPublisher),
             OrgUserManagementApi.class,
             databaseTypeProvider);
 
@@ -930,7 +940,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 organizationRepository,
                 securityEventQueryRepository,
-                auditLogWriters),
+                auditLogPublisher),
             OrgSecurityEventManagementApi.class,
             databaseTypeProvider);
 
@@ -941,7 +951,7 @@ public class IdpServerApplication {
                 organizationRepository,
                 authenticationConfigurationCommandRepository,
                 authenticationConfigurationQueryRepository,
-                auditLogWriters),
+                auditLogPublisher),
             OrgAuthenticationConfigManagementApi.class,
             databaseTypeProvider);
 
@@ -952,7 +962,7 @@ public class IdpServerApplication {
                 organizationRepository,
                 federationConfigurationCommandRepository,
                 federationConfigurationQueryRepository,
-                auditLogWriters),
+                auditLogPublisher),
             OrgFederationConfigManagementApi.class,
             databaseTypeProvider);
 
@@ -963,7 +973,7 @@ public class IdpServerApplication {
                 organizationRepository,
                 securityEventHookConfigurationCommandRepository,
                 securityEventHookConfigurationQueryRepository,
-                auditLogWriters),
+                auditLogPublisher),
             OrgSecurityEventHookConfigManagementApi.class,
             databaseTypeProvider);
 
@@ -973,7 +983,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 organizationRepository,
                 authenticationInteractionQueryRepository,
-                auditLogWriters),
+                auditLogPublisher),
             OrgAuthenticationInteractionManagementApi.class,
             databaseTypeProvider);
 
@@ -983,7 +993,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 organizationRepository,
                 authenticationTransactionQueryRepository,
-                auditLogWriters),
+                auditLogPublisher),
             OrgAuthenticationTransactionManagementApi.class,
             databaseTypeProvider);
 
@@ -994,7 +1004,7 @@ public class IdpServerApplication {
                 organizationRepository,
                 authorizationServerConfigurationQueryRepository,
                 authorizationServerConfigurationCommandRepository,
-                auditLogWriters),
+                auditLogPublisher),
             OrgAuthorizationServerManagementApi.class,
             databaseTypeProvider);
 
@@ -1005,7 +1015,7 @@ public class IdpServerApplication {
                 organizationRepository,
                 permissionQueryRepository,
                 permissionCommandRepository,
-                auditLogWriters),
+                auditLogPublisher),
             OrgPermissionManagementApi.class,
             databaseTypeProvider);
 
@@ -1017,7 +1027,7 @@ public class IdpServerApplication {
                 roleQueryRepository,
                 roleCommandRepository,
                 permissionQueryRepository,
-                auditLogWriters),
+                auditLogPublisher),
             OrgRoleManagementApi.class,
             databaseTypeProvider);
 
@@ -1028,7 +1038,7 @@ public class IdpServerApplication {
                 organizationRepository,
                 authenticationPolicyConfigurationCommandRepository,
                 authenticationPolicyConfigurationQueryRepository,
-                auditLogWriters),
+                auditLogPublisher),
             OrgAuthenticationPolicyConfigManagementApi.class,
             databaseTypeProvider);
 
@@ -1039,7 +1049,7 @@ public class IdpServerApplication {
                 organizationRepository,
                 identityVerificationConfigurationCommandRepository,
                 identityVerificationConfigurationQueryRepository,
-                auditLogWriters),
+                auditLogPublisher),
             OrgIdentityVerificationConfigManagementApi.class,
             databaseTypeProvider);
 
@@ -1049,7 +1059,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 organizationRepository,
                 auditLogQueryRepository,
-                auditLogWriters),
+                auditLogPublisher),
             OrgAuditLogManagementApi.class,
             databaseTypeProvider);
   }
@@ -1104,6 +1114,10 @@ public class IdpServerApplication {
 
   public SecurityEventApi securityEventApi() {
     return securityEventApi;
+  }
+
+  public AuditLogApi auditLogApi() {
+    return auditLogApi;
   }
 
   public TenantMetaDataApi tenantMetadataApi() {

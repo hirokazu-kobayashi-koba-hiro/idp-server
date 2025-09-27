@@ -31,7 +31,7 @@ import org.idp.server.core.openid.authentication.repository.AuthenticationTransa
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
-import org.idp.server.platform.audit.AuditLogWriters;
+import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -45,20 +45,21 @@ public class AuthenticationTransactionManagementEntryService
 
   AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository;
   TenantQueryRepository tenantQueryRepository;
-  AuditLogWriters auditLogWriters;
+  AuditLogPublisher auditLogPublisher;
   LoggerWrapper log =
       LoggerWrapper.getLogger(AuthenticationTransactionManagementEntryService.class);
 
   public AuthenticationTransactionManagementEntryService(
       AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
       TenantQueryRepository tenantQueryRepository,
-      AuditLogWriters auditLogWriters) {
+      AuditLogPublisher auditLogPublisher) {
     this.authenticationTransactionQueryRepository = authenticationTransactionQueryRepository;
     this.tenantQueryRepository = tenantQueryRepository;
-    this.auditLogWriters = auditLogWriters;
+    this.auditLogPublisher = auditLogPublisher;
   }
 
   @Override
+  @Transaction(readOnly = true)
   public AuthenticationTransactionManagementResponse findList(
       TenantIdentifier tenantIdentifier,
       User operator,
@@ -76,7 +77,7 @@ public class AuthenticationTransactionManagementEntryService
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -118,6 +119,7 @@ public class AuthenticationTransactionManagementEntryService
   }
 
   @Override
+  @Transaction(readOnly = true)
   public AuthenticationTransactionManagementResponse get(
       TenantIdentifier tenantIdentifier,
       User operator,
@@ -138,7 +140,7 @@ public class AuthenticationTransactionManagementEntryService
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();

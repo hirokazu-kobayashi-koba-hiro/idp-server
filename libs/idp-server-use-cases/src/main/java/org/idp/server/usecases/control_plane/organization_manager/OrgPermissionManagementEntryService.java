@@ -37,7 +37,7 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.permission.*;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
-import org.idp.server.platform.audit.AuditLogWriters;
+import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
@@ -77,7 +77,7 @@ public class OrgPermissionManagementEntryService implements OrgPermissionManagem
   OrganizationRepository organizationRepository;
   PermissionQueryRepository permissionQueryRepository;
   PermissionCommandRepository permissionCommandRepository;
-  AuditLogWriters auditLogWriters;
+  AuditLogPublisher auditLogPublisher;
   OrganizationAccessVerifier organizationAccessVerifier;
 
   LoggerWrapper log = LoggerWrapper.getLogger(OrgPermissionManagementEntryService.class);
@@ -89,19 +89,19 @@ public class OrgPermissionManagementEntryService implements OrgPermissionManagem
    * @param organizationRepository the organization repository
    * @param permissionQueryRepository the permission query repository
    * @param permissionCommandRepository the permission command repository
-   * @param auditLogWriters the audit log writers
+   * @param auditLogPublisher the audit log publisher
    */
   public OrgPermissionManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
       OrganizationRepository organizationRepository,
       PermissionQueryRepository permissionQueryRepository,
       PermissionCommandRepository permissionCommandRepository,
-      AuditLogWriters auditLogWriters) {
+      AuditLogPublisher auditLogPublisher) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.organizationRepository = organizationRepository;
     this.permissionQueryRepository = permissionQueryRepository;
     this.permissionCommandRepository = permissionCommandRepository;
-    this.auditLogWriters = auditLogWriters;
+    this.auditLogPublisher = auditLogPublisher;
     this.organizationAccessVerifier = new OrganizationAccessVerifier();
   }
 
@@ -156,7 +156,7 @@ public class OrgPermissionManagementEntryService implements OrgPermissionManagem
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!verificationResult.isValid()) {
       return verificationResult.errorResponse();
@@ -172,6 +172,7 @@ public class OrgPermissionManagementEntryService implements OrgPermissionManagem
   }
 
   @Override
+  @Transaction(readOnly = true)
   public PermissionManagementResponse findList(
       OrganizationIdentifier organizationIdentifier,
       TenantIdentifier tenantIdentifier,
@@ -213,7 +214,7 @@ public class OrgPermissionManagementEntryService implements OrgPermissionManagem
               operator,
               oAuthToken,
               requestAttributes);
-      auditLogWriters.write(targetTenant, auditLog);
+      auditLogPublisher.publish(auditLog);
 
       return new PermissionManagementResponse(PermissionManagementStatus.OK, response);
     }
@@ -228,7 +229,7 @@ public class OrgPermissionManagementEntryService implements OrgPermissionManagem
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     Map<String, Object> response = new HashMap<>();
     response.put("list", permissionList.stream().map(Permission::toMap).toList());
@@ -239,6 +240,7 @@ public class OrgPermissionManagementEntryService implements OrgPermissionManagem
   }
 
   @Override
+  @Transaction(readOnly = true)
   public PermissionManagementResponse get(
       OrganizationIdentifier organizationIdentifier,
       TenantIdentifier tenantIdentifier,
@@ -281,7 +283,7 @@ public class OrgPermissionManagementEntryService implements OrgPermissionManagem
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     return new PermissionManagementResponse(PermissionManagementStatus.OK, permission.toMap());
   }
@@ -343,7 +345,7 @@ public class OrgPermissionManagementEntryService implements OrgPermissionManagem
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (dryRun) {
       return context.toResponse();
@@ -399,7 +401,7 @@ public class OrgPermissionManagementEntryService implements OrgPermissionManagem
             oAuthToken,
             permission.toMap(),
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (dryRun) {
       return new PermissionManagementResponse(PermissionManagementStatus.NO_CONTENT, Map.of());

@@ -38,7 +38,7 @@ import org.idp.server.core.openid.oauth.configuration.client.ClientIdentifier;
 import org.idp.server.core.openid.oauth.configuration.client.ClientQueries;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
-import org.idp.server.platform.audit.AuditLogWriters;
+import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
@@ -78,7 +78,7 @@ public class OrgClientManagementEntryService implements OrgClientManagementApi {
   OrganizationRepository organizationRepository;
   ClientConfigurationCommandRepository clientConfigurationCommandRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
-  AuditLogWriters auditLogWriters;
+  AuditLogPublisher auditLogPublisher;
   OrganizationAccessVerifier organizationAccessVerifier;
 
   LoggerWrapper log = LoggerWrapper.getLogger(OrgClientManagementEntryService.class);
@@ -90,19 +90,19 @@ public class OrgClientManagementEntryService implements OrgClientManagementApi {
    * @param organizationRepository the organization repository
    * @param clientConfigurationCommandRepository the client configuration command repository
    * @param clientConfigurationQueryRepository the client configuration query repository
-   * @param auditLogWriters the audit log writers
+   * @param auditLogPublisher the audit log publisher
    */
   public OrgClientManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
       OrganizationRepository organizationRepository,
       ClientConfigurationCommandRepository clientConfigurationCommandRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
-      AuditLogWriters auditLogWriters) {
+      AuditLogPublisher auditLogPublisher) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.organizationRepository = organizationRepository;
     this.clientConfigurationCommandRepository = clientConfigurationCommandRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
-    this.auditLogWriters = auditLogWriters;
+    this.auditLogPublisher = auditLogPublisher;
     this.organizationAccessVerifier = new OrganizationAccessVerifier();
   }
 
@@ -138,7 +138,7 @@ public class OrgClientManagementEntryService implements OrgClientManagementApi {
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!accessResult.isSuccess()) {
       Map<String, Object> response = new HashMap<>();
@@ -165,6 +165,7 @@ public class OrgClientManagementEntryService implements OrgClientManagementApi {
   }
 
   @Override
+  @Transaction(readOnly = true)
   public ClientManagementResponse findList(
       OrganizationIdentifier organizationIdentifier,
       TenantIdentifier tenantIdentifier,
@@ -191,7 +192,7 @@ public class OrgClientManagementEntryService implements OrgClientManagementApi {
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     ClientQueryValidator validator = new ClientQueryValidator(queries);
     ClientRegistrationRequestValidationResult validated = validator.validate();
@@ -229,6 +230,7 @@ public class OrgClientManagementEntryService implements OrgClientManagementApi {
   }
 
   @Override
+  @Transaction(readOnly = true)
   public ClientManagementResponse get(
       OrganizationIdentifier organizationIdentifier,
       TenantIdentifier tenantIdentifier,
@@ -258,7 +260,7 @@ public class OrgClientManagementEntryService implements OrgClientManagementApi {
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!accessResult.isSuccess()) {
       Map<String, Object> response = new HashMap<>();
@@ -314,7 +316,7 @@ public class OrgClientManagementEntryService implements OrgClientManagementApi {
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!accessResult.isSuccess()) {
       Map<String, Object> response = new HashMap<>();
@@ -372,7 +374,7 @@ public class OrgClientManagementEntryService implements OrgClientManagementApi {
             oAuthToken,
             clientConfiguration.toMap(),
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!accessResult.isSuccess()) {
       Map<String, Object> response = new HashMap<>();

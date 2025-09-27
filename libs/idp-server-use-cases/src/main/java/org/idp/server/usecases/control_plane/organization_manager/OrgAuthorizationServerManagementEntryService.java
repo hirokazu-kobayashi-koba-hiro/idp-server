@@ -36,7 +36,7 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
-import org.idp.server.platform.audit.AuditLogWriters;
+import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
@@ -80,7 +80,7 @@ public class OrgAuthorizationServerManagementEntryService
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   AuthorizationServerConfigurationCommandRepository
       authorizationServerConfigurationCommandRepository;
-  AuditLogWriters auditLogWriters;
+  AuditLogPublisher auditLogPublisher;
   OrganizationAccessVerifier organizationAccessVerifier;
 
   LoggerWrapper log = LoggerWrapper.getLogger(OrgAuthorizationServerManagementEntryService.class);
@@ -94,7 +94,7 @@ public class OrgAuthorizationServerManagementEntryService
    *     query repository
    * @param authorizationServerConfigurationCommandRepository the authorization server configuration
    *     command repository
-   * @param auditLogWriters the audit log writers
+   * @param auditLogPublisher the audit log publisher
    */
   public OrgAuthorizationServerManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
@@ -103,18 +103,19 @@ public class OrgAuthorizationServerManagementEntryService
           authorizationServerConfigurationQueryRepository,
       AuthorizationServerConfigurationCommandRepository
           authorizationServerConfigurationCommandRepository,
-      AuditLogWriters auditLogWriters) {
+      AuditLogPublisher auditLogPublisher) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.organizationRepository = organizationRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
     this.authorizationServerConfigurationCommandRepository =
         authorizationServerConfigurationCommandRepository;
-    this.auditLogWriters = auditLogWriters;
+    this.auditLogPublisher = auditLogPublisher;
     this.organizationAccessVerifier = new OrganizationAccessVerifier();
   }
 
   @Override
+  @Transaction(readOnly = true)
   public AuthorizationServerManagementResponse get(
       OrganizationIdentifier organizationIdentifier,
       TenantIdentifier tenantIdentifier,
@@ -150,7 +151,7 @@ public class OrgAuthorizationServerManagementEntryService
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     return new AuthorizationServerManagementResponse(
         AuthorizationServerManagementStatus.OK, authorizationServerConfiguration.toMap());
@@ -206,7 +207,7 @@ public class OrgAuthorizationServerManagementEntryService
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (dryRun) {
       return context.toResponse();

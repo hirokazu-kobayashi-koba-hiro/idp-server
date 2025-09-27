@@ -39,7 +39,7 @@ import org.idp.server.core.extension.identity.verification.repository.IdentityVe
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
-import org.idp.server.platform.audit.AuditLogWriters;
+import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
@@ -59,7 +59,7 @@ public class OrgIdentityVerificationConfigManagementEntryService
   IdentityVerificationConfigurationCommandRepository
       identityVerificationConfigurationCommandRepository;
   IdentityVerificationConfigurationQueryRepository identityVerificationConfigurationQueryRepository;
-  AuditLogWriters auditLogWriters;
+  AuditLogPublisher auditLogPublisher;
   OrganizationAccessVerifier organizationAccessVerifier;
 
   LoggerWrapper log =
@@ -72,14 +72,14 @@ public class OrgIdentityVerificationConfigManagementEntryService
           identityVerificationConfigurationCommandRepository,
       IdentityVerificationConfigurationQueryRepository
           identityVerificationConfigurationQueryRepository,
-      AuditLogWriters auditLogWriters) {
+      AuditLogPublisher auditLogPublisher) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.organizationRepository = organizationRepository;
     this.identityVerificationConfigurationCommandRepository =
         identityVerificationConfigurationCommandRepository;
     this.identityVerificationConfigurationQueryRepository =
         identityVerificationConfigurationQueryRepository;
-    this.auditLogWriters = auditLogWriters;
+    this.auditLogPublisher = auditLogPublisher;
     this.organizationAccessVerifier = new OrganizationAccessVerifier();
   }
 
@@ -124,7 +124,7 @@ public class OrgIdentityVerificationConfigManagementEntryService
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (context.isDryRun()) {
       return context.toResponse();
@@ -137,6 +137,7 @@ public class OrgIdentityVerificationConfigManagementEntryService
   }
 
   @Override
+  @Transaction(readOnly = true)
   public IdentityVerificationConfigManagementResponse findList(
       OrganizationIdentifier organizationIdentifier,
       TenantIdentifier tenantIdentifier,
@@ -171,7 +172,7 @@ public class OrgIdentityVerificationConfigManagementEntryService
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     long totalCount =
         identityVerificationConfigurationQueryRepository.findTotalCount(targetTenant, queries);
@@ -200,6 +201,7 @@ public class OrgIdentityVerificationConfigManagementEntryService
   }
 
   @Override
+  @Transaction(readOnly = true)
   public IdentityVerificationConfigManagementResponse get(
       OrganizationIdentifier organizationIdentifier,
       TenantIdentifier tenantIdentifier,
@@ -237,7 +239,7 @@ public class OrgIdentityVerificationConfigManagementEntryService
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!configuration.exists()) {
       return new IdentityVerificationConfigManagementResponse(
@@ -293,7 +295,7 @@ public class OrgIdentityVerificationConfigManagementEntryService
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!configuration.exists()) {
       return new IdentityVerificationConfigManagementResponse(
@@ -350,7 +352,7 @@ public class OrgIdentityVerificationConfigManagementEntryService
             oAuthToken,
             configuration.toMap(),
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!configuration.exists()) {
       return new IdentityVerificationConfigManagementResponse(
