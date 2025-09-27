@@ -53,7 +53,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
     describe("Response Structure Validation", () => {
       it("should return correct response structure for authentication config list", async () => {
         const response = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs?limit=10&offset=0`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations?limit=10&offset=0`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -76,7 +76,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
       it("should return correct response structure for authentication config creation", async () => {
         const configId = uuidv4();
         const response = await postWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs?dry_run=true`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations?dry_run=true`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             id: configId,
@@ -106,7 +106,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
       it("should return standard error structure for 404 Not Found", async () => {
         const nonExistentConfigId = "00000000-0000-0000-0000-000000000000";
         const response = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs/${nonExistentConfigId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations/${nonExistentConfigId}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -115,7 +115,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
 
       it("should return standard error structure for invalid request", async () => {
         const response = await postWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             invalid: "data"
@@ -136,7 +136,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
       it("should successfully create authentication configuration", async () => {
         const configId = uuidv4();
         const response = await postWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             id: configId,
@@ -156,7 +156,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
 
         // Clean up
         await deletion({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
       });
@@ -164,7 +164,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
       it("should support dry run mode for creation", async () => {
         const configId = uuidv4();
         const response = await postWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs?dry_run=true`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations?dry_run=true`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             id: configId,
@@ -184,7 +184,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
     describe("Authentication Config List Retrieval", () => {
       it("should successfully retrieve authentication config list", async () => {
         const response = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -196,7 +196,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
 
       it("should support pagination with limit parameter", async () => {
         const response = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs?limit=5`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations?limit=5`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -207,7 +207,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
 
       it("should support pagination with offset parameter", async () => {
         const response = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs?limit=5&offset=2`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations?limit=5&offset=2`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -222,7 +222,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
         // Create a config specifically for this test
         const configId = uuidv4();
         const createResponse = await postWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             id: configId,
@@ -237,7 +237,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
 
         // Now retrieve it
         const response = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -248,7 +248,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
 
         // Clean up
         await deletion({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
       });
@@ -256,7 +256,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
       it("should return 404 for non-existent authentication config", async () => {
         const nonExistentId = "00000000-0000-0000-0000-000000000000";
         const response = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs/${nonExistentId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations/${nonExistentId}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -269,7 +269,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
         // Create a config specifically for this test
         const configId = uuidv4();
         const createResponse = await postWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             id: configId,
@@ -285,7 +285,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
 
         // Now update it
         const response = await putWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             id: configId,
@@ -304,7 +304,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
 
         // Clean up
         await deletion({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
       });
@@ -313,7 +313,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
         // Create a config specifically for this test
         const configId = uuidv4();
         const createResponse = await postWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             id: configId,
@@ -329,7 +329,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
 
         // Now test dry run update
         const response = await putWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs/${configId}?dry_run=true`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations/${configId}?dry_run=true`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             id: configId,
@@ -346,7 +346,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
 
         // Clean up
         await deletion({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
       });
@@ -357,7 +357,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
         // Create a config specifically for this test
         const configId = uuidv4();
         const createResponse = await postWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             id: configId,
@@ -372,7 +372,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
 
         // Test dry run deletion
         const response = await deletion({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs/${configId}?dry_run=true`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations/${configId}?dry_run=true`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -381,7 +381,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
 
         // Clean up (actual deletion)
         await deletion({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
       });
@@ -390,7 +390,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
         // Create a config specifically for this test
         const configId = uuidv4();
         const createResponse = await postWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             id: configId,
@@ -405,7 +405,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
 
         // Now delete it
         const response = await deletion({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -421,7 +421,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
   describe("Organization Access Control Tests", () => {
     it("should return 401 for unauthenticated requests", async () => {
       const response = await get({
-        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs`,
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations`,
         headers: {}
       });
 
@@ -431,7 +431,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
     it("should return 400/404 for invalid organization ID", async () => {
       const invalidOrgId = "invalid-org-id";
       const response = await get({
-        url: `${backendUrl}/v1/management/organizations/${invalidOrgId}/tenants/${tenantId}/authentication-configs`,
+        url: `${backendUrl}/v1/management/organizations/${invalidOrgId}/tenants/${tenantId}/authentication-configurations`,
         headers: { Authorization: `Bearer ${accessToken}` }
       });
 
@@ -441,7 +441,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
     it("should return 400/404 for invalid tenant ID", async () => {
       const invalidTenantId = "invalid-tenant-id";
       const response = await get({
-        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${invalidTenantId}/authentication-configs`,
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${invalidTenantId}/authentication-configurations`,
         headers: { Authorization: `Bearer ${accessToken}` }
       });
 
@@ -460,7 +460,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
 
         // 1. Create authentication config
         const createResponse = await postWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             id: configId,
@@ -477,7 +477,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
 
         // 2. Retrieve the created config
         const getResponse = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -487,7 +487,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
 
         // 3. Update the config
         const updateResponse = await putWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             id: configId,
@@ -505,7 +505,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
 
         // 4. Verify the update
         const getUpdatedResponse = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -514,7 +514,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
 
         // 5. delete the config
         const deleteResponse = await deletion({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -522,7 +522,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
 
         // 6. Verify deletionetion
         const getdeletedResponse = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -537,7 +537,7 @@ describe("Organization Authentication Config Management API - Structured Tests",
 
         while (hasMoreConfigs && allConfigs.length < 20) { // Limit to prevent infinite loops
           const response = await get({
-            url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configs?limit=${limit}&offset=${offset}`,
+            url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations?limit=${limit}&offset=${offset}`,
             headers: { Authorization: `Bearer ${accessToken}` }
           });
 

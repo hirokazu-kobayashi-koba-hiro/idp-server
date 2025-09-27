@@ -37,7 +37,7 @@ tags:
 
 paths:
   # Organization-level Authentication Configuration Management API
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-configs:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-configurations:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/TenantId'
@@ -127,7 +127,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-configs/{config-id}:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-configurations/{config-id}:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/TenantId'
@@ -235,7 +235,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
   # Organization-level Authentication Policy Configuration Management API
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-policy-configs:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-policies:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/TenantId'
@@ -325,7 +325,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-policy-configs/{config-id}:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-policies/{config-id}:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/TenantId'
@@ -673,7 +673,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
   # Organization-level Identity Verification Config Management API
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/identity-verification-configs:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/identity-verification-configurations:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/TenantId'
@@ -747,7 +747,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/identity-verification-configs/{config-id}:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/identity-verification-configurations/{config-id}:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/TenantId'
@@ -828,7 +828,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
   # Organization-level Federation Config Management API
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/federation-configs:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/federation-configurations:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/TenantId'
@@ -930,7 +930,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/federation-configs/{config-id}:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/federation-configurations/{config-id}:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/TenantId'
@@ -1052,7 +1052,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
   # Organization-level Security Event Hook Configuration Management API
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/security-event-hook-configs:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/security-event-hook-configurations:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/TenantId'
@@ -1150,7 +1150,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/security-event-hook-configs/{config-id}:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/security-event-hook-configurations/{config-id}:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/TenantId'

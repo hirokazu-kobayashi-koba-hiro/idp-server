@@ -34,11 +34,11 @@ public class ClientRegistrationRequest {
     return values.get(key);
   }
 
-  public boolean hasId() {
-    return values.containsKey("id");
+  public boolean hasClientId() {
+    return values.containsKey("client_id");
   }
 
-  public String getId() {
-    return (String) values.get("id");
+  public String getClientId() {
+    return (String) values.get("client_id");
   }
 }

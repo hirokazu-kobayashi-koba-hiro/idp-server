@@ -353,7 +353,7 @@ describe("organization role management api", () => {
           "permissions": []
         }
       });
-      console.log("Invalid create response:", invalidCreateResponse.status);
+      console.log("Invalid create response:", invalidCreateResponse.data);
       expect(invalidCreateResponse.status).toBe(400);
       console.log("✅ Empty role name returns 400");
 

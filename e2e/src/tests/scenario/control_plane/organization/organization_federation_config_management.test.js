@@ -33,7 +33,7 @@ describe("organization federation configuration management api", () => {
       try {
         // Step 1: Create a test federation configuration within the organization
         const createResponse = await postWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations`,
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -62,7 +62,7 @@ describe("organization federation configuration management api", () => {
         // Step 2: Test dry run for create
         const dryRunConfigId = uuidv4();
         const dryRunCreateResponse = await postWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs?dry_run=true`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations?dry_run=true`,
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -90,7 +90,7 @@ describe("organization federation configuration management api", () => {
 
         // Step 3: Verify the federation config appears in the list (enabled=true)
         const listResponse1 = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -105,7 +105,7 @@ describe("organization federation configuration management api", () => {
 
         // Step 4: Verify individual federation config retrieval works (enabled=true)
         const detailResponse1 = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${createdFederationConfigId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${createdFederationConfigId}`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -118,7 +118,7 @@ describe("organization federation configuration management api", () => {
 
         // Step 5: Update federation config to enabled=false
         const updateResponse = await putWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${createdFederationConfigId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${createdFederationConfigId}`,
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -143,7 +143,7 @@ describe("organization federation configuration management api", () => {
 
         // Step 6: Test dry run for update
         const dryRunUpdateResponse = await putWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${createdFederationConfigId}?dry_run=true`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${createdFederationConfigId}?dry_run=true`,
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -166,7 +166,7 @@ describe("organization federation configuration management api", () => {
 
         // Step 7: Verify the federation config still appears in the list (enabled status may not filter in list)
         const listResponse2 = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -180,7 +180,7 @@ describe("organization federation configuration management api", () => {
 
         // Step 8: Verify individual federation config retrieval still works (enabled=false)
         const detailResponse2 = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${createdFederationConfigId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${createdFederationConfigId}`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -195,7 +195,7 @@ describe("organization federation configuration management api", () => {
         // Step 9: Delete the federation configuration
         // Note: Delete operation does not support dry-run in current implementation
         const deleteResponse = await deletion({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${createdFederationConfigId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${createdFederationConfigId}`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -207,7 +207,7 @@ describe("organization federation configuration management api", () => {
 
         // Step 10: Verify the federation config is no longer accessible
         const detailResponse3 = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${createdFederationConfigId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${createdFederationConfigId}`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -224,7 +224,7 @@ describe("organization federation configuration management api", () => {
         if (federationConfigCreated) {
           try {
             await deletion({
-              url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${testFederationConfigId}`,
+              url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${testFederationConfigId}`,
               headers: {
                 Authorization: `Bearer ${accessToken}`
               }
@@ -254,7 +254,7 @@ describe("organization federation configuration management api", () => {
       // Test 1: Try to access non-existent federation config
       const nonExistentId = uuidv4();
       const notFoundResponse = await get({
-        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${nonExistentId}`,
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${nonExistentId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -265,7 +265,7 @@ describe("organization federation configuration management api", () => {
 
       // Test 2: Try to update non-existent federation config
       const updateNotFoundResponse = await putWithJson({
-        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${nonExistentId}`,
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${nonExistentId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -287,7 +287,7 @@ describe("organization federation configuration management api", () => {
 
       // Test 3: Try to delete non-existent federation config
       const deleteNotFoundResponse = await deletion({
-        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${nonExistentId}`,
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${nonExistentId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -298,7 +298,7 @@ describe("organization federation configuration management api", () => {
 
       // Test 4: Try with invalid authorization
       const unauthorizedResponse = await get({
-        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs`,
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations`,
         headers: {
           Authorization: "Bearer invalid-token"
         }

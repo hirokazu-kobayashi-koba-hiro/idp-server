@@ -22,7 +22,8 @@
       "items": {
         "type": "string",
         "format": "uuid"
-      }
+      },
+      "minItems": 1
     }
   }
 }

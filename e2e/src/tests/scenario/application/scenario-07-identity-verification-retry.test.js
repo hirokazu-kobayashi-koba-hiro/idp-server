@@ -70,7 +70,7 @@ describe("Identity Verification with HttpRequestExecutor Retry Functionality", (
     if (configId) {
 
         await deletion({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
           headers: { Authorization: `Bearer ${orgAccessToken}` }
         });
         console.log(`Cleaned up test configuration: ${configId}`);

@@ -16,6 +16,9 @@
 
 package org.idp.server.control_plane.management.oidc.client;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import org.idp.server.control_plane.management.oidc.client.io.ClientRegistrationRequest;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.platform.json.JsonConverter;
@@ -37,8 +40,11 @@ public class ClientRegistrationContextCreator {
   }
 
   public ClientRegistrationContext create() {
-    ClientConfiguration clientConfiguration =
-        jsonConverter.read(request.toMap(), ClientConfiguration.class);
+    Map<String, Object> map = new HashMap<>(request.toMap());
+    if (!request.hasClientId()) {
+      map.put("client_id", UUID.randomUUID().toString());
+    }
+    ClientConfiguration clientConfiguration = jsonConverter.read(map, ClientConfiguration.class);
 
     return new ClientRegistrationContext(tenant, clientConfiguration, dryRun);
   }

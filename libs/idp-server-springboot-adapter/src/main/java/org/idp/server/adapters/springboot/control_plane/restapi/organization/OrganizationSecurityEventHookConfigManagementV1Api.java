@@ -46,23 +46,23 @@ import org.springframework.web.bind.annotation.*;
  * proper isolation and access control.
  *
  * <p>API endpoints: - POST
- * /organizations/{organizationId}/tenants/{tenantId}/security-event-hook-configs - Create security
- * event hook config - GET
- * /organizations/{organizationId}/tenants/{tenantId}/security-event-hook-configs - List security
- * event hook configs - GET
- * /organizations/{organizationId}/tenants/{tenantId}/security-event-hook-configs/{configId} - Get
- * specific config - PUT
- * /organizations/{organizationId}/tenants/{tenantId}/security-event-hook-configs/{configId} -
- * Update config - DELETE
- * /organizations/{organizationId}/tenants/{tenantId}/security-event-hook-configs/{configId} -
- * Delete config
+ * /organizations/{organizationId}/tenants/{tenantId}/security-event-hook-configurations - Create
+ * security event hook config - GET
+ * /organizations/{organizationId}/tenants/{tenantId}/security-event-hook-configurations - List
+ * security event hook configs - GET
+ * /organizations/{organizationId}/tenants/{tenantId}/security-event-hook-configurations/{configId}
+ * - Get specific config - PUT
+ * /organizations/{organizationId}/tenants/{tenantId}/security-event-hook-configurations/{configId}
+ * - Update config - DELETE
+ * /organizations/{organizationId}/tenants/{tenantId}/security-event-hook-configurations/{configId}
+ * - Delete config
  *
  * @see OrgSecurityEventHookConfigManagementApi
  * @see OrganizationOperatorPrincipal
  */
 @RestController
 @RequestMapping(
-    "/v1/management/organizations/{organizationId}/tenants/{tenantId}/security-event-hook-configs")
+    "/v1/management/organizations/{organizationId}/tenants/{tenantId}/security-event-hook-configurations")
 public class OrganizationSecurityEventHookConfigManagementV1Api implements ParameterTransformable {
 
   OrgSecurityEventHookConfigManagementApi orgSecurityEventHookConfigManagementApi;
