@@ -34,7 +34,7 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
-import org.idp.server.platform.audit.AuditLogWriters;
+import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -49,7 +49,7 @@ public class AuthorizationServerManagementEntryService implements AuthorizationS
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   AuthorizationServerConfigurationCommandRepository
       authorizationServerConfigurationCommandRepository;
-  AuditLogWriters auditLogWriters;
+  AuditLogPublisher auditLogPublisher;
   LoggerWrapper log = LoggerWrapper.getLogger(AuthorizationServerManagementEntryService.class);
 
   public AuthorizationServerManagementEntryService(
@@ -58,16 +58,17 @@ public class AuthorizationServerManagementEntryService implements AuthorizationS
           authorizationServerConfigurationQueryRepository,
       AuthorizationServerConfigurationCommandRepository
           authorizationServerConfigurationCommandRepository,
-      AuditLogWriters auditLogWriters) {
+      AuditLogPublisher auditLogPublisher) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
     this.authorizationServerConfigurationCommandRepository =
         authorizationServerConfigurationCommandRepository;
-    this.auditLogWriters = auditLogWriters;
+    this.auditLogPublisher = auditLogPublisher;
   }
 
   @Override
+  @Transaction(readOnly = true)
   public AuthorizationServerManagementResponse get(
       TenantIdentifier tenantIdentifier,
       User operator,
@@ -88,7 +89,7 @@ public class AuthorizationServerManagementEntryService implements AuthorizationS
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -138,7 +139,7 @@ public class AuthorizationServerManagementEntryService implements AuthorizationS
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();

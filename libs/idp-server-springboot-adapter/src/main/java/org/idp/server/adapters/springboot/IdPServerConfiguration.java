@@ -21,6 +21,7 @@ import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.delegation.PasswordEncoder;
 import org.idp.server.adapters.springboot.application.delegation.PasswordVerification;
 import org.idp.server.adapters.springboot.application.event.SecurityEventPublisherService;
+import org.idp.server.adapters.springboot.application.event.SpringAuditLogPublisher;
 import org.idp.server.adapters.springboot.application.event.UserLifecycleEventPublisherService;
 import org.idp.server.adapters.springboot.application.property.AdminDatabaseConfigProperties;
 import org.idp.server.adapters.springboot.application.property.AppDatabaseConfigProperties;
@@ -95,6 +96,7 @@ public class IdPServerConfiguration {
   public IdpServerApplication idpServerApplication(
       OAuthSessionService oAuthSessionService,
       SecurityEventPublisherService eventPublisherService,
+      SpringAuditLogPublisher auditLogPublisher,
       UserLifecycleEventPublisherService userLifecycleEventPublisherService) {
 
     ApplicationDatabaseTypeProvider applicationDatabaseTypeProvider =
@@ -122,6 +124,7 @@ public class IdPServerConfiguration {
         passwordEncoder,
         passwordVerification,
         eventPublisherService,
+        auditLogPublisher,
         userLifecycleEventPublisherService,
         timeConfig);
   }

@@ -66,7 +66,7 @@ public class OrgAuditLogManagementEntryService implements OrgAuditLogManagementA
   TenantQueryRepository tenantQueryRepository;
   OrganizationRepository organizationRepository;
   AuditLogQueryRepository auditLogQueryRepository;
-  AuditLogWriters auditLogWriters;
+  AuditLogPublisher auditLogPublisher;
   OrganizationAccessVerifier organizationAccessVerifier;
 
   LoggerWrapper log = LoggerWrapper.getLogger(OrgAuditLogManagementEntryService.class);
@@ -77,21 +77,21 @@ public class OrgAuditLogManagementEntryService implements OrgAuditLogManagementA
    * @param tenantQueryRepository the tenant query repository
    * @param organizationRepository the organization repository
    * @param auditLogQueryRepository the audit log query repository
-   * @param auditLogWriters the audit log writers
+   * @param auditLogPublisher the audit log publisher
    */
   public OrgAuditLogManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
       OrganizationRepository organizationRepository,
       AuditLogQueryRepository auditLogQueryRepository,
-      AuditLogWriters auditLogWriters) {
+      AuditLogPublisher auditLogPublisher) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.organizationRepository = organizationRepository;
     this.auditLogQueryRepository = auditLogQueryRepository;
-    this.auditLogWriters = auditLogWriters;
+    this.auditLogPublisher = auditLogPublisher;
     this.organizationAccessVerifier = new OrganizationAccessVerifier();
   }
 
-  @Override
+  @Transaction(readOnly = true)
   public AuditLogManagementResponse findList(
       OrganizationIdentifier organizationIdentifier,
       TenantIdentifier adminTenant,
@@ -117,7 +117,7 @@ public class OrgAuditLogManagementEntryService implements OrgAuditLogManagementA
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!accessResult.isSuccess()) {
       Map<String, Object> response = new HashMap<>();
@@ -148,6 +148,7 @@ public class OrgAuditLogManagementEntryService implements OrgAuditLogManagementA
   }
 
   @Override
+  @Transaction(readOnly = true)
   public AuditLogManagementResponse get(
       OrganizationIdentifier organizationIdentifier,
       TenantIdentifier adminTenant,
@@ -175,7 +176,7 @@ public class OrgAuditLogManagementEntryService implements OrgAuditLogManagementA
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!accessResult.isSuccess()) {
       Map<String, Object> response = new HashMap<>();

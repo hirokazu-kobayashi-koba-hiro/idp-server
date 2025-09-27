@@ -33,7 +33,7 @@ import org.idp.server.core.openid.authentication.repository.AuthenticationIntera
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
-import org.idp.server.platform.audit.AuditLogWriters;
+import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
@@ -75,7 +75,7 @@ public class OrgAuthenticationInteractionManagementEntryService
   TenantQueryRepository tenantQueryRepository;
   OrganizationRepository organizationRepository;
   AuthenticationInteractionQueryRepository authenticationInteractionQueryRepository;
-  AuditLogWriters auditLogWriters;
+  AuditLogPublisher auditLogPublisher;
   OrganizationAccessVerifier organizationAccessVerifier;
 
   LoggerWrapper log =
@@ -87,21 +87,21 @@ public class OrgAuthenticationInteractionManagementEntryService
    * @param tenantQueryRepository the tenant query repository
    * @param organizationRepository the organization repository
    * @param authenticationInteractionQueryRepository the authentication interaction query repository
-   * @param auditLogWriters the audit log writers
+   * @param auditLogPublisher the audit log publisher
    */
   public OrgAuthenticationInteractionManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
       OrganizationRepository organizationRepository,
       AuthenticationInteractionQueryRepository authenticationInteractionQueryRepository,
-      AuditLogWriters auditLogWriters) {
+      AuditLogPublisher auditLogPublisher) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.organizationRepository = organizationRepository;
     this.authenticationInteractionQueryRepository = authenticationInteractionQueryRepository;
-    this.auditLogWriters = auditLogWriters;
+    this.auditLogPublisher = auditLogPublisher;
     this.organizationAccessVerifier = new OrganizationAccessVerifier();
   }
 
-  @Override
+  @Transaction(readOnly = true)
   public AuthenticationInteractionManagementResponse findList(
       OrganizationIdentifier organizationIdentifier,
       TenantIdentifier tenantIdentifier,
@@ -151,7 +151,7 @@ public class OrgAuthenticationInteractionManagementEntryService
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     Map<String, Object> response = new HashMap<>();
     response.put("list", interactions.stream().map(AuthenticationInteraction::toMap).toList());
@@ -161,6 +161,7 @@ public class OrgAuthenticationInteractionManagementEntryService
   }
 
   @Override
+  @Transaction(readOnly = true)
   public AuthenticationInteractionManagementResponse get(
       OrganizationIdentifier organizationIdentifier,
       TenantIdentifier tenantIdentifier,
@@ -207,7 +208,7 @@ public class OrgAuthenticationInteractionManagementEntryService
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     Map<String, Object> response = new HashMap<>();
     response.put("result", interaction.toMap());

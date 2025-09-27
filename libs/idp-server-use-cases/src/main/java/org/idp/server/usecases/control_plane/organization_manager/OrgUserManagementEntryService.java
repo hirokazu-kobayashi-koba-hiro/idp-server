@@ -43,7 +43,7 @@ import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.identity.role.RoleQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
-import org.idp.server.platform.audit.AuditLogWriters;
+import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
@@ -88,7 +88,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
   UserRegistrationVerifier verifier;
   UserRegistrationRelatedDataVerifier updateVerifier;
   UserLifecycleEventPublisher userLifecycleEventPublisher;
-  AuditLogWriters auditLogWriters;
+  AuditLogPublisher auditLogPublisher;
   OrganizationAccessVerifier organizationAccessVerifier;
 
   LoggerWrapper log = LoggerWrapper.getLogger(OrgUserManagementEntryService.class);
@@ -103,7 +103,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
    * @param roleQueryRepository the role query repository
    * @param passwordEncodeDelegation the password encode delegation
    * @param userLifecycleEventPublisher the user lifecycle event publisher
-   * @param auditLogWriters the audit log writers
+   * @param auditLogPublisher the audit log publisher
    */
   public OrgUserManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
@@ -113,7 +113,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
       RoleQueryRepository roleQueryRepository,
       PasswordEncodeDelegation passwordEncodeDelegation,
       UserLifecycleEventPublisher userLifecycleEventPublisher,
-      AuditLogWriters auditLogWriters) {
+      AuditLogPublisher auditLogPublisher) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.organizationRepository = organizationRepository;
     this.userQueryRepository = userQueryRepository;
@@ -127,7 +127,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     this.verifier = new UserRegistrationVerifier(userVerifier, userRegistrationRelatedDataVerifier);
     this.updateVerifier = userRegistrationRelatedDataVerifier;
     this.userLifecycleEventPublisher = userLifecycleEventPublisher;
-    this.auditLogWriters = auditLogWriters;
+    this.auditLogPublisher = auditLogPublisher;
     this.organizationAccessVerifier = new OrganizationAccessVerifier();
   }
 
@@ -171,7 +171,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!accessResult.isSuccess()) {
       Map<String, Object> response = new HashMap<>();
@@ -204,6 +204,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
   }
 
   @Override
+  @Transaction(readOnly = true)
   public UserManagementResponse findList(
       OrganizationIdentifier organizationIdentifier,
       TenantIdentifier tenantIdentifier,
@@ -230,7 +231,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!accessResult.isSuccess()) {
       Map<String, Object> response = new HashMap<>();
@@ -261,6 +262,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
   }
 
   @Override
+  @Transaction(readOnly = true)
   public UserManagementResponse get(
       OrganizationIdentifier organizationIdentifier,
       TenantIdentifier tenantIdentifier,
@@ -289,7 +291,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!accessResult.isSuccess()) {
       Map<String, Object> response = new HashMap<>();
@@ -343,7 +345,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!accessResult.isSuccess()) {
       Map<String, Object> response = new HashMap<>();
@@ -408,7 +410,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
             oAuthToken,
             user.toMap(),
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!accessResult.isSuccess()) {
       Map<String, Object> response = new HashMap<>();
@@ -483,7 +485,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!accessResult.isSuccess()) {
       Map<String, Object> response = new HashMap<>();
@@ -549,7 +551,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!accessResult.isSuccess()) {
       Map<String, Object> response = new HashMap<>();
@@ -613,7 +615,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!accessResult.isSuccess()) {
       Map<String, Object> response = new HashMap<>();
@@ -687,7 +689,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!accessResult.isSuccess()) {
       Map<String, Object> response = new HashMap<>();
@@ -750,7 +752,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!accessResult.isSuccess()) {
       Map<String, Object> response = new HashMap<>();

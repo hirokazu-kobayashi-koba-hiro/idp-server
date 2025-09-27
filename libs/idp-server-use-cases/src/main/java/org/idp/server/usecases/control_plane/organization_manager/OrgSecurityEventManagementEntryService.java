@@ -29,7 +29,7 @@ import org.idp.server.control_plane.organization.access.OrganizationAccessVerifi
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
-import org.idp.server.platform.audit.AuditLogWriters;
+import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
@@ -72,7 +72,7 @@ public class OrgSecurityEventManagementEntryService implements OrgSecurityEventM
   TenantQueryRepository tenantQueryRepository;
   OrganizationRepository organizationRepository;
   SecurityEventQueryRepository securityEventQueryRepository;
-  AuditLogWriters auditLogWriters;
+  AuditLogPublisher auditLogPublisher;
   OrganizationAccessVerifier organizationAccessVerifier;
 
   LoggerWrapper log = LoggerWrapper.getLogger(OrgSecurityEventManagementEntryService.class);
@@ -83,21 +83,22 @@ public class OrgSecurityEventManagementEntryService implements OrgSecurityEventM
    * @param tenantQueryRepository the tenant query repository
    * @param organizationRepository the organization repository
    * @param securityEventQueryRepository the security event query repository
-   * @param auditLogWriters the audit log writers
+   * @param auditLogPublisher the audit log publisher
    */
   public OrgSecurityEventManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
       OrganizationRepository organizationRepository,
       SecurityEventQueryRepository securityEventQueryRepository,
-      AuditLogWriters auditLogWriters) {
+      AuditLogPublisher auditLogPublisher) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.organizationRepository = organizationRepository;
     this.securityEventQueryRepository = securityEventQueryRepository;
-    this.auditLogWriters = auditLogWriters;
+    this.auditLogPublisher = auditLogPublisher;
     this.organizationAccessVerifier = new OrganizationAccessVerifier();
   }
 
   @Override
+  @Transaction(readOnly = true)
   public SecurityEventManagementResponse findList(
       OrganizationIdentifier organizationIdentifier,
       TenantIdentifier tenantIdentifier,
@@ -124,7 +125,7 @@ public class OrgSecurityEventManagementEntryService implements OrgSecurityEventM
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!accessResult.isSuccess()) {
       Map<String, Object> response = new HashMap<>();
@@ -155,6 +156,7 @@ public class OrgSecurityEventManagementEntryService implements OrgSecurityEventM
   }
 
   @Override
+  @Transaction(readOnly = true)
   public SecurityEventManagementResponse get(
       OrganizationIdentifier organizationIdentifier,
       TenantIdentifier tenantIdentifier,
@@ -183,7 +185,7 @@ public class OrgSecurityEventManagementEntryService implements OrgSecurityEventM
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!accessResult.isSuccess()) {
       Map<String, Object> response = new HashMap<>();

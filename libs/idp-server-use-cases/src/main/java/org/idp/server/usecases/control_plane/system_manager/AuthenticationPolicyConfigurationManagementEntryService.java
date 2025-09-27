@@ -32,7 +32,7 @@ import org.idp.server.core.openid.authentication.repository.AuthenticationPolicy
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
-import org.idp.server.platform.audit.AuditLogWriters;
+import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -48,7 +48,7 @@ public class AuthenticationPolicyConfigurationManagementEntryService
       authenticationPolicyConfigurationCommandRepository;
   AuthenticationPolicyConfigurationQueryRepository authenticationPolicyConfigurationQueryRepository;
   TenantQueryRepository tenantQueryRepository;
-  AuditLogWriters auditLogWriters;
+  AuditLogPublisher auditLogPublisher;
   LoggerWrapper log =
       LoggerWrapper.getLogger(AuthenticationPolicyConfigurationManagementEntryService.class);
 
@@ -58,13 +58,13 @@ public class AuthenticationPolicyConfigurationManagementEntryService
       AuthenticationPolicyConfigurationQueryRepository
           authenticationPolicyConfigurationQueryRepository,
       TenantQueryRepository tenantQueryRepository,
-      AuditLogWriters auditLogWriters) {
+      AuditLogPublisher auditLogPublisher) {
     this.authenticationPolicyConfigurationCommandRepository =
         authenticationPolicyConfigurationCommandRepository;
     this.authenticationPolicyConfigurationQueryRepository =
         authenticationPolicyConfigurationQueryRepository;
     this.tenantQueryRepository = tenantQueryRepository;
-    this.auditLogWriters = auditLogWriters;
+    this.auditLogPublisher = auditLogPublisher;
   }
 
   @Override
@@ -92,7 +92,7 @@ public class AuthenticationPolicyConfigurationManagementEntryService
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -117,6 +117,7 @@ public class AuthenticationPolicyConfigurationManagementEntryService
   }
 
   @Override
+  @Transaction(readOnly = true)
   public AuthenticationPolicyConfigManagementResponse findList(
       TenantIdentifier tenantIdentifier,
       User operator,
@@ -150,7 +151,7 @@ public class AuthenticationPolicyConfigurationManagementEntryService
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -177,6 +178,7 @@ public class AuthenticationPolicyConfigurationManagementEntryService
   }
 
   @Override
+  @Transaction(readOnly = true)
   public AuthenticationPolicyConfigManagementResponse get(
       TenantIdentifier tenantIdentifier,
       User operator,
@@ -198,7 +200,7 @@ public class AuthenticationPolicyConfigurationManagementEntryService
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -250,7 +252,7 @@ public class AuthenticationPolicyConfigurationManagementEntryService
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -298,7 +300,7 @@ public class AuthenticationPolicyConfigurationManagementEntryService
             oAuthToken,
             configuration.toMap(),
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();

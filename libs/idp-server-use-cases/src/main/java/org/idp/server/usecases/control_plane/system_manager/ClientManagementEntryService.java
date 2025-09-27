@@ -35,7 +35,7 @@ import org.idp.server.core.openid.oauth.configuration.client.ClientIdentifier;
 import org.idp.server.core.openid.oauth.configuration.client.ClientQueries;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
-import org.idp.server.platform.audit.AuditLogWriters;
+import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -49,20 +49,21 @@ public class ClientManagementEntryService implements ClientManagementApi {
   TenantQueryRepository tenantQueryRepository;
   ClientConfigurationCommandRepository clientConfigurationCommandRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
-  AuditLogWriters auditLogWriters;
+  AuditLogPublisher auditLogPublisher;
   LoggerWrapper log = LoggerWrapper.getLogger(ClientManagementEntryService.class);
 
   public ClientManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
       ClientConfigurationCommandRepository clientConfigurationCommandRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
-      AuditLogWriters auditLogWriters) {
+      AuditLogPublisher auditLogPublisher) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.clientConfigurationCommandRepository = clientConfigurationCommandRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
-    this.auditLogWriters = auditLogWriters;
+    this.auditLogPublisher = auditLogPublisher;
   }
 
+  @Override
   public ClientManagementResponse create(
       TenantIdentifier tenantIdentifier,
       User operator,
@@ -85,7 +86,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
     AuditLog auditLog =
         AuditLogCreator.create(
             "ClientManagementApi.create", tenant, operator, oAuthToken, context, requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -113,6 +114,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
   }
 
   @Override
+  @Transaction(readOnly = true)
   public ClientManagementResponse findList(
       TenantIdentifier tenantIdentifier,
       User operator,
@@ -132,7 +134,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -169,6 +171,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
   }
 
   @Override
+  @Transaction(readOnly = true)
   public ClientManagementResponse get(
       TenantIdentifier tenantIdentifier,
       User operator,
@@ -185,7 +188,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "ClientManagementApi.get", "get", tenant, operator, oAuthToken, requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -233,7 +236,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
     AuditLog auditLog =
         AuditLogCreator.createOnUpdate(
             "ClientManagementApi.update", tenant, operator, oAuthToken, context, requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -299,7 +302,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
             oAuthToken,
             clientConfiguration.toMap(),
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!clientConfiguration.exists()) {
       return new ClientManagementResponse(ClientManagementStatus.NOT_FOUND, Map.of());

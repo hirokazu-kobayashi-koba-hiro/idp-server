@@ -36,7 +36,7 @@ import org.idp.server.core.openid.identity.permission.*;
 import org.idp.server.core.openid.identity.role.*;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
-import org.idp.server.platform.audit.AuditLogWriters;
+import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
@@ -77,7 +77,7 @@ public class OrgRoleManagementEntryService implements OrgRoleManagementApi {
   RoleQueryRepository roleQueryRepository;
   RoleCommandRepository roleCommandRepository;
   PermissionQueryRepository permissionQueryRepository;
-  AuditLogWriters auditLogWriters;
+  AuditLogPublisher auditLogPublisher;
   OrganizationAccessVerifier organizationAccessVerifier;
 
   LoggerWrapper log = LoggerWrapper.getLogger(OrgRoleManagementEntryService.class);
@@ -89,7 +89,7 @@ public class OrgRoleManagementEntryService implements OrgRoleManagementApi {
    * @param organizationRepository the organization repository
    * @param roleQueryRepository the role query repository
    * @param roleCommandRepository the role command repository
-   * @param auditLogWriters the audit log writers
+   * @param auditLogPublisher the audit log publisher
    */
   public OrgRoleManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
@@ -97,13 +97,13 @@ public class OrgRoleManagementEntryService implements OrgRoleManagementApi {
       RoleQueryRepository roleQueryRepository,
       RoleCommandRepository roleCommandRepository,
       PermissionQueryRepository permissionQueryRepository,
-      AuditLogWriters auditLogWriters) {
+      AuditLogPublisher auditLogPublisher) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.organizationRepository = organizationRepository;
     this.roleQueryRepository = roleQueryRepository;
     this.roleCommandRepository = roleCommandRepository;
     this.permissionQueryRepository = permissionQueryRepository;
-    this.auditLogWriters = auditLogWriters;
+    this.auditLogPublisher = auditLogPublisher;
     this.organizationAccessVerifier = new OrganizationAccessVerifier();
   }
 
@@ -158,7 +158,7 @@ public class OrgRoleManagementEntryService implements OrgRoleManagementApi {
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!verificationResult.isValid()) {
       return verificationResult.errorResponse();
@@ -174,6 +174,7 @@ public class OrgRoleManagementEntryService implements OrgRoleManagementApi {
   }
 
   @Override
+  @Transaction(readOnly = true)
   public RoleManagementResponse findList(
       OrganizationIdentifier organizationIdentifier,
       TenantIdentifier tenantIdentifier,
@@ -215,7 +216,7 @@ public class OrgRoleManagementEntryService implements OrgRoleManagementApi {
               operator,
               oAuthToken,
               requestAttributes);
-      auditLogWriters.write(targetTenant, auditLog);
+      auditLogPublisher.publish(auditLog);
 
       return new RoleManagementResponse(RoleManagementStatus.OK, response);
     }
@@ -230,7 +231,7 @@ public class OrgRoleManagementEntryService implements OrgRoleManagementApi {
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     Map<String, Object> response = new HashMap<>();
     response.put("list", roleList.stream().map(Role::toMap).toList());
@@ -241,6 +242,7 @@ public class OrgRoleManagementEntryService implements OrgRoleManagementApi {
   }
 
   @Override
+  @Transaction(readOnly = true)
   public RoleManagementResponse get(
       OrganizationIdentifier organizationIdentifier,
       TenantIdentifier tenantIdentifier,
@@ -283,7 +285,7 @@ public class OrgRoleManagementEntryService implements OrgRoleManagementApi {
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     return new RoleManagementResponse(RoleManagementStatus.OK, role.toMap());
   }
@@ -349,7 +351,7 @@ public class OrgRoleManagementEntryService implements OrgRoleManagementApi {
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!verificationResult.isValid()) {
       return verificationResult.errorResponse();
@@ -409,7 +411,7 @@ public class OrgRoleManagementEntryService implements OrgRoleManagementApi {
             oAuthToken,
             role.toMap(),
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (dryRun) {
       return new RoleManagementResponse(RoleManagementStatus.NO_CONTENT, Map.of());

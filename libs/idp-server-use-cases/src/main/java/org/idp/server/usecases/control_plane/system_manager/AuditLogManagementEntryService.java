@@ -39,19 +39,20 @@ public class AuditLogManagementEntryService implements AuditLogManagementApi {
 
   AuditLogQueryRepository auditLogQueryRepository;
   TenantQueryRepository tenantQueryRepository;
-  AuditLogWriters auditLogWriters;
+  AuditLogPublisher auditLogPublisher;
   LoggerWrapper log = LoggerWrapper.getLogger(AuditLogManagementEntryService.class);
 
   public AuditLogManagementEntryService(
       AuditLogQueryRepository auditLogQueryRepository,
       TenantQueryRepository tenantQueryRepository,
-      AuditLogWriters auditLogWriters) {
+      AuditLogPublisher auditLogPublisher) {
     this.auditLogQueryRepository = auditLogQueryRepository;
     this.tenantQueryRepository = tenantQueryRepository;
-    this.auditLogWriters = auditLogWriters;
+    this.auditLogPublisher = auditLogPublisher;
   }
 
   @Override
+  @Transaction(readOnly = true)
   public AuditLogManagementResponse findList(
       TenantIdentifier tenantIdentifier,
       User operator,
@@ -69,7 +70,7 @@ public class AuditLogManagementEntryService implements AuditLogManagementApi {
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -105,6 +106,7 @@ public class AuditLogManagementEntryService implements AuditLogManagementApi {
   }
 
   @Override
+  @Transaction(readOnly = true)
   public AuditLogManagementResponse get(
       TenantIdentifier tenantIdentifier,
       User operator,
@@ -119,7 +121,7 @@ public class AuditLogManagementEntryService implements AuditLogManagementApi {
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "AuditLogManagementApi.get", "get", tenant, operator, oAuthToken, requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();

@@ -35,7 +35,7 @@ import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
-import org.idp.server.platform.audit.AuditLogWriters;
+import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
@@ -57,7 +57,7 @@ public class TenantManagementEntryService implements TenantManagementApi {
       authorizationServerConfigurationCommandRepository;
   TenantManagementVerifier tenantManagementVerifier;
   UserCommandRepository userCommandRepository;
-  AuditLogWriters auditLogWriters;
+  AuditLogPublisher auditLogPublisher;
 
   LoggerWrapper log = LoggerWrapper.getLogger(TenantManagementEntryService.class);
 
@@ -68,7 +68,7 @@ public class TenantManagementEntryService implements TenantManagementApi {
       AuthorizationServerConfigurationCommandRepository
           authorizationServerConfigurationCommandRepository,
       UserCommandRepository userCommandRepository,
-      AuditLogWriters auditLogWriters) {
+      AuditLogPublisher auditLogPublisher) {
     this.tenantCommandRepository = tenantCommandRepository;
     this.tenantQueryRepository = tenantQueryRepository;
     this.organizationRepository = organizationRepository;
@@ -77,7 +77,7 @@ public class TenantManagementEntryService implements TenantManagementApi {
     this.userCommandRepository = userCommandRepository;
     TenantVerifier tenantVerifier = new TenantVerifier(tenantQueryRepository);
     this.tenantManagementVerifier = new TenantManagementVerifier(tenantVerifier);
-    this.auditLogWriters = auditLogWriters;
+    this.auditLogPublisher = auditLogPublisher;
   }
 
   @Override
@@ -110,7 +110,7 @@ public class TenantManagementEntryService implements TenantManagementApi {
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(adminTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -149,6 +149,7 @@ public class TenantManagementEntryService implements TenantManagementApi {
   }
 
   @Override
+  @Transaction(readOnly = true)
   public TenantManagementResponse findList(
       TenantIdentifier adminTenantIdentifier,
       User operator,
@@ -180,6 +181,7 @@ public class TenantManagementEntryService implements TenantManagementApi {
   }
 
   @Override
+  @Transaction(readOnly = true)
   public TenantManagementResponse get(
       TenantIdentifier adminTenantIdentifier,
       User operator,
@@ -236,7 +238,7 @@ public class TenantManagementEntryService implements TenantManagementApi {
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(adminTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -285,7 +287,7 @@ public class TenantManagementEntryService implements TenantManagementApi {
             oAuthToken,
             before.toMap(),
             requestAttributes);
-    auditLogWriters.write(adminTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();

@@ -35,7 +35,7 @@ import org.idp.server.core.openid.federation.repository.FederationConfigurationQ
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
-import org.idp.server.platform.audit.AuditLogWriters;
+import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
@@ -77,7 +77,7 @@ public class OrgFederationConfigManagementEntryService implements OrgFederationC
   OrganizationRepository organizationRepository;
   FederationConfigurationCommandRepository federationConfigurationCommandRepository;
   FederationConfigurationQueryRepository federationConfigurationQueryRepository;
-  AuditLogWriters auditLogWriters;
+  AuditLogPublisher auditLogPublisher;
   OrganizationAccessVerifier organizationAccessVerifier;
 
   LoggerWrapper log = LoggerWrapper.getLogger(OrgFederationConfigManagementEntryService.class);
@@ -89,19 +89,19 @@ public class OrgFederationConfigManagementEntryService implements OrgFederationC
    * @param organizationRepository the organization repository
    * @param federationConfigurationCommandRepository the federation configuration command repository
    * @param federationConfigurationQueryRepository the federation configuration query repository
-   * @param auditLogWriters the audit log writers
+   * @param auditLogPublisher the audit log publisher
    */
   public OrgFederationConfigManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
       OrganizationRepository organizationRepository,
       FederationConfigurationCommandRepository federationConfigurationCommandRepository,
       FederationConfigurationQueryRepository federationConfigurationQueryRepository,
-      AuditLogWriters auditLogWriters) {
+      AuditLogPublisher auditLogPublisher) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.organizationRepository = organizationRepository;
     this.federationConfigurationCommandRepository = federationConfigurationCommandRepository;
     this.federationConfigurationQueryRepository = federationConfigurationQueryRepository;
-    this.auditLogWriters = auditLogWriters;
+    this.auditLogPublisher = auditLogPublisher;
     this.organizationAccessVerifier = new OrganizationAccessVerifier();
   }
 
@@ -146,7 +146,7 @@ public class OrgFederationConfigManagementEntryService implements OrgFederationC
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (context.isDryRun()) {
       return context.toResponse();
@@ -158,6 +158,7 @@ public class OrgFederationConfigManagementEntryService implements OrgFederationC
   }
 
   @Override
+  @Transaction(readOnly = true)
   public FederationConfigManagementResponse findList(
       OrganizationIdentifier organizationIdentifier,
       TenantIdentifier tenantIdentifier,
@@ -195,7 +196,7 @@ public class OrgFederationConfigManagementEntryService implements OrgFederationC
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     Map<String, Object> response = new HashMap<>();
     response.put("results", configurations.stream().map(FederationConfiguration::toMap).toList());
@@ -248,7 +249,7 @@ public class OrgFederationConfigManagementEntryService implements OrgFederationC
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     Map<String, Object> response = new HashMap<>();
     response.put("result", configuration.toMap());
@@ -299,7 +300,7 @@ public class OrgFederationConfigManagementEntryService implements OrgFederationC
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!before.exists()) {
       return new FederationConfigManagementResponse(
@@ -354,7 +355,7 @@ public class OrgFederationConfigManagementEntryService implements OrgFederationC
             oAuthToken,
             configuration.payload(),
             requestAttributes);
-    auditLogWriters.write(targetTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!configuration.exists()) {
       return new FederationConfigManagementResponse(

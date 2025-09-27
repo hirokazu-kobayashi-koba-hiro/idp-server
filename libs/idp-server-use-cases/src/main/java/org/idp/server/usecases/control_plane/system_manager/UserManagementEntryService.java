@@ -46,7 +46,7 @@ import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.identity.role.RoleQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
-import org.idp.server.platform.audit.AuditLogWriters;
+import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
@@ -67,7 +67,7 @@ public class UserManagementEntryService implements UserManagementApi {
   UserRegistrationVerifier verifier;
   UserRegistrationRelatedDataVerifier updateVerifier;
   UserLifecycleEventPublisher userLifecycleEventPublisher;
-  AuditLogWriters auditLogWriters;
+  AuditLogPublisher auditLogPublisher;
   LoggerWrapper log = LoggerWrapper.getLogger(UserManagementEntryService.class);
 
   public UserManagementEntryService(
@@ -78,7 +78,7 @@ public class UserManagementEntryService implements UserManagementApi {
       OrganizationRepository organizationRepository,
       PasswordEncodeDelegation passwordEncodeDelegation,
       UserLifecycleEventPublisher userLifecycleEventPublisher,
-      AuditLogWriters auditLogWriters) {
+      AuditLogPublisher auditLogPublisher) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.userQueryRepository = userQueryRepository;
     this.userCommandRepository = userCommandRepository;
@@ -92,7 +92,7 @@ public class UserManagementEntryService implements UserManagementApi {
     this.verifier = new UserRegistrationVerifier(userVerifier, userRegistrationRelatedDataVerifier);
     this.updateVerifier = userRegistrationRelatedDataVerifier;
     this.userLifecycleEventPublisher = userLifecycleEventPublisher;
-    this.auditLogWriters = auditLogWriters;
+    this.auditLogPublisher = auditLogPublisher;
   }
 
   @Override
@@ -121,7 +121,7 @@ public class UserManagementEntryService implements UserManagementApi {
     AuditLog auditLog =
         AuditLogCreator.create(
             "UserManagementApi.create", tenant, operator, oAuthToken, context, requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -153,6 +153,7 @@ public class UserManagementEntryService implements UserManagementApi {
   }
 
   @Override
+  @Transaction(readOnly = true)
   public UserManagementResponse findList(
       TenantIdentifier tenantIdentifier,
       User operator,
@@ -172,7 +173,7 @@ public class UserManagementEntryService implements UserManagementApi {
             operator,
             oAuthToken,
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -207,6 +208,7 @@ public class UserManagementEntryService implements UserManagementApi {
   }
 
   @Override
+  @Transaction(readOnly = true)
   public UserManagementResponse get(
       TenantIdentifier tenantIdentifier,
       User operator,
@@ -222,7 +224,7 @@ public class UserManagementEntryService implements UserManagementApi {
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "UserManagementApi.get", "get", tenant, operator, oAuthToken, requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -418,7 +420,7 @@ public class UserManagementEntryService implements UserManagementApi {
             oAuthToken,
             user.toMaskedValueMap(),
             requestAttributes);
-    auditLogWriters.write(tenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -464,7 +466,7 @@ public class UserManagementEntryService implements UserManagementApi {
     //        AuditLogCreator.createOnUpdate(
     //            "UserManagementApi.updateRoles", "updateRoles", tenant, operator, oAuthToken,
     // requestAttributes);
-    //    auditLogWriters.write(tenant, auditLog);
+    //    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -522,7 +524,7 @@ public class UserManagementEntryService implements UserManagementApi {
     //        AuditLogCreator.createOnUpdate(
     //            "UserManagementApi.updateTenantAssignments", "updateTenantAssignments", tenant,
     // operator, oAuthToken, requestAttributes);
-    //    auditLogWriters.write(tenant, auditLog);
+    //    auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();
@@ -592,7 +594,7 @@ public class UserManagementEntryService implements UserManagementApi {
     //                "UserManagementApi.updateOrganizationAssignments", tenant, operator,
     // oAuthToken,
     //     requestAttributes);
-    //        auditLogWriters.write(tenant, auditLog);
+    //        auditLogPublisher.publish(auditLog);
 
     if (!permissions.includesAll(operator.permissionsAsSet())) {
       Map<String, Object> response = new HashMap<>();

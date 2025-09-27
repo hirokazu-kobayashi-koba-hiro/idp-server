@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.security.event;
+package org.idp.server.platform.audit;
 
-import org.idp.server.platform.security.SecurityEvent;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
-public interface SecurityEventSqlExecutor {
-  void insert(SecurityEvent securityEvent);
+public interface AuditLogApi {
+
+  void handle(TenantIdentifier tenantIdentifier, AuditLog auditLog);
 }

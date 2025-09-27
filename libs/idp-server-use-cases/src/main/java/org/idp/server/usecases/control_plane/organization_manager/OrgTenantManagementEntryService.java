@@ -37,7 +37,7 @@ import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
-import org.idp.server.platform.audit.AuditLogWriters;
+import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
@@ -59,7 +59,7 @@ public class OrgTenantManagementEntryService implements OrgTenantManagementApi {
       authorizationServerConfigurationCommandRepository;
   TenantManagementVerifier tenantManagementVerifier;
   UserCommandRepository userCommandRepository;
-  AuditLogWriters auditLogWriters;
+  AuditLogPublisher auditLogPublisher;
   OrganizationAccessVerifier organizationAccessVerifier;
 
   LoggerWrapper log = LoggerWrapper.getLogger(OrgTenantManagementEntryService.class);
@@ -71,7 +71,7 @@ public class OrgTenantManagementEntryService implements OrgTenantManagementApi {
       AuthorizationServerConfigurationCommandRepository
           authorizationServerConfigurationCommandRepository,
       UserCommandRepository userCommandRepository,
-      AuditLogWriters auditLogWriters) {
+      AuditLogPublisher auditLogPublisher) {
     this.tenantCommandRepository = tenantCommandRepository;
     this.tenantQueryRepository = tenantQueryRepository;
     this.organizationRepository = organizationRepository;
@@ -80,7 +80,7 @@ public class OrgTenantManagementEntryService implements OrgTenantManagementApi {
     this.userCommandRepository = userCommandRepository;
     TenantVerifier tenantVerifier = new TenantVerifier(tenantQueryRepository);
     this.tenantManagementVerifier = new TenantManagementVerifier(tenantVerifier);
-    this.auditLogWriters = auditLogWriters;
+    this.auditLogPublisher = auditLogPublisher;
     this.organizationAccessVerifier = new OrganizationAccessVerifier();
   }
 
@@ -124,7 +124,7 @@ public class OrgTenantManagementEntryService implements OrgTenantManagementApi {
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(orgTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!accessResult.isSuccess()) {
       return accessResult.toErrorResponse();
@@ -148,6 +148,7 @@ public class OrgTenantManagementEntryService implements OrgTenantManagementApi {
   }
 
   @Override
+  @Transaction(readOnly = true)
   public TenantManagementResponse findList(
       OrganizationIdentifier organizationId,
       User operator,
@@ -180,6 +181,7 @@ public class OrgTenantManagementEntryService implements OrgTenantManagementApi {
   }
 
   @Override
+  @Transaction(readOnly = true)
   public TenantManagementResponse get(
       OrganizationIdentifier organizationId,
       User operator,
@@ -244,7 +246,7 @@ public class OrgTenantManagementEntryService implements OrgTenantManagementApi {
             oAuthToken,
             context,
             requestAttributes);
-    auditLogWriters.write(orgTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!before.exists()) {
       return new TenantManagementResponse(TenantManagementStatus.NOT_FOUND, Map.of());
@@ -291,7 +293,7 @@ public class OrgTenantManagementEntryService implements OrgTenantManagementApi {
             oAuthToken,
             before.toMap(),
             requestAttributes);
-    auditLogWriters.write(orgTenant, auditLog);
+    auditLogPublisher.publish(auditLog);
 
     if (!before.exists()) {
       return new TenantManagementResponse(TenantManagementStatus.NOT_FOUND, Map.of());
