@@ -249,7 +249,7 @@ Control Plane API → Template登録 → 動的API生成 → HttpRequestExecutor
 
 #### Management API（設定用）
 ```
-POST /v1/management/organizations/{orgId}/tenants/{tenantId}/identity-verification-configs
+POST /v1/management/organizations/{orgId}/tenants/{tenantId}/identity-verification-configurations
 ```
 
 #### 動的生成API（実行用）

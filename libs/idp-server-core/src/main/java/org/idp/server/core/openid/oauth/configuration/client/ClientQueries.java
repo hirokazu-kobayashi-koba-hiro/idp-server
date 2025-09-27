@@ -237,4 +237,8 @@ public class ClientQueries implements UuidConvertable {
     }
     return Integer.parseInt(values.get("offset"));
   }
+
+  public Map<String, String> toMap() {
+    return values;
+  }
 }

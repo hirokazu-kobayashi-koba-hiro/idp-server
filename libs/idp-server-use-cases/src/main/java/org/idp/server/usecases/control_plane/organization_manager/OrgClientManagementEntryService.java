@@ -25,6 +25,7 @@ import org.idp.server.control_plane.management.oidc.client.*;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementStatus;
 import org.idp.server.control_plane.management.oidc.client.io.ClientRegistrationRequest;
+import org.idp.server.control_plane.management.oidc.client.validator.ClientQueryValidator;
 import org.idp.server.control_plane.management.oidc.client.validator.ClientRegistrationRequestValidationResult;
 import org.idp.server.control_plane.management.oidc.client.validator.ClientRegistrationRequestValidator;
 import org.idp.server.control_plane.organization.access.OrganizationAccessControlResult;
@@ -191,6 +192,12 @@ public class OrgClientManagementEntryService implements OrgClientManagementApi {
             oAuthToken,
             requestAttributes);
     auditLogWriters.write(targetTenant, auditLog);
+
+    ClientQueryValidator validator = new ClientQueryValidator(queries);
+    ClientRegistrationRequestValidationResult validated = validator.validate();
+    if (!validated.isValid()) {
+      return validated.errorResponse();
+    }
 
     if (!accessResult.isSuccess()) {
       Map<String, Object> response = new HashMap<>();

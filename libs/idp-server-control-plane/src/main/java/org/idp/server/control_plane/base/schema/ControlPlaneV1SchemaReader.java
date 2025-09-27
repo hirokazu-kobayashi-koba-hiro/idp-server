@@ -63,6 +63,11 @@ public class ControlPlaneV1SchemaReader {
     return JsonSchemaDefinition.fromJson(json);
   }
 
+  public static JsonSchemaDefinition clientQuerySchema() {
+    String json = ResourceReader.readClasspath("/schema/1.0/client-query.json");
+    return JsonSchemaDefinition.fromJson(json);
+  }
+
   public static JsonSchemaDefinition adminUserSchema() {
     String json = ResourceReader.readClasspath("/schema/1.0/admin-user.json");
     return JsonSchemaDefinition.fromJson(json);

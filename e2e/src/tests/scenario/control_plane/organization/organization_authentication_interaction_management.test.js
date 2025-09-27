@@ -113,8 +113,8 @@ describe("organization authentication interaction management api", () => {
       });
       console.log("Filter by type response:", JSON.stringify(filterResponse.data, null, 2));
       expect(filterResponse.status).toBe(200);
-      expect(filterResponse.data).toHaveProperty("results");
-      expect(Array.isArray(filterResponse.data.results)).toBe(true);
+      expect(filterResponse.data).toHaveProperty("list");
+      expect(Array.isArray(filterResponse.data.list)).toBe(true);
     });
 
     it("filter by transaction_id", async () => {
@@ -195,8 +195,8 @@ describe("organization authentication interaction management api", () => {
 
       console.log("Date range filter response:", JSON.stringify(dateRangeResponse.data, null, 2));
       expect(dateRangeResponse.status).toBe(200);
-      expect(dateRangeResponse.data).toHaveProperty("results");
-      expect(Array.isArray(dateRangeResponse.data.results)).toBe(true);
+      expect(dateRangeResponse.data).toHaveProperty("list");
+      expect(Array.isArray(dateRangeResponse.data.list)).toBe(true);
 
       // Validate that all returned interactions fall within the date range
       dateRangeResponse.data.list.forEach(interaction => {
@@ -270,8 +270,8 @@ describe("organization authentication interaction management api", () => {
       });
       console.log("Filter by status response:", JSON.stringify(statusFilterResponse.data, null, 2));
       expect(statusFilterResponse.status).toBe(200);
-      expect(statusFilterResponse.data).toHaveProperty("results");
-      expect(Array.isArray(statusFilterResponse.data.results)).toBe(true);
+      expect(statusFilterResponse.data).toHaveProperty("list");
+      expect(Array.isArray(statusFilterResponse.data.list)).toBe(true);
     });
   });
 

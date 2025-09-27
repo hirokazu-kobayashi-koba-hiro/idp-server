@@ -1,0 +1,29 @@
+{
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique Client Identifier. It MUST NOT be currently valid for any other registered Client."
+    },
+    "client_id_alias": {
+      "type": "string",
+      "maxLength": "255",
+      "description": "Unique Client Id Alias"
+    },
+    "from": {
+      "type": "string"
+    },
+    "to": {
+      "type": "string"
+    },
+    "limit": {
+      "type": "string",
+      "pattern": "^[0-9]+$"
+    },
+    "offset": {
+      "type": "string",
+      "pattern": "^[0-9]+$"
+    }
+  }
+}

@@ -46,21 +46,23 @@ import org.springframework.web.bind.annotation.*;
  * <p>All operations are performed within the context of the organization's admin tenant, ensuring
  * proper isolation and access control.
  *
- * <p>API endpoints: - POST /organizations/{organizationId}/tenants/{tenantId}/federation-configs -
- * Create federation config - GET
- * /organizations/{organizationId}/tenants/{tenantId}/federation-configs - List federation configs -
- * GET /organizations/{organizationId}/tenants/{tenantId}/federation-configs/{configId} - Get
+ * <p>API endpoints: - POST
+ * /organizations/{organizationId}/tenants/{tenantId}/federation-configurations - Create federation
+ * config - GET /organizations/{organizationId}/tenants/{tenantId}/federation-configurations - List
+ * federation configs - GET
+ * /organizations/{organizationId}/tenants/{tenantId}/federation-configurations/{configId} - Get
  * specific config - PUT
- * /organizations/{organizationId}/tenants/{tenantId}/federation-configs/{configId} - Update config
- * - DELETE /organizations/{organizationId}/tenants/{tenantId}/federation-configs/{configId} -
- * Delete config
+ * /organizations/{organizationId}/tenants/{tenantId}/federation-configurations/{configId} - Update
+ * config - DELETE
+ * /organizations/{organizationId}/tenants/{tenantId}/federation-configurations/{configId} - Delete
+ * config
  *
  * @see OrgFederationConfigManagementApi
  * @see OrganizationOperatorPrincipal
  */
 @RestController
 @RequestMapping(
-    "/v1/management/organizations/{organizationId}/tenants/{tenantId}/federation-configs")
+    "/v1/management/organizations/{organizationId}/tenants/{tenantId}/federation-configurations")
 public class OrganizationFederationConfigManagementV1Api implements ParameterTransformable {
 
   OrgFederationConfigManagementApi orgFederationConfigManagementApi;

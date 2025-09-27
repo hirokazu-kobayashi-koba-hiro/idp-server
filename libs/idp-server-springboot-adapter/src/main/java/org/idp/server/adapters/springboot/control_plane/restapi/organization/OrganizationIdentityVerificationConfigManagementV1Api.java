@@ -39,7 +39,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(
-    "/v1/management/organizations/{organizationId}/tenants/{tenantId}/identity-verification-configs")
+    "/v1/management/organizations/{organizationId}/tenants/{tenantId}/identity-verification-configurations")
 public class OrganizationIdentityVerificationConfigManagementV1Api
     implements ParameterTransformable {
 

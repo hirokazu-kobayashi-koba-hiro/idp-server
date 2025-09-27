@@ -33,43 +33,28 @@ describe("Organization Identity Verification Config Management API Test", () => 
       id: configId,
       type: configType,
       enabled: true,
-      applications: [{
-        id: uuidv4(),
-        verification_type: "identity_document",
-        verification_process: "document_upload",
-        verification_steps: [
-          {
-            step_type: "document_capture",
-            required_documents: ["driver_license", "passport"],
-            verification_level: "enhanced"
+      processes: {
+        email_verification: {
+          request: {
+            basic_auth: {
+              username: "test_user",
+              password: "test_pass"
+            },
+            schema: {
+              type: "object",
+              properties: {
+                email: { type: "string" }
+              }
+            }
           },
-          {
-            step_type: "face_verification",
-            liveness_detection: true,
-            face_match_threshold: 0.85
-          },
-          {
-            step_type: "address_verification",
-            document_types: ["utility_bill", "bank_statement"],
-            age_limit_days: 90
+          execution: {
+            mock: {
+              enabled: true,
+              response: { status: "success" }
+            }
           }
-        ],
-        completion_requirements: {
-          minimum_steps: 2,
-          identity_score_threshold: 0.90,
-          manual_review_threshold: 0.75
-        },
-        result_storage: {
-          retain_verification_data: true,
-          retention_period_days: 2555, // 7 years
-          include_biometric_data: false
-        },
-        notification_settings: {
-          notify_on_completion: true,
-          notify_on_failure: true,
-          webhook_url: "https://example.org/webhook/ekyc"
         }
-      }],
+      },
       metadata: {
         created_by: "system",
         purpose: "comprehensive_identity_verification",
@@ -78,7 +63,7 @@ describe("Organization Identity Verification Config Management API Test", () => 
     };
 
     const createResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configs`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations`,
       headers: {
         Authorization: authHeader,
         "Content-Type": "application/json",
@@ -94,7 +79,7 @@ describe("Organization Identity Verification Config Management API Test", () => 
 
     // Test GET LIST
     const listResponse = await get({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configs`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations`,
       headers: {
         Authorization: authHeader,
       },
@@ -107,7 +92,7 @@ describe("Organization Identity Verification Config Management API Test", () => 
 
     // Test GET by ID
     const getResponse = await get({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configs/${configId}`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
       headers: {
         Authorization: authHeader,
       },
@@ -124,44 +109,28 @@ describe("Organization Identity Verification Config Management API Test", () => 
       id: configId,
       type: configType,
       enabled: true,
-      applications: [{
-        id: uuidv4(),
-        verification_type: "identity_document",
-        verification_process: "document_upload",
-        verification_steps: [
-          {
-            step_type: "document_capture",
-            required_documents: ["driver_license", "passport", "national_id"],
-            verification_level: "enhanced"
+      processes: {
+        email_verification: {
+          request: {
+            basic_auth: {
+              username: "test_user",
+              password: "test_pass"
+            },
+            schema: {
+              type: "object",
+              properties: {
+                email: { type: "string" }
+              }
+            }
           },
-          {
-            step_type: "face_verification",
-            liveness_detection: true,
-            face_match_threshold: 0.90 // Enhanced threshold
-          },
-          {
-            step_type: "address_verification",
-            document_types: ["utility_bill", "bank_statement"],
-            age_limit_days: 60 // Stricter requirement
+          execution: {
+            mock: {
+              enabled: true,
+              response: { status: "success" }
+            }
           }
-        ],
-        completion_requirements: {
-          minimum_steps: 3, // Require all steps
-          identity_score_threshold: 0.95, // Higher threshold
-          manual_review_threshold: 0.80
-        },
-        result_storage: {
-          retain_verification_data: true,
-          retention_period_days: 2555,
-          include_biometric_data: true // Now include biometric data
-        },
-        notification_settings: {
-          notify_on_completion: true,
-          notify_on_failure: true,
-          notify_on_manual_review: true,
-          webhook_url: "https://example.org/webhook/ekyc"
         }
-      }],
+      },
       metadata: {
         created_by: "system",
         updated_by: "admin",
@@ -171,7 +140,7 @@ describe("Organization Identity Verification Config Management API Test", () => 
     };
 
     const updateResponse = await putWithJson({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configs/${configId}`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
       headers: {
         Authorization: authHeader,
         "Content-Type": "application/json",
@@ -185,7 +154,7 @@ describe("Organization Identity Verification Config Management API Test", () => 
 
     // Test DELETE
     const deleteResponse = await deletion({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configs/${configId}`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
       headers: {
         Authorization: authHeader,
       },
@@ -195,7 +164,7 @@ describe("Organization Identity Verification Config Management API Test", () => 
 
     // Verify deletion by attempting to get the deleted config
     const verifyDeleteResponse = await get({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configs/${configId}`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
       headers: {
         Authorization: authHeader,
       },
@@ -211,22 +180,28 @@ describe("Organization Identity Verification Config Management API Test", () => 
       id: configId,
       type: "simple_document_verification",
       enabled: false,
-      applications: [{
-        id: uuidv4(),
-        verification_type: "identity_document",
-        verification_process: "document_upload",
-        verification_steps: [
-          {
-            step_type: "document_capture",
-            required_documents: ["driver_license"],
-            verification_level: "basic"
+      processes: {
+        email_verification: {
+          request: {
+            basic_auth: {
+              username: "test_user",
+              password: "test_pass"
+            },
+            schema: {
+              type: "object",
+              properties: {
+                email: { type: "string" }
+              }
+            }
+          },
+          execution: {
+            mock: {
+              enabled: true,
+              response: { status: "success" }
+            }
           }
-        ],
-        completion_requirements: {
-          minimum_steps: 1,
-          identity_score_threshold: 0.70
         }
-      }],
+      },
       metadata: {
         created_by: "system",
         purpose: "basic_identity_verification"
@@ -234,7 +209,7 @@ describe("Organization Identity Verification Config Management API Test", () => 
     };
 
     const dryRunResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configs?dry_run=true`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations?dry_run=true`,
       headers: {
         Authorization: authHeader,
         "Content-Type": "application/json",
@@ -249,7 +224,7 @@ describe("Organization Identity Verification Config Management API Test", () => 
 
     // Verify that dry-run didn't actually create the config
     const verifyResponse = await get({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configs/${configId}`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
       headers: {
         Authorization: authHeader,
       },
@@ -264,60 +239,74 @@ describe("Organization Identity Verification Config Management API Test", () => 
     // First create a config
     const createRequest = {
       id: configId,
-      type: "document_verification",
+      type: configId,
       enabled: true,
-      applications: [{
-        id: uuidv4(),
-        verification_type: "identity_document",
-        verification_process: "document_upload",
-        verification_steps: [
-          {
-            step_type: "document_capture",
-            required_documents: ["passport"],
-            verification_level: "standard"
+      processes: {
+        email_verification: {
+          request: {
+            basic_auth: {
+              username: "test_user",
+              password: "test_pass"
+            },
+            schema: {
+              type: "object",
+              properties: {
+                email: { type: "string" }
+              }
+            }
+          },
+          execution: {
+            mock: {
+              enabled: true,
+              response: { status: "success" }
+            }
           }
-        ],
-        completion_requirements: {
-          minimum_steps: 1,
-          identity_score_threshold: 0.80
         }
-      }],
+      },
       metadata: {
         created_by: "system",
         purpose: "document_verification"
       }
     };
 
-    await postWithJson({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configs`,
+    const postResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations`,
       headers: {
         Authorization: authHeader,
         "Content-Type": "application/json",
       },
       body: createRequest,
     });
+    console.log(JSON.stringify(postResponse.data, null, 2));
+    expect(postResponse.status).toBe(201);
 
     // Test dry-run update
     const updateRequest = {
       id: configId,
-      type: "enhanced_document_verification",
+      type: configId,
       enabled: true,
-      applications: [{
-        id: uuidv4(),
-        verification_type: "identity_document",
-        verification_process: "document_upload",
-        verification_steps: [
-          {
-            step_type: "document_capture",
-            required_documents: ["passport", "driver_license"],
-            verification_level: "enhanced"
+      processes: {
+        email_verification: {
+          request: {
+            basic_auth: {
+              username: "test_user",
+              password: "test_pass"
+            },
+            schema: {
+              type: "object",
+              properties: {
+                email: { type: "string" }
+              }
+            }
+          },
+          execution: {
+            mock: {
+              enabled: true,
+              response: { status: "success" }
+            }
           }
-        ],
-        completion_requirements: {
-          minimum_steps: 1,
-          identity_score_threshold: 0.90
         }
-      }],
+      },
       metadata: {
         created_by: "system",
         updated_by: "admin",
@@ -326,7 +315,7 @@ describe("Organization Identity Verification Config Management API Test", () => 
     };
 
     const dryRunUpdateResponse = await putWithJson({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configs/${configId}?dry_run=true`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}?dry_run=true`,
       headers: {
         Authorization: authHeader,
         "Content-Type": "application/json",
@@ -339,19 +328,19 @@ describe("Organization Identity Verification Config Management API Test", () => 
 
     // Verify original config is unchanged
     const verifyResponse = await get({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configs/${configId}`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
       headers: {
         Authorization: authHeader,
       },
     });
 
     expect(verifyResponse.status).toBe(200);
-    expect(verifyResponse.data).toHaveProperty("type", "document_verification"); // Original value
-    expect(verifyResponse.data.applications[0].completion_requirements.identity_score_threshold).toBe(0.80);
+    expect(verifyResponse.data).toHaveProperty("type", configId); // Original value
+    expect(verifyResponse.data.processes).toHaveProperty("email_verification");
 
     // Cleanup
     await deletion({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configs/${configId}`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
       headers: {
         Authorization: authHeader,
       },
@@ -364,24 +353,30 @@ describe("Organization Identity Verification Config Management API Test", () => 
     // First create a config
     const createRequest = {
       id: configId,
-      type: "biometric_verification",
+      type: configId,
       enabled: true,
-      applications: [{
-        id: uuidv4(),
-        verification_type: "biometric",
-        verification_process: "face_recognition",
-        verification_steps: [
-          {
-            step_type: "face_verification",
-            liveness_detection: true,
-            face_match_threshold: 0.85
+      processes: {
+        email_verification: {
+          request: {
+            basic_auth: {
+              username: "test_user",
+              password: "test_pass"
+            },
+            schema: {
+              type: "object",
+              properties: {
+                email: { type: "string" }
+              }
+            }
+          },
+          execution: {
+            mock: {
+              enabled: true,
+              response: { status: "success" }
+            }
           }
-        ],
-        completion_requirements: {
-          minimum_steps: 1,
-          identity_score_threshold: 0.85
         }
-      }],
+      },
       metadata: {
         created_by: "system",
         purpose: "biometric_verification"
@@ -389,7 +384,7 @@ describe("Organization Identity Verification Config Management API Test", () => 
     };
 
     await postWithJson({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configs`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations`,
       headers: {
         Authorization: authHeader,
         "Content-Type": "application/json",
@@ -399,19 +394,17 @@ describe("Organization Identity Verification Config Management API Test", () => 
 
     // Test dry-run delete
     const dryRunDeleteResponse = await deletion({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configs/${configId}?dry_run=true`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}?dry_run=true`,
       headers: {
         Authorization: authHeader,
       },
     });
 
-    expect(dryRunDeleteResponse.status).toBe(200);
-    expect(dryRunDeleteResponse.data).toHaveProperty("message");
-    expect(dryRunDeleteResponse.data.message).toMatch(/simulated successfully/);
+    expect(dryRunDeleteResponse.status).toBe(204);
 
     // Verify config still exists
     const verifyResponse = await get({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configs/${configId}`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
       headers: {
         Authorization: authHeader,
       },
@@ -422,7 +415,7 @@ describe("Organization Identity Verification Config Management API Test", () => 
 
     // Cleanup - actual delete
     await deletion({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configs/${configId}`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
       headers: {
         Authorization: authHeader,
       },
@@ -433,7 +426,7 @@ describe("Organization Identity Verification Config Management API Test", () => 
     const nonExistentId = uuidv4();
 
     const response = await get({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configs/${nonExistentId}`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${nonExistentId}`,
       headers: {
         Authorization: authHeader,
       },
@@ -451,22 +444,28 @@ describe("Organization Identity Verification Config Management API Test", () => 
         id: configId,
         type: `test_verification_${i}`,
         enabled: true,
-        applications: [{
-          id: uuidv4(),
-          verification_type: "identity_document",
-          verification_process: "document_upload",
-          verification_steps: [
-            {
-              step_type: "document_capture",
-              required_documents: ["passport"],
-              verification_level: "basic"
+        processes: {
+          email_verification: {
+            request: {
+              basic_auth: {
+                username: "test_user",
+                password: "test_pass"
+              },
+              schema: {
+                type: "object",
+                properties: {
+                  email: { type: "string" }
+                }
+              }
+            },
+            execution: {
+              mock: {
+                enabled: true,
+                response: { status: "success" }
+              }
             }
-          ],
-          completion_requirements: {
-            minimum_steps: 1,
-            identity_score_threshold: 0.70
           }
-        }],
+        },
         metadata: {
           created_by: "system",
           purpose: `test_verification_${i}`
@@ -474,7 +473,7 @@ describe("Organization Identity Verification Config Management API Test", () => 
       };
 
       await postWithJson({
-        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configs`,
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations`,
         headers: {
           Authorization: authHeader,
           "Content-Type": "application/json",
@@ -487,7 +486,7 @@ describe("Organization Identity Verification Config Management API Test", () => 
 
     // Test pagination
     const paginatedResponse = await get({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configs?limit=2&offset=0`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations?limit=2&offset=0`,
       headers: {
         Authorization: authHeader,
       },
@@ -500,7 +499,7 @@ describe("Organization Identity Verification Config Management API Test", () => 
     // Cleanup
     for (const configId of configs) {
       await deletion({
-        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configs/${configId}`,
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
         headers: {
           Authorization: authHeader,
         },

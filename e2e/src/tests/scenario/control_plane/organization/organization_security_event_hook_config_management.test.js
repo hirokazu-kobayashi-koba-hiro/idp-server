@@ -33,26 +33,35 @@ describe("organization security event hook configuration management api", () => 
       try {
         // Step 1: Create a test security event hook configuration within the organization
         const createResponse = await postWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configs`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations`,
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
           body: {
             "id": testConfigId,
             "type": testConfigId, // Use UUID to avoid type conflicts
-            "payload": {
-              "url": "https://webhook.example.com/security-events",
-              "headers": {
-                "Authorization": "Bearer webhook-token-org",
-                "Content-Type": "application/json"
-              },
-              "events": ["user.login", "user.logout", "authentication.failed"],
-              "retry_policy": {
-                "max_retries": 3,
-                "backoff_seconds": 30
+            triggers: [
+              "user_signin_failure"
+            ],
+            events: {
+              "user_signin_failure": {
+                execution: {
+                  function: "webhook_call",
+                  http_request: {
+                    url: "https://hmac.example.com/webhook",
+                    method: "POST",
+                    auth_type: "HMAC_SHA256",
+                    hmac_authentication: {
+                      api_key: "hmac-api-key",
+                      secret: "super-secret-hmac-key",
+                      signature_format: "SHA256",
+                      signing_fields: ["timestamp", "payload"]
+                    }
+                  }
+                }
               }
             },
-            "enabled": true
+            enabled: true
           }
         });
         console.log("Create Response:", createResponse.data);
@@ -65,21 +74,35 @@ describe("organization security event hook configuration management api", () => 
         // Step 2: Test dry run for create
         const dryRunConfigId = uuidv4();
         const dryRunCreateResponse = await postWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configs?dry_run=true`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations?dry_run=true`,
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
           body: {
             "id": dryRunConfigId,
             "type": dryRunConfigId,
-            "payload": {
-              "url": "https://dry-run.example.com/webhooks",
-              "headers": {
-                "Authorization": "Bearer dry-run-token"
-              },
-              "events": ["user.registration", "password.reset"]
+            triggers: [
+              "user_signin_failure"
+            ],
+            events: {
+              "user_signin_failure": {
+                execution: {
+                  function: "webhook_call",
+                  http_request: {
+                    url: "https://hmac.example.com/webhook",
+                    method: "POST",
+                    auth_type: "HMAC_SHA256",
+                    hmac_authentication: {
+                      api_key: "hmac-api-key",
+                      secret: "super-secret-hmac-key",
+                      signature_format: "SHA256",
+                      signing_fields: ["timestamp", "payload"]
+                    }
+                  }
+                }
+              }
             },
-            "enabled": true
+            enabled: true
           }
         });
         console.log("Dry run create response:", dryRunCreateResponse.data);
@@ -92,7 +115,7 @@ describe("organization security event hook configuration management api", () => 
 
         // Step 3: Verify the config appears in the list
         const listResponse1 = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configs`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -107,7 +130,7 @@ describe("organization security event hook configuration management api", () => 
 
         // Step 4: Verify individual config retrieval works
         const detailResponse1 = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configs/${createdConfigId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations/${createdConfigId}`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -119,27 +142,35 @@ describe("organization security event hook configuration management api", () => 
 
         // Step 5: Update security event hook config
         const updateResponse = await putWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configs/${createdConfigId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations/${createdConfigId}`,
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
           body: {
             "id": testConfigId,
             "type": testConfigId,
-            "payload": {
-              "url": "https://updated-webhook.example.com/security-events",
-              "headers": {
-                "Authorization": "Bearer updated-webhook-token-org",
-                "Content-Type": "application/json",
-                "X-Custom-Header": "updated-value"
-              },
-              "events": ["user.login", "user.logout", "authentication.failed", "account.locked"],
-              "retry_policy": {
-                "max_retries": 5,
-                "backoff_seconds": 60
+            triggers: [
+              "user_signin_failure"
+            ],
+            events: {
+              "user_signin_failure": {
+                execution: {
+                  function: "webhook_call",
+                  http_request: {
+                    url: "https://hmac.example.com/webhook",
+                    method: "POST",
+                    auth_type: "HMAC_SHA256",
+                    hmac_authentication: {
+                      api_key: "hmac-api-key",
+                      secret: "super-secret-hmac-key",
+                      signature_format: "SHA256",
+                      signing_fields: ["timestamp", "payload"]
+                    }
+                  }
+                }
               }
             },
-            "enabled": true
+            enabled: true
           }
         });
         console.log("Update Response:", updateResponse.data);
@@ -148,21 +179,35 @@ describe("organization security event hook configuration management api", () => 
 
         // Step 6: Test dry run for update
         const dryRunUpdateResponse = await putWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configs/${createdConfigId}?dry_run=true`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations/${createdConfigId}?dry_run=true`,
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
           body: {
             "id": testConfigId,
             "type": testConfigId,
-            "payload": {
-              "url": "https://dry-run-update.example.com/webhooks",
-              "headers": {
-                "Authorization": "Bearer dry-run-update-token"
-              },
-              "events": ["user.registration", "user.deletion"]
+            triggers: [
+              "user_signin_failure"
+            ],
+            events: {
+              "user_signin_failure": {
+                execution: {
+                  function: "webhook_call",
+                  http_request: {
+                    url: "https://hmac.example.com/webhook",
+                    method: "POST",
+                    auth_type: "HMAC_SHA256",
+                    hmac_authentication: {
+                      api_key: "hmac-api-key",
+                      secret: "super-secret-hmac-key",
+                      signature_format: "SHA256",
+                      signing_fields: ["timestamp", "payload"]
+                    }
+                  }
+                }
+              }
             },
-            "enabled": false
+            enabled: true
           }
         });
         console.log("Dry run update response:", dryRunUpdateResponse.data);
@@ -172,7 +217,7 @@ describe("organization security event hook configuration management api", () => 
 
         // Step 7: Verify the config still appears in the list after update
         const listResponse2 = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configs`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -186,7 +231,7 @@ describe("organization security event hook configuration management api", () => 
 
         // Step 8: Verify individual config retrieval still works after update
         const detailResponse2 = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configs/${createdConfigId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations/${createdConfigId}`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -198,7 +243,7 @@ describe("organization security event hook configuration management api", () => 
 
         // Step 9: Delete the security event hook configuration
         const deleteResponse = await deletion({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configs/${createdConfigId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations/${createdConfigId}`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -210,7 +255,7 @@ describe("organization security event hook configuration management api", () => 
 
         // Step 10: Verify the config is no longer accessible
         const detailResponse3 = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configs/${createdConfigId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations/${createdConfigId}`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -224,7 +269,7 @@ describe("organization security event hook configuration management api", () => 
         if (configCreated) {
           try {
             await deletion({
-              url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configs/${testConfigId}`,
+              url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations/${testConfigId}`,
               headers: {
                 Authorization: `Bearer ${accessToken}`
               }
@@ -254,7 +299,7 @@ describe("organization security event hook configuration management api", () => 
       // Test 1: Try to access non-existent security event hook config
       const nonExistentId = uuidv4();
       const notFoundResponse = await get({
-        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configs/${nonExistentId}`,
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations/${nonExistentId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -265,7 +310,7 @@ describe("organization security event hook configuration management api", () => 
 
       // Test 2: Try to update non-existent security event hook config
       const updateNotFoundResponse = await putWithJson({
-        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configs/${nonExistentId}`,
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations/${nonExistentId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -285,7 +330,7 @@ describe("organization security event hook configuration management api", () => 
 
       // Test 3: Try to delete non-existent security event hook config
       const deleteNotFoundResponse = await deletion({
-        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configs/${nonExistentId}`,
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations/${nonExistentId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -296,7 +341,7 @@ describe("organization security event hook configuration management api", () => 
 
       // Test 4: Try with invalid authorization
       const unauthorizedResponse = await get({
-        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configs`,
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations`,
         headers: {
           Authorization: "Bearer invalid-token"
         }

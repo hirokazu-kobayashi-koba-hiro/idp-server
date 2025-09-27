@@ -248,7 +248,7 @@ describe("organization audit log management api", () => {
         console.log("Audit log detail response:", detailResponse.data);
         expect(detailResponse.status).toBe(200);
         expect(detailResponse.data).toHaveProperty("id", logId);
-        expect(detailResponse.data).toHaveProperty("action");
+        expect(detailResponse.data).toHaveProperty("target_resource_action");
       } else {
         console.log("No audit logs available for detail testing");
       }

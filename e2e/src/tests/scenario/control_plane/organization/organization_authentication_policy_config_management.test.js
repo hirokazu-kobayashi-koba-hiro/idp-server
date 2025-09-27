@@ -57,7 +57,7 @@ describe("Organization Authentication Policy Config Management API Test", () => 
     };
 
     const createResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policy-configs`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies`,
       headers: {
         Authorization: authHeader,
         "Content-Type": "application/json",
@@ -73,7 +73,7 @@ describe("Organization Authentication Policy Config Management API Test", () => 
 
     // Test GET LIST
     const listResponse = await get({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policy-configs`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies`,
       headers: {
         Authorization: authHeader,
       },
@@ -86,7 +86,7 @@ describe("Organization Authentication Policy Config Management API Test", () => 
 
     // Test GET by ID
     const getResponse = await get({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policy-configs/${configId}`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies/${configId}`,
       headers: {
         Authorization: authHeader,
       },
@@ -127,7 +127,7 @@ describe("Organization Authentication Policy Config Management API Test", () => 
     };
 
     const updateResponse = await putWithJson({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policy-configs/${configId}`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies/${configId}`,
       headers: {
         Authorization: authHeader,
         "Content-Type": "application/json",
@@ -143,7 +143,7 @@ describe("Organization Authentication Policy Config Management API Test", () => 
 
     // Test DELETE
     const deleteResponse = await deletion({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policy-configs/${configId}`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies/${configId}`,
       headers: {
         Authorization: authHeader,
       },
@@ -153,7 +153,7 @@ describe("Organization Authentication Policy Config Management API Test", () => 
 
     // Verify deletion by attempting to get the deleted config
     const verifyDeleteResponse = await get({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policy-configs/${configId}`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies/${configId}`,
       headers: {
         Authorization: authHeader,
       },
@@ -194,7 +194,7 @@ describe("Organization Authentication Policy Config Management API Test", () => 
     };
 
     const dryRunResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policy-configs?dry_run=true`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies?dry_run=true`,
       headers: {
         Authorization: authHeader,
         "Content-Type": "application/json",
@@ -209,7 +209,7 @@ describe("Organization Authentication Policy Config Management API Test", () => 
 
     // Verify that dry-run didn't actually create the config
     const verifyResponse = await get({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policy-configs/${configId}`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies/${configId}`,
       headers: {
         Authorization: authHeader,
       },
@@ -251,7 +251,7 @@ describe("Organization Authentication Policy Config Management API Test", () => 
     };
 
     await postWithJson({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policy-configs`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies`,
       headers: {
         Authorization: authHeader,
         "Content-Type": "application/json",
@@ -289,7 +289,7 @@ describe("Organization Authentication Policy Config Management API Test", () => 
     };
 
     const dryRunUpdateResponse = await putWithJson({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policy-configs/${configId}?dry_run=true`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies/${configId}?dry_run=true`,
       headers: {
         Authorization: authHeader,
         "Content-Type": "application/json",
@@ -302,7 +302,7 @@ describe("Organization Authentication Policy Config Management API Test", () => 
 
     // Verify original config is unchanged
     const verifyResponse = await get({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policy-configs/${configId}`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies/${configId}`,
       headers: {
         Authorization: authHeader,
       },
@@ -315,7 +315,7 @@ describe("Organization Authentication Policy Config Management API Test", () => 
 
     // Cleanup
     await deletion({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policy-configs/${configId}`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies/${configId}`,
       headers: {
         Authorization: authHeader,
       },
@@ -367,7 +367,7 @@ describe("Organization Authentication Policy Config Management API Test", () => 
     };
 
     await postWithJson({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policy-configs`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies`,
       headers: {
         Authorization: authHeader,
         "Content-Type": "application/json",
@@ -377,7 +377,7 @@ describe("Organization Authentication Policy Config Management API Test", () => 
 
     // Test dry-run delete
     const dryRunDeleteResponse = await deletion({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policy-configs/${configId}?dry_run=true`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies/${configId}?dry_run=true`,
       headers: {
         Authorization: authHeader,
       },
@@ -389,7 +389,7 @@ describe("Organization Authentication Policy Config Management API Test", () => 
 
     // Verify config still exists after dry-run delete
     const verifyResponse = await get({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policy-configs/${configId}`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies/${configId}`,
       headers: {
         Authorization: authHeader,
       },
@@ -400,7 +400,7 @@ describe("Organization Authentication Policy Config Management API Test", () => 
 
     // Cleanup
     await deletion({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policy-configs/${configId}`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies/${configId}`,
       headers: {
         Authorization: authHeader,
       },
@@ -411,7 +411,7 @@ describe("Organization Authentication Policy Config Management API Test", () => 
     const nonExistentId = uuidv4();
 
     const getResponse = await get({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policy-configs/${nonExistentId}`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies/${nonExistentId}`,
       headers: {
         Authorization: authHeader,
       },
@@ -420,7 +420,7 @@ describe("Organization Authentication Policy Config Management API Test", () => 
     expect(getResponse.status).toBe(404);
 
     const updateResponse = await putWithJson({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policy-configs/${nonExistentId}`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies/${nonExistentId}`,
       headers: {
         Authorization: authHeader,
         "Content-Type": "application/json",
@@ -436,7 +436,7 @@ describe("Organization Authentication Policy Config Management API Test", () => 
     expect(updateResponse.status).toBe(404);
 
     const deleteResponse = await deletion({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policy-configs/${nonExistentId}`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies/${nonExistentId}`,
       headers: {
         Authorization: authHeader,
       },
@@ -463,7 +463,7 @@ describe("Organization Authentication Policy Config Management API Test", () => 
       };
 
       await postWithJson({
-        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policy-configs`,
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies`,
         headers: {
           Authorization: authHeader,
           "Content-Type": "application/json",
@@ -474,7 +474,7 @@ describe("Organization Authentication Policy Config Management API Test", () => 
 
     // Test pagination
     const paginatedResponse = await get({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policy-configs?limit=2&offset=0`,
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies?limit=2&offset=0`,
       headers: {
         Authorization: authHeader,
       },
@@ -489,7 +489,7 @@ describe("Organization Authentication Policy Config Management API Test", () => 
     // Cleanup
     for (const configId of configIds) {
       await deletion({
-        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policy-configs/${configId}`,
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies/${configId}`,
         headers: {
           Authorization: authHeader,
         },

@@ -48,7 +48,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
     describe("Response Structure Validation", () => {
       it("should return correct response structure for federation config list", async () => {
         const response = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs?limit=10&offset=0`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations?limit=10&offset=0`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -60,7 +60,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
       it("should return correct response structure for federation config creation", async () => {
         const configId = uuidv4();
         const response = await postWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs?dry_run=true`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations?dry_run=true`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             id: configId,
@@ -292,7 +292,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
     describe("Error Response Structure Validation", () => {
       it("should return 404 for non-existent federation config", async () => {
         const response = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${uuidv4()}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${uuidv4()}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -301,7 +301,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
 
       it("should return standard error structure for invalid request", async () => {
         const response = await postWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             invalid: "data"
@@ -324,7 +324,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
         const ssoProvider = uuidv4();
 
         const response = await postWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             id: configId,
@@ -418,7 +418,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
 
         // Clean up
         await deletion({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
       });
@@ -426,7 +426,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
       it("should support dry run mode for creation", async () => {
         const configId = uuidv4();
         const response = await postWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs?dry_run=true`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations?dry_run=true`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             id: configId,
@@ -454,7 +454,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
     describe("Federation Config List Retrieval (GET)", () => {
       it("should successfully retrieve federation config list", async () => {
         const response = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -465,7 +465,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
 
       it("should support enabled filtering", async () => {
         const response = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs?enabled=true`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations?enabled=true`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -482,7 +482,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
         const ssoProvider = uuidv4();
 
         const createResponse = await postWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             id: configId,
@@ -506,7 +506,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
 
         // Now retrieve it
         const response = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -577,14 +577,14 @@ describe("Organization Federation Config Management API - Structured Tests", () 
 
         // Clean up
         await deletion({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
       });
 
       it("should return 404 for non-existent federation config", async () => {
         const response = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${uuidv4()}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${uuidv4()}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -599,7 +599,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
         const ssoProvider = uuidv4();
 
         const createResponse = await postWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             id: configId,
@@ -620,7 +620,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
 
         // Now update it
         const response = await putWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             type: "oidc",
@@ -649,7 +649,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
 
         // Clean up
         await deletion({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
       });
@@ -660,7 +660,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
         const ssoProvider = uuidv4();
 
         const createResponse = await postWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             id: configId,
@@ -680,7 +680,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
 
         // Test dry run update
         const response = await putWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${configId}?dry_run=true`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${configId}?dry_run=true`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             payload: {
@@ -695,7 +695,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
 
         // Clean up
         await deletion({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
       });
@@ -708,7 +708,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
         const ssoProvider = uuidv4();
 
         const createResponse = await postWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             id: configId,
@@ -727,7 +727,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
 
         // Test dry run deletion
         const response = await deletion({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${configId}?dry_run=true`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${configId}?dry_run=true`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -735,7 +735,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
 
         // Clean up (actual deletion)
         await deletion({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
       });
@@ -746,7 +746,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
         const ssoProvider = uuidv4();
 
         const createResponse = await postWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             id: configId,
@@ -765,7 +765,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
 
         // Now delete it
         const response = await deletion({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -773,7 +773,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
 
         // Verify it's gone
         const getResponse = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -789,7 +789,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
   describe("Organization Access Control Tests", () => {
     it("should return 401 for unauthenticated requests", async () => {
       const response = await get({
-        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs`,
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations`,
         headers: { Authorization: "Bearer invalid-token" }
       });
 
@@ -798,7 +798,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
 
     it("should return 400/404 for invalid organization ID", async () => {
       const response = await get({
-        url: `${backendUrl}/v1/management/organizations/invalid-org-id/tenants/${tenantId}/federation-configs`,
+        url: `${backendUrl}/v1/management/organizations/invalid-org-id/tenants/${tenantId}/federation-configurations`,
         headers: { Authorization: `Bearer ${accessToken}` }
       });
 
@@ -807,7 +807,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
 
     it("should return 400/404 for invalid tenant ID", async () => {
       const response = await get({
-        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/invalid-tenant-id/federation-configs`,
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/invalid-tenant-id/federation-configurations`,
         headers: { Authorization: `Bearer ${accessToken}` }
       });
 
@@ -827,7 +827,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
 
         // Step 1: Create comprehensive config
         const createResponse = await postWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             id: configId,
@@ -882,7 +882,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
 
         // Step 2: Retrieve and verify
         const getResponse = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -894,7 +894,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
 
         // Step 3: Update with enhanced configuration
         const updateResponse = await putWithJson({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             payload: {
@@ -925,7 +925,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
 
         // Step 5: Clean up
         const deleteResponse = await deletion({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -933,7 +933,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
 
         // Step 6: Verify deletion
         const getFinalResponse = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${configId}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -950,7 +950,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
           const ssoProvider = uuidv4();
 
           const createResponse = await postWithJson({
-            url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs`,
+            url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations`,
             headers: { Authorization: `Bearer ${accessToken}` },
             body: {
               id: configId,
@@ -972,7 +972,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
 
         // Test enabled filtering
         const enabledResponse = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs?enabled=true`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations?enabled=true`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -981,7 +981,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
 
         // Test all configs
         const allResponse = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
@@ -991,7 +991,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
         // Clean up all configs
         for (const configId of configs) {
           await deletion({
-            url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configs/${configId}`,
+            url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${configId}`,
             headers: { Authorization: `Bearer ${accessToken}` }
           });
         }

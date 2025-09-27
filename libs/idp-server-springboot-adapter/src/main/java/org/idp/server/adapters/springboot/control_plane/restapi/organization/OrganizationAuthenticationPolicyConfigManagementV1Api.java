@@ -46,23 +46,23 @@ import org.springframework.web.bind.annotation.*;
  * isolation and access control.
  *
  * <p>API endpoints: - POST
- * /organizations/{organizationId}/tenants/{tenantId}/authentication-policy-configs - Create
+ * /organizations/{organizationId}/tenants/{tenantId}/authentication-policies - Create
  * authentication policy config - GET
- * /organizations/{organizationId}/tenants/{tenantId}/authentication-policy-configs - List
- * authentication policy configs - GET
- * /organizations/{organizationId}/tenants/{tenantId}/authentication-policy-configs/{configId} - Get
+ * /organizations/{organizationId}/tenants/{tenantId}/authentication-policies - List authentication
+ * policy configs - GET
+ * /organizations/{organizationId}/tenants/{tenantId}/authentication-policies/{configId} - Get
  * specific config - PUT
- * /organizations/{organizationId}/tenants/{tenantId}/authentication-policy-configs/{configId} -
- * Update config - DELETE
- * /organizations/{organizationId}/tenants/{tenantId}/authentication-policy-configs/{configId} -
- * Delete config
+ * /organizations/{organizationId}/tenants/{tenantId}/authentication-policies/{configId} - Update
+ * config - DELETE
+ * /organizations/{organizationId}/tenants/{tenantId}/authentication-policies/{configId} - Delete
+ * config
  *
  * @see OrgAuthenticationPolicyConfigManagementApi
  * @see OrganizationOperatorPrincipal
  */
 @RestController
 @RequestMapping(
-    "/v1/management/organizations/{organizationId}/tenants/{tenantId}/authentication-policy-configs")
+    "/v1/management/organizations/{organizationId}/tenants/{tenantId}/authentication-policies")
 public class OrganizationAuthenticationPolicyConfigManagementV1Api
     implements ParameterTransformable {
 

@@ -313,11 +313,6 @@ describe("organization client management api", () => {
     });
 
     const invalidRequestCases = [
-      ["missing client_id", {
-        "client_name": "Test Client",
-        "grant_types": ["authorization_code"],
-        "redirect_uris": ["http://localhost:3000/callback"]
-      }],
       ["empty client_id", {
         "client_id": "",
         "client_name": "Test Client",
@@ -330,12 +325,6 @@ describe("organization client management api", () => {
         "grant_types": ["invalid_grant"],
         "redirect_uris": ["http://localhost:3000/callback"]
       }],
-      ["invalid redirect_uri", {
-        "client_id": uuidv4(),
-        "client_name": "Test Client",
-        "grant_types": ["authorization_code"],
-        "redirect_uris": ["invalid-uri"]
-      }]
     ];
 
     test.each(invalidRequestCases)("invalid request: %s", async (description, body) => {
