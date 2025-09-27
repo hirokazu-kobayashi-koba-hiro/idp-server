@@ -28,11 +28,11 @@ import org.springframework.stereotype.Component;
  * asynchronous processing by AuditLogEventListener.
  */
 @Component
-public class SpringAuditLogPublisher implements AuditLogPublisher {
+public class AuditLogPublisherService implements AuditLogPublisher {
 
   private final ApplicationEventPublisher eventPublisher;
 
-  public SpringAuditLogPublisher(ApplicationEventPublisher eventPublisher) {
+  public AuditLogPublisherService(ApplicationEventPublisher eventPublisher) {
     this.eventPublisher = eventPublisher;
   }
 

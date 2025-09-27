@@ -51,12 +51,21 @@ public class SlackSecurityEventHookExecutor implements SecurityEventHook {
       SecurityEvent securityEvent,
       SecurityEventHookConfiguration hookConfiguration) {
 
+    long startTime = System.currentTimeMillis();
+
     SlackSecurityEventHookConfiguration configuration =
         jsonConverter.read(hookConfiguration.events(), SlackSecurityEventHookConfiguration.class);
     String incomingWebhookUrl = configuration.incomingWebhookUrl(securityEvent.type());
     if (incomingWebhookUrl == null) {
-      return SecurityEventHookResult.failure(
-          type(), Map.of("status", 500, "error", "invalid_configuration"));
+      long executionDurationMs = System.currentTimeMillis() - startTime;
+      return SecurityEventHookResult.failureWithContext(
+          hookConfiguration,
+          securityEvent,
+          null,
+          executionDurationMs,
+          "CONFIGURATION_ERROR",
+          "Slack incoming webhook URL not configured for event type: "
+              + securityEvent.type().value());
     }
 
     String template = configuration.messageTemplate(securityEvent.type());
@@ -79,16 +88,32 @@ public class SlackSecurityEventHookExecutor implements SecurityEventHook {
               .build();
 
       HttpRequestResult httpResult = httpRequestExecutor.execute(httpRequest);
+      long executionDurationMs = System.currentTimeMillis() - startTime;
 
-      Map<String, Object> result = new HashMap<>();
-      result.put("status", httpResult.statusCode());
-      result.put("body", httpResult.body());
+      Map<String, Object> responseBody = httpResult.toMap();
 
-      return SecurityEventHookResult.success(type(), result);
+      if (httpResult.isSuccess()) {
+        return SecurityEventHookResult.successWithContext(
+            hookConfiguration, securityEvent, responseBody, executionDurationMs);
+      } else {
+        return SecurityEventHookResult.failureWithContext(
+            hookConfiguration,
+            securityEvent,
+            responseBody,
+            executionDurationMs,
+            "HTTP_ERROR",
+            "Slack request failed with status: " + httpResult.statusCode());
+      }
+
     } catch (Exception e) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("message", "Slack request failed: " + e.getMessage());
-      return SecurityEventHookResult.failure(type(), response);
+      long executionDurationMs = System.currentTimeMillis() - startTime;
+      return SecurityEventHookResult.failureWithContext(
+          hookConfiguration,
+          securityEvent,
+          null,
+          executionDurationMs,
+          e.getClass().getSimpleName(),
+          "Slack request failed: " + e.getMessage());
     }
   }
 

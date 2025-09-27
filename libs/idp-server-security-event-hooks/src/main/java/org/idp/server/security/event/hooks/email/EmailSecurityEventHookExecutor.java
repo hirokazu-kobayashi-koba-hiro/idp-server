@@ -51,45 +51,70 @@ public class EmailSecurityEventHookExecutor implements SecurityEventHook {
       SecurityEvent securityEvent,
       SecurityEventHookConfiguration hookConfiguration) {
 
+    long startTime = System.currentTimeMillis();
+
     log.trace("Email hook execution started: event_type={}", securityEvent.type().value());
     log.debug("EmailHookExecutor called");
 
-    SecurityEventConfig securityEventConfig = hookConfiguration.getEvent(securityEvent.type());
-    SecurityEventExecutionConfig executionConfig = securityEventConfig.execution();
-    EmailSenderConfiguration emailSenderConfiguration =
-        jsonConverter.read(executionConfig.details(), EmailSenderConfiguration.class);
+    try {
+      SecurityEventConfig securityEventConfig = hookConfiguration.getEvent(securityEvent.type());
+      SecurityEventExecutionConfig executionConfig = securityEventConfig.execution();
+      EmailSenderConfiguration emailSenderConfiguration =
+          jsonConverter.read(executionConfig.details(), EmailSenderConfiguration.class);
 
-    String sender = emailSenderConfiguration.sender();
-    String subject = emailSenderConfiguration.subject();
-    String body = emailSenderConfiguration.body();
-    String email = securityEvent.user().email();
+      String sender = emailSenderConfiguration.sender();
+      String subject = emailSenderConfiguration.subject();
+      String body = emailSenderConfiguration.body();
+      String email = securityEvent.user().email();
 
-    EmailSendingRequest sendingRequest = new EmailSendingRequest(sender, email, subject, body);
+      EmailSendingRequest sendingRequest = new EmailSendingRequest(sender, email, subject, body);
 
-    EmailSender emailSender = emailSenders.get(emailSenderConfiguration.function());
+      EmailSender emailSender = emailSenders.get(emailSenderConfiguration.function());
 
-    log.trace(
-        "Sending email: recipient={}, sender={}, subject={}, function={}",
-        email,
-        sender,
-        subject,
-        emailSenderConfiguration.function());
-
-    EmailSendResult sendResult = emailSender.send(sendingRequest, emailSenderConfiguration);
-
-    if (sendResult.isError()) {
-      log.warn(
-          "Email notification failed: event_type={}, recipient={}, sender={}, subject={}, function={}, error={}",
-          securityEvent.type().value(),
+      log.trace(
+          "Sending email: recipient={}, sender={}, subject={}, function={}",
           email,
           sender,
           subject,
-          emailSenderConfiguration.function(),
-          sendResult.data());
-      return SecurityEventHookResult.failure(type(), sendResult.data());
-    }
+          emailSenderConfiguration.function());
 
-    log.trace("Email notification sent successfully: recipient={}", email);
-    return SecurityEventHookResult.success(type(), sendResult.data());
+      EmailSendResult sendResult = emailSender.send(sendingRequest, emailSenderConfiguration);
+      long executionDurationMs = System.currentTimeMillis() - startTime;
+
+      if (sendResult.isError()) {
+        log.warn(
+            "Email notification failed: event_type={}, recipient={}, sender={}, subject={}, function={}, error={}",
+            securityEvent.type().value(),
+            email,
+            sender,
+            subject,
+            emailSenderConfiguration.function(),
+            sendResult.data());
+
+        return SecurityEventHookResult.failureWithContext(
+            hookConfiguration,
+            securityEvent,
+            sendResult.data(),
+            executionDurationMs,
+            "EMAIL_SEND_ERROR",
+            "Email notification failed for function: " + emailSenderConfiguration.function());
+      }
+
+      log.trace("Email notification sent successfully: recipient={}", email);
+      return SecurityEventHookResult.successWithContext(
+          hookConfiguration, securityEvent, sendResult.data(), executionDurationMs);
+
+    } catch (Exception e) {
+      long executionDurationMs = System.currentTimeMillis() - startTime;
+      log.error("Email hook execution failed: event_type={}", securityEvent.type().value(), e);
+
+      return SecurityEventHookResult.failureWithContext(
+          hookConfiguration,
+          securityEvent,
+          null,
+          executionDurationMs,
+          e.getClass().getSimpleName(),
+          "Email hook execution failed: " + e.getMessage());
+    }
   }
 }

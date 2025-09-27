@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class AuditLog {
 
@@ -176,5 +177,9 @@ public class AuditLog {
 
   public boolean exists() {
     return id != null && !id.isEmpty();
+  }
+
+  public TenantIdentifier tenantIdentifier() {
+    return new TenantIdentifier(tenantId);
   }
 }

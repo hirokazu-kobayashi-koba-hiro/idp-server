@@ -19,7 +19,6 @@ package org.idp.server.security.event.hooks.webhook;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpRequest;
-import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.platform.http.*;
 import org.idp.server.platform.json.JsonConverter;
@@ -54,6 +53,8 @@ public class WebHookSecurityEventExecutor implements SecurityEventHook {
       SecurityEvent securityEvent,
       SecurityEventHookConfiguration hookConfiguration) {
 
+    long startTime = System.currentTimeMillis();
+
     try {
 
       WebHookConfiguration configuration =
@@ -85,20 +86,42 @@ public class WebHookSecurityEventExecutor implements SecurityEventHook {
       HttpRequest httpRequest = httpRequestBuilder.build();
 
       HttpRequestResult httpResult = httpRequestExecutor.execute(httpRequest);
+      long executionDurationMs = System.currentTimeMillis() - startTime;
 
-      Map<String, Object> result = new HashMap<>();
-      result.put("status", httpResult.statusCode());
-      result.put("body", httpResult.body());
+      // Parse response body if it's JSON
+      Map<String, Object> responseBody = httpResult.toMap();
 
-      return SecurityEventHookResult.success(type(), result);
+      if (httpResult.isSuccess()) {
+        return SecurityEventHookResult.successWithContext(
+            hookConfiguration, securityEvent, responseBody, executionDurationMs);
+      } else {
+        return SecurityEventHookResult.failureWithContext(
+            hookConfiguration,
+            securityEvent,
+            responseBody,
+            executionDurationMs,
+            "HTTP_ERROR",
+            "HTTP request failed with status: " + httpResult.statusCode());
+      }
+
     } catch (URISyntaxException e) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("message", "WebhookUrl is invalid.");
-      return SecurityEventHookResult.failure(type(), response);
+      long executionDurationMs = System.currentTimeMillis() - startTime;
+      return SecurityEventHookResult.failureWithContext(
+          hookConfiguration,
+          securityEvent,
+          null,
+          executionDurationMs,
+          "URISyntaxException",
+          "WebhookUrl is invalid: " + e.getMessage());
     } catch (Exception e) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("message", "Webhook request failed: " + e.getMessage());
-      return SecurityEventHookResult.failure(type(), response);
+      long executionDurationMs = System.currentTimeMillis() - startTime;
+      return SecurityEventHookResult.failureWithContext(
+          hookConfiguration,
+          securityEvent,
+          null,
+          executionDurationMs,
+          e.getClass().getSimpleName(),
+          "Webhook request failed: " + e.getMessage());
     }
   }
 

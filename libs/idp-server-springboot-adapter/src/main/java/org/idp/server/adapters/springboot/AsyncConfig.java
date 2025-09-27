@@ -16,11 +16,7 @@
 
 package org.idp.server.adapters.springboot;
 
-import org.idp.server.adapters.springboot.application.event.AuditLogRunnable;
-import org.idp.server.adapters.springboot.application.event.SecurityEventRetryScheduler;
-import org.idp.server.adapters.springboot.application.event.SecurityEventRunnable;
-import org.idp.server.adapters.springboot.application.event.UserLifecycleEventRetryScheduler;
-import org.idp.server.adapters.springboot.application.event.UserLifecycleEventRunnable;
+import org.idp.server.adapters.springboot.application.event.*;
 import org.idp.server.core.openid.identity.event.UserLifecycleEvent;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -36,12 +32,15 @@ public class AsyncConfig {
   LoggerWrapper logger = LoggerWrapper.getLogger(AsyncConfig.class);
   SecurityEventRetryScheduler securityEventRetryScheduler;
   UserLifecycleEventRetryScheduler userLifecycleEventRetryScheduler;
+  AuditLogRetryScheduler auditLogRetryScheduler;
 
   public AsyncConfig(
       SecurityEventRetryScheduler securityEventRetryScheduler,
-      UserLifecycleEventRetryScheduler userLifecycleEventRetryScheduler) {
+      UserLifecycleEventRetryScheduler userLifecycleEventRetryScheduler,
+      AuditLogRetryScheduler auditLogRetryScheduler) {
     this.securityEventRetryScheduler = securityEventRetryScheduler;
     this.userLifecycleEventRetryScheduler = userLifecycleEventRetryScheduler;
+    this.auditLogRetryScheduler = auditLogRetryScheduler;
   }
 
   @Bean("securityEventTaskExecutor")
@@ -109,8 +108,7 @@ public class AsyncConfig {
           if (r instanceof AuditLogRunnable) {
             AuditLog auditLog = ((AuditLogRunnable) r).getAuditLog();
             logger.error("Failed to process audit log asynchronously: {}", auditLog.id());
-            // Note: Unlike SecurityEvent, AuditLog doesn't have retry mechanism yet
-            // This is acceptable as audit logs are not critical for business flow
+            auditLogRetryScheduler.enqueue(auditLog);
           } else {
             logger.error("unknown AuditLog EventRunnable: {}", r.getClass().getName());
           }

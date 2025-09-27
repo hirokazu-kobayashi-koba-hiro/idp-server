@@ -72,6 +72,15 @@ public class SimpleLogFormatter implements SecurityEventLogFormatter {
       sb.append(" user_agenet=").append(securityEvent.userAgentValue());
     }
 
+    // Add resource and action from event detail if available
+    Map<String, Object> eventDetail = securityEvent.detail().toMap();
+    if (eventDetail.containsKey("resource")) {
+      sb.append(" resource=").append(eventDetail.get("resource"));
+    }
+    if (eventDetail.containsKey("action")) {
+      sb.append(" action=").append(eventDetail.get("action"));
+    }
+
     additionalFields.forEach((key, value) -> sb.append(" ").append(key).append("=").append(value));
 
     return sb.toString();
