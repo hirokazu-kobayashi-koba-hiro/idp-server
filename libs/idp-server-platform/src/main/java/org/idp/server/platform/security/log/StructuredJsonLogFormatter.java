@@ -75,11 +75,18 @@ public class StructuredJsonLogFormatter implements SecurityEventLogFormatter {
       jsonMap.put("user_agent", securityEvent.userAgentValue());
     }
 
+    // SecurityEvent already contains scrubbed data, no additional scrubbing needed
+    Map<String, Object> eventDetail = securityEvent.detail().toMap();
     if (config.includeEventDetail()) {
-      Map<String, Object> eventDetail =
-          scrubSensitiveData(securityEvent.detail().toMap(), config.getDetailScrubKeys());
-
       jsonMap.put("event_detail", eventDetail);
+    }
+
+    // Extract resource and action from event detail if available
+    if (eventDetail.containsKey("resource")) {
+      jsonMap.put("resource", eventDetail.get("resource"));
+    }
+    if (eventDetail.containsKey("action")) {
+      jsonMap.put("action", eventDetail.get("action"));
     }
 
     List<String> tags = new ArrayList<>();
@@ -117,53 +124,5 @@ public class StructuredJsonLogFormatter implements SecurityEventLogFormatter {
     if (type.startsWith("email_")) return "email";
     if (type.startsWith("sms_")) return "sms";
     return "other";
-  }
-
-  @SuppressWarnings("unchecked")
-  private Map<String, Object> scrubSensitiveData(Map<String, Object> data, List<String> scrubKeys) {
-    Map<String, Object> scrubbedData = new HashMap<>();
-
-    for (Map.Entry<String, Object> entry : data.entrySet()) {
-      String key = entry.getKey();
-      Object value = entry.getValue();
-
-      if (shouldScrubKey(key, scrubKeys)) {
-        scrubbedData.put(key, "[SCRUBBED]");
-      } else if (value instanceof Map) {
-        // Recursively scrub nested maps
-        scrubbedData.put(key, scrubSensitiveData((Map<String, Object>) value, scrubKeys));
-      } else if (value instanceof List) {
-        // Scrub lists that might contain maps
-        scrubbedData.put(key, scrubSensitiveDataInList((List<Object>) value, scrubKeys));
-      } else {
-        scrubbedData.put(key, value);
-      }
-    }
-
-    return scrubbedData;
-  }
-
-  @SuppressWarnings("unchecked")
-  private List<Object> scrubSensitiveDataInList(List<Object> list, List<String> scrubKeys) {
-    List<Object> scrubbedList = new ArrayList<>();
-
-    for (Object item : list) {
-      if (item instanceof Map) {
-        scrubbedList.add(scrubSensitiveData((Map<String, Object>) item, scrubKeys));
-      } else if (item instanceof List) {
-        scrubbedList.add(scrubSensitiveDataInList((List<Object>) item, scrubKeys));
-      } else {
-        scrubbedList.add(item);
-      }
-    }
-
-    return scrubbedList;
-  }
-
-  private boolean shouldScrubKey(String key, List<String> scrubKeys) {
-    String lowerKey = key.toLowerCase().trim();
-    return scrubKeys.stream()
-        .map(s -> s.toLowerCase().trim())
-        .anyMatch(scrubKey -> lowerKey.equals(scrubKey) || lowerKey.startsWith(scrubKey));
   }
 }

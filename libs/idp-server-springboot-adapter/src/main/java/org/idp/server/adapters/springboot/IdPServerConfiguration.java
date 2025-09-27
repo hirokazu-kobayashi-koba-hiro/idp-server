@@ -20,8 +20,8 @@ import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.delegation.PasswordEncoder;
 import org.idp.server.adapters.springboot.application.delegation.PasswordVerification;
+import org.idp.server.adapters.springboot.application.event.AuditLogPublisherService;
 import org.idp.server.adapters.springboot.application.event.SecurityEventPublisherService;
-import org.idp.server.adapters.springboot.application.event.SpringAuditLogPublisher;
 import org.idp.server.adapters.springboot.application.event.UserLifecycleEventPublisherService;
 import org.idp.server.adapters.springboot.application.property.AdminDatabaseConfigProperties;
 import org.idp.server.adapters.springboot.application.property.AppDatabaseConfigProperties;
@@ -96,7 +96,7 @@ public class IdPServerConfiguration {
   public IdpServerApplication idpServerApplication(
       OAuthSessionService oAuthSessionService,
       SecurityEventPublisherService eventPublisherService,
-      SpringAuditLogPublisher auditLogPublisher,
+      AuditLogPublisherService auditLogPublisher,
       UserLifecycleEventPublisherService userLifecycleEventPublisherService) {
 
     ApplicationDatabaseTypeProvider applicationDatabaseTypeProvider =

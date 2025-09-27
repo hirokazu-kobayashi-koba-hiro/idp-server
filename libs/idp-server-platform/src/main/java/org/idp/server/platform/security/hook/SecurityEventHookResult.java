@@ -16,8 +16,11 @@
 
 package org.idp.server.platform.security.hook;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
+import org.idp.server.platform.security.SecurityEvent;
+import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
 
 public class SecurityEventHookResult {
 
@@ -40,6 +43,68 @@ public class SecurityEventHookResult {
     SecurityEventHookResultIdentifier identifier =
         new SecurityEventHookResultIdentifier(UUID.randomUUID().toString());
     return new SecurityEventHookResult(identifier, SecurityEventHookStatus.FAILURE, type, contents);
+  }
+
+  /**
+   * Creates a successful hook result with detailed execution context.
+   *
+   * @param configuration hook configuration
+   * @param securityEvent original security event
+   * @param executionDetails detailed execution information including request, response, and
+   *     metadata
+   * @param executionDurationMs execution duration in milliseconds
+   * @return successful hook result with execution context
+   */
+  public static SecurityEventHookResult successWithContext(
+      SecurityEventHookConfiguration configuration,
+      SecurityEvent securityEvent,
+      Map<String, Object> executionDetails,
+      long executionDurationMs) {
+
+    SecurityEventHookExecutionContext context =
+        SecurityEventHookExecutionContext.success(
+            configuration, securityEvent, Instant.now(), executionDetails, executionDurationMs);
+
+    SecurityEventHookResultIdentifier identifier =
+        new SecurityEventHookResultIdentifier(UUID.randomUUID().toString());
+    return new SecurityEventHookResult(
+        identifier, SecurityEventHookStatus.SUCCESS, configuration.hookType(), context.toMap());
+  }
+
+  /**
+   * Creates a failed hook result with detailed execution context.
+   *
+   * @param configuration hook configuration
+   * @param securityEvent original security event
+   * @param executionDetails detailed execution information including request, response, and
+   *     metadata (if available)
+   * @param executionDurationMs execution duration in milliseconds
+   * @param errorType type of error that occurred
+   * @param errorMessage detailed error message
+   * @return failed hook result with execution context
+   */
+  public static SecurityEventHookResult failureWithContext(
+      SecurityEventHookConfiguration configuration,
+      SecurityEvent securityEvent,
+      Map<String, Object> executionDetails,
+      long executionDurationMs,
+      String errorType,
+      String errorMessage) {
+
+    SecurityEventHookExecutionContext context =
+        SecurityEventHookExecutionContext.failure(
+            configuration,
+            securityEvent,
+            Instant.now(),
+            executionDetails,
+            executionDurationMs,
+            errorType,
+            errorMessage);
+
+    SecurityEventHookResultIdentifier identifier =
+        new SecurityEventHookResultIdentifier(UUID.randomUUID().toString());
+    return new SecurityEventHookResult(
+        identifier, SecurityEventHookStatus.FAILURE, configuration.hookType(), context.toMap());
   }
 
   public SecurityEventHookResult(

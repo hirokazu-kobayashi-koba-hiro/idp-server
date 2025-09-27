@@ -44,6 +44,14 @@ public class SecurityEventLogService {
       return;
     }
 
+    logToConsole(securityEvent, config);
+
+    if (config.isPersistenceEnabled()) {
+      persist(tenant, securityEvent);
+    }
+  }
+
+  private void logToConsole(SecurityEvent securityEvent, SecurityEventLogConfiguration config) {
     SecurityEventLogFormatter formatter = getFormatter(config.getFormat());
     String logMessage = formatter.format(securityEvent, config);
     SecurityEventLogLevel logLevel = determineLogLevel(securityEvent);
@@ -54,13 +62,13 @@ public class SecurityEventLogService {
       case INFO -> log.info(logMessage);
       case DEBUG -> log.debug(logMessage);
     }
+  }
 
-    if (config.isPersistenceEnabled()) {
-      try {
-        repository.register(tenant, securityEvent);
-      } catch (Exception e) {
-        log.error("Failed to persist security event to database: error={}", e.getMessage(), e);
-      }
+  private void persist(Tenant tenant, SecurityEvent securityEvent) {
+    try {
+      repository.register(tenant, securityEvent);
+    } catch (Exception e) {
+      log.error("Failed to persist security event to database: error={}", e.getMessage(), e);
     }
   }
 

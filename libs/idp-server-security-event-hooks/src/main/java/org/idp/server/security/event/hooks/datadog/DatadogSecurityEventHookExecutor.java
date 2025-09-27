@@ -18,7 +18,6 @@ package org.idp.server.security.event.hooks.datadog;
 
 import java.net.URI;
 import java.net.http.HttpRequest;
-import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.platform.http.*;
 import org.idp.server.platform.json.JsonConverter;
@@ -49,6 +48,8 @@ public class DatadogSecurityEventHookExecutor implements SecurityEventHook {
       Tenant tenant,
       SecurityEvent securityEvent,
       SecurityEventHookConfiguration hookConfiguration) {
+
+    long startTime = System.currentTimeMillis();
 
     try {
       WebHookConfiguration configuration =
@@ -82,17 +83,41 @@ public class DatadogSecurityEventHookExecutor implements SecurityEventHook {
               .build();
 
       HttpRequestResult httpResult = httpRequestExecutor.execute(httpRequest);
+      long executionDurationMs = System.currentTimeMillis() - startTime;
 
-      Map<String, Object> result = new HashMap<>();
-      result.put("status", httpResult.statusCode());
-      result.put("body", httpResult.body());
+      Map<String, Object> responseBody = httpResult.toMap();
 
-      return SecurityEventHookResult.success(type(), result);
+      if (httpResult.isSuccess()) {
+        return SecurityEventHookResult.successWithContext(
+            hookConfiguration, securityEvent, responseBody, executionDurationMs);
+      } else {
+        return SecurityEventHookResult.failureWithContext(
+            hookConfiguration,
+            securityEvent,
+            responseBody,
+            executionDurationMs,
+            "HTTP_ERROR",
+            "Datadog log stream failed with status: " + httpResult.statusCode());
+      }
 
+    } catch (DatadogConfigurationInvalidException e) {
+      long executionDurationMs = System.currentTimeMillis() - startTime;
+      return SecurityEventHookResult.failureWithContext(
+          hookConfiguration,
+          securityEvent,
+          null,
+          executionDurationMs,
+          "DATADOG_CONFIGURATION_ERROR",
+          "Datadog configuration invalid: " + e.getMessage());
     } catch (Exception e) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("message", "Datadog log stream failed: " + e.getMessage());
-      return SecurityEventHookResult.failure(type(), response);
+      long executionDurationMs = System.currentTimeMillis() - startTime;
+      return SecurityEventHookResult.failureWithContext(
+          hookConfiguration,
+          securityEvent,
+          null,
+          executionDurationMs,
+          e.getClass().getSimpleName(),
+          "Datadog log stream failed: " + e.getMessage());
     }
   }
 

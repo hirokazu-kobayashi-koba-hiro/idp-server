@@ -74,7 +74,8 @@ public class UserEventPublisher implements SecurityEventUserCreatable {
     builder.add(requestAttributes.getUserAgent());
     detailsMap.putAll(requestAttributes.toMap());
 
-    SecurityEventDetail securityEventDetail = new SecurityEventDetail(detailsMap);
+    SecurityEventDetail securityEventDetail =
+        createSecurityEventDetailWithScrubbing(detailsMap, tenant);
     builder.add(securityEventDetail);
     SecurityEvent securityEvent = builder.build();
     securityEventPublisher.publish(securityEvent);

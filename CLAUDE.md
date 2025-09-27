@@ -335,8 +335,157 @@ POST /{tenant-id}/internal/v1/identity-verification/callback/{verification-type}
 
 ---
 
+## 🔧 実装品質向上のための規約 (Issue #398対応)
+
+### 🚨 メソッドチェーン（デメテルの法則）違反禁止
+```java
+// ❌ 悪い例: 内部構造への依存
+if (failedResult.status().isSuccess()) {
+if (user.profile().email().domain().equals("example.com")) {
+
+// ✅ 良い例: 適切なカプセル化
+if (failedResult.isSuccess()) {
+if (user.hasEmailDomain("example.com")) {
+```
+
+**原則**: オブジェクトは隣接する（直接保持する）オブジェクトとのみ会話する
+
+### 🚨 自明なコメント禁止
+```java
+// ❌ 削除すべきコメント
+// Extract execution context from the failed result
+SecurityEventHookExecutionContext context = extractExecutionContext(failedResult);
+
+// ❌ 削除すべきコメント
+// Build HttpRequest for SSF transmission
+HttpRequest httpRequest = createSsfRequest(endpoint, token);
+
+// ✅ 価値のあるコメント
+// SSF specification requires secevent+jwt content type
+.header("Content-Type", "application/secevent+jwt")
+
+// OAuth authentication is optional for SSF transmission
+if (transmissionConfig.oauthAuthorization() != null) {
+```
+
+**原則**: 「何をしているか」ではなく「なぜそうするか」を説明
+
+### 🔄 複雑メソッドのリファクタリング原則
+```java
+// ❌ 悪い例: メイン処理が詳細構築に埋もれる
+private SecurityEventHookResult send(...) {
+  // 50行の詳細なresult構築コード
+  Map<String, Object> executionResult = new HashMap<>();
+  // request情報
+  Map<String, Object> request = new HashMap<>();
+  request.put("endpoint", endpoint);
+  // ... 30行続く
+
+  // メイン処理が見えない
+  if (httpResult.isSuccess()) {
+    return success(...);
+  }
+}
+
+// ✅ 良い例: メイン処理が明確
+private SecurityEventHookResult send(...) {
+  HttpRequest httpRequest = createSsfRequest(endpoint, token);
+  HttpRequestResult result = executeRequest(httpRequest, config);
+  Map<String, Object> details = createExecutionDetails(...);
+
+  if (result.isSuccess()) {
+    return SecurityEventHookResult.successWithContext(...);
+  }
+}
+```
+
+**原則**: メイン処理フローを明確にし、詳細構築は別メソッドに分離
+
+### 🗑️ 重複データ排除
+```java
+// ❌ 悪い例: 重複情報の保存
+{
+  "hook_execution_context": {...},
+  "original_security_event": {...}, // 重複データ
+  "execution_result": {...}
+}
+
+// ✅ 良い例: 重複排除
+{
+  "hook_execution_context": {...},
+  "execution_result": {...}
+}
+```
+
+**原則**: 同じ情報を複数箇所に保存しない
+
+### 📊 ステータス情報の適切な配置
+```java
+// ❌ 悪い例: ステータス情報が分散
+{
+  "execution_result": {
+    "status": "SUCCESS",
+    "http_status_code": 200,  // 詳細レベルの情報
+    "execution_details": {...}
+  }
+}
+
+// ✅ 良い例: 階層的な情報配置
+{
+  "execution_result": {
+    "status": "SUCCESS",
+    "execution_details": {
+      "http_status_code": 200,  // 詳細内に配置
+      "request": {...},
+      "response": {...}
+    }
+  }
+}
+```
+
+**原則**: 情報は適切な抽象レベルに配置する
+
+### 🧩 判定メソッドの追加推奨
+```java
+// SecurityEventHookResultクラスに追加すべきメソッド
+public boolean isSuccess() {
+    return status.isSuccess();
+}
+
+public boolean isFailure() {
+    return status.isFailure();
+}
+
+public boolean isAlreadySuccessful() {
+    return isSuccess();
+}
+```
+
+**原則**: ドット記法チェーンを避けるため、適切な判定メソッドを提供
+
+### 💾 executionDurationMsの用途明確化
+- **パフォーマンス監視**: Hook実行時間の測定・SLA監視
+- **リトライ判定**: タイムアウト系エラーの識別
+- **デバッグ支援**: 実行遅延の原因調査
+- **リトライ戦略**: 実行時間に基づくbackoff調整
+
+**原則**: 各フィールドの存在理由と用途を明確に文書化
+
+### 🛡️ TODO実装の扱い
+```java
+// ❌ 本番リリース時に残してはいけない
+throw new UnsupportedOperationException("実装予定");
+
+// ✅ 開発中の一時的なマーカーとしてのみ使用
+// TODO: Issue #XXX - SecurityEvent再構築実装
+```
+
+**原則**: TODOは開発中の一時的なマーカーのみ。本番では完全実装必須
+
+---
+
 ## 現在の状況
 - **ステータス**: Clean（コミット可能変更なし）
 - **最新コミット**: Implement comprehensive security event logging system
 - **完了済み**: #292 (SecurityEvent拡張), #401 (FIDO-UAFリセット)
-- **進行中**: Issue #409 組織レベルテナント管理API（実装完了、Javadoc準備中）
+- **進行中**: Issue #398 Security Event Hook Retry Mechanism（execution context構築完了、API実装準備中）

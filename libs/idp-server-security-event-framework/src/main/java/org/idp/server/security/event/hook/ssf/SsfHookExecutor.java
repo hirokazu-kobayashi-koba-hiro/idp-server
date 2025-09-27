@@ -54,69 +54,93 @@ public class SsfHookExecutor implements SecurityEventHook {
       SecurityEvent securityEvent,
       SecurityEventHookConfiguration hookConfiguration) {
 
+    long startTime = System.currentTimeMillis();
+
     log.trace("SSF hook execution started: event_type={}", securityEvent.type().value());
 
-    SecurityEventConfig securityEventConfig = hookConfiguration.getEvent(securityEvent.type());
-    SharedSignalFrameworkMetadataConfig metadataConfig =
-        jsonConverter.read(hookConfiguration.metadata(), SharedSignalFrameworkMetadataConfig.class);
-    SecurityEventExecutionConfig executionConfig = securityEventConfig.execution();
-    SharedSignalFrameworkTransmissionConfig transmissionConfig =
-        jsonConverter.read(
-            executionConfig.details(), SharedSignalFrameworkTransmissionConfig.class);
+    try {
+      SecurityEventConfig securityEventConfig = hookConfiguration.getEvent(securityEvent.type());
+      SharedSignalFrameworkMetadataConfig metadataConfig =
+          jsonConverter.read(
+              hookConfiguration.metadata(), SharedSignalFrameworkMetadataConfig.class);
+      SecurityEventExecutionConfig executionConfig = securityEventConfig.execution();
+      SharedSignalFrameworkTransmissionConfig transmissionConfig =
+          jsonConverter.read(
+              executionConfig.details(), SharedSignalFrameworkTransmissionConfig.class);
 
-    SecurityEventTokenCreator securityEventTokenCreator =
-        new SecurityEventTokenCreator(securityEvent, metadataConfig, transmissionConfig);
-    SecurityEventToken securityEventToken = securityEventTokenCreator.create();
+      SecurityEventTokenCreator securityEventTokenCreator =
+          new SecurityEventTokenCreator(securityEvent, metadataConfig, transmissionConfig);
+      SecurityEventToken securityEventToken = securityEventTokenCreator.create();
 
-    log.trace("SSF token created, sending to endpoint: url={}", transmissionConfig.url());
+      log.trace("SSF token created, sending to endpoint: url={}", transmissionConfig.url());
+      log.debug(
+          "SSF transmission details: endpoint={}, oauth_enabled={}, token_length={}",
+          transmissionConfig.url(),
+          transmissionConfig.oauthAuthorization() != null,
+          securityEventToken.value().length());
 
-    return send(transmissionConfig.url(), securityEventToken, transmissionConfig);
+      return send(
+          hookConfiguration,
+          securityEvent,
+          transmissionConfig.url(),
+          securityEventToken,
+          transmissionConfig,
+          startTime);
+
+    } catch (Exception e) {
+      long executionDurationMs = System.currentTimeMillis() - startTime;
+      log.error("SSF hook execution failed: event_type={}", securityEvent.type().value(), e);
+
+      return SecurityEventHookResult.failureWithContext(
+          hookConfiguration,
+          securityEvent,
+          null,
+          executionDurationMs,
+          e.getClass().getSimpleName(),
+          "SSF hook execution failed: " + e.getMessage());
+    }
   }
 
   private SecurityEventHookResult send(
+      SecurityEventHookConfiguration hookConfiguration,
+      SecurityEvent securityEvent,
       String endpoint,
       SecurityEventToken securityEventToken,
-      SharedSignalFrameworkTransmissionConfig transmissionConfig) {
+      SharedSignalFrameworkTransmissionConfig transmissionConfig,
+      long startTime) {
 
     log.debug("send shared signal request url: {}, set: {}", endpoint, securityEventToken.value());
 
     try {
-      // Build HttpRequest for SSF transmission
-      HttpRequest.Builder builder =
-          HttpRequest.newBuilder()
-              .uri(URI.create(endpoint))
-              .header("Content-Type", "application/secevent+jwt")
-              .header("Accept", "application/json")
-              .POST(HttpRequest.BodyPublishers.ofString(securityEventToken.value()));
+      // Build and execute SSF transmission request
+      HttpRequest httpRequest = createSsfRequest(endpoint, securityEventToken);
+      HttpRequestResult httpRequestResult = executeRequest(httpRequest, transmissionConfig);
 
-      HttpRequest httpRequest = builder.build();
-
-      // Execute HTTP request through HttpRequestExecutor with OAuth support if configured
-      HttpRequestResult httpRequestResult;
-      if (transmissionConfig.oauthAuthorization() != null) {
-        httpRequestResult =
-            httpRequestExecutor.executeWithOAuth(
-                httpRequest, transmissionConfig.oauthAuthorization());
-      } else {
-        httpRequestResult = httpRequestExecutor.execute(httpRequest);
-      }
-
+      long executionDurationMs = System.currentTimeMillis() - startTime;
       log.trace(
           "SSF HTTP response received: status={}, endpoint={}",
           httpRequestResult.statusCode(),
           endpoint);
 
-      // Handle response based on status code
-      String body = httpRequestResult.body().toString();
+      // Create execution details for context
+      Map<String, Object> executionDetails =
+          createExecutionDetails(
+              endpoint, securityEventToken, httpRequestResult, transmissionConfig);
+
+      // Handle response status
       if (httpRequestResult.isClientError()) {
         log.warn(
             "SSF transmission client error: endpoint={}, status={}, response={}",
             endpoint,
             httpRequestResult.statusCode(),
-            body);
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", body);
-        return SecurityEventHookResult.failure(type(), response);
+            httpRequestResult.body());
+        return SecurityEventHookResult.failureWithContext(
+            hookConfiguration,
+            securityEvent,
+            executionDetails,
+            executionDurationMs,
+            "SSF_CLIENT_ERROR",
+            "SSF transmission client error: " + httpRequestResult.statusCode());
       }
 
       if (httpRequestResult.isServerError()) {
@@ -124,22 +148,87 @@ public class SsfHookExecutor implements SecurityEventHook {
             "SSF transmission server error: endpoint={}, status={}, response={}",
             endpoint,
             httpRequestResult.statusCode(),
-            body);
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", body);
-        return SecurityEventHookResult.failure(type(), response);
+            httpRequestResult.body());
+        return SecurityEventHookResult.failureWithContext(
+            hookConfiguration,
+            securityEvent,
+            executionDetails,
+            executionDurationMs,
+            "SSF_SERVER_ERROR",
+            "SSF transmission server error: " + httpRequestResult.statusCode());
       }
 
       log.trace("SSF transmission successful: endpoint={}", endpoint);
-      Map<String, Object> response = new HashMap<>();
-      response.put("message", body);
-      return SecurityEventHookResult.success(type(), response);
+      return SecurityEventHookResult.successWithContext(
+          hookConfiguration, securityEvent, executionDetails, executionDurationMs);
 
     } catch (Exception e) {
+      long executionDurationMs = System.currentTimeMillis() - startTime;
       log.error("SSF transmission failed: endpoint={}, error={}", endpoint, e.getMessage(), e);
-      Map<String, Object> response = new HashMap<>();
-      response.put("message", e.getMessage());
-      return SecurityEventHookResult.failure(type(), response);
+      return SecurityEventHookResult.failureWithContext(
+          hookConfiguration,
+          securityEvent,
+          null,
+          executionDurationMs,
+          e.getClass().getSimpleName(),
+          "SSF transmission failed: " + e.getMessage());
     }
+  }
+
+  private HttpRequest createSsfRequest(String endpoint, SecurityEventToken securityEventToken) {
+    return HttpRequest.newBuilder()
+        .uri(URI.create(endpoint))
+        .header("Content-Type", "application/secevent+jwt")
+        .header("Accept", "application/json")
+        .POST(HttpRequest.BodyPublishers.ofString(securityEventToken.value()))
+        .build();
+  }
+
+  private HttpRequestResult executeRequest(
+      HttpRequest httpRequest, SharedSignalFrameworkTransmissionConfig transmissionConfig) {
+    if (transmissionConfig.oauthAuthorization() != null) {
+      return httpRequestExecutor.executeWithOAuth(
+          httpRequest, transmissionConfig.oauthAuthorization());
+    } else {
+      return httpRequestExecutor.execute(httpRequest);
+    }
+  }
+
+  private Map<String, Object> createExecutionDetails(
+      String endpoint,
+      SecurityEventToken securityEventToken,
+      HttpRequestResult httpRequestResult,
+      SharedSignalFrameworkTransmissionConfig transmissionConfig) {
+    Map<String, Object> executionDetails = new HashMap<>();
+
+    // HTTP status code
+    executionDetails.put("http_status_code", httpRequestResult.statusCode());
+
+    // Request information
+    Map<String, Object> request = new HashMap<>();
+    request.put("endpoint", endpoint);
+    request.put("method", "POST");
+    request.put(
+        "headers",
+        Map.of("Content-Type", "application/secevent+jwt", "Accept", "application/json"));
+    request.put("body", securityEventToken.value());
+    request.put("body_size", securityEventToken.value().length());
+    executionDetails.put("request", request);
+
+    // Response information
+    Map<String, Object> response = new HashMap<>();
+    response.put("body", httpRequestResult.body().toMap());
+    response.put("headers", httpRequestResult.headersAsSingleValueMap());
+    executionDetails.put("response", response);
+
+    // Hook-specific metadata
+    Map<String, Object> hookMetadata = new HashMap<>();
+    hookMetadata.put("oauth_authentication_used", transmissionConfig.oauthAuthorization() != null);
+    hookMetadata.put("security_event_token_sent", true);
+    hookMetadata.put(
+        "security_event_token_hash", Integer.toHexString(securityEventToken.value().hashCode()));
+    executionDetails.put("hook_metadata", hookMetadata);
+
+    return executionDetails;
   }
 }

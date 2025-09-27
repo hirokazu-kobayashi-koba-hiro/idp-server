@@ -16,13 +16,16 @@
 
 package org.idp.server.core.openid.identity;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.security.event.SecurityEventDetail;
 import org.idp.server.platform.security.event.SecurityEventUser;
 import org.idp.server.platform.security.event.SecurityEventUserAttributeConfiguration;
+import org.idp.server.platform.security.log.SecurityEventLogConfiguration;
 
 public interface SecurityEventUserCreatable {
 
@@ -144,5 +147,61 @@ public interface SecurityEventUserCreatable {
     }
 
     return result;
+  }
+
+  default SecurityEventDetail createSecurityEventDetailWithScrubbing(
+      Map<String, Object> detailsMap, Tenant tenant) {
+    SecurityEventLogConfiguration logConfig =
+        new SecurityEventLogConfiguration(tenant.attributes());
+    Map<String, Object> scrubbedDetails =
+        scrubSensitiveDataInMap(detailsMap, logConfig.getDetailScrubKeys());
+    return new SecurityEventDetail(scrubbedDetails);
+  }
+
+  @SuppressWarnings("unchecked")
+  private Map<String, Object> scrubSensitiveDataInMap(
+      Map<String, Object> data, List<String> scrubKeys) {
+    Map<String, Object> scrubbedData = new HashMap<>();
+
+    for (Map.Entry<String, Object> entry : data.entrySet()) {
+      String key = entry.getKey();
+      Object value = entry.getValue();
+
+      if (shouldScrubKey(key, scrubKeys)) {
+        scrubbedData.put(key, "[SCRUBBED]");
+      } else if (value instanceof Map) {
+        scrubbedData.put(key, scrubSensitiveDataInMap((Map<String, Object>) value, scrubKeys));
+      } else if (value instanceof List) {
+        scrubbedData.put(key, scrubSensitiveDataInList((List<Object>) value, scrubKeys));
+      } else {
+        scrubbedData.put(key, value);
+      }
+    }
+
+    return scrubbedData;
+  }
+
+  @SuppressWarnings("unchecked")
+  private List<Object> scrubSensitiveDataInList(List<Object> list, List<String> scrubKeys) {
+    List<Object> scrubbedList = new ArrayList<>();
+
+    for (Object item : list) {
+      if (item instanceof Map) {
+        scrubbedList.add(scrubSensitiveDataInMap((Map<String, Object>) item, scrubKeys));
+      } else if (item instanceof List) {
+        scrubbedList.add(scrubSensitiveDataInList((List<Object>) item, scrubKeys));
+      } else {
+        scrubbedList.add(item);
+      }
+    }
+
+    return scrubbedList;
+  }
+
+  private boolean shouldScrubKey(String key, List<String> scrubKeys) {
+    String lowerKey = key.toLowerCase().trim();
+    return scrubKeys.stream()
+        .map(s -> s.toLowerCase().trim())
+        .anyMatch(scrubKey -> lowerKey.equals(scrubKey) || lowerKey.startsWith(scrubKey));
   }
 }

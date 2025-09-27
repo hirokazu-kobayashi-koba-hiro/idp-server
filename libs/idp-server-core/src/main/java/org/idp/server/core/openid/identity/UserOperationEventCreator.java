@@ -72,7 +72,8 @@ public class UserOperationEventCreator implements SecurityEventUserCreatable {
     builder.add(requestAttributes.getUserAgent());
     detailsMap.putAll(requestAttributes.toMap());
 
-    SecurityEventDetail securityEventDetail = new SecurityEventDetail(detailsMap);
+    SecurityEventDetail securityEventDetail =
+        createSecurityEventDetailWithScrubbing(detailsMap, tenant);
 
     builder.add(securityEventDetail);
 
