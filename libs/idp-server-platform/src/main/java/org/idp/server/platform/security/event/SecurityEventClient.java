@@ -19,8 +19,9 @@ package org.idp.server.platform.security.event;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import org.idp.server.platform.json.JsonReadable;
 
-public class SecurityEventClient {
+public class SecurityEventClient implements JsonReadable {
 
   String id;
   String name;

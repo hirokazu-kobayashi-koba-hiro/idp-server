@@ -20,9 +20,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.uuid.UuidConvertable;
 
-public class SecurityEventTenant implements UuidConvertable {
+public class SecurityEventTenant implements UuidConvertable, JsonReadable {
 
   String id;
   String issuer;

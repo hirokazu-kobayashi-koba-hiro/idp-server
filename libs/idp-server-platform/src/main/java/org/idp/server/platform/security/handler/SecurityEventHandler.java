@@ -83,7 +83,7 @@ public class SecurityEventHandler {
     }
 
     if (!results.isEmpty()) {
-      resultsCommandRepository.register(tenant, securityEvent, results);
+      resultsCommandRepository.bulkRegister(tenant, results);
     }
   }
 }

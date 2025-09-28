@@ -16,10 +16,9 @@
 
 package org.idp.server.platform.security.hook;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
 
 /**
@@ -43,7 +42,6 @@ public class SecurityEventHookExecutionContext {
    * Creates execution context for successful hook execution.
    *
    * @param configuration hook configuration
-   * @param securityEvent original security event
    * @param executionTimestamp when the hook was executed
    * @param executionDetails detailed execution information including request, response, and
    *     metadata
@@ -52,8 +50,7 @@ public class SecurityEventHookExecutionContext {
    */
   public static SecurityEventHookExecutionContext success(
       SecurityEventHookConfiguration configuration,
-      SecurityEvent securityEvent,
-      Instant executionTimestamp,
+      LocalDateTime executionTimestamp,
       Map<String, Object> executionDetails,
       long executionDurationMs) {
 
@@ -61,8 +58,7 @@ public class SecurityEventHookExecutionContext {
         new HookExecutionContext(
             configuration.hookType().name(),
             configuration.identifier().value(),
-            executionTimestamp,
-            securityEvent.tenantIdentifierValue());
+            executionTimestamp);
 
     ExecutionResult result = ExecutionResult.success(executionDetails, executionDurationMs);
 
@@ -73,7 +69,6 @@ public class SecurityEventHookExecutionContext {
    * Creates execution context for failed hook execution.
    *
    * @param configuration hook configuration
-   * @param securityEvent original security event
    * @param executionTimestamp when the hook was executed
    * @param executionDetails detailed execution information including request, response, and
    *     metadata (if available)
@@ -84,8 +79,7 @@ public class SecurityEventHookExecutionContext {
    */
   public static SecurityEventHookExecutionContext failure(
       SecurityEventHookConfiguration configuration,
-      SecurityEvent securityEvent,
-      Instant executionTimestamp,
+      LocalDateTime executionTimestamp,
       Map<String, Object> executionDetails,
       long executionDurationMs,
       String errorType,
@@ -95,8 +89,7 @@ public class SecurityEventHookExecutionContext {
         new HookExecutionContext(
             configuration.hookType().name(),
             configuration.identifier().value(),
-            executionTimestamp,
-            securityEvent.tenantIdentifierValue());
+            executionTimestamp);
 
     ExecutionResult result =
         ExecutionResult.failure(executionDetails, executionDurationMs, errorType, errorMessage);
@@ -128,15 +121,13 @@ public class SecurityEventHookExecutionContext {
   public static class HookExecutionContext {
     private final String hookType;
     private final String hookConfigurationId;
-    private final Instant executionTimestamp;
-    private final String tenantId;
+    private final LocalDateTime executionTimestamp;
 
     public HookExecutionContext(
-        String hookType, String hookConfigurationId, Instant executionTimestamp, String tenantId) {
+        String hookType, String hookConfigurationId, LocalDateTime executionTimestamp) {
       this.hookType = hookType;
       this.hookConfigurationId = hookConfigurationId;
       this.executionTimestamp = executionTimestamp;
-      this.tenantId = tenantId;
     }
 
     public Map<String, Object> toMap() {
@@ -144,7 +135,6 @@ public class SecurityEventHookExecutionContext {
       map.put("hook_type", hookType);
       map.put("hook_configuration_id", hookConfigurationId);
       map.put("execution_timestamp", executionTimestamp.toString());
-      map.put("tenant_id", tenantId);
       return map;
     }
 
@@ -156,12 +146,8 @@ public class SecurityEventHookExecutionContext {
       return hookConfigurationId;
     }
 
-    public Instant executionTimestamp() {
+    public LocalDateTime executionTimestamp() {
       return executionTimestamp;
-    }
-
-    public String tenantId() {
-      return tenantId;
     }
   }
 

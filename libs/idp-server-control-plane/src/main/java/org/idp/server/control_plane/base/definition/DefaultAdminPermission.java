@@ -106,6 +106,11 @@ public enum DefaultAdminPermission {
   SECURITY_EVENT_HOOK_CONFIG_DELETE(
       "security-event-hook-config:delete", "Admin Delete security-event-hook-config"),
 
+  SECURITY_EVENT_HOOK_READ(
+      "security-event-hook:read", "Admin Read security-event-hook information"),
+  SECURITY_EVENT_HOOK_RETRY(
+      "security-event-hook:retry", "Admin Retry failed security-event-hook execution"),
+
   SECURITY_EVENT_READ("security-event:read", "Admin Read security-event information"),
   AUDIT_LOG_READ("audit-log:read", "Admin Read audit-log information"),
   AUTHENTICATION_TRANSACTION_READ(

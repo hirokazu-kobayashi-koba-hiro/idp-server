@@ -16,42 +16,89 @@
 
 package org.idp.server.platform.security.hook;
 
+import java.util.Map;
+
 /** Result of a security event hook retry operation. */
 public class SecurityEventHookRetryResult {
 
   private final SecurityEventHookResultIdentifier originalResultIdentifier;
   private final SecurityEventHookRetryStatus status;
+  private final SecurityEventHookResultIdentifier newResultIdentifier;
   private final SecurityEventHookResult newResult;
   private final String errorMessage;
+  private final Map<String, Object> retryDetails;
 
   private SecurityEventHookRetryResult(
       SecurityEventHookResultIdentifier originalResultIdentifier,
       SecurityEventHookRetryStatus status,
+      SecurityEventHookResultIdentifier newResultIdentifier,
       SecurityEventHookResult newResult,
-      String errorMessage) {
+      String errorMessage,
+      Map<String, Object> retryDetails) {
     this.originalResultIdentifier = originalResultIdentifier;
     this.status = status;
+    this.newResultIdentifier = newResultIdentifier;
     this.newResult = newResult;
     this.errorMessage = errorMessage;
+    this.retryDetails = retryDetails != null ? retryDetails : Map.of();
   }
 
   public static SecurityEventHookRetryResult success(
       SecurityEventHookResultIdentifier originalResultIdentifier,
       SecurityEventHookResult newResult) {
     return new SecurityEventHookRetryResult(
-        originalResultIdentifier, SecurityEventHookRetryStatus.SUCCESS, newResult, null);
+        originalResultIdentifier,
+        SecurityEventHookRetryStatus.SUCCESS,
+        newResult != null ? newResult.identifier() : null,
+        newResult,
+        null,
+        Map.of());
+  }
+
+  public static SecurityEventHookRetryResult success(
+      SecurityEventHookResultIdentifier originalResultIdentifier,
+      SecurityEventHookResultIdentifier newResultIdentifier,
+      Map<String, Object> retryDetails) {
+    return new SecurityEventHookRetryResult(
+        originalResultIdentifier,
+        SecurityEventHookRetryStatus.SUCCESS,
+        newResultIdentifier,
+        null,
+        null,
+        retryDetails);
   }
 
   public static SecurityEventHookRetryResult failure(
       SecurityEventHookResultIdentifier originalResultIdentifier, String errorMessage) {
     return new SecurityEventHookRetryResult(
-        originalResultIdentifier, SecurityEventHookRetryStatus.FAILURE, null, errorMessage);
+        originalResultIdentifier,
+        SecurityEventHookRetryStatus.FAILURE,
+        null,
+        null,
+        errorMessage,
+        Map.of());
   }
 
   public static SecurityEventHookRetryResult alreadySuccessful(
       SecurityEventHookResultIdentifier originalResultIdentifier) {
     return new SecurityEventHookRetryResult(
-        originalResultIdentifier, SecurityEventHookRetryStatus.ALREADY_SUCCESSFUL, null, null);
+        originalResultIdentifier,
+        SecurityEventHookRetryStatus.ALREADY_SUCCESSFUL,
+        null,
+        null,
+        null,
+        Map.of());
+  }
+
+  public static SecurityEventHookRetryResult notFound(
+      SecurityEventHookResultIdentifier originalResultIdentifier) {
+    return new SecurityEventHookRetryResult(
+        originalResultIdentifier,
+        SecurityEventHookRetryStatus.NOT_FOUND,
+        null,
+        null,
+        "Hook result not found",
+        Map.of());
   }
 
   public SecurityEventHookResultIdentifier originalResultIdentifier() {
@@ -62,12 +109,20 @@ public class SecurityEventHookRetryResult {
     return status;
   }
 
+  public SecurityEventHookResultIdentifier newResultIdentifier() {
+    return newResultIdentifier;
+  }
+
   public SecurityEventHookResult newResult() {
     return newResult;
   }
 
   public String errorMessage() {
     return errorMessage;
+  }
+
+  public Map<String, Object> retryDetails() {
+    return retryDetails;
   }
 
   public boolean isSuccess() {
@@ -80,5 +135,9 @@ public class SecurityEventHookRetryResult {
 
   public boolean isAlreadySuccessful() {
     return status == SecurityEventHookRetryStatus.ALREADY_SUCCESSFUL;
+  }
+
+  public boolean isNotFound() {
+    return status == SecurityEventHookRetryStatus.NOT_FOUND;
   }
 }

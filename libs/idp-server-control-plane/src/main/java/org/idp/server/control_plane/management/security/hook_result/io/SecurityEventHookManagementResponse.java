@@ -14,29 +14,30 @@
  * limitations under the License.
  */
 
-package org.idp.server.platform.security.hook;
+package org.idp.server.control_plane.management.security.hook_result.io;
 
-public enum SecurityEventHookStatus {
-  SUCCESS,
-  FAILURE,
-  RETRY_SUCCESS,
-  RETRY_FAILURE,
-  UNKNOWN;
+import java.util.Map;
 
-  public static SecurityEventHookStatus of(String value) {
-    for (SecurityEventHookStatus status : values()) {
-      if (status.name().equalsIgnoreCase(value)) {
-        return status;
-      }
-    }
-    return UNKNOWN;
+public class SecurityEventHookManagementResponse {
+
+  SecurityEventHookManagementStatus status;
+  Map<String, Object> contents;
+
+  public SecurityEventHookManagementResponse(
+      SecurityEventHookManagementStatus status, Map<String, Object> contents) {
+    this.status = status;
+    this.contents = contents;
   }
 
-  public boolean isSuccess() {
-    return this == SUCCESS || this == RETRY_SUCCESS;
+  public SecurityEventHookManagementStatus status() {
+    return status;
   }
 
-  public boolean isFailure() {
-    return this == FAILURE || this == RETRY_FAILURE;
+  public int statusCode() {
+    return status.statusCode();
+  }
+
+  public Map<String, Object> contents() {
+    return contents;
   }
 }

@@ -14,17 +14,28 @@
  * limitations under the License.
  */
 
-package org.idp.server.platform.security.repository;
+package org.idp.server.control_plane.management.security.hook_result.io;
 
-import java.util.List;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.security.hook.SecurityEventHookResult;
-import org.idp.server.platform.security.hook.SecurityEventHookStatus;
+/** Status enumeration for security event hook management operations. */
+public enum SecurityEventHookManagementStatus {
+  OK(200),
+  INVALID_REQUEST(400),
+  UNAUTHORIZED(401),
+  FORBIDDEN(403),
+  NOT_FOUND(404),
+  SERVER_ERROR(500);
 
-public interface SecurityEventHookResultCommandRepository {
-  void register(Tenant tenant, SecurityEventHookResult result);
+  int statusCode;
 
-  void updateStatus(Tenant tenant, SecurityEventHookResult result, SecurityEventHookStatus status);
+  SecurityEventHookManagementStatus(int statusCode) {
+    this.statusCode = statusCode;
+  }
 
-  void bulkRegister(Tenant tenant, List<SecurityEventHookResult> results);
+  public int statusCode() {
+    return statusCode;
+  }
+
+  public boolean isOk() {
+    return this == OK;
+  }
 }
