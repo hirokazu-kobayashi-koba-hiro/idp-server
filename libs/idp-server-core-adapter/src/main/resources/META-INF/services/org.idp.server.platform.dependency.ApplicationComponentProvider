@@ -17,11 +17,12 @@ org.idp.server.core.adapters.datasource.oidc.code.operation.AuthorizationCodeGra
 org.idp.server.core.adapters.datasource.oidc.request.AuthorizationRequestDataSourceProvider
 org.idp.server.core.adapters.datasource.oidc.request.operation.AuthorizationRequestOperationCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.multi_tenancy.organization.OrganizationDataSourceProvider
-org.idp.server.core.adapters.datasource.security.event.SecurityEventDataSourceProvider
+org.idp.server.core.adapters.datasource.security.event.command.SecurityEventDataSourceProvider
 org.idp.server.core.adapters.datasource.security.event.query.SecurityEventQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.security.hook.configuration.query.SecurityEventHookConfigurationDataSourceProvider
 org.idp.server.core.adapters.datasource.security.hook.configuration.command.SecurityEventHookConfigurationDataSourceProvider
-org.idp.server.core.adapters.datasource.security.hook.result.SecurityEventHookResultCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.security.hook.result.coomand.SecurityEventHookResultCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.security.hook.result.query.SecurityEventHookResultQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.multi_tenancy.tenant.query.TenantQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.multi_tenancy.tenant.command.TenantCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.token.command.OAuthTokenDataSourceProvider

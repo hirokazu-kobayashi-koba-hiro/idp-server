@@ -25,5 +25,8 @@ public enum SecurityEventHookRetryStatus {
   FAILURE,
 
   /** Original hook was already successful, retry was skipped */
-  ALREADY_SUCCESSFUL
+  ALREADY_SUCCESSFUL,
+
+  /** Hook result not found */
+  NOT_FOUND
 }

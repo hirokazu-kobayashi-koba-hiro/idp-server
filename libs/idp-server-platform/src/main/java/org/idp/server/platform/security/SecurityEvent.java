@@ -144,6 +144,8 @@ public class SecurityEvent {
     if (hasUser()) {
       result.put("user", user().toMap());
     }
+    result.put("ip_address", ipAddress.value());
+    result.put("user_agent", userAgent.value());
     result.put("detail", detail.toMap());
     result.put("created_at", createdAt.valueAsString());
     return result;

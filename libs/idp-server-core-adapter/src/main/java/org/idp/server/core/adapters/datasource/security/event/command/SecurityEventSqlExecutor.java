@@ -14,17 +14,10 @@
  * limitations under the License.
  */
 
-package org.idp.server.platform.security.repository;
+package org.idp.server.core.adapters.datasource.security.event.command;
 
-import java.util.List;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.security.hook.SecurityEventHookResult;
-import org.idp.server.platform.security.hook.SecurityEventHookStatus;
+import org.idp.server.platform.security.SecurityEvent;
 
-public interface SecurityEventHookResultCommandRepository {
-  void register(Tenant tenant, SecurityEventHookResult result);
-
-  void updateStatus(Tenant tenant, SecurityEventHookResult result, SecurityEventHookStatus status);
-
-  void bulkRegister(Tenant tenant, List<SecurityEventHookResult> results);
+public interface SecurityEventSqlExecutor {
+  void insert(SecurityEvent securityEvent);
 }

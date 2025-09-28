@@ -16,9 +16,11 @@
 
 package org.idp.server.platform.security.hook;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
 
@@ -27,23 +29,12 @@ public class SecurityEventHookResult {
   SecurityEventHookResultIdentifier identifier;
   SecurityEventHookStatus status;
   SecurityEventHookType type;
+  SecurityEvent securityEvent;
   Map<String, Object> contents;
+  LocalDateTime createdAt;
+  LocalDateTime updatedAt;
 
   public SecurityEventHookResult() {}
-
-  public static SecurityEventHookResult success(
-      SecurityEventHookType type, Map<String, Object> contents) {
-    SecurityEventHookResultIdentifier identifier =
-        new SecurityEventHookResultIdentifier(UUID.randomUUID().toString());
-    return new SecurityEventHookResult(identifier, SecurityEventHookStatus.SUCCESS, type, contents);
-  }
-
-  public static SecurityEventHookResult failure(
-      SecurityEventHookType type, Map<String, Object> contents) {
-    SecurityEventHookResultIdentifier identifier =
-        new SecurityEventHookResultIdentifier(UUID.randomUUID().toString());
-    return new SecurityEventHookResult(identifier, SecurityEventHookStatus.FAILURE, type, contents);
-  }
 
   /**
    * Creates a successful hook result with detailed execution context.
@@ -63,12 +54,19 @@ public class SecurityEventHookResult {
 
     SecurityEventHookExecutionContext context =
         SecurityEventHookExecutionContext.success(
-            configuration, securityEvent, Instant.now(), executionDetails, executionDurationMs);
+            configuration, SystemDateTime.now(), executionDetails, executionDurationMs);
 
     SecurityEventHookResultIdentifier identifier =
         new SecurityEventHookResultIdentifier(UUID.randomUUID().toString());
+    LocalDateTime createdAt = SystemDateTime.now();
     return new SecurityEventHookResult(
-        identifier, SecurityEventHookStatus.SUCCESS, configuration.hookType(), context.toMap());
+        identifier,
+        SecurityEventHookStatus.SUCCESS,
+        configuration.hookType(),
+        securityEvent,
+        context.toMap(),
+        createdAt,
+        createdAt);
   }
 
   /**
@@ -94,8 +92,7 @@ public class SecurityEventHookResult {
     SecurityEventHookExecutionContext context =
         SecurityEventHookExecutionContext.failure(
             configuration,
-            securityEvent,
-            Instant.now(),
+            SystemDateTime.now(),
             executionDetails,
             executionDurationMs,
             errorType,
@@ -103,19 +100,32 @@ public class SecurityEventHookResult {
 
     SecurityEventHookResultIdentifier identifier =
         new SecurityEventHookResultIdentifier(UUID.randomUUID().toString());
+    LocalDateTime createdAt = SystemDateTime.now();
     return new SecurityEventHookResult(
-        identifier, SecurityEventHookStatus.FAILURE, configuration.hookType(), context.toMap());
+        identifier,
+        SecurityEventHookStatus.FAILURE,
+        configuration.hookType(),
+        securityEvent,
+        context.toMap(),
+        createdAt,
+        createdAt);
   }
 
   public SecurityEventHookResult(
       SecurityEventHookResultIdentifier identifier,
       SecurityEventHookStatus status,
       SecurityEventHookType type,
-      Map<String, Object> contents) {
+      SecurityEvent securityEvent,
+      Map<String, Object> contents,
+      LocalDateTime createdAt,
+      LocalDateTime updatedAt) {
     this.identifier = identifier;
     this.status = status;
     this.type = type;
+    this.securityEvent = securityEvent;
     this.contents = contents;
+    this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
   }
 
   public SecurityEventHookResultIdentifier identifier() {
@@ -130,7 +140,43 @@ public class SecurityEventHookResult {
     return type;
   }
 
+  public SecurityEvent securityEvent() {
+    return securityEvent;
+  }
+
   public Map<String, Object> contents() {
     return contents;
+  }
+
+  public LocalDateTime createdAt() {
+    return createdAt;
+  }
+
+  public LocalDateTime updatedAt() {
+    return updatedAt;
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("id", identifier.value());
+    map.put("status", status);
+    map.put("type", type.name());
+    map.put("security_event", securityEvent.toMap());
+    map.put("contents", contents);
+    map.put("created_at", createdAt);
+    map.put("updated_at", updatedAt);
+    return map;
+  }
+
+  public boolean exists() {
+    return identifier != null && identifier.exists();
+  }
+
+  public boolean isSuccess() {
+    return status.isSuccess();
+  }
+
+  public boolean isFailure() {
+    return status.isFailure();
   }
 }

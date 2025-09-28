@@ -21,9 +21,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.uuid.UuidConvertable;
 
-public class SecurityEventUser implements UuidConvertable {
+public class SecurityEventUser implements UuidConvertable, JsonReadable {
   String id;
   String name;
   String exSub;
@@ -39,7 +40,6 @@ public class SecurityEventUser implements UuidConvertable {
   String birthdate;
   String zoneinfo;
   String locale;
-  Map<String, Object> address;
   List<String> roles;
   List<String> permissions;
   String currentTenant;
