@@ -60,6 +60,10 @@ class ModelConverter {
         parseDatabaseBoolean(stringMap.get("phone_number_verified"), false));
     user.setHashedPassword(stringMap.getOrDefault("hashed_password", ""));
 
+    if (stringMap.containsKey("created_at")) {
+      user.setCreatedAt(LocalDateTimeParser.parse(stringMap.get("created_at")));
+    }
+
     if (stringMap.containsKey("updated_at")) {
       user.setUpdatedAt(LocalDateTimeParser.parse(stringMap.get("updated_at")));
     }

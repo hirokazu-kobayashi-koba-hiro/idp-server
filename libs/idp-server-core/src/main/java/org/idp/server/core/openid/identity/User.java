@@ -56,6 +56,7 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
   String phoneNumber;
   Boolean phoneNumberVerified;
   Address address;
+  LocalDateTime createdAt;
   LocalDateTime updatedAt;
   String hashedPassword;
   String rawPassword;
@@ -305,6 +306,19 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     return this;
   }
 
+  public LocalDateTime createdAt() {
+    return createdAt;
+  }
+
+  public long createdAtAsLong() {
+    return SystemDateTime.toEpochSecond(createdAt);
+  }
+
+  public User setCreatedAt(LocalDateTime createdAt) {
+    this.createdAt = createdAt;
+    return this;
+  }
+
   public LocalDateTime updatedAt() {
     return updatedAt;
   }
@@ -530,6 +544,10 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     return Objects.nonNull(hashedPassword) && !hashedPassword.isEmpty();
   }
 
+  public boolean hasCreatedAt() {
+    return Objects.nonNull(createdAt);
+  }
+
   public boolean hasUpdatedAt() {
     return Objects.nonNull(updatedAt);
   }
@@ -729,6 +747,7 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     if (hasLocale()) map.put("locale", locale);
     if (hasPhoneNumber()) map.put("phone_number", phoneNumber);
     if (hasPhoneNumberVerified()) map.put("phone_number_verified", phoneNumberVerified);
+    if (hasCreatedAt()) map.put("created_at", createdAt.toString());
     if (hasUpdatedAt()) map.put("updated_at", updatedAt.toString());
     if (hasAddress()) map.put("address", address.toMap());
     if (hasCustomProperties()) map.put("custom_properties", new HashMap<>(customProperties));
