@@ -53,7 +53,7 @@ class AdditionalParameterResolveResultTest {
     assertFalse(result.isSuccess());
     assertTrue(result.isFailFast());
     assertFalse(result.isResilientError());
-    assertNull(result.getData());
+    assertNotNull(result.getData());
     assertEquals(errorDetails, result.getErrorDetails());
   }
 
@@ -117,15 +117,15 @@ class AdditionalParameterResolveResultTest {
   }
 
   @Test
-  void successWithNullData_shouldBeValid() {
+  void success_shouldBeValid() {
     AdditionalParameterResolveResult result = AdditionalParameterResolveResult.success(null);
 
     assertTrue(result.isSuccess());
-    assertNull(result.getData());
+    assertNotNull(result.getData());
   }
 
   @Test
-  void resilientErrorWithNullFallbackData_shouldBeValid() {
+  void resilientErrorFallbackData_shouldBeValid() {
     IdentityVerificationErrorDetails errorDetails =
         IdentityVerificationErrorDetails.builder()
             .error("test_error")
@@ -136,7 +136,7 @@ class AdditionalParameterResolveResultTest {
         AdditionalParameterResolveResult.resilientError(errorDetails, null);
 
     assertTrue(result.isResilientError());
-    assertNull(result.getData());
+    assertNotNull(result.getData());
     assertEquals(errorDetails, result.getErrorDetails());
   }
 }
