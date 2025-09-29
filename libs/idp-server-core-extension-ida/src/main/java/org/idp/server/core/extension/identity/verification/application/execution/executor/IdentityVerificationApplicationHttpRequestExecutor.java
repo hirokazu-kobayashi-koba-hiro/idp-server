@@ -90,9 +90,7 @@ public class IdentityVerificationApplicationHttpRequestExecutor
   private Map<String, Object> createSuccessResponse(HttpRequestResult httpRequestResult) {
     Map<String, Object> result = new HashMap<>();
     result.put("status", "success");
-    result.put("response_status", httpRequestResult.statusCode());
-    result.put("response_headers", httpRequestResult.headers());
-    result.put("response_body", httpRequestResult.body().toMap());
+    result.putAll(httpRequestResult.toMap());
 
     return result;
   }
@@ -114,7 +112,11 @@ public class IdentityVerificationApplicationHttpRequestExecutor
             .addErrorDetail("status_code", httpRequestResult.statusCode());
 
     if (httpRequestResult.body() != null) {
-      builder.addErrorDetail("response_body", httpRequestResult.body().toMap());
+      if (httpRequestResult.body().isArray()) {
+        builder.addErrorDetail("response_body", httpRequestResult.body().toListAsMap());
+      } else if (httpRequestResult.body().isObject()) {
+        builder.addErrorDetail("response_body", httpRequestResult.body().toMap());
+      }
     }
 
     IdentityVerificationErrorDetails errorDetails = builder.build();
