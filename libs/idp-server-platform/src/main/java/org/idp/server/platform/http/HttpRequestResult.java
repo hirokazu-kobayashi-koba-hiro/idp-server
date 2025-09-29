@@ -61,7 +61,11 @@ public class HttpRequestResult {
     Map<String, Object> map = new HashMap<>();
     map.put("status_code", statusCode);
     map.put("response_headers", headersAsSingleValueMap());
-    map.put("response_body", body.toMap());
+    if (body.isArray()) {
+      map.put("response_body", body.toListAsMap());
+    } else if (body.isObject()) {
+      map.put("response_body", body.toMap());
+    }
     return map;
   }
 
