@@ -24,6 +24,8 @@ import org.idp.server.core.openid.authentication.AuthenticationTransactionApi;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionQueries;
 import org.idp.server.core.openid.authentication.io.AuthenticationTransactionFindingResponse;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
+import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;
@@ -32,16 +34,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("{tenant-id}/v1/authentication-devices/{device-id}/authentications")
+@RequestMapping("{tenant-id}/v1/authentication-devices")
 public class AuthenticationDeviceV1Api implements ParameterTransformable {
 
   AuthenticationTransactionApi authenticationTransactionApi;
+  LoggerWrapper log = LoggerWrapper.getLogger(AuthenticationDeviceV1Api.class);
 
   public AuthenticationDeviceV1Api(IdpServerApplication idpServerApplication) {
     this.authenticationTransactionApi = idpServerApplication.authenticationApi();
   }
 
-  @GetMapping
+  @GetMapping("/{device-id}/authentications")
   public ResponseEntity<?> get(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("device-id") AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
@@ -61,5 +64,16 @@ public class AuthenticationDeviceV1Api implements ParameterTransformable {
     httpHeaders.add("Content-Type", "application/json");
     return new ResponseEntity<>(
         response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @PostMapping("/logs")
+  public ResponseEntity<?> post(
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestBody Map<String, Object> requestBody) {
+
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(requestBody);
+    log.info(jsonNodeWrapper.toJson());
+
+    return new ResponseEntity<>(HttpStatus.OK);
   }
 }

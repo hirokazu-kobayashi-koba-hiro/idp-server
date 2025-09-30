@@ -94,6 +94,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuthenticationTransactionListResponse'
 
+  /{tenant-id}/v1/authentication-devices/logs:
+    post:
+      tags:
+        - 認証
+      summary: 認証デバイスのログ
+      description: |
+       認証デバイスのFIDO-UAFなどの実行っ結果のログをアプリケーションのログとして出力する。
+      parameters:
+        - in: path
+          name: tenant-id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 200 OK
+
   /{tenant-id}/.well-known/fido-uaf/facets:
     get:
       tags:
