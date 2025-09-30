@@ -24,6 +24,7 @@ import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.verifier.UserVerifier;
 import org.idp.server.control_plane.base.verifier.VerificationResult;
 import org.idp.server.control_plane.management.identity.user.*;
+import org.idp.server.control_plane.management.identity.user.ManagementEventPublisher;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
@@ -52,6 +53,8 @@ import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
+import org.idp.server.platform.security.SecurityEventPublisher;
+import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
@@ -90,6 +93,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
   UserLifecycleEventPublisher userLifecycleEventPublisher;
   AuditLogPublisher auditLogPublisher;
   OrganizationAccessVerifier organizationAccessVerifier;
+  ManagementEventPublisher managementEventPublisher;
 
   LoggerWrapper log = LoggerWrapper.getLogger(OrgUserManagementEntryService.class);
 
@@ -113,7 +117,8 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
       RoleQueryRepository roleQueryRepository,
       PasswordEncodeDelegation passwordEncodeDelegation,
       UserLifecycleEventPublisher userLifecycleEventPublisher,
-      AuditLogPublisher auditLogPublisher) {
+      AuditLogPublisher auditLogPublisher,
+      SecurityEventPublisher securityEventPublisher) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.organizationRepository = organizationRepository;
     this.userQueryRepository = userQueryRepository;
@@ -129,6 +134,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     this.userLifecycleEventPublisher = userLifecycleEventPublisher;
     this.auditLogPublisher = auditLogPublisher;
     this.organizationAccessVerifier = new OrganizationAccessVerifier();
+    this.managementEventPublisher = new ManagementEventPublisher(securityEventPublisher);
   }
 
   @Override
@@ -199,6 +205,15 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     //            context.user().userIdentifier(),
     //            context.user());
     //    userLifecycleEventPublisher.publish(event);
+
+    // Publish SecurityEvent for user creation
+    managementEventPublisher.publish(
+        targetTenant,
+        operator,
+        context.user(),
+        oAuthToken,
+        DefaultSecurityEventType.user_create.toEventType(),
+        requestAttributes);
 
     return context.toResponse();
   }
@@ -376,6 +391,15 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     //            context.after());
     //    userLifecycleEventPublisher.publish(event);
 
+    // Publish SecurityEvent for user update
+    managementEventPublisher.publish(
+        targetTenant,
+        operator,
+        context.after(),
+        oAuthToken,
+        DefaultSecurityEventType.user_edit.toEventType(),
+        requestAttributes);
+
     return context.toResponse();
   }
 
@@ -440,6 +464,15 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     //            user);
     //    userLifecycleEventPublisher.publish(event);
 
+    // Publish SecurityEvent for user deletion
+    managementEventPublisher.publish(
+        targetTenant,
+        operator,
+        user,
+        oAuthToken,
+        DefaultSecurityEventType.user_delete.toEventType(),
+        requestAttributes);
+
     return new UserManagementResponse(UserManagementStatus.NO_CONTENT, Map.of());
   }
 
@@ -503,6 +536,15 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     }
 
     userCommandRepository.update(targetTenant, context.after());
+
+    // Publish SecurityEvent for user patch
+    managementEventPublisher.publish(
+        targetTenant,
+        operator,
+        context.after(),
+        oAuthToken,
+        DefaultSecurityEventType.user_edit.toEventType(),
+        requestAttributes);
 
     return context.toResponse();
   }
@@ -569,6 +611,16 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     }
 
     userCommandRepository.updatePassword(targetTenant, context.after());
+
+    // Publish SecurityEvent for password update
+    managementEventPublisher.publish(
+        targetTenant,
+        operator,
+        context.after(),
+        oAuthToken,
+        DefaultSecurityEventType.password_change.toEventType(),
+        requestAttributes);
+
     return context.toResponse();
   }
 

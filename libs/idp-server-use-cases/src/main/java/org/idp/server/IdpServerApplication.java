@@ -765,7 +765,8 @@ public class IdpServerApplication {
                 organizationRepository,
                 passwordEncodeDelegation,
                 userLifecycleEventPublisher,
-                auditLogPublisher),
+                auditLogPublisher,
+                securityEventPublisher),
             UserManagementApi.class,
             databaseTypeProvider);
 
@@ -934,7 +935,8 @@ public class IdpServerApplication {
                 roleQueryRepository,
                 passwordEncodeDelegation,
                 userLifecycleEventPublisher,
-                auditLogPublisher),
+                auditLogPublisher,
+                securityEventPublisher),
             OrgUserManagementApi.class,
             databaseTypeProvider);
 
