@@ -3,7 +3,8 @@
   "type": "SSF",
   "execution_order": 2,
   "triggers": [
-    "fido_uaf_registration_success"
+    "fido_uaf_registration_success",
+    "user_delete"
   ],
   "attributes": {
     "label": "Security Event Framework",
@@ -51,6 +52,23 @@
           "security_event_token_additional_payload_mapping_rules": [
             { "from": "$.user.name", "to": "username" },
             { "static_value": "fido_uaf_registration_success", "to": "description" }
+          ]
+        }
+      }
+    },
+    "user_delete": {
+      "execution": {
+        "function": "ssf",
+        "details": {
+          "security_event_type_identifier": "https://schemas.openid.net/secevent/risc/event-type/account-purged",
+          "kid": "ssf-debug",
+          "url": "http://localhost:4000/token",
+          "security_event_token_headers": {
+            "key": "value"
+          },
+          "security_event_token_additional_payload_mapping_rules": [
+            { "from": "$.user.name", "to": "username" },
+            { "static_value": "user_delete", "to": "description" }
           ]
         }
       }

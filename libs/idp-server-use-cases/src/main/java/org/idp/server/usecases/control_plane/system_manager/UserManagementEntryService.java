@@ -24,6 +24,7 @@ import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.verifier.UserVerifier;
 import org.idp.server.control_plane.base.verifier.VerificationResult;
 import org.idp.server.control_plane.management.identity.user.*;
+import org.idp.server.control_plane.management.identity.user.ManagementEventPublisher;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
@@ -53,6 +54,8 @@ import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
+import org.idp.server.platform.security.SecurityEventPublisher;
+import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
 @Transaction
@@ -68,6 +71,7 @@ public class UserManagementEntryService implements UserManagementApi {
   UserRegistrationRelatedDataVerifier updateVerifier;
   UserLifecycleEventPublisher userLifecycleEventPublisher;
   AuditLogPublisher auditLogPublisher;
+  ManagementEventPublisher managementEventPublisher;
   LoggerWrapper log = LoggerWrapper.getLogger(UserManagementEntryService.class);
 
   public UserManagementEntryService(
@@ -78,7 +82,8 @@ public class UserManagementEntryService implements UserManagementApi {
       OrganizationRepository organizationRepository,
       PasswordEncodeDelegation passwordEncodeDelegation,
       UserLifecycleEventPublisher userLifecycleEventPublisher,
-      AuditLogPublisher auditLogPublisher) {
+      AuditLogPublisher auditLogPublisher,
+      SecurityEventPublisher securityEventPublisher) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.userQueryRepository = userQueryRepository;
     this.userCommandRepository = userCommandRepository;
@@ -93,6 +98,7 @@ public class UserManagementEntryService implements UserManagementApi {
     this.updateVerifier = userRegistrationRelatedDataVerifier;
     this.userLifecycleEventPublisher = userLifecycleEventPublisher;
     this.auditLogPublisher = auditLogPublisher;
+    this.managementEventPublisher = new ManagementEventPublisher(securityEventPublisher);
   }
 
   @Override
@@ -148,6 +154,15 @@ public class UserManagementEntryService implements UserManagementApi {
     }
 
     userCommandRepository.register(tenant, context.user());
+
+    // Publish SecurityEvent for user creation
+    managementEventPublisher.publish(
+        tenant,
+        operator,
+        context.user(),
+        oAuthToken,
+        DefaultSecurityEventType.user_create.toEventType(),
+        requestAttributes);
 
     return context.toResponse();
   }
@@ -292,6 +307,15 @@ public class UserManagementEntryService implements UserManagementApi {
     }
     userCommandRepository.update(tenant, context.after());
 
+    // Publish SecurityEvent for user update
+    managementEventPublisher.publish(
+        tenant,
+        operator,
+        context.after(),
+        oAuthToken,
+        DefaultSecurityEventType.user_edit.toEventType(),
+        requestAttributes);
+
     return context.toResponse();
   }
 
@@ -341,6 +365,15 @@ public class UserManagementEntryService implements UserManagementApi {
       return context.toResponse();
     }
     userCommandRepository.update(tenant, context.after());
+
+    // Publish SecurityEvent for user patch
+    managementEventPublisher.publish(
+        tenant,
+        operator,
+        context.after(),
+        oAuthToken,
+        DefaultSecurityEventType.user_edit.toEventType(),
+        requestAttributes);
 
     return context.toResponse();
   }
@@ -394,6 +427,15 @@ public class UserManagementEntryService implements UserManagementApi {
     }
     userCommandRepository.updatePassword(tenant, context.after());
 
+    // Publish SecurityEvent for password update
+    managementEventPublisher.publish(
+        tenant,
+        operator,
+        context.after(),
+        oAuthToken,
+        DefaultSecurityEventType.password_change.toEventType(),
+        requestAttributes);
+
     return context.toResponse();
   }
 
@@ -443,6 +485,15 @@ public class UserManagementEntryService implements UserManagementApi {
     UserLifecycleEvent userLifecycleEvent =
         new UserLifecycleEvent(tenant, user, UserLifecycleType.DELETE);
     userLifecycleEventPublisher.publish(userLifecycleEvent);
+
+    // Publish SecurityEvent for user deletion
+    managementEventPublisher.publish(
+        tenant,
+        operator,
+        user,
+        oAuthToken,
+        DefaultSecurityEventType.user_delete.toEventType(),
+        requestAttributes);
 
     return new UserManagementResponse(UserManagementStatus.NO_CONTENT, Map.of());
   }
