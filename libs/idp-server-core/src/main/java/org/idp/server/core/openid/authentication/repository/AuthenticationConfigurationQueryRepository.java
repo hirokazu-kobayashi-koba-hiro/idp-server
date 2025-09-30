@@ -24,6 +24,8 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public interface AuthenticationConfigurationQueryRepository {
   AuthenticationConfiguration get(Tenant tenant, String key);
 
+  AuthenticationConfiguration find(Tenant tenant, String key);
+
   AuthenticationConfiguration find(Tenant tenant, AuthenticationConfigurationIdentifier identifier);
 
   AuthenticationConfiguration findWithDisabled(

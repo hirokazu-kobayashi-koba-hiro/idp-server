@@ -52,6 +52,17 @@ public class AuthenticationConfigurationQueryDataSource
   }
 
   @Override
+  public AuthenticationConfiguration find(Tenant tenant, String type) {
+    Map<String, String> result = executor.selectOne(tenant, type);
+
+    if (Objects.isNull(result) || result.isEmpty()) {
+      return new AuthenticationConfiguration();
+    }
+
+    return jsonConverter.read(result.get("payload"), AuthenticationConfiguration.class);
+  }
+
+  @Override
   public AuthenticationConfiguration find(
       Tenant tenant, AuthenticationConfigurationIdentifier identifier) {
     Map<String, String> result = executor.selectOne(tenant, identifier);
