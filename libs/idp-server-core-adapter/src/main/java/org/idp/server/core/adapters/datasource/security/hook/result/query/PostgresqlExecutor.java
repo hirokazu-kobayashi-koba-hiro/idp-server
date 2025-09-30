@@ -35,14 +35,14 @@ public class PostgresqlExecutor implements SecurityEventHookResultSqlExecutor {
             """;
     StringBuilder sql = new StringBuilder(selectSql).append(" WHERE tenant_id = ?::uuid");
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifierUUID());
     sql.append(" AND created_at BETWEEN ? AND ?");
     params.add(queries.from());
     params.add(queries.to());
 
     if (queries.hasId()) {
-      sql.append(" AND id = ?");
-      params.add(queries.id());
+      sql.append(" AND id = ?::uuid");
+      params.add(queries.idAsUuid());
     }
 
     if (queries.hasEventType()) {
@@ -90,14 +90,14 @@ public class PostgresqlExecutor implements SecurityEventHookResultSqlExecutor {
 
     StringBuilder sql = new StringBuilder(selectSql).append(" WHERE tenant_id = ?::uuid");
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
+    params.add(tenant.identifierUUID());
     sql.append(" AND created_at BETWEEN ? AND ?");
     params.add(queries.from());
     params.add(queries.to());
 
     if (queries.hasId()) {
-      sql.append(" AND id = ?");
-      params.add(queries.id());
+      sql.append(" AND id = ?::uuid");
+      params.add(queries.idAsUuid());
     }
 
     if (queries.hasEventType()) {
