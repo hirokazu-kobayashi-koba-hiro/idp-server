@@ -112,9 +112,9 @@ void should_throw_{exception}_when_{invalid_condition}()
 - **全体目標**: 65-75%
 
 ### 品質指標
-- **Test Execution Time**: <5 minutes (all unit tests)
-- **Test Stability**: >99% success rate (flaky tests <1%)
-- **Build Success Rate**: >95%
+- **Test Execution Time**: \<5 minutes (all unit tests)
+- **Test Stability**: \>99% success rate (flaky tests \<1%)
+- **Build Success Rate**: \>95%
 - **CI/CD Integration**: Automated coverage reporting
 
 ### 実装工数見積もり

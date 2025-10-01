@@ -116,7 +116,7 @@ const config = {
           },
           {
             spec: 'openapi/swagger-control-plane-ja.yaml',
-            route: '/docs/control-plane-api-ja/',
+            route: '/docs/content_07_reference/control-plane-api-ja/',
           },
         ],
         // Theme Options for modifying how redoc renders them

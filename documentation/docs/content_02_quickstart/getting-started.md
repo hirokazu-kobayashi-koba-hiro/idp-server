@@ -4,12 +4,16 @@
 
 ## 前提条件
 
-以下のツールが事前にインストールされている必要があります：
+| ツール | 必須バージョン | 推奨 | 備考 |
+|-------|-------------|------|------|
+| **Java** | 21+ | Java 21 | |
+| **データベース** | PostgreSQL 14+ または MySQL 8.0+ | **PostgreSQL 14+** | Primary/Replica 構成対応 |
+| **Node.js** | 18.0+ | 20.x LTS | E2E テスト実行に必要 |
+| **Docker** | 20.10+ | Docker Desktop 最新版 | Compose V2 対応 |
 
-- Java 21 以上
-- PostgreSQL または MySQL
-- Node.js
-- Docker
+### データベース選択ガイド
+- **PostgreSQL**: ✅ 推奨（Primary/Replica 対応、本番環境向け）
+- **MySQL**: ⚠️ 基本機能のみ（開発・検証環境向け）
 
 ## ローカル環境構成
 
