@@ -32,15 +32,17 @@ public class HmacHasher {
   }
 
   public String hash(String input) {
-    try {
+    if (input == null) {
+      throw new HmacHasherInvalidInputException("Input cannot be null");
+    }
 
+    try {
       Mac mac = Mac.getInstance(HMAC_ALGO);
       mac.init(secretKey);
       byte[] hmac = mac.doFinal(input.getBytes());
 
       return Base64.getUrlEncoder().withoutPadding().encodeToString(hmac);
     } catch (InvalidKeyException | NoSuchAlgorithmException e) {
-
       throw new HmacHasherRuntimeException("Failed to compute HMAC", e);
     }
   }
