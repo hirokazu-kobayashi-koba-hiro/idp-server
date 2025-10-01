@@ -58,7 +58,7 @@ APIのパスの verification-type と process が、テンプレートの "type"
 
 ※テナント間で設定は共有されません。ただし、別テナントに同一の設定を適用するこは可能。
 
-**アプリからの申込も用のAPI**
+**アプリからの申込み用API**
 
 ```
 初回申込み
@@ -68,7 +68,42 @@ POST /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{
 後続処理
 POST /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{id}/{process}
 ※リソースオーナーのアクセストークンが必要
+
+申込み一覧取得
+GET /{tenant-id}/v1/me/identity-verification/applications
+※リソースオーナーのアクセストークンが必要
+※クエリパラメータ: type, status, limit, offset
+
+申込み削除
+DELETE /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{id}
+※リソースオーナーのアクセストークンが必要
+
+検証結果取得
+GET /{tenant-id}/v1/me/identity-verification/results
+※リソースオーナーのアクセストークンが必要
+※検証済みクレーム（verified_claims）の取得
 ```
+
+### APIエンドポイント詳細
+
+#### 申込み一覧取得 API
+- **パス**: `GET /{tenant-id}/v1/me/identity-verification/applications`
+- **認証**: リソースオーナーのアクセストークン必須
+- **クエリパラメータ**:
+  - `type` (optional): 申込み種別でフィルタリング
+  - `status` (optional): 申込みステータスでフィルタリング（requested, applying, examination_processing, approved, rejected, expired, cancelled）
+  - `limit` (optional): 取得件数制限（デフォルト: 20）
+  - `offset` (optional): 取得開始位置（デフォルト: 0）
+
+#### 申込み削除 API
+- **パス**: `DELETE /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{id}`
+- **認証**: リソースオーナーのアクセストークン必須
+- **説明**: 申込みの削除または取り下げ処理。ステータスがcancelledに変更される
+
+#### 検証結果取得 API
+- **パス**: `GET /{tenant-id}/v1/me/identity-verification/results`
+- **認証**: リソースオーナーのアクセストークン必須
+- **レスポンス**: ユーザーに紐づく検証済みクレーム（verified_claims）とその詳細情報
 
 [リソースオーナー用のAPI仕様（身元確認関連の申込みAPIを含む）](api-resource-owner-ja)
 
@@ -1714,3 +1749,12 @@ from で参照できるトップレベルのオブジェクトは以下の通り
   }
 }
 ```
+
+## 関連ドキュメント
+
+身元確認申込み機能を効果的に利用するために、以下の関連ドキュメントもご参照ください：
+
+### API仕様書
+- [リソースオーナー用API仕様](/docs/content_07_reference/api-resource-owner-ja/) - 身元確認関連の申込みAPIの詳細仕様
+- [管理用API仕様](/docs/content_07_reference/control-plane-api-ja/) - テンプレート設定用の管理API仕様
+- [内部システム連携API仕様](/docs/content_07_reference/api-internal-ja/) - 外部サービス連携用のコールバックAPI仕様
