@@ -283,20 +283,6 @@ describe("identity-verification application", () => {
       expect(applicationsResponse.data.list[0]).toHaveProperty("requested_at");
       expect(applicationsResponse.data.list[0].attributes.label).toEqual("証券口座開設");
 
-      // const deleteUrl = serverConfig.identityVerificationApplicationsDeletionEndpoint
-      //   .replace("{type}", type)
-      //   .replace("{id}", applicationId);
-      //
-      // const deleteResponse = await deletion({
-      //   url: deleteUrl,
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //     "Authorization": `Bearer ${accessToken}`
-      //   }
-      // });
-      //
-      // expect(deleteResponse.status).toBe(200);
-
       backchannelAuthenticationResponse =
         await requestBackchannelAuthentications({
           endpoint: serverConfig.backchannelAuthenticationEndpoint,
@@ -420,6 +406,21 @@ describe("identity-verification application", () => {
       expect(resultsResponse.data.list[0].source_details.status).not.toBeNull();
       expect(resultsResponse.data.list[0]).toHaveProperty("verified_at");
       expect(resultsResponse.data.list[0].attributes.label).toEqual("証券口座開設");
+
+      const deleteUrl = serverConfig.identityVerificationApplicationsDeletionEndpoint
+        .replace("{type}", type)
+        .replace("{id}", applicationId);
+
+      const deleteResponse = await deletion({
+        url: deleteUrl,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`
+        }
+      });
+
+      expect(deleteResponse.status).toBe(200);
+
 
     });
 
@@ -572,20 +573,6 @@ describe("identity-verification application", () => {
       expect(applicationsResponse.data.list.length).toBe(1);
       expect(applicationsResponse.data.list[0].id).toEqual(applicationId);
 
-      // const deleteUrl = serverConfig.identityVerificationApplicationsDeletionEndpoint
-      //   .replace("{type}", type)
-      //   .replace("{id}", applicationId);
-      //
-      // const deleteResponse = await deletion({
-      //   url: deleteUrl,
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //     "Authorization": `Bearer ${accessToken}`
-      //   }
-      // });
-      //
-      // expect(deleteResponse.status).toBe(200);
-
       backchannelAuthenticationResponse =
         await requestBackchannelAuthentications({
           endpoint: serverConfig.backchannelAuthenticationEndpoint,
@@ -708,6 +695,19 @@ describe("identity-verification application", () => {
       expect(resultsResponse.data.list[0]).toHaveProperty("verified_at");
       expect(resultsResponse.data.list[0]).toHaveProperty("verified_until");
 
+      const deleteUrl = serverConfig.identityVerificationApplicationsDeletionEndpoint
+        .replace("{type}", type)
+        .replace("{id}", applicationId);
+
+      const deleteResponse = await deletion({
+        url: deleteUrl,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`
+        }
+      });
+
+      expect(deleteResponse.status).toBe(200);
 
     });
   });
