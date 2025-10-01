@@ -15,7 +15,7 @@ npx docusaurus write-translations --locale ja
 ## run
 
 ```shell
-npx run start
+npm run start
 ```
 
 ```shell

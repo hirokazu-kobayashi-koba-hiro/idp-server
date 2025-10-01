@@ -71,14 +71,14 @@ sequenceDiagram
 
 | 方式                                                     | 説明                             |
 |:-------------------------------------------------------|:-------------------------------|
-| [初期登録](./configuration/authn/initial-registration.md)  | IDの属性情報の登録                     |
-| [Password](./configuration/authn/password.md)          | ユーザーIDとパスワードによる認証。             |
-| [SMS](./configuration/authn/sms.md)                    | SMS番号登録用の認証コード送信。              |
-| [Email](./configuration/authn/email.md)                | メールリンクによるワンタイム認証。              |
-| [FIDO-UAF](./configuration/authn/fido-uaf.md)          | FIDO-UAFによる登録チャレンジ生成。          |
-| [WebAuthn](./configuration/authn/webauthn.md)          | WebAuthn（Passkeyなど）の登録チャレンジ生成。 |
-| [デバイス](./configuration/authn/authentication-device.md) | CIBAやデバイス連携による認証通知。            |
-| [レガシー](./configuration/authn/legacy.md)                | 外部レガシーIDサービス連携による認証。           |
+| [初期登録](../content_06_developer-guide/configuration/authn/initial-registration.md)  | IDの属性情報の登録                     |
+| [Password](../content_06_developer-guide/configuration/authn/password.md)          | ユーザーIDとパスワードによる認証。             |
+| [SMS](../content_06_developer-guide/configuration/authn/sms.md)                    | SMS番号登録用の認証コード送信。              |
+| [Email](../content_06_developer-guide/configuration/authn/email.md)                | メールリンクによるワンタイム認証。              |
+| [FIDO-UAF](../content_06_developer-guide/configuration/authn/fido-uaf.md)          | FIDO-UAFによる登録チャレンジ生成。          |
+| [WebAuthn](../content_06_developer-guide/configuration/authn/webauthn.md)          | WebAuthn（Passkeyなど）の登録チャレンジ生成。 |
+| [デバイス](../content_06_developer-guide/configuration/authn/authentication-device.md) | CIBAやデバイス連携による認証通知。            |
+| [レガシー](../content_06_developer-guide/configuration/authn/legacy.md)                | 外部レガシーIDサービス連携による認証。           |
 
 例えば、
 
