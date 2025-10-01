@@ -19,6 +19,7 @@ package org.idp.server.adapters.springboot;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.IdpServerApplication;
@@ -71,15 +72,39 @@ public class ProtectedResourceApiFilter extends OncePerRequestFilter {
       SecurityContextHolder.getContext().setAuthentication(principal);
       filterChain.doFilter(request, response);
     } catch (UnauthorizedException e) {
-      response.setHeader(HttpHeaders.WWW_AUTHENTICATE, e.getMessage());
-      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+      writeErrorResponse(response, "invalid_token", e.getMessage());
 
     } catch (Exception e) {
-
       logger.error(e.getMessage(), e);
-      response.setHeader(
-          HttpHeaders.WWW_AUTHENTICATE, "error=invalid_token unexpected error occurred");
+      writeErrorResponse(response, "invalid_token", "Unexpected error occurred");
+    }
+  }
+
+  private void writeErrorResponse(
+      HttpServletResponse response, String error, String errorDescription) {
+    try {
+      // Set WWW-Authenticate header per RFC 6750
+      String wwwAuthenticate =
+          String.format("Bearer error=\"%s\", error_description=\"%s\"", error, errorDescription);
+      response.setHeader(HttpHeaders.WWW_AUTHENTICATE, wwwAuthenticate);
+
+      // Set status code
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+
+      // Set Content-Type for JSON response body
+      response.setContentType("application/json");
+      response.setCharacterEncoding("UTF-8");
+
+      // Write JSON error response body
+      String jsonErrorResponse =
+          String.format(
+              "{\"error\":\"%s\",\"error_description\":\"%s\"}",
+              error, errorDescription.replace("\"", "\\\""));
+
+      response.getWriter().write(jsonErrorResponse);
+      response.getWriter().flush();
+    } catch (IOException ioException) {
+      logger.error("Failed to write error response", ioException);
     }
   }
 

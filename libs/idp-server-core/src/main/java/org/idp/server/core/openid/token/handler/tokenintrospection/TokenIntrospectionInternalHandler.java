@@ -25,6 +25,7 @@ import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntro
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.openid.token.tokenintrospection.TokenIntrospectionContentsCreator;
+import org.idp.server.core.openid.token.tokenintrospection.validator.TokenIntrospectionValidator;
 import org.idp.server.core.openid.token.tokenintrospection.verifier.TokenIntrospectionVerifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -41,6 +42,8 @@ public class TokenIntrospectionInternalHandler {
   }
 
   public TokenIntrospectionResponse handle(TokenIntrospectionInternalRequest request) {
+    TokenIntrospectionValidator validator = new TokenIntrospectionValidator(request.toParameters());
+    validator.validate();
 
     AccessTokenEntity accessTokenEntity = request.accessToken();
     Tenant tenant = request.tenant();

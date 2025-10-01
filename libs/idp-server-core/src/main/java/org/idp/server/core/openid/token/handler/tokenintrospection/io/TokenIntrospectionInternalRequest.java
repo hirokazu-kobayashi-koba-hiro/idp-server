@@ -16,9 +16,12 @@
 
 package org.idp.server.core.openid.token.handler.tokenintrospection.io;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
 import org.idp.server.core.openid.token.AuthorizationHeaderHandlerable;
+import org.idp.server.core.openid.token.tokenintrospection.TokenIntrospectionRequestParameters;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class TokenIntrospectionInternalRequest implements AuthorizationHeaderHandlerable {
@@ -51,5 +54,14 @@ public class TokenIntrospectionInternalRequest implements AuthorizationHeaderHan
 
   public AccessTokenEntity accessToken() {
     return extractAccessToken(authorizationHeaders);
+  }
+
+  public TokenIntrospectionRequestParameters toParameters() {
+    AccessTokenEntity accessTokenEntity = accessToken();
+    Map<String, String[]> params = new HashMap<>();
+    if (accessTokenEntity.exists()) {
+      params.put("token", new String[] {accessTokenEntity.value()});
+    }
+    return new TokenIntrospectionRequestParameters(params);
   }
 }
