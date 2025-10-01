@@ -13,7 +13,6 @@ servers:
       tenant-id:
         description: テナント識別子（UUID形式）
         default: "67e7eae6-62b0-4500-9eff-87459f63fc66"
-        example: "67e7eae6-62b0-4500-9eff-87459f63fc66"
 
 tags:
   - name: CIBAフロー
@@ -473,6 +472,26 @@ paths:
       description: |
         アクセストークンやリフレッシュトークンの状態を確認するためのエンドポイントです。
         クライアントは自身が発行されたトークンの有効性や関連情報を照会できます。
+
+        📘 **RFC 7662 準拠**: [OAuth 2.0 Token Introspection](https://tools.ietf.org/html/rfc7662)
+
+        ## クライアント認証
+
+        このエンドポイントは **クライアント認証が必須** です。以下の認証方法をサポートしています：
+
+        - **client_secret_basic**：AuthorizationヘッダにBasic認証形式で `client_id` / `client_secret` を送信します（デフォルト）。
+        - **client_secret_post**：`client_id` と `client_secret` をフォームパラメータとしてリクエストボディに含めます。
+        - **client_secret_jwt**：client_secret を共通鍵として署名した JWT を `client_assertion` として送信します。
+        - **private_key_jwt**：登録済みの公開鍵に対応する秘密鍵で署名した JWT を `client_assertion` として送信します。
+        - **tls_client_auth（mTLS）**：クライアント証明書を使って双方向TLS認証を行います。サーバーは証明書のサブジェクトなどでクライアントを識別します。
+        - **self_signed_tls_client_auth（自己署名TLS）**: 自己署名のクライアント証明書を用いたTLS認証方式。証明書のフィンガープリントを事前登録することで認証が成立します。
+
+        JWT認証（client_secret_jwt / private_key_jwt）では、以下のクレームを含むJWTを生成し、次のパラメータを使用して送信してください：
+
+        - `client_assertion_type`: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+        - `client_assertion`: 署名済みJWT
+
+        認証に失敗した場合は `401 Unauthorized` が返されます。
       requestBody:
         required: true
         content:
@@ -501,16 +520,36 @@ paths:
         - トークン
       summary: トークン検証（拡張）
       description: |
-        アクセストークンやリフレッシュトークンの状態を確認するための標準仕様を拡張したエンドポイントです。        
+        アクセストークンやリフレッシュトークンの状態を確認するための標準仕様を拡張したエンドポイントです。
         リソースサーバー側で実施している許可している
          - スコープを含んでいるか
          - クライアント証明書がバインディングされているか
-        
+
         の検証も実施してトークンの有効性を確認することができます。
-      
+
         トークンが有効な場合は、標準仕様に沿ったレスポンスを返却します。
-        
+
         トークンが無効な場合は、エラーの原因を含めてレスポンスを返却します。
+
+        📘 **RFC 7662 拡張**: OAuth 2.0 Token Introspection の拡張実装
+
+        ## クライアント認証
+
+        このエンドポイントは **クライアント認証が必須** です。以下の認証方法をサポートしています：
+
+        - **client_secret_basic**：AuthorizationヘッダにBasic認証形式で `client_id` / `client_secret` を送信します（デフォルト）。
+        - **client_secret_post**：`client_id` と `client_secret` をフォームパラメータとしてリクエストボディに含めます。
+        - **client_secret_jwt**：client_secret を共通鍵として署名した JWT を `client_assertion` として送信します。
+        - **private_key_jwt**：登録済みの公開鍵に対応する秘密鍵で署名した JWT を `client_assertion` として送信します。
+        - **tls_client_auth（mTLS）**：クライアント証明書を使って双方向TLS認証を行います。サーバーは証明書のサブジェクトなどでクライアントを識別します。
+        - **self_signed_tls_client_auth（自己署名TLS）**: 自己署名のクライアント証明書を用いたTLS認証方式。証明書のフィンガープリントを事前登録することで認証が成立します。
+
+        JWT認証（client_secret_jwt / private_key_jwt）では、以下のクレームを含むJWTを生成し、次のパラメータを使用して送信してください：
+
+        - `client_assertion_type`: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+        - `client_assertion`: 署名済みJWT
+
+        認証に失敗した場合は `401 Unauthorized` が返されます。
       requestBody:
         required: true
         content:
@@ -541,6 +580,26 @@ paths:
       description: |
         発行済みのアクセストークンやリフレッシュトークンを無効化（取り消し）するためのエンドポイントです。
         クライアントは自分が発行したトークンのみをリボーク可能です。
+
+        📘 **RFC 7009 準拠**: [OAuth 2.0 Token Revocation](https://tools.ietf.org/html/rfc7009)
+
+        ## クライアント認証
+
+        このエンドポイントは **クライアント認証が必須** です。以下の認証方法をサポートしています：
+
+        - **client_secret_basic**：AuthorizationヘッダにBasic認証形式で `client_id` / `client_secret` を送信します（デフォルト）。
+        - **client_secret_post**：`client_id` と `client_secret` をフォームパラメータとしてリクエストボディに含めます。
+        - **client_secret_jwt**：client_secret を共通鍵として署名した JWT を `client_assertion` として送信します。
+        - **private_key_jwt**：登録済みの公開鍵に対応する秘密鍵で署名した JWT を `client_assertion` として送信します。
+        - **tls_client_auth（mTLS）**：クライアント証明書を使って双方向TLS認証を行います。サーバーは証明書のサブジェクトなどでクライアントを識別します。
+        - **self_signed_tls_client_auth（自己署名TLS）**: 自己署名のクライアント証明書を用いたTLS認証方式。証明書のフィンガープリントを事前登録することで認証が成立します。
+
+        JWT認証（client_secret_jwt / private_key_jwt）では、以下のクレームを含むJWTを生成し、次のパラメータを使用して送信してください：
+
+        - `client_assertion_type`: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+        - `client_assertion`: 署名済みJWT
+
+        認証に失敗した場合は `401 Unauthorized` が返されます。
       requestBody:
         required: true
         content:
@@ -549,7 +608,13 @@ paths:
               $ref: '#/components/schemas/TokenRevocationRequest'
       responses:
         '200':
-          description: リボケーション成功。常に200を返す仕様。
+          description: |
+            リボケーション成功。常に200を返す仕様。
+
+            📘 **RFC 7009準拠**:
+            - トークンが既に無効または存在しない場合でも200を返します
+            - セキュリティ上の理由により、トークンの存在/非存在を区別しません
+            - クライアントは200レスポンスをリボケーション完了として扱ってください
         '400':
           description: リクエスト形式エラーまたはパラメータの欠落。
         '401':
@@ -734,13 +799,6 @@ paths:
       tags:
         - OIDC
       parameters:
-        - name: tenant-id
-          in: path
-          required: true
-          description: テナント識別子
-          schema:
-            type: string
-          example: "67e7eae6-62b0-4500-9eff-87459f63fc66"
         - name: post_logout_redirect_uri
           in: query
           required: false
@@ -972,6 +1030,31 @@ components:
         **取得方法**: OAuth 2.0 / OpenID Connect フローを通じて取得
 
         📘 関連仕様: [RFC 6750 - OAuth 2.0 Bearer Token Usage](https://datatracker.ietf.org/doc/html/rfc6750)
+
+    clientAuth:
+      type: http
+      scheme: basic
+      description: |
+        OAuth 2.0 クライアント認証用のHTTP Basic認証。
+
+        **使用方法**:
+        ```
+        Authorization: Basic base64(client_id:client_secret)
+        ```
+
+        **対象エンドポイント**:
+        - Token エンドポイント
+        - Token Introspection エンドポイント
+        - Token Revocation エンドポイント
+
+        **その他サポート認証方法**:
+        - `client_secret_post`: フォームパラメータによる認証
+        - `client_secret_jwt`: JWT アサーション（共有鍵）
+        - `private_key_jwt`: JWT アサーション（秘密鍵）
+        - `tls_client_auth`: mTLS 相互認証
+        - `self_signed_tls_client_auth`: 自己署名証明書 mTLS
+
+        📘 関連仕様: [RFC 6749 Section 2.3 - Client Authentication](https://datatracker.ietf.org/doc/html/rfc6749#section-2.3)
 
   parameters:
     response_type:
@@ -1534,6 +1617,7 @@ components:
       type: object
       description: |
         RFC 7662 - Token Introspection標準のリクエスト。
+        クライアント認証が必須です。
       required:
         - token
       properties:
@@ -1544,12 +1628,35 @@ components:
           type: string
           enum: [ access_token, refresh_token ]
           description: トークンの種別に関するヒント（省略可能）。
+        client_id:
+          type: string
+          description: |
+            クライアント識別子。client_secret_post認証やmTLS認証で使用します。
+            client_secret_basic認証の場合はAuthorizationヘッダで送信されるため省略可能。
+        client_secret:
+          type: string
+          description: |
+            クライアントシークレット。client_secret_post認証でのみ使用します。
+            client_secret_basic認証の場合はAuthorizationヘッダで送信されます。
+        client_assertion_type:
+          type: string
+          enum: [ "urn:ietf:params:oauth:client-assertion-type:jwt-bearer" ]
+          description: |
+            JWT認証（client_secret_jwt / private_key_jwt）で使用するアサーションタイプ。
+            固定値: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+        client_assertion:
+          type: string
+          description: |
+            JWT認証で使用する署名済みJWTアサーション。
+            client_secret_jwt: client_secretで署名
+            private_key_jwt: 登録済み秘密鍵で署名
 
     TokenIntrospectionExtensionRequest:
       type: object
       description: |
         RFC 7662 - Token Introspectionをベースとした拡張APIのリクエスト。
         scope client_certの指定し、リソースサーバー側で検証するロジックをませることが可能。
+        クライアント認証が必須です。
       required:
         - token
       properties:
@@ -1568,8 +1675,30 @@ components:
         client_cert:
           type: string
           description: |
-            相互TLS通信で取得したPEM形式のクライアント証明書。。
+            相互TLS通信で取得したPEM形式のクライアント証明書。
             証明書バインディングされているクライアント証明書のサムプリントと一致しているかを検証します。
+        client_id:
+          type: string
+          description: |
+            クライアント識別子。client_secret_post認証やmTLS認証で使用します。
+            client_secret_basic認証の場合はAuthorizationヘッダで送信されるため省略可能。
+        client_secret:
+          type: string
+          description: |
+            クライアントシークレット。client_secret_post認証でのみ使用します。
+            client_secret_basic認証の場合はAuthorizationヘッダで送信されます。
+        client_assertion_type:
+          type: string
+          enum: [ "urn:ietf:params:oauth:client-assertion-type:jwt-bearer" ]
+          description: |
+            JWT認証（client_secret_jwt / private_key_jwt）で使用するアサーションタイプ。
+            固定値: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+        client_assertion:
+          type: string
+          description: |
+            JWT認証で使用する署名済みJWTアサーション。
+            client_secret_jwt: client_secretで署名
+            private_key_jwt: 登録済み秘密鍵で署名
 
     TokenIntrospectionResponse:
       type: object
@@ -1649,6 +1778,9 @@ components:
 
     TokenRevocationRequest:
       type: object
+      description: |
+        RFC 7009 - Token Revocation標準のリクエスト。
+        クライアント認証が必須です。
       required:
         - token
       properties:
@@ -1659,6 +1791,28 @@ components:
           type: string
           enum: [ access_token, refresh_token ]
           description: トークンの種類に関するヒント（省略可能）。
+        client_id:
+          type: string
+          description: |
+            クライアント識別子。client_secret_post認証やmTLS認証で使用します。
+            client_secret_basic認証の場合はAuthorizationヘッダで送信されるため省略可能。
+        client_secret:
+          type: string
+          description: |
+            クライアントシークレット。client_secret_post認証でのみ使用します。
+            client_secret_basic認証の場合はAuthorizationヘッダで送信されます。
+        client_assertion_type:
+          type: string
+          enum: [ "urn:ietf:params:oauth:client-assertion-type:jwt-bearer" ]
+          description: |
+            JWT認証（client_secret_jwt / private_key_jwt）で使用するアサーションタイプ。
+            固定値: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+        client_assertion:
+          type: string
+          description: |
+            JWT認証で使用する署名済みJWTアサーション。
+            client_secret_jwt: client_secretで署名
+            private_key_jwt: 登録済み秘密鍵で署名
 
     UserInfoResponse:
       type: object
