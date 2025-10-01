@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.authentication.interaction.execution;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
@@ -98,5 +99,12 @@ public class AuthenticationExecutionResult {
 
   public int statusCode() {
     return status.code();
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("status", status.code());
+    map.put("contents", contents);
+    return map;
   }
 }

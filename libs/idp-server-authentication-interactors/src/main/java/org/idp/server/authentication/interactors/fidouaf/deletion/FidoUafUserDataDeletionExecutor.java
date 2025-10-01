@@ -28,6 +28,7 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.core.openid.identity.event.UserLifecycleEvent;
 import org.idp.server.core.openid.identity.event.UserLifecycleEventExecutor;
 import org.idp.server.core.openid.identity.event.UserLifecycleEventResult;
@@ -61,11 +62,32 @@ public class FidoUafUserDataDeletionExecutor implements UserLifecycleEventExecut
 
   @Override
   public boolean shouldExecute(UserLifecycleEvent userLifecycleEvent) {
-    if (userLifecycleEvent.lifecycleType() == UserLifecycleType.DELETE) {
-      User user = userLifecycleEvent.user();
-      return user.enabledFidoUaf();
+    if (userLifecycleEvent.lifecycleType() != UserLifecycleType.DELETE) {
+      return false;
     }
-    return false;
+
+    Tenant tenant = userLifecycleEvent.tenant();
+    AuthenticationConfiguration authenticationConfiguration =
+        configurationQueryRepository.find(tenant, "fido-uaf");
+
+    if (!authenticationConfiguration.exists()) {
+      log.info(
+          "FidoUafUserDataDeletionExecutor, Authentication interaction config 'fido-uaf' not found");
+      return false;
+    }
+
+    AuthenticationInteractionConfig authenticationInteractionConfig =
+        authenticationConfiguration.getAuthenticationConfig("fido-uaf-deregistration");
+
+    if (authenticationInteractionConfig == null) {
+      log.info(
+          "FidoUafUserDataDeletionExecutor, Authentication interaction config 'fido-uaf-deregistration' not found");
+      return false;
+    }
+
+    User user = userLifecycleEvent.user();
+
+    return user.enabledFidoUaf();
   }
 
   @Override
@@ -76,30 +98,44 @@ public class FidoUafUserDataDeletionExecutor implements UserLifecycleEventExecut
           configurationQueryRepository.get(tenant, "fido-uaf");
 
       AuthenticationInteractionConfig authenticationInteractionConfig =
-          authenticationConfiguration.getAuthenticationConfig("fido-uaf-delete-key");
+          authenticationConfiguration.getAuthenticationConfig("fido-uaf-deregistration");
       AuthenticationExecutionConfig execution = authenticationInteractionConfig.execution();
       AuthenticationExecutor executor = authenticationExecutors.get(execution.function());
 
-      Map<String, Object> request = new HashMap<>();
-      // TODO dynamic mapping request
-      AuthenticationExecutionRequest fidoUafExecutionRequest =
-          new AuthenticationExecutionRequest(request);
-      AuthenticationExecutionResult executionResult =
-          executor.execute(
-              tenant,
-              new AuthenticationTransactionIdentifier(),
-              fidoUafExecutionRequest,
-              new RequestAttributes(),
-              execution);
+      User user = userLifecycleEvent.user();
+      Map<String, Object> data = new HashMap<>();
+      boolean result = true;
+      for (AuthenticationDevice authenticationDevice : user.authenticationDevices()) {
+        if (!authenticationDevice.enabledFidoUaf()) {
+          log.debug(
+              "Skip delete fido-uaf. device '{}' because it is not enabled fido-uaf",
+              authenticationDevice.id());
+          continue;
+        }
 
-      if (!executionResult.isSuccess()) {
-        Map<String, Object> data = new HashMap<>();
-        data.put("status", executionResult.status());
-        data.put("contents", executionResult.contents());
+        log.info("Delete fido-uaf for device '{}'", authenticationDevice.id());
+        Map<String, Object> request = new HashMap<>();
+        request.put("device_id", authenticationDevice.id());
+        AuthenticationExecutionRequest fidoUafExecutionRequest =
+            new AuthenticationExecutionRequest(request);
+        AuthenticationExecutionResult executionResult =
+            executor.execute(
+                tenant,
+                new AuthenticationTransactionIdentifier(),
+                fidoUafExecutionRequest,
+                new RequestAttributes(),
+                execution);
+        data.put(authenticationDevice.id(), executionResult.toMap());
+        if (!executionResult.isSuccess()) {
+          result = false;
+        }
+      }
+
+      if (!result) {
         return UserLifecycleEventResult.failure(name(), data);
       }
 
-      return UserLifecycleEventResult.success(name(), executionResult.contents());
+      return UserLifecycleEventResult.success(name(), data);
     } catch (Exception e) {
       log.error("UserLifecycleEventExecutor error: {}", e.getMessage(), e);
 
