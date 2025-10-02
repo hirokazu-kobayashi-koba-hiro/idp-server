@@ -105,5 +105,44 @@ JWTは「.（ドット）」で区切られた3つのパートからできてい
 
 ---
 
-> IDトークン（JWT）は、現代Webの「安全な本人確認・属性連携」の要です。  
+## 仕様参照
+
+### RFC・仕様文書
+- **[RFC 7519: JSON Web Token (JWT)](https://tools.ietf.org/html/rfc7519)** - JWT基本仕様
+- **[RFC 7515: JSON Web Signature (JWS)](https://tools.ietf.org/html/rfc7515)** - JWS署名仕様
+- **[RFC 7516: JSON Web Encryption (JWE)](https://tools.ietf.org/html/rfc7516)** - JWE暗号化仕様
+- **[RFC 7517: JSON Web Key (JWK)](https://tools.ietf.org/html/rfc7517)** - JWK鍵管理仕様
+- **[OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)** - IDトークン仕様
+
+### idp-server JWT機能サポート
+
+| 機能 | サポート状況 | 実装詳細 |
+|------|-------------|----------|
+| **JWT署名アルゴリズム** | | |
+| RS256 (RSA + SHA-256) | ✅ 完全対応 | RFC 7515 JWS準拠 |
+| ES256 (ECDSA P-256 + SHA-256) | ✅ 完全対応 | RFC 7515 ECDSA署名 |
+| PS256 (RSA-PSS + SHA-256) | ✅ 完全対応 | RFC 7515 RSA-PSS署名 |
+| HS256 (HMAC + SHA-256) | ⚠️ 制限付き | クライアント秘匿認証のみ |
+| **JWE暗号化** | | |
+| RSA-OAEP | ✅ 完全対応 | RFC 7516 JWE準拠 |
+| ECDH-ES | ✅ 完全対応 | RFC 7516 ECDH暗号化 |
+| **鍵管理** | | |
+| JWKSエンドポイント | ✅ 完全対応 | RFC 7517 JWK準拠 |
+| 鍵ローテーション | ✅ 完全対応 | 定期的な鍵更新対応 |
+| **IDトークン拡張** | | |
+| 標準クレーム | ✅ 完全対応 | [クレーム設定](../id-management.md) |
+| カスタムクレーム | ✅ 完全対応 | プラグインで拡張可能 |
+| 身元確認済みクレーム | ✅ 完全対応 | [身元確認](../id-verified.md) |
+
+### idp-server独自JWT拡張
+
+- **マルチテナント署名**: テナント単位での署名鍵管理
+- **動的クレーム生成**: プラグインによるカスタムクレーム追加
+- **監査証跡**: JWTリクエスト・検証の詳細ログ
+- **セキュリティイベント**: JWT関連のセキュリティ監視
+- **身元確認連携**: eKYC結果のIDトークン格納
+
+---
+
+> IDトークン（JWT）は、現代Webの「安全な本人確認・属性連携」の要です。
 > フロント・バックエンド問わず、きちんと署名検証＆項目チェックを徹底しましょう！

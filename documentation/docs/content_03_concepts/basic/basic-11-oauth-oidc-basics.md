@@ -52,6 +52,43 @@ OpenID Connectは、OAuth 2.0の「認可」に加えて「認証・ID」の要�
 
 ---
 
+## 仕様参照
+
+### RFC・仕様文書
+- **[RFC 6749: OAuth 2.0 Authorization Framework](https://tools.ietf.org/html/rfc6749)** - OAuth 2.0基本仕様
+- **[OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)** - OIDC基本仕様
+- **[OpenID Connect Discovery 1.0](https://openid.net/specs/openid-connect-discovery-1_0.html)** - Discovery仕様
+- **[RFC 7662: OAuth 2.0 Token Introspection](https://tools.ietf.org/html/rfc7662)** - トークンイントロスペクション
+- **[FAPI 2.0 Security Profile](https://openid.net/specs/fapi-2_0-security-profile.html)** - 金融グレードセキュリティ仕様
+
+### idp-server対応仕様
+
+| 仕様カテゴリ | 機能 | サポート状況 | 実装詳細 |
+|-------------|------|-------------|----------|
+| **OAuth 2.0 Core** | Authorization Code Grant | ✅ 完全対応 | [認可コードフロー](../../content_04_protocols/authorization-code-flow.md) |
+| | Client Credentials Grant | ✅ 完全対応 | RFC 6749 Section 4.4 |
+| | PKCE | ✅ 完全対応 | RFC 7636準拠 |
+| | Token Introspection | ✅ 完全対応 | [イントロスペクション](../../content_04_protocols/introspection.md) |
+| | Token Revocation | ✅ 完全対応 | RFC 7009準拠 |
+| **OpenID Connect** | Core | ✅ 完全対応 | [OIDC詳細](basic-12-openid-connect-detail.md) |
+| | Discovery | ✅ 完全対応 | OIDC Discovery 1.0準拠 |
+| | Dynamic Registration | ✅ 完全対応 | OIDC Registration 1.0準拠 |
+| | UserInfo Endpoint | ✅ 完全対応 | OIDC Core 1.0準拠 |
+| **拡張仕様** | CIBA | ✅ 完全対応 | [CIBAフロー](../../content_04_protocols/ciba-flow.md) |
+| | FAPI 2.0 | 🔄 計画中 | 金融グレードセキュリティ対応予定 |
+| | DPoP | 🔄 計画中 | Demonstration of Proof-of-Possession対応予定 |
+| | IDA | ✅ 対応 | [身元確認](../id-verified.md) |
+
+### idp-server独自機能
+
+- **マルチテナント認証基盤**: テナント単位での完全分離
+- **プラガブルアーキテクチャ**: カスタム認証・認可ロジック
+- **身元確認特化**: eKYC・本人確認済みクレーム管理
+- **セキュリティ監視**: リアルタイムイベント・監査ログ
+- **組織管理**: 企業・組織単位でのユーザー・権限管理
+
+---
+
 ## まとめ
 
 - OAuth 2.0は「権限管理と安全なAPI連携の標準」

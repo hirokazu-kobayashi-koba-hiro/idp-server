@@ -61,10 +61,40 @@ OAuth 2.0は、ユーザーのパスワードや機密情報を直接共有せ�
 
 ---
 
+## 仕様参照
+
+### RFC文書
+- **[RFC 6749: The OAuth 2.0 Authorization Framework](https://tools.ietf.org/html/rfc6749)** - OAuth 2.0の基本仕様
+- **[RFC 6750: The OAuth 2.0 Authorization Framework: Bearer Token Usage](https://tools.ietf.org/html/rfc6750)** - Bearer Token使用方法
+- **[RFC 7636: Proof Key for Code Exchange by OAuth Public Clients (PKCE)](https://tools.ietf.org/html/rfc7636)** - PKCEによる拡張仕様
+
+### idp-server機能サポート状況
+
+| 機能 | サポート状況 | 実装詳細 |
+|------|-------------|----------|
+| Authorization Code Grant | ✅ 完全対応 | [認可コードフロー](../../content_04_protocols/authorization-code-flow.md) |
+| PKCE | ✅ 完全対応 | RFC 7636準拠 |
+| Client Credentials Grant | ✅ 完全対応 | RFC 6749 Section 4.4 |
+| Resource Owner Password Credentials | ❌ 非対応 | セキュリティ上の理由により非サポート |
+| Implicit Grant | ⚠️ 非推奨 | 新規実装は推奨されません |
+| Device Authorization Grant | 🔄 計画中 | [Issue #XXX](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues) |
+| Bearer Token | ✅ 完全対応 | [トークンタイプ詳細](basic-10-oauth2-token-types.md) |
+| Token Introspection (RFC 7662) | ✅ 完全対応 | [イントロスペクション](../../content_04_protocols/introspection.md) |
+| Token Revocation (RFC 7009) | ✅ 完全対応 | RFC 7009準拠 |
+
+### idp-server独自拡張
+
+- **マルチテナント対応**: テナント単位での認可サーバー管理
+- **プラガブルアーキテクチャ**: カスタム認可ロジックの実装可能
+- **監査ログ**: 認可リクエストの詳細な監査証跡
+- **セキュリティイベント**: リアルタイムセキュリティ監視
+
+---
+
 ## まとめ
 
-OAuth 2.0は「本人認証」の仕組みではなく、  
-**ユーザーが“どの権限をどこまで”外部サービスに渡すかを安全に管理する“認可”の仕組み**です。
+OAuth 2.0は「本人認証」の仕組みではなく、
+**ユーザーが"どの権限をどこまで"外部サービスに渡すかを安全に管理する"認可"の仕組み**です。
 
 ---
 
