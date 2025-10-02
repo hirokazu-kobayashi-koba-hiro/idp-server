@@ -37,10 +37,6 @@ public class ScopeMappingCustomClaimsCreator implements AccessTokenCustomClaimsC
       ClientConfiguration clientConfiguration,
       ClientCredentials clientCredentials) {
 
-    if (authorizationServerConfiguration.isIdTokenStrictMode()) {
-      return false;
-    }
-
     if (!authorizationServerConfiguration.enabledCustomClaimsScopeMapping()) {
       return false;
     }

@@ -155,19 +155,23 @@ FAPIプロファイルの適用をスコープで判断します。
 
 `idp-server` は便利機能をいくつか用意しており、主な機能は下記2つとなります。
 
-1. claims:xx スコープによるIDトークンクレームの動的設定
+1. claims:xx スコープによるIDトークン・アクセストークンクレームの動的設定
 2. verified_claims:xx スコープによるアクセストークンのプロパティの動的設定
 
-### claims:xx スコープによるIDトークンクレームの動的設定
+### claims:xx スコープによるIDトークン・アクセストークンクレームの動的設定
 
 `idp-server` では、スコープに `claims:`プレフィックス付きスコープが含まれる場合、ユーザーのカスタム属性やロール情報を動的に
-ID トークンに含めることができます。
+IDトークンとアクセストークンに含めることができます。
+
+**注意**: `id_token_strict_mode` 設定はIDトークンへの追加時のみ適用され、アクセストークンには影響しません。
 
 これは `ScopeMappingCustomClaimsCreator` により実現され、以下の条件で動作します：
 
-* `id_token_strict_mode` が無効であること
 * `enabled_custom_claims_scope_mapping` が有効であること
-* 対象スコープが `claims:` プレフィックスが含まれていること
+* 対象スコープに `claims:` プレフィックスが含まれていること
+
+**IDトークンへの追加時の追加条件**：
+* `id_token_strict_mode` が無効であること
 
 対象スコープが `claims:roles` の場合、ユーザーが持つロール一覧（リスト形式）が `roles` クレームとして付加されます。
 
@@ -180,9 +184,8 @@ ID トークンに含めることができます。
 
 これは `AccessTokenSelectiveVerifiedClaimsCreator` により実現され、以下の条件で動作します：
 
-* `id_token_strict_mode` が無効であること
 * `enabled_access_token_selective_verified_claims` が有効であること
-* 対象スコープが `verified_claims:` プレフィックスが含まれていること
-* ユーザーが`verified_claims:`を所持していること
+* 対象スコープに `verified_claims:` プレフィックスが含まれていること
+* ユーザーが該当の `verified_claims` 属性を所持していること
 
 対象スコープが `verified_claims:name` の場合、ユーザーが持つverified_claimsの `name` をプロパティに設定します。
