@@ -65,5 +65,44 @@ sequenceDiagram
 
 ---
 
-> Authorization Code Flowは、現代のWebサービスやAPI連携の標準的な認可方式です。  
+## 仕様参照
+
+### RFC・仕様文書
+- **[RFC 6749: Section 4.1 - Authorization Code Grant](https://tools.ietf.org/html/rfc6749#section-4.1)** - 認可コードグラント基本仕様
+- **[RFC 7636: PKCE](https://tools.ietf.org/html/rfc7636)** - 認可コードフローの拡張セキュリティ
+- **[OpenID Connect Core 1.0: Section 3.1](https://openid.net/specs/openid-connect-core-1_0.html#CodeFlowAuth)** - OIDC認可コードフロー
+- **[OAuth 2.1 Draft](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1)** - OAuth 2.1での認可コードフロー
+
+### idp-server認可コードフロー実装
+
+| コンポーネント | サポート状況 | 実装詳細 |
+|-------------|-------------|----------|
+| **基本フロー** | | |
+| Authorization Endpoint | ✅ 完全対応 | RFC 6749 Section 3.1準拠 |
+| Token Endpoint | ✅ 完全対応 | RFC 6749 Section 3.2準拠 |
+| **セキュリティ拡張** | | |
+| PKCE | ✅ 完全対応 | RFC 7636準拠 |
+| State Parameter | ✅ 完全対応 | RFC 6749 Section 10.12準拠 |
+| Nonce Parameter | ✅ 完全対応 | OIDC Core 1.0準拠 |
+| **クライアント認証** | | |
+| Client Secret Basic | ✅ 完全対応 | RFC 6749 Section 2.3.1準拠 |
+| Client Secret Post | ✅ 完全対応 | RFC 6749 Section 2.3.1準拠 |
+| Client Secret JWT | ✅ 完全対応 | RFC 7523準拠 |
+| Private Key JWT | ✅ 完全対応 | RFC 7523準拠 |
+| **レスポンスタイプ** | | |
+| code | ✅ 完全対応 | 標準認可コードレスポンス |
+| code id_token | ✅ 完全対応 | OIDC Core 1.0 Hybrid Flow |
+| code token | ✅ 完全対応 | OIDC Core 1.0 Hybrid Flow |
+
+### idp-server独自拡張
+
+- **マルチテナント認可**: テナント単位での認可フロー分離
+- **動的同意画面**: プラガブルな同意画面カスタマイズ
+- **認可ポリシー**: カスタム認可判定ロジック
+- **セキュリティ監視**: 認可フローのリアルタイム監視
+- **監査証跡**: 認可リクエストの詳細ログ記録
+
+---
+
+> Authorization Code Flowは、現代のWebサービスやAPI連携の標準的な認可方式です。
 > 安全性と利便性を両立するための必須知識ですので、しっかり理解しておきましょう。

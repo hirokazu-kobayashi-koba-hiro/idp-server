@@ -50,6 +50,44 @@ OIDCは、API連携だけでなく、ソーシャルログインやeKYCなど“
 
 ---
 
+## 仕様参照
+
+### OpenID Connect仕様
+- **[OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)** - OIDC基本仕様
+- **[OpenID Connect Discovery 1.0](https://openid.net/specs/openid-connect-discovery-1_0.html)** - Discovery仕様
+- **[OpenID Connect Dynamic Client Registration 1.0](https://openid.net/specs/openid-connect-registration-1_0.html)** - 動的クライアント登録
+- **[OpenID Connect Session Management 1.0](https://openid.net/specs/openid-connect-session-1_0.html)** - セッション管理
+- **[OpenID Connect Front-Channel Logout 1.0](https://openid.net/specs/openid-connect-frontchannel-1_0.html)** - フロントチャネルログアウト
+
+### idp-server OpenID Connect機能
+
+| 機能 | サポート状況 | 実装詳細 |
+|------|-------------|----------|
+| **Core機能** | | |
+| Authorization Code Flow | ✅ 完全対応 | [認可コードフロー](../../content_04_protocols/authorization-code-flow.md) |
+| Implicit Flow | ⚠️ 非推奨 | セキュリティ上推奨されません |
+| Hybrid Flow | ✅ 完全対応 | OIDC Core 1.0 Section 3.3準拠 |
+| **Discovery & Registration** | | |
+| Discovery | ✅ 完全対応 | OIDC Discovery 1.0準拠 |
+| Dynamic Registration | ✅ 完全対応 | OIDC Registration 1.0準拠 |
+| **エンドポイント** | | |
+| UserInfo Endpoint | ✅ 完全対応 | OIDC Core 1.0 Section 5.3準拠 |
+| JWKS Endpoint | ✅ 完全対応 | RFC 7517 JWK準拠 |
+| **拡張機能** | | |
+| Identity Assurance | ✅ 対応 | [身元確認](../id-verified.md) |
+| CIBA | ✅ 完全対応 | [CIBAフロー](../../content_04_protocols/ciba-flow.md) |
+| Session Management | 🔄 計画中 | OIDC Session Management 1.0対応予定 |
+
+### idp-server独自OIDC拡張
+
+- **マルチテナント身元確認**: テナント単位でのeKYC・本人確認管理
+- **身元確認済みクレーム**: verified_claimsの完全対応
+- **プラガブル認証**: カスタム認証方式のプラグイン対応
+- **監査ログ**: OIDC認証フローの詳細な証跡管理
+- **組織レベル認証**: 企業・組織単位での認証制御
+
+---
+
 ## まとめ
 
 - OAuth 2.0は「権限委譲」専用、OIDCは「認証＋アイデンティティ＋権限委譲」まで標準化
@@ -58,5 +96,5 @@ OIDCは、API連携だけでなく、ソーシャルログインやeKYCなど“
 
 ---
 
-> 権限だけでなく「本人確認」「アイデンティティ管理」も必要なら、  
+> 権限だけでなく「本人確認」「アイデンティティ管理」も必要なら、
 > 必ずOpenID Connect（OIDC）の導入を検討しましょう！

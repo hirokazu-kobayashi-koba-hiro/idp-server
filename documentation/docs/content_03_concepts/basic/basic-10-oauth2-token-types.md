@@ -84,5 +84,48 @@ OAuth 2.0の認可フローで発行される主なトークンは「アクセ�
 
 ---
 
-> OAuth 2.0のトークンは「用途」と「形式」に応じて使い分けるのがセキュア運用のコツです。  
+## 仕様参照
+
+### RFC・仕様文書
+- **[RFC 6749: Section 1.4 - Access Tokens](https://tools.ietf.org/html/rfc6749#section-1.4)** - アクセストークン基本仕様
+- **[RFC 6750: Bearer Token Usage](https://tools.ietf.org/html/rfc6750)** - Bearer Token使用方法
+- **[RFC 7662: Token Introspection](https://tools.ietf.org/html/rfc7662)** - トークンイントロスペクション
+- **[RFC 7009: Token Revocation](https://tools.ietf.org/html/rfc7009)** - トークン取り消し
+- **[RFC 7519: JWT](https://tools.ietf.org/html/rfc7519)** - JWT形式仕様
+
+### idp-serverトークン管理機能
+
+| トークンタイプ | サポート状況 | 実装詳細 |
+|-------------|-------------|----------|
+| **アクセストークン形式** | | |
+| 不透明トークン | ✅ 完全対応 | ランダムストリング形式 |
+| JWTアクセストークン | ✅ 完全対応 | RFC 7519準拠 |
+| **Bearer Token使用方法** | | |
+| Authorizationヘッダー | ✅ 完全対応 | RFC 6750準拠 |
+| Form Body Parameter | ✅ 完全対応 | RFC 6750準拠 |
+| Query Parameter | ⚠️ 非推奨 | セキュリティ上非推奨 |
+| **リフレッシュトークン** | | |
+| Refresh Token | ✅ 完全対応 | RFC 6749 Section 6 |
+| Rotation | ✅ 完全対応 | セキュリティ向上 |
+| **IDトークン** | | |
+| JWT ID Token | ✅ 完全対応 | [IDトークン詳細](basic-13-id-token-jwt.md) |
+| 暗号化IDトークン | ✅ 完全対応 | RFC 7516 JWE対応 |
+| **トークン管理** | | |
+| Introspection | ✅ 完全対応 | [Introspection詳細](../../content_04_protocols/introspection.md) |
+| Revocation | ✅ 完全対応 | RFC 7009準拠 |
+| **有効期限管理** | | |
+| TTL設定 | ✅ 完全対応 | テナント単位設定可能 |
+| 自動削除 | ✅ 完全対応 | 期限切れトークンの自動クリーンアップ |
+
+### idp-server独自トークン拡張
+
+- **マルチテナント分離**: テナント単位でのトークン完全分離
+- **カスタムクレーム**: プラガブルなトークンクレーム拡張
+- **セキュリティ監視**: トークン使用状況のリアルタイム監視
+- **監査証跡**: トークン発行・使用・取り消しの詳細ログ
+- **スケーラブル管理**: Redis/PostgreSQLによる高性能トークン管理
+
+---
+
+> OAuth 2.0のトークンは「用途」と「形式」に応じて使い分けるのがセキュア運用のコツです。
 > 現場の要件・システム構成に合わせて最適な設計を心がけましょう！
