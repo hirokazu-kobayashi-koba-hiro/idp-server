@@ -234,10 +234,9 @@ payload
 
 これは `AccessTokenSelectiveVerifiedClaimsCreator` により実現され、以下の条件で動作します：
 
-* `id_token_strict_mode` が無効であること
-* `enabled_access_token_selective_verified_claims` が有効であること
+* `access_token_selective_verified_claims` が有効であること
 * 対象スコープが `verified_claims:` プレフィックスが含まれていること
-* ユーザーが　`verified_claims:`　を所持していること
+* ユーザーが対応する verified_claims を所持していること
 
 対象スコープが `verified_claims:name` の場合、ユーザーが持つverified_claimsの `name` をプロパティに設定します。
 
