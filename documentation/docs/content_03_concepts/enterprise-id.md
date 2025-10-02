@@ -1,5 +1,18 @@
 # エンタープライズID
 
+---
+
+## 前提知識
+
+このドキュメントを理解するには、以下の基礎知識が役立ちます：
+
+- [OAuth 2.0の基本](basic/basic-06-oauth2-authorization.md) - OAuth 2.0の認可の仕組み
+- [OpenID Connectの基本](basic/basic-11-oauth-oidc-basics.md) - OIDCによる認証
+- [マルチテナント](multi-tenant.md) - テナント・組織の階層構造
+- [認可コードフロー](../content_04_protocols/authorization-code-flow.md) - エンタープライズSSOの基盤
+
+---
+
 ## 概要
 
 idp-serverは、**エンタープライズグレードの包括的アイデンティティプラットフォーム**として設計されています。  
@@ -172,4 +185,28 @@ Organization → Tenant → Role → Permission → User
 ### セキュリティ & コンプライアンス
 - **確実なデータ隔離**: 企業グループや部門ごとの情報を物理的に分離し、誤用や漏洩リスクを回避
 - **完全な監査証跡**: 「誰がいつ、どのシステムに、何をしたか」をトレースし、監査対応を簡素化
+
+---
+
+## 参考資料
+
+### 標準仕様
+- [RFC 6749: The OAuth 2.0 Authorization Framework](https://datatracker.ietf.org/doc/html/rfc6749) - OAuth 2.0基本仕様
+- [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html) - OIDC基本仕様
+- [Financial-grade API (FAPI)](https://openid.net/specs/openid-financial-api-part-1-1_0.html) - 金融レベルセキュリティ
+- [OpenID Connect for Identity Assurance 1.0](https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html) - 身元確認連携
+
+### エンタープライズ認証技術
+- [SAML 2.0](https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf) - エンタープライズフェデレーション
+- [WebAuthn](https://www.w3.org/TR/webauthn-2/) - パスワードレス認証
+- [FIDO2](https://fidoalliance.org/fido2/) - 強固な認証基盤
+
+### 関連ドキュメント
+- [マルチテナント](multi-tenant.md) - 組織・テナント階層の詳細
+- [身元確認済みID](id-verified.md) - エンタープライズ身元確認統合
+- [認可コードフロー](../content_04_protocols/authorization-code-flow.md) - エンタープライズSSOの基盤技術
+- [認証設定](../content_06_developer-guide/configuration/authn/) - 企業認証ポリシー設定
+- [Basic Concepts](basic/) - OAuth/OIDCの基礎知識
+
+---
 

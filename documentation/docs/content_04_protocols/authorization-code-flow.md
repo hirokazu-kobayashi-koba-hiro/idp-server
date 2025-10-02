@@ -2,6 +2,16 @@
 
 ---
 
+## 前提知識
+
+このドキュメントを理解するには、以下の基礎知識が役立ちます：
+
+- [OAuth 2.0の基本](../content_03_concepts/basic/basic-06-oauth2-authorization.md) - OAuth 2.0の認可の仕組み
+- [認可コードグラントフロー](../content_03_concepts/basic/basic-08-oauth2-authorization-code-flow.md) - 認可コードフローの詳細
+- [OpenID Connectの基本](../content_03_concepts/basic/basic-11-oauth-oidc-basics.md) - OIDCによる認証
+
+---
+
 ## 概要
 
 `idp-server`は、OAuth 2.0 および OpenID Connectに準拠した認可コードフローを提供します。  
@@ -189,3 +199,25 @@ IDトークンとアクセストークンに含めることができます。
 * ユーザーが該当の `verified_claims` 属性を所持していること
 
 対象スコープが `verified_claims:name` の場合、ユーザーが持つverified_claimsの `name` をプロパティに設定します。
+
+---
+
+## 参考資料
+
+### 標準仕様
+- [RFC 6749: The OAuth 2.0 Authorization Framework](https://datatracker.ietf.org/doc/html/rfc6749)
+- [RFC 6750: Bearer Token Usage](https://datatracker.ietf.org/doc/html/rfc6750)
+- [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)
+- [RFC 7636: Proof Key for Code Exchange (PKCE)](https://datatracker.ietf.org/doc/html/rfc7636)
+- [RFC 9396: Rich Authorization Requests (RAR)](https://datatracker.ietf.org/doc/html/rfc9396)
+- [RFC 9126: Pushed Authorization Requests (PAR)](https://datatracker.ietf.org/doc/html/rfc9126)
+- [FAPI 1.0 Baseline Profile](https://openid.net/specs/openid-financial-api-part-1-1_0.html)
+- [FAPI 1.0 Advanced Profile](https://openid.net/specs/openid-financial-api-part-2-1_0.html)
+- [OpenID Connect for Identity Assurance 1.0](https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html)
+
+### 関連ドキュメント
+- [マルチテナント](../content_03_concepts/multi-tenant.md) - テナント設定の詳細
+- [身元確認済みID](../content_03_concepts/id-verified.md) - OIDC4IDAの実装ガイド
+- [Basic Concepts](../content_03_concepts/basic/) - OAuth/OIDCの基礎知識
+
+---
