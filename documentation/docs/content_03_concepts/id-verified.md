@@ -1,5 +1,18 @@
 # 身元確認済みID
 
+---
+
+## 前提知識
+
+このドキュメントを理解するには、以下の基礎知識が役立ちます：
+
+- [OAuth 2.0の基本](basic/basic-06-oauth2-authorization.md) - OAuth 2.0の認可の仕組み
+- [OpenID Connectの基本](basic/basic-11-oauth-oidc-basics.md) - OIDCによる認証
+- [認可コードフロー](../content_04_protocols/authorization-code-flow.md) - トークン取得の詳細フロー
+- [CIBA](../content_04_protocols/ciba.md) - バックチャネル認証フロー
+
+---
+
 ## 概要
 
 `idp-server` は、OpenID Connect for Identity Assurance (OIDC4IDA) に準拠した 身元確認済みのID連携 をサポートしています。
@@ -329,7 +342,26 @@ client_id=clientSecretPost
 * 検証済みユーザーで同スコープ → 成功 transfersのスコープを含めたトークンを取得できる
 
 
-## 参考
+---
 
-* https://openid-foundation-japan.github.io/openid-connect-4-identity-assurance.html
-* https://openid.net/specs/openid-ida-verified-claims-1_0-final.html
+## 参考資料
+
+### 標準仕様
+- [OpenID Connect for Identity Assurance 1.0](https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html) - OIDC4IDAの本仕様
+- [OpenID Connect IDA Verified Claims Specification 1.0](https://openid.net/specs/openid-ida-verified-claims-1_0-final.html) - verified_claimsの詳細仕様
+- [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html) - OIDC基本仕様
+- [Client Initiated Backchannel Authentication Flow - Core 1.0](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html) - CIBA仕様
+
+### 日本語リソース
+- [OpenID Connect for Identity Assurance 日本語版](https://openid-foundation-japan.github.io/openid-connect-4-identity-assurance.html) - OIDC4IDA日本語解説
+
+### 関連ドキュメント
+- [認可コードフロー](../content_04_protocols/authorization-code-flow.md) - トークンへのverified_claims埋め込み詳細
+- [CIBA](../content_04_protocols/ciba.md) - バックチャネル認証での身元確認要求
+- [マルチテナント](multi-tenant.md) - テナント別の身元確認設定
+- [エンタープライズID](enterprise-id.md) - 企業での身元確認統合
+- [Basic Concepts](basic/) - OAuth/OIDCの基礎知識
+- [身元確認申込み設定](identity-verification-application.md) - 外部サービス連携設定
+- [身元確認結果登録](identity-verification-registration.md) - 直接登録設定
+
+---

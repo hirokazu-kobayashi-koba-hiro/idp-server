@@ -120,6 +120,29 @@ flowchart TB
 |          |              | Datadog                        | セキュリティイベントや操作ログを Datadog に直接送信することができます。 これにより、以下のようなモダンな監視と可視化が実現されます： リアルタイムでの ログモニタリング 異常検知ルールの設定による セキュリティアラート                                                                                                                                                                                                                                                      | * トリガーイベント<br />                                                                 |      |                                                                                                                                                                                                |
 |          | 外部連携         | Slack通知                        | セキュリティイベントや認証操作に応じて Slack に通知を送る機能を提供しています。 これにより、以下のようなリアルタイムなセキュリティ運用が実現できます： 管理者への 即時アラート通知（例：ログイン失敗の連続、異常なIPアクセス） テナントごとやイベントタイプごとに チャンネルを分離して通知可能 SecurityEventHandler による柔軟な 条件フィルタ・メッセージ整形 Webhook URLの設定だけで簡単に導入でき、CIAM運用の初期段階でも役立つ通知手段です。                                                                                                                      | * トリガーイベント<br /> * SlackURL<br /> * メッセージテンプレート                                  |      |                                                                                                                                                                                                |
 |          |              | Webhook通知                      | セキュリティイベントや認証フローの各ポイントで外部システムにWebhook通知を送る機能を提供しています。 任意のURLに対して HTTP POST形式でイベント通知 通知対象イベント（例：ログイン成功、認可エラー、MFA通過など）を 柔軟に選択可能 テナントごとに Webhookの設定を分離管理可能 メッセージのカスタマイズにも対応し、JSON形式で詳細なイベント内容を送信可能 この機能により、外部SIEM、監査ログシステム、オペレーション自動化ツールなどと連携しやすくなります。                                                                                                                     | * トリガーイベント<br /> * 連携先URL<br /> * HTTPヘッダー<br /> * 静的なHTTPボディ <br /> * 動的HTTPボディ |      |                                                                                                                                                                                                |
-|          |              | SSF(Push)                      | OpenID Foundationが提唱する Shared Signals Framework（SSF） に対応しており、OIDCベースのセキュリティ通知プロトコルを通じてイベントの共有が可能です。 idp-server が SSFのSender（送信者）として機能 OIDC連携済みの 他のIdPやサービスに対し、セキュリティイベント（例：アカウント無効化、セッション強制終了）を通知 RISC（Risk Incident Sharing and Coordination）や将来的な CAEP（Continuous Access Evaluation Protocol） への拡張も視野に対応 これにより、信頼された連携先との間で、動的なセキュリティ判断や クロスサービスでの脅威対応が可能になります。       | * トリガーイベント<br /> * イベントペイロード                                                     |      |                                                                                                                                                                                                |
+|          |              | SSF(Push)                      | OpenID Foundationが提唱する Shared Signals Framework（SSF） に対応しており、OIDCベースのセキュリティ通知プロトコルを通じてイベントの共有が可能です。 idp-server が SSFのSender（送信者）として機能 OIDC連携済みの 他のIdPやサービスに対し、セキュリティイベント（例：アカウント無効化、セッション強制終了）を通知 RISC（Risk Incident Sharing and Coordination）や将来的な CAEP（Continuous Access Evaluation Protocol） への拡張も視野に対応 これにより、信頼された連携先との間で、動的なセキュリティ判断や クロスサービスでの脅威対応が可能になります。       | * トリガーイベント<br /> * イベントペイロード                                                     |      |
+
+---
+
+## 参考資料
+
+### マルチテナント設計リソース
+- [Multi-Tenant SaaS Architecture](https://docs.aws.amazon.com/whitepapers/latest/saas-architecture-fundamentals/multi-tenant-saas-architecture.html) - AWSによるマルチテナント設計ガイド
+- [PostgreSQL Row Level Security](https://www.postgresql.org/docs/current/ddl-rowsecurity.html) - データ分離の基盤技術
+
+### 標準仕様
+- [RFC 6749: The OAuth 2.0 Authorization Framework](https://datatracker.ietf.org/doc/html/rfc6749) - OAuth 2.0基本仕様
+- [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html) - OIDC基本仕様
+- [RFC 7636: Proof Key for Code Exchange (PKCE)](https://datatracker.ietf.org/doc/html/rfc7636) - セキュリティ拡張
+- [Financial-grade API (FAPI)](https://openid.net/specs/openid-financial-api-part-1-1_0.html) - 金融レベルセキュリティ
+
+### 関連ドキュメント
+- [エンタープライズID](enterprise-id.md) - エンタープライズでの活用パターン
+- [身元確認済みID](id-verified.md) - テナント別の身元確認設定
+- [認可コードフロー](../content_04_protocols/authorization-code-flow.md) - 基盤技術の詳細
+- [認証設定](../content_06_developer-guide/configuration/authn/) - テナント別認証ポリシー
+- [Basic Concepts](basic/) - OAuth/OIDCの基礎知識
+
+---                                                                                                                                                                                                |
 
 
