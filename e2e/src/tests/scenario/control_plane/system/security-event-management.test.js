@@ -91,6 +91,7 @@ describe("security event management api", () => {
     });
 
     const successCases = [
+      ["id", "id", "3ec055a8-8000-44a2-8677-e70ebff414e2"],
       ["ex-sub", "external_user_id", "3ec055a8-8000-44a2-8677-e70ebff414e2"],
       ["user-id", "user_id", "3ec055a8-8000-44a2-8677-e70ebff414e2"],
       ["client-id", "client_id", "client"],

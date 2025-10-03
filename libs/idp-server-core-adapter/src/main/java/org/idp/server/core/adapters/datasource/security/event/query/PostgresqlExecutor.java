@@ -40,8 +40,8 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
     params.add(queries.to());
 
     if (queries.hasId()) {
-      sql.append(" AND id = ?");
-      params.add(queries.id());
+      sql.append(" AND id = ?::uuid");
+      params.add(queries.idAsUuid());
     }
 
     if (queries.hasClientId()) {
@@ -84,8 +84,8 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
     params.add(queries.to());
 
     if (queries.hasId()) {
-      sql.append(" AND id = ?");
-      params.add(queries.id());
+      sql.append(" AND id = ?::uuid");
+      params.add(queries.idAsUuid());
     }
 
     if (queries.hasClientId()) {
