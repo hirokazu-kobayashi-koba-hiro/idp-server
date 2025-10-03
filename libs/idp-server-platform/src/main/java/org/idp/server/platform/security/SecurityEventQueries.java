@@ -88,6 +88,14 @@ public class SecurityEventQueries implements UuidConvertable {
     return values.containsKey("external_user_id");
   }
 
+  public boolean hasEventType() {
+    return values.containsKey("event_type");
+  }
+
+  public String eventType() {
+    return values.get("event_type");
+  }
+
   public boolean hasDetails() {
     return !details().isEmpty();
   }

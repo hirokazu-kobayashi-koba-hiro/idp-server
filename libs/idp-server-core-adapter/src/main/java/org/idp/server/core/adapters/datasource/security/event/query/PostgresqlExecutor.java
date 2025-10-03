@@ -59,6 +59,11 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
       params.add(queries.externalUserId());
     }
 
+    if (queries.hasEventType()) {
+      sql.append(" AND type = ?");
+      params.add(queries.eventType());
+    }
+
     if (queries.hasDetails()) {
       for (Map.Entry<String, String> entry : queries.details().entrySet()) {
         String key = entry.getKey();
@@ -101,6 +106,11 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
     if (queries.hasExternalUserId()) {
       sql.append(" AND external_user_id = ?");
       params.add(queries.externalUserId());
+    }
+
+    if (queries.hasEventType()) {
+      sql.append(" AND type = ?");
+      params.add(queries.eventType());
     }
 
     if (queries.hasDetails()) {
