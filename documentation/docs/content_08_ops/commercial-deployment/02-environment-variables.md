@@ -108,6 +108,30 @@ idp-server の設定は `application.yaml` で定義され、環境変数で上�
 | `maximum-pool-size` | `DB_READER_MAX_POOL_SIZE` | 最大接続プールサイズ | `30` | `80` |
 | `minimum-idle` | `DB_READER_MIN_IDLE` | 最小アイドル接続数 | `10` | `25` |
 
+### idp.datasource.app.mysql (アプリケーション用MySQL)
+
+**注意**: MySQLとPostgreSQLは同じ環境変数を共有します。`DATABASE_TYPE`環境変数により実行時に切り替わるため、両方が同時に使用されることはありません。
+
+#### Writer 設定
+| パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
+|-----------|----------|------|-------------|-----------|
+| `url` | `DB_WRITER_URL` | 書き込み用DB接続URL | `jdbc:mysql://localhost:3306/idpserver` | RDS Primary エンドポイント |
+| `username` | `DB_WRITER_USER_NAME` | アプリ用DBユーザー | `idpserver` | `idp_app_user` |
+| `password` | `DB_WRITER_PASSWORD` | アプリ用DBパスワード | `idpserver` | Secrets Manager |
+| `connection-timeout` | `DB_WRITER_TIMEOUT` | 接続タイムアウト (ms) | `3000` | `3000` |
+| `maximum-pool-size` | `DB_WRITER_MAX_POOL_SIZE` | 最大接続プールサイズ | `5` | `50` |
+| `minimum-idle` | `DB_WRITER_MIN_IDLE` | 最小アイドル接続数 | `2` | `15` |
+
+#### Reader 設定
+| パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
+|-----------|----------|------|-------------|-----------|
+| `url` | `DB_READER_URL` | 読み込み用DB接続URL | `jdbc:mysql://localhost:3306/idpserver` | RDS Replica エンドポイント |
+| `username` | `DB_READER_USER_NAME` | アプリ用読み込み専用DBユーザー | `idpserver` | `idp_app_user_ro` |
+| `password` | `DB_READER_PASSWORD` | アプリ用読み込み専用DBパスワード | `idpserver` | Secrets Manager |
+| `connection-timeout` | `DB_READER_TIMEOUT` | 接続タイムアウト (ms) | `2000` | `2000` |
+| `maximum-pool-size` | `DB_READER_MAX_POOL_SIZE` | 最大接続プールサイズ | `3` | `80` |
+| `minimum-idle` | `DB_READER_MIN_IDLE` | 最小アイドル接続数 | `1` | `25` |
+
 ### idp.cache (Redis キャッシュ設定)
 
 | パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
@@ -148,15 +172,16 @@ idp-server の設定は `application.yaml` で定義され、環境変数で上�
 |-----------|----------|------|-------------|-----------|
 | `spring.data.redis.host` | `REDIS_HOST` | Spring Redis ホスト | `localhost` | ElastiCache エンドポイント |
 | `spring.data.redis.port` | `REDIS_PORT` | Spring Redis ポート | `6379` | `6379` |
-| `spring.session.redis.configure-action` | - | Redis セッション設定アクション | `none` | `none` |
+| `spring.session.store-type` | `SESSION_STORE_TYPE` | セッションストアタイプ | `none` | `redis` |
+| `spring.session.redis.configure-action` | `SPRING_SESSION_REDIS_CONFIGURE_ACTION` | Redis セッション設定アクション | `none` | `none` |
 | `spring.session.timeout` | `SESSION_TIMEOUT` | セッションタイムアウト | `3600s` | `7200s` |
 
 ### server (Tomcat サーバー設定)
 
-| パラメータ | 設定ファイル | 説明 | デフォルト値 | 本番推奨値 |
-|-----------|------------|------|-------------|-----------|
-| `server.tomcat.threads.max` | application-prod.yaml | 最大スレッド数 | `300` | `500` |
-| `server.tomcat.threads.min-spare` | application-prod.yaml | 最小予備スレッド数 | `50` | `100` |
+| パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
+|-----------|----------|------|-------------|-----------|
+| `server.tomcat.threads.max` | `SERVER_TOMCAT_THREADS_MAX` | 最大スレッド数 | `300` | `500` |
+| `server.tomcat.threads.min-spare` | `SERVER_TOMCAT_THREADS_MIN_SPARE` | 最小予備スレッド数 | `50` | `100` |
 
 ---
 

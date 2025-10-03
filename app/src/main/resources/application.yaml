@@ -70,17 +70,17 @@ idp:
           username: "${DB_WRITER_USER_NAME:idpserver}"
           password: "${DB_WRITER_PASSWORD:idpserver}"
           hikari:
-            connection-timeout: 3000
-            maximum-pool-size: 5
-            minimum-idle: 2
+            connection-timeout: ${DB_WRITER_TIMEOUT:3000}
+            maximum-pool-size: ${DB_WRITER_MAX_POOL_SIZE:5}
+            minimum-idle: ${DB_WRITER_MIN_IDLE:2}
         reader:
           url: "${DB_READER_URL:jdbc:mysql://localhost:3306/idpserver}"
           username: "${DB_READER_USER_NAME:idpserver}"
           password: "${DB_READER_PASSWORD:idpserver}"
           hikari:
-            connection-timeout: 2000
-            maximum-pool-size: 3
-            minimum-idle: 1
+            connection-timeout: ${DB_READER_TIMEOUT:2000}
+            maximum-pool-size: ${DB_READER_MAX_POOL_SIZE:3}
+            minimum-idle: ${DB_READER_MIN_IDLE:1}
   cache:
     enabled: ${CACHE_ENABLE:true}
     timeToLiveSecond: ${CACHE_TIME_TO_LIVE_SECOND:300}
@@ -120,12 +120,13 @@ spring:
       host: "${REDIS_HOST:localhost}"
       port: ${REDIS_PORT:6379}
   session:
+    store-type: ${SESSION_STORE_TYPE:none}
     redis:
-      configure-action: none
+      configure-action: ${SPRING_SESSION_REDIS_CONFIGURE_ACTION:none}
     timeout: "${SESSION_TIMEOUT:3600s}"
 
 server:
   tomcat:
     threads:
-      max: 300
-      min-spare: 50
+      max: ${SERVER_TOMCAT_THREADS_MAX:300}
+      min-spare: ${SERVER_TOMCAT_THREADS_MIN_SPARE:50}
