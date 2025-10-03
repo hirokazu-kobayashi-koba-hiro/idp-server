@@ -6,9 +6,16 @@ API_KEY=$(uuidgen | tr 'A-Z' 'a-z')
 API_SECRET=$(uuidgen | tr 'A-Z' 'a-z' | base64)
 ENCRYPTION_KEY=$(head -c 32 /dev/urandom | base64)
 
+# Generate secure database passwords
+POSTGRES_PASSWORD=$(head -c 24 /dev/urandom | base64)
+DB_OWNER_PASSWORD=$(head -c 24 /dev/urandom | base64)
+IDP_ADMIN_PASSWORD=$(head -c 24 /dev/urandom | base64)
+DB_APP_PASSWORD=$(head -c 24 /dev/urandom | base64)
+
 echo "Generated API Key: $API_KEY"
 echo "Generated API Secret: $API_SECRET"
 echo "Generated ENCRYPTION_KEY: $ENCRYPTION_KEY"
+echo "Generated Database Passwords..."
 
 echo "Setting environment variables..."
 
@@ -42,7 +49,27 @@ echo "ADMIN_CLIENT_ID_ALIAS=$ADMIN_CLIENT_ID_ALIAS" >> .env
 echo "ADMIN_CLIENT_SECRET=$ADMIN_CLIENT_SECRET" >> .env
 echo "DRY_RUN=$DRY_RUN" >> .env
 
+# Add database configuration section
+echo "" >> .env
+echo "# Database Configuration" >> .env
+echo "# PostgreSQL superuser password" >> .env
+echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" >> .env
+echo "" >> .env
+echo "# Database owner password (for migrations)" >> .env
+echo "DB_OWNER_PASSWORD=$DB_OWNER_PASSWORD" >> .env
+echo "" >> .env
+echo "# Admin user password (RLS bypass for management operations)" >> .env
+echo "IDP_ADMIN_PASSWORD=$IDP_ADMIN_PASSWORD" >> .env
+echo "" >> .env
+echo "# Application user password (RLS-compliant operations)" >> .env
+echo "DB_APP_PASSWORD=$DB_APP_PASSWORD" >> .env
+
 echo ".env file generated:"
+echo "  - Application credentials: API Key, Secret, Encryption Key"
+echo "  - Admin user credentials: Username, Password, Tenant ID, Client ID"
+echo "  - Database passwords: PostgreSQL, Owner, Admin, App users"
+echo ""
+echo "IMPORTANT: Store these passwords securely!"
 
 #echo "export IDP_SERVER_DOMAIN=http://localhost:8080/"
 #echo "export IDP_SERVER_API_KEY=$API_KEY"

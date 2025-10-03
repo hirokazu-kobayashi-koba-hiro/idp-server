@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  postgresql:
+    image: postgres:15
+    container_name: idpserver-postgres
+    environment:
+      POSTGRES_DB: idpserver
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_admin_password}
+      # Admin user password for RLS bypass operations
+      IDP_ADMIN_PASSWORD: ${IDP_ADMIN_PASSWORD:-secure_admin_password}
+    volumes:
+      # Database initialization scripts (executed in alphabetical order)
+      - ./libs/idp-server-database/postgresql/operation/init_admin_user.sh:/docker-entrypoint-initdb.d/01-init-admin-user.sh
+      - ./libs/idp-server-database/postgresql/operation/admin_user.sql:/docker-entrypoint-initdb.d/02-admin-user.sql
+      - ./libs/idp-server-database/postgresql/operation/app_user.sql:/docker-entrypoint-initdb.d/03-app-user.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d idpserver"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: idpserver-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  idp-server:
+    image: idp-server:latest
+    container_name: idpserver-app
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Database configuration
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql:5432/idpserver
+      SPRING_DATASOURCE_USERNAME: idpserver
+      SPRING_DATASOURCE_PASSWORD: ${DB_OWNER_PASSWORD:-secure_owner_password}
+
+      # Application database user (RLS-compliant)
+      SPRING_DATASOURCE_APP_USERNAME: idp_app_user
+      SPRING_DATASOURCE_APP_PASSWORD: ${DB_APP_PASSWORD:-secure_app_password}
+
+      # Admin database user (RLS bypass for management operations)
+      SPRING_DATASOURCE_ADMIN_USERNAME: idp_admin_user
+      SPRING_DATASOURCE_ADMIN_PASSWORD: ${IDP_ADMIN_PASSWORD:-secure_admin_password}
+
+      # Redis configuration
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+
+      # Application configuration
+      SERVER_PORT: 8080
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+networks:
+  default:
+    name: idpserver-network
