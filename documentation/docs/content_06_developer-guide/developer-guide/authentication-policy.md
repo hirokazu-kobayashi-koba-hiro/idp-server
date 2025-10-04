@@ -18,53 +18,83 @@
 
 ```json
 {
-  "authentication_policy": {
-    "conditions": {
-      "acr_values": [
-        "urn:mfa:required"
+  "id": "e1bf16bb-57ab-43bd-814c-1de232db24d2",
+  "flow": "oauth",
+  "enabled": true,
+  "policies": [
+    {
+      "description": "MFA required for high-value transactions",
+      "priority": 1,
+      "conditions": {
+        "scopes": ["openid", "transfers"],
+        "acr_values": ["urn:mace:incommon:iap:gold"],
+        "client_ids": ["client-id-123"]
+      },
+      "available_methods": [
+        "password",
+        "email",
+        "sms",
+        "webauthn",
+        "fido-uaf"
       ],
-      "scopes": [
-        "read",
-        "write"
-      ],
-      "authorization_flow": "ciba"
-    },
-    "available_methods": [
-      "password",
-      "email",
-      "sms",
-      "webauthn",
-      "fido-uaf"
-    ],
-    "success_conditions": {
-      "all_of": [
-        {
-          "type": "password",
-          "success_count": 1
-        },
-        {
-          "type": "fido-uaf-authentication",
-          "success_count": 1
-        }
-      ]
-    },
-    "failure_conditions": {
-      "any_of": [
-        {
-          "type": "password",
-          "failure_count": 5
-        }
-      ]
-    },
-    "lock_conditions": {
-      "any_of": [
-        {
-          "type": "fido-uaf-authentication",
-          "failure_count": 5
-        }
-      ]
+      "acr_mapping_rules": {
+        "urn:mace:incommon:iap:gold": ["fido-uaf", "webauthn"],
+        "urn:mace:incommon:iap:silver": ["email", "sms"],
+        "urn:mace:incommon:iap:bronze": ["password"]
+      },
+      "level_of_authentication_scopes": {
+        "transfers": ["fido-uaf", "webauthn"]
+      },
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.fido-uaf-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      },
+      "failure_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      },
+      "lock_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      },
+      "authentication_device_rule": {
+        "max_devices": 100,
+        "required_identity_verification": true
+      }
     }
-  }
+  ]
 }
 ```
 
@@ -72,13 +102,54 @@
 
 ## 🧩 各フィールドの説明
 
-| フィールド                | 説明                                                     |
-|----------------------|--------------------------------------------------------|
-| `conditions`         | 適用条件。`acr_values`, `scopes`, `authorization_flow`などを指定 |
-| `available_methods`  | 利用可能な認証方式のリスト（UIや内部フローで利用）                             |
-| `success_conditions` | 認証成功とみなす条件                                             |
-| `failure_conditions` | 警告や統計記録の対象となる失敗条件                                      |
-| `lock_conditions`    | アカウントロックや認可拒否に至る失敗条件                                   |
+### トップレベルフィールド
+
+| フィールド     | 説明                                 | 必須 |
+|-----------|------------------------------------|----|
+| `id`      | 認証ポリシー設定のUUID                      | ✅  |
+| `flow`    | 適用フロー (`oauth`, `ciba`, `fido-uaf-registration`等) | ✅  |
+| `enabled` | ポリシーの有効/無効                         | ✅  |
+| `policies` | ポリシー定義の配列（優先度順に評価）                 | ✅  |
+
+### ポリシー内フィールド
+
+| フィールド                              | 説明                                                  | 使用例                                                                 |
+|------------------------------------|----------------------------------------------------|---------------------------------------------------------------------|
+| `description`                      | ポリシーの説明                                            | `"MFA required for high-value transactions"`                       |
+| `priority`                         | 優先度（数値が大きいほど優先）                                  | `1`                                                                 |
+| `conditions`                       | 適用条件。`scopes`, `acr_values`, `client_ids`等を指定       | `{"scopes": ["openid"], "acr_values": ["urn:mace:incommon:iap:gold"]}` |
+| `available_methods`                | 利用可能な認証方式のリスト                                     | `["password", "fido-uaf", "webauthn"]`                              |
+| `acr_mapping_rules`                | ACR値と認証方式のマッピング                                   | `{"urn:mace:incommon:iap:gold": ["fido-uaf", "webauthn"]}`          |
+| `level_of_authentication_scopes`   | スコープ別の必須認証レベル                                     | `{"transfers": ["fido-uaf", "webauthn"]}`                           |
+| `success_conditions`               | 認証成功とみなす条件（JSONPath + 演算子）                        | 下記参照                                                                |
+| `failure_conditions`               | 警告や統計記録の対象となる失敗条件                                 | 下記参照                                                                |
+| `lock_conditions`                  | アカウントロックや認可拒否に至る失敗条件                               | 下記参照                                                                |
+| `authentication_device_rule`       | デバイス登録ルール（MFA登録フロー用）                              | `{"max_devices": 100, "required_identity_verification": true}`      |
+| `step_definitions`                 | 多段階認証の定義                                           | -                                                                   |
+
+### 条件評価フィールド構造
+
+`success_conditions`, `failure_conditions`, `lock_conditions`は以下の構造：
+
+```json
+{
+  "any_of": [
+    [
+      {
+        "path": "$.password-authentication.success_count",
+        "type": "integer",
+        "operation": "gte",
+        "value": 1
+      }
+    ]
+  ]
+}
+```
+
+- `any_of`: いずれかの条件グループが満たされればtrue（OR評価）
+- 各条件グループ内の条件はすべて満たす必要あり（AND評価）
+- `path`: JSONPathでの評価対象パス
+- `operation`: 比較演算子（`eq`, `ne`, `gt`, `lt`, `gte`, `lte`, `in`, `nin`, `contains`, `regex`等）
 
 ---
 
