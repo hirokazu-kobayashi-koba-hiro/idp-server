@@ -218,6 +218,5 @@ IDトークンとアクセストークンに含めることができます。
 ### 関連ドキュメント
 - [マルチテナント](../content_03_concepts/multi-tenant.md) - テナント設定の詳細
 - [身元確認済みID](../content_03_concepts/id-verified.md) - OIDC4IDAの実装ガイド
-- [Basic Concepts](../content_03_concepts/basic/) - OAuth/OIDCの基礎知識
 
 ---

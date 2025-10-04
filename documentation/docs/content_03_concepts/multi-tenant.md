@@ -140,8 +140,6 @@ flowchart TB
 - [エンタープライズID](enterprise-id.md) - エンタープライズでの活用パターン
 - [身元確認済みID](id-verified.md) - テナント別の身元確認設定
 - [認可コードフロー](../content_04_protocols/authorization-code-flow.md) - 基盤技術の詳細
-- [認証設定](../content_06_developer-guide/configuration/authn/) - テナント別認証ポリシー
-- [Basic Concepts](basic/) - OAuth/OIDCの基礎知識
 
 ---                                                                                                                                                                                                |
 

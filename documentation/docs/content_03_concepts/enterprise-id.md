@@ -205,8 +205,6 @@ Organization → Tenant → Role → Permission → User
 - [マルチテナント](multi-tenant.md) - 組織・テナント階層の詳細
 - [身元確認済みID](id-verified.md) - エンタープライズ身元確認統合
 - [認可コードフロー](../content_04_protocols/authorization-code-flow.md) - エンタープライズSSOの基盤技術
-- [認証設定](../content_06_developer-guide/configuration/authn/) - 企業認証ポリシー設定
-- [Basic Concepts](basic/) - OAuth/OIDCの基礎知識
 
 ---
 
