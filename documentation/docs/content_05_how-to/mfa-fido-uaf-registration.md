@@ -4,6 +4,42 @@
 
 ---
 
+## 前提条件
+
+FIDO-UAF登録を行う前に、以下の設定が必要です：
+
+### 1. 認証ポリシーの登録
+
+`fido-uaf-registration` フローの認証ポリシーを事前に登録してください。
+
+```http
+POST /v1/management/tenants/{tenant-id}/authentication-policies
+Content-Type: application/json
+
+{
+  "flow": "fido-uaf-registration",
+  "enabled": true,
+  "policies": [
+    {
+      "description": "FIDO-UAF device registration policy",
+      "priority": 1,
+      "available_methods": ["fido-uaf"],
+      "authentication_device_rule": {
+        "max_devices": 100,
+        "required_identity_verification": true
+      }
+    }
+  ]
+}
+```
+
+#### 主要パラメータ
+
+- `max_devices`: ユーザーあたりの最大デバイス登録数 (デフォルト: 100)
+- `required_identity_verification`: 身元確認必須フラグ
+
+---
+
 ## 🧭 全体の流れ
 
 1. ログイン
@@ -208,19 +244,17 @@ Authorization: Bearer {access_token}
   "authentication_devices": [
     {
       "id": "UUID",
-      "app_name": "sampleアプリ",  
-  　　 "platform": "Android",
+      "app_name": "sampleアプリ",
+      "platform": "Android",
       "os": "Android15",
-  　　 "model": "galaxy z fold 6",
+      "model": "galaxy z fold 6",
+      "locale": "ja",
       "notification_channel": "fcm",
       "notification_token": "test token",
-      "available_methods": ["fido-uaf"]
-      "preferred_for_notification": true
+      "available_methods": ["fido-uaf"],
+      "priority": 1
     }
-  ],
-  "mfa": {
-    "fido-uaf": true
-  }
+  ]
 }
 ```
 
