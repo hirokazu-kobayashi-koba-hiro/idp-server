@@ -1,6 +1,33 @@
 # FIDO-UAF 解除フロー
 
-このドキュメントでは、`fido-uaf` を用いた認証デバイス登録の一連の流れを解説します。
+このドキュメントでは、`fido-uaf` を用いた認証デバイス解除の一連の流れを解説します。
+
+---
+
+## 前提条件
+
+FIDO-UAF解除を行う前に、以下の設定が必要です：
+
+### 1. 認証ポリシーの登録
+
+`fido-uaf-deregistration` フローの認証ポリシーを事前に登録してください。
+
+```http
+POST /v1/management/tenants/{tenant-id}/authentication-policies
+Content-Type: application/json
+
+{
+  "flow": "fido-uaf-deregistration",
+  "enabled": true,
+  "policies": [
+    {
+      "description": "FIDO-UAF device deregistration policy",
+      "priority": 1,
+      "available_methods": ["fido-uaf"]
+    }
+  ]
+}
+```
 
 ---
 
