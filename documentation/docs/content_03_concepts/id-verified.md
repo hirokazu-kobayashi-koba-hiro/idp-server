@@ -9,7 +9,7 @@
 - [OAuth 2.0の基本](basic/basic-06-oauth2-authorization.md) - OAuth 2.0の認可の仕組み
 - [OpenID Connectの基本](basic/basic-11-oauth-oidc-basics.md) - OIDCによる認証
 - [認可コードフロー](../content_04_protocols/authorization-code-flow.md) - トークン取得の詳細フロー
-- [CIBA](../content_04_protocols/ciba.md) - バックチャネル認証フロー
+- [CIBA](../content_04_protocols/ciba-flow.md) - バックチャネル認証フロー
 
 ---
 
@@ -29,8 +29,8 @@
 
 `idp-server` は 身元確認済みIDの機能を利用するに当たり身元確認方法を2つ用意しています。
 
-1. 身元確認の申込みから利用するパターン [詳細](identity-verification-application)
-2. 身元確認結果を直接登録するパターン [詳細](identity-verification-registration)
+1. 身元確認の申込みから利用するパターン [詳細](../content_05_how-to/identity-verification-application.md)
+2. 身元確認結果を直接登録するパターン [詳細](../content_05_how-to/identity-verification-registration.md)
 
 ### 身元確認の申込みから利用するパターン
 
@@ -357,11 +357,10 @@ client_id=clientSecretPost
 
 ### 関連ドキュメント
 - [認可コードフロー](../content_04_protocols/authorization-code-flow.md) - トークンへのverified_claims埋め込み詳細
-- [CIBA](../content_04_protocols/ciba.md) - バックチャネル認証での身元確認要求
+- [CIBA](../content_04_protocols/ciba-flow.md) - バックチャネル認証での身元確認要求
 - [マルチテナント](multi-tenant.md) - テナント別の身元確認設定
 - [エンタープライズID](enterprise-id.md) - 企業での身元確認統合
-- [Basic Concepts](basic/) - OAuth/OIDCの基礎知識
-- [身元確認申込み設定](identity-verification-application.md) - 外部サービス連携設定
-- [身元確認結果登録](identity-verification-registration.md) - 直接登録設定
+- [身元確認申込み設定](../content_05_how-to/identity-verification-application.md) - 外部サービス連携設定
+- [身元確認結果登録](../content_05_how-to/identity-verification-registration.md) - 直接登録設定
 
 ---

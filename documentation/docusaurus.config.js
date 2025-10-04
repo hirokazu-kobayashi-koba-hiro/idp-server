@@ -32,20 +32,10 @@ const config = {
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
 
-  // Even if you don't use internationalization, you can use this field to set
-  // useful metadata like html lang. For example, if your site is Chinese, you
-  // may want to replace "en" with "zh-Hans".
+  // Set Japanese as the only locale
   i18n: {
-    defaultLocale: 'en',
-    locales: ['en', 'ja'],
-    localeConfigs: {
-      en: {
-        label: 'English',
-      },
-      ja: {
-        label: '日本語',
-      },
-    },
+    defaultLocale: 'ja',
+    locales: ['ja'],
   },
 
   presets: [

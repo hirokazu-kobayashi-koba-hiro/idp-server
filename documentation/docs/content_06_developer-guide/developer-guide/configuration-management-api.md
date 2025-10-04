@@ -453,4 +453,4 @@ Database Layer
 - **Repository Pattern**: データアクセス抽象化
 - **Management Services**: ビジネスロジック層
 
-追加サポートについては、[APIリファレンス](../../api-reference/)を参照するか、開発チームにお問い合わせください。
+追加サポートについては、[APIリファレンス](/docs/content_07_reference/api-reference)を参照するか、開発チームにお問い合わせください。

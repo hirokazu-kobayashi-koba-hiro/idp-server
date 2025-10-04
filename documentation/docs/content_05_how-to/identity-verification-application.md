@@ -105,7 +105,7 @@ GET /{tenant-id}/v1/me/identity-verification/results
 - **認証**: リソースオーナーのアクセストークン必須
 - **レスポンス**: ユーザーに紐づく検証済みクレーム（verified_claims）とその詳細情報
 
-[リソースオーナー用のAPI仕様（身元確認関連の申込みAPIを含む）](api-resource-owner-ja)
+[リソースオーナー用のAPI仕様（身元確認関連の申込みAPIを含む）](/docs/content_07_reference/api-resource-owner-ja/)
 
 **審査結果コールバックAPI**
 
@@ -130,7 +130,7 @@ POST /{tenant-id}/internal/v1/identity-verification/callback/{verification-type}
 
 ```
 
-[外部ステム連携用インターナルAPI仕様（身元確認関連のコールバックAPIを含む）](api-internal-ja)
+[外部ステム連携用インターナルAPI仕様（身元確認関連のコールバックAPIを含む）](/docs/content_07_reference/api-internal-ja/)
 
 ## 条件付き実行機能 (Conditional Execution)
 
