@@ -1,7 +1,6 @@
 # CIBA + FIDO-UAF
 
-このドキュメントでは、`idp-server`がサポートする **CIBA (Client-Initiated Backchannel Authentication) フロー** における *
-*FIDO-UAF 認証** の利用方法を説明します。
+このドキュメントでは、CIBAフローにおけるFIDO-UAF認証の利用方法を説明します。
 
 FIDO-UAF認証を利用するためには、事前にFIDO-UAFを利用できる[デバイスの登録](mfa-fido-uaf-registration.md)が必要となります。
 
@@ -370,9 +369,12 @@ grant_type=urn:openid:params:grant-type:ciba&auth_req_id=...&client_id=...&clien
 GET {tenant-id}/v1/jwks
 ```
 
-IDの検証後、ペイロードに `amr`（Authentication Method Reference）に`fido-uaf` 値が含まれることを確認できます。
+IDトークン検証後、`amr`（Authentication Method Reference）クレームに以下の値が含まれることを確認できます：
 
-※今後、amrの標準パラメータとしてフィッシング耐性のある認証を実施した証である、`hwk` も含める想定です。
+- `fido-uaf`: FIDO-UAF認証を使用したことを示す
+
+**将来の拡張:**
+フィッシング耐性のある認証を証明するため、RFC 8176標準の`hwk`（Hardware Key Proof-of-Possession）をamrに追加する予定です。
 
 ---
 
