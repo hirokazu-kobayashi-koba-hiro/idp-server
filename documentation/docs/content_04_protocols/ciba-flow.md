@@ -83,10 +83,13 @@ CIBA フローにおけるユーザー認証も、通常の認可コードフロ
 
 また、仕様には定義されていないけれど、CIBAフローを実現するために必要な項目も設定が可能となっています。
 
-| 項目                                   | 説明               | デフォルト |
-|--------------------------------------|------------------|-------|
-| `backchannel_auth_request_expire_in` | 認証リクエストの有効期限     | 300秒  |
-| `backchannel_auth_polling_interval`  | ポーリング間隔（pollモード） | 5秒    |
+| 項目                                              | 説明                                 | デフォルト                                |
+|-------------------------------------------------|------------------------------------|--------------------------------------|
+| `backchannel_authentication_request_expires_in` | 認証リクエストの有効期限                       | 300秒                                 |
+| `backchannel_authentication_polling_interval`   | ポーリング間隔（pollモード）                   | 5秒                                   |
+| `default_ciba_authentication_interaction_type`  | デフォルト認証インタラクションタイプ                 | `authentication-device-notification` |
+| `required_backchannel_auth_user_code`           | バックチャネル認証でユーザーコード入力を必須とするか         | `false`                              |
+| `backchannel_auth_user_code_type`               | ユーザーコードのタイプ（`password` / `numeric`） | `password`                           |
 
 ## クライアント認証
 
