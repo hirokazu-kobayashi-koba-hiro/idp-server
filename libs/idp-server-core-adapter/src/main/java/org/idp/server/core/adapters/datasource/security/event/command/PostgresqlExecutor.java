@@ -72,7 +72,7 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
     params.add(securityEvent.client().name());
 
     if (securityEvent.hasUser()) {
-      params.add(securityEvent.user().idAsUuid());
+      params.add(securityEvent.user().subAsUuid());
       params.add(securityEvent.user().name());
       params.add(securityEvent.user().exSub());
     } else {

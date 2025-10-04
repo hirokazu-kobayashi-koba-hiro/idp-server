@@ -18,6 +18,7 @@ package org.idp.server.core.adapters.datasource.security.event.query;
 
 import java.util.Map;
 import org.idp.server.platform.date.LocalDateTimeParser;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.event.*;
@@ -25,6 +26,8 @@ import org.idp.server.platform.security.type.IpAddress;
 import org.idp.server.platform.security.type.UserAgent;
 
 public class ModelConvertor {
+
+  private static final JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   static SecurityEvent convert(Map<String, String> result) {
     SecurityEventIdentifier identifier = new SecurityEventIdentifier(result.get("id"));
@@ -35,14 +38,16 @@ public class ModelConvertor {
     SecurityEventClient client =
         new SecurityEventClient(result.get("client_id"), result.get("client_name"));
 
-    // TODO consider model
+    Map<String, Object> detailMap = JsonNodeWrapper.fromString(result.get("detail")).toMap();
     SecurityEventUser user =
-        new SecurityEventUser(
-            result.get("user_id"), result.get("user_name"), result.get("external_user_id"), "", "");
+        extractUserFromDetail(
+            result.get("user_id"),
+            result.get("user_name"),
+            result.get("external_user_id"),
+            detailMap);
     IpAddress ipAddress = new IpAddress(result.get("ip_address"));
     UserAgent userAgent = new UserAgent(result.get("user_agent"));
-    SecurityEventDetail detail =
-        new SecurityEventDetail(JsonNodeWrapper.fromString(result.get("detail")).toMap());
+    SecurityEventDetail detail = new SecurityEventDetail(detailMap);
     SecurityEventDatetime createdAt =
         new SecurityEventDatetime(LocalDateTimeParser.parse(result.get("created_at")));
 
@@ -57,5 +62,17 @@ public class ModelConvertor {
         userAgent,
         detail,
         createdAt);
+  }
+
+  private static SecurityEventUser extractUserFromDetail(
+      String userId, String userName, String externalUserId, Map<String, Object> detailMap) {
+
+    if (detailMap.containsKey("user")) {
+      JsonNodeWrapper userNode = JsonNodeWrapper.fromMap(detailMap).getNode("user");
+      return jsonConverter.read(userNode.toMap(), SecurityEventUser.class);
+    }
+
+    // Backward compatibility: for old data without detail.user
+    return new SecurityEventUser(userId, userName, externalUserId, "", "");
   }
 }

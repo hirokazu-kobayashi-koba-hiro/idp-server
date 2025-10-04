@@ -72,7 +72,7 @@ public class MysqlExecutor implements SecurityEventSqlExecutor {
     params.add(securityEvent.client().name());
 
     if (securityEvent.hasUser()) {
-      params.add(securityEvent.user().id());
+      params.add(securityEvent.user().sub());
       params.add(securityEvent.user().name());
       params.add(securityEvent.user().exSub());
     } else {
