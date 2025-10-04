@@ -56,10 +56,17 @@ graph TD
 
 ## 🚦 よく使う開発Tips
 
-### ✅ テンプレート修正のリロード
+### ✅ テンプレート作成・修正のリロード
 
 ```bash
-curl -X PUT /v1/management/tenants/{tenant-id}/identity-verification-configurations \
+# テンプレート作成
+curl -X POST /v1/management/tenants/{tenant-id}/identity-verification-configurations \
+-H "Authorization: Bearer ${ACCESS_TOKEN}" \
+-H "Content-Type: application/json" \
+-d @template.json
+
+# テンプレート更新（HotReload）
+curl -X PUT /v1/management/tenants/{tenant-id}/identity-verification-configurations/{config-id} \
 -H "Authorization: Bearer ${ACCESS_TOKEN}" \
 -H "Content-Type: application/json" \
 -d @template.json
@@ -93,7 +100,8 @@ curl -X PUT /v1/management/tenants/{tenant-id}/identity-verification-configurati
 ## 🧪 開発に入る前の「最短準備ステップ」
 
 1. `POST /identity-verification-configurations` でテンプレートを登録
-2. `POST /applications/{type}/apply` で申込APIを実行
+2. `POST /{tenant-id}/v1/me/identity-verification/applications/{type}/{process}` で申込APIを実行
+   - 例: `POST /tenant-1/v1/me/identity-verification/applications/investment-account-opening/apply`
 3. `Mockoon` または手動で `callback` API を叩く
 4. ステータス遷移を確認 (`GET /applications/{id}`)
 5. `userinfo` or `id_token` に verified_claims が入っているか確認
@@ -116,12 +124,12 @@ pre_hook、execution、store、response…あらゆる場所で出てくる超�
 }
 ```
 
-| 項目名            | 説明                                                                 |
-|----------------|--------------------------------------------------------------------|
-| `from`         | 取得元を [JsonPath](https://github.com/json-path/JsonPath) で指定         |
-| `to`           | セット先キー名。`.`区切りでネスト可能、`*`指定でマージ展開も可能                                |
-| `static_value` | 定数を使いたいときに指定（from の代わりに）                                           |
-| `convert_type` | 値を変換したいときに指定。例: `"string"`, `"integer"`, `"boolean"`, `"datetime"` |
+| 項目名            | 説明                                                                                                                                          |
+|----------------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| `from`         | 取得元を [JsonPath](https://github.com/json-path/JsonPath) で指定                                                                                 |
+| `to`           | セット先キー名。`.`区切りでネスト可能、`*`指定でマージ展開も可能                                                                                                        |
+| `static_value` | 定数を使いたいときに指定（from の代わりに）                                                                                                                   |
+| `functions`    | 値変換関数のリスト。`convert_type`関数で型変換可能。<br>サポート型: `string`, `integer`, `long`, `double`, `boolean`, `datetime` |
 
 > 💡 `from` or `static_value` のどちらかは必須。両方未指定はエラーになる！
 
@@ -179,7 +187,14 @@ pre_hook、execution、store、response…あらゆる場所で出てくる超�
 {
   "from": "$.application.application_details.score",
   "to": "risk_score",
-  "convert_type": "integer"
+  "functions": [
+    {
+      "name": "convert_type",
+      "args": {
+        "type": "integer"
+      }
+    }
+  ]
 }
 ```
 
