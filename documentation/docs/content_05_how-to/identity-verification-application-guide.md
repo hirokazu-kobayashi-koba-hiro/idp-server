@@ -129,7 +129,7 @@ pre_hook、execution、store、response…あらゆる場所で出てくる超�
 | `from`         | 取得元を [JsonPath](https://github.com/json-path/JsonPath) で指定                                                                                 |
 | `to`           | セット先キー名。`.`区切りでネスト可能、`*`指定でマージ展開も可能                                                                                                        |
 | `static_value` | 定数を使いたいときに指定（from の代わりに）                                                                                                                   |
-| `functions`    | 値変換関数のリスト。`convert_type`関数で型変換可能。<br>サポート型: `string`, `integer`, `long`, `double`, `boolean`, `datetime` |
+| `functions`    | 値変換関数のリスト。`convert_type`関数で型変換可能。<br />サポート型: `string`, `integer`, `long`, `double`, `boolean`, `datetime` |
 
 > 💡 `from` or `static_value` のどちらかは必須。両方未指定はエラーになる！
 
