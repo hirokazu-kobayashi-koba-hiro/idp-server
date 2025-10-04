@@ -194,8 +194,57 @@ pre_hookコンポーネントに `condition` フィールドを追加します�
 | `missing` | 存在しない | `{"operation": "missing", "path": "$.user.temp_flag"}` |
 | `contains` | 文字列を含む | `{"operation": "contains", "path": "$.user.email", "value": "@company.com"}` |
 | `regex` | 正規表現 | `{"operation": "regex", "path": "$.user.phone", "value": "^\\+81"}` |
-| `allOf` | 全て真 | `{"operation": "allOf", "value": [条件1, 条件2]}` |
-| `anyOf` | いずれか真 | `{"operation": "anyOf", "value": [条件1, 条件2]}` |
+
+### 複合演算子による条件の組み合わせ
+
+`allOf`と`anyOf`は**複合演算子**です：
+
+| 演算子 | 説明 | 使用例 |
+|---------|------------|---------|
+| `allOf` | すべての条件を満たす（AND） | `{"operation": "allOf", "value": [condition1, condition2]}` |
+| `anyOf` | いずれかの条件を満たす（OR） | `{"operation": "anyOf", "value": [condition1, condition2]}` |
+
+**例1：allOf（role==admin AND verified==true）**
+
+```json
+{
+  "operation": "allOf",
+  "value": [
+    {"operation": "eq", "path": "$.user.role", "value": "admin"},
+    {"operation": "eq", "path": "$.user.verified", "value": true}
+  ]
+}
+```
+
+**例2：anyOf（role==admin OR role==editor）**
+
+```json
+{
+  "operation": "anyOf",
+  "value": [
+    {"operation": "eq", "path": "$.user.role", "value": "admin"},
+    {"operation": "eq", "path": "$.user.role", "value": "editor"}
+  ]
+}
+```
+
+**例3：ネストした複合条件（(role==admin AND verified==true) OR age>=21）**
+
+```json
+{
+  "operation": "anyOf",
+  "value": [
+    {
+      "operation": "allOf",
+      "value": [
+        {"operation": "eq", "path": "$.user.role", "value": "admin"},
+        {"operation": "eq", "path": "$.user.verified", "value": true}
+      ]
+    },
+    {"operation": "gte", "path": "$.user.age", "value": 21}
+  ]
+}
+```
 
 ### コンテキストデータ
 
