@@ -83,7 +83,7 @@ public interface SecurityEventUserCreatable {
 
     // Always included safe fields
     if (userConfig.isIncludeId()) {
-      result.put("id", user.sub());
+      result.put("sub", user.sub());
     }
     if (userConfig.isIncludeExternalUserId() && user.hasExternalUserId()) {
       result.put("ex_sub", user.externalUserId());

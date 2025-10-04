@@ -90,7 +90,7 @@ public class SecurityEvent {
     if (user == null) {
       return "";
     }
-    return user.id();
+    return user.sub();
   }
 
   public String userExSub() {

@@ -25,7 +25,7 @@ import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.uuid.UuidConvertable;
 
 public class SecurityEventUser implements UuidConvertable, JsonReadable {
-  String id;
+  String sub;
   String name;
   String exSub;
   String email;
@@ -47,8 +47,9 @@ public class SecurityEventUser implements UuidConvertable, JsonReadable {
 
   public SecurityEventUser() {}
 
-  public SecurityEventUser(String id, String name, String exSub, String email, String phoneNumber) {
-    this.id = id;
+  public SecurityEventUser(
+      String sub, String name, String exSub, String email, String phoneNumber) {
+    this.sub = sub;
     this.name = name;
     this.exSub = exSub;
     this.email = email;
@@ -56,7 +57,7 @@ public class SecurityEventUser implements UuidConvertable, JsonReadable {
   }
 
   public SecurityEventUser(
-      String id,
+      String sub,
       String name,
       String exSub,
       String email,
@@ -75,7 +76,7 @@ public class SecurityEventUser implements UuidConvertable, JsonReadable {
       List<String> permissions,
       String currentTenant,
       List<String> assignedTenants) {
-    this.id = id;
+    this.sub = sub;
     this.name = name;
     this.exSub = exSub;
     this.email = email;
@@ -98,9 +99,8 @@ public class SecurityEventUser implements UuidConvertable, JsonReadable {
 
   public Map<String, Object> toMap() {
     HashMap<String, Object> result = new HashMap<>();
-    if (id != null) {
-      result.put("id", id);
-      result.put("sub", id);
+    if (sub != null) {
+      result.put("sub", sub);
     }
     if (name != null) {
       result.put("name", name);
@@ -160,12 +160,12 @@ public class SecurityEventUser implements UuidConvertable, JsonReadable {
     return result;
   }
 
-  public String id() {
-    return id;
+  public String sub() {
+    return sub;
   }
 
-  public UUID idAsUuid() {
-    return convertUuid(id);
+  public UUID subAsUuid() {
+    return convertUuid(sub);
   }
 
   public String name() {
@@ -241,6 +241,6 @@ public class SecurityEventUser implements UuidConvertable, JsonReadable {
   }
 
   public boolean exists() {
-    return Objects.nonNull(id) && !id.isEmpty();
+    return Objects.nonNull(sub) && !sub.isEmpty();
   }
 }
