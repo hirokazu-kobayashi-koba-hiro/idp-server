@@ -130,3 +130,19 @@ server:
     threads:
       max: ${SERVER_TOMCAT_THREADS_MAX:300}
       min-spare: ${SERVER_TOMCAT_THREADS_MIN_SPARE:50}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:health,info,metrics,prometheus}"
+      base-path: "${MANAGEMENT_ENDPOINTS_WEB_BASE_PATH:/actuator}"
+  endpoint:
+    health:
+      show-details: "${MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS:when-authorized}"
+      probes:
+        enabled: ${MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED:true}
+  metrics:
+    export:
+      prometheus:
+        enabled: ${MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED:true}
