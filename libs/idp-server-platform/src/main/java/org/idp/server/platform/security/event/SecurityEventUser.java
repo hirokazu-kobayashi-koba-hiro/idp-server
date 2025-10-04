@@ -100,12 +100,13 @@ public class SecurityEventUser implements UuidConvertable, JsonReadable {
     HashMap<String, Object> result = new HashMap<>();
     if (id != null) {
       result.put("id", id);
+      result.put("sub", id);
     }
     if (name != null) {
       result.put("name", name);
     }
     if (exSub != null) {
-      result.put("sub", exSub);
+      result.put("ex_sub", exSub);
     }
     if (email != null) {
       result.put("email", email);
