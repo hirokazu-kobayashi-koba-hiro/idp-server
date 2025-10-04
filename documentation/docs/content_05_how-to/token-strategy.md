@@ -119,7 +119,47 @@ gantt
 
 ---
 
+## 設定方法
+
+各パターンは以下の2つの設定項目で制御します：
+
+| 設定項目                    | 説明                         | 設定値                      | デフォルト    |
+|:------------------------|:---------------------------|:-------------------------|:---------|
+| `refresh_token_strategy` | リフレッシュトークンの有効期限戦略          | `"FIXED"` / `"EXTENDS"`  | `"FIXED"` |
+| `rotate_refresh_token`   | リフレッシュトークンのローテーション有無 | `true` / `false`         | `true`    |
+
+### パターン別設定
+
+| パターン           | `refresh_token_strategy` | `rotate_refresh_token` |
+|:---------------|:-------------------------|:-----------------------|
+| ローテーション＋固定（◎推奨） | `"FIXED"`                | `true`                 |
+| ローテーション＋延長     | `"EXTENDS"`              | `true`                 |
+| 非ローテーション＋固定    | `"FIXED"`                | `false`                |
+| 非ローテーション＋延長    | `"EXTENDS"`              | `false`                |
+
+### Management API での設定例
+
+```bash
+curl -X PUT https://idp-server/v1/management/tenants/{tenant-id}/authorization-server \
+  -H "Content-Type: application/json" \
+  -d '{
+    "extension": {
+      "refresh_token_strategy": "FIXED",
+      "rotate_refresh_token": true,
+      "refresh_token_duration": 3600
+    }
+  }'
+```
+
+### デフォルト設定
+
+設定を省略した場合、最もセキュアな **ローテーション＋固定パターン** が適用されます：
+- `refresh_token_strategy`: `"FIXED"`
+- `rotate_refresh_token`: `true`
+
+---
+
 ## まとめ
 
-要件やセキュリティレベルに応じて、最適なトークン管理方式を選択してください。  
+要件やセキュリティレベルに応じて、最適なトークン管理方式を選択してください。
 **特にセキュリティを重視する場合、「ローテーション＋固定」パターンを強く推奨します。**
