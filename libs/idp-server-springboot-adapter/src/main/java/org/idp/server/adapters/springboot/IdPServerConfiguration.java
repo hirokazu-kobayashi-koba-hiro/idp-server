@@ -23,8 +23,8 @@ import org.idp.server.adapters.springboot.application.delegation.PasswordVerific
 import org.idp.server.adapters.springboot.application.event.AuditLogPublisherService;
 import org.idp.server.adapters.springboot.application.event.SecurityEventPublisherService;
 import org.idp.server.adapters.springboot.application.event.UserLifecycleEventPublisherService;
-import org.idp.server.adapters.springboot.application.property.AdminDatabaseConfigProperties;
 import org.idp.server.adapters.springboot.application.property.AppDatabaseConfigProperties;
+import org.idp.server.adapters.springboot.application.property.ControlPlaneDatabaseConfigProperties;
 import org.idp.server.adapters.springboot.application.session.OAuthSessionService;
 import org.idp.server.control_plane.base.AdminDashboardUrl;
 import org.idp.server.core.adapters.datasource.cache.JedisCacheStore;
@@ -89,7 +89,7 @@ public class IdPServerConfiguration {
   @Value("${idp.time.zone}")
   String timeZone;
 
-  @Autowired AdminDatabaseConfigProperties adminDatabaseConfigProperties;
+  @Autowired ControlPlaneDatabaseConfigProperties controlPlaneDatabaseConfigProperties;
   @Autowired AppDatabaseConfigProperties appDatabaseConfigProperties;
 
   @Bean
@@ -130,38 +130,29 @@ public class IdPServerConfiguration {
   }
 
   private HikariConnectionProvider createHikariConnectionProvider() {
-    Map<DatabaseType, DbConfig> adminWriterConfigs =
-        Map.of(
-            DatabaseType.POSTGRESQL,
-            adminDatabaseConfigProperties.getPostgresql().get("writer").toDbConfig(),
-            DatabaseType.MYSQL,
-            adminDatabaseConfigProperties.getMysql().get("writer").toDbConfig());
+    DatabaseType currentDatabaseType = DatabaseType.of(databaseType);
 
-    Map<DatabaseType, DbConfig> adminReaderConfigs =
-        Map.of(
-            DatabaseType.POSTGRESQL,
-            adminDatabaseConfigProperties.getPostgresql().get("reader").toDbConfig(),
-            DatabaseType.MYSQL,
-            adminDatabaseConfigProperties.getMysql().get("reader").toDbConfig());
+    DbConfig controlPlaneWriterConfig =
+        controlPlaneDatabaseConfigProperties.getWriter().toDbConfig();
+    DbConfig controlPlaneReaderConfig =
+        controlPlaneDatabaseConfigProperties.getReader().toDbConfig();
 
-    DatabaseConfig adminDatabaseConfig = new DatabaseConfig(adminWriterConfigs, adminReaderConfigs);
+    Map<DatabaseType, DbConfig> controlPlaneWriterConfigs =
+        Map.of(currentDatabaseType, controlPlaneWriterConfig);
+    Map<DatabaseType, DbConfig> controlPlaneReaderConfigs =
+        Map.of(currentDatabaseType, controlPlaneReaderConfig);
 
-    Map<DatabaseType, DbConfig> appWriterConfigs =
-        Map.of(
-            DatabaseType.POSTGRESQL,
-            appDatabaseConfigProperties.getPostgresql().get("writer").toDbConfig(),
-            DatabaseType.MYSQL,
-            appDatabaseConfigProperties.getMysql().get("writer").toDbConfig());
+    DatabaseConfig controlPlaneDatabaseConfig =
+        new DatabaseConfig(controlPlaneWriterConfigs, controlPlaneReaderConfigs);
 
-    Map<DatabaseType, DbConfig> appReaderConfigs =
-        Map.of(
-            DatabaseType.POSTGRESQL,
-            appDatabaseConfigProperties.getPostgresql().get("reader").toDbConfig(),
-            DatabaseType.MYSQL,
-            appDatabaseConfigProperties.getMysql().get("reader").toDbConfig());
+    DbConfig appWriterConfig = appDatabaseConfigProperties.getWriter().toDbConfig();
+    DbConfig appReaderConfig = appDatabaseConfigProperties.getReader().toDbConfig();
+
+    Map<DatabaseType, DbConfig> appWriterConfigs = Map.of(currentDatabaseType, appWriterConfig);
+    Map<DatabaseType, DbConfig> appReaderConfigs = Map.of(currentDatabaseType, appReaderConfig);
 
     DatabaseConfig appDatabaseConfig = new DatabaseConfig(appWriterConfigs, appReaderConfigs);
-    return new HikariConnectionProvider(adminDatabaseConfig, appDatabaseConfig);
+    return new HikariConnectionProvider(controlPlaneDatabaseConfig, appDatabaseConfig);
   }
 
   private CacheStore createCacheStore() {

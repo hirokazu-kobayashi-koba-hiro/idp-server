@@ -19,7 +19,7 @@ FROM openjdk:21-slim AS runtime
 WORKDIR /app
 
 # app/build/libs/app-x.x.x.jar
-COPY --from=builder /workspace/app/build/libs/app-1.0.0.jar /app/idp-server.jar
+COPY --from=builder /workspace/app/build/libs/idp-server-*.jar /app/idp-server.jar
 COPY entrypoint.sh /app/entrypoint.sh
 COPY plugins /app/plugins
 

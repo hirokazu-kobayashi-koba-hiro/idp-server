@@ -10,8 +10,8 @@ idp-server の商用デプロイメントにおける環境変数、セキュリ
 - `IDP_SERVER_API_KEY` - 管理API認証キー
 - `IDP_SERVER_API_SECRET` - 管理API認証シークレット
 - `ENCRYPTION_KEY` - データ暗号化キー (AES-256)
-- `ADMIN_DB_WRITER_PASSWORD` - DB管理者パスワード
-- `DB_WRITER_PASSWORD` - DBアプリケーションパスワード
+- `CONTROL_PLANE_DB_WRITER_PASSWORD` - Control Plane用DBパスワード
+- `DB_WRITER_PASSWORD` - アプリケーション用DBパスワード
 
 **✅ 基本環境設定**
 - `DATABASE_TYPE` - データベース種類 (`POSTGRESQL`)
@@ -64,29 +64,29 @@ idp-server の設定は `application.yaml` で定義され、環境変数で上�
 |-----------|----------|------|-------------|-----------|
 | `zone` | `TIME_ZONE` | アプリケーションタイムゾーン | `UTC` | `UTC` |
 
-### idp.datasource.admin.postgresql (管理用PostgreSQL)
+### idp.datasource.control-plane (Control Plane用データベース)
 
 #### Writer 設定
 | パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
 |-----------|----------|------|-------------|-----------|
-| `url` | `DB_WRITER_URL` | 書き込み用DB接続URL | `jdbc:postgresql://localhost:5432/idpserver` | RDS Primary エンドポイント |
-| `username` | `ADMIN_DB_WRITER_USER_NAME` | 管理用DBユーザー | `idpserver` | `idp_admin` |
-| `password` | `ADMIN_DB_WRITER_PASSWORD` | 管理用DBパスワード | `idpserver` | Secrets Manager |
-| `connection-timeout` | `ADMIN_DB_WRITER_TIMEOUT` | 接続タイムアウト (ms) | `2000` | `3000` |
-| `maximum-pool-size` | `ADMIN_DB_WRITER_MAX_POOL_SIZE` | 最大接続プールサイズ | `10` | `15` |
-| `minimum-idle` | `ADMIN_DB_WRITER_MIN_IDLE` | 最小アイドル接続数 | `5` | `5` |
+| `url` | `CONTROL_PLANE_DB_WRITER_URL` | 書き込み用DB接続URL | `jdbc:postgresql://localhost:5432/idpserver` | RDS Primary エンドポイント |
+| `username` | `CONTROL_PLANE_DB_WRITER_USER_NAME` | Control Plane用DBユーザー | `idpserver` | `idp_admin` |
+| `password` | `CONTROL_PLANE_DB_WRITER_PASSWORD` | Control Plane用DBパスワード | `idpserver` | Secrets Manager |
+| `connection-timeout` | `CONTROL_PLANE_DB_WRITER_TIMEOUT` | 接続タイムアウト (ms) | `2000` | `3000` |
+| `maximum-pool-size` | `CONTROL_PLANE_DB_WRITER_MAX_POOL_SIZE` | 最大接続プールサイズ | `10` | `15` |
+| `minimum-idle` | `CONTROL_PLANE_DB_WRITER_MIN_IDLE` | 最小アイドル接続数 | `5` | `5` |
 
 #### Reader 設定
 | パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
 |-----------|----------|------|-------------|-----------|
-| `url` | `DB_READER_URL` | 読み込み用DB接続URL | `jdbc:postgresql://localhost:5433/idpserver` | RDS Replica エンドポイント |
-| `username` | `ADMIN_DB_READER_USER_NAME` | 管理用読み込み専用DBユーザー | `idpserver` | `idp_admin_ro` |
-| `password` | `ADMIN_DB_READER_PASSWORD` | 管理用読み込み専用DBパスワード | `idpserver` | Secrets Manager |
-| `connection-timeout` | `ADMIN_DB_READER_TIMEOUT` | 接続タイムアウト (ms) | `2000` | `3000` |
-| `maximum-pool-size` | `ADMIN_DB_READER_MAX_POOL_SIZE` | 最大接続プールサイズ | `10` | `20` |
-| `minimum-idle` | `ADMIN_DB_READER_MIN_IDLE` | 最小アイドル接続数 | `5` | `8` |
+| `url` | `CONTROL_PLANE_DB_READER_URL` | 読み込み用DB接続URL | `jdbc:postgresql://localhost:5433/idpserver` | RDS Replica エンドポイント |
+| `username` | `CONTROL_PLANE_DB_READER_USER_NAME` | Control Plane用読み込み専用DBユーザー | `idpserver` | `idp_admin_ro` |
+| `password` | `CONTROL_PLANE_DB_READER_PASSWORD` | Control Plane用読み込み専用DBパスワード | `idpserver` | Secrets Manager |
+| `connection-timeout` | `CONTROL_PLANE_DB_READER_TIMEOUT` | 接続タイムアウト (ms) | `2000` | `3000` |
+| `maximum-pool-size` | `CONTROL_PLANE_DB_READER_MAX_POOL_SIZE` | 最大接続プールサイズ | `10` | `20` |
+| `minimum-idle` | `CONTROL_PLANE_DB_READER_MIN_IDLE` | 最小アイドル接続数 | `5` | `8` |
 
-### idp.datasource.app.postgresql (アプリケーション用PostgreSQL)
+### idp.datasource.app (アプリケーション用データベース)
 
 #### Writer 設定
 | パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
@@ -108,29 +108,8 @@ idp-server の設定は `application.yaml` で定義され、環境変数で上�
 | `maximum-pool-size` | `DB_READER_MAX_POOL_SIZE` | 最大接続プールサイズ | `30` | `80` |
 | `minimum-idle` | `DB_READER_MIN_IDLE` | 最小アイドル接続数 | `10` | `25` |
 
-### idp.datasource.app.mysql (アプリケーション用MySQL)
+**注意**: `DATABASE_TYPE`環境変数（`POSTGRESQL`/`MYSQL`）により実行時にデータベース種別が切り替わります。環境変数は同じものを使用するため、接続先URLで適切なJDBCプレフィックスを指定してください。
 
-**注意**: MySQLとPostgreSQLは同じ環境変数を共有します。`DATABASE_TYPE`環境変数により実行時に切り替わるため、両方が同時に使用されることはありません。
-
-#### Writer 設定
-| パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
-|-----------|----------|------|-------------|-----------|
-| `url` | `DB_WRITER_URL` | 書き込み用DB接続URL | `jdbc:mysql://localhost:3306/idpserver` | RDS Primary エンドポイント |
-| `username` | `DB_WRITER_USER_NAME` | アプリ用DBユーザー | `idpserver` | `idp_app_user` |
-| `password` | `DB_WRITER_PASSWORD` | アプリ用DBパスワード | `idpserver` | Secrets Manager |
-| `connection-timeout` | `DB_WRITER_TIMEOUT` | 接続タイムアウト (ms) | `3000` | `3000` |
-| `maximum-pool-size` | `DB_WRITER_MAX_POOL_SIZE` | 最大接続プールサイズ | `5` | `50` |
-| `minimum-idle` | `DB_WRITER_MIN_IDLE` | 最小アイドル接続数 | `2` | `15` |
-
-#### Reader 設定
-| パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
-|-----------|----------|------|-------------|-----------|
-| `url` | `DB_READER_URL` | 読み込み用DB接続URL | `jdbc:mysql://localhost:3306/idpserver` | RDS Replica エンドポイント |
-| `username` | `DB_READER_USER_NAME` | アプリ用読み込み専用DBユーザー | `idpserver` | `idp_app_user_ro` |
-| `password` | `DB_READER_PASSWORD` | アプリ用読み込み専用DBパスワード | `idpserver` | Secrets Manager |
-| `connection-timeout` | `DB_READER_TIMEOUT` | 接続タイムアウト (ms) | `2000` | `2000` |
-| `maximum-pool-size` | `DB_READER_MAX_POOL_SIZE` | 最大接続プールサイズ | `3` | `80` |
-| `minimum-idle` | `DB_READER_MIN_IDLE` | 最小アイドル接続数 | `1` | `25` |
 
 ### idp.cache (Redis キャッシュ設定)
 
@@ -272,8 +251,8 @@ echo $ENCRYPTION_KEY | base64 -d | wc -c
 - `IDP_SERVER_API_KEY` - 管理API認証キー
 - `IDP_SERVER_API_SECRET` - 管理API認証シークレット
 - `ENCRYPTION_KEY` - データ暗号化キー (AES-256)
-- `ADMIN_DB_WRITER_PASSWORD` - 管理DB認証情報
-- `DB_WRITER_PASSWORD` - アプリケーションDB認証情報
+- `CONTROL_PLANE_DB_WRITER_PASSWORD` - Control Plane用DB認証情報
+- `DB_WRITER_PASSWORD` - アプリケーション用DB認証情報
 
 **セキュリティ要件:**
 - 平文での保存・ログ出力禁止
@@ -285,27 +264,25 @@ echo $ENCRYPTION_KEY | base64 -d | wc -c
 
 ### 2. データベース接続プール設定の考え方
 
-#### 管理用 vs アプリケーション用の分離理由
+#### Control Plane用 vs アプリケーション用の分離理由
 ```yaml
-# 管理用 (admin) - 小規模・安定
-admin:
-  postgresql:
-    writer:
-      maximum-pool-size: 15  # 管理操作は頻度低、小さめ
-    reader:
-      maximum-pool-size: 20  # 管理画面の表示用
+# Control Plane用 - 小規模・安定
+control-plane:
+  writer:
+    maximum-pool-size: 15  # Control Plane操作は頻度低、小さめ
+  reader:
+    maximum-pool-size: 20  # 管理画面の表示用
 
-# アプリケーション用 (app) - 大規模・高負荷
+# アプリケーション用 - 大規模・高負荷
 app:
-  postgresql:
-    writer:
-      maximum-pool-size: 50  # 認証処理の書き込み
-    reader:
-      maximum-pool-size: 80  # UserInfo、トークン検証等の読み込み
+  writer:
+    maximum-pool-size: 50  # 認証処理の書き込み
+  reader:
+    maximum-pool-size: 80  # UserInfo、トークン検証等の読み込み
 ```
 
 **設計思想:**
-- **管理用**: システム管理者が使用、低頻度・高信頼性重視
+- **Control Plane用**: システム管理者が使用、低頻度・高信頼性重視
 - **アプリケーション用**: エンドユーザーが使用、高頻度・スケーラビリティ重視
 
 #### 接続プールサイズの算出方法
@@ -414,7 +391,7 @@ export IDP_SERVER_API_SECRET=$(uuidgen | tr 'A-Z' 'a-z' | base64)
 export ENCRYPTION_KEY=$(head -c 32 /dev/urandom | base64)
 
 # 2. データベース認証設定
-export ADMIN_DB_WRITER_PASSWORD="<strong-password>"
+export CONTROL_PLANE_DB_WRITER_PASSWORD="<strong-password>"
 export DB_WRITER_PASSWORD="<strong-password>"
 
 # 3. 基本環境設定
