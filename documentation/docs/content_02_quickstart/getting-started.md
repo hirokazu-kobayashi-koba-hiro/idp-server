@@ -104,10 +104,12 @@ docker compose up -d
 
 これで完了です！セットアップには以下が含まれます：
 - ✅ 自動イメージビルド
-- ✅ PostgreSQL Primary/Replicaレプリケーション構成  
+- ✅ PostgreSQL Primary/Replicaレプリケーション構成
 - ✅ データベースマイグレーション実行
 - ✅ 全サービスのヘルスチェック
-- ✅ デフォルト環境変数（.env.localファイル不要）
+- ✅ サンプル設定用の固定ID（テナントID: `67e7eae6-62b0-4500-9eff-87459f63fc66`）
+
+**注意:** このシンプルセットアップでは、`config/examples/` 配下のサンプル設定ファイルと一致する固定IDを使用します。`./init.sh` を実行すると新しいランダムIDが生成されるため、サンプル設定との互換性が失われます。
 
 ### セットアップ確認
 
@@ -125,19 +127,10 @@ PostgreSQLレプリケーションの確認：
 
 このスクリプトは以下のテストを実行します：
 - プライマリとレプリカの状態確認
-- レプリケーションスロットの確認  
+- レプリケーションスロットの確認
 - データ同期テスト（プライマリに書き込み、レプリカから読み取り）
 - レプリカへの書き込み制限確認
 - 接続テスト（ポート 5432: プライマリ、ポート 5433: レプリカ）
-
-### 高度なセットアップ（オプション）
-
-カスタム環境変数が必要な場合は、`.env.local`を作成：
-
-```shell
-./init.sh  # API キーを含む .env.local を生成
-docker compose --env-file .env.local up -d
-```
 
 ### ステップバイステップセットアップ（デバッグ用）
 
@@ -163,13 +156,13 @@ docker compose up -d idp-server-1 idp-server-2 nginx
 * admin-tenant
 
 ```shell
-./config-sample/test-data.sh
+./config/examples/test-data.sh
 ```
 
 * test-tenant
 
 ```shell
-./config-sample/test-tenant-data.sh -t 1e68932e-ed4a-43e7-b412-460665e42df3
+./config/examples/test-tenant-data.sh -t 1e68932e-ed4a-43e7-b412-460665e42df3
 ```
 
 ### エンドツーエンドテスト（E2E）
@@ -190,5 +183,54 @@ cd e2e
 npm install
 npm test
 ```
+
+---
+
+## カスタムセットアップ（上級者向け）
+
+新しいランダムIDで環境を構築したい場合：
+
+### 1. 新しいシークレットとIDの生成
+
+```shell
+./init.sh
+```
+
+これにより以下が生成されます：
+- `config/secrets/local/encryption-keys.json` - 新しいAPIキー・暗号化キー
+- `config/secrets/local/client-secrets.json` - 新しいクライアント認証情報
+- `.env` - 新しいテナントID・クライアントID含む環境変数
+
+### 2. JWKSの抽出
+
+```shell
+# サンプルからJWKSを抽出（本番環境では独自のJWKSを生成すること）
+jq -r '.authorization_server.jwks' config/examples/local/organizer-tenant/initial.json | \
+  python3 -c "import sys, json; jwks_str = sys.stdin.read(); jwks = json.loads(jwks_str); print(json.dumps(jwks, indent=2))" \
+  > config/secrets/local/jwks.json
+```
+
+### 3. カスタム設定ファイルの作成
+
+新しいIDに合わせて `config/examples/local/admin-tenant/initial.json` をコピーして編集：
+
+```shell
+cp config/examples/local/admin-tenant/initial.json config/examples/local/custom-tenant/initial.json
+# テナントID、クライアントID、ユーザーIDなどを .env の値に合わせて手動編集
+```
+
+### 4. サービス起動と初期化
+
+```shell
+docker compose up -d
+
+# カスタム設定で初期化
+curl -X POST "${IDP_SERVER_DOMAIN}v1/admin/initialization" \
+  -u "${IDP_SERVER_API_KEY}:${IDP_SERVER_API_SECRET}" \
+  -H "Content-Type:application/json" \
+  --data @./config/examples/local/custom-tenant/initial.json | jq
+```
+
+**注意:** カスタムセットアップを使用する場合、E2Eテストは固定IDを前提としているため、そのままでは動作しません。`e2e/src/tests/testConfig.js` の `DEFAULT_TENANT_ID` を新しいテナントIDに変更する必要があります。
 
 ---

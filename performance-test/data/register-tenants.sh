@@ -36,7 +36,7 @@ for ((i=1; i<=NUM_TENANTS; i++)); do
   echo "----------------------------------------------"
   echo "🆕 Registering tenant $i/$NUM_TENANTS: $TENANT_ID"
 
-  ./config-templates/config-upsert.sh \
+  ./config/templates/config-upsert.sh \
     -e "$ENV" \
     -u "$USERNAME" \
     -p "$PASSWORD" \

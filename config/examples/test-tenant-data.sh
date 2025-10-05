@@ -19,7 +19,7 @@ while getopts ":t:" opt; do
   esac
 done
 
-ACCESS_TOKEN=$(./config-sample/get-access-token.sh -u "$ADMIN_USERNAME" -p "$ADMIN_PASSWORD" -t "$ADMIN_TENANT_ID" -e "$BASE_URL" -c "$ADMIN_CLIENT_ID" -s "$ADMIN_CLIENT_SECRET")
+ACCESS_TOKEN=$(./config/examples/get-access-token.sh -u "$ADMIN_USERNAME" -p "$ADMIN_PASSWORD" -t "$ADMIN_TENANT_ID" -e "$BASE_URL" -c "$ADMIN_CLIENT_ID" -s "$ADMIN_CLIENT_SECRET")
 
 echo "$ACCESS_TOKEN"
 
@@ -31,8 +31,8 @@ echo "-------------------------------------------------"
 echo ""
 echo "tenant-${TENANT_ID}"
 
-./config-sample/upsert-tenant.sh \
-  -f "./config-sample/${ENV}/tenant-${TENANT_ID}/tenant.json" \
+./config/examples/upsert-tenant.sh \
+  -f "./config/examples/${ENV}/tenant-${TENANT_ID}/tenant.json" \
   -b "${BASE_URL}" \
   -a "${ACCESS_TOKEN}" \
   -d "${DRY_RUN}"
@@ -44,9 +44,9 @@ echo "-------------------------------------------------"
 echo ""
 echo "client"
 
-./config-sample/upsert-client.sh \
+./config/examples/upsert-client.sh \
   -t "${TENANT_ID}" \
-  -f "./config-sample/${ENV}/tenant-${TENANT_ID}/clients/clientSecretPost.json" \
+  -f "./config/examples/${ENV}/tenant-${TENANT_ID}/clients/clientSecretPost.json" \
   -b "${BASE_URL}" \
   -a "${ACCESS_TOKEN}" \
   -d "${DRY_RUN}"
@@ -57,9 +57,9 @@ echo "-------------------------------------------------"
 echo ""
 echo "user"
 
-./config-templates/upsert-user.sh \
+./config/templates/upsert-user.sh \
   -t "${TENANT_ID}" \
-  -f "./config-sample/${ENV}/tenant-${TENANT_ID}/user/admin.json" \
+  -f "./config/examples/${ENV}/tenant-${TENANT_ID}/user/admin.json" \
   -b "${BASE_URL}" \
   -a "${ACCESS_TOKEN}" \
   -d "${DRY_RUN}"
@@ -71,9 +71,9 @@ echo "-------------------------------------------------"
 echo ""
 echo "authorization-server"
 
-./config-sample/upsert-authorization-server.sh \
+./config/examples/upsert-authorization-server.sh \
   -t "${TENANT_ID}" \
-  -f "./config-sample/${ENV}/tenant-${TENANT_ID}/authorization-server/idp-server.json" \
+  -f "./config/examples/${ENV}/tenant-${TENANT_ID}/authorization-server/idp-server.json" \
   -b "${BASE_URL}" \
   -a "${ACCESS_TOKEN}" \
   -d "${DRY_RUN}"
@@ -98,9 +98,9 @@ client_files=(
 for client_file in "${client_files[@]}"; do
   echo "🔧 Registering: $(basename "$client_file")"
 
-./config-sample/upsert-client.sh \
+./config/examples/upsert-client.sh \
   -t "${TENANT_ID}" \
-  -f "./config-sample/${ENV}/tenant-${TENANT_ID}/clients/${client_file}" \
+  -f "./config/examples/${ENV}/tenant-${TENANT_ID}/clients/${client_file}" \
   -b "${BASE_URL}" \
   -a "${ACCESS_TOKEN}" \
   -d "${DRY_RUN}"
@@ -125,9 +125,9 @@ authentication_config_files=(
 for authentication_config_file in "${authentication_config_files[@]}"; do
   echo "🔧 Registering: $(basename "$authentication_config_file")"
 
-./config-sample/upsert-authentication-config.sh \
+./config/examples/upsert-authentication-config.sh \
   -t "${TENANT_ID}" \
-  -f "./config-sample/${ENV}/tenant-${TENANT_ID}/authentication-config/${authentication_config_file}" \
+  -f "./config/examples/${ENV}/tenant-${TENANT_ID}/authentication-config/${authentication_config_file}" \
   -b "${BASE_URL}" \
   -a "${ACCESS_TOKEN}" \
   -d "${DRY_RUN}"
@@ -147,9 +147,9 @@ identity_verification_config_files=(
 for identity_verification_config_file in "${identity_verification_config_files[@]}"; do
   echo "🔧 Registering: $(basename "$identity_verification_config_file")"
 
-./config-sample/upsert-identity-verification-config.sh \
+./config/examples/upsert-identity-verification-config.sh \
   -t "${TENANT_ID}" \
-  -f "./config-sample/${ENV}/tenant-${TENANT_ID}/identity/${identity_verification_config_file}" \
+  -f "./config/examples/${ENV}/tenant-${TENANT_ID}/identity/${identity_verification_config_file}" \
   -b "${BASE_URL}" \
   -a "${ACCESS_TOKEN}" \
   -d "${DRY_RUN}"
@@ -170,9 +170,9 @@ federation_config_files=(
 for federation_config_file in "${federation_config_files[@]}"; do
   echo "🔧 Registering: $(basename "$federation_config_file")"
 
-./config-sample/upsert-federation-config.sh \
+./config/examples/upsert-federation-config.sh \
   -t "${TENANT_ID}" \
-  -f "./config-sample/${ENV}/tenant-${TENANT_ID}/federation/oidc/${federation_config_file}" \
+  -f "./config/examples/${ENV}/tenant-${TENANT_ID}/federation/oidc/${federation_config_file}" \
   -b "${BASE_URL}" \
   -a "${ACCESS_TOKEN}" \
   -d "${DRY_RUN}"
@@ -192,9 +192,9 @@ security_event_hook_config_files=(
 for security_event_hook_config_file in "${security_event_hook_config_files[@]}"; do
   echo "🔧 Registering: $(basename "$security_event_hook_config_file")"
 
-./config-sample/upsert-security-event-hook-config.sh \
+./config/examples/upsert-security-event-hook-config.sh \
   -t "${TENANT_ID}" \
-  -f "./config-sample/${ENV}/tenant-${TENANT_ID}/security-event-hook/${security_event_hook_config_file}" \
+  -f "./config/examples/${ENV}/tenant-${TENANT_ID}/security-event-hook/${security_event_hook_config_file}" \
   -b "${BASE_URL}" \
   -a "${ACCESS_TOKEN}" \
   -d "${DRY_RUN}"
