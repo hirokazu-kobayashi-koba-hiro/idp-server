@@ -15,28 +15,44 @@ mkdir -p "$CONFIG_DIR/secrets/development"
 mkdir -p "$CONFIG_DIR/secrets/production"
 
 # =========================
-# 1. Extract JWKS from tenant-template.json
+# 1. Extract JWKS from example configuration
 # =========================
-echo "📦 [1/3] Extracting JWKS from tenant-template.json..."
+echo "📦 [1/3] Extracting JWKS..."
 
-TENANT_TEMPLATE="$CONFIG_DIR/templates/tenant-template.json"
+JWKS_OUTPUT="$CONFIG_DIR/secrets/local/jwks.json"
 
-if [[ ! -f "$TENANT_TEMPLATE" ]]; then
-  echo "❌ Error: $TENANT_TEMPLATE not found"
-  exit 1
+# Check if JWKS already exists
+if [[ -f "$JWKS_OUTPUT" ]]; then
+  echo "⚠️  JWKS file already exists: $JWKS_OUTPUT"
+  read -p "Overwrite? (y/N): " -n 1 -r
+  echo
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "⏭️  Skipping JWKS extraction"
+    SKIP_JWKS=true
+  fi
 fi
 
-# Extract and validate JWKS using jq
-if command -v jq >/dev/null 2>&1; then
-  # Extract jwks field and unescape JSON string
-  jq -r '.authorization_server.jwks' "$TENANT_TEMPLATE" | \
-    python3 -c "import sys, json; jwks_str = sys.stdin.read(); jwks = json.loads(jwks_str); print(json.dumps(jwks, indent=2))" \
-    > "$CONFIG_DIR/secrets/local/jwks.json"
+if [[ "$SKIP_JWKS" != "true" ]]; then
+  # Try to extract from example configuration
+  EXAMPLE_CONFIG="$CONFIG_DIR/examples/local/organizer-tenant/initial.json"
 
-  echo "✅ JWKS extracted to config/secrets/local/jwks.json"
-else
-  echo "❌ Error: jq is required for JWKS extraction. Please install jq."
-  exit 1
+  if [[ -f "$EXAMPLE_CONFIG" ]]; then
+    # Extract and validate JWKS using jq
+    if command -v jq >/dev/null 2>&1; then
+      # Extract jwks field and unescape JSON string
+      jq -r '.authorization_server.jwks' "$EXAMPLE_CONFIG" | \
+        python3 -c "import sys, json; jwks_str = sys.stdin.read(); jwks = json.loads(jwks_str); print(json.dumps(jwks, indent=2))" \
+        > "$JWKS_OUTPUT"
+
+      echo "✅ JWKS extracted to config/secrets/local/jwks.json"
+    else
+      echo "❌ Error: jq is required for JWKS extraction. Please install jq."
+      exit 1
+    fi
+  else
+    echo "⚠️  Example configuration not found: $EXAMPLE_CONFIG"
+    echo "💡 You can manually create $JWKS_OUTPUT with your JWKS"
+  fi
 fi
 
 # =========================
