@@ -140,11 +140,10 @@
 | `OrganizationInitializeRequestValidator` | 組織初期化リクエスト検証 | • 組織設定検証<br />• 初期化要件<br />• セキュリティ制約 |
 | `IdpServerInitializeRequestValidator` | IDPサーバー初期化リクエスト検証 | • サーバー設定検証<br />• 初期化パラメータ<br />• 依存関係確認 |
 
-##### **Management APIs** (中優先 - 3 classes)
+##### **Management APIs** (中優先 - 2 classes)
 
 | クラス名 | 責任範囲 | 主要検証ポイント |
 |---------|----------|------------------|
-| `OrganizationInitializationApi` | 組織初期化API | • 組織初期化処理<br />• 設定適用<br />• データ整合性 |
 | `IdpServerOperationApi` | IDPサーバー運用API | • サーバー運用<br />• 操作実行<br />• 状態管理 |
 | `IdpServerStarterApi` | IDPサーバースターターAPI | • サーバー起動処理<br />• 初期化実行<br />• エラーハンドリング |
 

@@ -156,13 +156,13 @@ docker compose up -d idp-server-1 idp-server-2 nginx
 * admin-tenant
 
 ```shell
-./config/examples/test-data.sh
+./config/scripts/test-data.sh
 ```
 
 * test-tenant
 
 ```shell
-./config/examples/test-tenant-data.sh -t 1e68932e-ed4a-43e7-b412-460665e42df3
+./config/scripts/test-tenant-data.sh -t 1e68932e-ed4a-43e7-b412-460665e42df3
 ```
 
 ### エンドツーエンドテスト（E2E）

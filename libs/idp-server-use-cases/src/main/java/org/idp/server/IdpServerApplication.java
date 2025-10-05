@@ -26,7 +26,6 @@ import org.idp.server.authentication.interactors.plugin.FidoUafAdditionalRequest
 import org.idp.server.authentication.interactors.plugin.WebAuthnExecutorPluginLoader;
 import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutors;
 import org.idp.server.control_plane.admin.operation.IdpServerOperationApi;
-import org.idp.server.control_plane.admin.organization.OrganizationInitializationApi;
 import org.idp.server.control_plane.admin.starter.IdpServerStarterApi;
 import org.idp.server.control_plane.base.AdminDashboardUrl;
 import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
@@ -164,7 +163,6 @@ import org.idp.server.usecases.application.tenant_invitator.TenantInvitationMeta
 import org.idp.server.usecases.control_plane.organization_manager.*;
 import org.idp.server.usecases.control_plane.system_administrator.IdpServerOperationEntryService;
 import org.idp.server.usecases.control_plane.system_administrator.IdpServerStarterEntryService;
-import org.idp.server.usecases.control_plane.system_administrator.OrganizationInitializationEntryService;
 import org.idp.server.usecases.control_plane.system_manager.*;
 
 /** IdpServerApplication */
@@ -190,7 +188,6 @@ public class IdpServerApplication {
   UserOperationApi userOperationApi;
   UserLifecycleEventApi userLifecycleEventApi;
   OnboardingApi onboardingApi;
-  OrganizationInitializationApi organizationInitializationApi;
   TenantManagementApi tenantManagementApi;
 
   TenantInvitationManagementApi tenantInvitationManagementApi;
@@ -697,21 +694,6 @@ public class IdpServerApplication {
             OnboardingApi.class,
             databaseTypeProvider);
 
-    this.organizationInitializationApi =
-        TenantAwareEntryServiceProxy.createProxy(
-            new OrganizationInitializationEntryService(
-                tenantCommandRepository,
-                tenantQueryRepository,
-                organizationRepository,
-                userQueryRepository,
-                userCommandRepository,
-                authorizationServerConfigurationCommandRepository,
-                clientConfigurationCommandRepository,
-                clientConfigurationQueryRepository,
-                passwordEncodeDelegation),
-            OrganizationInitializationApi.class,
-            databaseTypeProvider);
-
     this.tenantManagementApi =
         TenantAwareEntryServiceProxy.createProxy(
             new TenantManagementEntryService(
@@ -1161,10 +1143,6 @@ public class IdpServerApplication {
 
   public OnboardingApi onboardingApi() {
     return onboardingApi;
-  }
-
-  public OrganizationInitializationApi tenantInitializationApi() {
-    return organizationInitializationApi;
   }
 
   public TenantManagementApi tenantManagementApi() {

@@ -54,3 +54,6 @@ config/secrets/
 
 # Generated configs
 config/generated/
+
+# Temporary files from scripts
+config/tmp/

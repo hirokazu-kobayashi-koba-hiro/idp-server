@@ -1,0 +1,112 @@
+{
+  "organization": {
+    "id": "${ORGANIZATION_ID}",
+    "name": "${ORGANIZATION_NAME}",
+    "description": "${ORGANIZATION_DESCRIPTION}"
+  },
+  "tenant": {
+    "id": "${TENANT_ID}",
+    "name": "${TENANT_NAME}",
+    "domain": "${BASE_URL}",
+    "authorization_provider": "idp-server",
+    "database_type": "postgresql",
+    "attributes": {
+      "cookie_name": "${COOKIE_NAME}",
+      "use_secure_cookie": false,
+      "allow_origins": [
+        "${BASE_URL}"
+      ],
+      "security_event_log_format": "structured_json",
+      "security_event_log_stage": "processed",
+      "security_event_log_include_user_id": true,
+      "security_event_log_include_user_ex_sub": true,
+      "security_event_log_include_client_id": true,
+      "security_event_log_include_ip": true,
+      "security_event_log_persistence_enabled": true,
+      "security_event_log_include_detail": true
+    }
+  },
+  "authorization_server": {
+    "issuer": "${BASE_URL}/${TENANT_ID}",
+    "authorization_endpoint": "${BASE_URL}/${TENANT_ID}/v1/authorizations",
+    "token_endpoint": "${BASE_URL}/${TENANT_ID}/v1/tokens",
+    "token_endpoint_auth_methods_supported": [
+      "client_secret_post",
+      "client_secret_basic"
+    ],
+    "token_endpoint_auth_signing_alg_values_supported": [
+      "RS256",
+      "ES256"
+    ],
+    "userinfo_endpoint": "${BASE_URL}/${TENANT_ID}/v1/userinfo",
+    "jwks_uri": "${BASE_URL}/${TENANT_ID}/v1/jwks",
+    "jwks": "${JWKS_CONTENT}",
+    "grant_types_supported": [
+      "authorization_code",
+      "refresh_token",
+      "password"
+    ],
+    "token_signed_key_id": "${TOKEN_SIGNING_KEY_ID}",
+    "id_token_signed_key_id": "${ID_TOKEN_SIGNING_KEY_ID}",
+    "scopes_supported": [
+      "openid",
+      "profile",
+      "email",
+      "management"
+    ],
+    "response_types_supported": [
+      "code"
+    ],
+    "response_modes_supported": [
+      "query",
+      "fragment"
+    ],
+    "subject_types_supported": [
+      "public"
+    ],
+    "id_token_signing_alg_values_supported": [
+      "RS256",
+      "ES256"
+    ],
+    "claims_parameter_supported": true,
+    "token_introspection_endpoint": "${BASE_URL}/${TENANT_ID}/v1/tokens/introspection",
+    "token_revocation_endpoint": "${BASE_URL}/${TENANT_ID}/v1/tokens/revocation",
+    "backchannel_authentication_endpoint": "${BASE_URL}/${TENANT_ID}/v1/backchannel/authentications",
+    "extension": {
+      "access_token_type": "JWT",
+      "token_signed_key_id": "${TOKEN_SIGNING_KEY_ID}",
+      "id_token_signed_key_id": "${ID_TOKEN_SIGNING_KEY_ID}",
+      "access_token_duration": 3600,
+      "id_token_duration": 3600,
+      "refresh_token_duration": 86400
+    }
+  },
+  "user": {
+    "sub": "${USER_SUB}",
+    "provider_id": "idp-server",
+    "name": "${USER_EMAIL}",
+    "email": "${USER_EMAIL}",
+    "email_verified": true,
+    "raw_password": "${USER_PASSWORD}"
+  },
+  "client": {
+    "client_id": "${CLIENT_ID}",
+    "client_id_alias": "${CLIENT_ALIAS}",
+    "client_secret": "${CLIENT_SECRET}",
+    "redirect_uris": [
+      "${REDIRECT_URI}"
+    ],
+    "response_types": [
+      "code"
+    ],
+    "grant_types": [
+      "authorization_code",
+      "refresh_token",
+      "password"
+    ],
+    "scope": "openid profile email management",
+    "client_name": "${CLIENT_NAME}",
+    "token_endpoint_auth_method": "client_secret_post",
+    "application_type": "web"
+  }
+}
