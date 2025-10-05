@@ -1,7 +1,8 @@
 #!/bin/zsh
 
-echo "create api key and secret"
+echo "🔐 Generating secrets and configuration..."
 
+# Generate secrets
 API_KEY=$(uuidgen | tr 'A-Z' 'a-z')
 API_SECRET=$(uuidgen | tr 'A-Z' 'a-z' | base64)
 ENCRYPTION_KEY=$(head -c 32 /dev/urandom | base64)
@@ -12,67 +13,95 @@ DB_OWNER_PASSWORD=$(head -c 24 /dev/urandom | base64)
 IDP_ADMIN_PASSWORD=$(head -c 24 /dev/urandom | base64)
 DB_APP_PASSWORD=$(head -c 24 /dev/urandom | base64)
 
-echo "Generated API Key: $API_KEY"
-echo "Generated API Secret: $API_SECRET"
-echo "Generated ENCRYPTION_KEY: $ENCRYPTION_KEY"
-echo "Generated Database Passwords..."
-
-echo "Setting environment variables..."
-
-# write to .env file
-echo "IDP_SERVER_DOMAIN=http://localhost:8080/" > .env
-echo "IDP_SERVER_API_KEY=$API_KEY" >> .env
-echo "IDP_SERVER_API_SECRET=$API_SECRET" >> .env
-echo "ENCRYPTION_KEY=$ENCRYPTION_KEY" >> .env
-echo "ENV=local" >> .env
-
-
-BASE_URL="http://localhost:8080"
+# Generate admin client credentials
 ADMIN_USERNAME="administrator_$(date +%s)"
-ADMIN_EMAIL="$ADMIN_USERNAME"@mail.com
+ADMIN_EMAIL="$ADMIN_USERNAME@mail.com"
 ADMIN_PASSWORD=$(head -c 12 /dev/urandom | base64)
 ADMIN_TENANT_ID=$(uuidgen | tr A-Z a-z)
 ADMIN_CLIENT_ID=$(uuidgen | tr A-Z a-z)
 ADMIN_CLIENT_ID_ALIAS="client_$(head -c 4 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 8)"
 ADMIN_CLIENT_SECRET=$(head -c 48 /dev/urandom | base64)
-DRY_RUN="false"
 
-echo "Setting environment variables..."
+echo "Generated secrets:"
+echo "  - API Key: $API_KEY"
+echo "  - Encryption Key: ********"
+echo "  - Admin Client ID: $ADMIN_CLIENT_ID"
 
-echo "BASE_URL=$BASE_URL" >> .env
-echo "ADMIN_USERNAME=$ADMIN_USERNAME" >> .env
-echo "ADMIN_EMAIL=$ADMIN_EMAIL" >> .env
-echo "ADMIN_PASSWORD=$ADMIN_PASSWORD" >> .env
-echo "ADMIN_TENANT_ID=$ADMIN_TENANT_ID" >> .env
-echo "ADMIN_CLIENT_ID=$ADMIN_CLIENT_ID" >> .env
-echo "ADMIN_CLIENT_ID_ALIAS=$ADMIN_CLIENT_ID_ALIAS" >> .env
-echo "ADMIN_CLIENT_SECRET=$ADMIN_CLIENT_SECRET" >> .env
-echo "DRY_RUN=$DRY_RUN" >> .env
+# Create secrets directory
+mkdir -p config/secrets/local
 
-# Add database configuration section
-echo "" >> .env
-echo "# Database Configuration" >> .env
-echo "# PostgreSQL superuser password" >> .env
-echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" >> .env
-echo "" >> .env
-echo "# Database owner password (for migrations)" >> .env
-echo "DB_OWNER_PASSWORD=$DB_OWNER_PASSWORD" >> .env
-echo "" >> .env
-echo "# Admin user password (RLS bypass for management operations)" >> .env
-echo "IDP_ADMIN_PASSWORD=$IDP_ADMIN_PASSWORD" >> .env
-echo "" >> .env
-echo "# Application user password (RLS-compliant operations)" >> .env
-echo "DB_APP_PASSWORD=$DB_APP_PASSWORD" >> .env
+# Write encryption-keys.json
+cat > config/secrets/local/encryption-keys.json <<EOF
+{
+  "api_key": "$API_KEY",
+  "api_secret": "$API_SECRET",
+  "encryption_key": "$ENCRYPTION_KEY"
+}
+EOF
 
-echo ".env file generated:"
-echo "  - Application credentials: API Key, Secret, Encryption Key"
-echo "  - Admin user credentials: Username, Password, Tenant ID, Client ID"
-echo "  - Database passwords: PostgreSQL, Owner, Admin, App users"
+# Write client-secrets.json
+cat > config/secrets/local/client-secrets.json <<EOF
+{
+  "admin_client": {
+    "client_id": "$ADMIN_CLIENT_ID",
+    "client_id_alias": "$ADMIN_CLIENT_ID_ALIAS",
+    "client_secret": "$ADMIN_CLIENT_SECRET"
+  }
+}
+EOF
+
+# Set proper permissions
+chmod 600 config/secrets/local/*.json
+
+echo "✅ Secrets saved to config/secrets/local/"
+
+# Write .env file (references only, no hardcoded secrets)
+cat > .env <<EOF
+# Base Configuration
+IDP_SERVER_DOMAIN=http://localhost:8080/
+ENV=local
+BASE_URL=http://localhost:8080
+DRY_RUN=false
+
+# Secrets Configuration (Phase 2: Reference files instead of hardcoding)
+SECRETS_DIR=./config/secrets/local
+JWKS_FILE=\${SECRETS_DIR}/jwks.json
+CLIENT_SECRETS_FILE=\${SECRETS_DIR}/client-secrets.json
+ENCRYPTION_KEYS_FILE=\${SECRETS_DIR}/encryption-keys.json
+
+# Admin User Configuration
+ADMIN_USERNAME=$ADMIN_USERNAME
+ADMIN_EMAIL=$ADMIN_EMAIL
+ADMIN_PASSWORD=$ADMIN_PASSWORD
+ADMIN_TENANT_ID=$ADMIN_TENANT_ID
+
+# Admin Client Configuration (loaded from CLIENT_SECRETS_FILE)
+ADMIN_CLIENT_ID=$ADMIN_CLIENT_ID
+ADMIN_CLIENT_ID_ALIAS=$ADMIN_CLIENT_ID_ALIAS
+
+# Database Configuration
+# PostgreSQL superuser password
+POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+
+# Database owner password (for migrations)
+DB_OWNER_PASSWORD=$DB_OWNER_PASSWORD
+
+# Admin user password (RLS bypass for management operations)
+IDP_ADMIN_PASSWORD=$IDP_ADMIN_PASSWORD
+
+# Application user password (RLS-compliant operations)
+DB_APP_PASSWORD=$DB_APP_PASSWORD
+EOF
+
+echo "✅ .env file generated"
 echo ""
-echo "IMPORTANT: Store these passwords securely!"
-
-#echo "export IDP_SERVER_DOMAIN=http://localhost:8080/"
-#echo "export IDP_SERVER_API_KEY=$API_KEY"
-#echo "export IDP_SERVER_API_SECRET=$API_SECRET"
-#echo "export ENCRYPTION_KEY=$ENCRYPTION_KEY"
-#echo "export ENV=local"
+echo "📋 Summary:"
+echo "  - Secrets: config/secrets/local/encryption-keys.json, client-secrets.json"
+echo "  - Environment: .env (references secrets, no hardcoded values)"
+echo ""
+echo "⚠️  IMPORTANT: Never commit config/secrets/ to git!"
+echo ""
+echo "Next steps:"
+echo "  1. Generate JWKS: ./config/scripts/migrate-secrets.sh (if using template JWKS)"
+echo "  2. Start services: docker-compose up -d"
+echo "  3. Initialize: ./setup.sh"

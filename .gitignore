@@ -44,3 +44,13 @@ performance-test-tenant.json
 performance-test/result/
 
 .env
+
+### Configuration (Phase 1: 統合設定管理) ###
+# Secrets
+config/secrets/
+!config/secrets/.gitignore
+!config/secrets/README.md
+!config/secrets/*/.gitkeep
+
+# Generated configs
+config/generated/

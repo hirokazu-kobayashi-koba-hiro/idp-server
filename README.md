@@ -191,13 +191,13 @@ curl -v http://localhost:8080/actuator/health
 * admin-tenant
 
 ```shell
-./config-sample/test-data.sh
+./config/examples/test-data.sh
  ```
 
 * test-tenant
 
 ```shell
-./config-sample/test-tenant-data.sh -t 1e68932e-ed4a-43e7-b412-460665e42df3
+./config/examples/test-tenant-data.sh -t 1e68932e-ed4a-43e7-b412-460665e42df3
  ```
 
 ### e2e
