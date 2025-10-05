@@ -2,18 +2,28 @@
 # Organization Initialization Script
 # This script creates a new organization with tenant, admin user, and client configuration
 
-set -e  # Exit on error
+set -euo pipefail
+IFS=$'\n\t'
 
 # Script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 TEMP_DIR="$PROJECT_ROOT/config/tmp"
 
+# Secure file creation
+umask 077
+
+# Cleanup temporary files on exit
+cleanup() {
+  rm -f "$TEMP_DIR"/ec-key-*.pem "$TEMP_DIR"/ec-pub-*.pem
+}
+trap cleanup EXIT INT TERM
+
 # Create temp directory if it doesn't exist
 mkdir -p "$TEMP_DIR"
 
 # Load environment variables
-set -a; [ -f .env ] && source .env; set +a
+set -a; [ -f "$PROJECT_ROOT/.env" ] && source "$PROJECT_ROOT/.env"; set +a
 
 # Color codes for output
 GREEN='\033[0;32m'
@@ -26,7 +36,7 @@ echo "${BLUE}=== Organization Initialization ===${NC}"
 echo
 
 # Check required commands
-for cmd in curl jq uuidgen; do
+for cmd in curl jq uuidgen openssl python3 envsubst; do
   if ! command -v $cmd &> /dev/null; then
     echo "${RED}❌ Error: $cmd is required but not installed${NC}"
     exit 1
@@ -58,20 +68,27 @@ fi
 echo "${GREEN}✅ Environment credentials verified${NC}"
 echo
 
+# Normalize BASE_URL (remove trailing slash)
+BASE_URL="${IDP_SERVER_DOMAIN%/}"
+
 # Get admin access token
 echo "${YELLOW}🔐 Obtaining admin access token...${NC}"
-TOKEN_RESPONSE=$(curl -s -X POST "${IDP_SERVER_DOMAIN}${ADMIN_TENANT_ID}/v1/tokens" \
+TOKEN_RESPONSE=$(curl -sSf -X POST "${BASE_URL}/${ADMIN_TENANT_ID}/v1/tokens" \
   -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "grant_type=password" \
-  -d "username=${ADMIN_USERNAME}" \
-  -d "password=${ADMIN_PASSWORD}" \
-  -d "client_id=${ADMIN_CLIENT_ID}" \
-  -d "client_secret=${ADMIN_CLIENT_SECRET}" \
-  -d "scope=management")
-
-ACCESS_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.access_token // empty')
-if [ -z "$ACCESS_TOKEN" ]; then
+  --data-urlencode "grant_type=password" \
+  --data-urlencode "username=${ADMIN_USERNAME}" \
+  --data-urlencode "password=${ADMIN_PASSWORD}" \
+  --data-urlencode "client_id=${ADMIN_CLIENT_ID}" \
+  --data-urlencode "client_secret=${ADMIN_CLIENT_SECRET}" \
+  --data-urlencode "scope=management") || {
   echo "${RED}❌ Failed to obtain access token${NC}"
+  echo "${YELLOW}Check ADMIN_USERNAME, ADMIN_PASSWORD, ADMIN_CLIENT_ID, ADMIN_CLIENT_SECRET in .env${NC}"
+  exit 1
+}
+
+ACCESS_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -e -r '.access_token')
+if [ -z "$ACCESS_TOKEN" ]; then
+  echo "${RED}❌ Failed to extract access token from response${NC}"
   echo "$TOKEN_RESPONSE" | jq .
   exit 1
 fi
@@ -226,9 +243,6 @@ print(escaped)
 PYTHON_SCRIPT
 )
 
-# Clean up temporary files
-rm -f "$TEMP_KEY" "$TEMP_PUB"
-
 TOKEN_SIGNING_KEY_ID="signing_key_1"
 ID_TOKEN_SIGNING_KEY_ID="signing_key_1"
 
@@ -236,7 +250,7 @@ echo "${GREEN}✅ JWKS generated (Signing Key ID: $TOKEN_SIGNING_KEY_ID)${NC}"
 
 # Load template
 echo "${YELLOW}📄 Loading organization template...${NC}"
-TEMPLATE_FILE="config/templates/organization-initialization-template.json"
+TEMPLATE_FILE="$PROJECT_ROOT/config/templates/organization-initialization-template.json"
 if [ ! -f "$TEMPLATE_FILE" ]; then
   echo "${RED}❌ Template file not found: $TEMPLATE_FILE${NC}"
   exit 1
@@ -249,7 +263,7 @@ export ORGANIZATION_DESCRIPTION="Created on $(date '+%Y-%m-%d %H:%M:%S')"
 export TENANT_ID
 export TENANT_NAME="$tenant_name"
 export BASE_URL="$domain"
-export COOKIE_NAME="ORG_SESSION_${ORG_ID:0:8}"
+export COOKIE_NAME="ORG_SESSION_$(echo "$ORG_ID" | tr -d '-' | cut -c1-8)"
 export JWKS_CONTENT
 export TOKEN_SIGNING_KEY_ID
 export ID_TOKEN_SIGNING_KEY_ID
@@ -265,6 +279,8 @@ export REDIRECT_URI="$redirect_uri"
 
 # Generate configuration from template
 ORG_CONFIG_FILE="$TEMP_DIR/org-init-${ORG_ID}.json"
+: > "$ORG_CONFIG_FILE"
+chmod 600 "$ORG_CONFIG_FILE"
 envsubst < "$TEMPLATE_FILE" > "$ORG_CONFIG_FILE"
 
 echo "${YELLOW}📄 Configuration file created: $ORG_CONFIG_FILE${NC}"
@@ -272,14 +288,15 @@ echo
 
 # Execute using onboarding script
 echo "${BLUE}🔍 Executing Dry Run validation...${NC}"
-./config/scripts/onboarding.sh -t "$ADMIN_TENANT_ID" -f "$ORG_CONFIG_FILE" -b "${IDP_SERVER_DOMAIN%/}" -a "$ACCESS_TOKEN" -d true
+"$PROJECT_ROOT/config/scripts/onboarding.sh" -t "$ADMIN_TENANT_ID" -f "$ORG_CONFIG_FILE" -b "$BASE_URL" -a "$ACCESS_TOKEN" -d true
 
 echo
 echo "${GREEN}✅ Dry Run validation successful${NC}"
 echo
 
 # Confirm execution
-read "confirm?${YELLOW}Execute organization initialization? (y/N): ${NC}"
+echo -n "${YELLOW}Execute organization initialization? (y/N): ${NC}"
+read confirm
 if [[ ! $confirm =~ ^[Yy]$ ]]; then
   echo "${RED}❌ Cancelled${NC}"
   exit 0
@@ -288,7 +305,7 @@ fi
 # Execute organization initialization
 echo
 echo "${BLUE}🚀 Creating organization...${NC}"
-./config/scripts/onboarding.sh -t "$ADMIN_TENANT_ID" -f "$ORG_CONFIG_FILE" -b "${IDP_SERVER_DOMAIN%/}" -a "$ACCESS_TOKEN" -d false
+"$PROJECT_ROOT/config/scripts/onboarding.sh" -t "$ADMIN_TENANT_ID" -f "$ORG_CONFIG_FILE" -b "$BASE_URL" -a "$ACCESS_TOKEN" -d false
 
 echo
 echo "${GREEN}✅ Organization created successfully!${NC}"
