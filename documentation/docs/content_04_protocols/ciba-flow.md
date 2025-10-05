@@ -48,8 +48,9 @@ CIBA 仕様 に準拠し、login_hint はユーザー識別のヒントとして
 
 ## ユーザー通知・端末連携
 
-- 通知は FCM (Firebase Cloud Messaging) や APNs を介してスマホに送信します。
-- 認証内容（取引明細など）は `authentication_context` 経由で端末に提示
+- ユーザー端末への通知は `AuthenticationDeviceNotifier` プラグインにより実行されます
+  - デフォルト実装: FCM (Firebase Cloud Messaging) / APNs対応
+  - 通知チャネルは `AuthenticationDevice` の設定で制御
 
 ## 認証方式
 
