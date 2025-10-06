@@ -16,29 +16,28 @@
 
 package org.idp.server.adapters.springboot.application.property;
 
-import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConfigurationProperties(prefix = "idp.datasource.admin")
-public class AdminDatabaseConfigProperties {
-  private Map<String, DbConfigProperty> postgresql;
-  private Map<String, DbConfigProperty> mysql;
+@ConfigurationProperties(prefix = "idp.datasource.control-plane")
+public class ControlPlaneDatabaseConfigProperties {
+  private DbConfigProperty writer;
+  private DbConfigProperty reader;
 
-  public Map<String, DbConfigProperty> getPostgresql() {
-    return postgresql;
+  public DbConfigProperty getWriter() {
+    return writer;
   }
 
-  public void setPostgresql(Map<String, DbConfigProperty> postgresql) {
-    this.postgresql = postgresql;
+  public void setWriter(DbConfigProperty writer) {
+    this.writer = writer;
   }
 
-  public Map<String, DbConfigProperty> getMysql() {
-    return mysql;
+  public DbConfigProperty getReader() {
+    return reader;
   }
 
-  public void setMysql(Map<String, DbConfigProperty> mysql) {
-    this.mysql = mysql;
+  public void setReader(DbConfigProperty reader) {
+    this.reader = reader;
   }
 }
