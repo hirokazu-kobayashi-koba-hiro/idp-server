@@ -18,11 +18,35 @@ package org.idp.server;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.session.web.http.SessionRepositoryFilter;
 
 @SpringBootApplication
 public class IdPApplication {
 
   public static void main(String[] args) {
     SpringApplication.run(IdPApplication.class, args);
+  }
+
+  @Bean
+  public SafeRedisSessionRepository sessionRepository(RedisConnectionFactory connectionFactory) {
+    RedisTemplate<String, Object> template = new RedisTemplate<>();
+    template.setConnectionFactory(connectionFactory);
+    template.setKeySerializer(new StringRedisSerializer());
+    template.setValueSerializer(new JdkSerializationRedisSerializer());
+    template.setHashKeySerializer(new StringRedisSerializer());
+    template.setHashValueSerializer(new JdkSerializationRedisSerializer());
+    template.afterPropertiesSet();
+    return new SafeRedisSessionRepository(template);
+  }
+
+  @Bean
+  public SessionRepositoryFilter sessionRepositoryFilter(
+      SafeRedisSessionRepository sessionRepository) {
+    return new SessionRepositoryFilter<>(sessionRepository);
   }
 }
