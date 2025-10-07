@@ -20,68 +20,232 @@ SMS認証は以下の複数のインタラクションを連続的に実行す�
 
 ## 設定
 
-設定には `sms` をキーとする `AuthenticationConfiguration` をテナントごとに登録する必要があります。
+設定には `type = "sms"` の `AuthenticationConfiguration` をテナントごとに登録する必要があります。
 
-### 外部SMS認証サービスを利用したTOTP
+SMS認証は `interactions` ベースの設定構造を持ち、以下の2つのインタラクションを定義します：
 
-#### 設定項目（テンプレート定義）
+* `sms-authentication-challenge`: SMS送信処理
+* `sms-authentication`: コード検証処理
 
-| 項目                        | 内容                       |
-|---------------------------|--------------------------|
-| `type`                    | `external-authn` 固定      |
-| `transaction_id_param`    | 外部サービスのトランザクションIDのパラメータ名 |
-| `verification_code_param` | 外部サービスの検証コードのパラメータ名      |
-| `oauth_authorization`     | 外部APIへの認証情報（OAuth2設定）    |
-| `executions`              | 外部サービスAPI定義              |
+### トップレベル設定項目
 
-外部SMS認証サービスのAPI定義を2つ設定することができます。
+| 項目            | 内容                           |
+|---------------|------------------------------|
+| `id`          | 設定ID（UUID形式）                  |
+| `type`        | `sms` 固定                      |
+| `metadata`    | メタデータ（型、パラメータ名など）            |
+| `interactions` | インタラクション定義（challenge/verify） |
 
-1. challenge 認証コードをSMSで送信するための設定
-2. verify 認証コードを検証するための設定
+### メタデータ設定項目
 
-#### API定義項目
+| 項目                        | 内容                                           |
+|---------------------------|----------------------------------------------|
+| `type`                    | `external`: 外部SMS認証サービス / `internal`: 内部OTP生成 |
+| `verification_code_param` | 検証コードのパラメータ名（デフォルト: `verification_code`）      |
+| `transaction_id_param`    | トランザクションIDのパラメータ名（外部サービス利用時）                |
 
-外部サービスのAPI仕様に応じて設定を行います。
+---
 
-| 項目                  | 説明                                                   |
-|---------------------|------------------------------------------------------|
-| `url`               | 外部サービスAPIのURL。POSTで呼び出される。                           |
-| `method`            | HTTPメソッド（通常は `"POST"`）                               |
-| `headers`           | API呼び出し時のHTTPヘッダ（`Content-Type`, `Authorization` など） |
-| `dynamic_body_keys` | APIリクエストbodyに含める動的キー。ユーザー入力などから取得                    |
-| `static_body`       | APIリクエストbodyに含める固定キー（例：`{"service_code": "001"}`）    |
+## 設定パターン
 
-### idp-serverで認証コード生成・検証 + 外部SMS送信サービスを利用したTOTP (予定)
+### パターン1: 外部SMS認証サービスを利用したTOTP
 
+外部のSMS認証APIサービスを利用し、OTP生成・検証を外部に委譲するパターンです。
 
-#### SMS認証設定
+#### challenge インタラクション設定
 
-| 項目         | 説明                    |
-|------------|-----------------------|
-| `type`     | 実行タイプ（executor名）      |
-| `provider` | 使用するSMSプロバイダ（Twilio等） |
-| `ttl`      | ワンタイムコードの有効期限（秒）      |
-| `length`   | 生成されるコードの桁数           |
+| 項目                            | 説明                                      |
+|-------------------------------|-----------------------------------------|
+| `execution.function`          | `http_request` 固定                       |
+| `execution.http_request`      | 外部API設定（URL、メソッド、認証、マッピングルール）          |
+| `execution.http_request_store` | 外部APIレスポンスの保存設定（`transaction_id`などを保存） |
+| `response.body_mapping_rules` | レスポンスマッピング                              |
 
-#### 外部サービス設定
+#### verify インタラクション設定
 
-| 項目                        | 内容                       |
-|---------------------------|--------------------------|
-| `type`                    | `external-sms-sender` 固定 |
-| `oauth_authorization`     | 外部APIへの認証情報（OAuth2設定）    |
-| `executions`              | 外部サービスAPI定義              |
+| 項目                                  | 説明                                   |
+|-------------------------------------|--------------------------------------|
+| `execution.function`                | `http_request` 固定                    |
+| `execution.previous_interaction`    | challenge時に保存したデータの参照キー             |
+| `execution.http_request`            | 外部検証API設定                            |
+| `execution.http_request.body_mapping_rules` | `verification_code` と `transaction_id` のマッピング |
+| `response.body_mapping_rules`       | レスポンスマッピング                           |
 
-#### API定義項目
+#### 設定例
 
-外部サービスのAPI仕様に応じて設定を行います。
+```json
+{
+  "id": "0f12803e-37b6-437e-8ca9-5822bd852b74",
+  "type": "sms",
+  "metadata": {
+    "type": "external",
+    "verification_code_param": "verification_code"
+  },
+  "interactions": {
+    "sms-authentication-challenge": {
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "https://external-sms-service.com/challenge",
+          "method": "POST",
+          "oauth_authorization": {
+            "type": "password",
+            "token_endpoint": "https://external-sms-service.com/token",
+            "client_id": "your-client-id",
+            "username": "username",
+            "password": "password"
+          },
+          "header_mapping_rules": [
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            }
+          ],
+          "body_mapping_rules": [
+            {
+              "from": "$.request_body",
+              "to": "*"
+            }
+          ]
+        },
+        "http_request_store": {
+          "key": "sms-authentication-challenge",
+          "interaction_mapping_rules": [
+            {
+              "from": "$.response_body.transaction_id",
+              "to": "transaction_id"
+            }
+          ]
+        }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_http_request.response_body",
+            "to": "*"
+          }
+        ]
+      }
+    },
+    "sms-authentication": {
+      "execution": {
+        "function": "http_request",
+        "previous_interaction": {
+          "key": "sms-authentication-challenge"
+        },
+        "http_request": {
+          "url": "https://external-sms-service.com/verify",
+          "method": "POST",
+          "oauth_authorization": {
+            "type": "password",
+            "token_endpoint": "https://external-sms-service.com/token",
+            "client_id": "your-client-id",
+            "username": "username",
+            "password": "password"
+          },
+          "body_mapping_rules": [
+            {
+              "from": "$.request_body.verification_code",
+              "to": "verification_code"
+            },
+            {
+              "from": "$.interaction.transaction_id",
+              "to": "transaction_id"
+            }
+          ]
+        }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_http_request.response_body",
+            "to": "*"
+          }
+        ]
+      }
+    }
+  }
+}
+```
 
-| 項目                  | 説明                                                   |
-|---------------------|------------------------------------------------------|
-| `url`               | 外部サービスAPIのURL。POSTで呼び出される。                           |
-| `method`            | HTTPメソッド（通常は `"POST"`）                               |
-| `headers`           | API呼び出し時のHTTPヘッダ（`Content-Type`, `Authorization` など） |
-| `dynamic_body_keys` | APIリクエストbodyに含める動的キー。ユーザー入力などから取得                    |
-| `static_body`       | APIリクエストbodyに含める固定キー（例：`{"service_code": "001"}`）    |
+---
+
+### パターン2: idp-server内部でOTP生成・検証
+
+idp-server内部でワンタイムパスワードを生成・検証し、外部SMSサービスは送信のみを担当するパターンです。
+
+#### challenge インタラクション設定
+
+| 項目                             | 説明                                      |
+|--------------------------------|-----------------------------------------|
+| `execution.function`           | `sms_authentication_challenge` 固定       |
+| `execution.details.sender_type` | SMSサービスタイプ（`twilio`, `no_action`など）    |
+| `execution.details.templates`  | テンプレート定義（`{VERIFICATION_CODE}`プレースホルダー使用） |
+| `execution.details.retry_count_limitation` | 検証リトライ上限回数（デフォルト: 5）                    |
+| `execution.details.expire_seconds` | OTP有効期限（秒）（デフォルト: 300）                  |
+
+#### テンプレート設定項目
+
+| 項目       | 内容                              |
+|----------|-------------------------------------|
+| `subject` | SMSタイトル（サービスによっては使用されない場合あり）       |
+| `body`   | SMS本文。`{VERIFICATION_CODE}` と `{EXPIRE_SECONDS}` のプレースホルダーが使用可能 |
+
+#### verify インタラクション設定
+
+| 項目                       | 説明                           |
+|--------------------------|------------------------------|
+| `execution.function`     | `sms_authentication` 固定      |
+| `execution.details`      | 検証設定（リトライ上限、有効期限）            |
+
+#### 設定例
+
+```json
+{
+  "id": "0f12803e-37b6-437e-8ca9-5822bd852b74",
+  "type": "sms",
+  "metadata": {
+    "type": "internal",
+    "verification_code_param": "verification_code"
+  },
+  "interactions": {
+    "sms-authentication-challenge": {
+      "execution": {
+        "function": "sms_authentication_challenge",
+        "details": {
+          "sender_type": "no_action",
+          "templates": {
+            "registration": {
+              "subject": "[ID Verification] Your signup SMS confirmation code",
+              "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\n– IDP Support"
+            },
+            "authentication": {
+              "subject": "[ID Verification] Your login SMS confirmation code",
+              "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\n– IDP Support"
+            }
+          },
+          "retry_count_limitation": 5,
+          "expire_seconds": 300
+        }
+      },
+      "response": {
+        "body_mapping_rules": [
+          { "from": "$.response_body", "to": "*" }
+        ]
+      }
+    },
+    "sms-authentication": {
+      "execution": {
+        "function": "sms_authentication",
+        "details": {
+          "retry_count_limitation": 5,
+          "expire_seconds": 300
+        }
+      }
+    }
+  }
+}
+```
 
 ---
 
