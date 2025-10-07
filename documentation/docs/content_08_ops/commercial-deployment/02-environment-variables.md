@@ -18,6 +18,7 @@ idp-server の商用デプロイメントにおける環境変数、セキュリ
 - `DB_WRITER_URL` - プライマリDB接続URL
 - `DB_READER_URL` - レプリカDB接続URL
 - `REDIS_HOST` - Redis/ElastiCache エンドポイント
+- `IDP_SESSION_MODE` - セッションモード (`redis`推奨)
 
 ### 本番環境で調整すべき項目 (Priority 2)
 
@@ -57,6 +58,17 @@ idp-server の設定は `application.yaml` で定義され、環境変数で上�
 | `apiSecret` | `IDP_SERVER_API_SECRET` | 管理API認証シークレット | なし (必須) | Secrets Manager |
 | `encryptionKey` | `ENCRYPTION_KEY` | データ暗号化キー (AES-256) | なし (必須) | Secrets Manager |
 | `databaseType` | `DATABASE_TYPE` | データベース種類 | `POSTGRESQL` | `POSTGRESQL` |
+
+### idp.session (セッション管理設定)
+
+| パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
+|-----------|----------|------|-------------|-----------|
+| `mode` | `IDP_SESSION_MODE` | セッションモード (`redis`/`servlet`/`disabled`) | `redis` | `redis` |
+
+**セッションモード説明:**
+- **redis**: Spring Session with Redis (本番・マルチインスタンス環境推奨)
+- **servlet**: 標準 HttpSession (ローカル開発・単一インスタンス向け)
+- **disabled**: セッション無効化 (ステートレスAPI向け)
 
 ### idp.time (タイムゾーン設定)
 
@@ -151,7 +163,10 @@ idp-server の設定は `application.yaml` で定義され、環境変数で上�
 |-----------|----------|------|-------------|-----------|
 | `spring.data.redis.host` | `REDIS_HOST` | Spring Redis ホスト | `localhost` | ElastiCache エンドポイント |
 | `spring.data.redis.port` | `REDIS_PORT` | Spring Redis ポート | `6379` | `6379` |
-| `spring.session.store-type` | `SESSION_STORE_TYPE` | セッションストアタイプ | `none` | `redis` |
+| `spring.data.redis.timeout` | `REDIS_TIMEOUT` | Redis接続タイムアウト | `2s` | `2s` |
+| `spring.data.redis.jedis.pool.max-active` | `REDIS_JEDIS_POOL_MAX_ACTIVE` | Jedis 最大アクティブ接続数 | `32` | `64` |
+| `spring.data.redis.jedis.pool.max-idle` | `REDIS_JEDIS_POOL_MAX_IDLE` | Jedis 最大アイドル接続数 | `16` | `32` |
+| `spring.data.redis.jedis.pool.min-idle` | `REDIS_JEDIS_POOL_MIN_IDLE` | Jedis 最小アイドル接続数 | `0` | `8` |
 | `spring.session.redis.configure-action` | `SPRING_SESSION_REDIS_CONFIGURE_ACTION` | Redis セッション設定アクション | `none` | `none` |
 | `spring.session.timeout` | `SESSION_TIMEOUT` | セッションタイムアウト | `3600s` | `7200s` |
 
@@ -335,6 +350,18 @@ LOGGING_LEVEL_IDP_SERVER_HTTP_REQUEST_EXECUTOR=info
 
 ### 4. セッション管理設定
 
+#### セッションモード選択
+```yaml
+idp:
+  session:
+    mode: redis  # redis/servlet/disabled
+```
+
+**モード別推奨環境:**
+- **redis**: 本番環境・マルチインスタンス (推奨)
+- **servlet**: ローカル開発・単一インスタンス
+- **disabled**: ステートレスAPI・JWT専用システム
+
 #### セッションタイムアウト設計
 ```yaml
 spring:
@@ -399,6 +426,7 @@ export DATABASE_TYPE="POSTGRESQL"
 export DB_WRITER_URL="jdbc:postgresql://rds-primary:5432/idpserver"
 export DB_READER_URL="jdbc:postgresql://rds-replica:5432/idpserver"
 export REDIS_HOST="elasticache-cluster.xxxxx.cache.amazonaws.com"
+export IDP_SESSION_MODE="redis"
 ```
 
 ### Phase 2: パフォーマンス調整 ⚡

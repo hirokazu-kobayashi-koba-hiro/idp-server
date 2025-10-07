@@ -6,6 +6,8 @@ idp:
    apiSecret: ${IDP_SERVER_API_SECRET}
    encryptionKey: ${ENCRYPTION_KEY}
    databaseType: "${DATABASE_TYPE:POSTGRESQL}"
+  session:
+    mode: "${IDP_SESSION_MODE:redis}"
   time:
    zone: "${TIME_ZONE:UTC}"
   datasource:
@@ -81,8 +83,13 @@ spring:
     redis:
       host: "${REDIS_HOST:localhost}"
       port: ${REDIS_PORT:6379}
+      timeout: "${REDIS_TIMEOUT:2s}"
+      jedis:
+        pool:
+          max-active: ${REDIS_JEDIS_POOL_MAX_ACTIVE:32}
+          max-idle: ${REDIS_JEDIS_POOL_MAX_IDLE:16}
+          min-idle: ${REDIS_JEDIS_POOL_MIN_IDLE:0}
   session:
-    store-type: ${SESSION_STORE_TYPE:none}
     redis:
       configure-action: ${SPRING_SESSION_REDIS_CONFIGURE_ACTION:none}
     timeout: "${SESSION_TIMEOUT:3600s}"
