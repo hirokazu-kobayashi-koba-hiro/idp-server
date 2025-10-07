@@ -16,6 +16,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+      postgres-user-init:
+        condition: service_completed_successfully
       flyway-migrator:
         condition: service_completed_successfully
     deploy:
@@ -89,6 +91,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+      postgres-user-init:
+        condition: service_completed_successfully
       flyway-migrator:
         condition: service_completed_successfully
     deploy:
@@ -166,13 +170,14 @@ services:
       - POSTGRES_PASSWORD=idpserver
       - POSTGRES_DB=idpserver
       - TZ=UTC
-      - IDP_DB_ADMIN_PASSWORD=${IDP_DB_ADMIN_PASSWORD:-idp_admin_user}
-      - IDP_DB_APP_PASSWORD=${IDP_DB_APP_PASSWORD:-idp_app_user}
+      - DB_OWNER_USER=${DB_OWNER_USER:-idp}
+      - DB_OWNER_PASSWORD=${DB_OWNER_PASSWORD:-idp}
     ports:
       - "5432:5432"
     command: [ "postgres", "-c", "shared_preload_libraries=pg_stat_statements" ]
     volumes:
-      - ./libs/idp-server-database/postgresql/init:/docker-entrypoint-initdb.d
+      - ./libs/idp-server-database/postgresql/init/00-init-app-user.sh:/docker-entrypoint-initdb.d/00-init-app-user.sh
+      - ./libs/idp-server-database/postgresql/init/01-add-bypassrls.sh:/docker-entrypoint-initdb.d/01-add-bypassrls.sh
       - ./docker/postgresql/primary/init-replication.sh:/docker-entrypoint-initdb.d/99-init-replication.sh
       - postgres_primary_data:/var/lib/postgresql/data
     healthcheck:
@@ -221,6 +226,25 @@ services:
       timeout: 5s
       retries: 10
 
+  postgres-user-init:
+    build:
+      context: ./libs/idp-server-database
+      dockerfile: Dockerfile-postgres-init
+    image: idp-postgres-user-init:latest
+    restart: "no"
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres-primary
+      PGPORT: 5432
+      POSTGRES_USER: idpserver
+      POSTGRES_PASSWORD: idpserver
+      POSTGRES_DB: idpserver
+      DB_OWNER_USER: ${DB_OWNER_USER:-idp}
+      IDP_DB_ADMIN_PASSWORD: ${IDP_DB_ADMIN_PASSWORD:-idp_admin_user}
+      IDP_DB_APP_PASSWORD: ${IDP_DB_APP_PASSWORD:-idp_app_user}
+
   flyway-migrator:
     build:
       context: ./libs/idp-server-database
@@ -230,11 +254,13 @@ services:
     depends_on:
       postgres-primary:
         condition: service_healthy
+      postgres-user-init:
+        condition: service_completed_successfully
     environment:
       DB_TYPE: postgresql
       DB_URL: jdbc:postgresql://postgres-primary:5432/idpserver
-      DB_USER_NAME: idpserver
-      DB_PASSWORD: idpserver
+      DB_USER_NAME: idp
+      DB_PASSWORD: ${DB_OWNER_PASSWORD:-idp}
     command: [ "migrate" ]    # info / repair / clean
 
   redis:

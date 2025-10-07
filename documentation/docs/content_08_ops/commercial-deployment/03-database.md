@@ -45,10 +45,26 @@ chmod 600 ~/.pgpass
 
 **フォーマット**: `hostname:port:database:username:password`
 
+#### ⚠️ 重要: BYPASSRLS ユーザー作成の要件
+
+**BYPASSRLS権限を持つユーザー（`idp_admin_user`）を作成するには、スーパーユーザー権限が必要です。**
+
+- **オンプレミス/Docker環境**: PostgreSQLスーパーユーザー（例: `postgres`, `idpserver`）で実行
+- **AWS RDS環境**: マスターユーザー（`rds_superuser`ロールを持つユーザー）で実行
+
+**理由**: PostgreSQLでは、BYPASSRLSは強力な権限であり、Row Level Security（RLS）ポリシーを回避できるため、スーパーユーザーのみが付与可能です。
+
 **スクリプトを使用してユーザーを作成します：**
 
 ```bash
-./01-init-users.sh
+# スーパーユーザー/マスターユーザーで実行
+psql -h $IDP_DB_HOST -p $IDP_DB_PORT -U <superuser> -d $IDP_DB_NAME -f ./libs/idp-server-database/postgresql/operation/01-create-users.sh
+```
+
+**Docker環境の場合**:
+```bash
+# postgres-user-initサービスが自動実行（内部でスーパーユーザー認証）
+docker-compose up postgres-user-init
 ```
 
 ### 2. ユーザー権限確認
