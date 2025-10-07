@@ -1,0 +1,14 @@
+# Use PostgreSQL client image
+FROM postgres:15-alpine
+
+WORKDIR /scripts
+
+# Copy user creation script
+COPY postgresql/operation/01-create-users.sh ./01-create-users.sh
+COPY entrypoint-postgres-init.sh /entrypoint.sh
+
+# Grant execution permissions
+RUN chmod +x /entrypoint.sh \
+    && chmod +x /scripts/01-create-users.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
