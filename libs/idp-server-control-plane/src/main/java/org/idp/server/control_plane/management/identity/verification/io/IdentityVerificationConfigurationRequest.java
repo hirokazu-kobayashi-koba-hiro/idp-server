@@ -28,6 +28,7 @@ import org.idp.server.platform.json.JsonReadable;
 public class IdentityVerificationConfigurationRequest implements JsonReadable {
   String id;
   String type;
+  boolean enabled = true;
   Map<String, Object> attributes;
   IdentityVerificationCommonConfiguration common;
   Map<String, IdentityVerificationProcessConfiguration> processes;
@@ -48,8 +49,12 @@ public class IdentityVerificationConfigurationRequest implements JsonReadable {
     return new IdentityVerificationType(type);
   }
 
+  public boolean enabled() {
+    return enabled;
+  }
+
   public IdentityVerificationConfiguration toConfiguration(String identifier) {
     return new IdentityVerificationConfiguration(
-        identifier, type, attributes, common, processes, registration, result);
+        identifier, type, enabled, attributes, common, processes, registration, result);
   }
 }

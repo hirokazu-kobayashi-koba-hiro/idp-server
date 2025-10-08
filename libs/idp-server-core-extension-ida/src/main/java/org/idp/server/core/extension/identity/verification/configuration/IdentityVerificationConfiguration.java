@@ -32,6 +32,7 @@ import org.idp.server.platform.uuid.UuidConvertable;
 public class IdentityVerificationConfiguration implements JsonReadable, UuidConvertable {
   String id;
   String type;
+  boolean enabled = true;
   Map<String, Object> attributes = new HashMap<>();
   IdentityVerificationCommonConfiguration common = new IdentityVerificationCommonConfiguration();
   Map<String, IdentityVerificationProcessConfiguration> processes = new HashMap<>();
@@ -44,6 +45,7 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
   public IdentityVerificationConfiguration(
       String id,
       String type,
+      boolean enabled,
       Map<String, Object> attributes,
       IdentityVerificationCommonConfiguration common,
       Map<String, IdentityVerificationProcessConfiguration> processes,
@@ -51,6 +53,7 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
       IdentityVerificationResultConfig result) {
     this.id = id;
     this.type = type;
+    this.enabled = enabled;
     this.attributes = attributes;
     this.common = common;
     this.processes = processes;
@@ -68,6 +71,10 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
 
   public IdentityVerificationType type() {
     return new IdentityVerificationType(type);
+  }
+
+  public boolean enabled() {
+    return enabled;
   }
 
   public Map<String, Object> attributes() {
@@ -169,6 +176,7 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
     Map<String, Object> map = new HashMap<>();
     map.put("id", id);
     map.put("type", type);
+    map.put("enabled", enabled);
     if (hasAttributes()) map.put("attributes", attributes);
     if (hasCommon()) map.put("common", common.toMap());
     if (hasProcesses()) map.put("processes", processesAsMap());

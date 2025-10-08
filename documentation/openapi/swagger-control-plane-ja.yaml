@@ -6076,7 +6076,7 @@ components:
     # Organization Identity Verification Config Schemas
     OrganizationIdentityVerificationConfig:
       type: object
-      required: ["id", "type"]
+      required: ["id", "type", "enabled"]
       properties:
         id:
           type: string
@@ -6087,6 +6087,10 @@ components:
           type: string
           description: Identity verification configuration type
           example: "document_verification"
+        enabled:
+          type: boolean
+          description: Whether the identity verification configuration is enabled
+          default: true
         attributes:
           type: object
           description: 設定属性
@@ -6118,6 +6122,10 @@ components:
           type: string
           description: Identity verification configuration type
           example: "document_verification"
+        enabled:
+          type: boolean
+          description: Whether the identity verification configuration is enabled
+          default: true
         attributes:
           type: object
           description: 設定属性
@@ -6143,6 +6151,9 @@ components:
           type: string
           description: Identity verification configuration type
           example: "enhanced_document_verification"
+        enabled:
+          type: boolean
+          description: Whether the identity verification configuration is enabled
         attributes:
           type: object
           description: 設定属性

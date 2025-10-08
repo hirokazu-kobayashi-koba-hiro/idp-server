@@ -101,8 +101,7 @@ describe("Organization Identity Verification Config Management API Test", () => 
     expect(getResponse.status).toBe(200);
     expect(getResponse.data).toHaveProperty("id", configId);
     expect(getResponse.data).toHaveProperty("type", configType);
-    // TODO fix implementation
-    // expect(getResponse.data).toHaveProperty("enabled", true);
+    expect(getResponse.data).toHaveProperty("enabled", true);
 
     // Test UPDATE
     const updateRequest = {
