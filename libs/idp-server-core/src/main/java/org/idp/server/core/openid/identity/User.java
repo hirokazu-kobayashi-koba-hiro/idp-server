@@ -684,6 +684,10 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     return status.name();
   }
 
+  public boolean hasStatus() {
+    return status != null;
+  }
+
   public User setStatus(UserStatus status) {
     this.status = status;
     return this;
