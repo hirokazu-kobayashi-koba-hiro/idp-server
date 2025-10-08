@@ -208,19 +208,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DryRun'
       responses:
-        '200':
+        '204':
           description: 認証設定の削除が成功しました
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  dry_run:
-                    type: boolean
-                    description: ドライランかどうか
-                  result:
-                    type: object
-                    description: 削除確認
         '403':
           description: 権限不足または無効な組織・テナントアクセス
           content:
@@ -1014,32 +1003,10 @@ paths:
       tags:
         - organization-federation-config
       parameters:
-        - name: dry_run
-          in: query
-          required: false
-          schema:
-            type: boolean
-            default: false
-          description: ドライランモード（実際の削除は行わない）
+        - $ref: '#/components/parameters/DryRun'
       responses:
-        '200':
+        '204':
           description: フェデレーション設定削除成功
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  dry_run:
-                    type: boolean
-                    description: ドライランかどうか
-                  result:
-                    type: object
-                    properties:
-                      deleted:
-                        type: boolean
-                        description: 設定が削除されたかどうか
-                    required: [deleted]
-                required: [dry_run, result]
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1248,24 +1215,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DryRun'
       responses:
-        '200':
+        '204':
           description: セキュリティイベントフック設定削除成功
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  dry_run:
-                    type: boolean
-                    description: ドライランかどうか
-                  result:
-                    type: object
-                    properties:
-                      deleted:
-                        type: boolean
-                        description: 設定が削除されたかどうか
-                    required: [deleted]
-                required: [dry_run, result]
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
