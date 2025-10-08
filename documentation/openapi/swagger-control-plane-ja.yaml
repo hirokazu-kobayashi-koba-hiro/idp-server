@@ -1111,6 +1111,8 @@ paths:
       tags:
         - organization-security-event-hook
       parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
         - name: enabled
           in: query
           required: false
@@ -1131,14 +1133,19 @@ paths:
               schema:
                 type: object
                 properties:
-                  dry_run:
-                    type: boolean
-                    description: ドライランかどうか
-                  result:
+                  list:
                     type: array
                     items:
                       $ref: '#/components/schemas/SecurityEventHookConfiguration'
-                required: [dry_run, result]
+                  total_count:
+                    type: integer
+                    description: セキュリティイベントフック設定の総数
+                  limit:
+                    type: integer
+                    description: 返される結果の最大数
+                  offset:
+                    type: integer
+                    description: スキップされた結果の数
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
