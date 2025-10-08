@@ -208,8 +208,25 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DryRun'
       responses:
+        '200':
+          description: ドライラン削除成功（dry_run=trueの場合）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: 削除シミュレーション成功メッセージ
+                  config_id:
+                    type: string
+                    format: uuid
+                    description: 削除対象の設定ID
+                  dry_run:
+                    type: boolean
+                    description: ドライランフラグ（常にtrue）
         '204':
-          description: 認証設定の削除が成功しました
+          description: 認証設定の削除が成功しました（実際の削除）
         '403':
           description: 権限不足または無効な組織・テナントアクセス
           content:
@@ -1005,8 +1022,25 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DryRun'
       responses:
+        '200':
+          description: ドライラン削除成功（dry_run=trueの場合）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: 削除シミュレーション成功メッセージ
+                  config_id:
+                    type: string
+                    format: uuid
+                    description: 削除対象の設定ID
+                  dry_run:
+                    type: boolean
+                    description: ドライランフラグ（常にtrue）
         '204':
-          description: フェデレーション設定削除成功
+          description: フェデレーション設定削除成功（実際の削除）
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1208,8 +1242,25 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DryRun'
       responses:
+        '200':
+          description: ドライラン削除成功（dry_run=trueの場合）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: 削除シミュレーション成功メッセージ
+                  config_id:
+                    type: string
+                    format: uuid
+                    description: 削除対象の設定ID
+                  dry_run:
+                    type: boolean
+                    description: ドライランフラグ（常にtrue）
         '204':
-          description: セキュリティイベントフック設定削除成功
+          description: セキュリティイベントフック設定削除成功（実際の削除）
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
