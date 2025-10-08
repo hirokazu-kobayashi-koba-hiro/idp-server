@@ -22,8 +22,6 @@ import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.verifier.TenantVerifier;
-import org.idp.server.control_plane.management.permission.io.PermissionManagementResponse;
-import org.idp.server.control_plane.management.permission.io.PermissionManagementStatus;
 import org.idp.server.control_plane.management.tenant.*;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementStatus;
@@ -303,12 +301,10 @@ public class OrgTenantManagementEntryService implements OrgTenantManagementApi {
 
     if (dryRun) {
       Map<String, Object> response = new HashMap<>();
-      response.put(
-              "message", "Deletion simulated successfully");
+      response.put("message", "Deletion simulated successfully");
       response.put("id", tenantIdentifier.value());
       response.put("dry_run", true);
-      return new TenantManagementResponse(
-              TenantManagementStatus.OK, response);
+      return new TenantManagementResponse(TenantManagementStatus.OK, response);
     }
 
     tenantCommandRepository.delete(tenantIdentifier);

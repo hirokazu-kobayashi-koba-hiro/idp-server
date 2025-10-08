@@ -307,12 +307,10 @@ public class TenantManagementEntryService implements TenantManagementApi {
 
     if (dryRun) {
       Map<String, Object> response = new HashMap<>();
-      response.put(
-              "message", "Deletion simulated successfully");
+      response.put("message", "Deletion simulated successfully");
       response.put("id", tenantIdentifier.value());
       response.put("dry_run", true);
-      return new TenantManagementResponse(
-              TenantManagementStatus.OK, response);
+      return new TenantManagementResponse(TenantManagementStatus.OK, response);
     }
 
     tenantCommandRepository.delete(tenantIdentifier);

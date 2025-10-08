@@ -21,8 +21,6 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
-import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementResponse;
-import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementStatus;
 import org.idp.server.control_plane.management.oidc.client.*;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementStatus;
@@ -312,12 +310,10 @@ public class ClientManagementEntryService implements ClientManagementApi {
 
     if (dryRun) {
       Map<String, Object> response = new HashMap<>();
-      response.put(
-              "message", "Deletion simulated successfully");
+      response.put("message", "Deletion simulated successfully");
       response.put("client_id", clientConfiguration.clientIdValue());
       response.put("dry_run", true);
-      return new ClientManagementResponse(
-              ClientManagementStatus.OK, response);
+      return new ClientManagementResponse(ClientManagementStatus.OK, response);
     }
 
     clientConfigurationCommandRepository.delete(tenant, clientConfiguration);

@@ -21,8 +21,6 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
-import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
-import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementStatus;
 import org.idp.server.control_plane.management.permission.*;
 import org.idp.server.control_plane.management.permission.io.PermissionManagementResponse;
 import org.idp.server.control_plane.management.permission.io.PermissionManagementStatus;
@@ -326,12 +324,10 @@ public class PermissionManagementEntryService implements PermissionManagementApi
 
     if (dryRun) {
       Map<String, Object> response = new HashMap<>();
-      response.put(
-              "message", "Deletion simulated successfully");
+      response.put("message", "Deletion simulated successfully");
       response.put("id", permission.id());
       response.put("dry_run", true);
-      return new PermissionManagementResponse(
-              PermissionManagementStatus.OK, response);
+      return new PermissionManagementResponse(PermissionManagementStatus.OK, response);
     }
 
     permissionCommandRepository.delete(tenant, permission);

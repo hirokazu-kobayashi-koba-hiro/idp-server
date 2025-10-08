@@ -35,8 +35,6 @@ import org.idp.server.control_plane.management.identity.user.validator.UserUpdat
 import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationRelatedDataVerifier;
 import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationVerificationResult;
 import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationVerifier;
-import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
-import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementStatus;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.UserQueries;
@@ -480,12 +478,10 @@ public class UserManagementEntryService implements UserManagementApi {
 
     if (dryRun) {
       Map<String, Object> response = new HashMap<>();
-      response.put(
-              "message", "Deletion simulated successfully");
+      response.put("message", "Deletion simulated successfully");
       response.put("sub", user.sub());
       response.put("dry_run", true);
-      return new UserManagementResponse(
-              UserManagementStatus.OK, response);
+      return new UserManagementResponse(UserManagementStatus.OK, response);
     }
 
     userCommandRepository.delete(tenant, userIdentifier);

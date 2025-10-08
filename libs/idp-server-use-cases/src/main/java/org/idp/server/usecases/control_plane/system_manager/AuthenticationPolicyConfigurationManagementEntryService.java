@@ -25,8 +25,6 @@ import org.idp.server.control_plane.management.authentication.policy.*;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementStatus;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigRequest;
-import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
-import org.idp.server.control_plane.management.tenant.io.TenantManagementStatus;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfigurationIdentifier;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationCommandRepository;
@@ -324,12 +322,11 @@ public class AuthenticationPolicyConfigurationManagementEntryService
 
     if (dryRun) {
       Map<String, Object> response = new HashMap<>();
-      response.put(
-              "message", "Deletion simulated successfully");
+      response.put("message", "Deletion simulated successfully");
       response.put("id", configuration.id());
       response.put("dry_run", true);
       return new AuthenticationPolicyConfigManagementResponse(
-              AuthenticationPolicyConfigManagementStatus.OK, response);
+          AuthenticationPolicyConfigManagementStatus.OK, response);
     }
 
     authenticationPolicyConfigurationCommandRepository.delete(tenant, configuration);

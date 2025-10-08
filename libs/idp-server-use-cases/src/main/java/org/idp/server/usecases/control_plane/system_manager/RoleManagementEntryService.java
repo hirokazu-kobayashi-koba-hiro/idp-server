@@ -387,12 +387,10 @@ public class RoleManagementEntryService implements RoleManagementApi {
 
     if (dryRun) {
       Map<String, Object> response = new HashMap<>();
-      response.put(
-              "message", "Deletion simulated successfully");
+      response.put("message", "Deletion simulated successfully");
       response.put("id", role.id());
       response.put("dry_run", true);
-      return new RoleManagementResponse(
-              RoleManagementStatus.OK, response);
+      return new RoleManagementResponse(RoleManagementStatus.OK, response);
     }
 
     roleCommandRepository.delete(tenant, role);

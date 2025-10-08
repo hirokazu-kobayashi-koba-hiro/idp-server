@@ -21,8 +21,6 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
-import org.idp.server.control_plane.management.permission.io.PermissionManagementResponse;
-import org.idp.server.control_plane.management.permission.io.PermissionManagementStatus;
 import org.idp.server.control_plane.management.role.*;
 import org.idp.server.control_plane.management.role.io.RoleManagementResponse;
 import org.idp.server.control_plane.management.role.io.RoleManagementStatus;
@@ -417,12 +415,10 @@ public class OrgRoleManagementEntryService implements OrgRoleManagementApi {
 
     if (dryRun) {
       Map<String, Object> response = new HashMap<>();
-      response.put(
-              "message", "Deletion simulated successfully");
+      response.put("message", "Deletion simulated successfully");
       response.put("id", role.id());
       response.put("dry_run", true);
-      return new RoleManagementResponse(
-              RoleManagementStatus.OK, response);
+      return new RoleManagementResponse(RoleManagementStatus.OK, response);
     }
 
     roleCommandRepository.delete(targetTenant, role);
