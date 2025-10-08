@@ -324,7 +324,7 @@ describe("organization tenant management api", () => {
       expect(deleteResponse.status).toBe(204);
     });
 
-    it("dry run functionality", async () => {
+    it("dry run create functionality", async () => {
       // Get OAuth token with org-management scope
       const tokenResponse = await requestToken({
         endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
@@ -423,6 +423,120 @@ describe("organization tenant management api", () => {
       // Check that dry-run tenant ID doesn't exist in the actual list
       const tenantIds = listResponse.data.list.map(tenant => tenant.id);
       expect(tenantIds).not.toContain(dryRunTenantId);
+    });
+
+    it("dry run update functionality", async () => {
+      // Get OAuth token with org-management scope
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const timestamp = Date.now();
+      const tenantId = uuidv4();
+
+      // First create a tenant
+      const createResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          tenant: {
+            "id": tenantId,
+            "name": `Test Tenant ${timestamp}`,
+            "domain": "http://localhost:8080",
+            "description": "Original description",
+            "authorization_provider": "idp-server",
+            "tenant_type": "BUSINESS"
+          },
+          authorization_server: {
+            "issuer": "http://localhost:8080/952f6906-3e95-4ed3-86b2-981f90f785f9",
+            "authorization_endpoint": "http://localhost:8080/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/authorizations",
+            "token_endpoint": "http://localhost:8080/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens",
+            "token_endpoint_auth_methods_supported": [
+              "client_secret_post",
+              "client_secret_basic"
+            ],
+            "userinfo_endpoint": "http://localhost:8080/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/userinfo",
+            "jwks_uri": "http://localhost:8080/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/jwks",
+            "grant_types_supported": [
+              "authorization_code",
+              "refresh_token"
+            ],
+            "scopes_supported": [
+              "openid",
+              "profile",
+              "email"
+            ],
+            "response_types_supported": [
+              "code"
+            ],
+            "response_modes_supported": [
+              "query"
+            ],
+            "subject_types_supported": [
+              "public"
+            ],
+            "id_token_signing_alg_values_supported": [
+              "RS256"
+            ],
+            "claims_supported": [
+              "sub",
+              "iss",
+              "name",
+              "email"
+            ],
+            "extension": {
+              "access_token_type": "JWT",
+              "access_token_duration": 3600,
+              "id_token_duration": 3600
+            }
+          }
+        }
+      });
+      expect(createResponse.status).toBe(201);
+
+      // Test dry run for tenant update
+      const dryRunUpdateResponse = await putWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}?dry_run=true`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          "name": `Dry Run Updated Tenant ${timestamp}`,
+          "description": "Dry run updated description",
+          "tenant_type": "BUSINESS"
+        }
+      });
+      console.log("Dry run update response:", dryRunUpdateResponse.data);
+      expect(dryRunUpdateResponse.status).toBe(200);
+      expect(dryRunUpdateResponse.data).toHaveProperty("dry_run", true);
+
+      // Verify tenant was not actually updated
+      const verifyResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      expect(verifyResponse.status).toBe(200);
+      expect(verifyResponse.data.description).toBe("Original description");
+
+      // Cleanup
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
     });
 
     it("pagination support", async () => {
