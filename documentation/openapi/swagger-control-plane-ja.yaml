@@ -1146,14 +1146,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  dry_run:
-                    type: boolean
-                    description: ドライランかどうか
-                  result:
-                    $ref: '#/components/schemas/SecurityEventHookConfiguration'
-                required: [dry_run, result]
+                $ref: '#/components/schemas/SecurityEventHookConfiguration'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
