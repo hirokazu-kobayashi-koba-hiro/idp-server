@@ -399,7 +399,7 @@ describe("Organization Identity Verification Config Management API Test", () => 
       },
     });
 
-    expect(dryRunDeleteResponse.status).toBe(204);
+    expect(dryRunDeleteResponse.status).toBe(200);
 
     // Verify config still exists
     const verifyResponse = await get({

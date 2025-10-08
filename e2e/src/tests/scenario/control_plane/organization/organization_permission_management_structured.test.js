@@ -502,8 +502,7 @@ describe("Organization Permission Management API - Structured Tests", () => {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
-        expect(response.status).toBe(204); // Dry run deletion returns 204
-        // 204 responses typically have no body
+        expect(response.status).toBe(200);
 
         // Verify permission still exists
         const verifyResponse = await get({

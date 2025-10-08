@@ -450,7 +450,8 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     if (dryRun) {
       Map<String, Object> response = new HashMap<>();
       response.put("message", "User deletion simulated successfully");
-      response.put("user_id", user.sub());
+      response.put("sub", user.sub());
+      response.put("dry_run", true);
       return new UserManagementResponse(UserManagementStatus.OK, response);
     }
 

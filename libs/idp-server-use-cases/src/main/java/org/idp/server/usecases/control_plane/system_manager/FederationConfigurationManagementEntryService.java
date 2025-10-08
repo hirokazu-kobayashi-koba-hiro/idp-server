@@ -25,6 +25,8 @@ import org.idp.server.control_plane.management.federation.*;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementStatus;
 import org.idp.server.control_plane.management.federation.io.FederationConfigRequest;
+import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
+import org.idp.server.control_plane.management.oidc.client.io.ClientManagementStatus;
 import org.idp.server.core.openid.federation.FederationConfiguration;
 import org.idp.server.core.openid.federation.FederationConfigurationIdentifier;
 import org.idp.server.core.openid.federation.FederationQueries;
@@ -311,6 +313,16 @@ public class FederationConfigurationManagementEntryService
     if (!configuration.exists()) {
       return new FederationConfigManagementResponse(
           FederationConfigManagementStatus.NOT_FOUND, Map.of());
+    }
+
+    if (dryRun) {
+      Map<String, Object> response = new HashMap<>();
+      response.put(
+              "message", "Deletion simulated successfully");
+      response.put("id", configuration.identifier().value());
+      response.put("dry_run", true);
+      return new FederationConfigManagementResponse(
+              FederationConfigManagementStatus.OK, response);
     }
 
     federationConfigurationCommandRepository.delete(tenant, configuration);

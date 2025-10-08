@@ -391,6 +391,7 @@ public class OrgClientManagementEntryService implements OrgClientManagementApi {
       Map<String, Object> response = new HashMap<>();
       response.put("message", "Client deletion simulated successfully");
       response.put("client_id", clientConfiguration.clientIdValue());
+      response.put("dry_run", true);
       return new ClientManagementResponse(ClientManagementStatus.OK, response);
     }
 

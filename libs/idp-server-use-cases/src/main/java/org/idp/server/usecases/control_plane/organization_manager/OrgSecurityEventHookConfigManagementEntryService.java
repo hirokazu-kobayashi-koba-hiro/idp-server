@@ -393,7 +393,7 @@ public class OrgSecurityEventHookConfigManagementEntryService
     if (dryRun) {
       Map<String, Object> response = new HashMap<>();
       response.put("message", "Security event hook configuration deletion simulated successfully");
-      response.put("config_id", configuration.identifier().value());
+      response.put("id", configuration.identifier().value());
       response.put("dry_run", true);
       return new SecurityEventHookConfigManagementResponse(
           SecurityEventHookConfigManagementStatus.OK, response);

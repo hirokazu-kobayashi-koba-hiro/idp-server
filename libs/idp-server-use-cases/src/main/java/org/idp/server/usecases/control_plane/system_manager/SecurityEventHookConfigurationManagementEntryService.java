@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
+import org.idp.server.control_plane.management.role.io.RoleManagementResponse;
+import org.idp.server.control_plane.management.role.io.RoleManagementStatus;
 import org.idp.server.control_plane.management.security.hook.*;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementStatus;
@@ -303,6 +305,16 @@ public class SecurityEventHookConfigurationManagementEntryService
     if (!configuration.exists()) {
       return new SecurityEventHookConfigManagementResponse(
           SecurityEventHookConfigManagementStatus.NOT_FOUND, Map.of());
+    }
+
+    if (dryRun) {
+      Map<String, Object> response = new HashMap<>();
+      response.put(
+              "message", "Deletion simulated successfully");
+      response.put("id", configuration.identifier().value());
+      response.put("dry_run", true);
+      return new SecurityEventHookConfigManagementResponse(
+              SecurityEventHookConfigManagementStatus.OK, response);
     }
 
     securityEventHookConfigurationCommandRepository.delete(tenant, configuration);

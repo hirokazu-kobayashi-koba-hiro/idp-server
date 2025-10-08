@@ -386,7 +386,7 @@ public class OrgAuthenticationConfigManagementEntryService
     if (dryRun) {
       Map<String, Object> response = new HashMap<>();
       response.put("message", "Authentication configuration deletion simulated successfully");
-      response.put("config_id", configuration.identifier().value());
+      response.put("id", configuration.identifier().value());
       response.put("dry_run", true);
       return new AuthenticationConfigManagementResponse(
           AuthenticationConfigManagementStatus.OK, response);

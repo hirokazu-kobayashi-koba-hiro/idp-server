@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
+import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
+import org.idp.server.control_plane.management.federation.io.FederationConfigManagementStatus;
 import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigRegistrationContext;
 import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigRegistrationContextCreator;
 import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigUpdateContext;
@@ -360,8 +362,13 @@ public class OrgIdentityVerificationConfigManagementEntryService
     }
 
     if (dryRun) {
+      Map<String, Object> response = new HashMap<>();
+      response.put(
+              "message", "Deletion simulated successfully");
+      response.put("id", configuration.id());
+      response.put("dry_run", true);
       return new IdentityVerificationConfigManagementResponse(
-          IdentityVerificationConfigManagementStatus.NO_CONTENT, Map.of());
+              IdentityVerificationConfigManagementStatus.OK, response);
     }
 
     identityVerificationConfigurationCommandRepository.delete(

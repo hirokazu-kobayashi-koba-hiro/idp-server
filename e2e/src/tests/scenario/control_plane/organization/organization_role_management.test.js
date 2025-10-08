@@ -252,7 +252,7 @@ describe("organization role management api", () => {
         }
       });
       console.log("Dry run delete response:", dryRunDeleteResponse.status);
-      expect(dryRunDeleteResponse.status).toBe(204);
+      expect(dryRunDeleteResponse.status).toBe(200);
       console.log("✅ Dry run role deletion verified");
 
       // Step 10: Delete the role

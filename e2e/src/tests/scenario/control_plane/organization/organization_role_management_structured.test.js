@@ -596,7 +596,7 @@ describe("Organization Role Management API - Structured Tests", () => {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
-        expect(response.status).toBe(204);
+        expect(response.status).toBe(200);
 
         // Confirm the role was not actually deleted
         const verifyResponse = await get({

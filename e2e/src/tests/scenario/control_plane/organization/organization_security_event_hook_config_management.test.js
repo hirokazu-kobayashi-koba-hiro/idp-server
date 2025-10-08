@@ -46,7 +46,7 @@ describe("organization security event hook configuration management api", () => 
             events: {
               "user_signin_failure": {
                 execution: {
-                  function: "webhook_call",
+                  function: "http_request",
                   http_request: {
                     url: "https://hmac.example.com/webhook",
                     method: "POST",
@@ -87,7 +87,7 @@ describe("organization security event hook configuration management api", () => 
             events: {
               "user_signin_failure": {
                 execution: {
-                  function: "webhook_call",
+                  function: "http_request",
                   http_request: {
                     url: "https://hmac.example.com/webhook",
                     method: "POST",
@@ -155,7 +155,7 @@ describe("organization security event hook configuration management api", () => 
             events: {
               "user_signin_failure": {
                 execution: {
-                  function: "webhook_call",
+                  function: "http_request",
                   http_request: {
                     url: "https://hmac.example.com/webhook",
                     method: "POST",
@@ -192,7 +192,7 @@ describe("organization security event hook configuration management api", () => 
             events: {
               "user_signin_failure": {
                 execution: {
-                  function: "webhook_call",
+                  function: "http_request",
                   http_request: {
                     url: "https://hmac.example.com/webhook",
                     method: "POST",
@@ -306,13 +306,28 @@ describe("organization security event hook configuration management api", () => 
         },
         body: {
           "id": hookConfigId,
-          "type": "ssf",
+          "type": hookConfigId,
           "enabled": true,
-          "transmission": {
-            "endpoint": "https://example.com/ssf-receiver",
-            "method": "POST",
-            "auth_type": "bearer_token",
-            "bearer_token": "test-bearer-token"
+          triggers: [
+            "user_signin_failure"
+          ],
+          "events": {
+            "user_signin_failure": {
+              execution: {
+                function: "http_request",
+                http_request: {
+                  url: "https://hmac.example.com/webhook",
+                  method: "POST",
+                  auth_type: "HMAC_SHA256",
+                  hmac_authentication: {
+                    api_key: "hmac-api-key",
+                    secret: "super-secret-hmac-key",
+                    signature_format: "SHA256",
+                    signing_fields: ["timestamp", "payload"]
+                  }
+                }
+              }
+            }
           }
         }
       });
@@ -325,8 +340,11 @@ describe("organization security event hook configuration management api", () => 
           Authorization: `Bearer ${accessToken}`
         }
       });
-      console.log("Dry run delete response status:", dryRunDeleteResponse.status);
-      expect(dryRunDeleteResponse.status).toBe(204);
+      console.log("Dry run delete response:", dryRunDeleteResponse.data);
+      expect(dryRunDeleteResponse.status).toBe(200);
+      expect(dryRunDeleteResponse.data).toHaveProperty("message");
+      expect(dryRunDeleteResponse.data).toHaveProperty("id", hookConfigId);
+      expect(dryRunDeleteResponse.data).toHaveProperty("dry_run", true);
 
       // Verify hook config was not actually deleted
       const verifyResponse = await get({
@@ -336,8 +354,7 @@ describe("organization security event hook configuration management api", () => 
         }
       });
       expect(verifyResponse.status).toBe(200);
-      expect(verifyResponse.data).toHaveProperty("result");
-      expect(verifyResponse.data.result.id).toBe(hookConfigId);
+      expect(verifyResponse.data.id).toBe(hookConfigId);
 
       // Cleanup - actual delete
       await deletion({

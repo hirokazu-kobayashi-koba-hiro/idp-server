@@ -250,7 +250,8 @@ describe("organization client management api", () => {
         }
       });
       expect(verifyResponse.status).toBe(200);
-      expect(verifyResponse.data.client_description).toBe("Original description");
+      // Verify original client_name was not changed (dry-run should not modify data)
+      expect(verifyResponse.data.client_name).toBe(`Test Client ${timestamp}`);
 
       // Cleanup
       await deletion({
@@ -314,7 +315,11 @@ describe("organization client management api", () => {
         }
       });
       console.log("Dry run delete response status:", dryRunDeleteResponse.status);
-      expect(dryRunDeleteResponse.status).toBe(204);
+      console.log("Dry run delete response data:", dryRunDeleteResponse.data);
+      expect(dryRunDeleteResponse.status).toBe(200);
+      expect(dryRunDeleteResponse.data).toHaveProperty("message");
+      expect(dryRunDeleteResponse.data).toHaveProperty("client_id", clientId);
+      expect(dryRunDeleteResponse.data).toHaveProperty("dry_run", true);
 
       // Verify client was not actually deleted
       const verifyResponse = await get({

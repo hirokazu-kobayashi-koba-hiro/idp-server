@@ -280,8 +280,11 @@ describe("organization federation configuration management api", () => {
           Authorization: `Bearer ${accessToken}`
         }
       });
-      console.log("Dry run delete response status:", dryRunDeleteResponse.status);
-      expect(dryRunDeleteResponse.status).toBe(204);
+      console.log("Dry run delete response:", dryRunDeleteResponse.data);
+      expect(dryRunDeleteResponse.status).toBe(200);
+      expect(dryRunDeleteResponse.data).toHaveProperty("message");
+      expect(dryRunDeleteResponse.data).toHaveProperty("id", federationConfigId);
+      expect(dryRunDeleteResponse.data).toHaveProperty("dry_run", true);
 
       // Verify federation config was not actually deleted
       const verifyResponse = await get({
