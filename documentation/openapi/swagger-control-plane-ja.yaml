@@ -3433,18 +3433,16 @@ components:
           description: フック実行結果の一意識別子
         status:
           type: string
-          enum: [SUCCESS, FAILURE, RETRY_SUCCESS, RETRY_FAILURE]
+          enum: [SUCCESS, FAILURE, RETRY_SUCCESS, RETRY_FAILURE, UNKNOWN]
           description: フック実行ステータス
         type:
           type: string
-          description: フックタイプ（WEBHOOK, SSF, Email）
+          description: フックタイプ（WEBHOOK, SSF, Email等）
         security_event:
-          type: object
-          description: トリガーとなったセキュリティイベント
-          additionalProperties: true
+          $ref: '#/components/schemas/SecurityEvent'
         contents:
           type: object
-          description: フック実行の詳細結果（HTTPステータスコード、レスポンスボディ等）
+          description: フック実行の詳細結果（execution_details, error_type, error_message等）
           additionalProperties: true
         created_at:
           type: string
