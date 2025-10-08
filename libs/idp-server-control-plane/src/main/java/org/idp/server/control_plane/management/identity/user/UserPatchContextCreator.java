@@ -17,6 +17,7 @@
 package org.idp.server.control_plane.management.identity.user;
 
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
+import org.idp.server.core.openid.identity.TenantIdentityPolicy;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserUpdater;
 import org.idp.server.platform.json.JsonConverter;
@@ -41,8 +42,21 @@ public class UserPatchContextCreator {
 
   public UserUpdateContext create() {
     User newUser = jsonConverter.read(request.toMap(), User.class);
+
+    // Apply tenant identity policy to newUser if not set
+    if (newUser.preferredUsername() == null || newUser.preferredUsername().isBlank()) {
+      TenantIdentityPolicy policy = TenantIdentityPolicy.fromTenantAttributes(tenant.attributes());
+      newUser.applyIdentityPolicy(policy);
+    }
+
     UserUpdater updater = new UserUpdater(newUser, before);
     User updated = updater.update();
+
+    // Apply policy to merged user if still not set
+    if (updated.preferredUsername() == null || updated.preferredUsername().isBlank()) {
+      TenantIdentityPolicy policy = TenantIdentityPolicy.fromTenantAttributes(tenant.attributes());
+      updated.applyIdentityPolicy(policy);
+    }
 
     return new UserUpdateContext(tenant, before, updated, dryRun);
   }

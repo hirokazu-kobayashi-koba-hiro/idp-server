@@ -46,4 +46,6 @@ public interface UserQueryRepository {
   User findByProvider(Tenant tenant, String providerId, String providerUserId);
 
   User findByAuthenticationDevice(Tenant tenant, String deviceId);
+
+  User findByPreferredUsername(Tenant tenant, String preferredUsername);
 }

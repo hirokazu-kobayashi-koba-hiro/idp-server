@@ -18,6 +18,7 @@ package org.idp.server.control_plane.management.identity.user;
 
 import java.util.UUID;
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
+import org.idp.server.core.openid.identity.TenantIdentityPolicy;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegation;
@@ -48,6 +49,12 @@ public class UserRegistrationContextCreator {
     User user = jsonConverter.read(request.toMap(), User.class);
     if (!user.hasSub()) {
       user.setSub(UUID.randomUUID().toString());
+    }
+
+    // Apply tenant identity policy to set preferred_username if not set
+    if (user.preferredUsername() == null || user.preferredUsername().isBlank()) {
+      TenantIdentityPolicy policy = TenantIdentityPolicy.fromTenantAttributes(tenant.attributes());
+      user.applyIdentityPolicy(policy);
     }
 
     String encoded = passwordEncodeDelegation.encode(user.rawPassword());

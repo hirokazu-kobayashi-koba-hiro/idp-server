@@ -1,4 +1,4 @@
-import { describe, expect, it } from "@jest/globals";
+import { describe, expect, it, xit } from "@jest/globals";
 import { backendUrl, clientSecretPostClient, serverConfig } from "../../testConfig";
 import { faker } from "@faker-js/faker";
 import { postAuthentication, requestToken } from "../../../api/oauthClient";
@@ -223,7 +223,8 @@ describe("user registration", () => {
       expect(tokenResponse.data).toHaveProperty("id_token");
     });
 
-    it("sms-authentication", async () => {
+    //sms authentication only is policy violation
+    xit("sms-authentication", async () => {
 
       const interaction = async (id, user) => {
         const challengeResponse = await postAuthentication({

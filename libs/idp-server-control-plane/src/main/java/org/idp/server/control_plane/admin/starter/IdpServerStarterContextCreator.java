@@ -22,6 +22,7 @@ import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.base.definition.DefaultAdminRole;
 import org.idp.server.control_plane.management.onboarding.io.OrganizationRegistrationRequest;
 import org.idp.server.control_plane.management.onboarding.io.TenantRegistrationRequest;
+import org.idp.server.core.openid.identity.TenantIdentityPolicy;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserRole;
 import org.idp.server.core.openid.identity.UserStatus;
@@ -86,6 +87,12 @@ public class IdpServerStarterContextCreator {
 
     User user = jsonConverter.read(request.get("user"), User.class);
     String encode = passwordEncodeDelegation.encode(user.rawPassword());
+
+    // Apply tenant identity policy to set preferred_username if not set
+    if (user.preferredUsername() == null || user.preferredUsername().isBlank()) {
+      TenantIdentityPolicy policy = TenantIdentityPolicy.fromTenantAttributes(tenant.attributes());
+      user.applyIdentityPolicy(policy);
+    }
 
     List<Role> rolesList = roles.toList();
     List<UserRole> userRoles =

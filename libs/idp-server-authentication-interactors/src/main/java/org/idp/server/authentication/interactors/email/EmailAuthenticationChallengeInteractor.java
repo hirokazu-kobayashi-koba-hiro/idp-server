@@ -187,7 +187,6 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
     User user = new User();
     String id = UUID.randomUUID().toString();
     user.setSub(id);
-    user.setExternalUserId(id);
     user.setEmail(email);
 
     return user;

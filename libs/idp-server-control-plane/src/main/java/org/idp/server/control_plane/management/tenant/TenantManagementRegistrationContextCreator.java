@@ -56,6 +56,11 @@ public class TenantManagementRegistrationContextCreator {
         jsonConverter.read(
             request.get("authorization_server"), AuthorizationServerConfiguration.class);
 
+    TenantAttributes attributes =
+        tenantRequest.attributes() != null
+            ? new TenantAttributes(tenantRequest.attributes())
+            : new TenantAttributes();
+
     Tenant tenant =
         new Tenant(
             tenantRequest.tenantIdentifier(),
@@ -64,7 +69,7 @@ public class TenantManagementRegistrationContextCreator {
             tenantRequest.tenantDomain(),
             tenantRequest.authorizationProvider(),
             tenantRequest.databaseType(),
-            new TenantAttributes());
+            attributes);
     AssignedTenant assignedTenant =
         new AssignedTenant(tenant.identifierValue(), tenant.name().value(), tenant.type().name());
     Organization assigned = organization.updateWithTenant(assignedTenant);

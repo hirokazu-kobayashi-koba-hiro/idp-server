@@ -5,6 +5,7 @@
   "authorization_provider": "idp-server",
   "database_type": "postgresql",
   "attributes": {
+    "identity_unique_key_type": "EMAIL",
     "cookie_name": "ADMIN_TENANT_IDP_SERVER_SESSION",
     "use_secure_cookie": false,
     "allow_origins": [
