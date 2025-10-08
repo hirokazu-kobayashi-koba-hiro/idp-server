@@ -282,6 +282,72 @@ describe("organization security event hook configuration management api", () => 
       }
     });
 
+    it("dry run delete functionality", async () => {
+      // Get OAuth token
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const hookConfigId = uuidv4();
+
+      // First create a security event hook config
+      const createResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          "id": hookConfigId,
+          "type": "ssf",
+          "enabled": true,
+          "transmission": {
+            "endpoint": "https://example.com/ssf-receiver",
+            "method": "POST",
+            "auth_type": "bearer_token",
+            "bearer_token": "test-bearer-token"
+          }
+        }
+      });
+      expect(createResponse.status).toBe(201);
+
+      // Test dry run for delete
+      const dryRunDeleteResponse = await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations/${hookConfigId}?dry_run=true`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      console.log("Dry run delete response status:", dryRunDeleteResponse.status);
+      expect(dryRunDeleteResponse.status).toBe(204);
+
+      // Verify hook config was not actually deleted
+      const verifyResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations/${hookConfigId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      expect(verifyResponse.status).toBe(200);
+      expect(verifyResponse.data).toHaveProperty("result");
+      expect(verifyResponse.data.result.id).toBe(hookConfigId);
+
+      // Cleanup - actual delete
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations/${hookConfigId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+    });
+
     it("error scenarios", async () => {
       // Get OAuth token
       const tokenResponse = await requestToken({

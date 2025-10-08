@@ -261,6 +261,80 @@ describe("organization client management api", () => {
       });
     });
 
+    it("dry run delete functionality", async () => {
+      // Get OAuth token with org-management scope
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const timestamp = Date.now();
+      const clientId = uuidv4();
+
+      // First create a client
+      const createResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/clients`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          "client_id": clientId,
+          "client_name": `Test Client ${timestamp}`,
+          "client_type": "CONFIDENTIAL",
+          "grant_types": [
+            "authorization_code",
+            "refresh_token"
+          ],
+          "redirect_uris": [
+            "http://localhost:3000/callback"
+          ],
+          "response_types": [
+            "code"
+          ],
+          "scope": "openid profile email",
+          "token_endpoint_auth_method": "client_secret_post",
+          "application_type": "web",
+          "client_description": "Test client for dry run delete"
+        }
+      });
+      expect(createResponse.status).toBe(201);
+
+      // Test dry run for client delete
+      const dryRunDeleteResponse = await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/clients/${clientId}?dry_run=true`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
+      console.log("Dry run delete response status:", dryRunDeleteResponse.status);
+      expect(dryRunDeleteResponse.status).toBe(204);
+
+      // Verify client was not actually deleted
+      const verifyResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/clients/${clientId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      expect(verifyResponse.status).toBe(200);
+      expect(verifyResponse.data).toHaveProperty("client_id", clientId);
+
+      // Cleanup - actual delete
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/clients/${clientId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
+    });
+
     it("pagination support", async () => {
       // Get OAuth token with org-management scope
       const tokenResponse = await requestToken({
