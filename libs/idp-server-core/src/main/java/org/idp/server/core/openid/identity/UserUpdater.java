@@ -39,7 +39,6 @@ public class UserUpdater {
     if (user.hasProfile()) updatedUser.setProfile(user.profile());
     if (user.hasPicture()) updatedUser.setPicture(user.picture());
     if (user.hasWebsite()) updatedUser.setWebsite(user.website());
-    if (user.hasEmail()) updatedUser.setEmail(user.email());
     if (user.hasEmailVerified()) updatedUser.setEmailVerified(user.emailVerified());
     if (user.hasGender()) updatedUser.setGender(user.gender());
     if (user.hasBirthdate()) updatedUser.setBirthdate(user.birthdate());
@@ -53,6 +52,7 @@ public class UserUpdater {
     if (user.hasCustomProperties()) updatedUser.setCustomProperties(user.customPropertiesValue());
     if (user.hasAuthenticationDevices())
       updatedUser.setAuthenticationDevices(user.authenticationDevicesAsList());
+    if (user.hasStatus()) updatedUser.setStatus(user.status());
     if (user.hasRoles()) updatedUser.setRoles(user.roles());
     if (user.hasAssignedTenants()) updatedUser.setAssignedTenants(user.assignedTenants());
 
