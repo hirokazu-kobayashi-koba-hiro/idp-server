@@ -1912,6 +1912,15 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Permission'
+                  total_count:
+                    type: integer
+                    description: 権限の総数
+                  limit:
+                    type: integer
+                    description: 返される結果の最大数
+                  offset:
+                    type: integer
+                    description: スキップされた結果の数
         '403':
           description: 権限不足または無効な組織アクセス
           content:
@@ -2521,6 +2530,15 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Role'
+                  total_count:
+                    type: integer
+                    description: ロールの総数
+                  limit:
+                    type: integer
+                    description: 返される結果の最大数
+                  offset:
+                    type: integer
+                    description: スキップされた結果の数
         '403':
           description: 権限不足または無効な組織アクセス
           content:
