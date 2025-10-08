@@ -192,6 +192,23 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     return this;
   }
 
+  /**
+   * Applies tenant identity policy to set preferred_username automatically.
+   *
+   * <p>Sets the preferred_username field based on the tenant's unique key policy. The value is
+   * normalized according to the policy type (username, email, phone, or external_user_id).
+   *
+   * @param policy tenant identity policy
+   * @return this user instance
+   */
+  public User applyIdentityPolicy(TenantIdentityPolicy policy) {
+    String normalizedValue = policy.extractPreferredUsername(this);
+    if (normalizedValue != null) {
+      this.preferredUsername = normalizedValue;
+    }
+    return this;
+  }
+
   public String profile() {
     return profile;
   }

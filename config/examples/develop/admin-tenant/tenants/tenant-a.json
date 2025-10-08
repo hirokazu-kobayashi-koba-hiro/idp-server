@@ -4,7 +4,10 @@
     "name": "tenant-a",
     "domain": "https://idp-server-0d10773f8944.herokuapp.com",
     "authorization_provider": "idp-server",
-    "database_type": "postgresql"
+    "database_type": "postgresql",
+    "attributes": {
+      "identity_unique_key_type": "EMAIL"
+    }
   },
   "authorization_server": {
     "issuer": "https://idp-server-0d10773f8944.herokuapp.com/779ff73a-7c8a-4966-9813-92f94f2fd2e8",

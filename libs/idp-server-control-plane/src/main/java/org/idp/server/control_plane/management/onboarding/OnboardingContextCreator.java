@@ -22,6 +22,7 @@ import org.idp.server.control_plane.base.definition.DefaultAdminRole;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingRequest;
 import org.idp.server.control_plane.management.onboarding.io.OrganizationRegistrationRequest;
 import org.idp.server.control_plane.management.onboarding.io.TenantRegistrationRequest;
+import org.idp.server.core.openid.identity.TenantIdentityPolicy;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserRole;
 import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegation;
@@ -70,6 +71,10 @@ public class OnboardingContextCreator {
     Roles roles = DefaultAdminRole.create(permissions);
 
     Organization organization = organizationRequest.toOrganization();
+    TenantAttributes attributes =
+        tenantRequest.attributes() != null
+            ? new TenantAttributes(tenantRequest.attributes())
+            : new TenantAttributes();
     Tenant tenant =
         new Tenant(
             tenantRequest.tenantIdentifier(),
@@ -78,11 +83,17 @@ public class OnboardingContextCreator {
             tenantRequest.tenantDomain(),
             tenantRequest.authorizationProvider(),
             tenantRequest.databaseType(),
-            new TenantAttributes());
+            attributes);
 
     AssignedTenant assignedTenant =
         new AssignedTenant(tenant.identifierValue(), tenant.name().value(), tenant.type().name());
     Organization assigned = organization.updateWithTenant(assignedTenant);
+
+    // Apply tenant identity policy to set preferred_username if not set
+    if (user.preferredUsername() == null || user.preferredUsername().isBlank()) {
+      TenantIdentityPolicy policy = TenantIdentityPolicy.fromTenantAttributes(tenant.attributes());
+      user.applyIdentityPolicy(policy);
+    }
 
     List<Role> rolesList = roles.toList();
     List<UserRole> userRoles =

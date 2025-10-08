@@ -6,6 +6,7 @@
     "authorization_provider": "idp-server",
     "database_type": "postgresql",
     "attributes": {
+      "identity_unique_key_type": "EMAIL",
       "cookie_name": "ADMIN_TENANT_IDP_SERVER_SESSION",
       "use_secure_cookie": false,
       "allow_origins": [
@@ -25,7 +26,7 @@
       "security_event_log_include_detail": true,
       "security_event_log_detail_scrub_keys": "authorization,cookie,set-cookie,proxy-authorization,password,secret,token,refresh_token,access_token,id_token,client_secret,api_key,bearer",
       "security_event_user_include_phone_number": true,
-      "security_event_user_include_email": true,
+      "security_event_user_include_email": true
     }
   },
   "authorization_server": {

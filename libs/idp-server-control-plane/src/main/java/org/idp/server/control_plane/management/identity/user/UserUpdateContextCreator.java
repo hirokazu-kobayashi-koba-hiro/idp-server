@@ -17,6 +17,7 @@
 package org.idp.server.control_plane.management.identity.user;
 
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
+import org.idp.server.core.openid.identity.TenantIdentityPolicy;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -41,6 +42,19 @@ public class UserUpdateContextCreator {
   public UserUpdateContext create() {
     User newUser = jsonConverter.read(request.toMap(), User.class);
     newUser.setSub(before.sub());
+
+    // Apply tenant identity policy to set preferred_username if not set
+    if (newUser.preferredUsername() == null || newUser.preferredUsername().isBlank()) {
+      // First try to preserve existing preferred_username
+      if (before.hasPreferredUsername()) {
+        newUser.setPreferredUsername(before.preferredUsername());
+      } else {
+        // If before also doesn't have it, apply policy
+        TenantIdentityPolicy policy =
+            TenantIdentityPolicy.fromTenantAttributes(tenant.attributes());
+        newUser.applyIdentityPolicy(policy);
+      }
+    }
 
     return new UserUpdateContext(tenant, before, newUser, dryRun);
   }

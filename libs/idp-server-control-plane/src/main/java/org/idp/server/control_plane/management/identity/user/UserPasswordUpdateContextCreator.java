@@ -17,6 +17,7 @@
 package org.idp.server.control_plane.management.identity.user;
 
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
+import org.idp.server.core.openid.identity.TenantIdentityPolicy;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.platform.json.JsonConverter;
@@ -51,6 +52,14 @@ public class UserPasswordUpdateContextCreator {
     if (newUser.hasRawPassword()) {
       String hashedPassword = passwordEncodeDelegation.encode(newUser.rawPassword());
       User updated = before.setHashedPassword(hashedPassword);
+
+      // Apply tenant identity policy if preferred_username is not set
+      if (updated.preferredUsername() == null || updated.preferredUsername().isBlank()) {
+        TenantIdentityPolicy policy =
+            TenantIdentityPolicy.fromTenantAttributes(tenant.attributes());
+        updated.applyIdentityPolicy(policy);
+      }
+
       return new UserUpdateContext(tenant, before, updated, dryRun);
     }
 
