@@ -96,77 +96,77 @@ idp-server は、OAuth 2.0 / OpenID Connect を中心に、最新の認証・認
 
 ### 認証 (Authentication) - 8個
 
-| Pluginインターフェース | パッケージ | 用途 |
-|-------------------|---------|------|
-| `AuthenticationInteractorFactory` | `org.idp.server.core.openid.authentication.plugin` | カスタム認証方式のインタラクター作成 |
-| `AuthenticationExecutorFactory` | `org.idp.server.core.openid.authentication.interaction.execution` | 認証実行ロジックのエグゼキューター作成 |
-| `AuthenticationDeviceNotifier` | `org.idp.server.authentication.interactors.device` | デバイス認証時の通知機能 |
-| `AuthenticationDeviceNotifierFactory` | `org.idp.server.authentication.interactors.device` | デバイス通知機能のファクトリー |
-| `WebAuthnExecutor` | `org.idp.server.authentication.interactors.webauthn` | WebAuthnチャレンジ・検証処理 |
-| `WebAuthnExecutorFactory` | `org.idp.server.authentication.interactors.webauthn` | WebAuthn実行エンジンのファクトリー |
-| `AuthenticationDependencyProvider` | `org.idp.server.core.openid.authentication.plugin` | 認証コンポーネントの依存関係提供 |
-| `FidoUafAdditionalRequestResolver` | `org.idp.server.authentication.interactors.fidouaf.plugin` | FIDO-UAF追加リクエストパラメータ解決 |
+| Pluginインターフェース | 用途 |
+|:---|:---|
+| `AuthenticationInteractorFactory` | カスタム認証方式のインタラクター作成 |
+| `AuthenticationExecutorFactory` | 認証実行ロジックのエグゼキューター作成 |
+| `AuthenticationDeviceNotifier` | デバイス認証時の通知機能 |
+| `AuthenticationDeviceNotifierFactory` | デバイス通知機能のファクトリー |
+| `WebAuthnExecutor` | WebAuthnチャレンジ・検証処理 |
+| `WebAuthnExecutorFactory` | WebAuthn実行エンジンのファクトリー |
+| `AuthenticationDependencyProvider` | 認証コンポーネントの依存関係提供 |
+| `FidoUafAdditionalRequestResolver` | FIDO-UAF追加リクエストパラメータ解決 |
 
 ### 認可・クライアント認証 (Authorization & Client Authentication) - 4個
 
-| Pluginインターフェース | パッケージ | 用途 |
-|-------------------|---------|------|
-| `AuthorizationRequestExtensionVerifier` | `org.idp.server.core.openid.oauth.verifier` | 認可リクエストの拡張検証ロジック |
-| `AuthorizationRequestVerifier` | `org.idp.server.core.openid.oauth.verifier` | 認可リクエストのコア検証機能 |
-| `AuthorizationRequestObjectFactory` | `org.idp.server.core.openid.oauth.factory` | カスタム認可リクエストオブジェクト作成 |
-| `ClientAuthenticator` | `org.idp.server.core.openid.oauth.clientauthenticator.plugin` | カスタムクライアント認証方式 |
+| Pluginインターフェース | 用途 |
+|:---|:---|
+| `AuthorizationRequestExtensionVerifier` | 認可リクエストの拡張検証ロジック |
+| `AuthorizationRequestVerifier` | 認可リクエストのコア検証機能 |
+| `AuthorizationRequestObjectFactory` | カスタム認可リクエストオブジェクト作成 |
+| `ClientAuthenticator` | カスタムクライアント認証方式 |
 
 ### トークン処理 (Token Processing) - 4個
 
-| Pluginインターフェース | パッケージ | 用途 |
-|-------------------|---------|------|
-| `OAuthTokenCreationServiceFactory` | `org.idp.server.core.openid.token.plugin` | カスタムOAuthトークン作成サービス |
-| `AccessTokenCustomClaimsCreator` | `org.idp.server.core.openid.token.plugin` | アクセストークンへのカスタムクレーム追加 |
-| `CustomIndividualClaimsCreator` | `org.idp.server.core.openid.identity.id_token.plugin` | IDトークンの個別カスタムクレーム作成 |
-| `AuthorizationCodeGrantVerifierInterface` | `org.idp.server.core.openid.token.verifier` | 認可コードグラント検証 |
+| Pluginインターフェース | 用途 |
+|:---|:---|
+| `OAuthTokenCreationServiceFactory` | カスタムOAuthトークン作成サービス |
+| `AccessTokenCustomClaimsCreator` | アクセストークンへのカスタムクレーム追加 |
+| `CustomIndividualClaimsCreator` | IDトークンの個別カスタムクレーム作成 |
+| `AuthorizationCodeGrantVerifierInterface` | 認可コードグラント検証 |
 
 ### フェデレーション (Federation) - 4個
 
-| Pluginインターフェース | パッケージ | 用途 |
-|-------------------|---------|------|
-| `FederationInteractorFactory` | `org.idp.server.core.openid.federation.plugin` | 各種フェデレーション方式のインタラクター作成 |
-| `FederationDependencyProvider` | `org.idp.server.core.openid.federation.plugin` | フェデレーションコンポーネントの依存関係提供 |
-| `OidcSsoExecutorFactory` | `org.idp.server.federation.sso.oidc` | OIDC SSO実行エンジンのファクトリー |
-| `UserinfoExecutor` | `org.idp.server.federation.sso.oidc` | 外部IdPからのユーザー情報取得実行 |
+| Pluginインターフェース | 用途 |
+|:---|:---|
+| `FederationInteractorFactory` | 各種フェデレーション方式のインタラクター作成 |
+| `FederationDependencyProvider` | フェデレーションコンポーネントの依存関係提供 |
+| `OidcSsoExecutorFactory` | OIDC SSO実行エンジンのファクトリー |
+| `UserinfoExecutor` | 外部IdPからのユーザー情報取得実行 |
 
 ### セキュリティイベント (Security Events) - 1個
 
-| Pluginインターフェース | パッケージ | 用途 |
-|-------------------|---------|------|
-| `SecurityEventHookFactory` | `org.idp.server.platform.security.hook` | セキュリティイベント監視・フック作成 |
+| Pluginインターフェース | 用途 |
+|:---|:---|
+| `SecurityEventHookFactory` | セキュリティイベント監視・フック作成 |
 
 ### 通知 (Notification) - 3個
 
-| Pluginインターフェース | パッケージ | 用途 |
-|-------------------|---------|------|
-| `EmailSender` | `org.idp.server.platform.notification.email` | Eメール送信機能実装 |
-| `EmailSenderFactory` | `org.idp.server.platform.notification.email` | Eメール送信機能のファクトリー |
-| `SmsSender` | `org.idp.server.platform.notification.sms` | SMS送信機能実装 |
+| Pluginインターフェース | 用途 |
+|:---|:---|
+| `EmailSender` | Eメール送信機能実装 |
+| `EmailSenderFactory` | Eメール送信機能のファクトリー |
+| `SmsSender` | SMS送信機能実装 |
 
 ### 監査ログ (Audit Log) - 1個
 
-| Pluginインターフェース | パッケージ | 用途 |
-|-------------------|---------|------|
-| `AuditLogWriterProvider` | `org.idp.server.platform.audit` | 監査ログ書き込み機能提供 |
+| Pluginインターフェース | 用途 |
+|:---|:---|
+| `AuditLogWriterProvider` | 監査ログ書き込み機能提供 |
 
 ### プラットフォーム (Platform) - 2個
 
-| Pluginインターフェース | パッケージ | 用途 |
-|-------------------|---------|------|
-| `ApplicationComponentProvider` | `org.idp.server.platform.dependency` | アプリケーションレベルのコンポーネント依存関係提供 |
-| `ProtocolProvider` | `org.idp.server.platform.dependency.protocol` | プロトコル固有の依存関係・設定提供 |
+| Pluginインターフェース | 用途 |
+|:---|:---|
+| `ApplicationComponentProvider` | アプリケーションレベルのコンポーネント依存関係提供 |
+| `ProtocolProvider` | プロトコル固有の依存関係・設定提供 |
 
 ### 身元確認 (Identity Verification) - 2個
 
-| Pluginインターフェース | パッケージ | 用途 |
-|-------------------|---------|------|
-| `AdditionalRequestParameterResolverFactory` | `org.idp.server.core.extension.identity.verification.application.pre_hook.additional_parameter` | 身元確認時の追加リクエストパラメータ解決 |
-| `UserLifecycleEventExecutorFactory` | `org.idp.server.core.openid.identity.event` | ユーザーライフサイクルイベント実行エンジン作成 |
+| Pluginインターフェース | 用途 |
+|:---|:---|
+| `AdditionalRequestParameterResolverFactory` | 身元確認時の追加リクエストパラメータ解決 |
+| `UserLifecycleEventExecutorFactory` | ユーザーライフサイクルイベント実行エンジン作成 |
 
 #### 機能拡張の手順
 
