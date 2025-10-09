@@ -451,8 +451,8 @@ describe("organization authorization server management api", () => {
           "required_backchannel_auth_user_code", "backchannel_auth_user_code_type",
           "default_ciba_authentication_interaction_type", "oauth_authorization_request_expires_in",
           "fapi_baseline_scopes", "fapi_advance_scopes", "required_identity_verification_scopes",
-          "enabled_custom_claims_scope_mapping", "enabled_access_token_selective_user_custom_properties",
-          "enabled_access_token_verified_claims", "enabled_access_token_selective_verified_claims"
+          "custom_claims_scope_mapping", "access_token_selective_user_custom_properties",
+          "access_token_verified_claims", "access_token_selective_verified_claims"
         ];
 
         extensionFields.forEach(field => {

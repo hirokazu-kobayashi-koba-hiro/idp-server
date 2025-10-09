@@ -161,7 +161,7 @@ scope=openid profile email claims:roles claims:assigned_tenants
 この場合、標準プロフィール＋メール＋ロール情報＋所属テナント一覧が取得可能になります。
 
 **注意事項**
-- `claims:`スコープは`enabled_custom_claims_scope_mapping=true`の設定が必要
+- `claims:`スコープは`custom_claims_scope_mapping=true`の設定が必要
 - セキュリティ上、`hashed_password`は取得できません
 - 管理者権限が必要な属性もあります
 
