@@ -60,36 +60,37 @@ idp-serverでは、以下のようなセキュリティイベントを発行し�
 
 | イベントタイプ | 説明 | 典型的な用途 |
 |:---|:---|:---|
-| `oauth_authorize` | OAuth認可リクエスト | 認可リクエストの監視 |
-| `mfa_success` | MFA認証成功 | MFA利用状況の追跡 |
-| `mfa_failure` | MFA認証失敗 | 不正アクセス検知 |
+| `oauth_authorize` | OAuth認可成功 | 認可リクエストの監視 |
+| `password_success` | パスワード認証成功 | ログイン成功の追跡 |
 | `password_failure` | パスワード認証失敗 | アカウントロックトリガー |
+| `webauthn_authentication_success` | WebAuthn認証成功 | FIDO認証利用状況 |
+| `webauthn_authentication_failure` | WebAuthn認証失敗 | 不正アクセス検知 |
 
 ### ユーザー操作イベント
 
 | イベントタイプ | 説明 | 典型的な用途 |
 |:---|:---|:---|
 | `user_signup` | ユーザー登録 | 新規ユーザー通知 |
-| `user_login` | ユーザーログイン | ログイン通知 |
-| `user_logout` | ユーザーログアウト | セッション管理 |
-| `user_locked` | アカウントロック | セキュリティアラート |
-| `user_delete` | ユーザー削除 | 監査ログ |
+| `login_success` | ユーザーログイン | ログイン通知 |
+| `logout` | ユーザーログアウト | セッション管理 |
+| `user_lock` | アカウントロック | セキュリティアラート |
+| `user_deletion` | ユーザー削除 | 監査ログ |
 
 ### フェデレーション関連イベント
 
 | イベントタイプ | 説明 | 典型的な用途 |
 |:---|:---|:---|
-| `federation_callback_success` | 外部IdP認証成功 | フェデレーション利用状況 |
-| `federation_callback_failure` | 外部IdP認証失敗 | 外部IdP連携エラー検知 |
+| `federation_success` | 外部IdP認証成功 | フェデレーション利用状況 |
+| `federation_failure` | 外部IdP認証失敗 | 外部IdP連携エラー検知 |
 
-### トークン・セッション関連イベント
+### トークン関連イベント
 
 | イベントタイプ | 説明 | 典型的な用途 |
 |:---|:---|:---|
-| `token_issued` | トークン発行 | トークン発行監視 |
-| `token_revoked` | トークン失効 | セキュリティ監視 |
-| `session_created` | セッション作成 | セッション管理 |
-| `session_terminated` | セッション終了 | セッション監視 |
+| `issue_token_success` | トークン発行成功 | トークン発行監視 |
+| `revoke_token_success` | トークン失効成功 | セキュリティ監視 |
+| `refresh_token_success` | トークン更新成功 | トークン管理 |
+| `inspect_token_success` | トークン検証成功 | トークン利用状況 |
 
 ---
 
@@ -118,14 +119,14 @@ flowchart TB
 {
   "type": "SLACK",
   "triggers": [
-    "user_locked",
+    "user_lock",
     "password_failure"
   ],
   "enabled": true
 }
 ```
 
-この例では、`user_locked`と`password_failure`イベントが発生した時のみSlack通知が実行されます。
+この例では、`user_lock`と`password_failure`イベントが発生した時のみSlack通知が実行されます。
 
 ### テナント単位設定
 
@@ -141,183 +142,58 @@ flowchart TB
 
 idp-serverでは、以下の6種類のフックをサポートしています。
 
-### 1. Slack通知
+| フックタイプ | 用途 | 送信先 |
+|:---|:---|:---|
+| **Slack** | リアルタイムなチーム通知 | Slack Incoming Webhook |
+| **Email** | 管理者へのメール通知 | SMTP経由でメール送信 |
+| **Webhook** | 外部システムへのHTTP POST | 任意のHTTPエンドポイント |
+| **SSF** | セキュリティイベント標準フォーマット送信 | SSF準拠の受信エンドポイント |
+| **Datadog** | メトリクス・ログ送信 | Datadog API |
+| **監査ログ** | データベース永続化 | idp-serverデータベース |
 
-**用途**: リアルタイムなチーム通知
+詳細な設定方法については、[イベント & フックシステム](../content_06_developer-guide/developer-guide/security-event-hooks.md)を参照してください。
 
-**設定例**:
-```json
-{
-  "type": "SLACK",
-  "triggers": ["user_locked", "mfa_failure"],
-  "enabled": true,
-  "details": {
-    "incoming_webhook_url": "https://hooks.slack.com/services/xxx"
-  }
-}
-```
+### SSFについて
 
-### 2. Email通知
-
-**用途**: 管理者へのメール通知
-
-**設定例**:
-```json
-{
-  "type": "EMAIL",
-  "triggers": ["user_signup", "user_delete"],
-  "enabled": true,
-  "details": {
-    "to": "admin@example.com",
-    "subject": "Security Alert"
-  }
-}
-```
-
-### 3. Webhook
-
-**用途**: 外部システムへのHTTP POST
-
-**設定例**:
-```json
-{
-  "type": "WEBHOOK",
-  "triggers": ["oauth_authorize", "token_issued"],
-  "enabled": true,
-  "details": {
-    "url": "https://external-system.com/events",
-    "method": "POST"
-  }
-}
-```
-
-### 4. SSF (Shared Signals Framework)
-
-**用途**: セキュリティイベント標準フォーマット送信
-
-**設定例**:
-```json
-{
-  "type": "SSF",
-  "triggers": ["user_locked", "session_terminated"],
-  "enabled": true,
-  "details": {
-    "transmission_endpoint": "https://receiver.com/ssf"
-  }
-}
-```
+SSF (Shared Signals Framework)は、OpenID Foundationが標準化したセキュリティイベント共有フレームワークです。
 
 参考: [OpenID Shared Signals and Events Framework](https://openid.net/specs/openid-sse-framework-1_0.html)
-
-### 5. Datadog
-
-**用途**: メトリクス・ログ送信
-
-**設定例**:
-```json
-{
-  "type": "DATADOG",
-  "triggers": ["user_login", "mfa_success"],
-  "enabled": true,
-  "details": {
-    "api_key": "xxx",
-    "site": "datadoghq.com"
-  }
-}
-```
-
-### 6. 監査ログ
-
-**用途**: データベース永続化
-
-**設定例**:
-```json
-{
-  "type": "AUDIT_LOG",
-  "triggers": ["user_delete", "client_create"],
-  "enabled": true,
-  "details": {
-    "store_execution_payload": true
-  }
-}
-```
 
 ---
 
 ## ユースケース
 
-### 1. セキュリティ監視: パスワード失敗5回でアカウントロック
+### 1. セキュリティ監視: アカウントロック
 
-```mermaid
-flowchart TB
-    LOGIN[ログイン失敗] --> EVENT[password_failure イベント]
-    EVENT --> COUNTER[失敗カウンター +1]
-    COUNTER --> CHECK{5回以上?}
-    CHECK -->|Yes| LOCK[UserLifecycleEvent: LOCK]
-    CHECK -->|No| END[終了]
-    LOCK --> EVENT2[user_locked イベント]
-    EVENT2 --> SLACK[Slack通知]
-```
+パスワード失敗を検知し、一定回数を超えたらアカウントをロックしてSlackに通知。
 
-このフローでは、SecurityEventとUserLifecycleEventが連携して動作します：
-
-1. `password_failure`イベント発行
-2. イベントハンドラーが失敗回数をカウント
-3. 5回以上でUserLifecycleEvent（LOCK）発行
-4. ユーザーステータスがLOCKEDに変更
-5. `user_locked`イベント発行
-6. Slackに通知
+- **イベント**: `password_failure` → `user_lock`
+- **フック**: Slack通知
+- **効果**: 不正アクセス試行をリアルタイムで検知
 
 ### 2. コンプライアンス: 監査ログの保存
 
-すべての重要な操作を監査ログとして保存：
+すべての重要な操作を監査ログとして保存。
 
-```json
-{
-  "type": "AUDIT_LOG",
-  "triggers": [
-    "user_delete",
-    "client_create",
-    "client_update",
-    "authorization_server_update"
-  ],
-  "enabled": true,
-  "store_execution_payload": true
-}
-```
+- **イベント**: `user_deletion`, `user_create`, `user_edit`等
+- **フック**: 監査ログ
+- **効果**: コンプライアンス要件を満たす監査証跡
 
 ### 3. 外部連携: SIEMへのイベント送信
 
-セキュリティイベントをSIEMに送信して脅威検知：
+セキュリティイベントをSIEMに送信して脅威を検知。
 
-```json
-{
-  "type": "WEBHOOK",
-  "triggers": [
-    "mfa_failure",
-    "user_locked",
-    "password_failure"
-  ],
-  "enabled": true,
-  "details": {
-    "url": "https://siem.example.com/events"
-  }
-}
-```
+- **イベント**: `webauthn_authentication_failure`, `user_lock`, `password_failure`
+- **フック**: Webhook
+- **効果**: 外部セキュリティシステムとの統合
 
-### 4. 運用通知: 新規ユーザー登録をSlack通知
+### 4. 運用通知: 新規ユーザー登録の通知
 
-```json
-{
-  "type": "SLACK",
-  "triggers": ["user_signup"],
-  "enabled": true,
-  "details": {
-    "incoming_webhook_url": "https://hooks.slack.com/services/xxx",
-    "channel": "#user-registrations"
-  }
-}
-```
+新規ユーザー登録をSlackで通知。
+
+- **イベント**: `user_signup`
+- **フック**: Slack通知
+- **効果**: チームへのリアルタイム情報共有
 
 ---
 
@@ -325,31 +201,12 @@ flowchart TB
 
 idp-serverでは、2種類のイベントシステムが連携して動作します。
 
-### SecurityEvent vs UserLifecycleEvent
-
-| イベント | 目的 | トリガーソース | 影響 |
+| イベント | 目的 | トリガー | 影響 |
 |:---|:---|:---|:---|
 | **SecurityEvent** | 不審なアクションの検出と通知 | 認証フロー、ログイン | 通知、監査、ライフサイクルイベントトリガー |
 | **UserLifecycleEvent** | ユーザー状態の変更 | 管理者アクション、自動ロック | ユーザー状態更新、データ削除 |
 
-### 連携例: アカウントロック
-
-```java
-// SecurityEventがトリガー
-SecurityEvent passwordFailure = new SecurityEvent(PASSWORD_FAILURE);
-
-// カウンターチェック
-if (failureCount >= 5) {
-    // UserLifecycleEventを発行
-    UserLifecycleEvent lockEvent = new UserLifecycleEvent(LOCK);
-
-    // ユーザーステータス更新
-    user.setStatus(LOCKED);
-
-    // 再度SecurityEventを発行（通知用）
-    SecurityEvent userLocked = new SecurityEvent(USER_LOCKED);
-}
-```
+**連携例**: パスワード失敗5回 → `password_failure`イベント → UserLifecycleEvent(LOCK) → `user_lock`イベント → Slack通知
 
 詳細は[イベント処理](../content_06_developer-guide/developer-guide/events.md)を参照してください。
 
