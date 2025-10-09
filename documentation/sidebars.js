@@ -56,6 +56,7 @@ const sidebars = {
         "content_03_concepts/concept-10-control-plane",
         "content_03_concepts/concept-11-security-events",
         "content_03_concepts/concept-12-authorization",
+        "content_03_concepts/concept-13-audit-compliance",
         {
           type: "category",
           label: "基礎（読み物）",
