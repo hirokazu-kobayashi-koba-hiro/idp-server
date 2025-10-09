@@ -2,7 +2,7 @@
 
 このドキュメントでは、CIBAフローにおけるFIDO-UAF認証の利用方法を説明します。
 
-FIDO-UAF認証を利用するためには、事前にFIDO-UAFを利用できる[デバイスの登録](mfa-fido-uaf-registration.md)が必要となります。
+FIDO-UAF認証を利用するためには、事前にFIDO-UAFを利用できる[デバイスの登録](how-to-05-mfa-fido-uaf-registration.md)が必要となります。
 
 ---
 
@@ -179,7 +179,7 @@ login_hintの形式に関しては、[CIBA フロー](content_04_protocols/ciba-
 
 優先順位など認証デバイスの属性情報に登録できる項目は下記ドキュメントを参照ください。
 
-[FIDO-UAF登録](mfa-fido-uaf-registration.md)
+[FIDO-UAF登録](how-to-05-mfa-fido-uaf-registration.md)
 
 ### 認証トランザクションの取得（認証デバイス）
 

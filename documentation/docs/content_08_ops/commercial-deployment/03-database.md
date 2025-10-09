@@ -281,5 +281,4 @@ ORDER BY grantee, table_name;
 - [デプロイ概要](./00-overview.md)
 - [環境変数設定](./02-environment-variables.md)
 - [初期設定・ユーザー・ロール](./04-initial-configuration.md)
-- [検証・テストチェックリスト](./05-verification-checklist.md)
-- [運用ガイダンス](./06-operational-guidance.md)
+- [運用ガイダンス](05-operational-guidance.md)

@@ -79,7 +79,7 @@ OAuth 2.0は、ユーザーのパスワードや機密情報を直接共有せ�
 | Implicit Grant | ⚠️ 非推奨 | 新規実装は推奨されません |
 | Device Authorization Grant | 🔄 計画中 | [Issue #XXX](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues) |
 | Bearer Token | ✅ 完全対応 | [トークンタイプ詳細](basic-10-oauth2-token-types.md) |
-| Token Introspection (RFC 7662) | ✅ 完全対応 | [イントロスペクション](../../content_04_protocols/introspection.md) |
+| Token Introspection (RFC 7662) | ✅ 完全対応 | [イントロスペクション](../../content_04_protocols/protocol-03-introspection.md) |
 | Token Revocation (RFC 7009) | ✅ 完全対応 | RFC 7009準拠 |
 
 ### idp-server独自拡張

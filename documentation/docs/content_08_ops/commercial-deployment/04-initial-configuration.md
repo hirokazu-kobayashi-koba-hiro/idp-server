@@ -272,5 +272,4 @@ vim config-sample/production/admin-tenant/initial.json
 - [デプロイ概要](./00-overview.md)
 - [環境変数設定](./02-environment-variables.md)
 - [データベース設定](./03-database.md)
-- [検証・テストチェックリスト](./05-verification-checklist.md)
-- [運用ガイダンス](./06-operational-guidance.md)
+- [運用ガイダンス](05-operational-guidance.md)

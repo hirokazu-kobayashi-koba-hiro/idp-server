@@ -140,6 +140,6 @@ idp-server の商用デプロイメントに必要な技術要件と基本的な
    - OAuth/OIDC フロー検証
    - テナント分離確認
 
-6. **[運用](./06-operational-guidance.md)**
+6. **[運用](05-operational-guidance.md)**
    - 監視設定
    - バックアップ
