@@ -554,19 +554,19 @@
           },
           "description": "List of scopes requiring identity verification."
         },
-        "enabled_custom_claims_scope_mapping": {
+        "custom_claims_scope_mapping": {
           "type": "boolean",
           "description": "Enables mapping of custom claims based on scope."
         },
-        "enabled_access_token_selective_user_custom_properties": {
+        "access_token_selective_user_custom_properties": {
           "type": "boolean",
           "description": "Enables selective inclusion of user custom properties in access token."
         },
-        "enabled_access_token_verified_claims": {
+        "access_token_verified_claims": {
           "type": "boolean",
           "description": "Enables inclusion of verified claims in access token."
         },
-        "enabled_access_token_selective_verified_claims": {
+        "access_token_selective_verified_claims": {
           "type": "boolean",
           "description": "Enables selective inclusion of verified claims in access token."
         }

@@ -177,7 +177,7 @@ IDトークンとアクセストークンに含めることができます。
 
 これは `ScopeMappingCustomClaimsCreator` により実現され、以下の条件で動作します：
 
-* `enabled_custom_claims_scope_mapping` が有効であること
+* `custom_claims_scope_mapping` が有効であること
 * 対象スコープに `claims:` プレフィックスが含まれていること
 
 **IDトークンへの追加時の追加条件**：

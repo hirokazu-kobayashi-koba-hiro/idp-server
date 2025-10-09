@@ -207,9 +207,9 @@
     "fapi_advance_scopes": [
       "write"
     ],
-    "enabled_custom_claims_scope_mapping": true,
-    "enabled_access_token_user_custom_properties": true,
-    "enabled_access_token_selective_verified_claims": true,
+    "custom_claims_scope_mapping": true,
+    "access_token_selective_user_custom_properties": true,
+    "access_token_selective_verified_claims": true,
     "authentication_policies": [
       {
         "id": "default_authentication_policy",
