@@ -48,6 +48,7 @@ const sidebars = {
         "content_03_concepts/concept-02-id-management",
         "content_03_concepts/concept-03-id-verified",
         "content_03_concepts/concept-04-enterprise-id",
+        "content_03_concepts/concept-05-authentication-policy",
         {
           type: "category",
           label: "基礎（読み物）",
