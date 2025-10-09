@@ -19,6 +19,7 @@ package org.idp.server.control_plane.management.tenant.invitation.io;
 public enum TenantInvitationManagementStatus {
   OK(200),
   CREATED(201),
+  NO_CONTENT(204),
   INVALID_REQUEST(400),
   UNAUTHORIZED(401),
   FORBIDDEN(403),

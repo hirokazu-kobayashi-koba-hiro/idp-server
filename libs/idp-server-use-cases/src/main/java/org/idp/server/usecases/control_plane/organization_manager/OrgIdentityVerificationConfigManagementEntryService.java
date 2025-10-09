@@ -360,8 +360,12 @@ public class OrgIdentityVerificationConfigManagementEntryService
     }
 
     if (dryRun) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("message", "Deletion simulated successfully");
+      response.put("id", configuration.id());
+      response.put("dry_run", true);
       return new IdentityVerificationConfigManagementResponse(
-          IdentityVerificationConfigManagementStatus.NO_CONTENT, Map.of());
+          IdentityVerificationConfigManagementStatus.OK, response);
     }
 
     identityVerificationConfigurationCommandRepository.delete(

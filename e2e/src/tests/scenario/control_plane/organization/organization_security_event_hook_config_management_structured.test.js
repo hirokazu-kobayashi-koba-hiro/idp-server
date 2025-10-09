@@ -369,7 +369,7 @@ describe("Organization Security Event Hook Config Management API - Structured Te
         expect(response.status).toBe(200);
         expect(response.data.dry_run).toBe(true);
         expect(response.data.message).toContain("simulated successfully");
-        expect(response.data.config_id).toBe(deleteConfigId);
+        expect(response.data.id).toBe(deleteConfigId);
       });
     });
 

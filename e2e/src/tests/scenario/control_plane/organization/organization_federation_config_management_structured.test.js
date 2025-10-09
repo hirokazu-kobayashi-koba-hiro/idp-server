@@ -731,7 +731,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
-        expect(response.status).toBe(204); // DELETE dry run returns 204 No Content
+        expect(response.status).toBe(200);
 
         // Clean up (actual deletion)
         await deletion({

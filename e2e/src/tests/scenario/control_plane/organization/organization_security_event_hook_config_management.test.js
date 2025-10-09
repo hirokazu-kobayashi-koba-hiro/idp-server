@@ -46,7 +46,7 @@ describe("organization security event hook configuration management api", () => 
             events: {
               "user_signin_failure": {
                 execution: {
-                  function: "webhook_call",
+                  function: "http_request",
                   http_request: {
                     url: "https://hmac.example.com/webhook",
                     method: "POST",
@@ -87,7 +87,7 @@ describe("organization security event hook configuration management api", () => 
             events: {
               "user_signin_failure": {
                 execution: {
-                  function: "webhook_call",
+                  function: "http_request",
                   http_request: {
                     url: "https://hmac.example.com/webhook",
                     method: "POST",
@@ -155,7 +155,7 @@ describe("organization security event hook configuration management api", () => 
             events: {
               "user_signin_failure": {
                 execution: {
-                  function: "webhook_call",
+                  function: "http_request",
                   http_request: {
                     url: "https://hmac.example.com/webhook",
                     method: "POST",
@@ -192,7 +192,7 @@ describe("organization security event hook configuration management api", () => 
             events: {
               "user_signin_failure": {
                 execution: {
-                  function: "webhook_call",
+                  function: "http_request",
                   http_request: {
                     url: "https://hmac.example.com/webhook",
                     method: "POST",
@@ -280,6 +280,89 @@ describe("organization security event hook configuration management api", () => 
           }
         }
       }
+    });
+
+    it("dry run delete functionality", async () => {
+      // Get OAuth token
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const hookConfigId = uuidv4();
+
+      // First create a security event hook config
+      const createResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          "id": hookConfigId,
+          "type": hookConfigId,
+          "enabled": true,
+          triggers: [
+            "user_signin_failure"
+          ],
+          "events": {
+            "user_signin_failure": {
+              execution: {
+                function: "http_request",
+                http_request: {
+                  url: "https://hmac.example.com/webhook",
+                  method: "POST",
+                  auth_type: "HMAC_SHA256",
+                  hmac_authentication: {
+                    api_key: "hmac-api-key",
+                    secret: "super-secret-hmac-key",
+                    signature_format: "SHA256",
+                    signing_fields: ["timestamp", "payload"]
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+      expect(createResponse.status).toBe(201);
+
+      // Test dry run for delete
+      const dryRunDeleteResponse = await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations/${hookConfigId}?dry_run=true`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      console.log("Dry run delete response:", dryRunDeleteResponse.data);
+      expect(dryRunDeleteResponse.status).toBe(200);
+      expect(dryRunDeleteResponse.data).toHaveProperty("message");
+      expect(dryRunDeleteResponse.data).toHaveProperty("id", hookConfigId);
+      expect(dryRunDeleteResponse.data).toHaveProperty("dry_run", true);
+
+      // Verify hook config was not actually deleted
+      const verifyResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations/${hookConfigId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      expect(verifyResponse.status).toBe(200);
+      expect(verifyResponse.data.id).toBe(hookConfigId);
+
+      // Cleanup - actual delete
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations/${hookConfigId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
     });
 
     it("error scenarios", async () => {

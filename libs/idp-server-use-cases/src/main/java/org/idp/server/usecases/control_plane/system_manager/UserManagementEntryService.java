@@ -477,7 +477,11 @@ public class UserManagementEntryService implements UserManagementApi {
     }
 
     if (dryRun) {
-      return new UserManagementResponse(UserManagementStatus.NO_CONTENT, Map.of());
+      Map<String, Object> response = new HashMap<>();
+      response.put("message", "Deletion simulated successfully");
+      response.put("sub", user.sub());
+      response.put("dry_run", true);
+      return new UserManagementResponse(UserManagementStatus.OK, response);
     }
 
     userCommandRepository.delete(tenant, userIdentifier);

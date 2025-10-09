@@ -313,6 +313,14 @@ public class FederationConfigurationManagementEntryService
           FederationConfigManagementStatus.NOT_FOUND, Map.of());
     }
 
+    if (dryRun) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("message", "Deletion simulated successfully");
+      response.put("id", configuration.identifier().value());
+      response.put("dry_run", true);
+      return new FederationConfigManagementResponse(FederationConfigManagementStatus.OK, response);
+    }
+
     federationConfigurationCommandRepository.delete(tenant, configuration);
 
     return new FederationConfigManagementResponse(

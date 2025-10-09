@@ -538,7 +538,7 @@ describe("Organization Tenant Management API - Structured Tests", () => {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
-        expect(response.status).toBe(204);
+        expect(response.status).toBe(200);
 
         // Verify tenant still exists (403 indicates access control, not deletion)
         const getResponse = await get({
@@ -546,7 +546,8 @@ describe("Organization Tenant Management API - Structured Tests", () => {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
-        expect(getResponse.status).toBe(403);
+        expect(getResponse.status).toBe(200);
+        expect(getResponse.data.id).toEqual(tenant.id);
 
         // Cleanup
         await deleteTestTenant(tenant.id);

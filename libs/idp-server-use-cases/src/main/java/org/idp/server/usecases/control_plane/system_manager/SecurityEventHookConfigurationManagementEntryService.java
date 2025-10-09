@@ -305,6 +305,15 @@ public class SecurityEventHookConfigurationManagementEntryService
           SecurityEventHookConfigManagementStatus.NOT_FOUND, Map.of());
     }
 
+    if (dryRun) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("message", "Deletion simulated successfully");
+      response.put("id", configuration.identifier().value());
+      response.put("dry_run", true);
+      return new SecurityEventHookConfigManagementResponse(
+          SecurityEventHookConfigManagementStatus.OK, response);
+    }
+
     securityEventHookConfigurationCommandRepository.delete(tenant, configuration);
 
     return new SecurityEventHookConfigManagementResponse(

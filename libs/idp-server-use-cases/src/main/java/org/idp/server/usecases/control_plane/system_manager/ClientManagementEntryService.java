@@ -308,6 +308,14 @@ public class ClientManagementEntryService implements ClientManagementApi {
       return new ClientManagementResponse(ClientManagementStatus.NOT_FOUND, Map.of());
     }
 
+    if (dryRun) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("message", "Deletion simulated successfully");
+      response.put("client_id", clientConfiguration.clientIdValue());
+      response.put("dry_run", true);
+      return new ClientManagementResponse(ClientManagementStatus.OK, response);
+    }
+
     clientConfigurationCommandRepository.delete(tenant, clientConfiguration);
 
     return new ClientManagementResponse(ClientManagementStatus.NO_CONTENT, Map.of());

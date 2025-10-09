@@ -414,7 +414,11 @@ public class OrgRoleManagementEntryService implements OrgRoleManagementApi {
     auditLogPublisher.publish(auditLog);
 
     if (dryRun) {
-      return new RoleManagementResponse(RoleManagementStatus.NO_CONTENT, Map.of());
+      Map<String, Object> response = new HashMap<>();
+      response.put("message", "Deletion simulated successfully");
+      response.put("id", role.id());
+      response.put("dry_run", true);
+      return new RoleManagementResponse(RoleManagementStatus.OK, response);
     }
 
     roleCommandRepository.delete(targetTenant, role);

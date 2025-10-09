@@ -320,6 +320,15 @@ public class AuthenticationPolicyConfigurationManagementEntryService
           AuthenticationPolicyConfigManagementStatus.NOT_FOUND, Map.of());
     }
 
+    if (dryRun) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("message", "Deletion simulated successfully");
+      response.put("id", configuration.id());
+      response.put("dry_run", true);
+      return new AuthenticationPolicyConfigManagementResponse(
+          AuthenticationPolicyConfigManagementStatus.OK, response);
+    }
+
     authenticationPolicyConfigurationCommandRepository.delete(tenant, configuration);
 
     return new AuthenticationPolicyConfigManagementResponse(

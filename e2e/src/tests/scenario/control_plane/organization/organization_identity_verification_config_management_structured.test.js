@@ -544,7 +544,7 @@ describe("Organization Identity Verification Config Management API - Structured 
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
-        expect(response.status).toBe(204);
+        expect(response.status).toBe(200);
 
         // Clean up (actual deletion)
         await deletion({

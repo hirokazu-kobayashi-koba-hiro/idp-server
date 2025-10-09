@@ -323,7 +323,11 @@ public class PermissionManagementEntryService implements PermissionManagementApi
     }
 
     if (dryRun) {
-      return new PermissionManagementResponse(PermissionManagementStatus.NO_CONTENT, Map.of());
+      Map<String, Object> response = new HashMap<>();
+      response.put("message", "Deletion simulated successfully");
+      response.put("id", permission.id());
+      response.put("dry_run", true);
+      return new PermissionManagementResponse(PermissionManagementStatus.OK, response);
     }
 
     permissionCommandRepository.delete(tenant, permission);

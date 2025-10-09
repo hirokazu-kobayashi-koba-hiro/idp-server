@@ -190,6 +190,7 @@ public class TenantInvitationManagementEntryService implements TenantInvitationM
 
     tenantInvitationCommandRepository.delete(tenant, tenantInvitation);
 
-    return new TenantInvitationManagementResponse(TenantInvitationManagementStatus.OK, response);
+    return new TenantInvitationManagementResponse(
+        TenantInvitationManagementStatus.NO_CONTENT, response);
   }
 }

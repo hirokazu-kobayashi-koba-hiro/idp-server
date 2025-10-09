@@ -209,18 +209,24 @@ paths:
         - $ref: '#/components/parameters/DryRun'
       responses:
         '200':
-          description: 認証設定の削除が成功しました
+          description: ドライラン削除成功（dry_run=trueの場合）
           content:
             application/json:
               schema:
                 type: object
                 properties:
+                  message:
+                    type: string
+                    description: 削除シミュレーション成功メッセージ
+                  config_id:
+                    type: string
+                    format: uuid
+                    description: 削除対象の設定ID
                   dry_run:
                     type: boolean
-                    description: ドライランかどうか
-                  result:
-                    type: object
-                    description: 削除確認
+                    description: ドライランフラグ（常にtrue）
+        '204':
+          description: 認証設定の削除が成功しました（実際の削除）
         '403':
           description: 権限不足または無効な組織・テナントアクセス
           content:
@@ -1014,32 +1020,27 @@ paths:
       tags:
         - organization-federation-config
       parameters:
-        - name: dry_run
-          in: query
-          required: false
-          schema:
-            type: boolean
-            default: false
-          description: ドライランモード（実際の削除は行わない）
+        - $ref: '#/components/parameters/DryRun'
       responses:
         '200':
-          description: フェデレーション設定削除成功
+          description: ドライラン削除成功（dry_run=trueの場合）
           content:
             application/json:
               schema:
                 type: object
                 properties:
+                  message:
+                    type: string
+                    description: 削除シミュレーション成功メッセージ
+                  config_id:
+                    type: string
+                    format: uuid
+                    description: 削除対象の設定ID
                   dry_run:
                     type: boolean
-                    description: ドライランかどうか
-                  result:
-                    type: object
-                    properties:
-                      deleted:
-                        type: boolean
-                        description: 設定が削除されたかどうか
-                    required: [deleted]
-                required: [dry_run, result]
+                    description: ドライランフラグ（常にtrue）
+        '204':
+          description: フェデレーション設定削除成功（実際の削除）
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1111,6 +1112,8 @@ paths:
       tags:
         - organization-security-event-hook
       parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
         - name: enabled
           in: query
           required: false
@@ -1131,14 +1134,19 @@ paths:
               schema:
                 type: object
                 properties:
-                  dry_run:
-                    type: boolean
-                    description: ドライランかどうか
-                  result:
+                  list:
                     type: array
                     items:
                       $ref: '#/components/schemas/SecurityEventHookConfiguration'
-                required: [dry_run, result]
+                  total_count:
+                    type: integer
+                    description: セキュリティイベントフック設定の総数
+                  limit:
+                    type: integer
+                    description: 返される結果の最大数
+                  offset:
+                    type: integer
+                    description: スキップされた結果の数
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1172,14 +1180,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  dry_run:
-                    type: boolean
-                    description: ドライランかどうか
-                  result:
-                    $ref: '#/components/schemas/SecurityEventHookConfiguration'
-                required: [dry_run, result]
+                $ref: '#/components/schemas/SecurityEventHookConfiguration'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1242,29 +1243,183 @@ paths:
         - $ref: '#/components/parameters/DryRun'
       responses:
         '200':
-          description: セキュリティイベントフック設定削除成功
+          description: ドライラン削除成功（dry_run=trueの場合）
           content:
             application/json:
               schema:
                 type: object
                 properties:
+                  message:
+                    type: string
+                    description: 削除シミュレーション成功メッセージ
+                  config_id:
+                    type: string
+                    format: uuid
+                    description: 削除対象の設定ID
                   dry_run:
                     type: boolean
-                    description: ドライランかどうか
-                  result:
-                    type: object
-                    properties:
-                      deleted:
-                        type: boolean
-                        description: 設定が削除されたかどうか
-                    required: [deleted]
-                required: [dry_run, result]
+                    description: ドライランフラグ（常にtrue）
+        '204':
+          description: セキュリティイベントフック設定削除成功（実際の削除）
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
           description: 組織、テナント、またはセキュリティイベントフック設定が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Organization-level Security Event Hook Result Management API
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/security-event-hooks:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: List security event hook execution results
+      description: 組織内のテナントのセキュリティイベントフック実行結果一覧を取得します
+      tags:
+        - organization-security-event-hook
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: 検索開始日時（ISO 8601形式）デフォルト：7日前
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: 検索終了日時（ISO 8601形式）デフォルト：明日
+        - name: id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: フック実行結果IDでフィルタリング
+        - name: event_type
+          in: query
+          required: false
+          schema:
+            type: string
+          description: イベントタイプでフィルタリング（例：user_signin, user_signin_failure）
+        - name: hook_type
+          in: query
+          required: false
+          schema:
+            type: string
+          description: フックタイプでフィルタリング（WEBHOOK, SSF, Email）
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [SUCCESS, FAILURE, RETRY_SUCCESS, RETRY_FAILURE]
+          description: 実行ステータスでフィルタリング
+      responses:
+        '200':
+          description: セキュリティイベントフック実行結果一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SecurityEventHookResult'
+                  total_count:
+                    type: integer
+                    description: フック実行結果の総数
+                  limit:
+                    type: integer
+                    description: 返される結果の最大数
+                  offset:
+                    type: integer
+                    description: スキップされた結果の数
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/security-event-hooks/{hook-result-id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - name: hook-result-id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: フック実行結果ID
+    get:
+      summary: Get security event hook execution result details
+      description: 特定のセキュリティイベントフック実行結果の詳細を取得します
+      tags:
+        - organization-security-event-hook
+      responses:
+        '200':
+          description: フック実行結果の詳細
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityEventHookResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: 組織、テナント、またはフック実行結果が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/security-event-hooks/{hook-result-id}/retry:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - name: hook-result-id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: 再試行するフック実行結果ID
+    post:
+      summary: Retry failed security event hook execution
+      description: 失敗したセキュリティイベントフック実行を再試行します。元のセキュリティイベントと最新のフック設定を使用して再実行します。
+      tags:
+        - organization-security-event-hook
+      responses:
+        '200':
+          description: フック再実行成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityEventHookResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: 組織、テナント、またはフック実行結果が見つかりません
           content:
             application/json:
               schema:
@@ -1801,6 +1956,15 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Permission'
+                  total_count:
+                    type: integer
+                    description: 権限の総数
+                  limit:
+                    type: integer
+                    description: 返される結果の最大数
+                  offset:
+                    type: integer
+                    description: スキップされた結果の数
         '403':
           description: 権限不足または無効な組織アクセス
           content:
@@ -2410,6 +2574,15 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Role'
+                  total_count:
+                    type: integer
+                    description: ロールの総数
+                  limit:
+                    type: integer
+                    description: 返される結果の最大数
+                  offset:
+                    type: integer
+                    description: スキップされた結果の数
         '403':
           description: 権限不足または無効な組織アクセス
           content:
@@ -3254,6 +3427,44 @@ components:
             type: object
             additionalProperties: true
           description: クエリマッピングルール
+      additionalProperties: false
+
+    SecurityEventHookResult:
+      type: object
+      required:
+        - id
+        - status
+        - type
+        - security_event
+        - contents
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: フック実行結果の一意識別子
+        status:
+          type: string
+          enum: [SUCCESS, FAILURE, RETRY_SUCCESS, RETRY_FAILURE, UNKNOWN]
+          description: フック実行ステータス
+        type:
+          type: string
+          description: フックタイプ（WEBHOOK, SSF, Email等）
+        security_event:
+          $ref: '#/components/schemas/SecurityEvent'
+        contents:
+          type: object
+          description: フック実行の詳細結果（execution_details, error_type, error_message等）
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+          description: フック実行結果作成タイムスタンプ
+        updated_at:
+          type: string
+          format: date-time
+          description: フック実行結果最終更新タイムスタンプ
       additionalProperties: false
 
     StandardSecurityEventHookType:
@@ -5878,7 +6089,7 @@ components:
     # Organization Identity Verification Config Schemas
     OrganizationIdentityVerificationConfig:
       type: object
-      required: ["id", "type"]
+      required: ["id", "type", "enabled"]
       properties:
         id:
           type: string
@@ -5889,6 +6100,10 @@ components:
           type: string
           description: Identity verification configuration type
           example: "document_verification"
+        enabled:
+          type: boolean
+          description: Whether the identity verification configuration is enabled
+          default: true
         attributes:
           type: object
           description: 設定属性
@@ -5920,6 +6135,10 @@ components:
           type: string
           description: Identity verification configuration type
           example: "document_verification"
+        enabled:
+          type: boolean
+          description: Whether the identity verification configuration is enabled
+          default: true
         attributes:
           type: object
           description: 設定属性
@@ -5945,6 +6164,9 @@ components:
           type: string
           description: Identity verification configuration type
           example: "enhanced_document_verification"
+        enabled:
+          type: boolean
+          description: Whether the identity verification configuration is enabled
         attributes:
           type: object
           description: 設定属性

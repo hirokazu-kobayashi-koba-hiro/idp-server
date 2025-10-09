@@ -237,6 +237,75 @@ describe("organization federation configuration management api", () => {
       }
     });
 
+    it("dry run delete functionality", async () => {
+      // Get OAuth token
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const federationConfigId = uuidv4();
+
+      // First create a federation config
+      const createResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          "id": federationConfigId,
+          "type": "oidc",
+          "sso_provider": federationConfigId,
+          "payload": {
+            "client_id": "test-client-id",
+            "client_secret": "test-client-secret",
+            "issuer": "https://accounts.google.com"
+          },
+          "enabled": true
+        }
+      });
+      expect(createResponse.status).toBe(201);
+
+      // Test dry run for delete
+      const dryRunDeleteResponse = await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${federationConfigId}?dry_run=true`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      console.log("Dry run delete response:", dryRunDeleteResponse.data);
+      expect(dryRunDeleteResponse.status).toBe(200);
+      expect(dryRunDeleteResponse.data).toHaveProperty("message");
+      expect(dryRunDeleteResponse.data).toHaveProperty("id", federationConfigId);
+      expect(dryRunDeleteResponse.data).toHaveProperty("dry_run", true);
+
+      // Verify federation config was not actually deleted
+      const verifyResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${federationConfigId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      expect(verifyResponse.status).toBe(200);
+      expect(verifyResponse.data).toHaveProperty("result");
+      expect(verifyResponse.data.result.id).toBe(federationConfigId);
+
+      // Cleanup - actual delete
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${federationConfigId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+    });
+
     it("error scenarios", async () => {
       // Get OAuth token
       const tokenResponse = await requestToken({

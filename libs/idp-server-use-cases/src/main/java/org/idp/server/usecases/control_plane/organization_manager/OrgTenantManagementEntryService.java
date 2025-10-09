@@ -299,6 +299,14 @@ public class OrgTenantManagementEntryService implements OrgTenantManagementApi {
       return new TenantManagementResponse(TenantManagementStatus.NOT_FOUND, Map.of());
     }
 
+    if (dryRun) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("message", "Deletion simulated successfully");
+      response.put("id", tenantIdentifier.value());
+      response.put("dry_run", true);
+      return new TenantManagementResponse(TenantManagementStatus.OK, response);
+    }
+
     tenantCommandRepository.delete(tenantIdentifier);
 
     return new TenantManagementResponse(TenantManagementStatus.NO_CONTENT, Map.of());
