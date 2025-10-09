@@ -2,41 +2,103 @@
 
 `idp-server` は 1サービスで、複数のテナントを運用できるマルチテナント型のアプリケーションです。
 
-## 🏷️ テナントとは？
+## テナントとは？
 
-**テナント（Tenant）** とは、`idp-server` を共有する中で独立した設定やデータ空間を持つ単位です。
+**テナント（Tenant）** とは、idp-serverを共有する中で独立した設定やデータ空間を持つ単位です。
 
-例えば：
+**ニーズ**:
+* サービスごとに独自の認証ポリシーやMFA設定を持たせたい
+* 開発環境と本番環境を分離したい
+* サービス提供先ごとにIdPの挙動を切り替えたい
 
-* サービスごとに独自の認証ポリシーやMFA設定を持たせたい場合
-* 開発環境と本番環境を分離したい場合
-* サービス提供先ごとにIdPの挙動を切り替えたい場合
-
-といったニーズに対応するため、**idp-server** はすべての機能をテナント単位で制御・分離できる設計になっています。
-
-```mermaid
-flowchart TB
-  idp_server["🛡️ idp-server"]
-  subgraph Tenant A
-    a_config["Config A"]
-    a_users["Users A"]
-  end
-  subgraph Tenant B
-    b_config["Config B"]
-    b_users["Users B"]
-  end
-  idp_server --> a_config
-  idp_server --> b_config
-
-```
-
-### 導入パターン例
-
+**導入パターン例**:
 - グループ会社ごとに分離してIdPを提供（B2B）
 - 開発・ステージング・本番の分離（DevOps）
 - ホワイトラベルSaaSの提供元が、顧客ごとにIdPをカスタマイズ（OEM型）
 
+---
 
+## idp-serverにおけるマルチテナントの設計思想
+
+### 1. 完全なテナント分離（Tenant Isolation）
+
+idp-serverでは、**データベースレベルでテナントを完全分離**します。
+
+```mermaid
+flowchart TB
+    subgraph Tenant A
+        A_Data[データ]
+        A_Config[設定]
+    end
+
+    subgraph Tenant B
+        B_Data[データ]
+        B_Config[設定]
+    end
+
+    RLS[Row Level Security<br/>※PostgreSQL] -->|強制分離| A_Data
+    RLS -->|強制分離| B_Data
+    App[アプリケーション] -->|検証| RLS
+```
+
+**なぜテナント分離が必要か**:
+- **セキュリティ境界の明確化**: テナント間のデータ漏洩防止
+- **コンプライアンス要件**: GDPR等の規制対応
+- **顧客ごとの独立性保証**: B2B SaaSでの信頼性
+- **マルチドメイン対応**: テナントごとに異なるドメイン・設定
+
+**テナント分離の実現方法**:
+- **アプリケーション検証**: Repository層でのTenantIdentifier検証
+- **すべてのRepository操作でTenantを第一引数**: 設計レベルでテナント分離を強制
+- **RLS（Row Level Security）**: データベースレベルでの強制分離（PostgreSQL選択時）
+
+**PostgreSQLを選択した場合**:
+- **RLS機能**: データベースレベルでの強制分離
+- **FORCE ROW LEVEL SECURITY**: DB管理者も制限
+- **二重防御**: アプリケーション + データベースの両方で検証
+
+詳細は [PostgreSQL Row Level Security](https://www.postgresql.org/docs/current/ddl-rowsecurity.html) を参照。
+
+### 2. 組織とテナントの階層構造
+
+idp-serverでは、**組織（Organization）** と **テナント（Tenant）** の2層構造をサポートします。
+
+```mermaid
+flowchart TB
+    Org[組織<br/>Organization] --> T1[テナントA<br/>本番環境]
+    Org --> T2[テナントB<br/>ステージング]
+    Org --> T3[テナントC<br/>開発環境]
+
+    T1 --> U1[ユーザー群A]
+    T2 --> U2[ユーザー群B]
+    T3 --> U3[ユーザー群C]
+```
+
+**関係性**:
+- **1組織 : N テナント**: 1つの組織が複数のテナントを管理
+- **組織管理者**: 組織内の複数テナントを横断管理
+- **テナント独立性**: テナント間のデータは完全分離
+
+**ユースケース**:
+- **企業**: 本番・ステージング・開発環境を1組織で管理
+- **SaaS事業者**: 顧客企業ごとに組織を作成、各環境をテナントで分離
+
+### 3. テナント単位の設定管理
+
+すべての設定がテナント単位で管理されます。
+
+**設定可能な項目**:
+- 認証ポリシー（concept-05参照）
+- 認可サーバー設定（concept-12参照）
+- クライアント設定
+- トークン設定（concept-06参照）
+- セッション設定（concept-07参照）
+- セキュリティイベントフック（concept-11参照）
+
+**メリット**:
+- テナントごとに異なるセキュリティポリシー
+- 段階的な設定変更（開発→ステージング→本番）
+- カスタマイズの柔軟性
 
 ---
 
@@ -124,6 +186,22 @@ flowchart TB
 
 ---
 
+## セキュリティ考慮事項
+
+### テナント間のデータ漏洩防止
+
+- **RLS強制**: PostgreSQLのFORCE ROW LEVEL SECURITYでDB管理者も制限
+- **アプリケーション検証**: Repository層でのTenantIdentifier検証（二重防御）
+- **監査ログ**: Cross-tenant accessの試行を記録
+
+### テナントIDの検証
+
+- **API呼び出し**: すべてのAPI呼び出しでテナントID検証
+- **URL vs トークン**: URLパスのテナントID vs トークンのテナントID一致確認
+- **不正アクセス拒否**: 不正なテナントIDでのアクセスを拒否
+
+---
+
 ## 参考資料
 
 ### マルチテナント設計リソース
@@ -137,9 +215,10 @@ flowchart TB
 - [Financial-grade API (FAPI)](https://openid.net/specs/openid-financial-api-part-1-1_0.html) - 金融レベルセキュリティ
 
 ### 関連ドキュメント
-- [エンタープライズID](enterprise-id.md) - エンタープライズでの活用パターン
-- [身元確認済みID](id-verified.md) - テナント別の身元確認設定
-- [認可コードフロー](../content_04_protocols/authorization-code-flow.md) - 基盤技術の詳細
+- [エンタープライズID](concept-04-enterprise-id.md) - エンタープライズでの活用パターン
+- [身元確認済みID](concept-03-id-verified.md) - テナント別の身元確認設定
+- [コントロールプレーン](concept-10-control-plane.md) - Management API、組織管理
+- [監査ログ](concept-13-audit-compliance.md) - テナント単位の監査分離
 
 ---                                                                                                                                                                                                |
 
