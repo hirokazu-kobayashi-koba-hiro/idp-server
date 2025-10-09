@@ -175,7 +175,7 @@ title: 📚 ドキュメント索引
 
 ---
 
-## ⚙️ content_08_ops - 運用ガイド (8ファイル)
+## ⚙️ content_08_ops - 運用ガイド (11ファイル)
 
 ### メイン運用ドキュメント (2ファイル)
 
@@ -183,6 +183,14 @@ title: 📚 ドキュメント索引
 |---|---------|---------|------|
 | 01 | `ops-01-test-strategy.md` | テスト戦略 | テスト方針 |
 | 02 | `ops-02-performance-test.md` | ストレステスト結果 | 負荷テスト結果 |
+
+### セキュリティ診断 (3ファイル)
+
+| # | ファイル | タイトル | 概要 |
+|---|---------|---------|------|
+| 01 | `security-vulnerability-sub-issues.md` | OWASP Top 10 2025 Sub-Issue分割 (日本語) | 脆弱性診断結果のSub-Issue詳細 |
+| 02 | `security-vulnerability-sub-issues-en.md` | OWASP Top 10 2025 Sub-Issue Breakdown (English) | Security assessment sub-issues |
+| 03 | `security-assessment-quick-reference.md` | セキュリティ診断クイックリファレンス | 緊急対応・優先順位一覧 |
 
 ### 商用デプロイメント (6ファイル)
 
@@ -227,7 +235,7 @@ title: 📚 ドキュメント索引
 | ハウツー | 9 | ✅ |
 | 開発者ガイド | 29 | ✅ |
 | APIリファレンス | 2 | ⚠️ (空ファイル含む) |
-| 運用 | 8 | ✅ |
+| 運用 | 11 | ✅ |
 | プロジェクト | 9 | ⚠️ (空ファイル含む) |
 | **合計** | **88** | - |
 
