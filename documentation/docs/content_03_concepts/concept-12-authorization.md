@@ -187,35 +187,37 @@ flowchart TB
 
 ### 6. クライアント認証の柔軟性
 
-idp-serverは、クライアントの認証方式を柔軟に選択できます。
+idp-serverは、7つのクライアント認証方式をサポートします。
 
 ```mermaid
 flowchart TB
-    Client[Client] --> Auth{認証方式}
-    Auth --> Secret[client_secret系]
-    Auth --> JWT[JWT系<br/>推奨]
-    Auth --> MTLS[mTLS系<br/>高セキュリティ]
-    Auth --> None[none<br/>Public Client]
+    Start[クライアント種類] --> Type{クライアントタイプ}
+
+    Type -->|Public Client| None[none<br/>+PKCE必須]
+
+    Type -->|Confidential Client| FAPI{FAPI準拠?}
+
+    FAPI -->|Yes| MTLS{証明書種別}
+    FAPI -->|No| Shared{シークレット共有可能?}
+
+    MTLS -->|CA証明書| TLS[tls_client_auth]
+    MTLS -->|自己署名| SelfSigned[self_signed_tls_client_auth]
+
+    Shared -->|共有を避けたい| JWT[private_key_jwt<br/>推奨]
+    Shared -->|共有OK| Secret[client_secret系]
 
     Secret --> Basic[client_secret_basic]
     Secret --> Post[client_secret_post]
-
-    JWT --> SecretJWT[client_secret_jwt]
-    JWT --> PrivateJWT[private_key_jwt]
-
-    MTLS --> TLS[tls_client_auth]
-    MTLS --> SelfSigned[self_signed_tls_client_auth]
 ```
 
-**推奨度**:
+**認証方式の選択基準**:
 
-| 認証方式 | セキュリティ | 推奨度 | 用途 |
-|:---|:---|:---|:---|
-| `private_key_jwt` | ★★★★★ | 最推奨 | 本番環境全般 |
-| `tls_client_auth` | ★★★★★ | 推奨 | 金融・医療等 |
-| `client_secret_jwt` | ★★★☆☆ | 条件付き | シークレット共有可能な場合 |
-| `client_secret_basic` | ★★☆☆☆ | 非推奨 | レガシー互換 |
-| `none` | ★☆☆☆☆ | Public Clientのみ | SPA/モバイル（+PKCE必須） |
+| 選択基準 | 推奨方式 | 理由 |
+|:---|:---|:---|
+| **FAPI準拠**（金融・医療） | `tls_client_auth` | Mutual TLS、FAPI要件 |
+| **シークレット共有を避けたい** | `private_key_jwt` | 公開鍵暗号、漏洩リスク低 |
+| **シークレット共有OK** | `client_secret_basic/post` | シンプル、管理容易 |
+| **Public Client** | `none` + PKCE | SPA/モバイルアプリ |
 
 ### 7. 2種類のトークン形式
 
