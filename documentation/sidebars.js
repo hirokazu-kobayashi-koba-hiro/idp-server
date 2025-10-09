@@ -53,6 +53,7 @@ const sidebars = {
         "content_03_concepts/concept-07-session-management",
         "content_03_concepts/concept-08-mfa",
         "content_03_concepts/concept-09-custom-claims",
+        "content_03_concepts/concept-10-control-plane",
         {
           type: "category",
           label: "基礎（読み物）",
