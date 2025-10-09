@@ -111,7 +111,7 @@ OAuth 2.0の認可フローで発行される主なトークンは「アクセ�
 | JWT ID Token | ✅ 完全対応 | [IDトークン詳細](basic-13-id-token-jwt.md) |
 | 暗号化IDトークン | ✅ 完全対応 | RFC 7516 JWE対応 |
 | **トークン管理** | | |
-| Introspection | ✅ 完全対応 | [Introspection詳細](../../content_04_protocols/introspection.md) |
+| Introspection | ✅ 完全対応 | [Introspection詳細](../../content_04_protocols/protocol-03-introspection.md) |
 | Revocation | ✅ 完全対応 | RFC 7009準拠 |
 | **有効期限管理** | | |
 | TTL設定 | ✅ 完全対応 | テナント単位設定可能 |

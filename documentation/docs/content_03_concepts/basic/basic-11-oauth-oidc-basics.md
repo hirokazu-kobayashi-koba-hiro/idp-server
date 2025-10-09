@@ -68,7 +68,7 @@ OpenID Connectは、OAuth 2.0の「認可」に加えて「認証・ID」の要�
 | **OAuth 2.0 Core** | Authorization Code Grant | ✅ 完全対応 | [認可コードフロー](../../content_04_protocols/authorization-code-flow.md) |
 | | Client Credentials Grant | ✅ 完全対応 | RFC 6749 Section 4.4 |
 | | PKCE | ✅ 完全対応 | RFC 7636準拠 |
-| | Token Introspection | ✅ 完全対応 | [イントロスペクション](../../content_04_protocols/introspection.md) |
+| | Token Introspection | ✅ 完全対応 | [イントロスペクション](../../content_04_protocols/protocol-03-introspection.md) |
 | | Token Revocation | ✅ 完全対応 | RFC 7009準拠 |
 | **OpenID Connect** | Core | ✅ 完全対応 | [OIDC詳細](basic-12-openid-connect-detail.md) |
 | | Discovery | ✅ 完全対応 | OIDC Discovery 1.0準拠 |

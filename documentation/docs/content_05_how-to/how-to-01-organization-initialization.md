@@ -339,7 +339,7 @@ Content-Type: application/json
 | `id_token_duration` | number | IDトークン有効期限（秒）デフォルト: 3600 |
 | `refresh_token_duration` | number | リフレッシュトークン有効期限（秒）デフォルト: 86400 |
 
-詳細は[認可サーバー設定ガイド](./authorization-server-configuration.md)を参照してください。
+詳細は[認可サーバー設定ガイド](how-to-02-authorization-server-configuration.md)を参照してください。
 
 #### user設定項目
 
@@ -736,13 +736,13 @@ curl "..."  # いきなり本番実行
 2. **MFA設定の有効化**
 3. **追加の管理者ユーザー作成**
 4. **監査ログ設定の確認**
-5. **ビジネステナントの作成**（[認可サーバー設定ガイド](./authorization-server-configuration.md)参照）
+5. **ビジネステナントの作成**（[認可サーバー設定ガイド](how-to-02-authorization-server-configuration.md)参照）
 
 ---
 
 ## 関連ドキュメント
 
-- [認可サーバー設定ガイド](./authorization-server-configuration.md) - テナント作成と認可サーバー設定
+- [認可サーバー設定ガイド](how-to-02-authorization-server-configuration.md) - テナント作成と認可サーバー設定
 - [エンタープライズID](../content_03_concepts/enterprise-id.md) - 組織・テナント概念
 - [マルチテナント](../content_03_concepts/multi-tenant.md) - マルチテナント設計
 
