@@ -57,6 +57,7 @@ const sidebars = {
         "content_03_concepts/concept-11-security-events",
         "content_03_concepts/concept-12-authorization",
         "content_03_concepts/concept-13-audit-compliance",
+        "content_03_concepts/concept-14-grant-management",
         {
           type: "category",
           label: "基礎（読み物）",
