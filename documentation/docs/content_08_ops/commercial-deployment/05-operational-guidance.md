@@ -35,7 +35,7 @@ curl http://localhost:8080/actuator/metrics/hikaricp.connections.active
 
 | ログメッセージ | レベル | 意味 | 対応 |
 |--------------|--------|------|------|
-| `Unable to connect to database` | ERROR | DB接続失敗 | 環境変数・接続確認 |
+| `Failed to get DB connection` | ERROR | DB接続失敗 | 環境変数・接続確認 |
 | `Redis connection failed` | ERROR | Redis接続失敗 | Redis状態確認 |
 | `Authentication failed` | INFO | 認証失敗 | 頻度監視（正常1-3%） |
 | `RLS policy violation` | ERROR | テナント分離違反 | **緊急調査** |
