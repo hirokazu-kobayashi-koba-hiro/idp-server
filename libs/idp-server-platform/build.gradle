@@ -17,7 +17,7 @@ dependencies {
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2'
 	implementation 'com.jayway.jsonpath:json-path:2.9.0'
 	//jose
-	implementation 'com.nimbusds:nimbus-jose-jwt:9.30.2'
+	implementation 'com.nimbusds:nimbus-jose-jwt:9.40'
 	// BouncyCastle for PEM key parsing
 	implementation 'org.bouncycastle:bcprov-jdk18on:1.78'
 	implementation 'org.bouncycastle:bcpkix-jdk18on:1.78'
