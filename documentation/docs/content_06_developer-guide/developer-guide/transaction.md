@@ -99,8 +99,17 @@ ALTER TABLE < table_name > FORCE ROW LEVEL SECURITY;
 `TransactionManager` は各 DB コネクションに適切なテナントコンテキストを適用します：
 
 ```java
-private static void setTenantId(Connection conn, String tenantIdentifier) {
-    stmt.execute("SET app.tenant_id = '" + tenantIdentifier + "'");
+private static void setTenantId(Connection conn, TenantIdentifier tenantIdentifier) {
+    log.debug("[RLS] SET app.tenant_id: tenant={}", tenantIdentifier.value());
+
+    // Use set_config() function with PreparedStatement to prevent SQL Injection
+    // See: https://www.postgresql.org/docs/current/functions-admin.html#FUNCTIONS-ADMIN-SET
+    try (var stmt = conn.prepareStatement("SELECT set_config('app.tenant_id', ?, true)")) {
+        stmt.setString(1, tenantIdentifier.value());
+        stmt.execute();
+    } catch (SQLException e) {
+        throw new SqlRuntimeException("Failed to set tenant_id", e);
+    }
 }
 ```
 
