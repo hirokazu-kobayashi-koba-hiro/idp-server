@@ -59,6 +59,7 @@ const sidebars = {
         "content_03_concepts/concept-13-audit-compliance",
         "content_03_concepts/concept-14-grant-management",
         "content_03_concepts/concept-15-operations",
+        "content_03_concepts/concept-16-external-service-integration",
         {
           type: "category",
           label: "基礎（読み物）",
