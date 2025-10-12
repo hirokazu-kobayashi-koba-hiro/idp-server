@@ -18,6 +18,11 @@ Controller → UseCase (EntryService) → Core (Handler-Service-Repository) → 
 - `idp-server-control-plane` - 管理API契約定義
 - `e2e/` - 3層テスト (spec/scenario/monkey)
 
+**📚 AI開発者向け詳細ドキュメント**: [全20モジュール詳解](documentation/docs/content_10_ai_developer/ai-01-index.md)
+- 100+クラスの詳細説明・実装パターン・アンチパターン
+- 実装コード引用・RFC準拠明示
+- Issue #676対応（実装ガイド精度95%+達成）
+
 ## 開発コマンド
 ```bash
 ./gradlew spotlessApply  # 必須: フォーマット修正
@@ -59,15 +64,25 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 
 ## 4層アーキテクチャ詳細
+
 1. **Controller層**: HTTP ↔ DTO変換のみ（ロジック禁止）
+   - 📖 [詳細: adapters.md - Spring Boot統合](documentation/docs/content_10_ai_developer/adapters.md#idp-server-springboot-adapter---spring-boot統合)
+
 2. **UseCase層**: `{Domain}{Action}EntryService` - オーケストレーション専用
+   - 📖 [詳細: use-cases.md - EntryService 10フェーズ](documentation/docs/content_10_ai_developer/ai-10-use-cases.md#entryserviceの10フェーズ)
+
 3. **Core層**: Handler-Service-Repository - OIDC仕様準拠・ドメインロジック
+   - 📖 [詳細: core.md - 全9ドメイン](documentation/docs/content_10_ai_developer/ai-11-core.md#主要ドメイン)
+
 4. **Adapter層**: Repository - 永続化カプセル化（ドメインロジック禁止）
+   - 📖 [詳細: adapters.md - DataSource-SqlExecutor](documentation/docs/content_10_ai_developer/adapters.md#datasource---sqlexecutor-パターン)
 
 ## Handler-Service-Repository パターン
 - **Handler**: `{Domain}{Action}Handler` - プロトコル処理・オーケストレーション
 - **Service**: `{Domain}{Action}Service` - 純粋ビジネスロジック
 - **Repository**: `{Entity}QueryRepository`/`{Entity}CommandRepository` - データアクセス抽象化
+
+📖 [詳細実装パターン: core.md](documentation/docs/content_10_ai_developer/ai-11-core.md#handler-service-repository-パターン)
 
 ## 検証・エラーハンドリング
 - **Validator**: 入力形式チェック → `{Operation}BadRequestException`
@@ -75,10 +90,39 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - **例外**: `throwExceptionIf{Condition}()` パターン、OAuth標準エラーコード
 
 ## 重要な実装パターン
-- **Repository**: 全メソッドで `Tenant` が第一引数（マルチテナント分離）。OrganizationRepositoryは除く。
-- **Extension**: `Map<GrantType, Service>` + Plugin インターフェース
-- **設定**: `TenantAttributes.optValueAsBoolean(key, default)` パターン
-- **命名**: `get()`必須存在, `find()`任意存在, `is/has/can`判定メソッド
+
+### Repository パターン
+- **Tenant第一引数**: 全メソッドで `Tenant` が第一引数（マルチテナント分離）
+  - **例外**: `OrganizationRepository`のみ（組織はテナントより上位概念）
+- **Query/Command分離**: `{Entity}QueryRepository` / `{Entity}CommandRepository`
+- **命名規則**: `get()`必須存在, `find()`任意存在, `is/has/can`判定メソッド
+- 📖 [詳細: core.md - Repository](documentation/docs/content_10_ai_developer/ai-11-core.md#3-repository---データアクセス抽象化)
+
+### Plugin 拡張パターン
+- **Map<Type, Service>**: `Map<GrantType, OAuthTokenCreationService>` で動的選択
+- **PluginLoader**: **静的メソッドAPI** - `PluginLoader.loadFromInternalModule(Class)`
+  - ❌ **誤り**: `new PluginLoader<>(Class)` はインスタンス化不可
+  - ✅ **正解**: `PluginLoader.loadFromInternalModule(Class)` 静的メソッド
+- **Factory パターン**: `{Feature}Factory` → `{Feature}` 生成
+- 📖 [詳細: platform.md - Plugin System](documentation/docs/content_10_ai_developer/ai-12-platform.md#plugin-system)
+
+### Context Creator パターン
+- **定義場所**: `idp-server-control-plane` モジュール
+- **使用場所**: `idp-server-use-cases` モジュール（EntryService）
+- **責務**: リクエストDTO → ドメインモデル変換
+- **命名**: `{Entity}{Operation}ContextCreator` → `{Entity}{Operation}Context`
+- 📖 [詳細: control-plane.md - Context Creator](documentation/docs/content_10_ai_developer/ai-13-control-plane.md#context-creator-パターン)
+
+### JsonConverter パターン
+- **defaultInstance()**: キャメルケース維持（`clientId`）
+- **snakeCaseInstance()**: スネークケース変換（`client_id`）
+- **用途**: Context Creator, Repository（JSONB列）, Cache, HTTP通信
+- 📖 [詳細: platform.md - JsonConverter](documentation/docs/content_10_ai_developer/ai-12-platform.md#json-シリアライズ・デシリアライズ)
+
+### TenantAttributes パターン
+- **optValueAsBoolean(key, default)**: デフォルト値付きOptional取得
+- **optValueAsString(key, default)**: 文字列取得
+- 📖 [詳細: platform.md - TenantAttributes](documentation/docs/content_10_ai_developer/ai-12-platform.md#tenantattributes---テナント固有設定)
 
 ## 🚨 アンチパターン（絶対禁止）
 - **Util濫用**: 共通ロジックをUtilに逃がす
@@ -596,5 +640,30 @@ throw new UnsupportedOperationException("実装予定");
 ## 現在の状況
 - **ステータス**: Clean（コミット可能変更なし）
 - **最新コミット**: Implement comprehensive security event logging system
-- **完了済み**: #292 (SecurityEvent拡張), #401 (FIDO-UAFリセット)
-- **進行中**: Issue #398 Security Event Hook Retry Mechanism（execution context構築完了、API実装準備中）
+- **完了済み**:
+  - #292 (SecurityEvent拡張)
+  - #401 (FIDO-UAFリセット)
+  - #676 (AI開発者向け知識ベース作成) ✅ **NEW**
+- **進行中**: なし
+
+## AI開発者向けリソース
+
+### 📚 詳細ドキュメント
+[AI開発者向けモジュールガイド](documentation/docs/content_10_ai_developer/ai-01-index.md) - 全20モジュール詳解
+- **core.md**: 全9ドメイン（OAuth, Token, Identity, Authentication等）
+- **platform.md**: マルチテナント、JsonConverter、PluginLoader
+- **use-cases.md**: EntryService 10フェーズパターン
+- **control-plane.md**: API契約、権限37種、Context Creator
+- **adapters.md**: Redis, Flyway, PostgreSQL/MySQL, ExceptionHandler
+- **extensions.md**: CIBA, FAPI, IDA, PKCE, VC
+- **authentication-federation.md**: 認証インタラクター、WebAuthn、Federation
+- **notification-security-event.md**: FCM, APNS, Email, SSF, Security Event Hooks
+
+### 🎯 実装時のチェックリスト
+- [ ] Tenant第一引数パターン（OrganizationRepository除く）
+- [ ] PluginLoader静的メソッド使用（`loadFromInternalModule()`）
+- [ ] Context Creator必須実装（TODOコメント禁止）
+- [ ] defaultメソッドの不要なオーバーライド回避
+- [ ] JsonConverter.snakeCaseInstance()使用（DTO変換時）
+- [ ] EntryService 10フェーズ遵守
+- [ ] Audit Log適切化（create/update/delete別）
