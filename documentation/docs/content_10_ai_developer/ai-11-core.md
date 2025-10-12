@@ -607,7 +607,7 @@ services.put(GrantType.REFRESH_TOKEN, new RefreshTokenGrantService(...));
 OAuthTokenCreationService service = services.get(tokenRequest.grantType());
 ```
 
-**情報源**: CLAUDE.md「Extension: Map<GrantType, Service> + Plugin インターフェース」
+**情報源**: CLAUDE.md「Extension: `Map<GrantType, Service>` + Plugin インターフェース」
 
 ### 3. Identity (`openid/identity/`)
 
@@ -1295,7 +1295,7 @@ String customClaim = tenantAttributes.optValueAsString("token.custom_claim_key",
 2. **Tenant第一引数の原則**: 全Repository操作でマルチテナント分離
 3. **値オブジェクト優先**: String/Map濫用を避け、型安全な設計
 4. **RFC準拠Javadoc**: 仕様書引用で実装意図を明確化
-5. **Plugin拡張**: Map<GrantType, Service>パターンで機能拡張
+5. **Plugin拡張**: `Map<GrantType, Service>`パターンで機能拡張
 
 ### 次のステップ
 
