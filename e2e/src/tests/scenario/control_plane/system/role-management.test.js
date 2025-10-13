@@ -91,6 +91,32 @@ describe("role management api", () => {
       expect(updateResponse.data).toHaveProperty("result");
       expect(updateResponse.data).toHaveProperty("diff");
 
+      // ロール名変更しないPUT（description/permissionsのみ変更）
+      const updateNoNameChangeResponse = await putWithJson({
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/roles/${roleId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          "name": createResponse.data.result.name, // 既存名
+          "description": "test-2",
+          "permissions": [
+            permissionListResponse.data.list[1].id,
+            permissionListResponse.data.list[2].id,
+          ]
+        }
+      });
+      expect(updateNoNameChangeResponse.status).toBe(200);
+      expect(updateNoNameChangeResponse.data).toHaveProperty("result");
+      expect(updateNoNameChangeResponse.data.result.name).toBe(createResponse.data.result.name);
+      expect(updateNoNameChangeResponse.data.result.description).toBe("test-2");
+      expect(updateNoNameChangeResponse.data.result.permissions).toEqual(
+        expect.arrayContaining([
+          permissionListResponse.data.list[1].id,
+          permissionListResponse.data.list[2].id,
+        ])
+      );
+
       //TODO implement api
       // const removeResponse = await putWithJson({
       //   url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/roles/${roleId}/permissions:remove`,

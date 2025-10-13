@@ -27,7 +27,7 @@ public class RoleRegistrationVerifier {
   public RoleRegistrationVerificationResult verify(RoleRegistrationContext context) {
 
     RolePermissionVerifier rolePermissionVerifier =
-        new RolePermissionVerifier(context.request(), context.roles(), context.permissions());
+        new RolePermissionVerifier(context.request(), context.roles(), context.permissions(), null);
     VerificationResult verificationResult = rolePermissionVerifier.verify();
 
     if (!verificationResult.isValid()) {
@@ -40,7 +40,8 @@ public class RoleRegistrationVerifier {
   public RoleRegistrationVerificationResult verify(RoleUpdateContext context) {
 
     RolePermissionVerifier rolePermissionVerifier =
-        new RolePermissionVerifier(context.request(), context.roles(), context.permissions());
+        new RolePermissionVerifier(
+            context.request(), context.roles(), context.permissions(), context.before().id());
     VerificationResult verificationResult = rolePermissionVerifier.verify();
 
     if (!verificationResult.isValid()) {

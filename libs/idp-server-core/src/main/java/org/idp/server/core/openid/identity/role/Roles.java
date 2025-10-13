@@ -19,6 +19,7 @@ package org.idp.server.core.openid.identity.role;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 public class Roles implements Iterable<Role> {
 
@@ -42,6 +43,10 @@ public class Roles implements Iterable<Role> {
 
   public boolean containsByName(String name) {
     return values.stream().anyMatch(value -> value.name().equals(name));
+  }
+
+  public Optional<Role> getByName(String name) {
+    return values.stream().filter(value -> value.name().equals(name)).findFirst();
   }
 
   @Override
