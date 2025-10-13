@@ -14,19 +14,16 @@
 
 ### Management API URL
 
-**実際のAPI**: 組織レベルAPI
+**組織レベルAPI**（このドキュメントでの表記）:
 ```
 POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/federation-configurations
 ```
 
-**このドキュメントでの表記**: 簡潔性のため省略
-```
-POST /v1/management/tenants/${TENANT_ID}/federation-configurations
-```
+**注意**: システムレベルAPIとの違い
+- **組織レベル**: `POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/federation-configurations` ← このドキュメント
+- **システムレベル**: `POST /v1/management/tenants/{tenant-id}/federation-configurations` ← 管理者のみ
 
-**注意**: 実際のAPI呼び出し時は`organizations/{organization-id}/`を含める必要があります。
-
-**詳細**: [how-to-03 クライアント登録](./how-to-03-client-registration.md#management-api-url)参照
+通常の運用では組織レベルAPIを使用してください。
 
 ---
 
@@ -72,7 +69,7 @@ Google Cloud Consoleで事前準備：
 ### Step 2: idp-serverでFederation設定
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/federation-configurations" \
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/federation-configurations" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -120,7 +117,7 @@ curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/federatio
 ### Step 3: 認証ポリシーでFederationを許可
 
 ```bash
-curl -X PUT "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentication-policies/oauth" \
+curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies/oauth" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -142,7 +139,7 @@ curl -X PUT "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentica
 ### Step 4: クライアントでFederationを有効化
 
 ```bash
-curl -X PUT "http://localhost:8080/v1/management/tenants/${TENANT_ID}/clients/${CLIENT_ID}" \
+curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/clients/${CLIENT_ID}" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -472,7 +469,7 @@ idp-serverでexternal_id="google-1234567890"のユーザーを検索
 OpenID Connect Discoveryに対応しているIdPの場合、自動設定が便利です：
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/federation-configurations/discover" \
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/federation-configurations/discover" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{

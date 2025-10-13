@@ -14,19 +14,16 @@
 
 ### Management API URL
 
-**実際のAPI**: 組織レベルAPI
+**組織レベルAPI**（このドキュメントでの表記）:
 ```
 POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/security-event-hooks
 ```
 
-**このドキュメントでの表記**: 簡潔性のため省略
-```
-POST /v1/management/tenants/${TENANT_ID}/security-event-hooks
-```
+**注意**: システムレベルAPIとの違い
+- **組織レベル**: `POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/security-event-hooks` ← このドキュメント
+- **システムレベル**: `POST /v1/management/tenants/{tenant-id}/security-event-hooks` ← 管理者のみ
 
-**注意**: 実際のAPI呼び出し時は`organizations/{organization-id}/`を含める必要があります。
-
-**詳細**: [how-to-03 クライアント登録](./how-to-03-client-registration.md#management-api-url)参照
+通常の運用では組織レベルAPIを使用してください。
 
 ---
 
@@ -63,7 +60,7 @@ idp-server: イベント検出
 ### Step 1: Email通知フックを作成
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/security-event-hooks" \
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hooks" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -110,7 +107,7 @@ IP: 192.168.1.100
 ### Webhookフックを作成
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/security-event-hooks" \
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hooks" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -220,7 +217,7 @@ curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/security-
 ### SSF設定
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/security-event-hooks" \
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hooks" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -270,7 +267,7 @@ curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/security-
 
 ```bash
 # Email通知（ユーザー向け）
-curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/security-event-hooks" \
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hooks" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -285,7 +282,7 @@ curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/security-
   }'
 
 # Webhook通知（セキュリティチーム向け）
-curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/security-event-hooks" \
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hooks" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -299,7 +296,7 @@ curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/security-
   }'
 
 # SSF通知（外部システム連携）
-curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/security-event-hooks" \
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hooks" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -451,7 +448,7 @@ Security Event Hook failed after 3 retries
 **解決策**:
 ```bash
 # フック設定を確認
-curl "http://localhost:8080/v1/management/tenants/${TENANT_ID}/security-event-hooks" \
+curl "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hooks" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   | jq '.[] | {type, enabled, events}'
 

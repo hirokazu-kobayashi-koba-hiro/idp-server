@@ -14,19 +14,16 @@
 
 ### Management API URL
 
-**実際のAPI**: 組織レベルAPI
+**組織レベルAPI**（このドキュメントでの表記）:
 ```
 POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-policies
 ```
 
-**このドキュメントでの表記**: 簡潔性のため、以下のように省略
-```
-POST /v1/management/tenants/${TENANT_ID}/authentication-policies
-```
+**注意**: システムレベルAPIとの違い
+- **組織レベル**: `POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-policies` ← このドキュメント
+- **システムレベル**: `POST /v1/management/tenants/{tenant-id}/authentication-policies` ← 管理者のみ
 
-**注意**: 実際のAPI呼び出し時は`organizations/{organization-id}/`を含める必要があります。
-
-**詳細**: [how-to-03 クライアント登録](./how-to-03-client-registration.md#management-api-url)参照
+通常の運用では組織レベルAPIを使用してください。
 
 ---
 
@@ -52,7 +49,7 @@ Authorization Request
 ### パスワードのみの認証
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentication-policies" \
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -86,7 +83,7 @@ curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentic
 ### パスワード + SMS OTP
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentication-policies" \
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -128,7 +125,7 @@ curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentic
 ### パスワード + （SMS または Email）
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentication-policies" \
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -250,7 +247,7 @@ webauthnで成功 → 認証完了
 ### クライアント別のポリシー
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentication-policies" \
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -399,11 +396,11 @@ ID Tokenに acr クレームとして含める
 **解決策**:
 ```bash
 # 認証ポリシーを確認
-curl "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentication-policies/oauth" \
+curl "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies/oauth" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}"
 
 # available_methodsに追加
-curl -X PUT "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentication-policies/oauth" \
+curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies/oauth" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -473,7 +470,7 @@ curl -X PUT "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentica
 **解決策**:
 ```bash
 # デフォルトポリシーを作成（conditions: {}）
-curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentication-policies" \
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -570,7 +567,7 @@ curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentic
 ### ポリシー一覧取得
 
 ```bash
-curl "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentication-policies" \
+curl "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   | jq '.'
 ```
@@ -578,7 +575,7 @@ curl "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentication-po
 ### 特定のポリシー取得
 
 ```bash
-curl "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentication-policies/oauth" \
+curl "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies/oauth" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   | jq '.policies'
 ```
@@ -606,7 +603,7 @@ curl "http://localhost:8080/${TENANT_ID}/.well-known/openid-configuration" \
 ### 既存ポリシーの更新
 
 ```bash
-curl -X PUT "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentication-policies/oauth" \
+curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies/oauth" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -634,7 +631,7 @@ curl -X PUT "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentica
 ### ポリシーの無効化
 
 ```bash
-curl -X PUT "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentication-policies/oauth" \
+curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies/oauth" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{

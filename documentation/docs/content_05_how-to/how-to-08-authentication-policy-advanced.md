@@ -14,20 +14,17 @@
 
 ### Management API URL
 
-**実際のAPI**: 組織レベルAPI
+**組織レベルAPI**（このドキュメントでの表記）:
 ```
 POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-policies
 PUT  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-policies/{policy-id}
 ```
 
-**このドキュメントでの表記**: 簡潔性のため省略
-```
-POST /v1/management/tenants/${TENANT_ID}/authentication-policies
-```
+**注意**: システムレベルAPIとの違い
+- **組織レベル**: `POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/...` ← このドキュメント
+- **システムレベル**: `POST /v1/management/tenants/{tenant-id}/...` ← 管理者のみ
 
-**注意**: 実際のAPI呼び出し時は`organizations/{organization-id}/`を含める必要があります。
-
-**詳細**: [how-to-03 クライアント登録](./how-to-03-client-registration.md#management-api-url)参照
+通常の運用では組織レベルAPIを使用してください。
 
 ---
 
@@ -373,7 +370,7 @@ Case 2: パスワード + SMS OTPで認証完了
 
 **ロック解除**:
 ```bash
-curl -X PUT "http://localhost:8080/v1/management/tenants/${TENANT_ID}/users/${USER_ID}" \
+curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/users/${USER_ID}" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{

@@ -47,16 +47,35 @@ Organization (企業A)
 
 ### 1. 組織管理者権限のアクセストークン
 
+**前提**: [how-to-01](./how-to-01-organization-initialization.md)で設定した環境変数を使用します。
+
+まだ設定していない場合は、以下を実行してください：
+
 ```bash
-# Password Grant Typeで組織管理スコープのトークン取得
-curl -X POST "http://localhost:8080/{admin-tenant-id}/v1/tokens" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "grant_type=password" \
-  -d "username=org-admin@example.com" \
-  -d "password=your_password" \
-  -d "scope=org-management account management" \
-  -d "client_id=org-client" \
-  -d "client_secret=org-client-secret"
+# how-to-01で出力された環境変数をコピー&ペースト
+export ORGANIZATION_ID='your-organization-id'
+export TENANT_ID='your-tenant-id'
+export ADMIN_EMAIL='admin@test-org.com'
+export ADMIN_PASSWORD='TestOrgPassword123!'
+export CLIENT_ID='your-client-id'
+export CLIENT_SECRET='your-client-secret'
+```
+
+トークンを取得して環境変数に保存：
+
+```bash
+# 組織管理者トークンを取得して保存
+export ORG_ADMIN_TOKEN=$(curl -sS -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'grant_type=password' \
+  -d "username=${ADMIN_EMAIL}" \
+  -d "password=${ADMIN_PASSWORD}" \
+  -d "client_id=${CLIENT_ID}" \
+  -d "client_secret=${CLIENT_SECRET}" \
+  -d 'scope=management' | jq -r '.access_token')
+
+# 確認
+echo "Token: ${ORG_ADMIN_TOKEN:0:50}..."
 ```
 
 **レスポンス例**:
@@ -64,13 +83,25 @@ curl -X POST "http://localhost:8080/{admin-tenant-id}/v1/tokens" \
 {
   "access_token": "eyJhbGc...",
   "token_type": "Bearer",
-  "expires_in": 3600
+  "expires_in": 3600,
+  "scope": "management"
 }
 ```
 
+✅ これで`$ORG_ADMIN_TOKEN`が設定されました。以降のManagement API呼び出しで使用します。
+
 ### 2. 組織IDとテナントIDの確認
 
-設定を適用する組織とテナントのIDを確認しておきます。
+環境変数が正しく設定されているか確認します：
+
+```bash
+# 環境変数の確認
+echo "Organization ID: $ORGANIZATION_ID"
+echo "Tenant ID: $TENANT_ID"
+echo "Admin Token: ${ORG_ADMIN_TOKEN:0:50}..."
+```
+
+これらの値を以降のAPI呼び出しで使用します。
 
 ---
 

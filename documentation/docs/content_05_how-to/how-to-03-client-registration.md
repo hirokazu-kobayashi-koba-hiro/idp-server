@@ -15,17 +15,16 @@
 
 ### Management API URL
 
-**実際のAPI**: 組織レベルAPI
+**組織レベルAPI**（このドキュメントでの表記）:
 ```
 POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/clients
 ```
 
-**このドキュメントでの表記**: 簡潔性のため、以下のように省略
-```
-POST /v1/management/tenants/${TENANT_ID}/clients
-```
+**注意**: システムレベルAPIとの違い
+- **組織レベル**: `POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/clients` ← このドキュメント
+- **システムレベル**: `POST /v1/management/tenants/{tenant-id}/clients` ← 管理者のみ
 
-**注意**: 実際のAPI呼び出し時は`organizations/{organization-id}/`を含める必要があります。
+通常の運用では組織レベルAPIを使用してください。
 
 ---
 
@@ -54,7 +53,7 @@ idp-server
 **特徴**: クライアントシークレットを安全に保存できない
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/clients" \
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/clients" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -81,7 +80,7 @@ curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/clients" 
 **特徴**: サーバー側でクライアントシークレットを安全に保存できる
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/clients" \
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/clients" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -109,7 +108,7 @@ curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/clients" 
 **特徴**: ユーザーなし、クライアント自身の権限で実行
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/clients" \
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/clients" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -287,7 +286,7 @@ idp-serverは`claims:`プレフィックスで**カスタム属性をID Tokenに
 **設定**:
 ```bash
 # テナント設定でカスタムクレームマッピングを有効化
-curl -X PUT "http://localhost:8080/v1/management/tenants/${TENANT_ID}" \
+curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -581,12 +580,12 @@ https://app.example.com/callback?code=abc123
 **解決策**:
 ```bash
 # クライアント設定を確認
-curl "http://localhost:8080/v1/management/tenants/${TENANT_ID}/clients/${CLIENT_ID}" \
+curl "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/clients/${CLIENT_ID}" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   | jq '.redirect_uris'
 
 # redirect_urisに追加
-curl -X PUT "http://localhost:8080/v1/management/tenants/${TENANT_ID}/clients/${CLIENT_ID}" \
+curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/clients/${CLIENT_ID}" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -614,7 +613,7 @@ curl -X PUT "http://localhost:8080/v1/management/tenants/${TENANT_ID}/clients/${
 **解決策**:
 ```bash
 # grant_typesに追加（ただしpasswordは非推奨）
-curl -X PUT "http://localhost:8080/v1/management/tenants/${TENANT_ID}/clients/${CLIENT_ID}" \
+curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/clients/${CLIENT_ID}" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -639,7 +638,7 @@ curl -X PUT "http://localhost:8080/v1/management/tenants/${TENANT_ID}/clients/${
 **解決策**:
 ```bash
 # クライアントのスコープを確認・更新
-curl -X PUT "http://localhost:8080/v1/management/tenants/${TENANT_ID}/clients/${CLIENT_ID}" \
+curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/clients/${CLIENT_ID}" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{

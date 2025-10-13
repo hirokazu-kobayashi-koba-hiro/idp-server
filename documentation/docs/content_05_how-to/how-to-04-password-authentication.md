@@ -15,19 +15,16 @@
 
 ### Management API URL
 
-**実際のAPI**: 組織レベルAPI
+**組織レベルAPI**（このドキュメントでの表記）:
 ```
 POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-configurations
 ```
 
-**このドキュメントでの表記**: 簡潔性のため、以下のように省略
-```
-POST /v1/management/tenants/${TENANT_ID}/authentication-configurations
-```
+**注意**: システムレベルAPIとの違い
+- **組織レベル**: `POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-configurations` ← このドキュメント
+- **システムレベル**: `POST /v1/management/tenants/{tenant-id}/authentication-configurations` ← 管理者のみ
 
-**注意**: 実際のAPI呼び出し時は`organizations/{organization-id}/`を含める必要があります。
-
-**詳細**: [how-to-03 クライアント登録](./how-to-03-client-registration.md#management-api-url)参照
+通常の運用では組織レベルAPIを使用してください。
 
 ---
 
@@ -50,7 +47,7 @@ idp-server
 ### Management APIで設定
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentication-configurations" \
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-configurations" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -96,7 +93,7 @@ curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentic
 ## Step 2: 設定を確認
 
 ```bash
-curl -X GET "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentication-configurations/password" \
+curl -X GET "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-configurations/password" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}"
 ```
 
@@ -117,7 +114,7 @@ curl -X GET "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentica
 パスワード認証にはユーザーが必要です。
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/users" \
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/users" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -150,7 +147,7 @@ curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/users" \
 パスワード認証を有効化するには、認証ポリシーで許可する必要があります。
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentication-policies" \
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -273,7 +270,7 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
 **解決策**:
 ```bash
 # 認証ポリシーを確認
-curl "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentication-policies" \
+curl "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}"
 
 # available_methods に "password" が含まれているか確認
@@ -308,7 +305,7 @@ curl "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentication-po
 
 ```bash
 # より緩い要件（開発環境用）
-curl -X PUT "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentication-configurations/password" \
+curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-configurations/password" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -326,7 +323,7 @@ curl -X PUT "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentica
 
 ```bash
 # より厳しい要件（本番環境用）
-curl -X PUT "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentication-configurations/password" \
+curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-configurations/password" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{

@@ -14,21 +14,17 @@
 
 ### Management API URL
 
-**実際のAPI**: 組織レベルAPI
+**組織レベルAPI**（このドキュメントでの表記）:
 ```
 POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-configurations
 PUT  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-policies/{policy-id}
 ```
 
-**このドキュメントでの表記**: 簡潔性のため省略
-```
-POST /v1/management/tenants/${TENANT_ID}/authentication-configurations
-PUT  /v1/management/tenants/${TENANT_ID}/authentication-policies/oauth
-```
+**注意**: システムレベルAPIとの違い
+- **組織レベル**: `POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/...` ← このドキュメント
+- **システムレベル**: `POST /v1/management/tenants/{tenant-id}/...` ← 管理者のみ
 
-**注意**: 実際のAPI呼び出し時は`organizations/{organization-id}/`を含める必要があります。
-
-**詳細**: [how-to-03 クライアント登録](./how-to-03-client-registration.md#management-api-url)参照
+通常の運用では組織レベルAPIを使用してください。
 
 ---
 
@@ -55,7 +51,7 @@ PUT  /v1/management/tenants/${TENANT_ID}/authentication-policies/oauth
 ### Management APIで設定
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentication-configurations" \
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-configurations" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -95,7 +91,7 @@ curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentic
 パスワード認証**と**SMS OTP認証の**両方**を要求する設定に変更します。
 
 ```bash
-curl -X PUT "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentication-policies/oauth" \
+curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies/oauth" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -120,7 +116,7 @@ curl -X PUT "http://localhost:8080/v1/management/tenants/${TENANT_ID}/authentica
 SMS OTPを送信するには、ユーザーに電話番号が必要です。
 
 ```bash
-curl -X PUT "http://localhost:8080/v1/management/tenants/${TENANT_ID}/users/${USER_ID}" \
+curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/users/${USER_ID}" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -335,7 +331,7 @@ SMS OTP sent to +81-90-1234-5678: 123456
 
 ```bash
 # Twilio設定を追加
-curl -X POST "http://localhost:8080/v1/management/tenants/${TENANT_ID}/notification-configurations" \
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/notification-configurations" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
