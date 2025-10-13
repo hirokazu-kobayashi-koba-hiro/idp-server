@@ -29,19 +29,30 @@ public class RolePermissionVerifier {
   RoleRequest roleRequest;
   Roles roles;
   Permissions permissions;
+  String updatingRoleId;
 
-  public RolePermissionVerifier(RoleRequest roleRequest, Roles roles, Permissions permissions) {
+  public RolePermissionVerifier(
+      RoleRequest roleRequest, Roles roles, Permissions permissions, String updatingRoleId) {
     this.roleRequest = roleRequest;
     this.roles = roles;
     this.permissions = permissions;
+    this.updatingRoleId = updatingRoleId;
   }
 
   public VerificationResult verify() {
 
     if (roles.containsByName(roleRequest.name())) {
-      List<String> errors = new ArrayList<>();
-      errors.add(String.format("Role is already exists: %s", roleRequest.name()));
-      return VerificationResult.failure(errors);
+      boolean isSelfUpdate = false;
+      if (updatingRoleId != null) {
+        var existing = roles.getByName(roleRequest.name());
+        isSelfUpdate =
+            (existing != null && existing.id() != null && existing.id().equals(updatingRoleId));
+      }
+      if (!isSelfUpdate) {
+        List<String> errors = new ArrayList<>();
+        errors.add(String.format("Role is already exists: %s", roleRequest.name()));
+        return VerificationResult.failure(errors);
+      }
     }
 
     Permissions filtered = permissions.filterById(roleRequest.permissions());
