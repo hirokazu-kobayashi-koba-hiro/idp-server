@@ -8,8 +8,27 @@
 ⏱️ **約15分**
 
 ### 前提条件
-- [パスワード認証](./how-to-03-password-authentication.md)が設定済み
+- [パスワード認証](./how-to-04-password-authentication.md)が設定済み
 - 管理者トークンを取得済み
+- 組織ID（organization-id）を取得済み
+
+### Management API URL
+
+**実際のAPI**: 組織レベルAPI
+```
+POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-configurations
+PUT  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-policies/{policy-id}
+```
+
+**このドキュメントでの表記**: 簡潔性のため省略
+```
+POST /v1/management/tenants/${TENANT_ID}/authentication-configurations
+PUT  /v1/management/tenants/${TENANT_ID}/authentication-policies/oauth
+```
+
+**注意**: 実際のAPI呼び出し時は`organizations/{organization-id}/`を含める必要があります。
+
+**詳細**: [how-to-03 クライアント登録](./how-to-03-client-registration.md#management-api-url)参照
 
 ---
 

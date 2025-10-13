@@ -10,6 +10,23 @@
 ### 前提条件
 - 管理者トークンを取得済み
 - 通知先サービス（Email、Slack、Webhook等）の準備
+- 組織ID（organization-id）を取得済み
+
+### Management API URL
+
+**実際のAPI**: 組織レベルAPI
+```
+POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/security-event-hooks
+```
+
+**このドキュメントでの表記**: 簡潔性のため省略
+```
+POST /v1/management/tenants/${TENANT_ID}/security-event-hooks
+```
+
+**注意**: 実際のAPI呼び出し時は`organizations/{organization-id}/`を含める必要があります。
+
+**詳細**: [how-to-03 クライアント登録](./how-to-03-client-registration.md#management-api-url)参照
 
 ---
 
