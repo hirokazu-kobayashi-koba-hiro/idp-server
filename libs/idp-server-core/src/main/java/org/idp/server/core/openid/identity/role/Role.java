@@ -57,6 +57,9 @@ public class Role implements Serializable, UuidConvertable {
   }
 
   public List<Map<String, Object>> permissionsAsMap() {
+    if (permissions == null) {
+      return List.of();
+    }
     return permissions.stream().map(Permission::toMap).toList();
   }
 
