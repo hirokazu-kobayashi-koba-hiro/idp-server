@@ -1,569 +1,486 @@
-# クライアント登録ガイド
+# OAuth/OIDCクライアント登録ガイド
 
 ## このドキュメントの目的
 
-**OAuth/OIDCクライアント**を正しく登録し、適切な設定を選択できるようになることが目標です。
+**OAuth 2.0/OIDCクライアント（アプリケーション）を登録し、認証フローが動作する環境を構築する**ことが目標です。
+
+具体的には、**3つの代表的なクライアントタイプ**（Webアプリ、モバイルアプリ、M2M）を登録し、それぞれの認証方式を理解します。
+
+### 学べること
+
+✅ **OAuth/OIDCクライアント登録の基礎**
+- クライアントとは何か（Confidential vs Public）
+- 3つの代表的なクライアントタイプ（Web/Mobile/M2M）
+- 必須設定項目（client_id, redirect_uris, grant_types等）
+
+✅ **実践的な知識**
+- クライアント登録の実行手順
+- 登録確認方法
+- トラブルシューティング
 
 ### 所要時間
-⏱️ **約20分**
+⏱️ **約15分**
+
+### このドキュメントの位置づけ
+
+**Phase 1**: 最小構成で動作確認（Step 3/5）
+
+**前提ドキュメント**:
+- [how-to-01: 組織初期化](./how-to-01-organization-initialization.md) - 組織作成済み
+- [how-to-02: テナント作成](./how-to-02-tenant-setup.md) - テナント作成済み
+
+**次のドキュメント**:
+- [how-to-04: ユーザー登録](./how-to-04-user-registration.md) - ユーザー作成と認証
 
 ### 前提条件
-- 管理者トークンを取得済み
-- テナントが作成済み
-- 組織ID（organization-id）を取得済み
-- OAuth 2.0/OIDC基礎知識（オプション）
-
-### Management API URL
-
-**組織レベルAPI**（このドキュメントでの表記）:
-```
-POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/clients
-```
-
-**注意**: システムレベルAPIとの違い
-- **組織レベル**: `POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/clients` ← このドキュメント
-- **システムレベル**: `POST /v1/management/tenants/{tenant-id}/clients` ← 管理者のみ
-
-通常の運用では組織レベルAPIを使用してください。
+- [how-to-02](./how-to-02-tenant-setup.md)でテナント作成完了
+- 組織管理者トークンを取得済み
+- 組織ID・テナントIDを確認済み
 
 ---
 
 ## クライアントとは
 
-**あなたのアプリケーション**（Webアプリ、モバイルアプリ、サーバー等）をOAuth/OIDCクライアントとして登録する必要があります。
+**Client（クライアント）**は、OAuth 2.0/OIDCプロトコルを使用してリソースにアクセスする**アプリケーション**です。
 
-```
-アプリケーション（クライアント）
-  ↓ OAuth認証リクエスト
-idp-server
-  ↓ ユーザー認証
-  ↓ Authorization Code発行
-アプリケーション
-  ↓ Authorization Code → Access Token交換
-idp-server
-  ↓ Access Token発行
-```
+クライアントには以下の2種類があります：
+- **Confidential Client（機密クライアント）**: `client_secret`を安全に保管できる（例：サーバーサイドWebアプリ）
+- **Public Client（公開クライアント）**: `client_secret`を保管できない（例：SPA、モバイルアプリ）
+
+**詳細**: [📖 Concept 19: Client](../content_03_concepts/concept-19-client.md) - Client種別、認証方法、Tenant-Client-User関係の詳細解説
 
 ---
 
-## Level 1: 最小限のクライアント（5分）
+## このドキュメントで行うこと
 
-### モバイルアプリ（Public Client）
+3つの代表的なクライアントタイプを登録します：
 
-**特徴**: クライアントシークレットを安全に保存できない
+### 1. 組織管理者トークンの準備
+
+**前提**: [how-to-02](./how-to-02-tenant-setup.md)で設定した環境変数を使用します。
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/clients" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer ${ADMIN_TOKEN}" \
-  -d '{
-    "client_id": "my-mobile-app",
-    "client_name": "My Mobile App",
-    "redirect_uris": ["myapp://callback"],
+# 環境変数の確認
+echo "Organization ID: $ORGANIZATION_ID"
+echo "Public Tenant ID: $PUBLIC_TENANT_ID"
+echo "Admin Token: ${ORG_ADMIN_TOKEN:0:50}..."
+```
+
+まだ設定していない場合は、how-to-02を参照してトークンを取得してください。
+
+---
+
+## 動作確認：3つのクライアントタイプを登録する
+
+### 1. Webアプリケーション（Confidential Client）
+
+**特徴**: サーバー側でclient_secretを安全に保管できる
+
+#### クライアントIDの準備
+
+```bash
+# クライアントID設定（UUID必須）
+export WEB_CLIENT_ID=$(uuidgen | tr '[:upper:]' '[:lower:]')
+export WEB_CLIENT_SECRET="$(openssl rand -base64 32)"
+
+# 確認
+echo "Web Client ID: $WEB_CLIENT_ID"
+echo "Web Client Secret: $WEB_CLIENT_SECRET"
+```
+
+#### クライアント登録
+
+```bash
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients" \
+  -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" \
+  -d "{
+  \"client_id\": \"${WEB_CLIENT_ID}\",
+  \"client_secret\": \"${WEB_CLIENT_SECRET}\",
+  \"client_name\": \"My Web Application\",
+  \"redirect_uris\": [
+    \"https://app.example.com/callback\",
+    \"http://localhost:3000/callback\"
+  ],
+  \"response_types\": [\"code\"],
+  \"grant_types\": [\"authorization_code\", \"refresh_token\"],
+  \"scope\": \"openid profile email\",
+  \"token_endpoint_auth_method\": \"client_secret_basic\",
+  \"application_type\": \"web\"
+}" | jq .
+```
+
+**期待されるレスポンス**:
+```json
+{
+  "dry_run": false,
+  "result": {
+    "client_id": "web-app-client",
+    "client_name": "My Web Application",
+    "redirect_uris": [
+      "https://app.example.com/callback",
+      "http://localhost:3000/callback"
+    ],
     "response_types": ["code"],
     "grant_types": ["authorization_code", "refresh_token"],
-    "scope": "openid profile email",
-    "token_endpoint_auth_method": "none",
-    "application_type": "native"
-  }'
+    "token_endpoint_auth_method": "client_secret_basic",
+    "application_type": "web"
+  }
+}
 ```
 
-**ポイント**:
-- ✅ `token_endpoint_auth_method: "none"` - クライアントシークレット不要
-- ✅ `application_type: "native"` - モバイルアプリ
-- ✅ **PKCE必須**（自動的に要求される）
+#### 確認ポイント
+- ✅ `client_id`が正しく登録されている
+- ✅ `redirect_uris`に2つのURIが含まれている
+- ✅ `token_endpoint_auth_method`が`client_secret_basic`
+- ✅ `grant_types`に`authorization_code`と`refresh_token`が含まれている
 
 ---
 
-### Webアプリ（Confidential Client）
+### 2. モバイルアプリ（Public Client + PKCE）
 
-**特徴**: サーバー側でクライアントシークレットを安全に保存できる
+**特徴**: client_secret不要、PKCE必須
+
+#### クライアントIDの準備
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/clients" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer ${ADMIN_TOKEN}" \
-  -d '{
-    "client_id": "my-web-app",
-    "client_secret": "your-secret-here",
-    "client_name": "My Web Application",
+# モバイルアプリ用クライアントID（UUID必須）
+export MOBILE_CLIENT_ID=$(uuidgen | tr '[:upper:]' '[:lower:]')
+
+# 確認
+echo "Mobile Client ID: $MOBILE_CLIENT_ID"
+```
+
+#### クライアント登録
+
+```bash
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients" \
+  -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" \
+  -d "{
+  \"client_id\": \"${MOBILE_CLIENT_ID}\",
+  \"client_name\": \"My Mobile App\",
+  \"redirect_uris\": [
+    \"com.example.myapp://callback\"
+  ],
+  \"response_types\": [\"code\"],
+  \"grant_types\": [\"authorization_code\", \"refresh_token\"],
+  \"scope\": \"openid profile email\",
+  \"token_endpoint_auth_method\": \"none\",
+  \"application_type\": \"native\"
+}" | jq .
+```
+
+**期待されるレスポンス**:
+```json
+{
+  "dry_run": false,
+  "result": {
+    "client_id": "mobile-app-client",
+    "client_name": "My Mobile App",
+    "redirect_uris": [
+      "com.example.myapp://callback"
+    ],
+    "response_types": ["code"],
+    "grant_types": ["authorization_code", "refresh_token"],
+    "token_endpoint_auth_method": "none",
+    "application_type": "native"
+  }
+}
+```
+
+#### 確認ポイント
+- ✅ `token_endpoint_auth_method`が`none`（client_secretなし）
+- ✅ `application_type`が`native`
+- ✅ `redirect_uris`にカスタムURLスキーム（`com.example.myapp://`）
+- ⚠️ **PKCE必須**: 実際の認証時にcode_challenge/code_verifierを使用
+
+---
+
+### 3. サーバー間通信（M2M: Machine-to-Machine）
+
+**特徴**: ユーザー認証不要、Client Credentials Flowのみ
+
+#### クライアントIDの準備
+
+```bash
+# M2M用クライアントID（UUID必須）
+export M2M_CLIENT_ID=$(uuidgen | tr '[:upper:]' '[:lower:]')
+export M2M_CLIENT_SECRET="$(openssl rand -base64 32)"
+
+# 確認
+echo "M2M Client ID: $M2M_CLIENT_ID"
+echo "M2M Client Secret: $M2M_CLIENT_SECRET"
+```
+
+#### クライアント登録
+
+```bash
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients" \
+  -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" \
+  -d "{
+  \"client_id\": \"${M2M_CLIENT_ID}\",
+  \"client_secret\": \"${M2M_CLIENT_SECRET}\",
+  \"client_name\": \"Backend Service\",
+  \"redirect_uris\": [],
+  \"response_types\": [],
+  \"grant_types\": [\"client_credentials\"],
+  \"scope\": \"api:read api:write\",
+  \"token_endpoint_auth_method\": \"client_secret_basic\",
+  \"application_type\": \"web\"
+}" | jq .
+```
+
+**期待されるレスポンス**:
+```json
+{
+  "dry_run": false,
+  "result": {
+    "client_id": "backend-service",
+    "client_name": "Backend Service",
+    "redirect_uris": [],
+    "response_types": [],
+    "grant_types": ["client_credentials"],
+    "token_endpoint_auth_method": "client_secret_basic",
+    "application_type": "web"
+  }
+}
+```
+
+#### 確認ポイント
+- ✅ `grant_types`が`client_credentials`のみ
+- ✅ `redirect_uris`が空配列（リダイレクト不要）
+- ✅ `response_types`が空配列（認可コード不要）
+- ✅ `scope`がカスタムスコープ（`api:read`, `api:write`）
+
+---
+
+### 登録したクライアントの確認
+
+```bash
+# クライアント一覧取得
+curl -X GET "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients" \
+  -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" | jq .
+```
+
+**期待される結果**: 3つのクライアント（web-app-client, mobile-app-client, backend-service）が表示される
+
+---
+
+### トラブルシューティング
+
+#### ❌ トークンが期限切れ
+
+**症状**: `{"error": "invalid_token"}` エラー
+
+**解決策**: トークンを再取得してください
+
+```bash
+export ORG_ADMIN_TOKEN=$(curl -sS -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'grant_type=password' \
+  -d "username=${ADMIN_EMAIL}" \
+  -d "password=${ADMIN_PASSWORD}" \
+  -d "client_id=${CLIENT_ID}" \
+  -d "client_secret=${CLIENT_SECRET}" \
+  -d 'scope=management' | jq -r '.access_token')
+```
+
+#### ❌ client_id重複エラー
+
+**症状**: `{"error": "invalid_request", "error_description": "client_id already exists"}`
+
+**原因**: 同じテナント内で同じclient_idが既に登録されている
+
+**解決策**: 別のclient_idを使用するか、既存のクライアントを削除
+
+```bash
+# 既存クライアントを削除
+curl -X DELETE "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients/${CLIENT_ID}" \
+  -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}"
+```
+---
+
+# API Reference
+
+このセクションでは、クライアント登録APIの詳細仕様を説明します。
+
+---
+
+## クライアント登録API
+
+### リクエスト
+
+```http
+POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/clients
+Authorization: Bearer {access_token}
+Content-Type: application/json
+
+{
+  "client_id": "my-app",
+  "client_secret": "secret-xxx",
+  "client_name": "My Application",
+  "redirect_uris": ["https://app.example.com/callback"],
+  "response_types": ["code"],
+  "grant_types": ["authorization_code", "refresh_token"],
+  "scope": "openid profile email",
+  "token_endpoint_auth_method": "client_secret_basic",
+  "application_type": "web"
+}
+```
+
+### パラメータ説明
+
+#### 基本情報
+
+| 項目 | 型 | 必須 | 説明 |
+|-----|---|------|------|
+| `client_id` | string (UUID) | ✅ | クライアントの一意識別子（UUID形式必須） |
+| `client_secret` | string | 条件付き | クライアントシークレット（Confidential Clientの場合必須） |
+| `client_name` | string | ❌ | クライアント名（表示用） |
+| `application_type` | string | ✅ | アプリケーションタイプ（`web` / `native`） |
+
+**client_secret必須条件**:
+- `token_endpoint_auth_method`が`client_secret_basic`または`client_secret_post`の場合
+- Confidential Client（サーバーサイドアプリ）の場合
+
+#### リダイレクトURI
+
+| 項目 | 型 | 必須 | 説明 |
+|-----|---|------|------|
+| `redirect_uris` | array | ✅ | リダイレクトURI配列（完全一致必須） |
+
+**重要**:
+- 完全一致が必須（パス、ポート、プロトコル）
+- 複数登録可能
+- フラグメント（`#`）は禁止
+
+#### OAuth/OIDC設定
+
+| 項目 | 型 | 必須 | 説明 |
+|-----|---|------|------|
+| `response_types` | array | ✅ | サポートするレスポンスタイプ（例: `["code"]`） |
+| `grant_types` | array | ✅ | サポートするグラントタイプ（例: `["authorization_code", "refresh_token"]`） |
+| `scope` | string | ❌ | デフォルトスコープ（スペース区切り） |
+| `token_endpoint_auth_method` | string | ❌ | トークンエンドポイント認証方式（デフォルト: `client_secret_basic`） |
+
+**主要なgrant_type**:
+- `authorization_code` - Authorization Code Flow
+- `refresh_token` - Refresh Token使用
+- `client_credentials` - Client Credentials Flow（M2M）
+- `urn:openid:params:grant-type:ciba` - CIBA Flow
+
+**主要なtoken_endpoint_auth_method**:
+- `client_secret_basic` - Basic認証（Confidential Client）
+- `client_secret_post` - POSTボディ（Confidential Client）
+- `none` - Public Client（PKCE必須）
+- `private_key_jwt` - JWT署名（秘密鍵）
+- `tls_client_auth` - クライアント証明書（mTLS）
+
+### レスポンス
+
+```http
+HTTP/1.1 201 Created
+Content-Type: application/json
+
+{
+  "dry_run": false,
+  "result": {
+    "client_id": "my-app",
+    "client_name": "My Application",
     "redirect_uris": ["https://app.example.com/callback"],
     "response_types": ["code"],
     "grant_types": ["authorization_code", "refresh_token"],
     "scope": "openid profile email",
     "token_endpoint_auth_method": "client_secret_basic",
     "application_type": "web"
-  }'
-```
-
-**ポイント**:
-- ✅ `client_secret` あり
-- ✅ `token_endpoint_auth_method: "client_secret_basic"` - Basic認証
-- ✅ `application_type: "web"` - Webアプリ
-
----
-
-### サーバー間通信（Machine-to-Machine）
-
-**特徴**: ユーザーなし、クライアント自身の権限で実行
-
-```bash
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/clients" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer ${ADMIN_TOKEN}" \
-  -d '{
-    "client_id": "my-backend-service",
-    "client_secret": "your-secret-here",
-    "client_name": "My Backend Service",
-    "redirect_uris": [],
-    "response_types": [],
-    "grant_types": ["client_credentials"],
-    "scope": "api:read api:write",
-    "token_endpoint_auth_method": "client_secret_basic",
-    "application_type": "web"
-  }'
-```
-
-**ポイント**:
-- ✅ `grant_types: ["client_credentials"]` のみ
-- ✅ `redirect_uris: []` - リダイレクト不要
-- ✅ カスタムスコープ（`api:read`, `api:write`等）
-
----
-
-## Level 2: response_typesの選択（10分）
-
-### response_typeとは
-
-**Authorization Requestで何を返すか**を指定します。
-
-| response_type | 返却物 | フロー | セキュリティ | 推奨 |
-|--------------|--------|------|------------|-----|
-| `code` | Authorization Code | Authorization Code Flow | ⭐⭐⭐⭐⭐ | ✅ 推奨 |
-| `token` | Access Token | Implicit Flow | ⭐⭐ | ❌ 非推奨 |
-| `id_token` | ID Token | Implicit Flow | ⭐⭐ | ❌ 非推奨 |
-| `code id_token` | Code + ID Token | Hybrid Flow | ⭐⭐⭐⭐ | △ 特殊用途 |
-| `code token` | Code + Access Token | Hybrid Flow | ⭐⭐⭐ | ❌ 非推奨 |
-
-### 推奨設定
-
-**ほとんどのアプリ**:
-```json
-"response_types": ["code"]
-```
-
-**理由**:
-- ✅ 最もセキュア（Authorization CodeはワンタイムのみTOKEN交換可能）
-- ✅ シンプル
-- ✅ PKCE対応
-
-**Implicit Flow（非推奨）**:
-```json
-// ❌ 使わない
-"response_types": ["token", "id_token"]
-```
-
-**理由**:
-- ❌ トークンがURLフラグメントに露出
-- ❌ リフレッシュトークン非対応
-- ❌ OAuth 2.1で廃止予定
-
----
-
-## Level 3: grant_typesの選択（10分）
-
-### grant_typeとは
-
-**Token Endpointでどの方式でトークンを取得するか**を指定します。
-
-| grant_type | 用途 | 必須？ | セキュリティ | 推奨 |
-|-----------|------|-------|------------|-----|
-| `authorization_code` | ユーザー認証後のトークン取得 | ✅ 必須 | ⭐⭐⭐⭐⭐ | ✅ |
-| `refresh_token` | Access Token更新 | ✅ 推奨 | ⭐⭐⭐⭐⭐ | ✅ |
-| `password` | ユーザー名・パスワード直接送信 | - | ⭐⭐ | ❌ 非推奨 |
-| `client_credentials` | サーバー間通信 | - | ⭐⭐⭐⭐ | △ M2Mのみ |
-| `urn:openid:params:grant-type:ciba` | バックチャネル認証 | - | ⭐⭐⭐⭐⭐ | △ 特殊用途 |
-
-### アプリケーション種類別の推奨設定
-
-#### モバイルアプリ / Webアプリ（標準）
-```json
-"grant_types": ["authorization_code", "refresh_token"]
-```
-
-**理由**:
-- ✅ Authorization Code Flow（最もセキュア）
-- ✅ Refresh Tokenで長期間ログイン維持
-
-#### サーバー間通信（M2M）
-```json
-"grant_types": ["client_credentials"]
-```
-
-**理由**:
-- ✅ ユーザーコンテキスト不要
-- ✅ クライアント自身の権限で実行
-
-#### レガシー対応（非推奨）
-```json
-"grant_types": ["password", "refresh_token"]
-```
-
-**理由**:
-- ⚠️ パスワードを直接送信（中間者攻撃リスク）
-- ⚠️ 既存システムとの互換性のみ使用
-- ⚠️ 新規実装では使用しない
-
-#### 高度な認証（CIBA対応）
-```json
-"grant_types": ["authorization_code", "refresh_token", "urn:openid:params:grant-type:ciba"]
-```
-
-**用途**:
-- プッシュ通知による認証
-- ユーザーがデバイスで承認
-
-**詳細**: [CIBA Flow実装](./how-to-04-ciba-flow-fido-uaf.md)
-
----
-
-## Level 4: scopeの選択（10分）
-
-### 標準スコープ
-
-| スコープ | 取得できる情報 | 必須？ |
-|---------|-------------|-------|
-| `openid` | `sub`（ユーザーID） | ✅ 必須（OIDC） |
-| `profile` | `name`, `given_name`, `family_name`, `picture`等 | - |
-| `email` | `email`, `email_verified` | - |
-| `phone` | `phone_number`, `phone_number_verified` | - |
-| `address` | `address`（郵送先住所） | - |
-
-### 基本設定
-
-```json
-"scope": "openid profile email"
-```
-
-**理由**:
-- ✅ ユーザー識別（sub）
-- ✅ 基本情報（name）
-- ✅ メールアドレス
-
----
-
-### カスタムスコープ（claims:xxx）
-
-idp-serverは`claims:`プレフィックスで**カスタム属性をID Tokenに含める**ことができます。
-
-#### 使用例
-
-```json
-"scope": "openid profile email claims:roles claims:permissions"
-```
-
-**効果**:
-```json
-// ID Token
-{
-  "sub": "user-12345",
-  "name": "John Doe",
-  "email": "john@example.com",
-  "roles": ["admin", "user"],        // ← claims:roles
-  "permissions": ["read", "write"]   // ← claims:permissions
-}
-```
-
-#### よくあるカスタムスコープ
-
-| スコープ | ID Tokenに含まれる情報 | 用途 |
-|---------|---------------------|------|
-| `claims:roles` | ユーザーのロール一覧 | 権限チェック |
-| `claims:permissions` | ユーザーの権限一覧 | 細かい権限制御 |
-| `claims:department` | 部署情報 | 組織内制御 |
-| `claims:assigned_tenants` | 割り当てテナント一覧 | マルチテナント対応 |
-
-**設定**:
-```bash
-# テナント設定でカスタムクレームマッピングを有効化
-curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer ${ADMIN_TOKEN}" \
-  -d '{
-    "attributes": {
-      "enabledCustomClaimsScopeMapping": "true",
-      "id_token_strict_mode": "false"
-    }
-  }'
-```
-
-**詳細**: [Concept: カスタムクレーム](../content_03_concepts/concept-09-custom-claims.md)
-
----
-
-### アプリケーション種類別の推奨スコープ
-
-#### ソーシャルログイン
-```json
-"scope": "openid profile email"
-```
-
-#### エンタープライズアプリ
-```json
-"scope": "openid profile email claims:roles claims:department"
-```
-
-#### マルチテナントSaaS
-```json
-"scope": "openid profile email claims:assigned_tenants claims:current_tenant"
-```
-
----
-
-## Level 5: token_endpoint_auth_methodの選択（5分）
-
-### クライアント認証方式
-
-トークンエンドポイントで**クライアントをどう認証するか**を指定します。
-
-| 認証方式 | セキュリティ | 用途 | 推奨 |
-|---------|------------|------|-----|
-| `none` | - | Public Client（モバイル/SPA） | ✅ Public Client |
-| `client_secret_basic` | ⭐⭐ | Basic認証ヘッダー | ✅ Confidential Client |
-| `client_secret_post` | ⭐ | POSTボディ | △ レガシー |
-| `client_secret_jwt` | ⭐⭐⭐ | JWT署名（共有鍵） | ✅ 高セキュリティ |
-| `private_key_jwt` | ⭐⭐⭐⭐ | JWT署名（秘密鍵） | ✅ 最高セキュリティ |
-| `tls_client_auth` | ⭐⭐⭐⭐⭐ | クライアント証明書（MTLS） | ✅ FAPI準拠 |
-
-### 推奨設定
-
-**モバイルアプリ / SPA**:
-```json
-"token_endpoint_auth_method": "none"
-```
-- PKCE必須で代替
-
-**Webアプリ（バックエンドあり）**:
-```json
-"token_endpoint_auth_method": "client_secret_basic"
-```
-- 最も一般的
-
-**金融機関等（高セキュリティ）**:
-```json
-"token_endpoint_auth_method": "private_key_jwt"
-```
-- クライアント秘密鍵で署名
-
-**詳細**: [Client Authentication実装](../content_06_developer-guide/03-application-plane/10-client-authentication.md)
-
----
-
-## Level 6: トークン有効期限の設定（5分）
-
-### デフォルト設定
-
-```json
-{
-  "client_id": "my-app",
-  ...
-  "extension": {
-    "access_token_duration": 3600,      // 1時間（秒）
-    "refresh_token_duration": 2592000   // 30日（秒）
   }
 }
 ```
 
-### アプリケーション種類別の推奨値
-
-| アプリ種類 | Access Token | Refresh Token | 理由 |
-|----------|-------------|--------------|------|
-| **モバイルアプリ** | 1時間（3600秒） | 30日（2592000秒） | バランス型 |
-| **SPA** | 15分（900秒） | 7日（604800秒） | 短命推奨 |
-| **Webアプリ** | 1時間（3600秒） | 30日（2592000秒） | 標準的 |
-| **管理画面** | 15分（900秒） | 1日（86400秒） | 高セキュリティ |
-| **API（M2M）** | 1時間（3600秒） | - | Refresh不要 |
-
-**セキュリティトレードオフ**:
-- 短い有効期限 → セキュア、頻繁な再認証
-- 長い有効期限 → 便利、トークン漏洩リスク
+**注意**: `client_secret`はレスポンスに含まれません。登録時の値を安全に保管してください。
 
 ---
 
-## Level 7: redirect_urisの設定（重要）
+## クライアント取得API
 
-### redirect_uriとは
+### リクエスト
 
-**認証成功後にユーザーをリダイレクトするURL**
-
-```
-ユーザー認証成功
-  ↓
-idp-server: リダイレクト
-  ↓
-https://app.example.com/callback?code=abc123
-  ↑ この URL が redirect_uri
+```http
+GET /v1/management/organizations/{organization-id}/tenants/{tenant-id}/clients/{client-id}
+Authorization: Bearer {access_token}
 ```
 
-### 設定例
-
-#### Webアプリ
-```json
-"redirect_uris": [
-  "https://app.example.com/callback",
-  "https://app.example.com/auth/callback"
-]
-```
-
-#### モバイルアプリ
-```json
-"redirect_uris": [
-  "myapp://callback",
-  "com.example.myapp://oauth/callback"
-]
-```
-
-#### 開発環境 + 本番環境
-```json
-"redirect_uris": [
-  "http://localhost:3000/callback",      // 開発環境
-  "https://app.example.com/callback"     // 本番環境
-]
-```
-
-### ⚠️ セキュリティ重要事項
-
-**完全一致**が必須:
-```bash
-# ✅ OK
-登録: https://app.example.com/callback
-使用: https://app.example.com/callback
-
-# ❌ NG: 末尾スラッシュ違い
-登録: https://app.example.com/callback
-使用: https://app.example.com/callback/  # エラー！
-
-# ❌ NG: サブドメイン違い
-登録: https://app.example.com/callback
-使用: https://sub.app.example.com/callback  # エラー！
-```
-
-**ワイルドカード非対応**:
-```json
-// ❌ 使えない
-"redirect_uris": ["https://*.example.com/callback"]
-
-// ✅ 個別に登録
-"redirect_uris": [
-  "https://app1.example.com/callback",
-  "https://app2.example.com/callback"
-]
-```
-
----
-
-## Level 8: 高度な設定（オプション）
-
-### CIBA対応クライアント
+### レスポンス
 
 ```json
 {
   "client_id": "my-app",
-  "grant_types": ["authorization_code", "refresh_token", "urn:openid:params:grant-type:ciba"],
-  "extension": {
-    "default_ciba_authentication_interaction_type": "authentication-device-notification"
-  }
-}
-```
-
-**CIBA認証インタラクションタイプ**:
-
-| タイプ | 意味 | ユーザー操作 |
-|-------|------|-----------|
-| `authentication-device-notification` | プッシュ通知 | デバイスで承認 |
-| `authentication-device-notification-no-action` | プッシュ通知（自動承認） | 操作不要 |
-| `poll` | ポーリング | 別途ログイン |
-
-**詳細**: [CIBA Flow](./how-to-04-ciba-flow-fido-uaf.md)
-
----
-
-### Federationを有効化
-
-```json
-{
-  "client_id": "my-app",
-  "extension": {
-    "available_federations": [
-      {
-        "id": "external-idp-a",
-        "type": "oidc",
-        "sso_provider": "external-idp-a"
-      },
-      {
-        "id": "external-idp-b",
-        "type": "oidc",
-        "sso_provider": "external-idp-b"
-      }
-    ]
-  }
-}
-```
-
-**効果**: このクライアントで外部IdP連携が利用可能になる
-
-**詳細**: [Federation設定](./how-to-12-federation-setup.md)
-
----
-
-## 実例: エンタープライズモバイルアプリの設定
-
-### 高度な機能を使用する完全な設定例
-
-**シナリオ**: CIBA対応、本人確認、カスタムクレーム使用のエンタープライズアプリ
-
-```json
-{
-  "client_id": "${ENTERPRISE_APP_CLIENT_ID}",
-  "client_id_alias": "enterprise-mobile-app",
-  "client_secret": "${ENTERPRISE_APP_CLIENT_SECRET}",
-  "redirect_uris": [
-    "com.example.enterprise://callback"
-  ],
+  "client_name": "My Application",
+  "redirect_uris": ["https://app.example.com/callback"],
   "response_types": ["code"],
-  "grant_types": [
-    "authorization_code",
-    "refresh_token",
-    "urn:openid:params:grant-type:ciba"
-  ],
-  "scope": "openid profile email address phone update identity_verification_application claims:roles claims:department claims:authentication_devices",
-  "client_name": "Enterprise Mobile App",
+  "grant_types": ["authorization_code", "refresh_token"],
+  "scope": "openid profile email",
   "token_endpoint_auth_method": "client_secret_basic",
-  "application_type": "native",
+  "application_type": "web",
   "extension": {
-    "default_ciba_authentication_interaction_type": "authentication-device-notification-no-action",
     "access_token_duration": 3600,
-    "refresh_token_duration": 2592000,
-    "supported_jar": true
+    "refresh_token_duration": 86400
   }
 }
 ```
 
-**特徴**:
-- ✅ CIBA Grant対応（プッシュ通知認証）
-- ✅ カスタムスコープ多数（組織固有情報）
-- ✅ 本人確認申請スコープ（`identity_verification_application`）
-- ✅ 認証デバイス情報（`claims:authentication_devices`）
-- ✅ JWT Authorization Request対応（`supported_jar`）
+---
 
-**初学者へのアドバイス**:
-- まずはシンプルなクライアント（Level 1）から始める
-- 必要に応じて段階的に機能追加
-- この例は参考として、自社要件に合わせてカスタマイズ
+## クライアント更新API
+
+### リクエスト
+
+```http
+PUT /v1/management/organizations/{organization-id}/tenants/{tenant-id}/clients/{client-id}
+Authorization: Bearer {access_token}
+Content-Type: application/json
+
+{
+  "client_name": "My Updated Application",
+  "redirect_uris": [
+    "https://app.example.com/callback",
+    "https://app.example.com/silent-renew"
+  ],
+  "scope": "openid profile email address"
+}
+```
+
+### Dry Run（検証のみ、更新なし）
+
+```http
+PUT /v1/management/organizations/{organization-id}/tenants/{tenant-id}/clients/{client-id}?dry_run=true
+Authorization: Bearer {access_token}
+Content-Type: application/json
+
+{
+  "redirect_uris": [
+    "https://app.example.com/callback",
+    "http://localhost:3000/callback"
+  ]
+}
+```
+
+**レスポンス**:
+```json
+{
+  "dry_run": true,
+  "validation_result": {
+    "valid": true,
+    "warnings": []
+  }
+}
+```
 
 ---
 
-## よくあるエラー
+## よくあるエラーと解決策
 
 ### エラー1: redirect_uri不一致
 
@@ -577,26 +494,20 @@ https://app.example.com/callback?code=abc123
 
 **原因**: Authorization Requestの`redirect_uri`がクライアント登録時の`redirect_uris`に含まれていない
 
-**解決策**:
-```bash
-# クライアント設定を確認
-curl "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/clients/${CLIENT_ID}" \
-  -H "Authorization: Bearer ${ADMIN_TOKEN}" \
-  | jq '.redirect_uris'
+**解決策**: クライアント設定を確認・更新
 
+```bash
 # redirect_urisに追加
-curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/clients/${CLIENT_ID}" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients/${CLIENT_ID}" \
+  -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" \
   -d '{
     "redirect_uris": [
       "https://app.example.com/callback",
-      "http://localhost:3000/callback"  // 追加
+      "http://localhost:3000/callback"
     ]
   }'
 ```
-
----
 
 ### エラー2: unsupported_grant_type
 
@@ -604,24 +515,22 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
 ```json
 {
   "error": "unsupported_grant_type",
-  "error_description": "grant_type 'password' is not allowed for this client"
+  "error_description": "grant_type 'refresh_token' is not allowed for this client"
 }
 ```
 
 **原因**: Token Requestで使用した`grant_type`がクライアントの`grant_types`に含まれていない
 
-**解決策**:
+**解決策**: `grant_types`に追加
+
 ```bash
-# grant_typesに追加（ただしpasswordは非推奨）
-curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/clients/${CLIENT_ID}" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients/${CLIENT_ID}" \
+  -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" \
   -d '{
-    "grant_types": ["authorization_code", "refresh_token"]  // passwordは追加しない
+    "grant_types": ["authorization_code", "refresh_token"]
   }'
 ```
-
----
 
 ### エラー3: invalid_scope
 
@@ -633,22 +542,25 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
 }
 ```
 
-**原因**: Authorization Requestで要求したスコープがクライアントの`scope`に含まれていない
+**原因**: Authorization Requestで要求したスコープがクライアントの`scope`またはテナントの`scopes_supported`に含まれていない
 
 **解決策**:
+1. クライアントのスコープを更新
+2. テナントの`scopes_supported`に追加
+
 ```bash
-# クライアントのスコープを確認・更新
-curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/clients/${CLIENT_ID}" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+# クライアントのスコープを更新
+curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients/${CLIENT_ID}" \
+  -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" \
   -d '{
-    "scope": "openid profile email admin"  // adminスコープ追加
+    "scope": "openid profile email admin"
   }'
 ```
 
 ---
 
-## クライアント登録のベストプラクティス
+## ベストプラクティス
 
 ### ✅ 推奨
 
@@ -672,7 +584,7 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
    "grant_types": ["authorization_code", "refresh_token"]
 
    // ❌ 全部許可（不要なものを有効化）
-   "grant_types": ["authorization_code", "refresh_token", "password", "client_credentials", "ciba"]
+   "grant_types": ["authorization_code", "refresh_token", "password", "client_credentials"]
    ```
 
 4. **redirect_uris は厳密に**
@@ -687,33 +599,32 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
    ]
    ```
 
+5. **client_secretの安全な管理** (RFC 6749 Section 2.3.1, 10.1)
+   - 環境変数で管理（コードにハードコードしない）
+   - HTTPSで送信（平文送信禁止）
+   - 漏洩が疑われる場合は即座に無効化
+
 ---
 
 ## 次のステップ
 
 ✅ クライアント登録ができました！
 
-### 認証を設定
-- [How-to: パスワード認証](./how-to-03-password-authentication.md)
-- [How-to: MFA設定](./how-to-09-mfa-setup.md)
-- [How-to: Federation設定](./how-to-12-federation-setup.md)
+### 認証を実行
+- [How-to: ユーザー登録と認証](./how-to-04-user-registration.md) - ユーザー作成と初回ログイン
 
-### 高度な機能
-- [How-to: CIBA Flow](./how-to-04-ciba-flow-fido-uaf.md) - バックチャネル認証
-- [How-to: Identity Verification](./how-to-07-identity-verification-application.md) - 身元確認
+### 高度な設定
+- [Developer Guide: Client設定](../content_06_developer-guide/05-configuration/client.md) - 詳細な設定オプション
+- [How-to: CIBA Flow](./how-to-05-ciba-flow.md) - バックチャネル認証
 
 ---
 
 ## 関連ドキュメント
 
-- [Concept: ID管理](../content_03_concepts/concept-02-id-management.md) - クライアント概念
-- [Concept: トークン管理](../content_03_concepts/concept-06-token-management.md) - トークン有効期限
+- [Concept: OAuth 2.0とOpenID Connect](../content_03_concepts/concept-01-oauth-oidc.md) - プロトコル概要
 - [Developer Guide: Client Authentication](../content_06_developer-guide/03-application-plane/10-client-authentication.md) - 7つの認証方式詳細
 - [API Reference](../content_07_reference/api-reference.md) - Management API仕様
 
 ---
 
-**最終更新**: 2025-10-13
-**難易度**: ⭐⭐☆☆☆（初級〜中級）
-**対象**: 初めてクライアントを登録する管理者・開発者
-**習得スキル**: response_types、grant_types、scope、認証方式の選択
+**最終更新**: 2025-10-14
