@@ -42,13 +42,7 @@ public class RolePermissionVerifier {
   public VerificationResult verify() {
 
     if (roles.containsByName(roleRequest.name())) {
-      boolean isSelfUpdate = false;
-      if (updatingRoleId != null) {
-        var existing = roles.getByName(roleRequest.name());
-        isSelfUpdate =
-            (existing != null && existing.id() != null && existing.id().equals(updatingRoleId));
-      }
-      if (!isSelfUpdate) {
+      if (!isSelfUpdate()) {
         List<String> errors = new ArrayList<>();
         errors.add(String.format("Role is already exists: %s", roleRequest.name()));
         return VerificationResult.failure(errors);
@@ -69,5 +63,16 @@ public class RolePermissionVerifier {
     }
 
     return VerificationResult.success();
+  }
+
+  private boolean isSelfUpdate() {
+    if (updatingRoleId == null) {
+      return false;
+    }
+    return roles
+        .getByName(roleRequest.name())
+        .map(role -> role.id())
+        .map(id -> id.equals(updatingRoleId))
+        .orElse(false);
   }
 }
