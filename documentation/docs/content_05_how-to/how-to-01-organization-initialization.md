@@ -1,12 +1,29 @@
 # 組織初期化ガイド
 
-このドキュメントでは、idp-serverで新しい組織を初期化する方法を解説します。
+## このドキュメントの目的
+
+**新しい組織とテナントを作成し、管理者としてログインできるようになる**ことが目標です。
+
+### 所要時間
+⏱️ **約10分**（スクリプト使用）/ **約20分**（API直接呼び出し）
+
+### このドキュメントの位置づけ
+
+**Phase 1**: 最小構成で動作確認（Step 1/5）
+
+**次のドキュメント**:
+- [how-to-02 テナント設定](./how-to-02-tenant-setup.md) - ビジネステナント作成
+
+### 前提条件
+- idp-serverが起動している
+- Admin Tenant（システム管理用テナント）が存在する
+- 管理者トークンを取得できる
 
 ---
 
-## 概要
+## 組織初期化とは
 
-組織初期化は、エンタープライズレベルのマルチテナント運用を開始するための最初のステップです。1つのAPIリクエストで以下をまとめて作成できます：
+組織初期化は、**エンタープライズレベルのマルチテナント運用を開始するための最初のステップ**です。1つのAPIリクエストで以下をまとめて作成できます：
 
 1. **Organization** - 組織本体
 2. **Tenant** - 組織管理用テナント（ORGANIZERタイプ）
@@ -740,16 +757,31 @@ curl "..."  # いきなり本番実行
 
 ---
 
-## 関連ドキュメント
-
-- [認可サーバー設定ガイド](how-to-02-authorization-server-configuration.md) - テナント作成と認可サーバー設定
-- [エンタープライズID](../content_03_concepts/enterprise-id.md) - 組織・テナント概念
-- [マルチテナント](../content_03_concepts/multi-tenant.md) - マルチテナント設計
-
 ---
 
-## 参考資料
+## 次のステップ
 
+✅ 組織初期化が完了しました！
+
+### Phase 1を完了しよう
+
+**次に必要な設定**:
+- [how-to-02 テナント設定](./how-to-02-tenant-setup.md) - ビジネス用テナント作成
+- [how-to-03 クライアント登録](./how-to-03-client-registration.md) - アプリケーションクライアント登録
+
+### 関連ドキュメント
+- [Concept: エンタープライズID](../content_03_concepts/concept-04-enterprise-id.md) - 組織・テナント概念
+- [Concept: マルチテナント](../content_03_concepts/concept-01-multi-tenant.md) - マルチテナント設計
+- [Configuration: Tenant設定](../content_06_developer-guide/05-configuration/tenant.md) - テナント設定詳細
+
+### 参考資料
 - [OpenID Connect Discovery 1.0](https://openid.net/specs/openid-connect-discovery-1_0.html)
 - [RFC 7517: JSON Web Key (JWK)](https://datatracker.ietf.org/doc/html/rfc7517)
 - [RFC 7591: OAuth 2.0 Dynamic Client Registration](https://datatracker.ietf.org/doc/html/rfc7591)
+
+---
+
+**最終更新**: 2025-01-15
+**難易度**: ⭐⭐☆☆☆（初級）
+**対象**: システム管理者、DevOpsエンジニア
+**習得スキル**: 組織・テナント作成、Onboarding API使用
