@@ -482,18 +482,16 @@ OAuth2RequestVerifier.verify(context)
 
 ### Validator vs Verifier の違い（実装ベース）
 
-| 観点 | OAuthRequestValidator | OAuthRequestVerifier |
-|------|---------------------|---------------------|
-| **実行タイミング** | リクエスト受信直後 | Context作成後 |
-| **必要な情報** | リクエストパラメータのみ | Tenant設定・クライアント設定 |
-| **検証内容** | 形式チェック（client_id存在、重複なし） | ビジネスルール（redirect_uri一致、scope有効性） |
-| **例外型** | `OAuthBadRequestException` | `OAuthRedirectableBadRequestException` |
-| **エラー処理** | エラーページ表示 | redirect_uriにエラーパラメータ付与 |
+| 観点 | OAuthRequestValidator | OAuthRequestVerifier                                       |
+|------|---------------------|------------------------------------------------------------|
+| **実行タイミング** | リクエスト受信直後 | Context作成後                                                 |
+| **必要な情報** | リクエストパラメータのみ | Tenant設定・クライアント設定                                          |
+| **検証内容** | 形式チェック（client_id存在、重複なし） | ビジネスルール（redirect_uri一致、scope有効性）                           |
+| **例外型** | `OAuthBadRequestException` | `OAuthRedirectableBadRequestException`                     |
+| **エラー処理** | エラーページ表示 | リダイレクトURIの検討でエラーの場合はエラーページ<br/>リダイレクトURIの検証後はリダイレクトにエラーを返却 |
 
 **RFC 6749 Section 3.1.2.4の実装**:
 > redirect_uriが無効な場合は、**リダイレクトしてはいけない**（セキュリティ理由）
-
-→ Validatorでredirect_uri形式を検証し、不正ならリダイレクトなしでエラー表示
 
 ---
 
@@ -959,20 +957,16 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_REQUES
 ```json
 {
   "error": "invalid_grant",
-  "error_description": "authorization code has already been used"
+  "error_description": "not found authorization code"
 }
 ```
 
 **原因**: 同じAuthorization Codeで2回Token Request実行
 
-**セキュリティ動作**:
+**動作**:
 ```
-1回目のToken Request: ✅ 成功（used=true に更新）
-2回目のToken Request: ❌ エラー（リプレイ攻撃検出）
-    ↓
-⚠️ セキュリティアラート
-    - 既に発行済みのAccess Token/Refresh Tokenを即座に無効化
-    - Security Event Hook発火
+1回目のToken Request: ✅ 成功（認可コード削除）
+2回目のToken Request: ❌ エラー（invalid_grant）
 ```
 
 **対処**:

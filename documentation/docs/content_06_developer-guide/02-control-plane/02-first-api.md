@@ -1,4 +1,4 @@
-# 02. 最初のAPI実装
+# Control PlaneのAPI実装
 
 ## このドキュメントの目的
 

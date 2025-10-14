@@ -13,12 +13,13 @@
 
 ### 1. システムレベルAPI（System Manager）
 
-**テナント単位**でリソースを管理。システム管理者が使用。
+**システム全体**のリソースを管理。システム運用者が使用。
 
 **URL**: `/v1/management/tenants/{tenant-id}/...`
 
 | カテゴリ | API | 管理対象 |
 |---------|-----|---------|
+| **Onboarding** | オンボーディング | 新規テナント自動セットアップ |
 | **基本設定** | TenantManagement | テナント |
 | | ClientManagement | OAuthクライアント |
 | | UserManagement | ユーザー |
@@ -36,8 +37,6 @@
 | | SecurityEventHookConfigurationManagement | フック設定 |
 | | AuditLogManagement | 監査ログ |
 | **招待** | TenantInvitationManagement | テナント招待 |
-
-**合計**: 16個のシステムレベルAPI
 
 ---
 
@@ -66,23 +65,19 @@
 | | OrgSecurityEventHookConfigManagement | フック設定 |
 | | OrgAuditLogManagement | 監査ログ |
 
-**合計**: 16個の組織レベルAPI
-
 ---
 
 ### 3. Admin API
 
-**システム全体**の管理。最高権限管理者が使用。
+**システム全体**の管理。システム管理者が使用。
 
 **URL**: `/v1/admin/...`
 
-| API | 管理対象 | 用途 |
-|-----|---------|-----|
-| IdpServerStarter | システム初期化 | 初回セットアップ |
-| IdpServerOperation | システム運用 | ヘルスチェック・メトリクス |
-| Onboarding | オンボーディング | 新規テナント自動セットアップ |
+| API | 管理対象 | 用途             |
+|-----|---------|----------------|
+| IdpServerStarter | システム初期化 | 初回セットアップ       |
+| IdpServerOperation | システム運用 | データクリーンアップ     |
 
-**合計**: 3個のAdmin API
 
 ---
 
@@ -111,10 +106,8 @@
 ### いつAdmin APIを使うか？
 
 - ✅ システム全体の初期化・運用
-- ✅ 最高権限管理者のみ
-- ✅ テナント横断の操作
 
-**例**: idp-serverの初回セットアップ、ヘルスチェック
+**例**: idp-serverの初回セットアップ、データクリーンアップ
 
 ---
 
@@ -148,9 +141,8 @@ DELETE /v1/management/tenants/{tenant-id}/clients/{id}    # client:delete
 - [組織レベルAPI実装](./04-organization-level-api.md) - 4ステップアクセス制御
 
 ### 個別機能
-- [Authentication Configuration](../../04-implementation-guides/authentication-policy.md) - 認証設定
-- [Federation Configuration](../../04-implementation-guides/federation.md) - フェデレーション
-- [Security Event Hooks](../../04-implementation-guides/security-event-hooks.md) - イベントフック
+- [Authentication Configuration](../04-implementation-guides/impl-05-authentication-policy.md) - 認証設定
+- [Security Event Hooks](../04-implementation-guides/impl-15-security-event-hooks.md) - イベントフック
 
 ---
 
