@@ -1,12 +1,29 @@
 # 組織初期化ガイド
 
-このドキュメントでは、idp-serverで新しい組織を初期化する方法を解説します。
+## このドキュメントの目的
+
+**新しい組織とテナントを作成し、管理者としてログインできるようになる**ことが目標です。
+
+### 所要時間
+⏱️ **約10分**（スクリプト使用）/ **約20分**（API直接呼び出し）
+
+### このドキュメントの位置づけ
+
+**Phase 1**: 最小構成で動作確認（Step 1/5）
+
+**次のドキュメント**:
+- [how-to-02 テナント設定](./how-to-02-tenant-setup.md) - ビジネステナント作成
+
+### 前提条件
+- idp-serverが起動している
+- Admin Tenant（システム管理用テナント）が存在する
+- 管理者トークンを取得できる
 
 ---
 
-## 概要
+## 組織初期化とは
 
-組織初期化は、エンタープライズレベルのマルチテナント運用を開始するための最初のステップです。1つのAPIリクエストで以下をまとめて作成できます：
+組織初期化は、**エンタープライズレベルのマルチテナント運用を開始するための最初のステップ**です。1つのAPIリクエストで以下をまとめて作成できます：
 
 1. **Organization** - 組織本体
 2. **Tenant** - 組織管理用テナント（ORGANIZERタイプ）
@@ -51,7 +68,7 @@ ADMIN_CLIENT_SECRET=clientSecretPostPassword123456789012345678901234567890123456
 2. **スクリプト実行**
 
 ```bash
-./scripts/create-organization.sh
+../../../scripts/create-organization.sh
 ```
 
 3. **対話形式で情報入力**
@@ -100,6 +117,14 @@ Admin Credentials:
 Client Credentials:
   Client ID: c2b59f68-071e-4fbe-b37d-1374d1b868dd
   Client Secret: test-org-secret-a3f9e82c...
+
+=== Environment Variables (Copy & Paste) ===
+export ORGANIZATION_ID='72cf4a12-8da3-40fb-8ae4-a77e3cda95e2'
+export TENANT_ID='952f6906-3e95-4ed3-86b2-981f90f785f9'
+export ADMIN_EMAIL='admin@acme.com'
+export ADMIN_PASSWORD='SecurePassword123!'
+export CLIENT_ID='c2b59f68-071e-4fbe-b37d-1374d1b868dd'
+export CLIENT_SECRET='test-org-secret-a3f9e82c...'
 ```
 
 ### スクリプトの利点
@@ -115,6 +140,144 @@ Client Credentials:
 
 ---
 
+## 動作確認：作成した組織管理者でログイン
+
+スクリプト実行後、**作成した組織管理者でアクセストークンを取得**して、正常に動作していることを確認します。
+
+### 1. スクリプト出力から必要な情報を取得
+
+スクリプトの最後に表示された情報を使います：
+
+```
+=== Login Information ===
+Organization ID: 734487a6-ab2b-43c6-b178-50ef79068cab
+Tenant ID: 70ffa986-bdc5-4532-8457-8fcda6e1b091
+Token Endpoint: http://localhost:8080/70ffa986-bdc5-4532-8457-8fcda6e1b091/v1/tokens
+
+Admin Credentials:
+  Username: org.admin
+  Email: admin@test-org.com
+  Password: TestOrgPassword123!
+
+Client Credentials:
+  Client ID: 8ff28e6b-dac4-47bb-bc74-900e1473a881
+  Client Secret: test-org-secret-79baf7c54d9e9210ed4b964b21ed34b6
+```
+
+### 2. 環境変数に設定
+
+スクリプトが最後に出力する**「Environment Variables (Copy & Paste)」セクション**をそのままコピー&ペーストします：
+
+```bash
+# スクリプト出力の「Environment Variables」セクションをコピー&ペースト
+export ORGANIZATION_ID='72cf4a12-8da3-40fb-8ae4-a77e3cda95e2'
+export TENANT_ID='952f6906-3e95-4ed3-86b2-981f90f785f9'
+export ADMIN_EMAIL='admin@acme.com'
+export ADMIN_PASSWORD='SecurePassword123!'
+export CLIENT_ID='c2b59f68-071e-4fbe-b37d-1374d1b868dd'
+export CLIENT_SECRET='test-org-secret-a3f9e82c...'
+```
+
+**ポイント**:
+- スクリプト出力をそのままコピーするだけなので、手動で入力する必要はありません
+- **シングルクォート**を使用しているため、パスワードに`!`や`$`などの特殊文字が含まれていても正しく設定されます
+
+### 3. トークン取得リクエスト
+
+```bash
+# ⚠️ パスワードに特殊文字(!,$,\等)が含まれる場合は必ずシングルクォートを使用
+curl -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'grant_type=password' \
+  -d "username=${ADMIN_EMAIL}" \
+  -d "password=${ADMIN_PASSWORD}" \
+  -d "client_id=${CLIENT_ID}" \
+  -d "client_secret=${CLIENT_SECRET}" \
+  -d 'scope=management' | jq .
+```
+
+**重要**:
+- usernameには**Email**を使用（Username `org.admin`ではない）
+- パスワードに特殊文字が含まれる場合は変数展開で対応
+
+### 4. 成功レスポンス
+
+```json
+{
+  "access_token": "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InNpZ25pbmdf...",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "refresh_token": "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InNpZ25pbmdf...",
+  "scope": "management"
+}
+```
+
+✅ **成功！** `access_token`が取得できれば、組織初期化は正常に完了しています。
+
+### 5. トークンを環境変数に保存
+
+次のステップ（how-to-02以降）で使うため、トークンを保存します：
+
+```bash
+# トークンを環境変数に保存
+export ORG_ADMIN_TOKEN=$(curl -sS -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'grant_type=password' \
+  -d "username=${ADMIN_EMAIL}" \
+  -d "password=${ADMIN_PASSWORD}" \
+  -d "client_id=${CLIENT_ID}" \
+  -d "client_secret=${CLIENT_SECRET}" \
+  -d 'scope=management' | jq -r '.access_token')
+
+# 確認
+echo "Token: ${ORG_ADMIN_TOKEN:0:50}..."
+echo "Organization ID: $ORGANIZATION_ID"
+echo "Tenant ID: $TENANT_ID"
+```
+
+### トラブルシューティング
+
+#### ❌ エラー: `does not found user by token request, or invalid password`
+
+**原因**: ユーザー名またはパスワードが間違っている
+
+**解決策**:
+1. ユーザー名は**Email**を使用（`Username`ではなく`Email`）
+2. 環境変数が正しく設定されているか確認
+3. スクリプト出力の情報を正確にコピー
+
+```bash
+# ✅ 正しい: Emailを使用（シングルクォート）
+export ADMIN_EMAIL='admin@test-org.com'
+-d "username=${ADMIN_EMAIL}"
+
+# ❌ 間違い: Usernameを使用
+export ADMIN_USERNAME='org.admin'  # これは使わない
+-d "username=${ADMIN_USERNAME}"
+
+# 環境変数の確認
+echo "Email: $ADMIN_EMAIL"
+echo "Password: ${ADMIN_PASSWORD:0:5}..."
+```
+
+#### ❌ エラー: `invalid_client`
+
+**原因**: Client IDまたはClient Secretが間違っている
+
+**解決策**: 環境変数を確認してスクリプト出力の値と一致しているか確認
+
+```bash
+# 環境変数の確認
+echo "Client ID: $CLIENT_ID"
+echo "Client Secret: ${CLIENT_SECRET:0:20}..."
+
+# スクリプト出力と比較して、正しい値を再設定（シングルクォート）
+export CLIENT_ID='8ff28e6b-dac4-47bb-bc74-900e1473a881'
+export CLIENT_SECRET='test-org-secret-79baf7c54d9e9210ed4b964b21ed34b6'
+```
+
+---
+
 ## 方法2: Management API直接呼び出し（詳細制御が必要な場合）
 
 **`/v1/management/onboarding` API**を直接呼び出して組織を作成する方法です。カスタマイズや自動化が必要な場合に使用します。
@@ -127,14 +290,15 @@ Onboarding APIは**management スコープを持つ管理者専用**です。Adm
 
 ```bash
 # Admin Tenantでトークン取得
-curl -X POST "http://localhost:8080/{admin-tenant-id}/v1/tokens" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "grant_type=password" \
-  -d "username=system-admin@example.com" \
-  -d "password=your_admin_password" \
-  -d "scope=openid profile email management" \
-  -d "client_id=admin-client" \
-  -d "client_secret=admin-secret"
+# ⚠️ パスワードに特殊文字(!,$,\等)が含まれる場合は必ずシングルクォートを使用
+curl -X POST 'http://localhost:8080/{admin-tenant-id}/v1/tokens' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'grant_type=password' \
+  -d 'username=system-admin@example.com' \
+  -d 'password=your_admin_password' \
+  -d 'scope=openid profile email management' \
+  -d 'client_id=admin-client' \
+  -d 'client_secret=admin-secret'
 ```
 
 **レスポンス例**:
@@ -451,14 +615,15 @@ Content-Type: application/json
 ### リクエスト
 
 ```bash
-curl -X POST "https://auth.acme.com/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "grant_type=password" \
-  -d "username=admin@acme.com" \
-  -d "password=SecurePassword123!" \
-  -d "scope=openid profile email org-management" \
-  -d "client_id=c2b59f68-071e-4fbe-b37d-1374d1b868dd" \
-  -d "client_secret=acme-org-secret-001"
+# ⚠️ パスワードに特殊文字(!,$,\等)が含まれる場合は必ずシングルクォートを使用
+curl -X POST 'https://auth.acme.com/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'grant_type=password' \
+  -d 'username=admin@acme.com' \
+  -d 'password=SecurePassword123!' \
+  -d 'scope=openid profile email org-management' \
+  -d 'client_id=c2b59f68-071e-4fbe-b37d-1374d1b868dd' \
+  -d 'client_secret=acme-org-secret-001'
 ```
 
 ### レスポンス
@@ -740,16 +905,31 @@ curl "..."  # いきなり本番実行
 
 ---
 
-## 関連ドキュメント
-
-- [認可サーバー設定ガイド](how-to-02-authorization-server-configuration.md) - テナント作成と認可サーバー設定
-- [エンタープライズID](../content_03_concepts/enterprise-id.md) - 組織・テナント概念
-- [マルチテナント](../content_03_concepts/multi-tenant.md) - マルチテナント設計
-
 ---
 
-## 参考資料
+## 次のステップ
 
+✅ 組織初期化が完了しました！
+
+### Phase 1を完了しよう
+
+**次に必要な設定**:
+- [how-to-02 テナント設定](./how-to-02-tenant-setup.md) - ビジネス用テナント作成
+- [how-to-03 クライアント登録](./how-to-03-client-registration.md) - アプリケーションクライアント登録
+
+### 関連ドキュメント
+- [Concept: エンタープライズID](../content_03_concepts/concept-04-enterprise-id.md) - 組織・テナント概念
+- [Concept: マルチテナント](../content_03_concepts/concept-01-multi-tenant.md) - マルチテナント設計
+- [Configuration: Tenant設定](../content_06_developer-guide/05-configuration/tenant.md) - テナント設定詳細
+
+### 参考資料
 - [OpenID Connect Discovery 1.0](https://openid.net/specs/openid-connect-discovery-1_0.html)
 - [RFC 7517: JSON Web Key (JWK)](https://datatracker.ietf.org/doc/html/rfc7517)
 - [RFC 7591: OAuth 2.0 Dynamic Client Registration](https://datatracker.ietf.org/doc/html/rfc7591)
+
+---
+
+**最終更新**: 2025-01-15
+**難易度**: ⭐⭐☆☆☆（初級）
+**対象**: システム管理者、DevOpsエンジニア
+**習得スキル**: 組織・テナント作成、Onboarding API使用

@@ -46,7 +46,7 @@
       "urn:openid:params:grant-type:ciba"
     ],
     "token_signed_key_id": "",
-    "id_token_signed_key_id": "debug_id_token_shinsei_account_opening",
+    "id_token_signed_key_id": "debug_id_token_account_opening",
     "scopes_supported": [
       "openid",
       "profile",

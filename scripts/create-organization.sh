@@ -326,3 +326,11 @@ echo "  Client Secret: ${GREEN}${CLIENT_SECRET}${NC}"
 echo
 echo "${YELLOW}💾 Configuration saved to: $ORG_CONFIG_FILE${NC}"
 echo "${YELLOW}🗑️  You can delete config/tmp/ directory when done${NC}"
+echo
+echo "${BLUE}=== Environment Variables (Copy & Paste) ===${NC}"
+echo "export ORGANIZATION_ID='${ORG_ID}'"
+echo "export TENANT_ID='${TENANT_ID}'"
+echo "export ADMIN_EMAIL='${admin_email}'"
+echo "export ADMIN_PASSWORD='${admin_password}'"
+echo "export CLIENT_ID='${CLIENT_ID}'"
+echo "export CLIENT_SECRET='${CLIENT_SECRET}'"
