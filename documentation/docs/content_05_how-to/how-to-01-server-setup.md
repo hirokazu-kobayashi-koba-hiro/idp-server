@@ -103,15 +103,15 @@ curl -X POST "${IDP_SERVER_DOMAIN}v1/admin/initialization" \
 **Adminテナントのトークン取得**
 
 ```bash
-# ⚠️ パスワードに特殊文字(!,$,\等)が含まれる場合は必ずシングルクォートを使用
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
+# ⚠️ パスワードに特殊文字(!,$,\等)が含まれる可能性があるため --data-urlencode
+curl -X POST "http://localhost:8080/${ADMIN_TENANT_ID}/v1/tokens" \
   -H 'Content-Type: application/x-www-form-urlencoded' \
-  -d 'grant_type=password' \
-  -d "username=${ADMIN_EMAIL}" \
-  -d "password=${ADMIN_PASSWORD}" \
-  -d "client_id=${CLIENT_ID}" \
-  -d "client_secret=${CLIENT_SECRET}" \
-  -d 'scope=management' | jq .
+  --data-urlencode 'grant_type=password' \
+  --data-urlencode "username=${ADMIN_USER_EMAIL}" \
+  --data-urlencode "password=${ADMIN_USER_PASSWORD}" \
+  --data-urlencode "client_id=${ADMIN_CLIENT_ID}" \
+  --data-urlencode "client_secret=${ADMIN_CLIENT_SECRET}" \
+  --data-urlencode 'scope=management' | jq .
 ```
 
 ---

@@ -185,15 +185,15 @@ export CLIENT_SECRET='test-org-secret-a3f9e82c...'
 ### 3. トークン取得リクエスト
 
 ```bash
-# ⚠️ パスワードに特殊文字(!,$,\等)が含まれる場合は必ずシングルクォートを使用
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
+# ⚠️ パスワードに特殊文字(!,$,\等)が含まれる可能性があるため --data-urlencode
+curl -X POST "http://localhost:8080/${ADMIN_TENANT_ID}/v1/tokens" \
   -H 'Content-Type: application/x-www-form-urlencoded' \
-  -d 'grant_type=password' \
-  -d "username=${ADMIN_EMAIL}" \
-  -d "password=${ADMIN_PASSWORD}" \
-  -d "client_id=${CLIENT_ID}" \
-  -d "client_secret=${CLIENT_SECRET}" \
-  -d 'scope=management' | jq .
+  --data-urlencode 'grant_type=password' \
+  --data-urlencode "username=${ADMIN_USER_EMAIL}" \
+  --data-urlencode "password=${ADMIN_USER_PASSWORD}" \
+  --data-urlencode "client_id=${ADMIN_CLIENT_ID}" \
+  --data-urlencode "client_secret=${ADMIN_CLIENT_SECRET}" \
+  --data-urlencode 'scope=management' | jq .
 ```
 
 **重要**:
@@ -291,14 +291,14 @@ Onboarding APIは**management スコープを持つ管理者専用**です。Adm
 ```bash
 # Admin Tenantでトークン取得
 # ⚠️ パスワードに特殊文字(!,$,\等)が含まれる場合は必ずシングルクォートを使用
-curl -X POST 'http://localhost:8080/{admin-tenant-id}/v1/tokens' \
+curl -X POST "http://localhost:8080/${ADMIN_TENANT_ID}/v1/tokens" \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   -d 'grant_type=password' \
-  -d 'username=system-admin@example.com' \
-  -d 'password=your_admin_password' \
-  -d 'scope=openid profile email management' \
-  -d 'client_id=admin-client' \
-  -d 'client_secret=admin-secret'
+  -d "username=${ADMIN_USER_EMAIL}" \
+  -d "password='${ADMIN_USER_PASSWORD}'" \
+  -d "client_id='${ADMIN_CLIENT_ID}'" \
+  -d "client_secret='${ADMIN_CLIENT_SECRET}'" \
+  -d 'scope=management' | jq .
 ```
 
 **レスポンス例**:
@@ -616,14 +616,14 @@ Content-Type: application/json
 
 ```bash
 # ⚠️ パスワードに特殊文字(!,$,\等)が含まれる場合は必ずシングルクォートを使用
-curl -X POST 'https://auth.acme.com/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens' \
+curl -X POST "http://localhost:8080/${ADMIN_TENANT_ID}/v1/tokens" \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   -d 'grant_type=password' \
-  -d 'username=admin@acme.com' \
-  -d 'password=SecurePassword123!' \
-  -d 'scope=openid profile email org-management' \
-  -d 'client_id=c2b59f68-071e-4fbe-b37d-1374d1b868dd' \
-  -d 'client_secret=acme-org-secret-001'
+  -d "username=${ADMIN_USER_EMAIL}" \
+  -d "password='${ADMIN_USER_PASSWORD}'" \
+  -d "client_id='${ADMIN_CLIENT_ID}'" \
+  -d "client_secret='${ADMIN_CLIENT_SECRET}'" \
+  -d 'scope=management' | jq .
 ```
 
 ### レスポンス

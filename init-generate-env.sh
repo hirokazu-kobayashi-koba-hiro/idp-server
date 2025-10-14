@@ -14,10 +14,12 @@ IDP_DB_ADMIN_PASSWORD=$(head -c 24 /dev/urandom | base64)
 IDP_DB_APP_PASSWORD=$(head -c 24 /dev/urandom | base64)
 
 # Generate admin client credentials
-ADMIN_USERNAME="administrator_$(date +%s)"
-ADMIN_EMAIL="$ADMIN_USERNAME@mail.com"
-ADMIN_PASSWORD=$(head -c 12 /dev/urandom | base64)
+ADMIN_ORGANIZATION_ID=$(uuidgen | tr A-Z a-z)
+ADMIN_USER_SUB=$(uuidgen | tr A-Z a-z)
+ADMIN_USER_EMAIL="administrator@mail.com"
+ADMIN_USER_PASSWORD=$(head -c 12 /dev/urandom | base64)
 ADMIN_TENANT_ID=$(uuidgen | tr A-Z a-z)
+ADMIN_TENANT_NAME="admin-tenant"
 ADMIN_CLIENT_ID=$(uuidgen | tr A-Z a-z)
 ADMIN_CLIENT_ID_ALIAS="client_$(head -c 4 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 8)"
 ADMIN_CLIENT_SECRET=$(head -c 48 /dev/urandom | base64)
@@ -58,9 +60,8 @@ echo "✅ Secrets saved to config/secrets/local/"
 # Write .env file (references only, no hardcoded secrets)
 cat > .env <<EOF
 # Base Configuration
-IDP_SERVER_DOMAIN=http://localhost:8080/
+AUTHORIZATION_SERVER_URL=http://localhost:8080
 ENV=local
-BASE_URL=http://localhost:8080
 DRY_RUN=false
 
 # API Authentication (for setup.sh and admin operations)
@@ -75,10 +76,13 @@ CLIENT_SECRETS_FILE=\${SECRETS_DIR}/client-secrets.json
 ENCRYPTION_KEYS_FILE=\${SECRETS_DIR}/encryption-keys.json
 
 # Admin User Configuration
-ADMIN_USERNAME=$ADMIN_USERNAME
-ADMIN_EMAIL=$ADMIN_EMAIL
-ADMIN_PASSWORD=$ADMIN_PASSWORD
+ADMIN_ORGANIZATION_ID=$ADMIN_ORGANIZATION_ID
 ADMIN_TENANT_ID=$ADMIN_TENANT_ID
+ADMIN_TENANT_NAME=$ADMIN_TENANT_NAME
+ADMIN_USER_SUB=$ADMIN_USER_SUB
+ADMIN_USER_NAME=$ADMIN_USER_NAME
+ADMIN_USER_EMAIL=$ADMIN_USER_EMAIL
+ADMIN_USER_PASSWORD=$ADMIN_USER_PASSWORD
 
 # Admin Client Configuration (loaded from CLIENT_SECRETS_FILE)
 ADMIN_CLIENT_ID=$ADMIN_CLIENT_ID
@@ -112,8 +116,9 @@ echo "  2. Start services: docker-compose up -d"
 echo "  3. Initialize: ./setup.sh"
 
 echo "Admin Tenant env"
-echo "export TENANT_ID='${ADMIN_TENANT_ID}'"
-echo "export ADMIN_EMAIL='${ADMIN_EMAIL}'"
-echo "export ADMIN_PASSWORD='${ADMIN_PASSWORD}'"
-echo "export CLIENT_ID='${ADMIN_CLIENT_ID}'"
-echo "export CLIENT_SECRET='${ADMIN_CLIENT_SECRET}'"
+echo "export ADMIN_ORGANIZATION_ID='${ADMIN_ORGANIZATION_ID}'"
+echo "export ADMIN_TENANT_ID='${ADMIN_TENANT_ID}'"
+echo "export ADMIN_USER_EMAIL='${ADMIN_USER_EMAIL}'"
+echo "export ADMIN_USER_PASSWORD='${ADMIN_USER_PASSWORD}'"
+echo "export ADMIN_CLIENT_ID='${ADMIN_CLIENT_ID}'"
+echo "export ADMIN_CLIENT_SECRET='${ADMIN_CLIENT_SECRET}'"
