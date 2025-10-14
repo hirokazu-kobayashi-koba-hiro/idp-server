@@ -1,14 +1,14 @@
-# OAuth/OIDC認証の最小設定ガイド
+# OIDCの最小設定ガイド
 
 ## このドキュメントの目的
 
-**OAuth 2.0/OpenID Connect認証が動作する環境を構築する**ことが目標です。
+**OpenID Connect認証が動作する環境を構築する**ことが目標です。
 
 具体的には、**アプリケーション用テナント（Public Tenant）**を作成し、OpenID Connect Discovery準拠の**認可サーバー設定**を行います。
 
 ### 学べること
 
-✅ **OAuth/OIDC認証を動かすために必要な最小設定**
+✅ **OIDC認証を動かすために必要な最小設定**
 - アプリケーション用テナント（Public Tenant）の作成方法
 - OpenID Connect Discovery準拠の認可サーバー設定
 - 必須設定項目（issuer, endpoints, scopes, grant_types等）
@@ -262,7 +262,6 @@ curl -X GET "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
 - `issuer`, `authorization_endpoint`, `token_endpoint`等が正しく設定されているか
 - `scopes_supported`に`openid`, `profile`, `email`が含まれているか
 - `extension.access_token_duration`等のデフォルト値が設定されているか
-- レスポンスの`type`フィールドが`"PUBLIC"`であることを確認
 
 ✅ **成功**: 認可サーバー設定が正しく取得できれば、アプリケーション用テナント（Public Tenant）の作成に成功しています。
 
