@@ -177,23 +177,84 @@ Organization (大企業グループ)
 **ハードコードではなく、設定で動作を変更**
 
 ```json
-// 認証設定（テナントごとに異なる）
 {
-  "authentication_interactions": [
+  "id": "e1bf16bb-57ab-43bd-814c-1de232db24d2",
+  "flow": "oauth",
+  "enabled": true,
+  "policies": [
     {
-      "type": "password",
-      "required": true
-    },
-    {
-      "type": "sms_otp",
-      "required": false
+      "description": "MFA required for high-value transactions",
+      "priority": 1,
+      "conditions": {
+        "scopes": ["openid", "transfers"],
+        "acr_values": ["urn:mace:incommon:iap:gold"],
+        "client_ids": ["client-id-123"]
+      },
+      "available_methods": [
+        "password",
+        "email",
+        "sms",
+        "webauthn",
+        "fido-uaf"
+      ],
+      "acr_mapping_rules": {
+        "urn:mace:incommon:iap:gold": ["fido-uaf", "webauthn"],
+        "urn:mace:incommon:iap:silver": ["email", "sms"],
+        "urn:mace:incommon:iap:bronze": ["password"]
+      },
+      "level_of_authentication_scopes": {
+        "transfers": ["fido-uaf", "webauthn"]
+      },
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.fido-uaf-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      },
+      "failure_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      },
+      "lock_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      },
+      "authentication_device_rule": {
+        "max_devices": 100,
+        "required_identity_verification": true
+      }
     }
-  ],
-  "authentication_policy": {
-    "success_conditions": {
-      "minimum_methods": 2  // 2要素認証必須
-    }
-  }
+  ]
 }
 ```
 
@@ -285,8 +346,10 @@ idp-serverが準拠している主要な仕様：
 
 ### 🎓 ラーニングパス
 
-- [初級ラーニングパス](../learning-paths/01-beginner.md) - 1-2週間でバグ修正できるレベルへ
-- [中級ラーニングパス](../learning-paths/02-intermediate.md) - 2-4週間でAPI実装できるレベルへ
+- [初級ラーニングパス](../learning-paths/01-beginner.md)
+- 中級者 - 1-2週間でバグ修正できるレベルへ
+  - [02-control-plane-track.md](../learning-paths/02-control-plane-track.md)
+  - [03-application-plane-track.md](../learning-paths/03-application-plane-track.md)
 - [上級ラーニングパス](../learning-paths/03-advanced.md) - 1-2ヶ月で設計できるレベルへ
 
 ---

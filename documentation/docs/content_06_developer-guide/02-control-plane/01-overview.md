@@ -96,32 +96,6 @@ Control Plane APIの実装は以下の構造：
 - システムレベルAPI vs 組織レベルAPI
 - 管理対象リソース
 
-### Step 2: 実践（30分）
-[02. 最初の管理API実装](./02-first-api.md)
-
-実際にテナント管理APIを実装しながら学ぶ：
-- Control Plane APIの基本構造
-- EntryServiceの実装パターン
-- Context Creatorの使い方
-
-### Step 3: CRUD実装（45分）
-[03. システムレベルAPI実装](./03-system-level-api.md)
-
-CRUD全操作を実装：
-- Create/Read/Update/Delete
-- 権限チェック
-- Audit Log記録
-- Dry Run対応
-
-### Step 4: 高度なアクセス制御（60分）
-[04. 組織レベルAPI実装](./04-organization-level-api.md)
-
-組織レベルAPIを実装：
-- 4ステップアクセス制御
-- 組織-テナント関係検証
-- OrganizationAdminPermissions
-
-**合計所要時間**: 約145分
 
 ---
 
