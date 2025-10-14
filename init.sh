@@ -3,15 +3,15 @@
 echo "🔐 Generating secrets and configuration..."
 
 # Generate secrets
-API_KEY=$(uuidgen | tr 'A-Z' 'a-z')
-API_SECRET=$(uuidgen | tr 'A-Z' 'a-z' | base64)
+IDP_SERVER_API_KEY=$(uuidgen | tr 'A-Z' 'a-z')
+IDP_SERVER_API_SECRET=$(uuidgen | tr 'A-Z' 'a-z' | base64)
 ENCRYPTION_KEY=$(head -c 32 /dev/urandom | base64)
 
 # Generate secure database passwords
 POSTGRES_PASSWORD=$(head -c 24 /dev/urandom | base64)
 DB_OWNER_PASSWORD=$(head -c 24 /dev/urandom | base64)
-IDP_ADMIN_PASSWORD=$(head -c 24 /dev/urandom | base64)
-DB_APP_PASSWORD=$(head -c 24 /dev/urandom | base64)
+IDP_DB_ADMIN_PASSWORD=$(head -c 24 /dev/urandom | base64)
+IDP_DB_APP_PASSWORD=$(head -c 24 /dev/urandom | base64)
 
 # Generate admin client credentials
 ADMIN_USERNAME="administrator_$(date +%s)"
@@ -63,6 +63,11 @@ ENV=local
 BASE_URL=http://localhost:8080
 DRY_RUN=false
 
+# API Authentication (for setup.sh and admin operations)
+IDP_SERVER_API_KEY=$IDP_SERVER_API_KEY
+IDP_SERVER_API_SECRET=$IDP_SERVER_API_SECRET
+ENCRYPTION_KEY=$ENCRYPTION_KEY
+
 # Secrets Configuration (Phase 2: Reference files instead of hardcoding)
 SECRETS_DIR=./config/secrets/local
 JWKS_FILE=\${SECRETS_DIR}/jwks.json
@@ -87,10 +92,10 @@ POSTGRES_PASSWORD=$POSTGRES_PASSWORD
 DB_OWNER_PASSWORD=$DB_OWNER_PASSWORD
 
 # Admin user password (RLS bypass for management operations)
-IDP_ADMIN_PASSWORD=$IDP_ADMIN_PASSWORD
+IDP_DB_ADMIN_PASSWORD=$IDP_DB_ADMIN_PASSWORD
 
 # Application user password (RLS-compliant operations)
-DB_APP_PASSWORD=$DB_APP_PASSWORD
+IDP_DB_APP_PASSWORD=$IDP_DB_APP_PASSWORD
 EOF
 
 echo "✅ .env file generated"
@@ -105,3 +110,10 @@ echo "Next steps:"
 echo "  1. Generate JWKS: ./config/scripts/migrate-secrets.sh (if using template JWKS)"
 echo "  2. Start services: docker-compose up -d"
 echo "  3. Initialize: ./setup.sh"
+
+echo "Admin Tenant env"
+echo "export TENANT_ID='${ADMIN_TENANT_ID}'"
+echo "export ADMIN_EMAIL='${ADMIN_EMAIL}'"
+echo "export ADMIN_PASSWORD='${ADMIN_PASSWORD}'"
+echo "export CLIENT_ID='${ADMIN_CLIENT_ID}'"
+echo "export CLIENT_SECRET='${ADMIN_CLIENT_SECRET}'"
