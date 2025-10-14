@@ -221,7 +221,7 @@ curl -X POST "http://localhost:8080/${PUBLIC_TENANT_ID}/v1/authentications/${AUT
 # redirect_uriからcodeパラメータを抽出
 export AUTH_CODE="auth-code-abc123"
 ```
-http://localhost:3000/callback?code=W9B3jMZqohAME-E6tSE0Bdttb84&iss=https%3A%2F%2Fapp.example.com%2F56b72d6b-eeb1-48a5-81dc-d60e39b84396&state=random-state-123
+http://localhost:3000/callback?code=DTPRqKCRc7MPsK3EQ2wkINbMQWI&iss=https%3A%2F%2Fapp.example.com%2F4c0da82e-ae80-4c37-bd0b-09f194cf64db&state=random-state-123
 ### 3.5 トークン取得
 
 ```bash

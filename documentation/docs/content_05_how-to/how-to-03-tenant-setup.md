@@ -119,12 +119,12 @@ export CLIENT_SECRET='your-client-secret'
 # 組織管理者トークンを取得して保存
 export ORG_ADMIN_TOKEN=$(curl -sS -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
   -H 'Content-Type: application/x-www-form-urlencoded' \
-  -d 'grant_type=password' \
-  -d "username=${ADMIN_EMAIL}" \
-  -d "password=${ADMIN_PASSWORD}" \
-  -d "client_id=${CLIENT_ID}" \
-  -d "client_secret=${CLIENT_SECRET}" \
-  -d 'scope=management' | jq -r '.access_token')
+  --data-urlencode 'grant_type=password' \
+  --data-urlencode "username=${ADMIN_EMAIL}" \
+  --data-urlencode "password=${ADMIN_PASSWORD}" \
+  --data-urlencode "client_id=${CLIENT_ID}" \
+  --data-urlencode "client_secret=${CLIENT_SECRET}" \
+  --data-urlencode 'scope=management' | jq -r '.access_token')
 
 # 確認
 echo "Token: ${ORG_ADMIN_TOKEN:0:50}..."

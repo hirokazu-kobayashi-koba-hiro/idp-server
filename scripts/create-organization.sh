@@ -14,10 +14,10 @@ TEMP_DIR="$PROJECT_ROOT/config/tmp"
 umask 077
 
 # Cleanup temporary files on exit
-cleanup() {
-  rm -f "$TEMP_DIR"/ec-key-*.pem "$TEMP_DIR"/ec-pub-*.pem
-}
-trap cleanup EXIT INT TERM
+#cleanup() {
+#  rm -f "$TEMP_DIR"/ec-key-*.pem "$TEMP_DIR"/ec-pub-*.pem
+#}
+#trap cleanup EXIT INT TERM
 
 # Create temp directory if it doesn't exist
 mkdir -p "$TEMP_DIR"
@@ -49,8 +49,8 @@ if [ -z "$ADMIN_TENANT_ID" ]; then
   echo "${RED}❌ ADMIN_TENANT_ID not set in .env${NC}"
   exit 1
 fi
-if [ -z "$ADMIN_USERNAME" ]; then
-  echo "${RED}❌ ADMIN_USERNAME not set in .env${NC}"
+if [ -z "$ADMIN_USER_EMAIL" ]; then
+  echo "${RED}❌ ADMIN_USER_EMAIL not set in .env${NC}"
   exit 1
 fi
 if [ -z "$ADMIN_PASSWORD" ]; then
@@ -69,15 +69,15 @@ echo "${GREEN}✅ Environment credentials verified${NC}"
 echo
 
 # Normalize BASE_URL (remove trailing slash)
-BASE_URL="${IDP_SERVER_DOMAIN%/}"
+BASE_URL="${AUTHORIZATION_SERVER_URL%/}"
 
 # Get admin access token
 echo "${YELLOW}🔐 Obtaining admin access token...${NC}"
 TOKEN_RESPONSE=$(curl -sSf -X POST "${BASE_URL}/${ADMIN_TENANT_ID}/v1/tokens" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   --data-urlencode "grant_type=password" \
-  --data-urlencode "username=${ADMIN_USERNAME}" \
-  --data-urlencode "password=${ADMIN_PASSWORD}" \
+  --data-urlencode "username=${ADMIN_USER_EMAIL}" \
+  --data-urlencode "password=${ADMIN_USER_PASSWORD}" \
   --data-urlencode "client_id=${ADMIN_CLIENT_ID}" \
   --data-urlencode "client_secret=${ADMIN_CLIENT_SECRET}" \
   --data-urlencode "scope=management") || {

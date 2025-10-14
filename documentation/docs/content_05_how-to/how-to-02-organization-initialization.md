@@ -186,13 +186,13 @@ export CLIENT_SECRET='test-org-secret-a3f9e82c...'
 
 ```bash
 # ⚠️ パスワードに特殊文字(!,$,\等)が含まれる可能性があるため --data-urlencode
-curl -X POST "http://localhost:8080/${ADMIN_TENANT_ID}/v1/tokens" \
+curl -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   --data-urlencode 'grant_type=password' \
-  --data-urlencode "username=${ADMIN_USER_EMAIL}" \
-  --data-urlencode "password=${ADMIN_USER_PASSWORD}" \
-  --data-urlencode "client_id=${ADMIN_CLIENT_ID}" \
-  --data-urlencode "client_secret=${ADMIN_CLIENT_SECRET}" \
+  --data-urlencode "username=${ADMIN_EMAIL}" \
+  --data-urlencode "password=${ADMIN_PASSWORD}" \
+  --data-urlencode "client_id=${CLIENT_ID}" \
+  --data-urlencode "client_secret=${CLIENT_SECRET}" \
   --data-urlencode 'scope=management' | jq .
 ```
 
@@ -222,12 +222,12 @@ curl -X POST "http://localhost:8080/${ADMIN_TENANT_ID}/v1/tokens" \
 # トークンを環境変数に保存
 export ORG_ADMIN_TOKEN=$(curl -sS -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
   -H 'Content-Type: application/x-www-form-urlencoded' \
-  -d 'grant_type=password' \
-  -d "username=${ADMIN_EMAIL}" \
-  -d "password=${ADMIN_PASSWORD}" \
-  -d "client_id=${CLIENT_ID}" \
-  -d "client_secret=${CLIENT_SECRET}" \
-  -d 'scope=management' | jq -r '.access_token')
+  --data-urlencode 'grant_type=password' \
+  --data-urlencode "username=${ADMIN_EMAIL}" \
+  --data-urlencode "password=${ADMIN_PASSWORD}" \
+  --data-urlencode "client_id=${CLIENT_ID}" \
+  --data-urlencode "client_secret=${CLIENT_SECRET}" \
+  --data-urlencode 'scope=management' | jq -r '.access_token')
 
 # 確認
 echo "Token: ${ORG_ADMIN_TOKEN:0:50}..."
@@ -290,15 +290,14 @@ Onboarding APIは**management スコープを持つ管理者専用**です。Adm
 
 ```bash
 # Admin Tenantでトークン取得
-# ⚠️ パスワードに特殊文字(!,$,\等)が含まれる場合は必ずシングルクォートを使用
-curl -X POST "http://localhost:8080/${ADMIN_TENANT_ID}/v1/tokens" \
+curl -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
   -H 'Content-Type: application/x-www-form-urlencoded' \
-  -d 'grant_type=password' \
-  -d "username=${ADMIN_USER_EMAIL}" \
-  -d "password='${ADMIN_USER_PASSWORD}'" \
-  -d "client_id='${ADMIN_CLIENT_ID}'" \
-  -d "client_secret='${ADMIN_CLIENT_SECRET}'" \
-  -d 'scope=management' | jq .
+  --data-urlencode 'grant_type=password' \
+  --data-urlencode "username=${ADMIN_EMAIL}" \
+  --data-urlencode "password=${ADMIN_PASSWORD}" \
+  --data-urlencode "client_id=${CLIENT_ID}" \
+  --data-urlencode "client_secret=${CLIENT_SECRET}" \
+  --data-urlencode 'scope=management' | jq .
 ```
 
 **レスポンス例**:
