@@ -15,7 +15,6 @@
 - 設定の取得・更新・検証方法
 
 ✅ **実践的な知識**
-- 金融グレード（FAPI）対応設定例
 - Dry Run機能による安全な設定変更
 - トラブルシューティング
 
@@ -81,15 +80,24 @@ OAuth/OIDC認証を動作させるために、以下の設定が必要です：
 - `grant_types_supported`: サポートするグラントタイプ（`authorization_code`, `refresh_token`等）
 - `token_endpoint_auth_methods_supported`: クライアント認証方式（`client_secret_post`等）
 
-**重要**: これらの設定は**OpenID Connect Discovery仕様**に準拠しており、クライアントが自動的に認可サーバーの機能を発見できるようにします。
+#### 3. 署名鍵
+- `jwks`: IDトークン・アクセストークンの署名鍵
+
+**info**: これらの設定は**OpenID Connect Discovery仕様**に準拠しており、クライアントが自動的に認可サーバーの機能を発見できるようにします。
 
 ---
 
 ## このドキュメントで行うこと
 
-テナント作成時に以下を設定します：
+### 🧭 全体の流れ
 
-### 1. 組織管理者権限のアクセストークン
+1. 事前確認
+2. テナント作成時に認可サーバー設定を同時登録
+3. 認可サーバー設定の取得
+4. 認可サーバー設定の更新
+
+
+### 1. 事前確認
 
 **前提**: [how-to-01](./how-to-01-organization-initialization.md)で設定した環境変数を使用します。
 
@@ -105,7 +113,7 @@ export CLIENT_ID='your-client-id'
 export CLIENT_SECRET='your-client-secret'
 ```
 
-トークンを取得して環境変数に保存：
+#### トークン設定
 
 ```bash
 # 組織管理者トークンを取得して保存
@@ -134,7 +142,7 @@ echo "Token: ${ORG_ADMIN_TOKEN:0:50}..."
 
 ✅ これで`$ORG_ADMIN_TOKEN`が設定されました。以降のManagement API呼び出しで使用します。
 
-### 2. 組織IDとテナントIDの確認
+#### 2. 組織IDとテナントIDの確認
 
 環境変数が正しく設定されているか確認します：
 
@@ -149,59 +157,11 @@ echo "Admin Token: ${ORG_ADMIN_TOKEN:0:50}..."
 
 ---
 
-## 🧭 全体の流れ
-
-1. テナント作成時に認可サーバー設定を同時登録
-2. 認可サーバー設定の取得
-3. 認可サーバー設定の更新
-
----
-
-## 🔁 操作フロー図（Mermaid）
-
-```mermaid
-sequenceDiagram
-    participant Admin as 組織管理者
-    participant IdP as idp-server
-    participant DB as Database
-
-    Admin ->> IdP: 1. POST /v1/management/organizations/{org-id}/tenants
-    Note over Admin,IdP: tenant + authorization_server を同時作成
-    IdP ->> DB: テナントと認可サーバー設定を保存
-    IdP -->> Admin: 201 Created
-
-    Admin ->> IdP: 2. GET /v1/management/organizations/{org-id}/tenants/{tenant-id}/authorization-server
-    IdP ->> DB: 認可サーバー設定を取得
-    IdP -->> Admin: 200 OK (OpenID Configuration)
-
-    Admin ->> IdP: 3. PUT /v1/management/organizations/{org-id}/tenants/{tenant-id}/authorization-server
-    Note over Admin,IdP: 設定を更新
-    IdP ->> DB: 認可サーバー設定を更新
-    IdP -->> Admin: 200 OK
-
-    Admin ->> IdP: 4. PUT /v1/management/organizations/{org-id}/tenants/{tenant-id}/authorization-server?dry_run=true
-    Note over Admin,IdP: Dry run検証
-    IdP -->> Admin: 200 OK (検証結果のみ、更新なし)
-```
-
----
-
-## 動作確認：アプリケーション用テナントを作成する
+### テナント作成時に認可サーバー設定を同時登録
 
 実際にアプリケーション用テナント（Public Tenant）を作成して、設定が正しく動作することを確認しましょう。
 
-### 1. 環境変数の準備
-
-まず、how-to-01で設定した環境変数が有効か確認します：
-
-```bash
-# 環境変数の確認
-echo "Organization ID: $ORGANIZATION_ID"
-echo "Tenant ID (Organizer): $TENANT_ID"
-echo "Admin Token: ${ORG_ADMIN_TOKEN:0:50}..."
-```
-
-### 2. テナント用の情報を準備
+#### 1. テナント用の情報を準備
 
 ```bash
 # テナントIDを生成（UUIDv4形式）
@@ -217,7 +177,7 @@ echo "Public Tenant Name: $PUBLIC_TENANT_NAME"
 echo "Public Tenant Domain: $PUBLIC_TENANT_DOMAIN"
 ```
 
-### 3. アプリケーション用テナントを作成
+#### 2. アプリケーション用テナントを作成
 
 ```bash
 curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants" \
@@ -291,7 +251,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 }
 ```
 
-### 4. 作成したテナントの認可サーバー設定を確認
+#### 3. 作成したテナントの認可サーバー設定を確認
 
 ```bash
 curl -X GET "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/authorization-server" \
@@ -308,98 +268,20 @@ curl -X GET "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
 
 **詳細な設定内容については、後述の「2. 認可サーバー設定の取得」セクションを参照してください。**
 
-### トラブルシューティング
+---
 
-#### ❌ トークンが期限切れ
+## API 項目
 
-**症状**: `{"error": "invalid_token"}` エラー
-
-**解決策**: トークンを再取得してください
-
-```bash
-export ORG_ADMIN_TOKEN=$(curl -sS -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  -d 'grant_type=password' \
-  -d "username=${ADMIN_EMAIL}" \
-  -d "password=${ADMIN_PASSWORD}" \
-  -d "client_id=${CLIENT_ID}" \
-  -d "client_secret=${CLIENT_SECRET}" \
-  -d 'scope=management' | jq -r '.access_token')
-```
-
-#### ❌ UUIDフォーマットエラー
-
-**症状**: `{"error": "invalid_request", "error_description": "id must be UUID format"}`
-
-**解決策**: `uuidgen`コマンドで正しいUUID形式を生成してください
-
-```bash
-# macOS/Linux
-export PUBLIC_TENANT_ID=$(uuidgen | tr '[:upper:]' '[:lower:]')
-
-# 確認（xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx 形式であることを確認）
-echo $PUBLIC_TENANT_ID
-```
+このセクションでは、各APIの基本的な項目を説明します。
 
 ---
 
-# API Reference
-
-このセクションでは、各APIの詳細仕様を説明します。
-
----
-
-## 1. テナント作成と認可サーバー設定の同時登録
-
-### リクエスト
+### 1. テナント作成と認可サーバー設定の同時登録
 
 ```http
 POST /v1/management/organizations/{organization-id}/tenants
-Authorization: Bearer {access_token}
-Content-Type: application/json
-
-{
-  "tenant": {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "name": "My Application Tenant",
-    "domain": "https://app.example.com",
-    "description": "Production tenant for my application",
-    "authorization_provider": "idp-server"
-  },
-  "authorization_server": {
-    "issuer": "https://app.example.com/550e8400-e29b-41d4-a716-446655440000",
-    "authorization_endpoint": "https://app.example.com/550e8400-e29b-41d4-a716-446655440000/v1/authorizations",
-    "token_endpoint": "https://app.example.com/550e8400-e29b-41d4-a716-446655440000/v1/tokens",
-    "userinfo_endpoint": "https://app.example.com/550e8400-e29b-41d4-a716-446655440000/v1/userinfo",
-    "jwks_uri": "https://app.example.com/550e8400-e29b-41d4-a716-446655440000/v1/jwks",
-    "scopes_supported": [
-      "openid",
-      "profile",
-      "email"
-    ],
-    "response_types_supported": [
-      "code"
-    ],
-    "response_modes_supported": [
-      "query",
-      "fragment"
-    ],
-    "subject_types_supported": [
-      "public"
-    ],
-    "grant_types_supported": [
-      "authorization_code",
-      "refresh_token"
-    ],
-    "token_endpoint_auth_methods_supported": [
-      "client_secret_post",
-      "client_secret_basic"
-    ]
-  }
-}
 ```
 
-### パラメータ説明
 
 #### tenant設定項目（リクエスト）
 
@@ -431,87 +313,19 @@ Content-Type: application/json
 | `token_endpoint_auth_methods_supported` | array | ✅ | サポートするクライアント認証方式 |
 | `subject_types_supported` | array | - | サポートするsubject識別子タイプ |
 
-### レスポンス
-
-```http
-HTTP/1.1 201 Created
-Content-Type: application/json
-
-{
-  "dry_run": false,
-  "result": {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "name": "My Application Tenant",
-    "domain": "https://app.example.com",
-    "description": "Production tenant for my application",
-    "database_type": "POSTGRESQL",
-    "authorization_provider": "idp-server",
-    "type": "PUBLIC",
-    "attributes": {}
-  }
-}
-```
-
 ---
 
-## 2. 認可サーバー設定の取得
-
-### リクエスト
+### 2. 認可サーバー設定の取得
 
 ```http
 GET /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authorization-server
-Authorization: Bearer {access_token}
 ```
 
-### レスポンス（OpenID Discovery形式 + 拡張設定）
-
-```json
-{
-  "issuer": "https://app.example.com/550e8400-e29b-41d4-a716-446655440000",
-  "authorization_endpoint": "https://app.example.com/550e8400-e29b-41d4-a716-446655440000/v1/authorizations",
-  "token_endpoint": "https://app.example.com/550e8400-e29b-41d4-a716-446655440000/v1/tokens",
-  "userinfo_endpoint": "https://app.example.com/550e8400-e29b-41d4-a716-446655440000/v1/userinfo",
-  "jwks_uri": "https://app.example.com/550e8400-e29b-41d4-a716-446655440000/v1/jwks",
-  "scopes_supported": ["openid", "profile", "email"],
-  "response_types_supported": ["code"],
-  "response_modes_supported": ["query", "fragment"],
-  "subject_types_supported": ["public"],
-  "grant_types_supported": ["authorization_code", "refresh_token"],
-  "token_endpoint_auth_methods_supported": ["client_secret_post", "client_secret_basic"],
-  "enabled": true,
-  "request_parameter_supported": true,
-  "request_uri_parameter_supported": true,
-  "require_request_uri_registration": true,
-  "claims_parameter_supported": true,
-  "extension": {
-    "access_token_type": "opaque",
-    "access_token_duration": 1800,
-    "id_token_duration": 3600,
-    "refresh_token_duration": 3600,
-    "refresh_token_strategy": "FIXED",
-    "rotate_refresh_token": true,
-    "authorization_code_valid_duration": 600,
-    "authorization_response_duration": 60,
-    "oauth_authorization_request_expires_in": 1800,
-    "default_max_age": 86400,
-    "id_token_strict_mode": false,
-    "custom_claims_scope_mapping": false,
-    "fapi_baseline_scopes": [],
-    "fapi_advance_scopes": []
-  }
-}
-```
-
-**レスポンスのポイント**:
-- **OpenID Discovery準拠**: `issuer`, `authorization_endpoint`等の標準フィールド
-- **拡張設定**: `extension`オブジェクトにidp-server固有の設定
-- **デフォルト値**: トークン有効期限、認可コード有効期限等が自動設定される
-
-### 📋 デフォルト値の詳細
+#### 📋 デフォルト値の詳細
 
 レスポンスの`extension`オブジェクトには、OAuth/OIDC認証の動作を制御する重要なデフォルト値が含まれています。
 
-#### トークン関連設定
+##### トークン関連設定
 
 | 設定項目 | デフォルト値 | 説明 |
 |---------|------------|------|
@@ -522,7 +336,7 @@ Authorization: Bearer {access_token}
 | `rotate_refresh_token` | `true` | リフレッシュトークンをローテーションするか |
 | `refresh_token_strategy` | `FIXED` | リフレッシュトークン戦略（`FIXED`/`EXTENDS`） |
 
-#### 認可フロー設定
+##### 認可フロー設定
 
 | 設定項目 | デフォルト値 | 説明 |
 |---------|------------|------|
@@ -531,7 +345,7 @@ Authorization: Bearer {access_token}
 | `authorization_response_duration` | `60`秒 (1分) | 認可レスポンスの有効期限 |
 | `default_max_age` | `86400`秒 (24時間) | デフォルトの最大認証有効期間 |
 
-#### 💡 各設定の意味と推奨値
+##### 💡 各設定の意味と推奨値
 
 **`access_token_type: "opaque"`**
 - `opaque`: 不透明な文字列（デフォルト、高速）
@@ -549,31 +363,9 @@ Authorization: Bearer {access_token}
 - 認可コードの有効期限は10分
 - RFC 6749推奨: 10分以内（短い方がセキュア）
 
-これらの設定は次の「3. 認可サーバー設定の更新」で変更可能です。
+これらの設定は「3認可サーバー設定の更新API」で変更可能です。
 
 ---
-
-## 3. 認可サーバー設定の更新
-
-### 通常の更新
-
-```http
-PUT /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authorization-server
-Authorization: Bearer {access_token}
-Content-Type: application/json
-
-{
-  "issuer": "https://app.example.com/550e8400-e29b-41d4-a716-446655440000",
-  "authorization_endpoint": "https://app.example.com/550e8400-e29b-41d4-a716-446655440000/v1/authorizations",
-  "token_endpoint": "https://app.example.com/550e8400-e29b-41d4-a716-446655440000/v1/tokens",
-  "userinfo_endpoint": "https://app.example.com/550e8400-e29b-41d4-a716-446655440000/v1/userinfo",
-  "jwks_uri": "https://app.example.com/550e8400-e29b-41d4-a716-446655440000/v1/jwks",
-  "scopes_supported": ["openid", "profile", "email", "address"],
-  "response_types_supported": ["code"],
-  "grant_types_supported": ["authorization_code", "refresh_token", "client_credentials"],
-  "token_endpoint_auth_methods_supported": ["client_secret_post", "client_secret_basic", "private_key_jwt"]
-}
-```
 
 ### Dry Run（検証のみ、更新なし）
 
@@ -593,14 +385,60 @@ Content-Type: application/json
 ```json
 {
   "dry_run": true,
-  "validation_result": {
-    "valid": true,
-    "warnings": []
-  }
+  "result": {}
 }
 ```
 
 **注意**: `dry_run=true`の場合、実際の更新は行わず検証結果のみ返却されます。
+
+
+## 基本パラメータの設定まとめ
+
+OAuth/OIDC認証を動かすために、以下の4つのカテゴリのパラメータを理解する必要がありました。
+
+### 📍 1. テナント基本情報
+
+| パラメータ | 役割 |
+|----------|------|
+| `tenant.id` | テナントの一意識別子（UUID形式） |
+| `tenant.name` | テナント名（表示用） |
+| `tenant.domain` | アプリケーションのベースURL |
+
+**ポイント**: `domain`は後続のエンドポイントURLのベースとなります。
+
+### 🔗 2. エンドポイント設定（URL構成）
+
+すべてのエンドポイントは `{domain}/{tenant_id}/v1/...` の形式で構成されます：
+
+| パラメータ | 役割 |
+|----------|------|
+| `issuer` | トークン発行者の識別子 |
+| `authorization_endpoint` | 認可リクエスト先 |
+| `token_endpoint` | トークン取得先 |
+| `jwks_uri` | 公開鍵取得先 |
+
+### ⚙️ 3. サポート機能の宣言
+
+| パラメータ | 意味 |
+|----------|------|
+| `scopes_supported` | 利用可能なスコープ |
+| `response_types_supported` | 認可レスポンス形式 |
+| `grant_types_supported` | トークン取得方法 |
+| `token_endpoint_auth_methods_supported` | クライアント認証方式 |
+
+### 🔑 4. JWKS（署名鍵）
+
+| パラメータ | 役割 |
+|----------|------|
+| `jwks` | IDトークン署名用のRSA鍵ペア（JSON文字列形式） |
+
+### 📊 パラメータ間の関係
+
+```
+tenant.domain → tenant.id → issuer → endpoints
+```
+
+エンドポイントURLは `{domain}/{tenant_id}/v1/...` パターンで構成されます。
 
 ---
 
@@ -625,6 +463,37 @@ Content-Type: application/json
 ```bash
 # 正しいスコープでトークン取得
 curl -d "scope=org-management account management" ...
+```
+
+### ❌ トークンが期限切れ
+
+**症状**: `{"error": "invalid_token"}` エラー
+
+**解決策**: トークンを再取得してください
+
+```bash
+export ORG_ADMIN_TOKEN=$(curl -sS -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'grant_type=password' \
+  -d "username=${ADMIN_EMAIL}" \
+  -d "password=${ADMIN_PASSWORD}" \
+  -d "client_id=${CLIENT_ID}" \
+  -d "client_secret=${CLIENT_SECRET}" \
+  -d 'scope=management' | jq -r '.access_token')
+```
+
+### ❌ UUIDフォーマットエラー
+
+**症状**: `{"error": "invalid_request", "error_description": "id must be UUID format"}`
+
+**解決策**: `uuidgen`コマンドで正しいUUID形式を生成してください
+
+```bash
+# macOS/Linux
+export PUBLIC_TENANT_ID=$(uuidgen | tr '[:upper:]' '[:lower:]')
+
+# 確認（xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx 形式であることを確認）
+echo $PUBLIC_TENANT_ID
 ```
 
 ---
@@ -706,14 +575,6 @@ curl -X PUT ".../authorization-server" -d '{...}'
   ]
 }
 ```
-
-### 4. クライアント認証方式の適切な選択
-
-| 用途 | 推奨方式 |
-|-----|---------|
-| Webアプリケーション | `client_secret_post`, `client_secret_basic` |
-| ネイティブアプリ | `none`（PKCE必須） |
-| 金融グレード | `private_key_jwt`, `tls_client_auth` |
 
 ---
 
