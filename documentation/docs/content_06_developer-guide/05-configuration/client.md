@@ -52,11 +52,11 @@ Client登録・更新のAPI詳細仕様（リクエスト/レスポンススキ�
 
 | # | シナリオ | ユースケース | 主なポイント | 詳細 |
 |---|---------|------------|------------|------|
-| 1 | **Webアプリケーション（標準）** | サーバーサイドアプリがユーザー認証を行い、バックエンドでトークンを安全に管理する | • client_secret_basic<br>• Authorization Code Flow<br>• Refresh Token | [詳細](#1-webアプリケーション標準) |
-| 2 | **SPA（Single Page App）** | ブラウザのみで動作するアプリがユーザー認証を行い、短命トークンで安全性を確保する | • PKCE必須<br>• token_auth: none<br>• 短いAccess Token | [詳細](#2-spasingle-page-app) |
-| 3 | **モバイルアプリ（iOS/Android）** | モバイルユーザーが長期間（30日）ログインを維持し、アプリを快適に利用する | • PKCE必須<br>• カスタムURLスキーム<br>• 長期Refresh Token | [詳細](#3-モバイルアプリiosandroid) |
-| 4 | **M2M（Machine-to-Machine）** | バックエンドサービスがユーザー認証なしで他のサービスのAPIにアクセスする | • Client Credentials Flow<br>• redirect_uri不要<br>• カスタムスコープ | [詳細](#4-m2mmachine-to-machine) |
-| 5 | **金融グレード（FAPI）** | 銀行システムが最高レベルのセキュリティでユーザー取引情報にアクセスする | • private_key_jwt / mTLS<br>• 短いAccess Token<br>• PAR必須 | [詳細](#5-金融グレードfapi) |
+| 1 | **Webアプリケーション（標準）** | サーバーサイドアプリがユーザー認証を行い、バックエンドでトークンを安全に管理する | • client_secret_basic<br/>• Authorization Code Flow<br/>• Refresh Token | [詳細](#1-webアプリケーション標準) |
+| 2 | **SPA（Single Page App）** | ブラウザのみで動作するアプリがユーザー認証を行い、短命トークンで安全性を確保する | • PKCE必須<br/>• token_auth: none<br/>• 短いAccess Token | [詳細](#2-spasingle-page-app) |
+| 3 | **モバイルアプリ（iOS/Android）** | モバイルユーザーが長期間（30日）ログインを維持し、アプリを快適に利用する | • PKCE必須<br/>• カスタムURLスキーム<br/>• 長期Refresh Token | [詳細](#3-モバイルアプリiosandroid) |
+| 4 | **M2M（Machine-to-Machine）** | バックエンドサービスがユーザー認証なしで他のサービスのAPIにアクセスする | • Client Credentials Flow<br/>• redirect_uri不要<br/>• カスタムスコープ | [詳細](#4-m2mmachine-to-machine) |
+| 5 | **金融グレード（FAPI）** | 銀行システムが最高レベルのセキュリティでユーザー取引情報にアクセスする | • private_key_jwt / mTLS<br/>• 短いAccess Token<br/>• PAR必須 | [詳細](#5-金融グレードfapi) |
 
 ---
 
