@@ -214,7 +214,7 @@ idp-serverが自動処理:
 ```bash
 curl -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
   -H "Content-Type: application/x-www-form-urlencoded" \
-  -H "Authorization: Basic $(echo -n '${CLIENT_ID}:${CLIENT_SECRET}' | base64)" \
+  -u "${CLIENT_ID}:${CLIENT_SECRET}" \
   -d "grant_type=authorization_code&code=abc123&redirect_uri=${REDIRECT_URI}"
 ```
 

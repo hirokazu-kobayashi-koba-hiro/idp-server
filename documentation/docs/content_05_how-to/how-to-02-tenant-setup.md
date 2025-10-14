@@ -223,46 +223,57 @@ echo "Public Tenant Domain: $PUBLIC_TENANT_DOMAIN"
 curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants" \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" \
-  -d "{
-  \"tenant\": {
-    \"id\": \"${PUBLIC_TENANT_ID}\",
-    \"name\": \"${PUBLIC_TENANT_NAME}\",
-    \"domain\": \"${PUBLIC_TENANT_DOMAIN}\",
-    \"description\": \"Public tenant for application\",
-    \"authorization_provider\": \"idp-server\"
+  -d '{
+  "tenant": {
+    "id": "'"${PUBLIC_TENANT_ID}"'",
+    "name": "'"${PUBLIC_TENANT_NAME}"'",
+    "domain": "'"${PUBLIC_TENANT_DOMAIN}"'",
+    "description": "Public tenant for application",
+    "authorization_provider": "idp-server"
   },
-  \"authorization_server\": {
-    \"issuer\": \"${PUBLIC_TENANT_DOMAIN}/${PUBLIC_TENANT_ID}\",
-    \"authorization_endpoint\": \"${PUBLIC_TENANT_DOMAIN}/${PUBLIC_TENANT_ID}/v1/authorizations\",
-    \"token_endpoint\": \"${PUBLIC_TENANT_DOMAIN}/${PUBLIC_TENANT_ID}/v1/tokens\",
-    \"userinfo_endpoint\": \"${PUBLIC_TENANT_DOMAIN}/${PUBLIC_TENANT_ID}/v1/userinfo\",
-    \"jwks_uri\": \"${PUBLIC_TENANT_DOMAIN}/${PUBLIC_TENANT_ID}/v1/jwks\",
-    \"scopes_supported\": [
-      \"openid\",
-      \"profile\",
-      \"email\"
+  "authorization_server": {
+    "issuer": "'"${PUBLIC_TENANT_DOMAIN}"'/'"${PUBLIC_TENANT_ID}"'",
+    "authorization_endpoint": "'"${PUBLIC_TENANT_DOMAIN}"'/'"${PUBLIC_TENANT_ID}"'/v1/authorizations",
+    "token_endpoint": "'"${PUBLIC_TENANT_DOMAIN}"'/'"${PUBLIC_TENANT_ID}"'/v1/tokens",
+    "userinfo_endpoint": "'"${PUBLIC_TENANT_DOMAIN}"'/'"${PUBLIC_TENANT_ID}"'/v1/userinfo",
+    "jwks_uri": "'"${PUBLIC_TENANT_DOMAIN}"'/'"${PUBLIC_TENANT_ID}"'/v1/jwks",
+    "scopes_supported": [
+      "openid",
+      "profile",
+      "email"
     ],
-    \"response_types_supported\": [
-      \"code\"
+    "response_types_supported": [
+      "code"
     ],
-    \"response_modes_supported\": [
-      \"query\",
-      \"fragment\"
+    "response_modes_supported": [
+      "query",
+      "fragment"
     ],
-    \"subject_types_supported\": [
-      \"public\"
+    "subject_types_supported": [
+      "public"
     ],
-    \"grant_types_supported\": [
-      \"authorization_code\",
-      \"refresh_token\"
+    "grant_types_supported": [
+      "authorization_code",
+      "refresh_token"
     ],
-    \"token_endpoint_auth_methods_supported\": [
-      \"client_secret_post\",
-      \"client_secret_basic\"
-    ]
+    "token_endpoint_auth_methods_supported": [
+      "client_secret_post",
+      "client_secret_basic"
+    ],
+    "jwks": "{\"keys\":[{\"p\":\"4lZfONObTLxmzgKAQynIbPi0MEcSPAdINlBXyCuTlortKJlYMYYGBuT7UQ4NO1WZvQMyqm5X5i3esY8sm3EAoxooclR_nmu37NMSj6TCDa7LM1lNT9KfDgHv1U6mDGEAMJ_Cz2YFLK89TYrXIdNuWvvoommzzoHEdXQBUQgh70M\",\"kty\":\"RSA\",\"q\":\"uDFIkGnwyXFS2VJaBz6cqIPXE1neZP1RncTVNysEqRqszxSqnfl88YminmLaEgtlYK8f19CHSmbq_pXxbPUlhrh-GN707CRcIJu5yeP6unNLAVM9qsJRhVEn7RnLH5D5onH5RKbvpnhr64Gy81oIXlKFhgpBIGtTWqkUlJkgaas\",\"d\":\"DezWobizEuoyDtjNqKR5TRpOv5OB1MY0UVr8ubKRgg-9quAC32XVfUmnd91dzYFeiVPfARDqHMNKwym_MF87SRL1OhfxPcXNfcjCS2mNkLDiQspw6sARQpke8mIxnua8DLAhsVXuHHBq282-C0dkD4dnSZ8Im402pDhMQ_8LUHSUpO4x66I30RNcAYsFOjZiIpKYPwGjU4LEJxfyQRlGa6tbiPPxQewmKEhHADSWp2oaGZ-GjqKgmqdPLaet9hWK6grxTn4i2lnrvwWFNgbXoonbSE-Qb8upeR2evWd-gqDzeGpewSRT7vkoNcc5a0mR_3HGVrXjhia1vDdG1nCM0Q\",\"e\":\"AQAB\",\"use\":\"sig\",\"kid\":\"sample-signing-key\",\"qi\":\"usKJkXzd2YmOrzKix2UvwdBGVONIIBJW7FlENIyq6TVzTfZHvTDFrYUvu75cV5-V3RSZyrPC_pMeGlVtkYl18SbV2MhRPoUINK7c1tF9GUhSE_Fax84_UScM7HUl4HhR-0houXza4bR4E7A1PeoHSwVRlg2PlNOdEM_K2lBe7DA\",\"dp\":\"Uq3Ccvu5izp3Q2HegKpOsJ_ZEpmjq5HtawnGRzTD4QY2w9HgSZbvtK0IsP81Diui0UzNwTw1l7vB0ZK_dLi-xtXTWJBNXg1zTmt8KETDLkRfrg49E5-YwoEqnvzv4y276Ac0Hpbh5QTOm_jPxWd6tHm47Ts3l4QHw-_wWy1hWAk\",\"alg\":\"RS256\",\"dq\":\"gkXZHMrREqikADDOm_Ecu9MDexxEvwirgPqGEs7KLRBAyPXE9pZOWEcQTRV9RuXofclerDVAes7vxcAnUPjR4cb66HxInfvZbPa3IKOt4dFJa1aEdxGYtsH_iyKDF4BiDxKtSnEHbqYdLiQ9fQBgitWyumrmRRejjKupcrAazKE\",\"n\":\"otmnIQr_-31lGG7wKziNIxDN1hNu7YvV8-iF-EsQeWM1Sv6eNtmq_fNtKDzslFYQ7x3MslZkZL8cQIaYIBZ1sJ3MVh4el_whDf1yB3wdtEfDgKvusgVMrykvHu7S6qMgf7vzpEEGgPASGZvzQXtPb83g-7h5FUeL2fHE_iQl-_tCKMRr813U6baYwSpEzLGpieqX8FRSULXz9kyrsnwWNglk9uUgh_s1TL2ybrEpv1Fpg_vnkym1HdQv6jonudCxYxbkEls0J8ba3E8xUEb_vsBoTUolILrpbKITrT_U4bBIE6Vh3q9BTqGxmZQYlNdDIOvFzYDSPWl8jvhvTS1MwQ\"}]}"
   }
-}" | jq .
+}' | jq .
 ```
+
+**重要な設定**:
+- ✅ **IDトークン署名用のJWKSを含む**: `authorization_server.jwks`フィールドにサンプルRSA鍵ペア（JSON文字列）を設定
+- ⚠️ **本番環境では独自の鍵ペアを生成してください**: 上記はテスト用サンプルです
+- 📌 **将来の改善**: [Issue #687](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/687)で、テナント作成時のデフォルトJWKS自動生成機能を提案中です
+
+**JWKSの形式**:
+- `jwks`フィールドは**JSON文字列**として渡します（オブジェクトではない）
+- 文字列化されたJWKS内に`keys`配列が含まれ、各キーの情報（`kty`, `use`, `kid`, `alg`, `n`, `e`, `d`, `p`, `q`, `dp`, `dq`, `qi`）が含まれます
+- サンプルでは`kid: "sample-signing-key"`のRS256署名用RSA鍵を使用
 
 **期待されるレスポンス**:
 ```json
