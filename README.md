@@ -191,7 +191,7 @@ curl -v http://localhost:8080/actuator/health
 * admin-tenant
 
 ```shell
-./config/scripts/test-data.sh
+./config/scripts/e2e-test-data.sh
  ```
 
 * test-tenant

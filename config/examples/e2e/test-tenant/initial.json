@@ -1,17 +1,17 @@
 {
   "organization": {
     "id": "9eb8eb8c-2615-4604-809f-5cae1c00a462",
-    "name": "admin",
-    "description": "admin"
+    "name": "test",
+    "description": "test"
   },
   "tenant": {
     "id": "67e7eae6-62b0-4500-9eff-87459f63fc66",
-    "name": "admin-tenant",
+    "name": "test-tenant",
     "domain": "http://localhost:8080",
     "authorization_provider": "idp-server",
     "database_type": "postgresql",
     "attributes": {
-      "cookie_name": "ADMIN_TENANT_IDP_SERVER_SESSION",
+      "cookie_name": "TEST_TENANT_IDP_SERVER_SESSION",
       "use_secure_cookie": false,
       "allow_origins": [
         "http://localhost:3000","http://localhost:3100","http://localhost:5173","https://idp-auth-frontend-ecru.vercel.app","https://idp-auth-frontend-diqt.vercel.app"
@@ -260,7 +260,7 @@
     "email": "ito.ichiro@gmail.com",
     "email_verified": true,
     "raw_password": "successUserCode001",
-    "role": "Administrator",
+    "role": "testistrator",
     "authentication_devices": [ { "id": "7736a252-60b4-45f5-b817-65ea9a540860", "platform": "iOS", "os": "iOS 18.5", "model": "iPhone15", "notification_channel": "fcm", "notification_token": "test token", "priority": 1 } ],
     "verified_claims": {"claims": {"address": {"country": "UK", "locality": "Edinburgh", "postal_code": "EH1 9GP", "street_address": "122 Burns Crescent"}, "birthdate": "1976-03-11", "given_name": "Sarah", "family_name": "Meredyth", "place_of_birth": {"country": "UK"}}, "verification": {"evidence": [{"time": "2021-04-09T14:12Z", "type": "electronic_record", "record": {"type": "mortgage_account", "source": {"name": "TheCreditBureau"}}, "check_details": [{"txn": "kbv1-hf934hn09234ng03jj3", "check_method": "kbv", "organization": "TheCreditBureau"}]}, {"time": "2021-04-09T14:12Z", "type": "electronic_record", "record": {"type": "bank_account", "source": {"name": "TheBank"}}, "check_details": [{"txn": "kbv2-nm0f23u9459fj38u5j6", "check_method": "kbv", "organization": "OpenBankingTPP"}]}], "trust_framework": "eidas"}}
   },
@@ -289,8 +289,8 @@
       "urn:openid:params:grant-type:ciba"
     ],
     "scope": "openid profile email address phone management verified_claims:family_name claims:status claims:authentication_devices claims:roles claims:permissions claims:assigned_tenants claims:assigned_organizations claims:authentication_devices offline_access account transfers read write identity_verification_application identity_verification_application_delete identity_credentials_update",
-    "client_name": "Admin Client",
-    "client_name#ja-Jpan-JP": "Adminクライアント",
+    "client_name": "test Client",
+    "client_name#ja-Jpan-JP": "testクライアント",
     "token_endpoint_auth_method": "client_secret_post",
     "logo_uri": "",
     "tos_uri": "",
