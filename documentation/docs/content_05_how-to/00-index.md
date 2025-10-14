@@ -92,12 +92,12 @@ export ADMIN_TOKEN=$(curl -sS -X POST 'http://localhost:8080/system/v1/tokens' \
 **前提**: なし（このPhaseから開始）
 **目標**: OAuth 2.0 Authorization Code Flowが動作する最小構成を作成
 
-| # | ドキュメント | 所要時間 | 内容 |
-|---|------------|---------|------|
-| 01 | [組織初期化](./how-to-01-organization-initialization.md) | 10分 | 組織とテナントの基本概念 |
-| 02 | [テナント設定](./how-to-02-tenant-setup.md) | 15分 | Authorization Server設定 |
-| 03 | [クライアント登録](./how-to-03-client-registration.md) | 20分 | OAuth/OIDCクライアント登録 |
-| 04 | [パスワード認証](./how-to-04-password-authentication.md) | 15分 | 基本的な認証方式 |
+| # | ドキュメント                                                   | 所要時間 | 内容 |
+|---|----------------------------------------------------------|---------|------|
+| 01 | [組織初期化](./how-to-01-organization-initialization.md)      | 10分 | 組織とテナントの基本概念 |
+| 02 | [テナント設定](./how-to-02-tenant-setup.md)                    | 15分 | Authorization Server設定 |
+| 03 | [クライアント登録](./how-to-03-client-registration.md)           | 20分 | OAuth/OIDCクライアント登録 |
+| 04 | [ユーザー登録・認証](./how-to-04-user-registration.md)            | 15分 | 基本的な認証方式 |
 | 05 | [認証ポリシー（基礎）](./how-to-05-authentication-policy-basic.md) | 20分 | 認証要件の定義 |
 
 **完了後にできること**:

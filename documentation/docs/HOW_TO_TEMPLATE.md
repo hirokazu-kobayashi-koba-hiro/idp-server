@@ -313,7 +313,7 @@ curl -X GET "http://localhost:8080/..."
 
 ### さらに詳しく
 
-- [Configuration: Password](../content_06_developer-guide/05-configuration/authentication-policy.md)
+- [Configuration: Password](content_06_developer-guide/05-configuration/authentication-policy.md)
 - [Concept: 認証ポリシー](../content_03_concepts/concept-05-authentication-policy.md)
 ```
 
