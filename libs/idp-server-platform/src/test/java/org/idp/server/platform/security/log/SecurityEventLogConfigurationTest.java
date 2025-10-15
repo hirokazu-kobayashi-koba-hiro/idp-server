@@ -45,7 +45,7 @@ class SecurityEventLogConfigurationTest {
   @Test
   void getDetailScrubKeys_shouldReturnEssentialKeysWhenEmptyString() {
     // Given
-    Map<String, Object> attributes = Map.of("security_event_log_detail_scrub_keys", "");
+    Map<String, Object> attributes = Map.of("detail_scrub_keys", "");
     SecurityEventLogConfiguration config = new SecurityEventLogConfiguration(attributes);
 
     // When
@@ -65,7 +65,7 @@ class SecurityEventLogConfigurationTest {
   void getDetailScrubKeys_shouldMergeConfiguredKeysWithEssentialKeys() {
     // Given
     Map<String, Object> attributes =
-        Map.of("security_event_log_detail_scrub_keys", "authorization,cookie,password,secret");
+        Map.of("detail_scrub_keys", "authorization,cookie,password,secret");
     SecurityEventLogConfiguration config = new SecurityEventLogConfiguration(attributes);
 
     // When
@@ -84,7 +84,7 @@ class SecurityEventLogConfigurationTest {
   @Test
   void getDetailScrubKeys_shouldHandleSingleKey() {
     // Given
-    Map<String, Object> attributes = Map.of("security_event_log_detail_scrub_keys", "custom_key");
+    Map<String, Object> attributes = Map.of("detail_scrub_keys", "custom_key");
     SecurityEventLogConfiguration config = new SecurityEventLogConfiguration(attributes);
 
     // When
@@ -106,7 +106,7 @@ class SecurityEventLogConfigurationTest {
     // Given
     Map<String, Object> attributes =
         Map.of(
-            "security_event_log_detail_scrub_keys",
+            "detail_scrub_keys",
             "authorization,cookie,set-cookie,proxy-authorization,password,secret,token,refresh_token,access_token,id_token,client_secret,api_key,bearer");
     SecurityEventLogConfiguration config = new SecurityEventLogConfiguration(attributes);
 

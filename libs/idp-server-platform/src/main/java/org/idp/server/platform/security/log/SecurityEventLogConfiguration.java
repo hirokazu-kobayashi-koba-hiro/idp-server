@@ -83,55 +83,47 @@ public class SecurityEventLogConfiguration {
     Map<String, Object> safeValues = Objects.requireNonNullElseGet(values, HashMap::new);
     this.format =
         SecurityEventLogFormatter.Format.fromValue(
-            extractString(safeValues, "security_event_log_format", "structured_json"));
-    this.debugEnabled = extractBoolean(safeValues, "security_event_debug_logging", false);
-    this.stage = extractString(safeValues, "security_event_log_stage", "processed");
-    this.includeUserId = extractBoolean(safeValues, "security_event_log_include_user_id", true);
-    this.includeUserExSub =
-        extractBoolean(safeValues, "security_event_log_include_user_ex_sub", true);
-    this.includeClientId = extractBoolean(safeValues, "security_event_log_include_client_id", true);
-    this.includeIpAddress = extractBoolean(safeValues, "security_event_log_include_ip", true);
-    this.includeUserAgent =
-        extractBoolean(safeValues, "security_event_log_include_user_agent", true);
-    this.includeEventDetail =
-        extractBoolean(safeValues, "security_event_log_include_detail", false);
-    this.includeUserDetail =
-        extractBoolean(safeValues, "security_event_log_include_user_detail", false);
-    this.includeUserPii = extractBoolean(safeValues, "security_event_log_include_user_pii", false);
-    this.allowedUserPiiKeys =
-        extractCommaSeparatedList(safeValues, "security_event_log_allowed_user_pii_keys");
-    this.includeTraceContext =
-        extractBoolean(safeValues, "security_event_log_include_trace_context", false);
-    this.serviceName = extractString(safeValues, "security_event_log_service_name", "idp-server");
-    this.customTags = extractCommaSeparatedList(safeValues, "security_event_log_custom_tags");
-    this.tracingEnabled = extractBoolean(safeValues, "security_event_log_tracing_enabled", false);
-    this.persistenceEnabled =
-        extractBoolean(safeValues, "security_event_log_persistence_enabled", false);
+            extractString(safeValues, "format", "structured_json"));
+    this.debugEnabled = extractBoolean(safeValues, "debug_logging", false);
+    this.stage = extractString(safeValues, "stage", "processed");
+    this.includeUserId = extractBoolean(safeValues, "include_user_id", true);
+    this.includeUserExSub = extractBoolean(safeValues, "include_user_ex_sub", true);
+    this.includeClientId = extractBoolean(safeValues, "include_client_id", true);
+    this.includeIpAddress = extractBoolean(safeValues, "include_ip_address", true);
+    this.includeUserAgent = extractBoolean(safeValues, "include_user_agent", true);
+    this.includeEventDetail = extractBoolean(safeValues, "include_event_detail", false);
+    this.includeUserDetail = extractBoolean(safeValues, "include_user_detail", false);
+    this.includeUserPii = extractBoolean(safeValues, "include_user_pii", false);
+    this.allowedUserPiiKeys = extractCommaSeparatedList(safeValues, "allowed_user_pii_keys");
+    this.includeTraceContext = extractBoolean(safeValues, "include_trace_context", false);
+    this.serviceName = extractString(safeValues, "service_name", "idp-server");
+    this.customTags = extractCommaSeparatedList(safeValues, "custom_tags");
+    this.tracingEnabled = extractBoolean(safeValues, "tracing_enabled", false);
+    this.persistenceEnabled = extractBoolean(safeValues, "persistence_enabled", false);
     this.detailScrubKeys =
-        mergeWithEssentialKeys(
-            extractCommaSeparatedList(safeValues, "security_event_log_detail_scrub_keys"));
+        mergeWithEssentialKeys(extractCommaSeparatedList(safeValues, "detail_scrub_keys"));
   }
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
-    map.put("security_event_log_format", format.value());
-    map.put("security_event_debug_logging", debugEnabled);
-    map.put("security_event_log_stage", stage);
-    map.put("security_event_log_include_user_id", includeUserId);
-    map.put("security_event_log_include_user_ex_sub", includeUserExSub);
-    map.put("security_event_log_include_client_id", includeClientId);
-    map.put("security_event_log_include_ip", includeIpAddress);
-    map.put("security_event_log_include_user_agent", includeUserAgent);
-    map.put("security_event_log_include_detail", includeEventDetail);
-    map.put("security_event_log_include_user_detail", includeUserDetail);
-    map.put("security_event_log_include_user_pii", includeUserPii);
-    map.put("security_event_log_allowed_user_pii_keys", String.join(",", allowedUserPiiKeys));
-    map.put("security_event_log_include_trace_context", includeTraceContext);
-    map.put("security_event_log_service_name", serviceName);
-    map.put("security_event_log_custom_tags", String.join(",", customTags));
-    map.put("security_event_log_tracing_enabled", tracingEnabled);
-    map.put("security_event_log_persistence_enabled", persistenceEnabled);
-    map.put("security_event_log_detail_scrub_keys", String.join(",", detailScrubKeys));
+    map.put("format", format.value());
+    map.put("debug_logging", debugEnabled);
+    map.put("stage", stage);
+    map.put("include_user_id", includeUserId);
+    map.put("include_user_ex_sub", includeUserExSub);
+    map.put("include_client_id", includeClientId);
+    map.put("include_ip_address", includeIpAddress);
+    map.put("include_user_agent", includeUserAgent);
+    map.put("include_event_detail", includeEventDetail);
+    map.put("include_user_detail", includeUserDetail);
+    map.put("include_user_pii", includeUserPii);
+    map.put("allowed_user_pii_keys", String.join(",", allowedUserPiiKeys));
+    map.put("include_trace_context", includeTraceContext);
+    map.put("service_name", serviceName);
+    map.put("custom_tags", String.join(",", customTags));
+    map.put("tracing_enabled", tracingEnabled);
+    map.put("persistence_enabled", persistenceEnabled);
+    map.put("detail_scrub_keys", String.join(",", detailScrubKeys));
     return map;
   }
 

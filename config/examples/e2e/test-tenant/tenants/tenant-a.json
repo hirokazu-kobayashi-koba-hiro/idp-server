@@ -5,7 +5,7 @@
     "domain": "https://idp-server-0d10773f8944.herokuapp.com",
     "authorization_provider": "idp-server",
     "database_type": "postgresql",
-    "attributes": {
+    "identity_policy_config": {
       "identity_unique_key_type": "EMAIL"
     }
   },

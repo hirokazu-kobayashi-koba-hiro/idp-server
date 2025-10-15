@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.Objects;
 
 public class SecurityEventUserAttributeConfiguration {
-  private static final String PREFIX = "security_event_user_";
 
   private final boolean includeId;
   private final boolean includeName;
@@ -71,57 +70,52 @@ public class SecurityEventUserAttributeConfiguration {
 
   public SecurityEventUserAttributeConfiguration(Map<String, Object> values) {
     Map<String, Object> safeValues = Objects.requireNonNullElseGet(values, HashMap::new);
-    this.includeId = extractBoolean(safeValues, PREFIX + "include_id", true);
-    this.includeName = extractBoolean(safeValues, PREFIX + "include_name", false);
-    this.includeExternalUserId =
-        extractBoolean(safeValues, PREFIX + "include_external_user_id", true);
-    this.includeEmail = extractBoolean(safeValues, PREFIX + "include_email", false);
-    this.includePhoneNumber = extractBoolean(safeValues, PREFIX + "include_phone_number", false);
-    this.includeGivenName = extractBoolean(safeValues, PREFIX + "include_given_name", false);
-    this.includeFamilyName = extractBoolean(safeValues, PREFIX + "include_family_name", false);
-    this.includePreferredUsername =
-        extractBoolean(safeValues, PREFIX + "include_preferred_username", false);
-    this.includeProfile = extractBoolean(safeValues, PREFIX + "include_profile", false);
-    this.includePicture = extractBoolean(safeValues, PREFIX + "include_picture", false);
-    this.includeWebsite = extractBoolean(safeValues, PREFIX + "include_website", false);
-    this.includeGender = extractBoolean(safeValues, PREFIX + "include_gender", false);
-    this.includeBirthdate = extractBoolean(safeValues, PREFIX + "include_birthdate", false);
-    this.includeZoneinfo = extractBoolean(safeValues, PREFIX + "include_zoneinfo", false);
-    this.includeLocale = extractBoolean(safeValues, PREFIX + "include_locale", false);
-    this.includeAddress = extractBoolean(safeValues, PREFIX + "include_address", false);
-    this.includeRoles = extractBoolean(safeValues, PREFIX + "include_roles", false);
-    this.includePermissions = extractBoolean(safeValues, PREFIX + "include_permissions", false);
-    this.includeCurrentTenant =
-        extractBoolean(safeValues, PREFIX + "include_current_tenant", false);
-    this.includeAssignedTenants =
-        extractBoolean(safeValues, PREFIX + "include_assigned_tenants", false);
-    this.includeVerifiedClaims =
-        extractBoolean(safeValues, PREFIX + "include_verified_claims", false);
+    this.includeId = extractBoolean(safeValues, "include_id", true);
+    this.includeName = extractBoolean(safeValues, "include_name", false);
+    this.includeExternalUserId = extractBoolean(safeValues, "include_external_user_id", true);
+    this.includeEmail = extractBoolean(safeValues, "include_email", false);
+    this.includePhoneNumber = extractBoolean(safeValues, "include_phone_number", false);
+    this.includeGivenName = extractBoolean(safeValues, "include_given_name", false);
+    this.includeFamilyName = extractBoolean(safeValues, "include_family_name", false);
+    this.includePreferredUsername = extractBoolean(safeValues, "include_preferred_username", false);
+    this.includeProfile = extractBoolean(safeValues, "include_profile", false);
+    this.includePicture = extractBoolean(safeValues, "include_picture", false);
+    this.includeWebsite = extractBoolean(safeValues, "include_website", false);
+    this.includeGender = extractBoolean(safeValues, "include_gender", false);
+    this.includeBirthdate = extractBoolean(safeValues, "include_birthdate", false);
+    this.includeZoneinfo = extractBoolean(safeValues, "include_zoneinfo", false);
+    this.includeLocale = extractBoolean(safeValues, "include_locale", false);
+    this.includeAddress = extractBoolean(safeValues, "include_address", false);
+    this.includeRoles = extractBoolean(safeValues, "include_roles", false);
+    this.includePermissions = extractBoolean(safeValues, "include_permissions", false);
+    this.includeCurrentTenant = extractBoolean(safeValues, "include_current_tenant", false);
+    this.includeAssignedTenants = extractBoolean(safeValues, "include_assigned_tenants", false);
+    this.includeVerifiedClaims = extractBoolean(safeValues, "include_verified_claims", false);
   }
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
-    map.put(PREFIX + "include_id", includeId);
-    map.put(PREFIX + "include_name", includeName);
-    map.put(PREFIX + "include_external_user_id", includeExternalUserId);
-    map.put(PREFIX + "include_email", includeEmail);
-    map.put(PREFIX + "include_phone_number", includePhoneNumber);
-    map.put(PREFIX + "include_given_name", includeGivenName);
-    map.put(PREFIX + "include_family_name", includeFamilyName);
-    map.put(PREFIX + "include_preferred_username", includePreferredUsername);
-    map.put(PREFIX + "include_profile", includeProfile);
-    map.put(PREFIX + "include_picture", includePicture);
-    map.put(PREFIX + "include_website", includeWebsite);
-    map.put(PREFIX + "include_gender", includeGender);
-    map.put(PREFIX + "include_birthdate", includeBirthdate);
-    map.put(PREFIX + "include_zoneinfo", includeZoneinfo);
-    map.put(PREFIX + "include_locale", includeLocale);
-    map.put(PREFIX + "include_address", includeAddress);
-    map.put(PREFIX + "include_roles", includeRoles);
-    map.put(PREFIX + "include_permissions", includePermissions);
-    map.put(PREFIX + "include_current_tenant", includeCurrentTenant);
-    map.put(PREFIX + "include_assigned_tenants", includeAssignedTenants);
-    map.put(PREFIX + "include_verified_claims", includeVerifiedClaims);
+    map.put("include_id", includeId);
+    map.put("include_name", includeName);
+    map.put("include_external_user_id", includeExternalUserId);
+    map.put("include_email", includeEmail);
+    map.put("include_phone_number", includePhoneNumber);
+    map.put("include_given_name", includeGivenName);
+    map.put("include_family_name", includeFamilyName);
+    map.put("include_preferred_username", includePreferredUsername);
+    map.put("include_profile", includeProfile);
+    map.put("include_picture", includePicture);
+    map.put("include_website", includeWebsite);
+    map.put("include_gender", includeGender);
+    map.put("include_birthdate", includeBirthdate);
+    map.put("include_zoneinfo", includeZoneinfo);
+    map.put("include_locale", includeLocale);
+    map.put("include_address", includeAddress);
+    map.put("include_roles", includeRoles);
+    map.put("include_permissions", includePermissions);
+    map.put("include_current_tenant", includeCurrentTenant);
+    map.put("include_assigned_tenants", includeAssignedTenants);
+    map.put("include_verified_claims", includeVerifiedClaims);
     return map;
   }
 
