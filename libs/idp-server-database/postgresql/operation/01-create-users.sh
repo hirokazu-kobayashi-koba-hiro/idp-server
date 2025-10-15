@@ -6,8 +6,17 @@ set -eu
 : "${POSTGRES_PASSWORD:=idpserver}"
 : "${POSTGRES_DB:=idpserver}"
 : "${DB_OWNER_USER:=idp}"
-: "${IDP_DB_ADMIN_PASSWORD:=idp_admin_user}"
-: "${IDP_DB_APP_PASSWORD:=idp_app_user}"
+
+# Require password environment variables (no defaults for security)
+if [ -z "${IDP_DB_ADMIN_PASSWORD:-}" ]; then
+  echo "ERROR: IDP_DB_ADMIN_PASSWORD environment variable is required" >&2
+  exit 1
+fi
+
+if [ -z "${IDP_DB_APP_PASSWORD:-}" ]; then
+  echo "ERROR: IDP_DB_APP_PASSWORD environment variable is required" >&2
+  exit 1
+fi
 
 # Set password for psql connection (use superuser credentials)
 export PGPASSWORD="$POSTGRES_PASSWORD"
