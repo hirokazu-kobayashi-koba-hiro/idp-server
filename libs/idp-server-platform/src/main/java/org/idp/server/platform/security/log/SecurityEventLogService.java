@@ -38,7 +38,7 @@ public class SecurityEventLogService {
   }
 
   public void logEvent(Tenant tenant, SecurityEvent securityEvent) {
-    SecurityEventLogConfiguration config = new SecurityEventLogConfiguration(tenant.attributes());
+    SecurityEventLogConfiguration config = tenant.securityEventLogConfiguration();
 
     if (!config.isEnabled()) {
       return;

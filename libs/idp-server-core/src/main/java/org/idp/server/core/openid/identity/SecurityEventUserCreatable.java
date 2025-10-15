@@ -77,7 +77,7 @@ public interface SecurityEventUserCreatable {
 
   default Map<String, Object> toDetailWithSensitiveData(User user, Tenant tenant) {
     SecurityEventUserAttributeConfiguration userConfig =
-        SecurityEventUserAttributeConfiguration.fromTenantAttributes(tenant.attributes());
+        tenant.securityEventUserAttributeConfiguration();
 
     Map<String, Object> result = new HashMap<>();
 
@@ -151,8 +151,7 @@ public interface SecurityEventUserCreatable {
 
   default SecurityEventDetail createSecurityEventDetailWithScrubbing(
       Map<String, Object> detailsMap, Tenant tenant) {
-    SecurityEventLogConfiguration logConfig =
-        new SecurityEventLogConfiguration(tenant.attributes());
+    SecurityEventLogConfiguration logConfig = tenant.securityEventLogConfiguration();
     Map<String, Object> scrubbedDetails =
         scrubSensitiveDataInMap(detailsMap, logConfig.getDetailScrubKeys());
     return new SecurityEventDetail(scrubbedDetails);

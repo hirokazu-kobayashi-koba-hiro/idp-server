@@ -20,7 +20,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 import java.util.Map;
-import org.idp.server.platform.multi_tenancy.tenant.TenantAttributes;
 import org.junit.jupiter.api.Test;
 
 class SecurityEventLogConfigurationTest {
@@ -28,8 +27,7 @@ class SecurityEventLogConfigurationTest {
   @Test
   void getDetailScrubKeys_shouldReturnEssentialKeysWhenNotConfigured() {
     // Given
-    TenantAttributes tenantAttributes = new TenantAttributes(Map.of());
-    SecurityEventLogConfiguration config = new SecurityEventLogConfiguration(tenantAttributes);
+    SecurityEventLogConfiguration config = new SecurityEventLogConfiguration(Map.of());
 
     // When
     List<String> result = config.getDetailScrubKeys();
@@ -48,8 +46,7 @@ class SecurityEventLogConfigurationTest {
   void getDetailScrubKeys_shouldReturnEssentialKeysWhenEmptyString() {
     // Given
     Map<String, Object> attributes = Map.of("security_event_log_detail_scrub_keys", "");
-    TenantAttributes tenantAttributes = new TenantAttributes(attributes);
-    SecurityEventLogConfiguration config = new SecurityEventLogConfiguration(tenantAttributes);
+    SecurityEventLogConfiguration config = new SecurityEventLogConfiguration(attributes);
 
     // When
     List<String> result = config.getDetailScrubKeys();
@@ -69,8 +66,7 @@ class SecurityEventLogConfigurationTest {
     // Given
     Map<String, Object> attributes =
         Map.of("security_event_log_detail_scrub_keys", "authorization,cookie,password,secret");
-    TenantAttributes tenantAttributes = new TenantAttributes(attributes);
-    SecurityEventLogConfiguration config = new SecurityEventLogConfiguration(tenantAttributes);
+    SecurityEventLogConfiguration config = new SecurityEventLogConfiguration(attributes);
 
     // When
     List<String> result = config.getDetailScrubKeys();
@@ -89,8 +85,7 @@ class SecurityEventLogConfigurationTest {
   void getDetailScrubKeys_shouldHandleSingleKey() {
     // Given
     Map<String, Object> attributes = Map.of("security_event_log_detail_scrub_keys", "custom_key");
-    TenantAttributes tenantAttributes = new TenantAttributes(attributes);
-    SecurityEventLogConfiguration config = new SecurityEventLogConfiguration(tenantAttributes);
+    SecurityEventLogConfiguration config = new SecurityEventLogConfiguration(attributes);
 
     // When
     List<String> result = config.getDetailScrubKeys();
@@ -113,8 +108,7 @@ class SecurityEventLogConfigurationTest {
         Map.of(
             "security_event_log_detail_scrub_keys",
             "authorization,cookie,set-cookie,proxy-authorization,password,secret,token,refresh_token,access_token,id_token,client_secret,api_key,bearer");
-    TenantAttributes tenantAttributes = new TenantAttributes(attributes);
-    SecurityEventLogConfiguration config = new SecurityEventLogConfiguration(tenantAttributes);
+    SecurityEventLogConfiguration config = new SecurityEventLogConfiguration(attributes);
 
     // When
     List<String> result = config.getDetailScrubKeys();

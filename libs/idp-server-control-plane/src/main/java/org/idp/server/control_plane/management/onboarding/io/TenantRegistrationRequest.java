@@ -33,6 +33,12 @@ public class TenantRegistrationRequest implements JsonReadable {
   String authorizationProvider;
   String databaseType;
   Map<String, Object> attributes;
+  Map<String, Object> uiConfig;
+  Map<String, Object> corsConfig;
+  Map<String, Object> sessionConfig;
+  Map<String, Object> securityEventLogConfig;
+  Map<String, Object> securityEventUserConfig;
+  Map<String, Object> identityPolicyConfig;
 
   public TenantRegistrationRequest() {}
 
@@ -65,5 +71,29 @@ public class TenantRegistrationRequest implements JsonReadable {
 
   public Map<String, Object> attributes() {
     return attributes;
+  }
+
+  public Map<String, Object> uiConfig() {
+    return uiConfig;
+  }
+
+  public Map<String, Object> corsConfig() {
+    return corsConfig;
+  }
+
+  public Map<String, Object> sessionConfig() {
+    return sessionConfig;
+  }
+
+  public Map<String, Object> securityEventLogConfig() {
+    return securityEventLogConfig;
+  }
+
+  public Map<String, Object> securityEventUserConfig() {
+    return securityEventUserConfig;
+  }
+
+  public Map<String, Object> identityPolicyConfig() {
+    return identityPolicyConfig;
   }
 }

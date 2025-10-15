@@ -19,9 +19,9 @@ package org.idp.server.adapters.springboot.application.session;
 import jakarta.servlet.http.HttpServletRequest;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.multi_tenancy.tenant.TenantAttributes;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantMetaDataApi;
+import org.idp.server.platform.multi_tenancy.tenant.config.SessionConfiguration;
 import org.springframework.session.web.http.DefaultCookieSerializer;
 
 public class DynamicCookieSerializer extends DefaultCookieSerializer {
@@ -37,13 +37,13 @@ public class DynamicCookieSerializer extends DefaultCookieSerializer {
     HttpServletRequest request = cookieValue.getRequest();
     TenantIdentifier tenantIdentifier = extractTenantIdentifier(request);
     Tenant tenant = tenantMetaDataApi.get(tenantIdentifier);
-    TenantAttributes attributes = tenant.attributes();
-    setCookieName(attributes.optValueAsString("cookie_name", "IDP_SERVER_SESSION"));
+    SessionConfiguration sessionConfiguration = tenant.sessionConfiguration();
+    setCookieName(sessionConfiguration.cookieName());
     setDomainName(tenant.domain().host());
-    setSameSite(attributes.optValueAsString("cookie_same_site", "None"));
-    setUseSecureCookie(attributes.optValueAsBoolean("use_secure_cookie", true));
-    setUseHttpOnlyCookie(true);
-    setCookiePath("/");
+    setSameSite(sessionConfiguration.cookieSameSite());
+    setUseSecureCookie(sessionConfiguration.useSecureCookie());
+    setUseHttpOnlyCookie(sessionConfiguration.useHttpOnlyCookie());
+    setCookiePath(sessionConfiguration.cookiePath());
     super.writeCookieValue(cookieValue);
   }
 

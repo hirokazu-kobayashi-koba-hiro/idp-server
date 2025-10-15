@@ -33,7 +33,13 @@ public class MysqlExecutor implements TenantQuerySqlExecutor {
                 domain,
                 authorization_provider,
                 database_type,
-                attributes
+                attributes,
+                ui_config,
+                cors_config,
+                session_config,
+                security_event_log_config,
+                security_event_user_config,
+                identity_policy_config
                 FROM tenant \n
               """;
 

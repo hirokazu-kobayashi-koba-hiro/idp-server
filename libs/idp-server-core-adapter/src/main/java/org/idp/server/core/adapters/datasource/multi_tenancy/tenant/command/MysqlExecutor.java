@@ -40,9 +40,15 @@ public class MysqlExecutor implements TenantCommandSqlExecutor {
                 domain,
                 authorization_provider,
                 database_type,
-                attributes
+                attributes,
+                ui_config,
+                cors_config,
+                session_config
                 )
                 VALUES (
+                ?,
+                ?,
+                ?,
                 ?,
                 ?,
                 ?,
@@ -60,6 +66,12 @@ public class MysqlExecutor implements TenantCommandSqlExecutor {
     params.add(tenant.authorizationProvider().name());
     params.add(tenant.databaseType().name());
     params.add(jsonConverter.write(tenant.attributesAsMap()));
+    params.add(jsonConverter.write(tenant.uiConfiguration().toMap()));
+    params.add(jsonConverter.write(tenant.corsConfiguration().toMap()));
+    params.add(jsonConverter.write(tenant.sessionConfiguration().toMap()));
+    params.add(jsonConverter.write(tenant.securityEventLogConfiguration().toMap()));
+    params.add(jsonConverter.write(tenant.securityEventUserAttributeConfiguration().toMap()));
+    params.add(jsonConverter.write(tenant.identityPolicyConfig().toMap()));
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -73,13 +85,25 @@ public class MysqlExecutor implements TenantCommandSqlExecutor {
                 UPDATE tenant
                 SET name = ?,
                 domain = ?,
-                attributes = ?
+                attributes = ?,
+                ui_config = ?,
+                cors_config = ?,
+                session_config = ?,
+                security_event_log_config = ?,
+                security_event_user_config = ?,
+                identity_policy_config = ?
                 WHERE id = ?;
                 """;
     List<Object> params = new ArrayList<>();
     params.add(tenant.name().value());
     params.add(tenant.domain().value());
     params.add(jsonConverter.write(tenant.attributesAsMap()));
+    params.add(jsonConverter.write(tenant.uiConfiguration().toMap()));
+    params.add(jsonConverter.write(tenant.corsConfiguration().toMap()));
+    params.add(jsonConverter.write(tenant.sessionConfiguration().toMap()));
+    params.add(jsonConverter.write(tenant.securityEventLogConfiguration().toMap()));
+    params.add(jsonConverter.write(tenant.securityEventUserAttributeConfiguration().toMap()));
+    params.add(jsonConverter.write(tenant.identityPolicyConfig().toMap()));
     params.add(tenant.identifier().value());
 
     sqlExecutor.execute(sqlTemplate, params);

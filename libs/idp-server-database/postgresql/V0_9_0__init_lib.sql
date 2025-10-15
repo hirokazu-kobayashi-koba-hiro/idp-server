@@ -16,14 +16,33 @@ CREATE TABLE tenant
     domain                 TEXT         NOT NULL,
     authorization_provider VARCHAR(255) NOT NULL,
     database_type          VARCHAR(255) NOT NULL,
+
+    -- Configuration columns (category-based JSONB)
+    security_event_log_config  JSONB,  -- Security event logging configuration
+    security_event_user_config JSONB,  -- Security event user attribute configuration
+    identity_policy_config     JSONB,  -- Identity policy configuration
+    ui_config                  JSONB,  -- UI/authorization page configuration
+    cors_config                JSONB,  -- CORS configuration
+    session_config             JSONB,  -- Cookie/session configuration
+
+    -- Legacy columns (will be deprecated)
     attributes             JSONB,
     features               JSONB,
+
     created_at             TIMESTAMP    NOT NULL DEFAULT now(),
     updated_at             TIMESTAMP    NOT NULL DEFAULT now(),
     PRIMARY KEY (id)
 );
 
 CREATE UNIQUE INDEX unique_admin_tenant ON tenant (type) WHERE type = 'ADMIN';
+
+-- Indexes for category-based configuration columns
+CREATE INDEX idx_tenant_security_event_log_config ON tenant USING GIN (security_event_log_config);
+CREATE INDEX idx_tenant_security_event_user_config ON tenant USING GIN (security_event_user_config);
+CREATE INDEX idx_tenant_identity_policy_config ON tenant USING GIN (identity_policy_config);
+CREATE INDEX idx_tenant_ui_config ON tenant USING GIN (ui_config);
+CREATE INDEX idx_tenant_cors_config ON tenant USING GIN (cors_config);
+CREATE INDEX idx_tenant_session_config ON tenant USING GIN (session_config);
 
 CREATE TABLE tenant_invitation
 (
