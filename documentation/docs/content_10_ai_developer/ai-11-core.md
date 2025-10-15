@@ -1182,7 +1182,7 @@ throw new OAuthRedirectableBadRequestException("invalid_scope", "Requested scope
 throw new ServerConfigurationNotFoundException("Authorization server configuration not found");
 ```
 
-### throwExceptionIf{Condition}() パターン
+### `throwExceptionIf{Condition}() パターン`
 
 ```java
 // ✅ 良い例: 条件を明示的に表現
@@ -1201,7 +1201,7 @@ public void verify() {
 }
 ```
 
-**情報源**: CLAUDE.md「例外: throwExceptionIf{Condition}() パターン、OAuth標準エラーコード」
+**情報源**: CLAUDE.md「例外: `throwExceptionIf{Condition}()` パターン、OAuth標準エラーコード」
 
 ## アンチパターン
 

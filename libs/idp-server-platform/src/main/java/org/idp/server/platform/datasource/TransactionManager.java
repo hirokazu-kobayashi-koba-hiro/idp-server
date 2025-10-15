@@ -154,7 +154,7 @@ public class TransactionManager {
    * @throws SqlRuntimeException if the tenant ID could not be set
    */
   private static void setTenantId(Connection conn, TenantIdentifier tenantIdentifier) {
-    log.debug("[RLS] SET app.tenant_id: tenant={}", tenantIdentifier.value());
+    log.trace("[RLS] SET app.tenant_id: tenant={}", tenantIdentifier.value());
 
     // Use set_config() function with PreparedStatement to prevent SQL Injection
     // See: https://www.postgresql.org/docs/current/functions-admin.html#FUNCTIONS-ADMIN-SET
