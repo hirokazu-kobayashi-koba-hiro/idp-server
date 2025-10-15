@@ -62,9 +62,12 @@ CREATE TABLE authorization_server_configuration
     payload      JSON                               NOT NULL,
     created_at   DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at   DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    enabled      BOOLEAN                            NOT NULL DEFAULT TRUE,
     PRIMARY KEY (tenant_id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE INDEX idx_authorization_server_configuration_enabled ON authorization_server_configuration (tenant_id, enabled);
 
 CREATE TABLE permission
 (
@@ -132,7 +135,7 @@ CREATE TABLE idp_user
     family_name                    VARCHAR(255),
     middle_name                    VARCHAR(255),
     nickname                       VARCHAR(255),
-    preferred_username             VARCHAR(255),
+    preferred_username             VARCHAR(255)                       NOT NULL,
     profile                        VARCHAR(255),
     picture                        VARCHAR(255),
     website                        VARCHAR(255),
@@ -160,6 +163,10 @@ CREATE TABLE idp_user
 
 CREATE INDEX idx_idp_user_tenant_provider ON idp_user (tenant_id, provider_id, external_user_id);
 CREATE INDEX idx_idp_user_tenant_email ON idp_user (tenant_id, email);
+CREATE UNIQUE INDEX idx_idp_user_tenant_preferred_username ON idp_user (tenant_id, preferred_username);
+
+ALTER TABLE idp_user MODIFY COLUMN preferred_username VARCHAR (255) NOT NULL
+    COMMENT 'Tenant-scoped unique user identifier. Stores normalized username/email/phone/external_user_id based on tenant unique key policy.';
 
 CREATE TABLE idp_user_assigned_tenants
 (
@@ -287,12 +294,14 @@ CREATE TABLE client_configuration
     payload    JSON                               NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    enabled    BOOLEAN                            NOT NULL DEFAULT TRUE,
     PRIMARY KEY (id),
     CONSTRAINT uk_client_configuration_alias unique (id_alias, tenant_id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE INDEX idx_client_configuration_alias ON client_configuration (id_alias, tenant_id);
+CREATE INDEX idx_client_configuration_enabled ON client_configuration (tenant_id, enabled);
 
 CREATE TABLE authorization_request
 (
@@ -538,17 +547,22 @@ CREATE INDEX idx_security_event_hook_configuration_order ON security_event_hook_
 
 CREATE TABLE security_event_hook_results
 (
-    id                     CHAR(36)                           NOT NULL,
-    tenant_id              CHAR(36)                           NOT NULL,
-    security_event_id      CHAR(36)                           NOT NULL,
-    security_event_type    VARCHAR(255)                       NOT NULL,
-    security_event_hook    VARCHAR(255)                       NOT NULL,
-    security_event_payload JSON                               NOT NULL,
-    status                 VARCHAR(255)                       NOT NULL,
-    created_at             DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at             DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    id                                    CHAR(36)                           NOT NULL,
+    tenant_id                             CHAR(36)                           NOT NULL,
+    security_event_id                     CHAR(36)                           NOT NULL,
+    security_event_type                   VARCHAR(255)                       NOT NULL,
+    security_event_hook                   VARCHAR(255)                       NOT NULL,
+    security_event_payload                JSON                               NOT NULL,
+    security_event_hook_execution_payload JSON,
+    status                                VARCHAR(255)                       NOT NULL,
+    created_at                            DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at                            DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE security_event_hook_results
+    MODIFY COLUMN security_event_hook_execution_payload JSON COMMENT
+    'Stores the execution result payload from security event hooks for resending and debugging purposes';
 
 CREATE TABLE federation_configurations
 (
@@ -559,13 +573,14 @@ CREATE TABLE federation_configurations
     payload      JSON                               NOT NULL,
     created_at   DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at   DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    enabled      BOOLEAN                            NOT NULL DEFAULT TRUE,
     PRIMARY KEY (id),
     CONSTRAINT uk_tenant_federation_configurations UNIQUE (tenant_id, type, sso_provider),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE INDEX idx_federation_configurations_tenant ON federation_configurations (tenant_id);
-
+CREATE INDEX idx_federation_configurations_enabled ON federation_configurations (tenant_id, enabled);
 CREATE INDEX idx_federation_configurations_type_sso_provider ON federation_configurations (tenant_id, type, sso_provider);
 
 CREATE TABLE federation_sso_session

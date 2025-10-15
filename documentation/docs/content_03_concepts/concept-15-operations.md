@@ -39,7 +39,7 @@ idp-serverは、**System Administrator API** で運用操作を提供します�
 
 ```mermaid
 flowchart TB
-    Cron[定期実行<br/>Cron/Scheduler] -->|呼び出し| API[/v1/admin/operations/delete-expired-data]
+    Cron[定期実行<br/>Cron/Scheduler] -->|呼び出し| API['/v1/admin/operations/delete-expired-data']
     API -->|削除| Token[期限切れトークン]
     API -->|削除| AuthTx[期限切れ認証トランザクション]
     API -->|削除| AuthReq[期限切れ認可リクエスト]
