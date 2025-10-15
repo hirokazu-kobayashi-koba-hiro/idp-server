@@ -207,7 +207,7 @@ public class OrgFederationConfigManagementEntryService implements OrgFederationC
     }
 
     List<FederationConfiguration> configurations =
-            federationConfigurationQueryRepository.findList(targetTenant, queries);
+        federationConfigurationQueryRepository.findList(targetTenant, queries);
 
     Map<String, Object> response = new HashMap<>();
     response.put("list", configurations.stream().map(FederationConfiguration::toMap).toList());
@@ -266,7 +266,8 @@ public class OrgFederationConfigManagementEntryService implements OrgFederationC
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    return new FederationConfigManagementResponse(FederationConfigManagementStatus.OK, configuration.toMap());
+    return new FederationConfigManagementResponse(
+        FederationConfigManagementStatus.OK, configuration.toMap());
   }
 
   @Override

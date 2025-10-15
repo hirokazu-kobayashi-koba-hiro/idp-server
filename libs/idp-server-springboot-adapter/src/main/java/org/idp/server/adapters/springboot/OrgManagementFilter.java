@@ -19,7 +19,6 @@ package org.idp.server.adapters.springboot;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -202,7 +201,7 @@ public class OrgManagementFilter extends OncePerRequestFilter {
     try {
       // Set WWW-Authenticate header per RFC 6750
       String wwwAuthenticate =
-              String.format("Bearer error=\"%s\", error_description=\"%s\"", error, errorDescription);
+          String.format("Bearer error=\"%s\", error_description=\"%s\"", error, errorDescription);
       response.setHeader(HttpHeaders.WWW_AUTHENTICATE, wwwAuthenticate);
 
       // Set status code
@@ -214,9 +213,9 @@ public class OrgManagementFilter extends OncePerRequestFilter {
 
       // Write JSON error response body
       String jsonErrorResponse =
-              String.format(
-                      "{\"error\":\"%s\",\"error_description\":\"%s\"}",
-                      error, errorDescription.replace("\"", "\\\""));
+          String.format(
+              "{\"error\":\"%s\",\"error_description\":\"%s\"}",
+              error, errorDescription.replace("\"", "\\\""));
 
       response.getWriter().write(jsonErrorResponse);
       response.getWriter().flush();
@@ -224,5 +223,4 @@ public class OrgManagementFilter extends OncePerRequestFilter {
       logger.error("Failed to write error response", ioException);
     }
   }
-
 }
