@@ -9,7 +9,63 @@
     "name": "tenant1",
     "domain": "http://localhost:8080",
     "authorization_provider": "idp-server",
-    "database_type": "postgresql"
+    "database_type": "postgresql",
+    "ui_config": {
+      "signup_page": "/auth-views/signup/index.html",
+      "signin_page": "/auth-views/signin/index.html"
+    },
+    "cors_config": {
+      "allow_origins": [],
+      "allow_headers": "Authorization, Content-Type, Accept, x-device-id",
+      "allow_methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+      "allow_credentials": true
+    },
+    "session_config": {
+      "cookie_name": "session",
+      "cookie_same_site": "lax",
+      "use_secure_cookie": true,
+      "use_http_only_cookie": true,
+      "cookie_path": "/"
+    },
+    "security_event_log_config": {
+      "format": "structured_json",
+      "debug_logging": false,
+      "stage": "development",
+      "include_user_id": true,
+      "include_user_ex_sub": true,
+      "include_client_id": true,
+      "include_ip_address": true,
+      "include_user_agent": true,
+      "include_event_detail": true,
+      "include_user_detail": false,
+      "include_user_pii": false,
+      "persistence_enabled": true,
+      "detail_scrub_keys": "authorization,cookie,password,secret,token"
+    },
+    "security_event_user_config": {
+      "include_id": true,
+      "include_name": false,
+      "include_external_user_id": true,
+      "include_email": false,
+      "include_phone_number": false,
+      "include_given_name": false,
+      "include_family_name": false,
+      "include_preferred_username": false,
+      "include_profile": false,
+      "include_picture": false,
+      "include_website": false,
+      "include_gender": false,
+      "include_birthdate": false,
+      "include_zoneinfo": false,
+      "include_locale": false,
+      "include_address": false,
+      "include_roles": false,
+      "include_permissions": false,
+      "include_current_tenant": false,
+      "include_assigned_tenants": false,
+      "include_verified_claims": false
+    },
+    "identity_policy_config": {}
   },
   "authorization_server": {
     "issuer": "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784",

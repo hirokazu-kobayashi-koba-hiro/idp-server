@@ -24,6 +24,11 @@ import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantAttributes;
 import org.idp.server.platform.multi_tenancy.tenant.TenantDomain;
+import org.idp.server.platform.multi_tenancy.tenant.config.CorsConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.config.SessionConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.config.UIConfiguration;
+import org.idp.server.platform.security.event.SecurityEventUserAttributeConfiguration;
+import org.idp.server.platform.security.log.SecurityEventLogConfiguration;
 
 public class TenantManagementUpdateContextCreator {
   Tenant adminTenant;
@@ -45,21 +50,58 @@ public class TenantManagementUpdateContextCreator {
   public TenantManagementUpdateContext create() {
     JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(request.toMap());
     String domain = jsonNodeWrapper.getValueOrEmptyAsString("domain");
-    TenantAttributes attributes = extractAttributes();
+    TenantAttributes attributes = extractConfiguration("attributes", TenantAttributes.class);
+    UIConfiguration uiConfiguration = extractConfiguration("ui_config", UIConfiguration.class);
+    CorsConfiguration corsConfiguration =
+        extractConfiguration("cors_config", CorsConfiguration.class);
+    SessionConfiguration sessionConfiguration =
+        extractConfiguration("session_config", SessionConfiguration.class);
+    SecurityEventLogConfiguration securityEventLogConfiguration =
+        extractConfiguration("security_event_log_config", SecurityEventLogConfiguration.class);
+    SecurityEventUserAttributeConfiguration securityEventUserAttributeConfiguration =
+        extractConfiguration(
+            "security_event_user_config", SecurityEventUserAttributeConfiguration.class);
+    TenantAttributes identityPolicyConfig =
+        extractConfiguration("identity_policy_config", TenantAttributes.class);
 
-    Tenant updatedDomain = before.updateWithDomain(new TenantDomain(domain));
-    Tenant updateAttributes = updatedDomain.updateWithAttributes(attributes);
+    Tenant updated =
+        new Tenant(
+            before.identifier(),
+            before.name(),
+            before.type(),
+            domain.isEmpty() ? before.domain() : new TenantDomain(domain),
+            before.authorizationProvider(),
+            before.databaseType(),
+            attributes.exists() ? attributes : before.attributes(),
+            uiConfiguration.exists() ? uiConfiguration : before.uiConfiguration(),
+            corsConfiguration.exists() ? corsConfiguration : before.corsConfiguration(),
+            sessionConfiguration.exists() ? sessionConfiguration : before.sessionConfiguration(),
+            securityEventLogConfiguration.exists()
+                ? securityEventLogConfiguration
+                : before.securityEventLogConfiguration(),
+            securityEventUserAttributeConfiguration.exists()
+                ? securityEventUserAttributeConfiguration
+                : before.securityEventUserAttributeConfiguration(),
+            identityPolicyConfig.exists() ? identityPolicyConfig : before.identityPolicyConfig());
 
-    return new TenantManagementUpdateContext(adminTenant, before, updateAttributes, user, dryRun);
+    return new TenantManagementUpdateContext(adminTenant, before, updated, user, dryRun);
   }
 
-  public TenantAttributes extractAttributes() {
+  private <T> T extractConfiguration(String key, Class<T> clazz) {
     JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(request.toMap());
-    JsonNodeWrapper attributes = jsonNodeWrapper.getValueAsJsonNode("attributes");
-    if (attributes == null || !attributes.exists()) {
-      return new TenantAttributes();
+    JsonNodeWrapper configNode = jsonNodeWrapper.getValueAsJsonNode(key);
+    if (configNode == null || !configNode.exists()) {
+      try {
+        return clazz.getDeclaredConstructor().newInstance();
+      } catch (Exception e) {
+        throw new RuntimeException("Failed to create default configuration for " + key, e);
+      }
     }
-    Map<String, Object> attributesMap = attributes.toMap();
-    return new TenantAttributes(attributesMap);
+    Map<String, Object> configMap = configNode.toMap();
+    try {
+      return clazz.getDeclaredConstructor(Map.class).newInstance(configMap);
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to create configuration for " + key, e);
+    }
   }
 }

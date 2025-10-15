@@ -22,6 +22,11 @@ import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.*;
+import org.idp.server.platform.multi_tenancy.tenant.config.CorsConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.config.SessionConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.config.UIConfiguration;
+import org.idp.server.platform.security.event.SecurityEventUserAttributeConfiguration;
+import org.idp.server.platform.security.log.SecurityEventLogConfiguration;
 
 class ModelConverter {
 
@@ -37,6 +42,18 @@ class ModelConverter {
         new AuthorizationProvider(result.getOrDefault("authorization_provider", ""));
     DatabaseType databaseType = DatabaseType.of(result.getOrDefault("database_type", ""));
     TenantAttributes tenantAttributes = convertAttributes(result.getOrDefault("attributes", ""));
+    UIConfiguration uiConfiguration = convertUIConfiguration(result.getOrDefault("ui_config", ""));
+    CorsConfiguration corsConfiguration =
+        convertCorsConfiguration(result.getOrDefault("cors_config", ""));
+    SessionConfiguration sessionConfiguration =
+        convertSessionConfiguration(result.getOrDefault("session_config", ""));
+    SecurityEventLogConfiguration securityEventLogConfiguration =
+        convertSecurityEventLogConfiguration(result.getOrDefault("security_event_log_config", ""));
+    SecurityEventUserAttributeConfiguration securityEventUserAttributeConfiguration =
+        convertSecurityEventUserAttributeConfiguration(
+            result.getOrDefault("security_event_user_config", ""));
+    TenantAttributes identityPolicyConfig =
+        convertAttributes(result.getOrDefault("identity_policy_config", ""));
 
     return new Tenant(
         tenantIdentifier,
@@ -45,7 +62,13 @@ class ModelConverter {
         tenantDomain,
         authorizationProvider,
         databaseType,
-        tenantAttributes);
+        tenantAttributes,
+        uiConfiguration,
+        corsConfiguration,
+        sessionConfiguration,
+        securityEventLogConfiguration,
+        securityEventUserAttributeConfiguration,
+        identityPolicyConfig);
   }
 
   private static TenantAttributes convertAttributes(String value) {
@@ -59,6 +82,72 @@ class ModelConverter {
       return new TenantAttributes(attributesMap);
     } catch (Exception exception) {
       return new TenantAttributes();
+    }
+  }
+
+  private static UIConfiguration convertUIConfiguration(String value) {
+    if (value == null || value.isEmpty()) {
+      return new UIConfiguration();
+    }
+    try {
+      JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(value);
+      Map<String, Object> configMap = jsonNodeWrapper.toMap();
+      return new UIConfiguration(configMap);
+    } catch (Exception exception) {
+      return new UIConfiguration();
+    }
+  }
+
+  private static CorsConfiguration convertCorsConfiguration(String value) {
+    if (value == null || value.isEmpty()) {
+      return new CorsConfiguration();
+    }
+    try {
+      JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(value);
+      Map<String, Object> configMap = jsonNodeWrapper.toMap();
+      return new CorsConfiguration(configMap);
+    } catch (Exception exception) {
+      return new CorsConfiguration();
+    }
+  }
+
+  private static SessionConfiguration convertSessionConfiguration(String value) {
+    if (value == null || value.isEmpty()) {
+      return new SessionConfiguration();
+    }
+    try {
+      JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(value);
+      Map<String, Object> configMap = jsonNodeWrapper.toMap();
+      return new SessionConfiguration(configMap);
+    } catch (Exception exception) {
+      return new SessionConfiguration();
+    }
+  }
+
+  private static SecurityEventLogConfiguration convertSecurityEventLogConfiguration(String value) {
+    if (value == null || value.isEmpty()) {
+      return new SecurityEventLogConfiguration();
+    }
+    try {
+      JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(value);
+      Map<String, Object> configMap = jsonNodeWrapper.toMap();
+      return new SecurityEventLogConfiguration(configMap);
+    } catch (Exception exception) {
+      return new SecurityEventLogConfiguration();
+    }
+  }
+
+  private static SecurityEventUserAttributeConfiguration
+      convertSecurityEventUserAttributeConfiguration(String value) {
+    if (value == null || value.isEmpty()) {
+      return new SecurityEventUserAttributeConfiguration();
+    }
+    try {
+      JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(value);
+      Map<String, Object> configMap = jsonNodeWrapper.toMap();
+      return new SecurityEventUserAttributeConfiguration(configMap);
+    } catch (Exception exception) {
+      return new SecurityEventUserAttributeConfiguration();
     }
   }
 }

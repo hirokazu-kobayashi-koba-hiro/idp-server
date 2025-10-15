@@ -16,8 +16,19 @@ CREATE TABLE tenant
     domain                 TEXT         NOT NULL,
     authorization_provider VARCHAR(255) NOT NULL,
     database_type          VARCHAR(255) NOT NULL,
+
+    -- Configuration columns (category-based JSON)
+    security_event_log_config  JSON,  -- Security event logging configuration
+    security_event_user_config JSON,  -- Security event user attribute configuration
+    identity_policy_config     JSON,  -- Identity policy configuration
+    ui_config                  JSON,  -- UI/authorization page configuration
+    cors_config                JSON,  -- CORS configuration
+    session_config             JSON,  -- Cookie/session configuration
+
+    -- Legacy columns (will be deprecated)
     attributes             JSON,
     features               JSON,
+
     created_at             DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at             DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id)

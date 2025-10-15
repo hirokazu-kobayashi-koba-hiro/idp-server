@@ -22,22 +22,21 @@ import org.idp.server.core.openid.oauth.type.oauth.Error;
 import org.idp.server.core.openid.oauth.type.oauth.ErrorDescription;
 import org.idp.server.platform.http.HttpQueryParams;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.multi_tenancy.tenant.TenantAttributes;
+import org.idp.server.platform.multi_tenancy.tenant.config.UIConfiguration;
 
 public class OAuthViewUrlResolver {
 
   public static String resolve(OAuthRequestContext context) {
     Tenant tenant = context.tenant();
-    TenantAttributes attributes = tenant.attributes();
+    UIConfiguration uiConfiguration = tenant.uiConfiguration();
     String base = context.tenant().domain().value();
 
     if (context.isPromptCreate()) {
-      String signupPage =
-          attributes.optValueAsString("signup_page", "/auth-views/signup/index.html");
+      String signupPage = uiConfiguration.signupPage();
       return buildUrl(base, signupPage, context);
     }
 
-    String signinPage = attributes.optValueAsString("signin_page", "/auth-views/signin/index.html");
+    String signinPage = uiConfiguration.signinPage();
     return buildUrl(base, signinPage, context);
   }
 

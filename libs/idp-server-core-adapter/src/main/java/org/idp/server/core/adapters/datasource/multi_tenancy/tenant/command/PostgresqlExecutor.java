@@ -40,7 +40,13 @@ public class PostgresqlExecutor implements TenantCommandSqlExecutor {
             domain,
             authorization_provider,
             database_type,
-            attributes
+            attributes,
+            ui_config,
+            cors_config,
+            session_config,
+            security_event_log_config,
+            security_event_user_config,
+            identity_policy_config
             )
             VALUES (
             ?::uuid,
@@ -49,6 +55,12 @@ public class PostgresqlExecutor implements TenantCommandSqlExecutor {
             ?,
             ?,
             ?,
+            ?::jsonb,
+            ?::jsonb,
+            ?::jsonb,
+            ?::jsonb,
+            ?::jsonb,
+            ?::jsonb,
             ?::jsonb
             )
             """;
@@ -60,6 +72,12 @@ public class PostgresqlExecutor implements TenantCommandSqlExecutor {
     params.add(tenant.authorizationProvider().name());
     params.add(tenant.databaseType().name());
     params.add(jsonConverter.write(tenant.attributesAsMap()));
+    params.add(jsonConverter.write(tenant.uiConfiguration().toMap()));
+    params.add(jsonConverter.write(tenant.corsConfiguration().toMap()));
+    params.add(jsonConverter.write(tenant.sessionConfiguration().toMap()));
+    params.add(jsonConverter.write(tenant.securityEventLogConfiguration().toMap()));
+    params.add(jsonConverter.write(tenant.securityEventUserAttributeConfiguration().toMap()));
+    params.add(jsonConverter.write(tenant.identityPolicyConfig().toMap()));
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -73,13 +91,25 @@ public class PostgresqlExecutor implements TenantCommandSqlExecutor {
                 UPDATE tenant
                 SET name = ?,
                 domain = ?,
-                attributes = ?::jsonb
+                attributes = ?::jsonb,
+                ui_config = ?::jsonb,
+                cors_config = ?::jsonb,
+                session_config = ?::jsonb,
+                security_event_log_config = ?::jsonb,
+                security_event_user_config = ?::jsonb,
+                identity_policy_config = ?::jsonb
                 WHERE id = ?::uuid;
                 """;
     List<Object> params = new ArrayList<>();
     params.add(tenant.name().value());
     params.add(tenant.domain().value());
     params.add(jsonConverter.write(tenant.attributesAsMap()));
+    params.add(jsonConverter.write(tenant.uiConfiguration().toMap()));
+    params.add(jsonConverter.write(tenant.corsConfiguration().toMap()));
+    params.add(jsonConverter.write(tenant.sessionConfiguration().toMap()));
+    params.add(jsonConverter.write(tenant.securityEventLogConfiguration().toMap()));
+    params.add(jsonConverter.write(tenant.securityEventUserAttributeConfiguration().toMap()));
+    params.add(jsonConverter.write(tenant.identityPolicyConfig().toMap()));
     params.add(tenant.identifierUUID());
 
     sqlExecutor.execute(sqlTemplate, params);

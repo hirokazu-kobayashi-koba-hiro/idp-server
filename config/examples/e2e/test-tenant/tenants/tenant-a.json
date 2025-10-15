@@ -5,7 +5,22 @@
     "domain": "https://idp-server-0d10773f8944.herokuapp.com",
     "authorization_provider": "idp-server",
     "database_type": "postgresql",
-    "attributes": {
+    "security_event_log_config": {
+      "format": "structured_json",
+      "debug_logging": false,
+      "stage": "production",
+      "include_user_id": true,
+      "include_user_ex_sub": true,
+      "include_client_id": true,
+      "include_ip_address": true,
+      "include_user_agent": true,
+      "include_event_detail": true,
+      "include_user_detail": false,
+      "include_user_pii": false,
+      "persistence_enabled": true,
+      "detail_scrub_keys": "authorization,cookie,set-cookie,proxy-authorization,password,secret,token,refresh_token,access_token,id_token,client_secret,api_key,bearer"
+    },
+    "identity_policy_config": {
       "identity_unique_key_type": "EMAIL"
     }
   },

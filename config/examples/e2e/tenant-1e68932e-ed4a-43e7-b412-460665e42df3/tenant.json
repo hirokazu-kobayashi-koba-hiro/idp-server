@@ -4,7 +4,64 @@
     "name": "tenant-1e68932e-ed4a-43e7-b412-460665e42df3",
     "domain": "http://localhost:8080",
     "authorization_provider": "idp-server",
-    "database_type": "postgresql"
+    "database_type": "postgresql",
+    "ui_config": {
+      "signup_page": "/auth-views/signup/index.html",
+      "signin_page": "/auth-views/signin/index.html"
+    },
+    "cors_config": {
+      "allow_origins": [],
+      "allow_headers": "Authorization, Content-Type, Accept, x-device-id",
+      "allow_methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+      "allow_credentials": true
+    },
+    "session_config": {
+      "cookie_name": "session",
+      "cookie_same_site": "lax",
+      "use_secure_cookie": false,
+      "use_http_only_cookie": true,
+      "cookie_path": "/"
+    },
+    "security_event_log_config": {
+      "format": "structured_json",
+      "debug_logging": true,
+      "stage": "development",
+      "include_user_id": true,
+      "include_user_ex_sub": true,
+      "include_client_id": true,
+      "include_ip_address": true,
+      "include_user_agent": true,
+      "include_event_detail": true,
+      "include_user_detail": true,
+      "include_user_pii": true,
+      "allowed_user_pii_keys": "email,phone_number",
+      "persistence_enabled": true,
+      "detail_scrub_keys": "authorization,cookie,set-cookie,proxy-authorization,password,secret,token,refresh_token,access_token,id_token,client_secret,api_key,bearer"
+    },
+    "security_event_user_config": {
+      "include_id": true,
+      "include_name": true,
+      "include_external_user_id": true,
+      "include_email": true,
+      "include_phone_number": true,
+      "include_given_name": true,
+      "include_family_name": true,
+      "include_preferred_username": true,
+      "include_profile": true,
+      "include_picture": true,
+      "include_website": true,
+      "include_gender": true,
+      "include_birthdate": true,
+      "include_zoneinfo": true,
+      "include_locale": true,
+      "include_address": true,
+      "include_roles": true,
+      "include_permissions": true,
+      "include_current_tenant": true,
+      "include_assigned_tenants": true,
+      "include_verified_claims": true
+    },
+    "identity_policy_config": {}
   },
   "authorization_server": {
     "issuer": "http://localhost:8080/1e68932e-ed4a-43e7-b412-460665e42df3",

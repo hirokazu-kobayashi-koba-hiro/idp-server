@@ -18,143 +18,258 @@ package org.idp.server.platform.security.log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import org.idp.server.platform.multi_tenancy.tenant.TenantAttributes;
 
 public class SecurityEventLogConfiguration {
 
-  private final TenantAttributes tenantAttributes;
+  private final SecurityEventLogFormatter.Format format;
+  private final boolean debugEnabled;
+  private final String stage;
+  private final boolean includeUserId;
+  private final boolean includeUserExSub;
+  private final boolean includeClientId;
+  private final boolean includeIpAddress;
+  private final boolean includeUserAgent;
+  private final boolean includeEventDetail;
+  private final boolean includeUserDetail;
+  private final boolean includeUserPii;
+  private final List<String> allowedUserPiiKeys;
+  private final boolean includeTraceContext;
+  private final String serviceName;
+  private final List<String> customTags;
+  private final boolean tracingEnabled;
+  private final boolean persistenceEnabled;
+  private final List<String> detailScrubKeys;
 
-  public SecurityEventLogConfiguration(TenantAttributes tenantAttributes) {
-    this.tenantAttributes = tenantAttributes;
+  private static final List<String> ESSENTIAL_SCRUB_KEYS =
+      List.of(
+          "authorization",
+          "cookie",
+          "password",
+          "secret",
+          "token",
+          "access_token",
+          "refresh_token",
+          "api_key",
+          "api_secret");
+
+  public SecurityEventLogConfiguration() {
+    this.format = SecurityEventLogFormatter.Format.STRUCTURED_JSON;
+    this.debugEnabled = false;
+    this.stage = "processed";
+    this.includeUserId = true;
+    this.includeUserExSub = true;
+    this.includeClientId = true;
+    this.includeIpAddress = true;
+    this.includeUserAgent = true;
+    this.includeEventDetail = false;
+    this.includeUserDetail = false;
+    this.includeUserPii = false;
+    this.allowedUserPiiKeys = List.of();
+    this.includeTraceContext = false;
+    this.serviceName = "idp-server";
+    this.customTags = List.of();
+    this.tracingEnabled = false;
+    this.persistenceEnabled = false;
+    this.detailScrubKeys = ESSENTIAL_SCRUB_KEYS;
+  }
+
+  public SecurityEventLogConfiguration(Map<String, Object> values) {
+    Map<String, Object> safeValues = Objects.requireNonNullElseGet(values, HashMap::new);
+    this.format =
+        SecurityEventLogFormatter.Format.fromValue(
+            extractString(safeValues, "format", "structured_json"));
+    this.debugEnabled = extractBoolean(safeValues, "debug_logging", false);
+    this.stage = extractString(safeValues, "stage", "processed");
+    this.includeUserId = extractBoolean(safeValues, "include_user_id", true);
+    this.includeUserExSub = extractBoolean(safeValues, "include_user_ex_sub", true);
+    this.includeClientId = extractBoolean(safeValues, "include_client_id", true);
+    this.includeIpAddress = extractBoolean(safeValues, "include_ip_address", true);
+    this.includeUserAgent = extractBoolean(safeValues, "include_user_agent", true);
+    this.includeEventDetail = extractBoolean(safeValues, "include_event_detail", false);
+    this.includeUserDetail = extractBoolean(safeValues, "include_user_detail", false);
+    this.includeUserPii = extractBoolean(safeValues, "include_user_pii", false);
+    this.allowedUserPiiKeys = extractCommaSeparatedList(safeValues, "allowed_user_pii_keys");
+    this.includeTraceContext = extractBoolean(safeValues, "include_trace_context", false);
+    this.serviceName = extractString(safeValues, "service_name", "idp-server");
+    this.customTags = extractCommaSeparatedList(safeValues, "custom_tags");
+    this.tracingEnabled = extractBoolean(safeValues, "tracing_enabled", false);
+    this.persistenceEnabled = extractBoolean(safeValues, "persistence_enabled", false);
+    this.detailScrubKeys =
+        mergeWithEssentialKeys(extractCommaSeparatedList(safeValues, "detail_scrub_keys"));
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("format", format.value());
+    map.put("debug_logging", debugEnabled);
+    map.put("stage", stage);
+    map.put("include_user_id", includeUserId);
+    map.put("include_user_ex_sub", includeUserExSub);
+    map.put("include_client_id", includeClientId);
+    map.put("include_ip_address", includeIpAddress);
+    map.put("include_user_agent", includeUserAgent);
+    map.put("include_event_detail", includeEventDetail);
+    map.put("include_user_detail", includeUserDetail);
+    map.put("include_user_pii", includeUserPii);
+    map.put("allowed_user_pii_keys", String.join(",", allowedUserPiiKeys));
+    map.put("include_trace_context", includeTraceContext);
+    map.put("service_name", serviceName);
+    map.put("custom_tags", String.join(",", customTags));
+    map.put("tracing_enabled", tracingEnabled);
+    map.put("persistence_enabled", persistenceEnabled);
+    map.put("detail_scrub_keys", String.join(",", detailScrubKeys));
+    return map;
+  }
+
+  public boolean exists() {
+    return format != SecurityEventLogFormatter.Format.STRUCTURED_JSON
+        || debugEnabled
+        || !stage.equals("processed")
+        || !includeUserId
+        || !includeUserExSub
+        || !includeClientId
+        || !includeIpAddress
+        || !includeUserAgent
+        || includeEventDetail
+        || includeUserDetail
+        || includeUserPii
+        || !allowedUserPiiKeys.isEmpty()
+        || includeTraceContext
+        || !serviceName.equals("idp-server")
+        || !customTags.isEmpty()
+        || tracingEnabled
+        || persistenceEnabled
+        || !detailScrubKeys.equals(ESSENTIAL_SCRUB_KEYS);
   }
 
   public SecurityEventLogFormatter.Format getFormat() {
-    String formatValue =
-        tenantAttributes.optValueAsString("security_event_log_format", "structured_json");
-    return SecurityEventLogFormatter.Format.fromValue(formatValue);
+    return format;
   }
 
   public boolean isEnabled() {
-    return getFormat() != SecurityEventLogFormatter.Format.DISABLED;
+    return format != SecurityEventLogFormatter.Format.DISABLED;
   }
 
   public boolean isDebugEnabled() {
-    return tenantAttributes.optValueAsBoolean("security_event_debug_logging", false);
+    return debugEnabled;
   }
 
-  public boolean isStageEnabled(String stage) {
-    String enabledStages =
-        tenantAttributes.optValueAsString("security_event_log_stage", "processed");
-    return enabledStages.equals("both") || enabledStages.equals(stage);
+  public boolean isStageEnabled(String checkStage) {
+    return stage.equals("both") || stage.equals(checkStage);
   }
 
   public boolean includeUserId() {
-    return tenantAttributes.optValueAsBoolean("security_event_log_include_user_id", true);
+    return includeUserId;
   }
 
   public boolean includeUserExSub() {
-    return tenantAttributes.optValueAsBoolean("security_event_log_include_user_ex_sub", true);
+    return includeUserExSub;
   }
 
   public boolean includeClientId() {
-    return tenantAttributes.optValueAsBoolean("security_event_log_include_client_id", true);
+    return includeClientId;
   }
 
   public boolean includeIpAddress() {
-    return tenantAttributes.optValueAsBoolean("security_event_log_include_ip", true);
+    return includeIpAddress;
   }
 
   public boolean includeUserAgent() {
-    return tenantAttributes.optValueAsBoolean("security_event_log_include_user_agent", true);
+    return includeUserAgent;
   }
 
   public boolean includeEventDetail() {
-    return tenantAttributes.optValueAsBoolean("security_event_log_include_detail", false);
+    return includeEventDetail;
   }
 
   public boolean includeUserDetail() {
-    return tenantAttributes.optValueAsBoolean("security_event_log_include_user_detail", false);
+    return includeUserDetail;
   }
 
   public boolean includeUserPii() {
-    return tenantAttributes.optValueAsBoolean("security_event_log_include_user_pii", false);
+    return includeUserPii;
   }
 
   public List<String> getAllowedUserPiiKeys() {
-    String allowedKeysValue =
-        tenantAttributes.optValueAsString("security_event_log_allowed_user_pii_keys", "");
-
-    if (allowedKeysValue.isEmpty()) {
-      return List.of(); // デフォルトでは何も許可しない
-    }
-
-    return Arrays.asList(allowedKeysValue.split(","));
+    return allowedUserPiiKeys;
   }
 
   public boolean hasAllowedUserPiiKeys() {
-    return !getAllowedUserPiiKeys().isEmpty();
+    return !allowedUserPiiKeys.isEmpty();
   }
 
   public boolean includeTraceContext() {
-    return tenantAttributes.optValueAsBoolean("security_event_log_include_trace_context", false);
+    return includeTraceContext;
   }
 
   public String getServiceName() {
-    return tenantAttributes.optValueAsString("security_event_log_service_name", "idp-server");
+    return serviceName;
   }
 
   public List<String> getCustomTags() {
-    String tagsValue = tenantAttributes.optValueAsString("security_event_log_custom_tags", "");
-    if (tagsValue.isEmpty()) {
-      return List.of();
-    }
-    return Arrays.asList(tagsValue.split(","));
+    return customTags;
   }
 
   public boolean hasCustomTags() {
-    return !getCustomTags().isEmpty();
+    return !customTags.isEmpty();
   }
 
   public boolean isTracingEnabled() {
-    return tenantAttributes.optValueAsBoolean("security_event_log_tracing_enabled", false);
+    return tracingEnabled;
   }
 
   public boolean isPersistenceEnabled() {
-    return tenantAttributes.optValueAsBoolean("security_event_log_persistence_enabled", false);
+    return persistenceEnabled;
   }
 
   public List<String> getDetailScrubKeys() {
-    String scrubKeysValue =
-        tenantAttributes.optValueAsString("security_event_log_detail_scrub_keys", "");
-
-    // Always ensure essential security and PII keys are included
-    List<String> essentialKeys =
-        List.of(
-            "authorization",
-            "cookie",
-            "password",
-            "secret",
-            "token",
-            "access_token",
-            "refresh_token",
-            "api_key",
-            "api_secret");
-
-    if (scrubKeysValue.isEmpty()) {
-      return essentialKeys;
-    }
-
-    List<String> configuredKeys = Arrays.asList(scrubKeysValue.split(","));
-    Set<String> allKeys = new HashSet<>(configuredKeys);
-    allKeys.addAll(essentialKeys);
-
-    return new ArrayList<>(allKeys);
+    return detailScrubKeys;
   }
 
   public boolean hasDetailScrubKeys() {
-    return !getDetailScrubKeys().isEmpty();
+    return !detailScrubKeys.isEmpty();
+  }
+
+  private static String extractString(Map<String, Object> values, String key, String defaultValue) {
+    if (values == null || values.isEmpty() || !values.containsKey(key)) {
+      return defaultValue;
+    }
+    Object value = values.get(key);
+    return value != null ? value.toString() : defaultValue;
+  }
+
+  private static boolean extractBoolean(
+      Map<String, Object> values, String key, boolean defaultValue) {
+    if (values == null || values.isEmpty() || !values.containsKey(key)) {
+      return defaultValue;
+    }
+    Object value = values.get(key);
+    if (value instanceof Boolean) {
+      return (Boolean) value;
+    }
+    return defaultValue;
+  }
+
+  private static List<String> extractCommaSeparatedList(Map<String, Object> values, String key) {
+    String value = extractString(values, key, "");
+    if (value.isEmpty()) {
+      return List.of();
+    }
+    return Arrays.asList(value.split(","));
+  }
+
+  private static List<String> mergeWithEssentialKeys(List<String> configuredKeys) {
+    if (configuredKeys.isEmpty()) {
+      return ESSENTIAL_SCRUB_KEYS;
+    }
+    Set<String> allKeys = new HashSet<>(configuredKeys);
+    allKeys.addAll(ESSENTIAL_SCRUB_KEYS);
+    return new ArrayList<>(allKeys);
   }
 }

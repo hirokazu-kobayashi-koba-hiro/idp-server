@@ -22,7 +22,11 @@ import java.util.Objects;
 import java.util.UUID;
 import org.idp.server.platform.datasource.DatabaseType;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
+import org.idp.server.platform.multi_tenancy.tenant.config.CorsConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.config.SessionConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.config.UIConfiguration;
 import org.idp.server.platform.security.event.SecurityEventUserAttributeConfiguration;
+import org.idp.server.platform.security.log.SecurityEventLogConfiguration;
 
 public class Tenant {
   TenantIdentifier identifier;
@@ -33,6 +37,12 @@ public class Tenant {
   DatabaseType databaseType;
   TenantAttributes attributes;
   TenantFeatures features;
+  UIConfiguration uiConfiguration;
+  CorsConfiguration corsConfiguration;
+  SessionConfiguration sessionConfiguration;
+  SecurityEventLogConfiguration securityEventLogConfiguration;
+  SecurityEventUserAttributeConfiguration securityEventUserAttributeConfiguration;
+  TenantAttributes identityPolicyConfig;
 
   public Tenant() {}
 
@@ -61,6 +71,63 @@ public class Tenant {
       AuthorizationProvider authorizationProvider,
       DatabaseType databaseType,
       TenantAttributes attributes) {
+    this(
+        identifier,
+        name,
+        type,
+        domain,
+        authorizationProvider,
+        databaseType,
+        attributes,
+        new UIConfiguration(),
+        new CorsConfiguration(),
+        new SessionConfiguration(),
+        new SecurityEventLogConfiguration(),
+        new SecurityEventUserAttributeConfiguration(),
+        new TenantAttributes());
+  }
+
+  public Tenant(
+      TenantIdentifier identifier,
+      TenantName name,
+      TenantType type,
+      TenantDomain domain,
+      AuthorizationProvider authorizationProvider,
+      DatabaseType databaseType,
+      TenantAttributes attributes,
+      UIConfiguration uiConfiguration,
+      CorsConfiguration corsConfiguration,
+      SessionConfiguration sessionConfiguration) {
+    this(
+        identifier,
+        name,
+        type,
+        domain,
+        authorizationProvider,
+        databaseType,
+        attributes,
+        uiConfiguration,
+        corsConfiguration,
+        sessionConfiguration,
+        new SecurityEventLogConfiguration(),
+        new SecurityEventUserAttributeConfiguration(),
+        new TenantAttributes());
+  }
+
+  public Tenant(
+      TenantIdentifier identifier,
+      TenantName name,
+      TenantType type,
+      TenantDomain domain,
+      AuthorizationProvider authorizationProvider,
+      DatabaseType databaseType,
+      TenantAttributes attributes,
+      UIConfiguration uiConfiguration,
+      CorsConfiguration corsConfiguration,
+      SessionConfiguration sessionConfiguration,
+      SecurityEventLogConfiguration securityEventLogConfiguration,
+      SecurityEventUserAttributeConfiguration securityEventUserAttributeConfiguration,
+      TenantAttributes identityPolicyConfig) {
     this.identifier = identifier;
     this.name = name;
     this.type = type;
@@ -68,6 +135,12 @@ public class Tenant {
     this.authorizationProvider = authorizationProvider;
     this.databaseType = databaseType;
     this.attributes = attributes;
+    this.uiConfiguration = uiConfiguration;
+    this.corsConfiguration = corsConfiguration;
+    this.sessionConfiguration = sessionConfiguration;
+    this.securityEventLogConfiguration = securityEventLogConfiguration;
+    this.securityEventUserAttributeConfiguration = securityEventUserAttributeConfiguration;
+    this.identityPolicyConfig = identityPolicyConfig;
   }
 
   public TenantIdentifier identifier() {
@@ -141,18 +214,67 @@ public class Tenant {
     return features;
   }
 
+  public UIConfiguration uiConfiguration() {
+    return uiConfiguration;
+  }
+
+  public CorsConfiguration corsConfiguration() {
+    return corsConfiguration;
+  }
+
+  public SessionConfiguration sessionConfiguration() {
+    return sessionConfiguration;
+  }
+
+  public SecurityEventLogConfiguration securityEventLogConfiguration() {
+    return securityEventLogConfiguration;
+  }
+
+  public SecurityEventUserAttributeConfiguration securityEventUserAttributeConfiguration() {
+    return securityEventUserAttributeConfiguration;
+  }
+
+  public TenantAttributes identityPolicyConfig() {
+    return identityPolicyConfig;
+  }
+
   public Tenant updateWithDomain(TenantDomain domain) {
 
     return new Tenant(
-        identifier, name, type, domain, authorizationProvider, databaseType, attributes);
+        identifier,
+        name,
+        type,
+        domain,
+        authorizationProvider,
+        databaseType,
+        attributes,
+        uiConfiguration,
+        corsConfiguration,
+        sessionConfiguration,
+        securityEventLogConfiguration,
+        securityEventUserAttributeConfiguration,
+        identityPolicyConfig);
   }
 
   public Tenant updateWithAttributes(TenantAttributes attributes) {
     return new Tenant(
-        identifier, name, type, domain, authorizationProvider, databaseType, attributes);
+        identifier,
+        name,
+        type,
+        domain,
+        authorizationProvider,
+        databaseType,
+        attributes,
+        uiConfiguration,
+        corsConfiguration,
+        sessionConfiguration,
+        securityEventLogConfiguration,
+        securityEventUserAttributeConfiguration,
+        identityPolicyConfig);
   }
 
+  @Deprecated
   public SecurityEventUserAttributeConfiguration getSecurityEventUserAttributeConfiguration() {
-    return SecurityEventUserAttributeConfiguration.fromTenantAttributes(this.attributes);
+    return securityEventUserAttributeConfiguration();
   }
 }

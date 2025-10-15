@@ -27,6 +27,7 @@ import org.idp.server.platform.exception.BadRequestException;
 import org.idp.server.platform.exception.NotFoundException;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.*;
+import org.idp.server.platform.multi_tenancy.tenant.config.CorsConfiguration;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -54,8 +55,8 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
 
       TenantIdentifier tenantIdentifier = extractTenantIdentifier(request);
       Tenant tenant = tenantMetaDataApi.get(tenantIdentifier);
-      TenantAttributes tenantAttributes = tenant.attributes();
-      List<String> allowOrigins = tenantAttributes.optValueAsStringList("allow_origins", List.of());
+      CorsConfiguration corsConfiguration = tenant.corsConfiguration();
+      List<String> allowOrigins = corsConfiguration.allowOrigins();
       String origin = request.getHeader("Origin") != null ? request.getHeader("Origin") : "";
       String allowOrigin =
           allowOrigins.stream()
@@ -66,11 +67,10 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
           "DynamicCorsFilter tenantId: {} allow origin: {}", tenantIdentifier.value(), allowOrigin);
 
       response.setHeader("Access-Control-Allow-Origin", allowOrigin);
-      response.setHeader("Access-Control-Allow-Credentials", "true");
-      // TODO config
       response.setHeader(
-          "Access-Control-Allow-Headers", "Authorization, Content-Type, Accept, x-device-id");
-      response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+          "Access-Control-Allow-Credentials", String.valueOf(corsConfiguration.allowCredentials()));
+      response.setHeader("Access-Control-Allow-Headers", corsConfiguration.allowHeaders());
+      response.setHeader("Access-Control-Allow-Methods", corsConfiguration.allowMethods());
 
       if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
         response.setStatus(HttpServletResponse.SC_OK);
