@@ -42,6 +42,22 @@ you’ll be up and running in just a few steps.
 
 Get idp-server running in just two commands:
 
+#### ⚠️ Required Environment Variables
+
+Create a `.env` file with strong passwords with init-generate-env.sh:
+
+```shell
+./init-generate-env.sh
+```
+
+**CRITICAL SECURITY NOTICE**: Database credentials must be set via environment variables. No default passwords are provided.
+
+**Setup AdminTenant Configuration**
+
+```shell
+./init-admin-tenant-config.sh
+```
+
 #### Simple Setup (Recommended)
 
 ```shell
@@ -59,6 +75,12 @@ That's it! The setup includes:
 - ✅ All services with proper health checks
 - ✅ Default environment variables (no .env.local required)
 
+**Start with custom credentials**
+
+```bash
+docker compose --env-file .env.local up -d
+```
+
 #### Verify Setup
 
 Check service health:
@@ -73,13 +95,49 @@ Verify PostgreSQL replication:
 ./scripts/verify-replication.sh
 ```
 
-#### Advanced Setup (Optional)
+## Application Configuration
 
-For custom environment variables, create `.env.local`:
+### Health Check
 
 ```shell
-./init.sh  # Generates .env.local with API keys
-docker compose --env-file .env.local up -d
+curl -v http://localhost:8080/actuator/health
+```
+
+### Setup Configuration
+
+```shell
+./setup.sh
+```
+
+* admin-tenant
+
+```shell
+./config/scripts/e2e-test-data.sh
+ ```
+
+* test-tenant
+
+```shell
+./config/scripts/e2e-test-tenant-data.sh -t 1e68932e-ed4a-43e7-b412-460665e42df3
+ ```
+
+### e2e
+
+Once the setup configuration is complete, you can immediately run E2E tests to verify that your IdP server is functioning correctly.
+
+#### Test Structure
+The test suite is organized into three categories:
+
+* 📘 scenario/: Realistic user and system behavior — e.g., user registration, SSO login, CIBA flow, MFA registration.
+* 📕 spec/: Specification compliance tests based on OpenID Connect, FAPI, JARM, and Verifiable Credentials.
+* 🐒 monkey/: Fault injection and edge-case validation — intentionally invalid sequences, parameters, or protocol violations.
+
+#### run
+
+```shell
+cd e2e
+npm install
+npm test
 ```
 
 #### Step-by-Step Setup (Debugging)
@@ -168,56 +226,10 @@ docker compose up -d postgres-primary postgres-replica
 #### ⚠️ Important Notes
 
 - **Development Only**: Not suitable for production use
-- **No Automatic Failover**: Manual intervention required if primary fails  
+- **No Automatic Failover**: Manual intervention required if primary fails
 - **Replication Delay**: Small delay expected between writes and reads
 - **Data Persistence**: Uses Docker volumes - data survives container restarts
 
----
-
-## Application Configuration
-
-### Health Check
-
-```shell
-curl -v http://localhost:8080/actuator/health
-```
-
-### Setup Configuration
-
-```shell
-./setup.sh
-```
-
-* admin-tenant
-
-```shell
-./config/scripts/e2e-test-data.sh
- ```
-
-* test-tenant
-
-```shell
-./config/scripts/e2e-test-tenant-data.sh -t 1e68932e-ed4a-43e7-b412-460665e42df3
- ```
-
-### e2e
-
-Once the setup configuration is complete, you can immediately run E2E tests to verify that your IdP server is functioning correctly.
-
-#### Test Structure
-The test suite is organized into three categories:
-
-* 📘 scenario/: Realistic user and system behavior — e.g., user registration, SSO login, CIBA flow, MFA registration.
-* 📕 spec/: Specification compliance tests based on OpenID Connect, FAPI, JARM, and Verifiable Credentials.
-* 🐒 monkey/: Fault injection and edge-case validation — intentionally invalid sequences, parameters, or protocol violations.
-
-#### run
-
-```shell
-cd e2e
-npm install
-npm test
-```
 
 ### performance-test
 
