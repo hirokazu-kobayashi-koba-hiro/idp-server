@@ -1,6 +1,6 @@
 import { describe, expect, it, test } from "@jest/globals";
 import { deletion, get, patchWithJson, putWithJson, postWithJson } from "../../../../lib/http";
-import { backendUrl, clientSecretPostClient, serverConfig } from "../../../testConfig";
+import { backendUrl, adminServerConfig } from "../../../testConfig";
 import { requestToken } from "../../../../api/oauthClient";
 import { generateRandomNumber } from "../../../../lib/util";
 
@@ -11,20 +11,20 @@ describe("user management api", () => {
     it("crud", async () => {
 
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret
       });
       console.log(tokenResponse.data);
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
       const createResponse = await postWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/users`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -42,7 +42,7 @@ describe("user management api", () => {
       const userId = createResponse.data.result.sub;
 
       const listResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users?user_id=${userId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/users?user_id=${userId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -53,7 +53,7 @@ describe("user management api", () => {
       expect(listResponse.data).toHaveProperty("list");
 
       const detailResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users/${userId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/users/${userId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -63,7 +63,7 @@ describe("user management api", () => {
       expect(detailResponse.data).toHaveProperty("sub");
 
       const updateResponse = await putWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users/${userId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/users/${userId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -78,7 +78,7 @@ describe("user management api", () => {
       expect(updateResponse.data).toHaveProperty("result");
 
       const patchResponse = await patchWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users/${userId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/users/${userId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -92,7 +92,7 @@ describe("user management api", () => {
 
 
       const updatePasswordResponse = await putWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users/${userId}/password`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/users/${userId}/password`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -108,7 +108,7 @@ describe("user management api", () => {
       expect(updatePasswordResponse.data).toHaveProperty("result");
 
       const deleteResponse = await deletion({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users/${userId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/users/${userId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         }
@@ -119,13 +119,13 @@ describe("user management api", () => {
 
     it("role and permission updates", async () => {
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret
       });
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
@@ -133,7 +133,7 @@ describe("user management api", () => {
       // Create a test user with unique email
       const timestamp = Date.now();
       const createResponse = await postWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/users`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -150,7 +150,7 @@ describe("user management api", () => {
 
       // Get existing roles from role management API
       const rolesListResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/roles`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/roles`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -179,7 +179,7 @@ describe("user management api", () => {
 
       // Test role updates
       const updateRolesResponse = await patchWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users/${userId}/roles`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/users/${userId}/roles`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -194,13 +194,13 @@ describe("user management api", () => {
 
       // Test tenant assignments update
       const updateTenantAssignmentsResponse = await patchWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users/${userId}/tenant-assignments`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/users/${userId}/tenant-assignments`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
         body: {
-          "current_tenant_id": serverConfig.tenantId,
-          "assigned_tenants": [serverConfig.tenantId]
+          "current_tenant_id": adminServerConfig.tenantId,
+          "assigned_tenants": [adminServerConfig.tenantId]
         }
       });
       console.log("updateTenantAssignments response:", updateTenantAssignmentsResponse.data);
@@ -211,7 +211,7 @@ describe("user management api", () => {
       const validOrgId = "9eb8eb8c-2615-4604-809f-5cae1c00a462";
       const validSubOrgId = "9eb8eb8c-2615-4604-809f-5cae1c00a462";
       const updateOrgAssignmentsResponse = await patchWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users/${userId}/organization-assignments`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/users/${userId}/organization-assignments`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -226,7 +226,7 @@ describe("user management api", () => {
 
       // Verify all updates by getting the user
       const verifyResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users/${userId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/users/${userId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -240,7 +240,7 @@ describe("user management api", () => {
 
       // Clean up - delete test user
       const deleteResponse = await deletion({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users/${userId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/users/${userId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         }
@@ -286,20 +286,20 @@ describe("user management api", () => {
         console.log(description, param, value);
 
         const tokenResponse = await requestToken({
-          endpoint: serverConfig.tokenEndpoint,
+          endpoint: adminServerConfig.tokenEndpoint,
           grantType: "password",
-          username: serverConfig.oauth.username,
-          password: serverConfig.oauth.password,
-          scope: clientSecretPostClient.scope,
-          clientId: clientSecretPostClient.clientId,
-          clientSecret: clientSecretPostClient.clientSecret
+          username: adminServerConfig.oauth.username,
+          password: adminServerConfig.oauth.password,
+          scope: adminServerConfig.adminClient.scope,
+          clientId: adminServerConfig.adminClient.clientId,
+          clientSecret: adminServerConfig.adminClient.clientSecret
         });
 
         expect(tokenResponse.status).toBe(200);
         const accessToken = tokenResponse.data.access_token;
 
         const listResponse = await get({
-          url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users?${param}=${encodeURIComponent(value)}`,
+          url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/users?${param}=${encodeURIComponent(value)}`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -325,20 +325,20 @@ describe("user management api", () => {
       console.log(description, param, value);
 
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret
       });
       console.log(tokenResponse.data);
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
       const listResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users?${param}=${value}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/users?${param}=${value}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }

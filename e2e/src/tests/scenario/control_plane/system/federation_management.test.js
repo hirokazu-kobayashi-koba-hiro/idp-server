@@ -2,7 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 import { v4 as uuidv4 } from "uuid";
 import { get, postWithJson, putWithJson, deletion } from "../../../../lib/http";
 import { requestToken } from "../../../../api/oauthClient";
-import { clientSecretPostClient, serverConfig, backendUrl } from "../../../testConfig";
+import { adminServerConfig, backendUrl } from "../../../testConfig";
 
 describe("federation configuration management api", () => {
 
@@ -10,13 +10,13 @@ describe("federation configuration management api", () => {
 
     it("crud with enabled filtering", async () => {
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret,
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
       });
       console.log(tokenResponse.data);
       expect(tokenResponse.status).toBe(200);
@@ -30,7 +30,7 @@ describe("federation configuration management api", () => {
 
       // Step 1: Create a test federation configuration (enabled=true by default)
       const createResponse = await postWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/federation-configurations`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/federation-configurations`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -58,7 +58,7 @@ describe("federation configuration management api", () => {
 
       // Step 2: Verify the federation config appears in the list (enabled=true)
       const listResponse1 = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/federation-configurations`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/federation-configurations`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -71,7 +71,7 @@ describe("federation configuration management api", () => {
 
       // Step 3: Verify individual federation config retrieval works (enabled=true)
       const detailResponse1 = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/federation-configurations/${createdFederationConfigId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/federation-configurations/${createdFederationConfigId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -83,7 +83,7 @@ describe("federation configuration management api", () => {
 
       // Step 4: Update federation config to enabled=false
       const updateResponse = await putWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/federation-configurations/${createdFederationConfigId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/federation-configurations/${createdFederationConfigId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -108,7 +108,7 @@ describe("federation configuration management api", () => {
 
       // Step 5: Verify the federation config does NOT appear in the list (enabled=false)
       const listResponse2 = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/federation-configurations`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/federation-configurations`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -121,7 +121,7 @@ describe("federation configuration management api", () => {
 
       // Step 6: Re-enable federation config (enabled=true) with include_disabled=true parameter
       const reEnableResponse = await putWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/federation-configurations/${createdFederationConfigId}?include_disabled=true`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/federation-configurations/${createdFederationConfigId}?include_disabled=true`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -146,7 +146,7 @@ describe("federation configuration management api", () => {
 
       // Step 7: Verify the federation config appears in the list again (enabled=true)
       const listResponse3 = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/federation-configurations`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/federation-configurations`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -159,7 +159,7 @@ describe("federation configuration management api", () => {
 
       // Step 8: Verify individual federation config retrieval works again (enabled=true)
       const detailResponse3 = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/federation-configurations/${createdFederationConfigId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/federation-configurations/${createdFederationConfigId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -175,7 +175,7 @@ describe("federation configuration management api", () => {
       if (federationConfigCreated) {
         try {
           const deleteResponse = await deletion({
-            url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/federation-configurations/${createdFederationConfigId}`,
+            url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/federation-configurations/${createdFederationConfigId}`,
             headers: {
               Authorization: `Bearer ${accessToken}`,
             }
@@ -197,20 +197,20 @@ describe("federation configuration management api", () => {
 
     it("should support basic pagination with total_count", async () => {
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret,
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
       });
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
       // Test basic pagination
       const listResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/federation-configurations?limit=5&offset=0`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/federation-configurations?limit=5&offset=0`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -229,20 +229,20 @@ describe("federation configuration management api", () => {
 
     it("should support filtering by type", async () => {
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret,
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
       });
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
       // Test filtering by type=oidc
       const typeResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/federation-configurations?type=oidc&limit=10`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/federation-configurations?type=oidc&limit=10`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -262,20 +262,20 @@ describe("federation configuration management api", () => {
 
     it("should support filtering by enabled status", async () => {
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret,
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
       });
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
       // Test filtering by enabled=true
       const enabledResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/federation-configurations?enabled=true&limit=10`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/federation-configurations?enabled=true&limit=10`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -292,20 +292,20 @@ describe("federation configuration management api", () => {
 
     it("should handle empty results with proper pagination info", async () => {
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret,
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
       });
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
       // Test with a query that should return no results
       const emptyResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/federation-configurations?sso_provider=NonExistentProvider12345&limit=10&offset=0`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/federation-configurations?sso_provider=NonExistentProvider12345&limit=10&offset=0`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -321,20 +321,20 @@ describe("federation configuration management api", () => {
 
     it("should support multiple query parameters", async () => {
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret,
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
       });
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
       // Test multiple query parameters
       const multiFilterResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/federation-configurations?type=oidc&enabled=true&limit=5&offset=0`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/federation-configurations?type=oidc&enabled=true&limit=5&offset=0`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }

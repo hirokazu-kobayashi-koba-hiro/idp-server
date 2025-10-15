@@ -47,6 +47,14 @@ ACCESS_TOKEN=$(curl -s -X POST "${BASE_URL}/${TENANT_ID}/v1/tokens" \
 
 if [ "$ACCESS_TOKEN" == "null" ] || [ -z "$ACCESS_TOKEN" ]; then
   echo "❌ Failed to get access token"
+  curl -s -X POST "${BASE_URL}/${TENANT_ID}/v1/tokens" \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    -d "grant_type=password" \
+    -d "client_id=${CLIENT_ID}" \
+    -d "client_secret=${CLIENT_SECRET}" \
+    -d "username=${USERNAME}" \
+    -d "password=${PASSWORD}" \
+    -d "scope=openid management phone email address offline_access" | jq
   exit 1
 fi
 

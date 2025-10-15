@@ -1,6 +1,6 @@
 import { describe, expect, it, test } from "@jest/globals";
 import { get } from "../../../../lib/http";
-import { backendUrl, clientSecretPostClient, serverConfig } from "../../../testConfig";
+import { backendUrl, adminServerConfig } from "../../../testConfig";
 import { requestToken } from "../../../../api/oauthClient";
 
 describe("security event management api", () => {
@@ -10,20 +10,20 @@ describe("security event management api", () => {
     it("no queries", async () => {
 
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret
       });
       console.log(tokenResponse.data);
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
       const securityEventResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/security-events`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/security-events`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -47,20 +47,20 @@ describe("security event management api", () => {
 
     it("individual security event detail contains created_at", async () => {
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret
       });
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
       // First get the list to find an existing security event ID
       const listResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/security-events?limit=1`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/security-events?limit=1`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -73,7 +73,7 @@ describe("security event management api", () => {
 
         // Get individual security event detail
         const detailResponse = await get({
-          url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/security-events/${securityEventId}`,
+          url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/security-events/${securityEventId}`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -106,20 +106,20 @@ describe("security event management api", () => {
       console.log(description, param, value);
 
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret
       });
       console.log(tokenResponse.data);
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
       const securityEventResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/security-events?${param}=${value}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/security-events?${param}=${value}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -141,20 +141,20 @@ describe("security event management api", () => {
     console.log(description, param, value);
 
     const tokenResponse = await requestToken({
-      endpoint: serverConfig.tokenEndpoint,
+      endpoint: adminServerConfig.tokenEndpoint,
       grantType: "password",
-      username: serverConfig.oauth.username,
-      password: serverConfig.oauth.password,
-      scope: clientSecretPostClient.scope,
-      clientId: clientSecretPostClient.clientId,
-      clientSecret: clientSecretPostClient.clientSecret
+      username: adminServerConfig.oauth.username,
+      password: adminServerConfig.oauth.password,
+      scope: adminServerConfig.adminClient.scope,
+      clientId: adminServerConfig.adminClient.clientId,
+      clientSecret: adminServerConfig.adminClient.clientSecret
     });
     console.log(tokenResponse.data);
     expect(tokenResponse.status).toBe(200);
     const accessToken = tokenResponse.data.access_token;
 
     const securityEventResponse = await get({
-      url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/security-events?${param}=${value}`,
+      url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/security-events?${param}=${value}`,
       headers: {
         Authorization: `Bearer ${accessToken}`
       }

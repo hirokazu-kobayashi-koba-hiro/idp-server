@@ -313,7 +313,8 @@ describe("organization authentication interaction management api", () => {
           Authorization: `Bearer ${accessToken}`
         }
       });
-      expect(forbiddenResponse.status).toBe(401);
+      console.log(forbiddenResponse.data);
+      expect(forbiddenResponse.status).toBe(404);
     });
 
     it("forbidden no assigned tenant", async () => {
@@ -379,7 +380,7 @@ describe("organization authentication interaction management api", () => {
 
         // Get the specific interaction
         const getResponse = await get({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-interactions/${transactionId}/types/${interactionType}`,
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-interactions/${transactionId}/${interactionType}`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -417,7 +418,7 @@ describe("organization authentication interaction management api", () => {
       // Try to get non-existent interaction
       const nonExistentTransactionId = "99999999-9999-9999-9999-999999999999";
       const notFoundResponse = await get({
-        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-interactions/${nonExistentTransactionId}/types/password`,
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-interactions/${nonExistentTransactionId}/password`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }

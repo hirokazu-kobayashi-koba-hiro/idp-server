@@ -97,9 +97,9 @@ describe("organization federation configuration management api", () => {
         });
         console.log("List Response 1:", listResponse1.data);
         expect(listResponse1.status).toBe(200);
-        expect(listResponse1.data).toHaveProperty("results");
+        expect(listResponse1.data).toHaveProperty("list");
 
-        const federationConfigsEnabled = listResponse1.data.results.filter(config => config.id === createdFederationConfigId);
+        const federationConfigsEnabled = listResponse1.data.list.filter(config => config.id === createdFederationConfigId);
         expect(federationConfigsEnabled.length).toBe(1);
         console.log("✅ Federation config found in list when enabled=true");
 
@@ -112,8 +112,7 @@ describe("organization federation configuration management api", () => {
         });
         console.log("Detail Response 1:", detailResponse1.data);
         expect(detailResponse1.status).toBe(200);
-        expect(detailResponse1.data).toHaveProperty("result");
-        expect(detailResponse1.data.result.id).toBe(createdFederationConfigId);
+        expect(detailResponse1.data.id).toBe(createdFederationConfigId);
         console.log("✅ Federation config detail retrieved when enabled=true");
 
         // Step 5: Update federation config to enabled=false
@@ -174,7 +173,7 @@ describe("organization federation configuration management api", () => {
         console.log("List Response 2:", listResponse2.data);
         expect(listResponse2.status).toBe(200);
 
-        const federationConfigsAfterUpdate = listResponse2.data.results.filter(config => config.id === createdFederationConfigId);
+        const federationConfigsAfterUpdate = listResponse2.data.list.filter(config => config.id === createdFederationConfigId);
         expect(federationConfigsAfterUpdate.length).toBe(1);
         console.log("✅ Federation config still appears in list after update");
 
@@ -187,8 +186,7 @@ describe("organization federation configuration management api", () => {
         });
         console.log("Detail Response 2:", detailResponse2.data);
         expect(detailResponse2.status).toBe(200);
-        expect(detailResponse2.data).toHaveProperty("result");
-        expect(detailResponse2.data.result.id).toBe(createdFederationConfigId);
+        expect(detailResponse2.data.id).toBe(createdFederationConfigId);
         // Note: enabled status may not be updated immediately or filtering may not be implemented
         console.log("✅ Federation config detail still accessible after update");
 
@@ -294,8 +292,7 @@ describe("organization federation configuration management api", () => {
         }
       });
       expect(verifyResponse.status).toBe(200);
-      expect(verifyResponse.data).toHaveProperty("result");
-      expect(verifyResponse.data.result.id).toBe(federationConfigId);
+      expect(verifyResponse.data.id).toBe(federationConfigId);
 
       // Cleanup - actual delete
       await deletion({

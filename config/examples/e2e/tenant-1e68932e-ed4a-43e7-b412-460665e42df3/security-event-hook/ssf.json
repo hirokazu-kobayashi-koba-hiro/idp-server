@@ -1,0 +1,78 @@
+{
+  "id": "3c9ac07b-2934-44b6-9535-5e3d5cb9c3ae",
+  "enabled": true,
+  "type": "SSF",
+  "execution_order": 2,
+  "triggers": [
+    "fido_uaf_registration_success",
+    "user_delete"
+  ],
+  "attributes": {
+    "label": "Security Event Framework",
+    "spec": "https://openid.net/specs/openid-sharedsignals-framework-1_0.html"
+  },
+  "metadata": {
+    "issuer": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
+    "spec_version": "1_0",
+    "jwks_uri": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/ssf/jwks",
+    "jwks": "{\n  \"keys\": [\n    {\n      \"kty\": \"EC\",\n      \"d\": \"_9Ki4nmPFljpGneu1bZeAVxHoJiOnt7Cmr98qSI9SQI\",\n      \"use\": \"sig\",\n      \"crv\": \"P-256\",\n      \"kid\": \"ssf-debug\",\n      \"x\": \"nitxvSyqpZEhGXT-oJ8CJD_Pr3feMVFAO43d8TlHk1w\",\n      \"y\": \"xA6Slvr4rRnF53TNaIdeRsw9v655xGlHPD3YNGy_CMY\",\n      \"alg\": \"ES256\"\n    }\n  ]\n}",
+    "delivery_methods_supported": [
+      "urn:ietf:rfc:8935",
+      "urn:ietf:rfc:8936"
+    ],
+    "configuration_endpoint": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/.well-known/ssf-configuration",
+    "status_endpoint": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/ssf/mgmt/status",
+    "add_subject_endpoint": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/ssf/mgmt/subject:add",
+    "remove_subject_endpoint": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/ssf/mgmt/subject:remove",
+    "verification_endpoint": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/ssf/mgmt/verification",
+    "critical_subject_members": [
+      "tenant",
+      "user"
+    ],
+    "authorization_schemes": [
+      {
+        "spec_urn": "urn:ietf:rfc:6749"
+      },
+      {
+        "spec_urn": "urn:ietf:rfc:8705"
+      }
+    ],
+    "default_subjects": "ALL"
+  },
+  "events": {
+    "fido_uaf_registration_success": {
+      "execution": {
+        "function": "ssf",
+        "details": {
+          "security_event_type_identifier": "https://schemas.openid.net/secevent/risc/event-type/account-credential-change-required",
+          "kid": "ssf-debug",
+          "url": "http://localhost:4000/token",
+          "security_event_token_headers": {
+            "key": "value"
+          },
+          "security_event_token_additional_payload_mapping_rules": [
+            { "from": "$.user.name", "to": "username" },
+            { "static_value": "fido_uaf_registration_success", "to": "description" }
+          ]
+        }
+      }
+    },
+    "user_delete": {
+      "execution": {
+        "function": "ssf",
+        "details": {
+          "security_event_type_identifier": "https://schemas.openid.net/secevent/risc/event-type/account-purged",
+          "kid": "ssf-debug",
+          "url": "http://localhost:4000/token",
+          "security_event_token_headers": {
+            "key": "value"
+          },
+          "security_event_token_additional_payload_mapping_rules": [
+            { "from": "$.user.name", "to": "username" },
+            { "static_value": "user_delete", "to": "description" }
+          ]
+        }
+      }
+    }
+  }
+}

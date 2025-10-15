@@ -1,6 +1,6 @@
 import { describe, expect, it, test } from "@jest/globals";
 import { deletion, get, patchWithJson, putWithJson, postWithJson } from "../../../../lib/http";
-import { backendUrl, clientSecretPostClient, serverConfig } from "../../../testConfig";
+import { backendUrl, adminServerConfig } from "../../../testConfig";
 import { requestToken } from "../../../../api/oauthClient";
 import { generateRandomString } from "../../../../lib/util";
 
@@ -11,20 +11,20 @@ describe("permission management api", () => {
     it("crud", async () => {
 
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret
       });
       console.log(tokenResponse.data);
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
       const createResponse = await postWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/permissions`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/permissions`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -40,7 +40,7 @@ describe("permission management api", () => {
       const permissionId = createResponse.data.result.id;
 
       const listResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/permissions?id=${permissionId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/permissions?id=${permissionId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -51,7 +51,7 @@ describe("permission management api", () => {
       expect(listResponse.data).toHaveProperty("list");
 
       const detailResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/permissions/${permissionId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/permissions/${permissionId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -61,7 +61,7 @@ describe("permission management api", () => {
       expect(detailResponse.data).toHaveProperty("id");
 
       const updateResponse = await putWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/permissions/${permissionId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/permissions/${permissionId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -76,7 +76,7 @@ describe("permission management api", () => {
       expect(updateResponse.data).toHaveProperty("diff");
 
       const deleteResponse = await deletion({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/permissions/${permissionId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/permissions/${permissionId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         }

@@ -513,7 +513,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-interactions/{transaction-id}/types/{type}:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-interactions/{transaction-id}/{type}:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/TenantId'

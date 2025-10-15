@@ -1,6 +1,6 @@
 import { describe, expect, it, test } from "@jest/globals";
 import { deletion, get, patchWithJson, putWithJson, postWithJson } from "../../../../lib/http";
-import { backendUrl, clientSecretPostClient, serverConfig } from "../../../testConfig";
+import { backendUrl, adminServerConfig } from "../../../testConfig";
 import { requestToken } from "../../../../api/oauthClient";
 import { generateRandomString } from "../../../../lib/util";
 
@@ -11,20 +11,20 @@ describe("role management api", () => {
     it("crud", async () => {
 
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret
       });
       console.log(tokenResponse.data);
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
       const permissionListResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/permissions?limit=100`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/permissions?limit=100`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -32,7 +32,7 @@ describe("role management api", () => {
       expect(permissionListResponse.status).toBe(200);
 
       const createResponse = await postWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/roles`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/roles`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -52,7 +52,7 @@ describe("role management api", () => {
       const roleId = createResponse.data.result.id;
 
       const listResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/roles?id=${roleId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/roles?id=${roleId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -63,7 +63,7 @@ describe("role management api", () => {
       expect(listResponse.data).toHaveProperty("list");
 
       const detailResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/roles/${roleId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/roles/${roleId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -73,7 +73,7 @@ describe("role management api", () => {
       expect(detailResponse.data).toHaveProperty("id");
 
       const updateResponse = await putWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/roles/${roleId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/roles/${roleId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -93,7 +93,7 @@ describe("role management api", () => {
 
       // ロール名変更しないPUT（description/permissionsのみ変更）
       const updateNoNameChangeResponse = await putWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/roles/${roleId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/roles/${roleId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -110,16 +110,12 @@ describe("role management api", () => {
       expect(updateNoNameChangeResponse.data).toHaveProperty("result");
       expect(updateNoNameChangeResponse.data.result.name).toBe(createResponse.data.result.name);
       expect(updateNoNameChangeResponse.data.result.description).toBe("test-2");
-      expect(updateNoNameChangeResponse.data.result.permissions).toEqual(
-        expect.arrayContaining([
-          permissionListResponse.data.list[1].id,
-          permissionListResponse.data.list[2].id,
-        ])
-      );
+      expect(updateNoNameChangeResponse.data.result.permissions[0].id).toEqual(permissionListResponse.data.list[1].id);
+      expect(updateNoNameChangeResponse.data.result.permissions[1].id).toEqual(permissionListResponse.data.list[2].id);
 
       //TODO implement api
       // const removeResponse = await putWithJson({
-      //   url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/roles/${roleId}/permissions:remove`,
+      //   url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/roles/${roleId}/permissions:remove`,
       //   headers: {
       //     Authorization: `Bearer ${accessToken}`,
       //   },
@@ -136,7 +132,7 @@ describe("role management api", () => {
       // expect(removeResponse.data).toHaveProperty("diff");
 
       const deleteResponse = await deletion({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/roles/${roleId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/roles/${roleId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         }

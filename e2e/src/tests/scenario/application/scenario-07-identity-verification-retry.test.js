@@ -221,7 +221,7 @@ describe("Identity Verification with HttpRequestExecutor Retry Functionality", (
       };
 
       let response = await postWithJson({
-        url: `${backendUrl}/v1/management/tenants/${tenantId}/identity-verification-configurations`,
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${tenantId}/identity-verification-configurations`,
         headers: {
           "Authorization": `Bearer ${orgAccessToken}`,
           "Content-Type": "application/json",
@@ -243,7 +243,7 @@ describe("Identity Verification with HttpRequestExecutor Retry Functionality", (
 
       // Verify the configuration was created with retry configuration
       const getResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${tenantId}/identity-verification-configurations/${configId}`,
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
         headers: { Authorization: `Bearer ${orgAccessToken}` }
       });
 
@@ -344,7 +344,7 @@ describe("Identity Verification with HttpRequestExecutor Retry Functionality", (
       console.log("Verifying retry configuration integration...");
 
       const configResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${tenantId}/identity-verification-configurations/${configId}`,
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
         headers: { Authorization: `Bearer ${orgAccessToken}` }
       });
 

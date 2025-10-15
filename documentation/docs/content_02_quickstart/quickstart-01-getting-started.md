@@ -149,17 +149,25 @@ docker compose up -d idp-server-1 idp-server-2 nginx
 
 ### 設定の適用
 
+**サンプルのサーバー設定ファイルを配置する**
+
 ```shell
-./setup.sh
+cp ./.env.example .env
 ```
+
+**サンプルのサーバー設定でセットアップ**
 
 * admin-tenant
 
 ```shell
-./config/scripts/test-data.sh
+./setup.sh
 ```
 
 * test-tenant
+
+```shell
+./config/scripts/test-data.sh
+```
 
 ```shell
 ./config/scripts/test-tenant-data.sh -t 1e68932e-ed4a-43e7-b412-460665e42df3
@@ -184,53 +192,6 @@ npm install
 npm test
 ```
 
----
+約800ケースのテストが実行され、正常に動作することが確認できます。
 
-## カスタムセットアップ（上級者向け）
-
-新しいランダムIDで環境を構築したい場合：
-
-### 1. 新しいシークレットとIDの生成
-
-```shell
-./init.sh
-```
-
-これにより以下が生成されます：
-- `config/secrets/local/encryption-keys.json` - 新しいAPIキー・暗号化キー
-- `config/secrets/local/client-secrets.json` - 新しいクライアント認証情報
-- `.env` - 新しいテナントID・クライアントID含む環境変数
-
-### 2. JWKSの抽出
-
-```shell
-# サンプルからJWKSを抽出（本番環境では独自のJWKSを生成すること）
-jq -r '.authorization_server.jwks' config/examples/local/organizer-tenant/initial.json | \
-  python3 -c "import sys, json; jwks_str = sys.stdin.read(); jwks = json.loads(jwks_str); print(json.dumps(jwks, indent=2))" \
-  > config/secrets/local/jwks.json
-```
-
-### 3. カスタム設定ファイルの作成
-
-新しいIDに合わせて `config/examples/local/admin-tenant/initial.json` をコピーして編集：
-
-```shell
-cp config/examples/local/admin-tenant/initial.json config/examples/local/custom-tenant/initial.json
-# テナントID、クライアントID、ユーザーIDなどを .env の値に合わせて手動編集
-```
-
-### 4. サービス起動と初期化
-
-```shell
-docker compose up -d
-
-# カスタム設定で初期化
-curl -X POST "${IDP_SERVER_DOMAIN}v1/admin/initialization" \
-  -u "${IDP_SERVER_API_KEY}:${IDP_SERVER_API_SECRET}" \
-  -H "Content-Type:application/json" \
-  --data @./config/examples/local/custom-tenant/initial.json | jq
-```
-
-**注意:** カスタムセットアップを使用する場合、E2Eテストは固定IDを前提としているため、そのままでは動作しません。`e2e/src/tests/testConfig.js` の `DEFAULT_TENANT_ID` を新しいテナントIDに変更する必要があります。
-
----
+クイックスタートはこれで完了です。

@@ -185,9 +185,6 @@ public class OrgFederationConfigManagementEntryService implements OrgFederationC
     // Use existing system-level logic with target tenant
     Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
 
-    List<FederationConfiguration> configurations =
-        federationConfigurationQueryRepository.findList(targetTenant, queries);
-
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "OrgFederationConfigManagementApi.findList",
@@ -198,8 +195,26 @@ public class OrgFederationConfigManagementEntryService implements OrgFederationC
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
+    long totalCount = federationConfigurationQueryRepository.findTotalCount(targetTenant, queries);
+
+    if (totalCount == 0) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("list", List.of());
+      response.put("total_count", totalCount);
+      response.put("limit", queries.limit());
+      response.put("offset", queries.offset());
+      return new FederationConfigManagementResponse(FederationConfigManagementStatus.OK, response);
+    }
+
+    List<FederationConfiguration> configurations =
+        federationConfigurationQueryRepository.findList(targetTenant, queries);
+
     Map<String, Object> response = new HashMap<>();
-    response.put("results", configurations.stream().map(FederationConfiguration::toMap).toList());
+    response.put("list", configurations.stream().map(FederationConfiguration::toMap).toList());
+    response.put("total_count", totalCount);
+    response.put("limit", queries.limit());
+    response.put("offset", queries.offset());
+
     return new FederationConfigManagementResponse(FederationConfigManagementStatus.OK, response);
   }
 
@@ -251,9 +266,8 @@ public class OrgFederationConfigManagementEntryService implements OrgFederationC
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    Map<String, Object> response = new HashMap<>();
-    response.put("result", configuration.toMap());
-    return new FederationConfigManagementResponse(FederationConfigManagementStatus.OK, response);
+    return new FederationConfigManagementResponse(
+        FederationConfigManagementStatus.OK, configuration.toMap());
   }
 
   @Override

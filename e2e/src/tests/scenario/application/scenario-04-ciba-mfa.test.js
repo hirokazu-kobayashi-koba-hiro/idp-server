@@ -296,7 +296,7 @@ describe("ciba - mfa", () => {
     const accessToken = adminTokenResponse.data.access_token;
 
     const interactionResponse = await get({
-      url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/authentication-interactions/${transactionId}/sms-authentication-challenge`,
+      url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-interactions/${transactionId}/sms-authentication-challenge`,
       headers: {
         Authorization: `Bearer ${accessToken}`
       }

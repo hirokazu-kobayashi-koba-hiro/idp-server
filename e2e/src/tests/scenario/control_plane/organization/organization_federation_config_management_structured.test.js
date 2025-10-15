@@ -53,8 +53,8 @@ describe("Organization Federation Config Management API - Structured Tests", () 
         });
 
         expect(response.status).toBe(200);
-        expect(response.data).toHaveProperty("results");
-        expect(Array.isArray(response.data.results)).toBe(true);
+        expect(response.data).toHaveProperty("list");
+        expect(Array.isArray(response.data.list)).toBe(true);
       });
 
       it("should return correct response structure for federation config creation", async () => {
@@ -459,8 +459,8 @@ describe("Organization Federation Config Management API - Structured Tests", () 
         });
 
         expect(response.status).toBe(200);
-        expect(response.data).toHaveProperty("results");
-        expect(Array.isArray(response.data.results)).toBe(true);
+        expect(response.data).toHaveProperty("list");
+        expect(Array.isArray(response.data.list)).toBe(true);
       });
 
       it("should support enabled filtering", async () => {
@@ -470,8 +470,8 @@ describe("Organization Federation Config Management API - Structured Tests", () 
         });
 
         expect(response.status).toBe(200);
-        expect(response.data).toHaveProperty("results");
-        expect(Array.isArray(response.data.results)).toBe(true);
+        expect(response.data).toHaveProperty("list");
+        expect(Array.isArray(response.data.list)).toBe(true);
       });
     });
 
@@ -516,14 +516,13 @@ describe("Organization Federation Config Management API - Structured Tests", () 
         console.log("GET Response Data:", JSON.stringify(response.data, null, 2));
 
         // Verify detailed GET response structure elements
-        expect(response.data).toHaveProperty("result");
-        expect(response.data.result).toHaveProperty("id", configId);
-        expect(response.data.result).toHaveProperty("type", "oidc");
-        expect(response.data.result).toHaveProperty("payload");
-        expect(response.data.result).toHaveProperty("enabled", true);
+        expect(response.data).toHaveProperty("id", configId);
+        expect(response.data).toHaveProperty("type", "oidc");
+        expect(response.data).toHaveProperty("payload");
+        expect(response.data).toHaveProperty("enabled", true);
 
         // Verify payload structure
-        const payload = response.data.result.payload;
+        const payload = response.data.payload;
         expect(payload).toHaveProperty("type", "oidc");
         expect(payload).toHaveProperty("provider", "detail-test");
         expect(payload).toHaveProperty("issuer", "https://detail.example.com");
@@ -531,13 +530,13 @@ describe("Organization Federation Config Management API - Structured Tests", () 
         expect(payload).toHaveProperty("clientSecret", "detail-secret");
 
         // Verify UUID format for id
-        expect(response.data.result.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+        expect(response.data.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
 
         // ===== GET取得時のプロパティー参照完全性検証 =====
         console.log("=== GET Property Reference Verification ===");
 
         // 作成時に登録したプロパティーがすべて取得できることを確認
-        const retrievedPayload = response.data.result.payload;
+        const retrievedPayload = response.data.payload;
 
         // 基本プロパティーの存在確認
         const requiredProps = ["type", "provider", "issuer", "clientId", "clientSecret"];
@@ -559,16 +558,16 @@ describe("Organization Federation Config Management API - Structured Tests", () 
         });
 
         // データ型の正確性確認
-        expect(typeof response.data.result.id).toBe("string");
-        expect(typeof response.data.result.type).toBe("string");
-        expect(typeof response.data.result.enabled).toBe("boolean");
+        expect(typeof response.data.id).toBe("string");
+        expect(typeof response.data.type).toBe("string");
+        expect(typeof response.data.enabled).toBe("boolean");
         expect(typeof retrievedPayload).toBe("object");
         console.log(`✓ Data types verified - id: string, type: string, enabled: boolean, payload: object`);
 
         // 作成時と取得時の一貫性確認
-        expect(response.data.result.id).toBe(configId);
-        expect(response.data.result.type).toBe("oidc");
-        expect(response.data.result.enabled).toBe(true);
+        expect(response.data.id).toBe(configId);
+        expect(response.data.type).toBe("oidc");
+        expect(response.data.enabled).toBe(true);
         expect(retrievedPayload.provider).toBe("detail-test");
         expect(retrievedPayload.issuer).toBe("https://detail.example.com");
         console.log(`✓ Created and retrieved data consistency verified`);
@@ -887,10 +886,10 @@ describe("Organization Federation Config Management API - Structured Tests", () 
         });
 
         expect(getResponse.status).toBe(200);
-        expect(getResponse.data.result).toHaveProperty("id", configId);
-        expect(getResponse.data.result.payload).toHaveProperty("issuerName", "Lifecycle Test Provider");
-        expect(getResponse.data.result.payload).toHaveProperty("userinfoExecution");
-        expect(getResponse.data.result.payload.userinfoExecution).toHaveProperty("function", "lifecycle_userinfo");
+        expect(getResponse.data).toHaveProperty("id", configId);
+        expect(getResponse.data.payload).toHaveProperty("issuerName", "Lifecycle Test Provider");
+        expect(getResponse.data.payload).toHaveProperty("userinfoExecution");
+        expect(getResponse.data.payload.userinfoExecution).toHaveProperty("function", "lifecycle_userinfo");
 
         // Step 3: Update with enhanced configuration
         const updateResponse = await putWithJson({
@@ -977,7 +976,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
         });
 
         expect(enabledResponse.status).toBe(200);
-        expect(Array.isArray(enabledResponse.data.results)).toBe(true);
+        expect(Array.isArray(enabledResponse.data.list)).toBe(true);
 
         // Test all configs
         const allResponse = await get({
@@ -986,7 +985,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
         });
 
         expect(allResponse.status).toBe(200);
-        expect(Array.isArray(allResponse.data.results)).toBe(true);
+        expect(Array.isArray(allResponse.data.list)).toBe(true);
 
         // Clean up all configs
         for (const configId of configs) {

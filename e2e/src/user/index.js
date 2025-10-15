@@ -1,7 +1,7 @@
 import { expect, it } from "@jest/globals";
 import { faker } from "@faker-js/faker";
-import { backendUrl, clientSecretPostClient, federationServerConfig, serverConfig } from "../tests/testConfig";
-import { getUserinfo, postAuthentication, postAuthenticationDeviceInteraction, requestToken } from "../api/oauthClient";
+import { backendUrl, clientSecretPostClient, serverConfig } from "../tests/testConfig";
+import { postAuthentication, postAuthenticationDeviceInteraction, requestToken } from "../api/oauthClient";
 import { get, post, postWithJson } from "../lib/http";
 import { requestFederation } from "../oauth/federation";
 import { requestAuthorizations } from "../oauth/request";
@@ -74,7 +74,7 @@ export const createFederatedUser = async ({
       const accessToken = adminTokenResponse.data.access_token;
 
       const authenticationTransactionResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${federationServerConfig.tenantId}/authentication-transactions?authorization_id=${id}`,
+        url: `${backendUrl}/v1/management/organizations/${federationServerConfig.organizationId}/tenants/${federationServerConfig.tenantId}/authentication-transactions?authorization_id=${id}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -84,12 +84,13 @@ export const createFederatedUser = async ({
       const transactionId = authenticationTransactionResponse.data.list[0].id;
 
       const interactionResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${federationServerConfig.tenantId}/authentication-interactions/${transactionId}/email-authentication-challenge`,
+        url: `${backendUrl}/v1/management/organizations/${federationServerConfig.organizationId}/tenants/${federationServerConfig.tenantId}/authentication-interactions/${transactionId}/email-authentication-challenge`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
       });
       console.log(interactionResponse.data);
+      expect(interactionResponse.status).toBe(200);
       const verificationCode = interactionResponse.data.payload.verification_code;
 
       const verificationResponse = await postAuthentication({

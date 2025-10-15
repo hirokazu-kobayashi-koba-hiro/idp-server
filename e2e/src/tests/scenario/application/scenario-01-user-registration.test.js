@@ -40,7 +40,7 @@ describe("user registration", () => {
         const accessToken = adminTokenResponse.data.access_token;
 
         const authenticationTransactionResponse = await get({
-          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-transactions?authorization_id=${id}`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -49,12 +49,12 @@ describe("user registration", () => {
         const transactionId = authenticationTransactionResponse.data.list[0].id;
 
         const interactionResponse = await get({
-          url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/authentication-interactions/${transactionId}/email-authentication-challenge`,
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-interactions/${transactionId}/email-authentication-challenge`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
         });
-        console.log(interactionResponse.data);
+        console.log(JSON.stringify(interactionResponse.data, null, 2));
         const verificationCode = interactionResponse.data.payload.verification_code;
 
         const verificationResponse = await postAuthentication({
@@ -145,7 +145,7 @@ describe("user registration", () => {
         const accessToken = adminTokenResponse.data.access_token;
 
         const authenticationTransactionResponse = await get({
-          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-transactions?authorization_id=${id}`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -154,7 +154,7 @@ describe("user registration", () => {
         const transactionId = authenticationTransactionResponse.data.list[0].id;
 
         const interactionResponse = await get({
-          url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/authentication-interactions/${transactionId}/sms-authentication-challenge`,
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-interactions/${transactionId}/sms-authentication-challenge`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -253,7 +253,7 @@ describe("user registration", () => {
         const accessToken = adminTokenResponse.data.access_token;
 
         const authenticationTransactionResponse = await get({
-          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-transactions?authorization_id=${id}`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -262,7 +262,7 @@ describe("user registration", () => {
         const transactionId = authenticationTransactionResponse.data.list[0].id;
 
         const interactionResponse = await get({
-          url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/authentication-interactions/${transactionId}/sms-authentication-challenge`,
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-interactions/${transactionId}/sms-authentication-challenge`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -358,7 +358,7 @@ describe("user registration", () => {
         const accessToken = adminTokenResponse.data.access_token;
 
         const authenticationTransactionResponse = await get({
-          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-transactions?authorization_id=${id}`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -367,7 +367,7 @@ describe("user registration", () => {
         const transactionId = authenticationTransactionResponse.data.list[0].id;
 
         const interactionResponse = await get({
-          url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/authentication-interactions/${transactionId}/sms-authentication-challenge`,
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-interactions/${transactionId}/sms-authentication-challenge`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -465,7 +465,7 @@ describe("user registration", () => {
         let accessToken = adminTokenResponse.data.access_token;
 
         let authenticationTransactionResponse = await get({
-          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-transactions?authorization_id=${id}`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -474,7 +474,7 @@ describe("user registration", () => {
         let transactionId = authenticationTransactionResponse.data.list[0].id;
 
         let interactionResponse = await get({
-          url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/authentication-interactions/${transactionId}/email-authentication-challenge`,
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-interactions/${transactionId}/email-authentication-challenge`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -518,7 +518,7 @@ describe("user registration", () => {
         accessToken = adminTokenResponse.data.access_token;
 
         authenticationTransactionResponse = await get({
-          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-transactions?authorization_id=${id}`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -527,7 +527,7 @@ describe("user registration", () => {
         transactionId = authenticationTransactionResponse.data.list[0].id;
 
         interactionResponse = await get({
-          url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/authentication-interactions/${transactionId}/sms-authentication-challenge`,
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-interactions/${transactionId}/sms-authentication-challenge`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -609,7 +609,7 @@ describe("user registration", () => {
         let accessToken = adminTokenResponse.data.access_token;
 
         let authenticationTransactionResponse = await get({
-          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-transactions?authorization_id=${id}`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -618,7 +618,7 @@ describe("user registration", () => {
         let transactionId = authenticationTransactionResponse.data.list[0].id;
 
         let interactionResponse = await get({
-          url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/authentication-interactions/${transactionId}/sms-authentication-challenge`,
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-interactions/${transactionId}/sms-authentication-challenge`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -662,7 +662,7 @@ describe("user registration", () => {
         accessToken = adminTokenResponse.data.access_token;
 
         authenticationTransactionResponse = await get({
-          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-transactions?authorization_id=${id}`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -671,7 +671,7 @@ describe("user registration", () => {
         transactionId = authenticationTransactionResponse.data.list[0].id;
 
         interactionResponse = await get({
-          url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/authentication-interactions/${transactionId}/email-authentication-challenge`,
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-interactions/${transactionId}/email-authentication-challenge`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -824,7 +824,7 @@ describe("user registration", () => {
         const accessToken = adminTokenResponse.data.access_token;
 
         const authenticationTransactionResponse = await get({
-          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-transactions?authorization_id=${id}`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -833,7 +833,7 @@ describe("user registration", () => {
         const transactionId = authenticationTransactionResponse.data.list[0].id;
 
         const interactionResponse = await get({
-          url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/authentication-interactions/${transactionId}/email-authentication-challenge`,
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-interactions/${transactionId}/email-authentication-challenge`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }

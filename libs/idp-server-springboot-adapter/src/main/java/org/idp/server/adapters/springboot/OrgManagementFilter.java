@@ -19,6 +19,7 @@ package org.idp.server.adapters.springboot;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.IdpServerApplication;
@@ -133,7 +134,7 @@ public class OrgManagementFilter extends OncePerRequestFilter {
     } catch (OrganizationNotFoundException e) {
       logger.warn("Organization management authentication failed: {}", e.getMessage());
       respondWithError(
-          response, HttpServletResponse.SC_NOT_FOUND, "invalid_request", "not found organization");
+          response, HttpServletResponse.SC_NOT_FOUND, "invalid_request", e.getMessage());
     } catch (BadRequestException e) {
       logger.warn("Organization management authentication failed: {}", e.getMessage());
       respondWithError(
@@ -196,10 +197,30 @@ public class OrgManagementFilter extends OncePerRequestFilter {
   }
 
   private void respondWithError(
-      HttpServletResponse response, int status, String error, String description) {
-    response.setHeader(
-        HttpHeaders.WWW_AUTHENTICATE,
-        String.format("error=%s, error_description=%s", error, description));
-    response.setStatus(status);
+      HttpServletResponse response, int status, String error, String errorDescription) {
+    try {
+      // Set WWW-Authenticate header per RFC 6750
+      String wwwAuthenticate =
+          String.format("Bearer error=\"%s\", error_description=\"%s\"", error, errorDescription);
+      response.setHeader(HttpHeaders.WWW_AUTHENTICATE, wwwAuthenticate);
+
+      // Set status code
+      response.setStatus(status);
+
+      // Set Content-Type for JSON response body
+      response.setContentType("application/json");
+      response.setCharacterEncoding("UTF-8");
+
+      // Write JSON error response body
+      String jsonErrorResponse =
+          String.format(
+              "{\"error\":\"%s\",\"error_description\":\"%s\"}",
+              error, errorDescription.replace("\"", "\\\""));
+
+      response.getWriter().write(jsonErrorResponse);
+      response.getWriter().flush();
+    } catch (IOException ioException) {
+      logger.error("Failed to write error response", ioException);
+    }
   }
 }

@@ -210,9 +210,7 @@ public class OrgAuthenticationInteractionManagementEntryService
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    Map<String, Object> response = new HashMap<>();
-    response.put("result", interaction.toMap());
     return new AuthenticationInteractionManagementResponse(
-        AuthenticationInteractionManagementStatus.OK, response);
+        AuthenticationInteractionManagementStatus.OK, interaction.toMap());
   }
 }
