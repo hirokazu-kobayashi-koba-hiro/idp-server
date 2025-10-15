@@ -47,9 +47,24 @@ describe("OAuth 2.0 Token Introspection", () => {
         clientId: clientSecretPostClient.clientId,
         clientSecret: clientSecretPostClient.clientSecret,
       });
-      console.log(introspectionResponse.data);
+      console.log(JSON.stringify(introspectionResponse.data, null, 2));
       expect(introspectionResponse.status).toBe(200);
       expect(introspectionResponse.data.active).toBe(true);
+
+      // RFC 9068: Verify authentication information claims in JWT access token
+      expect(introspectionResponse.data).toHaveProperty("auth_time");
+      expect(typeof introspectionResponse.data.auth_time).toBe("number");
+      expect(introspectionResponse.data.auth_time).toBeGreaterThan(0);
+
+      // AMR (Authentication Methods References) should be an array
+      if (introspectionResponse.data.amr) {
+        expect(Array.isArray(introspectionResponse.data.amr)).toBe(true);
+      }
+
+      // ACR (Authentication Context Class Reference) should be a string
+      if (introspectionResponse.data.acr) {
+        expect(typeof introspectionResponse.data.acr).toBe("string");
+      }
     });
 
     it("client_secret_basic ", async () => {

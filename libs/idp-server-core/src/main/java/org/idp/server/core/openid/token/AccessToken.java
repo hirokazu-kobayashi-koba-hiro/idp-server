@@ -87,6 +87,10 @@ public class AccessToken {
     return authorizationGrant;
   }
 
+  public boolean hasAuthentication() {
+    return authorizationGrant.hasAuthentication();
+  }
+
   public ClientCertificationThumbprint clientCertificationThumbprint() {
     return clientCertificationThumbprint;
   }

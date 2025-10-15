@@ -88,6 +88,10 @@ public class AuthorizationGrant {
     return authentication;
   }
 
+  public boolean hasAuthentication() {
+    return authentication != null && authentication.exists();
+  }
+
   public String subjectValue() {
     return user.sub();
   }

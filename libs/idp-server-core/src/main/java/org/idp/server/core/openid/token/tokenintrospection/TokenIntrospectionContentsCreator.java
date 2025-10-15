@@ -18,8 +18,10 @@ package org.idp.server.core.openid.token.tokenintrospection;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.token.AccessToken;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.date.SystemDateTime;
 
 public class TokenIntrospectionContentsCreator {
 
@@ -41,6 +43,19 @@ public class TokenIntrospectionContentsCreator {
     }
     if (accessToken.hasClientCertification()) {
       contents.put("cnf", Map.of("x5t#S256", accessToken.clientCertificationThumbprint().value()));
+    }
+    // RFC 9068: Add authentication information claims
+    if (accessToken.hasAuthentication()) {
+      Authentication authentication = accessToken.authorizationGrant().authentication();
+      if (authentication.hasAuthenticationTime()) {
+        contents.put("auth_time", SystemDateTime.toEpochSecond(authentication.time()));
+      }
+      if (authentication.hasMethod()) {
+        contents.put("amr", authentication.methods());
+      }
+      if (authentication.hasAcrValues()) {
+        contents.put("acr", authentication.acr());
+      }
     }
     contents.put("iat", accessToken.createdAt().toEpochSecondWithUtc());
     contents.put("exp", accessToken.expiresAt().toEpochSecondWithUtc());
