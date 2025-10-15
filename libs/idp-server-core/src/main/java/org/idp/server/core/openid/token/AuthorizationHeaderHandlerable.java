@@ -46,13 +46,20 @@ public interface AuthorizationHeaderHandlerable {
       return new BasicAuth();
     }
     String value = authorizationHeader.substring("Basic ".length());
-    byte[] decode = Base64.getUrlDecoder().decode(value);
-    String decodedValue = new String(decode);
-    if (!decodedValue.contains(":")) {
+    try {
+      byte[] decode = Base64.getUrlDecoder().decode(value);
+      String decodedValue = new String(decode);
+      if (!decodedValue.contains(":")) {
+        return new BasicAuth();
+      }
+      String[] splitValues = decodedValue.split(":", 2);
+      if (splitValues.length < 2) {
+        return new BasicAuth();
+      }
+      return new BasicAuth(splitValues[0], splitValues[1]);
+    } catch (IllegalArgumentException e) {
       return new BasicAuth();
     }
-    String[] splitValues = decodedValue.split(":");
-    return new BasicAuth(splitValues[0], splitValues[1]);
   }
 
   default AccessTokenEntity extractAccessToken(String authorizationHeader) {
