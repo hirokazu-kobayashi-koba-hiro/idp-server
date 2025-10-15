@@ -18,6 +18,7 @@ package org.idp.server.core.openid.token;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertificationThumbprint;
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.openid.oauth.type.extension.CreatedAt;
@@ -26,6 +27,7 @@ import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 import org.idp.server.core.openid.oauth.type.oauth.Subject;
 import org.idp.server.core.openid.oauth.type.oauth.TokenIssuer;
+import org.idp.server.platform.date.SystemDateTime;
 
 public class AccessTokenPayloadBuilder {
   Map<String, Object> values = new HashMap<>();
@@ -86,6 +88,29 @@ public class AccessTokenPayloadBuilder {
   public AccessTokenPayloadBuilder add(ClientCertificationThumbprint thumbprint) {
     if (thumbprint.exists()) {
       values.put("cnf", Map.of("x5t#S256", thumbprint.value()));
+    }
+    return this;
+  }
+
+  /**
+   * Add authentication information claims to JWT access token
+   *
+   * <p>RFC 9068 Section 2.2.1 allows JWT access tokens to contain authentication information claims
+   * (auth_time, acr, amr) to enable resource servers to verify authentication context.
+   *
+   * @param authentication the authentication information
+   * @return this builder
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9068#section-2.2.1">RFC 9068 Section 2.2.1</a>
+   */
+  public AccessTokenPayloadBuilder add(Authentication authentication) {
+    if (authentication.hasAuthenticationTime()) {
+      values.put("auth_time", SystemDateTime.toEpochSecond(authentication.time()));
+    }
+    if (authentication.hasMethod()) {
+      values.put("amr", authentication.methods());
+    }
+    if (authentication.hasAcrValues()) {
+      values.put("acr", authentication.acr());
     }
     return this;
   }
