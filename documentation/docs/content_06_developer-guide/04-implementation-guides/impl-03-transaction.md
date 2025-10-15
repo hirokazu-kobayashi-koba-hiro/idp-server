@@ -107,7 +107,7 @@ ALTER TABLE < table_name > FORCE ROW LEVEL SECURITY;
 
 ```java
 private static void setTenantId(Connection conn, TenantIdentifier tenantIdentifier) {
-    log.debug("[RLS] SET app.tenant_id: tenant={}", tenantIdentifier.value());
+    log.trace("[RLS] SET app.tenant_id: tenant={}", tenantIdentifier.value());
 
     // Use set_config() function with PreparedStatement to prevent SQL Injection
     // See: https://www.postgresql.org/docs/current/functions-admin.html#FUNCTIONS-ADMIN-SET
@@ -210,7 +210,7 @@ WHERE grantee = 'idp_app_user'
 **ドキュメント記載** (lines 109-120):
 ```java
 private static void setTenantId(Connection conn, TenantIdentifier tenantIdentifier) {
-    log.debug("[RLS] SET app.tenant_id: tenant={}", tenantIdentifier.value());
+    log.trace("[RLS] SET app.tenant_id: tenant={}", tenantIdentifier.value());
     try (var stmt = conn.prepareStatement("SELECT set_config('app.tenant_id', ?, true)")) {
         stmt.setString(1, tenantIdentifier.value());
         stmt.execute();

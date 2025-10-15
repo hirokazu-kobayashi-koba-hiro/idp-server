@@ -82,7 +82,7 @@ public class OrganizationAwareEntryServiceProxy implements InvocationHandler {
             target.getClass().getMethod(method.getName(), method.getParameterTypes());
         tx = implMethod.getAnnotation(Transaction.class);
       } catch (NoSuchMethodException e) {
-        log.debug("Method not found for transaction annotation lookup: {}", e.getMessage());
+        log.trace("Method not found for transaction annotation lookup: {}", e.getMessage());
       }
     }
     if (tx == null) {
@@ -94,18 +94,18 @@ public class OrganizationAwareEntryServiceProxy implements InvocationHandler {
     if (isTransactional && operationType == OperationType.READ) {
       try {
         OperationContext.set(operationType);
-        log.debug("READ start: class={}, method={}", target.getClass().getName(), method.getName());
+        log.trace("READ start: class={}, method={}", target.getClass().getName(), method.getName());
 
         DatabaseType databaseType = applicationDatabaseTypeProvider.provide();
         TransactionManager.createConnection(databaseType);
         Object result = method.invoke(target, args);
 
         TransactionManager.closeConnection();
-        log.debug("READ end: class={}, method={}", target.getClass().getName(), method.getName());
+        log.trace("READ end: class={}, method={}", target.getClass().getName(), method.getName());
 
         return result;
       } catch (InvocationTargetException e) {
-        log.debug(
+        log.trace(
             "transaction failed: class={}, method={}",
             target.getClass().getSimpleName(),
             method.getName());
@@ -124,34 +124,32 @@ public class OrganizationAwareEntryServiceProxy implements InvocationHandler {
     } else if (isTransactional && operationType == OperationType.WRITE) {
       try {
         OperationContext.set(operationType);
-        log.debug(
+        log.trace(
             "WRITE start: class={}, method={}", target.getClass().getName(), method.getName());
 
         DatabaseType databaseType = applicationDatabaseTypeProvider.provide();
         TransactionManager.beginTransaction(databaseType);
 
-        log.debug(
-            databaseType.name()
-                + ": begin transaction: "
-                + target.getClass().getName()
-                + ": "
-                + method.getName());
+        log.trace(
+            "{}: begin transaction: {}: {}",
+            databaseType.name(),
+            target.getClass().getName(),
+            method.getName());
 
         Object result = method.invoke(target, args);
         TransactionManager.commitTransaction();
-        log.debug(
-            databaseType.name()
-                + ": commit transaction: "
-                + target.getClass().getName()
-                + ": "
-                + method.getName());
+        log.trace(
+            "{}: commit transaction: {}: {}",
+            databaseType.name(),
+            target.getClass().getName(),
+            method.getName());
 
-        log.debug("WRITE end: class={}, method={}", target.getClass().getName(), method.getName());
+        log.trace("WRITE end: class={}, method={}", target.getClass().getName(), method.getName());
 
         return result;
       } catch (InvocationTargetException e) {
         TransactionManager.rollbackTransaction();
-        log.debug(
+        log.trace(
             "rollback transaction: class={}, method={}",
             target.getClass().getSimpleName(),
             method.getName());

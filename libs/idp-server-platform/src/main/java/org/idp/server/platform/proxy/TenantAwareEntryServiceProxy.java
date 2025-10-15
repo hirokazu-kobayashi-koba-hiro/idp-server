@@ -50,7 +50,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
             target.getClass().getMethod(method.getName(), method.getParameterTypes());
         tx = implMethod.getAnnotation(Transaction.class);
       } catch (NoSuchMethodException e) {
-        log.debug(
+        log.trace(
             "Method not found for transaction annotation lookup: class={}, method={}, error={}",
             target.getClass().getSimpleName(),
             method.getName(),
@@ -99,7 +99,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
 
         return result;
       } catch (InvocationTargetException e) {
-        log.debug(
+        log.trace(
             "Transaction failed: operation={}, service={}, method={}",
             operationType,
             target.getClass().getSimpleName(),
@@ -144,7 +144,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         TransactionManager.commitTransaction();
 
         long duration = System.currentTimeMillis() - startTime;
-        log.debug(
+        log.trace(
             "Transaction committed: operation={}, service={}, method={}, db_type={}, duration={}ms",
             operationType,
             target.getClass().getSimpleName(),
@@ -155,7 +155,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         return result;
       } catch (InvocationTargetException e) {
         TransactionManager.rollbackTransaction();
-        log.debug(
+        log.trace(
             "Transaction rollback: operation={}, service={}, method={}",
             operationType,
             target.getClass().getSimpleName(),
