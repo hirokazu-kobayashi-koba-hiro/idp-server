@@ -129,7 +129,9 @@ public class AccessTokenCreator {
     payloadBuilder.add(authorizationGrant.requestedClientId());
     payloadBuilder.add(authorizationGrant.scopes());
     payloadBuilder.add(authorizationGrant.authorizationDetails());
-    payloadBuilder.add(authorizationGrant.authentication());
+    if (authorizationGrant.hasAuthentication()) {
+      payloadBuilder.add(authorizationGrant.authentication());
+    }
     payloadBuilder.add(createdAt);
     payloadBuilder.add(expiresAt);
     payloadBuilder.addJti(UUID.randomUUID().toString());
