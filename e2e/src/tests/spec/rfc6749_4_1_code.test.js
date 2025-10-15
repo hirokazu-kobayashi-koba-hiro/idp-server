@@ -678,6 +678,40 @@ describe("The OAuth 2.0 Authorization Framework code", () => {
       expect(tokenResponse.data.error).toEqual("invalid_grant");
     });
 
+    // Fixed: Bug in OAuthAuthorizeContext.authorizationCodeGrantExpiresDateTime()
+    // was using plusMinutes instead of plusSeconds (Issue #695)
+    it("invalid_grant - authorization code is expired (Issue #695)", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "aiueo",
+        scope: clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+      });
+      console.log(authorizationResponse);
+      expect(authorizationResponse.code).not.toBeNull();
+
+      // Wait for authorization code to expire (default: 600 seconds = 10 minutes)
+      // With the bug fix, this now correctly expires after 10 seconds
+      await new Promise(resolve => setTimeout(resolve, 10000));
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(400);
+      expect(matchWithUSASCII(tokenResponse.data.error)).toBe(true);
+      expect(tokenResponse.data.error).toEqual("invalid_grant");
+      expect(tokenResponse.data.error_description).toEqual("authorization code is expired");
+    }, 620000);
+
     //FIXME fix test process
     xit("unauthorized_client The authenticated client is not authorized to use this authorization grant type.", async () => {
       const tokenResponse = await requestToken({

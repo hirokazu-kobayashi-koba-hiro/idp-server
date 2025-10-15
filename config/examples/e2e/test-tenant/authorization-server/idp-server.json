@@ -200,6 +200,7 @@
     "access_token_type": "JWT",
     "token_signed_key_id": "id_token_nextauth",
     "id_token_signed_key_id": "id_token_nextauth",
+    "authorization_code_valid_duration": 10,
     "access_token_duration": 3600,
     "id_token_duration": 3600,
     "id_token_strict_mode": false,

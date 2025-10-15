@@ -177,7 +177,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
   public ExpiresAt authorizationCodeGrantExpiresDateTime() {
     LocalDateTime localDateTime = SystemDateTime.now();
     int duration = authorizationServerConfiguration.authorizationCodeValidDuration();
-    return new ExpiresAt(localDateTime.plusMinutes(duration));
+    return new ExpiresAt(localDateTime.plusSeconds(duration));
   }
 
   public RequestedIdTokenClaims idTokenClaims() {
