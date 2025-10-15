@@ -45,7 +45,7 @@ CREATE TABLE tenant_invitation
 
 ALTER TABLE tenant_invitation ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_tenant_invitation
+POLICY tenant_isolation_policy
   ON tenant_invitation
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE tenant_invitation FORCE ROW LEVEL SECURITY;
@@ -64,7 +64,7 @@ CREATE TABLE organization_tenants
 
 ALTER TABLE organization_tenants ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_organization_tenants
+POLICY tenant_isolation_policy
   ON organization_tenants
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE organization_tenants FORCE ROW LEVEL SECURITY;
@@ -76,16 +76,19 @@ CREATE TABLE authorization_server_configuration
     payload      JSONB                   NOT NULL,
     created_at   TIMESTAMP DEFAULT now() NOT NULL,
     updated_at   TIMESTAMP DEFAULT now() NOT NULL,
+    enabled      BOOLEAN                 NOT NULL DEFAULT TRUE,
     PRIMARY KEY (tenant_id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
 ALTER TABLE authorization_server_configuration ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_authorization_server_configuration
+POLICY tenant_isolation_policy
   ON authorization_server_configuration
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE authorization_server_configuration FORCE ROW LEVEL SECURITY;
+
+CREATE INDEX idx_authorization_server_configuration_enabled ON authorization_server_configuration (tenant_id, enabled);
 
 CREATE TABLE permission
 (
@@ -102,7 +105,7 @@ CREATE TABLE permission
 
 ALTER TABLE permission ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_permission
+POLICY tenant_isolation_policy
   ON permission
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE permission FORCE ROW LEVEL SECURITY;
@@ -123,7 +126,7 @@ CREATE TABLE role
 
 ALTER TABLE role ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_role
+POLICY tenant_isolation_policy
   ON role
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE role FORCE ROW LEVEL SECURITY;
@@ -146,7 +149,7 @@ CREATE TABLE role_permission
 
 ALTER TABLE role_permission ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_role_permission
+POLICY tenant_isolation_policy
   ON role_permission
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE role_permission FORCE ROW LEVEL SECURITY;
@@ -175,7 +178,7 @@ CREATE TABLE idp_user
     family_name                    VARCHAR(255),
     middle_name                    VARCHAR(255),
     nickname                       VARCHAR(255),
-    preferred_username             VARCHAR(255),
+    preferred_username             VARCHAR(255)            NOT NULL,
     profile                        VARCHAR(255),
     picture                        VARCHAR(255),
     website                        VARCHAR(255),
@@ -203,7 +206,7 @@ CREATE TABLE idp_user
 
 ALTER TABLE idp_user ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_idp_user
+POLICY tenant_isolation_policy
   ON idp_user
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE idp_user FORCE ROW LEVEL SECURITY;
@@ -213,6 +216,11 @@ CREATE INDEX idx_idp_user_tenant_email ON idp_user (tenant_id, email);
 CREATE INDEX idx_idp_user_tenant_phone ON idp_user (tenant_id, phone_number);
 CREATE INDEX idx_user_devices_gin_path_ops
     ON idp_user USING GIN (authentication_devices jsonb_path_ops);
+-- Ensure uniqueness of preferred_username within tenant
+CREATE UNIQUE INDEX idx_idp_user_tenant_preferred_username ON idp_user (tenant_id, preferred_username);
+
+COMMENT
+ON COLUMN idp_user.preferred_username IS 'Tenant-scoped unique user identifier. Stores normalized username/email/phone/external_user_id based on tenant unique key policy.';
 
 -- no rls
 CREATE TABLE idp_user_assigned_tenants
@@ -286,7 +294,7 @@ CREATE TABLE idp_user_roles
 
 ALTER TABLE idp_user_roles ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_idp_user_roles
+POLICY tenant_isolation_policy
   ON idp_user_roles
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE idp_user_roles FORCE ROW LEVEL SECURITY;
@@ -313,6 +321,7 @@ CREATE TABLE client_configuration
     payload    JSONB                   NOT NULL,
     created_at TIMESTAMP DEFAULT now() NOT NULL,
     updated_at TIMESTAMP DEFAULT now() NOT NULL,
+    enabled    BOOLEAN                 NOT NULL DEFAULT TRUE,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
     CONSTRAINT uk_client_configuration_alias unique (id_alias, tenant_id)
@@ -320,12 +329,13 @@ CREATE TABLE client_configuration
 
 ALTER TABLE client_configuration ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_client_configuration
+POLICY tenant_isolation_policy
   ON client_configuration
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE client_configuration FORCE ROW LEVEL SECURITY;
 
 CREATE INDEX idx_client_configuration_alias ON client_configuration (id_alias, tenant_id);
+CREATE INDEX idx_client_configuration_enabled ON client_configuration (tenant_id, enabled);
 
 CREATE TABLE authorization_request
 (
@@ -363,7 +373,7 @@ CREATE TABLE authorization_request
 
 ALTER TABLE authorization_request ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_authorization_request
+POLICY tenant_isolation_policy
   ON authorization_request
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE authorization_request FORCE ROW LEVEL SECURITY;
@@ -396,7 +406,7 @@ CREATE TABLE authorization_code_grant
 
 ALTER TABLE authorization_code_grant ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_authorization_code_grant
+POLICY tenant_isolation_policy
   ON authorization_code_grant
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE authorization_code_grant FORCE ROW LEVEL SECURITY;
@@ -445,7 +455,7 @@ CREATE TABLE oauth_token
 
 ALTER TABLE oauth_token ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_oauth_token
+POLICY tenant_isolation_policy
   ON oauth_token
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE oauth_token FORCE ROW LEVEL SECURITY;
@@ -481,7 +491,7 @@ CREATE TABLE backchannel_authentication_request
 
 ALTER TABLE backchannel_authentication_request ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_backchannel_authentication_request
+POLICY tenant_isolation_policy
   ON backchannel_authentication_request
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE backchannel_authentication_request FORCE ROW LEVEL SECURITY;
@@ -515,7 +525,7 @@ CREATE TABLE ciba_grant
 
 ALTER TABLE ciba_grant ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_ciba_grant
+POLICY tenant_isolation_policy
   ON ciba_grant
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE ciba_grant FORCE ROW LEVEL SECURITY;
@@ -548,7 +558,7 @@ CREATE TABLE authorization_granted
 
 ALTER TABLE authorization_granted ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_authorization_granted
+POLICY tenant_isolation_policy
   ON authorization_granted
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE authorization_granted FORCE ROW LEVEL SECURITY;
@@ -576,7 +586,7 @@ CREATE TABLE security_event
 
 ALTER TABLE security_event ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_security_event
+POLICY tenant_isolation_policy
   ON security_event
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE security_event FORCE ROW LEVEL SECURITY;
@@ -606,7 +616,7 @@ CREATE TABLE security_event_hook_configurations
 
 ALTER TABLE security_event_hook_configurations ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_security_event_hook_configurations
+POLICY tenant_isolation_policy
   ON security_event_hook_configurations
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE security_event_hook_configurations FORCE ROW LEVEL SECURITY;
@@ -616,21 +626,27 @@ CREATE INDEX idx_security_event_hook_configurations_order ON security_event_hook
 
 CREATE TABLE security_event_hook_results
 (
-    id                     UUID                    NOT NULL,
-    tenant_id              UUID                    NOT NULL,
-    security_event_id      UUID                    NOT NULL,
-    security_event_type    VARCHAR(255)            NOT NULL,
-    security_event_hook    VARCHAR(255)            NOT NULL,
-    security_event_payload JSONB                   NOT NULL,
-    status                 VARCHAR(255)            NOT NULL,
-    created_at             TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at             TIMESTAMP DEFAULT now() NOT NULL,
+    id                                    UUID                    NOT NULL,
+    tenant_id                             UUID                    NOT NULL,
+    security_event_id                     UUID                    NOT NULL,
+    security_event_type                   VARCHAR(255)            NOT NULL,
+    security_event_hook                   VARCHAR(255)            NOT NULL,
+    security_event_payload                JSONB                   NOT NULL,
+    security_event_hook_execution_payload JSONB,
+    status                                VARCHAR(255)            NOT NULL,
+    created_at                            TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at                            TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (id)
 );
 
+-- Add comment to explain the purpose of the new column
+COMMENT
+ON COLUMN security_event_hook_results.security_event_hook_execution_payload IS
+'Stores the execution result payload from security event hooks for resending and debugging purposes';
+
 ALTER TABLE security_event_hook_results ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_security_event_hook_results
+POLICY tenant_isolation_policy
   ON security_event_hook_results
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE security_event_hook_results FORCE ROW LEVEL SECURITY;
@@ -644,6 +660,7 @@ CREATE TABLE federation_configurations
     payload      JSONB                   NOT NULL,
     created_at   TIMESTAMP DEFAULT now() NOT NULL,
     updated_at   TIMESTAMP DEFAULT now() NOT NULL,
+    enabled      BOOLEAN                 NOT NULL DEFAULT TRUE,
     PRIMARY KEY (id),
     CONSTRAINT uk_tenant_federation_configurations UNIQUE (tenant_id, type, sso_provider),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
@@ -651,13 +668,14 @@ CREATE TABLE federation_configurations
 
 ALTER TABLE federation_configurations ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_federation_configurations
+POLICY tenant_isolation_policy
   ON federation_configurations
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE federation_configurations FORCE ROW LEVEL SECURITY;
 
 CREATE INDEX idx_federation_configurations_tenant ON federation_configurations (tenant_id);
 CREATE INDEX idx_federation_configurations_type_sso_provider ON federation_configurations (tenant_id, type, sso_provider);
+CREATE INDEX idx_federation_configurations_enabled ON federation_configurations (tenant_id, enabled);
 
 CREATE TABLE federation_sso_session
 (
@@ -672,7 +690,7 @@ CREATE TABLE federation_sso_session
 
 ALTER TABLE federation_sso_session ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_federation_sso_session
+POLICY tenant_isolation_policy
   ON federation_sso_session
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE federation_sso_session FORCE ROW LEVEL SECURITY;
@@ -691,7 +709,7 @@ CREATE TABLE idp_user_sso_credentials
 
 ALTER TABLE idp_user_sso_credentials ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_idp_user_sso_credentials
+POLICY tenant_isolation_policy
   ON idp_user_sso_credentials
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE idp_user_sso_credentials FORCE ROW LEVEL SECURITY;
@@ -713,7 +731,7 @@ CREATE TABLE authentication_configuration
 
 ALTER TABLE authentication_configuration ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_authentication_configuration
+POLICY tenant_isolation_policy
   ON authentication_configuration
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE authentication_configuration FORCE ROW LEVEL SECURITY;
@@ -734,7 +752,7 @@ CREATE TABLE authentication_policy
 
 ALTER TABLE authentication_policy ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_authentication_policy
+POLICY tenant_isolation_policy
   ON authentication_policy
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE authentication_policy FORCE ROW LEVEL SECURITY;
@@ -767,7 +785,7 @@ CREATE TABLE authentication_transaction
 
 ALTER TABLE authentication_transaction ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_authentication_transaction
+POLICY tenant_isolation_policy
   ON authentication_transaction
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE authentication_transaction FORCE ROW LEVEL SECURITY;
@@ -795,7 +813,7 @@ CREATE TABLE authentication_interactions
 
 ALTER TABLE authentication_interactions ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_authentication_interactions
+POLICY tenant_isolation_policy
   ON authentication_interactions
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE authentication_interactions FORCE ROW LEVEL SECURITY;
@@ -816,7 +834,7 @@ CREATE TABLE identity_verification_configuration
 
 ALTER TABLE identity_verification_configuration ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_identity_verification_configuration
+POLICY tenant_isolation_policy
   ON identity_verification_configuration
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE identity_verification_configuration FORCE ROW LEVEL SECURITY;
@@ -843,7 +861,7 @@ CREATE TABLE identity_verification_application
 
 ALTER TABLE identity_verification_application ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_identity_verification_application
+POLICY tenant_isolation_policy
   ON identity_verification_application
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE identity_verification_application FORCE ROW LEVEL SECURITY;
@@ -883,7 +901,7 @@ CREATE INDEX idx_verification_result_attributes ON identity_verification_result 
 
 ALTER TABLE identity_verification_result ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_identity_verification_result
+POLICY tenant_isolation_policy
   ON identity_verification_result
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE identity_verification_result FORCE ROW LEVEL SECURITY;
@@ -903,7 +921,7 @@ CREATE TABLE idp_user_lifecycle_event_result
 
 ALTER TABLE idp_user_lifecycle_event_result ENABLE ROW LEVEL SECURITY;
 CREATE
-POLICY rls_idp_user_lifecycle_event_result
+POLICY tenant_isolation_policy
   ON idp_user_lifecycle_event_result
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE idp_user_lifecycle_event_result FORCE ROW LEVEL SECURITY;

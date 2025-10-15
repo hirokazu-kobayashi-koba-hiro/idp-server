@@ -62,6 +62,7 @@ const sidebars = {
         "content_03_concepts/concept-16-external-service-integration",
         "content_03_concepts/concept-17-application-logging",
         "content_03_concepts/concept-18-id-token",
+        "content_03_concepts/concept-19-client",
         {
           type: "category",
           label: "基礎（読み物）",
