@@ -22,6 +22,7 @@ import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.type.oauth.GrantType;
 import org.idp.server.core.openid.token.TokenRequestContext;
 import org.idp.server.core.openid.token.exception.TokenBadRequestException;
+import org.idp.server.platform.date.SystemDateTime;
 
 public class AuthorizationCodeGrantBaseVerifier {
 
@@ -34,6 +35,7 @@ public class AuthorizationCodeGrantBaseVerifier {
     throwExceptionIfUnSupportedGrantTypeWithClient(tokenRequestContext);
     throwExceptionIfNotFoundAuthorizationCode(
         tokenRequestContext, authorizationRequest, authorizationCodeGrant);
+    throwExceptionIfExpiredAuthorizationCode(authorizationCodeGrant);
     throwExceptionIfUnMatchRedirectUri(tokenRequestContext, authorizationRequest);
   }
 
@@ -90,6 +92,23 @@ public class AuthorizationCodeGrantBaseVerifier {
     }
     if (!authorizationCodeGrant.isGrantedClient(tokenRequestContext.clientIdentifier())) {
       throw new TokenBadRequestException("invalid_grant", "not found authorization code.");
+    }
+  }
+
+  /**
+   * 5.2. Error Response invalid_grant
+   *
+   * <p>The provided authorization grant (e.g., authorization code, resource owner credentials) or
+   * refresh token is invalid, expired, revoked, does not match the redirection URI used in the
+   * authorization request, or was issued to another client.
+   *
+   * <p>ensure that the authorization code has not expired
+   *
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-5.2">5.2. Error Response</a>
+   */
+  void throwExceptionIfExpiredAuthorizationCode(AuthorizationCodeGrant authorizationCodeGrant) {
+    if (authorizationCodeGrant.isExpire(SystemDateTime.now())) {
+      throw new TokenBadRequestException("invalid_grant", "authorization code is expired");
     }
   }
 
