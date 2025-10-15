@@ -16,13 +16,15 @@
 
 package org.idp.server.core.openid.oauth;
 
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+
 public interface OAuthSessionDelegate {
 
   OAuthSession findOrInitialize(OAuthSessionKey oAuthSessionKey);
 
   OAuthSession find(OAuthSessionKey oAuthSessionKey);
 
-  void registerSession(OAuthSession oAuthSession);
+  void registerSession(Tenant tenant, OAuthSession oAuthSession);
 
   void updateSession(OAuthSession oAuthSession);
 

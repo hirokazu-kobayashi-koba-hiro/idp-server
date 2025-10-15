@@ -18,10 +18,11 @@ package org.idp.server.core.openid.oauth.repository;
 
 import org.idp.server.core.openid.oauth.OAuthSession;
 import org.idp.server.core.openid.oauth.OAuthSessionKey;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface OAuthSessionRepository {
 
-  void register(OAuthSession oAuthSession);
+  void register(Tenant tenant, OAuthSession oAuthSession);
 
   OAuthSession find(OAuthSessionKey oAuthSessionKey);
 

@@ -20,6 +20,7 @@ import org.idp.server.core.openid.oauth.OAuthSession;
 import org.idp.server.core.openid.oauth.OAuthSessionDelegate;
 import org.idp.server.core.openid.oauth.OAuthSessionKey;
 import org.idp.server.core.openid.oauth.repository.OAuthSessionRepository;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -32,8 +33,8 @@ public class OAuthSessionService implements OAuthSessionDelegate {
   }
 
   @Override
-  public void registerSession(OAuthSession oAuthSession) {
-    httpSessionRepository.register(oAuthSession);
+  public void registerSession(Tenant tenant, OAuthSession oAuthSession) {
+    httpSessionRepository.register(tenant, oAuthSession);
   }
 
   @Override

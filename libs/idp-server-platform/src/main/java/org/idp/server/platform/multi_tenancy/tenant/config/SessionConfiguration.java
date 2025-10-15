@@ -33,6 +33,7 @@ public class SessionConfiguration {
   private final boolean useSecureCookie;
   private final boolean useHttpOnlyCookie;
   private final String cookiePath;
+  private final int timeoutSeconds;
 
   public SessionConfiguration() {
     this.cookieName = "IDP_SERVER_SESSION";
@@ -40,6 +41,7 @@ public class SessionConfiguration {
     this.useSecureCookie = true;
     this.useHttpOnlyCookie = true;
     this.cookiePath = "/";
+    this.timeoutSeconds = 3600;
   }
 
   public SessionConfiguration(Map<String, Object> values) {
@@ -49,6 +51,7 @@ public class SessionConfiguration {
     this.useSecureCookie = extractBoolean(safeValues, "use_secure_cookie", true);
     this.useHttpOnlyCookie = extractBoolean(safeValues, "use_http_only_cookie", true);
     this.cookiePath = extractString(safeValues, "cookie_path", "/");
+    this.timeoutSeconds = extractInt(safeValues, "timeout_seconds", 3600);
   }
 
   /**
@@ -97,6 +100,15 @@ public class SessionConfiguration {
   }
 
   /**
+   * Returns the session timeout in seconds
+   *
+   * @return timeout in seconds (default: 3600)
+   */
+  public int timeoutSeconds() {
+    return timeoutSeconds;
+  }
+
+  /**
    * Returns whether session configuration exists
    *
    * @return true if any session settings are configured
@@ -106,7 +118,8 @@ public class SessionConfiguration {
         || !cookieSameSite.equals("None")
         || !useSecureCookie
         || !useHttpOnlyCookie
-        || !cookiePath.equals("/");
+        || !cookiePath.equals("/")
+        || timeoutSeconds != 3600;
   }
 
   /**
@@ -121,6 +134,7 @@ public class SessionConfiguration {
     map.put("use_secure_cookie", useSecureCookie);
     map.put("use_http_only_cookie", useHttpOnlyCookie);
     map.put("cookie_path", cookiePath);
+    map.put("timeout_seconds", timeoutSeconds);
     return map;
   }
 
@@ -140,6 +154,17 @@ public class SessionConfiguration {
     Object value = values.get(key);
     if (value instanceof Boolean) {
       return (Boolean) value;
+    }
+    return defaultValue;
+  }
+
+  private static int extractInt(Map<String, Object> values, String key, int defaultValue) {
+    if (values == null || values.isEmpty() || !values.containsKey(key)) {
+      return defaultValue;
+    }
+    Object value = values.get(key);
+    if (value instanceof Number) {
+      return ((Number) value).intValue();
     }
     return defaultValue;
   }
