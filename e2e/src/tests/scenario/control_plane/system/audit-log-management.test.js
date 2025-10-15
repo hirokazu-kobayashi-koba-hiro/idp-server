@@ -1,6 +1,6 @@
 import { describe, expect, it, test } from "@jest/globals";
 import { get } from "../../../../lib/http";
-import { backendUrl, clientSecretPostClient, serverConfig } from "../../../testConfig";
+import { backendUrl, adminServerConfig } from "../../../testConfig";
 import { requestToken } from "../../../../api/oauthClient";
 
 describe("audit log management api", () => {
@@ -10,20 +10,20 @@ describe("audit log management api", () => {
     it("no queries", async () => {
 
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret
       });
       console.log(tokenResponse.data);
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
       const auditLogResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/audit-logs`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/audit-logs`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -49,20 +49,20 @@ describe("audit log management api", () => {
       console.log(description, param, value);
 
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret
       });
       console.log(tokenResponse.data);
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
       const auditLogResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/audit-logs?${param}=${value}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/audit-logs?${param}=${value}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -84,20 +84,20 @@ describe("audit log management api", () => {
     console.log(description, param, value);
 
     const tokenResponse = await requestToken({
-      endpoint: serverConfig.tokenEndpoint,
+      endpoint: adminServerConfig.tokenEndpoint,
       grantType: "password",
-      username: serverConfig.oauth.username,
-      password: serverConfig.oauth.password,
-      scope: clientSecretPostClient.scope,
-      clientId: clientSecretPostClient.clientId,
-      clientSecret: clientSecretPostClient.clientSecret
+      username: adminServerConfig.oauth.username,
+      password: adminServerConfig.oauth.password,
+      scope: adminServerConfig.adminClient.scope,
+      clientId: adminServerConfig.adminClient.clientId,
+      clientSecret: adminServerConfig.adminClient.clientSecret
     });
     console.log(tokenResponse.data);
     expect(tokenResponse.status).toBe(200);
     const accessToken = tokenResponse.data.access_token;
 
     const auditLogResponse = await get({
-      url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/audit-logs?${param}=${value}`,
+      url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/audit-logs?${param}=${value}`,
       headers: {
         Authorization: `Bearer ${accessToken}`
       }

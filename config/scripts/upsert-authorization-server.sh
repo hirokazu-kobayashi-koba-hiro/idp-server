@@ -9,8 +9,9 @@ usage() {
 
 BASE_URL="http://localhost:8080"
 
-while getopts ":t:f:b:a:d:" opt; do
+while getopts ":o:t:f:b:a:d:" opt; do
   case $opt in
+    o) ORGANIZATION_ID="$OPTARG" ;;
     t) TENANT_ID="$OPTARG" ;;
     f) JSON_FILE="$OPTARG" ;;
     b) BASE_URL="$OPTARG" ;;
@@ -26,7 +27,7 @@ done
 
 echo "🔍 Checking if authorization-server exists: $TENANT_ID"
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X GET \
-  "${BASE_URL}/v1/management/tenants/${TENANT_ID}/authorization-server" \
+  "${BASE_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authorization-server" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}")
 
 
@@ -42,7 +43,7 @@ fi
 if [ "$HTTP_CODE" == "200" ]; then
   echo "🔁 Config exists. Updating..."
   METHOD="PUT"
-  URL="${BASE_URL}/v1/management/tenants/${TENANT_ID}/authorization-server${DRY_RUN_PARM}"
+  URL="${BASE_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authorization-server${DRY_RUN_PARM}"
 else
   echo "❌ Unexpected response from GET: HTTP $HTTP_CODE"
   exit 1

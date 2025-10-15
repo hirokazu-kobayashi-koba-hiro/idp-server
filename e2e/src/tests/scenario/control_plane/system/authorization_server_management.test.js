@@ -2,7 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 import { v4 as uuidv4 } from "uuid";
 import { get, postWithJson, putWithJson, deletion } from "../../../../lib/http";
 import { requestToken } from "../../../../api/oauthClient";
-import { clientSecretPostClient, serverConfig, backendUrl } from "../../../testConfig";
+import { adminServerConfig, backendUrl } from "../../../testConfig";
 
 describe("authorization server configuration management api", () => {
 
@@ -10,13 +10,13 @@ describe("authorization server configuration management api", () => {
 
     xit("crud with enabled filtering", async () => {
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret,
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
       });
       console.log(tokenResponse.data);
       expect(tokenResponse.status).toBe(200);
@@ -30,7 +30,7 @@ describe("authorization server configuration management api", () => {
 
       // Step 1: Create a test authorization server configuration (enabled=true by default)
       const createResponse = await postWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/authorization-server-configurations`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/authorization-server-configurations`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -58,7 +58,7 @@ describe("authorization server configuration management api", () => {
 
       // Step 2: Verify the auth server config appears in the list (enabled=true)
       const listResponse1 = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/authorization-server-configurations`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/authorization-server-configurations`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -71,7 +71,7 @@ describe("authorization server configuration management api", () => {
 
       // Step 3: Verify individual auth server config retrieval works (enabled=true)
       const detailResponse1 = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/authorization-server-configurations/${createdAuthServerConfigId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/authorization-server-configurations/${createdAuthServerConfigId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -83,7 +83,7 @@ describe("authorization server configuration management api", () => {
 
       // Step 4: Update auth server config to enabled=false
       const updateResponse = await putWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/authorization-server-configurations/${createdAuthServerConfigId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/authorization-server-configurations/${createdAuthServerConfigId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -108,7 +108,7 @@ describe("authorization server configuration management api", () => {
 
       // Step 5: Verify the auth server config does NOT appear in the list (enabled=false)
       const listResponse2 = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/authorization-server-configurations`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/authorization-server-configurations`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -121,7 +121,7 @@ describe("authorization server configuration management api", () => {
 
       // Step 6: Re-enable auth server config (enabled=true) with include_disabled=true parameter
       const reEnableResponse = await putWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/authorization-server-configurations/${createdAuthServerConfigId}?include_disabled=true`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/authorization-server-configurations/${createdAuthServerConfigId}?include_disabled=true`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -146,7 +146,7 @@ describe("authorization server configuration management api", () => {
 
       // Step 7: Verify the auth server config appears in the list again (enabled=true)
       const listResponse3 = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/authorization-server-configurations`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/authorization-server-configurations`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -159,7 +159,7 @@ describe("authorization server configuration management api", () => {
 
       // Step 8: Verify individual auth server config retrieval works again (enabled=true)
       const detailResponse3 = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/authorization-server-configurations/${createdAuthServerConfigId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/authorization-server-configurations/${createdAuthServerConfigId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -175,7 +175,7 @@ describe("authorization server configuration management api", () => {
       if (authServerConfigCreated) {
         try {
           const deleteResponse = await deletion({
-            url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/authorization-server-configurations/${createdAuthServerConfigId}`,
+            url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/authorization-server-configurations/${createdAuthServerConfigId}`,
             headers: {
               Authorization: `Bearer ${accessToken}`,
             }

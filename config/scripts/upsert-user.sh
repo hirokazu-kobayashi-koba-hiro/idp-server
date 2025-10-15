@@ -8,8 +8,9 @@ usage() {
 
 BASE_URL="http://localhost:8080"
 
-while getopts ":t:f:b:a:d:" opt; do
+while getopts ":o:t:f:b:a:d:" opt; do
   case $opt in
+    o) ORGANIZATION_ID="$OPTARG" ;;
     t) TENANT_ID="$OPTARG" ;;
     f) JSON_FILE="$OPTARG" ;;
     b) BASE_URL="$OPTARG" ;;
@@ -32,7 +33,7 @@ fi
 
 echo "🔍 Checking if client exists: $USER_ID"
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X GET \
-  "${BASE_URL}/v1/management/tenants/${TENANT_ID}/users/${USER_ID}" \
+  "${BASE_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/users/${USER_ID}" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}")
 
 
@@ -48,11 +49,11 @@ fi
 if [ "$HTTP_CODE" == "200" ]; then
   echo "🔁 Client exists. Updating..."
   METHOD="PUT"
-  URL="${BASE_URL}/v1/management/tenants/${TENANT_ID}/users/${USER_ID}${DRY_RUN_PARM}"
+  URL="${BASE_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/users/${USER_ID}${DRY_RUN_PARM}"
 elif [ "$HTTP_CODE" == "404" ]; then
   echo "🆕 Client not found. Registering new one..."
   METHOD="POST"
-  URL="${BASE_URL}/v1/management/tenants/${TENANT_ID}/users${DRY_RUN_PARM}"
+  URL="${BASE_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/users${DRY_RUN_PARM}"
 else
   echo "❌ Unexpected response from GET users/${USER_ID}: HTTP $HTTP_CODE"
   exit 1

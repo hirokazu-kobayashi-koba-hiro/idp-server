@@ -2,7 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 import { v4 as uuidv4 } from "uuid";
 import { get, postWithJson, putWithJson, deletion } from "../../../../lib/http";
 import { requestToken } from "../../../../api/oauthClient";
-import { clientSecretPostClient, serverConfig, backendUrl } from "../../../testConfig";
+import { adminServerConfig, backendUrl } from "../../../testConfig";
 
 describe("client management api", () => {
 
@@ -10,13 +10,13 @@ describe("client management api", () => {
 
     it("crud", async () => {
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret,
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
       });
       console.log(tokenResponse.data);
       expect(tokenResponse.status).toBe(200);
@@ -30,7 +30,7 @@ describe("client management api", () => {
 
       // Step 1: Create a test client (enabled=true by default)
       const createResponse = await postWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/clients`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -52,7 +52,7 @@ describe("client management api", () => {
 
       // Step 2: Verify the client appears in the list (enabled=true)
       const listResponse1 = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/clients`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -65,7 +65,7 @@ describe("client management api", () => {
 
       // Step 3: Verify individual client retrieval works (enabled=true)
       const detailResponse1 = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients/${createdClientId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/clients/${createdClientId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -77,7 +77,7 @@ describe("client management api", () => {
 
       // Step 4: Update client to enabled=false
       const updateResponse = await putWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients/${createdClientId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/clients/${createdClientId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -96,7 +96,7 @@ describe("client management api", () => {
 
       // Step 5: Verify the client does NOT appear in the list (enabled=false)
       const listResponse2 = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/clients`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -108,7 +108,7 @@ describe("client management api", () => {
 
       // Step 6: Re-enable client (enabled=true) with include_disabled=true parameter
       const reEnableResponse = await putWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients/${createdClientId}?include_disabled=true`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/clients/${createdClientId}?include_disabled=true`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -127,7 +127,7 @@ describe("client management api", () => {
 
       // Step 7: Verify the client appears in the list again (enabled=true)
       const listResponse3 = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/clients`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -140,7 +140,7 @@ describe("client management api", () => {
 
       // Step 8: Verify individual client retrieval works again (enabled=true)
       const detailResponse3 = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients/${createdClientId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/clients/${createdClientId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -156,7 +156,7 @@ describe("client management api", () => {
       if (clientCreated) {
         try {
           const deleteResponse = await deletion({
-            url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients/${createdClientId}`,
+            url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/clients/${createdClientId}`,
             headers: {
               Authorization: `Bearer ${accessToken}`,
             }
@@ -178,20 +178,20 @@ describe("client management api", () => {
     
     it("should support basic pagination with total_count", async () => {
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret,
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
       });
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
       // Test basic pagination
       const listResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients?limit=5&offset=0`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/clients?limit=5&offset=0`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -210,13 +210,13 @@ describe("client management api", () => {
 
     it("should support client filtering by client_name", async () => {
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret,
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
       });
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
@@ -227,7 +227,7 @@ describe("client management api", () => {
       try {
         // Create a test client with specific name
         const createResponse = await postWithJson({
-          url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients`,
+          url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/clients`,
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -245,7 +245,7 @@ describe("client management api", () => {
 
         // Test filtering by client_name
         const filterResponse = await get({
-          url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients?client_name=E2E Test Filterable`,
+          url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/clients?client_name=E2E Test Filterable`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -264,7 +264,7 @@ describe("client management api", () => {
         if (clientCreated) {
           try {
             await deletion({
-              url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients/${testClientId}`,
+              url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/clients/${testClientId}`,
               headers: {
                 Authorization: `Bearer ${accessToken}`,
               }
@@ -279,20 +279,20 @@ describe("client management api", () => {
 
     it("should support filtering by enabled status", async () => {
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret,
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
       });
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
       // Test filtering by enabled=true
       const enabledResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients?enabled=true&limit=10`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/clients?enabled=true&limit=10`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -309,13 +309,13 @@ describe("client management api", () => {
 
     it("should support multiple query parameters", async () => {
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret,
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
       });
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
@@ -326,7 +326,7 @@ describe("client management api", () => {
       try {
         // Create a test client with specific properties
         const createResponse = await postWithJson({
-          url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients`,
+          url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/clients`,
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -346,7 +346,7 @@ describe("client management api", () => {
 
         // Test multiple query parameters
         const multiFilterResponse = await get({
-          url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients?client_name=Multi Query&enabled=true&limit=5&offset=0`,
+          url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/clients?client_name=Multi Query&enabled=true&limit=5&offset=0`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -367,7 +367,7 @@ describe("client management api", () => {
         if (clientCreated) {
           try {
             await deletion({
-              url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients/${testClientId}`,
+              url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/clients/${testClientId}`,
               headers: {
                 Authorization: `Bearer ${accessToken}`,
               }
@@ -382,20 +382,20 @@ describe("client management api", () => {
 
     it("should handle empty results with proper pagination info", async () => {
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret,
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
       });
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
       // Test with a query that should return no results
       const emptyResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients?client_name=NonExistentClient12345&limit=10&offset=0`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/clients?client_name=NonExistentClient12345&limit=10&offset=0`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -411,20 +411,20 @@ describe("client management api", () => {
 
     it("should support scope filtering", async () => {
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret,
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
       });
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
       // Test filtering by scope (should find clients with "openid" in their scope)
       const scopeResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients?scope=openid&limit=10`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/clients?scope=openid&limit=10`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }

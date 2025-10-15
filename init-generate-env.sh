@@ -25,7 +25,7 @@ ADMIN_CLIENT_ID_ALIAS="client_$(head -c 4 /dev/urandom | base64 | tr -dc 'a-zA-Z
 ADMIN_CLIENT_SECRET=$(head -c 48 /dev/urandom | base64)
 
 echo "Generated secrets:"
-echo "  - API Key: $API_KEY"
+echo "  - API Key: $IDP_SERVER_API_KEY"
 echo "  - Encryption Key: ********"
 echo "  - Admin Client ID: $ADMIN_CLIENT_ID"
 
@@ -35,8 +35,8 @@ mkdir -p config/secrets/local
 # Write encryption-keys.json
 cat > config/secrets/local/encryption-keys.json <<EOF
 {
-  "api_key": "$API_KEY",
-  "api_secret": "$API_SECRET",
+  "api_key": "$IDP_SERVER_API_KEY",
+  "api_secret": "$IDP_SERVER_API_SECRET",
   "encryption_key": "$ENCRYPTION_KEY"
 }
 EOF
@@ -80,7 +80,6 @@ ADMIN_ORGANIZATION_ID=$ADMIN_ORGANIZATION_ID
 ADMIN_TENANT_ID=$ADMIN_TENANT_ID
 ADMIN_TENANT_NAME=$ADMIN_TENANT_NAME
 ADMIN_USER_SUB=$ADMIN_USER_SUB
-ADMIN_USER_NAME=$ADMIN_USER_NAME
 ADMIN_USER_EMAIL=$ADMIN_USER_EMAIL
 ADMIN_USER_PASSWORD=$ADMIN_USER_PASSWORD
 

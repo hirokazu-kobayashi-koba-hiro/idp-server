@@ -1,6 +1,6 @@
 import { describe, expect, it, test } from "@jest/globals";
 import {get, postWithJson} from "../../../../lib/http";
-import { backendUrl, clientSecretPostClient, serverConfig } from "../../../testConfig";
+import { backendUrl, adminServerConfig } from "../../../testConfig";
 import { requestToken } from "../../../../api/oauthClient";
 
 describe("security event hook management api", () => {
@@ -10,20 +10,20 @@ describe("security event hook management api", () => {
     it("retry ssf", async () => {
 
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret
       });
       console.log(tokenResponse.data);
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
       const securityEventResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/security-event-hooks?hook_type=SSF&limit=1`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/security-event-hooks?hook_type=SSF&limit=1`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -44,7 +44,7 @@ describe("security event hook management api", () => {
 
         const resultId = securityEventResponse.data.list[0].id
         const retryResponse = await postWithJson({
-          url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/security-event-hooks/${resultId}/retry`,
+          url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/security-event-hooks/${resultId}/retry`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }

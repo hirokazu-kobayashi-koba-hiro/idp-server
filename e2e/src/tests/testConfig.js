@@ -1,12 +1,16 @@
 export const backendUrl = process.env.IDP_SERVER_URL || "http://localhost:8080";
 
 // Default tenant IDs for backward compatibility
-const DEFAULT_TENANT_ID = "67e7eae6-62b0-4500-9eff-87459f63fc66";
+const DEFAULT_ADMIN_TENANT_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"; // Admin tenant for Management API tests
+const DEFAULT_ORGANIZATION_ID = "9eb8eb8c-2615-4604-809f-5cae1c00a462"; // Test tenant for OAuth/OIDC tests
+const DEFAULT_TENANT_ID = "67e7eae6-62b0-4500-9eff-87459f63fc66"; // Test tenant for OAuth/OIDC tests
 const DEFAULT_FEDERATION_TENANT_ID = "1e68932e-ed4a-43e7-b412-460665e42df3";
 const DEFAULT_UNSUPPORTED_TENANT_ID = "94d8598e-f238-4150-85c2-c4accf515784";
 
 // Environment variables with fallbacks
-const tenantId = process.env.IDP_SERVER_TENANT_ID || DEFAULT_TENANT_ID;
+const adminTenantId = process.env.ADMIN_TENANT_ID || DEFAULT_ADMIN_TENANT_ID;
+const organizationId = process.env.E2E_ORGANIZATION_ID || DEFAULT_ORGANIZATION_ID;
+const tenantId = process.env.E2E__TENANT_ID || DEFAULT_TENANT_ID;
 const federationTenantId = process.env.IDP_SERVER_FEDERATION_TENANT_ID || DEFAULT_FEDERATION_TENANT_ID;
 const unsupportedTenantId = process.env.IDP_SERVER_UNSUPPORTED_TENANT_ID || DEFAULT_UNSUPPORTED_TENANT_ID;
 
@@ -25,6 +29,7 @@ const cibaPassword = process.env.CIBA_PASSWORD || "successUserCode001";
  */
 function createServerConfig(tenantId, baseUrl = backendUrl) {
   return {
+    organizationId,
     issuer: `${baseUrl}/${tenantId}`,
     tenantId,
     authorizationEndpoint: `${baseUrl}/${tenantId}/v1/authorizations`,
@@ -85,10 +90,56 @@ function createServerConfig(tenantId, baseUrl = backendUrl) {
   };
 }
 
+export const adminServerConfig =(() => {
+  const config = createServerConfig(adminTenantId);
+  return {
+    ...config,
+    oauth: {
+      username: process.env.ADMIN_USER_EMAIL,
+      password: process.env.ADMIN_USER_PASSWORD,
+    },
+    adminClient: {
+      clientId: "admin-client",
+      clientSecret:
+        process.env.ADMIN_CLIENT_SECRET,
+      redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+      scope: "account management identity_verification_application claims:authentication_devices claims:ex_sub ",
+      fapiBaselineScope: "read",
+      fapiAdvanceScope: "write",
+      identityVerificationScope: "transfers",
+      idTokenAlg: "RS256",
+      requestKey: {
+        kty: "EC",
+        d: "uj7jNVQIfSCBdiV4A_yVnY8htLZS7nskIXAGIVDb9oM",
+        use: "sig",
+        crv: "P-256",
+        kid: "request_secret_post",
+        x: "H4E6D5GqxTrZshUvkG-z0sAWNkbixERVSpm3YjcIU1U",
+        y: "413NbE2n5PeQJlG1Nfq_nCbqR_ZKbVAzsyyrmYph7Fs",
+        alg: "ES256",
+      },
+      requestEncKey: {
+        kty: "EC",
+        use: "enc",
+        crv: "P-256",
+        kid: "request_enc_key",
+        x: "PM6be42POiKdNzRKGeZ1Gia8908XfmSSbS4cwPasWTo",
+        y: "wksaan9a4h3L8R1UMmvc9w6rPB_F07IA-VHx7n7Add4",
+        alg: "ECDH-ES"
+      },
+      requestEnc: "A256GCM",
+      requestUri: "",
+      invalidRequestUri: "https://invalid.request.uri/request",
+      httpRedirectUri: "http://localhost:8081/callback",
+    }
+  };
+})();
+
 export const serverConfig = createServerConfig(tenantId);
 
 
 export const federationServerConfig = {
+  organizationId,
   issuer: `${backendUrl}/${federationTenantId}`,
   tenantId: federationTenantId,
   providerName: "test-provider"
@@ -366,9 +417,10 @@ export { createServerConfig };
 
 /**
  * Environment variables used for configuration:
- * 
+ *
  * - IDP_SERVER_URL: Backend server URL (default: http://localhost:8080)
- * - IDP_SERVER_TENANT_ID: Main tenant ID for tests
+ * - IDP_SERVER_ADMIN_TENANT_ID: Admin tenant ID for Management API tests (default: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa)
+ * - IDP_SERVER_TENANT_ID: Main tenant ID for OAuth/OIDC tests (default: 67e7eae6-62b0-4500-9eff-87459f63fc66)
  * - IDP_SERVER_FEDERATION_TENANT_ID: Federation tenant ID for SSO tests
  * - IDP_SERVER_UNSUPPORTED_TENANT_ID: Tenant ID for unsupported feature tests
  * - CIBA_USER_SUB: CIBA test user subject identifier
@@ -376,6 +428,10 @@ export { createServerConfig };
  * - CIBA_USER_DEVICE_ID: CIBA test user device ID
  * - CIBA_USERNAME: CIBA test username (for OAuth resource owner password credentials)
  * - CIBA_PASSWORD: CIBA test password
- * 
+ *
  * All variables have sensible defaults for backward compatibility.
+ *
+ * Tenant Usage:
+ * - adminServerConfig: Use for control_plane/system tests (Management API with 'management' scope)
+ * - serverConfig: Use for spec/scenario tests (OAuth/OIDC/CIBA/FAPI tests)
  */

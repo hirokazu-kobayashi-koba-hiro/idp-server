@@ -5,6 +5,8 @@ set -a; [ -f .env ] && source .env; set +a
 
 echo "env: $ENV"
 echo "url: $AUTHORIZATION_SERVER_URL"
+TENANT_ID="67e7eae6-62b0-4500-9eff-87459f63fc66"
+ORGANIZATION_ID="9eb8eb8c-2615-4604-809f-5cae1c00a462"
 
 #admin
 
@@ -44,6 +46,13 @@ echo "organizer-tenant"
   -d "${DRY_RUN}"
 
 
+## org access-token
+
+ACCESS_TOKEN=$(./config/scripts/get-access-token.sh -u "ito.ichiro" -p "successUserCode001" -t "67e7eae6-62b0-4500-9eff-87459f63fc66" -e "$AUTHORIZATION_SERVER_URL" -c "clientSecretPost" -s "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890")
+
+echo "org access-token"
+echo "$ACCESS_TOKEN"
+
 ## admin-tenant
 
 echo "-------------------------------------------------"
@@ -52,6 +61,7 @@ echo "test-tenant"
 
 ./config/scripts/upsert-tenant.sh \
   -f "./config/examples/e2e/test-tenant/tenants/admin-tenant.json" \
+  -o "${ORGANIZATION_ID}" \
   -b "${AUTHORIZATION_SERVER_URL}" \
   -a "${ACCESS_TOKEN}" \
   -d "${DRY_RUN}"
@@ -64,6 +74,7 @@ echo "tenant-a"
 
 ./config/scripts/upsert-tenant.sh \
   -f "./config/examples/e2e/test-tenant/tenants/tenant-a.json" \
+  -o "${ORGANIZATION_ID}" \
   -b "${AUTHORIZATION_SERVER_URL}" \
   -a "${ACCESS_TOKEN}" \
   -d "${DRY_RUN}"
@@ -75,7 +86,8 @@ echo ""
 echo "authorization-server"
 
 ./config/scripts/upsert-authorization-server.sh \
-  -t "${ADMIN_TENANT_ID}" \
+  -t "${TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
   -f "./config/examples/e2e/test-tenant/authorization-server/idp-server.json" \
   -b "${AUTHORIZATION_SERVER_URL}" \
   -a "${ACCESS_TOKEN}" \
@@ -102,7 +114,8 @@ for client_file in "${client_files[@]}"; do
   echo "🔧 Registering: $(basename "$client_file")"
 
 ./config/scripts/upsert-client.sh \
-  -t "${ADMIN_TENANT_ID}" \
+  -t "${TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
   -f "./config/examples/e2e/test-tenant/clients/${client_file}" \
   -b "${AUTHORIZATION_SERVER_URL}" \
   -a "${ACCESS_TOKEN}" \
@@ -129,7 +142,8 @@ for authentication_config_file in "${authentication_config_files[@]}"; do
   echo "🔧 Registering: $(basename "$authentication_config_file")"
 
 ./config/scripts/upsert-authentication-config.sh \
-  -t "${ADMIN_TENANT_ID}" \
+  -t "${TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
   -f "./config/examples/e2e/test-tenant/authentication-config/${authentication_config_file}" \
   -b "${AUTHORIZATION_SERVER_URL}" \
   -a "${ACCESS_TOKEN}" \
@@ -153,7 +167,8 @@ for authentication_policy_file in "${authentication_policy_files[@]}"; do
   echo "🔧 Registering: $(basename "$authentication_policy_file")"
 
 ./config/scripts/upsert-authentication-policy.sh \
-  -t "${ADMIN_TENANT_ID}" \
+  -t "${TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
   -f "./config/examples/e2e/test-tenant/authentication-policy/${authentication_policy_file}" \
   -b "${AUTHORIZATION_SERVER_URL}" \
   -a "${ACCESS_TOKEN}" \
@@ -178,7 +193,8 @@ for identity_verification_config_file in "${identity_verification_config_files[@
   echo "🔧 Registering: $(basename "$identity_verification_config_file")"
 
 ./config/scripts/upsert-identity-verification-config.sh \
-  -t "${ADMIN_TENANT_ID}" \
+  -t "${TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
   -f "./config/examples/e2e/test-tenant/identity/${identity_verification_config_file}" \
   -b "${AUTHORIZATION_SERVER_URL}" \
   -a "${ACCESS_TOKEN}" \
@@ -201,7 +217,8 @@ for federation_config_file in "${federation_config_files[@]}"; do
   echo "🔧 Registering: $(basename "$federation_config_file")"
 
 ./config/scripts/upsert-federation-config.sh \
-  -t "${ADMIN_TENANT_ID}" \
+  -t "${TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
   -f "./config/examples/e2e/test-tenant/federation/oidc/${federation_config_file}" \
   -b "${AUTHORIZATION_SERVER_URL}" \
   -a "${ACCESS_TOKEN}" \
@@ -224,7 +241,8 @@ for security_event_hook_config_file in "${security_event_hook_config_files[@]}";
   echo "🔧 Registering: $(basename "$security_event_hook_config_file")"
 
 ./config/scripts/upsert-security-event-hook-config.sh \
-  -t "${ADMIN_TENANT_ID}" \
+  -t "${TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
   -f "./config/examples/e2e/test-tenant/security-event-hook/${security_event_hook_config_file}" \
   -b "${AUTHORIZATION_SERVER_URL}" \
   -a "${ACCESS_TOKEN}" \

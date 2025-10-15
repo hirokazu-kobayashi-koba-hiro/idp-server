@@ -116,7 +116,7 @@ public class OrganizationAuthenticationInteractionManagementV1Api
    * @param httpServletRequest the HTTP request
    * @return the authentication interaction details response
    */
-  @GetMapping("/{transactionId}/types/{type}")
+  @GetMapping("/{transactionId}/{type}")
   public ResponseEntity<?> get(
       @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
       @PathVariable String organizationId,

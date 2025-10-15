@@ -2,7 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 import { v4 as uuidv4 } from "uuid";
 import { get, postWithJson, putWithJson, deletion } from "../../../../lib/http";
 import { requestToken } from "../../../../api/oauthClient";
-import { clientSecretPostClient, serverConfig, backendUrl } from "../../../testConfig";
+import { adminServerConfig, backendUrl } from "../../../testConfig";
 
 describe("identity verification configuration management api", () => {
 
@@ -10,13 +10,13 @@ describe("identity verification configuration management api", () => {
 
     it("basic list and get operations", async () => {
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret,
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
       });
       console.log(tokenResponse.data);
       expect(tokenResponse.status).toBe(200);
@@ -24,7 +24,7 @@ describe("identity verification configuration management api", () => {
 
       // Step 1: List identity verification configurations
       const listResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/identity-verification-configurations`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/identity-verification-configurations`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -39,7 +39,7 @@ describe("identity verification configuration management api", () => {
       if (listResponse.data.list.length > 0) {
         const firstConfigId = listResponse.data.list[0].id;
         const detailResponse = await get({
-          url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/identity-verification-configurations/${firstConfigId}`,
+          url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/identity-verification-configurations/${firstConfigId}`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -58,20 +58,20 @@ describe("identity verification configuration management api", () => {
 
     it("should support basic pagination with total_count", async () => {
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret,
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
       });
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
       // Test basic pagination
       const listResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/identity-verification-configurations?limit=5&offset=0`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/identity-verification-configurations?limit=5&offset=0`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -90,20 +90,20 @@ describe("identity verification configuration management api", () => {
 
     it("should support filtering by type", async () => {
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret,
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
       });
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
       // Test filtering by type
       const typeResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/identity-verification-configurations?type=ekyc_test_provider&limit=10`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/identity-verification-configurations?type=ekyc_test_provider&limit=10`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -123,20 +123,20 @@ describe("identity verification configuration management api", () => {
 
     it("should support limit and offset parameters", async () => {
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret,
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
       });
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
       // Test with small limit
       const limitResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/identity-verification-configurations?limit=2&offset=0`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/identity-verification-configurations?limit=2&offset=0`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -154,20 +154,20 @@ describe("identity verification configuration management api", () => {
 
     it("should handle empty results with proper pagination info", async () => {
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret,
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
       });
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
       // Test with a query that should return no results
       const emptyResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/identity-verification-configurations?type=NonExistentProvider12345&limit=10&offset=0`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/identity-verification-configurations?type=NonExistentProvider12345&limit=10&offset=0`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -183,20 +183,20 @@ describe("identity verification configuration management api", () => {
 
     it("should support multiple query parameters", async () => {
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret,
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
       });
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
 
       // Test multiple query parameters (using type and limit/offset)
       const multiFilterResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/identity-verification-configurations?type=ekyc_test_provider&limit=5&offset=0`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/identity-verification-configurations?type=ekyc_test_provider&limit=5&offset=0`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -216,13 +216,13 @@ describe("identity verification configuration management api", () => {
 
     it("should support time range filtering", async () => {
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret,
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
       });
       expect(tokenResponse.status).toBe(200);
       const accessToken = tokenResponse.data.access_token;
@@ -233,7 +233,7 @@ describe("identity verification configuration management api", () => {
       const fromDate = oneYearAgo.toISOString().substring(0, 19).replace("T", " ");
 
       const timeResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/identity-verification-configurations?from=${encodeURIComponent(fromDate)}&limit=10`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/identity-verification-configurations?from=${encodeURIComponent(fromDate)}&limit=10`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }

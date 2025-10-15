@@ -516,14 +516,13 @@ describe("Organization Federation Config Management API - Structured Tests", () 
         console.log("GET Response Data:", JSON.stringify(response.data, null, 2));
 
         // Verify detailed GET response structure elements
-        expect(response.data).toHaveProperty("result");
-        expect(response.data.result).toHaveProperty("id", configId);
-        expect(response.data.result).toHaveProperty("type", "oidc");
-        expect(response.data.result).toHaveProperty("payload");
-        expect(response.data.result).toHaveProperty("enabled", true);
+        expect(response.data).toHaveProperty("id", configId);
+        expect(response.data).toHaveProperty("type", "oidc");
+        expect(response.data).toHaveProperty("payload");
+        expect(response.data).toHaveProperty("enabled", true);
 
         // Verify payload structure
-        const payload = response.data.result.payload;
+        const payload = response.data.payload;
         expect(payload).toHaveProperty("type", "oidc");
         expect(payload).toHaveProperty("provider", "detail-test");
         expect(payload).toHaveProperty("issuer", "https://detail.example.com");

@@ -2,7 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 import { v4 as uuidv4 } from "uuid";
 import { get, postWithJson, putWithJson, deletion } from "../../../../lib/http";
 import { requestToken } from "../../../../api/oauthClient";
-import { clientSecretPostClient, serverConfig, backendUrl } from "../../../testConfig";
+import { adminServerConfig, backendUrl } from "../../../testConfig";
 
 describe("security event hook configuration management api", () => {
 
@@ -10,13 +10,13 @@ describe("security event hook configuration management api", () => {
 
     it("crud with enabled filtering", async () => {
       const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
+        endpoint: adminServerConfig.tokenEndpoint,
         grantType: "password",
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-        scope: clientSecretPostClient.scope,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret,
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
       });
       console.log(tokenResponse.data);
       expect(tokenResponse.status).toBe(200);
@@ -30,7 +30,7 @@ describe("security event hook configuration management api", () => {
 
       // Step 1: Create a test security event hook configuration (enabled=true by default)
       const createResponse = await postWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/security-event-hook-configurations`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/security-event-hook-configurations`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -59,7 +59,7 @@ describe("security event hook configuration management api", () => {
 
       // Step 2: Verify the hook config appears in the list (enabled=true)
       const listResponse1 = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/security-event-hook-configurations`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/security-event-hook-configurations`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -72,7 +72,7 @@ describe("security event hook configuration management api", () => {
 
       // Step 3: Verify individual hook config retrieval works (enabled=true)
       const detailResponse1 = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/security-event-hook-configurations/${createdHookConfigId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/security-event-hook-configurations/${createdHookConfigId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -84,7 +84,7 @@ describe("security event hook configuration management api", () => {
 
       // Step 4: Update hook config to enabled=false
       const updateResponse = await putWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/security-event-hook-configurations/${createdHookConfigId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/security-event-hook-configurations/${createdHookConfigId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -110,7 +110,7 @@ describe("security event hook configuration management api", () => {
 
       // Step 5: Verify the hook config does NOT appear in the list (enabled=false)
       const listResponse2 = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/security-event-hook-configurations`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/security-event-hook-configurations`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -123,7 +123,7 @@ describe("security event hook configuration management api", () => {
 
       // Step 6: Re-enable hook config (enabled=true) with include_disabled=true parameter
       const reEnableResponse = await putWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/security-event-hook-configurations/${createdHookConfigId}?include_disabled=true`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/security-event-hook-configurations/${createdHookConfigId}?include_disabled=true`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -149,7 +149,7 @@ describe("security event hook configuration management api", () => {
 
       // Step 7: Verify the hook config appears in the list again (enabled=true)
       const listResponse3 = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/security-event-hook-configurations`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/security-event-hook-configurations`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -162,7 +162,7 @@ describe("security event hook configuration management api", () => {
 
       // Step 8: Verify individual hook config retrieval works again (enabled=true)
       const detailResponse3 = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/security-event-hook-configurations/${createdHookConfigId}`,
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/security-event-hook-configurations/${createdHookConfigId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -178,7 +178,7 @@ describe("security event hook configuration management api", () => {
       if (hookConfigCreated) {
         try {
           const deleteResponse = await deletion({
-            url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/security-event-hook-configurations/${createdHookConfigId}`,
+            url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/security-event-hook-configurations/${createdHookConfigId}`,
             headers: {
               Authorization: `Bearer ${accessToken}`,
             }
