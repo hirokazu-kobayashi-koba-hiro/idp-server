@@ -39,7 +39,7 @@
       "service_name": "idp-server",
       "custom_tags": "",
       "tracing_enabled": false,
-      "persistence_enabled": false,
+      "persistence_enabled": true,
       "detail_scrub_keys": "authorization,cookie,set-cookie,proxy-authorization,password,secret,token,refresh_token,access_token,id_token,client_secret,api_key,api_secret,bearer"
     },
     "security_event_user_config": {
