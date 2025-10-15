@@ -48,7 +48,7 @@ public class OrganizationDataSource implements OrganizationRepository {
   public Organization get(OrganizationIdentifier identifier) {
     Map<String, String> result = executor.selectOne(identifier);
     if (result == null || result.isEmpty()) {
-      throw new OrganizationNotFoundException("Organization not found");
+      throw new OrganizationNotFoundException(String.format("Organization not found (%s)", identifier.value()));
     }
 
     return ModelConvertor.convert(result);

@@ -190,7 +190,7 @@ describe("sso oidc", () => {
         const accessToken = adminTokenResponse.data.access_token;
 
         const authenticationTransactionResponse = await get({
-          url: serverConfig.authenticationEndpoint + `?authorization_id=${id}`,
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-transactions?authorization_id=${id}`,
           headers: {
             Authorization: `Bearer ${accessToken}`
           }

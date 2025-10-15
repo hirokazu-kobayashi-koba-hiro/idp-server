@@ -135,7 +135,7 @@ public class OrgManagementFilter extends OncePerRequestFilter {
     } catch (OrganizationNotFoundException e) {
       logger.warn("Organization management authentication failed: {}", e.getMessage());
       respondWithError(
-          response, HttpServletResponse.SC_NOT_FOUND, "invalid_request", "not found organization");
+          response, HttpServletResponse.SC_NOT_FOUND, "invalid_request", e.getMessage());
     } catch (BadRequestException e) {
       logger.warn("Organization management authentication failed: {}", e.getMessage());
       respondWithError(

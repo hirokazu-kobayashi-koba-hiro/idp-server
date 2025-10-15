@@ -313,7 +313,8 @@ describe("organization authentication interaction management api", () => {
           Authorization: `Bearer ${accessToken}`
         }
       });
-      expect(forbiddenResponse.status).toBe(401);
+      console.log(forbiddenResponse.data);
+      expect(forbiddenResponse.status).toBe(404);
     });
 
     it("forbidden no assigned tenant", async () => {

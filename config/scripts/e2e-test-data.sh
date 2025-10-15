@@ -31,6 +31,18 @@ echo "test-tenant"
   -a "${ACCESS_TOKEN}" \
   -d "${DRY_RUN}"
 
+## tenant-1
+
+echo "-------------------------------------------------"
+echo ""
+echo "tenant-1"
+
+./config/scripts/onboarding.sh \
+  -t "${ADMIN_TENANT_ID}" \
+  -f "./config/examples/e2e/tenant-1/initial.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
 
 # organizer-tenant
 

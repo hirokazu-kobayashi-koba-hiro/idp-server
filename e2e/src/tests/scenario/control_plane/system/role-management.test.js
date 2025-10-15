@@ -110,12 +110,8 @@ describe("role management api", () => {
       expect(updateNoNameChangeResponse.data).toHaveProperty("result");
       expect(updateNoNameChangeResponse.data.result.name).toBe(createResponse.data.result.name);
       expect(updateNoNameChangeResponse.data.result.description).toBe("test-2");
-      expect(updateNoNameChangeResponse.data.result.permissions).toEqual(
-        expect.arrayContaining([
-          permissionListResponse.data.list[1].id,
-          permissionListResponse.data.list[2].id,
-        ])
-      );
+      expect(updateNoNameChangeResponse.data.result.permissions[0].id).toEqual(permissionListResponse.data.list[1].id);
+      expect(updateNoNameChangeResponse.data.result.permissions[1].id).toEqual(permissionListResponse.data.list[2].id);
 
       //TODO implement api
       // const removeResponse = await putWithJson({
