@@ -146,10 +146,13 @@ flowchart LR
 **タイミング**: 認証成功時
 
 ```java
+// OAuthSessionDataSource.register()で自動設定
+// テナント設定に基づいてタイムアウトが動的に設定される
 HttpSession session = request.getSession(true);
 session.setAttribute("user_id", "user123");
 session.setAttribute("tenant_id", "tenant-a");
-session.setMaxInactiveInterval(3600); // 1時間
+// timeout_seconds はテナント設定から自動適用
+session.setMaxInactiveInterval(tenant.sessionConfiguration().timeoutSeconds());
 ```
 
 ### 2. セッション使用
@@ -182,9 +185,61 @@ session.invalidate();
 
 ## セッションタイムアウト
 
-idp-serverでは、セッションタイムアウトを設定できます。
+idp-serverでは、テナント単位でセッションタイムアウトを設定できます。
 
-現在はアプリケーション全体で統一のアイドルタイムアウト（最終アクセスから一定時間経過で失効）を設定します。テナント単位での動的なタイムアウト設定は調整中です。
+### テナント別タイムアウト設定
+
+各テナントの要件に応じて、異なるセッションタイムアウトを設定可能です：
+
+| ユースケース | 推奨タイムアウト | 理由 |
+|:---|:---|:---|
+| **金融機関** | 5-15分 | 高セキュリティ要件（NIST推奨） |
+| **一般アプリケーション** | 30分-2時間 | セキュリティと利便性のバランス |
+| **低摩擦サービス** | 2-8時間 | ユーザー利便性優先 |
+| **長期セッション** | 24時間-7日 | エンタープライズ向け |
+
+### 設定方法
+
+セッションタイムアウトは `SessionConfiguration` の `timeout_seconds` フィールドで設定します：
+
+```json
+{
+  "session_configuration": {
+    "cookie_name": "IDP_SERVER_SESSION",
+    "cookie_same_site": "None",
+    "use_secure_cookie": true,
+    "use_http_only_cookie": true,
+    "cookie_path": "/",
+    "timeout_seconds": 1800
+  }
+}
+```
+
+**デフォルト値**: 3600秒（1時間）
+
+### 動作仕組み
+
+1. **セッション登録時**: `OAuthSessionDataSource.register()` でテナント設定を読み込み
+2. **タイムアウト設定**: `httpSession.setMaxInactiveInterval(tenant.sessionConfiguration().timeoutSeconds())`
+3. **動的適用**: テナントごとに異なるタイムアウトが適用される
+
+```java
+// 実装例（OAuthSessionDataSource.java）
+@Override
+public void register(Tenant tenant, OAuthSession oAuthSession) {
+  String sessionKey = oAuthSession.sessionKeyValue();
+  int timeoutSeconds = tenant.sessionConfiguration().timeoutSeconds();
+  httpSession.setMaxInactiveInterval(timeoutSeconds);
+  httpSession.setAttribute(sessionKey, oAuthSession);
+}
+```
+
+### タイムアウトの種類
+
+idp-serverは **アイドルタイムアウト** を採用しています：
+
+- **アイドルタイムアウト**: 最終アクセスから一定時間経過で失効
+- **絶対タイムアウト**: ログインから一定時間経過で失効（未サポート）
 
 ## セキュリティ機能
 
