@@ -127,7 +127,7 @@ public class OAuthAuthorizeHandler {
         new OAuthSessionKey(tenant.identifierValue(), requestedClientId.value());
     OAuthSession session =
         OAuthSession.create(oAuthSessionKey, user, authentication, authorizationRequest.maxAge());
-    delegate.registerSession(session);
+    delegate.registerSession(tenant, session);
 
     return authorizationResponse;
   }

@@ -21,6 +21,7 @@ import org.idp.server.core.openid.oauth.OAuthSession;
 import org.idp.server.core.openid.oauth.OAuthSessionKey;
 import org.idp.server.core.openid.oauth.repository.OAuthSessionRepository;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -34,10 +35,16 @@ public class OAuthSessionDataSource implements OAuthSessionRepository {
   }
 
   @Override
-  public void register(OAuthSession oAuthSession) {
+  public void register(Tenant tenant, OAuthSession oAuthSession) {
     String sessionKey = oAuthSession.sessionKeyValue();
     log.debug("registerSession: {}", sessionKey);
     log.debug("register sessionId: {}", httpSession.getId());
+    int timeoutSeconds = tenant.sessionConfiguration().timeoutSeconds();
+    httpSession.setMaxInactiveInterval(timeoutSeconds);
+    log.debug(
+        "session timeout set to {} seconds for tenant {}",
+        timeoutSeconds,
+        tenant.identifierValue());
     httpSession.setAttribute(sessionKey, oAuthSession);
   }
 
