@@ -118,14 +118,13 @@ public class OnboardingContextCreator {
             TenantType.ORGANIZER,
             tenantRequest.tenantDomain(),
             tenantRequest.authorizationProvider(),
-            tenantRequest.databaseType(),
-            attributes,
-            uiConfiguration,
-            corsConfiguration,
-            sessionConfiguration,
-            securityEventLogConfiguration,
-            securityEventUserAttributeConfiguration,
-            identityPolicyConfig);
+                attributes,
+                uiConfiguration,
+                corsConfiguration,
+                sessionConfiguration,
+                securityEventLogConfiguration,
+                securityEventUserAttributeConfiguration,
+                identityPolicyConfig);
 
     AssignedTenant assignedTenant =
         new AssignedTenant(tenant.identifierValue(), tenant.name().value(), tenant.type().name());

@@ -118,7 +118,6 @@ public class IdpServerStarterContextCreator {
             TenantType.ADMIN,
             tenantRequest.tenantDomain(),
             tenantRequest.authorizationProvider(),
-            tenantRequest.databaseType(),
             attributes,
             uiConfiguration,
             corsConfiguration,

@@ -20,7 +20,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import org.idp.server.platform.datasource.DatabaseType;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.platform.multi_tenancy.tenant.config.CorsConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.config.SessionConfiguration;
@@ -34,7 +33,6 @@ public class Tenant {
   TenantType type;
   TenantDomain domain;
   AuthorizationProvider authorizationProvider;
-  DatabaseType databaseType;
   TenantAttributes attributes;
   TenantFeatures features;
   UIConfiguration uiConfiguration;
@@ -52,7 +50,6 @@ public class Tenant {
       TenantType type,
       TenantDomain domain,
       AuthorizationProvider authorizationProvider,
-      DatabaseType databaseType,
       TenantAttributes attributes,
       UIConfiguration uiConfiguration,
       CorsConfiguration corsConfiguration,
@@ -65,7 +62,6 @@ public class Tenant {
     this.type = type;
     this.domain = domain;
     this.authorizationProvider = authorizationProvider;
-    this.databaseType = databaseType;
     this.attributes = attributes;
     this.uiConfiguration = uiConfiguration;
     this.corsConfiguration = corsConfiguration;
@@ -113,7 +109,6 @@ public class Tenant {
     map.put("name", name.value());
     map.put("type", type.name());
     map.put("authorization_provider", authorizationProvider.name());
-    map.put("database_type", databaseType.name());
     map.put("attributes", attributes.toMap());
     return map;
   }
@@ -132,10 +127,6 @@ public class Tenant {
 
   public AuthorizationProvider authorizationProvider() {
     return authorizationProvider;
-  }
-
-  public DatabaseType databaseType() {
-    return databaseType;
   }
 
   public Map<String, Object> attributesAsMap() {
@@ -196,7 +187,6 @@ public class Tenant {
         type,
         domain,
         authorizationProvider,
-        databaseType,
         attributes,
         uiConfiguration,
         corsConfiguration,
@@ -213,7 +203,6 @@ public class Tenant {
         type,
         domain,
         authorizationProvider,
-        databaseType,
         attributes,
         uiConfiguration,
         corsConfiguration,

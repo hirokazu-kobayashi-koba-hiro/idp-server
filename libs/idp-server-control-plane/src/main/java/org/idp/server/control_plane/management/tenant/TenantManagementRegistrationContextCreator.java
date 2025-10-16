@@ -103,7 +103,6 @@ public class TenantManagementRegistrationContextCreator {
             TenantType.PUBLIC,
             tenantRequest.tenantDomain(),
             tenantRequest.authorizationProvider(),
-            tenantRequest.databaseType(),
             attributes,
             uiConfiguration,
             corsConfiguration,

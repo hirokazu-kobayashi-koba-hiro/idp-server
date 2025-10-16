@@ -71,7 +71,6 @@ public class TenantManagementUpdateContextCreator {
             before.type(),
             domain.isEmpty() ? before.domain() : new TenantDomain(domain),
             before.authorizationProvider(),
-            before.databaseType(),
             attributes.exists() ? attributes : before.attributes(),
             uiConfiguration.exists() ? uiConfiguration : before.uiConfiguration(),
             corsConfiguration.exists() ? corsConfiguration : before.corsConfiguration(),
