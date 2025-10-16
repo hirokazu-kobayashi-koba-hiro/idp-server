@@ -36,7 +36,7 @@ public class SessionConfiguration {
   private final int timeoutSeconds;
 
   public SessionConfiguration() {
-    this.cookieName = "IDP_SERVER_SESSION";
+    this.cookieName = null;
     this.cookieSameSite = "None";
     this.useSecureCookie = true;
     this.useHttpOnlyCookie = true;
@@ -46,7 +46,7 @@ public class SessionConfiguration {
 
   public SessionConfiguration(Map<String, Object> values) {
     Map<String, Object> safeValues = Objects.requireNonNullElseGet(values, HashMap::new);
-    this.cookieName = extractString(safeValues, "cookie_name", "IDP_SERVER_SESSION");
+    this.cookieName = extractString(safeValues, "cookie_name", null);
     this.cookieSameSite = extractString(safeValues, "cookie_same_site", "None");
     this.useSecureCookie = extractBoolean(safeValues, "use_secure_cookie", true);
     this.useHttpOnlyCookie = extractBoolean(safeValues, "use_http_only_cookie", true);
@@ -57,10 +57,19 @@ public class SessionConfiguration {
   /**
    * Returns the cookie name
    *
-   * @return cookie name (default: IDP_SERVER_SESSION)
+   * @return cookie name, or null if not configured (tenant-specific default will be generated)
    */
   public String cookieName() {
     return cookieName;
+  }
+
+  /**
+   * Returns whether cookie name is configured
+   *
+   * @return true if cookie name is explicitly configured
+   */
+  public boolean hasCookieName() {
+    return cookieName != null && !cookieName.isEmpty();
   }
 
   /**
@@ -114,7 +123,7 @@ public class SessionConfiguration {
    * @return true if any session settings are configured
    */
   public boolean exists() {
-    return !cookieName.equals("IDP_SERVER_SESSION")
+    return cookieName != null
         || !cookieSameSite.equals("None")
         || !useSecureCookie
         || !useHttpOnlyCookie
@@ -129,7 +138,9 @@ public class SessionConfiguration {
    */
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
-    map.put("cookie_name", cookieName);
+    if (cookieName != null) {
+      map.put("cookie_name", cookieName);
+    }
     map.put("cookie_same_site", cookieSameSite);
     map.put("use_secure_cookie", useSecureCookie);
     map.put("use_http_only_cookie", useHttpOnlyCookie);

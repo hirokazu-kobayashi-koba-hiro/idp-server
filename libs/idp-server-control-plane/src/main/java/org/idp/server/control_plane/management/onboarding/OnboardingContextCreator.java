@@ -37,6 +37,11 @@ import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantAttributes;
 import org.idp.server.platform.multi_tenancy.tenant.TenantType;
+import org.idp.server.platform.multi_tenancy.tenant.config.CorsConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.config.SessionConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.config.UIConfiguration;
+import org.idp.server.platform.security.event.SecurityEventUserAttributeConfiguration;
+import org.idp.server.platform.security.log.SecurityEventLogConfiguration;
 
 public class OnboardingContextCreator {
 
@@ -75,6 +80,37 @@ public class OnboardingContextCreator {
         tenantRequest.attributes() != null
             ? new TenantAttributes(tenantRequest.attributes())
             : new TenantAttributes();
+
+    UIConfiguration uiConfiguration =
+        tenantRequest.uiConfig() != null
+            ? new UIConfiguration(tenantRequest.uiConfig())
+            : new UIConfiguration();
+
+    CorsConfiguration corsConfiguration =
+        tenantRequest.corsConfig() != null
+            ? new CorsConfiguration(tenantRequest.corsConfig())
+            : new CorsConfiguration();
+
+    SessionConfiguration sessionConfiguration =
+        tenantRequest.sessionConfig() != null
+            ? new SessionConfiguration(tenantRequest.sessionConfig())
+            : new SessionConfiguration();
+
+    SecurityEventLogConfiguration securityEventLogConfiguration =
+        tenantRequest.securityEventLogConfig() != null
+            ? new SecurityEventLogConfiguration(tenantRequest.securityEventLogConfig())
+            : new SecurityEventLogConfiguration();
+
+    SecurityEventUserAttributeConfiguration securityEventUserAttributeConfiguration =
+        tenantRequest.securityEventUserConfig() != null
+            ? new SecurityEventUserAttributeConfiguration(tenantRequest.securityEventUserConfig())
+            : new SecurityEventUserAttributeConfiguration();
+
+    TenantAttributes identityPolicyConfig =
+        tenantRequest.identityPolicyConfig() != null
+            ? new TenantAttributes(tenantRequest.identityPolicyConfig())
+            : new TenantAttributes();
+
     Tenant tenant =
         new Tenant(
             tenantRequest.tenantIdentifier(),
@@ -83,7 +119,13 @@ public class OnboardingContextCreator {
             tenantRequest.tenantDomain(),
             tenantRequest.authorizationProvider(),
             tenantRequest.databaseType(),
-            attributes);
+            attributes,
+            uiConfiguration,
+            corsConfiguration,
+            sessionConfiguration,
+            securityEventLogConfiguration,
+            securityEventUserAttributeConfiguration,
+            identityPolicyConfig);
 
     AssignedTenant assignedTenant =
         new AssignedTenant(tenant.identifierValue(), tenant.name().value(), tenant.type().name());

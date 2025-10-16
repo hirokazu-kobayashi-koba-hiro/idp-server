@@ -52,74 +52,6 @@ public class Tenant {
       TenantType type,
       TenantDomain domain,
       AuthorizationProvider authorizationProvider,
-      DatabaseType databaseType) {
-    this(
-        identifier,
-        name,
-        type,
-        domain,
-        authorizationProvider,
-        databaseType,
-        new TenantAttributes(Map.of()));
-  }
-
-  public Tenant(
-      TenantIdentifier identifier,
-      TenantName name,
-      TenantType type,
-      TenantDomain domain,
-      AuthorizationProvider authorizationProvider,
-      DatabaseType databaseType,
-      TenantAttributes attributes) {
-    this(
-        identifier,
-        name,
-        type,
-        domain,
-        authorizationProvider,
-        databaseType,
-        attributes,
-        new UIConfiguration(),
-        new CorsConfiguration(),
-        new SessionConfiguration(),
-        new SecurityEventLogConfiguration(),
-        new SecurityEventUserAttributeConfiguration(),
-        new TenantAttributes());
-  }
-
-  public Tenant(
-      TenantIdentifier identifier,
-      TenantName name,
-      TenantType type,
-      TenantDomain domain,
-      AuthorizationProvider authorizationProvider,
-      DatabaseType databaseType,
-      TenantAttributes attributes,
-      UIConfiguration uiConfiguration,
-      CorsConfiguration corsConfiguration,
-      SessionConfiguration sessionConfiguration) {
-    this(
-        identifier,
-        name,
-        type,
-        domain,
-        authorizationProvider,
-        databaseType,
-        attributes,
-        uiConfiguration,
-        corsConfiguration,
-        sessionConfiguration,
-        new SecurityEventLogConfiguration(),
-        new SecurityEventUserAttributeConfiguration(),
-        new TenantAttributes());
-  }
-
-  public Tenant(
-      TenantIdentifier identifier,
-      TenantName name,
-      TenantType type,
-      TenantDomain domain,
-      AuthorizationProvider authorizationProvider,
       DatabaseType databaseType,
       TenantAttributes attributes,
       UIConfiguration uiConfiguration,
@@ -224,6 +156,24 @@ public class Tenant {
 
   public SessionConfiguration sessionConfiguration() {
     return sessionConfiguration;
+  }
+
+  /**
+   * Returns session cookie name with tenant ID suffix for default configuration.
+   *
+   * <p>For multi-tenant isolation, generates tenant-specific cookie name when no custom name is
+   * configured. Custom cookie names are returned as-is.
+   *
+   * @return cookie name with tenant suffix (e.g., "IDP_SERVER_SESSION_a1b2c3d4") when not
+   *     configured, or the configured name
+   */
+  public String sessionCookieName() {
+    // Generate tenant-specific default name when not configured
+    if (!sessionConfiguration.hasCookieName()) {
+      String tenantIdPrefix = identifier.value().substring(0, 8);
+      return "IDP_SERVER_SESSION_" + tenantIdPrefix;
+    }
+    return sessionConfiguration.cookieName();
   }
 
   public SecurityEventLogConfiguration securityEventLogConfiguration() {

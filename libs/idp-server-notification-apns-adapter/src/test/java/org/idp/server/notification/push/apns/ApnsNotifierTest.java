@@ -24,8 +24,13 @@ import org.idp.server.platform.datasource.DatabaseType;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.*;
+import org.idp.server.platform.multi_tenancy.tenant.config.CorsConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.config.SessionConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.config.UIConfiguration;
 import org.idp.server.platform.notification.NotificationChannel;
 import org.idp.server.platform.notification.NotificationTemplate;
+import org.idp.server.platform.security.event.SecurityEventUserAttributeConfiguration;
+import org.idp.server.platform.security.log.SecurityEventLogConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -54,7 +59,14 @@ class ApnsNotifierTest {
             TenantType.PUBLIC,
             new TenantDomain("test.example.com"),
             new AuthorizationProvider("idp-server"),
-            DatabaseType.POSTGRESQL);
+            DatabaseType.POSTGRESQL,
+            new TenantAttributes(),
+            new UIConfiguration(),
+            new CorsConfiguration(),
+            new SessionConfiguration(),
+            new SecurityEventLogConfiguration(),
+            new SecurityEventUserAttributeConfiguration(),
+            new TenantAttributes());
 
     // Create notification template
     NotificationTemplate template =
@@ -92,7 +104,14 @@ class ApnsNotifierTest {
             TenantType.PUBLIC,
             new TenantDomain("test.example.com"),
             new AuthorizationProvider("idp-server"),
-            DatabaseType.POSTGRESQL);
+            DatabaseType.POSTGRESQL,
+            new TenantAttributes(),
+            new UIConfiguration(),
+            new CorsConfiguration(),
+            new SessionConfiguration(),
+            new SecurityEventLogConfiguration(),
+            new SecurityEventUserAttributeConfiguration(),
+            new TenantAttributes());
 
     NotificationTemplate emptyTemplate = new NotificationTemplate();
     String payload = apnsNotifier.createApnsPayload(emptyTemplate, tenant);
@@ -117,7 +136,14 @@ class ApnsNotifierTest {
             TenantType.PUBLIC,
             new TenantDomain("test.example.com"),
             new AuthorizationProvider("idp-server"),
-            DatabaseType.POSTGRESQL);
+            DatabaseType.POSTGRESQL,
+            new TenantAttributes(),
+            new UIConfiguration(),
+            new CorsConfiguration(),
+            new SessionConfiguration(),
+            new SecurityEventLogConfiguration(),
+            new SecurityEventUserAttributeConfiguration(),
+            new TenantAttributes());
 
     String cacheKey = apnsNotifier.createCacheKey(tenant);
 
@@ -133,7 +159,14 @@ class ApnsNotifierTest {
             TenantType.PUBLIC,
             new TenantDomain("test.example.com"),
             new AuthorizationProvider("idp-server"),
-            DatabaseType.POSTGRESQL);
+            DatabaseType.POSTGRESQL,
+            new TenantAttributes(),
+            new UIConfiguration(),
+            new CorsConfiguration(),
+            new SessionConfiguration(),
+            new SecurityEventLogConfiguration(),
+            new SecurityEventUserAttributeConfiguration(),
+            new TenantAttributes());
 
     HttpResponse<String> response = mock(HttpResponse.class);
     when(response.statusCode()).thenReturn(400);
@@ -152,7 +185,14 @@ class ApnsNotifierTest {
             TenantType.PUBLIC,
             new TenantDomain("test.example.com"),
             new AuthorizationProvider("idp-server"),
-            DatabaseType.POSTGRESQL);
+            DatabaseType.POSTGRESQL,
+            new TenantAttributes(),
+            new UIConfiguration(),
+            new CorsConfiguration(),
+            new SessionConfiguration(),
+            new SecurityEventLogConfiguration(),
+            new SecurityEventUserAttributeConfiguration(),
+            new TenantAttributes());
 
     HttpResponse<String> response = mock(HttpResponse.class);
     when(response.statusCode()).thenReturn(403);

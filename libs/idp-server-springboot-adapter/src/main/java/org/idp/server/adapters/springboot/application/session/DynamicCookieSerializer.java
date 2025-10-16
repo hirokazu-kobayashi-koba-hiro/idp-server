@@ -38,7 +38,7 @@ public class DynamicCookieSerializer extends DefaultCookieSerializer {
     TenantIdentifier tenantIdentifier = extractTenantIdentifier(request);
     Tenant tenant = tenantMetaDataApi.get(tenantIdentifier);
     SessionConfiguration sessionConfiguration = tenant.sessionConfiguration();
-    setCookieName(sessionConfiguration.cookieName());
+    setCookieName(tenant.sessionCookieName());
     setDomainName(tenant.domain().host());
     setSameSite(sessionConfiguration.cookieSameSite());
     setUseSecureCookie(sessionConfiguration.useSecureCookie());
