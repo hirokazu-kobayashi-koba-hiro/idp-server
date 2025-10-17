@@ -7,6 +7,11 @@ on:
     paths:
       - 'documentation/**'
   workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual deployment'
+        required: false
+        default: 'Manual deployment'
 
 permissions:
   contents: write
@@ -19,6 +24,14 @@ jobs:
         working-directory: documentation
 
     steps:
+      - name: Print deployment info
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "Manual deployment triggered"
+          echo "Reason: ${{ github.event.inputs.reason }}"
+          echo "Branch: ${{ github.ref_name }}"
+        working-directory: .
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
