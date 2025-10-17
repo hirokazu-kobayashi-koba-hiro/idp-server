@@ -1,0 +1,318 @@
+openapi: 3.0.3
+info:
+  title: 外部システム連携用インターナルAPI
+  version: 1.0.0
+tags:
+  - name: 身元確認申込みコールバック
+    description: |
+      身元確認結果の審査結果を登録するためのコールバックAPI。
+  - name: 身元確認結果登録
+    description: |
+      身元確認結果を登録するためのAPI
+paths:
+  /{tenant-id}/internal/v1/identity-verification/callback/{verification-type}/{verification-process}:
+    post:
+      tags:
+        - 身元確認申込みコールバック
+      security:
+        - Basic: []
+      summary: 身元確認申込みコールバック(body:id)
+      description: >
+        指定された verification-type（テンプレート種別）および verification-process（申込み処理タイプ）に従い、
+
+        身元確認申込みのコールバック結果を処理します。
+
+
+        - `verification-type` はテンプレートの `type` に対応
+
+        - `verification-process` はテンプレート内の `processes` のキーに対応（例: apply,
+        request-ekyc など）
+
+
+        リクエストボディはテンプレートで定義された `request.schema` に基づいてバリデーションされ、
+
+        必須項目の漏れや形式の不正がある場合はエラーになります。
+
+
+        正常に処理された場合は、`response.body_mapping_rules` に従いレスポンスを返却します。
+
+
+        さらに、審査が承認された場合はテンプレートの `result.verified_claims`
+        `result.source_details`に従い身元確認結果が登録されます。
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/VerificationType'
+        - $ref: '#/components/parameters/VerificationProcess'
+      requestBody:
+        description: >
+          テンプレートで定義されたスキーマに従うリクエストボディ。
+
+          内容は `verification-type` および `verification-process` ごとに異なる。
+
+          ※テンプレートのcommonへの設定および、申込み詳細(application_details)から申込みを特定できるパラメータを含める必要があります。
+
+          例：application_number
+
+
+          {
+           "id": "UUID",
+           "type": "investment-account-opening"
+           "common": {
+              "external_service": "mocky",
+              "callback_application_id_param": "application_number"
+            },
+            "processes": {},
+            "result: {}
+          }
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                description: テンプレートで定義されたスキーマに従う
+            example:
+              application_number: abcdefg012345
+              examination_status: 審査中
+              comment: 審査開始
+      responses:
+        '200':
+          description: 申込み成功時のレスポンス
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  description: 設定ファイルの `response` に設定した項目が返却される
+              example:
+                id: 565b030e-04b5-45eb-989e-136e3623dc7d
+                application_number: abcdefg012345
+        '400':
+          description: 申込みの入力エラー
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: string
+                    description: |
+                      エラーの種類を示す識別子（"invalid_request"）。
+                  error_description:
+                    type: string
+                    description: |
+                      エラーの概要。
+                  error_details:
+                    type: object
+                    description: |
+                      エラーの詳細内容。バリデーションの具体的な内容や。外部サービスからのエラーレスポンス。
+                example:
+                  error: invalid_request
+                  error_description: >-
+                    The identity verification request is invalid. Please review
+                    your input for missing or incorrect fields.
+        '401':
+          description: |
+            認証エラー。Basic認証が無効な場合。
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: string
+                    description: |
+                      エラーの種類を示す識別子（"invalid_token"）。
+                  error_description:
+                    type: string
+                    description: |
+                      エラーの概要。
+        '403':
+          description: |
+            権限エラー。スコープ不足。
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: string
+                    description: |
+                      エラーの種類を示す識別子（"invalid_token"）。
+                  error_description:
+                    type: string
+                    description: |
+                      エラーの概要。
+  /{tenant-id}/internal/v1/identity-verification/callback/{verification-type}/{id}/{verification-process}:
+    post:
+      tags:
+        - 身元確認申込みコールバック
+      security:
+        - Basic: []
+      summary: 身元確認申込みコールバック(path:id)
+      description: >
+        指定された verification-type（テンプレート種別）および verification-process（申込み処理タイプ）に従い、
+
+        身元確認申込みのコールバック結果を処理します。
+
+
+        - `verification-type` はテンプレートの `type` に対応
+
+        - `verification-process` はテンプレート内の `processes` のキーに対応（例: apply,
+        request-ekyc など）
+
+
+        リクエストボディはテンプレートで定義された `request.schema` に基づいてバリデーションされ、
+
+        必須項目の漏れや形式の不正がある場合はエラーになります。
+
+
+        正常に処理された場合は、`response.body_mapping_rules` に従いレスポンスを返却します。
+
+
+        さらに、審査が承認された場合はテンプレートの `result.verified_claims`
+        `result.source_details`に従い身元確認結果が登録されます。
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/VerificationType'
+        - $ref: '#/components/parameters/VerificationProcess'
+        - $ref: '#/components/parameters/ApplicationId'
+      requestBody:
+        required: false
+        description: |
+          テンプレートで定義されたスキーマに従うリクエストボディ。
+          内容は `verification-type` および `verification-process` ごとに異なる。
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: null
+            example:
+              application_number: abcdefg012345
+              examination_status: 承認
+              result:
+                identity_verification_doc: 運転免許証
+                ekyc_provider: trust_service
+                last_name: 伊藤
+                first_name: 一朗
+                birthdate: '1990-01-01'
+                email_address: ichiro@example.com
+      responses:
+        '200':
+          description: 申込み成功時のレスポンス
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  description: 設定ファイルの `response` に設定した項目が返却される
+              example:
+                id: 565b030e-04b5-45eb-989e-136e3623dc7d
+                application_number: abcdefg012345
+        '400':
+          description: 申込みの入力エラー
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: string
+                    description: |
+                      エラーの種類を示す識別子（"invalid_request"）。
+                  error_description:
+                    type: string
+                    description: |
+                      エラーの概要。
+                  error_details:
+                    type: object
+                    description: |
+                      エラーの詳細内容。バリデーションの具体的な内容。
+                example:
+                  error: invalid_request
+                  error_description: >-
+                    The identity verification request is invalid. Please review
+                    your input for missing or incorrect fields.
+        '401':
+          description: |
+            認証エラー。Basic認証が無効な場合。
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: string
+                    description: |
+                      エラーの種類を示す識別子（"invalid_token"）。
+                  error_description:
+                    type: string
+                    description: |
+                      エラーの概要。
+        '403':
+          description: |
+            権限エラー。スコープ不足。
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: string
+                    description: |
+                      エラーの種類を示す識別子（"invalid_token"）。
+                  error_description:
+                    type: string
+                    description: |
+                      エラーの概要。
+components:
+  securitySchemes:
+    Basic:
+      type: http
+      scheme: basic
+  parameters:
+    TenantId:
+      name: tenant-id
+      in: path
+      required: true
+      schema:
+        type: string
+    MfaOperationType:
+      name: mfa-operation-type
+      in: path
+      required: true
+      schema:
+        type: string
+        example: fido-uaf-registration
+    VerificationType:
+      name: verification-type
+      in: path
+      required: true
+      schema:
+        type: string
+        example: my_number
+    VerificationProcess:
+      name: verification-process
+      in: path
+      required: true
+      schema:
+        type: string
+        example: capture
+    ApplicationId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
