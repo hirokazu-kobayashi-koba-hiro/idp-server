@@ -118,7 +118,6 @@ public class OnboardingContextCreator {
             TenantType.ORGANIZER,
             tenantRequest.tenantDomain(),
             tenantRequest.authorizationProvider(),
-            tenantRequest.databaseType(),
             attributes,
             uiConfiguration,
             corsConfiguration,

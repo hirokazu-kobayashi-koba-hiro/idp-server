@@ -17,7 +17,6 @@
 package org.idp.server.core.adapters.datasource.multi_tenancy.tenant.query;
 
 import java.util.Map;
-import org.idp.server.platform.datasource.DatabaseType;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
@@ -40,7 +39,6 @@ class ModelConverter {
     TenantDomain tenantDomain = new TenantDomain(result.getOrDefault("domain", ""));
     AuthorizationProvider authorizationProvider =
         new AuthorizationProvider(result.getOrDefault("authorization_provider", ""));
-    DatabaseType databaseType = DatabaseType.of(result.getOrDefault("database_type", ""));
     TenantAttributes tenantAttributes = convertAttributes(result.getOrDefault("attributes", ""));
     UIConfiguration uiConfiguration = convertUIConfiguration(result.getOrDefault("ui_config", ""));
     CorsConfiguration corsConfiguration =
@@ -61,7 +59,6 @@ class ModelConverter {
         tenantType,
         tenantDomain,
         authorizationProvider,
-        databaseType,
         tenantAttributes,
         uiConfiguration,
         corsConfiguration,

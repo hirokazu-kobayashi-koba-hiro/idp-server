@@ -15,7 +15,6 @@ CREATE TABLE tenant
     type                   VARCHAR(10)  NOT NULL,
     domain                 TEXT         NOT NULL,
     authorization_provider VARCHAR(255) NOT NULL,
-    database_type          VARCHAR(255) NOT NULL,
 
     -- Configuration columns (category-based JSON)
     security_event_log_config  JSON,  -- Security event logging configuration

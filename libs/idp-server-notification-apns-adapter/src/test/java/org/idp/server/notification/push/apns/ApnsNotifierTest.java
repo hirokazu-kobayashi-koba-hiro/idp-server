@@ -20,7 +20,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.net.http.HttpResponse;
-import org.idp.server.platform.datasource.DatabaseType;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.*;
@@ -59,7 +58,6 @@ class ApnsNotifierTest {
             TenantType.PUBLIC,
             new TenantDomain("test.example.com"),
             new AuthorizationProvider("idp-server"),
-            DatabaseType.POSTGRESQL,
             new TenantAttributes(),
             new UIConfiguration(),
             new CorsConfiguration(),
@@ -104,7 +102,6 @@ class ApnsNotifierTest {
             TenantType.PUBLIC,
             new TenantDomain("test.example.com"),
             new AuthorizationProvider("idp-server"),
-            DatabaseType.POSTGRESQL,
             new TenantAttributes(),
             new UIConfiguration(),
             new CorsConfiguration(),
@@ -136,7 +133,6 @@ class ApnsNotifierTest {
             TenantType.PUBLIC,
             new TenantDomain("test.example.com"),
             new AuthorizationProvider("idp-server"),
-            DatabaseType.POSTGRESQL,
             new TenantAttributes(),
             new UIConfiguration(),
             new CorsConfiguration(),
@@ -159,7 +155,6 @@ class ApnsNotifierTest {
             TenantType.PUBLIC,
             new TenantDomain("test.example.com"),
             new AuthorizationProvider("idp-server"),
-            DatabaseType.POSTGRESQL,
             new TenantAttributes(),
             new UIConfiguration(),
             new CorsConfiguration(),
@@ -185,7 +180,6 @@ class ApnsNotifierTest {
             TenantType.PUBLIC,
             new TenantDomain("test.example.com"),
             new AuthorizationProvider("idp-server"),
-            DatabaseType.POSTGRESQL,
             new TenantAttributes(),
             new UIConfiguration(),
             new CorsConfiguration(),

@@ -39,13 +39,17 @@ public class MysqlExecutor implements TenantCommandSqlExecutor {
                 type,
                 domain,
                 authorization_provider,
-                database_type,
                 attributes,
                 ui_config,
                 cors_config,
-                session_config
+                session_config,
+                security_event_log_config,
+                security_event_user_config,
+                identity_policy_config
                 )
                 VALUES (
+                ?,
+                ?,
                 ?,
                 ?,
                 ?,
@@ -64,7 +68,6 @@ public class MysqlExecutor implements TenantCommandSqlExecutor {
     params.add(tenant.type().name());
     params.add(tenant.domain().value());
     params.add(tenant.authorizationProvider().name());
-    params.add(tenant.databaseType().name());
     params.add(jsonConverter.write(tenant.attributesAsMap()));
     params.add(jsonConverter.write(tenant.uiConfiguration().toMap()));
     params.add(jsonConverter.write(tenant.corsConfiguration().toMap()));

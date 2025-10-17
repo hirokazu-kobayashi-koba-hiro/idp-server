@@ -39,7 +39,6 @@ public class PostgresqlExecutor implements TenantCommandSqlExecutor {
             type,
             domain,
             authorization_provider,
-            database_type,
             attributes,
             ui_config,
             cors_config,
@@ -50,7 +49,6 @@ public class PostgresqlExecutor implements TenantCommandSqlExecutor {
             )
             VALUES (
             ?::uuid,
-            ?,
             ?,
             ?,
             ?,
@@ -70,7 +68,6 @@ public class PostgresqlExecutor implements TenantCommandSqlExecutor {
     params.add(tenant.type().name());
     params.add(tenant.domain().value());
     params.add(tenant.authorizationProvider().name());
-    params.add(tenant.databaseType().name());
     params.add(jsonConverter.write(tenant.attributesAsMap()));
     params.add(jsonConverter.write(tenant.uiConfiguration().toMap()));
     params.add(jsonConverter.write(tenant.corsConfiguration().toMap()));

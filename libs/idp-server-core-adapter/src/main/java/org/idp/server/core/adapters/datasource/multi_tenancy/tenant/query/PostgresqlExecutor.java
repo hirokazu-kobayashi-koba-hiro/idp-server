@@ -32,7 +32,6 @@ public class PostgresqlExecutor implements TenantQuerySqlExecutor {
                 type,
                 domain,
                 authorization_provider,
-                database_type,
                 attributes,
                 ui_config,
                 cors_config,
