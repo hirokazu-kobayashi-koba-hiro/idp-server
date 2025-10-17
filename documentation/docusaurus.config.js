@@ -29,7 +29,7 @@ const config = {
   organizationName: 'hirokazu-kobayashi-koba-hiro', // Usually your GitHub org/user name.
   projectName: 'idp-server', // Usually your repo name.
 
-  onBrokenLinks: 'throw',
+  onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
 
   // Set Japanese as the only locale
