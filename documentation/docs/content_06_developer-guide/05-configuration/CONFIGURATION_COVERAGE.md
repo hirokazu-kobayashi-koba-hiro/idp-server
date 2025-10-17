@@ -185,7 +185,7 @@
 | 基本情報（id, type） | ✅ | ✅ | OK |
 | triggers | ✅ | ✅ | OK |
 | metadata | ⚠️ | ⚠️ | 基本は理解可能 |
-| **events.{event-type}.execution** | ❌ | ❌ | **構造説明不足** |
+| **events.\{event-type\}.execution** | ❌ | ❌ | **構造説明不足** |
 | oauth_authorization.cache設定 | ❌ | ❌ | **説明なし** |
 | security_event_token_additional_payload_mapping_rules | ❌ | ❌ | **説明なし** |
 

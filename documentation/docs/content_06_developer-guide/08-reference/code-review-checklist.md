@@ -241,9 +241,9 @@ String clientId = request.getClientId();
 
 ### ✅ Phase 8: 例外ハンドリング
 
-- [ ] **適切な例外型**: `{Operation}BadRequestException`, `ForbiddenException`等
+- [ ] **適切な例外型**: `{'{Operation}BadRequestException'}`, `ForbiddenException`等
 - [ ] **OAuth標準エラーコード**: `invalid_request`, `access_denied`等
-- [ ] **throwExceptionIf{Condition}()**: パターン使用
+- [ ] **throwExceptionIf\{Condition\}()**: パターン使用
 
 ```java
 // ✅ 正しい例外
