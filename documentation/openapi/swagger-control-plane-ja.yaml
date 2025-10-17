@@ -723,6 +723,32 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Offset'
+        - name: id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 設定IDでフィルタリング
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 検証タイプでフィルタリング
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: 作成日時の開始（ISO 8601形式）
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: 作成日時の終了（ISO 8601形式）
         - $ref: '#/components/parameters/DryRun'
       responses:
         '200':
@@ -1670,6 +1696,70 @@ paths:
           schema:
             type: string
           description: クライアント名でフィルタリング
+        - name: client_id_alias
+          in: query
+          required: false
+          schema:
+            type: string
+          description: クライアントID別名でフィルタリング
+        - name: client_uri
+          in: query
+          required: false
+          schema:
+            type: string
+          description: クライアントURIでフィルタリング
+        - name: application_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [web, native]
+          description: アプリケーションタイプでフィルタリング
+        - name: grant_types
+          in: query
+          required: false
+          schema:
+            type: string
+          description: グラントタイプでフィルタリング（カンマ区切り）
+        - name: response_types
+          in: query
+          required: false
+          schema:
+            type: string
+          description: レスポンスタイプでフィルタリング（カンマ区切り）
+        - name: token_endpoint_auth_method
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [client_secret_basic, client_secret_post, client_secret_jwt, private_key_jwt, tls_client_auth, self_signed_tls_client_auth, none]
+          description: トークンエンドポイント認証方式でフィルタリング
+        - name: scope
+          in: query
+          required: false
+          schema:
+            type: string
+          description: スコープでフィルタリング（スペース区切り）
+        - name: enabled
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: 有効/無効ステータスでフィルタリング
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: 作成日時の開始（ISO 8601形式）
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: 作成日時の終了（ISO 8601形式）
       responses:
         '200':
           description: クライアント一覧を正常に取得しました
@@ -2131,6 +2221,105 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Offset'
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 特定のユーザーIDでフィルタリング
+        - name: preferred_username
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 優先ユーザー名でフィルタリング
+        - name: email
+          in: query
+          required: false
+          schema:
+            type: string
+          description: メールアドレスでフィルタリング
+        - name: external_user_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 外部ユーザーIDでフィルタリング
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [active, inactive, locked]
+          description: ユーザーステータスでフィルタリング
+        - name: provider_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: プロバイダーIDでフィルタリング
+        - name: phone_number
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 電話番号でフィルタリング
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 名前で部分一致検索（大文字小文字区別なし）
+        - name: given_name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 名で部分一致検索（大文字小文字区別なし）
+        - name: family_name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 姓で部分一致検索（大文字小文字区別なし）
+        - name: middle_name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: ミドルネームで部分一致検索（大文字小文字区別なし）
+        - name: nickname
+          in: query
+          required: false
+          schema:
+            type: string
+          description: ニックネームで部分一致検索（大文字小文字区別なし）
+        - name: role
+          in: query
+          required: false
+          schema:
+            type: string
+          description: ロール名で部分一致検索
+        - name: permission
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 権限名で部分一致検索
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: 作成日時の開始（ISO 8601形式）
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: 作成日時の終了（ISO 8601形式）
       responses:
         '200':
           description: ユーザーを正常に取得しました

@@ -17,7 +17,6 @@
 package org.idp.server.adapters.springboot.control_plane.restapi.organization;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
@@ -124,25 +123,13 @@ public class OrganizationClientManagementV1Api implements ParameterTransformable
       @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
       @PathVariable String organizationId,
       @PathVariable String tenantId,
-      @RequestParam(value = "limit", defaultValue = "20") String limitValue,
-      @RequestParam(value = "offset", defaultValue = "0") String offsetValue,
-      @RequestParam(value = "client_id", required = false) String clientId,
-      @RequestParam(value = "client_name", required = false) String clientName,
+      @RequestParam Map<String, String> queryParams,
       HttpServletRequest httpServletRequest) {
 
     OrganizationIdentifier organizationIdentifier =
         organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    Map<String, String> queryParams = new HashMap<>();
-    queryParams.put("limit", limitValue);
-    queryParams.put("offset", offsetValue);
-    if (clientId != null) {
-      queryParams.put("client_id", clientId);
-    }
-    if (clientName != null) {
-      queryParams.put("client_name", clientName);
-    }
     ClientQueries queries = new ClientQueries(queryParams);
 
     ClientManagementResponse response =
