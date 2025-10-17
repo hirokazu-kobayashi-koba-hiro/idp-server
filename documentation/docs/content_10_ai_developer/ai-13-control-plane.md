@@ -9,9 +9,9 @@
 
 Control Plane（管理API）の契約定義層。実装は含まず、インターフェース定義のみ。
 
-- **API契約**: `{Domain}ManagementApi` インターフェース定義
+- **API契約**: `{'{Domain}ManagementApi'}` インターフェース定義
 - **システムレベル**: テナント単位の管理API
-- **組織レベル**: 組織単位の管理API（`Org{Domain}ManagementApi`）
+- **組織レベル**: 組織単位の管理API（`{'Org{Domain}ManagementApi'}`）
 - **権限定義**: `default`メソッドによる権限自動計算
 - **I/O定義**: Request/Responseデータ構造
 
@@ -624,7 +624,7 @@ public class ClientRegistrationRequest {
 }
 ```
 
-**命名規則**: `{Entity}RegistrationRequest`（Create/Update共通）
+**命名規則**: `{'{Entity}RegistrationRequest'}`（Create/Update共通）
 
 ### Response - レスポンスデータ構造
 
@@ -650,7 +650,7 @@ public class ClientManagementResponse {
 }
 ```
 
-**命名規則**: `{Entity}ManagementResponse`
+**命名規則**: `{'{Entity}ManagementResponse'}`
 
 ### Status - ステータス列挙型
 
@@ -676,7 +676,7 @@ public enum ClientManagementStatus {
 }
 ```
 
-**命名規則**: `{Entity}ManagementStatus`
+**命名規則**: `{'{Entity}ManagementStatus'}`
 
 ## Dry Run対応
 
@@ -731,7 +731,7 @@ public class ClientQueries {
 }
 ```
 
-**命名規則**: `{Entity}Queries`
+**命名規則**: `{'{Entity}Queries'}`
 
 ## Context Creator パターン
 

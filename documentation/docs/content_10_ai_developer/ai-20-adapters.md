@@ -395,7 +395,7 @@ Spring Boot統合・HTTP/REST API実装。
 
 **情報源**: [ClientManagementV1Api.java:37-69](../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/control_plane/restapi/management/ClientManagementV1Api.java#L37-L69)
 
-#### 命名規則: {Domain}ManagementV1Api
+#### 命名規則: \{Domain\}ManagementV1Api
 
 ```java
 /**
@@ -445,7 +445,7 @@ public class ClientManagementV1Api implements ParameterTransformable {
 ```
 
 **重要ポイント**:
-- ✅ **命名規則**: `{Domain}ManagementV1Api` (例: `ClientManagementV1Api`, `UserManagementV1Api`)
+- ✅ **命名規則**: `{'{Domain}ManagementV1Api'}` (例: `ClientManagementV1Api`, `UserManagementV1Api`)
 - ✅ **implements ParameterTransformable**: HttpServletRequest → RequestAttributes変換
 - ✅ **@AuthenticationPrincipal OperatorPrincipal**: Spring Securityで認証済みオペレーター取得
 - ✅ **TenantIdentifier型**: `@PathVariable("tenant-id")` で型安全なパス変数
@@ -673,7 +673,7 @@ public class ClientManagementV1Api implements ParameterTransformable {  // ✅ �
 ```
 
 **追加内容**:
-- 命名規則: `{Domain}ManagementV1Api`
+- 命名規則: `{'{Domain}ManagementV1Api'}`
 - `implements ParameterTransformable`
 - `@AuthenticationPrincipal OperatorPrincipal` パターン
 - `TenantIdentifier` 型安全なパス変数

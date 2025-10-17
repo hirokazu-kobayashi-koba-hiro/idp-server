@@ -47,7 +47,7 @@ idp-server-coreでは、以下の3層パターンでドメインロジックを�
 
 #### 1. Handler - プロトコル処理・オーケストレーション
 
-**命名規則**: `{Domain}{Action}Handler`
+**命名規則**: `{'{Domain}{Action}Handler'}`
 
 **責務**:
 - プロトコルリクエストの受け取り
@@ -148,7 +148,7 @@ public class OAuthAuthorizeHandler {
 
 #### 2. Service - 純粋ビジネスロジック
 
-**命名規則**: `{Domain}{Action}Service`
+**命名規則**: `{'{Domain}{Action}Service'}`
 
 **責務**:
 - RFC準拠のビジネスロジック実装
@@ -202,7 +202,7 @@ public class AuthorizationCodeGrantService
 
 #### 3. Repository - データアクセス抽象化
 
-**命名規則**: `{Entity}QueryRepository` / `{Entity}CommandRepository`
+**命名規則**: `{'{Entity}QueryRepository'}` / `{'{Entity}CommandRepository'}`
 
 **責務**:
 - CQRS (Command Query Responsibility Segregation) パターン
@@ -245,7 +245,7 @@ public interface ClientConfigurationQueryRepository {
 
 ### Validator vs Verifier
 
-**Validator**: 入力形式チェック → `{Operation}BadRequestException`
+**Validator**: 入力形式チェック → `{'{Operation}BadRequestException'}`
 
 ```java
 // 形式チェック: nullチェック、形式妥当性

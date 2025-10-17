@@ -9,7 +9,7 @@
 
 アプリケーション層のオーケストレーション。Control Plane APIの契約を実装し、Core層のHandlerを呼び出す。
 
-- **EntryService実装**: `{Domain}{Action}EntryService` パターン
+- **EntryService実装**: `{'{Domain}{Action}EntryService'}` パターン
 - **トランザクション境界**: `@Transaction` によるトランザクション管理
 - **認可チェック**: 権限検証・アクセス制御
 - **Audit Log記録**: 全操作の監査ログ出力
