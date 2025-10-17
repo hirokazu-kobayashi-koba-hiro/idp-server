@@ -17,7 +17,6 @@
 package org.idp.server.adapters.springboot.control_plane.restapi.organization;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
@@ -123,25 +122,13 @@ public class OrganizationUserManagementV1Api implements ParameterTransformable {
       @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
       @PathVariable String organizationId,
       @PathVariable String tenantId,
-      @RequestParam(value = "limit", defaultValue = "20") String limitValue,
-      @RequestParam(value = "offset", defaultValue = "0") String offsetValue,
-      @RequestParam(value = "user_id", required = false) String userId,
-      @RequestParam(value = "username", required = false) String username,
+      @RequestParam Map<String, String> queryParams,
       HttpServletRequest httpServletRequest) {
 
     OrganizationIdentifier organizationIdentifier =
         organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    Map<String, String> queryParams = new HashMap<>();
-    queryParams.put("limit", limitValue);
-    queryParams.put("offset", offsetValue);
-    if (userId != null) {
-      queryParams.put("user_id", userId);
-    }
-    if (username != null) {
-      queryParams.put("username", username);
-    }
     UserQueries queries = new UserQueries(queryParams);
 
     UserManagementResponse response =

@@ -17,7 +17,6 @@
 package org.idp.server.adapters.springboot.control_plane.restapi.organization;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
@@ -85,16 +84,12 @@ public class OrganizationIdentityVerificationConfigManagementV1Api
       @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
       @PathVariable String organizationId,
       @PathVariable String tenantId,
-      @RequestParam(value = "limit", required = false, defaultValue = "20") int limit,
-      @RequestParam(value = "offset", required = false, defaultValue = "0") int offset,
+      @RequestParam Map<String, String> queryParams,
       HttpServletRequest httpServletRequest) {
 
     OrganizationIdentifier organizationIdentifier =
         organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
-    Map<String, String> queryParams = new HashMap<>();
-    queryParams.put("limit", String.valueOf(limit));
-    queryParams.put("offset", String.valueOf(offset));
     IdentityVerificationQueries queries = new IdentityVerificationQueries(queryParams);
 
     IdentityVerificationConfigManagementResponse response =

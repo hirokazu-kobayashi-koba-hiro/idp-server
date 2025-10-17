@@ -713,6 +713,32 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Offset'
+        - name: id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by configuration ID
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by verification type
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Filter by creation date from (ISO 8601 format)
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Filter by creation date to (ISO 8601 format)
         - $ref: '#/components/parameters/DryRun'
       responses:
         '200':
@@ -1511,6 +1537,70 @@ paths:
           schema:
             type: string
           description: Filter by client name
+        - name: client_id_alias
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by client ID alias
+        - name: client_uri
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by client URI
+        - name: application_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [web, native]
+          description: Filter by application type
+        - name: grant_types
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by grant types (comma-separated)
+        - name: response_types
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by response types (comma-separated)
+        - name: token_endpoint_auth_method
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [client_secret_basic, client_secret_post, client_secret_jwt, private_key_jwt, tls_client_auth, self_signed_tls_client_auth, none]
+          description: Filter by token endpoint authentication method
+        - name: scope
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by scope (space-separated)
+        - name: enabled
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Filter by enabled status
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Filter by creation date from (ISO 8601 format)
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Filter by creation date to (ISO 8601 format)
       responses:
         '200':
           description: Client list retrieved successfully
@@ -1963,6 +2053,105 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Offset'
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by specific user ID
+        - name: preferred_username
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by preferred username
+        - name: email
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by email address
+        - name: external_user_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by external user ID
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [active, inactive, locked]
+          description: Filter by user status
+        - name: provider_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by provider ID
+        - name: phone_number
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by phone number
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by name (partial match, case-insensitive)
+        - name: given_name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by given name (partial match, case-insensitive)
+        - name: family_name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by family name (partial match, case-insensitive)
+        - name: middle_name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by middle name (partial match, case-insensitive)
+        - name: nickname
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by nickname (partial match, case-insensitive)
+        - name: role
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by role name (partial match)
+        - name: permission
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by permission name (partial match)
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Filter by creation date from (ISO 8601 format)
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Filter by creation date to (ISO 8601 format)
       responses:
         '200':
           description: Users retrieved successfully
