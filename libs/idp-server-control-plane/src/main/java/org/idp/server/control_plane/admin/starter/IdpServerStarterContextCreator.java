@@ -22,7 +22,6 @@ import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.base.definition.DefaultAdminRole;
 import org.idp.server.control_plane.management.onboarding.io.OrganizationRegistrationRequest;
 import org.idp.server.control_plane.management.onboarding.io.TenantRegistrationRequest;
-import org.idp.server.core.openid.identity.TenantIdentityPolicy;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserRole;
 import org.idp.server.core.openid.identity.UserStatus;
@@ -41,6 +40,7 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantType;
 import org.idp.server.platform.multi_tenancy.tenant.config.CorsConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.config.SessionConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.config.UIConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
 import org.idp.server.platform.security.event.SecurityEventUserAttributeConfiguration;
 import org.idp.server.platform.security.log.SecurityEventLogConfiguration;
 
@@ -106,10 +106,11 @@ public class IdpServerStarterContextCreator {
             ? new SecurityEventUserAttributeConfiguration(tenantRequest.securityEventUserConfig())
             : new SecurityEventUserAttributeConfiguration();
 
-    TenantAttributes identityPolicyConfig =
+    TenantIdentityPolicy identityPolicyConfig =
         tenantRequest.identityPolicyConfig() != null
-            ? new TenantAttributes(tenantRequest.identityPolicyConfig())
-            : new TenantAttributes();
+            ? TenantIdentityPolicy.fromTenantAttributes(
+                new TenantAttributes(tenantRequest.identityPolicyConfig()))
+            : TenantIdentityPolicy.defaultPolicy();
 
     Tenant tenant =
         new Tenant(
@@ -135,8 +136,7 @@ public class IdpServerStarterContextCreator {
 
     // Apply tenant identity policy to set preferred_username if not set
     if (user.preferredUsername() == null || user.preferredUsername().isBlank()) {
-      TenantIdentityPolicy policy = TenantIdentityPolicy.fromTenantAttributes(tenant.attributes());
-      user.applyIdentityPolicy(policy);
+      user.applyIdentityPolicy(tenant.identityPolicyConfig());
     }
 
     List<Role> rolesList = roles.toList();

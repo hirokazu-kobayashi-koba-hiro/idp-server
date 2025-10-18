@@ -201,12 +201,48 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
    * @param policy tenant identity policy
    * @return this user instance
    */
-  public User applyIdentityPolicy(TenantIdentityPolicy policy) {
-    String normalizedValue = policy.extractPreferredUsername(this);
+  public User applyIdentityPolicy(
+      org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy policy) {
+    String normalizedValue =
+        switch (policy.uniqueKeyType()) {
+          case USERNAME -> normalizeUsername(this.preferredUsername);
+          case EMAIL -> normalizeEmail(this.email);
+          case PHONE -> normalizePhone(this.phoneNumber);
+          case EXTERNAL_USER_ID -> normalizeExternalUserId(this.externalUserId);
+        };
     if (normalizedValue != null) {
       this.preferredUsername = normalizedValue;
     }
     return this;
+  }
+
+  private String normalizeUsername(String username) {
+    if (username == null || username.isBlank()) {
+      return null;
+    }
+    return username.trim().toLowerCase();
+  }
+
+  private String normalizeEmail(String email) {
+    if (email == null || email.isBlank()) {
+      return null;
+    }
+    return email.trim().toLowerCase();
+  }
+
+  private String normalizePhone(String phone) {
+    if (phone == null || phone.isBlank()) {
+      return null;
+    }
+    String digits = phone.replaceAll("[^0-9]", "");
+    return digits.isEmpty() ? null : digits;
+  }
+
+  private String normalizeExternalUserId(String externalUserId) {
+    if (externalUserId == null || externalUserId.isBlank()) {
+      return null;
+    }
+    return externalUserId.trim();
   }
 
   public String profile() {

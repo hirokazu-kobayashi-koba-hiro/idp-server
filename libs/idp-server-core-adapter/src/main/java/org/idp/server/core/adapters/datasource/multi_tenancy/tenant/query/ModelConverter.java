@@ -24,6 +24,7 @@ import org.idp.server.platform.multi_tenancy.tenant.*;
 import org.idp.server.platform.multi_tenancy.tenant.config.CorsConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.config.SessionConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.config.UIConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
 import org.idp.server.platform.security.event.SecurityEventUserAttributeConfiguration;
 import org.idp.server.platform.security.log.SecurityEventLogConfiguration;
 
@@ -50,8 +51,8 @@ class ModelConverter {
     SecurityEventUserAttributeConfiguration securityEventUserAttributeConfiguration =
         convertSecurityEventUserAttributeConfiguration(
             result.getOrDefault("security_event_user_config", ""));
-    TenantAttributes identityPolicyConfig =
-        convertAttributes(result.getOrDefault("identity_policy_config", ""));
+    TenantIdentityPolicy identityPolicyConfig =
+        convertIdentityPolicyConfig(result.getOrDefault("identity_policy_config", ""));
 
     return new Tenant(
         tenantIdentifier,
@@ -145,6 +146,19 @@ class ModelConverter {
       return new SecurityEventUserAttributeConfiguration(configMap);
     } catch (Exception exception) {
       return new SecurityEventUserAttributeConfiguration();
+    }
+  }
+
+  private static TenantIdentityPolicy convertIdentityPolicyConfig(String value) {
+    if (value == null || value.isEmpty()) {
+      return TenantIdentityPolicy.defaultPolicy();
+    }
+    try {
+      JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(value);
+      Map<String, Object> configMap = jsonNodeWrapper.toMap();
+      return TenantIdentityPolicy.fromTenantAttributes(new TenantAttributes(configMap));
+    } catch (Exception exception) {
+      return TenantIdentityPolicy.defaultPolicy();
     }
   }
 }

@@ -17,11 +17,11 @@
 package org.idp.server.control_plane.management.identity.user;
 
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
-import org.idp.server.core.openid.identity.TenantIdentityPolicy;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserUpdater;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
 
 public class UserPatchContextCreator {
 
@@ -45,7 +45,7 @@ public class UserPatchContextCreator {
 
     // Apply tenant identity policy to newUser if not set
     if (newUser.preferredUsername() == null || newUser.preferredUsername().isBlank()) {
-      TenantIdentityPolicy policy = TenantIdentityPolicy.fromTenantAttributes(tenant.attributes());
+      TenantIdentityPolicy policy = tenant.identityPolicyConfig();
       newUser.applyIdentityPolicy(policy);
     }
 
@@ -54,7 +54,7 @@ public class UserPatchContextCreator {
 
     // Apply policy to merged user if still not set
     if (updated.preferredUsername() == null || updated.preferredUsername().isBlank()) {
-      TenantIdentityPolicy policy = TenantIdentityPolicy.fromTenantAttributes(tenant.attributes());
+      TenantIdentityPolicy policy = tenant.identityPolicyConfig();
       updated.applyIdentityPolicy(policy);
     }
 
