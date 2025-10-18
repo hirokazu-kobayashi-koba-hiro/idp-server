@@ -60,7 +60,7 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
       String origin = request.getHeader("Origin") != null ? request.getHeader("Origin") : "";
       String allowOrigin =
           allowOrigins.stream()
-              .filter(allow -> allow.contains(origin))
+              .filter(allow -> allow.equals(origin))
               .findFirst()
               .orElse(tenant.domain().value());
       log.debug(
