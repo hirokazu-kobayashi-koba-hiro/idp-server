@@ -16,6 +16,7 @@
 
 package org.idp.server.control_plane.management.tenant;
 
+import java.util.Map;
 import org.idp.server.control_plane.management.onboarding.io.TenantRegistrationRequest;
 import org.idp.server.control_plane.management.tenant.io.TenantRequest;
 import org.idp.server.core.openid.identity.User;
@@ -93,10 +94,7 @@ public class TenantManagementRegistrationContextCreator {
             : new SecurityEventUserAttributeConfiguration();
 
     TenantIdentityPolicy identityPolicyConfig =
-        tenantRequest.identityPolicyConfig() != null
-            ? TenantIdentityPolicy.fromTenantAttributes(
-                new TenantAttributes(tenantRequest.identityPolicyConfig()))
-            : TenantIdentityPolicy.defaultPolicy();
+        convertIdentityPolicyConfig(tenantRequest.identityPolicyConfig());
 
     Tenant tenant =
         new Tenant(
@@ -119,5 +117,9 @@ public class TenantManagementRegistrationContextCreator {
 
     return new TenantManagementRegistrationContext(
         adminTenant, tenant, authorizationServerConfiguration, assigned, user, dryRun);
+  }
+
+  private TenantIdentityPolicy convertIdentityPolicyConfig(Map<String, Object> configMap) {
+    return TenantIdentityPolicy.fromMap(configMap);
   }
 }

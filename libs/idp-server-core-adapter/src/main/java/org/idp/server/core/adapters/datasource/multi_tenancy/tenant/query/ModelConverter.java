@@ -20,6 +20,7 @@ import java.util.Map;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.*;
 import org.idp.server.platform.multi_tenancy.tenant.config.CorsConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.config.SessionConfiguration;
@@ -31,6 +32,7 @@ import org.idp.server.platform.security.log.SecurityEventLogConfiguration;
 class ModelConverter {
 
   private static final JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(ModelConverter.class);
 
   static Tenant convert(Map<String, String> result) {
 
@@ -156,8 +158,12 @@ class ModelConverter {
     try {
       JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(value);
       Map<String, Object> configMap = jsonNodeWrapper.toMap();
-      return TenantIdentityPolicy.fromTenantAttributes(new TenantAttributes(configMap));
+      return TenantIdentityPolicy.fromMap(configMap);
     } catch (Exception exception) {
+      log.warn(
+          "Failed to convert identity_policy_config, using default policy. Value: {}, Error: {}",
+          value,
+          exception.getMessage());
       return TenantIdentityPolicy.defaultPolicy();
     }
   }

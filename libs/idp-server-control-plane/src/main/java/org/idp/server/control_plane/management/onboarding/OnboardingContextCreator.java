@@ -17,6 +17,7 @@
 package org.idp.server.control_plane.management.onboarding;
 
 import java.util.List;
+import java.util.Map;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.base.definition.DefaultAdminRole;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingRequest;
@@ -107,10 +108,7 @@ public class OnboardingContextCreator {
             : new SecurityEventUserAttributeConfiguration();
 
     TenantIdentityPolicy identityPolicyConfig =
-        tenantRequest.identityPolicyConfig() != null
-            ? TenantIdentityPolicy.fromTenantAttributes(
-                new TenantAttributes(tenantRequest.identityPolicyConfig()))
-            : TenantIdentityPolicy.defaultPolicy();
+        convertIdentityPolicyConfig(tenantRequest.identityPolicyConfig());
 
     Tenant tenant =
         new Tenant(
@@ -156,5 +154,9 @@ public class OnboardingContextCreator {
         updatedUser,
         clientConfiguration,
         dryRun);
+  }
+
+  private TenantIdentityPolicy convertIdentityPolicyConfig(Map<String, Object> configMap) {
+    return TenantIdentityPolicy.fromMap(configMap);
   }
 }

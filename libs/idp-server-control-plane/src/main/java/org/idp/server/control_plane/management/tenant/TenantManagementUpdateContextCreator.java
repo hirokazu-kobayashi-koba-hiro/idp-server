@@ -66,7 +66,7 @@ public class TenantManagementUpdateContextCreator {
         extractConfiguration("identity_policy_config", TenantAttributes.class);
     TenantIdentityPolicy identityPolicyConfig =
         identityPolicyConfigAttributes.exists()
-            ? TenantIdentityPolicy.fromTenantAttributes(identityPolicyConfigAttributes)
+            ? TenantIdentityPolicy.fromMap(identityPolicyConfigAttributes.toMap())
             : before.identityPolicyConfig();
 
     Tenant updated =

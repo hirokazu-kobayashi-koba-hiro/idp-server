@@ -17,6 +17,7 @@
 package org.idp.server.control_plane.admin.starter;
 
 import java.util.List;
+import java.util.Map;
 import org.idp.server.control_plane.admin.starter.io.IdpServerStarterRequest;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.base.definition.DefaultAdminRole;
@@ -107,10 +108,7 @@ public class IdpServerStarterContextCreator {
             : new SecurityEventUserAttributeConfiguration();
 
     TenantIdentityPolicy identityPolicyConfig =
-        tenantRequest.identityPolicyConfig() != null
-            ? TenantIdentityPolicy.fromTenantAttributes(
-                new TenantAttributes(tenantRequest.identityPolicyConfig()))
-            : TenantIdentityPolicy.defaultPolicy();
+        convertIdentityPolicyConfig(tenantRequest.identityPolicyConfig());
 
     Tenant tenant =
         new Tenant(
@@ -160,5 +158,9 @@ public class IdpServerStarterContextCreator {
         updatedUser,
         clientConfiguration,
         dryRun);
+  }
+
+  private TenantIdentityPolicy convertIdentityPolicyConfig(Map<String, Object> configMap) {
+    return TenantIdentityPolicy.fromMap(configMap);
   }
 }

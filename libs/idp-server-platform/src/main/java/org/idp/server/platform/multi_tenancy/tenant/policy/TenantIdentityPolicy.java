@@ -54,6 +54,27 @@ public class TenantIdentityPolicy {
   }
 
   /**
+   * Constructs identity policy from map
+   *
+   * <p>Reads "identity_unique_key_type" from map. If not configured, defaults to EMAIL.
+   *
+   * @param map configuration map
+   * @return identity policy
+   */
+  public static TenantIdentityPolicy fromMap(Map<String, Object> map) {
+    if (map == null || map.isEmpty()) {
+      return defaultPolicy();
+    }
+    String keyTypeValue = (String) map.getOrDefault("identity_unique_key_type", "EMAIL");
+    try {
+      UniqueKeyType uniqueKeyType = UniqueKeyType.valueOf(keyTypeValue.toUpperCase());
+      return new TenantIdentityPolicy(uniqueKeyType);
+    } catch (IllegalArgumentException e) {
+      return defaultPolicy();
+    }
+  }
+
+  /**
    * Constructs identity policy from tenant attributes
    *
    * <p>Reads "identity_unique_key_type" from tenant attributes. If not configured, defaults to
@@ -98,5 +119,27 @@ public class TenantIdentityPolicy {
       map.put("identity_unique_key_type", uniqueKeyType.name());
     }
     return map;
+  }
+
+  /**
+   * Normalizes value based on unique key type.
+   *
+   * @param value the value to normalize
+   * @return normalized value
+   */
+  public String normalize(String value) {
+    if (value == null || value.isBlank()) {
+      return null;
+    }
+    return switch (uniqueKeyType) {
+      case USERNAME, EMAIL -> value.trim().toLowerCase();
+      case PHONE -> normalizePhone(value);
+      case EXTERNAL_USER_ID -> value.trim();
+    };
+  }
+
+  private String normalizePhone(String phone) {
+    String digits = phone.replaceAll("[^0-9]", "");
+    return digits.isEmpty() ? null : digits;
   }
 }
