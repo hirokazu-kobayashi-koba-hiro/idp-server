@@ -81,6 +81,10 @@ class ModelConverter {
       Map<String, Object> attributesMap = jsonNodeWrapper.toMap();
       return new TenantAttributes(attributesMap);
     } catch (Exception exception) {
+      log.warn(
+          "Failed to convert attributes, using empty attributes. Value: {}, Error: {}",
+          value,
+          exception.getMessage());
       return new TenantAttributes();
     }
   }
@@ -94,6 +98,10 @@ class ModelConverter {
       Map<String, Object> configMap = jsonNodeWrapper.toMap();
       return new UIConfiguration(configMap);
     } catch (Exception exception) {
+      log.warn(
+          "Failed to convert ui_config, using default configuration. Value: {}, Error: {}",
+          value,
+          exception.getMessage());
       return new UIConfiguration();
     }
   }
@@ -107,6 +115,10 @@ class ModelConverter {
       Map<String, Object> configMap = jsonNodeWrapper.toMap();
       return new CorsConfiguration(configMap);
     } catch (Exception exception) {
+      log.warn(
+          "Failed to convert cors_config, using default configuration. Value: {}, Error: {}",
+          value,
+          exception.getMessage());
       return new CorsConfiguration();
     }
   }
@@ -120,6 +132,10 @@ class ModelConverter {
       Map<String, Object> configMap = jsonNodeWrapper.toMap();
       return new SessionConfiguration(configMap);
     } catch (Exception exception) {
+      log.warn(
+          "Failed to convert session_config, using default configuration. Value: {}, Error: {}",
+          value,
+          exception.getMessage());
       return new SessionConfiguration();
     }
   }
@@ -133,6 +149,10 @@ class ModelConverter {
       Map<String, Object> configMap = jsonNodeWrapper.toMap();
       return new SecurityEventLogConfiguration(configMap);
     } catch (Exception exception) {
+      log.warn(
+          "Failed to convert security_event_log_config, using default configuration. Value: {}, Error: {}",
+          value,
+          exception.getMessage());
       return new SecurityEventLogConfiguration();
     }
   }
@@ -147,6 +167,10 @@ class ModelConverter {
       Map<String, Object> configMap = jsonNodeWrapper.toMap();
       return new SecurityEventUserAttributeConfiguration(configMap);
     } catch (Exception exception) {
+      log.warn(
+          "Failed to convert security_event_user_config, using default configuration. Value: {}, Error: {}",
+          value,
+          exception.getMessage());
       return new SecurityEventUserAttributeConfiguration();
     }
   }
