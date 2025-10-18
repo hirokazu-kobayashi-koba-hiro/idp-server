@@ -5,7 +5,7 @@
 <meta name="generator" content="Docusaurus v3.7.0">
 <title data-rh="true">監査ログ | IdP-Server Documentation</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://hirokazu-kobayashi-koba-hiro.github.io/idp-server/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://hirokazu-kobayashi-koba-hiro.github.io/idp-server/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://hirokazu-kobayashi-koba-hiro.github.io/idp-server/docs/content_03_concepts/concept-13-audit-compliance"><meta data-rh="true" property="og:locale" content="ja"><meta data-rh="true" name="docusaurus_locale" content="ja"><meta data-rh="true" name="docsearch:language" content="ja"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="監査ログ | IdP-Server Documentation"><meta data-rh="true" name="description" content="---"><meta data-rh="true" property="og:description" content="---"><link data-rh="true" rel="icon" href="/idp-server/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://hirokazu-kobayashi-koba-hiro.github.io/idp-server/docs/content_03_concepts/concept-13-audit-compliance"><link data-rh="true" rel="alternate" href="https://hirokazu-kobayashi-koba-hiro.github.io/idp-server/docs/content_03_concepts/concept-13-audit-compliance" hreflang="ja"><link data-rh="true" rel="alternate" href="https://hirokazu-kobayashi-koba-hiro.github.io/idp-server/docs/content_03_concepts/concept-13-audit-compliance" hreflang="x-default"><link rel="alternate" type="application/rss+xml" href="/idp-server/blog/rss.xml" title="IdP-Server Documentation RSS Feed">
 <link rel="alternate" type="application/atom+xml" href="/idp-server/blog/atom.xml" title="IdP-Server Documentation Atom Feed"><link rel="stylesheet" href="/idp-server/assets/css/styles.f434a3d5.css">
-<script src="/idp-server/assets/js/runtime~main.d90f1070.js" defer="defer"></script>
+<script src="/idp-server/assets/js/runtime~main.92c1f5ce.js" defer="defer"></script>
 <script src="/idp-server/assets/js/main.e38f4277.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -64,7 +64,6 @@
 <!-- -->
 <p><strong>3種類のデータ管理</strong>:</p>
 <table><thead><tr><th style="text-align:left">データ種別</th><th style="text-align:left">保持ポリシー</th><th style="text-align:left">例</th><th style="text-align:left">理由</th></tr></thead><tbody><tr><td style="text-align:left"><strong>物理削除</strong></td><td style="text-align:left">ユーザー削除時に即座削除</td><td style="text-align:left"><code>idp_user</code>, <code>oauth_token</code>, <code>authentication_transaction</code></td><td style="text-align:left">ユーザーの削除権</td></tr><tr><td style="text-align:left"><strong>論理削除</strong></td><td style="text-align:left">ステータス更新で履歴保持</td><td style="text-align:left"><code>authorization_granted</code> (revoked_at), <code>identity_verification_application</code> (status=&#x27;deleted&#x27;)</td><td style="text-align:left">監査証跡・統計分析</td></tr><tr><td style="text-align:left"><strong>監査ログ保持</strong></td><td style="text-align:left">ユーザー削除後も保持（アーカイブ対象）</td><td style="text-align:left"><code>audit_log</code>, <code>security_event</code></td><td style="text-align:left">法的義務・コンプライアンス</td></tr></tbody></table>
-<p>詳細は <a href="/idp-server/docs/content_06_developer-guide/developer-guide/user-lifecycle-event.md">ユーザーライフサイクルイベント</a> を参照。</p>
 <hr>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="ユースケース">ユースケース<a href="#ユースケース" class="hash-link" aria-label="ユースケース への直接リンク" title="ユースケース への直接リンク">​</a></h2>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="1-コンプライアンス監査-全操作ログのレビュー">1. コンプライアンス監査: 全操作ログのレビュー<a href="#1-コンプライアンス監査-全操作ログのレビュー" class="hash-link" aria-label="1. コンプライアンス監査: 全操作ログのレビュー への直接リンク" title="1. コンプライアンス監査: 全操作ログのレビュー への直接リンク">​</a></h3>
@@ -98,7 +97,7 @@
 </ul>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="データ削除の確実性">データ削除の確実性<a href="#データ削除の確実性" class="hash-link" aria-label="データ削除の確実性 への直接リンク" title="データ削除の確実性 への直接リンク">​</a></h3>
 <ul>
-<li><strong>物理削除と論理削除の明確な分離</strong>: 削除対象を明確化</li>
+<li><strong>物理削除と論理  削除の明確な分離</strong>: 削除対象を明確化</li>
 <li><strong>外部サービスへの削除通知</strong>: FIDO認証器、VC発行者等への通知</li>
 <li><strong>監査ログに削除記録</strong>: before/after payloadでデータ削除を追跡可能</li>
 </ul>
@@ -108,7 +107,6 @@
 <li><a href="/idp-server/docs/content_03_concepts/concept-11-security-events">セキュリティイベント</a> - SecurityEventログ、6種類のフック</li>
 <li><a href="/idp-server/docs/content_03_concepts/concept-01-multi-tenant">マルチテナント</a> - テナント単位の監査分離、RLS</li>
 <li><a href="/idp-server/docs/content_03_concepts/concept-10-control-plane">コントロールプレーン</a> - Management API、権限管理</li>
-<li><a href="/idp-server/docs/content_06_developer-guide/developer-guide/user-lifecycle-event.md">ユーザーライフサイクルイベント</a> - ユーザー削除ポリシー、物理削除/論理削除/保持の詳細</li>
 </ul>
 <hr>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="参考">参考<a href="#参考" class="hash-link" aria-label="参考 への直接リンク" title="参考 への直接リンク">​</a></h2>
