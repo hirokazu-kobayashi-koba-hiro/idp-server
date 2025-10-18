@@ -16,6 +16,8 @@
 
 package org.idp.server.core.openid.identity;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.platform.multi_tenancy.tenant.TenantAttributes;
 
 /**
@@ -72,6 +74,30 @@ public class TenantIdentityPolicy {
 
   public UniqueKeyType uniqueKeyType() {
     return uniqueKeyType;
+  }
+
+  /**
+   * Checks if this policy exists (is not null).
+   *
+   * @return true if policy exists
+   */
+  public boolean exists() {
+    return uniqueKeyType != null;
+  }
+
+  /**
+   * Converts this policy to a Map for JSON serialization.
+   *
+   * <p>Returns a map with "identity_unique_key_type" key for database storage.
+   *
+   * @return map representation
+   */
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    if (uniqueKeyType != null) {
+      map.put("identity_unique_key_type", uniqueKeyType.name());
+    }
+    return map;
   }
 
   /**
