@@ -122,24 +122,18 @@ public class TenantIdentityPolicy {
   }
 
   /**
-   * Normalizes value based on unique key type.
+   * Returns the value as-is without normalization.
    *
-   * @param value the value to normalize
-   * @return normalized value
+   * <p>Normalization removed to preserve original values from external systems. Username, email,
+   * phone, and external_user_id are stored exactly as provided.
+   *
+   * @param value the value
+   * @return the value unchanged (null if blank)
    */
   public String normalize(String value) {
     if (value == null || value.isBlank()) {
       return null;
     }
-    return switch (uniqueKeyType) {
-      case USERNAME, EMAIL -> value.trim().toLowerCase();
-      case PHONE -> normalizePhone(value);
-      case EXTERNAL_USER_ID -> value.trim();
-    };
-  }
-
-  private String normalizePhone(String phone) {
-    String digits = phone.replaceAll("[^0-9]", "");
-    return digits.isEmpty() ? null : digits;
+    return value;
   }
 }
