@@ -119,30 +119,6 @@ public class SecurityEventUserAttributeConfiguration {
     return map;
   }
 
-  public boolean exists() {
-    return !includeId
-        || includeName
-        || !includeExternalUserId
-        || includeEmail
-        || includePhoneNumber
-        || includeGivenName
-        || includeFamilyName
-        || includePreferredUsername
-        || includeProfile
-        || includePicture
-        || includeWebsite
-        || includeGender
-        || includeBirthdate
-        || includeZoneinfo
-        || includeLocale
-        || includeAddress
-        || includeRoles
-        || includePermissions
-        || includeCurrentTenant
-        || includeAssignedTenants
-        || includeVerifiedClaims;
-  }
-
   public boolean isIncludeId() {
     return includeId;
   }

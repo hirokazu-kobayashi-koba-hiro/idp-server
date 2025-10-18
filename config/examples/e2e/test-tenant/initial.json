@@ -7,9 +7,12 @@
   "tenant": {
     "id": "67e7eae6-62b0-4500-9eff-87459f63fc66",
     "name": "test-tenant",
-    "domain": "http://localhost:8080",
+    "domain": "http://localhost:3000",
     "authorization_provider": "idp-server",
-    "database_type": "postgresql",
+    "ui_config": {
+      "signup_page": "/signup/",
+      "signin_page": "/signin/"
+    },
     "session_config": {
       "cookie_name": "TEST_TENANT_IDP_SERVER_SESSION",
       "use_secure_cookie": false

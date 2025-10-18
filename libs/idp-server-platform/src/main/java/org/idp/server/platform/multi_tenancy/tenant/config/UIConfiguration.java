@@ -61,16 +61,6 @@ public class UIConfiguration {
   }
 
   /**
-   * Returns whether custom UI configuration exists
-   *
-   * @return true if any UI settings are configured
-   */
-  public boolean exists() {
-    return !signupPage.equals("/auth-views/signup/index.html")
-        || !signinPage.equals("/auth-views/signin/index.html");
-  }
-
-  /**
    * Returns the configuration as a map
    *
    * @return configuration map
