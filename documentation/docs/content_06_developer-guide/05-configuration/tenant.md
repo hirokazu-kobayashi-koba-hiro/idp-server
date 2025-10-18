@@ -18,8 +18,8 @@
 | **Developer Guide** | 本番設定を理解する | 詳細仕様と設計パターン |
 
 **前提知識**:
-- [how-to-01: 組織初期化](../../content_05_how-to/how-to-01-organization-initialization.md)完了
-- [how-to-02: OAuth/OIDC認証の最小設定](../../content_05_how-to/how-to-02-tenant-setup.md)完了
+- [how-to-01: 組織初期化](../../content_05_how-to/how-to-02-organization-initialization.md)完了
+- [how-to-02: OAuth/OIDC認証の最小設定](../../content_05_how-to/how-to-03-tenant-setup.md)完了
 - OAuth 2.0/OpenID Connectの基礎理解
 
 ---

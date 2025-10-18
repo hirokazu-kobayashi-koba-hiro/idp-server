@@ -384,7 +384,7 @@ public class TlsClientAuthAuthenticator implements ClientAuthenticator {
 - [FapiAdvanceVerifier.java](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java)
 - [TlsClientAuthAuthenticator.java](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/TlsClientAuthAuthenticator.java)
 - [PkceVerifier.java](../../libs/idp-server-core-extension-pkce/src/main/java/org/idp/server/core/openid/extension/pkce/PkceVerifier.java)
-- [intro-01-tech-overview.md](../../documentation/docs/content_01_intro/intro-01-tech-overview.md)
+- [intro-01-tech-overview.md](../content_01_intro/intro-01-tech-overview.md)
 - RFC 7636 (PKCE), OpenID Connect CIBA, FAPI, IDA仕様
 
 **最終更新**: 2025-10-12

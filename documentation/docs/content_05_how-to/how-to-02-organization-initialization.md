@@ -12,7 +12,7 @@
 **Phase 1**: 最小構成で動作確認（Step 1/5）
 
 **次のドキュメント**:
-- [how-to-02 テナント設定](./how-to-02-tenant-setup.md) - ビジネステナント作成
+- [how-to-02 テナント設定](./how-to-03-tenant-setup.md) - ビジネステナント作成
 
 ### 前提条件
 - idp-serverが起動している
@@ -913,8 +913,8 @@ curl "..."  # いきなり本番実行
 ### Phase 1を完了しよう
 
 **次に必要な設定**:
-- [how-to-02 テナント設定](./how-to-02-tenant-setup.md) - ビジネス用テナント作成
-- [how-to-03 クライアント登録](./how-to-03-client-registration.md) - アプリケーションクライアント登録
+- [how-to-02 テナント設定](./how-to-03-tenant-setup.md) - ビジネス用テナント作成
+- [how-to-03 クライアント登録](./how-to-04-client-registration.md) - アプリケーションクライアント登録
 
 ### 関連ドキュメント
 - [Concept: エンタープライズID](../content_03_concepts/concept-04-enterprise-id.md) - 組織・テナント概念

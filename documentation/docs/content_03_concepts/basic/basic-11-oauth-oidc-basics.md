@@ -65,7 +65,7 @@ OpenID Connectは、OAuth 2.0の「認可」に加えて「認証・ID」の要�
 
 | 仕様カテゴリ | 機能 | サポート状況 | 実装詳細 |
 |-------------|------|-------------|----------|
-| **OAuth 2.0 Core** | Authorization Code Grant | ✅ 完全対応 | [認可コードフロー](../../content_04_protocols/authorization-code-flow.md) |
+| **OAuth 2.0 Core** | Authorization Code Grant | ✅ 完全対応 | [認可コードフロー](../../content_04_protocols/protocol-01-authorization-code-flow.md) |
 | | Client Credentials Grant | ✅ 完全対応 | RFC 6749 Section 4.4 |
 | | PKCE | ✅ 完全対応 | RFC 7636準拠 |
 | | Token Introspection | ✅ 完全対応 | [イントロスペクション](../../content_04_protocols/protocol-03-introspection.md) |
@@ -74,7 +74,7 @@ OpenID Connectは、OAuth 2.0の「認可」に加えて「認証・ID」の要�
 | | Discovery | ✅ 完全対応 | OIDC Discovery 1.0準拠 |
 | | Dynamic Registration | ✅ 完全対応 | OIDC Registration 1.0準拠 |
 | | UserInfo Endpoint | ✅ 完全対応 | OIDC Core 1.0準拠 |
-| **拡張仕様** | CIBA | ✅ 完全対応 | [CIBAフロー](../../content_04_protocols/ciba-flow.md) |
+| **拡張仕様** | CIBA | ✅ 完全対応 | [CIBAフロー](../../content_04_protocols/protocol-02-ciba-flow.md) |
 | | FAPI 2.0 | 🔄 計画中 | 金融グレードセキュリティ対応予定 |
 | | DPoP | 🔄 計画中 | Demonstration of Proof-of-Possession対応予定 |
 | | IDA | ✅ 対応 | [身元確認](../id-verified.md) |

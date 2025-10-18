@@ -8,7 +8,7 @@
 ⏱️ **約15分**
 
 ### 前提条件
-- [パスワード認証](./how-to-04-password-authentication.md)が設定済み
+- [パスワード認証](./how-to-05-user-registration.md)が設定済み
 - 管理者トークンを取得済み
 - 組織ID（organization-id）を取得済み
 
@@ -352,7 +352,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 ✅ MFA（SMS OTP）を設定できました！
 
 ### さらにセキュリティを強化
-- [How-to: FIDO2/WebAuthn設定](./how-to-05-mfa-fido-uaf-registration.md) - 生体認証
+- [How-to: FIDO2/WebAuthn設定](./how-to-13-fido-uaf-registration.md) - 生体認証
 - [How-to: TOTP設定](./how-to-XX-totp-setup.md) - Google Authenticator等
 
 ### より複雑な認証フロー

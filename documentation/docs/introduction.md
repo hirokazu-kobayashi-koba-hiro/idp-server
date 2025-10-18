@@ -19,7 +19,7 @@ OpenID for Identity Assurance（OIDC IDA）や Verifiable Credential（VC）に�
 - OIDC `verified_claims` 対応
 - eKYC サービス連携（REST API / Webhook ベース）
   - 外部 eKYC サービスとの HTTP 連携に対応
-  - 詳細: [身元確認申込みガイド](content_05_how-to/how-to-07-identity-verification-application.md)
+  - 詳細: [身元確認申込みガイド](content_05_how-to/how-to-16-identity-verification-application.md)
 - Verifiable Credential (VC) 形式での ID 発行・検証機能
   - テナント設定により有効化可能
 

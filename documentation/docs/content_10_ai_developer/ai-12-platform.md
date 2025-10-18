@@ -1023,7 +1023,7 @@ for (T impl : serviceLoader) {
 - `SecurityEventHooksPluginLoader` - セキュリティイベントフック
 - `AdditionalOAuthAuthorizationResolverPluginLoader` - OAuth認可拡張
 
-**情報源**: [intro-01-tech-overview.md:171-190](../../documentation/docs/content_01_intro/intro-01-tech-overview.md#L171-L190)
+**情報源**: [intro-01-tech-overview.md:171-190](../content_01_intro/intro-01-tech-overview.md#L171-L190)
 
 ## 値オブジェクトパターン (Value Object)
 

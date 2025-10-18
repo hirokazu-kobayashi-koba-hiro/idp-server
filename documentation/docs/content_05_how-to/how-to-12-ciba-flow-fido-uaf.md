@@ -2,7 +2,7 @@
 
 このドキュメントでは、CIBAフローにおけるFIDO-UAF認証の利用方法を説明します。
 
-FIDO-UAF認証を利用するためには、事前にFIDO-UAFを利用できる[デバイスの登録](how-to-05-mfa-fido-uaf-registration.md)が必要となります。
+FIDO-UAF認証を利用するためには、事前にFIDO-UAFを利用できる[デバイスの登録](how-to-13-fido-uaf-registration.md)が必要となります。
 
 ---
 
@@ -40,7 +40,7 @@ sequenceDiagram
 
 ## CIBAフロー概要
 
-[CIBAフロー概要](content_04_protocols/ciba-flow.md)はこちらのドキュメントを参照ください。
+[CIBAフロー概要](content_04_protocols/protocol-02-ciba-flow.md)はこちらのドキュメントを参照ください。
 
 ---
 
@@ -87,7 +87,7 @@ client_id=...&client_secret=...&scope=openid profile phone email&login_hint=...&
 | `acr_values`            | `string`        | -    | 要求する認証強度（ACR値）                                                     |
 | `authorization_details` | `array<object>` | -    | トランザクションの詳細要求。Rich Authorization Request対応など                       |
 
-login_hintの形式に関しては、[CIBA フロー](content_04_protocols/ciba-flow.md)を参照ください。
+login_hintの形式に関しては、[CIBA フロー](content_04_protocols/protocol-02-ciba-flow.md)を参照ください。
 
 #### レスポンス
 
@@ -179,7 +179,7 @@ login_hintの形式に関しては、[CIBA フロー](content_04_protocols/ciba-
 
 優先順位など認証デバイスの属性情報に登録できる項目は下記ドキュメントを参照ください。
 
-[FIDO-UAF登録](how-to-05-mfa-fido-uaf-registration.md)
+[FIDO-UAF登録](how-to-13-fido-uaf-registration.md)
 
 ### 認証トランザクションの取得（認証デバイス）
 

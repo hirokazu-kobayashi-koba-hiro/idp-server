@@ -530,7 +530,7 @@ public class SsoProvider {
 - `libs/idp-server-federation-oidc/`配下の実装コード
 - `libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/`
 - `libs/idp-server-core/src/main/java/org/idp/server/core/openid/federation/`
-- [intro-01-tech-overview.md](../../documentation/docs/content_01_intro/intro-01-tech-overview.md)
+- [intro-01-tech-overview.md](../content_01_intro/intro-01-tech-overview.md)
 - [Web Authentication Level 2](https://www.w3.org/TR/webauthn-2/)
 
 **最終更新**: 2025-10-12

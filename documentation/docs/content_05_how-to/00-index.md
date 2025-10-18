@@ -21,7 +21,7 @@ POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/{リソ�
 - **組織レベル**: 組織管理者が使用（通常の運用） ← このガイド
 - **システムレベル**: システム管理者のみ使用
 
-詳細: [how-to-01 組織初期化](./how-to-01-organization-initialization.md)
+詳細: [how-to-02 組織初期化](./how-to-02-organization-initialization.md)
 
 ---
 
@@ -66,7 +66,7 @@ export ADMIN_TOKEN=$(curl -sS -X POST 'http://localhost:8080/system/v1/tokens' \
 - ⚠️ **パスワードに特殊文字（`!`, `$`, `\` など）が含まれる場合は必ずシングルクォート（`'`）で囲んでください**
 - ダブルクォート（`"`）を使うとbashの履歴展開や変数展開でエラーになります
 
-詳細: [how-to-01 組織初期化](./how-to-01-organization-initialization.md)
+詳細: [how-to-02 組織初期化](./how-to-02-organization-initialization.md)
 
 ### 3. 組織とテナントの基本理解
 
@@ -94,11 +94,12 @@ export ADMIN_TOKEN=$(curl -sS -X POST 'http://localhost:8080/system/v1/tokens' \
 
 | # | ドキュメント                                                   | 所要時間 | 内容 |
 |---|----------------------------------------------------------|---------|------|
-| 01 | [組織初期化](./how-to-01-organization-initialization.md)      | 10分 | 組織とテナントの基本概念 |
-| 02 | [テナント設定](./how-to-02-tenant-setup.md)                    | 15分 | Authorization Server設定 |
-| 03 | [クライアント登録](./how-to-03-client-registration.md)           | 20分 | OAuth/OIDCクライアント登録 |
-| 04 | [ユーザー登録・認証](./how-to-04-user-registration.md)            | 15分 | 基本的な認証方式 |
-| 05 | [認証ポリシー（基礎）](./how-to-05-authentication-policy-basic.md) | 20分 | 認証要件の定義 |
+| 01 | [サーバーセットアップ](./how-to-01-server-setup.md)      | 10分 | idp-server起動と初期設定 |
+| 02 | [組織初期化](./how-to-02-organization-initialization.md)      | 10分 | 組織とテナントの基本概念 |
+| 03 | [テナント設定](./how-to-03-tenant-setup.md)                    | 15分 | Authorization Server設定 |
+| 04 | [クライアント登録](./how-to-04-client-registration.md)           | 20分 | OAuth/OIDCクライアント登録 |
+| 05 | [ユーザー登録・認証](./how-to-05-user-registration.md)            | 15分 | 基本的な認証方式 |
+| 07 | [認証ポリシー（基礎）](./how-to-07-authentication-policy-basic.md) | 20分 | 認証要件の定義 |
 
 **完了後にできること**:
 - ✅ ユーザーがパスワードでログイン
@@ -114,9 +115,9 @@ export ADMIN_TOKEN=$(curl -sS -X POST 'http://localhost:8080/system/v1/tokens' \
 
 | # | ドキュメント | 所要時間 | 内容 |
 |---|------------|---------|------|
-| 06 | [MFA設定](./how-to-06-mfa-setup.md) | 20分 | 多要素認証（2FA） |
-| 07 | [トークン戦略](./how-to-07-token-strategy.md) | 15分 | トークン有効期限の最適化 |
-| 08 | [認証ポリシー（詳細）](./how-to-08-authentication-policy-advanced.md) | 30分 | 複雑な条件・ロック設定 |
+| 08 | [MFA設定](./how-to-08-mfa-setup.md) | 20分 | 多要素認証（2FA） |
+| 09 | [トークン戦略](./how-to-09-token-strategy.md) | 15分 | トークン有効期限の最適化 |
+| 10 | [認証ポリシー（詳細）](./how-to-10-authentication-policy-advanced.md) | 30分 | 複雑な条件・ロック設定 |
 
 **完了後にできること**:
 - ✅ パスワード + OTPの2要素認証
@@ -132,10 +133,10 @@ export ADMIN_TOKEN=$(curl -sS -X POST 'http://localhost:8080/system/v1/tokens' \
 
 | # | ドキュメント | 所要時間 | 内容 |
 |---|------------|---------|------|
-| 09 | [外部IdP連携](./how-to-09-federation-setup.md) | 25分 | OIDC Federation設定 |
-| 10 | [CIBA + FIDO-UAF](./how-to-10-ciba-flow-fido-uaf.md) | 30分 | バックチャネル認証 |
-| 11 | [FIDO-UAF登録](./how-to-11-fido-uaf-registration.md) | 20分 | 生体認証登録フロー |
-| 12 | [FIDO-UAF解除](./how-to-12-fido-uaf-deregistration.md) | 15分 | 生体認証解除フロー |
+| 11 | [外部IdP連携](./how-to-11-federation-setup.md) | 25分 | OIDC Federation設定 |
+| 12 | [CIBA + FIDO-UAF](./how-to-12-ciba-flow-fido-uaf.md) | 30分 | バックチャネル認証 |
+| 13 | [FIDO-UAF登録](./how-to-13-fido-uaf-registration.md) | 20分 | 生体認証登録フロー |
+| 14 | [FIDO-UAF解除](./how-to-14-fido-uaf-deregistration.md) | 15分 | 生体認証解除フロー |
 
 **完了後にできること**:
 - ✅ 外部IdP（Google等）でログイン
@@ -151,10 +152,10 @@ export ADMIN_TOKEN=$(curl -sS -X POST 'http://localhost:8080/system/v1/tokens' \
 
 | # | ドキュメント | 所要時間 | 内容 |
 |---|------------|---------|------|
-| 13 | [身元確認ガイド](./how-to-13-identity-verification-guide.md) | 20分 | eKYC導入の概要 |
-| 14 | [身元確認申込み](./how-to-14-identity-verification-application.md) | 30分 | 身元確認プロセス実装 |
-| 15 | [身元確認データ登録](./how-to-15-identity-verification-registration.md) | 15分 | 確認結果のClaims反映 |
-| 16 | [セキュリティイベントフック](./how-to-16-security-event-hooks.md) | 20分 | イベント通知設定 |
+| 15 | [身元確認ガイド](./how-to-15-identity-verification-guide.md) | 20分 | eKYC導入の概要 |
+| 16 | [身元確認申込み](./how-to-16-identity-verification-application.md) | 30分 | 身元確認プロセス実装 |
+| 17 | [身元確認データ登録](./how-to-17-identity-verification-registration.md) | 15分 | 確認結果のClaims反映 |
+| 18 | [セキュリティイベントフック](./how-to-18-security-event-hooks.md) | 20分 | イベント通知設定 |
 
 **完了後にできること**:
 - ✅ eKYC（顔認証・身分証確認）

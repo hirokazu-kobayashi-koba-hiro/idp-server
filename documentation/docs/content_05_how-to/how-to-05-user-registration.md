@@ -26,15 +26,15 @@
 **Phase 1**: 最小構成で動作確認（Step 4/5）
 
 **前提ドキュメント**:
-- [how-to-01: 組織初期化](./how-to-01-organization-initialization.md) - 組織作成済み
-- [how-to-02: テナント作成](./how-to-02-tenant-setup.md) - テナント作成済み
-- [how-to-03: クライアント登録](./how-to-03-client-registration.md) - クライアント登録済み
+- [how-to-01: 組織初期化](./how-to-02-organization-initialization.md) - 組織作成済み
+- [how-to-02: テナント作成](./how-to-03-tenant-setup.md) - テナント作成済み
+- [how-to-03: クライアント登録](./how-to-04-client-registration.md) - クライアント登録済み
 
 **次のドキュメント**:
-- [how-to-05: 認証ポリシー基礎編](./how-to-05-authentication-policy-basic.md) - より柔軟な認証設定
+- [how-to-05: 認証ポリシー基礎編](./how-to-07-authentication-policy-basic.md) - より柔軟な認証設定
 
 ### 前提条件
-- [how-to-03](./how-to-03-client-registration.md)でクライアント登録完了
+- [how-to-03](./how-to-04-client-registration.md)でクライアント登録完了
 - 組織管理者トークンを取得済み
 - 組織ID・テナントID・クライアントIDを確認済み
 
@@ -61,7 +61,7 @@
 
 ### 環境変数の準備
 
-**前提**: [how-to-03](./how-to-03-client-registration.md)で設定した環境変数を使用します。
+**前提**: [how-to-03](./how-to-04-client-registration.md)で設定した環境変数を使用します。
 
 ```bash
 # 環境変数の確認
@@ -529,14 +529,14 @@ Authorization: Bearer {access_token}
 ✅ ユーザー登録と認証フローができました！
 
 ### より高度な認証設定
-- [How-to: 認証ポリシー基礎編](./how-to-05-authentication-policy-basic.md) - より柔軟な認証設定
-- [How-to: MFA設定](./how-to-06-mfa-setup.md) - SMS OTP、TOTP、FIDO2
+- [How-to: 認証ポリシー基礎編](./how-to-07-authentication-policy-basic.md) - より柔軟な認証設定
+- [How-to: MFA設定](./how-to-08-mfa-setup.md) - SMS OTP、TOTP、FIDO2
 
 ### 外部IdP連携
-- [How-to: Federation設定](./how-to-09-federation-setup.md) - Google、Azure AD連携
+- [How-to: Federation設定](./how-to-11-federation-setup.md) - Google、Azure AD連携
 
 ### トークン管理
-- [How-to: トークン戦略](./how-to-07-token-strategy.md) - アクセストークン・リフレッシュトークンの管理
+- [How-to: トークン戦略](./how-to-09-token-strategy.md) - アクセストークン・リフレッシュトークンの管理
 
 ---
 

@@ -571,7 +571,7 @@ SecurityEventHook executed: type=Webhook, event=login_failure, status=RETRY (att
 - [Implementation Guide: Security Event Hooks](../content_06_developer-guide/04-implementation-guides/impl-15-security-event-hooks.md)
 
 ### 関連機能
-- [How-to: Identity Verification](./how-to-07-identity-verification-application.md) - 本人確認申請
+- [How-to: Identity Verification](./how-to-16-identity-verification-application.md) - 本人確認申請
 - [Concept: Security Events](../content_03_concepts/concept-11-security-events.md)
 
 ---

@@ -176,7 +176,7 @@ idp-serverでは、以下の権限モデルを採用しています：
 ## 関連ドキュメント
 
 - [設定管理API](../content_06_developer-guide/developer-guide/configuration-management-api.md) - 実装詳細
-- [組織初期化ガイド](../content_05_how-to/how-to-01-organization-initialization.md) - 実践例
+- [組織初期化ガイド](../content_05_how-to/how-to-02-organization-initialization.md) - 実践例
 - [マルチテナント](concept-01-multi-tenant.md) - テナント・組織の概念
 - [認証ポリシー](concept-05-authentication-policy.md) - 認証制御
 - [トークン管理](concept-06-token-management.md) - トークン設定

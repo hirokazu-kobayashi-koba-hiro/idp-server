@@ -286,7 +286,7 @@ SecurityEvent発行 → Data Mapping → HTTP Executor → 外部SIEM/Slack
 - [セキュリティイベント](concept-11-security-events.md) - Webhook、SSF連携
 - [HTTP Request Executor](../content_06_developer-guide/developer-guide/http-request-executor.md) - 実装詳細
 - [Mapping Functions](../content_06_developer-guide/developer-guide/MAPPING_FUNCTIONS.md) - マッピング関数開発ガイド
-- [身元確認申込みガイド](../content_05_how-to/how-to-07-identity-verification-application.md) - 設定例
+- [身元確認申込みガイド](../content_05_how-to/how-to-16-identity-verification-application.md) - 設定例
 
 ---
 

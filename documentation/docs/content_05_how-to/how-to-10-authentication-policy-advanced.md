@@ -8,7 +8,7 @@
 ⏱️ **約30分**
 
 ### 前提条件
-- [認証ポリシー基礎](./how-to-05-authentication-policy-basic.md)完了
+- [認証ポリシー基礎](./how-to-07-authentication-policy-basic.md)完了
 - JSONPath基礎知識（このドキュメントで学べます）
 - 組織ID（organization-id）を取得済み
 
@@ -909,8 +909,8 @@ scope=read を要求
 ✅ 複雑な認証ポリシーを設定できました！
 
 ### さらに高度な設定
-- [How-to: CIBA認証ポリシー](./how-to-04-ciba-flow-fido-uaf.md)
-- [How-to: FIDO UAF登録ポリシー](./how-to-05-mfa-fido-uaf-registration.md)
+- [How-to: CIBA認証ポリシー](./how-to-12-ciba-flow-fido-uaf.md)
+- [How-to: FIDO UAF登録ポリシー](./how-to-13-fido-uaf-registration.md)
 
 ---
 

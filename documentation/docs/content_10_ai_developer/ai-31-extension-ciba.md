@@ -178,7 +178,7 @@ interval: 5秒ごとにポーリング
 ## 次のステップ
 
 - [拡張機能層トップに戻る](./ai-30-extensions.md)
-- [他の拡張モジュール](./extensions.md#概要)
+- [他の拡張モジュール](./ai-30-extensions.md#概要)
 
 ---
 

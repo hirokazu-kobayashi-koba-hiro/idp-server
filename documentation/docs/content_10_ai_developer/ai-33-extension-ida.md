@@ -57,36 +57,36 @@ libs/idp-server-core-extension-ida/src/main/java/org/idp/server/core/extension/i
 
 ## How-To ドキュメントとの連携
 
-このモジュールは、[身元確認申込み機能ガイド](../../content_05_how-to/how-to-07-identity-verification-application.md)で説明されている機能の**実装部分**です。
+このモジュールは、[身元確認申込み機能ガイド](../../content_05_how-to/how-to-16-identity-verification-application.md)で説明されている機能の**実装部分**です。
 
 ### ドキュメント使い分け
 
 | 目的 | 読むドキュメント | 内容 |
 |------|---------------|------|
-| 身元確認機能を**使いたい** | [how-to-07](../../content_05_how-to/how-to-07-identity-verification-application.md) | 設定方法・API仕様 |
+| 身元確認機能を**使いたい** | [how-to-07](../../content_05_how-to/how-to-16-identity-verification-application.md) | 設定方法・API仕様 |
 | 身元確認機能を**実装・拡張したい** | 本ドキュメント（ai-33） | 内部構造・Plugin実装 |
-| 7フェーズの**設定方法** | [how-to-07 §process詳細](../../content_05_how-to/how-to-07-identity-verification-application.md#process詳細) | Request/Pre Hook/Execution等の設定 |
+| 7フェーズの**設定方法** | [how-to-07 §process詳細](../../content_05_how-to/how-to-16-identity-verification-application.md#process詳細) | Request/Pre Hook/Execution等の設定 |
 | 7フェーズの**実装詳細** | 本ドキュメント（下記） | Handler/Executor/Verifierの実装 |
-| verified_claimsの**使い方** | [how-to-07 §身元確認結果](../../content_05_how-to/how-to-07-identity-verification-application.md#身元確認結果) | mapping_rules設定例 |
+| verified_claimsの**使い方** | [how-to-07 §身元確認結果](../../content_05_how-to/how-to-16-identity-verification-application.md#身元確認結果) | mapping_rules設定例 |
 | verified_claimsの**生成ロジック** | 本ドキュメント §機能1 | AccessTokenVerifiedClaimsCreator実装 |
-| Conditional Executionの**設定** | [how-to-07 §条件付き実行](../../content_05_how-to/how-to-07-identity-verification-application.md#条件付き実行機能-conditional-execution) | 12演算子の使い方 |
+| Conditional Executionの**設定** | [how-to-07 §条件付き実行](../../content_05_how-to/how-to-16-identity-verification-application.md#条件付き実行機能-conditional-execution) | 12演算子の使い方 |
 | Conditional Executionの**実装** | 本ドキュメント（下記に追加） | ConditionEvaluator実装 |
 
 ### 典型的な学習フロー
 
 **ケース1: 身元確認機能を使いたい開発者**
-1. [how-to-07](../../content_05_how-to/how-to-07-identity-verification-application.md) を読む
+1. [how-to-07](../../content_05_how-to/how-to-16-identity-verification-application.md) を読む
 2. 設定例を参考にテンプレート作成
 3. APIを呼び出してテスト
 
 **ケース2: 新しい検証タイプを追加したいAI開発者**
-1. [how-to-07](../../content_05_how-to/how-to-07-identity-verification-application.md) で機能全体像を理解
+1. [how-to-07](../../content_05_how-to/how-to-16-identity-verification-application.md) で機能全体像を理解
 2. 本ドキュメント（ai-33）でPlugin実装パターンを理解
 3. `IdentityVerificationRequestVerifier` Pluginを実装
 4. META-INF/servicesに登録
 
 **ケース3: 外部eKYCサービス連携を理解したいAI開発者**
-1. [how-to-07 §Execution](../../content_05_how-to/how-to-07-identity-verification-application.md#3-execution-フェーズ) で設定方法を理解
+1. [how-to-07 §Execution](../../content_05_how-to/how-to-16-identity-verification-application.md#3-execution-フェーズ) で設定方法を理解
 2. 本ドキュメント §IdentityVerificationApplicationExecutors で実装を理解
 3. [platform.md §HttpRequestExecutor](./ai-12-platform.md) でリトライ・OAuth認証を理解
 
@@ -264,7 +264,7 @@ public class IdentityVerificationApplicationHandler {
 
 **情報源**:
 - CLAUDE.md「身元確認申込み機能（Identity Verification Application）」
-- [how-to-07-identity-verification-application.md](../../content_05_how-to/how-to-07-identity-verification-application.md)
+- [how-to-16-identity-verification-application.md](../../content_05_how-to/how-to-16-identity-verification-application.md)
 
 ### 7フェーズとIDA実装の対応表
 
@@ -282,7 +282,7 @@ public class IdentityVerificationApplicationHandler {
 
 #### Phase 1: Request（リクエスト検証）
 
-**How-To設定例**: [how-to-07 lines 493-522](../../content_05_how-to/how-to-07-identity-verification-application.md#1-request-フェーズ)
+**How-To設定例**: [how-to-07 lines 493-522](../../content_05_how-to/how-to-16-identity-verification-application.md#1-request-フェーズ)
 ```json
 {
   "request": {
@@ -322,7 +322,7 @@ public IdentityVerificationApplicationRequestVerifiedResult verifyAll(
 
 #### Phase 2: Pre Hook（前処理）
 
-**How-To設定例**: [how-to-07 lines 565-687](../../content_05_how-to/how-to-07-identity-verification-application.md#2-pre-hook-フェーズ)
+**How-To設定例**: [how-to-07 lines 565-687](../../content_05_how-to/how-to-16-identity-verification-application.md#2-pre-hook-フェーズ)
 ```json
 {
   "pre_hook": {
@@ -374,7 +374,7 @@ public AdditionalParameterResolveResult resolve(
 
 #### Phase 3: Execution（外部eKYCサービス実行）
 
-**How-To設定例**: [how-to-07 lines 757-806](../../content_05_how-to/how-to-07-identity-verification-application.md#3-execution-フェーズ)
+**How-To設定例**: [how-to-07 lines 757-806](../../content_05_how-to/how-to-16-identity-verification-application.md#3-execution-フェーズ)
 ```json
 {
   "execution": {
@@ -421,7 +421,7 @@ public IdentityVerificationApplicationExecutionResult execute(
 
 #### Phase 5: Transition（ステータス遷移）
 
-**How-To設定例**: [how-to-07 lines 964-1008](../../content_05_how-to/how-to-07-identity-verification-application.md#5-transition-フェーズ)
+**How-To設定例**: [how-to-07 lines 964-1008](../../content_05_how-to/how-to-16-identity-verification-application.md#5-transition-フェーズ)
 ```json
 {
   "transition": {
@@ -486,7 +486,7 @@ private boolean evaluateConditions(Conditions conditions, Map<String, Object> co
 
 ## Conditional Execution実装
 
-**情報源**: [how-to-07 §条件付き実行機能](../../content_05_how-to/how-to-07-identity-verification-application.md#条件付き実行機能-conditional-execution)
+**情報源**: [how-to-07 §条件付き実行機能](../../content_05_how-to/how-to-16-identity-verification-application.md#条件付き実行機能-conditional-execution)
 
 ### 12演算子の実装
 
@@ -549,7 +549,7 @@ public class ConditionEvaluator {
 
 ### How-To設定との対応
 
-**How-To設定例**: [how-to-07 lines 1698-1790](../../content_05_how-to/how-to-07-identity-verification-application.md#身元確認結果)
+**How-To設定例**: [how-to-07 lines 1698-1790](../../content_05_how-to/how-to-16-identity-verification-application.md#身元確認結果)
 ```json
 {
   "result": {
@@ -635,7 +635,7 @@ public class VerifiedClaimsCreator {
 
 ### HttpRequestApplicationExecutor
 
-**How-To設定例**: [how-to-07 lines 1359-1381](../../content_05_how-to/how-to-07-identity-verification-application.md#3-execution-フェーズ)
+**How-To設定例**: [how-to-07 lines 1359-1381](../../content_05_how-to/how-to-16-identity-verification-application.md#3-execution-フェーズ)
 ```json
 {
   "execution": {
@@ -830,7 +830,7 @@ public class IdentityVerificationApplicationExecutors {
 - [idp-server-platform](./ai-12-platform.md) - HttpRequestExecutor（外部サービス連携）
 
 ### ユーザー向け（How-To）
-- [身元確認申込み機能ガイド](../../content_05_how-to/how-to-07-identity-verification-application.md) - 7フェーズ詳細設定・証券口座開設実例
+- [身元確認申込み機能ガイド](../../content_05_how-to/how-to-16-identity-verification-application.md) - 7フェーズ詳細設定・証券口座開設実例
 
 ---
 
@@ -888,7 +888,7 @@ public class IdentityVerificationApplicationExecutors {
 - `libs/idp-server-core-extension-ida/`配下の実装コード（109ファイル）
 - [AccessTokenVerifiedClaimsCreator.java](../../libs/idp-server-core-extension-ida/src/main/java/org/idp/server/core/extension/identity/verified/AccessTokenVerifiedClaimsCreator.java)
 - [IdentityVerificationApplicationHandler.java](../../libs/idp-server-core-extension-ida/src/main/java/org/idp/server/core/extension/identity/verification/application/IdentityVerificationApplicationHandler.java)
-- [how-to-07-identity-verification-application.md](../../content_05_how-to/how-to-07-identity-verification-application.md) - 7フェーズ詳細設定・証券口座開設実例
+- [how-to-16-identity-verification-application.md](../../content_05_how-to/how-to-16-identity-verification-application.md) - 7フェーズ詳細設定・証券口座開設実例
 - CLAUDE.md「身元確認申込み機能（Identity Verification Application）」
 - [OpenID Connect for Identity Assurance 1.0](https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html)
 

@@ -272,7 +272,7 @@ RFC標準に加えて、独自の拡張機能を提供：
 ## 関連ドキュメント
 
 ### How-to ガイド
-- [How-to 03: クライアント登録](../../content_05_how-to/how-to-03-client-registration.md) - 実践的な登録手順
+- [How-to 03: クライアント登録](../../content_05_how-to/how-to-04-client-registration.md) - 実践的な登録手順
 
 ### Developer Guide
 - [Developer Guide: Client設定](../../content_06_developer-guide/05-configuration/client.md) - シナリオ別設定例、RFC標準パラメータ、extension詳細

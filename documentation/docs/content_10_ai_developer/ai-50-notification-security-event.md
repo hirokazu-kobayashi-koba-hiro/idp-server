@@ -731,8 +731,7 @@ public class SsfHookExecutor implements SecurityEventHook {
 ### 全モジュール完成！
 
 すべてのモジュールドキュメントが完成しました。
-- [インデックスページに戻る](./index.md)
-- [CLAUDE.md改善提案](../CLAUDE_md_improvements.md)
+- [インデックスページに戻る](./ai-01-index.md)
 
 ---
 

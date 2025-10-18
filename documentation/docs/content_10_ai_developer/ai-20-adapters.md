@@ -373,7 +373,7 @@ CREATE POLICY tenant_isolation ON client_configuration
 2. RLSポリシーが自動適用
 3. テナントIDが一致する行のみアクセス可能
 
-**情報源**: Issue #672（SQL Injection修正）、[deployment.md](../../documentation/docs/content_08_ops/ops-02-deployment.md)
+**情報源**: Issue #672（SQL Injection修正）、[deployment.md](../content_08_ops/ops-02-deployment.md)
 
 ---
 

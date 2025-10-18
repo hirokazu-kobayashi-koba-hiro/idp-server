@@ -131,7 +131,7 @@ idp-serverの**コア機能の実装方法**を説明する技術ドキュメン
 - [05-code-review-checklist.md](../05-code-review-checklist.md) - コードレビューチェックリスト
 
 ### How-Toガイド
-- [身元確認申込み機能](../../content_05_how-to/how-to-07-identity-verification-application.md) - 7フェーズ詳細設定
+- [身元確認申込み機能](../../content_05_how-to/how-to-16-identity-verification-application.md) - 7フェーズ詳細設定
 
 ---
 
