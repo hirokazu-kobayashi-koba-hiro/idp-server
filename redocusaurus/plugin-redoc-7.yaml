@@ -5107,6 +5107,18 @@ components:
             authorization_provider:
               type: string
               description: Authorization provider identifier
+            ui_config:
+              $ref: '#/components/schemas/UIConfiguration'
+            cors_config:
+              $ref: '#/components/schemas/CorsConfiguration'
+            session_config:
+              $ref: '#/components/schemas/SessionConfiguration'
+            security_event_log_config:
+              $ref: '#/components/schemas/SecurityEventLogConfiguration'
+            security_event_user_config:
+              $ref: '#/components/schemas/SecurityEventUserAttributeConfiguration'
+            identity_policy_config:
+              $ref: '#/components/schemas/IdentityPolicyConfiguration'
         authorization_server:
           $ref: '#/components/schemas/OpenIDConfiguration'
     TenantUpdateRequest:
@@ -5125,6 +5137,18 @@ components:
         description:
           type: string
           description: Human-readable description of the tenant
+        ui_config:
+          $ref: '#/components/schemas/UIConfiguration'
+        cors_config:
+          $ref: '#/components/schemas/CorsConfiguration'
+        session_config:
+          $ref: '#/components/schemas/SessionConfiguration'
+        security_event_log_config:
+          $ref: '#/components/schemas/SecurityEventLogConfiguration'
+        security_event_user_config:
+          $ref: '#/components/schemas/SecurityEventUserAttributeConfiguration'
+        identity_policy_config:
+          $ref: '#/components/schemas/IdentityPolicyConfiguration'
     ClientCreateRequest:
       type: object
       required:
@@ -7134,6 +7158,217 @@ components:
         - $ref: '#/components/schemas/OrganizationAuthenticationTransaction'
         - type: object
           description: 詳細取得APIのレスポンスは基本スキーマと同じ構造
+    UIConfiguration:
+      type: object
+      properties:
+        signup_page:
+          type: string
+          default: /auth-views/signup/index.html
+          description: カスタムサインアップページのパス
+        signin_page:
+          type: string
+          default: /auth-views/signin/index.html
+          description: カスタムサインインページのパス
+    CorsConfiguration:
+      type: object
+      properties:
+        allow_origins:
+          type: array
+          items:
+            type: string
+          default: []
+          description: 許可するオリジンのリスト
+        allow_headers:
+          type: string
+          default: Authorization, Content-Type, Accept, x-device-id
+          description: 許可するヘッダー
+        allow_methods:
+          type: string
+          default: GET, POST, PUT, PATCH, DELETE, OPTIONS
+          description: 許可するHTTPメソッド
+        allow_credentials:
+          type: boolean
+          default: true
+          description: クレデンシャル送信を許可
+    SessionConfiguration:
+      type: object
+      properties:
+        cookie_name:
+          type: string
+          nullable: true
+          default: null
+          description: セッションCookie名（null時は自動生成）
+        cookie_same_site:
+          type: string
+          enum:
+            - None
+            - Lax
+            - Strict
+          default: None
+          description: SameSite属性
+        use_secure_cookie:
+          type: boolean
+          default: true
+          description: Secure属性を使用
+        use_http_only_cookie:
+          type: boolean
+          default: true
+          description: HttpOnly属性を使用
+        cookie_path:
+          type: string
+          default: /
+          description: Cookieのパス
+        timeout_seconds:
+          type: integer
+          default: 3600
+          description: セッションタイムアウト（秒）
+    SecurityEventLogConfiguration:
+      type: object
+      properties:
+        format:
+          type: string
+          enum:
+            - structured_json
+            - plain_text
+          default: structured_json
+          description: ログフォーマット
+        debug_logging:
+          type: boolean
+          default: false
+          description: デバッグログ出力を有効化
+        stage:
+          type: string
+          default: processed
+          description: ログ出力タイミング
+        include_user_id:
+          type: boolean
+          default: true
+        include_user_ex_sub:
+          type: boolean
+          default: true
+        include_client_id:
+          type: boolean
+          default: true
+        include_ip_address:
+          type: boolean
+          default: true
+        include_user_agent:
+          type: boolean
+          default: true
+        include_event_detail:
+          type: boolean
+          default: false
+        include_user_detail:
+          type: boolean
+          default: false
+        include_user_pii:
+          type: boolean
+          default: false
+          description: ⚠️ 個人情報を含める（本番環境非推奨）
+        allowed_user_pii_keys:
+          type: string
+          default: ''
+          description: 許可するPIIキー（カンマ区切り）
+        include_trace_context:
+          type: boolean
+          default: false
+        service_name:
+          type: string
+          default: idp-server
+        custom_tags:
+          type: string
+          default: ''
+          description: カスタムタグ（カンマ区切り）
+        tracing_enabled:
+          type: boolean
+          default: false
+        persistence_enabled:
+          type: boolean
+          default: false
+        detail_scrub_keys:
+          type: string
+          default: >-
+            authorization,cookie,password,secret,token,access_token,refresh_token,api_key,api_secret
+          description: スクラブするキー（カンマ区切り）
+    SecurityEventUserAttributeConfiguration:
+      type: object
+      description: セキュリティイベントに含めるユーザー属性の制御
+      properties:
+        include_id:
+          type: boolean
+          default: true
+        include_name:
+          type: boolean
+          default: false
+        include_external_user_id:
+          type: boolean
+          default: true
+        include_email:
+          type: boolean
+          default: false
+        include_phone_number:
+          type: boolean
+          default: false
+        include_given_name:
+          type: boolean
+          default: false
+        include_family_name:
+          type: boolean
+          default: false
+        include_preferred_username:
+          type: boolean
+          default: false
+        include_profile:
+          type: boolean
+          default: false
+        include_picture:
+          type: boolean
+          default: false
+        include_website:
+          type: boolean
+          default: false
+        include_gender:
+          type: boolean
+          default: false
+        include_birthdate:
+          type: boolean
+          default: false
+        include_zoneinfo:
+          type: boolean
+          default: false
+        include_locale:
+          type: boolean
+          default: false
+        include_address:
+          type: boolean
+          default: false
+        include_roles:
+          type: boolean
+          default: false
+        include_permissions:
+          type: boolean
+          default: false
+        include_current_tenant:
+          type: boolean
+          default: false
+        include_assigned_tenants:
+          type: boolean
+          default: false
+        include_verified_claims:
+          type: boolean
+          default: false
+    IdentityPolicyConfiguration:
+      type: object
+      properties:
+        identity_unique_key_type:
+          type: string
+          enum:
+            - USERNAME
+            - EMAIL
+            - PHONE
+            - EXTERNAL_USER_ID
+          default: EMAIL
+          description: ユーザー識別キー種別
   responses:
     BadRequest:
       description: Bad Request - Invalid input parameters
