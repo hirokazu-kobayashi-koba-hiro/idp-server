@@ -20,16 +20,19 @@ import java.util.Map;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.*;
 import org.idp.server.platform.multi_tenancy.tenant.config.CorsConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.config.SessionConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.config.UIConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
 import org.idp.server.platform.security.event.SecurityEventUserAttributeConfiguration;
 import org.idp.server.platform.security.log.SecurityEventLogConfiguration;
 
 class ModelConverter {
 
   private static final JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(ModelConverter.class);
 
   static Tenant convert(Map<String, String> result) {
 
@@ -50,8 +53,8 @@ class ModelConverter {
     SecurityEventUserAttributeConfiguration securityEventUserAttributeConfiguration =
         convertSecurityEventUserAttributeConfiguration(
             result.getOrDefault("security_event_user_config", ""));
-    TenantAttributes identityPolicyConfig =
-        convertAttributes(result.getOrDefault("identity_policy_config", ""));
+    TenantIdentityPolicy identityPolicyConfig =
+        convertIdentityPolicyConfig(result.getOrDefault("identity_policy_config", ""));
 
     return new Tenant(
         tenantIdentifier,
@@ -78,6 +81,10 @@ class ModelConverter {
       Map<String, Object> attributesMap = jsonNodeWrapper.toMap();
       return new TenantAttributes(attributesMap);
     } catch (Exception exception) {
+      log.warn(
+          "Failed to convert attributes, using empty attributes. Value: {}, Error: {}",
+          value,
+          exception.getMessage());
       return new TenantAttributes();
     }
   }
@@ -91,6 +98,10 @@ class ModelConverter {
       Map<String, Object> configMap = jsonNodeWrapper.toMap();
       return new UIConfiguration(configMap);
     } catch (Exception exception) {
+      log.warn(
+          "Failed to convert ui_config, using default configuration. Value: {}, Error: {}",
+          value,
+          exception.getMessage());
       return new UIConfiguration();
     }
   }
@@ -104,6 +115,10 @@ class ModelConverter {
       Map<String, Object> configMap = jsonNodeWrapper.toMap();
       return new CorsConfiguration(configMap);
     } catch (Exception exception) {
+      log.warn(
+          "Failed to convert cors_config, using default configuration. Value: {}, Error: {}",
+          value,
+          exception.getMessage());
       return new CorsConfiguration();
     }
   }
@@ -117,6 +132,10 @@ class ModelConverter {
       Map<String, Object> configMap = jsonNodeWrapper.toMap();
       return new SessionConfiguration(configMap);
     } catch (Exception exception) {
+      log.warn(
+          "Failed to convert session_config, using default configuration. Value: {}, Error: {}",
+          value,
+          exception.getMessage());
       return new SessionConfiguration();
     }
   }
@@ -130,6 +149,10 @@ class ModelConverter {
       Map<String, Object> configMap = jsonNodeWrapper.toMap();
       return new SecurityEventLogConfiguration(configMap);
     } catch (Exception exception) {
+      log.warn(
+          "Failed to convert security_event_log_config, using default configuration. Value: {}, Error: {}",
+          value,
+          exception.getMessage());
       return new SecurityEventLogConfiguration();
     }
   }
@@ -144,7 +167,28 @@ class ModelConverter {
       Map<String, Object> configMap = jsonNodeWrapper.toMap();
       return new SecurityEventUserAttributeConfiguration(configMap);
     } catch (Exception exception) {
+      log.warn(
+          "Failed to convert security_event_user_config, using default configuration. Value: {}, Error: {}",
+          value,
+          exception.getMessage());
       return new SecurityEventUserAttributeConfiguration();
+    }
+  }
+
+  private static TenantIdentityPolicy convertIdentityPolicyConfig(String value) {
+    if (value == null || value.isEmpty()) {
+      return TenantIdentityPolicy.defaultPolicy();
+    }
+    try {
+      JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(value);
+      Map<String, Object> configMap = jsonNodeWrapper.toMap();
+      return TenantIdentityPolicy.fromMap(configMap);
+    } catch (Exception exception) {
+      log.warn(
+          "Failed to convert identity_policy_config, using default policy. Value: {}, Error: {}",
+          value,
+          exception.getMessage());
+      return TenantIdentityPolicy.defaultPolicy();
     }
   }
 }

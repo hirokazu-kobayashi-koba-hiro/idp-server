@@ -16,6 +16,7 @@
 
 package org.idp.server.control_plane.management.tenant;
 
+import java.util.Map;
 import org.idp.server.control_plane.management.onboarding.io.TenantRegistrationRequest;
 import org.idp.server.control_plane.management.tenant.io.TenantRequest;
 import org.idp.server.core.openid.identity.User;
@@ -29,6 +30,7 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantType;
 import org.idp.server.platform.multi_tenancy.tenant.config.CorsConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.config.SessionConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.config.UIConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
 import org.idp.server.platform.security.event.SecurityEventUserAttributeConfiguration;
 import org.idp.server.platform.security.log.SecurityEventLogConfiguration;
 
@@ -91,10 +93,8 @@ public class TenantManagementRegistrationContextCreator {
             ? new SecurityEventUserAttributeConfiguration(tenantRequest.securityEventUserConfig())
             : new SecurityEventUserAttributeConfiguration();
 
-    TenantAttributes identityPolicyConfig =
-        tenantRequest.identityPolicyConfig() != null
-            ? new TenantAttributes(tenantRequest.identityPolicyConfig())
-            : new TenantAttributes();
+    TenantIdentityPolicy identityPolicyConfig =
+        convertIdentityPolicyConfig(tenantRequest.identityPolicyConfig());
 
     Tenant tenant =
         new Tenant(
@@ -117,5 +117,9 @@ public class TenantManagementRegistrationContextCreator {
 
     return new TenantManagementRegistrationContext(
         adminTenant, tenant, authorizationServerConfiguration, assigned, user, dryRun);
+  }
+
+  private TenantIdentityPolicy convertIdentityPolicyConfig(Map<String, Object> configMap) {
+    return TenantIdentityPolicy.fromMap(configMap);
   }
 }

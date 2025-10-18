@@ -73,8 +73,7 @@ public class UserRegistrator {
    */
   private void applyIdentityPolicyIfNeeded(Tenant tenant, User user) {
     if (user.preferredUsername() == null || user.preferredUsername().isBlank()) {
-      TenantIdentityPolicy policy = TenantIdentityPolicy.fromTenantAttributes(tenant.attributes());
-      user.applyIdentityPolicy(policy);
+      user.applyIdentityPolicy(tenant.identityPolicyConfig());
     }
   }
 
@@ -90,8 +89,7 @@ public class UserRegistrator {
    */
   private void applyIdentityPolicyToExistingUserIfNeeded(Tenant tenant, User user) {
     if (user.preferredUsername() == null || user.preferredUsername().isBlank()) {
-      TenantIdentityPolicy policy = TenantIdentityPolicy.fromTenantAttributes(tenant.attributes());
-      user.applyIdentityPolicy(policy);
+      user.applyIdentityPolicy(tenant.identityPolicyConfig());
     }
   }
 }

@@ -201,8 +201,16 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
    * @param policy tenant identity policy
    * @return this user instance
    */
-  public User applyIdentityPolicy(TenantIdentityPolicy policy) {
-    String normalizedValue = policy.extractPreferredUsername(this);
+  public User applyIdentityPolicy(
+      org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy policy) {
+    String sourceValue =
+        switch (policy.uniqueKeyType()) {
+          case USERNAME -> this.preferredUsername;
+          case EMAIL -> this.email;
+          case PHONE -> this.phoneNumber;
+          case EXTERNAL_USER_ID -> this.externalUserId;
+        };
+    String normalizedValue = policy.normalize(sourceValue);
     if (normalizedValue != null) {
       this.preferredUsername = normalizedValue;
     }

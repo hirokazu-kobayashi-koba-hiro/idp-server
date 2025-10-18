@@ -17,10 +17,10 @@
 package org.idp.server.control_plane.management.identity.user;
 
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
-import org.idp.server.core.openid.identity.TenantIdentityPolicy;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
 
 public class UserUpdateContextCreator {
 

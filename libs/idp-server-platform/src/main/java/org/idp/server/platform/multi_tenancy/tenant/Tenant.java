@@ -24,6 +24,7 @@ import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.platform.multi_tenancy.tenant.config.CorsConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.config.SessionConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.config.UIConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
 import org.idp.server.platform.security.event.SecurityEventUserAttributeConfiguration;
 import org.idp.server.platform.security.log.SecurityEventLogConfiguration;
 
@@ -40,7 +41,7 @@ public class Tenant {
   SessionConfiguration sessionConfiguration;
   SecurityEventLogConfiguration securityEventLogConfiguration;
   SecurityEventUserAttributeConfiguration securityEventUserAttributeConfiguration;
-  TenantAttributes identityPolicyConfig;
+  TenantIdentityPolicy identityPolicyConfig;
 
   public Tenant() {}
 
@@ -56,7 +57,7 @@ public class Tenant {
       SessionConfiguration sessionConfiguration,
       SecurityEventLogConfiguration securityEventLogConfiguration,
       SecurityEventUserAttributeConfiguration securityEventUserAttributeConfiguration,
-      TenantAttributes identityPolicyConfig) {
+      TenantIdentityPolicy identityPolicyConfig) {
     this.identifier = identifier;
     this.name = name;
     this.type = type;
@@ -175,7 +176,7 @@ public class Tenant {
     return securityEventUserAttributeConfiguration;
   }
 
-  public TenantAttributes identityPolicyConfig() {
+  public TenantIdentityPolicy identityPolicyConfig() {
     return identityPolicyConfig;
   }
 

@@ -27,6 +27,7 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantDomain;
 import org.idp.server.platform.multi_tenancy.tenant.config.CorsConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.config.SessionConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.config.UIConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
 import org.idp.server.platform.security.event.SecurityEventUserAttributeConfiguration;
 import org.idp.server.platform.security.log.SecurityEventLogConfiguration;
 
@@ -61,8 +62,12 @@ public class TenantManagementUpdateContextCreator {
     SecurityEventUserAttributeConfiguration securityEventUserAttributeConfiguration =
         extractConfiguration(
             "security_event_user_config", SecurityEventUserAttributeConfiguration.class);
-    TenantAttributes identityPolicyConfig =
+    TenantAttributes identityPolicyConfigAttributes =
         extractConfiguration("identity_policy_config", TenantAttributes.class);
+    TenantIdentityPolicy identityPolicyConfig =
+        identityPolicyConfigAttributes.exists()
+            ? TenantIdentityPolicy.fromMap(identityPolicyConfigAttributes.toMap())
+            : before.identityPolicyConfig();
 
     Tenant updated =
         new Tenant(
@@ -81,7 +86,7 @@ public class TenantManagementUpdateContextCreator {
             securityEventUserAttributeConfiguration.exists()
                 ? securityEventUserAttributeConfiguration
                 : before.securityEventUserAttributeConfiguration(),
-            identityPolicyConfig.exists() ? identityPolicyConfig : before.identityPolicyConfig());
+            identityPolicyConfig);
 
     return new TenantManagementUpdateContext(adminTenant, before, updated, user, dryRun);
   }
