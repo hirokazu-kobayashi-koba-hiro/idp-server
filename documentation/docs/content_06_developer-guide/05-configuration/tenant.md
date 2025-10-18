@@ -222,11 +222,14 @@
     "id": "banking-tenant",
     "name": "Online Banking Platform",
     "domain": "https://banking.example.com",
-    "authorization_provider": "idp-server",
-    "attributes": {
-      "use_secure_cookie": true,
-      "allow_origins": ["https://banking.example.com"]
-    }
+    "authorization_provider": "idp-server"
+  },
+  "session_config": {
+    "use_secure_cookie": true,
+    "cookie_same_site": "Strict"
+  },
+  "cors_config": {
+    "allow_origins": ["https://banking.example.com"]
   },
   "authorization_server": {
     "issuer": "https://banking.example.com/banking-tenant",
@@ -469,19 +472,280 @@
 ```json
 {
   "tenant": {
-    "attributes": {
-      "cookie_name": "AUTH_SESSION",
-      "use_secure_cookie": true,
-      "allow_origins": [
-        "https://app.example.com",
-        "https://admin.example.com"
-      ],
-      "signin_page": "/login/",
-      "security_event_log_persistence_enabled": true
-    }
+    "id": "example-tenant",
+    "name": "Example Tenant",
+    "domain": "https://auth.example.com"
+  },
+  "session_config": {
+    "cookie_name": "AUTH_SESSION",
+    "use_secure_cookie": true
+  },
+  "cors_config": {
+    "allow_origins": [
+      "https://app.example.com",
+      "https://admin.example.com"
+    ]
+  },
+  "ui_config": {
+    "signin_page": "/login/"
+  },
+  "security_event_log_config": {
+    "persistence_enabled": true
   }
 }
 ```
+
+---
+
+## 🔧 Type-Safe Configuration Classes
+
+idp-serverでは、Tenant設定を型安全な6つのConfigurationクラスに分離しています。
+
+### UI Configuration
+
+**目的**: カスタムサインイン/サインアップページの設定
+
+**フィールド**:
+```json
+{
+  "ui_config": {
+    "signup_page": "/auth-views/signup/index.html",
+    "signin_page": "/auth-views/signin/index.html"
+  }
+}
+```
+
+| フィールド | 型 | デフォルト | 説明 |
+|-----------|---|----------|------|
+| `signup_page` | string | `/auth-views/signup/index.html` | カスタムサインアップページのパス |
+| `signin_page` | string | `/auth-views/signin/index.html` | カスタムサインインページのパス |
+
+**実装**: [UIConfiguration.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/config/UIConfiguration.java)
+
+---
+
+### CORS Configuration
+
+**目的**: クロスオリジンリソース共有の設定
+
+**フィールド**:
+```json
+{
+  "cors_config": {
+    "allow_origins": ["https://app.example.com"],
+    "allow_headers": "Authorization, Content-Type, Accept, x-device-id",
+    "allow_methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+    "allow_credentials": true
+  }
+}
+```
+
+| フィールド | 型 | デフォルト | 説明 |
+|-----------|---|----------|------|
+| `allow_origins` | array[string] | `[]` | 許可するオリジンのリスト |
+| `allow_headers` | string | `Authorization, Content-Type, Accept, x-device-id` | 許可するヘッダー |
+| `allow_methods` | string | `GET, POST, PUT, PATCH, DELETE, OPTIONS` | 許可するHTTPメソッド |
+| `allow_credentials` | boolean | `true` | クレデンシャル送信を許可 |
+
+**実装**: [CorsConfiguration.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/config/CorsConfiguration.java)
+
+---
+
+### Session Configuration
+
+**目的**: セッション管理とCookie設定
+
+**フィールド**:
+```json
+{
+  "session_config": {
+    "cookie_name": null,
+    "cookie_same_site": "None",
+    "use_secure_cookie": true,
+    "use_http_only_cookie": true,
+    "cookie_path": "/",
+    "timeout_seconds": 3600
+  }
+}
+```
+
+| フィールド | 型 | デフォルト | 説明 |
+|-----------|---|----------|------|
+| `cookie_name` | string \| null | `null` (自動生成) | セッションCookie名 |
+| `cookie_same_site` | string | `None` | SameSite属性 (`None`, `Lax`, `Strict`) |
+| `use_secure_cookie` | boolean | `true` | Secure属性を使用 |
+| `use_http_only_cookie` | boolean | `true` | HttpOnly属性を使用 |
+| `cookie_path` | string | `/` | Cookieのパス |
+| `timeout_seconds` | number | `3600` | セッションタイムアウト（秒） |
+
+**重要**: `cookie_name`が`null`の場合、`IDP_SERVER_SESSION_{tenant-id-prefix}`形式で自動生成されます。
+
+**実装**: [SessionConfiguration.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/config/SessionConfiguration.java)
+
+---
+
+### Security Event Log Configuration
+
+**目的**: セキュリティイベントログの詳細設定
+
+**フィールド**:
+```json
+{
+  "security_event_log_config": {
+    "format": "structured_json",
+    "debug_logging": false,
+    "stage": "processed",
+    "include_user_id": true,
+    "include_user_ex_sub": true,
+    "include_client_id": true,
+    "include_ip_address": true,
+    "include_user_agent": true,
+    "include_event_detail": false,
+    "include_user_detail": false,
+    "include_user_pii": false,
+    "allowed_user_pii_keys": "",
+    "include_trace_context": false,
+    "service_name": "idp-server",
+    "custom_tags": "",
+    "tracing_enabled": false,
+    "persistence_enabled": false,
+    "detail_scrub_keys": ""
+  }
+}
+```
+
+| フィールド | 型 | デフォルト | 説明 |
+|-----------|---|----------|------|
+| `format` | string | `structured_json` | ログフォーマット (`structured_json`, `plain_text`) |
+| `debug_logging` | boolean | `false` | デバッグログ出力を有効化 |
+| `stage` | string | `processed` | ログ出力タイミング |
+| `include_user_id` | boolean | `true` | ユーザーIDを含める |
+| `include_user_ex_sub` | boolean | `true` | 外部ユーザーIDを含める |
+| `include_client_id` | boolean | `true` | クライアントIDを含める |
+| `include_ip_address` | boolean | `true` | IPアドレスを含める |
+| `include_user_agent` | boolean | `true` | User-Agentを含める |
+| `include_event_detail` | boolean | `false` | イベント詳細を含める |
+| `include_user_detail` | boolean | `false` | ユーザー詳細を含める |
+| `include_user_pii` | boolean | `false` | 個人情報を含める（⚠️ 注意） |
+| `allowed_user_pii_keys` | string | `""` | 許可するPIIキー（カンマ区切り） |
+| `include_trace_context` | boolean | `false` | トレーシング情報を含める |
+| `service_name` | string | `idp-server` | サービス名 |
+| `custom_tags` | string | `""` | カスタムタグ（カンマ区切り） |
+| `tracing_enabled` | boolean | `false` | 分散トレーシングを有効化 |
+| `persistence_enabled` | boolean | `false` | データベース永続化を有効化 |
+| `detail_scrub_keys` | string | (必須キー) | スクラブするキー（カンマ区切り） |
+
+**デフォルトでスクラブされるキー**: `authorization`, `cookie`, `password`, `secret`, `token`, `access_token`, `refresh_token`, `api_key`, `api_secret`
+
+**プライバシー推奨設定**:
+- 本番環境: `include_user_pii: false`, `include_user_detail: false`
+- デバッグ: `debug_logging: true`, `include_event_detail: true`（一時的のみ）
+
+**実装**: [SecurityEventLogConfiguration.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/security/log/SecurityEventLogConfiguration.java)
+
+---
+
+### Security Event User Attribute Configuration
+
+**目的**: セキュリティイベントに含めるユーザー属性の制御
+
+**フィールド**:
+```json
+{
+  "security_event_user_config": {
+    "include_id": true,
+    "include_name": false,
+    "include_external_user_id": true,
+    "include_email": false,
+    "include_phone_number": false,
+    "include_given_name": false,
+    "include_family_name": false,
+    "include_preferred_username": false,
+    "include_profile": false,
+    "include_picture": false,
+    "include_website": false,
+    "include_gender": false,
+    "include_birthdate": false,
+    "include_zoneinfo": false,
+    "include_locale": false,
+    "include_address": false,
+    "include_roles": false,
+    "include_permissions": false,
+    "include_current_tenant": false,
+    "include_assigned_tenants": false,
+    "include_verified_claims": false
+  }
+}
+```
+
+**デフォルト**: `include_id`と`include_external_user_id`のみ`true`（最小限の情報）
+
+**プライバシーレベル別設定**:
+
+| レベル | 設定 | 用途 |
+|--------|------|------|
+| **最小** | `include_id`, `include_external_user_id`のみ | 本番環境（推奨） |
+| **標準** | + `include_email`, `include_roles` | 監査要件がある場合 |
+| **詳細** | + `include_name`, `include_phone_number` | デバッグ・調査時（一時的） |
+| **フル** | 全て`true` | ❌ 非推奨（GDPR/個人情報保護法違反リスク） |
+
+**実装**: [SecurityEventUserAttributeConfiguration.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/security/event/SecurityEventUserAttributeConfiguration.java)
+
+---
+
+### Identity Policy Configuration
+
+**目的**: ユーザー識別キーの設定
+
+**フィールド**:
+```json
+{
+  "identity_policy_config": {
+    "identity_unique_key_type": "EMAIL"
+  }
+}
+```
+
+| フィールド | 型 | デフォルト | 説明 |
+|-----------|---|----------|------|
+| `identity_unique_key_type` | string | `EMAIL` | ユニークキー種別 |
+
+**許可される値**:
+- `USERNAME`: ユーザー名を一意キーとして使用
+- `EMAIL`: メールアドレスを一意キーとして使用
+- `PHONE`: 電話番号を一意キーとして使用
+- `EXTERNAL_USER_ID`: 外部ユーザーIDを一意キーとして使用
+
+**使用例**:
+
+**パターン1: メールベース認証**（デフォルト）
+```json
+{
+  "identity_policy_config": {
+    "identity_unique_key_type": "EMAIL"
+  }
+}
+```
+
+**パターン2: 電話番号ベース認証**
+```json
+{
+  "identity_policy_config": {
+    "identity_unique_key_type": "PHONE"
+  }
+}
+```
+
+**パターン3: 外部システム連携**
+```json
+{
+  "identity_policy_config": {
+    "identity_unique_key_type": "EXTERNAL_USER_ID"
+  }
+}
+```
+
+**実装**: [TenantIdentityPolicy.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/policy/TenantIdentityPolicy.java)
 
 ---
 
@@ -526,10 +790,10 @@
 
 ```json
 {
-  "tenant": {
-    "attributes": {
-      "use_secure_cookie": true  // 必須（HTTPS環境）
-    }
+  "session_config": {
+    "use_secure_cookie": true,  // 必須（HTTPS環境）
+    "use_http_only_cookie": true,  // XSS対策
+    "cookie_same_site": "Strict"  // CSRF対策（本番環境推奨）
   }
 }
 ```
@@ -538,17 +802,16 @@
 
 ```json
 {
-  "tenant": {
-    "attributes": {
-      "allow_origins": [
-        "https://app.example.com"  // 必要最小限のオリジンのみ
-      ]
-    }
+  "cors_config": {
+    "allow_origins": [
+      "https://app.example.com"  // 必要最小限のオリジンのみ
+    ],
+    "allow_credentials": true
   }
 }
 ```
 
-❌ **危険**: `["*"]` は本番環境では絶対に使用しない
+❌ **危険**: `allow_origins: ["*"]` は本番環境では絶対に使用しない
 
 #### 3. トークン有効期限の適切な設定
 
@@ -670,10 +933,8 @@ Access to XMLHttpRequest at 'https://idp.example.com/...' from origin 'https://a
 **解決策**:
 ```json
 {
-  "tenant": {
-    "attributes": {
-      "allow_origins": ["https://app.example.com"]
-    }
+  "cors_config": {
+    "allow_origins": ["https://app.example.com"]
   }
 }
 ```
