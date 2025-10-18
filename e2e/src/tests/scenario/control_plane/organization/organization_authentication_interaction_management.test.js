@@ -314,7 +314,7 @@ describe("organization authentication interaction management api", () => {
         }
       });
       console.log(forbiddenResponse.data);
-      expect(forbiddenResponse.status).toBe(404);
+      expect(forbiddenResponse.status).toBe(401);
     });
 
     it("forbidden no assigned tenant", async () => {

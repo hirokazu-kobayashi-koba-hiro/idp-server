@@ -196,7 +196,6 @@ describe("user registration", () => {
           family_name: faker.person.lastName(),
           middle_name: faker.person.middleName(),
           nickname: faker.person.lastName(),
-          preferred_username: faker.person.lastName(),
           profile: faker.internet.url(),
           picture: faker.internet.url(),
           website: faker.internet.url(),

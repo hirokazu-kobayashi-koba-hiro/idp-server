@@ -26,6 +26,7 @@ import org.idp.server.platform.multi_tenancy.tenant.*;
 import org.idp.server.platform.multi_tenancy.tenant.config.CorsConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.config.SessionConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.config.UIConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
 import org.idp.server.platform.notification.NotificationChannel;
 import org.idp.server.platform.notification.NotificationTemplate;
 import org.idp.server.platform.security.event.SecurityEventUserAttributeConfiguration;
@@ -64,7 +65,7 @@ class ApnsNotifierTest {
             new SessionConfiguration(),
             new SecurityEventLogConfiguration(),
             new SecurityEventUserAttributeConfiguration(),
-            new TenantAttributes());
+            TenantIdentityPolicy.defaultPolicy());
 
     // Create notification template
     NotificationTemplate template =
@@ -108,7 +109,7 @@ class ApnsNotifierTest {
             new SessionConfiguration(),
             new SecurityEventLogConfiguration(),
             new SecurityEventUserAttributeConfiguration(),
-            new TenantAttributes());
+            TenantIdentityPolicy.defaultPolicy());
 
     NotificationTemplate emptyTemplate = new NotificationTemplate();
     String payload = apnsNotifier.createApnsPayload(emptyTemplate, tenant);
@@ -139,7 +140,7 @@ class ApnsNotifierTest {
             new SessionConfiguration(),
             new SecurityEventLogConfiguration(),
             new SecurityEventUserAttributeConfiguration(),
-            new TenantAttributes());
+            TenantIdentityPolicy.defaultPolicy());
 
     String cacheKey = apnsNotifier.createCacheKey(tenant);
 
@@ -161,7 +162,7 @@ class ApnsNotifierTest {
             new SessionConfiguration(),
             new SecurityEventLogConfiguration(),
             new SecurityEventUserAttributeConfiguration(),
-            new TenantAttributes());
+            TenantIdentityPolicy.defaultPolicy());
 
     HttpResponse<String> response = mock(HttpResponse.class);
     when(response.statusCode()).thenReturn(400);
@@ -186,7 +187,7 @@ class ApnsNotifierTest {
             new SessionConfiguration(),
             new SecurityEventLogConfiguration(),
             new SecurityEventUserAttributeConfiguration(),
-            new TenantAttributes());
+            TenantIdentityPolicy.defaultPolicy());
 
     HttpResponse<String> response = mock(HttpResponse.class);
     when(response.statusCode()).thenReturn(403);
