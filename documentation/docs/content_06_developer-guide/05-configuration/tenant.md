@@ -222,11 +222,14 @@
     "id": "banking-tenant",
     "name": "Online Banking Platform",
     "domain": "https://banking.example.com",
-    "authorization_provider": "idp-server",
-    "attributes": {
-      "use_secure_cookie": true,
-      "allow_origins": ["https://banking.example.com"]
-    }
+    "authorization_provider": "idp-server"
+  },
+  "session_config": {
+    "use_secure_cookie": true,
+    "cookie_same_site": "Strict"
+  },
+  "cors_config": {
+    "allow_origins": ["https://banking.example.com"]
   },
   "authorization_server": {
     "issuer": "https://banking.example.com/banking-tenant",
@@ -469,16 +472,25 @@
 ```json
 {
   "tenant": {
-    "attributes": {
-      "cookie_name": "AUTH_SESSION",
-      "use_secure_cookie": true,
-      "allow_origins": [
-        "https://app.example.com",
-        "https://admin.example.com"
-      ],
-      "signin_page": "/login/",
-      "security_event_log_persistence_enabled": true
-    }
+    "id": "example-tenant",
+    "name": "Example Tenant",
+    "domain": "https://auth.example.com"
+  },
+  "session_config": {
+    "cookie_name": "AUTH_SESSION",
+    "use_secure_cookie": true
+  },
+  "cors_config": {
+    "allow_origins": [
+      "https://app.example.com",
+      "https://admin.example.com"
+    ]
+  },
+  "ui_config": {
+    "signin_page": "/login/"
+  },
+  "security_event_log_config": {
+    "persistence_enabled": true
   }
 }
 ```
@@ -778,10 +790,10 @@ idp-serverでは、Tenant設定を型安全な6つのConfigurationクラスに�
 
 ```json
 {
-  "tenant": {
-    "attributes": {
-      "use_secure_cookie": true  // 必須（HTTPS環境）
-    }
+  "session_config": {
+    "use_secure_cookie": true,  // 必須（HTTPS環境）
+    "use_http_only_cookie": true,  // XSS対策
+    "cookie_same_site": "Strict"  // CSRF対策（本番環境推奨）
   }
 }
 ```
@@ -790,17 +802,16 @@ idp-serverでは、Tenant設定を型安全な6つのConfigurationクラスに�
 
 ```json
 {
-  "tenant": {
-    "attributes": {
-      "allow_origins": [
-        "https://app.example.com"  // 必要最小限のオリジンのみ
-      ]
-    }
+  "cors_config": {
+    "allow_origins": [
+      "https://app.example.com"  // 必要最小限のオリジンのみ
+    ],
+    "allow_credentials": true
   }
 }
 ```
 
-❌ **危険**: `["*"]` は本番環境では絶対に使用しない
+❌ **危険**: `allow_origins: ["*"]` は本番環境では絶対に使用しない
 
 #### 3. トークン有効期限の適切な設定
 
@@ -922,10 +933,8 @@ Access to XMLHttpRequest at 'https://idp.example.com/...' from origin 'https://a
 **解決策**:
 ```json
 {
-  "tenant": {
-    "attributes": {
-      "allow_origins": ["https://app.example.com"]
-    }
+  "cors_config": {
+    "allow_origins": ["https://app.example.com"]
   }
 }
 ```
