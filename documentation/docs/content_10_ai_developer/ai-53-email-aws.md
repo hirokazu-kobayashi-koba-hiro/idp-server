@@ -18,7 +18,7 @@ AWS SES (Simple Email Service) によるメール送信。
 
 ## EmailSender インターフェース・実装
 
-**情報源**: [AwsEmailSender.java:29-82](../../libs/idp-server-email-aws-adapter/src/main/java/org/idp/server/emai/aws/adapter/AwsEmailSender.java#L29-L82)
+**情報源**: [AwsEmailSender.java:29-82](../../../libs/idp-server-email-aws-adapter/src/main/java/org/idp/server/emai/aws/adapter/AwsEmailSender.java#L29-L82)
 
 ```java
 /**
@@ -107,6 +107,6 @@ org.idp.server.emai.aws.adapter.AwsEmailSender
 
 **情報源**:
 - `libs/idp-server-email-aws-adapter/`配下の実装コード
-- [AwsEmailSender.java](../../libs/idp-server-email-aws-adapter/src/main/java/org/idp/server/emai/aws/adapter/AwsEmailSender.java)
+- [AwsEmailSender.java](../../../libs/idp-server-email-aws-adapter/src/main/java/org/idp/server/emai/aws/adapter/AwsEmailSender.java)
 
 **最終更新**: 2025-10-12

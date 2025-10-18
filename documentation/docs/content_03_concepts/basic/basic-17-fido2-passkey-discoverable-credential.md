@@ -428,7 +428,7 @@ idp-serverは[WebAuthn4j](https://github.com/webauthn4j/webauthn4j)ライブラ�
 - **拡張機能**: カスタム認証ロジックのプラグイン対応
 
 > **📝 実装詳細**: 具体的な設定方法や実装例については、
-> [WebAuthn設定ガイド](../../content_06_developer-guide/configuration/authn/webauthn.md)を参照してください。
+> [WebAuthn設定ガイド](../../content_06_developer-guide/05-configuration/authn/webauthn.md)を参照してください。
 
 ---
 
@@ -441,7 +441,7 @@ idp-serverは[WebAuthn4j](https://github.com/webauthn4j/webauthn4j)ライブラ�
 
 ### 関連ドキュメント
 - **[FIDO2・WebAuthn パスワードレス認証](basic-16-fido-webauthn-passwordless.md)** - FIDO2/WebAuthnの基礎概念
-- **[WebAuthn設定](../../content_06_developer-guide/configuration/authn/webauthn.md)** - idp-serverでのWebAuthn設定方法
+- **[WebAuthn設定](../../content_06_developer-guide/05-configuration/authn/webauthn.md)** - idp-serverでのWebAuthn設定方法
 
 ---
 

@@ -626,7 +626,6 @@ CIBA（Client Initiated Backchannel Authentication）対応のクライアント
 ### 次に読むべきドキュメント
 
 1. [Authentication Policy](./authentication-policy.md) - 認証ポリシーとMFA設定
-2. [User Management](./user.md) - ユーザー管理とプロファイル設定
 3. [Federation](./federation.md) - 外部IdP連携
 
 ---

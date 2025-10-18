@@ -32,7 +32,7 @@ Firebase Cloud Messaging (FCM) によるプッシュ通知。
 
 #### 実装パターン
 
-**情報源**: [FcmNotifier.java:37-108](../../libs/idp-server-notification-fcm-adapter/src/main/java/org/idp/server/notification/push/fcm/FcmNotifier.java#L37-L108)
+**情報源**: [FcmNotifier.java:37-108](../../../libs/idp-server-notification-fcm-adapter/src/main/java/org/idp/server/notification/push/fcm/FcmNotifier.java#L37-L108)
 
 ```java
 /**
@@ -130,7 +130,7 @@ Apple Push Notification Service (APNS) によるプッシュ通知。
 
 #### 実装パターン
 
-**情報源**: [ApnsNotifier.java:42-134](../../libs/idp-server-notification-apns-adapter/src/main/java/org/idp/server/notification/push/apns/ApnsNotifier.java#L42-L134)
+**情報源**: [ApnsNotifier.java:42-134](../../../libs/idp-server-notification-apns-adapter/src/main/java/org/idp/server/notification/push/apns/ApnsNotifier.java#L42-L134)
 
 ```java
 /**
@@ -223,7 +223,7 @@ AWS SES (Simple Email Service) によるメール送信。
 
 #### EmailSender インターフェース・実装
 
-**情報源**: [AwsEmailSender.java:29-82](../../libs/idp-server-email-aws-adapter/src/main/java/org/idp/server/emai/aws/adapter/AwsEmailSender.java#L29-L82)
+**情報源**: [AwsEmailSender.java:29-82](../../../libs/idp-server-email-aws-adapter/src/main/java/org/idp/server/emai/aws/adapter/AwsEmailSender.java#L29-L82)
 
 ```java
 /**
@@ -333,7 +333,7 @@ Shared Signals Framework (SSF) によるセキュリティイベント配信。
 
 #### SSF Hook Executor - Push Delivery実装
 
-**情報源**: [SsfHookExecutor.java:35-176](../../libs/idp-server-security-event-framework/src/main/java/org/idp/server/security/event/hook/ssf/SsfHookExecutor.java#L35-L176)
+**情報源**: [SsfHookExecutor.java:35-176](../../../libs/idp-server-security-event-framework/src/main/java/org/idp/server/security/event/hook/ssf/SsfHookExecutor.java#L35-L176)
 
 ```java
 /**
@@ -457,7 +457,7 @@ public class SsfHookExecutor implements SecurityEventHook {
 
 #### SecurityEventHook インターフェース
 
-**情報源**: [SecurityEventHook.java:23](../../libs/idp-server-platform/src/main/java/org/idp/server/platform/security/hook/SecurityEventHook.java#L23)
+**情報源**: [SecurityEventHook.java:23](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/security/hook/SecurityEventHook.java#L23)
 
 ```java
 /**
@@ -492,7 +492,7 @@ public interface SecurityEventHook {
 
 #### WebHookSecurityEventExecutor - Webhook実装
 
-**情報源**: [WebHookSecurityEventExecutor.java:35](../../libs/idp-server-security-event-hooks/src/main/java/org/idp/server/security/event/hooks/webhook/WebHookSecurityEventExecutor.java#L35)
+**情報源**: [WebHookSecurityEventExecutor.java:35](../../../libs/idp-server-security-event-hooks/src/main/java/org/idp/server/security/event/hooks/webhook/WebHookSecurityEventExecutor.java#L35)
 
 ```java
 /**
@@ -651,7 +651,7 @@ public class SlackSecurityEventHookExecutor implements SecurityEventHook {
 
 #### Retry Mechanism
 
-**情報源**: [HttpRequestExecutor.java](../../libs/idp-server-platform/src/main/java/org/idp/server/platform/http/HttpRequestExecutor.java)（platform層で提供）
+**情報源**: [HttpRequestExecutor.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/http/HttpRequestExecutor.java)（platform層で提供）
 
 **重要**: 専用のRetryExecutorクラスは存在しない。`HttpRequestExecutor.executeWithRetry()`を使用。
 
@@ -714,7 +714,7 @@ public class SsfHookExecutor implements SecurityEventHook {
 **情報源**:
 - Issue #398（Security Event Hook Retry Mechanism）
 - platform.md「HTTP クライアント - リトライ機能付き実行」
-- [HttpRequestExecutor.java](../../libs/idp-server-platform/src/main/java/org/idp/server/platform/http/HttpRequestExecutor.java)
+- [HttpRequestExecutor.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/http/HttpRequestExecutor.java)
 
 ---
 
@@ -765,7 +765,7 @@ public class FcmNotifier implements AuthenticationDeviceNotifier {  // ✅ 実�
 - `NotificationTemplate`による設定駆動
 - `NotificationResult`による結果管理
 
-**検証**: [FcmNotifier.java:37-108](../../libs/idp-server-notification-fcm-adapter/src/main/java/org/idp/server/notification/push/fcm/FcmNotifier.java#L37-L108)
+**検証**: [FcmNotifier.java:37-108](../../../libs/idp-server-notification-fcm-adapter/src/main/java/org/idp/server/notification/push/fcm/FcmNotifier.java#L37-L108)
 
 #### 修正2: APNS Adapter実装パターン (131-205行目)
 
@@ -792,7 +792,7 @@ public class ApnsNotifier implements AuthenticationDeviceNotifier {  // ✅ 実�
 - JWT認証トークン生成・キャッシュ（1時間有効）
 - Production/Development環境切り替え
 
-**検証**: [ApnsNotifier.java:42-134](../../libs/idp-server-notification-apns-adapter/src/main/java/org/idp/server/notification/push/apns/ApnsNotifier.java#L42-L134)
+**検証**: [ApnsNotifier.java:42-134](../../../libs/idp-server-notification-apns-adapter/src/main/java/org/idp/server/notification/push/apns/ApnsNotifier.java#L42-L134)
 
 #### 修正3: Email AWS Adapter実装パターン (224-302行目)
 
@@ -819,7 +819,7 @@ public class AwsEmailSender implements EmailSender {  // ✅ 実装
 - `EmailSenderConfiguration`による設定駆動
 - `EmailSendResult`による結果管理
 
-**検証**: [AwsEmailSender.java:29-82](../../libs/idp-server-email-aws-adapter/src/main/java/org/idp/server/emai/aws/adapter/AwsEmailSender.java#L29-L82)
+**検証**: [AwsEmailSender.java:29-82](../../../libs/idp-server-email-aws-adapter/src/main/java/org/idp/server/emai/aws/adapter/AwsEmailSender.java#L29-L82)
 
 #### 修正4: SSF Push Delivery実装 (334-439行目)
 
@@ -846,7 +846,7 @@ public class SsfHookExecutor implements SecurityEventHook {  // ✅ 実装
 - OAuth認証オプション対応
 - Java標準HttpRequest.newBuilder()
 
-**検証**: [SsfHookExecutor.java:35-176](../../libs/idp-server-security-event-framework/src/main/java/org/idp/server/security/event/hook/ssf/SsfHookExecutor.java#L35-L176)
+**検証**: [SsfHookExecutor.java:35-176](../../../libs/idp-server-security-event-framework/src/main/java/org/idp/server/security/event/hook/ssf/SsfHookExecutor.java#L35-L176)
 
 #### 修正5: Retry Mechanism (652-717行目)
 
@@ -892,11 +892,11 @@ platform層の`HttpRequestExecutor.executeWithRetry()`を使用。
 - `libs/idp-server-notification-*/`配下の実装コード
 - `libs/idp-server-email-aws-adapter/`配下の実装コード
 - `libs/idp-server-security-event-*/`配下の実装コード
-- [FcmNotifier.java](../../libs/idp-server-notification-fcm-adapter/src/main/java/org/idp/server/notification/push/fcm/FcmNotifier.java)
-- [ApnsNotifier.java](../../libs/idp-server-notification-apns-adapter/src/main/java/org/idp/server/notification/push/apns/ApnsNotifier.java)
-- [AwsEmailSender.java](../../libs/idp-server-email-aws-adapter/src/main/java/org/idp/server/emai/aws/adapter/AwsEmailSender.java)
-- [SsfHookExecutor.java](../../libs/idp-server-security-event-framework/src/main/java/org/idp/server/security/event/hook/ssf/SsfHookExecutor.java)
-- [WebHookSecurityEventExecutor.java](../../libs/idp-server-security-event-hooks/src/main/java/org/idp/server/security/event/hooks/webhook/WebHookSecurityEventExecutor.java)
+- [FcmNotifier.java](../../../libs/idp-server-notification-fcm-adapter/src/main/java/org/idp/server/notification/push/fcm/FcmNotifier.java)
+- [ApnsNotifier.java](../../../libs/idp-server-notification-apns-adapter/src/main/java/org/idp/server/notification/push/apns/ApnsNotifier.java)
+- [AwsEmailSender.java](../../../libs/idp-server-email-aws-adapter/src/main/java/org/idp/server/emai/aws/adapter/AwsEmailSender.java)
+- [SsfHookExecutor.java](../../../libs/idp-server-security-event-framework/src/main/java/org/idp/server/security/event/hook/ssf/SsfHookExecutor.java)
+- [WebHookSecurityEventExecutor.java](../../../libs/idp-server-security-event-hooks/src/main/java/org/idp/server/security/event/hooks/webhook/WebHookSecurityEventExecutor.java)
 - platform.md「HTTP クライアント - リトライ機能付き実行」
 - Issue #398（Security Event Hook Retry Mechanism）
 - [Shared Signals Framework](https://openid.net/specs/openid-sse-framework-1_0.html)

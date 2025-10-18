@@ -353,11 +353,6 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 
 ### さらにセキュリティを強化
 - [How-to: FIDO2/WebAuthn設定](./how-to-13-fido-uaf-registration.md) - 生体認証
-- [How-to: TOTP設定](./how-to-XX-totp-setup.md) - Google Authenticator等
-
-### より複雑な認証フロー
-- [How-to: リスクベース認証](./how-to-XX-risk-based-authentication.md) - 状況に応じてMFA要求
-- [How-to: Step-up認証](./how-to-XX-step-up-authentication.md) - 重要操作時に追加認証
 
 ---
 

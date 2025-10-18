@@ -254,7 +254,7 @@
 - ✅ `./04-authentication.md`
 
 - ❌ `../content_10_ai_developer/` （相対パス誤り）
-- ✅ `../../content_10_ai_developer/`
+- ✅ `../content_10_ai_developer/`
 
 ### 5. クライアント認証の不足
 - ❌ 説明なし

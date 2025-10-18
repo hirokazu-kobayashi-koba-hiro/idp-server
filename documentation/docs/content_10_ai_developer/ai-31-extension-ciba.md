@@ -48,7 +48,7 @@ libs/idp-server-core-extension-ciba/src/main/java/org/idp/server/core/extension/
 
 ### CibaRequestHandler
 
-**情報源**: [CibaRequestHandler.java:61](../../libs/idp-server-core-extension-ciba/src/main/java/org/idp/server/core/extension/ciba/handler/CibaRequestHandler.java#L61)
+**情報源**: [CibaRequestHandler.java:61](../../../libs/idp-server-core-extension-ciba/src/main/java/org/idp/server/core/extension/ciba/handler/CibaRequestHandler.java#L61)
 
 ```java
 /**
@@ -90,7 +90,7 @@ public class CibaRequestHandler {
 
 ### CibaGrantService
 
-**情報源**: [CibaGrantService.java](../../libs/idp-server-core-extension-ciba/src/main/java/org/idp/server/core/extension/ciba/token/CibaGrantService.java)
+**情報源**: [CibaGrantService.java](../../../libs/idp-server-core-extension-ciba/src/main/java/org/idp/server/core/extension/ciba/token/CibaGrantService.java)
 
 ```java
 /**

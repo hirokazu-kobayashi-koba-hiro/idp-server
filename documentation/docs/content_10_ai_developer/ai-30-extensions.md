@@ -94,8 +94,8 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
 ```
 
 **情報源**:
-- [FapiBaselineVerifier.java:30](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiBaselineVerifier.java#L30)
-- [FapiAdvanceVerifier.java:34](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java#L34)
+- [FapiBaselineVerifier.java:30](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiBaselineVerifier.java#L30)
+- [FapiAdvanceVerifier.java:34](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java#L34)
 
 #### MTLS Client Authenticator
 
@@ -124,8 +124,8 @@ public class SelfSignedTlsClientAuthAuthenticator implements ClientAuthenticator
 ```
 
 **情報源**:
-- [TlsClientAuthAuthenticator.java:35](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/TlsClientAuthAuthenticator.java#L35)
-- [SelfSignedTlsClientAuthAuthenticator.java](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/SelfSignedTlsClientAuthAuthenticator.java)
+- [TlsClientAuthAuthenticator.java:35](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/TlsClientAuthAuthenticator.java#L35)
+- [SelfSignedTlsClientAuthAuthenticator.java](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/SelfSignedTlsClientAuthAuthenticator.java)
 
 ---
 
@@ -263,7 +263,7 @@ org.idp.server.core.extension.fapi.JarVerifier
 
 ### PluginLoader - 静的メソッドAPI
 
-**情報源**: [PluginLoader.java:25-91](../../libs/idp-server-platform/src/main/java/org/idp/server/platform/plugin/PluginLoader.java#L25-L91)
+**情報源**: [PluginLoader.java:25-91](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/plugin/PluginLoader.java#L25-L91)
 
 ```java
 // ✅ 正しいAPI: 静的メソッド使用
@@ -352,14 +352,14 @@ public class TlsClientAuthAuthenticator implements ClientAuthenticator {
 - 実装ファイルへの正確なリンク
 
 **検証**:
-- [FapiBaselineVerifier.java:30](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiBaselineVerifier.java#L30)
-- [FapiAdvanceVerifier.java:34](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java#L34)
-- [TlsClientAuthAuthenticator.java:35](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/TlsClientAuthAuthenticator.java#L35)
+- [FapiBaselineVerifier.java:30](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiBaselineVerifier.java#L30)
+- [FapiAdvanceVerifier.java:34](../..//..libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java#L34)
+- [TlsClientAuthAuthenticator.java:35](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/TlsClientAuthAuthenticator.java#L35)
 
 ### 検証済み項目
 
 #### ✅ PKCE Verifier
-- [PkceVerifier.java:23](../../libs/idp-server-core-extension-pkce/src/main/java/org/idp/server/core/openid/extension/pkce/PkceVerifier.java#L23)
+- [PkceVerifier.java:23](../../../libs/idp-server-core-extension-pkce/src/main/java/org/idp/server/core/openid/extension/pkce/PkceVerifier.java#L23)
 - `AuthorizationRequestExtensionVerifier` 実装を確認
 
 #### ✅ Plugin登録パターン
@@ -380,10 +380,10 @@ public class TlsClientAuthAuthenticator implements ClientAuthenticator {
 
 **情報源**:
 - `libs/idp-server-core-extension-*/`配下の実装コード
-- [FapiBaselineVerifier.java](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiBaselineVerifier.java)
-- [FapiAdvanceVerifier.java](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java)
-- [TlsClientAuthAuthenticator.java](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/TlsClientAuthAuthenticator.java)
-- [PkceVerifier.java](../../libs/idp-server-core-extension-pkce/src/main/java/org/idp/server/core/openid/extension/pkce/PkceVerifier.java)
+- [FapiBaselineVerifier.java](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiBaselineVerifier.java)
+- [FapiAdvanceVerifier.java](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java)
+- [TlsClientAuthAuthenticator.java](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/TlsClientAuthAuthenticator.java)
+- [PkceVerifier.java](../../../libs/idp-server-core-extension-pkce/src/main/java/org/idp/server/core/openid/extension/pkce/PkceVerifier.java)
 - [intro-01-tech-overview.md](../content_01_intro/intro-01-tech-overview.md)
 - RFC 7636 (PKCE), OpenID Connect CIBA, FAPI, IDA仕様
 

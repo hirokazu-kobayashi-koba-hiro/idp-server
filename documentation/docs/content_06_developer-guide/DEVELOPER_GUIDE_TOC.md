@@ -72,7 +72,7 @@
 | [Application Plane 概要](./03-application-plane/01-overview.md) | OAuth/OIDCフローの全体像 | 10分 |
 | [Authorization Code Flow実装](./03-application-plane/02-authorization-flow.md) | 認可フロー実装（予定） | - |
 | [Token Flow実装](./03-application-plane/03-token-endpoint.md) | トークン発行実装（予定） | - |
-| [CIBA Flow実装](./03-application-plane/04-ciba-flow.md) | バックチャネル認証実装（予定） | - |
+| [CIBA Flow実装](./03-application-plane/06-ciba-flow.md) | バックチャネル認証実装（予定） | - |
 
 **URL例**: `/oauth/authorize`, `/oauth/token`, `/{tenant}/v1/me/profile`
 
@@ -100,7 +100,6 @@
 |------------|---------------|
 | [Authentication Interactions](./04-implementation-guides/impl-06-authentication-interactor.md) | [認証インタラクター詳細](../content_10_ai_developer/ai-41-authentication.md) |
 | [Authentication Policy](./04-implementation-guides/impl-05-authentication-policy.md) | [Core - Authentication](../content_10_ai_developer/ai-11-core.md#authentication---認証ドメイン) |
-| [ID Token構造](./04-implementation-guides/impl-09-id-token-structure.md) | [Core - Token](../content_10_ai_developer/ai-11-core.md#token---トークンドメイン) |
 
 ### 🌐 フェデレーション・連携
 
@@ -114,7 +113,6 @@
 |------------|---------------|
 | [Events](./03-application-plane/09-events.md) | [通知・イベント一覧](../content_10_ai_developer/ai-50-notification-security-event.md) |
 | [Security Event Hooks](./04-implementation-guides/impl-15-security-event-hooks.md) | [Hooks詳細](../content_10_ai_developer/ai-55-security-event-hooks.md) |
-| [User Lifecycle Event](./developer-guide/user-lifecycle-event.md) | [SSF Framework](../content_10_ai_developer/ai-54-security-event-framework.md) |
 
 ### 🛠️ インフラ・設定
 

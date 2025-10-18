@@ -18,7 +18,7 @@
 
 ## SecurityEventHook インターフェース
 
-**情報源**: [SecurityEventHook.java:23](../../libs/idp-server-platform/src/main/java/org/idp/server/platform/security/hook/SecurityEventHook.java#L23)
+**情報源**: [SecurityEventHook.java:23](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/security/hook/SecurityEventHook.java#L23)
 
 ```java
 /**
@@ -53,7 +53,7 @@ public interface SecurityEventHook {
 
 ## WebHookSecurityEventExecutor - Webhook実装
 
-**情報源**: [WebHookSecurityEventExecutor.java:35](../../libs/idp-server-security-event-hooks/src/main/java/org/idp/server/security/event/hooks/webhook/WebHookSecurityEventExecutor.java#L35)
+**情報源**: [WebHookSecurityEventExecutor.java:35](../../../libs/idp-server-security-event-hooks/src/main/java/org/idp/server/security/event/hooks/webhook/WebHookSecurityEventExecutor.java#L35)
 
 ```java
 /**
@@ -212,7 +212,7 @@ public class SlackSecurityEventHookExecutor implements SecurityEventHook {
 
 ## Retry Mechanism
 
-**情報源**: [HttpRequestExecutor.java](../../libs/idp-server-platform/src/main/java/org/idp/server/platform/http/HttpRequestExecutor.java)（platform層で提供）
+**情報源**: [HttpRequestExecutor.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/http/HttpRequestExecutor.java)（platform層で提供）
 
 **重要**: 専用のRetryExecutorクラスは存在しない。`HttpRequestExecutor.executeWithRetry()`を使用。
 
@@ -282,7 +282,7 @@ public class SsfHookExecutor implements SecurityEventHook {
 
 **情報源**:
 - `libs/idp-server-security-event-hooks/`配下の実装コード
-- [WebHookSecurityEventExecutor.java](../../libs/idp-server-security-event-hooks/src/main/java/org/idp/server/security/event/hooks/webhook/WebHookSecurityEventExecutor.java)
+- [WebHookSecurityEventExecutor.java](../../../libs/idp-server-security-event-hooks/src/main/java/org/idp/server/security/event/hooks/webhook/WebHookSecurityEventExecutor.java)
 - Issue #398（Security Event Hook Retry Mechanism）
 - platform.md「HTTP クライアント - リトライ機能付き実行」
 

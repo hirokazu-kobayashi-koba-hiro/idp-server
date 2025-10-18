@@ -543,7 +543,6 @@ Authorization: Bearer {access_token}
 ## 関連ドキュメント
 
 - [Concept: 認証ポリシー](../content_03_concepts/concept-05-authentication-policy.md) - 認証ポリシーの詳細
-- [Developer Guide: User Management](../content_06_developer-guide/05-configuration/user.md) - ユーザー管理の詳細設定
 - [Developer Guide: Authentication実装](../content_06_developer-guide/03-application-plane/04-authentication.md) - 開発者向け実装ガイド
 - [API Reference](../content_07_reference/api-reference.md) - Management API仕様
 

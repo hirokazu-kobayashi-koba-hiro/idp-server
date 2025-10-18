@@ -402,8 +402,8 @@ public enum CustomSecurityEventType {
 ## 📚 関連ドキュメント
 
 ### 技術詳細
-- [AI開発者向け: Security Event Hooks詳細](../../content_10_ai_developer/ai-55-security-event-hooks.md) - Webhook実装パターン
-- [AI開発者向け: Security Event Framework](../../content_10_ai_developer/ai-54-security-event-framework.md) - SSF準拠実装
+- [AI開発者向け: Security Event Hooks詳細](../content_10_ai_developer/ai-55-security-event-hooks.md) - Webhook実装パターン
+- [AI開発者向け: Security Event Framework](../content_10_ai_developer/ai-54-security-event-framework.md) - SSF準拠実装
 
 ### 実装ガイド
 - [開発者ガイド: Events](../03-application-plane/09-events.md) - イベント一覧

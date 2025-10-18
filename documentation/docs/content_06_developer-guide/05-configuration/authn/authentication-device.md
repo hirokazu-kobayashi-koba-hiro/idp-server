@@ -167,7 +167,7 @@ CIBA（Client Initiated Backchannel Authentication）フローでは、バック
 **対象デバイス:**
 - ユーザーに登録された認証デバイスのうち、優先順位（priority）が最も高いデバイスに送信されます
 
-詳細は [CIBA + FIDO-UAF フロー](../../content_05_how-to/ciba-flow-fido-uaf.md) を参照してください。
+詳細は [CIBA + FIDO-UAF フロー](../../../content_05_how-to/how-to-12-ciba-flow-fido-uaf.md) を参照してください。
 
 ---
 

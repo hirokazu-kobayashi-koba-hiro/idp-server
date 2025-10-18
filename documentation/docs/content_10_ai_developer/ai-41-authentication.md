@@ -75,7 +75,7 @@ PluginLoader → AuthenticationInteractorFactory → AuthenticationInteractor
 
 ## AuthenticationInteractorFactory パターン
 
-**情報源**: [AuthenticationInteractorFactory.java:21](../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/plugin/AuthenticationInteractorFactory.java#L21)
+**情報源**: [AuthenticationInteractorFactory.java:21](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/plugin/AuthenticationInteractorFactory.java#L21)
 
 ```java
 /**
@@ -97,11 +97,11 @@ public class PasswordAuthenticationInteractorFactory implements AuthenticationIn
 }
 ```
 
-**情報源**: [PasswordAuthenticationInteractorFactory.java:24](../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/password/PasswordAuthenticationInteractorFactory.java#L24)
+**情報源**: [PasswordAuthenticationInteractorFactory.java:24](../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/password/PasswordAuthenticationInteractorFactory.java#L24)
 
 ## AuthenticationInteractor インターフェース
 
-**情報源**: [AuthenticationInteractor.java:23](../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/AuthenticationInteractor.java#L23)
+**情報源**: [AuthenticationInteractor.java:23](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/AuthenticationInteractor.java#L23)
 
 ```java
 /**
@@ -145,7 +145,7 @@ org.idp.server.authentication.interactors.cancel.AuthenticationCancelInteractorF
 
 ### 1. Password認証実装
 
-**情報源**: [PasswordAuthenticationInteractor.java:30-80](../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/password/PasswordAuthenticationInteractor.java#L30-L80)
+**情報源**: [PasswordAuthenticationInteractor.java:30-80](../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/password/PasswordAuthenticationInteractor.java#L30-L80)
 
 ```java
 public class PasswordAuthenticationInteractor implements AuthenticationInteractor {
@@ -214,7 +214,7 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
 
 ### 2. SMS認証実装（AuthenticationExecutor連携）
 
-**情報源**: [SmsAuthenticationInteractor.java:37-80](../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/sms/SmsAuthenticationInteractor.java#L37-L80)
+**情報源**: [SmsAuthenticationInteractor.java:37-80](../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/sms/SmsAuthenticationInteractor.java#L37-L80)
 
 ```java
 public class SmsAuthenticationInteractor implements AuthenticationInteractor {
@@ -691,8 +691,8 @@ org.idp.server.authentication.interactors.custom.CustomAuthenticationInteractorF
 
 **情報源**:
 - `libs/idp-server-authentication-interactors/`配下の全実装
-- [PasswordAuthenticationInteractor.java](../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/password/PasswordAuthenticationInteractor.java)
-- [SmsAuthenticationInteractor.java](../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/sms/SmsAuthenticationInteractor.java)
+- [PasswordAuthenticationInteractor.java](../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/password/PasswordAuthenticationInteractor.java)
+- [SmsAuthenticationInteractor.java](../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/sms/SmsAuthenticationInteractor.java)
 - [RFC 8176 - Authentication Method Reference Values](https://www.rfc-editor.org/rfc/rfc8176.html)
 
 **最終更新**: 2025-10-12

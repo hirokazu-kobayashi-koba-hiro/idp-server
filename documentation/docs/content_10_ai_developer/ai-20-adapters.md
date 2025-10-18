@@ -393,7 +393,7 @@ Spring Boot統合・HTTP/REST API実装。
 
 ### Controller パターン
 
-**情報源**: [ClientManagementV1Api.java:37-69](../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/control_plane/restapi/management/ClientManagementV1Api.java#L37-L69)
+**情報源**: [ClientManagementV1Api.java:37-69](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/control_plane/restapi/management/ClientManagementV1Api.java#L37-L69)
 
 #### 命名規則: \{Domain\}ManagementV1Api
 
@@ -487,7 +487,7 @@ public class DataSourceConfiguration {
 
 ### Exception Handler
 
-**情報源**: [ApiExceptionHandler.java:34](../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/ApiExceptionHandler.java#L34)
+**情報源**: [ApiExceptionHandler.java:34](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/ApiExceptionHandler.java#L34)
 
 ```java
 /**
@@ -614,7 +614,7 @@ public class ManagementApiFilter extends OncePerRequestFilter {
 
 テナント固有のCORS設定を動的に適用。
 
-**情報源**: [DynamicCorsFilter.java](../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/DynamicCorsFilter.java)
+**情報源**: [DynamicCorsFilter.java](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/DynamicCorsFilter.java)
 
 ---
 
@@ -679,7 +679,7 @@ public class ClientManagementV1Api implements ParameterTransformable {  // ✅ �
 - `TenantIdentifier` 型安全なパス変数
 - Controller → Control-Plane API → EntryService の階層構造
 
-**検証**: [ClientManagementV1Api.java:37-69](../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/control_plane/restapi/management/ClientManagementV1Api.java#L37-L69)
+**検証**: [ClientManagementV1Api.java:37-69](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/control_plane/restapi/management/ClientManagementV1Api.java#L37-L69)
 
 #### 修正2: まとめセクションの用語修正 (621-629行目)
 
@@ -710,9 +710,9 @@ public class ClientManagementV1Api implements ParameterTransformable {  // ✅ �
 - `libs/idp-server-springboot-adapter/src/main/java/`配下の実装コード
 - `libs/idp-server-database/postgresql/V1_0_0__init_lib.sql`
 - CLAUDE.md「⚠️ レイヤー責任違反の重要教訓」「4層アーキテクチャ」
-- [OAuthTokenCommandDataSource.java](../../libs/idp-server-core-adapter/src/main/java/org/idp/server/core/adapters/datasource/token/command/OAuthTokenCommandDataSource.java)
-- [ClientManagementV1Api.java](../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/control_plane/restapi/management/ClientManagementV1Api.java)
-- [ApiExceptionHandler.java](../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/ApiExceptionHandler.java)
+- [OAuthTokenCommandDataSource.java](../../../libs/idp-server-core-adapter/src/main/java/org/idp/server/core/adapters/datasource/token/command/OAuthTokenCommandDataSource.java)
+- [ClientManagementV1Api.java](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/control_plane/restapi/management/ClientManagementV1Api.java)
+- [ApiExceptionHandler.java](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/ApiExceptionHandler.java)
 
 **最終更新**: 2025-10-12
 **確認方法**: `find libs/idp-server-core-adapter/src/main/java/org/idp/server/core/adapters/datasource -type d -maxdepth 2`

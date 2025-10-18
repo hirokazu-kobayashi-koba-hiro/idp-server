@@ -529,7 +529,7 @@ Public Client（`client_secret_none`）でPKCEなし：
 
 ### 🔗 詳細情報
 
-- [AI開発者向け: OAuth - Client Authentication](../../../content_10_ai_developer/ai-11-core.md#oauth---oauthドメイン)
+- [AI開発者向け: OAuth - Client Authentication](../../content_10_ai_developer/ai-11-core.md#oauth---oauthドメイン)
 - [RFC 6749 Section 2.3](https://datatracker.ietf.org/doc/html/rfc6749#section-2.3) - Client Authentication
 
 ---

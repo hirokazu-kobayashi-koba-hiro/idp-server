@@ -16,7 +16,7 @@ Spring Boot統合・HTTP/REST API実装。
 
 ## Controller パターン
 
-**情報源**: [ClientManagementV1Api.java:37-69](../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/control_plane/restapi/management/ClientManagementV1Api.java#L37-L69)
+**情報源**: [ClientManagementV1Api.java:37-69](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/control_plane/restapi/management/ClientManagementV1Api.java#L37-L69)
 
 ### 命名規則: \{Domain\}ManagementV1Api
 
@@ -110,7 +110,7 @@ public class DataSourceConfiguration {
 
 ## Exception Handler
 
-**情報源**: [ApiExceptionHandler.java:34](../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/ApiExceptionHandler.java#L34)
+**情報源**: [ApiExceptionHandler.java:34](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/ApiExceptionHandler.java#L34)
 
 ```java
 /**
@@ -237,7 +237,7 @@ public class ManagementApiFilter extends OncePerRequestFilter {
 
 テナント固有のCORS設定を動的に適用。
 
-**情報源**: [DynamicCorsFilter.java](../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/DynamicCorsFilter.java)
+**情報源**: [DynamicCorsFilter.java](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/DynamicCorsFilter.java)
 
 ## 関連ドキュメント
 
@@ -249,7 +249,7 @@ public class ManagementApiFilter extends OncePerRequestFilter {
 
 **情報源**:
 - `libs/idp-server-springboot-adapter/src/main/java/`配下の実装コード
-- [ClientManagementV1Api.java](../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/control_plane/restapi/management/ClientManagementV1Api.java)
-- [ApiExceptionHandler.java](../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/ApiExceptionHandler.java)
+- [ClientManagementV1Api.java](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/control_plane/restapi/management/ClientManagementV1Api.java)
+- [ApiExceptionHandler.java](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/ApiExceptionHandler.java)
 
 **最終更新**: 2025-10-12

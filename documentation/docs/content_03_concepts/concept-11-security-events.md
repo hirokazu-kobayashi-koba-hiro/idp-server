@@ -151,7 +151,7 @@ idp-serverでは、以下の6種類のフックをサポートしています。
 | **Datadog** | メトリクス・ログ送信 | Datadog API |
 | **監査ログ** | データベース永続化 | idp-serverデータベース |
 
-詳細な設定方法については、[イベント & フックシステム](../content_06_developer-guide/developer-guide/security-event-hooks.md)を参照してください。
+詳細な設定方法については、[イベント & フックシステム](../content_06_developer-guide/04-implementation-guides/impl-15-security-event-hooks.md)を参照してください。
 
 ### SSFについて
 
@@ -208,8 +208,6 @@ idp-serverでは、2種類のイベントシステムが連携して動作しま
 
 **連携例**: パスワード失敗5回 → `password_failure`イベント → UserLifecycleEvent(LOCK) → `user_lock`イベント → Slack通知
 
-詳細は[イベント処理](../content_06_developer-guide/developer-guide/events.md)を参照してください。
-
 ---
 
 ## 設定と制御
@@ -255,9 +253,8 @@ idp-serverでは、2種類のイベントシステムが連携して動作しま
 
 ## 関連ドキュメント
 
-- [イベント & フックシステム](../content_06_developer-guide/developer-guide/security-event-hooks.md) - 実装詳細
-- [イベント処理](../content_06_developer-guide/developer-guide/events.md) - SecurityEventとUserLifecycleEventの関係
-- [HTTP Request Executor](../content_06_developer-guide/developer-guide/http-request-executor.md) - Webhook実行基盤
+- [イベント & フックシステム](../content_06_developer-guide/04-implementation-guides/impl-15-security-event-hooks.md) - 実装詳細
+- [HTTP Request Executor](../content_06_developer-guide/04-implementation-guides/impl-16-http-request-executor.md) - Webhook実行基盤
 - [認証ポリシー](concept-05-authentication-policy.md) - アカウントロック設定
 
 ---

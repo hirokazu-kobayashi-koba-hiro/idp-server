@@ -615,13 +615,13 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
 
 ### 高度な設定
 - [Developer Guide: Client設定](../content_06_developer-guide/05-configuration/client.md) - 詳細な設定オプション
-- [How-to: CIBA Flow](./how-to-05-ciba-flow.md) - バックチャネル認証
+- [How-to: CIBA Flow](./how-to-12-ciba-flow-fido-uaf.md) - バックチャネル認証
 
 ---
 
 ## 関連ドキュメント
 
-- [Concept: OAuth 2.0とOpenID Connect](../content_03_concepts/concept-01-oauth-oidc.md) - プロトコル概要
+- [Concept: OAuth 2.0とOpenID Connect](../content_03_concepts/basic/basic-11-oauth-oidc-basics.md) - プロトコル概要
 - [Developer Guide: Client Authentication](../content_06_developer-guide/03-application-plane/10-client-authentication.md) - 7つの認証方式詳細
 - [API Reference](../content_07_reference/api-reference.md) - Management API仕様
 

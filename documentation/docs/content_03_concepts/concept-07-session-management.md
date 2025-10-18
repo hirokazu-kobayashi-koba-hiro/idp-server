@@ -261,7 +261,7 @@ JavaScriptからのCookieアクセスを防止し、XSS攻撃によるセッシ�
 
 - [トークン管理](concept-06-token-management.md) - トークンとセッションの使い分け
 - [マルチテナント](concept-01-multi-tenant.md) - テナント分離の仕組み
-- [Cookie/CORS設定](../content_08_ops/deployment.md) - 本番環境での設定
+- [Cookie/CORS設定](../content_08_ops/commercial-deployment/00-overview.md) - 本番環境での設定
 
 ## 参考資料
 

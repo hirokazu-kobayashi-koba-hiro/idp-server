@@ -254,8 +254,8 @@ if (!accessControl.isAuthorized()) {
 | 🔴 必須 | [03. システムレベルAPI](../02-control-plane/03-system-level-api.md) | 45分 |
 | 🔴 必須 | [04. 組織レベルAPI](../02-control-plane/04-organization-level-api.md) | 60分 |
 | 🔴 必須 | [Repository実装ガイド](../04-implementation-guides/impl-10-repository-implementation.md) | 30分 |
-| 🟡 推奨 | [AI開発者向け: Use-Cases詳細](../../content_10_ai_developer/ai-10-use-cases.md) | 60分 |
-| 🟡 推奨 | [AI開発者向け: Control Plane詳細](../../content_10_ai_developer/ai-13-control-plane.md) | 60分 |
+| 🟡 推奨 | [AI開発者向け: Use-Cases詳細](../content_10_ai_developer/ai-10-use-cases.md) | 60分 |
+| 🟡 推奨 | [AI開発者向け: Control Plane詳細](../content_10_ai_developer/ai-13-control-plane.md) | 60分 |
 
 ---
 
@@ -394,9 +394,9 @@ List<Role> roles = roleRepository.findListWithPermissions(tenant, limit, offset)
 
 ## 🔗 関連リソース
 
-- [AI開発者向け: Use-Cases詳細](../../content_10_ai_developer/ai-10-use-cases.md)
-- [AI開発者向け: Control Plane詳細](../../content_10_ai_developer/ai-13-control-plane.md)
-- [AI開発者向け: Adapters詳細](../../content_10_ai_developer/ai-20-adapters.md)
+- [AI開発者向け: Use-Cases詳細](../content_10_ai_developer/ai-10-use-cases.md)
+- [AI開発者向け: Control Plane詳細](../content_10_ai_developer/ai-13-control-plane.md)
+- [AI開発者向け: Adapters詳細](../content_10_ai_developer/ai-20-adapters.md)
 - [開発者ガイドTOC](../DEVELOPER_GUIDE_TOC.md)
 
 ---

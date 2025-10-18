@@ -533,7 +533,7 @@ Repository → SqlExecutor → TransactionManager.getConnection()
 
 ### @Transaction アノテーション
 
-**情報源**: [Transaction.java:24-28](../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/Transaction.java#L24-L28)
+**情報源**: [Transaction.java:24-28](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/Transaction.java#L24-L28)
 
 ```java
 @Retention(RetentionPolicy.RUNTIME)

@@ -89,7 +89,7 @@ flowchart LR
 - サーバーが`Retry-After`ヘッダーを返す場合、その時間だけ待機
 - 動的な再試行制御
 
-詳細は [HTTP Request Executor](../content_06_developer-guide/developer-guide/http-request-executor.md) を参照。
+詳細は [HTTP Request Executor](../content_06_developer-guide/04-implementation-guides/impl-16-http-request-executor.md) を参照。
 
 ### 3. データマッピング
 
@@ -136,7 +136,7 @@ flowchart LR
 - **case/if/switch**: 条件分岐
 - **その他**: カスタム関数を追加可能
 
-詳細は [Mapping Functions](../content_06_developer-guide/developer-guide/MAPPING_FUNCTIONS.md) を参照。
+詳細は [Mapping Functions](../content_06_developer-guide/04-implementation-guides/impl-20-mapping-functions.md) を参照。
 
 ### 4. 認証統合
 
@@ -284,8 +284,8 @@ SecurityEvent発行 → Data Mapping → HTTP Executor → 外部SIEM/Slack
 
 - [身元確認済みID](concept-03-id-verified.md) - eKYC連携、verified_claims
 - [セキュリティイベント](concept-11-security-events.md) - Webhook、SSF連携
-- [HTTP Request Executor](../content_06_developer-guide/developer-guide/http-request-executor.md) - 実装詳細
-- [Mapping Functions](../content_06_developer-guide/developer-guide/MAPPING_FUNCTIONS.md) - マッピング関数開発ガイド
+- [HTTP Request Executor](../content_06_developer-guide/04-implementation-guides/impl-16-http-request-executor.md) - 実装詳細
+- [Mapping Functions](../content_06_developer-guide/04-implementation-guides/impl-20-mapping-functions.md) - マッピング関数開発ガイド
 - [身元確認申込みガイド](../content_05_how-to/how-to-16-identity-verification-application.md) - 設定例
 
 ---

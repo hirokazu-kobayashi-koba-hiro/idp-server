@@ -298,7 +298,7 @@ public class TwilioSmsSender implements SmsSender {
 | 🔴 必須 | [Application Plane Track](./03-application-plane-track.md) | - |
 | 🔴 必須 | [Plugin実装ガイド](../04-implementation-guides/impl-12-plugin-implementation.md) | 30分 |
 | 🔴 必須 | [外部サービス連携ガイド](../04-implementation-guides/impl-17-external-integration.md) | 30分 |
-| 🔴 必須 | [AI開発者向け: 全モジュールガイド](../../content_10_ai_developer/ai-01-index.md) | 180分 |
+| 🔴 必須 | [AI開発者向け: 全モジュールガイド](../content_10_ai_developer/ai-01-index.md) | 180分 |
 
 ---
 
@@ -510,8 +510,8 @@ POST /v1/management/tenants/{tenantId}/authentication-configurations/bulk
 
 ## 🔗 関連リソース
 
-- [AI開発者向け: 全モジュールガイド](../../content_10_ai_developer/ai-01-index.md)
-- [AI開発者向け: Lessons Learned](../../content_10_ai_developer/ai-02-lessons-learned.md)
+- [AI開発者向け: 全モジュールガイド](../content_10_ai_developer/ai-01-index.md)
+- [AI開発者向け: Lessons Learned](../content_10_ai_developer/ai-02-lessons-learned.md)
 - [開発者ガイドTOC](../DEVELOPER_GUIDE_TOC.md)
 - [Control Plane概念](../../content_03_concepts/concept-10-control-plane.md)
 

@@ -784,7 +784,6 @@ Access to XMLHttpRequest at 'https://idp.example.com/...' from origin 'https://a
 
 1. [Client設定](./client.md) - クライアント登録とOAuth 2.0クライアント設定
 2. [Authentication Policy](./authentication-policy.md) - 認証ポリシーとMFA設定
-3. [User Management](./user.md) - ユーザー管理とプロファイル設定
 
 ---
 

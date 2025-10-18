@@ -72,7 +72,7 @@ graph TD
 `TenantAwareEntryServiceProxy`は、Java Dynamic Proxyを使用して`@Transaction`アノテーションを検出し、自動的にトランザクション管理を実行します。
 
 **詳細な実装パターンと8ステップの動作フロー**:
-- [AI開発者向けドキュメント - platform.md](../../content_10_ai_developer/ai-12-platform.md#datasourceトランザクションproxy)
+- [AI開発者向けドキュメント - platform.md](../content_10_ai_developer/ai-12-platform.md#datasourceトランザクションproxy)
 
 ---
 

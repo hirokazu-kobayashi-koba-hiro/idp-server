@@ -129,7 +129,6 @@ flowchart TB
 5. 関連トークンを失効
 ```
 
-詳細は [ユーザーライフサイクルイベント](../content_06_developer-guide/developer-guide/user-lifecycle-event.md) を参照。
 
 ---
 
@@ -215,7 +214,6 @@ idp-serverは、GDPR主要条項に対応しています。
 - [認可](concept-12-authorization.md) - 認可サーバー、スコープベースアクセス制御
 - [監査ログ](concept-13-audit-compliance.md) - 監査証跡、データ保持ポリシー
 - [カスタムクレーム](concept-09-custom-claims.md) - スコープとクレームの関係
-- [ユーザーライフサイクルイベント](../content_06_developer-guide/developer-guide/user-lifecycle-event.md) - ユーザー削除ポリシー
 
 ---
 

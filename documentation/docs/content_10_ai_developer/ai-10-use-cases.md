@@ -1074,9 +1074,9 @@ if (!accessResult.isSuccess()) {
 **情報源**:
 - `libs/idp-server-use-cases/src/main/java/`配下の実装コード
 - CLAUDE.md「4層アーキテクチャ詳細」「組織レベルAPI設計」「🚨 組織レベルAPI実装の重要注意事項」
-- [ClientManagementEntryService.java](../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/control_plane/system_manager/ClientManagementEntryService.java)
-- [OrgUserManagementEntryService.java](../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/control_plane/organization_manager/OrgUserManagementEntryService.java)
-- [OrganizationAccessVerifier.java](../../libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/organization/access/OrganizationAccessVerifier.java)
+- [ClientManagementEntryService.java](../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/control_plane/system_manager/ClientManagementEntryService.java)
+- [OrgUserManagementEntryService.java](../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/control_plane/organization_manager/OrgUserManagementEntryService.java)
+- [OrganizationAccessVerifier.java](../../../libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/organization/access/OrganizationAccessVerifier.java)
 
 **最終更新**: 2025-10-12
 **確認方法**: `find libs/idp-server-use-cases -type f -name "*EntryService.java" | head -15`

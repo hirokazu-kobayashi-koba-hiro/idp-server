@@ -8,7 +8,7 @@
 ⏱️ **約60分**（実装 + テスト）
 
 ### 前提知識
-- [システムレベルAPI実装ガイド](./system-level-api.md) - **必読**
+- [システムレベルAPI実装ガイド](./03-system-level-api.md) - **必読**
 
 ---
 
@@ -643,8 +643,8 @@ AuditLog auditLog = AuditLogCreator.create(
 
 ### 📖 次に読むべきドキュメント
 
-1. [Repository実装ガイド](./repository-implementation.md) - データアクセス層の実装
-2. [Plugin実装ガイド](./impl-12-plugin-implementation.md) - 拡張機能の実装
+1. [Repository実装ガイド](../04-implementation-guides/impl-10-repository-implementation.md) - データアクセス層の実装
+2. [Plugin実装ガイド](../04-implementation-guides/impl-12-plugin-implementation.md) - 拡張機能の実装
 
 ### 🔗 詳細情報
 

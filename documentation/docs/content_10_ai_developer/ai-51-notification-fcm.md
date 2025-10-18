@@ -18,7 +18,7 @@ Firebase Cloud Messaging (FCM) によるプッシュ通知。
 
 ## 実装パターン
 
-**情報源**: [FcmNotifier.java:37-108](../../libs/idp-server-notification-fcm-adapter/src/main/java/org/idp/server/notification/push/fcm/FcmNotifier.java#L37-L108)
+**情報源**: [FcmNotifier.java:37-108](../../../libs/idp-server-notification-fcm-adapter/src/main/java/org/idp/server/notification/push/fcm/FcmNotifier.java#L37-L108)
 
 ```java
 /**
@@ -108,6 +108,6 @@ public class FcmNotifier implements AuthenticationDeviceNotifier {
 
 **情報源**:
 - `libs/idp-server-notification-fcm-adapter/`配下の実装コード
-- [FcmNotifier.java](../../libs/idp-server-notification-fcm-adapter/src/main/java/org/idp/server/notification/push/fcm/FcmNotifier.java)
+- [FcmNotifier.java](../../../libs/idp-server-notification-fcm-adapter/src/main/java/org/idp/server/notification/push/fcm/FcmNotifier.java)
 
 **最終更新**: 2025-10-12
