@@ -660,7 +660,7 @@ describe('OIDC Federation Flow', () => {
 
 ### 🔗 詳細情報
 
-- [AI開発者向け: Federation - OIDC](../../../content_10_ai_developer/ai-43-federation-oidc.md)
+- [AI開発者向け: Federation - OIDC](../../content_10_ai_developer/ai-43-federation-oidc.md)
 - [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)
 
 ---

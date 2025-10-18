@@ -20,7 +20,7 @@ WebAuthn/FIDO2実装（webauthn4jライブラリ統合）。
 
 ## WebAuthnExecutor インターフェース
 
-**情報源**: [WebAuthnExecutor.java:23](../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/webauthn/WebAuthnExecutor.java#L23)
+**情報源**: [WebAuthnExecutor.java:23](../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/webauthn/WebAuthnExecutor.java#L23)
 
 **重要**: `authentication-interactors` モジュールで定義（Core層ではない）
 
@@ -68,7 +68,7 @@ public interface WebAuthnExecutor {
 
 ## WebAuthn4jExecutor - webauthn4j実装
 
-**情報源**: [WebAuthn4jExecutor.java:28](../../libs/idp-server-webauthn4j-adapter/src/main/java/org/idp/server/authenticators/webauthn4j/WebAuthn4jExecutor.java#L28)
+**情報源**: [WebAuthn4jExecutor.java:28](../../../libs/idp-server-webauthn4j-adapter/src/main/java/org/idp/server/authenticators/webauthn4j/WebAuthn4jExecutor.java#L28)
 
 ```java
 /**

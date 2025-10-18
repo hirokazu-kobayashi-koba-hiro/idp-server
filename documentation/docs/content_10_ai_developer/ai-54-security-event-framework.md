@@ -29,7 +29,7 @@ Shared Signals Framework (SSF) によるセキュリティイベント配信。
 
 ## SSF Hook Executor - Push Delivery実装
 
-**情報源**: [SsfHookExecutor.java:35-176](../../libs/idp-server-security-event-framework/src/main/java/org/idp/server/security/event/hook/ssf/SsfHookExecutor.java#L35-L176)
+**情報源**: [SsfHookExecutor.java:35-176](../../../libs/idp-server-security-event-framework/src/main/java/org/idp/server/security/event/hook/ssf/SsfHookExecutor.java#L35-L176)
 
 ```java
 /**
@@ -145,7 +145,7 @@ public class SsfHookExecutor implements SecurityEventHook {
 
 **情報源**:
 - `libs/idp-server-security-event-framework/`配下の実装コード
-- [SsfHookExecutor.java](../../libs/idp-server-security-event-framework/src/main/java/org/idp/server/security/event/hook/ssf/SsfHookExecutor.java)
+- [SsfHookExecutor.java](../../../libs/idp-server-security-event-framework/src/main/java/org/idp/server/security/event/hook/ssf/SsfHookExecutor.java)
 - [Shared Signals Framework](https://openid.net/specs/openid-sse-framework-1_0.html)
 
 **最終更新**: 2025-10-12

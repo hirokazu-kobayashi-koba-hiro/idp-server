@@ -64,7 +64,7 @@ OIDCは、API連携だけでなく、ソーシャルログインやeKYCなど“
 | 機能 | サポート状況 | 実装詳細 |
 |------|-------------|----------|
 | **Core機能** | | |
-| Authorization Code Flow | ✅ 完全対応 | [認可コードフロー](../../content_04_protocols/authorization-code-flow.md) |
+| Authorization Code Flow | ✅ 完全対応 | [認可コードフロー](../../content_04_protocols/protocol-01-authorization-code-flow.md) |
 | Implicit Flow | ⚠️ 非推奨 | セキュリティ上推奨されません |
 | Hybrid Flow | ✅ 完全対応 | OIDC Core 1.0 Section 3.3準拠 |
 | **Discovery & Registration** | | |
@@ -74,8 +74,8 @@ OIDCは、API連携だけでなく、ソーシャルログインやeKYCなど“
 | UserInfo Endpoint | ✅ 完全対応 | OIDC Core 1.0 Section 5.3準拠 |
 | JWKS Endpoint | ✅ 完全対応 | RFC 7517 JWK準拠 |
 | **拡張機能** | | |
-| Identity Assurance | ✅ 対応 | [身元確認](../id-verified.md) |
-| CIBA | ✅ 完全対応 | [CIBAフロー](../../content_04_protocols/ciba-flow.md) |
+| Identity Assurance | ✅ 対応 | [身元確認](../concept-03-id-verified.md) |
+| CIBA | ✅ 完全対応 | [CIBAフロー](../../content_04_protocols/protocol-02-ciba-flow.md) |
 | Session Management | 🔄 計画中 | OIDC Session Management 1.0対応予定 |
 
 ### idp-server独自OIDC拡張

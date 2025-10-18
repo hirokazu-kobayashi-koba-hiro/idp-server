@@ -533,7 +533,7 @@ Repository → SqlExecutor → TransactionManager.getConnection()
 
 ### @Transaction アノテーション
 
-**情報源**: [Transaction.java:24-28](../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/Transaction.java#L24-L28)
+**情報源**: [Transaction.java:24-28](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/Transaction.java#L24-L28)
 
 ```java
 @Retention(RetentionPolicy.RUNTIME)
@@ -1023,7 +1023,7 @@ for (T impl : serviceLoader) {
 - `SecurityEventHooksPluginLoader` - セキュリティイベントフック
 - `AdditionalOAuthAuthorizationResolverPluginLoader` - OAuth認可拡張
 
-**情報源**: [intro-01-tech-overview.md:171-190](../../documentation/docs/content_01_intro/intro-01-tech-overview.md#L171-L190)
+**情報源**: [intro-01-tech-overview.md:171-190](../content_01_intro/intro-01-tech-overview.md#L171-L190)
 
 ## 値オブジェクトパターン (Value Object)
 

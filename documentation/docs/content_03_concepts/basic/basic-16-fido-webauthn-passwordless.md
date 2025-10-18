@@ -168,7 +168,7 @@ sequenceDiagram
 | 機能 | サポート状況 | 実装詳細 |
 |------|-------------|----------|
 | **基本認証フロー** | | |
-| Registration | 🔄 調整中 | [WebAuthn設定](../../content_06_developer-guide/configuration/authn/webauthn.md) |
+| Registration | 🔄 調整中 | [WebAuthn設定](../../content_06_developer-guide/05-configuration/authn/webauthn.md) |
 | Authentication | 🔄 調整中 | チャレンジ・レスポンス検証 |
 | **認証器タイプ** | | |
 | Platform Authenticator | 🔄 調整中 | Touch ID, Face ID, Windows Hello |

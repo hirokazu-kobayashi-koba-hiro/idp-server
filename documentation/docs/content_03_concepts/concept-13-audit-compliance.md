@@ -139,7 +139,6 @@ flowchart TB
 | **論理削除** | ステータス更新で履歴保持 | `authorization_granted` (revoked_at), `identity_verification_application` (status='deleted') | 監査証跡・統計分析 |
 | **監査ログ保持** | ユーザー削除後も保持（アーカイブ対象） | `audit_log`, `security_event` | 法的義務・コンプライアンス |
 
-詳細は [ユーザーライフサイクルイベント](../content_06_developer-guide/developer-guide/user-lifecycle-event.md) を参照。
 
 ---
 
@@ -192,7 +191,6 @@ flowchart TB
 - [セキュリティイベント](concept-11-security-events.md) - SecurityEventログ、6種類のフック
 - [マルチテナント](concept-01-multi-tenant.md) - テナント単位の監査分離、RLS
 - [コントロールプレーン](concept-10-control-plane.md) - Management API、権限管理
-- [ユーザーライフサイクルイベント](../content_06_developer-guide/developer-guide/user-lifecycle-event.md) - ユーザー削除ポリシー、物理削除/論理削除/保持の詳細
 
 ---
 

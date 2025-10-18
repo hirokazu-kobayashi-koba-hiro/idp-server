@@ -98,7 +98,7 @@ Org{Domain}ManagementApi
 
 ### システムレベルAPI
 
-**情報源**: [ClientManagementApi.java:34](../../libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/management/oidc/client/ClientManagementApi.java#L34)
+**情報源**: [ClientManagementApi.java:34](../../../libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/management/oidc/client/ClientManagementApi.java#L34)
 
 ```java
 /**

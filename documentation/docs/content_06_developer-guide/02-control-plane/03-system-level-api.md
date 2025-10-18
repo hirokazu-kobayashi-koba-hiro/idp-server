@@ -861,8 +861,8 @@ RoleRegistrationContext context = creator.create();
 
 ### 📖 次に読むべきドキュメント
 
-1. [組織レベルAPI実装ガイド](./organization-level-api.md) - より複雑なアクセス制御
-2. [Repository実装ガイド](./repository-implementation.md) - データアクセス層の実装
+1. [組織レベルAPI実装ガイド](./04-organization-level-api.md) - より複雑なアクセス制御
+2. [Repository実装ガイド](../04-implementation-guides/impl-10-repository-implementation.md) - データアクセス層の実装
 
 ### 🔗 詳細情報
 

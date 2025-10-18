@@ -664,7 +664,7 @@ public class EventListener {
 ### 📖 詳細情報
 
 - [実装ガイド: Security Event Hooks](../04-implementation-guides/impl-15-security-event-hooks.md) - Hook実装詳細
-- [AI開発者向け: Security Event](../../../content_10_ai_developer/ai-51-notification-security-event.md#security-event)
+- [AI開発者向け: Security Event](../../content_10_ai_developer/ai-51-notification-security-event.md#security-event)
 
 ---
 

@@ -26,14 +26,14 @@
 **Phase 1**: 最小構成で動作確認（Step 3/5）
 
 **前提ドキュメント**:
-- [how-to-01: 組織初期化](./how-to-01-organization-initialization.md) - 組織作成済み
-- [how-to-02: テナント作成](./how-to-02-tenant-setup.md) - テナント作成済み
+- [how-to-01: 組織初期化](./how-to-02-organization-initialization.md) - 組織作成済み
+- [how-to-02: テナント作成](./how-to-03-tenant-setup.md) - テナント作成済み
 
 **次のドキュメント**:
-- [how-to-04: ユーザー登録](./how-to-04-user-registration.md) - ユーザー作成と認証
+- [how-to-04: ユーザー登録](./how-to-05-user-registration.md) - ユーザー作成と認証
 
 ### 前提条件
-- [how-to-02](./how-to-02-tenant-setup.md)でテナント作成完了
+- [how-to-02](./how-to-03-tenant-setup.md)でテナント作成完了
 - 組織管理者トークンを取得済み
 - 組織ID・テナントIDを確認済み
 
@@ -57,7 +57,7 @@
 
 ### 1. 組織管理者トークンの準備
 
-**前提**: [how-to-02](./how-to-02-tenant-setup.md)で設定した環境変数を使用します。
+**前提**: [how-to-02](./how-to-03-tenant-setup.md)で設定した環境変数を使用します。
 
 ```bash
 # 環境変数の確認
@@ -611,17 +611,17 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
 ✅ クライアント登録ができました！
 
 ### 認証を実行
-- [How-to: ユーザー登録と認証](./how-to-04-user-registration.md) - ユーザー作成と初回ログイン
+- [How-to: ユーザー登録と認証](./how-to-05-user-registration.md) - ユーザー作成と初回ログイン
 
 ### 高度な設定
 - [Developer Guide: Client設定](../content_06_developer-guide/05-configuration/client.md) - 詳細な設定オプション
-- [How-to: CIBA Flow](./how-to-05-ciba-flow.md) - バックチャネル認証
+- [How-to: CIBA Flow](./how-to-12-ciba-flow-fido-uaf.md) - バックチャネル認証
 
 ---
 
 ## 関連ドキュメント
 
-- [Concept: OAuth 2.0とOpenID Connect](../content_03_concepts/concept-01-oauth-oidc.md) - プロトコル概要
+- [Concept: OAuth 2.0とOpenID Connect](../content_03_concepts/basic/basic-11-oauth-oidc-basics.md) - プロトコル概要
 - [Developer Guide: Client Authentication](../content_06_developer-guide/03-application-plane/10-client-authentication.md) - 7つの認証方式詳細
 - [API Reference](../content_07_reference/api-reference.md) - Management API仕様
 

@@ -141,7 +141,7 @@ curl -X POST "http://localhost:8080/${ADMIN_TENANT_ID}/v1/tokens" \
 
 - [クイックスタート](../content_02_quickstart/quickstart-01-getting-started.md) - 5分で試す
 - [how-to-02: 組織初期化](./how-to-02-organization-initialization.md) - 組織・テナント作成
-- [Developer Guide: デプロイメント](../content_06_developer-guide/deployment.md) - 詳細なデプロイ手順
+- [Developer Guide: デプロイメント](../content_08_ops/commercial-deployment/00-overview.md) - 詳細なデプロイ手順
 
 ---
 

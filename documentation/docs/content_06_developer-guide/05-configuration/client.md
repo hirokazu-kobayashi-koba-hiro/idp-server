@@ -18,7 +18,7 @@
 | **Developer Guide** | 本番設定を理解する | 詳細仕様と設計パターン |
 
 **前提知識**:
-- [how-to-03: クライアント登録](../../content_05_how-to/how-to-03-client-registration.md)完了
+- [how-to-03: クライアント登録](../../content_05_how-to/how-to-04-client-registration.md)完了
 - OAuth 2.0/OpenID Connectの基礎理解
 
 ---
@@ -626,7 +626,6 @@ CIBA（Client Initiated Backchannel Authentication）対応のクライアント
 ### 次に読むべきドキュメント
 
 1. [Authentication Policy](./authentication-policy.md) - 認証ポリシーとMFA設定
-2. [User Management](./user.md) - ユーザー管理とプロファイル設定
 3. [Federation](./federation.md) - 外部IdP連携
 
 ---

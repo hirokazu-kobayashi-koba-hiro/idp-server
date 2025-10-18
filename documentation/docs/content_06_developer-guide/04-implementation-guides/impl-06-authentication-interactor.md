@@ -11,7 +11,7 @@
 ## 前提知識
 
 このガイドを読む前に:
-- [AI開発者向け: 認証インタラクター](../../../content_10_ai_developer/ai-41-authentication.md) - 実装パターン詳細
+- [AI開発者向け: 認証インタラクター](../content_10_ai_developer/ai-41-authentication.md) - 実装パターン詳細
 - [impl-05-authentication-policy.md](./impl-05-authentication-policy.md) - 認証ポリシー
 
 ---
@@ -135,7 +135,7 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
 
 ## 実装パターン: Challenge-Response型（WebAuthn）
 
-**情報源**: [AI開発者向け: ai-41-authentication.md](../../../content_10_ai_developer/ai-41-authentication.md#4-webauthn認証実装challenge-response)
+**情報源**: [AI開発者向け: ai-41-authentication.md](../content_10_ai_developer/ai-41-authentication.md#4-webauthn認証実装challenge-response)
 
 ### Challenge生成
 
@@ -497,7 +497,7 @@ User user = userQueryRepository.findByEmail(tenant, username, providerId);
 **情報源**:
 - [AuthenticationInteractor.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/AuthenticationInteractor.java)
 - [PasswordAuthenticationInteractor.java](../../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/password/PasswordAuthenticationInteractor.java)
-- [AI開発者向け: ai-41-authentication.md](../../../content_10_ai_developer/ai-41-authentication.md)
+- [AI開発者向け: ai-41-authentication.md](../content_10_ai_developer/ai-41-authentication.md)
 - [RFC 8176 - Authentication Method Reference Values](https://www.rfc-editor.org/rfc/rfc8176.html)
 
 **最終更新**: 2025-10-12

@@ -48,7 +48,7 @@ libs/idp-server-core-extension-ciba/src/main/java/org/idp/server/core/extension/
 
 ### CibaRequestHandler
 
-**情報源**: [CibaRequestHandler.java:61](../../libs/idp-server-core-extension-ciba/src/main/java/org/idp/server/core/extension/ciba/handler/CibaRequestHandler.java#L61)
+**情報源**: [CibaRequestHandler.java:61](../../../libs/idp-server-core-extension-ciba/src/main/java/org/idp/server/core/extension/ciba/handler/CibaRequestHandler.java#L61)
 
 ```java
 /**
@@ -90,7 +90,7 @@ public class CibaRequestHandler {
 
 ### CibaGrantService
 
-**情報源**: [CibaGrantService.java](../../libs/idp-server-core-extension-ciba/src/main/java/org/idp/server/core/extension/ciba/token/CibaGrantService.java)
+**情報源**: [CibaGrantService.java](../../../libs/idp-server-core-extension-ciba/src/main/java/org/idp/server/core/extension/ciba/token/CibaGrantService.java)
 
 ```java
 /**
@@ -178,7 +178,7 @@ interval: 5秒ごとにポーリング
 ## 次のステップ
 
 - [拡張機能層トップに戻る](./ai-30-extensions.md)
-- [他の拡張モジュール](./extensions.md#概要)
+- [他の拡張モジュール](./ai-30-extensions.md#概要)
 
 ---
 

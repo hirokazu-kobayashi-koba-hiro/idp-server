@@ -252,8 +252,8 @@ return mapper.map(row);
 
 ## 🔗 関連リソース
 
-- [AI開発者向け: Use-Cases詳細](../../content_10_ai_developer/ai-10-use-cases.md)
-- [AI開発者向け: Core詳細](../../content_10_ai_developer/ai-11-core.md)
+- [AI開発者向け: Use-Cases詳細](../content_10_ai_developer/ai-10-use-cases.md)
+- [AI開発者向け: Core詳細](../content_10_ai_developer/ai-11-core.md)
 - [開発者ガイドTOC](../DEVELOPER_GUIDE_TOC.md)
 
 ---

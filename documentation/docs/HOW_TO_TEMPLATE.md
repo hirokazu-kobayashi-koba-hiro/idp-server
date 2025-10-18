@@ -411,7 +411,7 @@ curl -X GET "http://localhost:8080/..."
 
 ## 実例: 良い構造の例
 
-### how-to-03-client-registration.md
+### how-to-04-client-registration.md
 
 ✅ **良い点**:
 - Phase位置づけ明記
@@ -421,7 +421,7 @@ curl -X GET "http://localhost:8080/..."
 - よくあるエラー3つ
 - 次のステップが明確
 
-### how-to-04-password-authentication.md
+### how-to-05-user-registration.md
 
 ✅ **良い点**:
 - Step-by-Step（1-5）

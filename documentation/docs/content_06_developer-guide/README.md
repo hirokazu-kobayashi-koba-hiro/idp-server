@@ -102,7 +102,7 @@ learning-paths/         → スキルレベル別の学習経路
 ## 🔗 関連ドキュメント
 
 - [AI開発者向けモジュールガイド](../content_10_ai_developer/ai-01-index.md) - アーキテクチャ詳細
-- [Concepts](../content_03_concepts/) - OAuth/OIDC仕様解説
+- [Concepts](../content_03_concepts/concept-01-multi-tenant.md) - OAuth/OIDC仕様解説
 
 ---
 

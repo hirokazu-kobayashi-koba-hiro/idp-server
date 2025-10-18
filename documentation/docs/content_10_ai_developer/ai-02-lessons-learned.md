@@ -14,8 +14,8 @@
 
 ### 学習元
 
-- [platform.md - ドキュメント修正履歴](./platform.md#ドキュメント修正履歴) - 6件の大規模修正
-- [notification-security-event.md - 修正履歴](./notification-security-event.md#ドキュメント修正履歴) - 6件の修正
+- [platform.md - ドキュメント修正履歴](./ai-12-platform.md#ドキュメント修正履歴) - 6件の大規模修正
+- [notification-security-event.md - 修正履歴](./ai-50-notification-security-event.md#ドキュメント修正履歴) - 6件の修正
 - CLAUDE.md「想像ドキュメント作成防止の重要教訓」
 
 ---
@@ -609,14 +609,11 @@ CLAUDE.mdに既に記載されている原則を**徹底適用**することで�
 
 ### CLAUDE.md関連セクション
 
-- [想像ドキュメント作成防止の重要教訓](../../CLAUDE.md#🚨-想像ドキュメント作成防止の重要教訓)
-- [重要な実装パターン](../../CLAUDE.md#重要な実装パターン)
-- [アンチパターン](../../CLAUDE.md#🚨-アンチパターン（絶対禁止）)
 
 ### 修正履歴参照
 
-- [platform.md - ドキュメント修正履歴](./platform.md#ドキュメント修正履歴) - 6件の修正
-- [notification-security-event.md - 修正履歴](./notification-security-event.md#ドキュメント修正履歴) - 6件の修正
+- [platform.md - ドキュメント修正履歴](./ai-12-platform.md#ドキュメント修正履歴) - 6件の修正
+- [notification-security-event.md - 修正履歴](./ai-50-notification-security-event.md#ドキュメント修正履歴) - 6件の修正
 
 ### Issue参照
 

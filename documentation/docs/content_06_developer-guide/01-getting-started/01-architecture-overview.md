@@ -122,7 +122,7 @@ public class ClientManagementV1Api implements ParameterTransformable {  // ✅ �
 
 **重要**: Controller命名は`*Controller`ではなく`*V1Api`が正しい
 
-**詳細**: [AI開発者向けドキュメント - Spring Boot Adapter](../../content_10_ai_developer/ai-23-springboot-adapter.md)
+**詳細**: [AI開発者向けドキュメント - Spring Boot Adapter](../content_10_ai_developer/ai-23-springboot-adapter.md)
 
 #### ❌ やってはいけないこと
 ```java
@@ -442,7 +442,7 @@ CREATE POLICY tenant_isolation_policy ON client_configuration
     USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ```
 
-**詳細**: [Database](../../content_10_ai_developer/ai-22-database.md#row-level-security-rls)
+**詳細**: [Database](../content_10_ai_developer/ai-22-database.md#row-level-security-rls)
 
 ---
 
@@ -517,11 +517,11 @@ ClientConfiguration client = repository.get(tenant, clientId);
 
 ### 🔗 詳細情報
 
-- [AI開発者向け: Use-Cases詳細](../../content_10_ai_developer/ai-10-use-cases.md)
-- [AI開発者向け: Core詳細](../../content_10_ai_developer/ai-11-core.md)
-- [AI開発者向け: Adapters詳細](../../content_10_ai_developer/ai-20-adapters.md)
+- [AI開発者向け: Use-Cases詳細](../content_10_ai_developer/ai-10-use-cases.md)
+- [AI開発者向け: Core詳細](../content_10_ai_developer/ai-11-core.md)
+- [AI開発者向け: Adapters詳細](../content_10_ai_developer/ai-20-adapters.md)
 
 ---
 
-**情報源**: [ai-10-use-cases.md](../../content_10_ai_developer/ai-10-use-cases.md), [ai-11-core.md](../../content_10_ai_developer/ai-11-core.md)
+**情報源**: [ai-10-use-cases.md](../content_10_ai_developer/ai-10-use-cases.md), [ai-11-core.md](../content_10_ai_developer/ai-11-core.md)
 **最終更新**: 2025-10-12

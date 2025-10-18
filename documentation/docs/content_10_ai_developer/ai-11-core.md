@@ -1121,7 +1121,7 @@ if (localUser == null) {
 - `AccessTokenCustomClaimsCreator` - アクセストークンクレーム拡張
 - `ClientAuthenticator` - クライアント認証拡張
 
-**情報源**: [intro-01-tech-overview.md:93-170](../../documentation/docs/content_01_intro/intro-01-tech-overview.md#L93-L170)
+**情報源**: [intro-01-tech-overview.md:93-170](../content_01_intro/intro-01-tech-overview.md#L93-L170)
 
 ## 値オブジェクトパターン
 
@@ -1308,7 +1308,7 @@ String customClaim = tenantAttributes.optValueAsString("token.custom_claim_key",
 **情報源**:
 - `libs/idp-server-core/src/main/java/`配下の実装コード
 - CLAUDE.md「4層アーキテクチャ詳細」「Handler-Service-Repository パターン」
-- [intro-01-tech-overview.md](../../documentation/docs/content_01_intro/intro-01-tech-overview.md)
+- [intro-01-tech-overview.md](../content_01_intro/intro-01-tech-overview.md)
 
 **最終更新**: 2025-10-12
 **確認方法**: `find libs/idp-server-core -type f -name "*.java" | head -20`

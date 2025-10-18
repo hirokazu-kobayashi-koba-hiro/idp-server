@@ -72,7 +72,7 @@ OAuth 2.0は、ユーザーのパスワードや機密情報を直接共有せ�
 
 | 機能 | サポート状況 | 実装詳細 |
 |------|-------------|----------|
-| Authorization Code Grant | ✅ 完全対応 | [認可コードフロー](../../content_04_protocols/authorization-code-flow.md) |
+| Authorization Code Grant | ✅ 完全対応 | [認可コードフロー](../../content_04_protocols/protocol-01-authorization-code-flow.md) |
 | PKCE | ✅ 完全対応 | RFC 7636準拠 |
 | Client Credentials Grant | ✅ 完全対応 | RFC 6749 Section 4.4 |
 | Resource Owner Password Credentials | ❌ 非対応 | セキュリティ上の理由により非サポート |

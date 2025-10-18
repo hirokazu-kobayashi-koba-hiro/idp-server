@@ -33,7 +33,7 @@
 
 ### AuthenticationInteractorFactory パターン
 
-**情報源**: [AuthenticationInteractorFactory.java:21](../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/plugin/AuthenticationInteractorFactory.java#L21)
+**情報源**: [AuthenticationInteractorFactory.java:21](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/plugin/AuthenticationInteractorFactory.java#L21)
 
 ```java
 /**
@@ -55,11 +55,11 @@ public class PasswordAuthenticationInteractorFactory implements AuthenticationIn
 }
 ```
 
-**情報源**: [PasswordAuthenticationInteractorFactory.java:24](../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/password/PasswordAuthenticationInteractorFactory.java#L24)
+**情報源**: [PasswordAuthenticationInteractorFactory.java:24](../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/password/PasswordAuthenticationInteractorFactory.java#L24)
 
 ### AuthenticationInteractor インターフェース
 
-**情報源**: [AuthenticationInteractor.java:23](../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/AuthenticationInteractor.java#L23)
+**情報源**: [AuthenticationInteractor.java:23](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/AuthenticationInteractor.java#L23)
 
 ```java
 /**
@@ -154,7 +154,7 @@ WebAuthn/FIDO2実装（webauthn4jライブラリ統合）。
 
 ### WebAuthnExecutor インターフェース
 
-**情報源**: [WebAuthnExecutor.java:23](../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/webauthn/WebAuthnExecutor.java#L23)
+**情報源**: [WebAuthnExecutor.java:23](../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/webauthn/WebAuthnExecutor.java#L23)
 
 **重要**: `authentication-interactors` モジュールで定義（Core層ではない）
 
@@ -202,7 +202,7 @@ public interface WebAuthnExecutor {
 
 ### WebAuthn4jExecutor - webauthn4j実装
 
-**情報源**: [WebAuthn4jExecutor.java:28](../../libs/idp-server-webauthn4j-adapter/src/main/java/org/idp/server/authenticators/webauthn4j/WebAuthn4jExecutor.java#L28)
+**情報源**: [WebAuthn4jExecutor.java:28](../../../libs/idp-server-webauthn4j-adapter/src/main/java/org/idp/server/authenticators/webauthn4j/WebAuthn4jExecutor.java#L28)
 
 ```java
 /**
@@ -326,7 +326,7 @@ UserVerificationRequirement.DISCOURAGED // 不要
 
 ### FederationInteractor インターフェース
 
-**情報源**: [FederationInteractor.java:26](../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/federation/FederationInteractor.java#L26)
+**情報源**: [FederationInteractor.java:26](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/federation/FederationInteractor.java#L26)
 
 ```java
 /**
@@ -354,7 +354,7 @@ public interface FederationInteractor {
 
 ### FederationInteractorFactory パターン
 
-**情報源**: [OidcFederationInteractorFactory.java:27](../../libs/idp-server-federation-oidc/src/main/java/org/idp/server/federation/sso/oidc/OidcFederationInteractorFactory.java#L27)
+**情報源**: [OidcFederationInteractorFactory.java:27](../../../libs/idp-server-federation-oidc/src/main/java/org/idp/server/federation/sso/oidc/OidcFederationInteractorFactory.java#L27)
 
 ```java
 /**
@@ -499,20 +499,20 @@ public class SsoProvider {
 - Core層ではなく、認証機能層のインターフェース
 - パッケージ: `org.idp.server.authentication.interactors.webauthn`
 
-**検証**: [WebAuthnExecutor.java:23-51](../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/webauthn/WebAuthnExecutor.java#L23-L51)
+**検証**: [WebAuthnExecutor.java:23-51](../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/webauthn/WebAuthnExecutor.java#L23-L51)
 
 ### 検証済み項目
 
 #### ✅ AuthenticationInteractor インターフェース
-- [AuthenticationInteractor.java:23-40](../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/AuthenticationInteractor.java#L23-L40)
+- [AuthenticationInteractor.java:23-40](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/AuthenticationInteractor.java#L23-L40)
 - ドキュメント記載と完全一致
 
 #### ✅ WebAuthn4jExecutor 実装
-- [WebAuthn4jExecutor.java:28-100](../../libs/idp-server-webauthn4j-adapter/src/main/java/org/idp/server/authenticators/webauthn4j/WebAuthn4jExecutor.java#L28-L100)
+- [WebAuthn4jExecutor.java:28-100](../../../libs/idp-server-webauthn4j-adapter/src/main/java/org/idp/server/authenticators/webauthn4j/WebAuthn4jExecutor.java#L28-L100)
 - チャレンジ生成・検証ロジックが実装と一致
 
 #### ✅ FederationInteractor インターフェース
-- [FederationInteractor.java:26-40](../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/federation/FederationInteractor.java#L26-L40)
+- [FederationInteractor.java:26-40](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/federation/FederationInteractor.java#L26-L40)
 - request(), callback() メソッドが実装と一致
 
 ### 修正の原則
@@ -530,7 +530,7 @@ public class SsoProvider {
 - `libs/idp-server-federation-oidc/`配下の実装コード
 - `libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/`
 - `libs/idp-server-core/src/main/java/org/idp/server/core/openid/federation/`
-- [intro-01-tech-overview.md](../../documentation/docs/content_01_intro/intro-01-tech-overview.md)
+- [intro-01-tech-overview.md](../content_01_intro/intro-01-tech-overview.md)
 - [Web Authentication Level 2](https://www.w3.org/TR/webauthn-2/)
 
 **最終更新**: 2025-10-12

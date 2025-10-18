@@ -28,7 +28,7 @@ FAPI (Financial-grade API) は、OAuth 2.0/OpenID Connectに**セキュリティ
 
 ### FapiAdvanceVerifier / FapiBaselineVerifier
 
-**情報源**: [FapiAdvanceVerifier.java:34-251](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java#L34-L251)
+**情報源**: [FapiAdvanceVerifier.java:34-251](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java#L34-L251)
 
 ```java
 public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
@@ -70,7 +70,7 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
 
 #### 1. JAR（JWT Authorization Request）必須
 
-**情報源**: [FapiAdvanceVerifier.java:86-93](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java#L86-L93)
+**情報源**: [FapiAdvanceVerifier.java:86-93](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java#L86-L93)
 
 ```java
 /**
@@ -91,7 +91,7 @@ void throwExceptionIfNotRRequestParameterPattern(OAuthRequestContext context) {
 
 #### 2. Response Type/Mode検証
 
-**情報源**: [FapiAdvanceVerifier.java:99-110](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java#L99-L110)
+**情報源**: [FapiAdvanceVerifier.java:99-110](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java#L99-L110)
 
 ```java
 /**
@@ -116,7 +116,7 @@ void throwExceptionIfInvalidResponseTypeAndResponseMode(OAuthRequestContext cont
 
 #### 3. Sender-Constrained Access Token必須（MTLS）
 
-**情報源**: [FapiAdvanceVerifier.java:117-133](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java#L117-L133)
+**情報源**: [FapiAdvanceVerifier.java:117-133](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java#L117-L133)
 
 ```java
 /**
@@ -149,7 +149,7 @@ void throwIfNotSenderConstrainedAccessToken(OAuthRequestContext context) {
 
 #### 4. JWT有効期限検証（exp/nbf 60分制限）
 
-**情報源**: [FapiAdvanceVerifier.java:139-163](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java#L139-L163)
+**情報源**: [FapiAdvanceVerifier.java:139-163](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java#L139-L163)
 
 ```java
 /**
@@ -192,7 +192,7 @@ void throwExceptionIfNotContainExpAndNbfAndExp60minutesLongerThanNbf(OAuthReques
 
 #### 5. aud claim必須検証
 
-**情報源**: [FapiAdvanceVerifier.java:169-187](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java#L169-L187)
+**情報源**: [FapiAdvanceVerifier.java:169-187](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java#L169-L187)
 
 ```java
 /**
@@ -228,7 +228,7 @@ void throwExceptionIfNotContainsAud(OAuthRequestContext context) {
 
 #### 6. Client Secret認証禁止
 
-**情報源**: [FapiAdvanceVerifier.java:195-216](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java#L195-L216)
+**情報源**: [FapiAdvanceVerifier.java:195-216](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java#L195-L216)
 
 ```java
 /**
@@ -270,7 +270,7 @@ void throwExceptionIfClientSecretPostOrClientSecretBasicOrClientSecretJwt(OAuthR
 
 #### 7. Public Client禁止
 
-**情報源**: [FapiAdvanceVerifier.java:218-227](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java#L218-L227)
+**情報源**: [FapiAdvanceVerifier.java:218-227](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java#L218-L227)
 
 ```java
 /** shall not support public clients; */
@@ -289,7 +289,7 @@ void throwExceptionIfPublicClient(OAuthRequestContext context) {
 
 #### 8. nbf有効期限検証（過去60分以内）
 
-**情報源**: [FapiAdvanceVerifier.java:233-250](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java#L233-L250)
+**情報源**: [FapiAdvanceVerifier.java:233-250](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java#L233-L250)
 
 ```java
 /**
@@ -340,7 +340,7 @@ void throwExceptionIfNotContainNbfAnd60minutesLongerThan(OAuthRequestContext con
 
 ### FapiBaselineVerifier
 
-**情報源**: [FapiBaselineVerifier.java](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiBaselineVerifier.java)
+**情報源**: [FapiBaselineVerifier.java](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiBaselineVerifier.java)
 
 ```java
 public class FapiBaselineVerifier implements AuthorizationRequestVerifier {
@@ -370,7 +370,7 @@ public class FapiBaselineVerifier implements AuthorizationRequestVerifier {
 
 ### TlsClientAuthAuthenticator - MTLS認証実装
 
-**情報源**: [TlsClientAuthAuthenticator.java:35-80](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/TlsClientAuthAuthenticator.java#L35-L80)
+**情報源**: [TlsClientAuthAuthenticator.java:35-80](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/TlsClientAuthAuthenticator.java#L35-L80)
 
 ```java
 public class TlsClientAuthAuthenticator implements ClientAuthenticator {
@@ -446,7 +446,7 @@ public class TlsClientAuthAuthenticator implements ClientAuthenticator {
 
 ### SelfSignedTlsClientAuthAuthenticator - 自己署名証明書MTLS
 
-**情報源**: [SelfSignedTlsClientAuthAuthenticator.java](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/SelfSignedTlsClientAuthAuthenticator.java)
+**情報源**: [SelfSignedTlsClientAuthAuthenticator.java](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/SelfSignedTlsClientAuthAuthenticator.java)
 
 ```java
 public class SelfSignedTlsClientAuthAuthenticator implements ClientAuthenticator {
@@ -626,8 +626,8 @@ FAPI VerifierはExtension Verifierではなく、**Base Verifier**として実�
 
 **情報源**:
 - `libs/idp-server-core-extension-fapi/`配下の全実装
-- [FapiAdvanceVerifier.java](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java)
-- [TlsClientAuthAuthenticator.java](../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/TlsClientAuthAuthenticator.java)
+- [FapiAdvanceVerifier.java](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java)
+- [TlsClientAuthAuthenticator.java](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/TlsClientAuthAuthenticator.java)
 - [FAPI 1.0 Advanced - Part 2](https://openid.net/specs/openid-financial-api-part-2-1_0.html)
 
 **最終更新**: 2025-10-12

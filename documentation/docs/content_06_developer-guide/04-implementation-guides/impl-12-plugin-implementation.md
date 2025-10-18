@@ -357,7 +357,7 @@ public interface NotificationSender {
 
 ### 🔗 詳細情報
 
-- [AI開発者向け: Platform - Plugin System](../../content_10_ai_developer/ai-12-platform.md#plugin-system)
+- [AI開発者向け: Platform - Plugin System](../content_10_ai_developer/ai-12-platform.md#plugin-system)
 
 ---
 

@@ -81,14 +81,14 @@ sequenceDiagram
 
 | 方式                                                     | 説明                             |
 |:-------------------------------------------------------|:-------------------------------|
-| [初期登録](../content_06_developer-guide/configuration/authn/initial-registration.md)  | IDの属性情報の登録                     |
-| [Password](../content_06_developer-guide/configuration/authn/password.md)          | ユーザーIDとパスワードによる認証。             |
-| [SMS](../content_06_developer-guide/configuration/authn/sms.md)                    | SMS番号登録用の認証コード送信。              |
-| [Email](../content_06_developer-guide/configuration/authn/email.md)                | メールリンクによるワンタイム認証。              |
-| [FIDO-UAF](../content_06_developer-guide/configuration/authn/fido-uaf.md)          | FIDO-UAFによる登録チャレンジ生成。          |
-| [WebAuthn](../content_06_developer-guide/configuration/authn/webauthn.md)          | WebAuthn（Passkeyなど）の登録チャレンジ生成。 |
-| [デバイス](../content_06_developer-guide/configuration/authn/authentication-device.md) | CIBAやデバイス連携による認証通知。            |
-| [レガシー](../content_06_developer-guide/configuration/authn/legacy.md)                | 外部レガシーIDサービス連携による認証。           |
+| [初期登録](../content_06_developer-guide/05-configuration/authn/initial-registration.md)  | IDの属性情報の登録                     |
+| [Password](../content_06_developer-guide/05-configuration/authn/password.md)          | ユーザーIDとパスワードによる認証。             |
+| [SMS](../content_06_developer-guide/05-configuration/authn/sms.md)                    | SMS番号登録用の認証コード送信。              |
+| [Email](../content_06_developer-guide/05-configuration/authn/email.md)                | メールリンクによるワンタイム認証。              |
+| [FIDO-UAF](../content_06_developer-guide/05-configuration/authn/fido-uaf.md)          | FIDO-UAFによる登録チャレンジ生成。          |
+| [WebAuthn](../content_06_developer-guide/05-configuration/authn/webauthn.md)          | WebAuthn（Passkeyなど）の登録チャレンジ生成。 |
+| [デバイス](../content_06_developer-guide/05-configuration/authn/authentication-device.md) | CIBAやデバイス連携による認証通知。            |
+| [レガシー](../content_06_developer-guide/05-configuration/authn/legacy.md)                | 外部レガシーIDサービス連携による認証。           |
 
 例えば、
 
@@ -216,7 +216,7 @@ IDトークンとアクセストークンに含めることができます。
 - [OpenID Connect for Identity Assurance 1.0](https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html)
 
 ### 関連ドキュメント
-- [マルチテナント](../content_03_concepts/multi-tenant.md) - テナント設定の詳細
-- [身元確認済みID](../content_03_concepts/id-verified.md) - OIDC4IDAの実装ガイド
+- [マルチテナント](../content_03_concepts/concept-01-multi-tenant.md) - テナント設定の詳細
+- [身元確認済みID](../content_03_concepts/concept-03-id-verified.md) - OIDC4IDAの実装ガイド
 
 ---

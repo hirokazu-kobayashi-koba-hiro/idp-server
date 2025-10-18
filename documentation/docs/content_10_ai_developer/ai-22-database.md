@@ -32,7 +32,7 @@ libs/idp-server-database/
 
 ## Flyway マイグレーション
 
-**情報源**: [README.md](../../libs/idp-server-database/README.md)
+**情報源**: [README.md](../../../libs/idp-server-database/README.md)
 
 ### マイグレーション実行
 
@@ -60,7 +60,7 @@ DB_TYPE=postgresql DB_URL=jdbc:postgresql://localhost:5432/custom_db ./gradlew f
 | `UUID` type | `CHAR(36)` | 文字列として格納 |
 | `UNIQUE (...) WHERE ...` | Not supported | トリガーで代替 |
 
-**情報源**: [README.md:24-46](../../libs/idp-server-database/README.md#L24-L46)
+**情報源**: [README.md:24-46](../../../libs/idp-server-database/README.md#L24-L46)
 
 ### Docker Flyway Migrator
 
@@ -136,7 +136,7 @@ CREATE POLICY tenant_isolation ON client_configuration
 2. RLSポリシーが自動適用
 3. テナントIDが一致する行のみアクセス可能
 
-**情報源**: Issue #672（SQL Injection修正）、[deployment.md](../../documentation/docs/content_08_ops/ops-02-deployment.md)
+**情報源**: Issue #672（SQL Injection修正）、[deployment.md](../content_08_ops/ops-02-deployment.md)
 
 ## 関連ドキュメント
 
@@ -148,7 +148,7 @@ CREATE POLICY tenant_isolation ON client_configuration
 
 **情報源**:
 - `libs/idp-server-database/postgresql/V1_0_0__init_lib.sql`
-- [README.md](../../libs/idp-server-database/README.md)
+- [README.md](../../../libs/idp-server-database/README.md)
 - Issue #672（SQL Injection修正）
 
 **最終更新**: 2025-10-12

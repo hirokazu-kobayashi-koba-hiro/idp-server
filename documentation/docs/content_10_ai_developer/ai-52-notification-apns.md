@@ -18,7 +18,7 @@ Apple Push Notification Service (APNS) によるプッシュ通知。
 
 ## 実装パターン
 
-**情報源**: [ApnsNotifier.java:42-134](../../libs/idp-server-notification-apns-adapter/src/main/java/org/idp/server/notification/push/apns/ApnsNotifier.java#L42-L134)
+**情報源**: [ApnsNotifier.java:42-134](../../../libs/idp-server-notification-apns-adapter/src/main/java/org/idp/server/notification/push/apns/ApnsNotifier.java#L42-L134)
 
 ```java
 /**
@@ -103,6 +103,6 @@ public class ApnsNotifier implements AuthenticationDeviceNotifier {
 
 **情報源**:
 - `libs/idp-server-notification-apns-adapter/`配下の実装コード
-- [ApnsNotifier.java](../../libs/idp-server-notification-apns-adapter/src/main/java/org/idp/server/notification/push/apns/ApnsNotifier.java)
+- [ApnsNotifier.java](../../../libs/idp-server-notification-apns-adapter/src/main/java/org/idp/server/notification/push/apns/ApnsNotifier.java)
 
 **最終更新**: 2025-10-12

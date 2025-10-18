@@ -86,7 +86,7 @@ code_challenge = code_verifier
 
 ### PkceVerifier - Extension Verifier実装
 
-**情報源**: [PkceVerifier.java:23](../../libs/idp-server-core-extension-pkce/src/main/java/org/idp/server/core/openid/extension/pkce/PkceVerifier.java#L23)
+**情報源**: [PkceVerifier.java:23](../../../libs/idp-server-core-extension-pkce/src/main/java/org/idp/server/core/openid/extension/pkce/PkceVerifier.java#L23)
 
 ```java
 /**
@@ -145,7 +145,7 @@ org.idp.server.core.extension.pkce.PkceVerifier
 ## 次のステップ
 
 - [拡張機能層トップに戻る](./ai-30-extensions.md)
-- [他の拡張モジュール](./extensions.md#概要)
+- [他の拡張モジュール](./ai-30-extensions.md#概要)
 
 ---
 

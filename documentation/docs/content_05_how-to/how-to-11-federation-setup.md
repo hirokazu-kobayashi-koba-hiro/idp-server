@@ -452,8 +452,8 @@ idp-serverでexternal_id="google-1234567890"のユーザーを検索
 ✅ 外部IdP連携を設定できました！
 
 ### さらに高度な認証
-- [How-to: CIBA Flow](./how-to-04-ciba-flow-fido-uaf.md) - バックチャネル認証
-- [How-to: Identity Verification](./how-to-07-identity-verification-application.md) - 身元確認申込み
+- [How-to: CIBA Flow](./how-to-12-ciba-flow-fido-uaf.md) - バックチャネル認証
+- [How-to: Identity Verification](./how-to-16-identity-verification-application.md) - 身元確認申込み
 
 ### 他の外部IdP
 - **Azure AD**: エンタープライズSSO
@@ -492,7 +492,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 
 - [Concept: ID管理](../content_03_concepts/concept-02-id-management.md) - Federation概念
 - [Developer Guide: Federation実装](../content_06_developer-guide/03-application-plane/08-federation.md) - 開発者向け
-- [How-to: 組織初期化](./how-to-01-organization-initialization.md) - テナント・ユーザー作成
+- [How-to: 組織初期化](./how-to-02-organization-initialization.md) - テナント・ユーザー作成
 
 ---
 

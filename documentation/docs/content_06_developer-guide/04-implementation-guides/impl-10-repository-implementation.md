@@ -424,7 +424,7 @@ public void register(Tenant tenant, Role role) {
 
 ### 🔗 詳細情報
 
-- [AI開発者向け: Adapters詳細](../../content_10_ai_developer/ai-20-adapters.md#datasource---sqlexecutor-パターン)
+- [AI開発者向け: Adapters詳細](../content_10_ai_developer/ai-20-adapters.md#datasource---sqlexecutor-パターン)
 
 ---
 

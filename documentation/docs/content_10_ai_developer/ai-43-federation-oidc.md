@@ -21,7 +21,7 @@
 
 ## FederationInteractor インターフェース
 
-**情報源**: [FederationInteractor.java:26](../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/federation/FederationInteractor.java#L26)
+**情報源**: [FederationInteractor.java:26](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/federation/FederationInteractor.java#L26)
 
 ```java
 /**
@@ -49,7 +49,7 @@ public interface FederationInteractor {
 
 ## FederationInteractorFactory パターン
 
-**情報源**: [OidcFederationInteractorFactory.java:27](../../libs/idp-server-federation-oidc/src/main/java/org/idp/server/federation/sso/oidc/OidcFederationInteractorFactory.java#L27)
+**情報源**: [OidcFederationInteractorFactory.java:27](../../../libs/idp-server-federation-oidc/src/main/java/org/idp/server/federation/sso/oidc/OidcFederationInteractorFactory.java#L27)
 
 ```java
 /**

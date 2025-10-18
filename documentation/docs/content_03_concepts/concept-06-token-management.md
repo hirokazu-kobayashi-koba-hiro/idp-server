@@ -50,7 +50,7 @@ idp-serverでは、Refresh Tokenは使用のたびに新しいトークンを発
 
 ## 関連ドキュメント
 
-- [トークン有効期限パターン](../content_05_how-to/how-to-11-token-strategy.md) - 具体的な設定例
+- [トークン有効期限パターン](../content_05_how-to/how-to-09-token-strategy.md) - 具体的な設定例
 - [イントロスペクション](../content_04_protocols/protocol-03-introspection.md) - イントロスペクション仕様
 - [セッション管理](concept-07-session-management.md) - セッションとトークンの関係
 

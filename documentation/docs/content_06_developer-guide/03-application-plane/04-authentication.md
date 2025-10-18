@@ -930,7 +930,7 @@ HTTP Status: 200 OK
 
 ### 🔗 詳細情報
 
-- [AI開発者向け: 認証インタラクター](../../../content_10_ai_developer/ai-41-authentication.md)
+- [AI開発者向け: 認証インタラクター](../../content_10_ai_developer/ai-41-authentication.md)
 - [実装ガイド: Authentication Interactions](../04-implementation-guides/impl-06-authentication-interactor.md)
 
 ---

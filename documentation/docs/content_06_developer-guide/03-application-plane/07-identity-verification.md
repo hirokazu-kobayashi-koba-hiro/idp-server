@@ -8,7 +8,7 @@
 ⏱️ **約30分**
 
 ### 前提知識
-- [外部サービス連携](../04-implementation-guides/external-integration.md)
+- [外部サービス連携](../04-implementation-guides/impl-17-external-integration.md)
 
 ---
 
@@ -248,7 +248,7 @@ Phase 3で外部API呼び出し：
 - リトライ処理（指定ステータスコード）
 - Idempotency対応
 
-**詳細**: [実装ガイド: HTTP Request Executor](../04-implementation-guides/http-request-executor.md)
+**詳細**: [実装ガイド: HTTP Request Executor](../04-implementation-guides/impl-16-http-request-executor.md)
 
 ---
 
@@ -451,7 +451,7 @@ describe('Identity Verification Application', () => {
 ### 🔗 詳細情報
 
 - [AI開発者向け: IDA Extension](../../content_10_ai_developer/ai-33-extension-ida.md)
-- [実装ガイド: HTTP Request Executor](../../04-implementation-guides/http-request-executor.md)
+- [実装ガイド: HTTP Request Executor](../04-implementation-guides/impl-16-http-request-executor.md)
 
 ---
 

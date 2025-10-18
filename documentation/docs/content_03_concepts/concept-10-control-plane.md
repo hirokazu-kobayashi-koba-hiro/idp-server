@@ -169,14 +169,14 @@ idp-serverでは、以下の権限モデルを採用しています：
 - **システムレベル権限**: `DefaultAdminPermission`（40以上の細かい権限）
 - **組織レベル権限**: `OrganizationAdminPermissions`（組織内操作の権限）
 
-詳細な権限設定については、[設定管理API](../content_06_developer-guide/developer-guide/configuration-management-api.md)を参照してください。
+詳細な権限設定については、[設定管理API](../content_06_developer-guide/04-implementation-guides/impl-11-configuration-management-api.md)を参照してください。
 
 ---
 
 ## 関連ドキュメント
 
-- [設定管理API](../content_06_developer-guide/developer-guide/configuration-management-api.md) - 実装詳細
-- [組織初期化ガイド](../content_05_how-to/how-to-01-organization-initialization.md) - 実践例
+- [設定管理API](../content_06_developer-guide/04-implementation-guides/impl-11-configuration-management-api.md) - 実装詳細
+- [組織初期化ガイド](../content_05_how-to/how-to-02-organization-initialization.md) - 実践例
 - [マルチテナント](concept-01-multi-tenant.md) - テナント・組織の概念
 - [認証ポリシー](concept-05-authentication-policy.md) - 認証制御
 - [トークン管理](concept-06-token-management.md) - トークン設定

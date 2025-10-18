@@ -40,7 +40,7 @@ libs/idp-server-core-adapter/src/main/java/org/idp/server/core/adapters/
 
 ### DataSource - Repository実装
 
-**情報源**: [OAuthTokenCommandDataSource.java:25](../../libs/idp-server-core-adapter/src/main/java/org/idp/server/core/adapters/datasource/token/command/OAuthTokenCommandDataSource.java#L25)
+**情報源**: [OAuthTokenCommandDataSource.java:25](../../../libs/idp-server-core-adapter/src/main/java/org/idp/server/core/adapters/datasource/token/command/OAuthTokenCommandDataSource.java#L25)
 
 ```java
 /**
@@ -163,7 +163,7 @@ boolean valid = hmacHasher.verify(data, expectedHash);
 
 ## Redis Cache実装
 
-**情報源**: [JedisCacheStore.java:28](../../libs/idp-server-core-adapter/src/main/java/org/idp/server/core/adapters/datasource/cache/JedisCacheStore.java#L28)
+**情報源**: [JedisCacheStore.java:28](../../../libs/idp-server-core-adapter/src/main/java/org/idp/server/core/adapters/datasource/cache/JedisCacheStore.java#L28)
 
 ### JedisCacheStore - Redis キャッシュ
 
@@ -235,7 +235,7 @@ cache.ttl.seconds=3600
 **情報源**:
 - `libs/idp-server-core-adapter/src/main/java/`配下の実装コード
 - CLAUDE.md「⚠️ レイヤー責任違反の重要教訓」「4層アーキテクチャ」
-- [OAuthTokenCommandDataSource.java](../../libs/idp-server-core-adapter/src/main/java/org/idp/server/core/adapters/datasource/token/command/OAuthTokenCommandDataSource.java)
+- [OAuthTokenCommandDataSource.java](../../../libs/idp-server-core-adapter/src/main/java/org/idp/server/core/adapters/datasource/token/command/OAuthTokenCommandDataSource.java)
 
 **最終更新**: 2025-10-12
 **確認方法**: `find libs/idp-server-core-adapter/src/main/java/org/idp/server/core/adapters/datasource -type d -maxdepth 2`

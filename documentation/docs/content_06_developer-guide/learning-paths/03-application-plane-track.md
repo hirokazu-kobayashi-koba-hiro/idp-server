@@ -347,7 +347,7 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
 | 🔴 必須 | [Authentication実装](../03-application-plane/04-authentication.md) | 30分 |
 | 🔴 必須 | [Federation実装](../03-application-plane/08-federation.md) | 30分 |
 | 🟡 推奨 | [AuthenticationInteractor実装ガイド](../04-implementation-guides/impl-06-authentication-interactor.md) | 30分 |
-| 🟡 推奨 | [AI開発者向け: Core詳細](../../content_10_ai_developer/ai-11-core.md) | 90分 |
+| 🟡 推奨 | [AI開発者向け: Core詳細](../content_10_ai_developer/ai-11-core.md) | 90分 |
 
 ---
 
@@ -517,10 +517,10 @@ if (!receivedState.equals(session.state())) {
 
 ## 🔗 関連リソース
 
-- [AI開発者向け: Core - OAuth](../../content_10_ai_developer/ai-11-core.md#oauth---認可ドメイン)
-- [AI開発者向け: Core - Token](../../content_10_ai_developer/ai-11-core.md#token---トークンドメイン)
-- [AI開発者向け: Core - Authentication](../../content_10_ai_developer/ai-11-core.md#authentication---認証ドメイン)
-- [AI開発者向け: Extensions - CIBA](../../content_10_ai_developer/ai-14-extensions.md#ciba-extension)
+- [AI開発者向け: Core - OAuth](../content_10_ai_developer/ai-11-core.md#oauth---認可ドメイン)
+- [AI開発者向け: Core - Token](../content_10_ai_developer/ai-11-core.md#token---トークンドメイン)
+- [AI開発者向け: Core - Authentication](../content_10_ai_developer/ai-11-core.md#authentication---認証ドメイン)
+- [AI開発者向け: Extensions - CIBA](../content_10_ai_developer/ai-14-extensions.md#ciba-extension)
 - [開発者ガイドTOC](../DEVELOPER_GUIDE_TOC.md)
 
 ---
