@@ -280,6 +280,19 @@ services:
     ports:
       - "4000:4000"
 
+  app-view:
+    build:
+      context: .
+      dockerfile: docker/app-view/Dockerfile
+    container_name: app-view
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_IDP_SERVER_URL: "http://localhost:8080"
+    depends_on:
+      - idp-server-1
+
 volumes:
   postgres_primary_data:
   postgres_replica_data:

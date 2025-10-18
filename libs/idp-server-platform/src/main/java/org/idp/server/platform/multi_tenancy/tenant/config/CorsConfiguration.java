@@ -91,18 +91,6 @@ public class CorsConfiguration {
   }
 
   /**
-   * Returns whether CORS configuration exists
-   *
-   * @return true if any CORS settings are configured
-   */
-  public boolean exists() {
-    return !allowOrigins.isEmpty()
-        || !allowHeaders.equals("Authorization, Content-Type, Accept, x-device-id")
-        || !allowMethods.equals("GET, POST, PUT, PATCH, DELETE, OPTIONS")
-        || !allowCredentials;
-  }
-
-  /**
    * Returns the configuration as a map
    *
    * @return configuration map

@@ -127,27 +127,6 @@ public class SecurityEventLogConfiguration {
     return map;
   }
 
-  public boolean exists() {
-    return format != SecurityEventLogFormatter.Format.STRUCTURED_JSON
-        || debugEnabled
-        || !stage.equals("processed")
-        || !includeUserId
-        || !includeUserExSub
-        || !includeClientId
-        || !includeIpAddress
-        || !includeUserAgent
-        || includeEventDetail
-        || includeUserDetail
-        || includeUserPii
-        || !allowedUserPiiKeys.isEmpty()
-        || includeTraceContext
-        || !serviceName.equals("idp-server")
-        || !customTags.isEmpty()
-        || tracingEnabled
-        || persistenceEnabled
-        || !detailScrubKeys.equals(ESSENTIAL_SCRUB_KEYS);
-  }
-
   public SecurityEventLogFormatter.Format getFormat() {
     return format;
   }

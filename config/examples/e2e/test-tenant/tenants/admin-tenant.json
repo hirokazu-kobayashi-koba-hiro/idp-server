@@ -4,7 +4,10 @@
     "name": "admin-tenant",
     "domain": "http://localhost:8080",
     "authorization_provider": "idp-server",
-    "database_type": "postgresql",
+    "ui_config": {
+      "signup_page": "/auth-views/signup/index.html",
+      "signin_page": "/auth-views/signin/index.html"
+    },
     "session_config": {
       "cookie_name": "ADMIN_TENANT_IDP_SERVER_SESSION",
       "use_secure_cookie": false

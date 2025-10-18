@@ -65,7 +65,7 @@ public class TenantManagementUpdateContextCreator {
     TenantAttributes identityPolicyConfigAttributes =
         extractConfiguration("identity_policy_config", TenantAttributes.class);
     TenantIdentityPolicy identityPolicyConfig =
-        identityPolicyConfigAttributes.exists()
+        identityPolicyConfigAttributes != null
             ? TenantIdentityPolicy.fromMap(identityPolicyConfigAttributes.toMap())
             : before.identityPolicyConfig();
 
@@ -76,14 +76,14 @@ public class TenantManagementUpdateContextCreator {
             before.type(),
             domain.isEmpty() ? before.domain() : new TenantDomain(domain),
             before.authorizationProvider(),
-            attributes.exists() ? attributes : before.attributes(),
-            uiConfiguration.exists() ? uiConfiguration : before.uiConfiguration(),
-            corsConfiguration.exists() ? corsConfiguration : before.corsConfiguration(),
-            sessionConfiguration.exists() ? sessionConfiguration : before.sessionConfiguration(),
-            securityEventLogConfiguration.exists()
+            attributes != null ? attributes : before.attributes(),
+            uiConfiguration != null ? uiConfiguration : before.uiConfiguration(),
+            corsConfiguration != null ? corsConfiguration : before.corsConfiguration(),
+            sessionConfiguration != null ? sessionConfiguration : before.sessionConfiguration(),
+            securityEventLogConfiguration != null
                 ? securityEventLogConfiguration
                 : before.securityEventLogConfiguration(),
-            securityEventUserAttributeConfiguration.exists()
+            securityEventUserAttributeConfiguration != null
                 ? securityEventUserAttributeConfiguration
                 : before.securityEventUserAttributeConfiguration(),
             identityPolicyConfig);
@@ -95,11 +95,7 @@ public class TenantManagementUpdateContextCreator {
     JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(request.toMap());
     JsonNodeWrapper configNode = jsonNodeWrapper.getValueAsJsonNode(key);
     if (configNode == null || !configNode.exists()) {
-      try {
-        return clazz.getDeclaredConstructor().newInstance();
-      } catch (Exception e) {
-        throw new RuntimeException("Failed to create default configuration for " + key, e);
-      }
+      return null;
     }
     Map<String, Object> configMap = configNode.toMap();
     try {

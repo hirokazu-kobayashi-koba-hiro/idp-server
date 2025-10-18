@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  basePath: "/auth-views",
+  // basePath only needed for Spring Boot static resources (not Docker)
+  basePath: process.env.BASE_PATH || "",
   trailingSlash: true,
   images: {
     unoptimized: true,

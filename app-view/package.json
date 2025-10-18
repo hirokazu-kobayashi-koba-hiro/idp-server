@@ -5,8 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:springboot": "BASE_PATH=/auth-views next build",
     "copy-static": "rm -rf ../app/src/main/resources/static/auth-views/* && cp -r out/* ../app/src/main/resources/static/auth-views",
-    "build-and-copy": "npm run build && npm run copy-static",
+    "build-and-copy": "npm run build:springboot && npm run copy-static",
     "start": "next start",
     "lint": "next lint"
   },

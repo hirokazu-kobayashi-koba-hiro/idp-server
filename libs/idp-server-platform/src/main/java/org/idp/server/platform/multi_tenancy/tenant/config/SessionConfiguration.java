@@ -118,20 +118,6 @@ public class SessionConfiguration {
   }
 
   /**
-   * Returns whether session configuration exists
-   *
-   * @return true if any session settings are configured
-   */
-  public boolean exists() {
-    return cookieName != null
-        || !cookieSameSite.equals("None")
-        || !useSecureCookie
-        || !useHttpOnlyCookie
-        || !cookiePath.equals("/")
-        || timeoutSeconds != 3600;
-  }
-
-  /**
    * Returns the configuration as a map
    *
    * @return configuration map

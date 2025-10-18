@@ -109,8 +109,15 @@ public class Tenant {
     map.put("id", identifier.value());
     map.put("name", name.value());
     map.put("type", type.name());
+    map.put("domain", domain.value());
     map.put("authorization_provider", authorizationProvider.name());
     map.put("attributes", attributes.toMap());
+    map.put("ui_config", uiConfiguration.toMap());
+    map.put("cors_config", corsConfiguration.toMap());
+    map.put("session_config", sessionConfiguration.toMap());
+    map.put("security_event_log_config", securityEventLogConfiguration.toMap());
+    map.put("security_event_user_config", securityEventUserAttributeConfiguration.toMap());
+    map.put("identity_policy_config", identityPolicyConfig.toMap());
     return map;
   }
 
@@ -178,43 +185,5 @@ public class Tenant {
 
   public TenantIdentityPolicy identityPolicyConfig() {
     return identityPolicyConfig;
-  }
-
-  public Tenant updateWithDomain(TenantDomain domain) {
-
-    return new Tenant(
-        identifier,
-        name,
-        type,
-        domain,
-        authorizationProvider,
-        attributes,
-        uiConfiguration,
-        corsConfiguration,
-        sessionConfiguration,
-        securityEventLogConfiguration,
-        securityEventUserAttributeConfiguration,
-        identityPolicyConfig);
-  }
-
-  public Tenant updateWithAttributes(TenantAttributes attributes) {
-    return new Tenant(
-        identifier,
-        name,
-        type,
-        domain,
-        authorizationProvider,
-        attributes,
-        uiConfiguration,
-        corsConfiguration,
-        sessionConfiguration,
-        securityEventLogConfiguration,
-        securityEventUserAttributeConfiguration,
-        identityPolicyConfig);
-  }
-
-  @Deprecated
-  public SecurityEventUserAttributeConfiguration getSecurityEventUserAttributeConfiguration() {
-    return securityEventUserAttributeConfiguration();
   }
 }
