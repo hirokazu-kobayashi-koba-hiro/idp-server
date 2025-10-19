@@ -17,21 +17,16 @@
 package org.idp.server.usecases.control_plane.organization_manager;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.verifier.TenantVerifier;
-import org.idp.server.control_plane.management.tenant.*;
+import org.idp.server.control_plane.management.tenant.OrgTenantManagementApi;
+import org.idp.server.control_plane.management.tenant.TenantManagementRegistrationContext;
+import org.idp.server.control_plane.management.tenant.TenantManagementUpdateContext;
+import org.idp.server.control_plane.management.tenant.handler.*;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
-import org.idp.server.control_plane.management.tenant.io.TenantManagementStatus;
 import org.idp.server.control_plane.management.tenant.io.TenantRequest;
-import org.idp.server.control_plane.management.tenant.validator.TenantRequestValidationResult;
-import org.idp.server.control_plane.management.tenant.validator.TenantRequestValidator;
-import org.idp.server.control_plane.management.tenant.verifier.TenantManagementVerificationResult;
 import org.idp.server.control_plane.management.tenant.verifier.TenantManagementVerifier;
-import org.idp.server.control_plane.organization.access.OrganizationAccessControlResult;
-import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationCommandRepository;
@@ -39,11 +34,8 @@ import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantCommandRepository;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -52,17 +44,8 @@ import org.idp.server.platform.type.RequestAttributes;
 @Transaction
 public class OrgTenantManagementEntryService implements OrgTenantManagementApi {
 
-  TenantCommandRepository tenantCommandRepository;
-  TenantQueryRepository tenantQueryRepository;
-  OrganizationRepository organizationRepository;
-  AuthorizationServerConfigurationCommandRepository
-      authorizationServerConfigurationCommandRepository;
-  TenantManagementVerifier tenantManagementVerifier;
-  UserCommandRepository userCommandRepository;
   AuditLogPublisher auditLogPublisher;
-  OrganizationAccessVerifier organizationAccessVerifier;
-
-  LoggerWrapper log = LoggerWrapper.getLogger(OrgTenantManagementEntryService.class);
+  private OrgTenantManagementHandler handler;
 
   public OrgTenantManagementEntryService(
       TenantCommandRepository tenantCommandRepository,
@@ -72,16 +55,56 @@ public class OrgTenantManagementEntryService implements OrgTenantManagementApi {
           authorizationServerConfigurationCommandRepository,
       UserCommandRepository userCommandRepository,
       AuditLogPublisher auditLogPublisher) {
-    this.tenantCommandRepository = tenantCommandRepository;
-    this.tenantQueryRepository = tenantQueryRepository;
-    this.organizationRepository = organizationRepository;
-    this.authorizationServerConfigurationCommandRepository =
-        authorizationServerConfigurationCommandRepository;
-    this.userCommandRepository = userCommandRepository;
-    TenantVerifier tenantVerifier = new TenantVerifier(tenantQueryRepository);
-    this.tenantManagementVerifier = new TenantManagementVerifier(tenantVerifier);
     this.auditLogPublisher = auditLogPublisher;
-    this.organizationAccessVerifier = new OrganizationAccessVerifier();
+
+    // Create verifiers
+    TenantVerifier tenantVerifier = new TenantVerifier(tenantQueryRepository);
+    TenantManagementVerifier tenantManagementVerifier =
+        new TenantManagementVerifier(tenantVerifier);
+
+    // Create Handler
+    this.handler =
+        createHandler(
+            tenantCommandRepository,
+            tenantQueryRepository,
+            organizationRepository,
+            authorizationServerConfigurationCommandRepository,
+            userCommandRepository,
+            tenantManagementVerifier);
+  }
+
+  private OrgTenantManagementHandler createHandler(
+      TenantCommandRepository tenantCommandRepository,
+      TenantQueryRepository tenantQueryRepository,
+      OrganizationRepository organizationRepository,
+      AuthorizationServerConfigurationCommandRepository
+          authorizationServerConfigurationCommandRepository,
+      UserCommandRepository userCommandRepository,
+      TenantManagementVerifier tenantManagementVerifier) {
+
+    Map<String, TenantManagementService<?>> services = new HashMap<>();
+
+    services.put(
+        "create",
+        new OrgTenantCreationService(
+            tenantCommandRepository,
+            organizationRepository,
+            authorizationServerConfigurationCommandRepository,
+            userCommandRepository,
+            tenantManagementVerifier));
+
+    // Organization-level uses OrgTenantFindListService instead of TenantFindListService
+    services.put("findList", new OrgTenantFindListService(tenantQueryRepository));
+
+    services.put("get", new TenantFindService(tenantQueryRepository));
+
+    services.put("update", new TenantUpdateService(tenantQueryRepository, tenantCommandRepository));
+
+    services.put(
+        "delete", new TenantDeletionService(tenantQueryRepository, tenantCommandRepository));
+
+    return new OrgTenantManagementHandler(
+        services, this, tenantQueryRepository, organizationRepository);
   }
 
   @Override
@@ -92,59 +115,43 @@ public class OrgTenantManagementEntryService implements OrgTenantManagementApi {
       TenantRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
-    AdminPermissions permissions = getRequiredPermissions("create");
 
-    Organization organization = organizationRepository.get(organizationId);
-    Tenant orgTenant = tenantQueryRepository.get(organization.findOrgTenant().tenantIdentifier());
-    // Organization-level access control
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, new TenantIdentifier(), operator, permissions);
+    TenantManagementResult result =
+        handler.handle(
+            "create",
+            organizationId,
+            new TenantIdentifier(), // Empty tenant identifier for create operation
+            operator,
+            oAuthToken,
+            request,
+            requestAttributes,
+            dryRun);
 
-    TenantRequestValidator tenantRequestValidator = new TenantRequestValidator(request, dryRun);
-    TenantRequestValidationResult validateResult = tenantRequestValidator.validate();
-
-    if (!validateResult.isValid()) {
-      return validateResult.errorResponse();
+    // Record audit log (separate transaction via @Async)
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "OrganizationTenantManagementApi.create",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(dryRun);
     }
-
-    TenantManagementRegistrationContextCreator contextCreator =
-        new TenantManagementRegistrationContextCreator(
-            orgTenant, request, organization, operator, dryRun);
-    TenantManagementRegistrationContext context = contextCreator.create();
-
-    TenantManagementVerificationResult verificationResult =
-        tenantManagementVerifier.verify(context);
 
     AuditLog auditLog =
         AuditLogCreator.create(
             "OrganizationTenantManagementApi.create",
-            orgTenant,
+            result.tenant(),
             operator,
             oAuthToken,
-            context,
+            (TenantManagementRegistrationContext) result.context(),
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!accessResult.isSuccess()) {
-      return accessResult.toErrorResponse();
-    }
-
-    if (!verificationResult.isValid()) {
-      return verificationResult.errorResponse();
-    }
-
-    if (dryRun) {
-      return context.toResponse();
-    }
-
-    tenantCommandRepository.register(context.newTenant());
-    organizationRepository.update(context.organization());
-    authorizationServerConfigurationCommandRepository.register(
-        context.newTenant(), context.authorizationServerConfiguration());
-    userCommandRepository.update(orgTenant, context.user());
-
-    return context.toResponse();
+    return result.toResponse(dryRun);
   }
 
   @Override
@@ -156,28 +163,23 @@ public class OrgTenantManagementEntryService implements OrgTenantManagementApi {
       int limit,
       int offset,
       RequestAttributes requestAttributes) {
-    AdminPermissions permissions = getRequiredPermissions("findList");
-    Organization organization = organizationRepository.get(organizationId);
-    Tenant orgTenant = tenantQueryRepository.get(organization.findOrgTenant().tenantIdentifier());
 
-    // Organization-level access control
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, new TenantIdentifier(), operator, permissions);
+    TenantManagementResult result =
+        handler.handle(
+            "findList",
+            organizationId,
+            new TenantIdentifier(), // Empty tenant identifier for findList operation
+            operator,
+            oAuthToken,
+            null, // No request object for findList (handler will pass Organization)
+            requestAttributes,
+            false);
 
-    if (!accessResult.isSuccess()) {
-      return accessResult.toErrorResponse();
+    if (result.hasException()) {
+      return result.toResponse(false);
     }
 
-    // Get organization to find assigned tenants
-    List<TenantIdentifier> organizationTenantIds =
-        organization.assignedTenants().tenantIdentifiers();
-
-    List<Tenant> tenants = tenantQueryRepository.findList(organizationTenantIds);
-    Map<String, Object> response = new HashMap<>();
-    response.put("list", tenants.stream().map(Tenant::toMap).toList());
-
-    return new TenantManagementResponse(TenantManagementStatus.OK, response);
+    return result.toResponse(false);
   }
 
   @Override
@@ -188,26 +190,23 @@ public class OrgTenantManagementEntryService implements OrgTenantManagementApi {
       OAuthToken oAuthToken,
       TenantIdentifier tenantIdentifier,
       RequestAttributes requestAttributes) {
-    AdminPermissions permissions = getRequiredPermissions("get");
-    Organization organization = organizationRepository.get(organizationId);
-    Tenant orgTenant = tenantQueryRepository.get(organization.findOrgTenant().tenantIdentifier());
 
-    // Organization-level access control
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
+    TenantManagementResult result =
+        handler.handle(
+            "get",
+            organizationId,
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            tenantIdentifier,
+            requestAttributes,
+            false);
 
-    if (!accessResult.isSuccess()) {
-      return accessResult.toErrorResponse();
+    if (result.hasException()) {
+      return result.toResponse(false);
     }
 
-    Tenant tenant = tenantQueryRepository.find(tenantIdentifier);
-
-    if (!tenant.exists()) {
-      return new TenantManagementResponse(TenantManagementStatus.NOT_FOUND, Map.of());
-    }
-
-    return new TenantManagementResponse(TenantManagementStatus.OK, tenant.toMap());
+    return result.toResponse(false);
   }
 
   @Override
@@ -219,46 +218,44 @@ public class OrgTenantManagementEntryService implements OrgTenantManagementApi {
       TenantRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
-    AdminPermissions permissions = getRequiredPermissions("update");
-    Organization organization = organizationRepository.get(organizationId);
-    Tenant orgTenant = tenantQueryRepository.get(organization.findOrgTenant().tenantIdentifier());
 
-    // Organization-level access control
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
+    TenantUpdateRequest updateRequest = new TenantUpdateRequest(tenantIdentifier, request);
+    TenantManagementResult result =
+        handler.handle(
+            "update",
+            organizationId,
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            updateRequest,
+            requestAttributes,
+            dryRun);
 
-    if (!accessResult.isSuccess()) {
-      return accessResult.toErrorResponse();
+    // Record audit log (separate transaction via @Async)
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "OrganizationTenantManagementApi.update",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(dryRun);
     }
-
-    Tenant before = tenantQueryRepository.find(tenantIdentifier);
-
-    TenantManagementUpdateContextCreator contextCreator =
-        new TenantManagementUpdateContextCreator(orgTenant, before, request, operator, dryRun);
-    TenantManagementUpdateContext context = contextCreator.create();
 
     AuditLog auditLog =
         AuditLogCreator.createOnUpdate(
             "OrganizationTenantManagementApi.update",
-            orgTenant,
+            result.tenant(),
             operator,
             oAuthToken,
-            context,
+            (TenantManagementUpdateContext) result.context(),
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!before.exists()) {
-      return new TenantManagementResponse(TenantManagementStatus.NOT_FOUND, Map.of());
-    }
-
-    if (dryRun) {
-      return context.toResponse();
-    }
-
-    tenantCommandRepository.update(context.after());
-
-    return context.toResponse();
+    return result.toResponse(dryRun);
   }
 
   @Override
@@ -269,46 +266,45 @@ public class OrgTenantManagementEntryService implements OrgTenantManagementApi {
       TenantIdentifier tenantIdentifier,
       RequestAttributes requestAttributes,
       boolean dryRun) {
-    AdminPermissions permissions = getRequiredPermissions("delete");
-    Organization organization = organizationRepository.get(organizationId);
-    Tenant orgTenant = tenantQueryRepository.get(organization.findOrgTenant().tenantIdentifier());
 
-    // Organization-level access control
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
+    TenantManagementResult result =
+        handler.handle(
+            "delete",
+            organizationId,
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            tenantIdentifier,
+            requestAttributes,
+            dryRun);
 
-    if (!accessResult.isSuccess()) {
-      return accessResult.toErrorResponse();
+    // Record audit log (separate transaction via @Async)
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "OrganizationTenantManagementApi.delete",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(dryRun);
     }
 
-    Tenant before = tenantQueryRepository.find(tenantIdentifier);
-
+    // For delete, we don't have a context (no before/after comparison needed)
+    // Just record a simple audit log with tenant info
     AuditLog auditLog =
         AuditLogCreator.createOnDeletion(
             "OrganizationTenantManagementApi.delete",
             "delete",
-            orgTenant,
+            result.tenant(),
             operator,
             oAuthToken,
-            before.toMap(),
+            Map.of("tenant_id", tenantIdentifier.value()),
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!before.exists()) {
-      return new TenantManagementResponse(TenantManagementStatus.NOT_FOUND, Map.of());
-    }
-
-    if (dryRun) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("message", "Deletion simulated successfully");
-      response.put("id", tenantIdentifier.value());
-      response.put("dry_run", true);
-      return new TenantManagementResponse(TenantManagementStatus.OK, response);
-    }
-
-    tenantCommandRepository.delete(tenantIdentifier);
-
-    return new TenantManagementResponse(TenantManagementStatus.NO_CONTENT, Map.of());
+    return result.toResponse(dryRun);
   }
 }

@@ -85,9 +85,107 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 📖 [詳細実装パターン: core.md](documentation/docs/content_10_ai_developer/ai-11-core.md#handler-service-repository-パターン)
 
 ## 検証・エラーハンドリング
-- **Validator**: 入力形式チェック → `{Operation}BadRequestException`
-- **Verifier**: ビジネスルール検証 → `OAuthRedirectableBadRequestException`
-- **例外**: `throwExceptionIf{Condition}()` パターン、OAuth標準エラーコード
+
+### Result-Exception Hybrid パターン
+**原則**: Validator/Verifierは例外をthrow、Handlerで catch して Result に変換、EntryServiceでHTTPレスポンスに変換
+
+```java
+// ❌ 誤り: ResultオブジェクトをService層で返す
+public TenantRequestValidationResult validate() { ... }
+
+// ✅ 正解: void でthrowする（UserManagementパターン）
+public void validate() {
+  if (!result.isValid()) {
+    throw new InvalidRequestException("...", errors);
+  }
+}
+```
+
+### エラーハンドリングフロー（3層）
+
+#### 1. Service層: Validator/Verifierが例外をthrow
+```java
+// TenantCreationService.execute()
+new TenantRequestValidator(request, dryRun).validate(); // throws InvalidRequestException
+tenantManagementVerifier.verify(context);               // throws InvalidRequestException
+```
+
+#### 2. Handler層: ManagementApiExceptionをcatchしてResultに変換
+```java
+// TenantManagementHandler.handle()
+try {
+  return executeService(...);
+} catch (ManagementApiException e) {
+  return TenantManagementResult.error(tenant, e); // Result化
+}
+```
+
+#### 3. EntryService層: ResultをHTTPレスポンスに変換
+```java
+// TenantManagementEntryService.create()
+TenantManagementResult result = handler.handle(...);
+
+if (result.hasException()) {
+  AuditLog auditLog = AuditLogCreator.createOnError(...);
+  auditLogPublisher.publish(auditLog);
+  return result.toResponse(dryRun); // 400/403/404等の適切なHTTPステータス
+}
+```
+
+### Validator/Verifier実装パターン
+
+#### Validator: 入力形式チェック
+```java
+public class TenantRequestValidator {
+  public void validate() {
+    // スキーマ検証
+    JsonSchemaValidationResult result = validator.validate(json);
+    throwExceptionIfInvalid(result);
+  }
+
+  void throwExceptionIfInvalid(JsonSchemaValidationResult result) {
+    if (!result.isValid()) {
+      throw new InvalidRequestException("...", result.errors());
+    }
+  }
+}
+```
+
+#### Verifier: ビジネスルール検証
+```java
+public class TenantManagementVerifier {
+  public void verify(Context context) {
+    VerificationResult result = tenantVerifier.verify(context.newTenant());
+    throwExceptionIfInvalid(result);
+  }
+
+  void throwExceptionIfInvalid(VerificationResult result) {
+    if (!result.isValid()) {
+      throw new InvalidRequestException("...", result.errors());
+    }
+  }
+}
+```
+
+### 例外-HTTPステータスマッピング
+```java
+// TenantManagementResult.toResponse()
+private TenantManagementStatus mapExceptionToStatus(ManagementApiException e) {
+  if (e instanceof InvalidRequestException) {
+    return TenantManagementStatus.INVALID_REQUEST;      // 400
+  } else if (e instanceof PermissionDeniedException) {
+    return TenantManagementStatus.FORBIDDEN;            // 403
+  } else if (e instanceof ResourceNotFoundException) {
+    return TenantManagementStatus.NOT_FOUND;            // 404
+  }
+  return TenantManagementStatus.SERVER_ERROR;           // 500
+}
+```
+
+### 重要な設計判断
+- **throwしない返り値パターンは廃止**: `TenantRequestValidationResult`、`TenantManagementVerificationResult`のような返り値型は使用しない
+- **UserManagement統一**: `UserRegistrationRequestValidator`、`UserRegistrationVerifier`と同じパターンに統一
+- **例外の利点**: トランザクションロールバック、AuditLog記録、適切なHTTPステータス返却が一貫して可能
 
 ## 重要な実装パターン
 
@@ -151,6 +249,67 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 2. テナントアクセス検証
 3. 組織-テナント関係検証
 4. 権限検証
+
+### 🚨 組織レベルAPI特有の重要パターン
+
+#### Organization渡しパターン（NullPointerException回避）
+
+**問題**: 組織レベルAPIでは `operator.currentOrganizationIdentifier()` が null を返す
+
+```java
+// ❌ 誤り: システムレベルと同じServiceを共有
+public class TenantCreationService {
+  public TenantManagementResult execute(...) {
+    // システムレベルでは動作するが、組織レベルではNPE
+    OrganizationIdentifier orgId = operator.currentOrganizationIdentifier(); // null!
+    Organization org = organizationRepository.get(orgId); // NPE!
+  }
+}
+```
+
+**理由**: 組織レベルAPIでは、Organizationは既にHandlerで取得済み（URLパスパラメータから）
+
+```java
+// OrgTenantManagementHandler.handle()
+Organization organization = organizationRepository.get(organizationIdentifier); // 既に取得済み
+```
+
+**解決策**: 専用Request Wrapperで明示的にOrganizationを渡す
+
+```java
+// ✅ 正解: 組織レベル専用のRequest Wrapper
+public record OrgTenantCreationRequest(
+  Organization organization,  // Handlerで取得済みのOrganizationを渡す
+  TenantRequest tenantRequest
+) {}
+
+// ✅ 正解: 組織レベル専用のService
+public class OrgTenantCreationService
+    implements TenantManagementService<OrgTenantCreationRequest> {
+
+  public TenantManagementResult execute(..., OrgTenantCreationRequest request, ...) {
+    Organization organization = request.organization(); // Wrapperから取得
+    // operator.currentOrganizationIdentifier()は使わない
+  }
+}
+
+// Handler側: WrapperでOrganizationを渡す
+if ("create".equals(method)) {
+  serviceRequest = new OrgTenantCreationRequest(organization, request);
+}
+```
+
+#### パターン適用判断
+
+| 操作 | システムレベル | 組織レベル | 判断基準 |
+|------|--------------|-----------|---------|
+| `create` | `TenantCreationService` | `OrgTenantCreationService` + `OrgTenantCreationRequest` | Organizationが必要 |
+| `findList` | `TenantFindListService` | `OrgTenantFindListService` | 取得対象テナント範囲が異なる |
+| `get` | `TenantFindService` | `TenantFindService` (共有) | テナント単体取得のみ |
+| `update` | `TenantUpdateService` | `TenantUpdateService` (共有) | `TenantUpdateRequest`で十分 |
+| `delete` | `TenantDeletionService` | `TenantDeletionService` (共有) | テナント単体削除のみ |
+
+**原則**: Organizationオブジェクトが必要な操作、またはスコープが異なる操作のみ専用Serviceを作成
 
 
 ## 🎯 AI開発者向け重要情報
@@ -667,3 +826,7 @@ throw new UnsupportedOperationException("実装予定");
 - [ ] JsonConverter.snakeCaseInstance()使用（DTO変換時）
 - [ ] EntryService 10フェーズ遵守
 - [ ] Audit Log適切化（create/update/delete別）
+- [ ] **Validator/Verifier は void validate()/verify() でthrow**（Resultオブジェクト返却禁止）
+- [ ] **組織レベルAPIでOrganization必要な場合は専用Request Wrapper + 専用Service作成**
+- [ ] **Handler層でManagementApiExceptionをcatchしてResultに変換**
+- [ ] **EntryService層でresult.toResponse()でHTTPステータス適切化（throw禁止）**
