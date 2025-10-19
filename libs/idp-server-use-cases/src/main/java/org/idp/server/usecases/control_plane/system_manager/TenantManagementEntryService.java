@@ -171,8 +171,27 @@ public class TenantManagementEntryService implements TenantManagementApi {
             false);
 
     if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "TenantManagementApi.findList",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
       return result.toResponse(false);
     }
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnRead(
+            "TenantManagementApi.findList",
+            "findList",
+            result.tenant(),
+            operator,
+            oAuthToken,
+            requestAttributes);
+    auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);
   }
@@ -197,8 +216,27 @@ public class TenantManagementEntryService implements TenantManagementApi {
             false);
 
     if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "TenantManagementApi.get",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
       return result.toResponse(false);
     }
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnRead(
+            "TenantManagementApi.get",
+            "get",
+            result.tenant(),
+            operator,
+            oAuthToken,
+            requestAttributes);
+    auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);
   }

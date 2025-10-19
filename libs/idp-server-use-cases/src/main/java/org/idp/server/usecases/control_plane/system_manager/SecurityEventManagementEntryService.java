@@ -16,24 +16,22 @@
 
 package org.idp.server.usecases.control_plane.system_manager;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.security.event.SecurityEventManagementApi;
+import org.idp.server.control_plane.management.security.event.handler.SecurityEventFindListService;
+import org.idp.server.control_plane.management.security.event.handler.SecurityEventFindService;
+import org.idp.server.control_plane.management.security.event.handler.SecurityEventManagementHandler;
+import org.idp.server.control_plane.management.security.event.handler.SecurityEventManagementResult;
+import org.idp.server.control_plane.management.security.event.handler.SecurityEventManagementService;
 import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementResponse;
-import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementStatus;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
-import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.SecurityEventQueries;
 import org.idp.server.platform.security.event.SecurityEventIdentifier;
 import org.idp.server.platform.security.repository.SecurityEventQueryRepository;
@@ -42,17 +40,19 @@ import org.idp.server.platform.type.RequestAttributes;
 @Transaction
 public class SecurityEventManagementEntryService implements SecurityEventManagementApi {
 
-  SecurityEventQueryRepository securityEventQueryRepository;
-  TenantQueryRepository tenantQueryRepository;
-  AuditLogPublisher auditLogPublisher;
-  LoggerWrapper log = LoggerWrapper.getLogger(SecurityEventManagementEntryService.class);
+  private final SecurityEventManagementHandler handler;
+  private final AuditLogPublisher auditLogPublisher;
 
   public SecurityEventManagementEntryService(
       SecurityEventQueryRepository securityEventQueryRepository,
       TenantQueryRepository tenantQueryRepository,
       AuditLogPublisher auditLogPublisher) {
-    this.securityEventQueryRepository = securityEventQueryRepository;
-    this.tenantQueryRepository = tenantQueryRepository;
+    Map<String, SecurityEventManagementService<?>> services =
+        Map.of(
+            "findList", new SecurityEventFindListService(securityEventQueryRepository),
+            "get", new SecurityEventFindService(securityEventQueryRepository));
+
+    this.handler = new SecurityEventManagementHandler(services, this, tenantQueryRepository);
     this.auditLogPublisher = auditLogPublisher;
   }
 
@@ -64,50 +64,35 @@ public class SecurityEventManagementEntryService implements SecurityEventManagem
       OAuthToken oAuthToken,
       SecurityEventQueries queries,
       RequestAttributes requestAttributes) {
-    AdminPermissions permissions = getRequiredPermissions("findList");
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    SecurityEventManagementResult result =
+        handler.handle(
+            "findList", tenantIdentifier, operator, oAuthToken, queries, requestAttributes);
+
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "SecurityEventManagementApi.findList",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse();
+    }
+
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "SecurityEventManagementApi.findList",
             "findList",
-            tenant,
+            result.tenant(),
             operator,
             oAuthToken,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new SecurityEventManagementResponse(SecurityEventManagementStatus.FORBIDDEN, response);
-    }
-
-    long totalCount = securityEventQueryRepository.findTotalCount(tenant, queries);
-    if (totalCount == 0) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("list", List.of());
-      response.put("total_count", 0);
-      response.put("limit", queries.limit());
-      response.put("offset", queries.offset());
-      return new SecurityEventManagementResponse(SecurityEventManagementStatus.OK, response);
-    }
-
-    List<SecurityEvent> events = securityEventQueryRepository.findList(tenant, queries);
-
-    Map<String, Object> response = new HashMap<>();
-    response.put("list", events.stream().map(SecurityEvent::toMap).toList());
-    response.put("total_count", totalCount);
-    response.put("limit", queries.limit());
-    response.put("offset", queries.offset());
-
-    return new SecurityEventManagementResponse(SecurityEventManagementStatus.OK, response);
+    return result.toResponse();
   }
 
   @Override
@@ -118,38 +103,34 @@ public class SecurityEventManagementEntryService implements SecurityEventManagem
       OAuthToken oAuthToken,
       SecurityEventIdentifier identifier,
       RequestAttributes requestAttributes) {
-    AdminPermissions permissions = getRequiredPermissions("get");
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    SecurityEvent securityEvent = securityEventQueryRepository.find(tenant, identifier);
+    SecurityEventManagementResult result =
+        handler.handle(
+            "get", tenantIdentifier, operator, oAuthToken, identifier, requestAttributes);
+
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "SecurityEventManagementApi.get",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse();
+    }
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "SecurityEventManagementApi.get",
             "get",
-            tenant,
+            result.tenant(),
             operator,
             oAuthToken,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new SecurityEventManagementResponse(SecurityEventManagementStatus.FORBIDDEN, response);
-    }
-
-    if (!securityEvent.exists()) {
-      return new SecurityEventManagementResponse(SecurityEventManagementStatus.NOT_FOUND, Map.of());
-    }
-
-    return new SecurityEventManagementResponse(
-        SecurityEventManagementStatus.OK, securityEvent.toMap());
+    return result.toResponse();
   }
 }

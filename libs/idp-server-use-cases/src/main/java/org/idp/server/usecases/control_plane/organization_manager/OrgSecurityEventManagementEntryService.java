@@ -16,29 +16,25 @@
 
 package org.idp.server.usecases.control_plane.organization_manager;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.security.event.OrgSecurityEventManagementApi;
+import org.idp.server.control_plane.management.security.event.handler.OrgSecurityEventManagementHandler;
+import org.idp.server.control_plane.management.security.event.handler.SecurityEventFindListService;
+import org.idp.server.control_plane.management.security.event.handler.SecurityEventFindService;
+import org.idp.server.control_plane.management.security.event.handler.SecurityEventManagementResult;
+import org.idp.server.control_plane.management.security.event.handler.SecurityEventManagementService;
 import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementResponse;
-import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementStatus;
-import org.idp.server.control_plane.organization.access.OrganizationAccessControlResult;
 import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
-import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.SecurityEventQueries;
 import org.idp.server.platform.security.event.SecurityEventIdentifier;
 import org.idp.server.platform.security.repository.SecurityEventQueryRepository;
@@ -69,13 +65,8 @@ import org.idp.server.platform.type.RequestAttributes;
 @Transaction
 public class OrgSecurityEventManagementEntryService implements OrgSecurityEventManagementApi {
 
-  TenantQueryRepository tenantQueryRepository;
-  OrganizationRepository organizationRepository;
-  SecurityEventQueryRepository securityEventQueryRepository;
-  AuditLogPublisher auditLogPublisher;
-  OrganizationAccessVerifier organizationAccessVerifier;
-
-  LoggerWrapper log = LoggerWrapper.getLogger(OrgSecurityEventManagementEntryService.class);
+  private final OrgSecurityEventManagementHandler handler;
+  private final AuditLogPublisher auditLogPublisher;
 
   /**
    * Creates a new organization security event management entry service.
@@ -90,11 +81,19 @@ public class OrgSecurityEventManagementEntryService implements OrgSecurityEventM
       OrganizationRepository organizationRepository,
       SecurityEventQueryRepository securityEventQueryRepository,
       AuditLogPublisher auditLogPublisher) {
-    this.tenantQueryRepository = tenantQueryRepository;
-    this.organizationRepository = organizationRepository;
-    this.securityEventQueryRepository = securityEventQueryRepository;
+    Map<String, SecurityEventManagementService<?>> services =
+        Map.of(
+            "findList", new SecurityEventFindListService(securityEventQueryRepository),
+            "get", new SecurityEventFindService(securityEventQueryRepository));
+
+    this.handler =
+        new OrgSecurityEventManagementHandler(
+            services,
+            this,
+            tenantQueryRepository,
+            organizationRepository,
+            new OrganizationAccessVerifier());
     this.auditLogPublisher = auditLogPublisher;
-    this.organizationAccessVerifier = new OrganizationAccessVerifier();
   }
 
   @Override
@@ -107,52 +106,40 @@ public class OrgSecurityEventManagementEntryService implements OrgSecurityEventM
       SecurityEventQueries queries,
       RequestAttributes requestAttributes) {
 
-    AdminPermissions permissions = getRequiredPermissions("findList");
+    SecurityEventManagementResult result =
+        handler.handle(
+            "findList",
+            organizationIdentifier,
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            queries,
+            requestAttributes);
 
-    Organization organization = organizationRepository.get(organizationIdentifier);
-    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
-
-    // Organization-level access control
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "OrgSecurityEventManagementApi.findList",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse();
+    }
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "OrgSecurityEventManagementApi.findList",
             "findList",
-            targetTenant,
+            result.tenant(),
             operator,
             oAuthToken,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put("error_description", accessResult.getReason());
-      return new SecurityEventManagementResponse(SecurityEventManagementStatus.FORBIDDEN, response);
-    }
-
-    long totalCount = securityEventQueryRepository.findTotalCount(targetTenant, queries);
-    if (totalCount == 0) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("list", List.of());
-      response.put("total_count", totalCount);
-      response.put("limit", queries.limit());
-      response.put("offset", queries.offset());
-      return new SecurityEventManagementResponse(SecurityEventManagementStatus.OK, response);
-    }
-
-    List<SecurityEvent> events = securityEventQueryRepository.findList(targetTenant, queries);
-
-    Map<String, Object> response = new HashMap<>();
-    response.put("list", events.stream().map(SecurityEvent::toMap).toList());
-    response.put("total_count", totalCount);
-    response.put("limit", queries.limit());
-    response.put("offset", queries.offset());
-
-    return new SecurityEventManagementResponse(SecurityEventManagementStatus.OK, response);
+    return result.toResponse();
   }
 
   @Override
@@ -165,39 +152,39 @@ public class OrgSecurityEventManagementEntryService implements OrgSecurityEventM
       SecurityEventIdentifier identifier,
       RequestAttributes requestAttributes) {
 
-    AdminPermissions permissions = getRequiredPermissions("get");
+    SecurityEventManagementResult result =
+        handler.handle(
+            "get",
+            organizationIdentifier,
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            identifier,
+            requestAttributes);
 
-    Organization organization = organizationRepository.get(organizationIdentifier);
-    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
-
-    // Organization-level access control
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
-
-    SecurityEvent event = securityEventQueryRepository.find(targetTenant, identifier);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "OrgSecurityEventManagementApi.get",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse();
+    }
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "OrgSecurityEventManagementApi.get",
             "get",
-            targetTenant,
+            result.tenant(),
             operator,
             oAuthToken,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put("error_description", accessResult.getReason());
-      return new SecurityEventManagementResponse(SecurityEventManagementStatus.FORBIDDEN, response);
-    }
-
-    if (!event.exists()) {
-      return new SecurityEventManagementResponse(SecurityEventManagementStatus.NOT_FOUND, Map.of());
-    }
-
-    return new SecurityEventManagementResponse(SecurityEventManagementStatus.OK, event.toMap());
+    return result.toResponse();
   }
 }

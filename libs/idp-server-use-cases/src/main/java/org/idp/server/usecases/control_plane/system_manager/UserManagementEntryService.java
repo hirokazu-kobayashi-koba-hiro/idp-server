@@ -215,6 +215,19 @@ public class UserManagementEntryService implements UserManagementApi {
         handler.handle(
             "findList", tenantIdentifier, operator, oAuthToken, queries, requestAttributes, false);
 
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "UserManagementApi.findList",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      throw result.getException();
+    }
+
     // Record audit log (read operation)
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
@@ -225,10 +238,6 @@ public class UserManagementEntryService implements UserManagementApi {
             oAuthToken,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
-
-    if (result.hasException()) {
-      throw result.getException();
-    }
 
     return result.toResponse(false);
   }
@@ -253,6 +262,19 @@ public class UserManagementEntryService implements UserManagementApi {
             requestAttributes,
             false);
 
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "UserManagementApi.get",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      throw result.getException();
+    }
+
     // Record audit log (read operation)
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
@@ -263,10 +285,6 @@ public class UserManagementEntryService implements UserManagementApi {
             oAuthToken,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
-
-    if (result.hasException()) {
-      throw result.getException();
-    }
 
     return result.toResponse(false);
   }
