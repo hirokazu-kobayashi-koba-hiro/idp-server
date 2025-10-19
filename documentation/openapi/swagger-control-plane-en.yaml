@@ -7108,6 +7108,10 @@ components:
     UIConfiguration:
       type: object
       properties:
+        base_url:
+          type: string
+          description: Base URL for UI hosting (optional). When configured, authentication screens are served from this URL instead of the tenant domain. Enables cross-origin UI scenarios (e.g., localhost:3000 for development).
+          example: http://localhost:3000
         signup_page:
           type: string
           default: /auth-views/signup/index.html

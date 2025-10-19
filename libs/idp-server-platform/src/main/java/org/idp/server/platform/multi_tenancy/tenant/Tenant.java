@@ -158,6 +158,22 @@ public class Tenant {
   }
 
   /**
+   * Returns base URL for UI hosting.
+   *
+   * <p>Prioritizes UIConfiguration base_url if configured, otherwise uses tenant domain. This
+   * enables hosting UI on separate domains (e.g., localhost:3000) for development and cross-origin
+   * scenarios.
+   *
+   * @return configured base URL or tenant domain value
+   */
+  public String baseUrl() {
+    if (uiConfiguration.hasBaseUrl()) {
+      return uiConfiguration.baseUrl();
+    }
+    return domain.value();
+  }
+
+  /**
    * Returns session cookie name with tenant ID suffix for default configuration.
    *
    * <p>For multi-tenant isolation, generates tenant-specific cookie name when no custom name is
