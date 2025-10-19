@@ -28,18 +28,39 @@ import java.util.Objects;
  */
 public class UIConfiguration {
 
+  private final String baseUrl;
   private final String signupPage;
   private final String signinPage;
 
   public UIConfiguration() {
+    this.baseUrl = null;
     this.signupPage = "/auth-views/signup/index.html";
     this.signinPage = "/auth-views/signin/index.html";
   }
 
   public UIConfiguration(Map<String, Object> values) {
     Map<String, Object> safeValues = Objects.requireNonNullElseGet(values, HashMap::new);
+    this.baseUrl = extractString(safeValues, "base_url", null);
     this.signupPage = extractString(safeValues, "signup_page", "/auth-views/signup/index.html");
     this.signinPage = extractString(safeValues, "signin_page", "/auth-views/signin/index.html");
+  }
+
+  /**
+   * Returns the base URL for UI hosting
+   *
+   * @return base URL or null if not configured
+   */
+  public String baseUrl() {
+    return baseUrl;
+  }
+
+  /**
+   * Checks if base URL is configured
+   *
+   * @return true if base URL is set and not empty
+   */
+  public boolean hasBaseUrl() {
+    return baseUrl != null && !baseUrl.isEmpty();
   }
 
   /**
@@ -67,6 +88,9 @@ public class UIConfiguration {
    */
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
+    if (baseUrl != null) {
+      map.put("base_url", baseUrl);
+    }
     map.put("signup_page", signupPage);
     map.put("signin_page", signinPage);
     return map;

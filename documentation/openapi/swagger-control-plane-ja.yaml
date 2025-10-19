@@ -6826,6 +6826,10 @@ components:
     UIConfiguration:
       type: object
       properties:
+        base_url:
+          type: string
+          description: UIホスティング用のベースURL（オプション）。設定すると、認証画面はテナントドメインではなくこのURLから提供されます。クロスオリジンUIシナリオ（開発用のlocalhost:3000など）に対応します。
+          example: http://localhost:3000
         signup_page:
           type: string
           default: /auth-views/signup/index.html

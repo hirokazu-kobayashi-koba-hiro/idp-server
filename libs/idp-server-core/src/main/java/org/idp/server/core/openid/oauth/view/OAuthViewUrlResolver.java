@@ -29,7 +29,7 @@ public class OAuthViewUrlResolver {
   public static String resolve(OAuthRequestContext context) {
     Tenant tenant = context.tenant();
     UIConfiguration uiConfiguration = tenant.uiConfiguration();
-    String base = context.tenant().domain().value();
+    String base = tenant.baseUrl();
 
     if (context.isPromptCreate()) {
       String signupPage = uiConfiguration.signupPage();
@@ -41,7 +41,7 @@ public class OAuthViewUrlResolver {
   }
 
   public static String resolveError(Tenant tenant, Error error, ErrorDescription errorDescription) {
-    String base = tenant.domain().value();
+    String base = tenant.baseUrl();
     return String.format(
         "%s/error?error=%s&error_description=%s&tenant_id=%s",
         base, error.value(), errorDescription.value(), tenant.identifier().value());

@@ -6,6 +6,7 @@
     "authorization_provider": "idp-server",
     "database_type": "postgresql",
     "ui_config": {
+      "base_url": "",
       "signup_page": "/auth-views/signup/index.html",
       "signin_page": "/auth-views/signin/index.html"
     },
