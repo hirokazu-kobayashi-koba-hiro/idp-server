@@ -18,6 +18,7 @@ package org.idp.server.control_plane.management.identity.user.validator;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
@@ -56,5 +57,18 @@ public class UserRequestValidationResult {
     response.put("error_description", "user registration validation is failed");
     response.put("error_messages", userResult.errors());
     return new UserManagementResponse(UserManagementStatus.INVALID_REQUEST, response);
+  }
+
+  /**
+   * Converts validation result to exception for Handler/Service pattern.
+   *
+   * <p>This method is used when Service layer needs to throw exceptions instead of returning error
+   * responses. The exception will be caught by Handler layer and wrapped in UserManagementResult.
+   *
+   * @return InvalidRequestException with validation error details
+   */
+  public InvalidRequestException toException() {
+    return new InvalidRequestException(
+        "user registration validation is failed", userResult.errors());
   }
 }

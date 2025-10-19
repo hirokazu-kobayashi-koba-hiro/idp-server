@@ -17,6 +17,7 @@
 package org.idp.server.control_plane.management.identity.user.validator;
 
 import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
+import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
@@ -35,6 +36,13 @@ public class UserRegistrationRequestValidator {
         new JsonSchemaValidator(ControlPlaneV1SchemaReader.adminUserSchema());
   }
 
+  /**
+   * Validates the user registration request and returns validation result.
+   *
+   * <p>This method is used by existing EntryService classes.
+   *
+   * @return UserRequestValidationResult with validation outcome
+   */
   public UserRequestValidationResult validate() {
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request.toMap());
     JsonSchemaValidationResult userResult = userSchemaValidator.validate(jsonNodeWrapper);
@@ -44,5 +52,22 @@ public class UserRegistrationRequestValidator {
     }
 
     return UserRequestValidationResult.success(userResult, dryRun);
+  }
+
+  /**
+   * Validates the user registration request and throws exception if invalid.
+   *
+   * <p>This method is used by the new Handler/Service pattern (PoC in UserCreationService).
+   *
+   * @throws InvalidRequestException if validation fails
+   */
+  public void validateWithException() {
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request.toMap());
+    JsonSchemaValidationResult userResult = userSchemaValidator.validate(jsonNodeWrapper);
+
+    if (!userResult.isValid()) {
+      throw new InvalidRequestException(
+          "user registration validation is failed", userResult.errors());
+    }
   }
 }
