@@ -71,4 +71,15 @@ public class UserRequestValidationResult {
     return new InvalidRequestException(
         "user registration validation is failed", userResult.errors());
   }
+
+  /**
+   * Throws InvalidRequestException if validation failed.
+   *
+   * @throws InvalidRequestException if invalid
+   */
+  public void throwIfInvalid() {
+    if (!isValid) {
+      throw toException();
+    }
+  }
 }

@@ -19,11 +19,10 @@ package org.idp.server.usecases.control_plane.system_manager;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.verifier.UserVerifier;
-import org.idp.server.control_plane.base.verifier.VerificationResult;
 import org.idp.server.control_plane.management.identity.user.*;
 import org.idp.server.control_plane.management.identity.user.ManagementEventPublisher;
+import org.idp.server.control_plane.management.identity.user.handler.*;
 import org.idp.server.control_plane.management.identity.user.handler.UserCreationService;
 import org.idp.server.control_plane.management.identity.user.handler.UserDeletionContext;
 import org.idp.server.control_plane.management.identity.user.handler.UserDeletionService;
@@ -37,7 +36,6 @@ import org.idp.server.control_plane.management.identity.user.handler.UserPatchSe
 import org.idp.server.control_plane.management.identity.user.handler.UserUpdateRequest;
 import org.idp.server.control_plane.management.identity.user.handler.UserUpdateService;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
-import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
 import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationRelatedDataVerifier;
 import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationVerifier;
@@ -55,7 +53,6 @@ import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.security.SecurityEventPublisher;
@@ -64,21 +61,12 @@ import org.idp.server.platform.type.RequestAttributes;
 @Transaction
 public class UserManagementEntryService implements UserManagementApi {
 
-  TenantQueryRepository tenantQueryRepository;
-  UserQueryRepository userQueryRepository;
-  UserCommandRepository userCommandRepository;
-  RoleQueryRepository roleQueryRepository;
-  OrganizationRepository organizationRepository;
-  PasswordEncodeDelegation passwordEncodeDelegation;
-  UserRegistrationVerifier verifier;
-  UserRegistrationRelatedDataVerifier updateVerifier;
-  UserLifecycleEventPublisher userLifecycleEventPublisher;
   AuditLogPublisher auditLogPublisher;
-  ManagementEventPublisher managementEventPublisher;
+
   LoggerWrapper log = LoggerWrapper.getLogger(UserManagementEntryService.class);
 
-  // PoC: Handler/Service pattern components
-  UserManagementHandler pocHandler;
+  // Handler/Service pattern
+  private UserManagementHandler handler;
 
   public UserManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
@@ -90,65 +78,85 @@ public class UserManagementEntryService implements UserManagementApi {
       UserLifecycleEventPublisher userLifecycleEventPublisher,
       AuditLogPublisher auditLogPublisher,
       SecurityEventPublisher securityEventPublisher) {
-    this.tenantQueryRepository = tenantQueryRepository;
-    this.userQueryRepository = userQueryRepository;
-    this.userCommandRepository = userCommandRepository;
-    this.roleQueryRepository = roleQueryRepository;
-    this.organizationRepository = organizationRepository;
-    this.passwordEncodeDelegation = passwordEncodeDelegation;
-    UserRegistrationRelatedDataVerifier userRegistrationRelatedDataVerifier =
+    this.auditLogPublisher = auditLogPublisher;
+
+    UserRegistrationRelatedDataVerifier relatedDataVerifier =
         new UserRegistrationRelatedDataVerifier(
             roleQueryRepository, tenantQueryRepository, organizationRepository);
     UserVerifier userVerifier = new UserVerifier(userQueryRepository);
-    this.verifier = new UserRegistrationVerifier(userVerifier, userRegistrationRelatedDataVerifier);
-    this.updateVerifier = userRegistrationRelatedDataVerifier;
-    this.userLifecycleEventPublisher = userLifecycleEventPublisher;
-    this.auditLogPublisher = auditLogPublisher;
-    this.managementEventPublisher = new ManagementEventPublisher(securityEventPublisher);
+    UserRegistrationVerifier verifier =
+        new UserRegistrationVerifier(userVerifier, relatedDataVerifier);
 
-    // PoC: Initialize Handler/Service pattern components
-    initializePocComponents();
+    ManagementEventPublisher managementEventPublisher =
+        new ManagementEventPublisher(securityEventPublisher);
+
+    this.handler =
+        createHandler(
+            tenantQueryRepository,
+            userQueryRepository,
+            userCommandRepository,
+            roleQueryRepository,
+            organizationRepository,
+            passwordEncodeDelegation,
+            verifier,
+            userLifecycleEventPublisher,
+            managementEventPublisher);
   }
 
-  private void initializePocComponents() {
-    // Create all services
-    UserCreationService userCreationService =
+  private UserManagementHandler createHandler(
+      TenantQueryRepository tenantQueryRepository,
+      UserQueryRepository userQueryRepository,
+      UserCommandRepository userCommandRepository,
+      RoleQueryRepository roleQueryRepository,
+      OrganizationRepository organizationRepository,
+      PasswordEncodeDelegation passwordEncodeDelegation,
+      UserRegistrationVerifier verifier,
+      UserLifecycleEventPublisher userLifecycleEventPublisher,
+      ManagementEventPublisher managementEventPublisher) {
+
+    UserRegistrationRelatedDataVerifier updateVerifier =
+        new UserRegistrationRelatedDataVerifier(
+            roleQueryRepository, tenantQueryRepository, organizationRepository);
+
+    Map<String, UserManagementService<?>> services = new HashMap<>();
+    services.put(
+        "create",
         new UserCreationService(
-            userCommandRepository, passwordEncodeDelegation, verifier, managementEventPublisher);
-
-    UserUpdateService userUpdateService =
-        new UserUpdateService(userQueryRepository, userCommandRepository, managementEventPublisher);
-
-    UserPatchService userPatchService =
-        new UserPatchService(userQueryRepository, userCommandRepository, managementEventPublisher);
-
-    UserPasswordUpdateService userPasswordUpdateService =
+            userCommandRepository, passwordEncodeDelegation, verifier, managementEventPublisher));
+    services.put(
+        "update",
+        new UserUpdateService(
+            userQueryRepository, userCommandRepository, managementEventPublisher));
+    services.put(
+        "patch",
+        new UserPatchService(userQueryRepository, userCommandRepository, managementEventPublisher));
+    services.put(
+        "updatePassword",
         new UserPasswordUpdateService(
             userQueryRepository,
             userCommandRepository,
             passwordEncodeDelegation,
-            managementEventPublisher);
-
-    UserDeletionService userDeletionService =
+            managementEventPublisher));
+    services.put(
+        "delete",
         new UserDeletionService(
-            userQueryRepository, userCommandRepository, userLifecycleEventPublisher);
+            userQueryRepository,
+            userCommandRepository,
+            userLifecycleEventPublisher,
+            managementEventPublisher));
+    services.put("findList", new UserFindListService(userQueryRepository));
+    services.put("get", new UserFindService(userQueryRepository));
+    services.put(
+        "updateRoles",
+        new UserRolesUpdateService(userQueryRepository, userCommandRepository, updateVerifier));
+    services.put(
+        "updateTenantAssignments",
+        new UserTenantAssignmentsUpdateService(userQueryRepository, userCommandRepository));
+    services.put(
+        "updateOrganizationAssignments",
+        new UserOrganizationAssignmentsUpdateService(userQueryRepository, userCommandRepository));
 
-    UserFindListService userFindListService = new UserFindListService(userQueryRepository);
-
-    UserFindService userFindService = new UserFindService(userQueryRepository);
-
-    // Create service map with all operations
-    Map<String, UserManagementService<?>> services = new HashMap<>();
-    services.put("create", userCreationService);
-    services.put("update", userUpdateService);
-    services.put("patch", userPatchService);
-    services.put("updatePassword", userPasswordUpdateService);
-    services.put("delete", userDeletionService);
-    services.put("findList", userFindListService);
-    services.put("get", userFindService);
-
-    // Create Handler
-    this.pocHandler = new UserManagementHandler(services, this, tenantQueryRepository);
+    return new UserManagementHandler(services, this, tenantQueryRepository);
   }
 
   @Override
@@ -160,10 +168,8 @@ public class UserManagementEntryService implements UserManagementApi {
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    // PoC: Delegate to new Handler/Service pattern with exception-based error handling
-    log.info("PoC: Using Handler/Service pattern for user creation");
     UserManagementResult result =
-        pocHandler.handle(
+        handler.handle(
             "create", tenantIdentifier, operator, oAuthToken, request, requestAttributes, dryRun);
 
     // Record audit log (separate transaction via @Async) - always record, success or failure
@@ -206,7 +212,7 @@ public class UserManagementEntryService implements UserManagementApi {
 
     // Delegate to Handler/Service pattern
     UserManagementResult result =
-        pocHandler.handle(
+        handler.handle(
             "findList", tenantIdentifier, operator, oAuthToken, queries, requestAttributes, false);
 
     // Record audit log (read operation)
@@ -238,7 +244,7 @@ public class UserManagementEntryService implements UserManagementApi {
 
     // Delegate to Handler/Service pattern
     UserManagementResult result =
-        pocHandler.handle(
+        handler.handle(
             "get",
             tenantIdentifier,
             operator,
@@ -278,7 +284,7 @@ public class UserManagementEntryService implements UserManagementApi {
     // Delegate to Handler/Service pattern
     UserUpdateRequest updateRequest = new UserUpdateRequest(userIdentifier, request);
     UserManagementResult result =
-        pocHandler.handle(
+        handler.handle(
             "update",
             tenantIdentifier,
             operator,
@@ -328,7 +334,7 @@ public class UserManagementEntryService implements UserManagementApi {
     // Delegate to Handler/Service pattern
     UserUpdateRequest updateRequest = new UserUpdateRequest(userIdentifier, request);
     UserManagementResult result =
-        pocHandler.handle(
+        handler.handle(
             "patch",
             tenantIdentifier,
             operator,
@@ -378,7 +384,7 @@ public class UserManagementEntryService implements UserManagementApi {
     // Delegate to Handler/Service pattern
     UserUpdateRequest updateRequest = new UserUpdateRequest(userIdentifier, request);
     UserManagementResult result =
-        pocHandler.handle(
+        handler.handle(
             "updatePassword",
             tenantIdentifier,
             operator,
@@ -426,7 +432,7 @@ public class UserManagementEntryService implements UserManagementApi {
 
     // Delegate to Handler/Service pattern
     UserManagementResult result =
-        pocHandler.handle(
+        handler.handle(
             "delete",
             tenantIdentifier,
             operator,
@@ -475,52 +481,41 @@ public class UserManagementEntryService implements UserManagementApi {
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    AdminPermissions permissions = getRequiredPermissions("updateRoles");
+    UserUpdateRequest updateRequest = new UserUpdateRequest(userIdentifier, request);
+    UserManagementResult result =
+        handler.handle(
+            "updateRoles",
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            updateRequest,
+            requestAttributes,
+            dryRun);
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    User before = userQueryRepository.findById(tenant, userIdentifier);
-
-    //    AuditLog auditLog =
-    //        AuditLogCreator.createOnUpdate(
-    //            "UserManagementApi.updateRoles", "updateRoles", tenant, operator, oAuthToken,
-    // requestAttributes);
-    //    auditLogPublisher.publish(auditLog);
-
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new UserManagementResponse(UserManagementStatus.FORBIDDEN, response);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "UserManagementApi.updateRoles",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(dryRun);
     }
 
-    if (!before.exists()) {
-      return new UserManagementResponse(UserManagementStatus.NOT_FOUND, Map.of());
-    }
+    AuditLog auditLog =
+        AuditLogCreator.createOnUpdate(
+            "UserManagementApi.updateRoles",
+            result.tenant(),
+            operator,
+            oAuthToken,
+            (UserUpdateContext) result.context(),
+            requestAttributes);
+    auditLogPublisher.publish(auditLog);
 
-    // Validate roles
-    VerificationResult roleValidation = updateVerifier.verifyRoles(tenant, request);
-    if (!roleValidation.isValid()) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "invalid_request");
-      response.put("error_description", String.join(", ", roleValidation.errors()));
-      log.warn(response.toString());
-      return new UserManagementResponse(UserManagementStatus.INVALID_REQUEST, response);
-    }
-
-    User updatedUser = before.setRoles(request.roles()).setPermissions(request.permissions());
-
-    if (dryRun) {
-      return new UserManagementResponse(UserManagementStatus.OK, updatedUser.toMap());
-    }
-
-    userCommandRepository.update(tenant, updatedUser);
-
-    return new UserManagementResponse(UserManagementStatus.OK, updatedUser.toMap());
+    return result.toResponse(dryRun);
   }
 
   @Override
@@ -533,63 +528,41 @@ public class UserManagementEntryService implements UserManagementApi {
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    AdminPermissions permissions = getRequiredPermissions("updateTenantAssignments");
+    UserUpdateRequest updateRequest = new UserUpdateRequest(userIdentifier, request);
+    UserManagementResult result =
+        handler.handle(
+            "updateTenantAssignments",
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            updateRequest,
+            requestAttributes,
+            dryRun);
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    User before = userQueryRepository.findById(tenant, userIdentifier);
-
-    //    AuditLog auditLog =
-    //        AuditLogCreator.createOnUpdate(
-    //            "UserManagementApi.updateTenantAssignments", "updateTenantAssignments", tenant,
-    // operator, oAuthToken, requestAttributes);
-    //    auditLogPublisher.publish(auditLog);
-
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new UserManagementResponse(UserManagementStatus.FORBIDDEN, response);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "UserManagementApi.updateTenantAssignments",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(dryRun);
     }
 
-    if (!before.exists()) {
-      return new UserManagementResponse(UserManagementStatus.NOT_FOUND, Map.of());
-    }
+    AuditLog auditLog =
+        AuditLogCreator.createOnUpdate(
+            "UserManagementApi.updateTenantAssignments",
+            result.tenant(),
+            operator,
+            oAuthToken,
+            (UserUpdateContext) result.context(),
+            requestAttributes);
+    auditLogPublisher.publish(auditLog);
 
-    // Validate tenant assignments
-    VerificationResult tenantValidation = updateVerifier.verifyTenantAssignments(request);
-    if (!tenantValidation.isValid()) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "invalid_request");
-      response.put("error_description", String.join(", ", tenantValidation.errors()));
-      log.warn(response.toString());
-      return new UserManagementResponse(UserManagementStatus.INVALID_REQUEST, response);
-    }
-
-    User updatedUser = before;
-
-    if (request.currentTenant() != null) {
-      updatedUser =
-          updatedUser.setCurrentTenantId(
-              new org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier(
-                  request.currentTenant()));
-    }
-
-    if (!request.assignedTenants().isEmpty()) {
-      updatedUser = updatedUser.setAssignedTenants(request.assignedTenants());
-    }
-
-    if (dryRun) {
-      return new UserManagementResponse(UserManagementStatus.OK, updatedUser.toMap());
-    }
-
-    userCommandRepository.update(tenant, updatedUser);
-
-    return new UserManagementResponse(UserManagementStatus.OK, updatedUser.toMap());
+    return result.toResponse(dryRun);
   }
 
   @Override
@@ -602,64 +575,40 @@ public class UserManagementEntryService implements UserManagementApi {
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    AdminPermissions permissions = getRequiredPermissions("updateOrganizationAssignments");
+    UserUpdateRequest updateRequest = new UserUpdateRequest(userIdentifier, request);
+    UserManagementResult result =
+        handler.handle(
+            "updateOrganizationAssignments",
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            updateRequest,
+            requestAttributes,
+            dryRun);
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    User before = userQueryRepository.findById(tenant, userIdentifier);
-
-    //        AuditLog auditLog =
-    //            AuditLogCreator.createOnUpdate(
-    //                "UserManagementApi.updateOrganizationAssignments", tenant, operator,
-    // oAuthToken,
-    //     requestAttributes);
-    //        auditLogPublisher.publish(auditLog);
-
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new UserManagementResponse(UserManagementStatus.FORBIDDEN, response);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "UserManagementApi.updateOrganizationAssignments",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(dryRun);
     }
 
-    if (!before.exists()) {
-      return new UserManagementResponse(UserManagementStatus.NOT_FOUND, Map.of());
-    }
+    AuditLog auditLog =
+        AuditLogCreator.createOnUpdate(
+            "UserManagementApi.updateOrganizationAssignments",
+            result.tenant(),
+            operator,
+            oAuthToken,
+            (UserUpdateContext) result.context(),
+            requestAttributes);
+    auditLogPublisher.publish(auditLog);
 
-    // Validate organization assignments
-    VerificationResult organizationValidation =
-        updateVerifier.verifyOrganizationAssignments(tenant, request);
-    if (!organizationValidation.isValid()) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "invalid_request");
-      response.put("error_description", String.join(", ", organizationValidation.errors()));
-      log.warn(response.toString());
-      return new UserManagementResponse(UserManagementStatus.INVALID_REQUEST, response);
-    }
-
-    User updatedUser = before;
-
-    if (request.currentOrganizationId() != null) {
-      updatedUser =
-          updatedUser.setCurrentOrganizationId(
-              new org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier(
-                  request.currentOrganizationId()));
-    }
-
-    if (!request.assignedOrganizations().isEmpty()) {
-      updatedUser = updatedUser.setAssignedOrganizations(request.assignedOrganizations());
-    }
-
-    if (dryRun) {
-      return new UserManagementResponse(UserManagementStatus.OK, updatedUser.toMap());
-    }
-
-    userCommandRepository.update(tenant, updatedUser);
-
-    return new UserManagementResponse(UserManagementStatus.OK, updatedUser.toMap());
+    return result.toResponse(dryRun);
   }
 }

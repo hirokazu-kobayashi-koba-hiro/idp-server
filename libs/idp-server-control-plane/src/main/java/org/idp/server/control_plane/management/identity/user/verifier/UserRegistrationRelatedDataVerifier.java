@@ -21,7 +21,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import org.idp.server.control_plane.base.verifier.VerificationResult;
+import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
 import org.idp.server.core.openid.identity.UserRole;
 import org.idp.server.core.openid.identity.role.Role;
@@ -49,27 +49,23 @@ public class UserRegistrationRelatedDataVerifier {
     this.organizationRepository = organizationRepository;
   }
 
-  public VerificationResult verifyRoles(Tenant tenant, UserRegistrationRequest request) {
-    List<String> errors = new ArrayList<>();
+  public void verifyRoles(Tenant tenant, UserRegistrationRequest request) {
     List<UserRole> roles = Optional.ofNullable(request.roles()).orElse(List.of());
 
-    // Extract unique role IDs to avoid duplicate queries
     Set<String> uniqueRoleIds = new LinkedHashSet<>();
     for (UserRole userRole : roles) {
-      String roleId = userRole.roleId();
-      uniqueRoleIds.add(roleId);
+      uniqueRoleIds.add(userRole.roleId());
     }
 
     if (uniqueRoleIds.isEmpty()) {
-      return VerificationResult.success();
+      return;
     }
 
-    // Bulk existence check for roles - avoid N+1 query problem
     Roles allRoles = roleQueryRepository.findAll(tenant);
     Set<String> existingRoleIds =
         allRoles.toList().stream().map(Role::id).collect(java.util.stream.Collectors.toSet());
 
-    // Check which requested roles don't exist
+    List<String> errors = new ArrayList<>();
     for (String roleId : uniqueRoleIds) {
       if (!existingRoleIds.contains(roleId)) {
         errors.add(
@@ -77,33 +73,28 @@ public class UserRegistrationRelatedDataVerifier {
       }
     }
 
-    if (!errors.isEmpty()) {
-      return VerificationResult.failure(errors);
-    }
-
-    return VerificationResult.success();
+    throwExceptionIfInvalidRoles(errors);
   }
 
-  public VerificationResult verifyTenantAssignments(UserRegistrationRequest request) {
-    List<String> errors = new ArrayList<>();
+  void throwExceptionIfInvalidRoles(List<String> errors) {
+    if (!errors.isEmpty()) {
+      throw new InvalidRequestException("roles verification is failed", errors);
+    }
+  }
 
+  public void verifyTenantAssignments(UserRegistrationRequest request) {
     String currentTenantId = request.currentTenant();
     List<String> assignedTenants = Optional.ofNullable(request.assignedTenants()).orElse(List.of());
 
-    // Deduplicate assigned tenants
-    Set<String> uniqueAssignedTenantIds = new LinkedHashSet<>(assignedTenants);
-
-    // Bulk existence check for all tenant IDs
-    Set<String> allTenantIds = new LinkedHashSet<>(uniqueAssignedTenantIds);
+    Set<String> allTenantIds = new LinkedHashSet<>(assignedTenants);
     if (currentTenantId != null && !currentTenantId.trim().isEmpty()) {
       allTenantIds.add(currentTenantId);
     }
 
     if (allTenantIds.isEmpty()) {
-      return VerificationResult.success();
+      return;
     }
 
-    // Bulk existence check for tenants - avoid N+1 query problem
     List<TenantIdentifier> tenantIdentifiers =
         allTenantIds.stream()
             .map(TenantIdentifier::new)
@@ -116,7 +107,7 @@ public class UserRegistrationRelatedDataVerifier {
             .map(tenant -> tenant.identifier().value())
             .collect(java.util.stream.Collectors.toSet());
 
-    // Check which requested tenants don't exist
+    List<String> errors = new ArrayList<>();
     for (String tenantId : allTenantIds) {
       if (!existingTenantIds.contains(tenantId)) {
         errors.add(
@@ -126,32 +117,27 @@ public class UserRegistrationRelatedDataVerifier {
       }
     }
 
-    if (!errors.isEmpty()) {
-      return VerificationResult.failure(errors);
-    }
-
-    return VerificationResult.success();
+    throwExceptionIfInvalidTenantAssignments(errors);
   }
 
-  public VerificationResult verifyOrganizationAssignments(
-      Tenant tenant, UserRegistrationRequest request) {
-    List<String> errors = new ArrayList<>();
+  void throwExceptionIfInvalidTenantAssignments(List<String> errors) {
+    if (!errors.isEmpty()) {
+      throw new InvalidRequestException("tenant assignments verification is failed", errors);
+    }
+  }
 
+  public void verifyOrganizationAssignments(Tenant tenant, UserRegistrationRequest request) {
     String currentOrganizationId = request.currentOrganizationId();
     List<String> assignedOrganizations =
         Optional.ofNullable(request.assignedOrganizations()).orElse(List.of());
 
-    // Deduplicate assigned organizations
-    Set<String> uniqueAssignedOrgIds = new LinkedHashSet<>(assignedOrganizations);
-    if (uniqueAssignedOrgIds.isEmpty()) {
-      return VerificationResult.success();
+    Set<String> allOrgIds = new LinkedHashSet<>(assignedOrganizations);
+    if (allOrgIds.isEmpty()) {
+      return;
     }
 
-    // Bulk existence check for all organization IDs
-    Set<String> allOrgIds = new LinkedHashSet<>(uniqueAssignedOrgIds);
     allOrgIds.add(currentOrganizationId);
 
-    // Bulk existence check for organizations - avoid N+1 query problem
     OrganizationQueries queries = OrganizationQueries.ids(allOrgIds);
     List<Organization> existingOrganizations = organizationRepository.findList(queries);
     Set<String> existingOrgIds =
@@ -160,7 +146,7 @@ public class UserRegistrationRelatedDataVerifier {
             .map(org -> org.identifier().value())
             .collect(java.util.stream.Collectors.toSet());
 
-    // Check which requested organizations don't exist
+    List<String> errors = new ArrayList<>();
     for (String organizationId : allOrgIds) {
       if (!existingOrgIds.contains(organizationId)) {
         errors.add(
@@ -170,10 +156,12 @@ public class UserRegistrationRelatedDataVerifier {
       }
     }
 
-    if (!errors.isEmpty()) {
-      return VerificationResult.failure(errors);
-    }
+    throwExceptionIfInvalidOrganizationAssignments(errors);
+  }
 
-    return VerificationResult.success();
+  void throwExceptionIfInvalidOrganizationAssignments(List<String> errors) {
+    if (!errors.isEmpty()) {
+      throw new InvalidRequestException("organization assignments verification is failed", errors);
+    }
   }
 }

@@ -16,7 +16,6 @@
 
 package org.idp.server.control_plane.management.identity.user.handler;
 
-import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
 import org.idp.server.core.openid.identity.User;
@@ -66,10 +65,7 @@ public class UserFindService implements UserManagementService<UserIdentifier> {
       boolean dryRun) {
 
     // 1. User existence verification
-    User user = userQueryRepository.findById(tenant, userIdentifier);
-    if (!user.exists()) {
-      throw new ResourceNotFoundException("User not found: " + userIdentifier.value());
-    }
+    User user = userQueryRepository.get(tenant, userIdentifier);
 
     // 2. Return user data
     return UserManagementResult.success(

@@ -26,48 +26,24 @@ import org.idp.server.platform.json.schema.JsonSchemaValidator;
 public class UserRegistrationRequestValidator {
 
   UserRegistrationRequest request;
-  boolean dryRun;
   JsonSchemaValidator userSchemaValidator;
 
   public UserRegistrationRequestValidator(UserRegistrationRequest request, boolean dryRun) {
     this.request = request;
-    this.dryRun = dryRun;
     this.userSchemaValidator =
         new JsonSchemaValidator(ControlPlaneV1SchemaReader.adminUserSchema());
   }
 
-  /**
-   * Validates the user registration request and returns validation result.
-   *
-   * <p>This method is used by existing EntryService classes.
-   *
-   * @return UserRequestValidationResult with validation outcome
-   */
-  public UserRequestValidationResult validate() {
+  public void validate() {
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request.toMap());
     JsonSchemaValidationResult userResult = userSchemaValidator.validate(jsonNodeWrapper);
 
-    if (!userResult.isValid()) {
-      return UserRequestValidationResult.error(userResult, dryRun);
-    }
-
-    return UserRequestValidationResult.success(userResult, dryRun);
+    throwExceptionIfInvalid(userResult);
   }
 
-  /**
-   * Validates the user registration request and throws exception if invalid.
-   *
-   * <p>This method is used by the new Handler/Service pattern (PoC in UserCreationService).
-   *
-   * @throws InvalidRequestException if validation fails
-   */
-  public void validateWithException() {
-    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request.toMap());
-    JsonSchemaValidationResult userResult = userSchemaValidator.validate(jsonNodeWrapper);
-
-    if (!userResult.isValid()) {
-      throw new InvalidRequestException(
-          "user registration validation is failed", userResult.errors());
+  void throwExceptionIfInvalid(JsonSchemaValidationResult result) {
+    if (!result.isValid()) {
+      throw new InvalidRequestException("user registration validation is failed", result.errors());
     }
   }
 }

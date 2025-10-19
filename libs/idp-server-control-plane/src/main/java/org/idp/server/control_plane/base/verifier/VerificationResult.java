@@ -47,4 +47,17 @@ public class VerificationResult {
   public List<String> errors() {
     return errors;
   }
+
+  /**
+   * Throws InvalidRequestException if verification failed.
+   *
+   * @param message error message
+   * @throws org.idp.server.control_plane.management.exception.InvalidRequestException if invalid
+   */
+  public void throwIfInvalid(String message) {
+    if (!valid) {
+      throw new org.idp.server.control_plane.management.exception.InvalidRequestException(
+          message, errors);
+    }
+  }
 }

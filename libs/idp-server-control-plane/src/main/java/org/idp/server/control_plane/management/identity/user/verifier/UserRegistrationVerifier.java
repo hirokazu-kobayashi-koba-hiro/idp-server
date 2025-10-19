@@ -17,7 +17,6 @@
 package org.idp.server.control_plane.management.identity.user.verifier;
 
 import org.idp.server.control_plane.base.verifier.UserVerifier;
-import org.idp.server.control_plane.base.verifier.VerificationResult;
 import org.idp.server.control_plane.management.identity.user.UserRegistrationContext;
 
 public class UserRegistrationVerifier {
@@ -32,32 +31,11 @@ public class UserRegistrationVerifier {
     this.userRegistrationRelatedDataVerifier = userRegistrationRelatedDataVerifier;
   }
 
-  public UserRegistrationVerificationResult verify(UserRegistrationContext context) {
-
-    VerificationResult verificationResult = userVerifier.verify(context.tenant(), context.user());
-
-    if (!verificationResult.isValid()) {
-      return UserRegistrationVerificationResult.error(verificationResult, context.isDryRun());
-    }
-    VerificationResult rolesResult =
-        userRegistrationRelatedDataVerifier.verifyRoles(context.tenant(), context.request());
-    if (!rolesResult.isValid()) {
-      return UserRegistrationVerificationResult.error(verificationResult, context.isDryRun());
-    }
-
-    VerificationResult tenantAssignmentsResult =
-        userRegistrationRelatedDataVerifier.verifyTenantAssignments(context.request());
-    if (!tenantAssignmentsResult.isValid()) {
-      return UserRegistrationVerificationResult.error(verificationResult, context.isDryRun());
-    }
-
-    VerificationResult organizationAssignmentsResult =
-        userRegistrationRelatedDataVerifier.verifyOrganizationAssignments(
-            context.tenant(), context.request());
-    if (!organizationAssignmentsResult.isValid()) {
-      return UserRegistrationVerificationResult.error(verificationResult, context.isDryRun());
-    }
-
-    return UserRegistrationVerificationResult.success(verificationResult, context.isDryRun());
+  public void verify(UserRegistrationContext context) {
+    userVerifier.verify(context.tenant(), context.user());
+    userRegistrationRelatedDataVerifier.verifyRoles(context.tenant(), context.request());
+    userRegistrationRelatedDataVerifier.verifyTenantAssignments(context.request());
+    userRegistrationRelatedDataVerifier.verifyOrganizationAssignments(
+        context.tenant(), context.request());
   }
 }

@@ -18,6 +18,7 @@ package org.idp.server.control_plane.management.identity.user.handler;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.management.identity.user.ManagementEventPublisher;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
 import org.idp.server.core.openid.identity.User;
@@ -29,6 +30,7 @@ import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
@@ -57,14 +59,17 @@ public class UserDeletionService implements UserManagementService<UserIdentifier
   private final UserQueryRepository userQueryRepository;
   private final UserCommandRepository userCommandRepository;
   private final UserLifecycleEventPublisher userLifecycleEventPublisher;
+  private final ManagementEventPublisher managementEventPublisher;
 
   public UserDeletionService(
       UserQueryRepository userQueryRepository,
       UserCommandRepository userCommandRepository,
-      UserLifecycleEventPublisher userLifecycleEventPublisher) {
+      UserLifecycleEventPublisher userLifecycleEventPublisher,
+      ManagementEventPublisher managementEventPublisher) {
     this.userQueryRepository = userQueryRepository;
     this.userCommandRepository = userCommandRepository;
     this.userLifecycleEventPublisher = userLifecycleEventPublisher;
+    this.managementEventPublisher = managementEventPublisher;
   }
 
   @Override
@@ -89,7 +94,7 @@ public class UserDeletionService implements UserManagementService<UserIdentifier
       response.put("sub", user.sub());
       response.put("dry_run", true);
       return UserManagementResult.success(
-          tenant, context, new UserManagementResponse(UserManagementStatus.NO_CONTENT, response));
+          tenant, context, new UserManagementResponse(UserManagementStatus.OK, response));
     }
 
     // 4. Repository operation
@@ -100,7 +105,16 @@ public class UserDeletionService implements UserManagementService<UserIdentifier
         new UserLifecycleEvent(tenant, user, UserLifecycleType.DELETE);
     userLifecycleEventPublisher.publish(userLifecycleEvent);
 
-    // 6. Success response
+    // 6. Security event publishing
+    managementEventPublisher.publish(
+        tenant,
+        operator,
+        user,
+        oAuthToken,
+        DefaultSecurityEventType.user_delete.toEventType(),
+        requestAttributes);
+
+    // 7. Success response
     Map<String, Object> response = new HashMap<>();
     response.put("message", "User deleted successfully");
     response.put("sub", user.sub());

@@ -83,9 +83,7 @@ public class UserCreationService implements UserManagementService<UserRegistrati
       boolean dryRun) {
 
     // 1. Validation (throws InvalidRequestException if validation fails)
-    UserRegistrationRequestValidator validator =
-        new UserRegistrationRequestValidator(request, dryRun);
-    validator.validateWithException();
+    new UserRegistrationRequestValidator(request, dryRun).validate();
 
     // 2. Context creation
     UserRegistrationContextCreator contextCreator =

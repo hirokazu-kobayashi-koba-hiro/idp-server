@@ -16,7 +16,6 @@
 
 package org.idp.server.control_plane.management.identity.user.handler;
 
-import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.identity.user.ManagementEventPublisher;
 import org.idp.server.control_plane.management.identity.user.UserPasswordUpdateContextCreator;
 import org.idp.server.control_plane.management.identity.user.UserUpdateContext;
@@ -83,10 +82,7 @@ public class UserPasswordUpdateService implements UserManagementService<UserUpda
       boolean dryRun) {
 
     // 1. User existence verification
-    User before = userQueryRepository.findById(tenant, request.userIdentifier());
-    if (!before.exists()) {
-      throw new ResourceNotFoundException("User not found: " + request.userIdentifier().value());
-    }
+    User before = userQueryRepository.get(tenant, request.userIdentifier());
 
     // 2. Password validation
     UserPasswordUpdateRequestValidator validator =

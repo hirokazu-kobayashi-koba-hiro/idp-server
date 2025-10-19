@@ -1247,8 +1247,7 @@ describe("organization user management api", () => {
   });
 
   describe("role management", () => {
-    //TODO https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/453
-    xit("invalid role assignment", async () => {
+    it("invalid role assignment", async () => {
       // Get OAuth token with org-management scope
       const tokenResponse = await requestToken({
         endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,

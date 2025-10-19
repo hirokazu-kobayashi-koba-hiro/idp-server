@@ -41,13 +41,21 @@ public class UserTenantAssignmentsUpdateContextCreator {
   }
 
   public UserUpdateContext create() {
-    User newUser = jsonConverter.read(request.toMap(), User.class);
+    User updated = before;
 
-    if (newUser.hasAssignedTenants()) {
-      User updated = before.setAssignedTenants(newUser.assignedTenants());
-      return new UserUpdateContext(tenant, before, updated, dryRun);
+    // Update assigned tenants if provided
+    if (request.containsKey("assigned_tenants")) {
+      updated = updated.setAssignedTenants(request.assignedTenants());
     }
 
-    return new UserUpdateContext(tenant, before, newUser, dryRun);
+    // Update current tenant if provided
+    if (request.containsKey("current_tenant_id") && request.currentTenant() != null) {
+      updated =
+          updated.setCurrentTenantId(
+              new org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier(
+                  request.currentTenant()));
+    }
+
+    return new UserUpdateContext(tenant, before, updated, dryRun);
   }
 }

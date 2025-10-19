@@ -16,56 +16,51 @@
 
 package org.idp.server.control_plane.management.identity.user.handler;
 
-import org.idp.server.control_plane.management.identity.user.ManagementEventPublisher;
+import org.idp.server.control_plane.management.identity.user.UserOrganizationAssignmentsUpdateContextCreator;
 import org.idp.server.control_plane.management.identity.user.UserUpdateContext;
-import org.idp.server.control_plane.management.identity.user.UserUpdateContextCreator;
+import org.idp.server.control_plane.management.identity.user.validator.UserOrganizationAssignmentsUpdateRequestValidator;
 import org.idp.server.control_plane.management.identity.user.validator.UserRequestValidationResult;
-import org.idp.server.control_plane.management.identity.user.validator.UserUpdateRequestValidator;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Service for updating existing users.
+ * Service for updating user organization assignments.
  *
- * <p>Handles user update logic following the Handler/Service pattern. Focuses solely on the
- * business logic of user updates without cross-cutting concerns.
+ * <p>Handles user organization assignments update logic following the Handler/Service pattern. This
+ * operation is specific to organization-level APIs.
  *
  * <h2>Responsibilities</h2>
  *
  * <ul>
  *   <li>User existence verification
  *   <li>Request validation
- *   <li>Context creation (before/after state)
+ *   <li>Context creation
  *   <li>User update in repository
- *   <li>Security event publishing
  * </ul>
  *
- * <h2>NOT Responsibilities (handled by UserManagementHandler)</h2>
+ * <h2>NOT Responsibilities (handled by Handler/EntryService)</h2>
  *
  * <ul>
  *   <li>Permission checking
+ *   <li>Organization access control
  *   <li>Audit logging
  *   <li>Transaction management
  * </ul>
  */
-public class UserUpdateService implements UserManagementService<UserUpdateRequest> {
+public class UserOrganizationAssignmentsUpdateService
+    implements UserManagementService<UserUpdateRequest> {
 
   private final UserQueryRepository userQueryRepository;
   private final UserCommandRepository userCommandRepository;
-  private final ManagementEventPublisher managementEventPublisher;
 
-  public UserUpdateService(
-      UserQueryRepository userQueryRepository,
-      UserCommandRepository userCommandRepository,
-      ManagementEventPublisher managementEventPublisher) {
+  public UserOrganizationAssignmentsUpdateService(
+      UserQueryRepository userQueryRepository, UserCommandRepository userCommandRepository) {
     this.userQueryRepository = userQueryRepository;
     this.userCommandRepository = userCommandRepository;
-    this.managementEventPublisher = managementEventPublisher;
   }
 
   @Override
@@ -80,18 +75,19 @@ public class UserUpdateService implements UserManagementService<UserUpdateReques
     // 1. User existence verification
     User before = userQueryRepository.get(tenant, request.userIdentifier());
 
-    // 2. Validation (throws InvalidRequestException if validation fails)
-    UserUpdateRequestValidator validator =
-        new UserUpdateRequestValidator(request.registrationRequest(), dryRun);
+    // 2. Validation
+    UserOrganizationAssignmentsUpdateRequestValidator validator =
+        new UserOrganizationAssignmentsUpdateRequestValidator(
+            request.registrationRequest(), dryRun);
     UserRequestValidationResult validate = validator.validate();
     if (!validate.isValid()) {
-      // Validator returns response instead of throwing - need to throw for Handler pattern
       throw validate.toException();
     }
 
-    // 3. Context creation (before/after state)
-    UserUpdateContextCreator contextCreator =
-        new UserUpdateContextCreator(tenant, before, request.registrationRequest(), dryRun);
+    // 3. Context creation
+    UserOrganizationAssignmentsUpdateContextCreator contextCreator =
+        new UserOrganizationAssignmentsUpdateContextCreator(
+            tenant, before, request.registrationRequest(), dryRun);
     UserUpdateContext context = contextCreator.create();
 
     // 4. Dry-run check
@@ -101,15 +97,6 @@ public class UserUpdateService implements UserManagementService<UserUpdateReques
 
     // 5. Repository operation
     userCommandRepository.update(tenant, context.after());
-
-    // 6. Security event publishing
-    managementEventPublisher.publish(
-        tenant,
-        operator,
-        context.after(),
-        oAuthToken,
-        DefaultSecurityEventType.user_edit.toEventType(),
-        requestAttributes);
 
     return UserManagementResult.success(tenant, context, context.toResponse());
   }
