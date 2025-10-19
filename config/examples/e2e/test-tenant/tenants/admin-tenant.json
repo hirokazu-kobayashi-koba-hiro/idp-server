@@ -2,11 +2,11 @@
   "tenant": {
     "id": "67e7eae6-62b0-4500-9eff-87459f63fc66",
     "name": "admin-tenant",
-    "domain": "http://localhost:8080",
+    "domain": "http://localhost:3000",
     "authorization_provider": "idp-server",
     "ui_config": {
-      "signup_page": "/auth-views/signup/index.html",
-      "signin_page": "/auth-views/signin/index.html"
+      "signup_page": "/signup/",
+      "signin_page": "/signin/"
     },
     "session_config": {
       "cookie_name": "ADMIN_TENANT_IDP_SERVER_SESSION",

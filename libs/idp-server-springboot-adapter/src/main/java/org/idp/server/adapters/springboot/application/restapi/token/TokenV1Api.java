@@ -20,6 +20,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
+import org.idp.server.adapters.springboot.application.restapi.SecurityHeaderConfigurable;
 import org.idp.server.core.openid.token.TokenApi;
 import org.idp.server.core.openid.token.handler.token.io.TokenRequestResponse;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
@@ -34,7 +35,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("{tenant-id}/v1/tokens")
-public class TokenV1Api implements ParameterTransformable {
+public class TokenV1Api implements ParameterTransformable, SecurityHeaderConfigurable {
 
   TokenApi tokenApi;
 
@@ -57,7 +58,7 @@ public class TokenV1Api implements ParameterTransformable {
         tokenApi.request(
             tenantIdentifier, request, authorizationHeader, clientCert, requestAttributes);
 
-    HttpHeaders httpHeaders = new HttpHeaders();
+    HttpHeaders httpHeaders = createSecurityHeaders();
     httpHeaders.setAll(response.responseHeaders());
     return new ResponseEntity<>(
         response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
@@ -78,7 +79,10 @@ public class TokenV1Api implements ParameterTransformable {
         tokenApi.inspect(
             tenantIdentifier, request, authorizationHeader, clientCert, requestAttributes);
 
-    return new ResponseEntity<>(response.response(), HttpStatus.valueOf(response.statusCode()));
+    HttpHeaders httpHeaders = createSecurityHeaders();
+    httpHeaders.setAll(response.responseHeaders());
+    return new ResponseEntity<>(
+        response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
   @PostMapping("/introspection-extensions")
@@ -96,7 +100,10 @@ public class TokenV1Api implements ParameterTransformable {
         tokenApi.inspectWithVerification(
             tenantIdentifier, request, authorizationHeader, clientCert, requestAttributes);
 
-    return new ResponseEntity<>(response.response(), HttpStatus.valueOf(response.statusCode()));
+    HttpHeaders httpHeaders = createSecurityHeaders();
+    httpHeaders.setAll(response.responseHeaders());
+    return new ResponseEntity<>(
+        response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
   @PostMapping("/revocation")
@@ -114,6 +121,9 @@ public class TokenV1Api implements ParameterTransformable {
         tokenApi.revoke(
             tenantIdentifier, request, authorizationHeader, clientCert, requestAttributes);
 
-    return new ResponseEntity<>(response.response(), HttpStatus.valueOf(response.statusCode()));
+    HttpHeaders httpHeaders = createSecurityHeaders();
+    httpHeaders.setAll(response.responseHeaders());
+    return new ResponseEntity<>(
+        response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 }

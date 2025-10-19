@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.token.handler.tokenrevocation.io;
 
+import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
@@ -24,12 +25,22 @@ public class TokenRevocationResponse {
   TokenRevocationRequestStatus status;
   OAuthToken oAuthToken;
   Map<String, Object> response;
+  Map<String, String> headers;
 
   public TokenRevocationResponse(
       TokenRevocationRequestStatus status, OAuthToken oAuthToken, Map<String, Object> contents) {
     this.status = status;
     this.oAuthToken = oAuthToken;
     this.response = contents;
+    this.headers = createDefaultHeaders();
+  }
+
+  private Map<String, String> createDefaultHeaders() {
+    Map<String, String> values = new HashMap<>();
+    values.put("Content-Type", "application/json");
+    values.put("Cache-Control", "no-store, no-cache, must-revalidate, private");
+    values.put("Pragma", "no-cache");
+    return values;
   }
 
   public TokenRevocationRequestStatus status() {
@@ -46,6 +57,10 @@ public class TokenRevocationResponse {
 
   public Map<String, Object> response() {
     return response;
+  }
+
+  public Map<String, String> responseHeaders() {
+    return headers;
   }
 
   public boolean isOK() {

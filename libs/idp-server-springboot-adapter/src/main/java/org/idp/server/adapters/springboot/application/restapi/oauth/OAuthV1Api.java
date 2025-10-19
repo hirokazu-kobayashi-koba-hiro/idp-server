@@ -20,6 +20,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
+import org.idp.server.adapters.springboot.application.restapi.SecurityHeaderConfigurable;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequestResult;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
@@ -35,13 +36,14 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/{tenant-id}/v1/authorizations")
-public class OAuthV1Api implements ParameterTransformable {
+public class OAuthV1Api implements ParameterTransformable, SecurityHeaderConfigurable {
 
   OAuthFlowApi oAuthFlowApi;
 
@@ -64,8 +66,9 @@ public class OAuthV1Api implements ParameterTransformable {
         oAuthFlowApi.push(
             tenantIdentifier, params, authorizationHeader, clientCert, requestAttributes);
 
-    HttpHeaders httpHeaders = new HttpHeaders();
-    httpHeaders.add("Content-Type", "application/json");
+    HttpHeaders httpHeaders = createSecurityHeaders();
+    httpHeaders.setCacheControl("no-store, private");
+    httpHeaders.setContentType(MediaType.APPLICATION_JSON);
     return new ResponseEntity<>(response.contents(), httpHeaders, HttpStatus.OK);
   }
 
@@ -84,19 +87,19 @@ public class OAuthV1Api implements ParameterTransformable {
     switch (response.status()) {
       case OK, OK_SESSION_ENABLE, OK_ACCOUNT_CREATION -> {
         String url = response.frontUrl();
-        HttpHeaders headers = new HttpHeaders();
+        HttpHeaders headers = createSecurityHeaders();
         headers.add(HttpHeaders.LOCATION, url);
 
         return new ResponseEntity<>(headers, HttpStatus.FOUND);
       }
       case NO_INTERACTION_OK, REDIRECABLE_BAD_REQUEST -> {
-        HttpHeaders httpHeaders = new HttpHeaders();
+        HttpHeaders httpHeaders = createSecurityHeaders();
         httpHeaders.add(HttpHeaders.LOCATION, response.redirectUri());
 
         return new ResponseEntity<>(httpHeaders, HttpStatus.FOUND);
       }
       default -> {
-        HttpHeaders httpHeaders = new HttpHeaders();
+        HttpHeaders httpHeaders = createSecurityHeaders();
         httpHeaders.add(HttpHeaders.LOCATION, response.frontUrl());
 
         return new ResponseEntity<>(httpHeaders, HttpStatus.FOUND);
@@ -115,8 +118,9 @@ public class OAuthV1Api implements ParameterTransformable {
         oAuthFlowApi.getViewData(
             tenantIdentifier, authorizationRequestIdentifier, requestAttributes);
 
-    HttpHeaders httpHeaders = new HttpHeaders();
-    httpHeaders.add("Content-Type", "application/json");
+    HttpHeaders httpHeaders = createSecurityHeaders();
+    httpHeaders.setCacheControl("no-store, private");
+    httpHeaders.setContentType(MediaType.APPLICATION_JSON);
     return new ResponseEntity<>(viewDataResponse.contents(), httpHeaders, HttpStatus.OK);
   }
 
@@ -138,8 +142,9 @@ public class OAuthV1Api implements ParameterTransformable {
             ssoProvider,
             requestAttributes);
 
-    HttpHeaders headers = new HttpHeaders();
-    headers.add("Content-Type", "application/json");
+    HttpHeaders headers = createSecurityHeaders();
+    headers.setCacheControl("no-store, private");
+    headers.setContentType(MediaType.APPLICATION_JSON);
 
     switch (requestResponse.status()) {
       case REDIRECABLE_OK, REDIRECABLE_BAD_REQUEST -> {
@@ -171,8 +176,9 @@ public class OAuthV1Api implements ParameterTransformable {
             federationCallbackRequest,
             requestAttributes);
 
-    HttpHeaders headers = new HttpHeaders();
-    headers.add("Content-Type", "application/json");
+    HttpHeaders headers = createSecurityHeaders();
+    headers.setCacheControl("no-store, private");
+    headers.setContentType(MediaType.APPLICATION_JSON);
 
     return new ResponseEntity<>(
         result.response(), headers, HttpStatus.valueOf(result.statusCode()));
@@ -196,8 +202,9 @@ public class OAuthV1Api implements ParameterTransformable {
             new AuthenticationInteractionRequest(params),
             requestAttributes);
 
-    HttpHeaders httpHeaders = new HttpHeaders();
-    httpHeaders.add("Content-Type", "application/json");
+    HttpHeaders httpHeaders = createSecurityHeaders();
+    httpHeaders.setCacheControl("no-store, private");
+    httpHeaders.setContentType(MediaType.APPLICATION_JSON);
 
     switch (result.status()) {
       case SUCCESS -> {
@@ -225,8 +232,9 @@ public class OAuthV1Api implements ParameterTransformable {
         oAuthFlowApi.authorizeWithSession(
             tenantIdentifier, authorizationRequestIdentifier, requestAttributes);
 
-    HttpHeaders httpHeaders = new HttpHeaders();
-    httpHeaders.add("Content-Type", "application/json");
+    HttpHeaders httpHeaders = createSecurityHeaders();
+    httpHeaders.setCacheControl("no-store, private");
+    httpHeaders.setContentType(MediaType.APPLICATION_JSON);
 
     switch (authAuthorizeResponse.status()) {
       case OK, REDIRECABLE_BAD_REQUEST -> {
@@ -253,8 +261,9 @@ public class OAuthV1Api implements ParameterTransformable {
     OAuthAuthorizeResponse authAuthorizeResponse =
         oAuthFlowApi.authorize(tenantIdentifier, authorizationRequestIdentifier, requestAttributes);
 
-    HttpHeaders httpHeaders = new HttpHeaders();
-    httpHeaders.add("Content-Type", "application/json");
+    HttpHeaders httpHeaders = createSecurityHeaders();
+    httpHeaders.setCacheControl("no-store, private");
+    httpHeaders.setContentType(MediaType.APPLICATION_JSON);
 
     switch (authAuthorizeResponse.status()) {
       case OK, REDIRECABLE_BAD_REQUEST -> {
@@ -280,8 +289,9 @@ public class OAuthV1Api implements ParameterTransformable {
     RequestAttributes requestAttributes = transform(httpServletRequest);
     OAuthDenyResponse oAuthDenyResponse =
         oAuthFlowApi.deny(tenantIdentifier, authorizationRequestIdentifier, requestAttributes);
-    HttpHeaders httpHeaders = new HttpHeaders();
-    httpHeaders.add("Content-Type", "application/json");
+    HttpHeaders httpHeaders = createSecurityHeaders();
+    httpHeaders.setCacheControl("no-store, private");
+    httpHeaders.setContentType(MediaType.APPLICATION_JSON);
 
     switch (oAuthDenyResponse.status()) {
       case OK, REDIRECABLE_BAD_REQUEST -> {
