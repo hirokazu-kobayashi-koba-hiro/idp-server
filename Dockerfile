@@ -1,5 +1,5 @@
 # -------- Step 1: Build Stage --------
-FROM gradle:8.5-jdk21 AS builder
+FROM gradle:8.14-jdk21-alpine AS builder
 
 WORKDIR /workspace
 
@@ -14,7 +14,7 @@ COPY app /workspace/app
 RUN gradle clean build -x test --no-daemon
 
 # -------- Step 2: Runtime Stage --------
-FROM openjdk:21-slim AS runtime
+FROM eclipse-temurin:21-jre-alpine AS runtime
 
 WORKDIR /app
 
@@ -23,6 +23,11 @@ COPY --from=builder /workspace/app/build/libs/idp-server-*.jar /app/idp-server.j
 COPY entrypoint.sh /app/entrypoint.sh
 COPY plugins /app/plugins
 
-RUN chmod +x /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh && \
+    addgroup -S idpserver && \
+    adduser -S idpserver -G idpserver && \
+    chown -R idpserver:idpserver /app
+
+USER idpserver
 
 ENTRYPOINT ["/app/entrypoint.sh"]
