@@ -1,11 +1,11 @@
 name: Deploy Documentation to GitHub Pages
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'documentation/**'
+#  push:
+#    branches:
+#      - main
+#    paths:
+#      - 'documentation/**'
   workflow_dispatch:
     inputs:
       reason:

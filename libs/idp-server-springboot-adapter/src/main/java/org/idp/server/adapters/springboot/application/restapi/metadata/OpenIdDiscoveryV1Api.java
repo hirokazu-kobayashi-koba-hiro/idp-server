@@ -17,11 +17,14 @@
 package org.idp.server.adapters.springboot.application.restapi.metadata;
 
 import org.idp.server.IdpServerApplication;
+import org.idp.server.adapters.springboot.application.restapi.SecurityHeaderConfigurable;
 import org.idp.server.core.openid.discovery.OidcMetaDataApi;
 import org.idp.server.core.openid.discovery.handler.io.JwksRequestResponse;
 import org.idp.server.core.openid.discovery.handler.io.ServerConfigurationRequestResponse;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,7 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping
-public class OpenIdDiscoveryV1Api {
+public class OpenIdDiscoveryV1Api implements SecurityHeaderConfigurable {
 
   OidcMetaDataApi oidcMetaDataApi;
 
@@ -42,13 +45,25 @@ public class OpenIdDiscoveryV1Api {
   public ResponseEntity<?> getConfiguration(@PathVariable("tenant-id") TenantIdentifier tenantId) {
 
     ServerConfigurationRequestResponse response = oidcMetaDataApi.getConfiguration(tenantId);
-    return new ResponseEntity<>(response.content(), HttpStatus.valueOf(response.statusCode()));
+
+    HttpHeaders headers = createSecurityHeaders();
+    headers.setCacheControl("public, max-age=3600");
+    headers.setContentType(MediaType.APPLICATION_JSON);
+
+    return new ResponseEntity<>(
+        response.content(), headers, HttpStatus.valueOf(response.statusCode()));
   }
 
   @GetMapping("{tenant-id}/v1/jwks")
   public ResponseEntity<?> getJwks(@PathVariable("tenant-id") TenantIdentifier tenantId) {
 
     JwksRequestResponse response = oidcMetaDataApi.getJwks(tenantId);
-    return new ResponseEntity<>(response.content(), HttpStatus.valueOf(response.statusCode()));
+
+    HttpHeaders headers = createSecurityHeaders();
+    headers.setCacheControl("public, max-age=3600");
+    headers.setContentType(MediaType.APPLICATION_JSON);
+
+    return new ResponseEntity<>(
+        response.content(), headers, HttpStatus.valueOf(response.statusCode()));
   }
 }

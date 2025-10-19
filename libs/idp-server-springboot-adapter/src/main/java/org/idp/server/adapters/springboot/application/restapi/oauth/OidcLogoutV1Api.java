@@ -20,6 +20,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
+import org.idp.server.adapters.springboot.application.restapi.SecurityHeaderConfigurable;
 import org.idp.server.core.openid.oauth.OAuthFlowApi;
 import org.idp.server.core.openid.oauth.io.OAuthLogoutResponse;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -32,7 +33,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/{tenant-id}/v1/logout")
-public class OidcLogoutV1Api implements ParameterTransformable {
+public class OidcLogoutV1Api implements ParameterTransformable, SecurityHeaderConfigurable {
 
   OAuthFlowApi oAuthFlowApi;
 
@@ -51,20 +52,20 @@ public class OidcLogoutV1Api implements ParameterTransformable {
 
     OAuthLogoutResponse response = oAuthFlowApi.logout(tenantId, params, requestAttributes);
 
+    HttpHeaders headers = createSecurityHeaders();
     switch (response.status()) {
       case OK -> {
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(headers, HttpStatus.OK);
       }
       case REDIRECABLE_FOUND -> {
-        HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.LOCATION, response.redirectUriValue());
         return new ResponseEntity<>(headers, HttpStatus.FOUND);
       }
       case BAD_REQUEST -> {
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(headers, HttpStatus.BAD_REQUEST);
       }
       default -> {
-        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(headers, HttpStatus.INTERNAL_SERVER_ERROR);
       }
     }
   }

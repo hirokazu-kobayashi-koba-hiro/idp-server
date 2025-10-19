@@ -19,17 +19,20 @@ package org.idp.server.adapters.springboot.application.restapi.userinfo;
 import jakarta.servlet.http.HttpServletRequest;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
+import org.idp.server.adapters.springboot.application.restapi.SecurityHeaderConfigurable;
 import org.idp.server.core.openid.userinfo.UserinfoApi;
 import org.idp.server.core.openid.userinfo.handler.io.UserinfoRequestResponse;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("{tenant-id}/v1/userinfo")
-public class UserinfoV1Api implements ParameterTransformable {
+public class UserinfoV1Api implements ParameterTransformable, SecurityHeaderConfigurable {
 
   UserinfoApi userinfoApi;
 
@@ -49,7 +52,11 @@ public class UserinfoV1Api implements ParameterTransformable {
     UserinfoRequestResponse response =
         userinfoApi.request(tenantId, authorizationHeader, clientCert, requestAttributes);
 
-    return new ResponseEntity<>(response.response(), HttpStatus.valueOf(response.statusCode()));
+    HttpHeaders httpHeaders = createSecurityHeaders();
+    httpHeaders.setCacheControl("no-store, private");
+    httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+    return new ResponseEntity<>(
+        response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
   @PostMapping
@@ -64,6 +71,10 @@ public class UserinfoV1Api implements ParameterTransformable {
     UserinfoRequestResponse response =
         userinfoApi.request(tenantId, authorizationHeader, clientCert, requestAttributes);
 
-    return new ResponseEntity<>(response.response(), HttpStatus.valueOf(response.statusCode()));
+    HttpHeaders httpHeaders = createSecurityHeaders();
+    httpHeaders.setCacheControl("no-store, private");
+    httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+    return new ResponseEntity<>(
+        response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 }
