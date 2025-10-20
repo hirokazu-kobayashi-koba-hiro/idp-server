@@ -17,6 +17,7 @@
 package org.idp.server.control_plane.management.oidc.client.validator;
 
 import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
+import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.core.openid.oauth.configuration.client.ClientQueries;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
@@ -25,7 +26,6 @@ import org.idp.server.platform.json.schema.JsonSchemaValidator;
 public class ClientQueryValidator {
 
   ClientQueries queries;
-  boolean dryRun;
   JsonSchemaValidator clientSchemaValidator;
 
   public ClientQueryValidator(ClientQueries queries) {
@@ -34,14 +34,12 @@ public class ClientQueryValidator {
         new JsonSchemaValidator(ControlPlaneV1SchemaReader.clientQuerySchema());
   }
 
-  public ClientRegistrationRequestValidationResult validate() {
+  public void validate() {
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(queries.toMap());
     JsonSchemaValidationResult clientResult = clientSchemaValidator.validate(jsonNodeWrapper);
 
     if (!clientResult.isValid()) {
-      return ClientRegistrationRequestValidationResult.error(clientResult, false);
+      throw new InvalidRequestException("Invalid client query parameters", clientResult.errors());
     }
-
-    return ClientRegistrationRequestValidationResult.success(clientResult, false);
   }
 }

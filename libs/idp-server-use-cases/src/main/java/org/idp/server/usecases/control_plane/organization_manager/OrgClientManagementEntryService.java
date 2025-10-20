@@ -17,19 +17,22 @@
 package org.idp.server.usecases.control_plane.organization_manager;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.base.definition.AdminPermissions;
-import org.idp.server.control_plane.management.oidc.client.*;
+import org.idp.server.control_plane.management.oidc.client.ClientRegistrationContext;
+import org.idp.server.control_plane.management.oidc.client.ClientUpdateContext;
+import org.idp.server.control_plane.management.oidc.client.OrgClientManagementApi;
+import org.idp.server.control_plane.management.oidc.client.handler.ClientCreationService;
+import org.idp.server.control_plane.management.oidc.client.handler.ClientDeletionService;
+import org.idp.server.control_plane.management.oidc.client.handler.ClientFindListService;
+import org.idp.server.control_plane.management.oidc.client.handler.ClientFindService;
+import org.idp.server.control_plane.management.oidc.client.handler.ClientManagementResult;
+import org.idp.server.control_plane.management.oidc.client.handler.ClientManagementService;
+import org.idp.server.control_plane.management.oidc.client.handler.ClientUpdateRequest;
+import org.idp.server.control_plane.management.oidc.client.handler.ClientUpdateService;
+import org.idp.server.control_plane.management.oidc.client.handler.OrgClientManagementHandler;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
-import org.idp.server.control_plane.management.oidc.client.io.ClientManagementStatus;
 import org.idp.server.control_plane.management.oidc.client.io.ClientRegistrationRequest;
-import org.idp.server.control_plane.management.oidc.client.validator.ClientQueryValidator;
-import org.idp.server.control_plane.management.oidc.client.validator.ClientRegistrationRequestValidationResult;
-import org.idp.server.control_plane.management.oidc.client.validator.ClientRegistrationRequestValidator;
-import org.idp.server.control_plane.organization.access.OrganizationAccessControlResult;
-import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationCommandRepository;
@@ -40,8 +43,6 @@ import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -49,61 +50,39 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
-/**
- * Organization-level client management entry service.
- *
- * <p>This service implements organization-scoped OIDC client management operations that allow
- * organization administrators to manage OAuth/OIDC clients within their organization boundaries.
- *
- * <p>Organization-level operations follow the standard access control pattern:
- *
- * <ol>
- *   <li><strong>Organization access verification</strong> - Ensures the user has access to the
- *       organization
- *   <li><strong>Permission verification</strong> - Validates the user has necessary
- *       DefaultAdminPermission
- * </ol>
- *
- * <p>All operations support dry-run functionality for safe preview of changes and comprehensive
- * audit logging for organization-level client operations.
- *
- * @see OrgClientManagementApi
- * @see OrganizationAccessVerifier
- * @see org.idp.server.usecases.control_plane.system_manager.ClientManagementEntryService
- */
 @Transaction
 public class OrgClientManagementEntryService implements OrgClientManagementApi {
 
-  TenantQueryRepository tenantQueryRepository;
-  OrganizationRepository organizationRepository;
-  ClientConfigurationCommandRepository clientConfigurationCommandRepository;
-  ClientConfigurationQueryRepository clientConfigurationQueryRepository;
-  AuditLogPublisher auditLogPublisher;
-  OrganizationAccessVerifier organizationAccessVerifier;
+  private final OrgClientManagementHandler handler;
+  private final TenantQueryRepository tenantQueryRepository;
+  private final ClientConfigurationQueryRepository clientConfigurationQueryRepository;
+  private final AuditLogPublisher auditLogPublisher;
 
-  LoggerWrapper log = LoggerWrapper.getLogger(OrgClientManagementEntryService.class);
-
-  /**
-   * Creates a new organization client management entry service.
-   *
-   * @param tenantQueryRepository the tenant query repository
-   * @param organizationRepository the organization repository
-   * @param clientConfigurationCommandRepository the client configuration command repository
-   * @param clientConfigurationQueryRepository the client configuration query repository
-   * @param auditLogPublisher the audit log publisher
-   */
   public OrgClientManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
       OrganizationRepository organizationRepository,
       ClientConfigurationCommandRepository clientConfigurationCommandRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
       AuditLogPublisher auditLogPublisher) {
+
+    Map<String, ClientManagementService<?>> services = new HashMap<>();
+    services.put("create", new ClientCreationService(clientConfigurationCommandRepository));
+    services.put("findList", new ClientFindListService(clientConfigurationQueryRepository));
+    services.put("get", new ClientFindService(clientConfigurationQueryRepository));
+    services.put(
+        "update",
+        new ClientUpdateService(
+            clientConfigurationQueryRepository, clientConfigurationCommandRepository));
+    services.put(
+        "delete",
+        new ClientDeletionService(
+            clientConfigurationQueryRepository, clientConfigurationCommandRepository));
+
+    this.handler = new OrgClientManagementHandler(services, organizationRepository, this);
+
     this.tenantQueryRepository = tenantQueryRepository;
-    this.organizationRepository = organizationRepository;
-    this.clientConfigurationCommandRepository = clientConfigurationCommandRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
     this.auditLogPublisher = auditLogPublisher;
-    this.organizationAccessVerifier = new OrganizationAccessVerifier();
   }
 
   @Override
@@ -116,52 +95,44 @@ public class OrgClientManagementEntryService implements OrgClientManagementApi {
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    AdminPermissions permissions = getRequiredPermissions("create");
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    Organization organization = organizationRepository.get(organizationIdentifier);
-    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
+    ClientManagementResult result =
+        handler.handle(
+            "create",
+            organizationIdentifier,
+            tenant,
+            operator,
+            oAuthToken,
+            request,
+            requestAttributes,
+            dryRun);
 
-    // Organization-level access control
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "OrgClientManagementApi.create",
+              tenant,
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(dryRun);
+    }
 
-    ClientRegistrationContextCreator contextCreator =
-        new ClientRegistrationContextCreator(targetTenant, request, dryRun);
-    ClientRegistrationContext context = contextCreator.create();
-
+    ClientRegistrationContext context = (ClientRegistrationContext) result.context();
     AuditLog auditLog =
         AuditLogCreator.create(
             "OrgClientManagementApi.create",
-            targetTenant,
+            tenant,
             operator,
             oAuthToken,
             context,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put("error_description", accessResult.getReason());
-      return new ClientManagementResponse(ClientManagementStatus.FORBIDDEN, response);
-    }
-
-    ClientRegistrationRequestValidator validator =
-        new ClientRegistrationRequestValidator(request, dryRun);
-    ClientRegistrationRequestValidationResult validate = validator.validate();
-
-    if (!validate.isValid()) {
-      return validate.errorResponse();
-    }
-
-    if (dryRun) {
-      return context.toResponse();
-    }
-
-    clientConfigurationCommandRepository.register(targetTenant, context.configuration());
-
-    return context.toResponse();
+    return result.toResponse(dryRun);
   }
 
   @Override
@@ -174,59 +145,30 @@ public class OrgClientManagementEntryService implements OrgClientManagementApi {
       ClientQueries queries,
       RequestAttributes requestAttributes) {
 
-    AdminPermissions permissions = getRequiredPermissions("findList");
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    Organization organization = organizationRepository.get(organizationIdentifier);
-    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
-
-    // Organization-level access control
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
+    ClientManagementResult result =
+        handler.handle(
+            "findList",
+            organizationIdentifier,
+            tenant,
+            operator,
+            oAuthToken,
+            queries,
+            requestAttributes,
+            false);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "OrgClientManagementApi.findList",
             "findList",
-            targetTenant,
+            tenant,
             operator,
             oAuthToken,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    ClientQueryValidator validator = new ClientQueryValidator(queries);
-    ClientRegistrationRequestValidationResult validated = validator.validate();
-    if (!validated.isValid()) {
-      return validated.errorResponse();
-    }
-
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put("error_description", accessResult.getReason());
-      return new ClientManagementResponse(ClientManagementStatus.FORBIDDEN, response);
-    }
-
-    long totalCount = clientConfigurationQueryRepository.findTotalCount(targetTenant, queries);
-    if (totalCount == 0) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("list", List.of());
-      response.put("total_count", totalCount);
-      response.put("limit", queries.limit());
-      response.put("offset", queries.offset());
-      return new ClientManagementResponse(ClientManagementStatus.OK, response);
-    }
-
-    List<ClientConfiguration> clientConfigurations =
-        clientConfigurationQueryRepository.findList(targetTenant, queries);
-
-    Map<String, Object> response = new HashMap<>();
-    response.put("list", clientConfigurations.stream().map(ClientConfiguration::toMap).toList());
-    response.put("total_count", totalCount);
-    response.put("limit", queries.limit());
-    response.put("offset", queries.offset());
-
-    return new ClientManagementResponse(ClientManagementStatus.OK, response);
+    return result.toResponse();
   }
 
   @Override
@@ -239,41 +181,25 @@ public class OrgClientManagementEntryService implements OrgClientManagementApi {
       ClientIdentifier clientIdentifier,
       RequestAttributes requestAttributes) {
 
-    AdminPermissions permissions = getRequiredPermissions("get");
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    Organization organization = organizationRepository.get(organizationIdentifier);
-    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
-
-    // Organization-level access control
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
-
-    ClientConfiguration clientConfiguration =
-        clientConfigurationQueryRepository.findWithDisabled(targetTenant, clientIdentifier, true);
+    ClientManagementResult result =
+        handler.handle(
+            "get",
+            organizationIdentifier,
+            tenant,
+            operator,
+            oAuthToken,
+            clientIdentifier,
+            requestAttributes,
+            false);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
-            "OrgClientManagementApi.get",
-            "get",
-            targetTenant,
-            operator,
-            oAuthToken,
-            requestAttributes);
+            "OrgClientManagementApi.get", "get", tenant, operator, oAuthToken, requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put("error_description", accessResult.getReason());
-      return new ClientManagementResponse(ClientManagementStatus.FORBIDDEN, response);
-    }
-
-    if (!clientConfiguration.exists()) {
-      return new ClientManagementResponse(ClientManagementStatus.NOT_FOUND, Map.of());
-    }
-
-    return new ClientManagementResponse(ClientManagementStatus.OK, clientConfiguration.toMap());
+    return result.toResponse();
   }
 
   @Override
@@ -287,59 +213,47 @@ public class OrgClientManagementEntryService implements OrgClientManagementApi {
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    AdminPermissions permissions = getRequiredPermissions("update");
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    Organization organization = organizationRepository.get(organizationIdentifier);
-    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
+    // Wrap request for handler
+    ClientUpdateRequest updateRequest = new ClientUpdateRequest(clientIdentifier, request);
 
-    // Organization-level access control
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
+    ClientManagementResult result =
+        handler.handle(
+            "update",
+            organizationIdentifier,
+            tenant,
+            operator,
+            oAuthToken,
+            updateRequest,
+            requestAttributes,
+            dryRun);
 
-    ClientConfiguration before =
-        clientConfigurationQueryRepository.findWithDisabled(targetTenant, clientIdentifier, true);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "OrgClientManagementApi.update",
+              tenant,
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(dryRun);
+    }
 
-    ClientRegistrationRequestValidator validator =
-        new ClientRegistrationRequestValidator(request, dryRun);
-    ClientRegistrationRequestValidationResult validate = validator.validate();
-
-    ClientUpdateContextCreator contextCreator =
-        new ClientUpdateContextCreator(targetTenant, before, request, dryRun);
-    ClientUpdateContext context = contextCreator.create();
-
+    ClientUpdateContext context = (ClientUpdateContext) result.context();
     AuditLog auditLog =
         AuditLogCreator.createOnUpdate(
             "OrgClientManagementApi.update",
-            targetTenant,
+            tenant,
             operator,
             oAuthToken,
             context,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put("error_description", accessResult.getReason());
-      return new ClientManagementResponse(ClientManagementStatus.FORBIDDEN, response);
-    }
-
-    if (!before.exists()) {
-      return new ClientManagementResponse(ClientManagementStatus.NOT_FOUND, Map.of());
-    }
-
-    if (!validate.isValid()) {
-      return validate.errorResponse();
-    }
-
-    if (dryRun) {
-      return context.toResponse();
-    }
-
-    clientConfigurationCommandRepository.update(targetTenant, context.after());
-
-    return context.toResponse();
+    return result.toResponse(dryRun);
   }
 
   @Override
@@ -352,51 +266,32 @@ public class OrgClientManagementEntryService implements OrgClientManagementApi {
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    AdminPermissions permissions = getRequiredPermissions("delete");
-
-    Organization organization = organizationRepository.get(organizationIdentifier);
-    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
-
-    // Organization-level access control
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
-
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     ClientConfiguration clientConfiguration =
-        clientConfigurationQueryRepository.findWithDisabled(targetTenant, clientIdentifier, true);
+        clientConfigurationQueryRepository.findWithDisabled(tenant, clientIdentifier, true);
+
+    ClientManagementResult result =
+        handler.handle(
+            "delete",
+            organizationIdentifier,
+            tenant,
+            operator,
+            oAuthToken,
+            clientIdentifier,
+            requestAttributes,
+            dryRun);
 
     AuditLog auditLog =
         AuditLogCreator.createOnDeletion(
             "OrgClientManagementApi.delete",
             "delete",
-            targetTenant,
+            tenant,
             operator,
             oAuthToken,
             clientConfiguration.toMap(),
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put("error_description", accessResult.getReason());
-      return new ClientManagementResponse(ClientManagementStatus.FORBIDDEN, response);
-    }
-
-    if (!clientConfiguration.exists()) {
-      return new ClientManagementResponse(ClientManagementStatus.NOT_FOUND, Map.of());
-    }
-
-    if (dryRun) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("message", "Client deletion simulated successfully");
-      response.put("client_id", clientConfiguration.clientIdValue());
-      response.put("dry_run", true);
-      return new ClientManagementResponse(ClientManagementStatus.OK, response);
-    }
-
-    clientConfigurationCommandRepository.delete(targetTenant, clientConfiguration);
-
-    return new ClientManagementResponse(ClientManagementStatus.NO_CONTENT, Map.of());
+    return result.toResponse();
   }
 }
