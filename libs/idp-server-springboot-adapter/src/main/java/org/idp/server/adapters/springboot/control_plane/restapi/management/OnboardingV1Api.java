@@ -56,6 +56,7 @@ public class OnboardingV1Api implements ParameterTransformable {
         onboardingApi.onboard(
             adminTenantIdentifier,
             operatorPrincipal.getUser(),
+            operatorPrincipal.getOAuthToken(),
             new OnboardingRequest(request),
             requestAttributes,
             dryRun);

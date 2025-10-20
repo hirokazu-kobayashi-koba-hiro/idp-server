@@ -16,7 +16,10 @@
 
 package org.idp.server.control_plane.management.onboarding.validator;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
+import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingRequest;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
@@ -29,7 +32,6 @@ public class OnboardingRequestValidator {
   JsonSchemaValidator tenantSchemaValidator;
   JsonSchemaValidator authorizationServerSchemaValidator;
   JsonSchemaValidator clientSchemaValidator;
-  boolean dryRun;
 
   public OnboardingRequestValidator(OnboardingRequest request, boolean dryRun) {
     this.request = request;
@@ -39,10 +41,9 @@ public class OnboardingRequestValidator {
     this.authorizationServerSchemaValidator =
         new JsonSchemaValidator(ControlPlaneV1SchemaReader.authorizationServerSchema());
     this.clientSchemaValidator = new JsonSchemaValidator(ControlPlaneV1SchemaReader.clientSchema());
-    this.dryRun = dryRun;
   }
 
-  public OnboardingRequestValidationResult validate() {
+  public void validate() {
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request.toMap());
     JsonSchemaValidationResult organizationResult =
         organizationSchemaValidator.validate(jsonNodeWrapper.getValueAsJsonNode("organization"));
@@ -54,15 +55,25 @@ public class OnboardingRequestValidator {
     JsonSchemaValidationResult clientResult =
         clientSchemaValidator.validate(jsonNodeWrapper.getValueAsJsonNode("client"));
 
+    throwExceptionIfInvalid(
+        organizationResult, tenantResult, authorizationServerResult, clientResult);
+  }
+
+  void throwExceptionIfInvalid(
+      JsonSchemaValidationResult organizationResult,
+      JsonSchemaValidationResult tenantResult,
+      JsonSchemaValidationResult authorizationServerResult,
+      JsonSchemaValidationResult clientResult) {
     if (!organizationResult.isValid()
         || !tenantResult.isValid()
         || !authorizationServerResult.isValid()
         || !clientResult.isValid()) {
-      return OnboardingRequestValidationResult.error(
-          organizationResult, tenantResult, authorizationServerResult, clientResult, dryRun);
+      List<String> errors = new ArrayList<>();
+      errors.addAll(organizationResult.errors());
+      errors.addAll(tenantResult.errors());
+      errors.addAll(authorizationServerResult.errors());
+      errors.addAll(clientResult.errors());
+      throw new InvalidRequestException("onboarding validation is failed", errors);
     }
-
-    return OnboardingRequestValidationResult.success(
-        organizationResult, tenantResult, authorizationServerResult, clientResult, dryRun);
   }
 }

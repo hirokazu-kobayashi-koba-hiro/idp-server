@@ -16,6 +16,7 @@
 
 package org.idp.server.control_plane.management.onboarding;
 
+import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingResponse;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingStatus;
@@ -93,5 +94,18 @@ public class OnboardingContext {
     Map<String, Object> contents =
         Map.of("organization", organization.toMap(), "tenant", tenant.toMap(), "dry_run", dryRun);
     return new OnboardingResponse(OnboardingStatus.CREATED, contents);
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("tenant", tenant.toMap());
+    map.put("organization", organization.toMap());
+    map.put("authorization_server", authorizationServerConfiguration.toMap());
+    map.put("user", user.toMap());
+    map.put("client", clientConfiguration.toMap());
+    map.put("permissions_count", permissions.size());
+    map.put("roles_count", roles.toList().size());
+    map.put("dry_run", dryRun);
+    return map;
   }
 }

@@ -689,8 +689,8 @@ public class IdpServerApplication {
                 userCommandRepository,
                 authorizationServerConfigurationCommandRepository,
                 clientConfigurationCommandRepository,
-                clientConfigurationQueryRepository,
-                passwordEncodeDelegation),
+                passwordEncodeDelegation,
+                auditLogPublisher),
             OnboardingApi.class,
             databaseTypeProvider);
 
