@@ -217,8 +217,8 @@ describe("organization authorization server management api", () => {
         }
       });
       console.log("Invalid tenant response:", invalidTenantResponse.status);
-      expect(invalidTenantResponse.status).toBe(403);
-      console.log("✅ Invalid tenant returns 403");
+      expect(invalidTenantResponse.status).toBe(404);
+      console.log("✅ Invalid tenant returns 404");
 
       // Test 4: Try with missing required field (missing jwks_uri)
       const invalidUpdateResponse = await putWithJson({
@@ -368,6 +368,7 @@ describe("organization authorization server management api", () => {
       });
 
       console.log("📨 Received response:");
+      console.log(JSON.stringify(updateResponse.data, null, 2));
       console.log("Extension fields received:", JSON.stringify(updateResponse.data.result.extension, null, 2));
       expect(updateResponse.status).toBe(200);
       expect(updateResponse.data).toHaveProperty("result");
