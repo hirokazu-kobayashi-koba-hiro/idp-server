@@ -17,19 +17,16 @@
 package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.audit.AuditLogManagementApi;
+import org.idp.server.control_plane.management.audit.handler.*;
 import org.idp.server.control_plane.management.audit.io.AuditLogManagementResponse;
-import org.idp.server.control_plane.management.audit.io.AuditLogManagementStatus;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.*;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
@@ -37,18 +34,30 @@ import org.idp.server.platform.type.RequestAttributes;
 @Transaction
 public class AuditLogManagementEntryService implements AuditLogManagementApi {
 
-  AuditLogQueryRepository auditLogQueryRepository;
-  TenantQueryRepository tenantQueryRepository;
   AuditLogPublisher auditLogPublisher;
   LoggerWrapper log = LoggerWrapper.getLogger(AuditLogManagementEntryService.class);
+
+  // Handler/Service pattern
+  private AuditLogManagementHandler handler;
 
   public AuditLogManagementEntryService(
       AuditLogQueryRepository auditLogQueryRepository,
       TenantQueryRepository tenantQueryRepository,
       AuditLogPublisher auditLogPublisher) {
-    this.auditLogQueryRepository = auditLogQueryRepository;
-    this.tenantQueryRepository = tenantQueryRepository;
     this.auditLogPublisher = auditLogPublisher;
+
+    this.handler = createHandler(auditLogQueryRepository, tenantQueryRepository);
+  }
+
+  private AuditLogManagementHandler createHandler(
+      AuditLogQueryRepository auditLogQueryRepository,
+      TenantQueryRepository tenantQueryRepository) {
+
+    Map<String, AuditLogManagementService<?>> services = new HashMap<>();
+    services.put("findList", new AuditLogFindListService(auditLogQueryRepository));
+    services.put("get", new AuditLogFindService(auditLogQueryRepository));
+
+    return new AuditLogManagementHandler(services, this, tenantQueryRepository);
   }
 
   @Override
@@ -59,50 +68,38 @@ public class AuditLogManagementEntryService implements AuditLogManagementApi {
       OAuthToken oAuthToken,
       AuditLogQueries queries,
       RequestAttributes requestAttributes) {
-    AdminPermissions permissions = getRequiredPermissions("findList");
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    // Delegate to Handler/Service pattern
+    AuditLogFindListRequest request = new AuditLogFindListRequest(queries);
+    AuditLogManagementResult result =
+        handler.handle(
+            "findList", tenantIdentifier, operator, oAuthToken, request, requestAttributes);
+
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "AuditLogManagementApi.findList",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse();
+    }
+
+    // Record audit log (read operation)
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "AuditLogManagementApi.findList",
             "findList",
-            tenant,
+            result.tenant(),
             operator,
             oAuthToken,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new AuditLogManagementResponse(AuditLogManagementStatus.FORBIDDEN, response);
-    }
-
-    long totalCount = auditLogQueryRepository.findTotalCount(tenant, queries);
-    if (totalCount == 0) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("list", List.of());
-      response.put("total_count", 0);
-      response.put("limit", queries.limit());
-      response.put("offset", queries.offset());
-      return new AuditLogManagementResponse(AuditLogManagementStatus.OK, response);
-    }
-
-    List<AuditLog> auditLogs = auditLogQueryRepository.findList(tenant, queries);
-
-    Map<String, Object> response = new HashMap<>();
-    response.put("list", auditLogs.stream().map(AuditLog::toMap).toList());
-    response.put("total_count", totalCount);
-    response.put("limit", queries.limit());
-    response.put("offset", queries.offset());
-
-    return new AuditLogManagementResponse(AuditLogManagementStatus.OK, response);
+    return result.toResponse();
   }
 
   @Override
@@ -113,32 +110,36 @@ public class AuditLogManagementEntryService implements AuditLogManagementApi {
       OAuthToken oAuthToken,
       AuditLogIdentifier identifier,
       RequestAttributes requestAttributes) {
-    AdminPermissions permissions = getRequiredPermissions("get");
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    AuditLog findAuditLog = auditLogQueryRepository.find(tenant, identifier);
+    // Delegate to Handler/Service pattern
+    AuditLogManagementResult result =
+        handler.handle(
+            "get", tenantIdentifier, operator, oAuthToken, identifier, requestAttributes);
 
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "AuditLogManagementApi.get",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse();
+    }
+
+    // Record audit log (read operation)
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
-            "AuditLogManagementApi.get", "get", tenant, operator, oAuthToken, requestAttributes);
+            "AuditLogManagementApi.get",
+            "get",
+            result.tenant(),
+            operator,
+            oAuthToken,
+            requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new AuditLogManagementResponse(AuditLogManagementStatus.FORBIDDEN, response);
-    }
-
-    if (!findAuditLog.exists()) {
-      return new AuditLogManagementResponse(AuditLogManagementStatus.NOT_FOUND, Map.of());
-    }
-
-    return new AuditLogManagementResponse(AuditLogManagementStatus.OK, findAuditLog.toMap());
+    return result.toResponse();
   }
 }
