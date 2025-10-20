@@ -1052,7 +1052,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.orgSecurityEventHookManagementApi =
-        TenantAwareEntryServiceProxy.createProxy(
+          OrganizationAwareEntryServiceProxy.createProxy(
             new OrgSecurityEventHookManagementEntryService(
                 tenantQueryRepository,
                 organizationRepository,
