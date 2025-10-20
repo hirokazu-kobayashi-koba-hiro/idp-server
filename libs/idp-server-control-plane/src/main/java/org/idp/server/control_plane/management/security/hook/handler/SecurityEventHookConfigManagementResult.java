@@ -151,9 +151,10 @@ public class SecurityEventHookConfigManagementResult {
     if (hasException()) {
       SecurityEventHookConfigManagementStatus status = mapExceptionToStatus(exception);
       Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", exception.getClass().getSimpleName());
-      errorResponse.put("error_description", exception.getMessage());
       errorResponse.put("dry_run", dryRun);
+      errorResponse.put("error", exception.errorCode());
+      errorResponse.put("error_description", exception.errorDescription());
+      errorResponse.putAll(exception.errorDetails());
       return new SecurityEventHookConfigManagementResponse(status, errorResponse);
     }
     return (SecurityEventHookConfigManagementResponse) response;

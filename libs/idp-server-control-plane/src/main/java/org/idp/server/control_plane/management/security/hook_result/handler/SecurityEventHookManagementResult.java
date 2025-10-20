@@ -124,8 +124,9 @@ public class SecurityEventHookManagementResult {
     if (hasException()) {
       SecurityEventHookManagementStatus status = mapExceptionToStatus(exception);
       Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", exception.getClass().getSimpleName());
-      errorResponse.put("error_description", exception.getMessage());
+      errorResponse.put("error", exception.errorCode());
+      errorResponse.put("error_description", exception.errorDescription());
+      errorResponse.putAll(exception.errorDetails());
       return new SecurityEventHookManagementResponse(status, errorResponse);
     }
     return (SecurityEventHookManagementResponse) response;
