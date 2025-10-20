@@ -17,13 +17,20 @@
 package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.base.definition.AdminPermissions;
-import org.idp.server.control_plane.management.identity.verification.*;
+import org.idp.server.control_plane.base.ConfigRegistrationContext;
+import org.idp.server.control_plane.base.ConfigUpdateContext;
+import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigManagementApi;
+import org.idp.server.control_plane.management.identity.verification.handler.IdentityVerificationConfigCreationService;
+import org.idp.server.control_plane.management.identity.verification.handler.IdentityVerificationConfigDeletionService;
+import org.idp.server.control_plane.management.identity.verification.handler.IdentityVerificationConfigFindListService;
+import org.idp.server.control_plane.management.identity.verification.handler.IdentityVerificationConfigFindService;
+import org.idp.server.control_plane.management.identity.verification.handler.IdentityVerificationConfigManagementHandler;
+import org.idp.server.control_plane.management.identity.verification.handler.IdentityVerificationConfigManagementResult;
+import org.idp.server.control_plane.management.identity.verification.handler.IdentityVerificationConfigManagementService;
+import org.idp.server.control_plane.management.identity.verification.handler.IdentityVerificationConfigUpdateService;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
-import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementStatus;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigRegistrationRequest;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigUpdateRequest;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
@@ -36,7 +43,6 @@ import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -46,13 +52,11 @@ import org.idp.server.platform.type.RequestAttributes;
 public class IdentityVerificationConfigManagementEntryService
     implements IdentityVerificationConfigManagementApi {
 
-  IdentityVerificationConfigurationCommandRepository
-      identityVerificationConfigurationCommandRepository;
-  IdentityVerificationConfigurationQueryRepository identityVerificationConfigurationQueryRepository;
-  TenantQueryRepository tenantQueryRepository;
-  AuditLogPublisher auditLogPublisher;
-  LoggerWrapper log =
-      LoggerWrapper.getLogger(IdentityVerificationConfigManagementEntryService.class);
+  private final IdentityVerificationConfigManagementHandler handler;
+  private final TenantQueryRepository tenantQueryRepository;
+  private final IdentityVerificationConfigurationQueryRepository
+      identityVerificationConfigurationQueryRepository;
+  private final AuditLogPublisher auditLogPublisher;
 
   public IdentityVerificationConfigManagementEntryService(
       IdentityVerificationConfigurationCommandRepository
@@ -61,11 +65,36 @@ public class IdentityVerificationConfigManagementEntryService
           identityVerificationConfigurationQueryRepository,
       TenantQueryRepository tenantQueryRepository,
       AuditLogPublisher auditLogPublisher) {
-    this.identityVerificationConfigurationCommandRepository =
-        identityVerificationConfigurationCommandRepository;
+
+    Map<String, IdentityVerificationConfigManagementService<?>> services = new HashMap<>();
+    services.put(
+        "create",
+        new IdentityVerificationConfigCreationService(
+            identityVerificationConfigurationCommandRepository));
+    services.put(
+        "findList",
+        new IdentityVerificationConfigFindListService(
+            identityVerificationConfigurationQueryRepository));
+    services.put(
+        "get",
+        new IdentityVerificationConfigFindService(
+            identityVerificationConfigurationQueryRepository));
+    services.put(
+        "update",
+        new IdentityVerificationConfigUpdateService(
+            identityVerificationConfigurationQueryRepository,
+            identityVerificationConfigurationCommandRepository));
+    services.put(
+        "delete",
+        new IdentityVerificationConfigDeletionService(
+            identityVerificationConfigurationQueryRepository,
+            identityVerificationConfigurationCommandRepository));
+
+    this.handler = new IdentityVerificationConfigManagementHandler(services, this);
+
+    this.tenantQueryRepository = tenantQueryRepository;
     this.identityVerificationConfigurationQueryRepository =
         identityVerificationConfigurationQueryRepository;
-    this.tenantQueryRepository = tenantQueryRepository;
     this.auditLogPublisher = auditLogPublisher;
   }
 
@@ -78,14 +107,25 @@ public class IdentityVerificationConfigManagementEntryService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    AdminPermissions permissions = getRequiredPermissions("create");
-
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    IdentityVerificationConfigRegistrationContextCreator contextCreator =
-        new IdentityVerificationConfigRegistrationContextCreator(tenant, request, dryRun);
-    IdentityVerificationConfigRegistrationContext context = contextCreator.create();
+    IdentityVerificationConfigManagementResult result =
+        handler.handle("create", tenant, operator, oAuthToken, request, requestAttributes, dryRun);
 
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "IdentityVerificationConfigManagementApi.create",
+              tenant,
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(dryRun);
+    }
+
+    ConfigRegistrationContext context = (ConfigRegistrationContext) result.context();
     AuditLog auditLog =
         AuditLogCreator.create(
             "IdentityVerificationConfigManagementApi.create",
@@ -96,27 +136,7 @@ public class IdentityVerificationConfigManagementEntryService
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new IdentityVerificationConfigManagementResponse(
-          IdentityVerificationConfigManagementStatus.FORBIDDEN, response);
-    }
-
-    if (dryRun) {
-      return context.toResponse();
-    }
-
-    identityVerificationConfigurationCommandRepository.register(
-        tenant, context.identityVerificationType(), context.configuration());
-
-    return context.toResponse();
+    return result.toResponse(dryRun);
   }
 
   @Override
@@ -128,8 +148,10 @@ public class IdentityVerificationConfigManagementEntryService
       IdentityVerificationQueries queries,
       RequestAttributes requestAttributes) {
 
-    AdminPermissions permissions = getRequiredPermissions("findList");
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    IdentityVerificationConfigManagementResult result =
+        handler.handle("findList", tenant, operator, oAuthToken, queries, requestAttributes, false);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
@@ -141,43 +163,7 @@ public class IdentityVerificationConfigManagementEntryService
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new IdentityVerificationConfigManagementResponse(
-          IdentityVerificationConfigManagementStatus.FORBIDDEN, response);
-    }
-
-    long totalCount =
-        identityVerificationConfigurationQueryRepository.findTotalCount(tenant, queries);
-    if (totalCount == 0) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("list", List.of());
-      response.put("total_count", totalCount);
-      response.put("limit", queries.limit());
-      response.put("offset", queries.offset());
-      return new IdentityVerificationConfigManagementResponse(
-          IdentityVerificationConfigManagementStatus.OK, response);
-    }
-
-    List<IdentityVerificationConfiguration> configurations =
-        identityVerificationConfigurationQueryRepository.findList(tenant, queries);
-
-    Map<String, Object> response = new HashMap<>();
-    response.put(
-        "list", configurations.stream().map(IdentityVerificationConfiguration::toMap).toList());
-    response.put("total_count", totalCount);
-    response.put("limit", queries.limit());
-    response.put("offset", queries.offset());
-
-    return new IdentityVerificationConfigManagementResponse(
-        IdentityVerificationConfigManagementStatus.OK, response);
+    return result.toResponse();
   }
 
   @Override
@@ -189,11 +175,10 @@ public class IdentityVerificationConfigManagementEntryService
       IdentityVerificationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes) {
 
-    AdminPermissions permissions = getRequiredPermissions("get");
-
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    IdentityVerificationConfiguration configuration =
-        identityVerificationConfigurationQueryRepository.find(tenant, identifier);
+
+    IdentityVerificationConfigManagementResult result =
+        handler.handle("get", tenant, operator, oAuthToken, identifier, requestAttributes, false);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
@@ -205,26 +190,7 @@ public class IdentityVerificationConfigManagementEntryService
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new IdentityVerificationConfigManagementResponse(
-          IdentityVerificationConfigManagementStatus.FORBIDDEN, response);
-    }
-
-    if (!configuration.exists()) {
-      return new IdentityVerificationConfigManagementResponse(
-          IdentityVerificationConfigManagementStatus.NOT_FOUND, Map.of());
-    }
-
-    return new IdentityVerificationConfigManagementResponse(
-        IdentityVerificationConfigManagementStatus.OK, configuration.toMap());
+    return result.toResponse();
   }
 
   @Override
@@ -237,16 +203,30 @@ public class IdentityVerificationConfigManagementEntryService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    AdminPermissions permissions = getRequiredPermissions("update");
-
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    IdentityVerificationConfiguration configuration =
-        identityVerificationConfigurationQueryRepository.find(tenant, identifier);
 
-    IdentityVerificationConfigUpdateContextCreator contextCreator =
-        new IdentityVerificationConfigUpdateContextCreator(tenant, request, configuration, dryRun);
-    IdentityVerificationConfigUpdateContext context = contextCreator.create();
+    // Inject identifier into request
+    IdentityVerificationConfigUpdateRequest requestWithId =
+        new IdentityVerificationConfigUpdateRequest(identifier.value(), request.toMap());
 
+    IdentityVerificationConfigManagementResult result =
+        handler.handle(
+            "update", tenant, operator, oAuthToken, requestWithId, requestAttributes, dryRun);
+
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "IdentityVerificationConfigManagementApi.update",
+              tenant,
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(dryRun);
+    }
+
+    ConfigUpdateContext context = (ConfigUpdateContext) result.context();
     AuditLog auditLog =
         AuditLogCreator.createOnUpdate(
             "IdentityVerificationConfigManagementApi.update",
@@ -257,32 +237,7 @@ public class IdentityVerificationConfigManagementEntryService
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new IdentityVerificationConfigManagementResponse(
-          IdentityVerificationConfigManagementStatus.FORBIDDEN, response);
-    }
-
-    if (!configuration.exists()) {
-      return new IdentityVerificationConfigManagementResponse(
-          IdentityVerificationConfigManagementStatus.NOT_FOUND, Map.of());
-    }
-
-    if (context.isDryRun()) {
-      return context.toResponse();
-    }
-
-    identityVerificationConfigurationCommandRepository.update(
-        tenant, context.afterType(), context.after());
-
-    return context.toResponse();
+    return result.toResponse(dryRun);
   }
 
   @Override
@@ -294,11 +249,13 @@ public class IdentityVerificationConfigManagementEntryService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    AdminPermissions permissions = getRequiredPermissions("delete");
-
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     IdentityVerificationConfiguration configuration =
         identityVerificationConfigurationQueryRepository.find(tenant, identifier);
+
+    IdentityVerificationConfigManagementResult result =
+        handler.handle(
+            "delete", tenant, operator, oAuthToken, identifier, requestAttributes, dryRun);
 
     AuditLog auditLog =
         AuditLogCreator.createOnDeletion(
@@ -311,37 +268,6 @@ public class IdentityVerificationConfigManagementEntryService
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new IdentityVerificationConfigManagementResponse(
-          IdentityVerificationConfigManagementStatus.FORBIDDEN, response);
-    }
-
-    if (!configuration.exists()) {
-      return new IdentityVerificationConfigManagementResponse(
-          IdentityVerificationConfigManagementStatus.NOT_FOUND, Map.of());
-    }
-
-    if (dryRun) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("message", "Deletion simulated successfully");
-      response.put("id", configuration.id());
-      response.put("dry_run", true);
-      return new IdentityVerificationConfigManagementResponse(
-          IdentityVerificationConfigManagementStatus.OK, response);
-    }
-
-    identityVerificationConfigurationCommandRepository.delete(
-        tenant, configuration.type(), configuration);
-
-    return new IdentityVerificationConfigManagementResponse(
-        IdentityVerificationConfigManagementStatus.NO_CONTENT, Map.of());
+    return result.toResponse();
   }
 }

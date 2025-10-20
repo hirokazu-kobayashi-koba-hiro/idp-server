@@ -20,10 +20,21 @@ import java.util.Map;
 
 public class IdentityVerificationConfigUpdateRequest {
 
+  String configurationId;
   Map<String, Object> values;
 
   public IdentityVerificationConfigUpdateRequest(Map<String, Object> values) {
     this.values = values;
+  }
+
+  public IdentityVerificationConfigUpdateRequest(
+      String configurationId, Map<String, Object> values) {
+    this.configurationId = configurationId;
+    this.values = values;
+  }
+
+  public String configurationId() {
+    return configurationId;
   }
 
   public Map<String, Object> toMap() {
