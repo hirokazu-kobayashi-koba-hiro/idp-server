@@ -17,52 +17,57 @@
 package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.permission.*;
+import org.idp.server.control_plane.management.permission.handler.*;
 import org.idp.server.control_plane.management.permission.io.PermissionManagementResponse;
-import org.idp.server.control_plane.management.permission.io.PermissionManagementStatus;
 import org.idp.server.control_plane.management.permission.io.PermissionRequest;
-import org.idp.server.control_plane.management.permission.validator.PermissionRequestValidationResult;
-import org.idp.server.control_plane.management.permission.validator.PermissionRequestValidator;
-import org.idp.server.control_plane.management.permission.validator.PermissionUpdateRequestValidator;
-import org.idp.server.control_plane.management.permission.verifier.PermissionRegistrationVerificationResult;
-import org.idp.server.control_plane.management.permission.verifier.PermissionRegistrationVerifier;
-import org.idp.server.control_plane.management.permission.verifier.PermissionVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.permission.*;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
+/**
+ * System-level permission management entry service.
+ *
+ * <p>This service implements system-scoped permission management operations following the
+ * Handler/Service pattern.
+ *
+ * @see PermissionManagementApi
+ * @see PermissionManagementHandler
+ */
 @Transaction
 public class PermissionManagementEntryService implements PermissionManagementApi {
 
-  TenantQueryRepository tenantQueryRepository;
-  PermissionQueryRepository permissionQueryRepository;
-  PermissionCommandRepository permissionCommandRepository;
-  PermissionRegistrationVerifier verifier;
-  AuditLogPublisher auditLogPublisher;
-  LoggerWrapper log = LoggerWrapper.getLogger(PermissionManagementEntryService.class);
+  private final PermissionManagementHandler handler;
+  private final AuditLogPublisher auditLogPublisher;
 
   public PermissionManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
       PermissionQueryRepository permissionQueryRepository,
       PermissionCommandRepository permissionCommandRepository,
       AuditLogPublisher auditLogPublisher) {
-    this.tenantQueryRepository = tenantQueryRepository;
-    this.permissionQueryRepository = permissionQueryRepository;
-    this.permissionCommandRepository = permissionCommandRepository;
-    PermissionVerifier permissionVerifier = new PermissionVerifier(permissionQueryRepository);
-    this.verifier = new PermissionRegistrationVerifier(permissionVerifier);
+
+    Map<String, PermissionManagementService<?>> services = new HashMap<>();
+    services.put(
+        "create",
+        new PermissionCreateService(permissionQueryRepository, permissionCommandRepository));
+    services.put("findList", new PermissionFindListService(permissionQueryRepository));
+    services.put("get", new PermissionFindService(permissionQueryRepository));
+    services.put(
+        "update",
+        new PermissionUpdateService(permissionQueryRepository, permissionCommandRepository));
+    services.put(
+        "delete",
+        new PermissionDeleteService(permissionQueryRepository, permissionCommandRepository));
+
+    this.handler = new PermissionManagementHandler(services, this, tenantQueryRepository);
     this.auditLogPublisher = auditLogPublisher;
   }
 
@@ -75,56 +80,34 @@ public class PermissionManagementEntryService implements PermissionManagementApi
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    AdminPermissions permissions = getRequiredPermissions("create");
+    PermissionManagementResult result =
+        handler.handle(
+            "create", tenantIdentifier, operator, oAuthToken, request, requestAttributes, dryRun);
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    PermissionRequestValidator validator = new PermissionRequestValidator(request, dryRun);
-    PermissionRequestValidationResult validate = validator.validate();
-
-    PermissionRegistrationContextCreator permissionRegistrationContextCreator =
-        new PermissionRegistrationContextCreator(tenant, request, dryRun);
-    PermissionRegistrationContext context = permissionRegistrationContextCreator.create();
-
-    PermissionRegistrationVerificationResult verificationResult = verifier.verify(context);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "PermissionManagementApi.create",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(dryRun);
+    }
 
     AuditLog auditLog =
         AuditLogCreator.create(
             "PermissionManagementApi.create",
-            tenant,
+            result.tenant(),
             operator,
             oAuthToken,
-            context,
+            (PermissionRegistrationContext) result.context(),
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new PermissionManagementResponse(PermissionManagementStatus.FORBIDDEN, response);
-    }
-
-    if (!validate.isValid()) {
-      return validate.errorResponse();
-    }
-
-    if (!verificationResult.isValid()) {
-      return verificationResult.errorResponse();
-    }
-
-    if (dryRun) {
-      return context.toResponse();
-    }
-
-    permissionCommandRepository.register(tenant, context.permission());
-
-    return context.toResponse();
+    return result.toResponse(dryRun);
   }
 
   @Override
@@ -136,50 +119,34 @@ public class PermissionManagementEntryService implements PermissionManagementApi
       PermissionQueries queries,
       RequestAttributes requestAttributes) {
 
-    AdminPermissions permissions = getRequiredPermissions("findList");
+    PermissionManagementResult result =
+        handler.handle(
+            "findList", tenantIdentifier, operator, oAuthToken, queries, requestAttributes, false);
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "PermissionManagementApi.findList",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(false);
+    }
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "PermissionManagementApi.findList",
             "findList",
-            tenant,
+            result.tenant(),
             operator,
             oAuthToken,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new PermissionManagementResponse(PermissionManagementStatus.FORBIDDEN, response);
-    }
-
-    long totalCount = permissionQueryRepository.findTotalCount(tenant, queries);
-    if (totalCount == 0) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("list", List.of());
-      response.put("total_count", 0);
-      response.put("limit", queries.limit());
-      response.put("offset", queries.offset());
-      return new PermissionManagementResponse(PermissionManagementStatus.OK, response);
-    }
-
-    List<Permission> permissionList = permissionQueryRepository.findList(tenant, queries);
-    Map<String, Object> response = new HashMap<>();
-    response.put("list", permissionList.stream().map(Permission::toMap).toList());
-    response.put("total_count", totalCount);
-    response.put("limit", queries.limit());
-    response.put("offset", queries.offset());
-
-    return new PermissionManagementResponse(PermissionManagementStatus.OK, response);
+    return result.toResponse(false);
   }
 
   @Override
@@ -191,33 +158,34 @@ public class PermissionManagementEntryService implements PermissionManagementApi
       PermissionIdentifier identifier,
       RequestAttributes requestAttributes) {
 
-    AdminPermissions permissions = getRequiredPermissions("get");
+    PermissionManagementResult result =
+        handler.handle(
+            "get", tenantIdentifier, operator, oAuthToken, identifier, requestAttributes, false);
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    Permission permission = permissionQueryRepository.find(tenant, identifier);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "PermissionManagementApi.get",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(false);
+    }
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
-            "PermissionManagementApi.get", "get", tenant, operator, oAuthToken, requestAttributes);
+            "PermissionManagementApi.get",
+            "get",
+            result.tenant(),
+            operator,
+            oAuthToken,
+            requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new PermissionManagementResponse(PermissionManagementStatus.FORBIDDEN, response);
-    }
-
-    if (!permission.exists()) {
-      return new PermissionManagementResponse(PermissionManagementStatus.NOT_FOUND, Map.of());
-    }
-
-    return new PermissionManagementResponse(PermissionManagementStatus.OK, permission.toMap());
+    return result.toResponse(false);
   }
 
   @Override
@@ -230,55 +198,41 @@ public class PermissionManagementEntryService implements PermissionManagementApi
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    AdminPermissions permissions = getRequiredPermissions("update");
-
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    Permission before = permissionQueryRepository.find(tenant, identifier);
-
-    PermissionUpdateRequestValidator validator =
-        new PermissionUpdateRequestValidator(request, dryRun);
-    PermissionRequestValidationResult validate = validator.validate();
-
-    PermissionUpdateContextCreator permissionUpdateContextCreator =
-        new PermissionUpdateContextCreator(tenant, before, request, dryRun);
-    PermissionUpdateContext context = permissionUpdateContextCreator.create();
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "PermissionManagementApi.update",
+    PermissionUpdateRequest updateRequest = new PermissionUpdateRequest(identifier, request);
+    PermissionManagementResult result =
+        handler.handle(
             "update",
-            tenant,
+            tenantIdentifier,
             operator,
             oAuthToken,
+            updateRequest,
+            requestAttributes,
+            dryRun);
+
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "PermissionManagementApi.update",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(dryRun);
+    }
+
+    AuditLog auditLog =
+        AuditLogCreator.createOnUpdate(
+            "PermissionManagementApi.update",
+            result.tenant(),
+            operator,
+            oAuthToken,
+            (PermissionUpdateContext) result.context(),
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new PermissionManagementResponse(PermissionManagementStatus.FORBIDDEN, response);
-    }
-
-    if (!before.exists()) {
-      return new PermissionManagementResponse(PermissionManagementStatus.NOT_FOUND, Map.of());
-    }
-
-    if (!validate.isValid()) {
-      return validate.errorResponse();
-    }
-
-    if (context.isDryRun()) {
-      return context.toResponse();
-    }
-    permissionCommandRepository.update(tenant, context.after());
-
-    return context.toResponse();
+    return result.toResponse(dryRun);
   }
 
   @Override
@@ -290,48 +244,40 @@ public class PermissionManagementEntryService implements PermissionManagementApi
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    AdminPermissions permissions = getRequiredPermissions("delete");
+    PermissionManagementResult result =
+        handler.handle(
+            "delete",
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            identifier,
+            requestAttributes,
+            dryRun);
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    Permission permission = permissionQueryRepository.find(tenant, identifier);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "PermissionManagementApi.delete",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(dryRun);
+    }
 
     AuditLog auditLog =
         AuditLogCreator.createOnDeletion(
             "PermissionManagementApi.delete",
             "delete",
-            tenant,
+            result.tenant(),
             operator,
             oAuthToken,
-            permission.toMap(),
+            (Map<String, Object>) result.context(),
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new PermissionManagementResponse(PermissionManagementStatus.FORBIDDEN, response);
-    }
-
-    if (!permission.exists()) {
-      return new PermissionManagementResponse(PermissionManagementStatus.NOT_FOUND, Map.of());
-    }
-
-    if (dryRun) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("message", "Deletion simulated successfully");
-      response.put("id", permission.id());
-      response.put("dry_run", true);
-      return new PermissionManagementResponse(PermissionManagementStatus.OK, response);
-    }
-
-    permissionCommandRepository.delete(tenant, permission);
-
-    return new PermissionManagementResponse(PermissionManagementStatus.NO_CONTENT, Map.of());
+    return result.toResponse(dryRun);
   }
 }

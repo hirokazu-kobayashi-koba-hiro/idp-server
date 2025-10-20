@@ -270,8 +270,8 @@ describe("organization permission management api", () => {
         }
       });
       console.log("Invalid tenant response:", invalidTenantResponse.status);
-      expect(invalidTenantResponse.status).toBe(403);
-      console.log("✅ Invalid tenant returns 403");
+      expect(invalidTenantResponse.status).toBe(404);
+      console.log("✅ Invalid tenant returns 404");
 
       // Test 4: Try to create permission with invalid data (empty name)
       const invalidCreateResponse = await postWithJson({

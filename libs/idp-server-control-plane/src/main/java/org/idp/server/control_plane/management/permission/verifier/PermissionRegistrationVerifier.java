@@ -17,6 +17,7 @@
 package org.idp.server.control_plane.management.permission.verifier;
 
 import org.idp.server.control_plane.base.verifier.VerificationResult;
+import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.control_plane.management.permission.PermissionRegistrationContext;
 
 public class PermissionRegistrationVerifier {
@@ -27,15 +28,18 @@ public class PermissionRegistrationVerifier {
     this.permissionVerifier = permissionVerifier;
   }
 
-  public PermissionRegistrationVerificationResult verify(PermissionRegistrationContext context) {
+  public void verify(PermissionRegistrationContext context) {
 
     VerificationResult verificationResult =
         permissionVerifier.verify(context.tenant(), context.permission());
 
-    if (!verificationResult.isValid()) {
-      return PermissionRegistrationVerificationResult.error(verificationResult, context.isDryRun());
-    }
+    throwExceptionIfInvalid(verificationResult);
+  }
 
-    return PermissionRegistrationVerificationResult.success(verificationResult, context.isDryRun());
+  void throwExceptionIfInvalid(VerificationResult result) {
+    if (!result.isValid()) {
+      throw new InvalidRequestException(
+          "permission registration verification is failed", result.errors());
+    }
   }
 }
