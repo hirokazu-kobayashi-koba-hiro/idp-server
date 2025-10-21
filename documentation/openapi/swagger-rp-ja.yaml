@@ -2221,7 +2221,23 @@ components:
           description: "必須。openid を含める必要がある。例：openid profile email"
         login_hint:
           type: string
-          description: "ユーザーを識別するヒント。IDやメールアドレスなど ※login_hintまたはid_token_hintの指定が必要"
+          description: |
+            ユーザーを識別するヒント。IDやメールアドレスなど
+            ※login_hintまたはid_token_hintの指定が必要
+
+            ## login_hint
+
+            login_hint には複数の拡張形式をサポートし、柔軟なユーザー特定が可能です。
+
+            | フォーマット | 意味 | 例 |
+            |-------------|------|---|
+            | `sub:<subject>` | 内部ユーザーIDで直接識別 | `sub:abc123` |
+            | `ex-sub:<subject>,idp:<id-provider>` | 外部IdPのサブジェクトで識別 | `ex-sub:ex-idp123,idp:ex-idp` |
+            | `device:<deviceId>,idp:<id-provider>` | 認証デバイスで識別 | `device:device123,idp:ex-idp` |
+            | `email:<email>,idp:<id-provider>` | メールアドレスによる識別 | `email:foo@example.com,idp:idp-server` |
+            | `phone:<number>,idp:<id-provider>` | 電話番号による識別 | `phone:09012345678,idp:idp-server` |
+
+            idp-provider のデフォルト値は `idp-server`。
         id_token_hint:
           type: string
           description: "過去の ID Token を用いたユーザー識別 ※login_hintまたはid_token_hintの指定が必要"
