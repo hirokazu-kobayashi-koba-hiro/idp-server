@@ -60,14 +60,29 @@ describe("RFC 7009 - OAuth 2.0 Token Revocation", () => {
   });
 
   describe("2.1. Revocation Request", () => {
-    it("token parameter REQUIRED - RFC 7009 Section 2.1", async () => {
+    it("token parameter REQUIRED - 'null' string is 200 OK", async () => {
       // The client constructs the request by including the following
       // parameters using the "application/x-www-form-urlencoded" format
       // token REQUIRED
 
       const revokeResponse = await revokeToken({
         endpoint: serverConfig.tokenRevocationEndpoint,
-        token: null, // Missing token parameter
+        token: "null",
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+
+      console.log(revokeResponse.data);
+      expect(revokeResponse.status).toBe(200);
+    });
+
+    it("token parameter REQUIRED", async () => {
+      // The client constructs the request by including the following
+      // parameters using the "application/x-www-form-urlencoded" format
+      // token REQUIRED
+
+      const revokeResponse = await revokeToken({
+        endpoint: serverConfig.tokenRevocationEndpoint,
         clientId: clientSecretPostClient.clientId,
         clientSecret: clientSecretPostClient.clientSecret,
       });
@@ -202,7 +217,6 @@ describe("RFC 7009 - OAuth 2.0 Token Revocation", () => {
 
       const revokeResponse = await revokeToken({
         endpoint: serverConfig.tokenRevocationEndpoint,
-        token: null,
         clientId: clientSecretPostClient.clientId,
         clientSecret: clientSecretPostClient.clientSecret,
       });
