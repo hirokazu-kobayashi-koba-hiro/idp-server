@@ -125,7 +125,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
     OAuthRequestResponse requestResponse = oAuthProtocol.request(oAuthRequest);
 
-    if (requestResponse.isNoInteractionOK()) {
+    if (requestResponse.isRequiredInteraction()) {
       AuthenticationPolicyConfiguration authenticationPolicyConfiguration =
           authenticationPolicyConfigurationQueryRepository.find(
               tenant, StandardAuthFlow.OAUTH.toAuthFlow());
