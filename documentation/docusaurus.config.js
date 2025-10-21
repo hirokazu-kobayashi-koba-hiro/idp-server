@@ -77,18 +77,6 @@ const config = {
         // Plugin Options for loading OpenAPI files
         specs: [
           {
-            spec: 'openapi/swagger-rp-en.yaml',
-            route: '/docs/content_07_reference/api-rp-en/',
-          },
-          {
-            spec: 'openapi/swagger-authentication-device-en.yaml',
-            route: '/docs/content_07_reference/api-authentication-device-en/',
-          },
-          {
-            spec: 'openapi/swagger-control-plane-en.yaml',
-            route: '/docs/content_07_reference/control-plane-api-en/',
-          },
-          {
             spec: 'openapi/swagger-rp-ja.yaml',
             route: '/docs/content_07_reference/api-rp-ja/',
           },
