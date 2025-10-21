@@ -29,9 +29,9 @@ import org.idp.server.core.openid.token.handler.token.io.TokenRequest;
 import org.idp.server.core.openid.token.handler.token.io.TokenRequestResponse;
 import org.idp.server.core.openid.token.handler.tokenintrospection.*;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.*;
+import org.idp.server.core.openid.token.handler.tokenrevocation.TokenRevocationErrorHandler;
 import org.idp.server.core.openid.token.handler.tokenrevocation.TokenRevocationHandler;
 import org.idp.server.core.openid.token.handler.tokenrevocation.io.TokenRevocationRequest;
-import org.idp.server.core.openid.token.handler.tokenrevocation.io.TokenRevocationRequestStatus;
 import org.idp.server.core.openid.token.handler.tokenrevocation.io.TokenRevocationResponse;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
@@ -51,6 +51,7 @@ public class DefaultTokenProtocol implements TokenProtocol {
   TokenRevocationHandler revocationHandler;
   TokenRequestErrorHandler errorHandler;
   TokenIntrospectionErrorHandler introspectionErrorHandler;
+  TokenRevocationErrorHandler revocationErrorHandler;
   PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate;
   LoggerWrapper log = LoggerWrapper.getLogger(DefaultTokenProtocol.class);
 
@@ -104,6 +105,7 @@ public class DefaultTokenProtocol implements TokenProtocol {
             oAuthTokenQueryRepository,
             authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository);
+    this.revocationErrorHandler = new TokenRevocationErrorHandler();
     this.passwordCredentialsGrantDelegate = passwordCredentialsGrantDelegate;
   }
 
@@ -164,9 +166,8 @@ public class DefaultTokenProtocol implements TokenProtocol {
 
       return revocationHandler.handle(request);
     } catch (Exception exception) {
-      log.error(exception.getMessage(), exception);
-      return new TokenRevocationResponse(
-          TokenRevocationRequestStatus.SERVER_ERROR, new OAuthToken(), Map.of());
+
+      return revocationErrorHandler.handle(exception);
     }
   }
 }

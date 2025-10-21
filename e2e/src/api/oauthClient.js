@@ -402,7 +402,7 @@ export const revokeToken = async ({
   basicAuth
 }) => {
   let params = new URLSearchParams();
-  if (params) {
+  if (token) {
     params.append("token", token);
   }
   if (tokenHintType) {
