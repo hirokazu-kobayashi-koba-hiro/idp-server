@@ -32,4 +32,8 @@ public enum OAuthRequestStatus {
         || this == NO_INTERACTION_OK
         || this == OK_ACCOUNT_CREATION;
   }
+
+  public boolean isNoInteractionOK() {
+    return this == NO_INTERACTION_OK;
+  }
 }

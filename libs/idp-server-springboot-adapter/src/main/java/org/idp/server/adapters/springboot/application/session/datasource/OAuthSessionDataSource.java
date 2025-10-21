@@ -16,6 +16,7 @@
 
 package org.idp.server.adapters.springboot.application.session.datasource;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.idp.server.core.openid.oauth.OAuthSession;
 import org.idp.server.core.openid.oauth.OAuthSessionKey;
@@ -28,10 +29,12 @@ import org.springframework.stereotype.Repository;
 public class OAuthSessionDataSource implements OAuthSessionRepository {
 
   HttpSession httpSession;
+  HttpServletRequest httpServletRequest;
   LoggerWrapper log = LoggerWrapper.getLogger(OAuthSessionDataSource.class);
 
-  public OAuthSessionDataSource(HttpSession httpSession) {
+  public OAuthSessionDataSource(HttpSession httpSession, HttpServletRequest httpServletRequest) {
     this.httpSession = httpSession;
+    this.httpServletRequest = httpServletRequest;
   }
 
   @Override
@@ -39,6 +42,7 @@ public class OAuthSessionDataSource implements OAuthSessionRepository {
     String sessionKey = oAuthSession.sessionKeyValue();
     log.debug("registerSession: {}", sessionKey);
     log.debug("register sessionId: {}", httpSession.getId());
+
     int timeoutSeconds = tenant.sessionConfiguration().timeoutSeconds();
     httpSession.setMaxInactiveInterval(timeoutSeconds);
     log.debug(
@@ -64,9 +68,17 @@ public class OAuthSessionDataSource implements OAuthSessionRepository {
   @Override
   public void update(OAuthSession oAuthSession) {
     String sessionKey = oAuthSession.sessionKeyValue();
-    log.debug("update sessionId: {}", httpSession.getId());
+    String oldSessionId = httpSession.getId();
+    log.debug("update sessionId (before): {}", oldSessionId);
     log.debug("updateSession: {}", sessionKey);
-    httpSession.getId();
+
+    // Session Fixation Attack Prevention (Issue #736)
+    // Regenerate session ID when updating to authenticated session
+    if (oAuthSession.hasUser()) {
+      regenerateSessionId();
+    }
+
+    log.debug("update sessionId (after): {}", httpSession.getId());
     httpSession.setAttribute(sessionKey, oAuthSession);
   }
 
@@ -76,5 +88,54 @@ public class OAuthSessionDataSource implements OAuthSessionRepository {
     log.debug("deleteSession: {}", oAuthSessionKey.key());
     // FIXME every client
     httpSession.invalidate();
+  }
+
+  /**
+   * Regenerates the session ID to prevent session fixation attacks.
+   *
+   * <p>This method is called when registering an authenticated OAuth session to ensure that the
+   * session ID established before authentication cannot be reused by an attacker. This is a
+   * critical security measure to prevent session fixation attacks (CWE-384).
+   *
+   * <p>Session Fixation Attack Prevention Flow:
+   *
+   * <ol>
+   *   <li>Before authentication: User has session ID "abc123" (potentially from attacker)
+   *   <li>User successfully authenticates and OAuth session is registered
+   *   <li>This method is called: httpServletRequest.changeSessionId()
+   *   <li>After authentication: New session ID "xyz789" is generated
+   *   <li>Old session ID "abc123" is invalidated and cannot be used
+   * </ol>
+   *
+   * <p>Security Considerations:
+   *
+   * <ul>
+   *   <li>MUST be called when registering authenticated sessions (hasUser() == true)
+   *   <li>MUST be called BEFORE setting session attributes
+   *   <li>Works with both Servlet-based and Redis-based session management
+   *   <li>The new session ID is automatically set in the response cookie
+   * </ul>
+   *
+   * @see <a href="https://owasp.org/www-community/attacks/Session_fixation">OWASP Session
+   *     Fixation</a>
+   * @see <a href="https://cwe.mitre.org/data/definitions/384.html">CWE-384: Session Fixation</a>
+   */
+  private void regenerateSessionId() {
+    try {
+      String oldSessionId = httpSession.getId();
+
+      // Change session ID (invalidates old session and creates new one)
+      String newSessionId = httpServletRequest.changeSessionId();
+
+      // Log session ID regeneration for security audit
+      log.info(
+          "Session ID regenerated for security (Session Fixation Prevention): {} -> {}",
+          oldSessionId,
+          newSessionId);
+    } catch (IllegalStateException e) {
+      // Session already invalidated or no session exists
+      // This is acceptable - session may not exist for stateless authentication
+      log.warn("Failed to regenerate session ID: {}", e.getMessage());
+    }
   }
 }

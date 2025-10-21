@@ -124,6 +124,7 @@ export const requestAuthorizations = async ({
       return {
         status: authorizeResponse.status,
         authorizationResponse,
+        response: authorizeResponse,
       };
     } else {
 
@@ -140,6 +141,7 @@ export const requestAuthorizations = async ({
       return {
         status: denyResponse.status,
         authorizationResponse,
+        response: denyResponse,
       };
     }
 };

@@ -40,8 +40,31 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
     expect(tokenResponse.data).toHaveProperty("id_token");
   });
 
-  xit("success pattern prompt none", async () => {
+  it("success pattern prompt none", async () => {
     const { authorizationResponse } = await requestAuthorizations({
+      endpoint: serverConfig.authorizationEndpoint,
+      clientId: clientSecretPostClient.clientId,
+      responseType: "code",
+      state: "aiueo",
+      scope: "openid profile phone email " + clientSecretPostClient.scope,
+      redirectUri: clientSecretPostClient.redirectUri,
+    });
+    console.log(authorizationResponse);
+    expect(authorizationResponse.code).not.toBeNull();
+
+    let tokenResponse = await requestToken({
+      endpoint: serverConfig.tokenEndpoint,
+      code: authorizationResponse.code,
+      grantType: "authorization_code",
+      redirectUri: clientSecretPostClient.redirectUri,
+      clientId: clientSecretPostClient.clientId,
+      clientSecret: clientSecretPostClient.clientSecret,
+    });
+    console.log(tokenResponse.data);
+    expect(tokenResponse.status).toBe(200);
+    expect(tokenResponse.data).toHaveProperty("id_token");
+
+    const { authorizationResponse: reAuthorizationResponse } = await requestAuthorizations({
       endpoint: serverConfig.authorizationEndpoint,
       clientId: clientSecretPostClient.clientId,
       responseType: "code",
@@ -50,12 +73,12 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       scope: "openid profile phone email" + clientSecretPostClient.scope,
       redirectUri: clientSecretPostClient.redirectUri,
     });
-    console.log(authorizationResponse);
-    expect(authorizationResponse.code).not.toBeNull();
+    console.log(reAuthorizationResponse);
+    expect(reAuthorizationResponse.code).not.toBeNull();
 
-    const tokenResponse = await requestToken({
+    tokenResponse = await requestToken({
       endpoint: serverConfig.tokenEndpoint,
-      code: authorizationResponse.code,
+      code: reAuthorizationResponse.code,
       grantType: "authorization_code",
       redirectUri: clientSecretPostClient.redirectUri,
       clientId: clientSecretPostClient.clientId,
