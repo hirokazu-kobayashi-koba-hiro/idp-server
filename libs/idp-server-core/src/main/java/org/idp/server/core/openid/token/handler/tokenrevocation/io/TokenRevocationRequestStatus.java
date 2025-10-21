@@ -19,6 +19,7 @@ package org.idp.server.core.openid.token.handler.tokenrevocation.io;
 public enum TokenRevocationRequestStatus {
   OK(200),
   BAD_REQUEST(400),
+  UNAUTHORIZED(401),
   SERVER_ERROR(500);
 
   int statusCode;
