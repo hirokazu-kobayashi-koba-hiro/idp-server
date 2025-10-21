@@ -68,8 +68,8 @@ import org.idp.server.platform.type.RequestAttributes;
 public class UserManagementHandler {
 
   private final Map<String, UserManagementService<?>> services;
-  private final ApiPermissionVerifier apiPermissionVerifier;
   private final UserManagementApi managementApi;
+  private final ApiPermissionVerifier apiPermissionVerifier;
   private final TenantQueryRepository tenantQueryRepository;
 
   public UserManagementHandler(
@@ -77,8 +77,8 @@ public class UserManagementHandler {
       UserManagementApi managementApi,
       TenantQueryRepository tenantQueryRepository) {
     this.services = services;
-    this.apiPermissionVerifier = new ApiPermissionVerifier();
     this.managementApi = managementApi;
+    this.apiPermissionVerifier = new ApiPermissionVerifier();
     this.tenantQueryRepository = tenantQueryRepository;
   }
 
@@ -111,8 +111,9 @@ public class UserManagementHandler {
       // 0. Get tenant first (needed for audit logging even if operation fails)
       tenant = tenantQueryRepository.get(tenantIdentifier);
 
-      // 1. Permission verification (throws PermissionDeniedException if denied)
-      AdminPermissions requiredPermissions = managementApi.getRequiredPermissions(method);
+      // 1. Permission verification with tenant type check (throws PermissionDeniedException if
+      // denied)
+      AdminPermissions requiredPermissions = managementApi.getRequiredPermissions(method, tenant);
       apiPermissionVerifier.verify(operator, requiredPermissions);
 
       // 2. Service selection

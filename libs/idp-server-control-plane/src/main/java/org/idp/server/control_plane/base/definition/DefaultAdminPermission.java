@@ -55,6 +55,13 @@ public enum DefaultAdminPermission {
   USER_INVITE("user:invite", "Admin Invite a user"),
   USER_SUSPEND("user:suspend", "Admin Suspend user account"),
 
+  ADMIN_USER_CREATE("admin_user:create", "Admin Create an admin user"),
+  ADMIN_USER_READ("admin_user:read", "Admin Read admin user information"),
+  ADMIN_USER_UPDATE("admin_user:update", "Admin Update admin user"),
+  ADMIN_USER_DELETE("admin_user:delete", "Admin Delete admin user"),
+  ADMIN_USER_INVITE("admin_user:invite", "Admin Invite an admin user"),
+  ADMIN_USER_SUSPEND("admin_user:suspend", "Admin Suspend admin user account"),
+
   PERMISSION_CREATE("permission:create", "Admin Create a permission"),
   PERMISSION_READ("permission:read", "Admin Read permission information"),
   PERMISSION_UPDATE("permission:update", "Admin Update permission"),
@@ -136,6 +143,14 @@ public enum DefaultAdminPermission {
 
   public boolean match(String permission) {
     return value.equals(permission);
+  }
+
+  public boolean isAdminUserPermission() {
+    return value.startsWith("admin_user:");
+  }
+
+  public boolean isPublicUserPermission() {
+    return value.startsWith("user:") && !value.startsWith("admin_user:");
   }
 
   public static Set<DefaultAdminPermission> getAll() {
