@@ -30,9 +30,9 @@ services:
           memory: 1g
     environment:
       SERVER_URL: "http://localhost:8081"
-      IDP_SERVER_API_KEY: ${IDP_SERVER_API_KEY:-30113151-4ee1-4f6a-a1ac-cc1be9eaf695}
-      IDP_SERVER_API_SECRET: ${IDP_SERVER_API_SECRET:-MTY5YjM3NmYtOTY0ZC00Nzg0LWIyOTMtOWQyNDhjMTkyNmIwCg==}
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-JjN9c6N4STeA+g9d+TtBGp5MC3sbqOWs+S9qzJG42iY=}
+      IDP_SERVER_API_KEY: ${IDP_SERVER_API_KEY?IDP server API key is required. Set IDP_SERVER_API_KEY environment variable.}
+      IDP_SERVER_API_SECRET: ${IDP_SERVER_API_SECRET?IDP server API secret is required. Set IDP_SERVER_API_SECRET environment variable.}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY?Encryption key is required. Set ENCRYPTION_KEY environment variable.}
       ADMIN_TENANT_ID: ${ADMIN_TENANT_ID:-67e7eae6-62b0-4500-9eff-87459f63fc66}
       DATABASE_TYPE: POSTGRESQL
       DB_WRITER_URL: jdbc:postgresql://postgres-primary:5432/idpserver
@@ -167,11 +167,11 @@ services:
     container_name: postgres-primary
     environment:
       - POSTGRES_USER=idpserver
-      - POSTGRES_PASSWORD=idpserver
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?PostgreSQL password is required. Set POSTGRES_PASSWORD environment variable.}
       - POSTGRES_DB=idpserver
       - TZ=UTC
-      - DB_OWNER_USER=${DB_OWNER_USER:-idp}
-      - DB_OWNER_PASSWORD=${DB_OWNER_PASSWORD:-idp}
+      - DB_OWNER_USER=${DB_OWNER_USER?Database owner user is required. Set DB_OWNER_USER environment variable.}
+      - DB_OWNER_PASSWORD=${DB_OWNER_PASSWORD?Database owner password is required. Set DB_OWNER_PASSWORD environment variable.}
     ports:
       - "5432:5432"
     command: [ "postgres", "-c", "shared_preload_libraries=pg_stat_statements" ]
@@ -192,7 +192,7 @@ services:
     container_name: postgres-replica
     environment:
       - POSTGRES_USER=idpserver
-      - POSTGRES_PASSWORD=idpserver
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?PostgreSQL password is required. Set POSTGRES_PASSWORD environment variable.}
       - POSTGRES_DB=idpserver
       - TZ=UTC
     ports:
@@ -213,10 +213,10 @@ services:
     container_name: mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD?MySQL root password is required. Set MYSQL_ROOT_PASSWORD environment variable.}
       MYSQL_DATABASE: idpserver
       MYSQL_USER: idpserver
-      MYSQL_PASSWORD: idpserver
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD?MySQL password is required. Set MYSQL_PASSWORD environment variable.}
     ports:
       - "3306:3306"
     command: --default-authentication-plugin=mysql_native_password
@@ -239,9 +239,9 @@ services:
       PGHOST: postgres-primary
       PGPORT: 5432
       POSTGRES_USER: idpserver
-      POSTGRES_PASSWORD: idpserver
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD?PostgreSQL password is required. Set POSTGRES_PASSWORD environment variable.}
       POSTGRES_DB: idpserver
-      DB_OWNER_USER: ${DB_OWNER_USER:-idp}
+      DB_OWNER_USER: ${DB_OWNER_USER?Database owner user is required. Set DB_OWNER_USER environment variable.}
       IDP_DB_ADMIN_PASSWORD: ${IDP_DB_ADMIN_PASSWORD?Database admin password is required. Set IDP_DB_ADMIN_PASSWORD environment variable.}
       IDP_DB_APP_PASSWORD: ${IDP_DB_APP_PASSWORD?Database app password is required. Set IDP_DB_APP_PASSWORD environment variable.}
 
@@ -259,8 +259,8 @@ services:
     environment:
       DB_TYPE: postgresql
       DB_URL: jdbc:postgresql://postgres-primary:5432/idpserver
-      DB_USER_NAME: idp
-      DB_PASSWORD: ${DB_OWNER_PASSWORD:-idp}
+      DB_USER_NAME: ${DB_OWNER_USER?Database owner user is required. Set DB_OWNER_USER environment variable.}
+      DB_PASSWORD: ${DB_OWNER_PASSWORD?Database owner password is required. Set DB_OWNER_PASSWORD environment variable.}
     command: [ "migrate" ]    # info / repair / clean
 
   redis:

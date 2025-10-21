@@ -94,6 +94,9 @@ POSTGRES_PASSWORD=$POSTGRES_PASSWORD
 
 # Database owner password (for migrations)
 DB_OWNER_PASSWORD=$DB_OWNER_PASSWORD
+DB_OWNER_USER=idp
+MYSQL_ROOT_PASSWORD=root
+MYSQL_PASSWORD=idpserver
 
 # Admin user password (RLS bypass for management operations)
 IDP_DB_ADMIN_PASSWORD=$IDP_DB_ADMIN_PASSWORD
