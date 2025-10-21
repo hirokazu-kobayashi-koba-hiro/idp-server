@@ -19,12 +19,11 @@ package org.idp.server.control_plane.management.role.handler;
 import java.util.Map;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
-import org.idp.server.control_plane.management.exception.PermissionDeniedException;
 import org.idp.server.control_plane.management.role.OrgRoleManagementApi;
-import org.idp.server.control_plane.organization.access.OrganizationAccessControlResult;
 import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
@@ -124,18 +123,12 @@ public class OrgRoleManagementHandler {
       tenant = tenantQueryRepository.get(tenantIdentifier);
       AdminPermissions permissions = api.getRequiredPermissions(method);
 
-      OrganizationAccessControlResult accessResult =
-          organizationAccessVerifier.verifyAccess(
-              organization, tenantIdentifier, operator, permissions);
-
-      if (!accessResult.isSuccess()) {
-        throw new PermissionDeniedException(permissions, operator.permissionsAsSet());
-      }
+      organizationAccessVerifier.verify(organization, tenantIdentifier, operator, permissions);
 
       RoleManagementService<REQUEST> service =
           (RoleManagementService<REQUEST>) services.get(method);
       if (service == null) {
-        throw new IllegalArgumentException("Unsupported operation method: " + method);
+        throw new UnSupportedException("Unsupported operation method: " + method);
       }
 
       return service.execute(tenant, operator, oAuthToken, request, requestAttributes, dryRun);

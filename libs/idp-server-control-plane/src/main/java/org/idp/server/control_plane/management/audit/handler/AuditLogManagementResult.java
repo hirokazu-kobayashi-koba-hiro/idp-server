@@ -21,6 +21,7 @@ import java.util.Map;
 import org.idp.server.control_plane.management.audit.io.AuditLogManagementResponse;
 import org.idp.server.control_plane.management.audit.io.AuditLogManagementStatus;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
+import org.idp.server.control_plane.management.exception.OrganizationAccessDeniedException;
 import org.idp.server.control_plane.management.exception.PermissionDeniedException;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -150,7 +151,7 @@ public class AuditLogManagementResult {
    * @return the corresponding status
    */
   private AuditLogManagementStatus mapExceptionToStatus(ManagementApiException e) {
-    if (e instanceof PermissionDeniedException) {
+    if (e instanceof PermissionDeniedException || e instanceof OrganizationAccessDeniedException) {
       return AuditLogManagementStatus.FORBIDDEN;
     } else if (e instanceof ResourceNotFoundException) {
       return AuditLogManagementStatus.NOT_FOUND;

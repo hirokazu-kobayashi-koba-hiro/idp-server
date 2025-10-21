@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.management.authentication.policy.handler;
+package org.idp.server.control_plane.management.authentication.transaction.handler;
 
 import java.util.Map;
-import org.idp.server.control_plane.base.ApiPermissionVerifier;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
-import org.idp.server.control_plane.management.authentication.policy.OrgAuthenticationPolicyConfigManagementApi;
+import org.idp.server.control_plane.management.authentication.transaction.OrgAuthenticationTransactionManagementApi;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
 import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
 import org.idp.server.core.openid.identity.User;
@@ -34,9 +33,9 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Organization-level authentication policy configuration management handler.
+ * Organization-level authentication transaction management handler.
  *
- * <p>Orchestrates organization-scoped authentication policy configuration management operations by
+ * <p>Orchestrates organization-scoped authentication transaction management operations by
  * delegating to appropriate Service implementations via strategy pattern.
  *
  * <h2>Organization-Level Access Control</h2>
@@ -65,22 +64,21 @@ import org.idp.server.platform.type.RequestAttributes;
  *   <li>Transaction management (handled by EntryService)
  * </ul>
  *
- * @see AuthenticationPolicyConfigManagementService
- * @see AuthenticationPolicyConfigManagementResult
+ * @see AuthenticationTransactionManagementService
+ * @see AuthenticationTransactionManagementResult
  * @see OrganizationAccessVerifier
  */
-public class OrgAuthenticationPolicyConfigManagementHandler {
+public class OrgAuthenticationTransactionManagementHandler {
 
-  private final Map<String, AuthenticationPolicyConfigManagementService<?>> services;
-  private final OrgAuthenticationPolicyConfigManagementApi entryService;
+  private final Map<String, AuthenticationTransactionManagementService<?>> services;
+  private final OrgAuthenticationTransactionManagementApi entryService;
   private final TenantQueryRepository tenantQueryRepository;
   private final OrganizationRepository organizationRepository;
   private final OrganizationAccessVerifier organizationAccessVerifier;
-  private final ApiPermissionVerifier apiPermissionVerifier;
 
-  public OrgAuthenticationPolicyConfigManagementHandler(
-      Map<String, AuthenticationPolicyConfigManagementService<?>> services,
-      OrgAuthenticationPolicyConfigManagementApi entryService,
+  public OrgAuthenticationTransactionManagementHandler(
+      Map<String, AuthenticationTransactionManagementService<?>> services,
+      OrgAuthenticationTransactionManagementApi entryService,
       TenantQueryRepository tenantQueryRepository,
       OrganizationRepository organizationRepository) {
     this.services = services;
@@ -88,16 +86,15 @@ public class OrgAuthenticationPolicyConfigManagementHandler {
     this.tenantQueryRepository = tenantQueryRepository;
     this.organizationRepository = organizationRepository;
     this.organizationAccessVerifier = new OrganizationAccessVerifier();
-    this.apiPermissionVerifier = new ApiPermissionVerifier();
   }
 
   /**
-   * Handles organization-level authentication policy configuration management operation.
+   * Handles organization-level authentication transaction management operation.
    *
    * <p>Organization-level operations include additional access control verification to ensure the
    * operator has access to both the organization and the tenant.
    *
-   * @param method the operation method (e.g., "create", "update", "delete")
+   * @param method the operation method (e.g., "findList", "get")
    * @param organizationIdentifier the organization identifier
    * @param tenantIdentifier the tenant context
    * @param operator the user performing the operation
@@ -105,9 +102,9 @@ public class OrgAuthenticationPolicyConfigManagementHandler {
    * @param request the operation-specific request object
    * @param requestAttributes HTTP request attributes for audit logging
    * @param dryRun if true, validate but don't persist changes
-   * @return AuthenticationPolicyConfigManagementResult containing operation outcome or exception
+   * @return AuthenticationTransactionManagementResult containing operation outcome or exception
    */
-  public AuthenticationPolicyConfigManagementResult handle(
+  public AuthenticationTransactionManagementResult handle(
       String method,
       OrganizationIdentifier organizationIdentifier,
       TenantIdentifier tenantIdentifier,
@@ -129,7 +126,7 @@ public class OrgAuthenticationPolicyConfigManagementHandler {
           organization, tenantIdentifier, operator, requiredPermissions);
 
       // 2. Service selection
-      AuthenticationPolicyConfigManagementService<?> service = services.get(method);
+      AuthenticationTransactionManagementService<?> service = services.get(method);
       if (service == null) {
         throw new UnSupportedException("Unsupported operation method: " + method);
       }
@@ -140,7 +137,8 @@ public class OrgAuthenticationPolicyConfigManagementHandler {
 
     } catch (ManagementApiException e) {
       // Wrap exception in Result with tenant for audit logging
-      return AuthenticationPolicyConfigManagementResult.error(tenant, e);
+      return AuthenticationTransactionManagementResult.error(
+          tenant != null ? tenant.identifier() : tenantIdentifier, e);
     }
   }
 
@@ -150,8 +148,8 @@ public class OrgAuthenticationPolicyConfigManagementHandler {
    * <p>This helper method uses generics to ensure type safety when calling service.execute().
    */
   @SuppressWarnings("unchecked")
-  private <REQUEST> AuthenticationPolicyConfigManagementResult executeService(
-      AuthenticationPolicyConfigManagementService<REQUEST> service,
+  private <REQUEST> AuthenticationTransactionManagementResult executeService(
+      AuthenticationTransactionManagementService<REQUEST> service,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,

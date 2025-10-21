@@ -17,12 +17,13 @@
 package org.idp.server.control_plane.management.tenant.handler;
 
 import java.util.Map;
-import org.idp.server.control_plane.base.PermissionVerifier;
+import org.idp.server.control_plane.base.ApiPermissionVerifier;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
 import org.idp.server.control_plane.management.tenant.TenantManagementApi;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -56,7 +57,7 @@ import org.idp.server.platform.type.RequestAttributes;
 public class TenantManagementHandler {
 
   private final Map<String, TenantManagementService<?>> services;
-  private final PermissionVerifier permissionVerifier;
+  private final ApiPermissionVerifier apiPermissionVerifier;
   private final TenantManagementApi managementApi;
   private final TenantQueryRepository tenantQueryRepository;
 
@@ -65,7 +66,7 @@ public class TenantManagementHandler {
       TenantManagementApi managementApi,
       TenantQueryRepository tenantQueryRepository) {
     this.services = services;
-    this.permissionVerifier = new PermissionVerifier();
+    this.apiPermissionVerifier = new ApiPermissionVerifier();
     this.managementApi = managementApi;
     this.tenantQueryRepository = tenantQueryRepository;
   }
@@ -101,12 +102,12 @@ public class TenantManagementHandler {
 
       // 1. Permission verification (throws PermissionDeniedException if denied)
       AdminPermissions requiredPermissions = managementApi.getRequiredPermissions(method);
-      permissionVerifier.verify(operator, requiredPermissions);
+      apiPermissionVerifier.verify(operator, requiredPermissions);
 
       // 2. Service selection
       TenantManagementService<?> service = services.get(method);
       if (service == null) {
-        throw new IllegalArgumentException("Unsupported operation method: " + method);
+        throw new UnSupportedException("Unsupported operation method: " + method);
       }
 
       // 3. Delegate to service (pass adminTenant to avoid duplicate retrieval)

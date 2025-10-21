@@ -17,12 +17,13 @@
 package org.idp.server.control_plane.management.authentication.interaction.handler;
 
 import java.util.Map;
-import org.idp.server.control_plane.base.PermissionVerifier;
+import org.idp.server.control_plane.base.ApiPermissionVerifier;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.authentication.interaction.AuthenticationInteractionManagementApi;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -59,7 +60,7 @@ public class AuthenticationInteractionManagementHandler {
   private final Map<String, AuthenticationInteractionManagementService<?>> services;
   private final AuthenticationInteractionManagementApi entryService;
   private final TenantQueryRepository tenantQueryRepository;
-  private final PermissionVerifier permissionVerifier;
+  private final ApiPermissionVerifier apiPermissionVerifier;
 
   public AuthenticationInteractionManagementHandler(
       Map<String, AuthenticationInteractionManagementService<?>> services,
@@ -68,7 +69,7 @@ public class AuthenticationInteractionManagementHandler {
     this.services = services;
     this.entryService = entryService;
     this.tenantQueryRepository = tenantQueryRepository;
-    this.permissionVerifier = new PermissionVerifier();
+    this.apiPermissionVerifier = new ApiPermissionVerifier();
   }
 
   /**
@@ -97,12 +98,12 @@ public class AuthenticationInteractionManagementHandler {
 
       // 2. Permission verification
       AdminPermissions requiredPermissions = entryService.getRequiredPermissions(method);
-      permissionVerifier.verify(operator, requiredPermissions);
+      apiPermissionVerifier.verify(operator, requiredPermissions);
 
       // 3. Service selection
       AuthenticationInteractionManagementService<?> service = services.get(method);
       if (service == null) {
-        throw new IllegalArgumentException("Unsupported operation method: " + method);
+        throw new UnSupportedException("Unsupported operation method: " + method);
       }
 
       // 4. Delegate to service

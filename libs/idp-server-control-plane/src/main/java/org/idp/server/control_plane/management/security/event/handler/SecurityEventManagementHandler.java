@@ -17,12 +17,12 @@
 package org.idp.server.control_plane.management.security.event.handler;
 
 import java.util.Map;
-import java.util.Set;
+import org.idp.server.control_plane.base.ApiPermissionVerifier;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
-import org.idp.server.control_plane.management.exception.PermissionDeniedException;
 import org.idp.server.control_plane.management.security.event.SecurityEventManagementApi;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -56,6 +56,7 @@ public class SecurityEventManagementHandler {
   private final Map<String, SecurityEventManagementService<?>> services;
   private final SecurityEventManagementApi managementApi;
   private final TenantQueryRepository tenantQueryRepository;
+  private final ApiPermissionVerifier apiPermissionVerifier;
 
   public SecurityEventManagementHandler(
       Map<String, SecurityEventManagementService<?>> services,
@@ -64,6 +65,7 @@ public class SecurityEventManagementHandler {
     this.services = services;
     this.managementApi = managementApi;
     this.tenantQueryRepository = tenantQueryRepository;
+    this.apiPermissionVerifier = new ApiPermissionVerifier();
   }
 
   /**
@@ -95,14 +97,12 @@ public class SecurityEventManagementHandler {
 
       // 2. Permission verification
       AdminPermissions requiredPermissions = managementApi.getRequiredPermissions(method);
-      if (!requiredPermissions.includesAll(operator.permissionsAsSet())) {
-        throw new PermissionDeniedException(requiredPermissions, Set.of());
-      }
+      apiPermissionVerifier.verify(operator, requiredPermissions);
 
       // 3. Service selection
       SecurityEventManagementService<?> service = services.get(method);
       if (service == null) {
-        throw new IllegalArgumentException("Unsupported operation method: " + method);
+        throw new UnSupportedException("Unsupported operation method: " + method);
       }
 
       // 4. Delegate to service

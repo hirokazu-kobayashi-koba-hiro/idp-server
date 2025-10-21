@@ -18,10 +18,7 @@ package org.idp.server.control_plane.management.identity.user.handler;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.control_plane.management.exception.InvalidRequestException;
-import org.idp.server.control_plane.management.exception.ManagementApiException;
-import org.idp.server.control_plane.management.exception.PermissionDeniedException;
-import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
+import org.idp.server.control_plane.management.exception.*;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -151,7 +148,8 @@ public class UserManagementResult {
   private UserManagementStatus mapExceptionToStatus(ManagementApiException exception) {
     if (exception instanceof InvalidRequestException) {
       return UserManagementStatus.INVALID_REQUEST;
-    } else if (exception instanceof PermissionDeniedException) {
+    } else if (exception instanceof PermissionDeniedException
+        || exception instanceof OrganizationAccessDeniedException) {
       return UserManagementStatus.FORBIDDEN;
     } else if (exception instanceof ResourceNotFoundException) {
       return UserManagementStatus.NOT_FOUND;

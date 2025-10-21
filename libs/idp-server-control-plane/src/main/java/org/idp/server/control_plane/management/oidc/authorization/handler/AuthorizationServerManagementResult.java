@@ -19,6 +19,7 @@ package org.idp.server.control_plane.management.oidc.authorization.handler;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
+import org.idp.server.control_plane.management.exception.OrganizationAccessDeniedException;
 import org.idp.server.control_plane.management.exception.PermissionDeniedException;
 import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerManagementResponse;
 import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerManagementStatus;
@@ -135,14 +136,16 @@ public class AuthorizationServerManagementResult {
 
   private static AuthorizationServerManagementStatus mapExceptionToStatus(
       ManagementApiException exception) {
-    if (exception instanceof PermissionDeniedException) {
+    if (exception instanceof PermissionDeniedException
+        || exception instanceof OrganizationAccessDeniedException) {
       return AuthorizationServerManagementStatus.FORBIDDEN;
     }
     return AuthorizationServerManagementStatus.INVALID_REQUEST;
   }
 
   private static String getErrorCode(ManagementApiException exception) {
-    if (exception instanceof PermissionDeniedException) {
+    if (exception instanceof PermissionDeniedException
+        || exception instanceof OrganizationAccessDeniedException) {
       return "access_denied";
     }
     return "invalid_request";

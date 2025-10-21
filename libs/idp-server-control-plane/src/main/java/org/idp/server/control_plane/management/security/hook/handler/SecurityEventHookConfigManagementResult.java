@@ -19,6 +19,7 @@ package org.idp.server.control_plane.management.security.hook.handler;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
+import org.idp.server.control_plane.management.exception.OrganizationAccessDeniedException;
 import org.idp.server.control_plane.management.exception.PermissionDeniedException;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
@@ -171,7 +172,8 @@ public class SecurityEventHookConfigManagementResult {
     if (exception instanceof ResourceNotFoundException) {
       return SecurityEventHookConfigManagementStatus.NOT_FOUND;
     }
-    if (exception instanceof PermissionDeniedException) {
+    if (exception instanceof PermissionDeniedException
+        || exception instanceof OrganizationAccessDeniedException) {
       return SecurityEventHookConfigManagementStatus.FORBIDDEN;
     }
     return SecurityEventHookConfigManagementStatus.INVALID_REQUEST;

@@ -227,7 +227,7 @@ public UserManagementResult handle(
     // 3. Service選択
     UserManagementService<?> service = services.get(method);
     if (service == null) {
-      throw new IllegalArgumentException("Unsupported operation method: " + method);
+      throw new UnSupportedException("Unsupported operation method: " + method);
     }
 
     // 4. Service実行 (Genericsで型安全に)
@@ -574,7 +574,7 @@ public class {Domain}ManagementHandler {
 
       {Domain}ManagementService<?> service = services.get(method);
       if (service == null) {
-        throw new IllegalArgumentException("Unsupported operation method: " + method);
+        throw new UnSupportedException("Unsupported operation method: " + method);
       }
 
       return executeService(service, tenant, operator, oAuthToken, request, requestAttributes, dryRun);

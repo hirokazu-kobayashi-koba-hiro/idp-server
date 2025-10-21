@@ -16,10 +16,9 @@
 
 package org.idp.server.control_plane.management.onboarding.handler;
 
-import java.util.Set;
+import org.idp.server.control_plane.base.ApiPermissionVerifier;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
-import org.idp.server.control_plane.management.exception.PermissionDeniedException;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingRequest;
 import org.idp.server.core.openid.identity.User;
@@ -56,6 +55,7 @@ public class OnboardingManagementHandler {
 
   private final OnboardingService service;
   private final OnboardingApi api;
+  private final ApiPermissionVerifier apiPermissionVerifier;
 
   /**
    * Creates a new onboarding management handler.
@@ -66,6 +66,7 @@ public class OnboardingManagementHandler {
   public OnboardingManagementHandler(OnboardingService service, OnboardingApi api) {
     this.service = service;
     this.api = api;
+    this.apiPermissionVerifier = new ApiPermissionVerifier();
   }
 
   /**
@@ -89,9 +90,7 @@ public class OnboardingManagementHandler {
 
     try {
       AdminPermissions requiredPermissions = api.getRequiredPermissions("onboard");
-      if (!requiredPermissions.includesAll(operator.permissionsAsSet())) {
-        throw new PermissionDeniedException(requiredPermissions, Set.of());
-      }
+      apiPermissionVerifier.verify(operator, requiredPermissions);
 
       return service.execute(
           adminTenantIdentifier, operator, oAuthToken, request, requestAttributes, dryRun);

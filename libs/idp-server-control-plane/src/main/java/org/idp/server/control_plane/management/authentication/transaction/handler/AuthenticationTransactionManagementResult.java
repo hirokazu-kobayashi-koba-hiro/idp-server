@@ -21,6 +21,7 @@ import java.util.Map;
 import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionManagementResponse;
 import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionManagementStatus;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
+import org.idp.server.control_plane.management.exception.OrganizationAccessDeniedException;
 import org.idp.server.control_plane.management.exception.PermissionDeniedException;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -139,7 +140,8 @@ public class AuthenticationTransactionManagementResult {
     if (exception instanceof ResourceNotFoundException) {
       return AuthenticationTransactionManagementStatus.NOT_FOUND;
     }
-    if (exception instanceof PermissionDeniedException) {
+    if (exception instanceof PermissionDeniedException
+        || exception instanceof OrganizationAccessDeniedException) {
       return AuthenticationTransactionManagementStatus.FORBIDDEN;
     }
     return AuthenticationTransactionManagementStatus.INVALID_REQUEST;
@@ -148,6 +150,9 @@ public class AuthenticationTransactionManagementResult {
   private static String getErrorCode(ManagementApiException exception) {
     if (exception instanceof ResourceNotFoundException) {
       return "not_found";
+    }
+    if (exception instanceof OrganizationAccessDeniedException) {
+      return "organization_access_denied";
     }
     if (exception instanceof PermissionDeniedException) {
       return "access_denied";

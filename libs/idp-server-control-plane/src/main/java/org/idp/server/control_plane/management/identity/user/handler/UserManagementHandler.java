@@ -17,12 +17,13 @@
 package org.idp.server.control_plane.management.identity.user.handler;
 
 import java.util.Map;
-import org.idp.server.control_plane.base.PermissionVerifier;
+import org.idp.server.control_plane.base.ApiPermissionVerifier;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
 import org.idp.server.control_plane.management.identity.user.UserManagementApi;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -67,7 +68,7 @@ import org.idp.server.platform.type.RequestAttributes;
 public class UserManagementHandler {
 
   private final Map<String, UserManagementService<?>> services;
-  private final PermissionVerifier permissionVerifier;
+  private final ApiPermissionVerifier apiPermissionVerifier;
   private final UserManagementApi managementApi;
   private final TenantQueryRepository tenantQueryRepository;
 
@@ -76,7 +77,7 @@ public class UserManagementHandler {
       UserManagementApi managementApi,
       TenantQueryRepository tenantQueryRepository) {
     this.services = services;
-    this.permissionVerifier = new PermissionVerifier();
+    this.apiPermissionVerifier = new ApiPermissionVerifier();
     this.managementApi = managementApi;
     this.tenantQueryRepository = tenantQueryRepository;
   }
@@ -112,12 +113,12 @@ public class UserManagementHandler {
 
       // 1. Permission verification (throws PermissionDeniedException if denied)
       AdminPermissions requiredPermissions = managementApi.getRequiredPermissions(method);
-      permissionVerifier.verify(operator, requiredPermissions);
+      apiPermissionVerifier.verify(operator, requiredPermissions);
 
       // 2. Service selection
       UserManagementService<?> service = services.get(method);
       if (service == null) {
-        throw new IllegalArgumentException("Unsupported operation method: " + method);
+        throw new UnSupportedException("Unsupported operation method: " + method);
       }
 
       // 3. Delegate to service (pass tenant to avoid duplicate retrieval)

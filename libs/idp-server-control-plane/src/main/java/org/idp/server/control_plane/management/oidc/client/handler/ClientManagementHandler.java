@@ -17,11 +17,10 @@
 package org.idp.server.control_plane.management.oidc.client.handler;
 
 import java.util.Map;
-import java.util.Set;
+import org.idp.server.control_plane.base.ApiPermissionVerifier;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
-import org.idp.server.control_plane.management.exception.PermissionDeniedException;
 import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -41,11 +40,13 @@ public class ClientManagementHandler {
 
   private final Map<String, ClientManagementService<?>> services;
   private final ClientManagementApi api;
+  private final ApiPermissionVerifier apiPermissionVerifier;
 
   public ClientManagementHandler(
       Map<String, ClientManagementService<?>> services, ClientManagementApi api) {
     this.services = services;
     this.api = api;
+    this.apiPermissionVerifier = new ApiPermissionVerifier();
   }
 
   /**
@@ -72,9 +73,7 @@ public class ClientManagementHandler {
     try {
       AdminPermissions requiredPermissions = api.getRequiredPermissions(method);
 
-      if (!requiredPermissions.includesAll(operator.permissionsAsSet())) {
-        throw new PermissionDeniedException(requiredPermissions, Set.of());
-      }
+      apiPermissionVerifier.verify(operator, requiredPermissions);
 
       return executeService(
           method, tenant, operator, oAuthToken, request, requestAttributes, dryRun);

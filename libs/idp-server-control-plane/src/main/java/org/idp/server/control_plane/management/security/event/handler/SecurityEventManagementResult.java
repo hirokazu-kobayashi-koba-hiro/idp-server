@@ -18,10 +18,7 @@ package org.idp.server.control_plane.management.security.event.handler;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.control_plane.management.exception.InvalidRequestException;
-import org.idp.server.control_plane.management.exception.ManagementApiException;
-import org.idp.server.control_plane.management.exception.PermissionDeniedException;
-import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
+import org.idp.server.control_plane.management.exception.*;
 import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementResponse;
 import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementStatus;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -97,7 +94,8 @@ public class SecurityEventManagementResult {
   private SecurityEventManagementStatus mapExceptionToStatus(ManagementApiException exception) {
     if (exception instanceof InvalidRequestException) {
       return SecurityEventManagementStatus.INVALID_REQUEST;
-    } else if (exception instanceof PermissionDeniedException) {
+    } else if (exception instanceof PermissionDeniedException
+        || exception instanceof OrganizationAccessDeniedException) {
       return SecurityEventManagementStatus.FORBIDDEN;
     } else if (exception instanceof ResourceNotFoundException) {
       return SecurityEventManagementStatus.NOT_FOUND;

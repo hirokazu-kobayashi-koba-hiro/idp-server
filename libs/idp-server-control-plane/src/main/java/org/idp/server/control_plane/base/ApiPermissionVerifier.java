@@ -37,7 +37,7 @@ import org.idp.server.core.openid.identity.User;
  *
  * @see org.idp.server.control_plane.management.exception.PermissionDeniedException
  */
-public class PermissionVerifier {
+public class ApiPermissionVerifier {
 
   /**
    * Verifies that the operator has all required permissions.

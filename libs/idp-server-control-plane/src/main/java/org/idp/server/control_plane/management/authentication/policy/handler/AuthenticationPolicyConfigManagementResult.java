@@ -20,10 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementStatus;
-import org.idp.server.control_plane.management.exception.InvalidRequestException;
-import org.idp.server.control_plane.management.exception.ManagementApiException;
-import org.idp.server.control_plane.management.exception.PermissionDeniedException;
-import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
+import org.idp.server.control_plane.management.exception.*;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
@@ -147,7 +144,8 @@ public class AuthenticationPolicyConfigManagementResult {
       ManagementApiException exception) {
     if (exception instanceof InvalidRequestException) {
       return AuthenticationPolicyConfigManagementStatus.INVALID_REQUEST;
-    } else if (exception instanceof PermissionDeniedException) {
+    } else if (exception instanceof PermissionDeniedException
+        || exception instanceof OrganizationAccessDeniedException) {
       return AuthenticationPolicyConfigManagementStatus.FORBIDDEN;
     } else if (exception instanceof ResourceNotFoundException) {
       return AuthenticationPolicyConfigManagementStatus.NOT_FOUND;

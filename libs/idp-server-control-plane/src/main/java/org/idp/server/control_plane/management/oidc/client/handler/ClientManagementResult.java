@@ -19,6 +19,7 @@ package org.idp.server.control_plane.management.oidc.client.handler;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
+import org.idp.server.control_plane.management.exception.OrganizationAccessDeniedException;
 import org.idp.server.control_plane.management.exception.PermissionDeniedException;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
@@ -107,7 +108,8 @@ public class ClientManagementResult {
     if (exception instanceof ResourceNotFoundException) {
       return ClientManagementStatus.NOT_FOUND;
     }
-    if (exception instanceof PermissionDeniedException) {
+    if (exception instanceof PermissionDeniedException
+        || exception instanceof OrganizationAccessDeniedException) {
       return ClientManagementStatus.FORBIDDEN;
     }
     return ClientManagementStatus.INVALID_REQUEST;

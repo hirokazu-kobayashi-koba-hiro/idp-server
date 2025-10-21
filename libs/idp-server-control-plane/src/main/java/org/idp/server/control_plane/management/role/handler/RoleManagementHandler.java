@@ -17,13 +17,13 @@
 package org.idp.server.control_plane.management.role.handler;
 
 import java.util.Map;
-import java.util.Set;
+import org.idp.server.control_plane.base.ApiPermissionVerifier;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
-import org.idp.server.control_plane.management.exception.PermissionDeniedException;
 import org.idp.server.control_plane.management.role.RoleManagementApi;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -62,6 +62,7 @@ public class RoleManagementHandler {
   private final Map<String, RoleManagementService<?>> services;
   private final RoleManagementApi api;
   private final TenantQueryRepository tenantQueryRepository;
+  private final ApiPermissionVerifier apiPermissionVerifier;
 
   /**
    * Creates a new role management handler.
@@ -77,6 +78,7 @@ public class RoleManagementHandler {
     this.services = services;
     this.api = api;
     this.tenantQueryRepository = tenantQueryRepository;
+    this.apiPermissionVerifier = new ApiPermissionVerifier();
   }
 
   /**
@@ -106,14 +108,12 @@ public class RoleManagementHandler {
       tenant = tenantQueryRepository.get(tenantIdentifier);
 
       AdminPermissions requiredPermissions = api.getRequiredPermissions(method);
-      if (!requiredPermissions.includesAll(operator.permissionsAsSet())) {
-        throw new PermissionDeniedException(requiredPermissions, Set.of());
-      }
+      apiPermissionVerifier.verify(operator, requiredPermissions);
 
       RoleManagementService<REQUEST> service =
           (RoleManagementService<REQUEST>) services.get(method);
       if (service == null) {
-        throw new IllegalArgumentException("Unsupported operation method: " + method);
+        throw new UnSupportedException("Unsupported operation method: " + method);
       }
 
       return service.execute(tenant, operator, oAuthToken, request, requestAttributes, dryRun);

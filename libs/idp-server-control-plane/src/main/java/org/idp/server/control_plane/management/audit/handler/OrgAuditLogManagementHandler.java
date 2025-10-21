@@ -20,11 +20,10 @@ import java.util.Map;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.audit.OrgAuditLogManagementApi;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
-import org.idp.server.control_plane.management.exception.PermissionDeniedException;
-import org.idp.server.control_plane.organization.access.OrganizationAccessControlResult;
 import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
@@ -121,20 +120,13 @@ public class OrgAuditLogManagementHandler {
 
       // 1. Organization access verification (4-step verification)
       AdminPermissions requiredPermissions = entryService.getRequiredPermissions(method);
-      OrganizationAccessControlResult accessControlResult =
-          organizationAccessVerifier.verifyAccess(
-              organization, tenantIdentifier, operator, requiredPermissions);
-
-      if (!accessControlResult.isSuccess()) {
-        // Organization access verification failed
-        // EntryService will handle error response conversion
-        throw new PermissionDeniedException(requiredPermissions, operator.permissionsAsSet());
-      }
+      organizationAccessVerifier.verify(
+          organization, tenantIdentifier, operator, requiredPermissions);
 
       // 2. Service selection
       AuditLogManagementService<?> service = services.get(method);
       if (service == null) {
-        throw new IllegalArgumentException("Unsupported operation method: " + method);
+        throw new UnSupportedException("Unsupported operation method: " + method);
       }
 
       // 3. Delegate to service (pass tenant to avoid duplicate retrieval)

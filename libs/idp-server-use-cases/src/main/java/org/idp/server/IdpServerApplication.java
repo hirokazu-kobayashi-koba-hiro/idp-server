@@ -978,9 +978,9 @@ public class IdpServerApplication {
     this.orgAuthenticationTransactionManagementApi =
         OrganizationAwareEntryServiceProxy.createProxy(
             new OrgAuthenticationTransactionManagementEntryService(
+                authenticationTransactionQueryRepository,
                 tenantQueryRepository,
                 organizationRepository,
-                authenticationTransactionQueryRepository,
                 auditLogPublisher),
             OrgAuthenticationTransactionManagementApi.class,
             databaseTypeProvider);

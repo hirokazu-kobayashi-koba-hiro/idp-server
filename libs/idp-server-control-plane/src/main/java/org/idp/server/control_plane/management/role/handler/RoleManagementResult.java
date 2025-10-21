@@ -19,6 +19,7 @@ package org.idp.server.control_plane.management.role.handler;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
+import org.idp.server.control_plane.management.exception.OrganizationAccessDeniedException;
 import org.idp.server.control_plane.management.exception.PermissionDeniedException;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.role.io.RoleManagementResponse;
@@ -99,7 +100,8 @@ public class RoleManagementResult {
     if (exception instanceof ResourceNotFoundException) {
       return RoleManagementStatus.NOT_FOUND;
     }
-    if (exception instanceof PermissionDeniedException) {
+    if (exception instanceof PermissionDeniedException
+        || exception instanceof OrganizationAccessDeniedException) {
       return RoleManagementStatus.FORBIDDEN;
     }
     return RoleManagementStatus.INVALID_REQUEST;

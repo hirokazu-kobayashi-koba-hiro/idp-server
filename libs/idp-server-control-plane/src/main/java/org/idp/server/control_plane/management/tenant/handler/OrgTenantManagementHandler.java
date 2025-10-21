@@ -18,11 +18,13 @@ package org.idp.server.control_plane.management.tenant.handler;
 
 import java.util.Map;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
+import org.idp.server.control_plane.management.exception.ManagementApiException;
 import org.idp.server.control_plane.management.tenant.OrgTenantManagementApi;
-import org.idp.server.control_plane.organization.access.OrganizationAccessControlResult;
+import org.idp.server.control_plane.management.tenant.io.TenantRequest;
 import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
@@ -124,19 +126,12 @@ public class OrgTenantManagementHandler {
       orgTenant = tenantQueryRepository.get(organization.findOrgTenant().tenantIdentifier());
 
       // 3. Organization-level access control
-      OrganizationAccessControlResult accessResult =
-          organizationAccessVerifier.verifyAccess(
-              organization, tenantIdentifier, operator, permissions);
-
-      if (!accessResult.isSuccess()) {
-        throw new org.idp.server.control_plane.management.exception.PermissionDeniedException(
-            permissions, java.util.Set.of());
-      }
+      organizationAccessVerifier.verify(organization, tenantIdentifier, operator, permissions);
 
       // 4. Service selection
       TenantManagementService<?> service = services.get(method);
       if (service == null) {
-        throw new IllegalArgumentException("Unsupported operation method: " + method);
+        throw new UnSupportedException("Unsupported operation method: " + method);
       }
 
       // 5. Delegate to service (pass orgTenant for context)
@@ -147,15 +142,12 @@ public class OrgTenantManagementHandler {
       if ("findList".equals(method)) {
         serviceRequest = organization;
       } else if ("create".equals(method)) {
-        serviceRequest =
-            new OrgTenantCreationRequest(
-                organization,
-                (org.idp.server.control_plane.management.tenant.io.TenantRequest) request);
+        serviceRequest = new OrgTenantCreationRequest(organization, (TenantRequest) request);
       }
       return executeService(
           service, orgTenant, operator, oAuthToken, serviceRequest, requestAttributes, dryRun);
 
-    } catch (org.idp.server.control_plane.management.exception.ManagementApiException e) {
+    } catch (ManagementApiException e) {
       // Wrap exception in Result with orgTenant for audit logging
       return TenantManagementResult.error(orgTenant, e);
     }

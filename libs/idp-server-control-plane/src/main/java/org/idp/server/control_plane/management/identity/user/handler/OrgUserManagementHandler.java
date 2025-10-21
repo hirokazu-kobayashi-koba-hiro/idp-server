@@ -19,7 +19,6 @@ package org.idp.server.control_plane.management.identity.user.handler;
 import java.util.Map;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.identity.user.OrgUserManagementApi;
-import org.idp.server.control_plane.organization.access.OrganizationAccessControlResult;
 import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -118,14 +117,7 @@ public class OrgUserManagementHandler {
       tenant = tenantQueryRepository.get(tenantIdentifier);
 
       // 3. Organization-level access control
-      OrganizationAccessControlResult accessResult =
-          organizationAccessVerifier.verifyAccess(
-              organization, tenantIdentifier, operator, permissions);
-
-      if (!accessResult.isSuccess()) {
-        throw new org.idp.server.control_plane.management.exception.PermissionDeniedException(
-            permissions, java.util.Set.of());
-      }
+      organizationAccessVerifier.verify(organization, tenantIdentifier, operator, permissions);
 
       // 4. Service selection
       UserManagementService<?> service = services.get(operation);

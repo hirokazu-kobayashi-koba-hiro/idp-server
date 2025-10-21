@@ -18,10 +18,7 @@ package org.idp.server.control_plane.management.tenant.handler;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.control_plane.management.exception.InvalidRequestException;
-import org.idp.server.control_plane.management.exception.ManagementApiException;
-import org.idp.server.control_plane.management.exception.PermissionDeniedException;
-import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
+import org.idp.server.control_plane.management.exception.*;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementStatus;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -104,7 +101,8 @@ public class TenantManagementResult {
   private TenantManagementStatus mapExceptionToStatus(ManagementApiException exception) {
     if (exception instanceof InvalidRequestException) {
       return TenantManagementStatus.INVALID_REQUEST;
-    } else if (exception instanceof PermissionDeniedException) {
+    } else if (exception instanceof PermissionDeniedException
+        || exception instanceof OrganizationAccessDeniedException) {
       return TenantManagementStatus.FORBIDDEN;
     } else if (exception instanceof ResourceNotFoundException) {
       return TenantManagementStatus.NOT_FOUND;

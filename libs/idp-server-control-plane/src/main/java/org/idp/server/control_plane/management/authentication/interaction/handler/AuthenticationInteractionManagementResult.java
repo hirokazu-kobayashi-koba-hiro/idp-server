@@ -18,10 +18,7 @@ package org.idp.server.control_plane.management.authentication.interaction.handl
 
 import org.idp.server.control_plane.management.authentication.interaction.io.AuthenticationInteractionManagementResponse;
 import org.idp.server.control_plane.management.authentication.interaction.io.AuthenticationInteractionManagementStatus;
-import org.idp.server.control_plane.management.exception.InvalidRequestException;
-import org.idp.server.control_plane.management.exception.ManagementApiException;
-import org.idp.server.control_plane.management.exception.PermissionDeniedException;
-import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
+import org.idp.server.control_plane.management.exception.*;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
@@ -160,7 +157,8 @@ public class AuthenticationInteractionManagementResult {
   private AuthenticationInteractionManagementStatus mapExceptionToStatus(ManagementApiException e) {
     if (e instanceof InvalidRequestException) {
       return AuthenticationInteractionManagementStatus.INVALID_REQUEST;
-    } else if (e instanceof PermissionDeniedException) {
+    } else if (e instanceof PermissionDeniedException
+        || e instanceof OrganizationAccessDeniedException) {
       return AuthenticationInteractionManagementStatus.FORBIDDEN;
     } else if (e instanceof ResourceNotFoundException) {
       return AuthenticationInteractionManagementStatus.NOT_FOUND;

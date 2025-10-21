@@ -17,13 +17,10 @@
 package org.idp.server.control_plane.management.federation.handler;
 
 import java.util.Map;
-import java.util.Set;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
-import org.idp.server.control_plane.management.exception.PermissionDeniedException;
 import org.idp.server.control_plane.management.federation.OrgFederationConfigManagementApi;
-import org.idp.server.control_plane.organization.access.OrganizationAccessControlResult;
 import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -89,13 +86,8 @@ public class OrgFederationConfigManagementHandler {
 
       Organization organization = organizationRepository.get(organizationIdentifier);
 
-      OrganizationAccessControlResult accessResult =
-          organizationAccessVerifier.verifyAccess(
-              organization, tenant.identifier(), operator, requiredPermissions);
-
-      if (!accessResult.isSuccess()) {
-        throw new PermissionDeniedException(requiredPermissions, Set.of());
-      }
+      organizationAccessVerifier.verify(
+          organization, tenant.identifier(), operator, requiredPermissions);
 
       return executeService(
           method, tenant, operator, oAuthToken, request, requestAttributes, dryRun);

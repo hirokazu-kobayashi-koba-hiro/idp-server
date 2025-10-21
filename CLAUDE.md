@@ -172,7 +172,9 @@ public class TenantManagementVerifier {
 // TenantManagementResult.toResponse()
 private TenantManagementStatus mapExceptionToStatus(ManagementApiException e) {
   if (e instanceof InvalidRequestException) {
-    return TenantManagementStatus.INVALID_REQUEST;      // 400
+      return TenantManagementStatus.INVALID_REQUEST;      // 400
+  } else if (exception instanceof OrganizationAccessDeniedException) {
+      return TenantManagementStatus.FORBIDDEN; // 403
   } else if (e instanceof PermissionDeniedException) {
     return TenantManagementStatus.FORBIDDEN;            // 403
   } else if (e instanceof ResourceNotFoundException) {

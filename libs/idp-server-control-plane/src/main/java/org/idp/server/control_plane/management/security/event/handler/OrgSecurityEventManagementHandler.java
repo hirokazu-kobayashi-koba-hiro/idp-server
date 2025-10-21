@@ -21,6 +21,7 @@ import org.idp.server.control_plane.management.security.event.OrgSecurityEventMa
 import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
@@ -107,23 +108,13 @@ public class OrgSecurityEventManagementHandler {
       orgTenant = tenantQueryRepository.get(organization.findOrgTenant().tenantIdentifier());
 
       // 3. Organization access verification (4-step verification)
-      org.idp.server.control_plane.organization.access.OrganizationAccessControlResult
-          accessResult =
-              organizationAccessVerifier.verifyAccess(
-                  organization,
-                  tenantIdentifier,
-                  operator,
-                  managementApi.getRequiredPermissions(method));
-
-      if (!accessResult.isSuccess()) {
-        throw new org.idp.server.control_plane.management.exception.PermissionDeniedException(
-            managementApi.getRequiredPermissions(method), java.util.Set.of());
-      }
+      organizationAccessVerifier.verify(
+          organization, tenantIdentifier, operator, managementApi.getRequiredPermissions(method));
 
       // 4. Service selection
       SecurityEventManagementService<?> service = services.get(method);
       if (service == null) {
-        throw new IllegalArgumentException("Unsupported operation method: " + method);
+        throw new UnSupportedException("Unsupported operation method: " + method);
       }
 
       // 5. Tenant retrieval (the actual target tenant)
