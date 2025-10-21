@@ -339,7 +339,7 @@ describe("organization authentication interaction management api", () => {
           Authorization: `Bearer ${accessToken}`
         }
       });
-      expect(notFoundResponse.status).toBe(403);
+      expect(notFoundResponse.status).toBe(404);
     });
   });
 
