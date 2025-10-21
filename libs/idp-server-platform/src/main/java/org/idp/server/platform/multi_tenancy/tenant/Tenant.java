@@ -96,6 +96,10 @@ public class Tenant {
     return type == TenantType.ADMIN;
   }
 
+  public boolean isOrganizer() {
+    return type == TenantType.ORGANIZER;
+  }
+
   public boolean isPublic() {
     return type == TenantType.PUBLIC;
   }

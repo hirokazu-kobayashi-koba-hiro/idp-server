@@ -109,14 +109,14 @@ public class OrgUserManagementHandler {
 
     Tenant tenant = null;
     try {
-      // 1. Get required permissions
-      AdminPermissions permissions = entryService.getRequiredPermissions(operation);
-
-      // 2. Organization and Tenant retrieval
+      // 1. Organization and Tenant retrieval
       Organization organization = organizationRepository.get(organizationIdentifier);
       tenant = tenantQueryRepository.get(tenantIdentifier);
 
-      // 3. Organization-level access control
+      // 2. Get required permissions based on tenant type
+      AdminPermissions permissions = entryService.getRequiredPermissions(operation, tenant);
+
+      // 3. Organization-level access control (includes permission verification)
       organizationAccessVerifier.verify(organization, tenantIdentifier, operator, permissions);
 
       // 4. Service selection

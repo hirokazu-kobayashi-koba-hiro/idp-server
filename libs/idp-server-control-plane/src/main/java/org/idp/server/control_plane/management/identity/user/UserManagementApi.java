@@ -28,28 +28,57 @@ import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.UserQueries;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 
 public interface UserManagementApi {
 
-  default AdminPermissions getRequiredPermissions(String method) {
+  default AdminPermissions getRequiredPermissions(String method, Tenant tenant) {
     Map<String, AdminPermissions> map = new HashMap<>();
-    map.put("create", new AdminPermissions(Set.of(DefaultAdminPermission.USER_CREATE)));
-    map.put("findList", new AdminPermissions(Set.of(DefaultAdminPermission.USER_READ)));
-    map.put("get", new AdminPermissions(Set.of(DefaultAdminPermission.USER_READ)));
-    map.put("update", new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
-    map.put("patch", new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
-    map.put("updatePassword", new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
-    map.put("updateRoles", new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
-    map.put("updatePermissions", new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
-    map.put(
-        "updateTenantAssignments",
-        new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
-    map.put(
-        "updateOrganizationAssignments",
-        new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
-    map.put("delete", new AdminPermissions(Set.of(DefaultAdminPermission.USER_DELETE)));
+
+    // Determine permission type based on tenant type
+    if (tenant.isOrganizer() || tenant.isAdmin()) {
+      // ADMIN/ORGANIZER tenants require ADMIN_USER_* permissions
+      map.put("create", new AdminPermissions(Set.of(DefaultAdminPermission.ADMIN_USER_CREATE)));
+      map.put("findList", new AdminPermissions(Set.of(DefaultAdminPermission.ADMIN_USER_READ)));
+      map.put("get", new AdminPermissions(Set.of(DefaultAdminPermission.ADMIN_USER_READ)));
+      map.put("update", new AdminPermissions(Set.of(DefaultAdminPermission.ADMIN_USER_UPDATE)));
+      map.put("patch", new AdminPermissions(Set.of(DefaultAdminPermission.ADMIN_USER_UPDATE)));
+      map.put(
+          "updatePassword", new AdminPermissions(Set.of(DefaultAdminPermission.ADMIN_USER_UPDATE)));
+      map.put(
+          "updateRoles", new AdminPermissions(Set.of(DefaultAdminPermission.ADMIN_USER_UPDATE)));
+      map.put(
+          "updatePermissions",
+          new AdminPermissions(Set.of(DefaultAdminPermission.ADMIN_USER_UPDATE)));
+      map.put(
+          "updateTenantAssignments",
+          new AdminPermissions(Set.of(DefaultAdminPermission.ADMIN_USER_UPDATE)));
+      map.put(
+          "updateOrganizationAssignments",
+          new AdminPermissions(Set.of(DefaultAdminPermission.ADMIN_USER_UPDATE)));
+      map.put("delete", new AdminPermissions(Set.of(DefaultAdminPermission.ADMIN_USER_DELETE)));
+    } else {
+      // PUBLIC tenants require USER_* permissions
+      map.put("create", new AdminPermissions(Set.of(DefaultAdminPermission.USER_CREATE)));
+      map.put("findList", new AdminPermissions(Set.of(DefaultAdminPermission.USER_READ)));
+      map.put("get", new AdminPermissions(Set.of(DefaultAdminPermission.USER_READ)));
+      map.put("update", new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
+      map.put("patch", new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
+      map.put("updatePassword", new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
+      map.put("updateRoles", new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
+      map.put(
+          "updatePermissions", new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
+      map.put(
+          "updateTenantAssignments",
+          new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
+      map.put(
+          "updateOrganizationAssignments",
+          new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
+      map.put("delete", new AdminPermissions(Set.of(DefaultAdminPermission.USER_DELETE)));
+    }
+
     AdminPermissions adminPermissions = map.get(method);
     if (adminPermissions == null) {
       throw new UnSupportedException("Method " + method + " not supported");
