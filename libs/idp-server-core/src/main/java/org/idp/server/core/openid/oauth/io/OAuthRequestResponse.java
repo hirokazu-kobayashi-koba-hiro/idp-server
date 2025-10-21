@@ -72,8 +72,12 @@ public class OAuthRequestResponse {
     this.contents = Map.of("error", error.value(), "error_description", errorDescription.value());
   }
 
-  public OAuthRequestResponse(OAuthRequestStatus status, AuthorizationResponse response) {
+  public OAuthRequestResponse(
+      OAuthRequestStatus status, OAuthRequestContext context, AuthorizationResponse response) {
     this.status = status;
+    this.authorizationRequest = context.authorizationRequest();
+    this.authorizationServerConfiguration = context.serverConfiguration();
+    this.clientConfiguration = context.clientConfiguration();
     this.response = response;
     this.redirectUri = response.redirectUriValue();
   }
@@ -140,8 +144,16 @@ public class OAuthRequestResponse {
     return authorizationServerConfiguration.oauthAuthorizationRequestExpiresIn();
   }
 
-  public boolean isOK() {
+  public boolean isSuccess() {
     return status.isSuccess();
+  }
+
+  public boolean isRequiredInteraction() {
+    return status.isSuccess() && !status.isNoInteractionOK();
+  }
+
+  public boolean isNoInteractionOK() {
+    return status.isNoInteractionOK();
   }
 
   // FIXME bad code

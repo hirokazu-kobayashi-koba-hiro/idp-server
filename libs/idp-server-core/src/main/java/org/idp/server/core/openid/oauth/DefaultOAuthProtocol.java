@@ -124,7 +124,7 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
         OAuthAuthorizeRequest oAuthAuthorizeRequest = context.createOAuthAuthorizeRequest();
         AuthorizationResponse response =
             authorizeHandler.handle(oAuthAuthorizeRequest, oAuthSessionDelegate);
-        return new OAuthRequestResponse(OAuthRequestStatus.NO_INTERACTION_OK, response);
+        return new OAuthRequestResponse(OAuthRequestStatus.NO_INTERACTION_OK, context, response);
       }
 
       return context.createResponse();

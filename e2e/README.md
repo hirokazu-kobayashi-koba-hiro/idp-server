@@ -4,10 +4,11 @@ This directory contains end-to-end tests for the idp-server project.
 
 ## Test Categories
 
-The E2E tests are organized into three main categories:
+The E2E tests are organized into four main categories:
 
 - **📘 spec/** - Specification compliance tests (RFC and standard protocol verification)
-- **📕 scenario/** - Real-world integration scenario tests  
+- **📕 scenario/** - Real-world integration scenario tests
+- **🔒 security/** - Security vulnerability and attack prevention tests
 - **🐒 monkey/** - Chaos testing and edge case validation
 
 ## Quick Start
@@ -44,10 +45,11 @@ The E2E tests are organized into three main categories:
    ```bash
    # Run all tests
    npm test
-   
+
    # Run specific test category
    npm test spec/
    npm test scenario/
+   npm test security/
    npm test monkey/
    
    # Run with coverage
@@ -110,6 +112,7 @@ src/
 ├── tests/
 │   ├── spec/      # RFC compliance tests
 │   ├── scenario/  # Integration scenario tests
+│   ├── security/  # Security vulnerability tests
 │   └── monkey/    # Chaos/edge case tests
 └── user/          # User management helpers
 ```
@@ -132,7 +135,11 @@ const stagingConfig = createServerConfig('staging-tenant', 'https://staging.exam
 
 ### Adding New Tests
 
-1. Choose the appropriate category (spec/, scenario/, or monkey/)
+1. Choose the appropriate category:
+   - **spec/** - RFC/standard compliance tests
+   - **scenario/** - Real-world integration tests
+   - **security/** - Security vulnerability and attack prevention tests
+   - **monkey/** - Chaos/edge case tests
 2. Follow existing patterns for imports and test structure
 3. Use the shared configuration from `testConfig.js`
 4. Add appropriate error handling and cleanup
