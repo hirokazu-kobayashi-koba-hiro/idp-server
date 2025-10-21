@@ -17,25 +17,19 @@
 package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.security.hook_result.SecurityEventHookManagementApi;
+import org.idp.server.control_plane.management.security.hook_result.handler.*;
 import org.idp.server.control_plane.management.security.hook_result.io.SecurityEventHookManagementResponse;
-import org.idp.server.control_plane.management.security.hook_result.io.SecurityEventHookManagementStatus;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
-import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.hook.*;
-import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookResultCommandRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookResultQueryRepository;
@@ -44,13 +38,8 @@ import org.idp.server.platform.type.RequestAttributes;
 @Transaction
 public class SecurityEventHookManagementEntryService implements SecurityEventHookManagementApi {
 
-  TenantQueryRepository tenantQueryRepository;
-  SecurityEventHookResultQueryRepository securityEventHookResultRepository;
-  SecurityEventHookResultCommandRepository securityEventHookResultCommandRepository;
-  SecurityEventHooks securityEventHooks;
-  SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository;
-  AuditLogPublisher auditLogPublisher;
-  LoggerWrapper log = LoggerWrapper.getLogger(SecurityEventHookManagementEntryService.class);
+  private final SecurityEventHookManagementHandler handler;
+  private final AuditLogPublisher auditLogPublisher;
 
   public SecurityEventHookManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
@@ -59,12 +48,20 @@ public class SecurityEventHookManagementEntryService implements SecurityEventHoo
       SecurityEventHooks securityEventHooks,
       SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository,
       AuditLogPublisher auditLogPublisher) {
-    this.tenantQueryRepository = tenantQueryRepository;
-    this.securityEventHookResultRepository = securityEventHookResultQueryRepository;
-    this.securityEventHookResultCommandRepository = securityEventHookResultCommandRepository;
-    this.securityEventHooks = securityEventHooks;
-    this.securityEventHookConfigurationQueryRepository =
-        securityEventHookConfigurationQueryRepository;
+
+    Map<String, SecurityEventHookManagementService<?>> services = new HashMap<>();
+    services.put(
+        "findList", new SecurityEventHookFindListService(securityEventHookResultQueryRepository));
+    services.put("get", new SecurityEventHookFindService(securityEventHookResultQueryRepository));
+    services.put(
+        "retry",
+        new SecurityEventHookRetryService(
+            securityEventHookResultQueryRepository,
+            securityEventHookResultCommandRepository,
+            securityEventHooks,
+            securityEventHookConfigurationQueryRepository));
+
+    this.handler = new SecurityEventHookManagementHandler(services, this, tenantQueryRepository);
     this.auditLogPublisher = auditLogPublisher;
   }
 
@@ -76,52 +73,35 @@ public class SecurityEventHookManagementEntryService implements SecurityEventHoo
       OAuthToken oAuthToken,
       SecurityEventHookResultQueries queries,
       RequestAttributes requestAttributes) {
-    AdminPermissions permissions = getRequiredPermissions("findList");
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    SecurityEventHookManagementResult result =
+        handler.handle(
+            "findList", tenantIdentifier, operator, oAuthToken, queries, requestAttributes);
+
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "SecurityEventHookManagementApi.findList",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse();
+    }
+
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "SecurityEventHookManagementApi.findList",
             "findList",
-            tenant,
+            result.tenant(),
             operator,
             oAuthToken,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new SecurityEventHookManagementResponse(
-          SecurityEventHookManagementStatus.FORBIDDEN, response);
-    }
-
-    long totalCount = securityEventHookResultRepository.findTotalCount(tenant, queries);
-    if (totalCount == 0) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("list", List.of());
-      response.put("total_count", 0);
-      response.put("limit", queries.limit());
-      response.put("offset", queries.offset());
-      return new SecurityEventHookManagementResponse(
-          SecurityEventHookManagementStatus.OK, response);
-    }
-
-    List<SecurityEventHookResult> events =
-        securityEventHookResultRepository.findList(tenant, queries);
-
-    Map<String, Object> response = new HashMap<>();
-    response.put("list", events.stream().map(SecurityEventHookResult::toMap).toList());
-    response.put("total_count", totalCount);
-    response.put("limit", queries.limit());
-    response.put("offset", queries.offset());
-
-    return new SecurityEventHookManagementResponse(SecurityEventHookManagementStatus.OK, response);
+    return result.toResponse();
   }
 
   @Override
@@ -132,41 +112,35 @@ public class SecurityEventHookManagementEntryService implements SecurityEventHoo
       OAuthToken oAuthToken,
       SecurityEventHookResultIdentifier identifier,
       RequestAttributes requestAttributes) {
-    AdminPermissions permissions = getRequiredPermissions("get");
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    SecurityEventHookResult hookResult = securityEventHookResultRepository.find(tenant, identifier);
+    SecurityEventHookManagementResult result =
+        handler.handle(
+            "get", tenantIdentifier, operator, oAuthToken, identifier, requestAttributes);
+
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "SecurityEventHookManagementApi.get",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse();
+    }
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "SecurityEventHookManagementApi.get",
             "get",
-            tenant,
+            result.tenant(),
             operator,
             oAuthToken,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new SecurityEventHookManagementResponse(
-          SecurityEventHookManagementStatus.FORBIDDEN, response);
-    }
-
-    if (!hookResult.exists()) {
-      return new SecurityEventHookManagementResponse(
-          SecurityEventHookManagementStatus.NOT_FOUND, Map.of());
-    }
-
-    return new SecurityEventHookManagementResponse(
-        SecurityEventHookManagementStatus.OK, hookResult.toMap());
+    return result.toResponse();
   }
 
   /**
@@ -184,57 +158,34 @@ public class SecurityEventHookManagementEntryService implements SecurityEventHoo
       SecurityEventHookResultIdentifier identifier,
       RequestAttributes requestAttributes) {
 
-    AdminPermissions permissions = getRequiredPermissions("retry");
+    SecurityEventHookManagementResult result =
+        handler.handle(
+            "retry", tenantIdentifier, operator, oAuthToken, identifier, requestAttributes);
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    SecurityEventHookResult previousHookResult =
-        securityEventHookResultRepository.find(tenant, identifier);
-
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new SecurityEventHookManagementResponse(
-          SecurityEventHookManagementStatus.FORBIDDEN, response);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "SecurityEventHookManagementApi.retry",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse();
     }
-
-    if (!previousHookResult.exists()) {
-      return new SecurityEventHookManagementResponse(
-          SecurityEventHookManagementStatus.NOT_FOUND, Map.of());
-    }
-
-    SecurityEventHookType hookType = previousHookResult.type();
-    SecurityEvent securityEvent = previousHookResult.securityEvent();
-    SecurityEventHook securityEventHook = securityEventHooks.get(hookType);
-
-    SecurityEventHookConfiguration securityEventHookConfiguration =
-        securityEventHookConfigurationQueryRepository.find(tenant, hookType.name());
-    SecurityEventHookResult securityEventHookResult =
-        securityEventHook.execute(tenant, securityEvent, securityEventHookConfiguration);
-
-    SecurityEventHookStatus retryStatus =
-        securityEventHookResult.isSuccess()
-            ? SecurityEventHookStatus.RETRY_SUCCESS
-            : SecurityEventHookStatus.RETRY_FAILURE;
-    securityEventHookResultCommandRepository.updateStatus(tenant, previousHookResult, retryStatus);
-    securityEventHookResultCommandRepository.register(tenant, securityEventHookResult);
 
     AuditLog auditLog =
-        AuditLogCreator.createOnRead(
+        AuditLogCreator.createOnDeletion(
             "SecurityEventHookManagementApi.retry",
             "retry",
-            tenant,
+            result.tenant(),
             operator,
             oAuthToken,
+            Map.of("hook_result_identifier", identifier.value()),
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    return new SecurityEventHookManagementResponse(
-        SecurityEventHookManagementStatus.OK, securityEventHookResult.toMap());
+    return result.toResponse();
   }
 }

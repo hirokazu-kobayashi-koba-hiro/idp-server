@@ -35,7 +35,7 @@ describe("user management api", () => {
           "raw_password": "test@01234"
         }
       });
-      console.log(createResponse.headers);
+      console.log(createResponse.data);
       expect(createResponse.status).toBe(201);
       expect(createResponse.data).toHaveProperty("result");
 
@@ -189,7 +189,7 @@ describe("user management api", () => {
       });
       console.log("updateRoles response:", updateRolesResponse.data);
       expect(updateRolesResponse.status).toBe(200);
-      expect(updateRolesResponse.data).toHaveProperty("roles");
+      expect(updateRolesResponse.data.result).toHaveProperty("roles");
 
 
       // Test tenant assignments update
@@ -205,7 +205,7 @@ describe("user management api", () => {
       });
       console.log("updateTenantAssignments response:", updateTenantAssignmentsResponse.data);
       expect(updateTenantAssignmentsResponse.status).toBe(200);
-      expect(updateTenantAssignmentsResponse.data).toHaveProperty("current_tenant_id");
+      expect(updateTenantAssignmentsResponse.data.result).toHaveProperty("current_tenant_id");
 
       // Test organization assignments update with valid UUIDs
       const validOrgId = "9eb8eb8c-2615-4604-809f-5cae1c00a462";
@@ -222,7 +222,7 @@ describe("user management api", () => {
       });
       console.log("updateOrgAssignments response:", updateOrgAssignmentsResponse.data);
       expect(updateOrgAssignmentsResponse.status).toBe(200);
-      expect(updateOrgAssignmentsResponse.data).toHaveProperty("current_organization_id");
+      expect(updateOrgAssignmentsResponse.data.result).toHaveProperty("current_organization_id");
 
       // Verify all updates by getting the user
       const verifyResponse = await get({

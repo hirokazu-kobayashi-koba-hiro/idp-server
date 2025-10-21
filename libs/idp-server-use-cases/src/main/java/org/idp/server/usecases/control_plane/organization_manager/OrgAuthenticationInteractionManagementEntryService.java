@@ -17,17 +17,12 @@
 package org.idp.server.usecases.control_plane.organization_manager;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.authentication.interaction.OrgAuthenticationInteractionManagementApi;
+import org.idp.server.control_plane.management.authentication.interaction.handler.*;
 import org.idp.server.control_plane.management.authentication.interaction.io.AuthenticationInteractionManagementResponse;
-import org.idp.server.control_plane.management.authentication.interaction.io.AuthenticationInteractionManagementStatus;
-import org.idp.server.control_plane.organization.access.OrganizationAccessControlResult;
-import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
-import org.idp.server.core.openid.authentication.interaction.AuthenticationInteraction;
 import org.idp.server.core.openid.authentication.interaction.AuthenticationInteractionQueries;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
 import org.idp.server.core.openid.identity.User;
@@ -36,10 +31,8 @@ import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
@@ -72,14 +65,13 @@ import org.idp.server.platform.type.RequestAttributes;
 public class OrgAuthenticationInteractionManagementEntryService
     implements OrgAuthenticationInteractionManagementApi {
 
-  TenantQueryRepository tenantQueryRepository;
-  OrganizationRepository organizationRepository;
-  AuthenticationInteractionQueryRepository authenticationInteractionQueryRepository;
   AuditLogPublisher auditLogPublisher;
-  OrganizationAccessVerifier organizationAccessVerifier;
 
   LoggerWrapper log =
       LoggerWrapper.getLogger(OrgAuthenticationInteractionManagementEntryService.class);
+
+  // Handler/Service pattern (organization-level)
+  private OrgAuthenticationInteractionManagementHandler handler;
 
   /**
    * Creates a new organization authentication interaction management entry service.
@@ -94,11 +86,29 @@ public class OrgAuthenticationInteractionManagementEntryService
       OrganizationRepository organizationRepository,
       AuthenticationInteractionQueryRepository authenticationInteractionQueryRepository,
       AuditLogPublisher auditLogPublisher) {
-    this.tenantQueryRepository = tenantQueryRepository;
-    this.organizationRepository = organizationRepository;
-    this.authenticationInteractionQueryRepository = authenticationInteractionQueryRepository;
     this.auditLogPublisher = auditLogPublisher;
-    this.organizationAccessVerifier = new OrganizationAccessVerifier();
+
+    this.handler =
+        createHandler(
+            authenticationInteractionQueryRepository,
+            tenantQueryRepository,
+            organizationRepository);
+  }
+
+  private OrgAuthenticationInteractionManagementHandler createHandler(
+      AuthenticationInteractionQueryRepository authenticationInteractionQueryRepository,
+      TenantQueryRepository tenantQueryRepository,
+      OrganizationRepository organizationRepository) {
+
+    Map<String, AuthenticationInteractionManagementService<?>> services = new HashMap<>();
+    services.put(
+        "findList",
+        new AuthenticationInteractionFindListService(authenticationInteractionQueryRepository));
+    services.put(
+        "get", new AuthenticationInteractionFindService(authenticationInteractionQueryRepository));
+
+    return new OrgAuthenticationInteractionManagementHandler(
+        services, this, tenantQueryRepository, organizationRepository);
   }
 
   @Transaction(readOnly = true)
@@ -109,55 +119,43 @@ public class OrgAuthenticationInteractionManagementEntryService
       OAuthToken oAuthToken,
       AuthenticationInteractionQueries queries,
       RequestAttributes requestAttributes) {
-    AdminPermissions permissions = getRequiredPermissions("findList");
 
-    // Organization access verification
-    Organization organization = organizationRepository.get(organizationIdentifier);
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
+    // Delegate to Handler/Service pattern (Handler performs all access control)
+    AuthenticationInteractionManagementResult result =
+        handler.handle(
+            "findList",
+            organizationIdentifier,
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            queries,
+            requestAttributes);
 
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", "access_denied");
-      errorResponse.put("error_description", accessResult.getReason());
-      return new AuthenticationInteractionManagementResponse(
-          AuthenticationInteractionManagementStatus.FORBIDDEN, errorResponse);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "OrgAuthenticationInteractionManagementApi.findList",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse();
     }
 
-    // Use existing system-level logic with target tenant
-    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
-
-    long totalCount =
-        authenticationInteractionQueryRepository.findTotalCount(targetTenant, queries);
-    if (totalCount == 0) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("list", List.of());
-      response.put("total_count", 0);
-      response.put("limit", queries.limit());
-      response.put("offset", queries.offset());
-      return new AuthenticationInteractionManagementResponse(
-          AuthenticationInteractionManagementStatus.OK, response);
-    }
-
-    List<AuthenticationInteraction> interactions =
-        authenticationInteractionQueryRepository.findList(targetTenant, queries);
-
+    // Record audit log (read operation)
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "OrgAuthenticationInteractionManagementApi.findList",
             "findList",
-            targetTenant,
+            result.tenant(),
             operator,
             oAuthToken,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    Map<String, Object> response = new HashMap<>();
-    response.put("list", interactions.stream().map(AuthenticationInteraction::toMap).toList());
-    response.put("total_count", totalCount);
-    return new AuthenticationInteractionManagementResponse(
-        AuthenticationInteractionManagementStatus.OK, response);
+    return result.toResponse();
   }
 
   @Override
@@ -170,47 +168,44 @@ public class OrgAuthenticationInteractionManagementEntryService
       AuthenticationTransactionIdentifier identifier,
       String type,
       RequestAttributes requestAttributes) {
-    AdminPermissions permissions = getRequiredPermissions("get");
 
-    // Organization access verification
-    Organization organization = organizationRepository.get(organizationIdentifier);
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
+    // Delegate to Handler/Service pattern (Handler performs all access control)
+    AuthenticationInteractionFindRequest request =
+        new AuthenticationInteractionFindRequest(identifier, type);
+    AuthenticationInteractionManagementResult result =
+        handler.handle(
+            "get",
+            organizationIdentifier,
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            request,
+            requestAttributes);
 
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", "access_denied");
-      errorResponse.put("error_description", accessResult.getReason());
-      return new AuthenticationInteractionManagementResponse(
-          AuthenticationInteractionManagementStatus.FORBIDDEN, errorResponse);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "OrgAuthenticationInteractionManagementApi.get",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse();
     }
 
-    // Use existing system-level logic with target tenant
-    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
-
-    AuthenticationInteraction interaction =
-        authenticationInteractionQueryRepository.find(targetTenant, identifier, type);
-
-    if (!interaction.exists()) {
-      Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", "not_found");
-      errorResponse.put("error_description", "Authentication interaction not found");
-      return new AuthenticationInteractionManagementResponse(
-          AuthenticationInteractionManagementStatus.NOT_FOUND, errorResponse);
-    }
-
+    // Record audit log (read operation)
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "OrgAuthenticationInteractionManagementApi.get",
             "get",
-            targetTenant,
+            result.tenant(),
             operator,
             oAuthToken,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    return new AuthenticationInteractionManagementResponse(
-        AuthenticationInteractionManagementStatus.OK, interaction.toMap());
+    return result.toResponse();
   }
 }

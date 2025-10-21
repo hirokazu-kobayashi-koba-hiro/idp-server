@@ -19,24 +19,18 @@ package org.idp.server.usecases.control_plane.system_manager;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.oidc.authorization.AuthorizationServerManagementApi;
 import org.idp.server.control_plane.management.oidc.authorization.AuthorizationServerUpdateContext;
-import org.idp.server.control_plane.management.oidc.authorization.AuthorizationServerUpdateContextCreator;
+import org.idp.server.control_plane.management.oidc.authorization.handler.*;
 import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerManagementResponse;
-import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerManagementStatus;
 import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerUpdateRequest;
-import org.idp.server.control_plane.management.oidc.authorization.validator.AuthorizationServerRequestValidationResult;
-import org.idp.server.control_plane.management.oidc.authorization.validator.AuthorizationServerRequestValidator;
 import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -45,25 +39,24 @@ import org.idp.server.platform.type.RequestAttributes;
 @Transaction
 public class AuthorizationServerManagementEntryService implements AuthorizationServerManagementApi {
 
-  TenantQueryRepository tenantQueryRepository;
-  AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
-  AuthorizationServerConfigurationCommandRepository
-      authorizationServerConfigurationCommandRepository;
-  AuditLogPublisher auditLogPublisher;
-  LoggerWrapper log = LoggerWrapper.getLogger(AuthorizationServerManagementEntryService.class);
+  private final AuthorizationServerManagementHandler handler;
+  private final TenantQueryRepository tenantQueryRepository;
+  private final AuditLogPublisher auditLogPublisher;
 
   public AuthorizationServerManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
-      AuthorizationServerConfigurationQueryRepository
-          authorizationServerConfigurationQueryRepository,
-      AuthorizationServerConfigurationCommandRepository
-          authorizationServerConfigurationCommandRepository,
+      AuthorizationServerConfigurationQueryRepository queryRepository,
+      AuthorizationServerConfigurationCommandRepository commandRepository,
       AuditLogPublisher auditLogPublisher) {
+
+    Map<String, AuthorizationServerManagementService<?>> services = new HashMap<>();
+    services.put("get", new AuthorizationServerFindService(queryRepository));
+    services.put(
+        "update", new AuthorizationServerUpdateService(queryRepository, commandRepository));
+
+    this.handler = new AuthorizationServerManagementHandler(services, this);
+
     this.tenantQueryRepository = tenantQueryRepository;
-    this.authorizationServerConfigurationQueryRepository =
-        authorizationServerConfigurationQueryRepository;
-    this.authorizationServerConfigurationCommandRepository =
-        authorizationServerConfigurationCommandRepository;
     this.auditLogPublisher = auditLogPublisher;
   }
 
@@ -75,11 +68,10 @@ public class AuthorizationServerManagementEntryService implements AuthorizationS
       OAuthToken oAuthToken,
       RequestAttributes requestAttributes) {
 
-    AdminPermissions permissions = getRequiredPermissions("get");
-
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    AuthorizationServerConfiguration authorizationServerConfiguration =
-        authorizationServerConfigurationQueryRepository.getWithDisabled(tenant, true);
+
+    AuthorizationServerManagementResult result =
+        handler.handle("get", tenant, operator, oAuthToken, null, requestAttributes, false);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
@@ -91,21 +83,7 @@ public class AuthorizationServerManagementEntryService implements AuthorizationS
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new AuthorizationServerManagementResponse(
-          AuthorizationServerManagementStatus.FORBIDDEN, response);
-    }
-
-    return new AuthorizationServerManagementResponse(
-        AuthorizationServerManagementStatus.OK, authorizationServerConfiguration.toMap());
+    return result.toResponse(false);
   }
 
   @Override
@@ -117,20 +95,25 @@ public class AuthorizationServerManagementEntryService implements AuthorizationS
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    AdminPermissions permissions = getRequiredPermissions("update");
-
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    AuthorizationServerConfiguration before =
-        authorizationServerConfigurationQueryRepository.getWithDisabled(tenant, true);
 
-    AuthorizationServerRequestValidator validator =
-        new AuthorizationServerRequestValidator(request, dryRun);
-    AuthorizationServerRequestValidationResult validate = validator.validate();
+    AuthorizationServerManagementResult result =
+        handler.handle("update", tenant, operator, oAuthToken, request, requestAttributes, dryRun);
 
-    AuthorizationServerUpdateContextCreator contextCreator =
-        new AuthorizationServerUpdateContextCreator(tenant, before, request, dryRun);
-    AuthorizationServerUpdateContext context = contextCreator.create();
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "AuthorizationServerManagementApi.update",
+              tenant,
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(dryRun);
+    }
 
+    AuthorizationServerUpdateContext context = (AuthorizationServerUpdateContext) result.context();
     AuditLog auditLog =
         AuditLogCreator.createOnUpdate(
             "AuthorizationServerManagementApi.update",
@@ -141,29 +124,6 @@ public class AuthorizationServerManagementEntryService implements AuthorizationS
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new AuthorizationServerManagementResponse(
-          AuthorizationServerManagementStatus.FORBIDDEN, response);
-    }
-
-    if (!validate.isValid()) {
-      return validate.errorResponse();
-    }
-
-    if (dryRun) {
-      return context.toResponse();
-    }
-
-    authorizationServerConfigurationCommandRepository.update(tenant, context.after());
-
-    return context.toResponse();
+    return result.toResponse(dryRun);
   }
 }

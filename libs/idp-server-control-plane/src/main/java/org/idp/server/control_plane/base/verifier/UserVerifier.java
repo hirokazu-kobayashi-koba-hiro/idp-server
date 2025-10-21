@@ -16,8 +16,7 @@
 
 package org.idp.server.control_plane.base.verifier;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -29,23 +28,22 @@ public class UserVerifier {
     this.userQueryRepository = userQueryRepository;
   }
 
-  public VerificationResult verify(Tenant tenant, User user) {
-    List<String> errors = new ArrayList<>();
+  public void verify(Tenant tenant, User user) {
+    throwExceptionIfUserIdAlreadyExists(tenant, user);
+    throwExceptionIfUserEmailAlreadyExists(tenant, user);
+  }
 
+  void throwExceptionIfUserIdAlreadyExists(Tenant tenant, User user) {
     User byId = userQueryRepository.findById(tenant, user.userIdentifier());
     if (byId.exists()) {
-      errors.add("User id is already exists");
+      throw new InvalidRequestException("User id is already exists");
     }
+  }
 
+  void throwExceptionIfUserEmailAlreadyExists(Tenant tenant, User user) {
     User byEmail = userQueryRepository.findByEmail(tenant, user.email(), user.providerId());
     if (byEmail.exists()) {
-      errors.add("User email is already exists");
+      throw new InvalidRequestException("User email is already exists");
     }
-
-    if (!errors.isEmpty()) {
-      return VerificationResult.failure(errors);
-    }
-
-    return VerificationResult.success();
   }
 }

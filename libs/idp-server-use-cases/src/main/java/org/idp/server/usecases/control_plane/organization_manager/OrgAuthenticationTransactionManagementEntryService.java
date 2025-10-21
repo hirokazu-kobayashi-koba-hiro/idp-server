@@ -17,16 +17,15 @@
 package org.idp.server.usecases.control_plane.organization_manager;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.authentication.transaction.OrgAuthenticationTransactionManagementApi;
+import org.idp.server.control_plane.management.authentication.transaction.handler.AuthenticationTransactionFindListService;
+import org.idp.server.control_plane.management.authentication.transaction.handler.AuthenticationTransactionFindService;
+import org.idp.server.control_plane.management.authentication.transaction.handler.AuthenticationTransactionManagementResult;
+import org.idp.server.control_plane.management.authentication.transaction.handler.AuthenticationTransactionManagementService;
+import org.idp.server.control_plane.management.authentication.transaction.handler.OrgAuthenticationTransactionManagementHandler;
 import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionManagementResponse;
-import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionManagementStatus;
-import org.idp.server.control_plane.organization.access.OrganizationAccessControlResult;
-import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
-import org.idp.server.core.openid.authentication.AuthenticationTransaction;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionQueries;
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionQueryRepository;
@@ -36,7 +35,6 @@ import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -64,7 +62,7 @@ import org.idp.server.platform.type.RequestAttributes;
  * audit logging for organization-level authentication transaction monitoring operations.
  *
  * @see OrgAuthenticationTransactionManagementApi
- * @see OrganizationAccessVerifier
+ * @see OrgAuthenticationTransactionManagementHandler
  * @see
  *     org.idp.server.usecases.control_plane.system_manager.AuthenticationTransactionManagementEntryService
  */
@@ -72,35 +70,54 @@ import org.idp.server.platform.type.RequestAttributes;
 public class OrgAuthenticationTransactionManagementEntryService
     implements OrgAuthenticationTransactionManagementApi {
 
-  TenantQueryRepository tenantQueryRepository;
-  OrganizationRepository organizationRepository;
-  AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository;
   AuditLogPublisher auditLogPublisher;
-  OrganizationAccessVerifier organizationAccessVerifier;
-
+  TenantQueryRepository tenantQueryRepository;
   LoggerWrapper log =
       LoggerWrapper.getLogger(OrgAuthenticationTransactionManagementEntryService.class);
+
+  // Handler/Service pattern
+  private OrgAuthenticationTransactionManagementHandler handler;
 
   /**
    * Creates a new organization authentication transaction management entry service.
    *
+   * @param authenticationTransactionQueryRepository the authentication transaction query repository
    * @param tenantQueryRepository the tenant query repository
    * @param organizationRepository the organization repository
-   * @param authenticationTransactionQueryRepository the authentication transaction query repository
    * @param auditLogPublisher the audit log publisher
    */
   public OrgAuthenticationTransactionManagementEntryService(
+      AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
       TenantQueryRepository tenantQueryRepository,
       OrganizationRepository organizationRepository,
-      AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
       AuditLogPublisher auditLogPublisher) {
-    this.tenantQueryRepository = tenantQueryRepository;
-    this.organizationRepository = organizationRepository;
-    this.authenticationTransactionQueryRepository = authenticationTransactionQueryRepository;
     this.auditLogPublisher = auditLogPublisher;
-    this.organizationAccessVerifier = new OrganizationAccessVerifier();
+    this.tenantQueryRepository = tenantQueryRepository;
+
+    this.handler =
+        createHandler(
+            authenticationTransactionQueryRepository,
+            tenantQueryRepository,
+            organizationRepository);
   }
 
+  private OrgAuthenticationTransactionManagementHandler createHandler(
+      AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
+      TenantQueryRepository tenantQueryRepository,
+      OrganizationRepository organizationRepository) {
+
+    Map<String, AuthenticationTransactionManagementService<?>> services = new HashMap<>();
+    services.put(
+        "findList",
+        new AuthenticationTransactionFindListService(authenticationTransactionQueryRepository));
+    services.put(
+        "get", new AuthenticationTransactionFindService(authenticationTransactionQueryRepository));
+
+    return new OrgAuthenticationTransactionManagementHandler(
+        services, this, tenantQueryRepository, organizationRepository);
+  }
+
+  @Override
   @Transaction(readOnly = true)
   public AuthenticationTransactionManagementResponse findList(
       OrganizationIdentifier organizationIdentifier,
@@ -109,69 +126,46 @@ public class OrgAuthenticationTransactionManagementEntryService
       OAuthToken oAuthToken,
       AuthenticationTransactionQueries queries,
       RequestAttributes requestAttributes) {
-    AdminPermissions permissions = getRequiredPermissions("findList");
 
-    // Organization access verification
-    Organization organization = organizationRepository.get(organizationIdentifier);
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
+    // Delegate to Handler/Service pattern
+    AuthenticationTransactionManagementResult result =
+        handler.handle(
+            "findList",
+            organizationIdentifier,
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            queries,
+            requestAttributes,
+            false);
 
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", "access_denied");
-      errorResponse.put("error_description", accessResult.getReason());
-      return new AuthenticationTransactionManagementResponse(
-          AuthenticationTransactionManagementStatus.FORBIDDEN, errorResponse);
-    }
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    // Use existing system-level logic with target tenant
-    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
-
-    long totalCount =
-        authenticationTransactionQueryRepository.findTotalCount(targetTenant, queries);
-    if (totalCount == 0) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("list", List.of());
-      response.put("total_count", 0);
-      response.put("limit", queries.limit());
-      response.put("offset", queries.offset());
-
+    if (result.hasException()) {
       AuditLog auditLog =
-          AuditLogCreator.createOnRead(
+          AuditLogCreator.createOnError(
               "OrgAuthenticationTransactionManagementApi.findList",
-              "findList",
-              targetTenant,
+              tenant,
               operator,
               oAuthToken,
+              result.getException(),
               requestAttributes);
       auditLogPublisher.publish(auditLog);
-
-      return new AuthenticationTransactionManagementResponse(
-          AuthenticationTransactionManagementStatus.OK, response);
+      return result.toResponse(false);
     }
 
-    List<AuthenticationTransaction> transactions =
-        authenticationTransactionQueryRepository.findList(targetTenant, queries);
-
+    // Record audit log (read operation)
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "OrgAuthenticationTransactionManagementApi.findList",
             "findList",
-            targetTenant,
+            tenant,
             operator,
             oAuthToken,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    Map<String, Object> response = new HashMap<>();
-    response.put(
-        "list", transactions.stream().map(AuthenticationTransaction::toRequestMap).toList());
-    response.put("total_count", totalCount);
-    response.put("limit", queries.limit());
-    response.put("offset", queries.offset());
-    return new AuthenticationTransactionManagementResponse(
-        AuthenticationTransactionManagementStatus.OK, response);
+    return result.toResponse(false);
   }
 
   @Override
@@ -183,47 +177,45 @@ public class OrgAuthenticationTransactionManagementEntryService
       OAuthToken oAuthToken,
       AuthenticationTransactionIdentifier identifier,
       RequestAttributes requestAttributes) {
-    AdminPermissions permissions = getRequiredPermissions("get");
 
-    // Organization access verification
-    Organization organization = organizationRepository.get(organizationIdentifier);
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
+    // Delegate to Handler/Service pattern
+    AuthenticationTransactionManagementResult result =
+        handler.handle(
+            "get",
+            organizationIdentifier,
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            identifier,
+            requestAttributes,
+            false);
 
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", "access_denied");
-      errorResponse.put("error_description", accessResult.getReason());
-      return new AuthenticationTransactionManagementResponse(
-          AuthenticationTransactionManagementStatus.FORBIDDEN, errorResponse);
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "OrgAuthenticationTransactionManagementApi.get",
+              tenant,
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(false);
     }
 
-    // Use existing system-level logic with target tenant
-    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
-
-    AuthenticationTransaction transaction =
-        authenticationTransactionQueryRepository.find(targetTenant, identifier);
-
-    if (!transaction.exists()) {
-      Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", "not_found");
-      errorResponse.put("error_description", "Authentication transaction not found");
-      return new AuthenticationTransactionManagementResponse(
-          AuthenticationTransactionManagementStatus.NOT_FOUND, errorResponse);
-    }
-
+    // Record audit log (read operation)
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "OrgAuthenticationTransactionManagementApi.get",
             "get",
-            targetTenant,
+            tenant,
             operator,
             oAuthToken,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    return new AuthenticationTransactionManagementResponse(
-        AuthenticationTransactionManagementStatus.OK, transaction.toRequestMap());
+    return result.toResponse(false);
   }
 }

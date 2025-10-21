@@ -17,21 +17,15 @@
 package org.idp.server.usecases.control_plane.organization_manager;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.authentication.policy.AuthenticationPolicyConfigRegistrationContext;
-import org.idp.server.control_plane.management.authentication.policy.AuthenticationPolicyConfigRegistrationContextCreator;
 import org.idp.server.control_plane.management.authentication.policy.AuthenticationPolicyConfigUpdateContext;
-import org.idp.server.control_plane.management.authentication.policy.AuthenticationPolicyConfigUpdateContextCreator;
 import org.idp.server.control_plane.management.authentication.policy.OrgAuthenticationPolicyConfigManagementApi;
+import org.idp.server.control_plane.management.authentication.policy.handler.*;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementResponse;
-import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementStatus;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigRequest;
-import org.idp.server.control_plane.organization.access.OrganizationAccessControlResult;
 import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
-import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfigurationIdentifier;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationQueryRepository;
@@ -41,10 +35,8 @@ import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
@@ -62,7 +54,7 @@ import org.idp.server.platform.type.RequestAttributes;
  *   <li><strong>Organization access verification</strong> - Ensures the user has access to the
  *       organization
  *   <li><strong>Permission verification</strong> - Validates the user has necessary
- *       AUTHENTICATION_POLICY_CONFIG_* permissions
+ *       AUTHENTICATION_POLICY_CONFIG_* permissions (handled by Handler)
  * </ol>
  *
  * <p>All operations support dry-run functionality for safe preview of changes and comprehensive
@@ -77,28 +69,14 @@ import org.idp.server.platform.type.RequestAttributes;
 public class OrgAuthenticationPolicyConfigManagementEntryService
     implements OrgAuthenticationPolicyConfigManagementApi {
 
-  TenantQueryRepository tenantQueryRepository;
-  OrganizationRepository organizationRepository;
-  AuthenticationPolicyConfigurationCommandRepository
-      authenticationPolicyConfigurationCommandRepository;
-  AuthenticationPolicyConfigurationQueryRepository authenticationPolicyConfigurationQueryRepository;
   AuditLogPublisher auditLogPublisher;
-  OrganizationAccessVerifier organizationAccessVerifier;
 
   LoggerWrapper log =
       LoggerWrapper.getLogger(OrgAuthenticationPolicyConfigManagementEntryService.class);
 
-  /**
-   * Creates a new organization authentication policy configuration management entry service.
-   *
-   * @param tenantQueryRepository the tenant query repository
-   * @param organizationRepository the organization repository
-   * @param authenticationPolicyConfigurationCommandRepository the authentication policy
-   *     configuration command repository
-   * @param authenticationPolicyConfigurationQueryRepository the authentication policy configuration
-   *     query repository
-   * @param auditLogPublisher the audit log publisher
-   */
+  // Handler/Service pattern (organization-level)
+  private OrgAuthenticationPolicyConfigManagementHandler handler;
+
   public OrgAuthenticationPolicyConfigManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
       OrganizationRepository organizationRepository,
@@ -107,14 +85,50 @@ public class OrgAuthenticationPolicyConfigManagementEntryService
       AuthenticationPolicyConfigurationQueryRepository
           authenticationPolicyConfigurationQueryRepository,
       AuditLogPublisher auditLogPublisher) {
-    this.tenantQueryRepository = tenantQueryRepository;
-    this.organizationRepository = organizationRepository;
-    this.authenticationPolicyConfigurationCommandRepository =
-        authenticationPolicyConfigurationCommandRepository;
-    this.authenticationPolicyConfigurationQueryRepository =
-        authenticationPolicyConfigurationQueryRepository;
     this.auditLogPublisher = auditLogPublisher;
-    this.organizationAccessVerifier = new OrganizationAccessVerifier();
+
+    this.handler =
+        createHandler(
+            authenticationPolicyConfigurationCommandRepository,
+            authenticationPolicyConfigurationQueryRepository,
+            tenantQueryRepository,
+            organizationRepository);
+  }
+
+  private OrgAuthenticationPolicyConfigManagementHandler createHandler(
+      AuthenticationPolicyConfigurationCommandRepository
+          authenticationPolicyConfigurationCommandRepository,
+      AuthenticationPolicyConfigurationQueryRepository
+          authenticationPolicyConfigurationQueryRepository,
+      TenantQueryRepository tenantQueryRepository,
+      OrganizationRepository organizationRepository) {
+
+    Map<String, AuthenticationPolicyConfigManagementService<?>> services = new HashMap<>();
+    services.put(
+        "create",
+        new AuthenticationPolicyConfigCreationService(
+            authenticationPolicyConfigurationCommandRepository));
+    services.put(
+        "findList",
+        new AuthenticationPolicyConfigFindListService(
+            authenticationPolicyConfigurationQueryRepository));
+    services.put(
+        "get",
+        new AuthenticationPolicyConfigFindService(
+            authenticationPolicyConfigurationQueryRepository));
+    services.put(
+        "update",
+        new AuthenticationPolicyConfigUpdateService(
+            authenticationPolicyConfigurationQueryRepository,
+            authenticationPolicyConfigurationCommandRepository));
+    services.put(
+        "delete",
+        new AuthenticationPolicyConfigDeletionService(
+            authenticationPolicyConfigurationQueryRepository,
+            authenticationPolicyConfigurationCommandRepository));
+
+    return new OrgAuthenticationPolicyConfigManagementHandler(
+        services, this, tenantQueryRepository, organizationRepository);
   }
 
   @Override
@@ -127,49 +141,46 @@ public class OrgAuthenticationPolicyConfigManagementEntryService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    AdminPermissions permissions = getRequiredPermissions("create");
+    // Delegate to Handler/Service pattern (Handler performs all access control)
+    AuthenticationPolicyConfigManagementResult result =
+        handler.handle(
+            "create",
+            organizationIdentifier,
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            request,
+            requestAttributes,
+            dryRun);
 
-    Organization organization = organizationRepository.get(organizationIdentifier);
-    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
-
-    // Organization-level access control
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
-
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put("error_description", accessResult.getReason());
-      return new AuthenticationPolicyConfigManagementResponse(
-          AuthenticationPolicyConfigManagementStatus.FORBIDDEN, response);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "OrgAuthenticationPolicyConfigManagementApi.create",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(dryRun);
     }
 
-    // Create context using the existing Context Creator pattern
-    AuthenticationPolicyConfigRegistrationContextCreator contextCreator =
-        new AuthenticationPolicyConfigRegistrationContextCreator(targetTenant, request, dryRun);
-    AuthenticationPolicyConfigRegistrationContext context = contextCreator.create();
-
+    // Record audit log (create operation)
     AuditLog auditLog =
         AuditLogCreator.create(
             "OrgAuthenticationPolicyConfigManagementApi.create",
-            targetTenant,
+            result.tenant(),
             operator,
             oAuthToken,
-            context,
+            (AuthenticationPolicyConfigRegistrationContext) result.context(),
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (context.isDryRun()) {
-      return context.toResponse();
-    }
-
-    authenticationPolicyConfigurationCommandRepository.register(
-        targetTenant, context.configuration());
-
-    return context.toResponse();
+    return result.toResponse(dryRun);
   }
 
+  @Override
   @Transaction(readOnly = true)
   public AuthenticationPolicyConfigManagementResponse findList(
       OrganizationIdentifier organizationIdentifier,
@@ -180,57 +191,45 @@ public class OrgAuthenticationPolicyConfigManagementEntryService
       int offset,
       RequestAttributes requestAttributes) {
 
-    AdminPermissions permissions = getRequiredPermissions("findList");
+    // Delegate to Handler/Service pattern (Handler performs all access control)
+    AuthenticationPolicyConfigFindListRequest request =
+        new AuthenticationPolicyConfigFindListRequest(limit, offset);
+    AuthenticationPolicyConfigManagementResult result =
+        handler.handle(
+            "findList",
+            organizationIdentifier,
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            request,
+            requestAttributes,
+            false);
 
-    Organization organization = organizationRepository.get(organizationIdentifier);
-    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "OrgAuthenticationPolicyConfigManagementApi.findList",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(false);
+    }
 
-    // Organization-level access control
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
-
+    // Record audit log (read operation)
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "OrgAuthenticationPolicyConfigManagementApi.findList",
             "findList",
-            targetTenant,
+            result.tenant(),
             operator,
             oAuthToken,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put("error_description", accessResult.getReason());
-      return new AuthenticationPolicyConfigManagementResponse(
-          AuthenticationPolicyConfigManagementStatus.FORBIDDEN, response);
-    }
-
-    long totalCount = authenticationPolicyConfigurationQueryRepository.findTotalCount(targetTenant);
-    if (totalCount == 0) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("list", List.of());
-      response.put("total_count", 0);
-      response.put("limit", limit);
-      response.put("offset", offset);
-      return new AuthenticationPolicyConfigManagementResponse(
-          AuthenticationPolicyConfigManagementStatus.OK, response);
-    }
-
-    List<AuthenticationPolicyConfiguration> configurations =
-        authenticationPolicyConfigurationQueryRepository.findList(targetTenant, limit, offset);
-
-    Map<String, Object> response = new HashMap<>();
-    response.put(
-        "list", configurations.stream().map(AuthenticationPolicyConfiguration::toMap).toList());
-    response.put("total_count", totalCount);
-    response.put("limit", limit);
-    response.put("offset", offset);
-
-    return new AuthenticationPolicyConfigManagementResponse(
-        AuthenticationPolicyConfigManagementStatus.OK, response);
+    return result.toResponse(false);
   }
 
   @Override
@@ -243,45 +242,43 @@ public class OrgAuthenticationPolicyConfigManagementEntryService
       AuthenticationPolicyConfigurationIdentifier identifier,
       RequestAttributes requestAttributes) {
 
-    AdminPermissions permissions = getRequiredPermissions("get");
+    // Delegate to Handler/Service pattern (Handler performs all access control)
+    AuthenticationPolicyConfigManagementResult result =
+        handler.handle(
+            "get",
+            organizationIdentifier,
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            identifier,
+            requestAttributes,
+            false);
 
-    Organization organization = organizationRepository.get(organizationIdentifier);
-    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "OrgAuthenticationPolicyConfigManagementApi.get",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(false);
+    }
 
-    // Organization-level access control
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
-
-    AuthenticationPolicyConfiguration configuration =
-        authenticationPolicyConfigurationQueryRepository.findWithDisabled(
-            targetTenant, identifier, true);
-
+    // Record audit log (read operation)
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "OrgAuthenticationPolicyConfigManagementApi.get",
             "get",
-            targetTenant,
+            result.tenant(),
             operator,
             oAuthToken,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put("error_description", accessResult.getReason());
-      return new AuthenticationPolicyConfigManagementResponse(
-          AuthenticationPolicyConfigManagementStatus.FORBIDDEN, response);
-    }
-
-    if (!configuration.exists()) {
-      return new AuthenticationPolicyConfigManagementResponse(
-          AuthenticationPolicyConfigManagementStatus.NOT_FOUND, Map.of());
-    }
-
-    return new AuthenticationPolicyConfigManagementResponse(
-        AuthenticationPolicyConfigManagementStatus.OK, configuration.toMap());
+    return result.toResponse(false);
   }
 
   @Override
@@ -295,55 +292,45 @@ public class OrgAuthenticationPolicyConfigManagementEntryService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    AdminPermissions permissions = getRequiredPermissions("update");
+    // Delegate to Handler/Service pattern (Handler performs all access control)
+    AuthenticationPolicyConfigUpdateRequest updateRequest =
+        new AuthenticationPolicyConfigUpdateRequest(identifier, request);
+    AuthenticationPolicyConfigManagementResult result =
+        handler.handle(
+            "update",
+            organizationIdentifier,
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            updateRequest,
+            requestAttributes,
+            dryRun);
 
-    Organization organization = organizationRepository.get(organizationIdentifier);
-    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
-
-    // Organization-level access control
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
-
-    AuthenticationPolicyConfiguration before =
-        authenticationPolicyConfigurationQueryRepository.findWithDisabled(
-            targetTenant, identifier, true);
-
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put("error_description", accessResult.getReason());
-      return new AuthenticationPolicyConfigManagementResponse(
-          AuthenticationPolicyConfigManagementStatus.FORBIDDEN, response);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "OrgAuthenticationPolicyConfigManagementApi.update",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(dryRun);
     }
 
-    if (!before.exists()) {
-      return new AuthenticationPolicyConfigManagementResponse(
-          AuthenticationPolicyConfigManagementStatus.NOT_FOUND, Map.of());
-    }
-
-    // Create context using the existing Context Creator pattern
-    AuthenticationPolicyConfigUpdateContextCreator contextCreator =
-        new AuthenticationPolicyConfigUpdateContextCreator(targetTenant, before, request, dryRun);
-    AuthenticationPolicyConfigUpdateContext context = contextCreator.create();
-
+    // Record audit log (update operation)
     AuditLog auditLog =
         AuditLogCreator.createOnUpdate(
             "OrgAuthenticationPolicyConfigManagementApi.update",
-            targetTenant,
+            result.tenant(),
             operator,
             oAuthToken,
-            context,
+            (AuthenticationPolicyConfigUpdateContext) result.context(),
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (context.isDryRun()) {
-      return context.toResponse();
-    }
-
-    authenticationPolicyConfigurationCommandRepository.update(targetTenant, context.after());
-
-    return context.toResponse();
+    return result.toResponse(dryRun);
   }
 
   @Override
@@ -356,56 +343,43 @@ public class OrgAuthenticationPolicyConfigManagementEntryService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    AdminPermissions permissions = getRequiredPermissions("delete");
+    // Delegate to Handler/Service pattern (Handler performs all access control)
+    AuthenticationPolicyConfigManagementResult result =
+        handler.handle(
+            "delete",
+            organizationIdentifier,
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            identifier,
+            requestAttributes,
+            dryRun);
 
-    Organization organization = organizationRepository.get(organizationIdentifier);
-    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "OrgAuthenticationPolicyConfigManagementApi.delete",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(dryRun);
+    }
 
-    // Organization-level access control
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
-
-    AuthenticationPolicyConfiguration configuration =
-        authenticationPolicyConfigurationQueryRepository.findWithDisabled(
-            targetTenant, identifier, true);
-
+    // Record audit log (deletion operation)
     AuditLog auditLog =
         AuditLogCreator.createOnDeletion(
             "OrgAuthenticationPolicyConfigManagementApi.delete",
             "delete",
-            targetTenant,
+            result.tenant(),
             operator,
             oAuthToken,
-            configuration.toMap(),
+            (Map<String, Object>) result.context(),
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put("error_description", accessResult.getReason());
-      return new AuthenticationPolicyConfigManagementResponse(
-          AuthenticationPolicyConfigManagementStatus.FORBIDDEN, response);
-    }
-
-    if (!configuration.exists()) {
-      return new AuthenticationPolicyConfigManagementResponse(
-          AuthenticationPolicyConfigManagementStatus.NOT_FOUND, Map.of());
-    }
-
-    if (dryRun) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("message", "Deletion simulated successfully");
-      response.put("id", configuration.identifier().value());
-      response.put("dry_run", true);
-      return new AuthenticationPolicyConfigManagementResponse(
-          AuthenticationPolicyConfigManagementStatus.OK, response);
-    }
-
-    authenticationPolicyConfigurationCommandRepository.delete(targetTenant, configuration);
-
-    return new AuthenticationPolicyConfigManagementResponse(
-        AuthenticationPolicyConfigManagementStatus.NO_CONTENT, configuration.toMap());
+    return result.toResponse(dryRun);
   }
 }

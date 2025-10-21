@@ -19,27 +19,18 @@ package org.idp.server.usecases.control_plane.organization_manager;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.oidc.authorization.AuthorizationServerUpdateContext;
-import org.idp.server.control_plane.management.oidc.authorization.AuthorizationServerUpdateContextCreator;
 import org.idp.server.control_plane.management.oidc.authorization.OrgAuthorizationServerManagementApi;
+import org.idp.server.control_plane.management.oidc.authorization.handler.*;
 import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerManagementResponse;
-import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerManagementStatus;
 import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerUpdateRequest;
-import org.idp.server.control_plane.management.oidc.authorization.validator.AuthorizationServerRequestValidationResult;
-import org.idp.server.control_plane.management.oidc.authorization.validator.AuthorizationServerRequestValidator;
-import org.idp.server.control_plane.organization.access.OrganizationAccessControlResult;
-import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
 import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -75,43 +66,36 @@ import org.idp.server.platform.type.RequestAttributes;
 public class OrgAuthorizationServerManagementEntryService
     implements OrgAuthorizationServerManagementApi {
 
-  TenantQueryRepository tenantQueryRepository;
-  OrganizationRepository organizationRepository;
-  AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
-  AuthorizationServerConfigurationCommandRepository
-      authorizationServerConfigurationCommandRepository;
-  AuditLogPublisher auditLogPublisher;
-  OrganizationAccessVerifier organizationAccessVerifier;
-
-  LoggerWrapper log = LoggerWrapper.getLogger(OrgAuthorizationServerManagementEntryService.class);
+  private final OrgAuthorizationServerManagementHandler handler;
+  private final TenantQueryRepository tenantQueryRepository;
+  private final AuditLogPublisher auditLogPublisher;
 
   /**
    * Creates a new organization authorization server management entry service.
    *
    * @param tenantQueryRepository the tenant query repository
    * @param organizationRepository the organization repository
-   * @param authorizationServerConfigurationQueryRepository the authorization server configuration
-   *     query repository
-   * @param authorizationServerConfigurationCommandRepository the authorization server configuration
-   *     command repository
+   * @param queryRepository the authorization server configuration query repository
+   * @param commandRepository the authorization server configuration command repository
    * @param auditLogPublisher the audit log publisher
    */
   public OrgAuthorizationServerManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
       OrganizationRepository organizationRepository,
-      AuthorizationServerConfigurationQueryRepository
-          authorizationServerConfigurationQueryRepository,
-      AuthorizationServerConfigurationCommandRepository
-          authorizationServerConfigurationCommandRepository,
+      AuthorizationServerConfigurationQueryRepository queryRepository,
+      AuthorizationServerConfigurationCommandRepository commandRepository,
       AuditLogPublisher auditLogPublisher) {
+
+    Map<String, AuthorizationServerManagementService<?>> services = new HashMap<>();
+    services.put("get", new AuthorizationServerFindService(queryRepository));
+    services.put(
+        "update", new AuthorizationServerUpdateService(queryRepository, commandRepository));
+
+    this.handler =
+        new OrgAuthorizationServerManagementHandler(services, organizationRepository, this);
+
     this.tenantQueryRepository = tenantQueryRepository;
-    this.organizationRepository = organizationRepository;
-    this.authorizationServerConfigurationQueryRepository =
-        authorizationServerConfigurationQueryRepository;
-    this.authorizationServerConfigurationCommandRepository =
-        authorizationServerConfigurationCommandRepository;
     this.auditLogPublisher = auditLogPublisher;
-    this.organizationAccessVerifier = new OrganizationAccessVerifier();
   }
 
   @Override
@@ -122,39 +106,31 @@ public class OrgAuthorizationServerManagementEntryService
       User operator,
       OAuthToken oAuthToken,
       RequestAttributes requestAttributes) {
-    AdminPermissions permissions = getRequiredPermissions("get");
 
-    // Organization access verification
-    Organization organization = organizationRepository.get(organizationIdentifier);
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", "access_denied");
-      errorResponse.put("error_description", accessResult.getReason());
-      return new AuthorizationServerManagementResponse(
-          AuthorizationServerManagementStatus.FORBIDDEN, errorResponse);
-    }
-
-    // Use existing system-level logic with target tenant
-    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
-    AuthorizationServerConfiguration authorizationServerConfiguration =
-        authorizationServerConfigurationQueryRepository.getWithDisabled(targetTenant, true);
+    AuthorizationServerManagementResult result =
+        handler.handle(
+            "get",
+            organizationIdentifier,
+            tenant,
+            operator,
+            oAuthToken,
+            null,
+            requestAttributes,
+            false);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "OrgAuthorizationServerManagementApi.get",
             "get",
-            targetTenant,
+            tenant,
             operator,
             oAuthToken,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    return new AuthorizationServerManagementResponse(
-        AuthorizationServerManagementStatus.OK, authorizationServerConfiguration.toMap());
+    return result.toResponse(false);
   }
 
   @Override
@@ -166,55 +142,44 @@ public class OrgAuthorizationServerManagementEntryService
       AuthorizationServerUpdateRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
-    AdminPermissions permissions = getRequiredPermissions("update");
 
-    // Organization access verification
-    Organization organization = organizationRepository.get(organizationIdentifier);
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", "access_denied");
-      errorResponse.put("error_description", accessResult.getReason());
-      return new AuthorizationServerManagementResponse(
-          AuthorizationServerManagementStatus.FORBIDDEN, errorResponse);
+    AuthorizationServerManagementResult result =
+        handler.handle(
+            "update",
+            organizationIdentifier,
+            tenant,
+            operator,
+            oAuthToken,
+            request,
+            requestAttributes,
+            dryRun);
+
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "OrgAuthorizationServerManagementApi.update",
+              tenant,
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(dryRun);
     }
 
-    // Use existing system-level logic with target tenant
-    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
-    AuthorizationServerConfiguration before =
-        authorizationServerConfigurationQueryRepository.getWithDisabled(targetTenant, true);
-
-    AuthorizationServerRequestValidator validator =
-        new AuthorizationServerRequestValidator(request, dryRun);
-    AuthorizationServerRequestValidationResult validate = validator.validate();
-
-    if (!validate.isValid()) {
-      return validate.errorResponse();
-    }
-
-    AuthorizationServerUpdateContextCreator contextCreator =
-        new AuthorizationServerUpdateContextCreator(targetTenant, before, request, dryRun);
-    AuthorizationServerUpdateContext context = contextCreator.create();
-
+    AuthorizationServerUpdateContext context = (AuthorizationServerUpdateContext) result.context();
     AuditLog auditLog =
         AuditLogCreator.createOnUpdate(
             "OrgAuthorizationServerManagementApi.update",
-            targetTenant,
+            tenant,
             operator,
             oAuthToken,
             context,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (dryRun) {
-      return context.toResponse();
-    }
-
-    authorizationServerConfigurationCommandRepository.update(targetTenant, context.after());
-
-    return context.toResponse();
+    return result.toResponse(dryRun);
   }
 }

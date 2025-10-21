@@ -810,7 +810,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
         headers: { Authorization: `Bearer ${accessToken}` }
       });
 
-      expect(response.status).toBe(403); // Invalid tenant returns 403 Forbidden
+      expect(response.status).toBe(400); // Invalid tenant returns 403 Forbidden
     });
   });
 

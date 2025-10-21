@@ -17,15 +17,12 @@
 package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.authentication.interaction.AuthenticationInteractionManagementApi;
+import org.idp.server.control_plane.management.authentication.interaction.handler.*;
 import org.idp.server.control_plane.management.authentication.interaction.io.AuthenticationInteractionManagementResponse;
-import org.idp.server.control_plane.management.authentication.interaction.io.AuthenticationInteractionManagementStatus;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
-import org.idp.server.core.openid.authentication.interaction.AuthenticationInteraction;
 import org.idp.server.core.openid.authentication.interaction.AuthenticationInteractionQueries;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
 import org.idp.server.core.openid.identity.User;
@@ -33,7 +30,6 @@ import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.*;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
@@ -42,19 +38,34 @@ import org.idp.server.platform.type.RequestAttributes;
 public class AuthenticationInteractionManagementEntryService
     implements AuthenticationInteractionManagementApi {
 
-  AuthenticationInteractionQueryRepository authenticationInteractionQueryRepository;
-  TenantQueryRepository tenantQueryRepository;
   AuditLogPublisher auditLogPublisher;
   LoggerWrapper log =
       LoggerWrapper.getLogger(AuthenticationInteractionManagementEntryService.class);
+
+  // Handler/Service pattern
+  private AuthenticationInteractionManagementHandler handler;
 
   public AuthenticationInteractionManagementEntryService(
       AuthenticationInteractionQueryRepository authenticationInteractionQueryRepository,
       TenantQueryRepository tenantQueryRepository,
       AuditLogPublisher auditLogPublisher) {
-    this.authenticationInteractionQueryRepository = authenticationInteractionQueryRepository;
-    this.tenantQueryRepository = tenantQueryRepository;
     this.auditLogPublisher = auditLogPublisher;
+
+    this.handler = createHandler(authenticationInteractionQueryRepository, tenantQueryRepository);
+  }
+
+  private AuthenticationInteractionManagementHandler createHandler(
+      AuthenticationInteractionQueryRepository authenticationInteractionQueryRepository,
+      TenantQueryRepository tenantQueryRepository) {
+
+    Map<String, AuthenticationInteractionManagementService<?>> services = new HashMap<>();
+    services.put(
+        "findList",
+        new AuthenticationInteractionFindListService(authenticationInteractionQueryRepository));
+    services.put(
+        "get", new AuthenticationInteractionFindService(authenticationInteractionQueryRepository));
+
+    return new AuthenticationInteractionManagementHandler(services, this, tenantQueryRepository);
   }
 
   @Override
@@ -65,55 +76,37 @@ public class AuthenticationInteractionManagementEntryService
       OAuthToken oAuthToken,
       AuthenticationInteractionQueries queries,
       RequestAttributes requestAttributes) {
-    AdminPermissions permissions = getRequiredPermissions("findList");
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    // Delegate to Handler/Service pattern
+    AuthenticationInteractionManagementResult result =
+        handler.handle(
+            "findList", tenantIdentifier, operator, oAuthToken, queries, requestAttributes);
+
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "AuthenticationInteractionManagementApi.findList",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse();
+    }
+
+    // Record audit log (read operation)
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "AuthenticationInteractionManagementApi.findList",
             "findList",
-            tenant,
+            result.tenant(),
             operator,
             oAuthToken,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new AuthenticationInteractionManagementResponse(
-          AuthenticationInteractionManagementStatus.FORBIDDEN, response);
-    }
-
-    long totalCount = authenticationInteractionQueryRepository.findTotalCount(tenant, queries);
-    if (totalCount == 0) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("list", List.of());
-      response.put("total_count", 0);
-      response.put("limit", queries.limit());
-      response.put("offset", queries.offset());
-      return new AuthenticationInteractionManagementResponse(
-          AuthenticationInteractionManagementStatus.OK, response);
-    }
-
-    List<AuthenticationInteraction> authenticationInteractions =
-        authenticationInteractionQueryRepository.findList(tenant, queries);
-
-    Map<String, Object> response = new HashMap<>();
-    response.put(
-        "list", authenticationInteractions.stream().map(AuthenticationInteraction::toMap).toList());
-    response.put("total_count", totalCount);
-    response.put("limit", queries.limit());
-    response.put("offset", queries.offset());
-
-    return new AuthenticationInteractionManagementResponse(
-        AuthenticationInteractionManagementStatus.OK, response);
+    return result.toResponse();
   }
 
   @Override
@@ -123,43 +116,39 @@ public class AuthenticationInteractionManagementEntryService
       User operator,
       OAuthToken oAuthToken,
       AuthenticationTransactionIdentifier identifier,
-      String key,
+      String type,
       RequestAttributes requestAttributes) {
-    AdminPermissions permissions = getRequiredPermissions("get");
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    AuthenticationInteraction authenticationInteraction =
-        authenticationInteractionQueryRepository.find(tenant, identifier, key);
+    // Delegate to Handler/Service pattern
+    AuthenticationInteractionFindRequest request =
+        new AuthenticationInteractionFindRequest(identifier, type);
+    AuthenticationInteractionManagementResult result =
+        handler.handle("get", tenantIdentifier, operator, oAuthToken, request, requestAttributes);
 
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "AuthenticationInteractionManagementApi.get",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse();
+    }
+
+    // Record audit log (read operation)
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "AuthenticationInteractionManagementApi.get",
             "get",
-            tenant,
+            result.tenant(),
             operator,
             oAuthToken,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new AuthenticationInteractionManagementResponse(
-          AuthenticationInteractionManagementStatus.FORBIDDEN, response);
-    }
-
-    if (!authenticationInteraction.exists()) {
-      return new AuthenticationInteractionManagementResponse(
-          AuthenticationInteractionManagementStatus.NOT_FOUND, Map.of());
-    }
-
-    return new AuthenticationInteractionManagementResponse(
-        AuthenticationInteractionManagementStatus.OK, authenticationInteraction.toMap());
+    return result.toResponse();
   }
 }

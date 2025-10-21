@@ -1,0 +1,162 @@
+/*
+ * Copyright 2025 Hirokazu Kobayashi
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.idp.server.control_plane.management.authentication.transaction.handler;
+
+import java.util.HashMap;
+import java.util.Map;
+import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionManagementResponse;
+import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionManagementStatus;
+import org.idp.server.control_plane.management.exception.ManagementApiException;
+import org.idp.server.control_plane.management.exception.OrganizationAccessDeniedException;
+import org.idp.server.control_plane.management.exception.PermissionDeniedException;
+import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+
+/**
+ * Result wrapper for authentication transaction management operations.
+ *
+ * <p>Encapsulates both success and error results, with automatic exception-to-HTTP status mapping.
+ *
+ * @see AuthenticationTransactionManagementService
+ */
+public class AuthenticationTransactionManagementResult {
+
+  private final TenantIdentifier tenantIdentifier;
+  private final AuthenticationTransactionManagementResponse response;
+  private final ManagementApiException exception;
+  private final Object context;
+
+  private AuthenticationTransactionManagementResult(
+      TenantIdentifier tenantIdentifier,
+      AuthenticationTransactionManagementResponse response,
+      ManagementApiException exception,
+      Object context) {
+    this.tenantIdentifier = tenantIdentifier;
+    this.response = response;
+    this.exception = exception;
+    this.context = context;
+  }
+
+  /**
+   * Creates a success result.
+   *
+   * @param tenantIdentifier the tenant identifier
+   * @param response the response
+   * @return the success result
+   */
+  public static AuthenticationTransactionManagementResult success(
+      TenantIdentifier tenantIdentifier, AuthenticationTransactionManagementResponse response) {
+    return new AuthenticationTransactionManagementResult(tenantIdentifier, response, null, null);
+  }
+
+  /**
+   * Creates a success result with context.
+   *
+   * @param tenantIdentifier the tenant identifier
+   * @param response the response
+   * @param context the context object
+   * @return the success result
+   */
+  public static AuthenticationTransactionManagementResult success(
+      TenantIdentifier tenantIdentifier,
+      AuthenticationTransactionManagementResponse response,
+      Object context) {
+    return new AuthenticationTransactionManagementResult(tenantIdentifier, response, null, context);
+  }
+
+  /**
+   * Creates an error result from an exception.
+   *
+   * @param tenantIdentifier the tenant identifier
+   * @param exception the exception
+   * @return the error result
+   */
+  public static AuthenticationTransactionManagementResult error(
+      TenantIdentifier tenantIdentifier, ManagementApiException exception) {
+    return new AuthenticationTransactionManagementResult(tenantIdentifier, null, exception, null);
+  }
+
+  /**
+   * Checks if this result has an exception.
+   *
+   * @return true if this result has an exception
+   */
+  public boolean hasException() {
+    return exception != null;
+  }
+
+  /**
+   * Gets the exception.
+   *
+   * @return the exception
+   */
+  public ManagementApiException getException() {
+    return exception;
+  }
+
+  /**
+   * Gets the context object.
+   *
+   * @return the context object
+   */
+  public Object context() {
+    return context;
+  }
+
+  /**
+   * Converts this result to a response.
+   *
+   * @param dryRun whether this is a dry run
+   * @return the response
+   */
+  public AuthenticationTransactionManagementResponse toResponse(boolean dryRun) {
+    if (exception != null) {
+      AuthenticationTransactionManagementStatus status = mapExceptionToStatus(exception);
+      Map<String, Object> errorResponse = new HashMap<>();
+      errorResponse.put("error", getErrorCode(exception));
+      errorResponse.put("error_description", exception.getMessage());
+      errorResponse.put("dry_run", dryRun);
+      return new AuthenticationTransactionManagementResponse(status, errorResponse);
+    }
+    return response;
+  }
+
+  private static AuthenticationTransactionManagementStatus mapExceptionToStatus(
+      ManagementApiException exception) {
+    if (exception instanceof ResourceNotFoundException) {
+      return AuthenticationTransactionManagementStatus.NOT_FOUND;
+    }
+    if (exception instanceof PermissionDeniedException
+        || exception instanceof OrganizationAccessDeniedException) {
+      return AuthenticationTransactionManagementStatus.FORBIDDEN;
+    }
+    return AuthenticationTransactionManagementStatus.INVALID_REQUEST;
+  }
+
+  private static String getErrorCode(ManagementApiException exception) {
+    if (exception instanceof ResourceNotFoundException) {
+      return "not_found";
+    }
+    if (exception instanceof OrganizationAccessDeniedException) {
+      return "organization_access_denied";
+    }
+    if (exception instanceof PermissionDeniedException) {
+      return "access_denied";
+    }
+    return "invalid_request";
+  }
+}

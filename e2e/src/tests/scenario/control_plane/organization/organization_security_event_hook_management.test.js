@@ -176,7 +176,7 @@ describe("organization security event hook management api", () => {
         }
       });
       console.log("Invalid tenant response:", invalidTenantResponse.data);
-      expect([400, 403, 404]).toContain(invalidTenantResponse.status);
+      expect(invalidTenantResponse.status).toBe(403);
     });
   });
 

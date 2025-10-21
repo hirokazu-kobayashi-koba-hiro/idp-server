@@ -17,15 +17,12 @@
 package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.authentication.configuration.*;
+import org.idp.server.control_plane.management.authentication.configuration.handler.*;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementResponse;
-import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementStatus;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigRequest;
-import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfigurationIdentifier;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
@@ -35,7 +32,6 @@ import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
@@ -44,23 +40,53 @@ import org.idp.server.platform.type.RequestAttributes;
 public class AuthenticationConfigurationManagementEntryService
     implements AuthenticationConfigurationManagementApi {
 
-  AuthenticationConfigurationCommandRepository authenticationConfigurationCommandRepository;
-  AuthenticationConfigurationQueryRepository authenticationConfigurationQueryRepository;
-  TenantQueryRepository tenantQueryRepository;
   AuditLogPublisher auditLogPublisher;
   LoggerWrapper log =
       LoggerWrapper.getLogger(AuthenticationConfigurationManagementEntryService.class);
+
+  // Handler/Service pattern
+  private AuthenticationConfigManagementHandler handler;
 
   public AuthenticationConfigurationManagementEntryService(
       AuthenticationConfigurationCommandRepository authenticationConfigurationCommandRepository,
       AuthenticationConfigurationQueryRepository authenticationConfigurationQueryRepository,
       TenantQueryRepository tenantQueryRepository,
       AuditLogPublisher auditLogPublisher) {
-    this.authenticationConfigurationCommandRepository =
-        authenticationConfigurationCommandRepository;
-    this.authenticationConfigurationQueryRepository = authenticationConfigurationQueryRepository;
-    this.tenantQueryRepository = tenantQueryRepository;
     this.auditLogPublisher = auditLogPublisher;
+
+    this.handler =
+        createHandler(
+            authenticationConfigurationCommandRepository,
+            authenticationConfigurationQueryRepository,
+            tenantQueryRepository);
+  }
+
+  private AuthenticationConfigManagementHandler createHandler(
+      AuthenticationConfigurationCommandRepository authenticationConfigurationCommandRepository,
+      AuthenticationConfigurationQueryRepository authenticationConfigurationQueryRepository,
+      TenantQueryRepository tenantQueryRepository) {
+
+    Map<String, AuthenticationConfigManagementService<?>> services = new HashMap<>();
+    services.put(
+        "create",
+        new AuthenticationConfigCreationService(authenticationConfigurationCommandRepository));
+    services.put(
+        "findList",
+        new AuthenticationConfigFindListService(authenticationConfigurationQueryRepository));
+    services.put(
+        "get", new AuthenticationConfigFindService(authenticationConfigurationQueryRepository));
+    services.put(
+        "update",
+        new AuthenticationConfigUpdateService(
+            authenticationConfigurationQueryRepository,
+            authenticationConfigurationCommandRepository));
+    services.put(
+        "delete",
+        new AuthenticationConfigDeletionService(
+            authenticationConfigurationQueryRepository,
+            authenticationConfigurationCommandRepository));
+
+    return new AuthenticationConfigManagementHandler(services, this, tenantQueryRepository);
   }
 
   @Override
@@ -72,44 +98,36 @@ public class AuthenticationConfigurationManagementEntryService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    AdminPermissions permissions = getRequiredPermissions("create");
+    // Delegate to Handler/Service pattern
+    AuthenticationConfigManagementResult result =
+        handler.handle(
+            "create", tenantIdentifier, operator, oAuthToken, request, requestAttributes, dryRun);
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "AuthenticationConfigurationManagementApi.create",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(dryRun);
+    }
 
-    AuthenticationConfigRegistrationContextCreator contextCreator =
-        new AuthenticationConfigRegistrationContextCreator(tenant, request, dryRun);
-    AuthenticationConfigRegistrationContext context = contextCreator.create();
-
+    // Record audit log (create operation)
     AuditLog auditLog =
         AuditLogCreator.create(
             "AuthenticationConfigurationManagementApi.create",
-            tenant,
+            result.tenant(),
             operator,
             oAuthToken,
-            context,
+            (AuthenticationConfigRegistrationContext) result.context(),
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new AuthenticationConfigManagementResponse(
-          AuthenticationConfigManagementStatus.FORBIDDEN, response);
-    }
-
-    if (context.isDryRun()) {
-      return context.toResponse();
-    }
-
-    authenticationConfigurationCommandRepository.register(tenant, context.configuration());
-
-    return context.toResponse();
+    return result.toResponse(dryRun);
   }
 
   @Override
@@ -122,54 +140,38 @@ public class AuthenticationConfigurationManagementEntryService
       int offset,
       RequestAttributes requestAttributes) {
 
-    AdminPermissions permissions = getRequiredPermissions("findList");
+    // Delegate to Handler/Service pattern
+    AuthenticationConfigFindListRequest request =
+        new AuthenticationConfigFindListRequest(limit, offset);
+    AuthenticationConfigManagementResult result =
+        handler.handle(
+            "findList", tenantIdentifier, operator, oAuthToken, request, requestAttributes, false);
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    long totalCount = authenticationConfigurationQueryRepository.findTotalCount(tenant);
-    if (totalCount == 0) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("list", List.of());
-      response.put("total_count", 0);
-      response.put("limit", limit);
-      response.put("offset", offset);
-      return new AuthenticationConfigManagementResponse(
-          AuthenticationConfigManagementStatus.OK, response);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "AuthenticationConfigurationManagementApi.findList",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(false);
     }
 
-    List<AuthenticationConfiguration> configurations =
-        authenticationConfigurationQueryRepository.findList(tenant, limit, offset);
-
+    // Record audit log (read operation)
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "AuthenticationConfigurationManagementApi.findList",
             "findList",
-            tenant,
+            result.tenant(),
             operator,
             oAuthToken,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new AuthenticationConfigManagementResponse(
-          AuthenticationConfigManagementStatus.FORBIDDEN, response);
-    }
-
-    Map<String, Object> response = new HashMap<>();
-    response.put("list", configurations.stream().map(AuthenticationConfiguration::toMap).toList());
-    response.put("total_count", totalCount);
-    response.put("limit", limit);
-    response.put("offset", offset);
-
-    return new AuthenticationConfigManagementResponse(
-        AuthenticationConfigManagementStatus.OK, response);
+    return result.toResponse(false);
   }
 
   @Override
@@ -181,42 +183,36 @@ public class AuthenticationConfigurationManagementEntryService
       AuthenticationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes) {
 
-    AdminPermissions permissions = getRequiredPermissions("get");
+    // Delegate to Handler/Service pattern
+    AuthenticationConfigManagementResult result =
+        handler.handle(
+            "get", tenantIdentifier, operator, oAuthToken, identifier, requestAttributes, false);
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    AuthenticationConfiguration configuration =
-        authenticationConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "AuthenticationConfigurationManagementApi.get",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(false);
+    }
 
+    // Record audit log (read operation)
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "AuthenticationConfigurationManagementApi.get",
             "get",
-            tenant,
+            result.tenant(),
             operator,
             oAuthToken,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new AuthenticationConfigManagementResponse(
-          AuthenticationConfigManagementStatus.FORBIDDEN, response);
-    }
-
-    if (!configuration.exists()) {
-      return new AuthenticationConfigManagementResponse(
-          AuthenticationConfigManagementStatus.NOT_FOUND, Map.of());
-    }
-
-    return new AuthenticationConfigManagementResponse(
-        AuthenticationConfigManagementStatus.OK, configuration.toMap());
+    return result.toResponse(false);
   }
 
   @Override
@@ -229,46 +225,44 @@ public class AuthenticationConfigurationManagementEntryService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    AdminPermissions permissions = getRequiredPermissions("update");
+    // Delegate to Handler/Service pattern
+    AuthenticationConfigUpdateRequest updateRequest =
+        new AuthenticationConfigUpdateRequest(identifier, request);
+    AuthenticationConfigManagementResult result =
+        handler.handle(
+            "update",
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            updateRequest,
+            requestAttributes,
+            dryRun);
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    AuthenticationConfiguration before =
-        authenticationConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "AuthenticationConfigurationManagementApi.update",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(dryRun);
+    }
 
-    AuthenticationConfigUpdateContextCreator contextCreator =
-        new AuthenticationConfigUpdateContextCreator(tenant, before, request, dryRun);
-    AuthenticationConfigUpdateContext context = contextCreator.create();
-
+    // Record audit log (update operation)
     AuditLog auditLog =
         AuditLogCreator.createOnUpdate(
             "AuthenticationConfigurationManagementApi.update",
-            tenant,
+            result.tenant(),
             operator,
             oAuthToken,
-            context,
+            (AuthenticationConfigUpdateContext) result.context(),
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new AuthenticationConfigManagementResponse(
-          AuthenticationConfigManagementStatus.FORBIDDEN, response);
-    }
-
-    if (context.isDryRun()) {
-      return context.toResponse();
-    }
-
-    authenticationConfigurationCommandRepository.update(tenant, context.after());
-
-    return context.toResponse();
+    return result.toResponse(dryRun);
   }
 
   @Override
@@ -280,53 +274,42 @@ public class AuthenticationConfigurationManagementEntryService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    AdminPermissions permissions = getRequiredPermissions("delete");
+    // Delegate to Handler/Service pattern
+    AuthenticationConfigManagementResult result =
+        handler.handle(
+            "delete",
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            identifier,
+            requestAttributes,
+            dryRun);
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    AuthenticationConfiguration configuration =
-        authenticationConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "AuthenticationConfigurationManagementApi.delete",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(dryRun);
+    }
 
+    // Record audit log (deletion operation)
     AuditLog auditLog =
         AuditLogCreator.createOnDeletion(
             "AuthenticationConfigurationManagementApi.delete",
             "delete",
-            tenant,
+            result.tenant(),
             operator,
             oAuthToken,
-            configuration.toMap(),
+            (Map<String, Object>) result.context(),
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new AuthenticationConfigManagementResponse(
-          AuthenticationConfigManagementStatus.FORBIDDEN, response);
-    }
-
-    if (!configuration.exists()) {
-      return new AuthenticationConfigManagementResponse(
-          AuthenticationConfigManagementStatus.NOT_FOUND, Map.of());
-    }
-
-    if (dryRun) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("message", "Authentication configuration deletion simulated successfully");
-      response.put("id", configuration.identifier().value());
-      response.put("dry_run", true);
-      return new AuthenticationConfigManagementResponse(
-          AuthenticationConfigManagementStatus.OK, response);
-    }
-
-    authenticationConfigurationCommandRepository.delete(tenant, configuration);
-
-    return new AuthenticationConfigManagementResponse(
-        AuthenticationConfigManagementStatus.NO_CONTENT, Map.of());
+    return result.toResponse(dryRun);
   }
 }

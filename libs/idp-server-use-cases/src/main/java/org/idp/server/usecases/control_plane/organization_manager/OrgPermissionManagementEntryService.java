@@ -17,33 +17,24 @@
 package org.idp.server.usecases.control_plane.organization_manager;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.permission.*;
+import org.idp.server.control_plane.management.permission.handler.*;
 import org.idp.server.control_plane.management.permission.io.PermissionManagementResponse;
-import org.idp.server.control_plane.management.permission.io.PermissionManagementStatus;
 import org.idp.server.control_plane.management.permission.io.PermissionRequest;
-import org.idp.server.control_plane.management.permission.validator.PermissionRequestValidationResult;
-import org.idp.server.control_plane.management.permission.validator.PermissionRequestValidator;
-import org.idp.server.control_plane.management.permission.validator.PermissionUpdateRequestValidator;
-import org.idp.server.control_plane.management.permission.verifier.PermissionRegistrationVerificationResult;
-import org.idp.server.control_plane.management.permission.verifier.PermissionRegistrationVerifier;
-import org.idp.server.control_plane.management.permission.verifier.PermissionVerifier;
-import org.idp.server.control_plane.organization.access.OrganizationAccessControlResult;
 import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
 import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.identity.permission.*;
+import org.idp.server.core.openid.identity.permission.PermissionCommandRepository;
+import org.idp.server.core.openid.identity.permission.PermissionIdentifier;
+import org.idp.server.core.openid.identity.permission.PermissionQueries;
+import org.idp.server.core.openid.identity.permission.PermissionQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
@@ -73,14 +64,8 @@ import org.idp.server.platform.type.RequestAttributes;
 @Transaction
 public class OrgPermissionManagementEntryService implements OrgPermissionManagementApi {
 
-  TenantQueryRepository tenantQueryRepository;
-  OrganizationRepository organizationRepository;
-  PermissionQueryRepository permissionQueryRepository;
-  PermissionCommandRepository permissionCommandRepository;
-  AuditLogPublisher auditLogPublisher;
-  OrganizationAccessVerifier organizationAccessVerifier;
-
-  LoggerWrapper log = LoggerWrapper.getLogger(OrgPermissionManagementEntryService.class);
+  private final OrgPermissionManagementHandler handler;
+  private final AuditLogPublisher auditLogPublisher;
 
   /**
    * Creates a new organization permission management entry service.
@@ -97,12 +82,28 @@ public class OrgPermissionManagementEntryService implements OrgPermissionManagem
       PermissionQueryRepository permissionQueryRepository,
       PermissionCommandRepository permissionCommandRepository,
       AuditLogPublisher auditLogPublisher) {
-    this.tenantQueryRepository = tenantQueryRepository;
-    this.organizationRepository = organizationRepository;
-    this.permissionQueryRepository = permissionQueryRepository;
-    this.permissionCommandRepository = permissionCommandRepository;
+
+    Map<String, PermissionManagementService<?>> services = new HashMap<>();
+    services.put(
+        "create",
+        new PermissionCreateService(permissionQueryRepository, permissionCommandRepository));
+    services.put("findList", new PermissionFindListService(permissionQueryRepository));
+    services.put("get", new PermissionFindService(permissionQueryRepository));
+    services.put(
+        "update",
+        new PermissionUpdateService(permissionQueryRepository, permissionCommandRepository));
+    services.put(
+        "delete",
+        new PermissionDeleteService(permissionQueryRepository, permissionCommandRepository));
+
+    this.handler =
+        new OrgPermissionManagementHandler(
+            services,
+            this,
+            tenantQueryRepository,
+            organizationRepository,
+            new OrganizationAccessVerifier());
     this.auditLogPublisher = auditLogPublisher;
-    this.organizationAccessVerifier = new OrganizationAccessVerifier();
   }
 
   @Override
@@ -114,61 +115,42 @@ public class OrgPermissionManagementEntryService implements OrgPermissionManagem
       PermissionRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
-    AdminPermissions permissions = getRequiredPermissions("create");
 
-    // Organization access verification
-    Organization organization = organizationRepository.get(organizationIdentifier);
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
+    PermissionManagementResult result =
+        handler.handle(
+            "create",
+            organizationIdentifier,
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            request,
+            requestAttributes,
+            dryRun);
 
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", "access_denied");
-      errorResponse.put("error_description", accessResult.getReason());
-      return new PermissionManagementResponse(PermissionManagementStatus.FORBIDDEN, errorResponse);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "OrgPermissionManagementApi.create",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(dryRun);
     }
-
-    // Use existing system-level logic with target tenant
-    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
-
-    PermissionRequestValidator validator = new PermissionRequestValidator(request, dryRun);
-    PermissionRequestValidationResult validate = validator.validate();
-
-    if (!validate.isValid()) {
-      return validate.errorResponse();
-    }
-
-    PermissionRegistrationContextCreator contextCreator =
-        new PermissionRegistrationContextCreator(targetTenant, request, dryRun);
-    PermissionRegistrationContext context = contextCreator.create();
-
-    PermissionVerifier permissionVerifier = new PermissionVerifier(permissionQueryRepository);
-    PermissionRegistrationVerifier verifier =
-        new PermissionRegistrationVerifier(permissionVerifier);
-    PermissionRegistrationVerificationResult verificationResult = verifier.verify(context);
 
     AuditLog auditLog =
         AuditLogCreator.create(
             "OrgPermissionManagementApi.create",
-            targetTenant,
+            result.tenant(),
             operator,
             oAuthToken,
-            context,
+            (PermissionRegistrationContext) result.context(),
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (!verificationResult.isValid()) {
-      return verificationResult.errorResponse();
-    }
-
-    if (dryRun) {
-      return context.toResponse();
-    }
-
-    permissionCommandRepository.register(targetTenant, context.permission());
-
-    return context.toResponse();
+    return result.toResponse(dryRun);
   }
 
   @Override
@@ -180,63 +162,42 @@ public class OrgPermissionManagementEntryService implements OrgPermissionManagem
       OAuthToken oAuthToken,
       PermissionQueries queries,
       RequestAttributes requestAttributes) {
-    AdminPermissions permissions = getRequiredPermissions("findList");
 
-    // Organization access verification
-    Organization organization = organizationRepository.get(organizationIdentifier);
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
+    PermissionManagementResult result =
+        handler.handle(
+            "findList",
+            organizationIdentifier,
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            queries,
+            requestAttributes,
+            false);
 
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", "access_denied");
-      errorResponse.put("error_description", accessResult.getReason());
-      return new PermissionManagementResponse(PermissionManagementStatus.FORBIDDEN, errorResponse);
-    }
-
-    // Use existing system-level logic with target tenant
-    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
-
-    long totalCount = permissionQueryRepository.findTotalCount(targetTenant, queries);
-    if (totalCount == 0) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("list", List.of());
-      response.put("total_count", 0);
-      response.put("limit", queries.limit());
-      response.put("offset", queries.offset());
-
+    if (result.hasException()) {
       AuditLog auditLog =
-          AuditLogCreator.createOnRead(
+          AuditLogCreator.createOnError(
               "OrgPermissionManagementApi.findList",
-              "findList",
-              targetTenant,
+              result.tenant(),
               operator,
               oAuthToken,
+              result.getException(),
               requestAttributes);
       auditLogPublisher.publish(auditLog);
-
-      return new PermissionManagementResponse(PermissionManagementStatus.OK, response);
+      return result.toResponse(false);
     }
-
-    List<Permission> permissionList = permissionQueryRepository.findList(targetTenant, queries);
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "OrgPermissionManagementApi.findList",
             "findList",
-            targetTenant,
+            result.tenant(),
             operator,
             oAuthToken,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    Map<String, Object> response = new HashMap<>();
-    response.put("list", permissionList.stream().map(Permission::toMap).toList());
-    response.put("total_count", totalCount);
-    response.put("limit", queries.limit());
-    response.put("offset", queries.offset());
-    return new PermissionManagementResponse(PermissionManagementStatus.OK, response);
+    return result.toResponse(false);
   }
 
   @Override
@@ -248,44 +209,42 @@ public class OrgPermissionManagementEntryService implements OrgPermissionManagem
       OAuthToken oAuthToken,
       PermissionIdentifier identifier,
       RequestAttributes requestAttributes) {
-    AdminPermissions permissions = getRequiredPermissions("get");
 
-    // Organization access verification
-    Organization organization = organizationRepository.get(organizationIdentifier);
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
+    PermissionManagementResult result =
+        handler.handle(
+            "get",
+            organizationIdentifier,
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            identifier,
+            requestAttributes,
+            false);
 
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", "access_denied");
-      errorResponse.put("error_description", accessResult.getReason());
-      return new PermissionManagementResponse(PermissionManagementStatus.FORBIDDEN, errorResponse);
-    }
-
-    // Use existing system-level logic with target tenant
-    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
-
-    Permission permission = permissionQueryRepository.find(targetTenant, identifier);
-
-    if (!permission.exists()) {
-      Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", "not_found");
-      errorResponse.put("error_description", "Permission not found");
-      return new PermissionManagementResponse(PermissionManagementStatus.NOT_FOUND, errorResponse);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "OrgPermissionManagementApi.get",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(false);
     }
 
     AuditLog auditLog =
         AuditLogCreator.createOnRead(
             "OrgPermissionManagementApi.get",
             "get",
-            targetTenant,
+            result.tenant(),
             operator,
             oAuthToken,
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    return new PermissionManagementResponse(PermissionManagementStatus.OK, permission.toMap());
+    return result.toResponse(false);
   }
 
   @Override
@@ -298,62 +257,43 @@ public class OrgPermissionManagementEntryService implements OrgPermissionManagem
       PermissionRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
-    AdminPermissions permissions = getRequiredPermissions("update");
 
-    // Organization access verification
-    Organization organization = organizationRepository.get(organizationIdentifier);
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
+    PermissionUpdateRequest updateRequest = new PermissionUpdateRequest(identifier, request);
+    PermissionManagementResult result =
+        handler.handle(
+            "update",
+            organizationIdentifier,
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            updateRequest,
+            requestAttributes,
+            dryRun);
 
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", "access_denied");
-      errorResponse.put("error_description", accessResult.getReason());
-      return new PermissionManagementResponse(PermissionManagementStatus.FORBIDDEN, errorResponse);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "OrgPermissionManagementApi.update",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(dryRun);
     }
-
-    // Use existing system-level logic with target tenant
-    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
-
-    Permission before = permissionQueryRepository.find(targetTenant, identifier);
-
-    if (!before.exists()) {
-      Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", "not_found");
-      errorResponse.put("error_description", "Permission not found");
-      return new PermissionManagementResponse(PermissionManagementStatus.NOT_FOUND, errorResponse);
-    }
-
-    PermissionUpdateRequestValidator validator =
-        new PermissionUpdateRequestValidator(request, dryRun);
-    PermissionRequestValidationResult validate = validator.validate();
-
-    if (!validate.isValid()) {
-      return validate.errorResponse();
-    }
-
-    PermissionUpdateContextCreator contextCreator =
-        new PermissionUpdateContextCreator(targetTenant, before, request, dryRun);
-    PermissionUpdateContext context = contextCreator.create();
 
     AuditLog auditLog =
         AuditLogCreator.createOnUpdate(
             "OrgPermissionManagementApi.update",
-            targetTenant,
+            result.tenant(),
             operator,
             oAuthToken,
-            context,
+            (PermissionUpdateContext) result.context(),
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (dryRun) {
-      return context.toResponse();
-    }
-
-    permissionCommandRepository.update(targetTenant, context.after());
-
-    return context.toResponse();
+    return result.toResponse(dryRun);
   }
 
   @Override
@@ -365,54 +305,42 @@ public class OrgPermissionManagementEntryService implements OrgPermissionManagem
       PermissionIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun) {
-    AdminPermissions permissions = getRequiredPermissions("delete");
 
-    // Organization access verification
-    Organization organization = organizationRepository.get(organizationIdentifier);
-    OrganizationAccessControlResult accessResult =
-        organizationAccessVerifier.verifyAccess(
-            organization, tenantIdentifier, operator, permissions);
+    PermissionManagementResult result =
+        handler.handle(
+            "delete",
+            organizationIdentifier,
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            identifier,
+            requestAttributes,
+            dryRun);
 
-    if (!accessResult.isSuccess()) {
-      Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", "access_denied");
-      errorResponse.put("error_description", accessResult.getReason());
-      return new PermissionManagementResponse(PermissionManagementStatus.FORBIDDEN, errorResponse);
-    }
-
-    // Use existing system-level logic with target tenant
-    Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
-
-    Permission permission = permissionQueryRepository.find(targetTenant, identifier);
-
-    if (!permission.exists()) {
-      Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", "not_found");
-      errorResponse.put("error_description", "Permission not found");
-      return new PermissionManagementResponse(PermissionManagementStatus.NOT_FOUND, errorResponse);
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "OrgPermissionManagementApi.delete",
+              result.tenant(),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(dryRun);
     }
 
     AuditLog auditLog =
         AuditLogCreator.createOnDeletion(
             "OrgPermissionManagementApi.delete",
             "delete",
-            targetTenant,
+            result.tenant(),
             operator,
             oAuthToken,
-            permission.toMap(),
+            (Map<String, Object>) result.context(),
             requestAttributes);
     auditLogPublisher.publish(auditLog);
 
-    if (dryRun) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("message", "Deletion simulated successfully");
-      response.put("id", permission.id());
-      response.put("dry_run", true);
-      return new PermissionManagementResponse(PermissionManagementStatus.OK, response);
-    }
-
-    permissionCommandRepository.delete(targetTenant, permission);
-
-    return new PermissionManagementResponse(PermissionManagementStatus.NO_CONTENT, Map.of());
+    return result.toResponse(dryRun);
   }
 }

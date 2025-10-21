@@ -17,6 +17,7 @@
 package org.idp.server.control_plane.management.role.validator;
 
 import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
+import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.control_plane.management.role.io.RoleRequest;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
@@ -25,24 +26,25 @@ import org.idp.server.platform.json.schema.JsonSchemaValidator;
 public class RoleRemovePermissionsRequestValidator {
 
   RoleRequest request;
-  boolean dryRun;
   JsonSchemaValidator schemaValidator;
 
   public RoleRemovePermissionsRequestValidator(RoleRequest request, boolean dryRun) {
     this.request = request;
-    this.dryRun = dryRun;
     this.schemaValidator =
         new JsonSchemaValidator(ControlPlaneV1SchemaReader.roleRemovePermissionsSchema());
   }
 
-  public RoleRequestValidationResult validate() {
+  public void validate() {
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request.toMap());
     JsonSchemaValidationResult schemaResult = schemaValidator.validate(jsonNodeWrapper);
 
-    if (!schemaResult.isValid()) {
-      return RoleRequestValidationResult.error(schemaResult, dryRun);
-    }
+    throwExceptionIfInvalid(schemaResult);
+  }
 
-    return RoleRequestValidationResult.success(schemaResult, dryRun);
+  void throwExceptionIfInvalid(JsonSchemaValidationResult result) {
+    if (!result.isValid()) {
+      throw new InvalidRequestException(
+          "role remove permissions request validation failed", result.errors());
+    }
   }
 }

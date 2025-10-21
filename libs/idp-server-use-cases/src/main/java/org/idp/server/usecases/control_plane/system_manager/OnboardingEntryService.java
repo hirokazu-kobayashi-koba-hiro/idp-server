@@ -16,19 +16,15 @@
 
 package org.idp.server.usecases.control_plane.system_manager;
 
-import java.util.HashMap;
-import java.util.Map;
-import org.idp.server.control_plane.base.definition.AdminPermissions;
+import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.verifier.TenantVerifier;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
 import org.idp.server.control_plane.management.onboarding.OnboardingContext;
-import org.idp.server.control_plane.management.onboarding.OnboardingContextCreator;
+import org.idp.server.control_plane.management.onboarding.handler.OnboardingManagementHandler;
+import org.idp.server.control_plane.management.onboarding.handler.OnboardingManagementResult;
+import org.idp.server.control_plane.management.onboarding.handler.OnboardingService;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingRequest;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingResponse;
-import org.idp.server.control_plane.management.onboarding.io.OnboardingStatus;
-import org.idp.server.control_plane.management.onboarding.validator.OnboardingRequestValidationResult;
-import org.idp.server.control_plane.management.onboarding.validator.OnboardingRequestValidator;
-import org.idp.server.control_plane.management.onboarding.verifier.OnboardingVerificationResult;
 import org.idp.server.control_plane.management.onboarding.verifier.OnboardingVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserRegistrator;
@@ -39,29 +35,22 @@ import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.identity.role.RoleCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationCommandRepository;
-import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.audit.AuditLog;
+import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.organization.*;
-import org.idp.server.platform.multi_tenancy.tenant.*;
+import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
+import org.idp.server.platform.multi_tenancy.tenant.TenantCommandRepository;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
 @Transaction
 public class OnboardingEntryService implements OnboardingApi {
 
-  TenantCommandRepository tenantCommandRepository;
-  TenantQueryRepository tenantQueryRepository;
-  OrganizationRepository organizationRepository;
-  PermissionCommandRepository permissionCommandRepository;
-  RoleCommandRepository roleCommandRepository;
-  UserRegistrator userRegistrator;
-  AuthorizationServerConfigurationCommandRepository
-      authorizationServerConfigurationCommandRepository;
-  ClientConfigurationCommandRepository clientConfigurationCommandRepository;
-  ClientConfigurationQueryRepository clientConfigurationQueryRepository;
-  OnboardingVerifier onboardingVerifier;
-  PasswordEncodeDelegation passwordEncodeDelegation;
-  LoggerWrapper log = LoggerWrapper.getLogger(OnboardingEntryService.class);
+  private final OnboardingManagementHandler handler;
+  private final TenantQueryRepository tenantQueryRepository;
+  private final AuditLogPublisher auditLogPublisher;
 
   public OnboardingEntryService(
       TenantCommandRepository tenantCommandRepository,
@@ -74,72 +63,67 @@ public class OnboardingEntryService implements OnboardingApi {
       AuthorizationServerConfigurationCommandRepository
           authorizationServerConfigurationCommandRepository,
       ClientConfigurationCommandRepository clientConfigurationCommandRepository,
-      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
-      PasswordEncodeDelegation passwordEncodeDelegation) {
-    this.tenantCommandRepository = tenantCommandRepository;
-    this.tenantQueryRepository = tenantQueryRepository;
-    this.organizationRepository = organizationRepository;
-    this.permissionCommandRepository = permissionCommandRepository;
-    this.roleCommandRepository = roleCommandRepository;
-    this.userRegistrator = new UserRegistrator(userQueryRepository, userCommandRepository);
-    this.authorizationServerConfigurationCommandRepository =
-        authorizationServerConfigurationCommandRepository;
-    this.clientConfigurationCommandRepository = clientConfigurationCommandRepository;
-    this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
+      PasswordEncodeDelegation passwordEncodeDelegation,
+      AuditLogPublisher auditLogPublisher) {
+
+    UserRegistrator userRegistrator =
+        new UserRegistrator(userQueryRepository, userCommandRepository);
     TenantVerifier tenantVerifier = new TenantVerifier(tenantQueryRepository);
-    this.onboardingVerifier = new OnboardingVerifier(tenantVerifier);
-    this.passwordEncodeDelegation = passwordEncodeDelegation;
+    OnboardingVerifier onboardingVerifier = new OnboardingVerifier(tenantVerifier);
+
+    OnboardingService service =
+        new OnboardingService(
+            tenantCommandRepository,
+            organizationRepository,
+            permissionCommandRepository,
+            roleCommandRepository,
+            userRegistrator,
+            authorizationServerConfigurationCommandRepository,
+            clientConfigurationCommandRepository,
+            onboardingVerifier,
+            passwordEncodeDelegation);
+
+    this.handler = new OnboardingManagementHandler(service, this);
+    this.tenantQueryRepository = tenantQueryRepository;
+    this.auditLogPublisher = auditLogPublisher;
   }
 
   public OnboardingResponse onboard(
       TenantIdentifier adminTenantIdentifier,
       User operator,
+      OAuthToken oAuthToken,
       OnboardingRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    AdminPermissions permissions = getRequiredPermissions("onboard");
-    if (!permissions.includesAll(operator.permissionsAsSet())) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put(
-          "error_description",
-          String.format(
-              "permission denied required permission %s, but %s",
-              permissions.valuesAsString(), operator.permissionsAsString()));
-      log.warn(response.toString());
-      return new OnboardingResponse(OnboardingStatus.FORBIDDEN, response);
+    OnboardingManagementResult result =
+        handler.handle(
+            adminTenantIdentifier, operator, oAuthToken, request, requestAttributes, dryRun);
+
+    if (result.hasException()) {
+      AuditLog auditLog =
+          AuditLogCreator.createOnError(
+              "OnboardingApi.onboard",
+              tenantQueryRepository.get(result.adminTenantIdentifier()),
+              operator,
+              oAuthToken,
+              result.getException(),
+              requestAttributes);
+      auditLogPublisher.publish(auditLog);
+      return result.toResponse(dryRun);
     }
 
-    OnboardingRequestValidator validator = new OnboardingRequestValidator(request, dryRun);
-    OnboardingRequestValidationResult validationResult = validator.validate();
-    if (!validationResult.isValid()) {
-      return validationResult.errorResponse();
-    }
+    OnboardingContext context = result.context();
+    AuditLog auditLog =
+        AuditLogCreator.create(
+            "OnboardingApi.onboard",
+            tenantQueryRepository.get(result.adminTenantIdentifier()),
+            operator,
+            oAuthToken,
+            context,
+            requestAttributes);
+    auditLogPublisher.publish(auditLog);
 
-    OnboardingContextCreator contextCreator =
-        new OnboardingContextCreator(request, passwordEncodeDelegation, dryRun);
-    OnboardingContext context = contextCreator.create();
-
-    OnboardingVerificationResult verificationResult = onboardingVerifier.verify(context);
-    if (!verificationResult.isValid()) {
-      return verificationResult.errorResponse();
-    }
-
-    if (dryRun) {
-      return context.toResponse();
-    }
-
-    Tenant tenant = context.tenant();
-    tenantCommandRepository.register(tenant);
-    authorizationServerConfigurationCommandRepository.register(
-        tenant, context.authorizationServerConfiguration());
-    organizationRepository.register(context.organization());
-    permissionCommandRepository.bulkRegister(tenant, context.permissions());
-    roleCommandRepository.bulkRegister(tenant, context.roles());
-    userRegistrator.registerOrUpdate(tenant, context.user());
-    clientConfigurationCommandRepository.register(tenant, context.clientConfiguration());
-
-    return context.toResponse();
+    return result.toResponse(dryRun);
   }
 }

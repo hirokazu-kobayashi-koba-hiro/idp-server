@@ -17,6 +17,7 @@
 package org.idp.server.control_plane.management.permission.validator;
 
 import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
+import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.control_plane.management.permission.io.PermissionRequest;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
@@ -25,23 +26,24 @@ import org.idp.server.platform.json.schema.JsonSchemaValidator;
 public class PermissionRequestValidator {
 
   PermissionRequest request;
-  boolean dryRun;
   JsonSchemaValidator schemaValidator;
 
   public PermissionRequestValidator(PermissionRequest request, boolean dryRun) {
     this.request = request;
-    this.dryRun = dryRun;
     this.schemaValidator = new JsonSchemaValidator(ControlPlaneV1SchemaReader.permissionSchema());
   }
 
-  public PermissionRequestValidationResult validate() {
+  public void validate() {
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request.toMap());
-    JsonSchemaValidationResult userResult = schemaValidator.validate(jsonNodeWrapper);
+    JsonSchemaValidationResult schemaResult = schemaValidator.validate(jsonNodeWrapper);
 
-    if (!userResult.isValid()) {
-      return PermissionRequestValidationResult.error(userResult, dryRun);
+    throwExceptionIfInvalid(schemaResult);
+  }
+
+  void throwExceptionIfInvalid(JsonSchemaValidationResult result) {
+    if (!result.isValid()) {
+      throw new InvalidRequestException(
+          "permission registration validation is failed", result.errors());
     }
-
-    return PermissionRequestValidationResult.success(userResult, dryRun);
   }
 }

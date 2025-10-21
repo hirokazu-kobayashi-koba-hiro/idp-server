@@ -17,6 +17,8 @@
 package org.idp.server.control_plane.organization.access;
 
 import org.idp.server.control_plane.base.definition.AdminPermissions;
+import org.idp.server.control_plane.management.exception.OrganizationAccessDeniedException;
+import org.idp.server.control_plane.management.exception.PermissionDeniedException;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -41,129 +43,121 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
  * <p>This verification pattern ensures proper multi-tenant isolation and organization-scoped access
  * control in accordance with idp-server's security model.
  *
+ * <h2>Exception-Based Pattern (Result-Exception Hybrid)</h2>
+ *
+ * <p>This verifier follows the standard Result-Exception Hybrid pattern used throughout the
+ * codebase:
+ *
+ * <ul>
+ *   <li><strong>Success case</strong>: Returns void (no exception)
+ *   <li><strong>Failure case</strong>: Throws {@link PermissionDeniedException}
+ * </ul>
+ *
  * <p>Usage example:
  *
  * <pre>{@code
- * OrganizationAccessVerifier verifier = new OrganizationAccessVerifier(orgRepository);
- * OrganizationAdminPermissions requiredPermissions = new OrganizationAdminPermissions(
- *     Set.of(OrganizationAdminPermission.ORG_TENANT_CREATE)
- * );
+ * OrganizationAccessVerifier verifier = new OrganizationAccessVerifier();
+ * AdminPermissions requiredPermissions = getRequiredPermissions("create");
  *
- * OrganizationAccessControlResult result = verifier.verifyAccess(
- *     organizationId, tenantId, operator, requiredPermissions, adminTenant
- * );
- *
- * if (result.isSuccess()) {
- *     // Proceed with operation
- * } else {
- *     // Handle access denied or not found
+ * try {
+ *   verifier.verify(organization, tenantId, operator, requiredPermissions);
+ *   // Proceed with operation
+ * } catch (PermissionDeniedException e) {
+ *   // Handler will wrap in Result.error()
  * }
  * }</pre>
  *
- * @see OrganizationAccessControlResult
- * @see OrganizationAdminPermissions
+ * @see PermissionDeniedException
+ * @see AdminPermissions
  */
 public class OrganizationAccessVerifier {
 
   public OrganizationAccessVerifier() {}
 
-  public OrganizationAccessControlResult verifyAccess(
+  /**
+   * Verifies organization-level access with 4-step verification.
+   *
+   * <p>This method performs comprehensive access control verification and throws {@link
+   * PermissionDeniedException} on any failure. This follows the Result-Exception Hybrid pattern
+   * where Verifier throws exceptions and Handler catches them to wrap in Result.
+   *
+   * @param organization the organization context
+   * @param tenantIdentifier the target tenant identifier
+   * @param operator the user performing the operation
+   * @param requiredPermissions the required permissions for the operation
+   * @throws OrganizationAccessDeniedException if organization membership, tenant access, or
+   *     organization-tenant relationship verification fails
+   * @throws PermissionDeniedException if permission verification fails
+   */
+  public void verify(
       Organization organization,
       TenantIdentifier tenantIdentifier,
       User operator,
       AdminPermissions requiredPermissions) {
 
-    OrganizationAccessControlResult organizationMembershipResult =
-        verifyOrganizationMembership(operator, organization);
-    if (!organizationMembershipResult.isSuccess()) {
-      return organizationMembershipResult;
-    }
+    // Step 1: Organization membership verification
+    verifyOrganizationMembership(operator, organization);
 
-    OrganizationAccessControlResult tenantAccessResult =
-        verifyTenantAccess(operator, tenantIdentifier);
-    if (!tenantAccessResult.isSuccess()) {
-      return tenantAccessResult;
-    }
+    // Step 2: Tenant access verification
+    verifyTenantAccess(operator, tenantIdentifier);
 
-    OrganizationAccessControlResult organizationTenantRelationResult =
-        verifyOrganizationTenantRelation(organization, tenantIdentifier);
-    if (!organizationTenantRelationResult.isSuccess()) {
-      return organizationTenantRelationResult;
-    }
+    // Step 3: Organization-tenant relationship verification
+    verifyOrganizationTenantRelation(organization, tenantIdentifier);
 
-    OrganizationAccessControlResult permissionResult =
-        verifyRequiredPermissions(operator, requiredPermissions);
-    if (!permissionResult.isSuccess()) {
-      return permissionResult;
-    }
-
-    return OrganizationAccessControlResult.success();
+    // Step 4: Required permissions verification
+    verifyRequiredPermissions(operator, requiredPermissions);
   }
 
-  private OrganizationAccessControlResult verifyOrganizationMembership(
-      User operator, Organization organization) {
+  private void verifyOrganizationMembership(User operator, Organization organization) {
     if (!operator.hasAssignedOrganizations()) {
-      return OrganizationAccessControlResult.forbidden("User has no assigned organizations");
+      throw new OrganizationAccessDeniedException("User has no assigned organizations");
     }
 
     if (!operator.assignedOrganizations().contains(organization.identifier().value())) {
-      return OrganizationAccessControlResult.forbidden(
+      throw new OrganizationAccessDeniedException(
           String.format(
               "User is not member of organization: %s. Assigned: %s",
               organization.identifier().value(),
               String.join(",", operator.assignedOrganizations())));
     }
-
-    return OrganizationAccessControlResult.success();
   }
 
-  private OrganizationAccessControlResult verifyTenantAccess(
-      User operator, TenantIdentifier tenantIdentifier) {
+  private void verifyTenantAccess(User operator, TenantIdentifier tenantIdentifier) {
 
     if (!tenantIdentifier.exists()) {
-      return OrganizationAccessControlResult.success();
+      return;
     }
 
     if (!operator.hasAssignedTenants()) {
-      return OrganizationAccessControlResult.forbidden("User has no assigned tenants");
+      throw new OrganizationAccessDeniedException("User has no assigned tenants");
     }
 
     if (!operator.assignedTenants().contains(tenantIdentifier.value())) {
-      return OrganizationAccessControlResult.forbidden(
+      throw new OrganizationAccessDeniedException(
           String.format(
               "User does not have access to tenant: %s. Assigned: %s",
               tenantIdentifier.value(), String.join(",", operator.assignedTenants())));
     }
-
-    return OrganizationAccessControlResult.success();
   }
 
-  private OrganizationAccessControlResult verifyOrganizationTenantRelation(
+  private void verifyOrganizationTenantRelation(
       Organization organization, TenantIdentifier tenantIdentifier) {
 
     if (!tenantIdentifier.exists()) {
-      return OrganizationAccessControlResult.success();
+      return;
     }
 
     if (!organization.hasAssignedTenant(tenantIdentifier)) {
-      return OrganizationAccessControlResult.forbidden(
+      throw new OrganizationAccessDeniedException(
           String.format(
               "Tenant %s is not assigned to organization %s",
               tenantIdentifier.value(), organization.identifier().value()));
     }
-
-    return OrganizationAccessControlResult.success();
   }
 
-  private OrganizationAccessControlResult verifyRequiredPermissions(
-      User operator, AdminPermissions requiredPermissions) {
+  private void verifyRequiredPermissions(User operator, AdminPermissions requiredPermissions) {
     if (!requiredPermissions.includesAll(operator.permissionsAsSet())) {
-      return OrganizationAccessControlResult.forbidden(
-          String.format(
-              "Required permissions: %s, but user has: %s",
-              requiredPermissions.valuesAsString(), operator.permissionsAsString()));
+      throw new PermissionDeniedException(requiredPermissions, operator.permissionsAsSet());
     }
-
-    return OrganizationAccessControlResult.success();
   }
 }

@@ -17,6 +17,7 @@
 package org.idp.server.control_plane.management.oidc.client.validator;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementStatus;
@@ -47,6 +48,10 @@ public class ClientRegistrationRequestValidationResult {
 
   public boolean isValid() {
     return isValid;
+  }
+
+  public List<String> errors() {
+    return clientResult.errors();
   }
 
   public ClientManagementResponse errorResponse() {

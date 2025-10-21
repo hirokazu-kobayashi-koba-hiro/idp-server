@@ -17,6 +17,7 @@
 package org.idp.server.control_plane.management.oidc.client.validator;
 
 import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
+import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.control_plane.management.oidc.client.io.ClientRegistrationRequest;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
@@ -34,14 +35,13 @@ public class ClientRegistrationRequestValidator {
     this.clientSchemaValidator = new JsonSchemaValidator(ControlPlaneV1SchemaReader.clientSchema());
   }
 
-  public ClientRegistrationRequestValidationResult validate() {
+  public void validate() {
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request.toMap());
     JsonSchemaValidationResult clientResult = clientSchemaValidator.validate(jsonNodeWrapper);
 
     if (!clientResult.isValid()) {
-      return ClientRegistrationRequestValidationResult.error(clientResult, dryRun);
+      throw new InvalidRequestException(
+          "Invalid client registration request", clientResult.errors());
     }
-
-    return ClientRegistrationRequestValidationResult.success(clientResult, dryRun);
   }
 }

@@ -17,6 +17,7 @@
 package org.idp.server.control_plane.management.permission.validator;
 
 import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
+import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.control_plane.management.permission.io.PermissionRequest;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
@@ -25,23 +26,23 @@ import org.idp.server.platform.json.schema.JsonSchemaValidator;
 public class PermissionUpdateRequestValidator {
 
   PermissionRequest request;
-  boolean dryRun;
   JsonSchemaValidator validator;
 
   public PermissionUpdateRequestValidator(PermissionRequest request, boolean dryRun) {
     this.request = request;
-    this.dryRun = dryRun;
     this.validator = new JsonSchemaValidator(ControlPlaneV1SchemaReader.permissionUpdateSchema());
   }
 
-  public PermissionRequestValidationResult validate() {
+  public void validate() {
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request.toMap());
-    JsonSchemaValidationResult userResult = validator.validate(jsonNodeWrapper);
+    JsonSchemaValidationResult schemaResult = validator.validate(jsonNodeWrapper);
 
-    if (!userResult.isValid()) {
-      return PermissionRequestValidationResult.error(userResult, dryRun);
+    throwExceptionIfInvalid(schemaResult);
+  }
+
+  void throwExceptionIfInvalid(JsonSchemaValidationResult result) {
+    if (!result.isValid()) {
+      throw new InvalidRequestException("permission update validation is failed", result.errors());
     }
-
-    return PermissionRequestValidationResult.success(userResult, dryRun);
   }
 }

@@ -41,13 +41,21 @@ public class UserOrganizationAssignmentsUpdateContextCreator {
   }
 
   public UserUpdateContext create() {
-    User newUser = jsonConverter.read(request.toMap(), User.class);
+    User updated = before;
 
-    if (newUser.hasAssignedOrganizations()) {
-      User updated = before.setAssignedOrganizations(newUser.assignedOrganizations());
-      return new UserUpdateContext(tenant, before, updated, dryRun);
+    // Update assigned organizations if provided
+    if (request.containsKey("assigned_organizations")) {
+      updated = updated.setAssignedOrganizations(request.assignedOrganizations());
     }
 
-    return new UserUpdateContext(tenant, before, newUser, dryRun);
+    // Update current organization if provided
+    if (request.containsKey("current_organization_id") && request.currentOrganizationId() != null) {
+      updated =
+          updated.setCurrentOrganizationId(
+              new org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier(
+                  request.currentOrganizationId()));
+    }
+
+    return new UserUpdateContext(tenant, before, updated, dryRun);
   }
 }

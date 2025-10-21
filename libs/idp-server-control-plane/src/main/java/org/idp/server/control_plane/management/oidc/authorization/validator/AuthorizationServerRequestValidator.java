@@ -17,6 +17,7 @@
 package org.idp.server.control_plane.management.oidc.authorization.validator;
 
 import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
+import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerUpdateRequest;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
@@ -36,15 +37,14 @@ public class AuthorizationServerRequestValidator {
         new JsonSchemaValidator(ControlPlaneV1SchemaReader.authorizationServerSchema());
   }
 
-  public AuthorizationServerRequestValidationResult validate() {
+  public void validate() {
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request.toMap());
     JsonSchemaValidationResult serverResult =
         authorizationServerSchemaValidator.validate(jsonNodeWrapper);
 
     if (!serverResult.isValid()) {
-      return AuthorizationServerRequestValidationResult.error(serverResult, dryRun);
+      throw new InvalidRequestException(
+          "Invalid authorization server configuration request", serverResult.errors());
     }
-
-    return AuthorizationServerRequestValidationResult.success(serverResult, dryRun);
   }
 }

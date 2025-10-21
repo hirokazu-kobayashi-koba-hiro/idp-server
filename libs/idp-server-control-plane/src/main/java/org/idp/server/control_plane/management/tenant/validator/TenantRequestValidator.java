@@ -19,6 +19,7 @@ package org.idp.server.control_plane.management.tenant.validator;
 import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
+import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.control_plane.management.tenant.io.TenantRequest;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
@@ -39,19 +40,17 @@ public class TenantRequestValidator {
     this.dryRun = dryRun;
   }
 
-  public TenantRequestValidationResult validate() {
+  public void validate() {
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request.toMap());
     if (!jsonNodeWrapper.contains("tenant")) {
       List<String> errors = new ArrayList<>();
       errors.add("tenant is required.");
-      return TenantRequestValidationResult.error(
-          JsonSchemaValidationResult.failure(errors), JsonSchemaValidationResult.empty(), dryRun);
+      throw new InvalidRequestException("Tenant request validation failed", errors);
     }
     if (!jsonNodeWrapper.contains("authorization_server")) {
       List<String> errors = new ArrayList<>();
       errors.add("authorization_server is required.");
-      return TenantRequestValidationResult.error(
-          JsonSchemaValidationResult.failure(errors), JsonSchemaValidationResult.empty(), dryRun);
+      throw new InvalidRequestException("Tenant request validation failed", errors);
     }
     JsonSchemaValidationResult tenantResult =
         tenantSchemaValidator.validate(jsonNodeWrapper.getValueAsJsonNode("tenant"));
@@ -59,10 +58,21 @@ public class TenantRequestValidator {
         authorizationServerSchemaValidator.validate(
             jsonNodeWrapper.getValueAsJsonNode("authorization_server"));
 
-    if (!tenantResult.isValid() || !authorizationServerResult.isValid()) {
-      return TenantRequestValidationResult.error(tenantResult, authorizationServerResult, dryRun);
-    }
+    throwExceptionIfInvalid(tenantResult, authorizationServerResult);
+  }
 
-    return TenantRequestValidationResult.success(tenantResult, authorizationServerResult, dryRun);
+  void throwExceptionIfInvalid(
+      JsonSchemaValidationResult tenantResult,
+      JsonSchemaValidationResult authorizationServerResult) {
+    if (!tenantResult.isValid() || !authorizationServerResult.isValid()) {
+      List<String> errorMessages = new ArrayList<>();
+      if (!tenantResult.isValid()) {
+        errorMessages.addAll(tenantResult.errors());
+      }
+      if (!authorizationServerResult.isValid()) {
+        errorMessages.addAll(authorizationServerResult.errors());
+      }
+      throw new InvalidRequestException("Tenant request validation failed", errorMessages);
+    }
   }
 }

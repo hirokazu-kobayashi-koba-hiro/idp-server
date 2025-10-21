@@ -28,6 +28,8 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantAttributes;
  */
 public class TenantIdentityPolicy {
 
+  public TenantIdentityPolicy() {}
+
   public enum UniqueKeyType {
     /** Use username as unique key */
     USERNAME,
@@ -42,7 +44,7 @@ public class TenantIdentityPolicy {
     EXTERNAL_USER_ID
   }
 
-  private final UniqueKeyType uniqueKeyType;
+  private UniqueKeyType uniqueKeyType;
 
   public TenantIdentityPolicy(UniqueKeyType uniqueKeyType) {
     this.uniqueKeyType = uniqueKeyType != null ? uniqueKeyType : UniqueKeyType.EMAIL;

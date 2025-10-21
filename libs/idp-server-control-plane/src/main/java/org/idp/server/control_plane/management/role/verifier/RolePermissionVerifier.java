@@ -18,7 +18,7 @@ package org.idp.server.control_plane.management.role.verifier;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.control_plane.base.verifier.VerificationResult;
+import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.control_plane.management.role.io.RoleRequest;
 import org.idp.server.core.openid.identity.permission.Permission;
 import org.idp.server.core.openid.identity.permission.Permissions;
@@ -39,13 +39,12 @@ public class RolePermissionVerifier {
     this.updatingRoleId = updatingRoleId;
   }
 
-  public VerificationResult verify() {
-
+  public void verify() {
     if (roles.containsByName(roleRequest.name())) {
       if (!isSelfUpdate()) {
         List<String> errors = new ArrayList<>();
-        errors.add(String.format("Role is already exists: %s", roleRequest.name()));
-        return VerificationResult.failure(errors);
+        errors.add(String.format("Role already exists: %s", roleRequest.name()));
+        throw new InvalidRequestException("role registration verification is failed", errors);
       }
     }
 
@@ -57,12 +56,9 @@ public class RolePermissionVerifier {
           roleRequest.permissions().stream().filter(id -> !existingIds.contains(id)).toList();
 
       List<String> errors = new ArrayList<>();
-      errors.add(
-          String.format("Permission does not exists: %s", String.join(", ", nonExistentIds)));
-      return VerificationResult.failure(errors);
+      errors.add(String.format("Permission does not exist: %s", String.join(", ", nonExistentIds)));
+      throw new InvalidRequestException("role registration verification is failed", errors);
     }
-
-    return VerificationResult.success();
   }
 
   private boolean isSelfUpdate() {

@@ -25,24 +25,25 @@ import org.idp.server.platform.json.schema.JsonSchemaValidator;
 public class UserRolesUpdateRequestValidator {
 
   UserRegistrationRequest request;
-  boolean dryRun;
   JsonSchemaValidator schemaValidator;
 
   public UserRolesUpdateRequestValidator(UserRegistrationRequest request, boolean dryRun) {
     this.request = request;
-    this.dryRun = dryRun;
     this.schemaValidator =
         new JsonSchemaValidator(ControlPlaneV1SchemaReader.adminUserRolesUpdateSchema());
   }
 
-  public UserRequestValidationResult validate() {
+  public void validate() {
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request.toMap());
     JsonSchemaValidationResult result = schemaValidator.validate(jsonNodeWrapper);
 
-    if (!result.isValid()) {
-      return UserRequestValidationResult.error(result, dryRun);
-    }
+    throwExceptionIfInvalid(result);
+  }
 
-    return UserRequestValidationResult.success(result, dryRun);
+  void throwExceptionIfInvalid(JsonSchemaValidationResult result) {
+    if (!result.isValid()) {
+      throw new org.idp.server.control_plane.management.exception.InvalidRequestException(
+          "user registration validation is failed", result.errors());
+    }
   }
 }

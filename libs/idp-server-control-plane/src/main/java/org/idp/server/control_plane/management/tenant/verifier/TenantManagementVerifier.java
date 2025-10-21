@@ -18,6 +18,7 @@ package org.idp.server.control_plane.management.tenant.verifier;
 
 import org.idp.server.control_plane.base.verifier.TenantVerifier;
 import org.idp.server.control_plane.base.verifier.VerificationResult;
+import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.control_plane.management.tenant.TenantManagementRegistrationContext;
 
 public class TenantManagementVerifier {
@@ -28,14 +29,14 @@ public class TenantManagementVerifier {
     this.tenantVerifier = tenantVerifier;
   }
 
-  public TenantManagementVerificationResult verify(TenantManagementRegistrationContext context) {
-
+  public void verify(TenantManagementRegistrationContext context) {
     VerificationResult verificationResult = tenantVerifier.verify(context.newTenant());
+    throwExceptionIfInvalid(verificationResult);
+  }
 
-    if (!verificationResult.isValid()) {
-      return TenantManagementVerificationResult.error(verificationResult, context.isDryRun());
+  void throwExceptionIfInvalid(VerificationResult result) {
+    if (!result.isValid()) {
+      throw new InvalidRequestException("Tenant management verification failed", result.errors());
     }
-
-    return TenantManagementVerificationResult.success(verificationResult, context.isDryRun());
   }
 }

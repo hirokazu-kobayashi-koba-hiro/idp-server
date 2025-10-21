@@ -335,7 +335,7 @@ describe("organization authentication transaction management api", () => {
       expect(forbiddenResponse.status).toBe(401);
     });
 
-    it("forbidden no assigned tenant", async () => {
+    it("Try to access non-existent tenant", async () => {
       // Get OAuth token with org-management scope
       const tokenResponse = await requestToken({
         endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
@@ -357,7 +357,7 @@ describe("organization authentication transaction management api", () => {
           Authorization: `Bearer ${accessToken}`
         }
       });
-      expect(notFoundResponse.status).toBe(403);
+      expect(notFoundResponse.status).toBe(404);
     });
   });
 

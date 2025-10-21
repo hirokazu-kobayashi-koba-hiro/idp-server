@@ -689,8 +689,8 @@ public class IdpServerApplication {
                 userCommandRepository,
                 authorizationServerConfigurationCommandRepository,
                 clientConfigurationCommandRepository,
-                clientConfigurationQueryRepository,
-                passwordEncodeDelegation),
+                passwordEncodeDelegation,
+                auditLogPublisher),
             OnboardingApi.class,
             databaseTypeProvider);
 
@@ -978,9 +978,9 @@ public class IdpServerApplication {
     this.orgAuthenticationTransactionManagementApi =
         OrganizationAwareEntryServiceProxy.createProxy(
             new OrgAuthenticationTransactionManagementEntryService(
+                authenticationTransactionQueryRepository,
                 tenantQueryRepository,
                 organizationRepository,
-                authenticationTransactionQueryRepository,
                 auditLogPublisher),
             OrgAuthenticationTransactionManagementApi.class,
             databaseTypeProvider);
@@ -1052,7 +1052,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.orgSecurityEventHookManagementApi =
-        TenantAwareEntryServiceProxy.createProxy(
+        OrganizationAwareEntryServiceProxy.createProxy(
             new OrgSecurityEventHookManagementEntryService(
                 tenantQueryRepository,
                 organizationRepository,
