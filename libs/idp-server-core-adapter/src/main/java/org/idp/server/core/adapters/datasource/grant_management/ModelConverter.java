@@ -42,7 +42,7 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 class ModelConverter {
 
-  static JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+  private static final JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   static AuthorizationGranted convert(Map<String, String> stringMap) {
     AuthorizationGrantedIdentifier identifier =

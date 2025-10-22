@@ -28,7 +28,7 @@ import org.idp.server.platform.json.JsonConverter;
 
 class ModelConverter {
 
-  static JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+  private static final JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   static VerifiableCredentialTransaction convert(Map<String, String> stringMap) {
     TransactionId id = new TransactionId(stringMap.get("transaction_id"));

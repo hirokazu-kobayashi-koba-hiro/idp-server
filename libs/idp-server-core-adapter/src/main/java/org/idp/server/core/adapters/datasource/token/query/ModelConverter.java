@@ -43,7 +43,7 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 class ModelConverter {
 
-  static JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+  private static final JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   // TODO refactor
   static OAuthToken convert(Map<String, String> stringMap, AesCipher aesCipher) {
