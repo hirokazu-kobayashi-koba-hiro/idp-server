@@ -21,7 +21,7 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.platform.json.JsonConverter;
 
 class ModelConverter {
-  static JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+  private static final JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   static AuthorizationServerConfiguration convert(Map<String, String> stringMap) {
     return jsonConverter.read(stringMap.get("payload"), AuthorizationServerConfiguration.class);
