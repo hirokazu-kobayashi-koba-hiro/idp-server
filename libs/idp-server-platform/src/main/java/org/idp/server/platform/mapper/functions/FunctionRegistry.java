@@ -74,7 +74,6 @@ public class FunctionRegistry {
     // Collection operation functions
     MapFunction mapFunction = new MapFunction();
     temp.put(mapFunction.name(), mapFunction);
-    mapFunction.setFunctionRegistry(this);
 
     FilterFunction filterFunction = new FilterFunction();
     temp.put(filterFunction.name(), filterFunction);
@@ -85,7 +84,12 @@ public class FunctionRegistry {
     SplitFunction splitFunction = new SplitFunction();
     temp.put(splitFunction.name(), splitFunction);
 
+    // Initialize map field before calling setFunctionRegistry to prevent partial construction
+    // escape
     this.map = Collections.unmodifiableMap(temp);
+
+    // Set registry reference after map initialization to ensure thread-safety
+    mapFunction.setFunctionRegistry(this);
   }
 
   public ValueFunction get(String name) {
