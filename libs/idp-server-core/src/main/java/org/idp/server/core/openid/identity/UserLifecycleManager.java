@@ -24,22 +24,41 @@ import org.idp.server.platform.exception.UnSupportedException;
 public class UserLifecycleManager {
 
   private static final Map<UserStatus, Set<UserStatus>> allowedTransitions =
-      Map.of(
-          UserStatus.INITIALIZED, EnumSet.of(UserStatus.REGISTERED),
-          UserStatus.REGISTERED, EnumSet.of(UserStatus.IDENTITY_VERIFIED, UserStatus.DELETED),
-          UserStatus.IDENTITY_VERIFIED,
+      Map.ofEntries(
+          Map.entry(UserStatus.INITIALIZED, EnumSet.of(UserStatus.REGISTERED)),
+          Map.entry(
+              UserStatus.FEDERATED,
+              EnumSet.of(
+                  UserStatus.REGISTERED,
+                  UserStatus.IDENTITY_VERIFIED,
+                  UserStatus.IDENTITY_VERIFICATION_REQUIRED,
+                  UserStatus.LOCKED,
+                  UserStatus.DISABLED,
+                  UserStatus.SUSPENDED)),
+          Map.entry(
+              UserStatus.REGISTERED, EnumSet.of(UserStatus.IDENTITY_VERIFIED, UserStatus.DELETED)),
+          Map.entry(
+              UserStatus.IDENTITY_VERIFIED,
               EnumSet.of(
                   UserStatus.IDENTITY_VERIFIED,
                   UserStatus.LOCKED,
                   UserStatus.DISABLED,
                   UserStatus.SUSPENDED,
-                  UserStatus.DEACTIVATED),
-          UserStatus.IDENTITY_VERIFICATION_REQUIRED, EnumSet.of(UserStatus.IDENTITY_VERIFIED),
-          UserStatus.LOCKED, EnumSet.of(UserStatus.IDENTITY_VERIFIED, UserStatus.REGISTERED),
-          UserStatus.DISABLED, EnumSet.of(UserStatus.IDENTITY_VERIFIED, UserStatus.REGISTERED),
-          UserStatus.SUSPENDED, EnumSet.of(UserStatus.IDENTITY_VERIFIED, UserStatus.REGISTERED),
-          UserStatus.DEACTIVATED, EnumSet.of(UserStatus.DELETED_PENDING, UserStatus.REGISTERED),
-          UserStatus.DELETED_PENDING, EnumSet.of(UserStatus.DELETED, UserStatus.REGISTERED));
+                  UserStatus.DEACTIVATED)),
+          Map.entry(
+              UserStatus.IDENTITY_VERIFICATION_REQUIRED, EnumSet.of(UserStatus.IDENTITY_VERIFIED)),
+          Map.entry(
+              UserStatus.LOCKED, EnumSet.of(UserStatus.IDENTITY_VERIFIED, UserStatus.REGISTERED)),
+          Map.entry(
+              UserStatus.DISABLED, EnumSet.of(UserStatus.IDENTITY_VERIFIED, UserStatus.REGISTERED)),
+          Map.entry(
+              UserStatus.SUSPENDED,
+              EnumSet.of(UserStatus.IDENTITY_VERIFIED, UserStatus.REGISTERED)),
+          Map.entry(
+              UserStatus.DEACTIVATED,
+              EnumSet.of(UserStatus.DELETED_PENDING, UserStatus.REGISTERED)),
+          Map.entry(
+              UserStatus.DELETED_PENDING, EnumSet.of(UserStatus.DELETED, UserStatus.REGISTERED)));
 
   public static boolean canTransit(UserStatus from, UserStatus to) {
     Set<UserStatus> nextStatuses = allowedTransitions.getOrDefault(from, Set.of());
