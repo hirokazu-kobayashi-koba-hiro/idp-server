@@ -33,6 +33,13 @@ CREATE TABLE tenant
     PRIMARY KEY (id)
 );
 
+ALTER TABLE tenant ENABLE ROW LEVEL SECURITY;
+CREATE
+POLICY tenant_isolation_policy
+  ON tenant
+  USING (id = current_setting('app.tenant_id')::uuid);
+ALTER TABLE tenant FORCE ROW LEVEL SECURITY;
+
 CREATE UNIQUE INDEX unique_admin_tenant ON tenant (type) WHERE type = 'ADMIN';
 
 -- Indexes for category-based configuration columns
@@ -240,7 +247,11 @@ CREATE UNIQUE INDEX idx_idp_user_tenant_preferred_username ON idp_user (tenant_i
 COMMENT
 ON COLUMN idp_user.preferred_username IS 'Tenant-scoped unique user identifier. Stores normalized username/email/phone/external_user_id based on tenant unique key policy.';
 
--- no rls
+-- No RLS: User-based filtering required instead of tenant-based
+-- Reason: A single user can be assigned to multiple tenants (cross-tenant functionality).
+--         User needs to see ALL their assigned tenants for tenant switching.
+--         RLS with 'tenant_id = current_setting()' would only show 1 row instead of all assignments.
+-- Security: Application layer filters by 'user_id' in AssignedTenantQueryDataSource.
 CREATE TABLE idp_user_assigned_tenants
 (
     id          UUID      DEFAULT gen_random_uuid(),
@@ -253,7 +264,11 @@ CREATE TABLE idp_user_assigned_tenants
     UNIQUE (tenant_id, user_id)
 );
 
--- no rls
+-- No RLS: User-scoped preference data, not tenant-scoped data
+-- Reason: Stores which tenant the user is currently using (similar to session state).
+--         PRIMARY KEY is 'user_id', not 'tenant_id' - this is user preference data.
+--         tenant_id is a reference (foreign key), not a filtering criterion.
+-- Security: Application layer filters by 'user_id' in CurrentTenantDataSource.
 CREATE TABLE idp_user_current_tenant
 (
     user_id    UUID                                NOT NULL,
@@ -265,7 +280,11 @@ CREATE TABLE idp_user_current_tenant
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
--- no rls
+-- No RLS: Organization-level data (higher than tenant hierarchy)
+-- Reason: Organizations are ABOVE tenants in the hierarchy (Organization > Tenant > User).
+--         A user can belong to multiple organizations, each containing multiple tenants.
+--         Tenant-based RLS would incorrectly restrict organization-level operations.
+-- Security: Application layer filters by 'user_id' and organization-level access control.
 CREATE TABLE idp_user_assigned_organizations
 (
     id              UUID      DEFAULT gen_random_uuid(),
@@ -278,7 +297,11 @@ CREATE TABLE idp_user_assigned_organizations
     FOREIGN KEY (organization_id) REFERENCES organization (id) ON DELETE CASCADE
 );
 
--- no rls
+-- No RLS: User-scoped preference for organization context (higher than tenant level)
+-- Reason: Similar to idp_user_current_tenant but for organization-level context.
+--         PRIMARY KEY is 'user_id' - this is user preference data at organization level.
+--         Organization hierarchy is above tenants, so tenant-based RLS doesn't apply.
+-- Security: Application layer filters by 'user_id' and OrganizationAccessVerifier.
 CREATE TABLE idp_user_current_organization
 (
     user_id         UUID                                NOT NULL,
@@ -965,6 +988,13 @@ CREATE TABLE audit_log
     created_at             TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (id)
 );
+
+ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
+CREATE
+POLICY tenant_isolation_policy
+  ON audit_log
+  USING (tenant_id = current_setting('app.tenant_id')::uuid);
+ALTER TABLE audit_log FORCE ROW LEVEL SECURITY;
 
 CREATE INDEX idx_audit_log_tenant_id ON audit_log (tenant_id);
 CREATE INDEX idx_audit_log_client_id ON audit_log (client_id);
