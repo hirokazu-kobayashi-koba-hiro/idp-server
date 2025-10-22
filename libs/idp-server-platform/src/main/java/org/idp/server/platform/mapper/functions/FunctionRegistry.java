@@ -16,41 +16,76 @@
 
 package org.idp.server.platform.mapper.functions;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 public class FunctionRegistry {
-  private final Map<String, ValueFunction> map = new HashMap<>();
+  private final Map<String, ValueFunction> map;
 
   public FunctionRegistry() {
-    register(new FormatFunction());
-    register(new RandomStringFunction());
-    register(new NowFunction());
-    register(new ExistsFunction());
-    register(new ConvertTypeFunction());
-    register(new Uuid4Function());
-    register(new Uuid5Function());
-    register(new UuidShortFunction());
-    register(new SubstringFunction());
-    register(new ReplaceFunction());
-    register(new RegexReplaceFunction());
-    register(new CaseFunction());
-    register(new TrimFunction());
-    register(new IfFunction());
-    register(new SwitchFunction());
+    Map<String, ValueFunction> temp = new HashMap<>();
+
+    FormatFunction formatFunction = new FormatFunction();
+    temp.put(formatFunction.name(), formatFunction);
+
+    RandomStringFunction randomStringFunction = new RandomStringFunction();
+    temp.put(randomStringFunction.name(), randomStringFunction);
+
+    NowFunction nowFunction = new NowFunction();
+    temp.put(nowFunction.name(), nowFunction);
+
+    ExistsFunction existsFunction = new ExistsFunction();
+    temp.put(existsFunction.name(), existsFunction);
+
+    ConvertTypeFunction convertTypeFunction = new ConvertTypeFunction();
+    temp.put(convertTypeFunction.name(), convertTypeFunction);
+
+    Uuid4Function uuid4Function = new Uuid4Function();
+    temp.put(uuid4Function.name(), uuid4Function);
+
+    Uuid5Function uuid5Function = new Uuid5Function();
+    temp.put(uuid5Function.name(), uuid5Function);
+
+    UuidShortFunction uuidShortFunction = new UuidShortFunction();
+    temp.put(uuidShortFunction.name(), uuidShortFunction);
+
+    SubstringFunction substringFunction = new SubstringFunction();
+    temp.put(substringFunction.name(), substringFunction);
+
+    ReplaceFunction replaceFunction = new ReplaceFunction();
+    temp.put(replaceFunction.name(), replaceFunction);
+
+    RegexReplaceFunction regexReplaceFunction = new RegexReplaceFunction();
+    temp.put(regexReplaceFunction.name(), regexReplaceFunction);
+
+    CaseFunction caseFunction = new CaseFunction();
+    temp.put(caseFunction.name(), caseFunction);
+
+    TrimFunction trimFunction = new TrimFunction();
+    temp.put(trimFunction.name(), trimFunction);
+
+    IfFunction ifFunction = new IfFunction();
+    temp.put(ifFunction.name(), ifFunction);
+
+    SwitchFunction switchFunction = new SwitchFunction();
+    temp.put(switchFunction.name(), switchFunction);
 
     // Collection operation functions
     MapFunction mapFunction = new MapFunction();
-    register(mapFunction);
+    temp.put(mapFunction.name(), mapFunction);
     mapFunction.setFunctionRegistry(this);
 
-    register(new FilterFunction());
-    register(new JoinFunction());
-    register(new SplitFunction());
-  }
+    FilterFunction filterFunction = new FilterFunction();
+    temp.put(filterFunction.name(), filterFunction);
 
-  public void register(ValueFunction fn) {
-    map.put(fn.name(), fn);
+    JoinFunction joinFunction = new JoinFunction();
+    temp.put(joinFunction.name(), joinFunction);
+
+    SplitFunction splitFunction = new SplitFunction();
+    temp.put(splitFunction.name(), splitFunction);
+
+    this.map = Collections.unmodifiableMap(temp);
   }
 
   public ValueFunction get(String name) {
