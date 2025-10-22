@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.platform.json.JsonConvertable;
+import org.idp.server.platform.json.JsonNodeWrapper;
 
 /**
  * example
@@ -91,7 +91,8 @@ public class Credential {
   }
 
   public static Credential parse(String json) {
-    return new Credential(JsonConvertable.read(json, Map.class));
+    Map<String, Object> map = JsonNodeWrapper.fromString(json).toMap();
+    return new Credential(map);
   }
 
   public List<String> context() {
