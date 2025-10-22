@@ -254,7 +254,7 @@
   },
   "client": {
     "client_id": "${ADMIN_CLIENT_ID}",
-    "client_id_alias": "admin-client",
+    "client_id_alias": "${ADMIN_CLIENT_ID_ALIAS}",
     "client_secret": "${ADMIN_CLIENT_SECRET}",
     "redirect_uris": [
       ${ADMIN_CLIENT_REDIRECT_URIS}

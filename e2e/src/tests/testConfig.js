@@ -99,7 +99,7 @@ export const adminServerConfig =(() => {
       password: process.env.ADMIN_USER_PASSWORD,
     },
     adminClient: {
-      clientId: "admin-client",
+      clientId: process.env.ADMIN_CLIENT_ID_ALIAS,
       clientSecret:
         process.env.ADMIN_CLIENT_SECRET,
       redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
