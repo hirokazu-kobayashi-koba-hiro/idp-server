@@ -118,13 +118,7 @@ public class AuthenticationConfigurationManagementEntryService
 
     // Record audit log (create operation)
     AuditLog auditLog =
-        AuditLogCreator.create(
-            "AuthenticationConfigurationManagementApi.create",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (AuthenticationConfigRegistrationContext) result.context(),
-            requestAttributes);
+        AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -253,13 +247,7 @@ public class AuthenticationConfigurationManagementEntryService
 
     // Record audit log (update operation)
     AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "AuthenticationConfigurationManagementApi.update",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (AuthenticationConfigUpdateContext) result.context(),
-            requestAttributes);
+        AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

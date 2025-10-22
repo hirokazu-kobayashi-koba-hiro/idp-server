@@ -18,6 +18,8 @@ package org.idp.server.control_plane.management.federation.handler;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
 import org.idp.server.control_plane.management.exception.OrganizationAccessDeniedException;
 import org.idp.server.control_plane.management.exception.PermissionDeniedException;
@@ -38,13 +40,13 @@ public class FederationConfigManagementResult {
   private final TenantIdentifier tenantIdentifier;
   private final FederationConfigManagementResponse response;
   private final ManagementApiException exception;
-  private final Object context;
+  private final AuditableContext context;
 
   private FederationConfigManagementResult(
       TenantIdentifier tenantIdentifier,
       FederationConfigManagementResponse response,
       ManagementApiException exception,
-      Object context) {
+      AuditableContext context) {
     this.tenantIdentifier = tenantIdentifier;
     this.response = response;
     this.exception = exception;
@@ -74,7 +76,7 @@ public class FederationConfigManagementResult {
   public static FederationConfigManagementResult success(
       TenantIdentifier tenantIdentifier,
       FederationConfigManagementResponse response,
-      Object context) {
+      AuditableContext context) {
     return new FederationConfigManagementResult(tenantIdentifier, response, null, context);
   }
 
@@ -113,7 +115,7 @@ public class FederationConfigManagementResult {
    *
    * @return the context object
    */
-  public Object context() {
+  public AuditableContext context() {
     return context;
   }
 

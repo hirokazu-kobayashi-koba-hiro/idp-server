@@ -154,13 +154,7 @@ public class OrgSecurityEventHookConfigManagementEntryService
     }
 
     AuditLog auditLog =
-        AuditLogCreator.create(
-            "OrgSecurityEventHookConfigManagementApi.create",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (SecurityEventHookConfigRegistrationContext) result.context(),
-            requestAttributes);
+        AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -301,13 +295,7 @@ public class OrgSecurityEventHookConfigManagementEntryService
     }
 
     AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "OrgSecurityEventHookConfigManagementApi.update",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (SecurityEventHookConfigUpdateContext) result.context(),
-            requestAttributes);
+        AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

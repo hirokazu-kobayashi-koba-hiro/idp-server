@@ -104,16 +104,9 @@ public class FederationConfigurationManagementEntryService
       return result.toResponse(dryRun);
     }
 
-    FederationConfigRegistrationContext context =
-        (FederationConfigRegistrationContext) result.context();
+
     AuditLog auditLog =
-        AuditLogCreator.create(
-            "FederationConfigurationManagementApi.create",
-            tenant,
-            operator,
-            oAuthToken,
-            context,
-            requestAttributes);
+        AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -209,15 +202,8 @@ public class FederationConfigurationManagementEntryService
       return result.toResponse(dryRun);
     }
 
-    FederationConfigUpdateContext context = (FederationConfigUpdateContext) result.context();
     AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "FederationConfigurationManagementApi.update",
-            tenant,
-            operator,
-            oAuthToken,
-            context,
-            requestAttributes);
+        AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

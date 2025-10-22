@@ -76,7 +76,7 @@ public class FederationConfigUpdateService
     }
 
     // Update configuration
-    commandRepository.update(tenant, context.after());
+    commandRepository.update(tenant, context.afterConfiguration());
 
     FederationConfigManagementResponse response = context.toResponse();
     return FederationConfigManagementResult.success(tenant.identifier(), response, context);

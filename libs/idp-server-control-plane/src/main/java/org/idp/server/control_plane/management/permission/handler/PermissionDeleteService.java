@@ -71,7 +71,7 @@ public class PermissionDeleteService implements PermissionManagementService<Perm
       return PermissionManagementResult.success(
           tenant,
           new PermissionManagementResponse(PermissionManagementStatus.OK, response),
-          permission.toMap());
+          null);
     }
 
     permissionCommandRepository.delete(tenant, permission);
@@ -79,6 +79,6 @@ public class PermissionDeleteService implements PermissionManagementService<Perm
     return PermissionManagementResult.success(
         tenant,
         new PermissionManagementResponse(PermissionManagementStatus.NO_CONTENT, Map.of()),
-        permission.toMap());
+        null);
   }
 }

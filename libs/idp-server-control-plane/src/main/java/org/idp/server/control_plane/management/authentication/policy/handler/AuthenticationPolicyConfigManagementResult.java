@@ -18,6 +18,8 @@ package org.idp.server.control_plane.management.authentication.policy.handler;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementStatus;
 import org.idp.server.control_plane.management.exception.*;
@@ -53,13 +55,13 @@ public class AuthenticationPolicyConfigManagementResult {
 
   private final AuthenticationPolicyConfigManagementResponse response;
   private final Tenant tenant;
-  private final Object context;
+  private final AuditableContext context;
   private final ManagementApiException exception;
 
   private AuthenticationPolicyConfigManagementResult(
       AuthenticationPolicyConfigManagementResponse response,
       Tenant tenant,
-      Object context,
+      AuditableContext context,
       ManagementApiException exception) {
     this.response = response;
     this.tenant = tenant;
@@ -76,7 +78,7 @@ public class AuthenticationPolicyConfigManagementResult {
    * @return AuthenticationPolicyConfigManagementResult with success response
    */
   public static AuthenticationPolicyConfigManagementResult success(
-      Tenant tenant, Object context, AuthenticationPolicyConfigManagementResponse response) {
+      Tenant tenant, AuditableContext context, AuthenticationPolicyConfigManagementResponse response) {
     return new AuthenticationPolicyConfigManagementResult(response, tenant, context, null);
   }
 
@@ -168,7 +170,7 @@ public class AuthenticationPolicyConfigManagementResult {
    * @return operation context (e.g., AuthenticationPolicyConfigRegistrationContext) or null if
    *     error result
    */
-  public Object context() {
+  public AuditableContext context() {
     return context;
   }
 }

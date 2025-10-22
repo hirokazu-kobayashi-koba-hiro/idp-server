@@ -25,14 +25,14 @@ public class RoleRegistrationVerifier {
 
   public void verify(RoleRegistrationContext context) {
     RolePermissionVerifier rolePermissionVerifier =
-        new RolePermissionVerifier(context.request(), context.roles(), context.permissions(), null);
+        new RolePermissionVerifier(context.requestRole(), context.roles(), context.permissions(), null);
     rolePermissionVerifier.verify();
   }
 
   public void verify(RoleUpdateContext context) {
     RolePermissionVerifier rolePermissionVerifier =
         new RolePermissionVerifier(
-            context.request(), context.roles(), context.permissions(), context.before().id());
+            context.requestRole(), context.roles(), context.permissions(), context.beforeRoke().id());
     rolePermissionVerifier.verify();
   }
 }

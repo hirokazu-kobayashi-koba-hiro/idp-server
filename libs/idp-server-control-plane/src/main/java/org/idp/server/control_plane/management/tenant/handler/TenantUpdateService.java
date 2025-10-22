@@ -74,7 +74,7 @@ public class TenantUpdateService implements TenantManagementService<TenantUpdate
     }
 
     // 5. Repository operation
-    tenantCommandRepository.update(context.after());
+    tenantCommandRepository.update(context.afterTenant());
 
     return TenantManagementResult.success(adminTenant, context, context.toResponse());
   }

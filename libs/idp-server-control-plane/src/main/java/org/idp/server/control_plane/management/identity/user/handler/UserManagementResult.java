@@ -18,6 +18,7 @@ package org.idp.server.control_plane.management.identity.user.handler;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.exception.*;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
@@ -59,13 +60,13 @@ public class UserManagementResult {
 
   private final UserManagementResponse response;
   private final Tenant tenant;
-  private final Object context;
+  private final AuditableContext context;
   private final ManagementApiException exception;
 
   private UserManagementResult(
       UserManagementResponse response,
       Tenant tenant,
-      Object context,
+      AuditableContext context,
       ManagementApiException exception) {
     this.response = response;
     this.tenant = tenant;
@@ -82,7 +83,7 @@ public class UserManagementResult {
    * @return UserManagementResult with success response
    */
   public static UserManagementResult success(
-      Tenant tenant, Object context, UserManagementResponse response) {
+      Tenant tenant, AuditableContext context, UserManagementResponse response) {
     return new UserManagementResult(response, tenant, context, null);
   }
 
@@ -97,6 +98,19 @@ public class UserManagementResult {
    */
   public static UserManagementResult error(Tenant tenant, ManagementApiException exception) {
     return new UserManagementResult(null, tenant, null, exception);
+  }
+
+  /**
+   * Creates an error result from exception with partial context.
+   *
+   * <p>Used when context was partially built before error occurred (e.g., Tenant retrieval failed).
+   *
+   * @param context the partial context with available information for audit logging
+   * @param exception the exception that caused the error
+   * @return UserManagementResult with exception and partial context
+   */
+  public static UserManagementResult error(AuditableContext context, ManagementApiException exception) {
+    return new UserManagementResult(null, null, context, exception);
   }
 
   /**
@@ -171,7 +185,7 @@ public class UserManagementResult {
    *
    * @return operation context (e.g., UserRegistrationContext) or null if error result
    */
-  public Object context() {
+  public AuditableContext context() {
     return context;
   }
 }

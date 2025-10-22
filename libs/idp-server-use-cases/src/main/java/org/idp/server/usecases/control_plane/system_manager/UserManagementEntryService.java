@@ -188,14 +188,7 @@ public class UserManagementEntryService implements UserManagementApi {
     }
 
     // Success case - record with context
-    AuditLog auditLog =
-        AuditLogCreator.create(
-            "UserManagementApi.create",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (UserRegistrationContext) result.context(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -229,14 +222,7 @@ public class UserManagementEntryService implements UserManagementApi {
     }
 
     // Record audit log (read operation)
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "UserManagementApi.findList",
-            "findList",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);
@@ -276,14 +262,7 @@ public class UserManagementEntryService implements UserManagementApi {
     }
 
     // Record audit log (read operation)
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "UserManagementApi.get",
-            "get",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);
@@ -326,14 +305,7 @@ public class UserManagementEntryService implements UserManagementApi {
     }
 
     // Success case
-    AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "UserManagementApi.update",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (UserUpdateContext) result.context(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -376,14 +348,7 @@ public class UserManagementEntryService implements UserManagementApi {
     }
 
     // Success case
-    AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "UserManagementApi.patch",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (UserUpdateContext) result.context(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -426,14 +391,7 @@ public class UserManagementEntryService implements UserManagementApi {
     }
 
     // Success case
-    AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "UserManagementApi.updatePassword",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (UserUpdateContext) result.context(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -474,16 +432,7 @@ public class UserManagementEntryService implements UserManagementApi {
     }
 
     // Success case - record deletion audit log
-    UserDeletionContext context = (UserDeletionContext) result.context();
-    AuditLog auditLog =
-        AuditLogCreator.createOnDeletion(
-            "UserManagementApi.delete",
-            "delete",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            context.beforePayload(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -523,14 +472,7 @@ public class UserManagementEntryService implements UserManagementApi {
       return result.toResponse(dryRun);
     }
 
-    AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "UserManagementApi.updateRoles",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (UserUpdateContext) result.context(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -570,14 +512,7 @@ public class UserManagementEntryService implements UserManagementApi {
       return result.toResponse(dryRun);
     }
 
-    AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "UserManagementApi.updateTenantAssignments",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (UserUpdateContext) result.context(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -617,14 +552,7 @@ public class UserManagementEntryService implements UserManagementApi {
       return result.toResponse(dryRun);
     }
 
-    AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "UserManagementApi.updateOrganizationAssignments",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (UserUpdateContext) result.context(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

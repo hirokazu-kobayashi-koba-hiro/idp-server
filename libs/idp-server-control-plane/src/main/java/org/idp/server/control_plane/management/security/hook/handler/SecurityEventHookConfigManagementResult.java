@@ -18,6 +18,8 @@ package org.idp.server.control_plane.management.security.hook.handler;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
 import org.idp.server.control_plane.management.exception.OrganizationAccessDeniedException;
 import org.idp.server.control_plane.management.exception.PermissionDeniedException;
@@ -51,10 +53,10 @@ public class SecurityEventHookConfigManagementResult {
   private final Tenant tenant;
   private final ManagementApiException exception;
   private final Object response;
-  private final Object context;
+  private final AuditableContext context;
 
   private SecurityEventHookConfigManagementResult(
-      Tenant tenant, ManagementApiException exception, Object response, Object context) {
+      Tenant tenant, ManagementApiException exception, Object response, AuditableContext context) {
     this.tenant = tenant;
     this.exception = exception;
     this.response = response;
@@ -68,7 +70,7 @@ public class SecurityEventHookConfigManagementResult {
    * @param response operation-specific response object
    * @return success result
    */
-  public static SecurityEventHookConfigManagementResult success(Tenant tenant, Object response) {
+  public static SecurityEventHookConfigManagementResult success(Tenant tenant, SecurityEventHookConfigManagementResponse response) {
     return new SecurityEventHookConfigManagementResult(tenant, null, response, null);
   }
 
@@ -81,7 +83,7 @@ public class SecurityEventHookConfigManagementResult {
    * @return success result with context
    */
   public static SecurityEventHookConfigManagementResult successWithContext(
-      Tenant tenant, Object response, Object context) {
+      Tenant tenant, Object response, AuditableContext context) {
     return new SecurityEventHookConfigManagementResult(tenant, null, response, context);
   }
 
@@ -130,7 +132,7 @@ public class SecurityEventHookConfigManagementResult {
    * @return context (SecurityEventHookConfigRegistrationContext or
    *     SecurityEventHookConfigUpdateContext)
    */
-  public Object context() {
+  public AuditableContext context() {
     return context;
   }
 

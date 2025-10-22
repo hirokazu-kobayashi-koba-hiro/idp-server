@@ -16,15 +16,16 @@
 
 package org.idp.server.control_plane.management.security.hook;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.control_plane.base.ConfigRegistrationContext;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementStatus;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
 
-public class SecurityEventHookConfigRegistrationContext implements ConfigRegistrationContext {
+public class SecurityEventHookConfigRegistrationContext implements AuditableContext {
 
   Tenant tenant;
   SecurityEventHookConfiguration securityEventHookConfiguration;
@@ -49,17 +50,97 @@ public class SecurityEventHookConfigRegistrationContext implements ConfigRegistr
 
   @Override
   public String type() {
-    return securityEventHookConfiguration.type();
+    return "";
   }
 
   @Override
-  public Map<String, Object> payload() {
-    return securityEventHookConfiguration.toMap();
+  public String description() {
+    return "";
   }
 
   @Override
-  public boolean isDryRun() {
+  public String tenantId() {
+    return "";
+  }
+
+  @Override
+  public String clientId() {
+    return "";
+  }
+
+  @Override
+  public String userId() {
+    return "";
+  }
+
+  @Override
+  public String externalUserId() {
+    return "";
+  }
+
+  @Override
+  public Map<String, Object> userPayload() {
+    return Map.of();
+  }
+
+  @Override
+  public String targetResource() {
+    return "";
+  }
+
+  @Override
+  public String targetResourceAction() {
+    return "";
+  }
+
+  @Override
+  public String ipAddress() {
+    return "";
+  }
+
+  @Override
+  public String userAgent() {
+    return "";
+  }
+
+  @Override
+  public Map<String, Object> request() {
+    return Map.of();
+  }
+
+  @Override
+  public Map<String, Object> before() {
+    return Map.of();
+  }
+
+  @Override
+  public Map<String, Object> after() {
+    return Map.of();
+  }
+
+  @Override
+  public String outcomeResult() {
+    return "";
+  }
+
+  @Override
+  public String outcomeReason() {
+    return "";
+  }
+
+  @Override
+  public String targetTenantId() {
+    return tenant.identifierValue();
+  }
+  
+  @Override
+  public boolean dryRun() {
     return dryRun;
+  }
+
+  @Override
+  public Map<String, Object> attributes() {
+    return Collections.emptyMap();
   }
 
   public SecurityEventHookConfigManagementResponse toResponse() {

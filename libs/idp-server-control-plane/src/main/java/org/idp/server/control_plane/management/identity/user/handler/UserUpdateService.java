@@ -17,15 +17,20 @@
 package org.idp.server.control_plane.management.identity.user.handler;
 
 import org.idp.server.control_plane.management.identity.user.ManagementEventPublisher;
+import org.idp.server.control_plane.management.identity.user.UserManagementContextBuilder;
 import org.idp.server.control_plane.management.identity.user.UserUpdateContext;
+import org.idp.server.control_plane.management.identity.user.UserUpdateContextBuilder;
 import org.idp.server.control_plane.management.identity.user.UserUpdateContextCreator;
+import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.validator.UserRequestValidationResult;
 import org.idp.server.control_plane.management.identity.user.validator.UserUpdateRequestValidator;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -69,13 +74,32 @@ public class UserUpdateService implements UserManagementService<UserUpdateReques
   }
 
   @Override
-  public UserManagementResult execute(
+  public UserManagementContextBuilder createContextBuilder(
+      TenantIdentifier tenantIdentifier,
+      OrganizationIdentifier organizationIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      RequestAttributes requestAttributes,
+      UserUpdateRequest request,
+      boolean dryRun) {
+    return new UserUpdateContextBuilder(
+            tenantIdentifier, organizationIdentifier, operator, oAuthToken, requestAttributes)
+        .withRequestPayload(request.registrationRequest().toMap())
+        .withDryRun(dryRun);
+  }
+
+  @Override
+  public UserManagementResponse execute(
+      UserManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
       UserUpdateRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
+
+    // Cast to specific builder type
+    UserUpdateContextBuilder updateBuilder = (UserUpdateContextBuilder) builder;
 
     // 1. User existence verification
     User before = userQueryRepository.get(tenant, request.userIdentifier());
@@ -91,26 +115,32 @@ public class UserUpdateService implements UserManagementService<UserUpdateReques
 
     // 3. Context creation (before/after state)
     UserUpdateContextCreator contextCreator =
-        new UserUpdateContextCreator(tenant, before, request.registrationRequest(), dryRun);
+        new UserUpdateContextCreator(
+            tenant, operator, oAuthToken, requestAttributes, before,
+            request.registrationRequest(), dryRun);
     UserUpdateContext context = contextCreator.create();
 
-    // 4. Dry-run check
+    // 4. Set before/after users to builder for context completion
+    updateBuilder.withBefore(context.beforeUser());
+    updateBuilder.withAfter(context.afterUser());
+
+    // 5. Dry-run check
     if (dryRun) {
-      return UserManagementResult.success(tenant, context, context.toResponse());
+      return context.toResponse();
     }
 
-    // 5. Repository operation
-    userCommandRepository.update(tenant, context.after());
+    // 6. Repository operation
+    userCommandRepository.update(tenant, context.afterUser());
 
-    // 6. Security event publishing
+    // 7. Security event publishing
     managementEventPublisher.publish(
         tenant,
         operator,
-        context.after(),
+        context.afterUser(),
         oAuthToken,
         DefaultSecurityEventType.user_edit.toEventType(),
         requestAttributes);
 
-    return UserManagementResult.success(tenant, context, context.toResponse());
+    return context.toResponse();
   }
 }

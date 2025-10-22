@@ -36,10 +36,14 @@ public class ModelConvertor {
     JsonNodeWrapper userPayload = JsonNodeWrapper.fromString(result.get("user_payload"));
     String targetResource = result.get("target_resource");
     String targetResourceAction = result.get("target_resource_action");
+    JsonNodeWrapper request = JsonNodeWrapper.fromString(result.get("request_payload"));
+    JsonNodeWrapper before = JsonNodeWrapper.fromString(result.get("before_payload"));
+    JsonNodeWrapper after = JsonNodeWrapper.fromString(result.get("after_payload"));
+    String outcomeResult = result.get("outcome_result");
+    String outcomeReason = result.get("outcome_reason");
+    String targetTenantId = result.get("target_tenant_id");
     String ipAddress = result.get("ip_address");
     String userAgent = result.get("user_agent");
-    JsonNodeWrapper before = JsonNodeWrapper.fromString(result.get("before"));
-    JsonNodeWrapper after = JsonNodeWrapper.fromString(result.get("after"));
     JsonNodeWrapper attributes = JsonNodeWrapper.fromString(result.get("attributes"));
     boolean dryRun = Boolean.parseBoolean(result.get("dry_run"));
     LocalDateTime createdAt = LocalDateTimeParser.parse(result.get("created_at"));
@@ -54,10 +58,14 @@ public class ModelConvertor {
         userPayload,
         targetResource,
         targetResourceAction,
-        ipAddress,
-        userAgent,
+        request,
         before,
         after,
+        outcomeResult,
+        outcomeReason,
+        targetTenantId,
+        ipAddress,
+        userAgent,
         attributes,
         dryRun,
         createdAt);

@@ -122,13 +122,7 @@ public class RoleManagementEntryService implements RoleManagementApi {
     }
 
     AuditLog auditLog =
-        AuditLogCreator.create(
-            "RoleManagementApi.create",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (RoleRegistrationContext) result.context(),
-            requestAttributes);
+        AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -247,13 +241,7 @@ public class RoleManagementEntryService implements RoleManagementApi {
     }
 
     AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "RoleManagementApi.update",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (RoleUpdateContext) result.context(),
-            requestAttributes);
+        AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -294,14 +282,7 @@ public class RoleManagementEntryService implements RoleManagementApi {
       return result.toResponse(dryRun);
     }
 
-    AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "RoleManagementApi.removePermissions",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (RoleRemovePermissionContext) result.context(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

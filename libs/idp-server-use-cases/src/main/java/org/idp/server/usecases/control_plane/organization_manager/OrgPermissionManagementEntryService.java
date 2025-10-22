@@ -141,13 +141,7 @@ public class OrgPermissionManagementEntryService implements OrgPermissionManagem
     }
 
     AuditLog auditLog =
-        AuditLogCreator.create(
-            "OrgPermissionManagementApi.create",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (PermissionRegistrationContext) result.context(),
-            requestAttributes);
+        AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -284,13 +278,7 @@ public class OrgPermissionManagementEntryService implements OrgPermissionManagem
     }
 
     AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "OrgPermissionManagementApi.update",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (PermissionUpdateContext) result.context(),
-            requestAttributes);
+        AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

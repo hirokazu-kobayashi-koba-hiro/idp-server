@@ -16,15 +16,20 @@
 
 package org.idp.server.control_plane.management.identity.user.handler;
 
+import org.idp.server.control_plane.management.identity.user.UserManagementContextBuilder;
 import org.idp.server.control_plane.management.identity.user.UserRolesUpdateContextCreator;
 import org.idp.server.control_plane.management.identity.user.UserUpdateContext;
+import org.idp.server.control_plane.management.identity.user.UserUpdateContextBuilder;
+import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.validator.UserRolesUpdateRequestValidator;
 import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationRelatedDataVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
@@ -68,7 +73,8 @@ public class UserRolesUpdateService implements UserManagementService<UserUpdateR
   }
 
   @Override
-  public UserManagementResult execute(
+  public UserManagementResponse execute(
+      UserManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -76,20 +82,44 @@ public class UserRolesUpdateService implements UserManagementService<UserUpdateR
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    // Cast to specific builder type
+    UserUpdateContextBuilder updateBuilder = (UserUpdateContextBuilder) builder;
+
     User before = userQueryRepository.get(tenant, request.userIdentifier());
 
     new UserRolesUpdateRequestValidator(request.registrationRequest(), dryRun).validate();
     relatedDataVerifier.verifyRoles(tenant, request.registrationRequest());
 
     UserUpdateContext context =
-        new UserRolesUpdateContextCreator(tenant, before, request.registrationRequest(), dryRun)
+        new UserRolesUpdateContextCreator(
+                tenant, operator, oAuthToken, requestAttributes, before,
+                request.registrationRequest(), dryRun)
             .create();
 
+    // Set before/after users to builder for context completion
+    updateBuilder.withBefore(context.beforeUser());
+    updateBuilder.withAfter(context.afterUser());
+
     if (dryRun) {
-      return UserManagementResult.success(tenant, context, context.toResponse());
+      return context.toResponse();
     }
 
-    userCommandRepository.update(tenant, context.after());
-    return UserManagementResult.success(tenant, context, context.toResponse());
+    userCommandRepository.update(tenant, context.afterUser());
+    return context.toResponse();
+  }
+
+  @Override
+  public UserManagementContextBuilder createContextBuilder(
+      TenantIdentifier tenantIdentifier,
+      OrganizationIdentifier organizationIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      RequestAttributes requestAttributes,
+      UserUpdateRequest request,
+      boolean dryRun) {
+    return new UserUpdateContextBuilder(
+            tenantIdentifier, organizationIdentifier, operator, oAuthToken, requestAttributes)
+        .withRequestPayload(request.registrationRequest().toMap())
+        .withDryRun(dryRun);
   }
 }

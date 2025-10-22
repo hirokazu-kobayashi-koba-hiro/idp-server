@@ -17,8 +17,11 @@
 package org.idp.server.control_plane.management.identity.user.handler;
 
 import java.util.Map;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.identity.user.OrgUserManagementApi;
+import org.idp.server.control_plane.management.identity.user.UserManagementContextBuilder;
+import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -107,37 +110,68 @@ public class OrgUserManagementHandler {
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    Tenant tenant = null;
-    try {
-      // 1. Organization and Tenant retrieval
-      Organization organization = organizationRepository.get(organizationIdentifier);
-      tenant = tenantQueryRepository.get(tenantIdentifier);
+    // 1. Service selection
+    UserManagementService<?> service = services.get(operation);
+    if (service == null) {
+      throw new IllegalArgumentException("Unknown operation: " + operation);
+    }
 
-      // 2. Get required permissions based on tenant type
+    // 2. Context Builder creation (before Organization/Tenant retrieval)
+    UserManagementContextBuilder contextBuilder =
+        createContextBuilder(
+            service, tenantIdentifier, organizationIdentifier, operator, oAuthToken, request, requestAttributes, dryRun);
+
+    try {
+      // 3. Organization and Tenant retrieval
+      Organization organization = organizationRepository.get(organizationIdentifier);
+      Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+      contextBuilder.withOrganization(organization);
+      contextBuilder.withTenant(tenant);
+
+      // 4. Get required permissions based on tenant type
       AdminPermissions permissions = entryService.getRequiredPermissions(operation, tenant);
 
-      // 3. Organization-level access control (includes permission verification)
+      // 5. Organization-level access control (includes permission verification)
       organizationAccessVerifier.verify(organization, tenantIdentifier, operator, permissions);
 
-      // 4. Service selection
-      UserManagementService<?> service = services.get(operation);
-      if (service == null) {
-        throw new IllegalArgumentException("Unknown operation: " + operation);
-      }
+      // 6. Execute service
+      UserManagementResponse response = executeService(
+              service, contextBuilder, tenant, operator, oAuthToken, request, requestAttributes, dryRun);
 
-      // 5. Execute service
-      return executeService(
-          service, tenant, operator, oAuthToken, request, requestAttributes, dryRun);
+      AuditableContext context = contextBuilder.build();
+      return UserManagementResult.success(tenant, context, response);
 
     } catch (org.idp.server.control_plane.management.exception.ManagementApiException e) {
-      // Wrap exception in Result with tenant for audit logging
-      return UserManagementResult.error(tenant, e);
+      // Partial Context creation for audit logging (may not have Tenant if retrieval failed)
+      AuditableContext errorContext = contextBuilder.buildPartial(e);
+      return UserManagementResult.error(errorContext, e);
     }
   }
 
   @SuppressWarnings("unchecked")
-  private <REQUEST> UserManagementResult executeService(
+  private <REQUEST> UserManagementContextBuilder createContextBuilder(
       UserManagementService<REQUEST> service,
+      TenantIdentifier tenantIdentifier,
+      OrganizationIdentifier organizationIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      Object request,
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
+    return service.createContextBuilder(
+        tenantIdentifier,
+        organizationIdentifier,
+        operator,
+        oAuthToken,
+        requestAttributes,
+        (REQUEST) request,
+        dryRun);
+  }
+
+  @SuppressWarnings("unchecked")
+  private <REQUEST> UserManagementResponse executeService(
+      UserManagementService<REQUEST> service,
+      UserManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -146,6 +180,6 @@ public class OrgUserManagementHandler {
       boolean dryRun) {
 
     return service.execute(
-        tenant, operator, oAuthToken, (REQUEST) request, requestAttributes, dryRun);
+        builder, tenant, operator, oAuthToken, (REQUEST) request, requestAttributes, dryRun);
   }
 }

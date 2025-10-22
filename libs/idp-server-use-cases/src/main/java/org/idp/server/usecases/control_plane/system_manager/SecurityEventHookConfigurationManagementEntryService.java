@@ -102,13 +102,7 @@ public class SecurityEventHookConfigurationManagementEntryService
     }
 
     AuditLog auditLog =
-        AuditLogCreator.create(
-            "SecurityEventHookConfigurationManagementApi.create",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (SecurityEventHookConfigRegistrationContext) result.context(),
-            requestAttributes);
+        AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -231,13 +225,7 @@ public class SecurityEventHookConfigurationManagementEntryService
     }
 
     AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "SecurityEventHookConfigurationManagementApi.update",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (SecurityEventHookConfigUpdateContext) result.context(),
-            requestAttributes);
+        AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

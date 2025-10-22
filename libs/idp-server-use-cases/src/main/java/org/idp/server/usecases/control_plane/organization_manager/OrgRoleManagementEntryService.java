@@ -144,13 +144,7 @@ public class OrgRoleManagementEntryService implements OrgRoleManagementApi {
     }
 
     AuditLog auditLog =
-        AuditLogCreator.create(
-            "OrgRoleManagementApi.create",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (RoleRegistrationContext) result.context(),
-            requestAttributes);
+        AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -286,14 +280,7 @@ public class OrgRoleManagementEntryService implements OrgRoleManagementApi {
       return result.toResponse(dryRun);
     }
 
-    AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "OrgRoleManagementApi.update",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (RoleUpdateContext) result.context(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

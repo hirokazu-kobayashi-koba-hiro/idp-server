@@ -65,7 +65,7 @@ public class SecurityEventHookConfigCreateService
         new SecurityEventHookConfigRegistrationContextCreator(tenant, request, dryRun);
     SecurityEventHookConfigRegistrationContext context = contextCreator.create();
 
-    if (context.isDryRun()) {
+    if (context.dryRun()) {
       return SecurityEventHookConfigManagementResult.successWithContext(
           tenant, context.toResponse(), context);
     }

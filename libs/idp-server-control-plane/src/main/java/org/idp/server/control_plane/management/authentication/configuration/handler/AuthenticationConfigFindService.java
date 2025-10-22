@@ -73,7 +73,7 @@ public class AuthenticationConfigFindService
     // 3. Build response
     return AuthenticationConfigManagementResult.success(
         tenant,
-        configuration,
+        null,
         new AuthenticationConfigManagementResponse(
             AuthenticationConfigManagementStatus.OK, configuration.toMap()));
   }

@@ -218,14 +218,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     }
 
     // Success case
-    AuditLog auditLog =
-        AuditLogCreator.create(
-            "OrgUserManagementApi.create",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (UserRegistrationContext) result.context(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -350,14 +343,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     }
 
     // Success case
-    AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "OrgUserManagementApi.update",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (UserUpdateContext) result.context(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -401,15 +387,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
 
     // Success case
     UserDeletionContext context = (UserDeletionContext) result.context();
-    AuditLog auditLog =
-        AuditLogCreator.createOnDeletion(
-            "OrgUserManagementApi.delete",
-            "delete",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            context.beforePayload(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -454,14 +432,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     }
 
     // Success case
-    AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "OrgUserManagementApi.patch",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (UserUpdateContext) result.context(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -506,14 +477,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     }
 
     // Success case
-    AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "OrgUserManagementApi.updatePassword",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (UserUpdateContext) result.context(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -558,14 +522,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     }
 
     // Success case
-    AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "OrgUserManagementApi.updateRoles",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (UserUpdateContext) result.context(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -610,14 +567,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     }
 
     // Success case
-    AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "OrgUserManagementApi.updateTenantAssignments",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (UserUpdateContext) result.context(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -662,14 +612,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     }
 
     // Success case
-    AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "OrgUserManagementApi.updateOrganizationAssignments",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (UserUpdateContext) result.context(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

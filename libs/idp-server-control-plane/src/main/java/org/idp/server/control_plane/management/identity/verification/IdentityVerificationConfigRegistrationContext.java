@@ -16,15 +16,16 @@
 
 package org.idp.server.control_plane.management.identity.verification;
 
+import java.util.Collections;
 import java.util.Map;
-import org.idp.server.control_plane.base.ConfigRegistrationContext;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementStatus;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class IdentityVerificationConfigRegistrationContext implements ConfigRegistrationContext {
+public class IdentityVerificationConfigRegistrationContext implements AuditableContext {
 
   Tenant tenant;
   IdentityVerificationConfiguration identityVerificationConfiguration;
@@ -53,17 +54,97 @@ public class IdentityVerificationConfigRegistrationContext implements ConfigRegi
 
   @Override
   public String type() {
-    return identityVerificationConfiguration.type().name();
+    return "";
   }
 
   @Override
-  public Map<String, Object> payload() {
-    return identityVerificationConfiguration.toMap();
+  public String description() {
+    return "";
   }
 
   @Override
-  public boolean isDryRun() {
+  public String tenantId() {
+    return "";
+  }
+
+  @Override
+  public String clientId() {
+    return "";
+  }
+
+  @Override
+  public String userId() {
+    return "";
+  }
+
+  @Override
+  public String externalUserId() {
+    return "";
+  }
+
+  @Override
+  public Map<String, Object> userPayload() {
+    return Map.of();
+  }
+
+  @Override
+  public String targetResource() {
+    return "";
+  }
+
+  @Override
+  public String targetResourceAction() {
+    return "";
+  }
+
+  @Override
+  public String ipAddress() {
+    return "";
+  }
+
+  @Override
+  public String userAgent() {
+    return "";
+  }
+
+  @Override
+  public Map<String, Object> request() {
+    return Map.of();
+  }
+
+  @Override
+  public Map<String, Object> before() {
+    return Map.of();
+  }
+
+  @Override
+  public Map<String, Object> after() {
+    return Map.of();
+  }
+
+  @Override
+  public String outcomeResult() {
+    return "";
+  }
+
+  @Override
+  public String outcomeReason() {
+    return "";
+  }
+
+  @Override
+  public String targetTenantId() {
+    return tenant.identifierValue();
+  }
+
+  @Override
+  public boolean dryRun() {
     return dryRun;
+  }
+
+  @Override
+  public Map<String, Object> attributes() {
+    return Collections.emptyMap();
   }
 
   public IdentityVerificationConfigManagementResponse toResponse() {

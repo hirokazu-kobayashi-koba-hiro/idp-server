@@ -19,7 +19,7 @@ package org.idp.server.usecases.control_plane.organization_manager;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.base.ConfigRegistrationContext;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.base.ConfigUpdateContext;
 import org.idp.server.control_plane.management.identity.verification.OrgIdentityVerificationConfigManagementApi;
 import org.idp.server.control_plane.management.identity.verification.handler.IdentityVerificationConfigCreationService;
@@ -138,15 +138,8 @@ public class OrgIdentityVerificationConfigManagementEntryService
       return result.toResponse(dryRun);
     }
 
-    ConfigRegistrationContext context = (ConfigRegistrationContext) result.context();
     AuditLog auditLog =
-        AuditLogCreator.create(
-            "OrgIdentityVerificationConfigManagementApi.create",
-            tenant,
-            operator,
-            oAuthToken,
-            context,
-            requestAttributes);
+        AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

@@ -80,7 +80,7 @@ public class ClientUpdateService implements ClientManagementService<ClientUpdate
     }
 
     // Update client
-    commandRepository.update(tenant, context.after());
+    commandRepository.update(tenant, context.afterConfiguration());
 
     ClientManagementResponse response = context.toResponse();
     return ClientManagementResult.success(tenant.identifier(), response, context);

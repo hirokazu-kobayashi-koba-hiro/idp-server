@@ -17,6 +17,8 @@
 package org.idp.server.control_plane.management.permission;
 
 import java.util.Map;
+
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.base.ConfigUpdateContext;
 import org.idp.server.control_plane.management.permission.io.PermissionManagementResponse;
 import org.idp.server.control_plane.management.permission.io.PermissionManagementStatus;
@@ -25,7 +27,7 @@ import org.idp.server.platform.json.JsonDiffCalculator;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class PermissionUpdateContext implements ConfigUpdateContext {
+public class PermissionUpdateContext implements AuditableContext {
 
   Tenant tenant;
   Permission before;
@@ -44,12 +46,32 @@ public class PermissionUpdateContext implements ConfigUpdateContext {
     return tenant;
   }
 
-  public Permission before() {
+  public Permission beforePermission() {
     return before;
   }
 
-  public Permission after() {
+  public Permission afterPermission() {
     return after;
+  }
+
+  @Override
+  public String outcomeResult() {
+    return "";
+  }
+
+  @Override
+  public String outcomeReason() {
+    return "";
+  }
+
+  @Override
+  public String targetTenantId() {
+    return "";
+  }
+
+  @Override
+  public Map<String, Object> attributes() {
+    return Map.of();
   }
 
   @Override
@@ -58,17 +80,72 @@ public class PermissionUpdateContext implements ConfigUpdateContext {
   }
 
   @Override
-  public Map<String, Object> beforePayload() {
+  public String description() {
+    return "";
+  }
+
+  @Override
+  public String tenantId() {
+    return "";
+  }
+
+  @Override
+  public String clientId() {
+    return "";
+  }
+
+  @Override
+  public String userId() {
+    return "";
+  }
+
+  @Override
+  public String externalUserId() {
+    return "";
+  }
+
+  @Override
+  public Map<String, Object> userPayload() {
+    return Map.of();
+  }
+
+  @Override
+  public String targetResource() {
+    return "";
+  }
+
+  @Override
+  public String targetResourceAction() {
+    return "";
+  }
+
+  @Override
+  public String ipAddress() {
+    return "";
+  }
+
+  @Override
+  public String userAgent() {
+    return "";
+  }
+
+  @Override
+  public Map<String, Object> request() {
+    return Map.of();
+  }
+
+  @Override
+  public Map<String, Object> before() {
     return before.toMap();
   }
 
   @Override
-  public Map<String, Object> afterPayload() {
+  public Map<String, Object> after() {
     return after.toMap();
   }
 
   @Override
-  public boolean isDryRun() {
+  public boolean dryRun() {
     return dryRun;
   }
 

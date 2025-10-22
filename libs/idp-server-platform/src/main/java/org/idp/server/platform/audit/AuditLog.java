@@ -34,10 +34,14 @@ public class AuditLog {
   JsonNodeWrapper userPayload;
   String targetResource;
   String targetResourceAction;
-  String ipAddress;
-  String userAgent;
+  JsonNodeWrapper request;
   JsonNodeWrapper before;
   JsonNodeWrapper after;
+  String outcomeResult;
+  String outcomeReason;
+  String targetTenantId;
+  String ipAddress;
+  String userAgent;
   JsonNodeWrapper attributes;
   boolean dryRun;
   LocalDateTime createdAt;
@@ -55,10 +59,14 @@ public class AuditLog {
       JsonNodeWrapper userPayload,
       String targetResource,
       String targetResourceAction,
-      String ipAddress,
-      String userAgent,
+      JsonNodeWrapper request,
       JsonNodeWrapper before,
       JsonNodeWrapper after,
+      String outcomeResult,
+      String outcomeReason,
+      String targetTenantId,
+      String ipAddress,
+      String userAgent,
       JsonNodeWrapper attributes,
       boolean dryRun,
       LocalDateTime createdAt) {
@@ -72,10 +80,14 @@ public class AuditLog {
     this.userPayload = userPayload;
     this.targetResource = targetResource;
     this.targetResourceAction = targetResourceAction;
-    this.ipAddress = ipAddress;
-    this.userAgent = userAgent;
+    this.request = request;
     this.before = before;
     this.after = after;
+    this.outcomeResult = outcomeResult;
+    this.outcomeReason = outcomeReason;
+    this.targetTenantId = targetTenantId;
+    this.ipAddress = ipAddress;
+    this.userAgent = userAgent;
     this.attributes = attributes;
     this.dryRun = dryRun;
     this.createdAt = createdAt;
@@ -133,12 +145,28 @@ public class AuditLog {
     return userAgent;
   }
 
+  public JsonNodeWrapper request() {
+    return request;
+  }
+
   public JsonNodeWrapper before() {
     return before;
   }
 
   public JsonNodeWrapper after() {
     return after;
+  }
+
+  public String outcomeResult() {
+    return outcomeResult;
+  }
+
+  public String outcomeReason() {
+    return outcomeReason;
+  }
+
+  public String targetTenantId() {
+    return targetTenantId;
   }
 
   public JsonNodeWrapper attributes() {
@@ -165,10 +193,14 @@ public class AuditLog {
     map.put("user_payload", userPayload.toMap());
     map.put("target_resource", targetResource);
     map.put("target_resource_action", targetResourceAction);
-    map.put("ip_address", ipAddress);
-    map.put("user_agent", userAgent);
+    map.put("request", request.toMap());
     map.put("before", before.toMap());
     map.put("after", after.toMap());
+    map.put("outcome_result", outcomeResult);
+    map.put("outcome_reason", outcomeReason);
+    map.put("target_tenant_id", targetTenantId);
+    map.put("ip_address", ipAddress);
+    map.put("user_agent", userAgent);
     map.put("attributes", attributes.toMap());
     map.put("dry_run", dryRun);
     map.put("created_at", createdAt.toString());

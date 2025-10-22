@@ -68,7 +68,7 @@ public class PermissionUpdateService
     PermissionUpdateContext context = creator.create();
 
     if (!dryRun) {
-      permissionCommandRepository.update(tenant, context.after());
+      permissionCommandRepository.update(tenant, context.afterPermission());
     }
 
     return PermissionManagementResult.success(tenant, context.toResponse(), context);

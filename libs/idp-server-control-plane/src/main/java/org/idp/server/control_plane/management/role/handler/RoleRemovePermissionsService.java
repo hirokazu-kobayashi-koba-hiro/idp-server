@@ -87,7 +87,7 @@ public class RoleRemovePermissionsService
 
     if (!dryRun) {
       roleCommandRepository.removePermissions(
-          tenant, context.after(), context.removedPermissions());
+          tenant, context.afterRole(), context.removedPermissions());
     }
 
     return RoleManagementResult.success(tenant, context.toResponse(), context);

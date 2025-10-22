@@ -90,7 +90,7 @@ public class RoleUpdateService implements RoleManagementService<RoleUpdateReques
     new RoleRegistrationVerifier().verify(context);
 
     if (!dryRun) {
-      roleCommandRepository.update(tenant, context.after());
+      roleCommandRepository.update(tenant, context.afterRole());
     }
 
     return RoleManagementResult.success(tenant, context.toResponse(), context);

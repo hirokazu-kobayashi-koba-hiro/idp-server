@@ -86,7 +86,7 @@ public class AuthenticationConfigDeletionService
       response.put("dry_run", true);
       return AuthenticationConfigManagementResult.success(
           tenant,
-          configuration.toMap(),
+          null,
           new AuthenticationConfigManagementResponse(
               AuthenticationConfigManagementStatus.OK, response));
     }
@@ -97,7 +97,7 @@ public class AuthenticationConfigDeletionService
     // 4. Return success (NO_CONTENT for actual deletion)
     return AuthenticationConfigManagementResult.success(
         tenant,
-        configuration.toMap(),
+        null,
         new AuthenticationConfigManagementResponse(
             AuthenticationConfigManagementStatus.NO_CONTENT, Map.of()));
   }

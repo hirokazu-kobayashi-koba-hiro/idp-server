@@ -18,6 +18,8 @@ package org.idp.server.control_plane.management.oidc.client.handler;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
 import org.idp.server.control_plane.management.exception.OrganizationAccessDeniedException;
 import org.idp.server.control_plane.management.exception.PermissionDeniedException;
@@ -48,13 +50,13 @@ public class ClientManagementResult {
   private final TenantIdentifier tenantIdentifier;
   private final ManagementApiException exception;
   private final ClientManagementResponse response;
-  private final Object context;
+  private final AuditableContext context;
 
   private ClientManagementResult(
       TenantIdentifier tenantIdentifier,
       ManagementApiException exception,
       ClientManagementResponse response,
-      Object context) {
+      AuditableContext context) {
     this.tenantIdentifier = tenantIdentifier;
     this.exception = exception;
     this.response = response;
@@ -82,7 +84,7 @@ public class ClientManagementResult {
    * @return successful result with context
    */
   public static ClientManagementResult success(
-      TenantIdentifier tenantIdentifier, ClientManagementResponse response, Object context) {
+      TenantIdentifier tenantIdentifier, ClientManagementResponse response, AuditableContext context) {
     return new ClientManagementResult(tenantIdentifier, null, response, context);
   }
 
@@ -127,7 +129,7 @@ public class ClientManagementResult {
     return exception;
   }
 
-  public Object context() {
+  public AuditableContext context() {
     return context;
   }
 

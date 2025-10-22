@@ -128,15 +128,7 @@ public class AuthenticationPolicyConfigurationManagementEntryService
 
     // Record audit log (create operation)
     AuditLog auditLog =
-        AuditLogCreator.create(
-            "AuthenticationPolicyConfigurationManagementApi.create",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (org.idp.server.control_plane.management.authentication.policy
-                    .AuthenticationPolicyConfigRegistrationContext)
-                result.context(),
-            requestAttributes);
+        AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -265,15 +257,7 @@ public class AuthenticationPolicyConfigurationManagementEntryService
 
     // Record audit log (update operation)
     AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "AuthenticationPolicyConfigurationManagementApi.update",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (org.idp.server.control_plane.management.authentication.policy
-                    .AuthenticationPolicyConfigUpdateContext)
-                result.context(),
-            requestAttributes);
+        AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

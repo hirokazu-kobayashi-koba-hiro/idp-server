@@ -109,10 +109,9 @@ public class ClientManagementEntryService implements ClientManagementApi {
       return result.toResponse(dryRun);
     }
 
-    ClientRegistrationContext context = (ClientRegistrationContext) result.context();
     AuditLog auditLog =
         AuditLogCreator.create(
-            "ClientManagementApi.create", tenant, operator, oAuthToken, context, requestAttributes);
+            result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -200,10 +199,8 @@ public class ClientManagementEntryService implements ClientManagementApi {
       return result.toResponse(dryRun);
     }
 
-    ClientUpdateContext context = (ClientUpdateContext) result.context();
     AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "ClientManagementApi.update", tenant, operator, oAuthToken, context, requestAttributes);
+        AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

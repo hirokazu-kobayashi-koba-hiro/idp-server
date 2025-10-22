@@ -19,13 +19,16 @@ package org.idp.server.control_plane.management.identity.user.handler;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.control_plane.management.identity.user.UserManagementContextBuilder;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserQueries;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
@@ -59,13 +62,17 @@ public class UserFindListService implements UserManagementService<UserQueries> {
   }
 
   @Override
-  public UserManagementResult execute(
+  public UserManagementResponse execute(
+      UserManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
       UserQueries queries,
       RequestAttributes requestAttributes,
       boolean dryRun) {
+
+    // Cast to specific builder type (UserFindListContextBuilder doesn't need extra data)
+    UserFindListContextBuilder findListBuilder = (UserFindListContextBuilder) builder;
 
     // 1. Get total count
     long totalCount = userQueryRepository.findTotalCount(tenant, queries);
@@ -75,8 +82,7 @@ public class UserFindListService implements UserManagementService<UserQueries> {
       response.put("total_count", 0);
       response.put("limit", queries.limit());
       response.put("offset", queries.offset());
-      return UserManagementResult.success(
-          tenant, queries, new UserManagementResponse(UserManagementStatus.OK, response));
+      return new UserManagementResponse(UserManagementStatus.OK, response);
     }
 
     // 2. Get user list
@@ -89,7 +95,25 @@ public class UserFindListService implements UserManagementService<UserQueries> {
     response.put("limit", queries.limit());
     response.put("offset", queries.offset());
 
-    return UserManagementResult.success(
-        tenant, queries, new UserManagementResponse(UserManagementStatus.OK, response));
+    return new UserManagementResponse(UserManagementStatus.OK, response);
+  }
+
+  @Override
+  public UserManagementContextBuilder createContextBuilder(
+      TenantIdentifier tenantIdentifier,
+      OrganizationIdentifier organizationIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      RequestAttributes requestAttributes,
+      UserQueries request,
+      boolean dryRun) {
+    return new UserFindListContextBuilder(
+            tenantIdentifier,
+            organizationIdentifier,
+            operator,
+            oAuthToken,
+            requestAttributes,
+            request)
+        .withDryRun(dryRun);
   }
 }

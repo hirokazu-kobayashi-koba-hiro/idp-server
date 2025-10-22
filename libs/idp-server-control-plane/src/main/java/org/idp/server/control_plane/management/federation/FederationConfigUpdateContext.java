@@ -18,6 +18,8 @@ package org.idp.server.control_plane.management.federation;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.base.ConfigUpdateContext;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementStatus;
@@ -26,7 +28,7 @@ import org.idp.server.platform.json.JsonDiffCalculator;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class FederationConfigUpdateContext implements ConfigUpdateContext {
+public class FederationConfigUpdateContext implements AuditableContext {
 
   Tenant tenant;
   FederationConfiguration before;
@@ -48,12 +50,32 @@ public class FederationConfigUpdateContext implements ConfigUpdateContext {
     return tenant;
   }
 
-  public FederationConfiguration before() {
+  public FederationConfiguration beforeConfiguration() {
     return before;
   }
 
-  public FederationConfiguration after() {
+  public FederationConfiguration afterConfiguration() {
     return after;
+  }
+
+  @Override
+  public String outcomeResult() {
+    return "";
+  }
+
+  @Override
+  public String outcomeReason() {
+    return "";
+  }
+
+  @Override
+  public String targetTenantId() {
+    return "";
+  }
+
+  @Override
+  public Map<String, Object> attributes() {
+    return Map.of();
   }
 
   @Override
@@ -62,17 +84,72 @@ public class FederationConfigUpdateContext implements ConfigUpdateContext {
   }
 
   @Override
-  public Map<String, Object> beforePayload() {
+  public String description() {
+    return "";
+  }
+
+  @Override
+  public String tenantId() {
+    return "";
+  }
+
+  @Override
+  public String clientId() {
+    return "";
+  }
+
+  @Override
+  public String userId() {
+    return "";
+  }
+
+  @Override
+  public String externalUserId() {
+    return "";
+  }
+
+  @Override
+  public Map<String, Object> userPayload() {
+    return Map.of();
+  }
+
+  @Override
+  public String targetResource() {
+    return "";
+  }
+
+  @Override
+  public String targetResourceAction() {
+    return "";
+  }
+
+  @Override
+  public String ipAddress() {
+    return "";
+  }
+
+  @Override
+  public String userAgent() {
+    return "";
+  }
+
+  @Override
+  public Map<String, Object> request() {
+    return Map.of();
+  }
+
+  @Override
+  public Map<String, Object> before() {
     return before.payload();
   }
 
   @Override
-  public Map<String, Object> afterPayload() {
+  public Map<String, Object> after() {
     return after.payload();
   }
 
   @Override
-  public boolean isDryRun() {
+  public boolean dryRun() {
     return dryRun;
   }
 

@@ -17,6 +17,8 @@
 package org.idp.server.control_plane.management.identity.verification;
 
 import java.util.Map;
+
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.base.ConfigUpdateContext;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementStatus;
@@ -26,7 +28,7 @@ import org.idp.server.platform.json.JsonDiffCalculator;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class IdentityVerificationConfigUpdateContext implements ConfigUpdateContext {
+public class IdentityVerificationConfigUpdateContext implements AuditableContext {
 
   Tenant tenant;
   IdentityVerificationConfiguration before;
@@ -48,12 +50,37 @@ public class IdentityVerificationConfigUpdateContext implements ConfigUpdateCont
     return null;
   }
 
-  public IdentityVerificationConfiguration before() {
+  public IdentityVerificationConfiguration beforeConfiguration() {
     return before;
   }
 
-  public IdentityVerificationConfiguration after() {
+  public IdentityVerificationConfiguration afterConfiguration() {
     return after;
+  }
+
+  @Override
+  public String outcomeResult() {
+    return "";
+  }
+
+  @Override
+  public String outcomeReason() {
+    return "";
+  }
+
+  @Override
+  public String targetTenantId() {
+    return "";
+  }
+
+  @Override
+  public Map<String, Object> attributes() {
+    return Map.of();
+  }
+
+  @Override
+  public boolean dryRun() {
+    return false;
   }
 
   public IdentityVerificationType beforeType() {
@@ -70,12 +97,67 @@ public class IdentityVerificationConfigUpdateContext implements ConfigUpdateCont
   }
 
   @Override
-  public Map<String, Object> beforePayload() {
+  public String description() {
+    return "";
+  }
+
+  @Override
+  public String tenantId() {
+    return "";
+  }
+
+  @Override
+  public String clientId() {
+    return "";
+  }
+
+  @Override
+  public String userId() {
+    return "";
+  }
+
+  @Override
+  public String externalUserId() {
+    return "";
+  }
+
+  @Override
+  public Map<String, Object> userPayload() {
+    return Map.of();
+  }
+
+  @Override
+  public String targetResource() {
+    return "";
+  }
+
+  @Override
+  public String targetResourceAction() {
+    return "";
+  }
+
+  @Override
+  public String ipAddress() {
+    return "";
+  }
+
+  @Override
+  public String userAgent() {
+    return "";
+  }
+
+  @Override
+  public Map<String, Object> request() {
+    return Map.of();
+  }
+
+  @Override
+  public Map<String, Object> before() {
     return before.toMap();
   }
 
   @Override
-  public Map<String, Object> afterPayload() {
+  public Map<String, Object> after() {
     return after.toMap();
   }
 

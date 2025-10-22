@@ -88,7 +88,7 @@ public class SecurityEventHookConfigDeleteService
           tenant,
           new SecurityEventHookConfigManagementResponse(
               SecurityEventHookConfigManagementStatus.OK, response),
-          configuration.toMap());
+          null);
     }
 
     securityEventHookConfigurationCommandRepository.delete(tenant, configuration);
@@ -97,6 +97,6 @@ public class SecurityEventHookConfigDeleteService
         tenant,
         new SecurityEventHookConfigManagementResponse(
             SecurityEventHookConfigManagementStatus.NO_CONTENT, null),
-        configuration.toMap());
+       null);
   }
 }

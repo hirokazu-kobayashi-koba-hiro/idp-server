@@ -17,6 +17,8 @@
 package org.idp.server.control_plane.management.role;
 
 import java.util.Map;
+
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.base.ConfigUpdateContext;
 import org.idp.server.control_plane.management.role.io.RoleManagementResponse;
 import org.idp.server.control_plane.management.role.io.RoleManagementStatus;
@@ -27,7 +29,7 @@ import org.idp.server.platform.json.JsonDiffCalculator;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class RoleRemovePermissionContext implements ConfigUpdateContext {
+public class RoleRemovePermissionContext implements AuditableContext {
 
   Tenant tenant;
   Role before;
@@ -58,16 +60,41 @@ public class RoleRemovePermissionContext implements ConfigUpdateContext {
     return tenant;
   }
 
-  public Role before() {
+  public Role beforeRole() {
     return before;
   }
 
-  public RoleRequest request() {
+  public RoleRequest requestRole() {
     return request;
   }
 
-  public Role after() {
+  public Role afterRole() {
     return after;
+  }
+
+  @Override
+  public String outcomeResult() {
+    return "";
+  }
+
+  @Override
+  public String outcomeReason() {
+    return "";
+  }
+
+  @Override
+  public String targetTenantId() {
+    return "";
+  }
+
+  @Override
+  public Map<String, Object> attributes() {
+    return Map.of();
+  }
+
+  @Override
+  public boolean dryRun() {
+    return false;
   }
 
   public Permissions removedPermissions() {
@@ -84,18 +111,68 @@ public class RoleRemovePermissionContext implements ConfigUpdateContext {
   }
 
   @Override
-  public Map<String, Object> beforePayload() {
-    return before.toMap();
+  public String description() {
+    return "";
   }
 
   @Override
-  public Map<String, Object> afterPayload() {
-    return after.toMap();
+  public String tenantId() {
+    return "";
   }
 
   @Override
-  public boolean isDryRun() {
-    return dryRun;
+  public String clientId() {
+    return "";
+  }
+
+  @Override
+  public String userId() {
+    return "";
+  }
+
+  @Override
+  public String externalUserId() {
+    return "";
+  }
+
+  @Override
+  public Map<String, Object> userPayload() {
+    return Map.of();
+  }
+
+  @Override
+  public String targetResource() {
+    return "";
+  }
+
+  @Override
+  public String targetResourceAction() {
+    return "";
+  }
+
+  @Override
+  public String ipAddress() {
+    return "";
+  }
+
+  @Override
+  public String userAgent() {
+    return "";
+  }
+
+  @Override
+  public Map<String, Object> request() {
+    return Map.of();
+  }
+
+  @Override
+  public Map<String, Object> before() {
+    return Map.of();
+  }
+
+  @Override
+  public Map<String, Object> after() {
+    return Map.of();
   }
 
   public RoleManagementResponse toResponse() {

@@ -16,9 +16,10 @@
 
 package org.idp.server.control_plane.management.role;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.control_plane.base.ConfigRegistrationContext;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.role.io.RoleManagementResponse;
 import org.idp.server.control_plane.management.role.io.RoleManagementStatus;
 import org.idp.server.control_plane.management.role.io.RoleRequest;
@@ -27,7 +28,7 @@ import org.idp.server.core.openid.identity.role.Role;
 import org.idp.server.core.openid.identity.role.Roles;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class RoleRegistrationContext implements ConfigRegistrationContext {
+public class RoleRegistrationContext implements AuditableContext {
 
   Tenant tenant;
   RoleRequest request;
@@ -55,8 +56,88 @@ public class RoleRegistrationContext implements ConfigRegistrationContext {
     return tenant;
   }
 
-  public RoleRequest request() {
+  public RoleRequest requestRole() {
     return request;
+  }
+
+  @Override
+  public String type() {
+    return "";
+  }
+
+  @Override
+  public String description() {
+    return "";
+  }
+
+  @Override
+  public String tenantId() {
+    return "";
+  }
+
+  @Override
+  public String clientId() {
+    return "";
+  }
+
+  @Override
+  public String userId() {
+    return "";
+  }
+
+  @Override
+  public String externalUserId() {
+    return "";
+  }
+
+  @Override
+  public Map<String, Object> userPayload() {
+    return Map.of();
+  }
+
+  @Override
+  public String targetResource() {
+    return "";
+  }
+
+  @Override
+  public String targetResourceAction() {
+    return "";
+  }
+
+  @Override
+  public String ipAddress() {
+    return "";
+  }
+
+  @Override
+  public String userAgent() {
+    return "";
+  }
+
+  @Override
+  public Map<String, Object> request() {
+    return Map.of();
+  }
+
+  @Override
+  public Map<String, Object> before() {
+    return Map.of();
+  }
+
+  @Override
+  public Map<String, Object> after() {
+    return Map.of();
+  }
+
+  @Override
+  public String outcomeResult() {
+    return "";
+  }
+
+  @Override
+  public String outcomeReason() {
+    return "";
   }
 
   public Role role() {
@@ -72,18 +153,18 @@ public class RoleRegistrationContext implements ConfigRegistrationContext {
   }
 
   @Override
-  public String type() {
-    return "role";
+  public String targetTenantId() {
+    return tenant.identifierValue();
   }
 
   @Override
-  public Map<String, Object> payload() {
-    return role.toMap();
-  }
-
-  @Override
-  public boolean isDryRun() {
+  public boolean dryRun() {
     return dryRun;
+  }
+
+  @Override
+  public Map<String, Object> attributes() {
+    return Collections.emptyMap();
   }
 
   public RoleManagementResponse toResponse() {

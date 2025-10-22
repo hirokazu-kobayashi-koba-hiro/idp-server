@@ -82,12 +82,12 @@ public class SecurityEventHookConfigUpdateService
             tenant, before, updateRequest.identifier(), updateRequest.request(), dryRun);
     SecurityEventHookConfigUpdateContext context = contextCreator.create();
 
-    if (context.isDryRun()) {
+    if (context.dryRun()) {
       return SecurityEventHookConfigManagementResult.successWithContext(
           tenant, context.toResponse(), context);
     }
 
-    securityEventHookConfigurationCommandRepository.update(tenant, context.after());
+    securityEventHookConfigurationCommandRepository.update(tenant, context.afterConfiguration());
 
     return SecurityEventHookConfigManagementResult.successWithContext(
         tenant, context.toResponse(), context);

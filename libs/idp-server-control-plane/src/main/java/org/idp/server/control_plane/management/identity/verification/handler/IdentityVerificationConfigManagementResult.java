@@ -18,6 +18,8 @@ package org.idp.server.control_plane.management.identity.verification.handler;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
 import org.idp.server.control_plane.management.exception.OrganizationAccessDeniedException;
 import org.idp.server.control_plane.management.exception.PermissionDeniedException;
@@ -48,13 +50,13 @@ public class IdentityVerificationConfigManagementResult {
   private final TenantIdentifier tenantIdentifier;
   private final ManagementApiException exception;
   private final IdentityVerificationConfigManagementResponse response;
-  private final Object context;
+  private final AuditableContext context;
 
   private IdentityVerificationConfigManagementResult(
       TenantIdentifier tenantIdentifier,
       ManagementApiException exception,
       IdentityVerificationConfigManagementResponse response,
-      Object context) {
+      AuditableContext context) {
     this.tenantIdentifier = tenantIdentifier;
     this.exception = exception;
     this.response = response;
@@ -84,7 +86,7 @@ public class IdentityVerificationConfigManagementResult {
   public static IdentityVerificationConfigManagementResult success(
       TenantIdentifier tenantIdentifier,
       IdentityVerificationConfigManagementResponse response,
-      Object context) {
+      AuditableContext context) {
     return new IdentityVerificationConfigManagementResult(
         tenantIdentifier, null, response, context);
   }
@@ -131,7 +133,7 @@ public class IdentityVerificationConfigManagementResult {
     return exception;
   }
 
-  public Object context() {
+  public AuditableContext context() {
     return context;
   }
 

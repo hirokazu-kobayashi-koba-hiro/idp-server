@@ -73,7 +73,7 @@ public class AuthenticationConfigFindListService
       response.put("offset", request.offset());
       return AuthenticationConfigManagementResult.success(
           tenant,
-          request,
+          null,
           new AuthenticationConfigManagementResponse(
               AuthenticationConfigManagementStatus.OK, response));
     }
@@ -92,7 +92,7 @@ public class AuthenticationConfigFindListService
 
     return AuthenticationConfigManagementResult.success(
         tenant,
-        request,
+        null,
         new AuthenticationConfigManagementResponse(
             AuthenticationConfigManagementStatus.OK, response));
   }

@@ -778,8 +778,12 @@ CREATE TABLE audit_log
     user_payload           JSON                                NOT NULL,
     target_resource        TEXT                                NOT NULL,
     target_resource_action TEXT                                NOT NULL,
+    request_payload        JSON,
     before_payload         JSON,
     after_payload          JSON,
+    outcome_result         VARCHAR(50)                         NOT NULL DEFAULT 'unknown',
+    outcome_reason         VARCHAR(255),
+    target_tenant_id       CHAR(36),
     ip_address             TEXT,
     user_agent             TEXT,
     dry_run                BOOLEAN,
@@ -794,3 +798,6 @@ CREATE INDEX idx_audit_log_user_id ON audit_log (user_id);
 CREATE INDEX idx_audit_log_external_user_id ON audit_log (external_user_id);
 CREATE INDEX idx_audit_log_created_at ON audit_log (created_at);
 CREATE INDEX idx_audit_log_tenant_created_at ON audit_log (tenant_id, created_at);
+CREATE INDEX idx_audit_log_outcome ON audit_log (outcome_result);
+CREATE INDEX idx_audit_log_type_created ON audit_log (type, created_at);
+CREATE INDEX idx_audit_log_target_tenant ON audit_log (target_tenant_id, created_at);

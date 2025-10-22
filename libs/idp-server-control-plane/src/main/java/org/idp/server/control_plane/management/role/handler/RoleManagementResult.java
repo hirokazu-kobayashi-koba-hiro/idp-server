@@ -18,6 +18,7 @@ package org.idp.server.control_plane.management.role.handler;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
 import org.idp.server.control_plane.management.exception.OrganizationAccessDeniedException;
 import org.idp.server.control_plane.management.exception.PermissionDeniedException;
@@ -45,11 +46,11 @@ public class RoleManagementResult {
 
   private final Tenant tenant;
   private final ManagementApiException exception;
-  private final Object response;
-  private final Object context;
+  private final RoleManagementResponse response;
+  private final AuditableContext context;
 
   private RoleManagementResult(
-      Tenant tenant, ManagementApiException exception, Object response, Object context) {
+      Tenant tenant, ManagementApiException exception, RoleManagementResponse response, AuditableContext context) {
     this.tenant = tenant;
     this.exception = exception;
     this.response = response;
@@ -63,7 +64,7 @@ public class RoleManagementResult {
    * @param response the success response
    * @return successful result
    */
-  public static RoleManagementResult success(Tenant tenant, Object response) {
+  public static RoleManagementResult success(Tenant tenant, RoleManagementResponse response) {
     return new RoleManagementResult(tenant, null, response, null);
   }
 
@@ -75,7 +76,8 @@ public class RoleManagementResult {
    * @param context the operation context
    * @return successful result with context
    */
-  public static RoleManagementResult success(Tenant tenant, Object response, Object context) {
+  public static RoleManagementResult success(
+      Tenant tenant, RoleManagementResponse response, AuditableContext context) {
     return new RoleManagementResult(tenant, null, response, context);
   }
 
@@ -119,7 +121,7 @@ public class RoleManagementResult {
     return exception;
   }
 
-  public Object context() {
+  public AuditableContext context() {
     return context;
   }
 
@@ -133,6 +135,6 @@ public class RoleManagementResult {
       errorResponse.putAll(exception.errorDetails());
       return new RoleManagementResponse(status, errorResponse);
     }
-    return (RoleManagementResponse) response;
+    return response;
   }
 }

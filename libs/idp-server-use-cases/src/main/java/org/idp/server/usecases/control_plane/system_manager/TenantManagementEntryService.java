@@ -138,13 +138,7 @@ public class TenantManagementEntryService implements TenantManagementApi {
     }
 
     AuditLog auditLog =
-        AuditLogCreator.create(
-            "TenantManagementApi.create",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (TenantManagementRegistrationContext) result.context(),
-            requestAttributes);
+        AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -277,13 +271,7 @@ public class TenantManagementEntryService implements TenantManagementApi {
     }
 
     AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "TenantManagementApi.update",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (TenantManagementUpdateContext) result.context(),
-            requestAttributes);
+        AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

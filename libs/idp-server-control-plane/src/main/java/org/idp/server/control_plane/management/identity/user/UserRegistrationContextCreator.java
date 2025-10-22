@@ -21,13 +21,18 @@ import org.idp.server.control_plane.management.identity.user.io.UserRegistration
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegation;
+import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
+import org.idp.server.platform.type.RequestAttributes;
 
 public class UserRegistrationContextCreator {
 
   Tenant tenant;
+  User operator;
+  OAuthToken oAuthToken;
+  RequestAttributes requestAttributes;
   UserRegistrationRequest request;
   boolean dryRun;
   PasswordEncodeDelegation passwordEncodeDelegation;
@@ -35,10 +40,16 @@ public class UserRegistrationContextCreator {
 
   public UserRegistrationContextCreator(
       Tenant tenant,
+      User operator,
+      OAuthToken oAuthToken,
+      RequestAttributes requestAttributes,
       UserRegistrationRequest request,
       boolean dryRun,
       PasswordEncodeDelegation passwordEncodeDelegation) {
     this.tenant = tenant;
+    this.operator = operator;
+    this.oAuthToken = oAuthToken;
+    this.requestAttributes = requestAttributes;
     this.request = request;
     this.dryRun = dryRun;
     this.passwordEncodeDelegation = passwordEncodeDelegation;
@@ -61,6 +72,7 @@ public class UserRegistrationContextCreator {
     user.setHashedPassword(encoded);
     user.setStatus(UserStatus.REGISTERED);
 
-    return new UserRegistrationContext(tenant, user, request, dryRun);
+    return new UserRegistrationContext(
+        tenant, operator, oAuthToken, requestAttributes, user, request, dryRun);
   }
 }

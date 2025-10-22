@@ -19,13 +19,18 @@ package org.idp.server.control_plane.management.identity.user;
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegation;
+import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
+import org.idp.server.platform.type.RequestAttributes;
 
 public class UserPasswordUpdateContextCreator {
 
   Tenant tenant;
+  User operator;
+  OAuthToken oAuthToken;
+  RequestAttributes requestAttributes;
   User before;
   UserRegistrationRequest request;
   boolean dryRun;
@@ -34,11 +39,17 @@ public class UserPasswordUpdateContextCreator {
 
   public UserPasswordUpdateContextCreator(
       Tenant tenant,
+      User operator,
+      OAuthToken oAuthToken,
+      RequestAttributes requestAttributes,
       User before,
       UserRegistrationRequest request,
       boolean dryRun,
       PasswordEncodeDelegation passwordEncodeDelegation) {
     this.tenant = tenant;
+    this.operator = operator;
+    this.oAuthToken = oAuthToken;
+    this.requestAttributes = requestAttributes;
     this.before = before;
     this.request = request;
     this.dryRun = dryRun;
@@ -60,9 +71,11 @@ public class UserPasswordUpdateContextCreator {
         updated.applyIdentityPolicy(policy);
       }
 
-      return new UserUpdateContext(tenant, before, updated, dryRun);
+      return new UserUpdateContext(
+          tenant, operator, oAuthToken, requestAttributes, before, updated, request.toMap(), dryRun);
     }
 
-    return new UserUpdateContext(tenant, before, newUser, dryRun);
+    return new UserUpdateContext(
+        tenant, operator, oAuthToken, requestAttributes, before, newUser, request.toMap(), dryRun);
   }
 }

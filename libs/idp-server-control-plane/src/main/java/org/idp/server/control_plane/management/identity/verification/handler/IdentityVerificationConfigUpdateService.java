@@ -78,7 +78,7 @@ public class IdentityVerificationConfigUpdateService
           tenant.identifier(), response, context);
     }
 
-    commandRepository.update(tenant, context.afterType(), context.after());
+    commandRepository.update(tenant, context.afterType(), context.afterConfiguration());
 
     IdentityVerificationConfigManagementResponse response = context.toResponse();
     return IdentityVerificationConfigManagementResult.success(

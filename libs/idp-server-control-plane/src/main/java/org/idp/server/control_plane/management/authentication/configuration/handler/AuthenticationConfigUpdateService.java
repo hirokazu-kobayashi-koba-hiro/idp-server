@@ -89,7 +89,7 @@ public class AuthenticationConfigUpdateService
     }
 
     // 4. Update configuration
-    authenticationConfigurationCommandRepository.update(tenant, context.after());
+    authenticationConfigurationCommandRepository.update(tenant, context.afterConfiguration());
 
     // 5. Return success
     AuthenticationConfigManagementResponse response = context.toResponse();

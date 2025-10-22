@@ -16,13 +16,16 @@
 
 package org.idp.server.control_plane.management.identity.user.handler;
 
+import org.idp.server.control_plane.management.identity.user.UserManagementContextBuilder;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
@@ -56,7 +59,8 @@ public class UserFindService implements UserManagementService<UserIdentifier> {
   }
 
   @Override
-  public UserManagementResult execute(
+  public UserManagementResponse execute(
+      UserManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -64,11 +68,30 @@ public class UserFindService implements UserManagementService<UserIdentifier> {
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    // Cast to specific builder type
+    UserFindContextBuilder findBuilder = (UserFindContextBuilder) builder;
+
     // 1. User existence verification
     User user = userQueryRepository.get(tenant, userIdentifier);
 
-    // 2. Return user data
-    return UserManagementResult.success(
-        tenant, user, new UserManagementResponse(UserManagementStatus.OK, user.toMap()));
+    // 2. Set user to builder for context completion
+    findBuilder.withUser(user);
+
+    // 3. Return user data
+    return new UserManagementResponse(UserManagementStatus.OK, user.toMap());
+  }
+
+  @Override
+  public UserManagementContextBuilder createContextBuilder(
+      TenantIdentifier tenantIdentifier,
+      OrganizationIdentifier organizationIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      RequestAttributes requestAttributes,
+      UserIdentifier request,
+      boolean dryRun) {
+    return new UserFindContextBuilder(
+            tenantIdentifier, organizationIdentifier, operator, oAuthToken, requestAttributes)
+        .withDryRun(dryRun);
   }
 }

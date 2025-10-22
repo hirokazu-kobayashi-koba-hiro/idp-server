@@ -18,6 +18,7 @@ package org.idp.server.control_plane.management.tenant.handler;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.exception.*;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementStatus;
@@ -39,19 +40,20 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class TenantManagementResult {
 
   private final Tenant tenant;
-  private final Object context;
+  private final AuditableContext context;
   private final ManagementApiException exception;
   private final Object response;
 
   private TenantManagementResult(
-      Tenant tenant, Object context, ManagementApiException exception, Object response) {
+      Tenant tenant, AuditableContext context, ManagementApiException exception, Object response) {
     this.tenant = tenant;
     this.context = context;
     this.exception = exception;
     this.response = response;
   }
 
-  public static TenantManagementResult success(Tenant tenant, Object context, Object response) {
+  public static TenantManagementResult success(
+      Tenant tenant, AuditableContext context, Object response) {
     return new TenantManagementResult(tenant, context, null, response);
   }
 
@@ -71,7 +73,7 @@ public class TenantManagementResult {
     return tenant;
   }
 
-  public Object context() {
+  public AuditableContext context() {
     return context;
   }
 

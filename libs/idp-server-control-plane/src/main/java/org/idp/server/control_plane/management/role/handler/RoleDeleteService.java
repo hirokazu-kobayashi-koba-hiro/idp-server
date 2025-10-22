@@ -75,7 +75,7 @@ public class RoleDeleteService implements RoleManagementService<RoleIdentifier> 
       response.put("id", role.id());
       response.put("dry_run", true);
       return RoleManagementResult.success(
-          tenant, new RoleManagementResponse(RoleManagementStatus.OK, response), role.toMap());
+          tenant, new RoleManagementResponse(RoleManagementStatus.OK, response), null);
     }
 
     roleCommandRepository.delete(tenant, role);
@@ -83,6 +83,6 @@ public class RoleDeleteService implements RoleManagementService<RoleIdentifier> 
     return RoleManagementResult.success(
         tenant,
         new RoleManagementResponse(RoleManagementStatus.NO_CONTENT, Map.of()),
-        role.toMap());
+        null);
   }
 }

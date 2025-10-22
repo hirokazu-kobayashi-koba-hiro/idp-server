@@ -121,15 +121,8 @@ public class OrgClientManagementEntryService implements OrgClientManagementApi {
       return result.toResponse(dryRun);
     }
 
-    ClientRegistrationContext context = (ClientRegistrationContext) result.context();
     AuditLog auditLog =
-        AuditLogCreator.create(
-            "OrgClientManagementApi.create",
-            tenant,
-            operator,
-            oAuthToken,
-            context,
-            requestAttributes);
+        AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -242,15 +235,8 @@ public class OrgClientManagementEntryService implements OrgClientManagementApi {
       return result.toResponse(dryRun);
     }
 
-    ClientUpdateContext context = (ClientUpdateContext) result.context();
     AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "OrgClientManagementApi.update",
-            tenant,
-            operator,
-            oAuthToken,
-            context,
-            requestAttributes);
+        AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

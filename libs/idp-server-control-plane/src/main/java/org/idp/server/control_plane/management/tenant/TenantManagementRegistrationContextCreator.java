@@ -116,7 +116,7 @@ public class TenantManagementRegistrationContextCreator {
     user.addAssignedTenant(tenant.identifier());
 
     return new TenantManagementRegistrationContext(
-        adminTenant, tenant, authorizationServerConfiguration, assigned, user, dryRun);
+        adminTenant, tenant, authorizationServerConfiguration, assigned, user, request, dryRun);
   }
 
   private TenantIdentityPolicy convertIdentityPolicyConfig(Map<String, Object> configMap) {

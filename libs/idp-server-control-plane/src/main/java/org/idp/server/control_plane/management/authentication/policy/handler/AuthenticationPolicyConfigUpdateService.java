@@ -93,7 +93,7 @@ public class AuthenticationPolicyConfigUpdateService
     }
 
     // 4. Update configuration
-    authenticationPolicyConfigurationCommandRepository.update(tenant, context.after());
+    authenticationPolicyConfigurationCommandRepository.update(tenant, context.afterConfiguration());
 
     // 5. Return success
     AuthenticationPolicyConfigManagementResponse response = context.toResponse();
