@@ -3,9 +3,15 @@ set -eu
 
 # User password configuration
 : "${POSTGRES_USER:=idpserver}"
-: "${POSTGRES_PASSWORD:=idpserver}"
+: "${POSTGRES_PASSWORD}"
 : "${POSTGRES_DB:=idpserver}"
 : "${DB_OWNER_USER:=idp}"
+
+# Require password environment variables (no defaults for security)
+if [ -z "${POSTGRES_PASSWORD:-}" ]; then
+  echo "ERROR: POSTGRES_PASSWORD environment variable is required" >&2
+  exit 1
+fi
 
 # Require password environment variables (no defaults for security)
 if [ -z "${IDP_DB_ADMIN_PASSWORD:-}" ]; then

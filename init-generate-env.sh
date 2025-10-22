@@ -21,7 +21,7 @@ ADMIN_USER_PASSWORD=$(head -c 12 /dev/urandom | base64)
 ADMIN_TENANT_ID=$(uuidgen | tr A-Z a-z)
 ADMIN_TENANT_NAME="admin-tenant"
 ADMIN_CLIENT_ID=$(uuidgen | tr A-Z a-z)
-ADMIN_CLIENT_ID_ALIAS="client_$(head -c 4 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 8)"
+ADMIN_CLIENT_ID_ALIAS="admin-client_$(head -c 4 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 8)"
 ADMIN_CLIENT_SECRET=$(head -c 48 /dev/urandom | base64)
 
 echo "Generated secrets:"
