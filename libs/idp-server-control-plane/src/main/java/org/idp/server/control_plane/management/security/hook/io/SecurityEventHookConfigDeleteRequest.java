@@ -14,36 +14,24 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.management.security.hook.handler;
+package org.idp.server.control_plane.management.security.hook.io;
 
 import java.util.Map;
+import org.idp.server.control_plane.management.security.hook.handler.SecurityEventHookConfigManagementRequest;
+import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfigurationIdentifier;
 
 /**
- * Request wrapper for findList operation.
+ * Request for deleting a security event hook configuration.
  *
- * <p>Encapsulates pagination parameters for list retrieval.
+ * <p>Wrapper for SecurityEventHookConfigurationIdentifier to implement
+ * SecurityEventHookConfigManagementRequest interface.
  */
-public class SecurityEventHookConfigFindListRequest
+public record SecurityEventHookConfigDeleteRequest(
+    SecurityEventHookConfigurationIdentifier identifier)
     implements SecurityEventHookConfigManagementRequest {
-
-  private final int limit;
-  private final int offset;
-
-  public SecurityEventHookConfigFindListRequest(int limit, int offset) {
-    this.limit = limit;
-    this.offset = offset;
-  }
-
-  public int limit() {
-    return limit;
-  }
-
-  public int offset() {
-    return offset;
-  }
 
   @Override
   public Map<String, Object> toMap() {
-    return Map.of("limit", limit, "offset", offset);
+    return Map.of("id", identifier.value());
   }
 }

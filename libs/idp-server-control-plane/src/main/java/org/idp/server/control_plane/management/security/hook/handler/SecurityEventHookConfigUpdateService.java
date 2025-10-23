@@ -16,11 +16,18 @@
 
 package org.idp.server.control_plane.management.security.hook.handler;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
-import org.idp.server.control_plane.management.security.hook.SecurityEventHookConfigUpdateContext;
-import org.idp.server.control_plane.management.security.hook.SecurityEventHookConfigUpdateContextCreator;
+import org.idp.server.control_plane.management.security.hook.SecurityEventHookConfigManagementContextBuilder;
+import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
+import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementStatus;
+import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigurationRequest;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.json.JsonDiffCalculator;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationCommandRepository;
@@ -36,7 +43,8 @@ import org.idp.server.platform.type.RequestAttributes;
  *
  * <ul>
  *   <li>Existing configuration retrieval and existence verification
- *   <li>Update context creation from request
+ *   <li>Updated configuration creation from request
+ *   <li>Builder population (withBefore + withAfter)
  *   <li>Dry-run simulation support
  *   <li>Configuration update
  * </ul>
@@ -60,7 +68,8 @@ public class SecurityEventHookConfigUpdateService
   }
 
   @Override
-  public SecurityEventHookConfigManagementResult execute(
+  public SecurityEventHookConfigManagementResponse execute(
+      SecurityEventHookConfigManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -68,6 +77,7 @@ public class SecurityEventHookConfigUpdateService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    // 1. Retrieve existing configuration
     SecurityEventHookConfiguration before =
         securityEventHookConfigurationQueryRepository.findWithDisabled(
             tenant, updateRequest.identifier(), true);
@@ -77,19 +87,35 @@ public class SecurityEventHookConfigUpdateService
           "Security event hook configuration not found: " + updateRequest.identifier().value());
     }
 
-    SecurityEventHookConfigUpdateContextCreator contextCreator =
-        new SecurityEventHookConfigUpdateContextCreator(
-            tenant, before, updateRequest.identifier(), updateRequest.request(), dryRun);
-    SecurityEventHookConfigUpdateContext context = contextCreator.create();
+    // 2. Create updated configuration from request
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+    SecurityEventHookConfigurationRequest configurationRequest =
+        jsonConverter.read(
+            updateRequest.request().toMap(), SecurityEventHookConfigurationRequest.class);
+    SecurityEventHookConfiguration after =
+        configurationRequest.toConfiguration(updateRequest.identifier().value());
 
-    if (context.dryRun()) {
-      return SecurityEventHookConfigManagementResult.successWithContext(
-          tenant, context.toResponse(), context);
+    // 3. Populate builder with before/after
+    builder.withBefore(before).withAfter(after);
+
+    // 4. Build response
+    Map<String, Object> contents = new HashMap<>();
+    JsonNodeWrapper beforeJson = JsonNodeWrapper.fromMap(before.toMap());
+    JsonNodeWrapper afterJson = JsonNodeWrapper.fromMap(after.toMap());
+    contents.put("result", after.toMap());
+    contents.put("diff", JsonDiffCalculator.deepDiff(beforeJson, afterJson));
+    contents.put("dry_run", dryRun);
+
+    // 5. Dry-run check
+    if (dryRun) {
+      return new SecurityEventHookConfigManagementResponse(
+          SecurityEventHookConfigManagementStatus.OK, contents);
     }
 
-    securityEventHookConfigurationCommandRepository.update(tenant, context.afterConfiguration());
+    // 6. Update configuration
+    securityEventHookConfigurationCommandRepository.update(tenant, after);
 
-    return SecurityEventHookConfigManagementResult.successWithContext(
-        tenant, context.toResponse(), context);
+    return new SecurityEventHookConfigManagementResponse(
+        SecurityEventHookConfigManagementStatus.OK, contents);
   }
 }

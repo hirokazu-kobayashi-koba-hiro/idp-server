@@ -19,31 +19,25 @@ package org.idp.server.control_plane.management.security.hook.handler;
 import java.util.Map;
 
 /**
- * Request wrapper for findList operation.
+ * Marker interface for security event hook configuration management request objects.
  *
- * <p>Encapsulates pagination parameters for list retrieval.
+ * <p>Enables polymorphic handling of different request types in Handler layer:
+ *
+ * <ul>
+ *   <li>SecurityEventHookRequest (create operation)
+ *   <li>SecurityEventHookConfigUpdateRequest (update operation)
+ *   <li>SecurityEventHookConfigFindListRequest (findList operation)
+ *   <li>Other operation-specific requests
+ * </ul>
+ *
+ * @see SecurityEventHookConfigManagementHandler
  */
-public class SecurityEventHookConfigFindListRequest
-    implements SecurityEventHookConfigManagementRequest {
+public interface SecurityEventHookConfigManagementRequest {
 
-  private final int limit;
-  private final int offset;
-
-  public SecurityEventHookConfigFindListRequest(int limit, int offset) {
-    this.limit = limit;
-    this.offset = offset;
-  }
-
-  public int limit() {
-    return limit;
-  }
-
-  public int offset() {
-    return offset;
-  }
-
-  @Override
-  public Map<String, Object> toMap() {
-    return Map.of("limit", limit, "offset", offset);
-  }
+  /**
+   * Converts request to Map for audit logging.
+   *
+   * @return request data as map
+   */
+  Map<String, Object> toMap();
 }

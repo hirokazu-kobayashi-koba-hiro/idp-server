@@ -95,8 +95,8 @@ describe("Organization Security Event Hook Config Management API - Structured Te
           }
         });
 
-        console.log(JSON.stringify(response.data, null, 2))
-        expect(response.status).toBe(201);
+        console.log(JSON.stringify(response.data, null, 2));
+        expect(response.status).toBe(200);
         expect(response.data).toHaveProperty("dry_run", true);
         expect(response.data).toHaveProperty("result");
         expect(response.data.result).toHaveProperty("id", configId);
@@ -162,7 +162,7 @@ describe("Organization Security Event Hook Config Management API - Structured Te
           }
         });
 
-        expect(response.status).toBe(201);
+        expect(response.status).toBe(200);
       });
     });
   });
@@ -244,7 +244,7 @@ describe("Organization Security Event Hook Config Management API - Structured Te
           }
         });
 
-        expect(response.status).toBe(201);
+        expect(response.status).toBe(200);
         expect(response.data.dry_run).toBe(true);
         expect(response.data.result.id).toBe(configId);
         expect(response.data.result.type).toBe(configId);
@@ -407,7 +407,7 @@ describe("Organization Security Event Hook Config Management API - Structured Te
             }
           });
 
-          expect(response.status).toBe(201);
+          expect(response.status).toBe(200);
           expect(response.data.result.events).toHaveProperty(eventType);
         }
       });
@@ -444,7 +444,7 @@ describe("Organization Security Event Hook Config Management API - Structured Te
             }
           });
 
-          expect(response.status).toBe(201);
+          expect(response.status).toBe(200);
           expect(response.data.result.events).toHaveProperty(eventType);
         }
       });
@@ -481,7 +481,7 @@ describe("Organization Security Event Hook Config Management API - Structured Te
             }
           });
 
-          expect(response.status).toBe(201);
+          expect(response.status).toBe(200);
           expect(response.data.result.events).toHaveProperty(eventType);
         }
       });
@@ -525,7 +525,7 @@ describe("Organization Security Event Hook Config Management API - Structured Te
             }
           });
 
-          expect(response.status).toBe(201);
+          expect(response.status).toBe(200);
           expect(response.data.result.events).toHaveProperty(eventType);
         }
       });
@@ -562,7 +562,7 @@ describe("Organization Security Event Hook Config Management API - Structured Te
             }
           });
 
-          expect(response.status).toBe(201);
+          expect(response.status).toBe(200);
           expect(response.data.result.events).toHaveProperty(eventType);
         }
       });
@@ -604,7 +604,7 @@ describe("Organization Security Event Hook Config Management API - Structured Te
           }
         });
         console.log(JSON.stringify(response.data, null, 2));
-        expect(response.status).toBe(201);
+        expect(response.status).toBe(200);
         expect(response.data.result.events["user_signin"].execution.http_request.auth_type).toBe("OAUTH2_CLIENT_CREDENTIALS");
         expect(response.data.result.events["user_signin"].execution.http_request.oauth_authorization.client_id).toBe("webhook-oauth-client");
         expect(response.data.result.events["user_signin"].execution.http_request.oauth_authorization.scope).toBe("webhook:write events:send");
@@ -644,7 +644,7 @@ describe("Organization Security Event Hook Config Management API - Structured Te
           }
         });
 
-        expect(response.status).toBe(201);
+        expect(response.status).toBe(200);
         expect(response.data.result.events["user_signin_failure"].execution.http_request.auth_type).toBe("HMAC_SHA256");
         expect(response.data.result.events["user_signin_failure"].execution.http_request.hmac_authentication.secret).toBe("super-secret-hmac-key");
       });

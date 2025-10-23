@@ -17,13 +17,20 @@
 package org.idp.server.control_plane.management.security.hook.handler;
 
 import java.util.Map;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.ApiPermissionVerifier;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
+import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
+import org.idp.server.control_plane.management.security.hook.SecurityEventHookConfigManagementContextBuilder;
 import org.idp.server.control_plane.management.security.hook.SecurityEventHookConfigurationManagementApi;
+import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.exception.NotFoundException;
 import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -58,6 +65,7 @@ public class SecurityEventHookConfigManagementHandler {
   private final SecurityEventHookConfigurationManagementApi managementApi;
   private final TenantQueryRepository tenantQueryRepository;
   private final ApiPermissionVerifier apiPermissionVerifier;
+  LoggerWrapper log = LoggerWrapper.getLogger(SecurityEventHookConfigManagementHandler.class);
 
   public SecurityEventHookConfigManagementHandler(
       Map<String, SecurityEventHookConfigManagementService<?>> services,
@@ -75,9 +83,8 @@ public class SecurityEventHookConfigManagementHandler {
    * <p>Performs permission verification before delegating to Service.
    *
    * @param method the operation method (e.g., "create", "findList", "get", "update", "delete")
+   * @param authenticationContext the admin authentication context
    * @param tenantIdentifier the tenant identifier
-   * @param operator the user performing the operation
-   * @param oAuthToken the OAuth token for the operation
    * @param request the operation-specific request object
    * @param requestAttributes HTTP request attributes for audit logging
    * @param dryRun whether to simulate the operation without persisting changes
@@ -85,35 +92,58 @@ public class SecurityEventHookConfigManagementHandler {
    */
   public SecurityEventHookConfigManagementResult handle(
       String method,
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      Object request,
+      SecurityEventHookConfigManagementRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    Tenant tenant = null;
-    try {
-      // 1. Tenant retrieval
-      tenant = tenantQueryRepository.get(tenantIdentifier);
+    User operator = authenticationContext.operator();
+    OAuthToken oAuthToken = authenticationContext.oAuthToken();
 
-      // 2. Permission verification
+    // 1. Service selection
+    SecurityEventHookConfigManagementService<?> service = services.get(method);
+    if (service == null) {
+      throw new UnSupportedException("Unsupported operation method: " + method);
+    }
+
+    // 2. Context Builder creation (before Tenant retrieval - enables audit logging on errors)
+    SecurityEventHookConfigManagementContextBuilder contextBuilder =
+        new SecurityEventHookConfigManagementContextBuilder(tenantIdentifier, operator, oAuthToken, requestAttributes, request, dryRun);
+
+    try {
+      // 3. Tenant retrieval
+      Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+      // 4. Permission verification
       AdminPermissions requiredPermissions = managementApi.getRequiredPermissions(method);
       apiPermissionVerifier.verify(operator, requiredPermissions);
 
-      // 3. Service selection
-      SecurityEventHookConfigManagementService<?> service = services.get(method);
-      if (service == null) {
-        throw new UnSupportedException("Unsupported operation method: " + method);
-      }
+      // 5. Delegate to service
+      SecurityEventHookConfigManagementResponse response =
+          executeService(
+              service,
+              contextBuilder,
+              tenant,
+              operator,
+              oAuthToken,
+              request,
+              requestAttributes,
+              dryRun);
 
-      // 4. Delegate to service
-      return executeService(
-          service, tenant, operator, oAuthToken, request, requestAttributes, dryRun);
+      AuditableContext context = contextBuilder.build();
+      return SecurityEventHookConfigManagementResult.success(context, response);
+    } catch (NotFoundException e) {
 
+      log.warn(e.getMessage());
+      ResourceNotFoundException notFound = new ResourceNotFoundException(e.getMessage());
+      AuditableContext context = contextBuilder.buildPartial(notFound);
+      return SecurityEventHookConfigManagementResult.error(context, notFound);
     } catch (ManagementApiException e) {
-      // Wrap exception in Result with tenant for audit logging
-      return SecurityEventHookConfigManagementResult.error(tenant, e);
+
+      log.warn(e.getMessage());
+      AuditableContext errorContext = contextBuilder.buildPartial(e);
+      return SecurityEventHookConfigManagementResult.error(errorContext, e);
     }
   }
 
@@ -128,7 +158,16 @@ public class SecurityEventHookConfigManagementHandler {
    *   <li>EntryService methods pass the correct request type for each operation
    * </ul>
    *
+   * <p>Following the UserManagement pattern:
+   *
+   * <ol>
+   *   <li>Service returns Response directly (and populates builder with withAfter/withBefore)
+   *   <li>Handler calls builder.build() to create Context
+   *   <li>Handler wraps Response in Result.success(context, response)
+   * </ol>
+   *
    * @param service the service to execute
+   * @param builder context builder for incremental context construction
    * @param tenant the tenant
    * @param operator the user performing the operation
    * @param oAuthToken the OAuth token
@@ -137,16 +176,18 @@ public class SecurityEventHookConfigManagementHandler {
    * @param dryRun whether to simulate the operation
    * @return SecurityEventHookConfigManagementResult containing operation outcome
    */
-  private <T> SecurityEventHookConfigManagementResult executeService(
+  @SuppressWarnings("unchecked")
+  private <T> SecurityEventHookConfigManagementResponse executeService(
       SecurityEventHookConfigManagementService<T> service,
+      SecurityEventHookConfigManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
       Object request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
-    @SuppressWarnings("unchecked")
     T typedRequest = (T) request;
-    return service.execute(tenant, operator, oAuthToken, typedRequest, requestAttributes, dryRun);
+    return service.execute(
+        builder, tenant, operator, oAuthToken, typedRequest, requestAttributes, dryRun);
   }
 }

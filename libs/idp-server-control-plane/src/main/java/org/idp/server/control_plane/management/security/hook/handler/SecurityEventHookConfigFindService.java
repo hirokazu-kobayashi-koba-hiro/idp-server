@@ -17,13 +17,14 @@
 package org.idp.server.control_plane.management.security.hook.handler;
 
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
+import org.idp.server.control_plane.management.security.hook.SecurityEventHookConfigManagementContextBuilder;
+import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigFindRequest;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementStatus;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
-import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfigurationIdentifier;
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -41,7 +42,7 @@ import org.idp.server.platform.type.RequestAttributes;
  * </ul>
  */
 public class SecurityEventHookConfigFindService
-    implements SecurityEventHookConfigManagementService<SecurityEventHookConfigurationIdentifier> {
+    implements SecurityEventHookConfigManagementService<SecurityEventHookConfigFindRequest> {
 
   private final SecurityEventHookConfigurationQueryRepository
       securityEventHookConfigurationQueryRepository;
@@ -53,25 +54,28 @@ public class SecurityEventHookConfigFindService
   }
 
   @Override
-  public SecurityEventHookConfigManagementResult execute(
+  public SecurityEventHookConfigManagementResponse execute(
+      SecurityEventHookConfigManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      SecurityEventHookConfigurationIdentifier identifier,
+      SecurityEventHookConfigFindRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
     SecurityEventHookConfiguration configuration =
-        securityEventHookConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
+        securityEventHookConfigurationQueryRepository.findWithDisabled(
+            tenant, request.identifier(), true);
 
     if (!configuration.exists()) {
       throw new ResourceNotFoundException(
-          "Security event hook configuration not found: " + identifier.value());
+          "Security event hook configuration not found: " + request.identifier().value());
     }
 
-    SecurityEventHookConfigManagementResponse response =
-        new SecurityEventHookConfigManagementResponse(
-            SecurityEventHookConfigManagementStatus.OK, configuration.toMap());
-    return SecurityEventHookConfigManagementResult.success(tenant, response);
+    // Populate builder with found configuration (for audit logging)
+    builder.withBefore(configuration);
+
+    return new SecurityEventHookConfigManagementResponse(
+        SecurityEventHookConfigManagementStatus.OK, configuration.toMap());
   }
 }
