@@ -19,6 +19,8 @@ package org.idp.server.control_plane.management.security.hook_result.handler;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.control_plane.management.security.hook_result.SecurityEventHookManagementContextBuilder;
+import org.idp.server.control_plane.management.security.hook_result.io.SecurityEventHookFindListRequest;
 import org.idp.server.control_plane.management.security.hook_result.io.SecurityEventHookManagementResponse;
 import org.idp.server.control_plane.management.security.hook_result.io.SecurityEventHookManagementStatus;
 import org.idp.server.core.openid.identity.User;
@@ -43,7 +45,7 @@ import org.idp.server.platform.type.RequestAttributes;
  * </ul>
  */
 public class SecurityEventHookFindListService
-    implements SecurityEventHookManagementService<SecurityEventHookResultQueries> {
+    implements SecurityEventHookManagementService<SecurityEventHookFindListRequest> {
 
   private final SecurityEventHookResultQueryRepository securityEventHookResultQueryRepository;
 
@@ -53,13 +55,15 @@ public class SecurityEventHookFindListService
   }
 
   @Override
-  public SecurityEventHookManagementResult execute(
+  public SecurityEventHookManagementResponse execute(
+      SecurityEventHookManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      SecurityEventHookResultQueries queries,
+      SecurityEventHookFindListRequest request,
       RequestAttributes requestAttributes) {
 
+    SecurityEventHookResultQueries queries = request.queries();
     long totalCount = securityEventHookResultQueryRepository.findTotalCount(tenant, queries);
 
     if (totalCount == 0) {
@@ -68,9 +72,8 @@ public class SecurityEventHookFindListService
       response.put("total_count", 0);
       response.put("limit", queries.limit());
       response.put("offset", queries.offset());
-      return SecurityEventHookManagementResult.success(
-          tenant,
-          new SecurityEventHookManagementResponse(SecurityEventHookManagementStatus.OK, response));
+      return new SecurityEventHookManagementResponse(
+          SecurityEventHookManagementStatus.OK, response);
     }
 
     List<SecurityEventHookResult> results =
@@ -82,8 +85,6 @@ public class SecurityEventHookFindListService
     response.put("limit", queries.limit());
     response.put("offset", queries.offset());
 
-    return SecurityEventHookManagementResult.success(
-        tenant,
-        new SecurityEventHookManagementResponse(SecurityEventHookManagementStatus.OK, response));
+    return new SecurityEventHookManagementResponse(SecurityEventHookManagementStatus.OK, response);
   }
 }

@@ -17,6 +17,8 @@
 package org.idp.server.control_plane.management.security.hook_result.handler;
 
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
+import org.idp.server.control_plane.management.security.hook_result.SecurityEventHookManagementContextBuilder;
+import org.idp.server.control_plane.management.security.hook_result.io.SecurityEventHookFindRequest;
 import org.idp.server.control_plane.management.security.hook_result.io.SecurityEventHookManagementResponse;
 import org.idp.server.control_plane.management.security.hook_result.io.SecurityEventHookManagementStatus;
 import org.idp.server.core.openid.identity.User;
@@ -40,7 +42,7 @@ import org.idp.server.platform.type.RequestAttributes;
  * </ul>
  */
 public class SecurityEventHookFindService
-    implements SecurityEventHookManagementService<SecurityEventHookResultIdentifier> {
+    implements SecurityEventHookManagementService<SecurityEventHookFindRequest> {
 
   private final SecurityEventHookResultQueryRepository securityEventHookResultQueryRepository;
 
@@ -50,13 +52,15 @@ public class SecurityEventHookFindService
   }
 
   @Override
-  public SecurityEventHookManagementResult execute(
+  public SecurityEventHookManagementResponse execute(
+      SecurityEventHookManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      SecurityEventHookResultIdentifier identifier,
+      SecurityEventHookFindRequest request,
       RequestAttributes requestAttributes) {
 
+    SecurityEventHookResultIdentifier identifier = request.securityEventHookResultIdentifier();
     SecurityEventHookResult hookResult =
         securityEventHookResultQueryRepository.find(tenant, identifier);
 
@@ -65,9 +69,7 @@ public class SecurityEventHookFindService
           "Security event hook result not found: " + identifier.value());
     }
 
-    SecurityEventHookManagementResponse response =
-        new SecurityEventHookManagementResponse(
-            SecurityEventHookManagementStatus.OK, hookResult.toMap());
-    return SecurityEventHookManagementResult.success(tenant, response);
+    return new SecurityEventHookManagementResponse(
+        SecurityEventHookManagementStatus.OK, hookResult.toMap());
   }
 }

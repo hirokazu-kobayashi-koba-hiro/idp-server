@@ -19,11 +19,10 @@ package org.idp.server.control_plane.management.security.hook_result;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.security.hook_result.io.SecurityEventHookManagementResponse;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.hook.SecurityEventHookResultIdentifier;
@@ -60,16 +59,14 @@ public interface SecurityEventHookManagementApi {
   }
 
   SecurityEventHookManagementResponse findList(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       SecurityEventHookResultQueries queries,
       RequestAttributes requestAttributes);
 
   SecurityEventHookManagementResponse get(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       SecurityEventHookResultIdentifier identifier,
       RequestAttributes requestAttributes);
 
@@ -81,16 +78,14 @@ public interface SecurityEventHookManagementApi {
    * with the same parameters.
    *
    * @param tenantIdentifier tenant context
-   * @param operator user performing the retry operation
-   * @param oAuthToken authentication token
+   * @param authenticationContext authentication context contains adminTenant operator oauthToken
    * @param identifier identifier of the failed hook result to retry
    * @param requestAttributes request context information
    * @return result of the retry operation
    */
   SecurityEventHookManagementResponse retry(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       SecurityEventHookResultIdentifier identifier,
       RequestAttributes requestAttributes);
 }

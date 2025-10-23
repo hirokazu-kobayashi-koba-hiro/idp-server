@@ -57,10 +57,8 @@ public class OrgSecurityEventHookManagementV1Api implements ParameterTransformab
 
     SecurityEventHookManagementResponse response =
         securityEventHookManagementApi.findList(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new SecurityEventHookResultQueries(queryParams),
             requestAttributes);
 
@@ -82,10 +80,8 @@ public class OrgSecurityEventHookManagementV1Api implements ParameterTransformab
 
     SecurityEventHookManagementResponse response =
         securityEventHookManagementApi.get(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             identifier,
             requestAttributes);
 
@@ -107,10 +103,8 @@ public class OrgSecurityEventHookManagementV1Api implements ParameterTransformab
 
     SecurityEventHookManagementResponse response =
         securityEventHookManagementApi.retry(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             identifier,
             requestAttributes);
 

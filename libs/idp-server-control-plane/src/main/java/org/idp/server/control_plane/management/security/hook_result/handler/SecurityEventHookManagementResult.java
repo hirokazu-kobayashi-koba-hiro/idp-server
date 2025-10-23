@@ -18,13 +18,13 @@ package org.idp.server.control_plane.management.security.hook_result.handler;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
 import org.idp.server.control_plane.management.exception.OrganizationAccessDeniedException;
 import org.idp.server.control_plane.management.exception.PermissionDeniedException;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.security.hook_result.io.SecurityEventHookManagementResponse;
 import org.idp.server.control_plane.management.security.hook_result.io.SecurityEventHookManagementStatus;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
  * Result wrapper for security event hook management operations.
@@ -47,38 +47,31 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
  */
 public class SecurityEventHookManagementResult {
 
-  private final Tenant tenant;
+  private final AuditableContext context;
   private final ManagementApiException exception;
-  private final Object response;
+  private final SecurityEventHookManagementResponse response;
 
   private SecurityEventHookManagementResult(
-      Tenant tenant, ManagementApiException exception, Object response) {
-    this.tenant = tenant;
+      AuditableContext context,
+      ManagementApiException exception,
+      SecurityEventHookManagementResponse response) {
+    this.context = context;
     this.exception = exception;
     this.response = response;
   }
 
-  /**
-   * Creates a successful result.
-   *
-   * @param tenant tenant context (for audit logging)
-   * @param response operation-specific response object
-   * @return success result
-   */
-  public static SecurityEventHookManagementResult success(Tenant tenant, Object response) {
-    return new SecurityEventHookManagementResult(tenant, null, response);
+  public static SecurityEventHookManagementResult success(
+      AuditableContext context, SecurityEventHookManagementResponse response) {
+    return new SecurityEventHookManagementResult(context, null, response);
   }
 
-  /**
-   * Creates an error result.
-   *
-   * @param tenant tenant context (for audit logging)
-   * @param exception domain exception that occurred
-   * @return error result
-   */
   public static SecurityEventHookManagementResult error(
-      Tenant tenant, ManagementApiException exception) {
-    return new SecurityEventHookManagementResult(tenant, exception, null);
+      AuditableContext context, ManagementApiException exception) {
+    return new SecurityEventHookManagementResult(context, exception, null);
+  }
+
+  public AuditableContext context() {
+    return context;
   }
 
   /**
@@ -97,15 +90,6 @@ public class SecurityEventHookManagementResult {
    */
   public ManagementApiException getException() {
     return exception;
-  }
-
-  /**
-   * Gets the tenant context.
-   *
-   * @return tenant (for audit logging)
-   */
-  public Tenant tenant() {
-    return tenant;
   }
 
   /**
@@ -130,7 +114,7 @@ public class SecurityEventHookManagementResult {
       errorResponse.putAll(exception.errorDetails());
       return new SecurityEventHookManagementResponse(status, errorResponse);
     }
-    return (SecurityEventHookManagementResponse) response;
+    return response;
   }
 
   /**

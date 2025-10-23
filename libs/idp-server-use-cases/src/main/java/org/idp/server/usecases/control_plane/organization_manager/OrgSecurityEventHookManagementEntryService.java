@@ -20,15 +20,16 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.OrganizationAccessVerifier;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.management.security.hook_result.OrgSecurityEventHookManagementApi;
 import org.idp.server.control_plane.management.security.hook_result.handler.*;
+import org.idp.server.control_plane.management.security.hook_result.io.SecurityEventHookFindListRequest;
+import org.idp.server.control_plane.management.security.hook_result.io.SecurityEventHookFindRequest;
 import org.idp.server.control_plane.management.security.hook_result.io.SecurityEventHookManagementResponse;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.control_plane.management.security.hook_result.io.SecurityEventHookRetryRequest;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -79,44 +80,20 @@ public class OrgSecurityEventHookManagementEntryService
   @Override
   @Transaction(readOnly = true)
   public SecurityEventHookManagementResponse findList(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       SecurityEventHookResultQueries queries,
       RequestAttributes requestAttributes) {
 
     SecurityEventHookManagementResult result =
         handler.handle(
             "findList",
-            organizationIdentifier,
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
-            queries,
+            new SecurityEventHookFindListRequest(queries),
             requestAttributes);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "SecurityEventHookManagementApi.findList",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse();
-    }
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "SecurityEventHookManagementApi.findList",
-            "findList",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse();
@@ -125,44 +102,20 @@ public class OrgSecurityEventHookManagementEntryService
   @Override
   @Transaction(readOnly = true)
   public SecurityEventHookManagementResponse get(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       SecurityEventHookResultIdentifier identifier,
       RequestAttributes requestAttributes) {
 
     SecurityEventHookManagementResult result =
         handler.handle(
             "get",
-            organizationIdentifier,
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
-            identifier,
+            new SecurityEventHookFindRequest(identifier),
             requestAttributes);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "SecurityEventHookManagementApi.get",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse();
-    }
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "SecurityEventHookManagementApi.get",
-            "get",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse();
@@ -177,45 +130,20 @@ public class OrgSecurityEventHookManagementEntryService
    */
   @Override
   public SecurityEventHookManagementResponse retry(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       SecurityEventHookResultIdentifier identifier,
       RequestAttributes requestAttributes) {
 
     SecurityEventHookManagementResult result =
         handler.handle(
             "retry",
-            organizationIdentifier,
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
-            identifier,
+            new SecurityEventHookRetryRequest(identifier),
             requestAttributes);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "SecurityEventHookManagementApi.retry",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse();
-    }
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnDeletion(
-            "SecurityEventHookManagementApi.retry",
-            "retry",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            Map.of("hook_result_identifier", identifier.value()),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse();
