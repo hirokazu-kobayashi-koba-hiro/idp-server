@@ -18,10 +18,10 @@ package org.idp.server.control_plane.management.security.event.handler;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.exception.*;
 import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementResponse;
 import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementStatus;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
  * Result container for security event management operations.
@@ -37,24 +37,31 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
  */
 public class SecurityEventManagementResult {
 
-  private final Tenant tenant;
+  private final AuditableContext context;
   private final ManagementApiException exception;
-  private final Object response;
+  private final SecurityEventManagementResponse response;
 
   private SecurityEventManagementResult(
-      Tenant tenant, ManagementApiException exception, Object response) {
-    this.tenant = tenant;
+      AuditableContext context,
+      ManagementApiException exception,
+      SecurityEventManagementResponse response) {
+    this.context = context;
     this.exception = exception;
     this.response = response;
   }
 
-  public static SecurityEventManagementResult success(Tenant tenant, Object response) {
-    return new SecurityEventManagementResult(tenant, null, response);
+  public static SecurityEventManagementResult success(
+      AuditableContext context, SecurityEventManagementResponse response) {
+    return new SecurityEventManagementResult(context, null, response);
   }
 
   public static SecurityEventManagementResult error(
-      Tenant tenant, ManagementApiException exception) {
-    return new SecurityEventManagementResult(tenant, exception, null);
+      AuditableContext context, ManagementApiException exception) {
+    return new SecurityEventManagementResult(context, exception, null);
+  }
+
+  public AuditableContext context() {
+    return context;
   }
 
   public boolean hasException() {
@@ -63,10 +70,6 @@ public class SecurityEventManagementResult {
 
   public ManagementApiException getException() {
     return exception;
-  }
-
-  public Tenant tenant() {
-    return tenant;
   }
 
   public SecurityEventManagementResponse toResponse() {
@@ -79,10 +82,7 @@ public class SecurityEventManagementResult {
       SecurityEventManagementStatus status = mapExceptionToStatus(exception);
       return new SecurityEventManagementResponse(status, errorResponse);
     }
-    if (response instanceof SecurityEventManagementResponse) {
-      return (SecurityEventManagementResponse) response;
-    }
-    throw new IllegalStateException("Response is not a SecurityEventManagementResponse");
+    return response;
   }
 
   /**

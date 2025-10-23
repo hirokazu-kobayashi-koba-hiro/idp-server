@@ -17,12 +17,21 @@
 package org.idp.server.control_plane.management.security.event.handler;
 
 import java.util.Map;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.ApiPermissionVerifier;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
+import org.idp.server.control_plane.management.exception.ManagementApiException;
+import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.security.event.SecurityEventManagementApi;
+import org.idp.server.control_plane.management.security.event.SecurityEventManagementContextBuilder;
+import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementRequest;
+import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementResponse;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.exception.NotFoundException;
 import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -57,6 +66,7 @@ public class SecurityEventManagementHandler {
   private final SecurityEventManagementApi managementApi;
   private final TenantQueryRepository tenantQueryRepository;
   private final ApiPermissionVerifier apiPermissionVerifier;
+  LoggerWrapper log = LoggerWrapper.getLogger(SecurityEventManagementHandler.class);
 
   public SecurityEventManagementHandler(
       Map<String, SecurityEventManagementService<?>> services,
@@ -68,49 +78,51 @@ public class SecurityEventManagementHandler {
     this.apiPermissionVerifier = new ApiPermissionVerifier();
   }
 
-  /**
-   * Handles security event management operation.
-   *
-   * <p>Catches ManagementApiException and wraps them in Result. EntryService will check {@code
-   * result.hasException()} and return appropriate HTTP status.
-   *
-   * @param method the operation method (e.g., "findList", "get")
-   * @param tenantIdentifier the tenant identifier
-   * @param operator the user performing the operation
-   * @param oAuthToken the OAuth token for the operation
-   * @param request the operation-specific request object
-   * @param requestAttributes HTTP request attributes for audit logging
-   * @return SecurityEventManagementResult containing operation outcome or exception
-   */
   public SecurityEventManagementResult handle(
       String method,
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      Object request,
+      SecurityEventManagementRequest request,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = null;
+    // 1. Service selection
+    SecurityEventManagementService<?> service = services.get(method);
+    if (service == null) {
+      throw new UnSupportedException("Unsupported operation method: " + method);
+    }
+
+    User operator = authenticationContext.operator();
+    OAuthToken oAuthToken = authenticationContext.oAuthToken();
+    SecurityEventManagementContextBuilder builder =
+        new SecurityEventManagementContextBuilder(
+            tenantIdentifier, operator, oAuthToken, requestAttributes, request);
+
     try {
-      // 1. Tenant retrieval
-      tenant = tenantQueryRepository.get(tenantIdentifier);
+
+      Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
 
       // 2. Permission verification
       AdminPermissions requiredPermissions = managementApi.getRequiredPermissions(method);
       apiPermissionVerifier.verify(operator, requiredPermissions);
 
-      // 3. Service selection
-      SecurityEventManagementService<?> service = services.get(method);
-      if (service == null) {
-        throw new UnSupportedException("Unsupported operation method: " + method);
-      }
-
       // 4. Delegate to service
-      return executeService(service, tenant, operator, oAuthToken, request, requestAttributes);
+      SecurityEventManagementResponse response =
+          executeService(
+              service, builder, targetTenant, operator, oAuthToken, request, requestAttributes);
 
-    } catch (org.idp.server.control_plane.management.exception.ManagementApiException e) {
-      // Wrap exception in Result with tenant for audit logging
-      return SecurityEventManagementResult.error(tenant, e);
+      AuditableContext context = builder.build();
+      return SecurityEventManagementResult.success(context, response);
+    } catch (NotFoundException e) {
+
+      log.warn(e.getMessage());
+      ResourceNotFoundException notFound = new ResourceNotFoundException(e.getMessage());
+      AuditableContext context = builder.buildPartial(notFound);
+      return SecurityEventManagementResult.error(context, notFound);
+    } catch (ManagementApiException e) {
+
+      log.warn(e.getMessage());
+      AuditableContext context = builder.buildPartial(e);
+      return SecurityEventManagementResult.error(context, e);
     }
   }
 
@@ -133,15 +145,16 @@ public class SecurityEventManagementHandler {
    * @param requestAttributes HTTP request attributes
    * @return SecurityEventManagementResult containing operation outcome
    */
-  private <T> SecurityEventManagementResult executeService(
+  private <T> SecurityEventManagementResponse executeService(
       SecurityEventManagementService<T> service,
+      SecurityEventManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      Object request,
+      SecurityEventManagementRequest request,
       RequestAttributes requestAttributes) {
     @SuppressWarnings("unchecked")
     T typedRequest = (T) request;
-    return service.execute(tenant, operator, oAuthToken, typedRequest, requestAttributes);
+    return service.execute(builder, tenant, operator, oAuthToken, typedRequest, requestAttributes);
   }
 }

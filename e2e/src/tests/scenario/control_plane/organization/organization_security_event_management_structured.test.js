@@ -272,14 +272,14 @@ describe("Organization Security Event Management API - Structured Tests", () => 
       expect([400, 404]).toContain(response.status);
     });
 
-    it("should return 403 for invalid tenant ID", async () => {
+    it("should return 400 for invalid tenant ID", async () => {
       const invalidTenantId = "invalid-tenant-id";
       const response = await get({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${invalidTenantId}/security-events`,
         headers: { Authorization: `Bearer ${accessToken}` }
       });
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(400);
     });
   });
 

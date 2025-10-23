@@ -17,6 +17,8 @@
 package org.idp.server.control_plane.management.security.event.handler;
 
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
+import org.idp.server.control_plane.management.security.event.SecurityEventManagementContextBuilder;
+import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementFindRequest;
 import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementResponse;
 import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementStatus;
 import org.idp.server.core.openid.identity.User;
@@ -40,7 +42,7 @@ import org.idp.server.platform.type.RequestAttributes;
  * </ul>
  */
 public class SecurityEventFindService
-    implements SecurityEventManagementService<SecurityEventIdentifier> {
+    implements SecurityEventManagementService<SecurityEventManagementFindRequest> {
 
   private final SecurityEventQueryRepository securityEventQueryRepository;
 
@@ -49,21 +51,21 @@ public class SecurityEventFindService
   }
 
   @Override
-  public SecurityEventManagementResult execute(
+  public SecurityEventManagementResponse execute(
+      SecurityEventManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      SecurityEventIdentifier identifier,
+      SecurityEventManagementFindRequest request,
       RequestAttributes requestAttributes) {
 
+    SecurityEventIdentifier identifier = request.securityEventIdentifier();
     SecurityEvent event = securityEventQueryRepository.find(tenant, identifier);
 
     if (!event.exists()) {
       throw new ResourceNotFoundException("Security event not found: " + identifier.value());
     }
 
-    SecurityEventManagementResponse response =
-        new SecurityEventManagementResponse(SecurityEventManagementStatus.OK, event.toMap());
-    return SecurityEventManagementResult.success(tenant, response);
+    return new SecurityEventManagementResponse(SecurityEventManagementStatus.OK, event.toMap());
   }
 }

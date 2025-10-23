@@ -20,13 +20,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import org.idp.server.control_plane.base.OrganizationAccessVerifier;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementResponse;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.SecurityEventQueries;
 import org.idp.server.platform.security.event.SecurityEventIdentifier;
@@ -63,41 +61,15 @@ public interface OrgSecurityEventManagementApi {
     return adminPermissions;
   }
 
-  /**
-   * Lists security events within the organization.
-   *
-   * @param organizationIdentifier the organization identifier
-   * @param tenantIdentifier the tenant identifier
-   * @param operator the operator user
-   * @param oAuthToken the OAuth token
-   * @param queries the security event queries
-   * @param requestAttributes the request attributes
-   * @return the security event list response
-   */
   SecurityEventManagementResponse findList(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       SecurityEventQueries queries,
       RequestAttributes requestAttributes);
 
-  /**
-   * Gets a specific security event within the organization.
-   *
-   * @param organizationIdentifier the organization identifier
-   * @param tenantIdentifier the tenant identifier
-   * @param operator the operator user
-   * @param oAuthToken the OAuth token
-   * @param identifier the security event identifier
-   * @param requestAttributes the request attributes
-   * @return the security event details response
-   */
   SecurityEventManagementResponse get(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       SecurityEventIdentifier identifier,
       RequestAttributes requestAttributes);
 }
