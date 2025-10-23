@@ -19,6 +19,7 @@ package org.idp.server.control_plane.management.identity.verification;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.idp.server.control_plane.base.OrganizationAccessVerifier;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
@@ -54,7 +55,7 @@ import org.idp.server.platform.type.RequestAttributes;
  *
  * @see IdentityVerificationConfigManagementApi
  * @see AdminPermissions
- * @see org.idp.server.control_plane.organization.access.OrganizationAccessVerifier
+ * @see OrganizationAccessVerifier
  */
 public interface OrgIdentityVerificationConfigManagementApi {
 

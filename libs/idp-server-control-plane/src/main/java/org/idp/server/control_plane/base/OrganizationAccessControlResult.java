@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.organization.access;
+package org.idp.server.control_plane.base;
 
 import java.util.HashMap;
 import java.util.Map;

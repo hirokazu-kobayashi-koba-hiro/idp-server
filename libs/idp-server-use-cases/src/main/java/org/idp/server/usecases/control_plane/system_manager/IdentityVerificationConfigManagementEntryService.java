@@ -19,7 +19,6 @@ package org.idp.server.usecases.control_plane.system_manager;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.base.ConfigUpdateContext;
 import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigManagementApi;
 import org.idp.server.control_plane.management.identity.verification.handler.IdentityVerificationConfigCreationService;
@@ -125,8 +124,7 @@ public class IdentityVerificationConfigManagementEntryService
       return result.toResponse(dryRun);
     }
 
-    AuditLog auditLog =
-        AuditLogCreator.create(result.context());
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

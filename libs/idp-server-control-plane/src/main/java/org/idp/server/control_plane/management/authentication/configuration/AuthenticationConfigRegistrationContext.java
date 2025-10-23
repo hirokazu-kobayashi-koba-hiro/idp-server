@@ -131,7 +131,6 @@ public class AuthenticationConfigRegistrationContext implements AuditableContext
     return tenant.identifierValue();
   }
 
-
   @Override
   public boolean dryRun() {
     return dryRun;

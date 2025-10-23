@@ -19,11 +19,11 @@ package org.idp.server.usecases.control_plane.organization_manager;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
+import org.idp.server.control_plane.base.OrganizationAccessVerifier;
 import org.idp.server.control_plane.management.security.hook.*;
 import org.idp.server.control_plane.management.security.hook.handler.*;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookRequest;
-import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
@@ -153,8 +153,7 @@ public class OrgSecurityEventHookConfigManagementEntryService
       return result.toResponse(dryRun);
     }
 
-    AuditLog auditLog =
-        AuditLogCreator.create(result.context());
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -294,8 +293,7 @@ public class OrgSecurityEventHookConfigManagementEntryService
       return result.toResponse(dryRun);
     }
 
-    AuditLog auditLog =
-        AuditLogCreator.create(result.context());
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

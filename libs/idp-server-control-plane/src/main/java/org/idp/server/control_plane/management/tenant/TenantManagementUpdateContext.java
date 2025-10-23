@@ -18,9 +18,7 @@ package org.idp.server.control_plane.management.tenant;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import org.idp.server.control_plane.base.AuditableContext;
-import org.idp.server.control_plane.base.ConfigUpdateContext;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementStatus;
 import org.idp.server.core.openid.identity.User;

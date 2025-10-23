@@ -18,7 +18,6 @@ package org.idp.server.control_plane.management.authentication.policy.handler;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementStatus;
@@ -78,7 +77,9 @@ public class AuthenticationPolicyConfigManagementResult {
    * @return AuthenticationPolicyConfigManagementResult with success response
    */
   public static AuthenticationPolicyConfigManagementResult success(
-      Tenant tenant, AuditableContext context, AuthenticationPolicyConfigManagementResponse response) {
+      Tenant tenant,
+      AuditableContext context,
+      AuthenticationPolicyConfigManagementResponse response) {
     return new AuthenticationPolicyConfigManagementResult(response, tenant, context, null);
   }
 

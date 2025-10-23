@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.management.identity.user.handler;
+package org.idp.server.control_plane.management.identity.user.io;
 
-import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
+import java.util.Map;
+import org.idp.server.control_plane.management.identity.user.handler.UserManagementRequest;
 import org.idp.server.core.openid.identity.UserIdentifier;
 
 /**
@@ -30,4 +31,11 @@ import org.idp.server.core.openid.identity.UserIdentifier;
  * @param registrationRequest the updated user data (reuses registration request structure)
  */
 public record UserUpdateRequest(
-    UserIdentifier userIdentifier, UserRegistrationRequest registrationRequest) {}
+    UserIdentifier userIdentifier, UserRegistrationRequest registrationRequest)
+    implements UserManagementRequest {
+
+  @Override
+  public Map<String, Object> toMap() {
+    return registrationRequest.toMap();
+  }
+}

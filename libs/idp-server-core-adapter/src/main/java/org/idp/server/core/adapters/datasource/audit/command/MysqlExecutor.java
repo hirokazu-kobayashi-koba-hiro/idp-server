@@ -48,8 +48,10 @@ public class MysqlExecutor implements AuditLogSqlExecutor {
                 target_tenant_id,
                 ip_address,
                 user_agent,
-                dry_run
+                dry_run,
+                attributes
                 ) VALUES (
+                ?,
                 ?,
                 ?,
                 ?,
@@ -92,6 +94,7 @@ public class MysqlExecutor implements AuditLogSqlExecutor {
     params.add(auditLog.ipAddress());
     params.add(auditLog.userAgent());
     params.add(auditLog.dryRun());
+    params.add(auditLog.attributes().toJson());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

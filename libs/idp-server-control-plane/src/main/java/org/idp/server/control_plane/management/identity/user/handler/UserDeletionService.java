@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.management.identity.user.ManagementEventPublisher;
 import org.idp.server.control_plane.management.identity.user.UserManagementContextBuilder;
+import org.idp.server.control_plane.management.identity.user.io.UserDeleteRequest;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
 import org.idp.server.core.openid.identity.User;
@@ -30,9 +31,7 @@ import org.idp.server.core.openid.identity.event.UserLifecycleType;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -57,7 +56,7 @@ import org.idp.server.platform.type.RequestAttributes;
  *   <li>Transaction management
  * </ul>
  */
-public class UserDeletionService implements UserManagementService<UserIdentifier> {
+public class UserDeletionService implements UserManagementService<UserDeleteRequest> {
 
   private final UserQueryRepository userQueryRepository;
   private final UserCommandRepository userCommandRepository;
@@ -81,18 +80,16 @@ public class UserDeletionService implements UserManagementService<UserIdentifier
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      UserIdentifier userIdentifier,
+      UserDeleteRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    // Cast to specific builder type
-    UserDeletionContextBuilder deletionBuilder = (UserDeletionContextBuilder) builder;
-
+    UserIdentifier userIdentifier = request.userIdentifier();
     // 1. User existence verification
     User user = userQueryRepository.get(tenant, userIdentifier);
 
     // 2. Set user to builder for context completion
-    deletionBuilder.withUser(user);
+    builder.withBefore(user);
 
     // 3. Dry-run check
     if (dryRun) {
@@ -125,19 +122,5 @@ public class UserDeletionService implements UserManagementService<UserIdentifier
     response.put("message", "User deleted successfully");
     response.put("sub", user.sub());
     return new UserManagementResponse(UserManagementStatus.NO_CONTENT, response);
-  }
-
-  @Override
-  public UserManagementContextBuilder createContextBuilder(
-      TenantIdentifier tenantIdentifier,
-      OrganizationIdentifier organizationIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      RequestAttributes requestAttributes,
-      UserIdentifier request,
-      boolean dryRun) {
-    return new UserDeletionContextBuilder(
-            tenantIdentifier, organizationIdentifier, operator, oAuthToken, requestAttributes)
-        .withDryRun(dryRun);
   }
 }

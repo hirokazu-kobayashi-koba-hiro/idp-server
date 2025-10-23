@@ -18,9 +18,7 @@ package org.idp.server.control_plane.management.security.hook;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import org.idp.server.control_plane.base.AuditableContext;
-import org.idp.server.control_plane.base.ConfigUpdateContext;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementStatus;
 import org.idp.server.platform.json.JsonDiffCalculator;
@@ -152,7 +150,6 @@ public class SecurityEventHookConfigUpdateContext implements AuditableContext {
   public Map<String, Object> after() {
     return Map.of();
   }
-
 
   public SecurityEventHookConfigManagementResponse toResponse() {
     JsonNodeWrapper beforeJson = JsonNodeWrapper.fromMap(before.toMap());

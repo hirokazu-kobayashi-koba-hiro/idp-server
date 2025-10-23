@@ -50,7 +50,10 @@ public class RoleManagementResult {
   private final AuditableContext context;
 
   private RoleManagementResult(
-      Tenant tenant, ManagementApiException exception, RoleManagementResponse response, AuditableContext context) {
+      Tenant tenant,
+      ManagementApiException exception,
+      RoleManagementResponse response,
+      AuditableContext context) {
     this.tenant = tenant;
     this.exception = exception;
     this.response = response;

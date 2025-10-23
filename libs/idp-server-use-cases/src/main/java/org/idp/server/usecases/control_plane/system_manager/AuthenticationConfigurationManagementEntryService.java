@@ -117,8 +117,7 @@ public class AuthenticationConfigurationManagementEntryService
     }
 
     // Record audit log (create operation)
-    AuditLog auditLog =
-        AuditLogCreator.create(result.context());
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -246,8 +245,7 @@ public class AuthenticationConfigurationManagementEntryService
     }
 
     // Record audit log (update operation)
-    AuditLog auditLog =
-        AuditLogCreator.create(result.context());
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

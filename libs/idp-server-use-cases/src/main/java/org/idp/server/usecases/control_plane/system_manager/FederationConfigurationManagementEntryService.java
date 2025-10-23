@@ -19,8 +19,6 @@ package org.idp.server.usecases.control_plane.system_manager;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.management.federation.FederationConfigRegistrationContext;
-import org.idp.server.control_plane.management.federation.FederationConfigUpdateContext;
 import org.idp.server.control_plane.management.federation.FederationConfigurationManagementApi;
 import org.idp.server.control_plane.management.federation.handler.*;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
@@ -104,9 +102,7 @@ public class FederationConfigurationManagementEntryService
       return result.toResponse(dryRun);
     }
 
-
-    AuditLog auditLog =
-        AuditLogCreator.create(result.context());
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -202,8 +198,7 @@ public class FederationConfigurationManagementEntryService
       return result.toResponse(dryRun);
     }
 
-    AuditLog auditLog =
-        AuditLogCreator.create(result.context());
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

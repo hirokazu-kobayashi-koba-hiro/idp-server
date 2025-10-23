@@ -24,7 +24,6 @@ import org.idp.server.control_plane.management.identity.user.*;
 import org.idp.server.control_plane.management.identity.user.ManagementEventPublisher;
 import org.idp.server.control_plane.management.identity.user.handler.*;
 import org.idp.server.control_plane.management.identity.user.handler.UserCreationService;
-import org.idp.server.control_plane.management.identity.user.handler.UserDeletionContext;
 import org.idp.server.control_plane.management.identity.user.handler.UserDeletionService;
 import org.idp.server.control_plane.management.identity.user.handler.UserFindListService;
 import org.idp.server.control_plane.management.identity.user.handler.UserFindService;
@@ -33,10 +32,8 @@ import org.idp.server.control_plane.management.identity.user.handler.UserManagem
 import org.idp.server.control_plane.management.identity.user.handler.UserManagementService;
 import org.idp.server.control_plane.management.identity.user.handler.UserPasswordUpdateService;
 import org.idp.server.control_plane.management.identity.user.handler.UserPatchService;
-import org.idp.server.control_plane.management.identity.user.handler.UserUpdateRequest;
 import org.idp.server.control_plane.management.identity.user.handler.UserUpdateService;
-import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
-import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
+import org.idp.server.control_plane.management.identity.user.io.*;
 import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationRelatedDataVerifier;
 import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationVerifier;
 import org.idp.server.core.openid.identity.User;
@@ -172,22 +169,6 @@ public class UserManagementEntryService implements UserManagementApi {
         handler.handle(
             "create", tenantIdentifier, operator, oAuthToken, request, requestAttributes, dryRun);
 
-    // Record audit log (separate transaction via @Async) - always record, success or failure
-    if (result.hasException()) {
-      // Failure case - tenant is already set in result by Handler
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "UserManagementApi.create",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      throw result.getException();
-    }
-
-    // Success case - record with context
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
@@ -206,22 +187,14 @@ public class UserManagementEntryService implements UserManagementApi {
     // Delegate to Handler/Service pattern
     UserManagementResult result =
         handler.handle(
-            "findList", tenantIdentifier, operator, oAuthToken, queries, requestAttributes, false);
+            "findList",
+            tenantIdentifier,
+            operator,
+            oAuthToken,
+            new UserFindListRequest(queries),
+            requestAttributes,
+            false);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "UserManagementApi.findList",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      throw result.getException();
-    }
-
-    // Record audit log (read operation)
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
@@ -244,24 +217,10 @@ public class UserManagementEntryService implements UserManagementApi {
             tenantIdentifier,
             operator,
             oAuthToken,
-            userIdentifier,
+            new UserFindRequest(userIdentifier),
             requestAttributes,
             false);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "UserManagementApi.get",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      throw result.getException();
-    }
-
-    // Record audit log (read operation)
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
@@ -290,21 +249,6 @@ public class UserManagementEntryService implements UserManagementApi {
             requestAttributes,
             dryRun);
 
-    // Record audit log
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "UserManagementApi.update",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      throw result.getException();
-    }
-
-    // Success case
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
@@ -333,21 +277,6 @@ public class UserManagementEntryService implements UserManagementApi {
             requestAttributes,
             dryRun);
 
-    // Record audit log
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "UserManagementApi.patch",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      throw result.getException();
-    }
-
-    // Success case
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
@@ -376,21 +305,6 @@ public class UserManagementEntryService implements UserManagementApi {
             requestAttributes,
             dryRun);
 
-    // Record audit log
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "UserManagementApi.updatePassword",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      throw result.getException();
-    }
-
-    // Success case
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
@@ -413,25 +327,10 @@ public class UserManagementEntryService implements UserManagementApi {
             tenantIdentifier,
             operator,
             oAuthToken,
-            userIdentifier,
+            new UserDeleteRequest(userIdentifier),
             requestAttributes,
             dryRun);
 
-    // Record audit log
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "UserManagementApi.delete",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      throw result.getException();
-    }
-
-    // Success case - record deletion audit log
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
@@ -458,19 +357,6 @@ public class UserManagementEntryService implements UserManagementApi {
             updateRequest,
             requestAttributes,
             dryRun);
-
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "UserManagementApi.updateRoles",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
 
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
@@ -499,19 +385,6 @@ public class UserManagementEntryService implements UserManagementApi {
             requestAttributes,
             dryRun);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "UserManagementApi.updateTenantAssignments",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
-
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
@@ -538,19 +411,6 @@ public class UserManagementEntryService implements UserManagementApi {
             updateRequest,
             requestAttributes,
             dryRun);
-
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "UserManagementApi.updateOrganizationAssignments",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
 
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);

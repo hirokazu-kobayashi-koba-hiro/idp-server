@@ -21,13 +21,15 @@ import org.idp.server.control_plane.base.ApiPermissionVerifier;
 import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
+import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.identity.user.UserManagementApi;
 import org.idp.server.control_plane.management.identity.user.UserManagementContextBuilder;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.exception.NotFoundException;
 import org.idp.server.platform.exception.UnSupportedException;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -75,6 +77,7 @@ public class UserManagementHandler {
   private final UserManagementApi managementApi;
   private final ApiPermissionVerifier apiPermissionVerifier;
   private final TenantQueryRepository tenantQueryRepository;
+  LoggerWrapper log = LoggerWrapper.getLogger(UserManagementHandler.class);
 
   public UserManagementHandler(
       Map<String, UserManagementService<?>> services,
@@ -106,7 +109,7 @@ public class UserManagementHandler {
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      Object request,
+      UserManagementRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
@@ -118,13 +121,12 @@ public class UserManagementHandler {
 
     // 2. Context Builder creation (before Tenant retrieval - enables audit logging on errors)
     UserManagementContextBuilder contextBuilder =
-        createContextBuilder(
-            service, tenantIdentifier, null, operator, oAuthToken, request, requestAttributes, dryRun);
+        new UserManagementContextBuilder(
+            tenantIdentifier, operator, oAuthToken, requestAttributes, request, dryRun);
 
     try {
       // 3. Get tenant
       Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-      contextBuilder.withTenant(tenant);
 
       // 4. Permission verification with tenant type check (throws PermissionDeniedException if
       // denied)
@@ -132,47 +134,30 @@ public class UserManagementHandler {
       apiPermissionVerifier.verify(operator, requiredPermissions);
 
       // 5. Delegate to service (pass tenant to avoid duplicate retrieval)
-      UserManagementResponse response = executeService(
-              service, contextBuilder, tenant, operator, oAuthToken, request, requestAttributes, dryRun);
+      UserManagementResponse response =
+          executeService(
+              service,
+              contextBuilder,
+              tenant,
+              operator,
+              oAuthToken,
+              request,
+              requestAttributes,
+              dryRun);
 
       AuditableContext context = contextBuilder.build();
-      return UserManagementResult.success(tenant, context, response);
+      return UserManagementResult.success(context, response);
+    } catch (NotFoundException notFoundException) {
+      ResourceNotFoundException resourceNotFoundException =
+          new ResourceNotFoundException(notFoundException.getMessage());
+      AuditableContext errorContext = contextBuilder.buildPartial(resourceNotFoundException);
+      return UserManagementResult.error(errorContext, resourceNotFoundException);
     } catch (ManagementApiException e) {
+      log.warn(e.getMessage());
       // Partial Context creation for audit logging (may not have Tenant if retrieval failed)
       AuditableContext errorContext = contextBuilder.buildPartial(e);
       return UserManagementResult.error(errorContext, e);
     }
-  }
-
-  /**
-   * Creates context builder with type-safe request handling.
-   *
-   * <p>The @SuppressWarnings("unchecked") is safe because:
-   *
-   * <ul>
-   *   <li>Each service implementation defines its own REQUEST type parameter
-   *   <li>The service map is built at initialization time with correct type mappings
-   *   <li>The Handler doesn't know the concrete request type at compile time
-   * </ul>
-   */
-  @SuppressWarnings("unchecked")
-  private <REQUEST> UserManagementContextBuilder createContextBuilder(
-      UserManagementService<REQUEST> service,
-      TenantIdentifier tenantIdentifier,
-      OrganizationIdentifier organizationIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      Object request,
-      RequestAttributes requestAttributes,
-      boolean dryRun) {
-    return service.createContextBuilder(
-        tenantIdentifier,
-        organizationIdentifier,
-        operator,
-        oAuthToken,
-        requestAttributes,
-        (REQUEST) request,
-        dryRun);
   }
 
   /**

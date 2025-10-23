@@ -18,83 +18,96 @@ package org.idp.server.control_plane.management.identity.user;
 
 import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
-import org.idp.server.platform.multi_tenancy.organization.Organization;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.control_plane.management.identity.user.handler.UserManagementRequest;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Common interface for user management context builders.
+ * Builder for UserUpdateContext.
  *
- * <p>Enables incremental construction of audit contexts, supporting error scenarios where full
- * context may not be available (e.g., Tenant retrieval failure).
- *
- * <h2>Design Pattern</h2>
- *
- * <pre>{@code
- * // Handler layer: Early builder creation (before Tenant retrieval)
- * UserManagementContextBuilder builder = service.createContextBuilder(
- *     tenantIdentifier, organizationIdentifier, operator, oAuthToken, request, requestAttributes, dryRun);
- *
- * try {
- *   // Add data as it becomes available
- *   Tenant tenant = tenantRepository.get(tenantIdentifier);
- *   builder.withTenant(tenant);
- *
- *   Organization org = organizationRepository.get(organizationIdentifier);
- *   builder.withOrganization(org);
- *
- *   // Full context for success case
- *   AuditableContext context = builder.build();
- * } catch (ManagementApiException e) {
- *   // Partial context for audit logging (may not have Tenant/Organization)
- *   AuditableContext errorContext = builder.buildPartial(e);
- * }
- * }</pre>
- *
- * <h2>Responsibilities</h2>
- *
- * <ul>
- *   <li>Incremental addition of Tenant/Organization as they're retrieved
- *   <li>Full context construction for success scenarios
- *   <li>Partial context construction for error scenarios
- *   <li>Exception tracking for audit logging
- * </ul>
- *
- * @see UserRegistrationContextBuilder
+ * <p>Allows incremental construction of update context, supporting error scenarios where data
+ * retrieval may fail.
  */
-public interface UserManagementContextBuilder {
+public class UserManagementContextBuilder {
+
+  private final String type;
+  private final User operator;
+  private final OAuthToken oAuthToken;
+  private final RequestAttributes requestAttributes;
+  private final UserManagementRequest request;
+  private final TenantIdentifier tenantIdentifier;
+  private final boolean dryRun;
+
+  private User before; // nullable: null in error scenarios
+  private User after; // nullable: null in error scenarios
+
+  public UserManagementContextBuilder(
+      TenantIdentifier tenantIdentifier,
+      User operator,
+      OAuthToken oAuthToken,
+      RequestAttributes requestAttributes,
+      UserManagementRequest request,
+      boolean dryRun) {
+    this.type = "user";
+    this.tenantIdentifier = tenantIdentifier;
+    this.operator = operator;
+    this.oAuthToken = oAuthToken;
+    this.requestAttributes = requestAttributes;
+    this.request = request;
+    this.dryRun = dryRun;
+  }
+
+  public UserManagementContextBuilder withBefore(User before) {
+    this.before = before;
+    return this;
+  }
+
+  public UserManagementContextBuilder withAfter(User after) {
+    this.after = after;
+    return this;
+  }
 
   /**
-   * Adds Tenant to the builder after retrieval.
+   * Builds complete UserUpdateContext.
    *
-   * @param tenant the retrieved Tenant
-   * @return this builder for chaining
-   */
-  UserManagementContextBuilder withTenant(Tenant tenant);
-
-  /**
-   * Adds Organization to the builder after retrieval (optional for system-level APIs).
-   *
-   * @param organization the retrieved Organization
-   * @return this builder for chaining
-   */
-  UserManagementContextBuilder withOrganization(Organization organization);
-
-  /**
-   * Builds complete AuditableContext for success scenarios.
-   *
-   * @return full context with all available data
+   * @return full context with before/after users
    * @throws IllegalStateException if required data is missing
    */
-  AuditableContext build();
+  public AuditableContext build() {
+
+    return new UserManagementContext(
+        type,
+        tenantIdentifier,
+        operator,
+        oAuthToken,
+        requestAttributes,
+        before,
+        after,
+        request,
+        dryRun,
+        null);
+  }
 
   /**
-   * Builds partial AuditableContext for error scenarios.
+   * Builds partial UserUpdateContext for error scenarios.
    *
-   * <p>Creates context with available data only, suitable for audit logging when operations fail
-   * before full data is retrieved.
-   *
-   * @param exception the exception that caused the failure (nullable)
+   * @param exception the exception that caused the failure
    * @return partial context with error information
    */
-  AuditableContext buildPartial(ManagementApiException exception);
+  public AuditableContext buildPartial(ManagementApiException exception) {
+    // Use available data, even if incomplete
+    return new UserManagementContext(
+        type,
+        tenantIdentifier,
+        operator,
+        oAuthToken,
+        requestAttributes,
+        before,
+        after,
+        request,
+        dryRun,
+        exception);
+  }
 }

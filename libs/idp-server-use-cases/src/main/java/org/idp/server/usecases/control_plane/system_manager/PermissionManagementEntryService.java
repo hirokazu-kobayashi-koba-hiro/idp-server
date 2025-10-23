@@ -97,8 +97,7 @@ public class PermissionManagementEntryService implements PermissionManagementApi
       return result.toResponse(dryRun);
     }
 
-    AuditLog auditLog =
-        AuditLogCreator.create(result.context());
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -216,8 +215,7 @@ public class PermissionManagementEntryService implements PermissionManagementApi
       return result.toResponse(dryRun);
     }
 
-    AuditLog auditLog =
-        AuditLogCreator.create(result.context());
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

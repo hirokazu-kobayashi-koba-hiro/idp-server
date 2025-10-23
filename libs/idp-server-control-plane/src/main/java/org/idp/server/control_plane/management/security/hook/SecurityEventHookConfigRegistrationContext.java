@@ -132,7 +132,7 @@ public class SecurityEventHookConfigRegistrationContext implements AuditableCont
   public String targetTenantId() {
     return tenant.identifierValue();
   }
-  
+
   @Override
   public boolean dryRun() {
     return dryRun;

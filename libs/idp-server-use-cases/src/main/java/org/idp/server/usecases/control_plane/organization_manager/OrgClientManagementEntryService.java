@@ -19,8 +19,6 @@ package org.idp.server.usecases.control_plane.organization_manager;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.management.oidc.client.ClientRegistrationContext;
-import org.idp.server.control_plane.management.oidc.client.ClientUpdateContext;
 import org.idp.server.control_plane.management.oidc.client.OrgClientManagementApi;
 import org.idp.server.control_plane.management.oidc.client.handler.ClientCreationService;
 import org.idp.server.control_plane.management.oidc.client.handler.ClientDeletionService;
@@ -121,8 +119,7 @@ public class OrgClientManagementEntryService implements OrgClientManagementApi {
       return result.toResponse(dryRun);
     }
 
-    AuditLog auditLog =
-        AuditLogCreator.create(result.context());
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -235,8 +232,7 @@ public class OrgClientManagementEntryService implements OrgClientManagementApi {
       return result.toResponse(dryRun);
     }
 
-    AuditLog auditLog =
-        AuditLogCreator.create(result.context());
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

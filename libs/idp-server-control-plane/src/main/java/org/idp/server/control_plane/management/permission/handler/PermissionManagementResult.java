@@ -18,7 +18,6 @@ package org.idp.server.control_plane.management.permission.handler;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
 import org.idp.server.control_plane.management.exception.OrganizationAccessDeniedException;
@@ -77,7 +76,8 @@ public class PermissionManagementResult {
    * @param context the operation context
    * @return successful result with context
    */
-  public static PermissionManagementResult success(Tenant tenant, Object response, AuditableContext context) {
+  public static PermissionManagementResult success(
+      Tenant tenant, Object response, AuditableContext context) {
     return new PermissionManagementResult(tenant, null, response, context);
   }
 

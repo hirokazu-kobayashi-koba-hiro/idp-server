@@ -16,10 +16,10 @@
 
 package org.idp.server.control_plane.management.identity.user.handler;
 
+import java.util.Map;
+import java.util.UUID;
 import org.idp.server.control_plane.management.identity.user.ManagementEventPublisher;
 import org.idp.server.control_plane.management.identity.user.UserManagementContextBuilder;
-import org.idp.server.control_plane.management.identity.user.UserRegistrationContext;
-import org.idp.server.control_plane.management.identity.user.UserRegistrationContextBuilder;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
@@ -31,15 +31,10 @@ import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegati
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.json.JsonConverter;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
-
-import java.util.Map;
-import java.util.UUID;
 
 /**
  * Service for creating new users.
@@ -85,21 +80,6 @@ public class UserCreationService implements UserManagementService<UserRegistrati
   }
 
   @Override
-  public UserManagementContextBuilder createContextBuilder(
-      TenantIdentifier tenantIdentifier,
-      OrganizationIdentifier organizationIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      RequestAttributes requestAttributes,
-      UserRegistrationRequest request,
-      boolean dryRun) {
-    return new UserRegistrationContextBuilder(
-            tenantIdentifier, organizationIdentifier, operator, oAuthToken, requestAttributes)
-        .withRequest(request)
-        .withDryRun(dryRun);
-  }
-
-  @Override
   public UserManagementResponse execute(
       UserManagementContextBuilder builder,
       Tenant tenant,
@@ -109,17 +89,14 @@ public class UserCreationService implements UserManagementService<UserRegistrati
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    // Cast to specific builder type
-    UserRegistrationContextBuilder registrationBuilder = (UserRegistrationContextBuilder) builder;
-
     // 1. Validation (throws InvalidRequestException if validation fails)
     new UserRegistrationRequestValidator(request, dryRun).validate();
 
     // 2. User creation
-    User user = registrationBuilder.buildUser(passwordEncodeDelegation);
+    User user = createUser(tenant, request);
 
     // 3. Set user to builder for context completion
-    registrationBuilder.withUser(user);
+    builder.withAfter(user);
 
     // 4. Business rule verification (throws exception if verification fails)
     verifier.verify(tenant, user, request);
@@ -146,7 +123,7 @@ public class UserCreationService implements UserManagementService<UserRegistrati
     return new UserManagementResponse(UserManagementStatus.CREATED, contents);
   }
 
-  User createUser(Tenant tenant, UserRegistrationRequest request, PasswordEncodeDelegation passwordEncodeDelegation) {
+  User createUser(Tenant tenant, UserRegistrationRequest request) {
     User user = JsonConverter.snakeCaseInstance().read(request.toMap(), User.class);
 
     // Generate sub if not provided

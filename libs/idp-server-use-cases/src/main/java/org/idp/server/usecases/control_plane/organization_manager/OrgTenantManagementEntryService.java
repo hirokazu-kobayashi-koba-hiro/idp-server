@@ -21,8 +21,6 @@ import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.verifier.TenantVerifier;
 import org.idp.server.control_plane.management.tenant.OrgTenantManagementApi;
-import org.idp.server.control_plane.management.tenant.TenantManagementRegistrationContext;
-import org.idp.server.control_plane.management.tenant.TenantManagementUpdateContext;
 import org.idp.server.control_plane.management.tenant.handler.*;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
 import org.idp.server.control_plane.management.tenant.io.TenantRequest;
@@ -141,8 +139,7 @@ public class OrgTenantManagementEntryService implements OrgTenantManagementApi {
       return result.toResponse(dryRun);
     }
 
-    AuditLog auditLog =
-        AuditLogCreator.create(result.context());
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -239,8 +236,7 @@ public class OrgTenantManagementEntryService implements OrgTenantManagementApi {
       return result.toResponse(dryRun);
     }
 
-    AuditLog auditLog =
-        AuditLogCreator.create(result.context());
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

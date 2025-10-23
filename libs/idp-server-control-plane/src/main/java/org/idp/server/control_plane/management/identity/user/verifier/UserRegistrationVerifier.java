@@ -17,7 +17,6 @@
 package org.idp.server.control_plane.management.identity.user.verifier;
 
 import org.idp.server.control_plane.base.verifier.UserVerifier;
-import org.idp.server.control_plane.management.identity.user.UserRegistrationContext;
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;

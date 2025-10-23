@@ -19,13 +19,11 @@ package org.idp.server.usecases.control_plane.organization_manager;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.management.authentication.policy.AuthenticationPolicyConfigRegistrationContext;
-import org.idp.server.control_plane.management.authentication.policy.AuthenticationPolicyConfigUpdateContext;
+import org.idp.server.control_plane.base.OrganizationAccessVerifier;
 import org.idp.server.control_plane.management.authentication.policy.OrgAuthenticationPolicyConfigManagementApi;
 import org.idp.server.control_plane.management.authentication.policy.handler.*;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigRequest;
-import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfigurationIdentifier;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationQueryRepository;
@@ -167,8 +165,7 @@ public class OrgAuthenticationPolicyConfigManagementEntryService
     }
 
     // Record audit log (create operation)
-    AuditLog auditLog =
-        AuditLogCreator.create(result.context());
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -314,8 +311,7 @@ public class OrgAuthenticationPolicyConfigManagementEntryService
     }
 
     // Record audit log (update operation)
-    AuditLog auditLog =
-        AuditLogCreator.create(result.context());
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

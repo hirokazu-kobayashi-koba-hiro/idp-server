@@ -17,11 +17,11 @@
 package org.idp.server.control_plane.management.tenant.handler;
 
 import java.util.Map;
+import org.idp.server.control_plane.base.OrganizationAccessVerifier;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
 import org.idp.server.control_plane.management.tenant.OrgTenantManagementApi;
 import org.idp.server.control_plane.management.tenant.io.TenantRequest;
-import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;

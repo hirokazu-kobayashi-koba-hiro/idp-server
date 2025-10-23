@@ -17,9 +17,7 @@
 package org.idp.server.control_plane.management.oidc.client;
 
 import java.util.Map;
-
 import org.idp.server.control_plane.base.AuditableContext;
-import org.idp.server.control_plane.base.ConfigUpdateContext;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementStatus;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;

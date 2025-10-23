@@ -133,7 +133,6 @@ public class AuthenticationPolicyConfigRegistrationContext implements AuditableC
     return tenant.identifierValue();
   }
 
-
   @Override
   public boolean dryRun() {
     return dryRun;

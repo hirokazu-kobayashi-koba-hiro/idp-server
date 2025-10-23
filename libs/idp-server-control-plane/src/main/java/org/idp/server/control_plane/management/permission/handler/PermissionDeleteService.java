@@ -69,9 +69,7 @@ public class PermissionDeleteService implements PermissionManagementService<Perm
       response.put("id", permission.id());
       response.put("dry_run", true);
       return PermissionManagementResult.success(
-          tenant,
-          new PermissionManagementResponse(PermissionManagementStatus.OK, response),
-          null);
+          tenant, new PermissionManagementResponse(PermissionManagementStatus.OK, response), null);
     }
 
     permissionCommandRepository.delete(tenant, permission);

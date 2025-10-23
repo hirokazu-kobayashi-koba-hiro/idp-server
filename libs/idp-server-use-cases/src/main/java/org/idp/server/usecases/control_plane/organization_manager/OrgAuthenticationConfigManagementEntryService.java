@@ -19,8 +19,6 @@ package org.idp.server.usecases.control_plane.organization_manager;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.management.authentication.configuration.AuthenticationConfigRegistrationContext;
-import org.idp.server.control_plane.management.authentication.configuration.AuthenticationConfigUpdateContext;
 import org.idp.server.control_plane.management.authentication.configuration.OrgAuthenticationConfigManagementApi;
 import org.idp.server.control_plane.management.authentication.configuration.handler.*;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementResponse;
@@ -168,8 +166,7 @@ public class OrgAuthenticationConfigManagementEntryService
     }
 
     // Record audit log (create operation)
-    AuditLog auditLog =
-        AuditLogCreator.create(result.context());
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -314,8 +311,7 @@ public class OrgAuthenticationConfigManagementEntryService
     }
 
     // Record audit log (update operation)
-    AuditLog auditLog =
-        AuditLogCreator.create(result.context());
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

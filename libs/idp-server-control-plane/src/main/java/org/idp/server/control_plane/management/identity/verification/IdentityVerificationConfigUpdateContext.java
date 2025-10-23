@@ -17,9 +17,7 @@
 package org.idp.server.control_plane.management.identity.verification;
 
 import java.util.Map;
-
 import org.idp.server.control_plane.base.AuditableContext;
-import org.idp.server.control_plane.base.ConfigUpdateContext;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementStatus;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;

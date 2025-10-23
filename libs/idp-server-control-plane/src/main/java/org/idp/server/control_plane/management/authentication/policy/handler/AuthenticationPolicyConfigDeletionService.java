@@ -91,8 +91,7 @@ public class AuthenticationPolicyConfigDeletionService
       AuthenticationPolicyConfigManagementResponse managementResponse =
           new AuthenticationPolicyConfigManagementResponse(
               AuthenticationPolicyConfigManagementStatus.OK, response);
-      return AuthenticationPolicyConfigManagementResult.success(
-          tenant, null, managementResponse);
+      return AuthenticationPolicyConfigManagementResult.success(tenant, null, managementResponse);
     }
 
     // 3. Delete configuration
@@ -102,7 +101,6 @@ public class AuthenticationPolicyConfigDeletionService
     AuthenticationPolicyConfigManagementResponse managementResponse =
         new AuthenticationPolicyConfigManagementResponse(
             AuthenticationPolicyConfigManagementStatus.NO_CONTENT, configuration.toMap());
-    return AuthenticationPolicyConfigManagementResult.success(
-        tenant, null, managementResponse);
+    return AuthenticationPolicyConfigManagementResult.success(tenant, null, managementResponse);
   }
 }

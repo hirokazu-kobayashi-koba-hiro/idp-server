@@ -17,9 +17,9 @@
 package org.idp.server.control_plane.management.security.hook.handler;
 
 import java.util.Map;
+import org.idp.server.control_plane.base.OrganizationAccessVerifier;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
 import org.idp.server.control_plane.management.security.hook.OrgSecurityEventHookConfigManagementApi;
-import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;

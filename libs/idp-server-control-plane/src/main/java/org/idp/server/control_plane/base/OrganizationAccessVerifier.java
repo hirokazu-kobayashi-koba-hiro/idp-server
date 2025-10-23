@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.organization.access;
+package org.idp.server.control_plane.base;
 
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.exception.OrganizationAccessDeniedException;

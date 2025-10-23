@@ -18,7 +18,6 @@ package org.idp.server.control_plane.management.security.hook.handler;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
 import org.idp.server.control_plane.management.exception.OrganizationAccessDeniedException;
@@ -70,7 +69,8 @@ public class SecurityEventHookConfigManagementResult {
    * @param response operation-specific response object
    * @return success result
    */
-  public static SecurityEventHookConfigManagementResult success(Tenant tenant, SecurityEventHookConfigManagementResponse response) {
+  public static SecurityEventHookConfigManagementResult success(
+      Tenant tenant, SecurityEventHookConfigManagementResponse response) {
     return new SecurityEventHookConfigManagementResult(tenant, null, response, null);
   }
 

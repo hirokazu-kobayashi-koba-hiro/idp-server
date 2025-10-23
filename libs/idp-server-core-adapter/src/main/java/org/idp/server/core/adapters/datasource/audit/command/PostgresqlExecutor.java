@@ -48,7 +48,8 @@ public class PostgresqlExecutor implements AuditLogSqlExecutor {
                 target_tenant_id,
                 ip_address,
                 user_agent,
-                dry_run
+                dry_run,
+                attributes
                 ) VALUES (
                 ?::uuid,
                 ?,
@@ -68,7 +69,8 @@ public class PostgresqlExecutor implements AuditLogSqlExecutor {
                 ?::uuid,
                 ?,
                 ?,
-                ?
+                ?,
+                ?::jsonb
                 );
                 """;
 
@@ -92,6 +94,7 @@ public class PostgresqlExecutor implements AuditLogSqlExecutor {
     params.add(auditLog.ipAddress());
     params.add(auditLog.userAgent());
     params.add(auditLog.dryRun());
+    params.add(auditLog.attributes().toJson());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

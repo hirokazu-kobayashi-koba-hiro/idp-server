@@ -139,7 +139,7 @@ public class TenantManagementRegistrationContext implements AuditableContext {
     return organization;
   }
 
-  //TODO
+  // TODO
   public User user() {
     return User.notFound();
   }

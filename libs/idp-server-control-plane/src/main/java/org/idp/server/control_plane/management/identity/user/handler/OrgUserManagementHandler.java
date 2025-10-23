@@ -18,13 +18,17 @@ package org.idp.server.control_plane.management.identity.user.handler;
 
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditableContext;
+import org.idp.server.control_plane.base.OrganizationAccessVerifier;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
+import org.idp.server.control_plane.management.exception.ManagementApiException;
+import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.identity.user.OrgUserManagementApi;
 import org.idp.server.control_plane.management.identity.user.UserManagementContextBuilder;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
-import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.exception.NotFoundException;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
@@ -74,6 +78,7 @@ public class OrgUserManagementHandler {
   private final TenantQueryRepository tenantQueryRepository;
   private final OrganizationRepository organizationRepository;
   private final OrganizationAccessVerifier organizationAccessVerifier;
+  LoggerWrapper log = LoggerWrapper.getLogger(OrgUserManagementHandler.class);
 
   public OrgUserManagementHandler(
       Map<String, UserManagementService<?>> services,
@@ -106,27 +111,25 @@ public class OrgUserManagementHandler {
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
-      Object request,
+      UserManagementRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
     // 1. Service selection
     UserManagementService<?> service = services.get(operation);
     if (service == null) {
-      throw new IllegalArgumentException("Unknown operation: " + operation);
+      throw new UnsupportedOperationException("Unknown operation: " + operation);
     }
 
     // 2. Context Builder creation (before Organization/Tenant retrieval)
     UserManagementContextBuilder contextBuilder =
-        createContextBuilder(
-            service, tenantIdentifier, organizationIdentifier, operator, oAuthToken, request, requestAttributes, dryRun);
+        new UserManagementContextBuilder(
+            tenantIdentifier, operator, oAuthToken, requestAttributes, request, dryRun);
 
     try {
       // 3. Organization and Tenant retrieval
       Organization organization = organizationRepository.get(organizationIdentifier);
       Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-      contextBuilder.withOrganization(organization);
-      contextBuilder.withTenant(tenant);
 
       // 4. Get required permissions based on tenant type
       AdminPermissions permissions = entryService.getRequiredPermissions(operation, tenant);
@@ -135,37 +138,31 @@ public class OrgUserManagementHandler {
       organizationAccessVerifier.verify(organization, tenantIdentifier, operator, permissions);
 
       // 6. Execute service
-      UserManagementResponse response = executeService(
-              service, contextBuilder, tenant, operator, oAuthToken, request, requestAttributes, dryRun);
+      UserManagementResponse response =
+          executeService(
+              service,
+              contextBuilder,
+              tenant,
+              operator,
+              oAuthToken,
+              request,
+              requestAttributes,
+              dryRun);
 
       AuditableContext context = contextBuilder.build();
-      return UserManagementResult.success(tenant, context, response);
+      return UserManagementResult.success(context, response);
 
-    } catch (org.idp.server.control_plane.management.exception.ManagementApiException e) {
+    } catch (NotFoundException notFoundException) {
+      ResourceNotFoundException resourceNotFoundException =
+          new ResourceNotFoundException(notFoundException.getMessage());
+      AuditableContext errorContext = contextBuilder.buildPartial(resourceNotFoundException);
+      return UserManagementResult.error(errorContext, resourceNotFoundException);
+    } catch (ManagementApiException e) {
+      log.warn(e.getMessage());
       // Partial Context creation for audit logging (may not have Tenant if retrieval failed)
       AuditableContext errorContext = contextBuilder.buildPartial(e);
       return UserManagementResult.error(errorContext, e);
     }
-  }
-
-  @SuppressWarnings("unchecked")
-  private <REQUEST> UserManagementContextBuilder createContextBuilder(
-      UserManagementService<REQUEST> service,
-      TenantIdentifier tenantIdentifier,
-      OrganizationIdentifier organizationIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      Object request,
-      RequestAttributes requestAttributes,
-      boolean dryRun) {
-    return service.createContextBuilder(
-        tenantIdentifier,
-        organizationIdentifier,
-        operator,
-        oAuthToken,
-        requestAttributes,
-        (REQUEST) request,
-        dryRun);
   }
 
   @SuppressWarnings("unchecked")
@@ -175,7 +172,7 @@ public class OrgUserManagementHandler {
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      Object request,
+      UserManagementRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 

@@ -17,6 +17,7 @@
 package org.idp.server.control_plane.management.identity.user.validator;
 
 import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
+import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
@@ -35,14 +36,16 @@ public class UserPasswordUpdateRequestValidator {
         new JsonSchemaValidator(ControlPlaneV1SchemaReader.adminUserPasswordSchema());
   }
 
-  public UserRequestValidationResult validate() {
+  public void validate() {
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request.toMap());
     JsonSchemaValidationResult userResult = userSchemaValidator.validate(jsonNodeWrapper);
 
-    if (!userResult.isValid()) {
-      return UserRequestValidationResult.error(userResult, dryRun);
-    }
+    throwExceptionIfInvalid(userResult);
+  }
 
-    return UserRequestValidationResult.success(userResult, dryRun);
+  void throwExceptionIfInvalid(JsonSchemaValidationResult result) {
+    if (!result.isValid()) {
+      throw new InvalidRequestException("user password validation is failed", result.errors());
+    }
   }
 }

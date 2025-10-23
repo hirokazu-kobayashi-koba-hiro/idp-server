@@ -97,6 +97,6 @@ public class SecurityEventHookConfigDeleteService
         tenant,
         new SecurityEventHookConfigManagementResponse(
             SecurityEventHookConfigManagementStatus.NO_CONTENT, null),
-       null);
+        null);
   }
 }

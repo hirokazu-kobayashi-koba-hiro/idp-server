@@ -20,12 +20,8 @@ import org.idp.server.control_plane.management.identity.user.UserManagementConte
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
-
-import java.util.Map;
 
 /**
  * Service interface for user management operations.
@@ -71,30 +67,6 @@ import java.util.Map;
  * @see UserManagementResult
  */
 public interface UserManagementService<REQUEST> {
-
-  /**
-   * Creates context builder for this operation with minimal information.
-   *
-   * <p>This method is called at the beginning of Handler, before Tenant/Organization retrieval.
-   * Allows audit logging even when retrieval fails.
-   *
-   * @param tenantIdentifier the tenant identifier (before Tenant retrieval)
-   * @param organizationIdentifier the organization identifier (before Organization retrieval)
-   * @param operator the user performing the operation
-   * @param oAuthToken the OAuth token for the operation
-   * @param requestAttributes HTTP request attributes for audit logging
-   * @param request the operation-specific request object
-   * @param dryRun if true, validate but don't persist changes
-   * @return UserManagementContextBuilder for incremental context construction
-   */
-  UserManagementContextBuilder createContextBuilder(
-      TenantIdentifier tenantIdentifier,
-      OrganizationIdentifier organizationIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      RequestAttributes requestAttributes,
-      REQUEST request,
-      boolean dryRun);
 
   /**
    * Executes the user management operation.

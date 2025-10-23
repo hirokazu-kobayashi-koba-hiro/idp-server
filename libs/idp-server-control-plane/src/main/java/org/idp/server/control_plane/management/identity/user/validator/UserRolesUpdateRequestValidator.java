@@ -17,6 +17,7 @@
 package org.idp.server.control_plane.management.identity.user.validator;
 
 import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
+import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
@@ -42,8 +43,7 @@ public class UserRolesUpdateRequestValidator {
 
   void throwExceptionIfInvalid(JsonSchemaValidationResult result) {
     if (!result.isValid()) {
-      throw new org.idp.server.control_plane.management.exception.InvalidRequestException(
-          "user registration validation is failed", result.errors());
+      throw new InvalidRequestException("user update validation is failed", result.errors());
     }
   }
 }

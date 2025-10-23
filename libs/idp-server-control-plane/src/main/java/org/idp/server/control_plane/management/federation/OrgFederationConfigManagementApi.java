@@ -19,6 +19,7 @@ package org.idp.server.control_plane.management.federation;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.idp.server.control_plane.base.OrganizationAccessVerifier;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
@@ -51,7 +52,7 @@ import org.idp.server.platform.type.RequestAttributes;
  * <p>All operations support dry-run functionality for safe preview of changes.
  *
  * @see FederationConfigurationManagementApi
- * @see org.idp.server.control_plane.organization.access.OrganizationAccessVerifier
+ * @see OrganizationAccessVerifier
  */
 public interface OrgFederationConfigManagementApi {
 

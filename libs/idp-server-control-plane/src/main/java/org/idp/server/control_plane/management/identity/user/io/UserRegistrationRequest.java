@@ -18,8 +18,9 @@ package org.idp.server.control_plane.management.identity.user.io;
 
 import java.util.Map;
 import java.util.Optional;
+import org.idp.server.control_plane.management.identity.user.handler.UserManagementRequest;
 
-public class UserRegistrationRequest {
+public class UserRegistrationRequest implements UserManagementRequest {
 
   Map<String, Object> values;
 

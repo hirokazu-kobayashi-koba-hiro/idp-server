@@ -17,49 +17,54 @@
 package org.idp.server.control_plane.management.identity.user;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditableContext;
+import org.idp.server.control_plane.management.exception.ManagementApiException;
+import org.idp.server.control_plane.management.identity.user.handler.UserManagementRequest;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.json.JsonDiffCalculator;
 import org.idp.server.platform.json.JsonNodeWrapper;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 
-public class UserUpdateContext implements AuditableContext {
+public class UserManagementContext implements AuditableContext {
 
-  Tenant tenant;
+  String type;
+  TenantIdentifier tenantIdentifier;
   User operator;
   OAuthToken oAuthToken;
   RequestAttributes requestAttributes;
   User before;
   User after;
-  Map<String, Object> requestPayload;
+  UserManagementRequest request;
   boolean dryRun;
+  ManagementApiException exception;
 
-  public UserUpdateContext(
-      Tenant tenant,
+  public UserManagementContext(
+      String type,
+      TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
       RequestAttributes requestAttributes,
       User before,
       User after,
-      Map<String, Object> requestPayload,
-      boolean dryRun) {
-    this.tenant = tenant;
+      UserManagementRequest request,
+      boolean dryRun,
+      ManagementApiException exception) {
+    this.type = type;
+    this.tenantIdentifier = tenantIdentifier;
     this.operator = operator;
     this.oAuthToken = oAuthToken;
     this.requestAttributes = requestAttributes;
     this.before = before;
     this.after = after;
-    this.requestPayload = requestPayload;
+    this.request = request;
     this.dryRun = dryRun;
-  }
-
-  public Tenant tenant() {
-    return tenant;
+    this.exception = exception;
   }
 
   public User beforeUser() {
@@ -74,17 +79,17 @@ public class UserUpdateContext implements AuditableContext {
 
   @Override
   public String type() {
-    return "UserManagementApi.update";
+    return type;
   }
 
   @Override
   public String description() {
-    return "user";
+    return "user management api";
   }
 
   @Override
   public String tenantId() {
-    return tenant.identifier().value();
+    return oAuthToken.tenantIdentifier().value();
   }
 
   @Override
@@ -129,37 +134,51 @@ public class UserUpdateContext implements AuditableContext {
 
   @Override
   public Map<String, Object> request() {
-    return requestPayload;
+    return request != null ? request.toMap() : Collections.emptyMap();
   }
 
   @Override
   public Map<String, Object> before() {
-    return before.toMaskedValueMap();
+    return before != null ? before.toMap() : Collections.emptyMap();
   }
 
   @Override
   public Map<String, Object> after() {
-    return after.toMaskedValueMap();
+    return after != null ? after.toMap() : Collections.emptyMap();
   }
 
   @Override
   public String outcomeResult() {
-    return "success";
+    return exception != null ? "failure" : "success";
   }
 
   @Override
   public String outcomeReason() {
-    return null;
+    return exception != null ? exception.errorCode() : null;
   }
 
   @Override
   public String targetTenantId() {
-    return tenant.identifierValue();
+    return tenantIdentifier.value();
   }
 
   @Override
   public Map<String, Object> attributes() {
-    return Collections.emptyMap();
+    Map<String, Object> attributes = new HashMap<>();
+    if (exception != null) {
+      Map<String, Object> error = new HashMap<>();
+      error.put("error_code", exception.errorCode());
+      error.put("error_description", exception.errorDescription());
+
+      // Add error details if available
+      Map<String, Object> errorDetails = exception.errorDetails();
+      if (errorDetails != null && !errorDetails.isEmpty()) {
+        error.putAll(errorDetails);
+      }
+      attributes.put("error", error);
+    }
+
+    return attributes;
   }
 
   @Override

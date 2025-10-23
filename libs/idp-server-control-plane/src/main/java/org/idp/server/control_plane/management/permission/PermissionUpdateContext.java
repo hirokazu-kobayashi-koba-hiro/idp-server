@@ -17,9 +17,7 @@
 package org.idp.server.control_plane.management.permission;
 
 import java.util.Map;
-
 import org.idp.server.control_plane.base.AuditableContext;
-import org.idp.server.control_plane.base.ConfigUpdateContext;
 import org.idp.server.control_plane.management.permission.io.PermissionManagementResponse;
 import org.idp.server.control_plane.management.permission.io.PermissionManagementStatus;
 import org.idp.server.core.openid.identity.permission.Permission;

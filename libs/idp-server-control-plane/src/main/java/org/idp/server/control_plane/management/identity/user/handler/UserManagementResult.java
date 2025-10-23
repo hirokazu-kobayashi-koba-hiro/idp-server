@@ -22,7 +22,6 @@ import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.exception.*;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
  * Result of a user management service operation.
@@ -59,17 +58,12 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class UserManagementResult {
 
   private final UserManagementResponse response;
-  private final Tenant tenant;
   private final AuditableContext context;
   private final ManagementApiException exception;
 
   private UserManagementResult(
-      UserManagementResponse response,
-      Tenant tenant,
-      AuditableContext context,
-      ManagementApiException exception) {
+      UserManagementResponse response, AuditableContext context, ManagementApiException exception) {
     this.response = response;
-    this.tenant = tenant;
     this.context = context;
     this.exception = exception;
   }
@@ -77,27 +71,13 @@ public class UserManagementResult {
   /**
    * Creates a successful result.
    *
-   * @param tenant the tenant context
    * @param context the operation context for audit logging
    * @param response the UserManagementResponse
    * @return UserManagementResult with success response
    */
   public static UserManagementResult success(
-      Tenant tenant, AuditableContext context, UserManagementResponse response) {
-    return new UserManagementResult(response, tenant, context, null);
-  }
-
-  /**
-   * Creates an error result from exception.
-   *
-   * <p>The exception will be re-thrown by Protocol layer to trigger transaction rollback.
-   *
-   * @param tenant the tenant context (needed for audit logging)
-   * @param exception the exception that caused the error
-   * @return UserManagementResult with exception
-   */
-  public static UserManagementResult error(Tenant tenant, ManagementApiException exception) {
-    return new UserManagementResult(null, tenant, null, exception);
+      AuditableContext context, UserManagementResponse response) {
+    return new UserManagementResult(response, context, null);
   }
 
   /**
@@ -109,8 +89,9 @@ public class UserManagementResult {
    * @param exception the exception that caused the error
    * @return UserManagementResult with exception and partial context
    */
-  public static UserManagementResult error(AuditableContext context, ManagementApiException exception) {
-    return new UserManagementResult(null, null, context, exception);
+  public static UserManagementResult error(
+      AuditableContext context, ManagementApiException exception) {
+    return new UserManagementResult(null, context, exception);
   }
 
   /**
@@ -169,15 +150,6 @@ public class UserManagementResult {
       return UserManagementStatus.NOT_FOUND;
     }
     return UserManagementStatus.SERVER_ERROR;
-  }
-
-  /**
-   * Returns the tenant context for audit logging.
-   *
-   * @return Tenant or null if error result
-   */
-  public Tenant tenant() {
-    return tenant;
   }
 
   /**

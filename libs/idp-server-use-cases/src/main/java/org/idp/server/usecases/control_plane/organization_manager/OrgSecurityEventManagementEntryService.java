@@ -18,6 +18,7 @@ package org.idp.server.usecases.control_plane.organization_manager;
 
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
+import org.idp.server.control_plane.base.OrganizationAccessVerifier;
 import org.idp.server.control_plane.management.security.event.OrgSecurityEventManagementApi;
 import org.idp.server.control_plane.management.security.event.handler.OrgSecurityEventManagementHandler;
 import org.idp.server.control_plane.management.security.event.handler.SecurityEventFindListService;
@@ -25,7 +26,6 @@ import org.idp.server.control_plane.management.security.event.handler.SecurityEv
 import org.idp.server.control_plane.management.security.event.handler.SecurityEventManagementResult;
 import org.idp.server.control_plane.management.security.event.handler.SecurityEventManagementService;
 import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementResponse;
-import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;

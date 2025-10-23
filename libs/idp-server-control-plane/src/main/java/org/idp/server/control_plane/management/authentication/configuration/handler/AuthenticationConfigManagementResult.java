@@ -18,7 +18,6 @@ package org.idp.server.control_plane.management.authentication.configuration.han
 
 import java.util.HashMap;
 import java.util.Map;
-
 import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementStatus;

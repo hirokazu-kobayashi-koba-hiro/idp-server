@@ -18,9 +18,7 @@ package org.idp.server.control_plane.management.federation;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import org.idp.server.control_plane.base.AuditableContext;
-import org.idp.server.control_plane.base.ConfigUpdateContext;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementStatus;
 import org.idp.server.core.openid.federation.FederationConfiguration;

@@ -19,6 +19,7 @@ package org.idp.server.control_plane.management.oidc.authorization;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.idp.server.control_plane.base.OrganizationAccessVerifier;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerManagementResponse;
@@ -47,7 +48,7 @@ import org.idp.server.platform.type.RequestAttributes;
  * </ol>
  *
  * @see AuthorizationServerManagementApi
- * @see org.idp.server.control_plane.organization.access.OrganizationAccessVerifier
+ * @see OrganizationAccessVerifier
  */
 public interface OrgAuthorizationServerManagementApi {
 

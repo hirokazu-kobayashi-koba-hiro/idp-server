@@ -81,8 +81,6 @@ public class RoleDeleteService implements RoleManagementService<RoleIdentifier> 
     roleCommandRepository.delete(tenant, role);
 
     return RoleManagementResult.success(
-        tenant,
-        new RoleManagementResponse(RoleManagementStatus.NO_CONTENT, Map.of()),
-        null);
+        tenant, new RoleManagementResponse(RoleManagementStatus.NO_CONTENT, Map.of()), null);
   }
 }

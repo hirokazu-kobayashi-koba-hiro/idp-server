@@ -19,11 +19,11 @@ package org.idp.server.usecases.control_plane.organization_manager;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
+import org.idp.server.control_plane.base.OrganizationAccessVerifier;
 import org.idp.server.control_plane.management.role.*;
 import org.idp.server.control_plane.management.role.handler.*;
 import org.idp.server.control_plane.management.role.io.RoleManagementResponse;
 import org.idp.server.control_plane.management.role.io.RoleRequest;
-import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.permission.PermissionQueryRepository;
 import org.idp.server.core.openid.identity.role.RoleCommandRepository;
@@ -143,8 +143,7 @@ public class OrgRoleManagementEntryService implements OrgRoleManagementApi {
       return result.toResponse(dryRun);
     }
 
-    AuditLog auditLog =
-        AuditLogCreator.create(result.context());
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

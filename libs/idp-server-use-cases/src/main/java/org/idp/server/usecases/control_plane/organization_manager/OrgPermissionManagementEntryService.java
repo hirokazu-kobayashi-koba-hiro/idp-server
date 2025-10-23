@@ -19,11 +19,11 @@ package org.idp.server.usecases.control_plane.organization_manager;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
+import org.idp.server.control_plane.base.OrganizationAccessVerifier;
 import org.idp.server.control_plane.management.permission.*;
 import org.idp.server.control_plane.management.permission.handler.*;
 import org.idp.server.control_plane.management.permission.io.PermissionManagementResponse;
 import org.idp.server.control_plane.management.permission.io.PermissionRequest;
-import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.permission.PermissionCommandRepository;
 import org.idp.server.core.openid.identity.permission.PermissionIdentifier;
@@ -140,8 +140,7 @@ public class OrgPermissionManagementEntryService implements OrgPermissionManagem
       return result.toResponse(dryRun);
     }
 
-    AuditLog auditLog =
-        AuditLogCreator.create(result.context());
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -277,8 +276,7 @@ public class OrgPermissionManagementEntryService implements OrgPermissionManagem
       return result.toResponse(dryRun);
     }
 
-    AuditLog auditLog =
-        AuditLogCreator.create(result.context());
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
