@@ -24,7 +24,6 @@ import org.idp.server.adapters.springboot.control_plane.model.OperatorPrincipal;
 import org.idp.server.control_plane.management.tenant.TenantManagementApi;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
 import org.idp.server.control_plane.management.tenant.io.TenantRequest;
-import org.idp.server.platform.multi_tenancy.tenant.AdminTenantContext;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;
@@ -50,14 +49,11 @@ public class TenantManagementV1Api implements ParameterTransformable {
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
-    TenantIdentifier adminTenantIdentifier = AdminTenantContext.getTenantIdentifier();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     TenantManagementResponse response =
         tenantManagementApi.create(
-            adminTenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
+            operatorPrincipal.authenticationContext(),
             new TenantRequest(body),
             requestAttributes,
             dryRun);
@@ -74,14 +70,11 @@ public class TenantManagementV1Api implements ParameterTransformable {
       @RequestParam(value = "offset", defaultValue = "0") String offsetValue,
       HttpServletRequest httpServletRequest) {
 
-    TenantIdentifier adminTenantIdentifier = AdminTenantContext.getTenantIdentifier();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     TenantManagementResponse response =
         tenantManagementApi.findList(
-            adminTenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
+            operatorPrincipal.authenticationContext(),
             Integer.parseInt(limitValue),
             Integer.parseInt(offsetValue),
             requestAttributes);
@@ -98,16 +91,11 @@ public class TenantManagementV1Api implements ParameterTransformable {
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       HttpServletRequest httpServletRequest) {
 
-    TenantIdentifier adminTenantIdentifier = AdminTenantContext.getTenantIdentifier();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     TenantManagementResponse response =
         tenantManagementApi.get(
-            adminTenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
-            tenantIdentifier,
-            requestAttributes);
+            operatorPrincipal.authenticationContext(), tenantIdentifier, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
@@ -123,14 +111,11 @@ public class TenantManagementV1Api implements ParameterTransformable {
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
-    TenantIdentifier adminTenantIdentifier = AdminTenantContext.getTenantIdentifier();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     TenantManagementResponse response =
         tenantManagementApi.update(
-            adminTenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
             new TenantRequest(body),
             requestAttributes,
@@ -148,17 +133,11 @@ public class TenantManagementV1Api implements ParameterTransformable {
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
-    TenantIdentifier adminTenantIdentifier = AdminTenantContext.getTenantIdentifier();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     TenantManagementResponse response =
         tenantManagementApi.delete(
-            adminTenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
-            tenantIdentifier,
-            requestAttributes,
-            dryRun);
+            operatorPrincipal.authenticationContext(), tenantIdentifier, requestAttributes, dryRun);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");

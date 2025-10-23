@@ -19,12 +19,11 @@ package org.idp.server.control_plane.management.tenant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
 import org.idp.server.control_plane.management.tenant.io.TenantRequest;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
@@ -45,41 +44,31 @@ public interface TenantManagementApi {
   }
 
   TenantManagementResponse create(
-      TenantIdentifier adminTenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
+      AdminAuthenticationContext authenticationContext,
       TenantRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
   TenantManagementResponse findList(
-      TenantIdentifier adminTenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
+      AdminAuthenticationContext authenticationContext,
       int limit,
       int offset,
       RequestAttributes requestAttributes);
 
   TenantManagementResponse get(
-      TenantIdentifier adminTenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
       RequestAttributes requestAttributes);
 
   TenantManagementResponse update(
-      TenantIdentifier adminTenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
       TenantRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
   TenantManagementResponse delete(
-      TenantIdentifier adminTenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
       RequestAttributes requestAttributes,
       boolean dryRun);

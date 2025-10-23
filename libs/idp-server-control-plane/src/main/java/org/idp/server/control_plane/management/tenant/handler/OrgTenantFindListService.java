@@ -19,11 +19,12 @@ package org.idp.server.control_plane.management.tenant.handler;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.control_plane.management.tenant.TenantManagementContextBuilder;
+import org.idp.server.control_plane.management.tenant.io.TenantFindListRequest;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementStatus;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
-import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -41,7 +42,7 @@ import org.idp.server.platform.type.RequestAttributes;
  *   <li>Tenant list query based on organization's tenant assignments
  * </ul>
  */
-public class OrgTenantFindListService implements TenantManagementService<Organization> {
+public class OrgTenantFindListService implements TenantManagementService<TenantFindListRequest> {
 
   private final TenantQueryRepository tenantQueryRepository;
 
@@ -50,17 +51,17 @@ public class OrgTenantFindListService implements TenantManagementService<Organiz
   }
 
   @Override
-  public TenantManagementResult execute(
+  public TenantManagementResponse execute(
+      TenantManagementContextBuilder builder,
       Tenant orgTenant,
       User operator,
       OAuthToken oAuthToken,
-      Organization organization,
+      TenantFindListRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
     // 1. Get organization's assigned tenant identifiers
-    List<TenantIdentifier> organizationTenantIds =
-        organization.assignedTenants().tenantIdentifiers();
+    List<TenantIdentifier> organizationTenantIds = request.tenantIdentifiers();
 
     // 2. Retrieve tenant list
     List<Tenant> tenants = tenantQueryRepository.findList(organizationTenantIds);
@@ -69,8 +70,6 @@ public class OrgTenantFindListService implements TenantManagementService<Organiz
     Map<String, Object> responseMap = new HashMap<>();
     responseMap.put("list", tenants.stream().map(Tenant::toMap).toList());
 
-    TenantManagementResponse response =
-        new TenantManagementResponse(TenantManagementStatus.OK, responseMap);
-    return TenantManagementResult.success(orgTenant, null, response);
+    return new TenantManagementResponse(TenantManagementStatus.OK, responseMap);
   }
 }

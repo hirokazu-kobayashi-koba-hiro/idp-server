@@ -35,14 +35,13 @@ import org.idp.server.platform.log.LoggerWrapper;
  * organization-level authentication - Full transaction management for both read and write
  * operations
  */
-public class OrganizationAwareEntryServiceProxy implements InvocationHandler {
+public class ManagementTypeEntryServiceProxy implements InvocationHandler {
 
   private final Object target;
   private final ApplicationDatabaseTypeProvider applicationDatabaseTypeProvider;
-  private final LoggerWrapper log =
-      LoggerWrapper.getLogger(OrganizationAwareEntryServiceProxy.class);
+  private final LoggerWrapper log = LoggerWrapper.getLogger(ManagementTypeEntryServiceProxy.class);
 
-  private OrganizationAwareEntryServiceProxy(
+  private ManagementTypeEntryServiceProxy(
       Object target, ApplicationDatabaseTypeProvider databaseTypeProvider) {
     this.target = target;
     this.applicationDatabaseTypeProvider = databaseTypeProvider;
@@ -64,7 +63,7 @@ public class OrganizationAwareEntryServiceProxy implements InvocationHandler {
         Proxy.newProxyInstance(
             interfaceType.getClassLoader(),
             new Class<?>[] {interfaceType},
-            new OrganizationAwareEntryServiceProxy(target, databaseTypeProvider));
+            new ManagementTypeEntryServiceProxy(target, databaseTypeProvider));
   }
 
   @Override

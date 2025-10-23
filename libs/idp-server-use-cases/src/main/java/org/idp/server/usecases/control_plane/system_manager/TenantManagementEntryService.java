@@ -18,17 +18,15 @@ package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.verifier.TenantVerifier;
 import org.idp.server.control_plane.management.tenant.TenantManagementApi;
 import org.idp.server.control_plane.management.tenant.handler.*;
-import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
-import org.idp.server.control_plane.management.tenant.io.TenantRequest;
+import org.idp.server.control_plane.management.tenant.io.*;
 import org.idp.server.control_plane.management.tenant.verifier.TenantManagementVerifier;
-import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationCommandRepository;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
@@ -104,36 +102,13 @@ public class TenantManagementEntryService implements TenantManagementApi {
 
   @Override
   public TenantManagementResponse create(
-      TenantIdentifier adminTenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
+      AdminAuthenticationContext authenticationContext,
       TenantRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
     TenantManagementResult result =
-        handler.handle(
-            "create",
-            adminTenantIdentifier,
-            operator,
-            oAuthToken,
-            request,
-            requestAttributes,
-            dryRun);
-
-    // Record audit log (separate transaction via @Async)
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "TenantManagementApi.create",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
+        handler.handle("create", authenticationContext, request, requestAttributes, dryRun);
 
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
@@ -144,9 +119,7 @@ public class TenantManagementEntryService implements TenantManagementApi {
   @Override
   @Transaction(readOnly = true)
   public TenantManagementResponse findList(
-      TenantIdentifier adminTenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
+      AdminAuthenticationContext authenticationContext,
       int limit,
       int offset,
       RequestAttributes requestAttributes) {
@@ -154,34 +127,13 @@ public class TenantManagementEntryService implements TenantManagementApi {
     TenantManagementResult result =
         handler.handle(
             "findList",
-            adminTenantIdentifier,
-            operator,
-            oAuthToken,
-            null, // No request object for findList
+            authenticationContext,
+            new TenantFindListRequest(
+                authenticationContext.operator().assignedTenantsAsTenantIdentifiers()),
             requestAttributes,
             false);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "TenantManagementApi.findList",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(false);
-    }
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "TenantManagementApi.findList",
-            "findList",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);
@@ -190,43 +142,19 @@ public class TenantManagementEntryService implements TenantManagementApi {
   @Override
   @Transaction(readOnly = true)
   public TenantManagementResponse get(
-      TenantIdentifier adminTenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
       RequestAttributes requestAttributes) {
 
     TenantManagementResult result =
         handler.handle(
             "get",
-            adminTenantIdentifier,
-            operator,
-            oAuthToken,
-            tenantIdentifier,
+            authenticationContext,
+            new TenantFindRequest(tenantIdentifier),
             requestAttributes,
             false);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "TenantManagementApi.get",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(false);
-    }
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "TenantManagementApi.get",
-            "get",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);
@@ -234,9 +162,7 @@ public class TenantManagementEntryService implements TenantManagementApi {
 
   @Override
   public TenantManagementResponse update(
-      TenantIdentifier adminTenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
       TenantRequest request,
       RequestAttributes requestAttributes,
@@ -244,28 +170,7 @@ public class TenantManagementEntryService implements TenantManagementApi {
 
     TenantUpdateRequest updateRequest = new TenantUpdateRequest(tenantIdentifier, request);
     TenantManagementResult result =
-        handler.handle(
-            "update",
-            adminTenantIdentifier,
-            operator,
-            oAuthToken,
-            updateRequest,
-            requestAttributes,
-            dryRun);
-
-    // Record audit log (separate transaction via @Async)
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "TenantManagementApi.update",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
+        handler.handle("update", authenticationContext, updateRequest, requestAttributes, dryRun);
 
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
@@ -275,9 +180,7 @@ public class TenantManagementEntryService implements TenantManagementApi {
 
   @Override
   public TenantManagementResponse delete(
-      TenantIdentifier adminTenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
       RequestAttributes requestAttributes,
       boolean dryRun) {
@@ -285,38 +188,12 @@ public class TenantManagementEntryService implements TenantManagementApi {
     TenantManagementResult result =
         handler.handle(
             "delete",
-            adminTenantIdentifier,
-            operator,
-            oAuthToken,
-            tenantIdentifier,
+            authenticationContext,
+            new TenantDeleteRequest(tenantIdentifier),
             requestAttributes,
             dryRun);
 
-    // Record audit log (separate transaction via @Async)
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "TenantManagementApi.delete",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
-
-    // For delete, we don't have a context (no before/after comparison needed)
-    // Just record a simple audit log with tenant info
-    AuditLog auditLog =
-        AuditLogCreator.createOnDeletion(
-            "TenantManagementApi.delete",
-            "delete",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            Map.of("tenant_id", tenantIdentifier.value()),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

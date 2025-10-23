@@ -17,19 +17,24 @@
 package org.idp.server.control_plane.management.tenant.handler;
 
 import java.util.Map;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.base.OrganizationAccessVerifier;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
+import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.tenant.OrgTenantManagementApi;
-import org.idp.server.control_plane.management.tenant.io.TenantRequest;
+import org.idp.server.control_plane.management.tenant.TenantManagementContextBuilder;
+import org.idp.server.control_plane.management.tenant.io.TenantManagementRequest;
+import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.exception.NotFoundException;
 import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -75,6 +80,7 @@ public class OrgTenantManagementHandler {
   private final TenantQueryRepository tenantQueryRepository;
   private final OrganizationRepository organizationRepository;
   private final OrganizationAccessVerifier organizationAccessVerifier;
+  LoggerWrapper log = LoggerWrapper.getLogger(OrgTenantManagementHandler.class);
 
   public OrgTenantManagementHandler(
       Map<String, TenantManagementService<?>> services,
@@ -95,10 +101,6 @@ public class OrgTenantManagementHandler {
    * result.hasException()} and re-throw for transaction rollback.
    *
    * @param method the operation method (e.g., "create", "findList", "get", "update", "delete")
-   * @param organizationIdentifier the organization identifier
-   * @param tenantIdentifier the tenant identifier (can be empty for create/findList operations)
-   * @param operator the user performing the operation
-   * @param oAuthToken the OAuth token for the operation
    * @param request the operation-specific request object
    * @param requestAttributes HTTP request attributes for audit logging
    * @param dryRun if true, validate but don't persist changes
@@ -106,50 +108,60 @@ public class OrgTenantManagementHandler {
    */
   public TenantManagementResult handle(
       String method,
-      OrganizationIdentifier organizationIdentifier,
-      TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      Object request,
+      OrganizationAuthenticationContext authenticationContext,
+      TenantManagementRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    Tenant orgTenant = null;
+    // 1. Service selection
+    TenantManagementService<?> service = services.get(method);
+    if (service == null) {
+      throw new UnSupportedException("Unsupported operation method: " + method);
+    }
+
+    Tenant orgTenant = authenticationContext.organizerTenant();
+    User operator = authenticationContext.operator();
+    OAuthToken oAuthToken = authenticationContext.oAuthToken();
+    TenantManagementContextBuilder builder =
+        new TenantManagementContextBuilder(
+            request.tenantIdentifier(), operator, oAuthToken, requestAttributes, request, dryRun);
+
     try {
       // 0. Get required permissions
       AdminPermissions permissions = entryService.getRequiredPermissions(method);
 
       // 1. Organization retrieval
-      Organization organization = organizationRepository.get(organizationIdentifier);
-
-      // 2. Get organization tenant for audit logging
-      orgTenant = tenantQueryRepository.get(organization.findOrgTenant().tenantIdentifier());
+      Organization organization = authenticationContext.organization();
 
       // 3. Organization-level access control
-      organizationAccessVerifier.verify(organization, tenantIdentifier, operator, permissions);
+      organizationAccessVerifier.verify(
+          organization, request.tenantIdentifier(), operator, permissions);
 
-      // 4. Service selection
-      TenantManagementService<?> service = services.get(method);
-      if (service == null) {
-        throw new UnSupportedException("Unsupported operation method: " + method);
-      }
+      TenantManagementResponse response =
+          executeService(
+              service,
+              builder,
+              orgTenant,
+              operator,
+              oAuthToken,
+              request,
+              requestAttributes,
+              dryRun);
+      AuditableContext context = builder.build();
 
-      // 5. Delegate to service (pass orgTenant for context)
-      // Special cases:
-      // - findList operation needs Organization object
-      // - create operation needs OrgTenantCreationRequest wrapper
-      Object serviceRequest = request;
-      if ("findList".equals(method)) {
-        serviceRequest = organization;
-      } else if ("create".equals(method)) {
-        serviceRequest = new OrgTenantCreationRequest(organization, (TenantRequest) request);
-      }
-      return executeService(
-          service, orgTenant, operator, oAuthToken, serviceRequest, requestAttributes, dryRun);
+      return TenantManagementResult.success(context, response);
+    } catch (NotFoundException e) {
+
+      log.warn(e.getMessage());
+      ResourceNotFoundException notFound = new ResourceNotFoundException(e.getMessage());
+      AuditableContext context = builder.buildPartial(notFound);
+      return TenantManagementResult.error(context, notFound);
 
     } catch (ManagementApiException e) {
-      // Wrap exception in Result with orgTenant for audit logging
-      return TenantManagementResult.error(orgTenant, e);
+
+      log.warn(e.getMessage());
+      AuditableContext context = builder.buildPartial(e);
+      return TenantManagementResult.error(context, e);
     }
   }
 
@@ -171,19 +183,20 @@ public class OrgTenantManagementHandler {
    * @param request the operation-specific request object
    * @param requestAttributes HTTP request attributes
    * @param dryRun if true, validate but don't persist changes
-   * @return TenantManagementResult containing operation outcome
+   * @return TenantManagementResponse containing operation outcome
    */
-  private <T> TenantManagementResult executeService(
+  private <T> TenantManagementResponse executeService(
       TenantManagementService<T> service,
+      TenantManagementContextBuilder builder,
       Tenant orgTenant,
       User operator,
       OAuthToken oAuthToken,
-      Object request,
+      TenantManagementRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
     @SuppressWarnings("unchecked")
     T typedRequest = (T) request;
     return service.execute(
-        orgTenant, operator, oAuthToken, typedRequest, requestAttributes, dryRun);
+        builder, orgTenant, operator, oAuthToken, typedRequest, requestAttributes, dryRun);
   }
 }

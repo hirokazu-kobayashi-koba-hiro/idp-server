@@ -14,28 +14,14 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.management.tenant.io;
+package org.idp.server.control_plane.base;
 
-import java.util.Map;
-import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
+import org.idp.server.platform.type.Pairs;
 
-public class TenantRequest implements TenantManagementRequest {
+public interface OrganizationUserAuthenticationApi {
 
-  Map<String, Object> values;
-
-  public TenantRequest(Map<String, Object> values) {
-    this.values = values;
-  }
-
-  public TenantIdentifier tenantIdentifier() {
-    return new TenantIdentifier();
-  }
-
-  public Map<String, Object> toMap() {
-    return values;
-  }
-
-  public Object get(String key) {
-    return values.get(key);
-  }
+  Pairs<User, OrganizationAuthenticationContext> authenticate(
+      OrganizationIdentifier organizationId, String authorizationHeader, String clientCert);
 }

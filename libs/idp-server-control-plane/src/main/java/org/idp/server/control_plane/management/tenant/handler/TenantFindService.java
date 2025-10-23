@@ -16,6 +16,8 @@
 
 package org.idp.server.control_plane.management.tenant.handler;
 
+import org.idp.server.control_plane.management.tenant.TenantManagementContextBuilder;
+import org.idp.server.control_plane.management.tenant.io.TenantFindRequest;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementStatus;
 import org.idp.server.core.openid.identity.User;
@@ -46,7 +48,7 @@ import org.idp.server.platform.type.RequestAttributes;
  *   <li>Transaction management
  * </ul>
  */
-public class TenantFindService implements TenantManagementService<TenantIdentifier> {
+public class TenantFindService implements TenantManagementService<TenantFindRequest> {
 
   private final TenantQueryRepository tenantQueryRepository;
 
@@ -55,20 +57,20 @@ public class TenantFindService implements TenantManagementService<TenantIdentifi
   }
 
   @Override
-  public TenantManagementResult execute(
+  public TenantManagementResponse execute(
+      TenantManagementContextBuilder builder,
       Tenant adminTenant,
       User operator,
       OAuthToken oAuthToken,
-      TenantIdentifier tenantIdentifier,
+      TenantFindRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    TenantIdentifier tenantIdentifier = request.tenantIdentifier();
     // 1. Retrieve tenant (throws ResourceNotFoundException if not found)
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     // 2. Return success result (no context for read-only operation)
-    TenantManagementResponse response =
-        new TenantManagementResponse(TenantManagementStatus.OK, tenant.toMap());
-    return TenantManagementResult.success(adminTenant, null, response);
+    return new TenantManagementResponse(TenantManagementStatus.OK, tenant.toMap());
   }
 }

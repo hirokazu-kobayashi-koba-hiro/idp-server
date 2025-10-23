@@ -18,6 +18,8 @@ package org.idp.server.control_plane.management.tenant.handler;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.management.tenant.TenantManagementContextBuilder;
+import org.idp.server.control_plane.management.tenant.io.TenantDeleteRequest;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementStatus;
 import org.idp.server.core.openid.identity.User;
@@ -40,7 +42,7 @@ import org.idp.server.platform.type.RequestAttributes;
  *   <li>Tenant deletion from repository
  * </ul>
  */
-public class TenantDeletionService implements TenantManagementService<TenantIdentifier> {
+public class TenantDeletionService implements TenantManagementService<TenantDeleteRequest> {
 
   private final TenantQueryRepository tenantQueryRepository;
   private final TenantCommandRepository tenantCommandRepository;
@@ -53,16 +55,20 @@ public class TenantDeletionService implements TenantManagementService<TenantIden
   }
 
   @Override
-  public TenantManagementResult execute(
+  public TenantManagementResponse execute(
+      TenantManagementContextBuilder builder,
       Tenant adminTenant,
       User operator,
       OAuthToken oAuthToken,
-      TenantIdentifier tenantIdentifier,
+      TenantDeleteRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    // 1. Retrieve existing tenant (throws ResourceNotFoundException if not found)
+    TenantIdentifier tenantIdentifier = request.tenantIdentifier();
+    // 1. Retrieve existing tenant
     Tenant before = tenantQueryRepository.get(tenantIdentifier);
+
+    builder.withBefore(before);
 
     // 2. Dry-run check
     if (dryRun) {
@@ -70,17 +76,13 @@ public class TenantDeletionService implements TenantManagementService<TenantIden
       response.put("message", "Deletion simulated successfully");
       response.put("id", tenantIdentifier.value());
       response.put("dry_run", true);
-      TenantManagementResponse dryRunResponse =
-          new TenantManagementResponse(TenantManagementStatus.OK, response);
-      return TenantManagementResult.success(adminTenant, null, dryRunResponse);
+      return new TenantManagementResponse(TenantManagementStatus.OK, response);
     }
 
     // 4. Repository operation
     tenantCommandRepository.delete(tenantIdentifier);
 
     // 5. Return NO_CONTENT response
-    TenantManagementResponse response =
-        new TenantManagementResponse(TenantManagementStatus.NO_CONTENT, Map.of());
-    return TenantManagementResult.success(adminTenant, null, response);
+    return new TenantManagementResponse(TenantManagementStatus.NO_CONTENT, Map.of());
   }
 }

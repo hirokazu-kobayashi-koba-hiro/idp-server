@@ -14,14 +14,23 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.openid.identity;
+package org.idp.server.control_plane.management.tenant.io;
 
-import org.idp.server.core.openid.token.OAuthToken;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
-import org.idp.server.platform.type.Pairs;
+import java.util.List;
+import java.util.Map;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
-public interface OrganizationUserAuthenticationApi {
+/** Request wrapper for tenant find operation. */
+public record TenantFindListRequest(List<TenantIdentifier> tenantIdentifiers)
+    implements TenantManagementRequest {
 
-  Pairs<User, OAuthToken> authenticate(
-      OrganizationIdentifier organizationId, String authorizationHeader, String clientCert);
+  @Override
+  public TenantIdentifier tenantIdentifier() {
+    return new TenantIdentifier();
+  }
+
+  @Override
+  public Map<String, Object> toMap() {
+    return Map.of();
+  }
 }

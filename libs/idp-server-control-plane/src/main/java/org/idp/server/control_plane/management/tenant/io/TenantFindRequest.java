@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.management.tenant.handler;
+package org.idp.server.control_plane.management.tenant.io;
 
-import org.idp.server.control_plane.management.tenant.io.TenantRequest;
-import org.idp.server.platform.multi_tenancy.organization.Organization;
+import java.util.Map;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
-/**
- * Request wrapper for organization-level tenant creation.
- *
- * <p>Combines organization with tenant creation request for org-level operations.
- */
-public record OrgTenantCreationRequest(Organization organization, TenantRequest tenantRequest) {}
+/** Request wrapper for tenant find operation. */
+public record TenantFindRequest(TenantIdentifier tenantIdentifier)
+    implements TenantManagementRequest {
+
+  @Override
+  public Map<String, Object> toMap() {
+    return Map.of();
+  }
+}

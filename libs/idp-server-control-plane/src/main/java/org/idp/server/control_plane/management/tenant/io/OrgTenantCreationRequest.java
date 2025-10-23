@@ -17,25 +17,24 @@
 package org.idp.server.control_plane.management.tenant.io;
 
 import java.util.Map;
+import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
-public class TenantRequest implements TenantManagementRequest {
+/**
+ * Request wrapper for organization-level tenant creation.
+ *
+ * <p>Combines organization with tenant creation request for org-level operations.
+ */
+public record OrgTenantCreationRequest(Organization organization, TenantRequest tenantRequest)
+    implements TenantManagementRequest {
 
-  Map<String, Object> values;
-
-  public TenantRequest(Map<String, Object> values) {
-    this.values = values;
-  }
-
+  @Override
   public TenantIdentifier tenantIdentifier() {
     return new TenantIdentifier();
   }
 
+  @Override
   public Map<String, Object> toMap() {
-    return values;
-  }
-
-  public Object get(String key) {
-    return values.get(key);
+    return tenantRequest.toMap();
   }
 }

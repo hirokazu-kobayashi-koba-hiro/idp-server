@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.management.tenant.handler;
+package org.idp.server.control_plane.base;
 
-import org.idp.server.control_plane.management.tenant.io.TenantRequest;
+import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.type.Pairs;
 
-/**
- * Request wrapper for tenant update operation.
- *
- * <p>Combines tenant identifier with update request.
- */
-public record TenantUpdateRequest(TenantIdentifier tenantIdentifier, TenantRequest tenantRequest) {}
+public interface AdminUserAuthenticationApi {
+
+  Pairs<User, AdminAuthenticationContext> authenticate(
+      TenantIdentifier adminTenantIdentifier, String authorizationHeader, String clientCert);
+}

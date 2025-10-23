@@ -17,15 +17,22 @@
 package org.idp.server.control_plane.management.tenant.handler;
 
 import java.util.Map;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.ApiPermissionVerifier;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
+import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.tenant.TenantManagementApi;
+import org.idp.server.control_plane.management.tenant.TenantManagementContextBuilder;
+import org.idp.server.control_plane.management.tenant.io.TenantManagementRequest;
+import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.exception.NotFoundException;
 import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -60,6 +67,7 @@ public class TenantManagementHandler {
   private final ApiPermissionVerifier apiPermissionVerifier;
   private final TenantManagementApi managementApi;
   private final TenantQueryRepository tenantQueryRepository;
+  LoggerWrapper log = LoggerWrapper.getLogger(TenantManagementHandler.class);
 
   public TenantManagementHandler(
       Map<String, TenantManagementService<?>> services,
@@ -71,52 +79,59 @@ public class TenantManagementHandler {
     this.tenantQueryRepository = tenantQueryRepository;
   }
 
-  /**
-   * Handles tenant management operations.
-   *
-   * <p>Catches ManagementApiException and wraps them in Result. EntryService will check {@code
-   * result.hasException()} and re-throw for transaction rollback.
-   *
-   * @param method the operation method (e.g., "create", "get", "update", "delete", "findList")
-   * @param adminTenantIdentifier the admin tenant identifier
-   * @param operator the user performing the operation
-   * @param oAuthToken the OAuth token for the operation
-   * @param request the operation-specific request object
-   * @param requestAttributes HTTP request attributes for audit logging
-   * @param dryRun if true, validate but don't persist changes
-   * @return TenantManagementResult containing operation outcome or exception
-   */
   public TenantManagementResult handle(
       String method,
-      TenantIdentifier adminTenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      Object request,
+      AdminAuthenticationContext authenticationContext,
+      TenantManagementRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    Tenant adminTenant = null;
-    try {
-      // 0. Get admin tenant first (needed for audit logging even if operation fails)
-      adminTenant = tenantQueryRepository.get(adminTenantIdentifier);
+    // 1. Service selection
+    TenantManagementService<?> service = services.get(method);
+    if (service == null) {
+      throw new UnSupportedException("Unsupported operation method: " + method);
+    }
 
-      // 1. Permission verification (throws PermissionDeniedException if denied)
+    Tenant adminTenant = authenticationContext.adminTenant();
+    User operator = authenticationContext.operator();
+    OAuthToken oAuthToken = authenticationContext.oAuthToken();
+    TenantManagementContextBuilder builder =
+        new TenantManagementContextBuilder(
+            request.tenantIdentifier(), operator, oAuthToken, requestAttributes, request, dryRun);
+
+    try {
+
+      // 2. Permission verification (throws PermissionDeniedException if denied)
       AdminPermissions requiredPermissions = managementApi.getRequiredPermissions(method);
       apiPermissionVerifier.verify(operator, requiredPermissions);
 
-      // 2. Service selection
-      TenantManagementService<?> service = services.get(method);
-      if (service == null) {
-        throw new UnSupportedException("Unsupported operation method: " + method);
-      }
-
       // 3. Delegate to service (pass adminTenant to avoid duplicate retrieval)
-      return executeService(
-          service, adminTenant, operator, oAuthToken, request, requestAttributes, dryRun);
+      TenantManagementResponse tenantManagementResponse =
+          executeService(
+              service,
+              builder,
+              adminTenant,
+              operator,
+              oAuthToken,
+              request,
+              requestAttributes,
+              dryRun);
+
+      AuditableContext context = builder.build();
+
+      return TenantManagementResult.success(context, tenantManagementResponse);
+    } catch (NotFoundException e) {
+
+      log.warn(e.getMessage());
+      ResourceNotFoundException notFound = new ResourceNotFoundException(e.getMessage());
+      AuditableContext context = builder.buildPartial(notFound);
+      return TenantManagementResult.error(context, notFound);
 
     } catch (ManagementApiException e) {
-      // Wrap exception in Result with adminTenant for audit logging
-      return TenantManagementResult.error(adminTenant, e);
+
+      log.warn(e.getMessage());
+      AuditableContext context = builder.buildPartial(e);
+      return TenantManagementResult.error(context, e);
     }
   }
 
@@ -140,17 +155,18 @@ public class TenantManagementHandler {
    * @param dryRun if true, validate but don't persist changes
    * @return TenantManagementResult containing operation outcome
    */
-  private <T> TenantManagementResult executeService(
+  private <T> TenantManagementResponse executeService(
       TenantManagementService<T> service,
+      TenantManagementContextBuilder builder,
       Tenant adminTenant,
       User operator,
       OAuthToken oAuthToken,
-      Object request,
+      TenantManagementRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
     @SuppressWarnings("unchecked")
     T typedRequest = (T) request;
     return service.execute(
-        adminTenant, operator, oAuthToken, typedRequest, requestAttributes, dryRun);
+        builder, adminTenant, operator, oAuthToken, typedRequest, requestAttributes, dryRun);
   }
 }

@@ -19,7 +19,6 @@ package org.idp.server.usecases.control_plane.system_manager;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.base.ConfigUpdateContext;
 import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigManagementApi;
 import org.idp.server.control_plane.management.identity.verification.handler.IdentityVerificationConfigCreationService;
 import org.idp.server.control_plane.management.identity.verification.handler.IdentityVerificationConfigDeletionService;
@@ -217,15 +216,7 @@ public class IdentityVerificationConfigManagementEntryService
       return result.toResponse(dryRun);
     }
 
-    ConfigUpdateContext context = (ConfigUpdateContext) result.context();
-    AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "IdentityVerificationConfigManagementApi.update",
-            tenant,
-            operator,
-            oAuthToken,
-            context,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

@@ -53,6 +53,11 @@ public class ControlPlaneV1SchemaReader {
     return JsonSchemaDefinition.fromJson(json);
   }
 
+  public static JsonSchemaDefinition tenantUpdateSchema() {
+    String json = ResourceReader.readClasspath("/schema/1.0/tenant-update.json");
+    return JsonSchemaDefinition.fromJson(json);
+  }
+
   public static JsonSchemaDefinition authorizationServerSchema() {
     String json = ResourceReader.readClasspath("/schema/1.0/authorization-server.json");
     return JsonSchemaDefinition.fromJson(json);

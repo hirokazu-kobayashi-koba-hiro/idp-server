@@ -77,16 +77,11 @@ public class OrganizationTenantManagementV1Api implements ParameterTransformable
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
-    // Use the organization's admin tenant as context
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     TenantManagementResponse response =
         orgTenantManagementApi.create(
-            organizationIdentifier,
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantRequest(body),
             requestAttributes,
             dryRun);
@@ -121,9 +116,7 @@ public class OrganizationTenantManagementV1Api implements ParameterTransformable
 
     TenantManagementResponse response =
         orgTenantManagementApi.findList(
-            organizationIdentifier,
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
+            organizationOperatorPrincipal.authenticationContext(),
             Integer.parseInt(limitValue),
             Integer.parseInt(offsetValue),
             requestAttributes);
@@ -150,15 +143,11 @@ public class OrganizationTenantManagementV1Api implements ParameterTransformable
       @PathVariable String tenantId,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     TenantManagementResponse response =
         orgTenantManagementApi.get(
-            organizationIdentifier,
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
             requestAttributes);
 
@@ -188,15 +177,11 @@ public class OrganizationTenantManagementV1Api implements ParameterTransformable
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     TenantManagementResponse response =
         orgTenantManagementApi.update(
-            organizationIdentifier,
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
             new TenantRequest(body),
             requestAttributes,
@@ -225,16 +210,11 @@ public class OrganizationTenantManagementV1Api implements ParameterTransformable
       HttpServletRequest httpServletRequest,
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun) {
 
-    TenantIdentifier adminTenantIdentifier = organizationOperatorPrincipal.getAdminTenantId();
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     TenantManagementResponse response =
         orgTenantManagementApi.delete(
-            organizationIdentifier,
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
             requestAttributes,
             dryRun);

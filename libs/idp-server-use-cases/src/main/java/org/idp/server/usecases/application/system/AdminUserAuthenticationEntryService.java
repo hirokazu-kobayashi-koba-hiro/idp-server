@@ -16,8 +16,8 @@
 
 package org.idp.server.usecases.application.system;
 
-import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
-import org.idp.server.control_plane.base.OrganizationUserAuthenticationApi;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
+import org.idp.server.control_plane.base.AdminUserAuthenticationApi;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
@@ -27,9 +27,6 @@ import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntro
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.exception.UnauthorizedException;
-import org.idp.server.platform.multi_tenancy.organization.AssignedTenant;
-import org.idp.server.platform.multi_tenancy.organization.Organization;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -37,15 +34,14 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.Pairs;
 
 @Transaction
-public class OrganizationUserAuthenticationEntryService
-    implements OrganizationUserAuthenticationApi {
+public class AdminUserAuthenticationEntryService implements AdminUserAuthenticationApi {
 
   TokenProtocols tokenProtocols;
   TenantQueryRepository tenantQueryRepository;
   UserQueryRepository userQueryRepository;
   OrganizationRepository organizationRepository;
 
-  public OrganizationUserAuthenticationEntryService(
+  public AdminUserAuthenticationEntryService(
       TokenProtocols tokenProtocols,
       TenantQueryRepository tenantQueryRepository,
       UserQueryRepository userQueryRepository,
@@ -56,26 +52,10 @@ public class OrganizationUserAuthenticationEntryService
     this.organizationRepository = organizationRepository;
   }
 
-  /**
-   * Authenticates a user for organization-level operations.
-   *
-   * <p>This method is designed to work with OrganizationAwareEntryServiceProxy, which automatically
-   * resolves the admin tenant ID from the organization and handles the tenant resolution
-   * transparently.
-   *
-   * @param organizationId the organization identifier (proxy will resolve admin tenant)
-   * @param authorizationHeader the Authorization header value
-   * @param clientCert the client certificate (optional)
-   * @return a pair of authenticated User and OAuthToken
-   * @throws UnauthorizedException if authentication fails
-   */
-  public Pairs<User, OrganizationAuthenticationContext> authenticate(
-      OrganizationIdentifier organizationId, String authorizationHeader, String clientCert) {
+  public Pairs<User, AdminAuthenticationContext> authenticate(
+      TenantIdentifier tenantIdentifier, String authorizationHeader, String clientCert) {
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    Organization organization = organizationRepository.get(organizationId);
-    AssignedTenant orgTenant = organization.findOrgTenant();
-    TenantIdentifier orgTenantId = orgTenant.tenantIdentifier();
-    Tenant tenant = tenantQueryRepository.get(orgTenantId);
     TokenIntrospectionInternalRequest tokenIntrospectionInternalRequest =
         new TokenIntrospectionInternalRequest(tenant, authorizationHeader, clientCert);
 
@@ -96,10 +76,9 @@ public class OrganizationUserAuthenticationEntryService
     UserIdentifier userIdentifier = new UserIdentifier(introspectionResponse.subject());
     User user = userQueryRepository.get(tenant, userIdentifier);
 
-    OrganizationAuthenticationContext authenticationContext =
-        new OrganizationAuthenticationContext(
-            organization, tenant, introspectionResponse.oAuthToken(), user);
+    AdminAuthenticationContext adminAuthenticationContext =
+        new AdminAuthenticationContext(tenant, introspectionResponse.oAuthToken(), user);
 
-    return new Pairs<>(user, authenticationContext);
+    return new Pairs<>(user, adminAuthenticationContext);
   }
 }

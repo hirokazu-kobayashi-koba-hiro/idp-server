@@ -22,7 +22,6 @@ import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.exception.*;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementStatus;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
  * Result container for tenant management operations.
@@ -39,26 +38,27 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
  */
 public class TenantManagementResult {
 
-  private final Tenant tenant;
   private final AuditableContext context;
   private final ManagementApiException exception;
-  private final Object response;
+  private final TenantManagementResponse response;
 
   private TenantManagementResult(
-      Tenant tenant, AuditableContext context, ManagementApiException exception, Object response) {
-    this.tenant = tenant;
+      AuditableContext context,
+      ManagementApiException exception,
+      TenantManagementResponse response) {
     this.context = context;
     this.exception = exception;
     this.response = response;
   }
 
   public static TenantManagementResult success(
-      Tenant tenant, AuditableContext context, Object response) {
-    return new TenantManagementResult(tenant, context, null, response);
+      AuditableContext context, TenantManagementResponse response) {
+    return new TenantManagementResult(context, null, response);
   }
 
-  public static TenantManagementResult error(Tenant tenant, ManagementApiException exception) {
-    return new TenantManagementResult(tenant, null, exception, null);
+  public static TenantManagementResult error(
+      AuditableContext context, ManagementApiException exception) {
+    return new TenantManagementResult(context, exception, null);
   }
 
   public boolean hasException() {
@@ -67,10 +67,6 @@ public class TenantManagementResult {
 
   public ManagementApiException getException() {
     return exception;
-  }
-
-  public Tenant tenant() {
-    return tenant;
   }
 
   public AuditableContext context() {
@@ -88,10 +84,7 @@ public class TenantManagementResult {
       TenantManagementStatus status = mapExceptionToStatus(exception);
       return new TenantManagementResponse(status, errorResponse);
     }
-    if (response instanceof TenantManagementResponse) {
-      return (TenantManagementResponse) response;
-    }
-    throw new IllegalStateException("Response is not a TenantManagementResponse");
+    return response;
   }
 
   /**

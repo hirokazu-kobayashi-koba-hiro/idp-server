@@ -28,6 +28,8 @@ import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutors;
 import org.idp.server.control_plane.admin.operation.IdpServerOperationApi;
 import org.idp.server.control_plane.admin.starter.IdpServerStarterApi;
 import org.idp.server.control_plane.base.AdminDashboardUrl;
+import org.idp.server.control_plane.base.AdminUserAuthenticationApi;
+import org.idp.server.control_plane.base.OrganizationUserAuthenticationApi;
 import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
 import org.idp.server.control_plane.management.audit.AuditLogManagementApi;
 import org.idp.server.control_plane.management.audit.OrgAuditLogManagementApi;
@@ -146,7 +148,7 @@ import org.idp.server.platform.notification.email.EmailSenders;
 import org.idp.server.platform.notification.sms.SmsSenders;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 import org.idp.server.platform.plugin.*;
-import org.idp.server.platform.proxy.OrganizationAwareEntryServiceProxy;
+import org.idp.server.platform.proxy.ManagementTypeEntryServiceProxy;
 import org.idp.server.platform.proxy.TenantAwareEntryServiceProxy;
 import org.idp.server.platform.security.SecurityEventApi;
 import org.idp.server.platform.security.SecurityEventPublisher;
@@ -207,6 +209,8 @@ public class IdpServerApplication {
   PermissionManagementApi permissionManagementApi;
   RoleManagementApi roleManagementApi;
   UserAuthenticationApi userAuthenticationApi;
+
+  AdminUserAuthenticationApi adminUserAuthenticationApi;
 
   OrgTenantManagementApi orgTenantManagementApi;
   OrgClientManagementApi orgClientManagementApi;
@@ -677,8 +681,29 @@ public class IdpServerApplication {
             UserLifecycleEventApi.class,
             databaseTypeProvider);
 
-    this.onboardingApi =
+    this.adminUserAuthenticationApi =
         TenantAwareEntryServiceProxy.createProxy(
+            new AdminUserAuthenticationEntryService(
+                new TokenProtocols(protocolContainer.resolveAll(TokenProtocol.class)),
+                tenantQueryRepository,
+                userQueryRepository,
+                organizationRepository),
+            AdminUserAuthenticationApi.class,
+            databaseTypeProvider);
+
+    this.userAuthenticationApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new UserAuthenticationEntryService(
+                new TokenProtocols(protocolContainer.resolveAll(TokenProtocol.class)),
+                tenantQueryRepository,
+                userQueryRepository,
+                organizationRepository),
+            UserAuthenticationApi.class,
+            databaseTypeProvider);
+
+    // admin
+    this.onboardingApi =
+        ManagementTypeEntryServiceProxy.createProxy(
             new OnboardingEntryService(
                 tenantCommandRepository,
                 tenantQueryRepository,
@@ -695,7 +720,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.tenantManagementApi =
-        TenantAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new TenantManagementEntryService(
                 tenantCommandRepository,
                 tenantQueryRepository,
@@ -707,7 +732,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.tenantInvitationManagementApi =
-        TenantAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new TenantInvitationManagementEntryService(
                 tenantInvitationCommandRepository,
                 tenantInvitationQueryRepository,
@@ -718,7 +743,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.authorizationServerManagementApi =
-        TenantAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new AuthorizationServerManagementEntryService(
                 tenantQueryRepository,
                 authorizationServerConfigurationQueryRepository,
@@ -728,7 +753,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.clientManagementApi =
-        TenantAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new ClientManagementEntryService(
                 tenantQueryRepository,
                 clientConfigurationCommandRepository,
@@ -738,7 +763,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.userManagementApi =
-        TenantAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new UserManagementEntryService(
                 tenantQueryRepository,
                 userQueryRepository,
@@ -753,7 +778,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.authenticationConfigurationManagementApi =
-        TenantAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new AuthenticationConfigurationManagementEntryService(
                 authenticationConfigurationCommandRepository,
                 authenticationConfigurationQueryRepository,
@@ -763,7 +788,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.authenticationPolicyConfigurationManagementApi =
-        TenantAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new AuthenticationPolicyConfigurationManagementEntryService(
                 authenticationPolicyConfigurationCommandRepository,
                 authenticationPolicyConfigurationQueryRepository,
@@ -773,7 +798,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.federationConfigurationManagementApi =
-        TenantAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new FederationConfigurationManagementEntryService(
                 federationConfigurationQueryRepository,
                 federationConfigurationCommandRepository,
@@ -783,7 +808,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.securityEventHookConfigurationManagementApi =
-        TenantAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new SecurityEventHookConfigurationManagementEntryService(
                 securityEventHookConfigurationCommandRepository,
                 securityEventHookConfigurationQueryRepository,
@@ -793,7 +818,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.identityVerificationConfigManagementApi =
-        TenantAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new IdentityVerificationConfigManagementEntryService(
                 identityVerificationConfigurationCommandRepository,
                 identityVerificationConfigurationQueryRepository,
@@ -803,14 +828,14 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.securityEventManagementApi =
-        TenantAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new SecurityEventManagementEntryService(
                 securityEventQueryRepository, tenantQueryRepository, auditLogPublisher),
             SecurityEventManagementApi.class,
             databaseTypeProvider);
 
     this.securityEventHookManagementApi =
-        TenantAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new SecurityEventHookManagementEntryService(
                 tenantQueryRepository,
                 securityEventHookResultQueryRepository,
@@ -822,28 +847,28 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.auditLogManagementApi =
-        TenantAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new AuditLogManagementEntryService(
                 auditLogQueryRepository, tenantQueryRepository, auditLogPublisher),
             AuditLogManagementApi.class,
             databaseTypeProvider);
 
     this.authenticationInteractionManagementApi =
-        TenantAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new AuthenticationInteractionManagementEntryService(
                 authenticationInteractionQueryRepository, tenantQueryRepository, auditLogPublisher),
             AuthenticationInteractionManagementApi.class,
             databaseTypeProvider);
 
     this.authenticationTransactionManagementApi =
-        TenantAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new AuthenticationTransactionManagementEntryService(
                 authenticationTransactionQueryRepository, tenantQueryRepository, auditLogPublisher),
             AuthenticationTransactionManagementApi.class,
             databaseTypeProvider);
 
     this.permissionManagementApi =
-        TenantAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new PermissionManagementEntryService(
                 tenantQueryRepository,
                 permissionQueryRepository,
@@ -853,7 +878,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.roleManagementApi =
-        TenantAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new RoleManagementEntryService(
                 tenantQueryRepository,
                 roleQueryRepository,
@@ -863,19 +888,9 @@ public class IdpServerApplication {
             RoleManagementApi.class,
             databaseTypeProvider);
 
-    this.userAuthenticationApi =
-        TenantAwareEntryServiceProxy.createProxy(
-            new UserAuthenticationEntryService(
-                new TokenProtocols(protocolContainer.resolveAll(TokenProtocol.class)),
-                tenantQueryRepository,
-                userQueryRepository,
-                organizationRepository),
-            UserAuthenticationApi.class,
-            databaseTypeProvider);
-
     // organization
     this.organizationUserAuthenticationApi =
-        OrganizationAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new OrganizationUserAuthenticationEntryService(
                 new TokenProtocols(protocolContainer.resolveAll(TokenProtocol.class)),
                 tenantQueryRepository,
@@ -885,7 +900,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.orgTenantManagementApi =
-        OrganizationAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new OrgTenantManagementEntryService(
                 tenantCommandRepository,
                 tenantQueryRepository,
@@ -897,7 +912,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.orgClientManagementApi =
-        OrganizationAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new OrgClientManagementEntryService(
                 tenantQueryRepository,
                 organizationRepository,
@@ -908,7 +923,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.orgUserManagementApi =
-        OrganizationAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new OrgUserManagementEntryService(
                 tenantQueryRepository,
                 organizationRepository,
@@ -923,7 +938,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.orgSecurityEventManagementApi =
-        OrganizationAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new OrgSecurityEventManagementEntryService(
                 tenantQueryRepository,
                 organizationRepository,
@@ -933,7 +948,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.orgAuthenticationConfigManagementApi =
-        OrganizationAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new OrgAuthenticationConfigManagementEntryService(
                 tenantQueryRepository,
                 organizationRepository,
@@ -944,7 +959,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.orgFederationConfigManagementApi =
-        OrganizationAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new OrgFederationConfigManagementEntryService(
                 tenantQueryRepository,
                 organizationRepository,
@@ -955,7 +970,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.orgSecurityEventHookConfigManagementApi =
-        OrganizationAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new OrgSecurityEventHookConfigManagementEntryService(
                 tenantQueryRepository,
                 organizationRepository,
@@ -966,7 +981,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.orgAuthenticationInteractionManagementApi =
-        OrganizationAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new OrgAuthenticationInteractionManagementEntryService(
                 tenantQueryRepository,
                 organizationRepository,
@@ -976,7 +991,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.orgAuthenticationTransactionManagementApi =
-        OrganizationAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new OrgAuthenticationTransactionManagementEntryService(
                 authenticationTransactionQueryRepository,
                 tenantQueryRepository,
@@ -986,7 +1001,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.orgAuthorizationServerManagementApi =
-        OrganizationAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new OrgAuthorizationServerManagementEntryService(
                 tenantQueryRepository,
                 organizationRepository,
@@ -997,7 +1012,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.orgPermissionManagementApi =
-        OrganizationAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new OrgPermissionManagementEntryService(
                 tenantQueryRepository,
                 organizationRepository,
@@ -1008,7 +1023,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.orgRoleManagementApi =
-        OrganizationAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new OrgRoleManagementEntryService(
                 tenantQueryRepository,
                 organizationRepository,
@@ -1020,7 +1035,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.orgAuthenticationPolicyConfigManagementApi =
-        OrganizationAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new OrgAuthenticationPolicyConfigManagementEntryService(
                 tenantQueryRepository,
                 organizationRepository,
@@ -1031,7 +1046,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.orgIdentityVerificationConfigManagementApi =
-        OrganizationAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new OrgIdentityVerificationConfigManagementEntryService(
                 tenantQueryRepository,
                 organizationRepository,
@@ -1042,7 +1057,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.orgAuditLogManagementApi =
-        OrganizationAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new OrgAuditLogManagementEntryService(
                 tenantQueryRepository,
                 organizationRepository,
@@ -1052,7 +1067,7 @@ public class IdpServerApplication {
             databaseTypeProvider);
 
     this.orgSecurityEventHookManagementApi =
-        OrganizationAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new OrgSecurityEventHookManagementEntryService(
                 tenantQueryRepository,
                 organizationRepository,
@@ -1216,6 +1231,10 @@ public class IdpServerApplication {
 
   public AuthenticationTransactionManagementApi authenticationTransactionManagementApi() {
     return authenticationTransactionManagementApi;
+  }
+
+  public AdminUserAuthenticationApi adminUserAuthenticationApi() {
+    return adminUserAuthenticationApi;
   }
 
   public OrganizationUserAuthenticationApi organizationUserAuthenticationApi() {

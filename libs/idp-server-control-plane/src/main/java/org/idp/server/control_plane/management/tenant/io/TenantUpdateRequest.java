@@ -19,23 +19,16 @@ package org.idp.server.control_plane.management.tenant.io;
 import java.util.Map;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
-public class TenantRequest implements TenantManagementRequest {
+/**
+ * Request wrapper for tenant update operation.
+ *
+ * <p>Combines tenant identifier with update request.
+ */
+public record TenantUpdateRequest(TenantIdentifier tenantIdentifier, TenantRequest tenantRequest)
+    implements TenantManagementRequest {
 
-  Map<String, Object> values;
-
-  public TenantRequest(Map<String, Object> values) {
-    this.values = values;
-  }
-
-  public TenantIdentifier tenantIdentifier() {
-    return new TenantIdentifier();
-  }
-
+  @Override
   public Map<String, Object> toMap() {
-    return values;
-  }
-
-  public Object get(String key) {
-    return values.get(key);
+    return tenantRequest.toMap();
   }
 }
