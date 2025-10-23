@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.management.role.handler;
+package org.idp.server.control_plane.management.role.io;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,9 +23,8 @@ import org.idp.server.control_plane.management.exception.ManagementApiException;
 import org.idp.server.control_plane.management.exception.OrganizationAccessDeniedException;
 import org.idp.server.control_plane.management.exception.PermissionDeniedException;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
-import org.idp.server.control_plane.management.role.io.RoleManagementResponse;
-import org.idp.server.control_plane.management.role.io.RoleManagementStatus;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.control_plane.management.role.handler.RoleManagementHandler;
+import org.idp.server.control_plane.management.role.handler.RoleManagementService;
 
 /**
  * Result object for role management operations.
@@ -44,55 +43,39 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
  */
 public class RoleManagementResult {
 
-  private final Tenant tenant;
+  private final AuditableContext context;
   private final ManagementApiException exception;
   private final RoleManagementResponse response;
-  private final AuditableContext context;
 
   private RoleManagementResult(
-      Tenant tenant,
-      ManagementApiException exception,
-      RoleManagementResponse response,
-      AuditableContext context) {
-    this.tenant = tenant;
+      AuditableContext context, ManagementApiException exception, RoleManagementResponse response) {
+    this.context = context;
     this.exception = exception;
     this.response = response;
-    this.context = context;
-  }
-
-  /**
-   * Creates a successful result.
-   *
-   * @param tenant the tenant
-   * @param response the success response
-   * @return successful result
-   */
-  public static RoleManagementResult success(Tenant tenant, RoleManagementResponse response) {
-    return new RoleManagementResult(tenant, null, response, null);
   }
 
   /**
    * Creates a successful result with context.
    *
-   * @param tenant the tenant
-   * @param response the success response
    * @param context the operation context
+   * @param response the success response
    * @return successful result with context
    */
   public static RoleManagementResult success(
-      Tenant tenant, RoleManagementResponse response, AuditableContext context) {
-    return new RoleManagementResult(tenant, null, response, context);
+      AuditableContext context, RoleManagementResponse response) {
+    return new RoleManagementResult(context, null, response);
   }
 
   /**
    * Creates an error result from an exception.
    *
-   * @param tenant the tenant
+   * @param context the operation context (may be partial)
    * @param exception the exception that occurred
    * @return error result
    */
-  public static RoleManagementResult error(Tenant tenant, ManagementApiException exception) {
-    return new RoleManagementResult(tenant, exception, null, null);
+  public static RoleManagementResult error(
+      AuditableContext context, ManagementApiException exception) {
+    return new RoleManagementResult(context, exception, null);
   }
 
   /**
@@ -112,20 +95,12 @@ public class RoleManagementResult {
     return RoleManagementStatus.INVALID_REQUEST;
   }
 
-  public Tenant tenant() {
-    return tenant;
+  public AuditableContext context() {
+    return context;
   }
 
   public boolean hasException() {
     return exception != null;
-  }
-
-  public ManagementApiException getException() {
-    return exception;
-  }
-
-  public AuditableContext context() {
-    return context;
   }
 
   public RoleManagementResponse toResponse(boolean dryRun) {

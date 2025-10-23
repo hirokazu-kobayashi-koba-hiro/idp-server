@@ -117,7 +117,8 @@ public class OrgSecurityEventHookConfigManagementHandler {
 
     // 2. Context Builder creation (before any retrieval - enables audit logging on errors)
     SecurityEventHookConfigManagementContextBuilder contextBuilder =
-        new SecurityEventHookConfigManagementContextBuilder(tenantIdentifier, operator, oAuthToken, requestAttributes, request, dryRun);
+        new SecurityEventHookConfigManagementContextBuilder(
+            tenantIdentifier, operator, oAuthToken, requestAttributes, request, dryRun);
 
     try {
       // 3. Organization access verification (4-step verification)

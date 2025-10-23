@@ -17,15 +17,23 @@
 package org.idp.server.control_plane.management.role.handler;
 
 import java.util.Map;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.base.OrganizationAccessVerifier;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
+import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.role.OrgRoleManagementApi;
+import org.idp.server.control_plane.management.role.RoleManagementContextBuilder;
+import org.idp.server.control_plane.management.role.io.RoleManagementRequest;
+import org.idp.server.control_plane.management.role.io.RoleManagementResponse;
+import org.idp.server.control_plane.management.role.io.RoleManagementResult;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.exception.NotFoundException;
 import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -70,6 +78,7 @@ public class OrgRoleManagementHandler {
   private final TenantQueryRepository tenantQueryRepository;
   private final OrganizationRepository organizationRepository;
   private final OrganizationAccessVerifier organizationAccessVerifier;
+  LoggerWrapper log = LoggerWrapper.getLogger(OrgRoleManagementHandler.class);
 
   /**
    * Creates a new organization role management handler.
@@ -97,43 +106,86 @@ public class OrgRoleManagementHandler {
    * Handles an organization-level role management request.
    *
    * @param method the operation method (create, findList, get, update, delete)
-   * @param organizationIdentifier the organization identifier
+   * @param authenticationContext the organization authentication context
    * @param tenantIdentifier the tenant identifier
-   * @param operator the user performing the operation
-   * @param oAuthToken the OAuth token
    * @param request the operation-specific request object
    * @param requestAttributes HTTP request attributes
    * @param dryRun whether to perform a dry run (preview only)
    * @return the operation result
    */
-  @SuppressWarnings("unchecked")
-  public <REQUEST> RoleManagementResult handle(
+  public RoleManagementResult handle(
       String method,
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      REQUEST request,
+      RoleManagementRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    Tenant tenant = null;
-    try {
-      Organization organization = organizationRepository.get(organizationIdentifier);
-      tenant = tenantQueryRepository.get(tenantIdentifier);
-      AdminPermissions permissions = api.getRequiredPermissions(method);
+    Organization organization = authenticationContext.organization();
+    User operator = authenticationContext.operator();
+    OAuthToken oAuthToken = authenticationContext.oAuthToken();
 
+    // 1. Service selection
+    RoleManagementService<?> service = services.get(method);
+    if (service == null) {
+      throw new UnSupportedException("Unsupported operation method: " + method);
+    }
+
+    // 2. Context Builder creation
+    RoleManagementContextBuilder contextBuilder =
+        new RoleManagementContextBuilder(
+            tenantIdentifier, operator, oAuthToken, requestAttributes, request, dryRun);
+
+    try {
+      // 3. Tenant retrieval
+      Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+      // 4. Organization access verification
+      AdminPermissions permissions = api.getRequiredPermissions(method);
       organizationAccessVerifier.verify(organization, tenantIdentifier, operator, permissions);
 
-      RoleManagementService<REQUEST> service =
-          (RoleManagementService<REQUEST>) services.get(method);
-      if (service == null) {
-        throw new UnSupportedException("Unsupported operation method: " + method);
-      }
+      // 5. Delegate to service
+      RoleManagementResponse response =
+          executeService(
+              service,
+              contextBuilder,
+              tenant,
+              operator,
+              oAuthToken,
+              request,
+              requestAttributes,
+              dryRun);
 
-      return service.execute(tenant, operator, oAuthToken, request, requestAttributes, dryRun);
+      AuditableContext context = contextBuilder.build();
+      return RoleManagementResult.success(context, response);
+    } catch (NotFoundException e) {
+
+      log.warn(e.getMessage());
+      ResourceNotFoundException notFound = new ResourceNotFoundException(e.getMessage());
+      AuditableContext context = contextBuilder.buildPartial(notFound);
+      return RoleManagementResult.error(context, notFound);
+
     } catch (ManagementApiException e) {
-      return RoleManagementResult.error(tenant, e);
+
+      log.warn(e.getMessage());
+      AuditableContext errorContext = contextBuilder.buildPartial(e);
+      return RoleManagementResult.error(errorContext, e);
     }
+  }
+
+  /** Executes the service with type-safe request handling. */
+  @SuppressWarnings("unchecked")
+  private <T> RoleManagementResponse executeService(
+      RoleManagementService<T> service,
+      RoleManagementContextBuilder builder,
+      Tenant tenant,
+      User operator,
+      OAuthToken oAuthToken,
+      Object request,
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
+    T typedRequest = (T) request;
+    return service.execute(
+        builder, tenant, operator, oAuthToken, typedRequest, requestAttributes, dryRun);
   }
 }

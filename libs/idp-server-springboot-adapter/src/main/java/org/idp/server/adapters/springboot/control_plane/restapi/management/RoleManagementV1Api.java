@@ -56,9 +56,8 @@ public class RoleManagementV1Api implements ParameterTransformable {
 
     RoleManagementResponse response =
         roleManagementApi.create(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             new RoleRequest(body),
             requestAttributes,
             dryRun);
@@ -80,9 +79,8 @@ public class RoleManagementV1Api implements ParameterTransformable {
 
     RoleManagementResponse response =
         roleManagementApi.findList(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             new RoleQueries(queryParams),
             requestAttributes);
 
@@ -103,9 +101,8 @@ public class RoleManagementV1Api implements ParameterTransformable {
 
     RoleManagementResponse response =
         roleManagementApi.get(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             requestAttributes);
 
@@ -128,9 +125,8 @@ public class RoleManagementV1Api implements ParameterTransformable {
 
     RoleManagementResponse response =
         roleManagementApi.update(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             new RoleRequest(body),
             requestAttributes,
@@ -154,9 +150,8 @@ public class RoleManagementV1Api implements ParameterTransformable {
 
     RoleManagementResponse response =
         roleManagementApi.removePermissions(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             new RoleRequest(body),
             requestAttributes,
@@ -179,9 +174,8 @@ public class RoleManagementV1Api implements ParameterTransformable {
 
     RoleManagementResponse response =
         roleManagementApi.delete(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             requestAttributes,
             dryRun);

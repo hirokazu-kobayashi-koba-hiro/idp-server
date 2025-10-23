@@ -14,14 +14,24 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.management.role.handler;
+package org.idp.server.control_plane.management.role.io;
 
-import org.idp.server.control_plane.management.role.io.RoleRequest;
-import org.idp.server.core.openid.identity.role.RoleIdentifier;
+import java.util.HashMap;
+import java.util.Map;
+import org.idp.server.core.openid.identity.role.RoleQueries;
 
 /**
- * Request wrapper for role update operations.
+ * Request wrapper for role findList operations.
  *
- * <p>Combines role identifier with update request body.
+ * <p>Wraps RoleQueries for list/search operations.
  */
-public record RoleUpdateRequest(RoleIdentifier identifier, RoleRequest roleRequest) {}
+public record RoleFindListRequest(RoleQueries queries) implements RoleManagementRequest {
+
+  @Override
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("limit", queries.limit());
+    map.put("offset", queries.offset());
+    return map;
+  }
+}

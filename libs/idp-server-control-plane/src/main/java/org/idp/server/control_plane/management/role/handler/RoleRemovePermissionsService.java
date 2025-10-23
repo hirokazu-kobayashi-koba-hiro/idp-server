@@ -16,9 +16,14 @@
 
 package org.idp.server.control_plane.management.role.handler;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
-import org.idp.server.control_plane.management.role.RoleRemovePermissionContext;
-import org.idp.server.control_plane.management.role.RoleRemovePermissionContextCreator;
+import org.idp.server.control_plane.management.role.RoleManagementContextBuilder;
+import org.idp.server.control_plane.management.role.io.RoleManagementResponse;
+import org.idp.server.control_plane.management.role.io.RoleManagementStatus;
+import org.idp.server.control_plane.management.role.io.RoleRemovePermissionsRequest;
+import org.idp.server.control_plane.management.role.io.RoleRequest;
 import org.idp.server.control_plane.management.role.validator.RoleRemovePermissionsRequestValidator;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.permission.PermissionQueryRepository;
@@ -27,6 +32,8 @@ import org.idp.server.core.openid.identity.role.Role;
 import org.idp.server.core.openid.identity.role.RoleCommandRepository;
 import org.idp.server.core.openid.identity.role.RoleQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.json.JsonDiffCalculator;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -62,7 +69,8 @@ public class RoleRemovePermissionsService
   }
 
   @Override
-  public RoleManagementResult execute(
+  public RoleManagementResponse execute(
+      RoleManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -70,6 +78,7 @@ public class RoleRemovePermissionsService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    // 1. Retrieve existing role (throws ResourceNotFoundException if not found)
     Role before = roleQueryRepository.find(tenant, request.identifier());
 
     if (!before.exists()) {
@@ -77,19 +86,42 @@ public class RoleRemovePermissionsService
           String.format("Role not found: %s", request.identifier().value()));
     }
 
+    // 2. Request validation
     new RoleRemovePermissionsRequestValidator(request.roleRequest(), dryRun).validate();
 
-    Permissions permissionList = permissionQueryRepository.findAll(tenant);
-    RoleRemovePermissionContextCreator creator =
-        new RoleRemovePermissionContextCreator(
-            tenant, before, request.roleRequest(), permissionList, dryRun);
-    RoleRemovePermissionContext context = creator.create();
+    // 3. Calculate removed permissions and create updated role
+    Permissions allPermissions = permissionQueryRepository.findAll(tenant);
+    Permissions removedPermissions =
+        allPermissions.filterByName(request.roleRequest().permissions());
+    Role after = removePermissions(before, request.roleRequest(), removedPermissions);
 
-    if (!dryRun) {
-      roleCommandRepository.removePermissions(
-          tenant, context.afterRole(), context.removedPermissions());
+    // 4. Populate builder with before and after roles
+    builder.withBefore(before);
+    builder.withAfter(after);
+
+    // 5. Build response
+    JsonNodeWrapper beforeJson = JsonNodeWrapper.fromMap(before.toMap());
+    JsonNodeWrapper afterJson = JsonNodeWrapper.fromMap(after.toMap());
+    Map<String, Object> contents = new HashMap<>();
+    contents.put("result", after.toMap());
+    contents.put("diff", JsonDiffCalculator.deepDiff(beforeJson, afterJson));
+    contents.put("dry_run", dryRun);
+
+    if (dryRun) {
+      return new RoleManagementResponse(RoleManagementStatus.OK, contents);
     }
 
-    return RoleManagementResult.success(tenant, context.toResponse(), context);
+    // 6. Repository operation
+    roleCommandRepository.removePermissions(tenant, after, removedPermissions);
+
+    return new RoleManagementResponse(RoleManagementStatus.OK, contents);
+  }
+
+  private Role removePermissions(Role before, RoleRequest request, Permissions removedPermissions) {
+    String id = before.id();
+    String name = request.name();
+    String description = request.description();
+
+    return new Role(id, name, description, removedPermissions.toList());
   }
 }

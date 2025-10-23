@@ -14,14 +14,20 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.management.role.handler;
+package org.idp.server.control_plane.management.role.io;
 
-import org.idp.server.control_plane.management.role.io.RoleRequest;
+import java.util.Map;
 import org.idp.server.core.openid.identity.role.RoleIdentifier;
 
 /**
- * Request wrapper for role permission removal operations.
+ * Request wrapper for role find (get) operations.
  *
- * <p>Combines role identifier with permission removal request body.
+ * <p>Wraps RoleIdentifier for get/delete operations.
  */
-public record RoleRemovePermissionsRequest(RoleIdentifier identifier, RoleRequest roleRequest) {}
+public record RoleFindRequest(RoleIdentifier identifier) implements RoleManagementRequest {
+
+  @Override
+  public Map<String, Object> toMap() {
+    return Map.of("id", identifier.value());
+  }
+}

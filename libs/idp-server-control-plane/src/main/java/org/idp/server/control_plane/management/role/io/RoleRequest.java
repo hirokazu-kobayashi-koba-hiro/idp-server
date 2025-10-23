@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.json.JsonNodeWrapper;
 
-public class RoleRequest {
+public class RoleRequest implements RoleManagementRequest {
 
   JsonNodeWrapper json;
 

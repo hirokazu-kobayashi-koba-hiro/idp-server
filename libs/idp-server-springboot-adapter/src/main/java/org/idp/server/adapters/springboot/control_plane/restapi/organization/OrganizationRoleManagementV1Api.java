@@ -88,10 +88,8 @@ public class OrganizationRoleManagementV1Api implements ParameterTransformable {
 
     RoleManagementResponse response =
         orgRoleManagementApi.create(
-            organizationId,
+            organizationOperatorPrincipal.authenticationContext(),
             tenantId,
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new RoleRequest(body),
             requestAttributes,
             dryRun);
@@ -124,10 +122,8 @@ public class OrganizationRoleManagementV1Api implements ParameterTransformable {
 
     RoleManagementResponse response =
         orgRoleManagementApi.findList(
-            organizationId,
+            organizationOperatorPrincipal.authenticationContext(),
             tenantId,
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new RoleQueries(queryParams),
             requestAttributes);
 
@@ -159,10 +155,8 @@ public class OrganizationRoleManagementV1Api implements ParameterTransformable {
 
     RoleManagementResponse response =
         orgRoleManagementApi.get(
-            organizationId,
+            organizationOperatorPrincipal.authenticationContext(),
             tenantId,
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             identifier,
             requestAttributes);
 
@@ -198,10 +192,8 @@ public class OrganizationRoleManagementV1Api implements ParameterTransformable {
 
     RoleManagementResponse response =
         orgRoleManagementApi.update(
-            organizationId,
+            organizationOperatorPrincipal.authenticationContext(),
             tenantId,
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             identifier,
             new RoleRequest(body),
             requestAttributes,
@@ -236,10 +228,8 @@ public class OrganizationRoleManagementV1Api implements ParameterTransformable {
 
     RoleManagementResponse response =
         orgRoleManagementApi.delete(
-            organizationId,
+            organizationOperatorPrincipal.authenticationContext(),
             tenantId,
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             identifier,
             requestAttributes,
             dryRun);

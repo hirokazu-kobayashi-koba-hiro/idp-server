@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.management.security.hook;
+package org.idp.server.control_plane.management.role;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
-import org.idp.server.control_plane.management.security.hook.handler.SecurityEventHookConfigManagementRequest;
+import org.idp.server.control_plane.management.role.io.RoleManagementRequest;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.role.Role;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Unified context for all security event hook configuration management operations.
+ * Unified context for all role management operations.
  *
  * <p>This context supports:
  *
@@ -49,26 +49,26 @@ import org.idp.server.platform.type.RequestAttributes;
  *   <li>Partial context construction for early failures
  * </ul>
  */
-public class SecurityEventHookConfigManagementContext implements AuditableContext {
+public class RoleManagementContext implements AuditableContext {
 
   TenantIdentifier tenantIdentifier;
   User operator;
   OAuthToken oAuthToken;
   RequestAttributes requestAttributes;
-  SecurityEventHookConfiguration before;
-  SecurityEventHookConfiguration after;
-  SecurityEventHookConfigManagementRequest request;
+  Role before;
+  Role after;
+  RoleManagementRequest request;
   boolean dryRun;
   ManagementApiException exception;
 
-  public SecurityEventHookConfigManagementContext(
+  public RoleManagementContext(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
       RequestAttributes requestAttributes,
-      SecurityEventHookConfiguration before,
-      SecurityEventHookConfiguration after,
-      SecurityEventHookConfigManagementRequest request,
+      Role before,
+      Role after,
+      RoleManagementRequest request,
       boolean dryRun,
       ManagementApiException exception) {
     this.tenantIdentifier = tenantIdentifier;
@@ -82,24 +82,32 @@ public class SecurityEventHookConfigManagementContext implements AuditableContex
     this.exception = exception;
   }
 
-  public SecurityEventHookConfiguration beforeConfiguration() {
+  public Role beforeRole() {
     return before;
   }
 
-  public SecurityEventHookConfiguration afterConfiguration() {
+  public Role afterRole() {
     return after;
+  }
+
+  public boolean hasException() {
+    return exception != null;
+  }
+
+  public ManagementApiException exception() {
+    return exception;
   }
 
   // === AuditableContext Implementation ===
 
   @Override
   public String type() {
-    return "security_event_hook_config";
+    return "role_management";
   }
 
   @Override
   public String description() {
-    return "security event hook configuration management api";
+    return "role management api";
   }
 
   @Override

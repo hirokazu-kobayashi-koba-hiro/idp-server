@@ -19,6 +19,8 @@ package org.idp.server.control_plane.management.role.handler;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.control_plane.management.role.RoleManagementContextBuilder;
+import org.idp.server.control_plane.management.role.io.RoleFindListRequest;
 import org.idp.server.control_plane.management.role.io.RoleManagementResponse;
 import org.idp.server.control_plane.management.role.io.RoleManagementStatus;
 import org.idp.server.core.openid.identity.User;
@@ -41,7 +43,7 @@ import org.idp.server.platform.type.RequestAttributes;
  *   <li>Response construction with list data, total_count, limit, offset
  * </ul>
  */
-public class RoleFindListService implements RoleManagementService<RoleQueries> {
+public class RoleFindListService implements RoleManagementService<RoleFindListRequest> {
 
   private final RoleQueryRepository roleQueryRepository;
 
@@ -50,33 +52,35 @@ public class RoleFindListService implements RoleManagementService<RoleQueries> {
   }
 
   @Override
-  public RoleManagementResult execute(
+  public RoleManagementResponse execute(
+      RoleManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      RoleQueries queries,
+      RoleFindListRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    RoleQueries queries = request.queries();
     long totalCount = roleQueryRepository.findTotalCount(tenant, queries);
+    Map<String, Object> response = new HashMap<>();
+
     if (totalCount == 0) {
-      Map<String, Object> response = new HashMap<>();
       response.put("list", List.of());
       response.put("total_count", 0);
       response.put("limit", queries.limit());
       response.put("offset", queries.offset());
-      return RoleManagementResult.success(
-          tenant, new RoleManagementResponse(RoleManagementStatus.OK, response));
+      response.put("dry_run", dryRun);
+      return new RoleManagementResponse(RoleManagementStatus.OK, response);
     }
 
     List<Role> roles = roleQueryRepository.findList(tenant, queries);
-    Map<String, Object> response = new HashMap<>();
     response.put("list", roles.stream().map(Role::toMap).toList());
     response.put("total_count", totalCount);
     response.put("limit", queries.limit());
     response.put("offset", queries.offset());
+    response.put("dry_run", dryRun);
 
-    return RoleManagementResult.success(
-        tenant, new RoleManagementResponse(RoleManagementStatus.OK, response));
+    return new RoleManagementResponse(RoleManagementStatus.OK, response);
   }
 }

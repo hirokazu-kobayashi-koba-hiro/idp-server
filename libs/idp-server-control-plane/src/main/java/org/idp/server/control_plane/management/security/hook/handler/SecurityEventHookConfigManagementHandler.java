@@ -109,7 +109,8 @@ public class SecurityEventHookConfigManagementHandler {
 
     // 2. Context Builder creation (before Tenant retrieval - enables audit logging on errors)
     SecurityEventHookConfigManagementContextBuilder contextBuilder =
-        new SecurityEventHookConfigManagementContextBuilder(tenantIdentifier, operator, oAuthToken, requestAttributes, request, dryRun);
+        new SecurityEventHookConfigManagementContextBuilder(
+            tenantIdentifier, operator, oAuthToken, requestAttributes, request, dryRun);
 
     try {
       // 3. Tenant retrieval

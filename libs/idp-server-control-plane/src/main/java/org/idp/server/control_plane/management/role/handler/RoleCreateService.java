@@ -16,14 +16,18 @@
 
 package org.idp.server.control_plane.management.role.handler;
 
-import org.idp.server.control_plane.management.role.RoleRegistrationContext;
-import org.idp.server.control_plane.management.role.RoleRegistrationContextCreator;
+import java.util.Map;
+import java.util.UUID;
+import org.idp.server.control_plane.management.role.RoleManagementContextBuilder;
+import org.idp.server.control_plane.management.role.io.RoleManagementResponse;
+import org.idp.server.control_plane.management.role.io.RoleManagementStatus;
 import org.idp.server.control_plane.management.role.io.RoleRequest;
 import org.idp.server.control_plane.management.role.validator.RoleRequestValidator;
 import org.idp.server.control_plane.management.role.verifier.RoleRegistrationVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.permission.PermissionQueryRepository;
 import org.idp.server.core.openid.identity.permission.Permissions;
+import org.idp.server.core.openid.identity.role.Role;
 import org.idp.server.core.openid.identity.role.RoleCommandRepository;
 import org.idp.server.core.openid.identity.role.RoleQueryRepository;
 import org.idp.server.core.openid.identity.role.Roles;
@@ -61,7 +65,8 @@ public class RoleCreateService implements RoleManagementService<RoleRequest> {
   }
 
   @Override
-  public RoleManagementResult execute(
+  public RoleManagementResponse execute(
+      RoleManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -69,20 +74,40 @@ public class RoleCreateService implements RoleManagementService<RoleRequest> {
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    // 1. Request validation
     new RoleRequestValidator(request, dryRun).validate();
 
+    // 2. Create role from request
     Roles roles = roleQueryRepository.findAll(tenant);
-    Permissions permissionList = permissionQueryRepository.findAll(tenant);
-    RoleRegistrationContextCreator creator =
-        new RoleRegistrationContextCreator(tenant, request, roles, permissionList, dryRun);
-    RoleRegistrationContext context = creator.create();
+    Permissions permissions = permissionQueryRepository.findAll(tenant);
+    Role role = createRole(request, permissions);
 
-    new RoleRegistrationVerifier().verify(context);
+    // 3. Business rule verification
+    new RoleRegistrationVerifier(request, roles, permissions).verify();
 
-    if (!dryRun) {
-      roleCommandRepository.register(tenant, context.role());
+    // 4. Populate builder with created role
+    builder.withAfter(role);
+
+    // 5. Build response
+    Map<String, Object> contents = Map.of("result", role.toMap(), "dry_run", dryRun);
+
+    if (dryRun) {
+      return new RoleManagementResponse(RoleManagementStatus.OK, contents);
     }
 
-    return RoleManagementResult.success(tenant, context.toResponse(), context);
+    // 6. Repository operation
+    roleCommandRepository.register(tenant, role);
+
+    return new RoleManagementResponse(RoleManagementStatus.CREATED, contents);
+  }
+
+  private Role createRole(RoleRequest request, Permissions permissions) {
+    String id = request.hasId() ? request.id() : UUID.randomUUID().toString();
+    String name = request.name();
+    String description = request.description();
+
+    Permissions filtered = permissions.filterById(request.permissions());
+
+    return new Role(id, name, description, filtered.toList());
   }
 }
