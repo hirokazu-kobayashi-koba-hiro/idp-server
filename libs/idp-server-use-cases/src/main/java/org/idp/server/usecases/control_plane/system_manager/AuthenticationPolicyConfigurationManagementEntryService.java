@@ -22,7 +22,6 @@ import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.management.authentication.policy.AuthenticationPolicyConfigurationManagementApi;
 import org.idp.server.control_plane.management.authentication.policy.handler.*;
-import org.idp.server.control_plane.management.authentication.policy.handler.AuthenticationPolicyConfigFindListRequest;
 import org.idp.server.control_plane.management.authentication.policy.handler.AuthenticationPolicyConfigUpdateRequest;
 import org.idp.server.control_plane.management.authentication.policy.io.*;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfigurationIdentifier;
