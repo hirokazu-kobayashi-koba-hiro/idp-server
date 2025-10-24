@@ -29,6 +29,7 @@ import org.idp.server.control_plane.management.identity.user.io.UserManagementRe
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.NotFoundException;
+import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -115,7 +116,7 @@ public class OrgUserManagementHandler {
     // 1. Service selection
     UserManagementService<?> service = services.get(operation);
     if (service == null) {
-      throw new UnsupportedOperationException("Unknown operation: " + operation);
+      throw new UnSupportedException("Unsupported operation method: " + operation);
     }
 
     // 2. Context Builder creation (before Organization/Tenant retrieval)
@@ -124,8 +125,7 @@ public class OrgUserManagementHandler {
             tenantIdentifier, operator, oAuthToken, requestAttributes, request, dryRun);
 
     try {
-      // 3. Organization and Tenant retrieval
-      // Organization already retrieved from authenticationContext
+      // 3. Tenant retrieval (Organization already in authenticationContext)
       Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
       // 4. Get required permissions based on tenant type
@@ -150,13 +150,16 @@ public class OrgUserManagementHandler {
       return UserManagementResult.success(context, response);
 
     } catch (NotFoundException notFoundException) {
+
+      log.warn(notFoundException.getMessage());
       ResourceNotFoundException resourceNotFoundException =
           new ResourceNotFoundException(notFoundException.getMessage());
       AuditableContext errorContext = contextBuilder.buildPartial(resourceNotFoundException);
       return UserManagementResult.error(errorContext, resourceNotFoundException);
+
     } catch (ManagementApiException e) {
+
       log.warn(e.getMessage());
-      // Partial Context creation for audit logging (may not have Tenant if retrieval failed)
       AuditableContext errorContext = contextBuilder.buildPartial(e);
       return UserManagementResult.error(errorContext, e);
     }
