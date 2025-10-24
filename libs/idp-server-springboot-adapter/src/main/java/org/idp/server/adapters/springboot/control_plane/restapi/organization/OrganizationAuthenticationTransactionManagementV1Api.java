@@ -25,7 +25,6 @@ import org.idp.server.control_plane.management.authentication.transaction.OrgAut
 import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionManagementResponse;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionQueries;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;
@@ -86,16 +85,12 @@ public class OrganizationAuthenticationTransactionManagementV1Api
       @RequestParam Map<String, String> queryParams,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AuthenticationTransactionManagementResponse response =
         orgAuthenticationTransactionManagementApi.findList(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new AuthenticationTransactionQueries(queryParams),
             requestAttributes);
 
@@ -123,16 +118,12 @@ public class OrganizationAuthenticationTransactionManagementV1Api
       @PathVariable("transactionId") AuthenticationTransactionIdentifier transactionId,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AuthenticationTransactionManagementResponse response =
         orgAuthenticationTransactionManagementApi.get(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             transactionId,
             requestAttributes);
 

@@ -19,25 +19,23 @@ package org.idp.server.usecases.control_plane.organization_manager;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
+import org.idp.server.control_plane.base.OrganizationAccessVerifier;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.management.authentication.transaction.OrgAuthenticationTransactionManagementApi;
 import org.idp.server.control_plane.management.authentication.transaction.handler.AuthenticationTransactionFindListService;
 import org.idp.server.control_plane.management.authentication.transaction.handler.AuthenticationTransactionFindService;
 import org.idp.server.control_plane.management.authentication.transaction.handler.AuthenticationTransactionManagementResult;
 import org.idp.server.control_plane.management.authentication.transaction.handler.AuthenticationTransactionManagementService;
 import org.idp.server.control_plane.management.authentication.transaction.handler.OrgAuthenticationTransactionManagementHandler;
+import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionFindListRequest;
+import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionFindRequest;
 import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionManagementResponse;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionQueries;
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionQueryRepository;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
@@ -70,41 +68,20 @@ import org.idp.server.platform.type.RequestAttributes;
 public class OrgAuthenticationTransactionManagementEntryService
     implements OrgAuthenticationTransactionManagementApi {
 
-  AuditLogPublisher auditLogPublisher;
-  TenantQueryRepository tenantQueryRepository;
-  LoggerWrapper log =
-      LoggerWrapper.getLogger(OrgAuthenticationTransactionManagementEntryService.class);
-
-  // Handler/Service pattern
-  private OrgAuthenticationTransactionManagementHandler handler;
+  private final OrgAuthenticationTransactionManagementHandler handler;
+  private final AuditLogPublisher auditLogPublisher;
 
   /**
    * Creates a new organization authentication transaction management entry service.
    *
    * @param authenticationTransactionQueryRepository the authentication transaction query repository
    * @param tenantQueryRepository the tenant query repository
-   * @param organizationRepository the organization repository
    * @param auditLogPublisher the audit log publisher
    */
   public OrgAuthenticationTransactionManagementEntryService(
       AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
       TenantQueryRepository tenantQueryRepository,
-      OrganizationRepository organizationRepository,
       AuditLogPublisher auditLogPublisher) {
-    this.auditLogPublisher = auditLogPublisher;
-    this.tenantQueryRepository = tenantQueryRepository;
-
-    this.handler =
-        createHandler(
-            authenticationTransactionQueryRepository,
-            tenantQueryRepository,
-            organizationRepository);
-  }
-
-  private OrgAuthenticationTransactionManagementHandler createHandler(
-      AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
-      TenantQueryRepository tenantQueryRepository,
-      OrganizationRepository organizationRepository) {
 
     Map<String, AuthenticationTransactionManagementService<?>> services = new HashMap<>();
     services.put(
@@ -113,56 +90,32 @@ public class OrgAuthenticationTransactionManagementEntryService
     services.put(
         "get", new AuthenticationTransactionFindService(authenticationTransactionQueryRepository));
 
-    return new OrgAuthenticationTransactionManagementHandler(
-        services, this, tenantQueryRepository, organizationRepository);
+    this.handler =
+        new OrgAuthenticationTransactionManagementHandler(
+            services, this, tenantQueryRepository, new OrganizationAccessVerifier());
+    this.auditLogPublisher = auditLogPublisher;
   }
 
   @Override
   @Transaction(readOnly = true)
   public AuthenticationTransactionManagementResponse findList(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationTransactionQueries queries,
       RequestAttributes requestAttributes) {
 
-    // Delegate to Handler/Service pattern
+    AuthenticationTransactionFindListRequest findListRequest =
+        new AuthenticationTransactionFindListRequest(queries);
     AuthenticationTransactionManagementResult result =
         handler.handle(
             "findList",
-            organizationIdentifier,
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
-            queries,
+            findListRequest,
             requestAttributes,
             false);
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "OrgAuthenticationTransactionManagementApi.findList",
-              tenant,
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(false);
-    }
-
-    // Record audit log (read operation)
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "OrgAuthenticationTransactionManagementApi.findList",
-            "findList",
-            tenant,
-            operator,
-            oAuthToken,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);
@@ -171,49 +124,18 @@ public class OrgAuthenticationTransactionManagementEntryService
   @Override
   @Transaction(readOnly = true)
   public AuthenticationTransactionManagementResponse get(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationTransactionIdentifier identifier,
       RequestAttributes requestAttributes) {
 
-    // Delegate to Handler/Service pattern
+    AuthenticationTransactionFindRequest findRequest =
+        new AuthenticationTransactionFindRequest(identifier);
     AuthenticationTransactionManagementResult result =
         handler.handle(
-            "get",
-            organizationIdentifier,
-            tenantIdentifier,
-            operator,
-            oAuthToken,
-            identifier,
-            requestAttributes,
-            false);
+            "get", authenticationContext, tenantIdentifier, findRequest, requestAttributes, false);
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "OrgAuthenticationTransactionManagementApi.get",
-              tenant,
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(false);
-    }
-
-    // Record audit log (read operation)
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "OrgAuthenticationTransactionManagementApi.get",
-            "get",
-            tenant,
-            operator,
-            oAuthToken,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);

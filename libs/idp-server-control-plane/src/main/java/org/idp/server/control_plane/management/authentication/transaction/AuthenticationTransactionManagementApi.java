@@ -19,13 +19,12 @@ package org.idp.server.control_plane.management.authentication.transaction;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionManagementResponse;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionQueries;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
@@ -47,16 +46,14 @@ public interface AuthenticationTransactionManagementApi {
   }
 
   AuthenticationTransactionManagementResponse findList(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationTransactionQueries queries,
       RequestAttributes requestAttributes);
 
   AuthenticationTransactionManagementResponse get(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationTransactionIdentifier identifier,
       RequestAttributes requestAttributes);
 }

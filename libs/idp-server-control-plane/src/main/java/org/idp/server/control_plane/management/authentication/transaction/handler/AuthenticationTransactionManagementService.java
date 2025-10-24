@@ -16,6 +16,8 @@
 
 package org.idp.server.control_plane.management.authentication.transaction.handler;
 
+import org.idp.server.control_plane.management.authentication.transaction.AuthenticationTransactionManagementContextBuilder;
+import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionManagementResponse;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -24,10 +26,11 @@ import org.idp.server.platform.type.RequestAttributes;
 /**
  * Service interface for authentication transaction management operations.
  *
- * <p>Part of Handler/Service pattern. Each operation (findList, get) has its own service
- * implementation that handles business logic.
+ * <p>Part of Handler/Service pattern. Implementations handle specific authentication transaction
+ * management operations (get, findList).
  *
  * @param <T> the request type for this service
+ * @see AuthenticationTransactionManagementHandler
  * @see AuthenticationTransactionManagementResult
  */
 public interface AuthenticationTransactionManagementService<T> {
@@ -35,15 +38,17 @@ public interface AuthenticationTransactionManagementService<T> {
   /**
    * Executes the authentication transaction management operation.
    *
+   * @param contextBuilder the context builder for audit logging
    * @param tenant the tenant
    * @param operator the operator user
    * @param oAuthToken the OAuth token
    * @param request the request object (type varies by operation)
    * @param requestAttributes the request attributes
    * @param dryRun whether to perform a dry run
-   * @return the result of the operation
+   * @return the response of the operation
    */
-  AuthenticationTransactionManagementResult execute(
+  AuthenticationTransactionManagementResponse execute(
+      AuthenticationTransactionManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,

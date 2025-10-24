@@ -17,13 +17,21 @@
 package org.idp.server.control_plane.management.authentication.transaction.handler;
 
 import java.util.Map;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.ApiPermissionVerifier;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.authentication.transaction.AuthenticationTransactionManagementApi;
+import org.idp.server.control_plane.management.authentication.transaction.AuthenticationTransactionManagementContextBuilder;
+import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionManagementRequest;
+import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionManagementResponse;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
+import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.exception.NotFoundException;
 import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -69,89 +77,109 @@ public class AuthenticationTransactionManagementHandler {
 
   private final Map<String, AuthenticationTransactionManagementService<?>> services;
   private final ApiPermissionVerifier apiPermissionVerifier;
-  private final AuthenticationTransactionManagementApi managementApi;
+  private final AuthenticationTransactionManagementApi api;
   private final TenantQueryRepository tenantQueryRepository;
+  LoggerWrapper log = LoggerWrapper.getLogger(AuthenticationTransactionManagementHandler.class);
 
   public AuthenticationTransactionManagementHandler(
       Map<String, AuthenticationTransactionManagementService<?>> services,
-      AuthenticationTransactionManagementApi managementApi,
+      AuthenticationTransactionManagementApi api,
       TenantQueryRepository tenantQueryRepository) {
     this.services = services;
     this.apiPermissionVerifier = new ApiPermissionVerifier();
-    this.managementApi = managementApi;
+    this.api = api;
     this.tenantQueryRepository = tenantQueryRepository;
   }
 
   /**
-   * Handles authentication transaction management operations.
+   * Handles an authentication transaction management request.
    *
-   * <p>Catches ManagementApiException and wraps them in Result. EntryService will check {@code
-   * result.hasException()} and re-throw for transaction rollback.
-   *
-   * @param method the operation method (e.g., "findList", "get")
-   * @param tenantIdentifier the tenant context
-   * @param operator the user performing the operation
-   * @param oAuthToken the OAuth token for the operation
+   * @param method the operation method (get, findList)
+   * @param authenticationContext the admin authentication context
+   * @param tenantIdentifier the tenant identifier
    * @param request the operation-specific request object
-   * @param requestAttributes HTTP request attributes for audit logging
-   * @param dryRun if true, validate but don't persist changes
-   * @return AuthenticationTransactionManagementResult containing operation outcome or exception
+   * @param requestAttributes HTTP request attributes
+   * @param dryRun whether to perform a dry run (preview only)
+   * @return the operation result
    */
   public AuthenticationTransactionManagementResult handle(
       String method,
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      Object request,
+      AuthenticationTransactionManagementRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    User operator = authenticationContext.operator();
+    OAuthToken oAuthToken = authenticationContext.oAuthToken();
+
+    // 1. Service selection
+    AuthenticationTransactionManagementService<?> service = services.get(method);
+    if (service == null) {
+      throw new UnSupportedException("Unsupported operation method: " + method);
+    }
+
+    // 2. Context Builder creation (before Tenant retrieval - enables audit logging on errors)
+    AuthenticationTransactionManagementContextBuilder contextBuilder =
+        new AuthenticationTransactionManagementContextBuilder(
+            tenantIdentifier, operator, oAuthToken, requestAttributes, request);
+
     try {
-      // 0. Get tenant first (needed for audit logging even if operation fails)
+      // 3. Tenant retrieval
       Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-      // 1. Permission verification (throws PermissionDeniedException if denied)
-      AdminPermissions requiredPermissions = managementApi.getRequiredPermissions(method);
+      // 4. Permission verification
+      AdminPermissions requiredPermissions = api.getRequiredPermissions(method);
       apiPermissionVerifier.verify(operator, requiredPermissions);
 
-      // 2. Service selection
-      AuthenticationTransactionManagementService<?> service = services.get(method);
-      if (service == null) {
-        throw new UnSupportedException("Unsupported operation method: " + method);
-      }
+      // 5. Delegate to service
+      AuthenticationTransactionManagementResponse response =
+          executeService(
+              service,
+              contextBuilder,
+              tenant,
+              operator,
+              oAuthToken,
+              request,
+              requestAttributes,
+              dryRun);
 
-      // 3. Delegate to service (pass tenant to avoid duplicate retrieval)
-      return executeService(
-          service, tenant, operator, oAuthToken, request, requestAttributes, dryRun);
+      AuditableContext context = contextBuilder.build();
+      return AuthenticationTransactionManagementResult.success(context, response);
+    } catch (NotFoundException e) {
+
+      log.warn(e.getMessage());
+
+      ResourceNotFoundException resourceNotFoundException =
+          new ResourceNotFoundException(e.getMessage());
+
+      AuditableContext partialContext = contextBuilder.buildPartial(resourceNotFoundException);
+      return AuthenticationTransactionManagementResult.error(
+          partialContext, resourceNotFoundException);
 
     } catch (ManagementApiException e) {
-      // Wrap exception in Result with tenant identifier for audit logging
-      return AuthenticationTransactionManagementResult.error(tenantIdentifier, e);
+
+      log.warn(e.getMessage());
+      AuditableContext partialContext = contextBuilder.buildPartial(e);
+      return AuthenticationTransactionManagementResult.error(partialContext, e);
     }
   }
 
-  /**
-   * Executes the service with type-safe request handling.
-   *
-   * <p>This helper method uses generics to ensure type safety when calling service.execute().
-   * The @SuppressWarnings("unchecked") is safe because:
-   *
-   * <ul>
-   *   <li>Each service implementation defines its own REQUEST type parameter
-   *   <li>The service map is built at initialization time with correct type mappings
-   *   <li>The Handler doesn't know the concrete request type at compile time
-   * </ul>
-   */
   @SuppressWarnings("unchecked")
-  private <REQUEST> AuthenticationTransactionManagementResult executeService(
-      AuthenticationTransactionManagementService<REQUEST> service,
+  private <T> AuthenticationTransactionManagementResponse executeService(
+      AuthenticationTransactionManagementService<?> service,
+      AuthenticationTransactionManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      Object request,
+      T request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
-    return service.execute(
-        tenant, operator, oAuthToken, (REQUEST) request, requestAttributes, dryRun);
+
+    AuthenticationTransactionManagementService<T> typedService =
+        (AuthenticationTransactionManagementService<T>) service;
+
+    return typedService.execute(
+        contextBuilder, tenant, operator, oAuthToken, request, requestAttributes, dryRun);
   }
 }

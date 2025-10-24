@@ -18,10 +18,11 @@ package org.idp.server.control_plane.management.authentication.transaction.handl
 
 import java.util.List;
 import java.util.Map;
+import org.idp.server.control_plane.management.authentication.transaction.AuthenticationTransactionManagementContextBuilder;
+import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionFindListRequest;
 import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionManagementResponse;
 import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionManagementStatus;
 import org.idp.server.core.openid.authentication.AuthenticationTransaction;
-import org.idp.server.core.openid.authentication.AuthenticationTransactionQueries;
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -43,7 +44,8 @@ import org.idp.server.platform.type.RequestAttributes;
  * </ul>
  */
 public class AuthenticationTransactionFindListService
-    implements AuthenticationTransactionManagementService<AuthenticationTransactionQueries> {
+    implements AuthenticationTransactionManagementService<
+        AuthenticationTransactionFindListRequest> {
 
   private final AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository;
 
@@ -53,31 +55,30 @@ public class AuthenticationTransactionFindListService
   }
 
   @Override
-  public AuthenticationTransactionManagementResult execute(
+  public AuthenticationTransactionManagementResponse execute(
+      AuthenticationTransactionManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      AuthenticationTransactionQueries queries,
+      AuthenticationTransactionFindListRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    long totalCount = authenticationTransactionQueryRepository.findTotalCount(tenant, queries);
+    long totalCount =
+        authenticationTransactionQueryRepository.findTotalCount(tenant, request.queries());
     if (totalCount == 0) {
       Map<String, Object> response =
           Map.of(
               "list", List.of(),
               "total_count", 0,
-              "limit", queries.limit(),
-              "offset", queries.offset());
-      AuthenticationTransactionManagementResponse managementResponse =
-          new AuthenticationTransactionManagementResponse(
-              AuthenticationTransactionManagementStatus.OK, response);
-      return AuthenticationTransactionManagementResult.success(
-          tenant.identifier(), managementResponse);
+              "limit", request.queries().limit(),
+              "offset", request.queries().offset());
+      return new AuthenticationTransactionManagementResponse(
+          AuthenticationTransactionManagementStatus.OK, response);
     }
 
     List<AuthenticationTransaction> authenticationTransactions =
-        authenticationTransactionQueryRepository.findList(tenant, queries);
+        authenticationTransactionQueryRepository.findList(tenant, request.queries());
 
     Map<String, Object> response =
         Map.of(
@@ -86,13 +87,10 @@ public class AuthenticationTransactionFindListService
                     .map(AuthenticationTransaction::toRequestMap)
                     .toList(),
             "total_count", totalCount,
-            "limit", queries.limit(),
-            "offset", queries.offset());
+            "limit", request.queries().limit(),
+            "offset", request.queries().offset());
 
-    AuthenticationTransactionManagementResponse managementResponse =
-        new AuthenticationTransactionManagementResponse(
-            AuthenticationTransactionManagementStatus.OK, response);
-    return AuthenticationTransactionManagementResult.success(
-        tenant.identifier(), managementResponse);
+    return new AuthenticationTransactionManagementResponse(
+        AuthenticationTransactionManagementStatus.OK, response);
   }
 }

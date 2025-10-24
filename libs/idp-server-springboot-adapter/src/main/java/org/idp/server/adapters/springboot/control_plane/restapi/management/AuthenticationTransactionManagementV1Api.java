@@ -63,9 +63,8 @@ public class AuthenticationTransactionManagementV1Api implements ParameterTransf
 
     AuthenticationTransactionManagementResponse response =
         authenticationTransactionManagementApi.findList(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             new AuthenticationTransactionQueries(queryParams),
             requestAttributes);
 
@@ -86,9 +85,8 @@ public class AuthenticationTransactionManagementV1Api implements ParameterTransf
 
     AuthenticationTransactionManagementResponse response =
         authenticationTransactionManagementApi.get(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             requestAttributes);
 

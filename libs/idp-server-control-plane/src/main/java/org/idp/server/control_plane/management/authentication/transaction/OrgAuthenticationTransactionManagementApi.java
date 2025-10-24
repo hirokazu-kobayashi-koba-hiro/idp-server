@@ -20,15 +20,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import org.idp.server.control_plane.base.OrganizationAccessVerifier;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionManagementResponse;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionQueries;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -74,38 +72,30 @@ public interface OrgAuthenticationTransactionManagementApi {
   /**
    * Lists authentication transactions within the organization.
    *
-   * @param organizationIdentifier the organization identifier
+   * @param authenticationContext the organization authentication context
    * @param tenantIdentifier the tenant identifier
-   * @param operator the operator user
-   * @param oAuthToken the OAuth token
    * @param queries the authentication transaction queries
    * @param requestAttributes the request attributes
    * @return the authentication transaction list response
    */
   AuthenticationTransactionManagementResponse findList(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationTransactionQueries queries,
       RequestAttributes requestAttributes);
 
   /**
    * Gets a specific authentication transaction within the organization.
    *
-   * @param organizationIdentifier the organization identifier
+   * @param authenticationContext the organization authentication context
    * @param tenantIdentifier the tenant identifier
-   * @param operator the operator user
-   * @param oAuthToken the OAuth token
    * @param identifier the authentication transaction identifier
    * @param requestAttributes the request attributes
    * @return the authentication transaction details response
    */
   AuthenticationTransactionManagementResponse get(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationTransactionIdentifier identifier,
       RequestAttributes requestAttributes);
 }
