@@ -16,15 +16,21 @@
 
 package org.idp.server.control_plane.management.permission.handler;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
-import org.idp.server.control_plane.management.permission.PermissionUpdateContext;
-import org.idp.server.control_plane.management.permission.PermissionUpdateContextCreator;
-import org.idp.server.control_plane.management.permission.validator.PermissionUpdateRequestValidator;
+import org.idp.server.control_plane.management.permission.PermissionManagementContextBuilder;
+import org.idp.server.control_plane.management.permission.io.PermissionManagementResponse;
+import org.idp.server.control_plane.management.permission.io.PermissionManagementStatus;
+import org.idp.server.control_plane.management.permission.io.PermissionUpdateRequest;
+import org.idp.server.control_plane.management.permission.validator.PermissionRequestValidator;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.permission.Permission;
 import org.idp.server.core.openid.identity.permission.PermissionCommandRepository;
 import org.idp.server.core.openid.identity.permission.PermissionQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.json.JsonDiffCalculator;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -32,6 +38,14 @@ import org.idp.server.platform.type.RequestAttributes;
  * Service for updating permissions.
  *
  * <p>Handles permission update logic following the Handler/Service pattern.
+ *
+ * <h2>Responsibilities</h2>
+ *
+ * <ul>
+ *   <li>Request validation via PermissionRequestValidator (throws InvalidRequestException)
+ *   <li>Existing permission retrieval
+ *   <li>Permission update (or dry-run simulation)
+ * </ul>
  */
 public class PermissionUpdateService
     implements PermissionManagementService<PermissionUpdateRequest> {
@@ -47,7 +61,8 @@ public class PermissionUpdateService
   }
 
   @Override
-  public PermissionManagementResult execute(
+  public PermissionManagementResponse execute(
+      PermissionManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -55,22 +70,55 @@ public class PermissionUpdateService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    new PermissionUpdateRequestValidator(request.permissionRequest(), dryRun).validate();
-
+    // 1. Retrieve existing permission (throws ResourceNotFoundException if not found)
     Permission before = permissionQueryRepository.find(tenant, request.identifier());
+
     if (!before.exists()) {
       throw new ResourceNotFoundException(
           String.format("Permission not found: %s", request.identifier().value()));
     }
 
-    PermissionUpdateContextCreator creator =
-        new PermissionUpdateContextCreator(tenant, before, request.permissionRequest(), dryRun);
-    PermissionUpdateContext context = creator.create();
+    // 2. Request validation
+    new PermissionRequestValidator(request.permissionRequest(), dryRun).validate();
 
-    if (!dryRun) {
-      permissionCommandRepository.update(tenant, context.afterPermission());
+    // 3. Create updated permission
+    Permission after = updatePermission(before, request.permissionRequest());
+
+    // 4. Populate builder with before/after
+    builder.withBefore(before);
+    builder.withAfter(after);
+
+    // 5. Build response
+    JsonNodeWrapper beforeJson = JsonNodeWrapper.fromMap(before.toMap());
+    JsonNodeWrapper afterJson = JsonNodeWrapper.fromMap(after.toMap());
+    Map<String, Object> contents = new HashMap<>();
+    contents.put("result", after.toMap());
+    contents.put("diff", JsonDiffCalculator.deepDiff(beforeJson, afterJson));
+    contents.put("dry_run", dryRun);
+
+    if (dryRun) {
+      return new PermissionManagementResponse(PermissionManagementStatus.OK, contents);
     }
 
-    return PermissionManagementResult.success(tenant, context.toResponse(), context);
+    // 6. Repository operation
+    permissionCommandRepository.update(tenant, after);
+
+    return new PermissionManagementResponse(PermissionManagementStatus.OK, contents);
+  }
+
+  private Permission updatePermission(
+      Permission before,
+      org.idp.server.control_plane.management.permission.io.PermissionRequest request) {
+    JsonNodeWrapper requestJson = JsonNodeWrapper.fromMap(request.toMap());
+
+    String id = before.id(); // ID cannot be changed
+    String name =
+        requestJson.contains("name") ? requestJson.getValueOrEmptyAsString("name") : before.name();
+    String description =
+        requestJson.contains("description")
+            ? requestJson.getValueOrEmptyAsString("description")
+            : before.description();
+
+    return new Permission(id, name, description);
   }
 }

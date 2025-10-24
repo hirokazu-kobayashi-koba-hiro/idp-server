@@ -17,31 +17,19 @@
 package org.idp.server.control_plane.management.permission.io;
 
 import java.util.Map;
+import org.idp.server.core.openid.identity.permission.PermissionIdentifier;
 
-public class PermissionRequest implements PermissionManagementRequest {
+/**
+ * Request wrapper for permission update operations.
+ *
+ * <p>Combines permission identifier with update request payload.
+ */
+public record PermissionUpdateRequest(
+    PermissionIdentifier identifier, PermissionRequest permissionRequest)
+    implements PermissionManagementRequest {
 
-  Map<String, Object> values;
-
-  public PermissionRequest(Map<String, Object> values) {
-    this.values = values;
-  }
-
+  @Override
   public Map<String, Object> toMap() {
-    return values;
-  }
-
-  public Object get(String key) {
-    return values.get(key);
-  }
-
-  public String getValueAsString(String key) {
-    return values.get(key).toString();
-  }
-
-  public String optValueAsString(String key, String defaultValue) {
-    if (values.containsKey(key)) {
-      return values.get(key).toString();
-    }
-    return defaultValue;
+    return permissionRequest.toMap();
   }
 }

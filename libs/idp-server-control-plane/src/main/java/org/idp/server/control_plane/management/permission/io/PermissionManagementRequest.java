@@ -17,31 +17,28 @@
 package org.idp.server.control_plane.management.permission.io;
 
 import java.util.Map;
+import org.idp.server.control_plane.management.permission.handler.PermissionManagementHandler;
 
-public class PermissionRequest implements PermissionManagementRequest {
+/**
+ * Marker interface for permission management request objects.
+ *
+ * <p>Enables polymorphic handling of different request types in Handler layer:
+ *
+ * <ul>
+ *   <li>PermissionRequest (create operation)
+ *   <li>PermissionUpdateRequest (update operation)
+ *   <li>PermissionIdentifier (get/delete operations)
+ *   <li>PermissionQueries (findList operation)
+ * </ul>
+ *
+ * @see PermissionManagementHandler
+ */
+public interface PermissionManagementRequest {
 
-  Map<String, Object> values;
-
-  public PermissionRequest(Map<String, Object> values) {
-    this.values = values;
-  }
-
-  public Map<String, Object> toMap() {
-    return values;
-  }
-
-  public Object get(String key) {
-    return values.get(key);
-  }
-
-  public String getValueAsString(String key) {
-    return values.get(key).toString();
-  }
-
-  public String optValueAsString(String key, String defaultValue) {
-    if (values.containsKey(key)) {
-      return values.get(key).toString();
-    }
-    return defaultValue;
-  }
+  /**
+   * Converts request to Map for audit logging.
+   *
+   * @return request data as map
+   */
+  Map<String, Object> toMap();
 }

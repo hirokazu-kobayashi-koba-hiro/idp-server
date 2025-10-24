@@ -16,15 +16,21 @@
 
 package org.idp.server.control_plane.management.permission.handler;
 
-import org.idp.server.control_plane.management.permission.PermissionRegistrationContext;
-import org.idp.server.control_plane.management.permission.PermissionRegistrationContextCreator;
+import java.util.Map;
+import java.util.UUID;
+import org.idp.server.control_plane.management.permission.PermissionManagementContextBuilder;
+import org.idp.server.control_plane.management.permission.io.PermissionManagementResponse;
+import org.idp.server.control_plane.management.permission.io.PermissionManagementStatus;
 import org.idp.server.control_plane.management.permission.io.PermissionRequest;
 import org.idp.server.control_plane.management.permission.validator.PermissionRequestValidator;
 import org.idp.server.control_plane.management.permission.verifier.PermissionRegistrationVerifier;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.permission.Permission;
 import org.idp.server.core.openid.identity.permission.PermissionCommandRepository;
 import org.idp.server.core.openid.identity.permission.PermissionQueryRepository;
+import org.idp.server.core.openid.identity.permission.Permissions;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -37,7 +43,7 @@ import org.idp.server.platform.type.RequestAttributes;
  *
  * <ul>
  *   <li>Request validation via PermissionRequestValidator (throws InvalidRequestException)
- *   <li>Context creation via PermissionRegistrationContextCreator
+ *   <li>Permission object creation from request
  *   <li>Business rule verification via PermissionRegistrationVerifier (throws
  *       InvalidRequestException)
  *   <li>Permission registration (or dry-run simulation)
@@ -47,21 +53,17 @@ public class PermissionCreateService implements PermissionManagementService<Perm
 
   private final PermissionQueryRepository permissionQueryRepository;
   private final PermissionCommandRepository permissionCommandRepository;
-  private final PermissionRegistrationVerifier verifier;
 
   public PermissionCreateService(
       PermissionQueryRepository permissionQueryRepository,
       PermissionCommandRepository permissionCommandRepository) {
     this.permissionQueryRepository = permissionQueryRepository;
     this.permissionCommandRepository = permissionCommandRepository;
-    this.verifier =
-        new PermissionRegistrationVerifier(
-            new org.idp.server.control_plane.management.permission.verifier.PermissionVerifier(
-                permissionQueryRepository));
   }
 
   @Override
-  public PermissionManagementResult execute(
+  public PermissionManagementResponse execute(
+      PermissionManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -69,18 +71,41 @@ public class PermissionCreateService implements PermissionManagementService<Perm
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    // 1. Request validation
     new PermissionRequestValidator(request, dryRun).validate();
 
-    PermissionRegistrationContextCreator creator =
-        new PermissionRegistrationContextCreator(tenant, request, dryRun);
-    PermissionRegistrationContext context = creator.create();
+    // 2. Create permission from request
+    Permissions existingPermissions = permissionQueryRepository.findAll(tenant);
+    Permission permission = createPermission(request);
 
-    verifier.verify(context);
+    // 3. Business rule verification
+    new PermissionRegistrationVerifier(request, existingPermissions).verify();
 
-    if (!dryRun) {
-      permissionCommandRepository.register(tenant, context.permission());
+    // 4. Populate builder with created permission
+    builder.withAfter(permission);
+
+    // 5. Build response
+    Map<String, Object> contents = Map.of("result", permission.toMap(), "dry_run", dryRun);
+
+    if (dryRun) {
+      return new PermissionManagementResponse(PermissionManagementStatus.OK, contents);
     }
 
-    return PermissionManagementResult.success(tenant, context.toResponse(), context);
+    // 6. Repository operation
+    permissionCommandRepository.register(tenant, permission);
+
+    return new PermissionManagementResponse(PermissionManagementStatus.CREATED, contents);
+  }
+
+  private Permission createPermission(PermissionRequest request) {
+    JsonNodeWrapper requestJson = JsonNodeWrapper.fromMap(request.toMap());
+    String id =
+        requestJson.contains("id")
+            ? requestJson.getValueOrEmptyAsString("id")
+            : UUID.randomUUID().toString();
+    String name = requestJson.getValueOrEmptyAsString("name");
+    String description = requestJson.getValueOrEmptyAsString("description");
+
+    return new Permission(id, name, description);
   }
 }

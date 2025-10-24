@@ -18,14 +18,12 @@ package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.management.permission.*;
 import org.idp.server.control_plane.management.permission.handler.*;
-import org.idp.server.control_plane.management.permission.io.PermissionManagementResponse;
-import org.idp.server.control_plane.management.permission.io.PermissionRequest;
-import org.idp.server.core.openid.identity.User;
+import org.idp.server.control_plane.management.permission.io.*;
 import org.idp.server.core.openid.identity.permission.*;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
@@ -36,8 +34,14 @@ import org.idp.server.platform.type.RequestAttributes;
 /**
  * System-level permission management entry service.
  *
- * <p>This service implements system-scoped permission management operations following the
- * Handler/Service pattern.
+ * <p>This service implements permission management operations using the Handler/Service pattern.
+ * Responsibilities include:
+ *
+ * <ul>
+ *   <li>Orchestrating Handler/Service components
+ *   <li>Audit log publication
+ *   <li>HTTP response generation from Result objects
+ * </ul>
  *
  * @see PermissionManagementApi
  * @see PermissionManagementHandler
@@ -48,6 +52,14 @@ public class PermissionManagementEntryService implements PermissionManagementApi
   private final PermissionManagementHandler handler;
   private final AuditLogPublisher auditLogPublisher;
 
+  /**
+   * Creates a new permission management entry service.
+   *
+   * @param tenantQueryRepository the tenant query repository
+   * @param permissionQueryRepository the permission query repository
+   * @param permissionCommandRepository the permission command repository
+   * @param auditLogPublisher the audit log publisher
+   */
   public PermissionManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
       PermissionQueryRepository permissionQueryRepository,
@@ -73,29 +85,15 @@ public class PermissionManagementEntryService implements PermissionManagementApi
 
   @Override
   public PermissionManagementResponse create(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       PermissionRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
     PermissionManagementResult result =
         handler.handle(
-            "create", tenantIdentifier, operator, oAuthToken, request, requestAttributes, dryRun);
-
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "PermissionManagementApi.create",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
+            "create", authenticationContext, tenantIdentifier, request, requestAttributes, dryRun);
 
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
@@ -106,37 +104,17 @@ public class PermissionManagementEntryService implements PermissionManagementApi
   @Override
   @Transaction(readOnly = true)
   public PermissionManagementResponse findList(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       PermissionQueries queries,
       RequestAttributes requestAttributes) {
 
+    PermissionFindListRequest request = new PermissionFindListRequest(queries);
     PermissionManagementResult result =
         handler.handle(
-            "findList", tenantIdentifier, operator, oAuthToken, queries, requestAttributes, false);
+            "findList", authenticationContext, tenantIdentifier, request, requestAttributes, false);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "PermissionManagementApi.findList",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(false);
-    }
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "PermissionManagementApi.findList",
-            "findList",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);
@@ -145,37 +123,17 @@ public class PermissionManagementEntryService implements PermissionManagementApi
   @Override
   @Transaction(readOnly = true)
   public PermissionManagementResponse get(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       PermissionIdentifier identifier,
       RequestAttributes requestAttributes) {
 
+    PermissionFindRequest request = new PermissionFindRequest(identifier);
     PermissionManagementResult result =
         handler.handle(
-            "get", tenantIdentifier, operator, oAuthToken, identifier, requestAttributes, false);
+            "get", authenticationContext, tenantIdentifier, request, requestAttributes, false);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "PermissionManagementApi.get",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(false);
-    }
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "PermissionManagementApi.get",
-            "get",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);
@@ -183,9 +141,8 @@ public class PermissionManagementEntryService implements PermissionManagementApi
 
   @Override
   public PermissionManagementResponse update(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       PermissionIdentifier identifier,
       PermissionRequest request,
       RequestAttributes requestAttributes,
@@ -195,25 +152,11 @@ public class PermissionManagementEntryService implements PermissionManagementApi
     PermissionManagementResult result =
         handler.handle(
             "update",
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
             updateRequest,
             requestAttributes,
             dryRun);
-
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "PermissionManagementApi.update",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
 
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
@@ -223,45 +166,23 @@ public class PermissionManagementEntryService implements PermissionManagementApi
 
   @Override
   public PermissionManagementResponse delete(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       PermissionIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    PermissionDeleteRequest deleteRequest = new PermissionDeleteRequest(identifier);
     PermissionManagementResult result =
         handler.handle(
             "delete",
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
-            identifier,
+            deleteRequest,
             requestAttributes,
             dryRun);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "PermissionManagementApi.delete",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnDeletion(
-            "PermissionManagementApi.delete",
-            "delete",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (Map<String, Object>) result.context(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

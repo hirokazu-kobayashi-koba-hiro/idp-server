@@ -16,9 +16,10 @@
 
 package org.idp.server.control_plane.management.permission.handler;
 
-import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
+import org.idp.server.control_plane.management.permission.PermissionManagementContextBuilder;
+import org.idp.server.control_plane.management.permission.io.PermissionDeleteRequest;
 import org.idp.server.control_plane.management.permission.io.PermissionManagementResponse;
 import org.idp.server.control_plane.management.permission.io.PermissionManagementStatus;
 import org.idp.server.core.openid.identity.User;
@@ -34,8 +35,16 @@ import org.idp.server.platform.type.RequestAttributes;
  * Service for deleting permissions.
  *
  * <p>Handles permission deletion logic following the Handler/Service pattern.
+ *
+ * <h2>Responsibilities</h2>
+ *
+ * <ul>
+ *   <li>Existing permission retrieval
+ *   <li>Permission deletion (or dry-run simulation)
+ * </ul>
  */
-public class PermissionDeleteService implements PermissionManagementService<PermissionIdentifier> {
+public class PermissionDeleteService
+    implements PermissionManagementService<PermissionDeleteRequest> {
 
   private final PermissionQueryRepository permissionQueryRepository;
   private final PermissionCommandRepository permissionCommandRepository;
@@ -48,14 +57,16 @@ public class PermissionDeleteService implements PermissionManagementService<Perm
   }
 
   @Override
-  public PermissionManagementResult execute(
+  public PermissionManagementResponse execute(
+      PermissionManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      PermissionIdentifier identifier,
+      PermissionDeleteRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    PermissionIdentifier identifier = request.identifier();
     Permission permission = permissionQueryRepository.find(tenant, identifier);
 
     if (!permission.exists()) {
@@ -63,20 +74,20 @@ public class PermissionDeleteService implements PermissionManagementService<Perm
           String.format("Permission not found: %s", identifier.value()));
     }
 
+    // Populate builder with permission to be deleted
+    builder.withBefore(permission);
+
     if (dryRun) {
-      Map<String, Object> response = new HashMap<>();
+      Map<String, Object> response = new java.util.HashMap<>();
       response.put("message", "Deletion simulated successfully");
       response.put("id", permission.id());
       response.put("dry_run", true);
-      return PermissionManagementResult.success(
-          tenant, new PermissionManagementResponse(PermissionManagementStatus.OK, response), null);
+      return new PermissionManagementResponse(PermissionManagementStatus.OK, response);
     }
 
+    // Repository operation
     permissionCommandRepository.delete(tenant, permission);
 
-    return PermissionManagementResult.success(
-        tenant,
-        new PermissionManagementResponse(PermissionManagementStatus.NO_CONTENT, Map.of()),
-        null);
+    return new PermissionManagementResponse(PermissionManagementStatus.NO_CONTENT, Map.of());
   }
 }

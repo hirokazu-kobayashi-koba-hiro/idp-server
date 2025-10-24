@@ -14,15 +14,25 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.management.permission.handler;
+package org.idp.server.control_plane.management.permission.io;
 
-import org.idp.server.control_plane.management.permission.io.PermissionRequest;
-import org.idp.server.core.openid.identity.permission.PermissionIdentifier;
+import java.util.HashMap;
+import java.util.Map;
+import org.idp.server.core.openid.identity.permission.PermissionQueries;
 
 /**
- * Request wrapper for permission update operations.
+ * Request wrapper for permission findList operations.
  *
- * <p>Combines permission identifier with update request payload.
+ * <p>Wraps PermissionQueries for list/search operations.
  */
-public record PermissionUpdateRequest(
-    PermissionIdentifier identifier, PermissionRequest permissionRequest) {}
+public record PermissionFindListRequest(PermissionQueries queries)
+    implements PermissionManagementRequest {
+
+  @Override
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("limit", queries.limit());
+    map.put("offset", queries.offset());
+    return map;
+  }
+}
