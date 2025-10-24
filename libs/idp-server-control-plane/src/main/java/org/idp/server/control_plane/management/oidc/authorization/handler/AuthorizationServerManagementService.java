@@ -16,6 +16,8 @@
 
 package org.idp.server.control_plane.management.oidc.authorization.handler;
 
+import org.idp.server.control_plane.management.oidc.authorization.AuthorizationServerManagementContextBuilder;
+import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerManagementResponse;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -24,10 +26,11 @@ import org.idp.server.platform.type.RequestAttributes;
 /**
  * Service interface for authorization server management operations.
  *
- * <p>Part of Handler/Service pattern. Each operation (get, update) has its own service
- * implementation that handles business logic.
+ * <p>Part of Handler/Service pattern. Implementations handle specific authorization server
+ * management operations (get, update).
  *
  * @param <T> the request type for this service
+ * @see AuthorizationServerManagementHandler
  * @see AuthorizationServerManagementResult
  */
 public interface AuthorizationServerManagementService<T> {
@@ -35,15 +38,17 @@ public interface AuthorizationServerManagementService<T> {
   /**
    * Executes the authorization server management operation.
    *
+   * @param contextBuilder the context builder for audit logging
    * @param tenant the tenant
    * @param operator the operator user
    * @param oAuthToken the OAuth token
    * @param request the request object (type varies by operation, may be null for get)
    * @param requestAttributes the request attributes
    * @param dryRun whether to perform a dry run
-   * @return the result of the operation
+   * @return the response of the operation
    */
-  AuthorizationServerManagementResult execute(
+  AuthorizationServerManagementResponse execute(
+      AuthorizationServerManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,

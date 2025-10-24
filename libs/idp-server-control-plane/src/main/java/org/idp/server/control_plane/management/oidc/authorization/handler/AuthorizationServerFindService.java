@@ -16,6 +16,8 @@
 
 package org.idp.server.control_plane.management.oidc.authorization.handler;
 
+import org.idp.server.control_plane.management.oidc.authorization.AuthorizationServerManagementContextBuilder;
+import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerFindRequest;
 import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerManagementResponse;
 import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerManagementStatus;
 import org.idp.server.core.openid.identity.User;
@@ -31,7 +33,8 @@ import org.idp.server.platform.type.RequestAttributes;
  * <p>Handles business logic for retrieving authorization server configurations. Part of
  * Handler/Service pattern.
  */
-public class AuthorizationServerFindService implements AuthorizationServerManagementService<Void> {
+public class AuthorizationServerFindService
+    implements AuthorizationServerManagementService<AuthorizationServerFindRequest> {
 
   private final AuthorizationServerConfigurationQueryRepository queryRepository;
 
@@ -41,19 +44,21 @@ public class AuthorizationServerFindService implements AuthorizationServerManage
   }
 
   @Override
-  public AuthorizationServerManagementResult execute(
+  public AuthorizationServerManagementResponse execute(
+      AuthorizationServerManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      Void request,
+      AuthorizationServerFindRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
     AuthorizationServerConfiguration configuration = queryRepository.getWithDisabled(tenant, true);
 
-    return AuthorizationServerManagementResult.success(
-        tenant.identifier(),
-        new AuthorizationServerManagementResponse(
-            AuthorizationServerManagementStatus.OK, configuration.toMap()));
+    // Update context builder with before state (for audit logging)
+    contextBuilder.withBefore(configuration);
+
+    return new AuthorizationServerManagementResponse(
+        AuthorizationServerManagementStatus.OK, configuration.toMap());
   }
 }

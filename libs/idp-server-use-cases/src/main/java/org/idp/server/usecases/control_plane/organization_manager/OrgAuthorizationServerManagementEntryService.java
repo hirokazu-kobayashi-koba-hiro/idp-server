@@ -19,21 +19,18 @@ package org.idp.server.usecases.control_plane.organization_manager;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.management.oidc.authorization.AuthorizationServerUpdateContext;
+import org.idp.server.control_plane.base.OrganizationAccessVerifier;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.management.oidc.authorization.OrgAuthorizationServerManagementApi;
 import org.idp.server.control_plane.management.oidc.authorization.handler.*;
+import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerFindRequest;
 import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerManagementResponse;
 import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerUpdateRequest;
-import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
@@ -74,14 +71,12 @@ public class OrgAuthorizationServerManagementEntryService
    * Creates a new organization authorization server management entry service.
    *
    * @param tenantQueryRepository the tenant query repository
-   * @param organizationRepository the organization repository
    * @param queryRepository the authorization server configuration query repository
    * @param commandRepository the authorization server configuration command repository
    * @param auditLogPublisher the audit log publisher
    */
   public OrgAuthorizationServerManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
-      OrganizationRepository organizationRepository,
       AuthorizationServerConfigurationQueryRepository queryRepository,
       AuthorizationServerConfigurationCommandRepository commandRepository,
       AuditLogPublisher auditLogPublisher) {
@@ -92,7 +87,8 @@ public class OrgAuthorizationServerManagementEntryService
         "update", new AuthorizationServerUpdateService(queryRepository, commandRepository));
 
     this.handler =
-        new OrgAuthorizationServerManagementHandler(services, organizationRepository, this);
+        new OrgAuthorizationServerManagementHandler(
+            services, this, tenantQueryRepository, new OrganizationAccessVerifier());
 
     this.tenantQueryRepository = tenantQueryRepository;
     this.auditLogPublisher = auditLogPublisher;
@@ -101,33 +97,16 @@ public class OrgAuthorizationServerManagementEntryService
   @Override
   @Transaction(readOnly = true)
   public AuthorizationServerManagementResponse get(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
+    AuthorizationServerFindRequest findRequest = new AuthorizationServerFindRequest();
     AuthorizationServerManagementResult result =
         handler.handle(
-            "get",
-            organizationIdentifier,
-            tenant,
-            operator,
-            oAuthToken,
-            null,
-            requestAttributes,
-            false);
+            "get", authenticationContext, tenantIdentifier, findRequest, requestAttributes, false);
 
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "OrgAuthorizationServerManagementApi.get",
-            "get",
-            tenant,
-            operator,
-            oAuthToken,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);
@@ -135,49 +114,17 @@ public class OrgAuthorizationServerManagementEntryService
 
   @Override
   public AuthorizationServerManagementResponse update(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthorizationServerUpdateRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
     AuthorizationServerManagementResult result =
         handler.handle(
-            "update",
-            organizationIdentifier,
-            tenant,
-            operator,
-            oAuthToken,
-            request,
-            requestAttributes,
-            dryRun);
+            "update", authenticationContext, tenantIdentifier, request, requestAttributes, dryRun);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "OrgAuthorizationServerManagementApi.update",
-              tenant,
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
-
-    AuthorizationServerUpdateContext context = (AuthorizationServerUpdateContext) result.context();
-    AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "OrgAuthorizationServerManagementApi.update",
-            tenant,
-            operator,
-            oAuthToken,
-            context,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

@@ -18,20 +18,15 @@ package org.idp.server.control_plane.management.oidc.authorization.io;
 
 import java.util.Map;
 
-public class AuthorizationServerUpdateRequest implements AuthorizationServerManagementRequest {
-
-  Map<String, Object> values;
-
-  public AuthorizationServerUpdateRequest(Map<String, Object> values) {
-    this.values = values;
-  }
+/**
+ * Request wrapper for authorization server find (get) operations.
+ *
+ * <p>Empty request object for get operations (no parameters needed).
+ */
+public record AuthorizationServerFindRequest() implements AuthorizationServerManagementRequest {
 
   @Override
   public Map<String, Object> toMap() {
-    return values;
-  }
-
-  public Object get(String key) {
-    return values.get(key);
+    return Map.of();
   }
 }

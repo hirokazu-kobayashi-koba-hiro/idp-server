@@ -82,11 +82,7 @@ public class OrganizationAuthorizationServerManagementV1Api implements Parameter
 
     AuthorizationServerManagementResponse response =
         orgAuthorizationServerManagementApi.get(
-            organizationId,
-            tenantId,
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
-            requestAttributes);
+            organizationOperatorPrincipal.authenticationContext(), tenantId, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
@@ -119,10 +115,8 @@ public class OrganizationAuthorizationServerManagementV1Api implements Parameter
 
     AuthorizationServerManagementResponse response =
         orgAuthorizationServerManagementApi.update(
-            organizationId,
+            organizationOperatorPrincipal.authenticationContext(),
             tenantId,
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new AuthorizationServerUpdateRequest(body),
             requestAttributes,
             dryRun);

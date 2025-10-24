@@ -1004,7 +1004,6 @@ public class IdpServerApplication {
         ManagementTypeEntryServiceProxy.createProxy(
             new OrgAuthorizationServerManagementEntryService(
                 tenantQueryRepository,
-                organizationRepository,
                 authorizationServerConfigurationQueryRepository,
                 authorizationServerConfigurationCommandRepository,
                 auditLogPublisher),

@@ -17,21 +17,26 @@
 package org.idp.server.control_plane.management.oidc.authorization.io;
 
 import java.util.Map;
+import org.idp.server.control_plane.management.oidc.authorization.handler.AuthorizationServerManagementHandler;
 
-public class AuthorizationServerUpdateRequest implements AuthorizationServerManagementRequest {
+/**
+ * Marker interface for authorization server management request objects.
+ *
+ * <p>Enables polymorphic handling of different request types in Handler layer:
+ *
+ * <ul>
+ *   <li>AuthorizationServerFindRequest (get operation)
+ *   <li>AuthorizationServerUpdateRequest (update operation)
+ * </ul>
+ *
+ * @see AuthorizationServerManagementHandler
+ */
+public interface AuthorizationServerManagementRequest {
 
-  Map<String, Object> values;
-
-  public AuthorizationServerUpdateRequest(Map<String, Object> values) {
-    this.values = values;
-  }
-
-  @Override
-  public Map<String, Object> toMap() {
-    return values;
-  }
-
-  public Object get(String key) {
-    return values.get(key);
-  }
+  /**
+   * Converts request to Map for audit logging.
+   *
+   * @return request data as map
+   */
+  Map<String, Object> toMap();
 }

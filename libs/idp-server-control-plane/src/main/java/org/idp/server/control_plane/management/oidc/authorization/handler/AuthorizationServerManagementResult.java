@@ -18,124 +18,79 @@ package org.idp.server.control_plane.management.oidc.authorization.handler;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
 import org.idp.server.control_plane.management.exception.OrganizationAccessDeniedException;
 import org.idp.server.control_plane.management.exception.PermissionDeniedException;
+import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerManagementResponse;
 import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerManagementStatus;
-import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 /**
- * Result wrapper for authorization server management operations.
+ * Result object for authorization server management operations.
  *
- * <p>Encapsulates both success and error results, with automatic exception-to-HTTP status mapping.
+ * <p>Encapsulates the outcome of authorization server management Handler/Service pattern
+ * operations. Follows the Result-Exception Hybrid pattern:
  *
+ * <ul>
+ *   <li>Service layer throws ManagementApiException on validation/verification failures
+ *   <li>Handler layer catches exceptions and converts to Result
+ *   <li>EntryService layer converts Result to HTTP response
+ * </ul>
+ *
+ * @see AuthorizationServerManagementHandler
  * @see AuthorizationServerManagementService
  */
 public class AuthorizationServerManagementResult {
 
-  private final TenantIdentifier tenantIdentifier;
-  private final AuthorizationServerManagementResponse response;
+  private final AuditableContext context;
   private final ManagementApiException exception;
-  private final Object context;
+  private final AuthorizationServerManagementResponse response;
 
   private AuthorizationServerManagementResult(
-      TenantIdentifier tenantIdentifier,
-      AuthorizationServerManagementResponse response,
+      AuditableContext context,
       ManagementApiException exception,
-      Object context) {
-    this.tenantIdentifier = tenantIdentifier;
-    this.response = response;
-    this.exception = exception;
+      AuthorizationServerManagementResponse response) {
     this.context = context;
+    this.exception = exception;
+    this.response = response;
   }
 
   /**
-   * Creates a success result.
+   * Creates a successful result with context.
    *
-   * @param tenantIdentifier the tenant identifier
-   * @param response the response
-   * @return the success result
+   * @param context the operation context
+   * @param response the success response
+   * @return successful result with context
    */
   public static AuthorizationServerManagementResult success(
-      TenantIdentifier tenantIdentifier, AuthorizationServerManagementResponse response) {
-    return new AuthorizationServerManagementResult(tenantIdentifier, response, null, null);
-  }
-
-  /**
-   * Creates a success result with context.
-   *
-   * @param tenantIdentifier the tenant identifier
-   * @param response the response
-   * @param context the context object
-   * @return the success result
-   */
-  public static AuthorizationServerManagementResult success(
-      TenantIdentifier tenantIdentifier,
-      AuthorizationServerManagementResponse response,
-      Object context) {
-    return new AuthorizationServerManagementResult(tenantIdentifier, response, null, context);
+      AuditableContext context, AuthorizationServerManagementResponse response) {
+    return new AuthorizationServerManagementResult(context, null, response);
   }
 
   /**
    * Creates an error result from an exception.
    *
-   * @param tenantIdentifier the tenant identifier
-   * @param exception the exception
-   * @return the error result
+   * @param context the operation context (may be partial)
+   * @param exception the exception that occurred
+   * @return error result
    */
   public static AuthorizationServerManagementResult error(
-      TenantIdentifier tenantIdentifier, ManagementApiException exception) {
-    return new AuthorizationServerManagementResult(tenantIdentifier, null, exception, null);
+      AuditableContext context, ManagementApiException exception) {
+    return new AuthorizationServerManagementResult(context, exception, null);
   }
 
   /**
-   * Checks if this result has an exception.
+   * Maps exception types to HTTP status codes.
    *
-   * @return true if this result has an exception
+   * @param exception the exception to map
+   * @return corresponding HTTP status
    */
-  public boolean hasException() {
-    return exception != null;
-  }
-
-  /**
-   * Gets the exception.
-   *
-   * @return the exception
-   */
-  public ManagementApiException getException() {
-    return exception;
-  }
-
-  /**
-   * Gets the context object.
-   *
-   * @return the context object
-   */
-  public Object context() {
-    return context;
-  }
-
-  /**
-   * Converts this result to a response.
-   *
-   * @param dryRun whether this is a dry run
-   * @return the response
-   */
-  public AuthorizationServerManagementResponse toResponse(boolean dryRun) {
-    if (exception != null) {
-      AuthorizationServerManagementStatus status = mapExceptionToStatus(exception);
-      Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", getErrorCode(exception));
-      errorResponse.put("error_description", exception.getMessage());
-      errorResponse.put("dry_run", dryRun);
-      return new AuthorizationServerManagementResponse(status, errorResponse);
-    }
-    return response;
-  }
-
   private static AuthorizationServerManagementStatus mapExceptionToStatus(
       ManagementApiException exception) {
+    if (exception instanceof ResourceNotFoundException) {
+      return AuthorizationServerManagementStatus.NOT_FOUND;
+    }
     if (exception instanceof PermissionDeniedException
         || exception instanceof OrganizationAccessDeniedException) {
       return AuthorizationServerManagementStatus.FORBIDDEN;
@@ -143,11 +98,28 @@ public class AuthorizationServerManagementResult {
     return AuthorizationServerManagementStatus.INVALID_REQUEST;
   }
 
-  private static String getErrorCode(ManagementApiException exception) {
-    if (exception instanceof PermissionDeniedException
-        || exception instanceof OrganizationAccessDeniedException) {
-      return "access_denied";
+  public AuditableContext context() {
+    return context;
+  }
+
+  public boolean hasException() {
+    return exception != null;
+  }
+
+  public ManagementApiException getException() {
+    return exception;
+  }
+
+  public AuthorizationServerManagementResponse toResponse(boolean dryRun) {
+    if (hasException()) {
+      AuthorizationServerManagementStatus status = mapExceptionToStatus(exception);
+      Map<String, Object> errorResponse = new HashMap<>();
+      errorResponse.put("dry_run", dryRun);
+      errorResponse.put("error", exception.errorCode());
+      errorResponse.put("error_description", exception.errorDescription());
+      errorResponse.putAll(exception.errorDetails());
+      return new AuthorizationServerManagementResponse(status, errorResponse);
     }
-    return "invalid_request";
+    return response;
   }
 }
