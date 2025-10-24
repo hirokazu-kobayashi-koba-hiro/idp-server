@@ -57,9 +57,8 @@ public class AuthenticationPolicyConfigurationManagementV1Api implements Paramet
 
     AuthenticationPolicyConfigManagementResponse response =
         authenticationPolicyConfigurationManagementApi.create(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             new AuthenticationPolicyConfigRequest(body),
             requestAttributes,
             dryRun);
@@ -83,9 +82,8 @@ public class AuthenticationPolicyConfigurationManagementV1Api implements Paramet
 
     AuthenticationPolicyConfigManagementResponse response =
         authenticationPolicyConfigurationManagementApi.findList(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             Integer.parseInt(limitValue),
             Integer.parseInt(offsetValue),
             requestAttributes);
@@ -108,9 +106,8 @@ public class AuthenticationPolicyConfigurationManagementV1Api implements Paramet
 
     AuthenticationPolicyConfigManagementResponse response =
         authenticationPolicyConfigurationManagementApi.get(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             requestAttributes);
 
@@ -133,9 +130,8 @@ public class AuthenticationPolicyConfigurationManagementV1Api implements Paramet
 
     AuthenticationPolicyConfigManagementResponse response =
         authenticationPolicyConfigurationManagementApi.update(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             new AuthenticationPolicyConfigRequest(body),
             requestAttributes,
@@ -158,9 +154,8 @@ public class AuthenticationPolicyConfigurationManagementV1Api implements Paramet
 
     AuthenticationPolicyConfigManagementResponse response =
         authenticationPolicyConfigurationManagementApi.delete(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             requestAttributes,
             dryRun);

@@ -19,13 +19,12 @@ package org.idp.server.control_plane.management.authentication.policy;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigRequest;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfigurationIdentifier;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
@@ -57,41 +56,36 @@ public interface AuthenticationPolicyConfigurationManagementApi {
   }
 
   AuthenticationPolicyConfigManagementResponse create(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationPolicyConfigRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
   AuthenticationPolicyConfigManagementResponse findList(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       int limit,
       int offset,
       RequestAttributes requestAttributes);
 
   AuthenticationPolicyConfigManagementResponse get(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationPolicyConfigurationIdentifier identifier,
       RequestAttributes requestAttributes);
 
   AuthenticationPolicyConfigManagementResponse update(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationPolicyConfigurationIdentifier identifier,
       AuthenticationPolicyConfigRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
   AuthenticationPolicyConfigManagementResponse delete(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationPolicyConfigurationIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun);

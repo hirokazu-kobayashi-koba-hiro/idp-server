@@ -18,16 +18,16 @@ package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.management.authentication.policy.AuthenticationPolicyConfigurationManagementApi;
 import org.idp.server.control_plane.management.authentication.policy.handler.*;
-import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementResponse;
-import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigRequest;
+import org.idp.server.control_plane.management.authentication.policy.handler.AuthenticationPolicyConfigFindListRequest;
+import org.idp.server.control_plane.management.authentication.policy.handler.AuthenticationPolicyConfigUpdateRequest;
+import org.idp.server.control_plane.management.authentication.policy.io.*;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfigurationIdentifier;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationQueryRepository;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
@@ -101,9 +101,8 @@ public class AuthenticationPolicyConfigurationManagementEntryService
 
   @Override
   public AuthenticationPolicyConfigManagementResponse create(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationPolicyConfigRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
@@ -111,22 +110,9 @@ public class AuthenticationPolicyConfigurationManagementEntryService
     // Delegate to Handler/Service pattern
     AuthenticationPolicyConfigManagementResult result =
         handler.handle(
-            "create", tenantIdentifier, operator, oAuthToken, request, requestAttributes, dryRun);
+            "create", authenticationContext, tenantIdentifier, request, requestAttributes, dryRun);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "AuthenticationPolicyConfigurationManagementApi.create",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
-
-    // Record audit log (create operation)
+    // Record audit log
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
@@ -136,42 +122,21 @@ public class AuthenticationPolicyConfigurationManagementEntryService
   @Override
   @Transaction(readOnly = true)
   public AuthenticationPolicyConfigManagementResponse findList(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       int limit,
       int offset,
       RequestAttributes requestAttributes) {
 
     // Delegate to Handler/Service pattern
-    AuthenticationPolicyConfigFindListRequest request =
+    AuthenticationPolicyConfigManagementRequest request =
         new AuthenticationPolicyConfigFindListRequest(limit, offset);
     AuthenticationPolicyConfigManagementResult result =
         handler.handle(
-            "findList", tenantIdentifier, operator, oAuthToken, request, requestAttributes, false);
+            "findList", authenticationContext, tenantIdentifier, request, requestAttributes, false);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "AuthenticationPolicyConfigurationManagementApi.findList",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(false);
-    }
-
-    // Record audit log (read operation)
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "AuthenticationPolicyConfigurationManagementApi.findList",
-            "findList",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            requestAttributes);
+    // Record audit log
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);
@@ -180,39 +145,20 @@ public class AuthenticationPolicyConfigurationManagementEntryService
   @Override
   @Transaction(readOnly = true)
   public AuthenticationPolicyConfigManagementResponse get(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationPolicyConfigurationIdentifier identifier,
       RequestAttributes requestAttributes) {
 
     // Delegate to Handler/Service pattern
+    AuthenticationPolicyConfigFindRequest request =
+        new AuthenticationPolicyConfigFindRequest(identifier);
     AuthenticationPolicyConfigManagementResult result =
         handler.handle(
-            "get", tenantIdentifier, operator, oAuthToken, identifier, requestAttributes, false);
+            "get", authenticationContext, tenantIdentifier, request, requestAttributes, false);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "AuthenticationPolicyConfigurationManagementApi.get",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(false);
-    }
-
-    // Record audit log (read operation)
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "AuthenticationPolicyConfigurationManagementApi.get",
-            "get",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            requestAttributes);
+    // Record audit log
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);
@@ -220,41 +166,26 @@ public class AuthenticationPolicyConfigurationManagementEntryService
 
   @Override
   public AuthenticationPolicyConfigManagementResponse update(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationPolicyConfigurationIdentifier identifier,
       AuthenticationPolicyConfigRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
     // Delegate to Handler/Service pattern
-    AuthenticationPolicyConfigUpdateRequest updateRequest =
+    AuthenticationPolicyConfigManagementRequest updateRequest =
         new AuthenticationPolicyConfigUpdateRequest(identifier, request);
     AuthenticationPolicyConfigManagementResult result =
         handler.handle(
             "update",
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
             updateRequest,
             requestAttributes,
             dryRun);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "AuthenticationPolicyConfigurationManagementApi.update",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
-
-    // Record audit log (update operation)
+    // Record audit log
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
@@ -263,47 +194,21 @@ public class AuthenticationPolicyConfigurationManagementEntryService
 
   @Override
   public AuthenticationPolicyConfigManagementResponse delete(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationPolicyConfigurationIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
     // Delegate to Handler/Service pattern
+    AuthenticationPolicyConfigDeleteRequest request =
+        new AuthenticationPolicyConfigDeleteRequest(identifier);
     AuthenticationPolicyConfigManagementResult result =
         handler.handle(
-            "delete",
-            tenantIdentifier,
-            operator,
-            oAuthToken,
-            identifier,
-            requestAttributes,
-            dryRun);
+            "delete", authenticationContext, tenantIdentifier, request, requestAttributes, dryRun);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "AuthenticationPolicyConfigurationManagementApi.delete",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
-
-    // Record audit log (deletion operation)
-    AuditLog auditLog =
-        AuditLogCreator.createOnDeletion(
-            "AuthenticationPolicyConfigurationManagementApi.delete",
-            "delete",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (Map<String, Object>) result.context(),
-            requestAttributes);
+    // Record audit log
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

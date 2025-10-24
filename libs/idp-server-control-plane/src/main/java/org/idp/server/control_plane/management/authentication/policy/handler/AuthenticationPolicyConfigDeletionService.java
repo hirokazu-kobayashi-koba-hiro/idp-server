@@ -16,13 +16,13 @@
 
 package org.idp.server.control_plane.management.authentication.policy.handler;
 
-import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.management.authentication.policy.AuthenticationPolicyConfigManagementContextBuilder;
+import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigDeleteRequest;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementStatus;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
-import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfigurationIdentifier;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
@@ -31,76 +31,62 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Service for deleting authentication policy configurations.
+ * Service for authentication policy configuration deletion operations.
  *
- * <p>Handles authentication policy configuration deletion logic.
- *
- * <h2>Responsibilities</h2>
- *
- * <ul>
- *   <li>Retrieve existing configuration
- *   <li>Existence validation
- *   <li>Configuration deletion from repository
- *   <li>Dry-run support
- * </ul>
+ * <p>Handles business logic for deleting authentication policy configurations. Part of
+ * Handler/Service pattern.
  */
 public class AuthenticationPolicyConfigDeletionService
     implements AuthenticationPolicyConfigManagementService<
-        AuthenticationPolicyConfigurationIdentifier> {
+        AuthenticationPolicyConfigDeleteRequest> {
 
-  private final AuthenticationPolicyConfigurationQueryRepository
-      authenticationPolicyConfigurationQueryRepository;
-  private final AuthenticationPolicyConfigurationCommandRepository
-      authenticationPolicyConfigurationCommandRepository;
+  private final AuthenticationPolicyConfigurationQueryRepository queryRepository;
+  private final AuthenticationPolicyConfigurationCommandRepository commandRepository;
 
   public AuthenticationPolicyConfigDeletionService(
-      AuthenticationPolicyConfigurationQueryRepository
-          authenticationPolicyConfigurationQueryRepository,
-      AuthenticationPolicyConfigurationCommandRepository
-          authenticationPolicyConfigurationCommandRepository) {
-    this.authenticationPolicyConfigurationQueryRepository =
-        authenticationPolicyConfigurationQueryRepository;
-    this.authenticationPolicyConfigurationCommandRepository =
-        authenticationPolicyConfigurationCommandRepository;
+      AuthenticationPolicyConfigurationQueryRepository queryRepository,
+      AuthenticationPolicyConfigurationCommandRepository commandRepository) {
+    this.queryRepository = queryRepository;
+    this.commandRepository = commandRepository;
   }
 
   @Override
-  public AuthenticationPolicyConfigManagementResult execute(
+  public AuthenticationPolicyConfigManagementResponse execute(
+      AuthenticationPolicyConfigManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      AuthenticationPolicyConfigurationIdentifier identifier,
+      AuthenticationPolicyConfigDeleteRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    // 1. Retrieve existing configuration
     AuthenticationPolicyConfiguration configuration =
-        authenticationPolicyConfigurationQueryRepository.find(tenant, identifier);
+        queryRepository.findWithDisabled(tenant, request.identifier(), true);
 
     if (!configuration.exists()) {
       throw new ResourceNotFoundException(
-          String.format("Authentication policy configuration %s not found", identifier.value()));
+          "Authentication policy configuration not found: " + request.identifier().value());
     }
 
-    // 2. Dry-run check
+    // Update context builder with before state (for audit logging)
+    contextBuilder.withBefore(configuration);
+
     if (dryRun) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("message", "Deletion simulated successfully");
-      response.put("id", configuration.id());
-      response.put("dry_run", true);
-      AuthenticationPolicyConfigManagementResponse managementResponse =
-          new AuthenticationPolicyConfigManagementResponse(
-              AuthenticationPolicyConfigManagementStatus.OK, response);
-      return AuthenticationPolicyConfigManagementResult.success(tenant, null, managementResponse);
+      Map<String, Object> response =
+          Map.of(
+              "message",
+              "Deletion simulated successfully",
+              "id",
+              configuration.id(),
+              "dry_run",
+              true);
+      return new AuthenticationPolicyConfigManagementResponse(
+          AuthenticationPolicyConfigManagementStatus.OK, response);
     }
 
-    // 3. Delete configuration
-    authenticationPolicyConfigurationCommandRepository.delete(tenant, configuration);
+    commandRepository.delete(tenant, configuration);
 
-    // 4. Return success
-    AuthenticationPolicyConfigManagementResponse managementResponse =
-        new AuthenticationPolicyConfigManagementResponse(
-            AuthenticationPolicyConfigManagementStatus.NO_CONTENT, configuration.toMap());
-    return AuthenticationPolicyConfigManagementResult.success(tenant, null, managementResponse);
+    return new AuthenticationPolicyConfigManagementResponse(
+        AuthenticationPolicyConfigManagementStatus.NO_CONTENT, Map.of());
   }
 }

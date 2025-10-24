@@ -16,11 +16,12 @@
 
 package org.idp.server.control_plane.management.authentication.policy.handler;
 
+import org.idp.server.control_plane.management.authentication.policy.AuthenticationPolicyConfigManagementContextBuilder;
+import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigFindRequest;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementStatus;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
-import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfigurationIdentifier;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -28,53 +29,43 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Service for finding a single authentication policy configuration.
+ * Service for authentication policy configuration retrieval operations.
  *
- * <p>Handles authentication policy configuration retrieval by identifier. Throws
- * ResourceNotFoundException if the configuration does not exist.
- *
- * <h2>Responsibilities</h2>
- *
- * <ul>
- *   <li>Configuration retrieval by identifier
- *   <li>Existence validation
- *   <li>Response formatting
- * </ul>
+ * <p>Handles business logic for retrieving a single authentication policy configuration. Part of
+ * Handler/Service pattern.
  */
 public class AuthenticationPolicyConfigFindService
-    implements AuthenticationPolicyConfigManagementService<
-        AuthenticationPolicyConfigurationIdentifier> {
+    implements AuthenticationPolicyConfigManagementService<AuthenticationPolicyConfigFindRequest> {
 
-  private final AuthenticationPolicyConfigurationQueryRepository
-      authenticationPolicyConfigurationQueryRepository;
+  private final AuthenticationPolicyConfigurationQueryRepository queryRepository;
 
   public AuthenticationPolicyConfigFindService(
-      AuthenticationPolicyConfigurationQueryRepository
-          authenticationPolicyConfigurationQueryRepository) {
-    this.authenticationPolicyConfigurationQueryRepository =
-        authenticationPolicyConfigurationQueryRepository;
+      AuthenticationPolicyConfigurationQueryRepository queryRepository) {
+    this.queryRepository = queryRepository;
   }
 
   @Override
-  public AuthenticationPolicyConfigManagementResult execute(
+  public AuthenticationPolicyConfigManagementResponse execute(
+      AuthenticationPolicyConfigManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      AuthenticationPolicyConfigurationIdentifier identifier,
+      AuthenticationPolicyConfigFindRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
     AuthenticationPolicyConfiguration configuration =
-        authenticationPolicyConfigurationQueryRepository.find(tenant, identifier);
+        queryRepository.findWithDisabled(tenant, request.identifier(), true);
 
     if (!configuration.exists()) {
       throw new ResourceNotFoundException(
-          String.format("Authentication policy configuration %s not found", identifier.value()));
+          "Authentication policy configuration not found: " + request.identifier().value());
     }
 
-    AuthenticationPolicyConfigManagementResponse managementResponse =
-        new AuthenticationPolicyConfigManagementResponse(
-            AuthenticationPolicyConfigManagementStatus.OK, configuration.toMap());
-    return AuthenticationPolicyConfigManagementResult.success(tenant, null, managementResponse);
+    // Update context builder with before state (for audit logging)
+    contextBuilder.withBefore(configuration);
+
+    return new AuthenticationPolicyConfigManagementResponse(
+        AuthenticationPolicyConfigManagementStatus.OK, configuration.toMap());
   }
 }

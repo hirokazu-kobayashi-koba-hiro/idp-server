@@ -14,68 +14,80 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.management.authentication.transaction;
+package org.idp.server.control_plane.management.authentication.policy;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditableContext;
-import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionManagementRequest;
+import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementRequest;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
-import org.idp.server.core.openid.authentication.AuthenticationTransaction;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Unified context for all authentication transaction management operations.
+ * Unified context for all authentication policy configuration management operations.
  *
  * <p>This context supports:
  *
  * <ul>
- *   <li>get operation (result only)
- *   <li>findList operation (result only)
+ *   <li>create operation (after only)
+ *   <li>update operation (before + after)
+ *   <li>delete operation (before only)
+ *   <li>get/findList operations (before only)
  * </ul>
  *
- * <p>This enables:
+ * <p>Fields before/after are nullable depending on the operation type. This enables:
  *
  * <ul>
- *   <li>Single context implementation for all read operations
+ *   <li>Single context implementation for all operations
  *   <li>Complete AuditableContext implementation
  *   <li>Error tracking via exception field
  *   <li>Partial context construction for early failures
  * </ul>
  */
-public class AuthenticationTransactionManagementContext implements AuditableContext {
+public class AuthenticationPolicyConfigManagementContext implements AuditableContext {
 
   TenantIdentifier tenantIdentifier;
   User operator;
   OAuthToken oAuthToken;
   RequestAttributes requestAttributes;
-  AuthenticationTransaction result;
-  AuthenticationTransactionManagementRequest request;
+  AuthenticationPolicyConfiguration before;
+  AuthenticationPolicyConfiguration after;
+  AuthenticationPolicyConfigManagementRequest request;
+  boolean dryRun;
   ManagementApiException exception;
 
-  public AuthenticationTransactionManagementContext(
+  public AuthenticationPolicyConfigManagementContext(
       TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
       RequestAttributes requestAttributes,
-      AuthenticationTransaction result,
-      AuthenticationTransactionManagementRequest request,
+      AuthenticationPolicyConfiguration before,
+      AuthenticationPolicyConfiguration after,
+      AuthenticationPolicyConfigManagementRequest request,
+      boolean dryRun,
       ManagementApiException exception) {
     this.tenantIdentifier = tenantIdentifier;
     this.operator = operator;
     this.oAuthToken = oAuthToken;
     this.requestAttributes = requestAttributes;
-    this.result = result;
+    this.before = before;
+    this.after = after;
     this.request = request;
+    this.dryRun = dryRun;
     this.exception = exception;
   }
 
-  public AuthenticationTransaction result() {
-    return result;
+  public AuthenticationPolicyConfiguration beforeConfiguration() {
+    return before;
+  }
+
+  public AuthenticationPolicyConfiguration afterConfiguration() {
+    return after;
   }
 
   public boolean hasException() {
@@ -90,12 +102,12 @@ public class AuthenticationTransactionManagementContext implements AuditableCont
 
   @Override
   public String type() {
-    return "authentication_transaction";
+    return "authentication_policy_config";
   }
 
   @Override
   public String description() {
-    return "authentication transaction management api";
+    return "authentication policy configuration management api";
   }
 
   @Override
@@ -150,12 +162,12 @@ public class AuthenticationTransactionManagementContext implements AuditableCont
 
   @Override
   public Map<String, Object> before() {
-    return Collections.emptyMap();
+    return before != null ? before.toMap() : Collections.emptyMap();
   }
 
   @Override
   public Map<String, Object> after() {
-    return result != null ? result.toRequestMap() : Collections.emptyMap();
+    return after != null ? after.toMap() : Collections.emptyMap();
   }
 
   @Override
@@ -194,6 +206,6 @@ public class AuthenticationTransactionManagementContext implements AuditableCont
 
   @Override
   public boolean dryRun() {
-    return false;
+    return dryRun;
   }
 }

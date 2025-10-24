@@ -14,26 +14,20 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.management.authentication.policy.handler;
+package org.idp.server.control_plane.management.authentication.policy.io;
 
 import java.util.Map;
-import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementRequest;
-import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigRequest;
-import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfigurationIdentifier;
 
 /**
- * Request wrapper for update operation.
+ * Request wrapper for authentication policy configuration findList operations.
  *
- * @param identifier the configuration identifier to update
- * @param request the update request
+ * <p>Wraps pagination parameters for findList operations.
  */
-public record AuthenticationPolicyConfigUpdateRequest(
-    AuthenticationPolicyConfigurationIdentifier identifier,
-    AuthenticationPolicyConfigRequest request)
+public record AuthenticationPolicyConfigFindListRequest(int limit, int offset)
     implements AuthenticationPolicyConfigManagementRequest {
 
   @Override
   public Map<String, Object> toMap() {
-    return request.toMap();
+    return Map.of("limit", limit, "offset", offset);
   }
 }

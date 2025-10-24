@@ -16,10 +16,19 @@
 
 package org.idp.server.control_plane.management.authentication.policy.handler;
 
+import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementRequest;
+
 /**
  * Request wrapper for findList operation.
  *
  * @param limit maximum number of results to return
  * @param offset offset for pagination
  */
-public record AuthenticationPolicyConfigFindListRequest(int limit, int offset) {}
+public record AuthenticationPolicyConfigFindListRequest(int limit, int offset)
+    implements AuthenticationPolicyConfigManagementRequest {
+
+  @Override
+  public java.util.Map<String, Object> toMap() {
+    return java.util.Map.of("limit", limit, "offset", offset);
+  }
+}

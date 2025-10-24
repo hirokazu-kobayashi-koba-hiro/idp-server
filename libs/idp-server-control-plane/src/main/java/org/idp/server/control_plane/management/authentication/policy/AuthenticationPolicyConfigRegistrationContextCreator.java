@@ -16,9 +16,10 @@
 
 package org.idp.server.control_plane.management.authentication.policy;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigRequest;
-import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigurationRequest;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -40,13 +41,13 @@ public class AuthenticationPolicyConfigRegistrationContextCreator {
 
   public AuthenticationPolicyConfigRegistrationContext create() {
 
-    AuthenticationPolicyConfigurationRequest configurationRequest =
-        jsonConverter.read(request.toMap(), AuthenticationPolicyConfigurationRequest.class);
+    String id = request.hasId() ? request.getId() : UUID.randomUUID().toString();
 
-    String id =
-        configurationRequest.hasId() ? configurationRequest.id() : UUID.randomUUID().toString();
+    Map<String, Object> configMap = new HashMap<>(request.toMap());
+    configMap.put("id", id);
 
-    AuthenticationPolicyConfiguration configuration = configurationRequest.toConfiguration(id);
+    AuthenticationPolicyConfiguration configuration =
+        jsonConverter.read(configMap, AuthenticationPolicyConfiguration.class);
 
     return new AuthenticationPolicyConfigRegistrationContext(tenant, configuration, dryRun);
   }

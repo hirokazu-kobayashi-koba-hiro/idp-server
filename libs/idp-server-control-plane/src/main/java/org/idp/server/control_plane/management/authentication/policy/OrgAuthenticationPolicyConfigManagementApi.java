@@ -20,15 +20,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import org.idp.server.control_plane.base.OrganizationAccessVerifier;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigRequest;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfigurationIdentifier;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -79,107 +77,37 @@ public interface OrgAuthenticationPolicyConfigManagementApi {
     return adminPermissions;
   }
 
-  /**
-   * Creates a new authentication policy configuration within the organization.
-   *
-   * @param organizationIdentifier the organization identifier
-   * @param tenantIdentifier the tenant identifier
-   * @param operator the operator user
-   * @param oAuthToken the OAuth token
-   * @param request the authentication policy configuration request
-   * @param requestAttributes the request attributes
-   * @param dryRun whether to perform a dry run (validation only)
-   * @return the authentication policy configuration creation response
-   */
   AuthenticationPolicyConfigManagementResponse create(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationPolicyConfigRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
-  /**
-   * Lists authentication policy configurations within the organization.
-   *
-   * @param organizationIdentifier the organization identifier
-   * @param tenantIdentifier the tenant identifier
-   * @param operator the operator user
-   * @param oAuthToken the OAuth token
-   * @param limit the maximum number of results to return
-   * @param offset the offset for pagination
-   * @param requestAttributes the request attributes
-   * @return the authentication policy configuration list response
-   */
   AuthenticationPolicyConfigManagementResponse findList(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       int limit,
       int offset,
       RequestAttributes requestAttributes);
 
-  /**
-   * Gets a specific authentication policy configuration within the organization.
-   *
-   * @param organizationIdentifier the organization identifier
-   * @param tenantIdentifier the tenant identifier
-   * @param operator the operator user
-   * @param oAuthToken the OAuth token
-   * @param identifier the authentication policy configuration identifier
-   * @param requestAttributes the request attributes
-   * @return the authentication policy configuration details response
-   */
   AuthenticationPolicyConfigManagementResponse get(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationPolicyConfigurationIdentifier identifier,
       RequestAttributes requestAttributes);
 
-  /**
-   * Updates a specific authentication policy configuration within the organization.
-   *
-   * @param organizationIdentifier the organization identifier
-   * @param tenantIdentifier the tenant identifier
-   * @param operator the operator user
-   * @param oAuthToken the OAuth token
-   * @param identifier the authentication policy configuration identifier
-   * @param request the authentication policy configuration update request
-   * @param requestAttributes the request attributes
-   * @param dryRun whether to perform a dry run (validation only)
-   * @return the authentication policy configuration update response
-   */
   AuthenticationPolicyConfigManagementResponse update(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationPolicyConfigurationIdentifier identifier,
       AuthenticationPolicyConfigRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
-  /**
-   * Deletes a specific authentication policy configuration within the organization.
-   *
-   * @param organizationIdentifier the organization identifier
-   * @param tenantIdentifier the tenant identifier
-   * @param operator the operator user
-   * @param oAuthToken the OAuth token
-   * @param identifier the authentication policy configuration identifier
-   * @param requestAttributes the request attributes
-   * @param dryRun whether to perform a dry run (validation only)
-   * @return the authentication policy configuration deletion response
-   */
   AuthenticationPolicyConfigManagementResponse delete(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationPolicyConfigurationIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun);

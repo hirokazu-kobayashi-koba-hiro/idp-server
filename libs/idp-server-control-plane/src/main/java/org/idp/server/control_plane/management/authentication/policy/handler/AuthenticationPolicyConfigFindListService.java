@@ -18,6 +18,8 @@ package org.idp.server.control_plane.management.authentication.policy.handler;
 
 import java.util.List;
 import java.util.Map;
+import org.idp.server.control_plane.management.authentication.policy.AuthenticationPolicyConfigManagementContextBuilder;
+import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigFindListRequest;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementStatus;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
@@ -28,34 +30,25 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Service for finding authentication policy configuration list.
+ * Service for authentication policy configuration list retrieval operations.
  *
- * <p>Handles authentication policy configuration list retrieval logic with pagination support.
- *
- * <h2>Responsibilities</h2>
- *
- * <ul>
- *   <li>Query execution with pagination
- *   <li>Total count retrieval
- *   <li>Response formatting
- * </ul>
+ * <p>Handles business logic for retrieving lists of authentication policy configurations. Part of
+ * Handler/Service pattern.
  */
 public class AuthenticationPolicyConfigFindListService
     implements AuthenticationPolicyConfigManagementService<
         AuthenticationPolicyConfigFindListRequest> {
 
-  private final AuthenticationPolicyConfigurationQueryRepository
-      authenticationPolicyConfigurationQueryRepository;
+  private final AuthenticationPolicyConfigurationQueryRepository queryRepository;
 
   public AuthenticationPolicyConfigFindListService(
-      AuthenticationPolicyConfigurationQueryRepository
-          authenticationPolicyConfigurationQueryRepository) {
-    this.authenticationPolicyConfigurationQueryRepository =
-        authenticationPolicyConfigurationQueryRepository;
+      AuthenticationPolicyConfigurationQueryRepository queryRepository) {
+    this.queryRepository = queryRepository;
   }
 
   @Override
-  public AuthenticationPolicyConfigManagementResult execute(
+  public AuthenticationPolicyConfigManagementResponse execute(
+      AuthenticationPolicyConfigManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -63,34 +56,37 @@ public class AuthenticationPolicyConfigFindListService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    long totalCount = authenticationPolicyConfigurationQueryRepository.findTotalCount(tenant);
+    long totalCount = queryRepository.findTotalCount(tenant);
     if (totalCount == 0) {
       Map<String, Object> response =
           Map.of(
-              "list", List.of(),
-              "total_count", 0,
-              "limit", request.limit(),
-              "offset", request.offset());
-      AuthenticationPolicyConfigManagementResponse managementResponse =
-          new AuthenticationPolicyConfigManagementResponse(
-              AuthenticationPolicyConfigManagementStatus.OK, response);
-      return AuthenticationPolicyConfigManagementResult.success(tenant, null, managementResponse);
+              "list",
+              List.of(),
+              "total_count",
+              totalCount,
+              "limit",
+              request.limit(),
+              "offset",
+              request.offset());
+      return new AuthenticationPolicyConfigManagementResponse(
+          AuthenticationPolicyConfigManagementStatus.OK, response);
     }
 
     List<AuthenticationPolicyConfiguration> configurations =
-        authenticationPolicyConfigurationQueryRepository.findList(
-            tenant, request.limit(), request.offset());
+        queryRepository.findList(tenant, request.limit(), request.offset());
 
     Map<String, Object> response =
         Map.of(
-            "list", configurations.stream().map(AuthenticationPolicyConfiguration::toMap).toList(),
-            "total_count", totalCount,
-            "limit", request.limit(),
-            "offset", request.offset());
+            "list",
+            configurations.stream().map(AuthenticationPolicyConfiguration::toMap).toList(),
+            "total_count",
+            totalCount,
+            "limit",
+            request.limit(),
+            "offset",
+            request.offset());
 
-    AuthenticationPolicyConfigManagementResponse managementResponse =
-        new AuthenticationPolicyConfigManagementResponse(
-            AuthenticationPolicyConfigManagementStatus.OK, response);
-    return AuthenticationPolicyConfigManagementResult.success(tenant, null, managementResponse);
+    return new AuthenticationPolicyConfigManagementResponse(
+        AuthenticationPolicyConfigManagementStatus.OK, response);
   }
 }
