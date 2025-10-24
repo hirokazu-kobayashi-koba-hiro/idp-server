@@ -22,12 +22,12 @@ import org.idp.server.control_plane.management.identity.verification.IdentityVer
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementStatus;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigRegistrationRequest;
+import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigurationRequest;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationCommandRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.json.JsonConverter;
-import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -81,20 +81,13 @@ public class IdentityVerificationConfigCreationService
 
   private IdentityVerificationConfiguration createConfiguration(
       IdentityVerificationConfigRegistrationRequest request) {
-    JsonNodeWrapper requestJson = JsonNodeWrapper.fromMap(request.toMap());
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+    IdentityVerificationConfigurationRequest configurationRequest =
+        jsonConverter.read(request.toMap(), IdentityVerificationConfigurationRequest.class);
 
-    // Generate UUID if not provided
-    String id =
-        requestJson.contains("id")
-            ? requestJson.getValueOrEmptyAsString("id")
-            : UUID.randomUUID().toString();
+    String identifier =
+        configurationRequest.hasId() ? configurationRequest.id() : UUID.randomUUID().toString();
 
-    // Add ID to request map for conversion
-    Map<String, Object> configMap = request.toMap();
-    configMap.put("id", id);
-
-    // Convert to IdentityVerificationConfiguration using JsonConverter
-    JsonConverter converter = JsonConverter.snakeCaseInstance();
-    return converter.read(configMap, IdentityVerificationConfiguration.class);
+    return configurationRequest.toConfiguration(identifier);
   }
 }

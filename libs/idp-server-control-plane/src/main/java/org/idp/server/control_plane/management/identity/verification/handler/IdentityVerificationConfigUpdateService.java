@@ -22,9 +22,10 @@ import org.idp.server.control_plane.management.exception.ResourceNotFoundExcepti
 import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigManagementContextBuilder;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementStatus;
+import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigRegistrationRequest;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigUpdateRequest;
+import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigurationRequest;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
-import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationCommandRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
@@ -66,12 +67,11 @@ public class IdentityVerificationConfigUpdateService
       boolean dryRun) {
 
     // 1. Retrieve existing configuration (throws ResourceNotFoundException if not found)
-    IdentityVerificationConfigurationIdentifier identifier = request.identifier();
-    IdentityVerificationConfiguration before = queryRepository.find(tenant, identifier);
+    IdentityVerificationConfiguration before = queryRepository.find(tenant, request.identifier());
 
     if (!before.exists()) {
       throw new ResourceNotFoundException(
-          "Identity verification configuration not found: " + identifier.value());
+          "Identity verification configuration not found: " + request.identifier().value());
     }
 
     // 2. Create updated configuration
@@ -103,24 +103,14 @@ public class IdentityVerificationConfigUpdateService
 
   private IdentityVerificationConfiguration updateConfiguration(
       IdentityVerificationConfiguration before,
-      org.idp.server.control_plane.management.identity.verification.io
-              .IdentityVerificationConfigRegistrationRequest
-          request) {
+      IdentityVerificationConfigRegistrationRequest request) {
 
-    // Merge update request with existing configuration
-    Map<String, Object> updatedMap = new HashMap<>(before.toMap());
-    Map<String, Object> requestMap = request.toMap();
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+    IdentityVerificationConfigurationRequest configurationRequest =
+        jsonConverter.read(request.toMap(), IdentityVerificationConfigurationRequest.class);
 
-    // Update fields from request (preserving ID)
-    requestMap.forEach(
-        (key, value) -> {
-          if (!"id".equals(key)) { // ID cannot be changed
-            updatedMap.put(key, value);
-          }
-        });
+    String identifier = configurationRequest.hasId() ? configurationRequest.id() : before.id();
 
-    // Convert to IdentityVerificationConfiguration using JsonConverter
-    JsonConverter converter = JsonConverter.snakeCaseInstance();
-    return converter.read(updatedMap, IdentityVerificationConfiguration.class);
+    return configurationRequest.toConfiguration(identifier);
   }
 }
