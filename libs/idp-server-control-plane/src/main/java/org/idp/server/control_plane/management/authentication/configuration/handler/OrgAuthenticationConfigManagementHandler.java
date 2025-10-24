@@ -17,25 +17,31 @@
 package org.idp.server.control_plane.management.authentication.configuration.handler;
 
 import java.util.Map;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.base.OrganizationAccessVerifier;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
+import org.idp.server.control_plane.management.authentication.configuration.AuthenticationConfigManagementContextBuilder;
 import org.idp.server.control_plane.management.authentication.configuration.OrgAuthenticationConfigManagementApi;
+import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementRequest;
+import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementResponse;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
+import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.exception.NotFoundException;
 import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Organization-level authentication configuration management handler.
+ * Organization-level authentication policy configuration management handler.
  *
- * <p>Orchestrates organization-scoped authentication configuration management operations by
+ * <p>Orchestrates organization-scoped authentication policy configuration management operations by
  * delegating to appropriate Service implementations via strategy pattern.
  *
  * <h2>Organization-Level Access Control</h2>
@@ -71,73 +77,79 @@ import org.idp.server.platform.type.RequestAttributes;
 public class OrgAuthenticationConfigManagementHandler {
 
   private final Map<String, AuthenticationConfigManagementService<?>> services;
-  private final OrgAuthenticationConfigManagementApi entryService;
+  private final OrgAuthenticationConfigManagementApi api;
   private final TenantQueryRepository tenantQueryRepository;
-  private final OrganizationRepository organizationRepository;
   private final OrganizationAccessVerifier organizationAccessVerifier;
+  LoggerWrapper log = LoggerWrapper.getLogger(OrgAuthenticationConfigManagementHandler.class);
 
   public OrgAuthenticationConfigManagementHandler(
       Map<String, AuthenticationConfigManagementService<?>> services,
-      OrgAuthenticationConfigManagementApi entryService,
+      OrgAuthenticationConfigManagementApi api,
       TenantQueryRepository tenantQueryRepository,
-      OrganizationRepository organizationRepository) {
+      OrganizationAccessVerifier organizationAccessVerifier) {
     this.services = services;
-    this.entryService = entryService;
+    this.api = api;
     this.tenantQueryRepository = tenantQueryRepository;
-    this.organizationRepository = organizationRepository;
-    this.organizationAccessVerifier = new OrganizationAccessVerifier();
+    this.organizationAccessVerifier = organizationAccessVerifier;
   }
 
-  /**
-   * Handles organization-level authentication configuration management operation.
-   *
-   * <p>Organization-level operations include additional access control verification to ensure the
-   * operator has access to both the organization and the tenant.
-   *
-   * @param method the operation method (e.g., "create", "update", "delete")
-   * @param organizationIdentifier the organization identifier
-   * @param tenantIdentifier the tenant context
-   * @param operator the user performing the operation
-   * @param oAuthToken the OAuth token for the operation
-   * @param request the operation-specific request object
-   * @param requestAttributes HTTP request attributes for audit logging
-   * @param dryRun if true, validate but don't persist changes
-   * @return AuthenticationConfigManagementResult containing operation outcome or exception
-   */
   public AuthenticationConfigManagementResult handle(
       String method,
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      Object request,
+      AuthenticationConfigManagementRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    Tenant tenant = null;
-    try {
-      // 0. Get organization and tenant
-      Organization organization = organizationRepository.get(organizationIdentifier);
-      tenant = tenantQueryRepository.get(tenantIdentifier);
+    Organization organization = authenticationContext.organization();
+    User operator = authenticationContext.operator();
+    OAuthToken oAuthToken = authenticationContext.oAuthToken();
 
-      // 1. Organization access verification (4-step verification)
-      AdminPermissions requiredPermissions = entryService.getRequiredPermissions(method);
+    // 1. Service selection
+    AuthenticationConfigManagementService<?> service = services.get(method);
+    if (service == null) {
+      throw new UnSupportedException("Unsupported operation method: " + method);
+    }
+
+    // 2. Context Builder creation (before Tenant retrieval - enables audit logging on errors)
+    AuthenticationConfigManagementContextBuilder contextBuilder =
+        new AuthenticationConfigManagementContextBuilder(
+            tenantIdentifier, operator, oAuthToken, requestAttributes, request, dryRun);
+
+    try {
+      // 3. Get organization and tenant
+      Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+      // 4. Organization access verification (4-step verification)
+      AdminPermissions requiredPermissions = api.getRequiredPermissions(method);
       organizationAccessVerifier.verify(
           organization, tenantIdentifier, operator, requiredPermissions);
 
-      // 2. Service selection
-      AuthenticationConfigManagementService<?> service = services.get(method);
-      if (service == null) {
-        throw new UnSupportedException("Unsupported operation method: " + method);
-      }
+      // 5. Delegate to service
+      AuthenticationConfigManagementResponse response =
+          executeService(
+              service,
+              contextBuilder,
+              tenant,
+              operator,
+              oAuthToken,
+              request,
+              requestAttributes,
+              dryRun);
 
-      // 3. Delegate to service (pass tenant to avoid duplicate retrieval)
-      return executeService(
-          service, tenant, operator, oAuthToken, request, requestAttributes, dryRun);
+      AuditableContext context = contextBuilder.build();
+      return AuthenticationConfigManagementResult.success(context, response);
+    } catch (NotFoundException e) {
 
+      log.warn(e.getMessage());
+      ResourceNotFoundException notFound = new ResourceNotFoundException(e.getMessage());
+      AuditableContext context = contextBuilder.buildPartial(notFound);
+      return AuthenticationConfigManagementResult.error(context, notFound);
     } catch (ManagementApiException e) {
-      // Wrap exception in Result with tenant for audit logging
-      return AuthenticationConfigManagementResult.error(tenant, e);
+
+      log.warn(e.getMessage());
+      AuditableContext partialContext = contextBuilder.buildPartial(e);
+      return AuthenticationConfigManagementResult.error(partialContext, e);
     }
   }
 
@@ -147,15 +159,20 @@ public class OrgAuthenticationConfigManagementHandler {
    * <p>This helper method uses generics to ensure type safety when calling service.execute().
    */
   @SuppressWarnings("unchecked")
-  private <REQUEST> AuthenticationConfigManagementResult executeService(
-      AuthenticationConfigManagementService<REQUEST> service,
+  private <T> AuthenticationConfigManagementResponse executeService(
+      AuthenticationConfigManagementService<?> service,
+      AuthenticationConfigManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      Object request,
+      T request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
-    return service.execute(
-        tenant, operator, oAuthToken, (REQUEST) request, requestAttributes, dryRun);
+
+    AuthenticationConfigManagementService<T> typedService =
+        (AuthenticationConfigManagementService<T>) service;
+
+    return typedService.execute(
+        contextBuilder, tenant, operator, oAuthToken, request, requestAttributes, dryRun);
   }
 }

@@ -14,16 +14,21 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.management.authentication.configuration.handler;
+package org.idp.server.control_plane.management.authentication.configuration.io;
 
-import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigRequest;
+import java.util.Map;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfigurationIdentifier;
 
 /**
- * Request for updating an authentication configuration.
+ * Request wrapper for authentication policy configuration find (get) operations.
  *
- * @param identifier the authentication configuration identifier
- * @param request the update request data
+ * <p>Wraps AuthenticationConfigurationIdentifier for get operations.
  */
-public record AuthenticationConfigUpdateRequest(
-    AuthenticationConfigurationIdentifier identifier, AuthenticationConfigRequest request) {}
+public record AuthenticationConfigFindRequest(AuthenticationConfigurationIdentifier identifier)
+    implements AuthenticationConfigManagementRequest {
+
+  @Override
+  public Map<String, Object> toMap() {
+    return Map.of("id", identifier.value());
+  }
+}

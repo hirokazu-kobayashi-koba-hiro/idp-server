@@ -14,12 +14,20 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.management.authentication.configuration.handler;
+package org.idp.server.control_plane.management.authentication.configuration.io;
+
+import java.util.Map;
 
 /**
- * Request for finding list of authentication configurations.
+ * Request wrapper for authentication policy configuration findList operations.
  *
- * @param limit maximum number of results to return
- * @param offset number of results to skip
+ * <p>Wraps pagination parameters for findList operations.
  */
-public record AuthenticationConfigFindListRequest(int limit, int offset) {}
+public record AuthenticationConfigFindListRequest(int limit, int offset)
+    implements AuthenticationConfigManagementRequest {
+
+  @Override
+  public Map<String, Object> toMap() {
+    return Map.of("limit", limit, "offset", offset);
+  }
+}

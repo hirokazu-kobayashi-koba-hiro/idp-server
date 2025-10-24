@@ -19,13 +19,12 @@ package org.idp.server.control_plane.management.authentication.configuration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigRequest;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfigurationIdentifier;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
@@ -55,41 +54,36 @@ public interface AuthenticationConfigurationManagementApi {
   }
 
   AuthenticationConfigManagementResponse create(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationConfigRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
   AuthenticationConfigManagementResponse findList(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       int limit,
       int offset,
       RequestAttributes requestAttributes);
 
   AuthenticationConfigManagementResponse get(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes);
 
   AuthenticationConfigManagementResponse update(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationConfigurationIdentifier identifier,
       AuthenticationConfigRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
   AuthenticationConfigManagementResponse delete(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun);

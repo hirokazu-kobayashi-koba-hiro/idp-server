@@ -37,10 +37,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/v1/management/tenants/{tenant-id}/authentication-configurations")
 public class AuthenticationConfigurationManagementV1Api implements ParameterTransformable {
 
-  AuthenticationConfigurationManagementApi authenticationConfigurationManagementApi;
+  AuthenticationConfigurationManagementApi authenticationPolicyConfigurationManagementApi;
 
   public AuthenticationConfigurationManagementV1Api(IdpServerApplication idpServerApplication) {
-    this.authenticationConfigurationManagementApi =
+    this.authenticationPolicyConfigurationManagementApi =
         idpServerApplication.authenticationConfigurationManagementApi();
   }
 
@@ -55,10 +55,9 @@ public class AuthenticationConfigurationManagementV1Api implements ParameterTran
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AuthenticationConfigManagementResponse response =
-        authenticationConfigurationManagementApi.create(
+        authenticationPolicyConfigurationManagementApi.create(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             new AuthenticationConfigRequest(body),
             requestAttributes,
             dryRun);
@@ -81,10 +80,9 @@ public class AuthenticationConfigurationManagementV1Api implements ParameterTran
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AuthenticationConfigManagementResponse response =
-        authenticationConfigurationManagementApi.findList(
+        authenticationPolicyConfigurationManagementApi.findList(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             Integer.parseInt(limitValue),
             Integer.parseInt(offsetValue),
             requestAttributes);
@@ -106,10 +104,9 @@ public class AuthenticationConfigurationManagementV1Api implements ParameterTran
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AuthenticationConfigManagementResponse response =
-        authenticationConfigurationManagementApi.get(
+        authenticationPolicyConfigurationManagementApi.get(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             requestAttributes);
 
@@ -131,10 +128,9 @@ public class AuthenticationConfigurationManagementV1Api implements ParameterTran
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AuthenticationConfigManagementResponse response =
-        authenticationConfigurationManagementApi.update(
+        authenticationPolicyConfigurationManagementApi.update(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             new AuthenticationConfigRequest(body),
             requestAttributes,
@@ -156,10 +152,9 @@ public class AuthenticationConfigurationManagementV1Api implements ParameterTran
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AuthenticationConfigManagementResponse response =
-        authenticationConfigurationManagementApi.delete(
+        authenticationPolicyConfigurationManagementApi.delete(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             requestAttributes,
             dryRun);

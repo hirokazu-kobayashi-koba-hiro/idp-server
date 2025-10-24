@@ -19,31 +19,27 @@ package org.idp.server.usecases.control_plane.organization_manager;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
+import org.idp.server.control_plane.base.OrganizationAccessVerifier;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.management.authentication.configuration.OrgAuthenticationConfigManagementApi;
 import org.idp.server.control_plane.management.authentication.configuration.handler.*;
-import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementResponse;
-import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigRequest;
+import org.idp.server.control_plane.management.authentication.configuration.io.*;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfigurationIdentifier;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Organization-level authentication configuration management entry service.
+ * Organization-level authentication policy configuration management entry service.
  *
- * <p>This service implements organization-scoped authentication configuration management operations
- * that allow organization administrators to manage authentication configurations within their
- * organization boundaries.
+ * <p>This service implements organization-scoped authentication policy configuration management
+ * operations that allow organization administrators to manage authentication policy configurations
+ * within their organization boundaries.
  *
  * <p>Organization-level operations follow the standard access control pattern:
  *
@@ -51,11 +47,11 @@ import org.idp.server.platform.type.RequestAttributes;
  *   <li><strong>Organization access verification</strong> - Ensures the user has access to the
  *       organization
  *   <li><strong>Permission verification</strong> - Validates the user has necessary
- *       AUTHENTICATION_CONFIG_* permissions
+ *       AUTHENTICATION_POLICY_CONFIG_* permissions (handled by Handler)
  * </ol>
  *
  * <p>All operations support dry-run functionality for safe preview of changes and comprehensive
- * audit logging for organization-level authentication configuration operations.
+ * audit logging for organization-level authentication policy configuration operations.
  *
  * @see OrgAuthenticationConfigManagementApi
  * @see OrganizationAccessVerifier
@@ -66,45 +62,14 @@ import org.idp.server.platform.type.RequestAttributes;
 public class OrgAuthenticationConfigManagementEntryService
     implements OrgAuthenticationConfigManagementApi {
 
-  AuditLogPublisher auditLogPublisher;
+  private final OrgAuthenticationConfigManagementHandler handler;
+  private final AuditLogPublisher auditLogPublisher;
 
-  LoggerWrapper log = LoggerWrapper.getLogger(OrgAuthenticationConfigManagementEntryService.class);
-
-  // Handler/Service pattern (organization-level)
-  private OrgAuthenticationConfigManagementHandler handler;
-
-  /**
-   * Creates a new organization authentication configuration management entry service.
-   *
-   * @param tenantQueryRepository the tenant query repository
-   * @param organizationRepository the organization repository
-   * @param authenticationConfigurationCommandRepository the authentication configuration command
-   *     repository
-   * @param authenticationConfigurationQueryRepository the authentication configuration query
-   *     repository
-   * @param auditLogPublisher the audit log publisher
-   */
   public OrgAuthenticationConfigManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
-      OrganizationRepository organizationRepository,
       AuthenticationConfigurationCommandRepository authenticationConfigurationCommandRepository,
       AuthenticationConfigurationQueryRepository authenticationConfigurationQueryRepository,
       AuditLogPublisher auditLogPublisher) {
-    this.auditLogPublisher = auditLogPublisher;
-
-    this.handler =
-        createHandler(
-            authenticationConfigurationCommandRepository,
-            authenticationConfigurationQueryRepository,
-            tenantQueryRepository,
-            organizationRepository);
-  }
-
-  private OrgAuthenticationConfigManagementHandler createHandler(
-      AuthenticationConfigurationCommandRepository authenticationConfigurationCommandRepository,
-      AuthenticationConfigurationQueryRepository authenticationConfigurationQueryRepository,
-      TenantQueryRepository tenantQueryRepository,
-      OrganizationRepository organizationRepository) {
 
     Map<String, AuthenticationConfigManagementService<?>> services = new HashMap<>();
     services.put(
@@ -126,16 +91,16 @@ public class OrgAuthenticationConfigManagementEntryService
             authenticationConfigurationQueryRepository,
             authenticationConfigurationCommandRepository));
 
-    return new OrgAuthenticationConfigManagementHandler(
-        services, this, tenantQueryRepository, organizationRepository);
+    this.handler =
+        new OrgAuthenticationConfigManagementHandler(
+            services, this, tenantQueryRepository, new OrganizationAccessVerifier());
+    this.auditLogPublisher = auditLogPublisher;
   }
 
   @Override
   public AuthenticationConfigManagementResponse create(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationConfigRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
@@ -143,41 +108,19 @@ public class OrgAuthenticationConfigManagementEntryService
     // Delegate to Handler/Service pattern (Handler performs all access control)
     AuthenticationConfigManagementResult result =
         handler.handle(
-            "create",
-            organizationIdentifier,
-            tenantIdentifier,
-            operator,
-            oAuthToken,
-            request,
-            requestAttributes,
-            dryRun);
+            "create", authenticationContext, tenantIdentifier, request, requestAttributes, dryRun);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "OrgAuthenticationConfigManagementApi.create",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
-
-    // Record audit log (create operation)
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
   }
 
+  @Override
   @Transaction(readOnly = true)
   public AuthenticationConfigManagementResponse findList(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       int limit,
       int offset,
       RequestAttributes requestAttributes) {
@@ -187,37 +130,9 @@ public class OrgAuthenticationConfigManagementEntryService
         new AuthenticationConfigFindListRequest(limit, offset);
     AuthenticationConfigManagementResult result =
         handler.handle(
-            "findList",
-            organizationIdentifier,
-            tenantIdentifier,
-            operator,
-            oAuthToken,
-            request,
-            requestAttributes,
-            false);
+            "findList", authenticationContext, tenantIdentifier, request, requestAttributes, false);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "OrgAuthenticationConfigManagementApi.findList",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(false);
-    }
-
-    // Record audit log (read operation)
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "OrgAuthenticationConfigManagementApi.findList",
-            "findList",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);
@@ -226,10 +141,8 @@ public class OrgAuthenticationConfigManagementEntryService
   @Override
   @Transaction(readOnly = true)
   public AuthenticationConfigManagementResponse get(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes) {
 
@@ -237,36 +150,13 @@ public class OrgAuthenticationConfigManagementEntryService
     AuthenticationConfigManagementResult result =
         handler.handle(
             "get",
-            organizationIdentifier,
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
-            identifier,
+            new AuthenticationConfigFindRequest(identifier),
             requestAttributes,
             false);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "OrgAuthenticationConfigManagementApi.get",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(false);
-    }
-
-    // Record audit log (read operation)
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "OrgAuthenticationConfigManagementApi.get",
-            "get",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);
@@ -274,10 +164,8 @@ public class OrgAuthenticationConfigManagementEntryService
 
   @Override
   public AuthenticationConfigManagementResponse update(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationConfigurationIdentifier identifier,
       AuthenticationConfigRequest request,
       RequestAttributes requestAttributes,
@@ -289,28 +177,12 @@ public class OrgAuthenticationConfigManagementEntryService
     AuthenticationConfigManagementResult result =
         handler.handle(
             "update",
-            organizationIdentifier,
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
             updateRequest,
             requestAttributes,
             dryRun);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "OrgAuthenticationConfigManagementApi.update",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
-
-    // Record audit log (update operation)
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
@@ -319,10 +191,8 @@ public class OrgAuthenticationConfigManagementEntryService
 
   @Override
   public AuthenticationConfigManagementResponse delete(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun) {
@@ -331,37 +201,13 @@ public class OrgAuthenticationConfigManagementEntryService
     AuthenticationConfigManagementResult result =
         handler.handle(
             "delete",
-            organizationIdentifier,
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
-            identifier,
+            new AuthenticationConfigDeleteRequest(identifier),
             requestAttributes,
             dryRun);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "OrgAuthenticationConfigManagementApi.delete",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
-
-    // Record audit log (deletion operation)
-    AuditLog auditLog =
-        AuditLogCreator.createOnDeletion(
-            "OrgAuthenticationConfigManagementApi.delete",
-            "delete",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (Map<String, Object>) result.context(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

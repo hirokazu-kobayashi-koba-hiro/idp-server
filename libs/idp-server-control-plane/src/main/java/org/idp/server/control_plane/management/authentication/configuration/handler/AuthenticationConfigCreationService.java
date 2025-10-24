@@ -16,43 +16,42 @@
 
 package org.idp.server.control_plane.management.authentication.configuration.handler;
 
-import org.idp.server.control_plane.management.authentication.configuration.AuthenticationConfigRegistrationContext;
-import org.idp.server.control_plane.management.authentication.configuration.AuthenticationConfigRegistrationContextCreator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import org.idp.server.control_plane.management.authentication.configuration.AuthenticationConfigManagementContextBuilder;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementResponse;
+import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementStatus;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigRequest;
+import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationCommandRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Service for creating authentication configurations.
+ * Service for creating authentication policy configurations.
  *
- * <p>Handles authentication configuration creation logic.
- *
- * <h2>Responsibilities</h2>
- *
- * <ul>
- *   <li>Context creation via Context Creator
- *   <li>Configuration registration in repository
- *   <li>Dry-run support
- * </ul>
+ * <p>Handles business logic for creating authentication policy configurations. Part of
+ * Handler/Service pattern.
  */
 public class AuthenticationConfigCreationService
     implements AuthenticationConfigManagementService<AuthenticationConfigRequest> {
 
-  private final AuthenticationConfigurationCommandRepository
-      authenticationConfigurationCommandRepository;
+  private final AuthenticationConfigurationCommandRepository commandRepository;
+  private final JsonConverter jsonConverter;
 
   public AuthenticationConfigCreationService(
-      AuthenticationConfigurationCommandRepository authenticationConfigurationCommandRepository) {
-    this.authenticationConfigurationCommandRepository =
-        authenticationConfigurationCommandRepository;
+      AuthenticationConfigurationCommandRepository commandRepository) {
+    this.commandRepository = commandRepository;
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override
-  public AuthenticationConfigManagementResult execute(
+  public AuthenticationConfigManagementResponse execute(
+      AuthenticationConfigManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -60,22 +59,27 @@ public class AuthenticationConfigCreationService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    // 1. Context creation
-    AuthenticationConfigRegistrationContextCreator contextCreator =
-        new AuthenticationConfigRegistrationContextCreator(tenant, request, dryRun);
-    AuthenticationConfigRegistrationContext context = contextCreator.create();
+    // Build AuthenticationConfiguration (add id if missing)
+    Map<String, Object> map = new HashMap<>(request.toMap());
+    if (!request.hasId()) {
+      map.put("id", UUID.randomUUID().toString());
+    }
+    AuthenticationConfiguration configuration =
+        jsonConverter.read(map, AuthenticationConfiguration.class);
 
-    // 2. Dry-run check
+    // Update context builder with after state
+    contextBuilder.withAfter(configuration);
+
+    Map<String, Object> response = Map.of("result", configuration.toMap(), "dry_run", dryRun);
     if (dryRun) {
-      AuthenticationConfigManagementResponse response = context.toResponse();
-      return AuthenticationConfigManagementResult.success(tenant, context, response);
+      return new AuthenticationConfigManagementResponse(
+          AuthenticationConfigManagementStatus.OK, response);
     }
 
-    // 3. Register configuration
-    authenticationConfigurationCommandRepository.register(tenant, context.configuration());
+    // Register configuration
+    commandRepository.register(tenant, configuration);
 
-    // 4. Return success
-    AuthenticationConfigManagementResponse response = context.toResponse();
-    return AuthenticationConfigManagementResult.success(tenant, context, response);
+    return new AuthenticationConfigManagementResponse(
+        AuthenticationConfigManagementStatus.CREATED, response);
   }
 }

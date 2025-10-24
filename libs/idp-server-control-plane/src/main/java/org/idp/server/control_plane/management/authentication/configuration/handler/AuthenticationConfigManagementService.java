@@ -16,58 +16,43 @@
 
 package org.idp.server.control_plane.management.authentication.configuration.handler;
 
+import org.idp.server.control_plane.management.authentication.configuration.AuthenticationConfigManagementContextBuilder;
+import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementResponse;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Service interface for authentication configuration management operations.
+ * Service interface for authentication policy configuration management operations.
  *
- * <p>This interface defines the contract for authentication configuration management Service
- * implementations following the Handler-Service-Repository pattern.
+ * <p>Part of Handler/Service pattern. Implementations handle specific authentication policy
+ * configuration management operations (create, update, delete, find, findList).
  *
- * <h2>Responsibilities</h2>
- *
- * <ul>
- *   <li>Execute business logic for authentication configuration operations
- *   <li>Create/update/delete authentication configurations
- *   <li>Query repository for authentication configuration data
- *   <li>Build response with appropriate data
- * </ul>
- *
- * <h2>NOT Responsibilities</h2>
- *
- * <ul>
- *   <li>Permission verification (handled by Handler)
- *   <li>Organization access control (handled by Handler)
- *   <li>Tenant retrieval (handled by Handler)
- *   <li>Audit logging (handled by EntryService)
- *   <li>Transaction management (handled by EntryService)
- * </ul>
- *
- * @param <REQUEST> the request type for the specific operation
- * @see AuthenticationConfigManagementResult
+ * @param <T> the request type for this service
  * @see AuthenticationConfigManagementHandler
+ * @see AuthenticationConfigManagementResult
  */
-public interface AuthenticationConfigManagementService<REQUEST> {
+public interface AuthenticationConfigManagementService<T> {
 
   /**
-   * Executes the authentication configuration management operation.
+   * Executes the authentication policy configuration management operation.
    *
-   * @param tenant the tenant context (already retrieved by Handler)
-   * @param operator the user performing the operation
-   * @param oAuthToken the OAuth token for the operation
-   * @param request the operation-specific request object
-   * @param requestAttributes HTTP request attributes for audit logging
-   * @param dryRun if true, validate but don't persist changes
-   * @return AuthenticationConfigManagementResult containing operation outcome
+   * @param contextBuilder the context builder for audit logging
+   * @param tenant the tenant
+   * @param operator the operator user
+   * @param oAuthToken the OAuth token
+   * @param request the request object (type varies by operation)
+   * @param requestAttributes the request attributes
+   * @param dryRun whether to perform a dry run
+   * @return the response of the operation
    */
-  AuthenticationConfigManagementResult execute(
+  AuthenticationConfigManagementResponse execute(
+      AuthenticationConfigManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      REQUEST request,
+      T request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 }

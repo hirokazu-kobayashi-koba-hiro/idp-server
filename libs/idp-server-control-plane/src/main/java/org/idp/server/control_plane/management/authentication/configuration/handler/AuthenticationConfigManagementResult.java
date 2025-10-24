@@ -22,159 +22,104 @@ import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementStatus;
 import org.idp.server.control_plane.management.exception.*;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
- * Result wrapper for authentication configuration management operations.
+ * Result object for authentication policy configuration management operations.
  *
- * <p>This class encapsulates the outcome of authentication configuration management Service
- * execution, including success results and exceptions.
- *
- * <h2>Purpose</h2>
+ * <p>Encapsulates the outcome of authentication policy configuration management Handler/Service
+ * pattern operations. Follows the Result-Exception Hybrid pattern:
  *
  * <ul>
- *   <li>Encapsulate Service execution results
- *   <li>Preserve Tenant for audit logging even on error
- *   <li>Convert exceptions to appropriate HTTP responses
+ *   <li>Service layer throws ManagementApiException on validation/verification failures
+ *   <li>Handler layer catches exceptions and converts to Result
+ *   <li>EntryService layer converts Result to HTTP response
  * </ul>
  *
- * <h2>Usage Pattern</h2>
- *
- * <pre>{@code
- * // In Service: return success
- * return AuthenticationConfigManagementResult.success(tenant, context, response);
- *
- * // In Handler: catch exception and wrap
- * try {
- *   return service.execute(...);
- * } catch (ManagementApiException e) {
- *   return AuthenticationConfigManagementResult.error(tenant, e);
- * }
- *
- * // In EntryService: convert to HTTP response
- * if (result.hasException()) {
- *   return result.toResponse(dryRun);
- * }
- * }</pre>
+ * @see AuthenticationConfigManagementHandler
+ * @see AuthenticationConfigManagementService
  */
 public class AuthenticationConfigManagementResult {
 
-  private final Tenant tenant;
   private final AuditableContext context;
-  private final AuthenticationConfigManagementResponse response;
   private final ManagementApiException exception;
+  private final AuthenticationConfigManagementResponse response;
 
   private AuthenticationConfigManagementResult(
-      Tenant tenant,
       AuditableContext context,
-      AuthenticationConfigManagementResponse response,
-      ManagementApiException exception) {
-    this.tenant = tenant;
+      ManagementApiException exception,
+      AuthenticationConfigManagementResponse response) {
     this.context = context;
-    this.response = response;
     this.exception = exception;
+    this.response = response;
   }
 
   /**
-   * Creates a success result.
+   * Creates a successful result with context.
    *
-   * @param tenant the tenant context
-   * @param context the operation context (for audit logging)
+   * @param context the operation context
    * @param response the success response
-   * @return success result
+   * @return successful result with context
    */
   public static AuthenticationConfigManagementResult success(
-      Tenant tenant, AuditableContext context, AuthenticationConfigManagementResponse response) {
-    return new AuthenticationConfigManagementResult(tenant, context, response, null);
+      AuditableContext context, AuthenticationConfigManagementResponse response) {
+    return new AuthenticationConfigManagementResult(context, null, response);
   }
 
   /**
-   * Creates an error result.
+   * Creates an error result from an exception.
    *
-   * @param tenant the tenant context (may be null if tenant retrieval failed)
+   * @param context the operation context (may be partial)
    * @param exception the exception that occurred
    * @return error result
    */
   public static AuthenticationConfigManagementResult error(
-      Tenant tenant, ManagementApiException exception) {
-    return new AuthenticationConfigManagementResult(tenant, null, null, exception);
+      AuditableContext context, ManagementApiException exception) {
+    return new AuthenticationConfigManagementResult(context, exception, null);
   }
 
   /**
-   * Checks if this result contains an exception.
+   * Maps exception types to HTTP status codes.
    *
-   * @return true if exception exists
+   * @param exception the exception to map
+   * @return corresponding HTTP status
    */
-  public boolean hasException() {
-    return exception != null;
+  private static AuthenticationConfigManagementStatus mapExceptionToStatus(
+      ManagementApiException exception) {
+    if (exception instanceof ResourceNotFoundException) {
+      return AuthenticationConfigManagementStatus.NOT_FOUND;
+    }
+    if (exception instanceof PermissionDeniedException
+        || exception instanceof OrganizationAccessDeniedException) {
+      return AuthenticationConfigManagementStatus.FORBIDDEN;
+    }
+    if (exception instanceof InvalidRequestException) {
+      return AuthenticationConfigManagementStatus.INVALID_REQUEST;
+    }
+    return AuthenticationConfigManagementStatus.SERVER_ERROR;
   }
 
-  /**
-   * Gets the tenant context.
-   *
-   * @return tenant
-   */
-  public Tenant tenant() {
-    return tenant;
-  }
-
-  /**
-   * Gets the operation context for audit logging.
-   *
-   * @return context object
-   */
   public AuditableContext context() {
     return context;
   }
 
-  /**
-   * Gets the exception if present.
-   *
-   * @return exception
-   */
+  public boolean hasException() {
+    return exception != null;
+  }
+
   public ManagementApiException getException() {
     return exception;
   }
 
-  /**
-   * Converts this result to HTTP response.
-   *
-   * <p>If exception exists, automatically generates error response from exception details.
-   *
-   * @param dryRun whether this is a dry-run operation
-   * @return AuthenticationConfigManagementResponse with status and data
-   */
   public AuthenticationConfigManagementResponse toResponse(boolean dryRun) {
     if (hasException()) {
+      AuthenticationConfigManagementStatus status = mapExceptionToStatus(exception);
       Map<String, Object> errorResponse = new HashMap<>();
       errorResponse.put("dry_run", dryRun);
       errorResponse.put("error", exception.errorCode());
       errorResponse.put("error_description", exception.errorDescription());
       errorResponse.putAll(exception.errorDetails());
-
-      AuthenticationConfigManagementStatus status = mapExceptionToStatus(exception);
       return new AuthenticationConfigManagementResponse(status, errorResponse);
     }
     return response;
-  }
-
-  /**
-   * Maps exception type to AuthenticationConfigManagementStatus.
-   *
-   * @param exception the exception to map
-   * @return corresponding AuthenticationConfigManagementStatus
-   */
-  private AuthenticationConfigManagementStatus mapExceptionToStatus(
-      ManagementApiException exception) {
-    if (exception instanceof InvalidRequestException) {
-      return AuthenticationConfigManagementStatus.INVALID_REQUEST;
-    } else if (exception instanceof OrganizationAccessDeniedException) {
-      return AuthenticationConfigManagementStatus.FORBIDDEN;
-    } else if (exception instanceof PermissionDeniedException) {
-      return AuthenticationConfigManagementStatus.FORBIDDEN;
-    } else if (exception instanceof ResourceNotFoundException) {
-      return AuthenticationConfigManagementStatus.NOT_FOUND;
-    }
-    return AuthenticationConfigManagementStatus.SERVER_ERROR;
   }
 }
