@@ -52,10 +52,7 @@ public class AuthorizationServerManagementV1Api implements ParameterTransformabl
 
     AuthorizationServerManagementResponse response =
         authorizationServerManagementApi.get(
-            tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
-            requestAttributes);
+            operatorPrincipal.authenticationContext(), tenantIdentifier, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");
@@ -76,9 +73,8 @@ public class AuthorizationServerManagementV1Api implements ParameterTransformabl
 
     AuthorizationServerManagementResponse response =
         authorizationServerManagementApi.update(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             new AuthorizationServerUpdateRequest(body),
             requestAttributes,
             dryRun);
