@@ -119,7 +119,7 @@ describe("Organization Identity Verification Config Management API - Structured 
           }
         });
 
-        expect(response.status).toBe(201);
+        expect(response.status).toBe(200);
         expect(response.data).toHaveProperty("dry_run", true);
         expect(response.data).toHaveProperty("result");
 
@@ -307,7 +307,7 @@ describe("Organization Identity Verification Config Management API - Structured 
           }
         });
 
-        expect(response.status).toBe(201);
+        expect(response.status).toBe(200);
         expect(response.data).toHaveProperty("dry_run", true);
         expect(response.data).toHaveProperty("result");
       });

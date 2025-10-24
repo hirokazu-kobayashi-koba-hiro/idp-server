@@ -19,6 +19,7 @@ package org.idp.server.control_plane.management.identity.verification.handler;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigManagementContextBuilder;
+import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigFindListRequest;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementStatus;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
@@ -36,7 +37,8 @@ import org.idp.server.platform.type.RequestAttributes;
  * Handler/Service pattern.
  */
 public class IdentityVerificationConfigFindListService
-    implements IdentityVerificationConfigManagementService<IdentityVerificationQueries> {
+    implements IdentityVerificationConfigManagementService<
+        IdentityVerificationConfigFindListRequest> {
 
   private final IdentityVerificationConfigurationQueryRepository queryRepository;
 
@@ -51,10 +53,11 @@ public class IdentityVerificationConfigFindListService
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      IdentityVerificationQueries queries,
+      IdentityVerificationConfigFindListRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    IdentityVerificationQueries queries = request.queries();
     long totalCount = queryRepository.findTotalCount(tenant, queries);
     if (totalCount == 0) {
       Map<String, Object> response =

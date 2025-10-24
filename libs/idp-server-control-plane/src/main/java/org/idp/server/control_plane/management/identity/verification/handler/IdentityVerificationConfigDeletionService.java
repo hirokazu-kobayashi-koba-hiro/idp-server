@@ -19,6 +19,7 @@ package org.idp.server.control_plane.management.identity.verification.handler;
 import java.util.Map;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigManagementContextBuilder;
+import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigDeleteRequest;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementStatus;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
@@ -38,7 +39,7 @@ import org.idp.server.platform.type.RequestAttributes;
  */
 public class IdentityVerificationConfigDeletionService
     implements IdentityVerificationConfigManagementService<
-        IdentityVerificationConfigurationIdentifier> {
+        IdentityVerificationConfigDeleteRequest> {
 
   private final IdentityVerificationConfigurationQueryRepository queryRepository;
   private final IdentityVerificationConfigurationCommandRepository commandRepository;
@@ -56,10 +57,11 @@ public class IdentityVerificationConfigDeletionService
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      IdentityVerificationConfigurationIdentifier identifier,
+      IdentityVerificationConfigDeleteRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    IdentityVerificationConfigurationIdentifier identifier = request.identifier();
     IdentityVerificationConfiguration configuration = queryRepository.find(tenant, identifier);
 
     if (!configuration.exists()) {
