@@ -19,11 +19,10 @@ package org.idp.server.control_plane.management.audit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.audit.io.AuditLogManagementResponse;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLogIdentifier;
 import org.idp.server.platform.audit.AuditLogQueries;
 import org.idp.server.platform.exception.UnSupportedException;
@@ -43,16 +42,14 @@ public interface AuditLogManagementApi {
   }
 
   AuditLogManagementResponse findList(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuditLogQueries queries,
       RequestAttributes requestAttributes);
 
   AuditLogManagementResponse get(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuditLogIdentifier identifier,
       RequestAttributes requestAttributes);
 }

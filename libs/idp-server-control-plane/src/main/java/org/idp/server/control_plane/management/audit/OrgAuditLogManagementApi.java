@@ -20,15 +20,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import org.idp.server.control_plane.base.OrganizationAccessVerifier;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.audit.io.AuditLogManagementResponse;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLogIdentifier;
 import org.idp.server.platform.audit.AuditLogQueries;
 import org.idp.server.platform.exception.UnSupportedException;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -36,7 +34,7 @@ import org.idp.server.platform.type.RequestAttributes;
  * Organization-level audit log management API.
  *
  * <p>This interface defines operations for managing audit logs within an organization context. It
- * provides read-only access to audit logs with organization-level access control.
+ * provides read-only operations for audit logs with organization-level access control.
  *
  * <p>Organization-level operations follow the standard access control pattern:
  *
@@ -44,8 +42,11 @@ import org.idp.server.platform.type.RequestAttributes;
  *   <li><strong>Organization access verification</strong> - Ensures the user has access to the
  *       organization
  *   <li><strong>Permission verification</strong> - Validates the user has necessary AUDIT_LOG_READ
- *       permission
+ *       permissions
  * </ol>
+ *
+ * <p>This API provides read-only access to audit log data for monitoring and audit purposes within
+ * organization boundaries.
  *
  * @see AuditLogManagementApi
  * @see OrganizationAccessVerifier
@@ -66,38 +67,30 @@ public interface OrgAuditLogManagementApi {
   /**
    * Lists audit logs within the organization.
    *
-   * @param organizationIdentifier the organization identifier
-   * @param adminTenant the admin tenant identifier
-   * @param operator the operator user
-   * @param oAuthToken the OAuth token
+   * @param authenticationContext the organization authentication context
+   * @param tenantIdentifier the tenant identifier
    * @param queries the audit log queries
    * @param requestAttributes the request attributes
    * @return the audit log list response
    */
   AuditLogManagementResponse findList(
-      OrganizationIdentifier organizationIdentifier,
-      TenantIdentifier adminTenant,
-      User operator,
-      OAuthToken oAuthToken,
+      OrganizationAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
       AuditLogQueries queries,
       RequestAttributes requestAttributes);
 
   /**
    * Gets a specific audit log within the organization.
    *
-   * @param organizationIdentifier the organization identifier
-   * @param adminTenant the admin tenant identifier
-   * @param operator the operator user
-   * @param oAuthToken the OAuth token
+   * @param authenticationContext the organization authentication context
+   * @param tenantIdentifier the tenant identifier
    * @param identifier the audit log identifier
    * @param requestAttributes the request attributes
    * @return the audit log details response
    */
   AuditLogManagementResponse get(
-      OrganizationIdentifier organizationIdentifier,
-      TenantIdentifier adminTenant,
-      User operator,
-      OAuthToken oAuthToken,
+      OrganizationAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
       AuditLogIdentifier identifier,
       RequestAttributes requestAttributes);
 }

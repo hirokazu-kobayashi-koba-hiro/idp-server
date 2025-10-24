@@ -16,6 +16,8 @@
 
 package org.idp.server.control_plane.management.audit.handler;
 
+import org.idp.server.control_plane.management.audit.AuditLogManagementContextBuilder;
+import org.idp.server.control_plane.management.audit.io.AuditLogManagementResponse;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -24,46 +26,31 @@ import org.idp.server.platform.type.RequestAttributes;
 /**
  * Service interface for audit log management operations.
  *
- * <p>This interface defines the contract for audit log management services that handle specific
- * operations (findList, get) in the Handler/Service pattern.
+ * <p>Part of Handler/Service pattern. Implementations handle specific audit log management
+ * operations (get, findList).
  *
- * <h2>Responsibilities</h2>
- *
- * <ul>
- *   <li>Execute business logic for specific audit log operation
- *   <li>Query audit logs from repository
- *   <li>Return success result or throw ManagementApiException
- * </ul>
- *
- * <h2>NOT Responsibilities</h2>
- *
- * <ul>
- *   <li>Permission verification (handled by Handler)
- *   <li>Tenant retrieval (handled by Handler)
- *   <li>Audit logging (handled by EntryService)
- *   <li>Transaction management (handled by EntryService)
- * </ul>
- *
- * @param <REQUEST> the request type for this service
- * @see AuditLogManagementResult
+ * @param <T> the request type for this service
  * @see AuditLogManagementHandler
+ * @see AuditLogManagementResult
  */
-public interface AuditLogManagementService<REQUEST> {
+public interface AuditLogManagementService<T> {
 
   /**
    * Executes the audit log management operation.
    *
-   * @param tenant the tenant context (already retrieved by Handler)
-   * @param operator the user performing the operation (already permission-verified)
-   * @param oAuthToken the OAuth token for the operation
-   * @param request the operation-specific request object
-   * @param requestAttributes HTTP request attributes for audit logging
-   * @return AuditLogManagementResult containing operation outcome
+   * @param contextBuilder the context builder for audit logging
+   * @param tenant the tenant
+   * @param operator the operator user
+   * @param oAuthToken the OAuth token
+   * @param request the request object (type varies by operation)
+   * @param requestAttributes the request attributes
+   * @return the response of the operation
    */
-  AuditLogManagementResult execute(
+  AuditLogManagementResponse execute(
+      AuditLogManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      REQUEST request,
+      T request,
       RequestAttributes requestAttributes);
 }

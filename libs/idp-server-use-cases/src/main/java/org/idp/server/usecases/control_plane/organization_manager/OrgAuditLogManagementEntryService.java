@@ -19,16 +19,19 @@ package org.idp.server.usecases.control_plane.organization_manager;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
+import org.idp.server.control_plane.base.OrganizationAccessVerifier;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.management.audit.OrgAuditLogManagementApi;
 import org.idp.server.control_plane.management.audit.handler.*;
+import org.idp.server.control_plane.management.audit.io.AuditLogFindListRequest;
+import org.idp.server.control_plane.management.audit.io.AuditLogFindRequest;
 import org.idp.server.control_plane.management.audit.io.AuditLogManagementResponse;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
-import org.idp.server.platform.audit.*;
+import org.idp.server.platform.audit.AuditLog;
+import org.idp.server.platform.audit.AuditLogIdentifier;
+import org.idp.server.platform.audit.AuditLogPublisher;
+import org.idp.server.platform.audit.AuditLogQueries;
+import org.idp.server.platform.audit.AuditLogQueryRepository;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
@@ -37,7 +40,7 @@ import org.idp.server.platform.type.RequestAttributes;
  * Organization-level audit log management entry service.
  *
  * <p>This service implements organization-scoped audit log management operations that allow
- * organization administrators to view audit logs within their organization boundaries.
+ * organization administrators to monitor audit logs within their organization boundaries.
  *
  * <p>Organization-level operations follow the standard access control pattern:
  *
@@ -45,10 +48,11 @@ import org.idp.server.platform.type.RequestAttributes;
  *   <li><strong>Organization access verification</strong> - Ensures the user has access to the
  *       organization
  *   <li><strong>Permission verification</strong> - Validates the user has necessary AUDIT_LOG_READ
- *       permission
+ *       permissions
  * </ol>
  *
- * <p>All operations provide comprehensive audit logging for organization-level audit log access.
+ * <p>This service provides read-only access to audit log data and comprehensive audit logging for
+ * organization-level audit log monitoring operations.
  *
  * @see OrgAuditLogManagementApi
  * @see OrganizationAccessVerifier
@@ -57,87 +61,49 @@ import org.idp.server.platform.type.RequestAttributes;
 @Transaction
 public class OrgAuditLogManagementEntryService implements OrgAuditLogManagementApi {
 
-  AuditLogPublisher auditLogPublisher;
-  LoggerWrapper log = LoggerWrapper.getLogger(OrgAuditLogManagementEntryService.class);
-
-  // Handler/Service pattern (organization-level)
-  private OrgAuditLogManagementHandler handler;
+  private final OrgAuditLogManagementHandler handler;
+  private final AuditLogPublisher auditLogPublisher;
 
   /**
    * Creates a new organization audit log management entry service.
    *
    * @param tenantQueryRepository the tenant query repository
-   * @param organizationRepository the organization repository
    * @param auditLogQueryRepository the audit log query repository
    * @param auditLogPublisher the audit log publisher
    */
   public OrgAuditLogManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
-      OrganizationRepository organizationRepository,
       AuditLogQueryRepository auditLogQueryRepository,
       AuditLogPublisher auditLogPublisher) {
-    this.auditLogPublisher = auditLogPublisher;
-
-    this.handler =
-        createHandler(auditLogQueryRepository, tenantQueryRepository, organizationRepository);
-  }
-
-  private OrgAuditLogManagementHandler createHandler(
-      AuditLogQueryRepository auditLogQueryRepository,
-      TenantQueryRepository tenantQueryRepository,
-      OrganizationRepository organizationRepository) {
 
     Map<String, AuditLogManagementService<?>> services = new HashMap<>();
     services.put("findList", new AuditLogFindListService(auditLogQueryRepository));
     services.put("get", new AuditLogFindService(auditLogQueryRepository));
 
-    return new OrgAuditLogManagementHandler(
-        services, this, tenantQueryRepository, organizationRepository);
+    this.handler =
+        new OrgAuditLogManagementHandler(
+            services, this, tenantQueryRepository, new OrganizationAccessVerifier());
+    this.auditLogPublisher = auditLogPublisher;
   }
 
+  @Override
   @Transaction(readOnly = true)
   public AuditLogManagementResponse findList(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuditLogQueries queries,
       RequestAttributes requestAttributes) {
 
-    // Delegate to Handler/Service pattern (Handler performs all access control)
-    AuditLogFindListRequest request = new AuditLogFindListRequest(queries);
+    AuditLogFindListRequest findListRequest = new AuditLogFindListRequest(queries);
     AuditLogManagementResult result =
         handler.handle(
             "findList",
-            organizationIdentifier,
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
-            request,
+            findListRequest,
             requestAttributes);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "OrgAuditLogManagementApi.findList",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse();
-    }
-
-    // Record audit log (read operation)
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "OrgAuditLogManagementApi.findList",
-            "findList",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse();
@@ -146,46 +112,17 @@ public class OrgAuditLogManagementEntryService implements OrgAuditLogManagementA
   @Override
   @Transaction(readOnly = true)
   public AuditLogManagementResponse get(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuditLogIdentifier identifier,
       RequestAttributes requestAttributes) {
 
-    // Delegate to Handler/Service pattern (Handler performs all access control)
+    AuditLogFindRequest findRequest = new AuditLogFindRequest(identifier);
     AuditLogManagementResult result =
         handler.handle(
-            "get",
-            organizationIdentifier,
-            tenantIdentifier,
-            operator,
-            oAuthToken,
-            identifier,
-            requestAttributes);
+            "get", authenticationContext, tenantIdentifier, findRequest, requestAttributes);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "OrgAuditLogManagementApi.get",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse();
-    }
-
-    // Record audit log (read operation)
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "OrgAuditLogManagementApi.get",
-            "get",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse();

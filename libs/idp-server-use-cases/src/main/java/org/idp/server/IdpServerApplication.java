@@ -1051,10 +1051,7 @@ public class IdpServerApplication {
     this.orgAuditLogManagementApi =
         ManagementTypeEntryServiceProxy.createProxy(
             new OrgAuditLogManagementEntryService(
-                tenantQueryRepository,
-                organizationRepository,
-                auditLogQueryRepository,
-                auditLogPublisher),
+                tenantQueryRepository, auditLogQueryRepository, auditLogPublisher),
             OrgAuditLogManagementApi.class,
             databaseTypeProvider);
 

@@ -18,144 +18,97 @@ package org.idp.server.control_plane.management.audit.handler;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.audit.io.AuditLogManagementResponse;
 import org.idp.server.control_plane.management.audit.io.AuditLogManagementStatus;
-import org.idp.server.control_plane.management.exception.ManagementApiException;
-import org.idp.server.control_plane.management.exception.OrganizationAccessDeniedException;
-import org.idp.server.control_plane.management.exception.PermissionDeniedException;
-import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.control_plane.management.exception.*;
 
 /**
- * Result wrapper for audit log management operations.
+ * Result object for audit log management operations.
  *
- * <p>This class encapsulates the result of audit log management operations, including both success
- * and error cases. It provides a consistent way to handle operation outcomes across the
- * Handler/Service pattern.
+ * <p>Encapsulates the outcome of audit log management Handler/Service pattern operations. Follows
+ * the Result-Exception Hybrid pattern:
  *
- * <h2>Usage Pattern</h2>
+ * <ul>
+ *   <li>Service layer throws ManagementApiException on validation/verification failures
+ *   <li>Handler layer catches exceptions and converts to Result
+ *   <li>EntryService layer converts Result to HTTP response
+ * </ul>
  *
- * <pre>{@code
- * // Success case
- * AuditLogManagementResult result = AuditLogManagementResult.success(
- *     tenant, response);
- *
- * // Error case (caught in Handler)
- * try {
- *   return service.execute(...);
- * } catch (ManagementApiException e) {
- *   return AuditLogManagementResult.error(tenant, e);
- * }
- *
- * // Convert to HTTP response (in EntryService)
- * if (result.hasException()) {
- *   auditLogPublisher.publish(createErrorLog(...));
- *   return result.toResponse();
- * }
- * auditLogPublisher.publish(createSuccessLog(...));
- * return result.toResponse();
- * }</pre>
- *
- * @see AuditLogManagementService
  * @see AuditLogManagementHandler
+ * @see AuditLogManagementService
  */
 public class AuditLogManagementResult {
 
-  private final Tenant tenant;
-  private final AuditLogManagementResponse response;
+  private final AuditableContext context;
   private final ManagementApiException exception;
+  private final AuditLogManagementResponse response;
 
   private AuditLogManagementResult(
-      Tenant tenant, AuditLogManagementResponse response, ManagementApiException exception) {
-    this.tenant = tenant;
-    this.response = response;
+      AuditableContext context,
+      ManagementApiException exception,
+      AuditLogManagementResponse response) {
+    this.context = context;
     this.exception = exception;
+    this.response = response;
   }
 
   /**
-   * Creates a success result.
+   * Creates a successful result with context.
    *
-   * @param tenant the tenant context
+   * @param context the operation context
    * @param response the success response
-   * @return success result
+   * @return successful result with context
    */
   public static AuditLogManagementResult success(
-      Tenant tenant, AuditLogManagementResponse response) {
-    return new AuditLogManagementResult(tenant, response, null);
+      AuditableContext context, AuditLogManagementResponse response) {
+    return new AuditLogManagementResult(context, null, response);
   }
 
   /**
-   * Creates an error result.
+   * Creates an error result from an exception.
    *
-   * @param tenant the tenant context (may be null if tenant retrieval failed)
+   * @param context the operation context (may be partial)
    * @param exception the exception that occurred
    * @return error result
    */
-  public static AuditLogManagementResult error(Tenant tenant, ManagementApiException exception) {
-    return new AuditLogManagementResult(tenant, null, exception);
+  public static AuditLogManagementResult error(
+      AuditableContext context, ManagementApiException exception) {
+    return new AuditLogManagementResult(context, exception, null);
   }
 
-  /**
-   * Checks if this result contains an exception.
-   *
-   * @return true if error result, false if success result
-   */
+  private static AuditLogManagementStatus mapExceptionToStatus(ManagementApiException exception) {
+    if (exception instanceof ResourceNotFoundException) {
+      return AuditLogManagementStatus.NOT_FOUND;
+    }
+    if (exception instanceof PermissionDeniedException
+        || exception instanceof OrganizationAccessDeniedException) {
+      return AuditLogManagementStatus.FORBIDDEN;
+    }
+    return AuditLogManagementStatus.INVALID_REQUEST;
+  }
+
+  public AuditableContext context() {
+    return context;
+  }
+
   public boolean hasException() {
     return exception != null;
   }
 
-  /**
-   * Gets the tenant context.
-   *
-   * @return the tenant (may be null if tenant retrieval failed)
-   */
-  public Tenant tenant() {
-    return tenant;
-  }
-
-  /**
-   * Gets the exception.
-   *
-   * @return the exception (null for success results)
-   */
   public ManagementApiException getException() {
     return exception;
   }
 
-  /**
-   * Converts this result to HTTP response.
-   *
-   * <p>For error results, constructs error response from exception. For success results, returns
-   * the response as-is.
-   *
-   * @return the HTTP response
-   */
   public AuditLogManagementResponse toResponse() {
     if (hasException()) {
       Map<String, Object> errorResponse = new HashMap<>();
       errorResponse.put("error", exception.errorCode());
       errorResponse.put("error_description", exception.errorDescription());
       errorResponse.putAll(exception.errorDetails());
-
       AuditLogManagementStatus status = mapExceptionToStatus(exception);
       return new AuditLogManagementResponse(status, errorResponse);
     }
-
     return response;
-  }
-
-  /**
-   * Maps exception types to HTTP status codes.
-   *
-   * @param e the exception
-   * @return the corresponding status
-   */
-  private AuditLogManagementStatus mapExceptionToStatus(ManagementApiException e) {
-    if (e instanceof PermissionDeniedException || e instanceof OrganizationAccessDeniedException) {
-      return AuditLogManagementStatus.FORBIDDEN;
-    } else if (e instanceof ResourceNotFoundException) {
-      return AuditLogManagementStatus.NOT_FOUND;
-    }
-    return AuditLogManagementStatus.SERVER_ERROR;
   }
 }
