@@ -109,7 +109,7 @@ public class IdentityVerificationConfigUpdateService
     IdentityVerificationConfigurationRequest configurationRequest =
         jsonConverter.read(request.toMap(), IdentityVerificationConfigurationRequest.class);
 
-    String identifier = configurationRequest.hasId() ? configurationRequest.id() : before.id();
+    String identifier = before.id();
 
     return configurationRequest.toConfiguration(identifier);
   }
