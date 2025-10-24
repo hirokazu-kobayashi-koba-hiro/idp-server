@@ -16,18 +16,18 @@
 
 package org.idp.server.control_plane.management.identity.verification.io;
 
+import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationQueries;
 
-public record IdentityVerificationConfigUpdateRequest(
-    IdentityVerificationConfigurationIdentifier identifier,
-    IdentityVerificationConfigRegistrationRequest configRequest)
+public record IdentityVerificationConfigFindListRequest(IdentityVerificationQueries queries)
     implements IdentityVerificationConfigManagementRequest {
 
   @Override
   public Map<String, Object> toMap() {
-    Map<String, Object> map = configRequest.toMap();
-    map.put("id", identifier.value());
+    Map<String, Object> map = new HashMap<>();
+    map.put("limit", queries.limit());
+    map.put("offset", queries.offset());
     return map;
   }
 }

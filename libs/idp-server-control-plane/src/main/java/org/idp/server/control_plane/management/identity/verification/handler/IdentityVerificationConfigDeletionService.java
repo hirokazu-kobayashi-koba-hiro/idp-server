@@ -18,6 +18,7 @@ package org.idp.server.control_plane.management.identity.verification.handler;
 
 import java.util.Map;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
+import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigManagementContextBuilder;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementStatus;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
@@ -50,7 +51,8 @@ public class IdentityVerificationConfigDeletionService
   }
 
   @Override
-  public IdentityVerificationConfigManagementResult execute(
+  public IdentityVerificationConfigManagementResponse execute(
+      IdentityVerificationConfigManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -65,6 +67,9 @@ public class IdentityVerificationConfigDeletionService
           "Identity verification configuration not found: " + identifier.value());
     }
 
+    // Populate builder with configuration being deleted
+    builder.withBefore(configuration);
+
     if (dryRun) {
       Map<String, Object> response =
           Map.of(
@@ -74,17 +79,13 @@ public class IdentityVerificationConfigDeletionService
               configuration.id(),
               "dry_run",
               true);
-      return IdentityVerificationConfigManagementResult.success(
-          tenant.identifier(),
-          new IdentityVerificationConfigManagementResponse(
-              IdentityVerificationConfigManagementStatus.OK, response));
+      return new IdentityVerificationConfigManagementResponse(
+          IdentityVerificationConfigManagementStatus.OK, response);
     }
 
     commandRepository.delete(tenant, configuration.type(), configuration);
 
-    return IdentityVerificationConfigManagementResult.success(
-        tenant.identifier(),
-        new IdentityVerificationConfigManagementResponse(
-            IdentityVerificationConfigManagementStatus.NO_CONTENT, Map.of()));
+    return new IdentityVerificationConfigManagementResponse(
+        IdentityVerificationConfigManagementStatus.NO_CONTENT, Map.of());
   }
 }

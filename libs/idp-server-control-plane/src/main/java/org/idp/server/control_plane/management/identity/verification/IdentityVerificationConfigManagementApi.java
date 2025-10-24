@@ -19,6 +19,7 @@ package org.idp.server.control_plane.management.identity.verification;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
@@ -26,8 +27,6 @@ import org.idp.server.control_plane.management.identity.verification.io.Identity
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigUpdateRequest;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationQueries;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
@@ -59,41 +58,36 @@ public interface IdentityVerificationConfigManagementApi {
   }
 
   IdentityVerificationConfigManagementResponse create(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       IdentityVerificationConfigRegistrationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
   IdentityVerificationConfigManagementResponse findList(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       IdentityVerificationQueries queries,
       RequestAttributes requestAttributes);
 
   IdentityVerificationConfigManagementResponse get(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      IdentityVerificationConfigurationIdentifier userIdentifier,
+      IdentityVerificationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes);
 
   IdentityVerificationConfigManagementResponse update(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      IdentityVerificationConfigurationIdentifier userIdentifier,
+      IdentityVerificationConfigurationIdentifier identifier,
       IdentityVerificationConfigUpdateRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
   IdentityVerificationConfigManagementResponse delete(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      IdentityVerificationConfigurationIdentifier userIdentifier,
+      IdentityVerificationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun);
 }

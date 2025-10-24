@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import org.idp.server.control_plane.base.OrganizationAccessVerifier;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
@@ -27,10 +28,7 @@ import org.idp.server.control_plane.management.identity.verification.io.Identity
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigUpdateRequest;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationQueries;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -102,94 +100,36 @@ public interface OrgIdentityVerificationConfigManagementApi {
    * @return the creation response with configuration details
    */
   IdentityVerificationConfigManagementResponse create(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       IdentityVerificationConfigRegistrationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
-  /**
-   * Retrieves a filtered list of identity verification configurations within the organization
-   * tenant.
-   *
-   * @param organizationIdentifier the organization identifier
-   * @param tenantIdentifier the target tenant identifier within the organization
-   * @param operator the user performing the operation
-   * @param oAuthToken the authentication token
-   * @param queries the query filters and pagination parameters
-   * @param requestAttributes additional request context information
-   * @return the list response with matching configurations
-   */
   IdentityVerificationConfigManagementResponse findList(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       IdentityVerificationQueries queries,
       RequestAttributes requestAttributes);
 
-  /**
-   * Retrieves a specific identity verification configuration by identifier.
-   *
-   * @param organizationIdentifier the organization identifier
-   * @param tenantIdentifier the target tenant identifier within the organization
-   * @param operator the user performing the operation
-   * @param oAuthToken the authentication token
-   * @param configurationIdentifier the configuration identifier to retrieve
-   * @param requestAttributes additional request context information
-   * @return the configuration details response
-   */
   IdentityVerificationConfigManagementResponse get(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      IdentityVerificationConfigurationIdentifier configurationIdentifier,
+      IdentityVerificationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes);
 
-  /**
-   * Updates an existing identity verification configuration within the organization tenant.
-   *
-   * @param organizationIdentifier the organization identifier
-   * @param tenantIdentifier the target tenant identifier within the organization
-   * @param operator the user performing the operation
-   * @param oAuthToken the authentication token
-   * @param configurationIdentifier the configuration identifier to update
-   * @param request the update request with new configuration data
-   * @param requestAttributes additional request context information
-   * @param dryRun whether to perform a dry-run (preview) operation
-   * @return the update response with modified configuration details
-   */
   IdentityVerificationConfigManagementResponse update(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      IdentityVerificationConfigurationIdentifier configurationIdentifier,
+      IdentityVerificationConfigurationIdentifier identifier,
       IdentityVerificationConfigUpdateRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
-  /**
-   * Deletes an identity verification configuration from the organization tenant.
-   *
-   * @param organizationIdentifier the organization identifier
-   * @param tenantIdentifier the target tenant identifier within the organization
-   * @param operator the user performing the operation
-   * @param oAuthToken the authentication token
-   * @param configurationIdentifier the configuration identifier to delete
-   * @param requestAttributes additional request context information
-   * @param dryRun whether to perform a dry-run (preview) operation
-   * @return the deletion response
-   */
   IdentityVerificationConfigManagementResponse delete(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      IdentityVerificationConfigurationIdentifier configurationIdentifier,
+      IdentityVerificationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun);
 }

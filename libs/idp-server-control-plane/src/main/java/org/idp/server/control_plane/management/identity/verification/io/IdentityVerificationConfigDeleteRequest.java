@@ -19,15 +19,12 @@ package org.idp.server.control_plane.management.identity.verification.io;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
 
-public record IdentityVerificationConfigUpdateRequest(
-    IdentityVerificationConfigurationIdentifier identifier,
-    IdentityVerificationConfigRegistrationRequest configRequest)
+public record IdentityVerificationConfigDeleteRequest(
+    IdentityVerificationConfigurationIdentifier identifier)
     implements IdentityVerificationConfigManagementRequest {
 
   @Override
   public Map<String, Object> toMap() {
-    Map<String, Object> map = configRequest.toMap();
-    map.put("id", identifier.value());
-    return map;
+    return Map.of("id", identifier.value());
   }
 }

@@ -16,13 +16,18 @@
 
 package org.idp.server.control_plane.management.identity.verification.handler;
 
-import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigRegistrationContext;
-import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigRegistrationContextCreator;
+import java.util.Map;
+import java.util.UUID;
+import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigManagementContextBuilder;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
+import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementStatus;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigRegistrationRequest;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationCommandRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -44,7 +49,8 @@ public class IdentityVerificationConfigCreationService
   }
 
   @Override
-  public IdentityVerificationConfigManagementResult execute(
+  public IdentityVerificationConfigManagementResponse execute(
+      IdentityVerificationConfigManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -52,20 +58,43 @@ public class IdentityVerificationConfigCreationService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    IdentityVerificationConfigRegistrationContextCreator contextCreator =
-        new IdentityVerificationConfigRegistrationContextCreator(tenant, request, dryRun);
-    IdentityVerificationConfigRegistrationContext context = contextCreator.create();
+    // 1. Create configuration from request
+    IdentityVerificationConfiguration configuration = createConfiguration(request);
+
+    // 2. Populate builder with created configuration
+    builder.withAfter(configuration);
+
+    // 3. Build response
+    Map<String, Object> contents = Map.of("result", configuration.toMap(), "dry_run", dryRun);
 
     if (dryRun) {
-      IdentityVerificationConfigManagementResponse response = context.toResponse();
-      return IdentityVerificationConfigManagementResult.success(
-          tenant.identifier(), response, context);
+      return new IdentityVerificationConfigManagementResponse(
+          IdentityVerificationConfigManagementStatus.OK, contents);
     }
 
-    commandRepository.register(tenant, context.identityVerificationType(), context.configuration());
+    // 4. Repository operation
+    commandRepository.register(tenant, configuration.type(), configuration);
 
-    IdentityVerificationConfigManagementResponse response = context.toResponse();
-    return IdentityVerificationConfigManagementResult.success(
-        tenant.identifier(), response, context);
+    return new IdentityVerificationConfigManagementResponse(
+        IdentityVerificationConfigManagementStatus.CREATED, contents);
+  }
+
+  private IdentityVerificationConfiguration createConfiguration(
+      IdentityVerificationConfigRegistrationRequest request) {
+    JsonNodeWrapper requestJson = JsonNodeWrapper.fromMap(request.toMap());
+
+    // Generate UUID if not provided
+    String id =
+        requestJson.contains("id")
+            ? requestJson.getValueOrEmptyAsString("id")
+            : UUID.randomUUID().toString();
+
+    // Add ID to request map for conversion
+    Map<String, Object> configMap = request.toMap();
+    configMap.put("id", id);
+
+    // Convert to IdentityVerificationConfiguration using JsonConverter
+    JsonConverter converter = JsonConverter.snakeCaseInstance();
+    return converter.read(configMap, IdentityVerificationConfiguration.class);
   }
 }

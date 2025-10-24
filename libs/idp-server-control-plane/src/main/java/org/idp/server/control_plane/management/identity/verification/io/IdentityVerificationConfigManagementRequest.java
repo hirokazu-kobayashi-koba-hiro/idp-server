@@ -17,17 +17,18 @@
 package org.idp.server.control_plane.management.identity.verification.io;
 
 import java.util.Map;
-import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
 
-public record IdentityVerificationConfigUpdateRequest(
-    IdentityVerificationConfigurationIdentifier identifier,
-    IdentityVerificationConfigRegistrationRequest configRequest)
-    implements IdentityVerificationConfigManagementRequest {
+/**
+ * Marker interface for identity verification configuration management request objects.
+ *
+ * <p>Enables polymorphic handling of different request types in Handler layer.
+ */
+public interface IdentityVerificationConfigManagementRequest {
 
-  @Override
-  public Map<String, Object> toMap() {
-    Map<String, Object> map = configRequest.toMap();
-    map.put("id", identifier.value());
-    return map;
-  }
+  /**
+   * Converts request to Map for audit logging.
+   *
+   * @return request data as map
+   */
+  Map<String, Object> toMap();
 }
