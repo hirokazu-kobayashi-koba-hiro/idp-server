@@ -23,7 +23,6 @@ import org.idp.server.control_plane.base.OrganizationAccessVerifier;
 import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.management.authentication.policy.OrgAuthenticationPolicyConfigManagementApi;
 import org.idp.server.control_plane.management.authentication.policy.handler.*;
-import org.idp.server.control_plane.management.authentication.policy.handler.AuthenticationPolicyConfigUpdateRequest;
 import org.idp.server.control_plane.management.authentication.policy.io.*;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfigurationIdentifier;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationCommandRepository;
