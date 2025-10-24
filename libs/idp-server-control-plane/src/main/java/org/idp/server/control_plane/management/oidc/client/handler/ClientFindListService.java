@@ -18,13 +18,14 @@ package org.idp.server.control_plane.management.oidc.client.handler;
 
 import java.util.List;
 import java.util.Map;
+import org.idp.server.control_plane.management.oidc.client.ClientManagementContextBuilder;
+import org.idp.server.control_plane.management.oidc.client.io.ClientFindListRequest;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementStatus;
 import org.idp.server.control_plane.management.oidc.client.validator.ClientQueryValidator;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
-import org.idp.server.core.openid.oauth.configuration.client.ClientQueries;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
@@ -35,7 +36,7 @@ import org.idp.server.platform.type.RequestAttributes;
  * <p>Handles business logic for retrieving lists of client configurations. Part of Handler/Service
  * pattern.
  */
-public class ClientFindListService implements ClientManagementService<ClientQueries> {
+public class ClientFindListService implements ClientManagementService<ClientFindListRequest> {
 
   private final ClientConfigurationQueryRepository queryRepository;
 
@@ -44,31 +45,36 @@ public class ClientFindListService implements ClientManagementService<ClientQuer
   }
 
   @Override
-  public ClientManagementResult execute(
+  public ClientManagementResponse execute(
+      ClientManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      ClientQueries queries,
+      ClientFindListRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
     // Validation
-    ClientQueryValidator validator = new ClientQueryValidator(queries);
+    ClientQueryValidator validator = new ClientQueryValidator(request.queries());
     validator.validate(); // throws InvalidRequestException if invalid
 
-    long totalCount = queryRepository.findTotalCount(tenant, queries);
+    long totalCount = queryRepository.findTotalCount(tenant, request.queries());
     if (totalCount == 0) {
       Map<String, Object> response =
           Map.of(
-              "list", List.of(),
-              "total_count", totalCount,
-              "limit", queries.limit(),
-              "offset", queries.offset());
-      return ClientManagementResult.success(
-          tenant.identifier(), new ClientManagementResponse(ClientManagementStatus.OK, response));
+              "list",
+              List.of(),
+              "total_count",
+              totalCount,
+              "limit",
+              request.queries().limit(),
+              "offset",
+              request.queries().offset());
+      return new ClientManagementResponse(ClientManagementStatus.OK, response);
     }
 
-    List<ClientConfiguration> clientConfigurations = queryRepository.findList(tenant, queries);
+    List<ClientConfiguration> clientConfigurations =
+        queryRepository.findList(tenant, request.queries());
 
     Map<String, Object> response =
         Map.of(
@@ -77,11 +83,10 @@ public class ClientFindListService implements ClientManagementService<ClientQuer
             "total_count",
             totalCount,
             "limit",
-            queries.limit(),
+            request.queries().limit(),
             "offset",
-            queries.offset());
+            request.queries().offset());
 
-    return ClientManagementResult.success(
-        tenant.identifier(), new ClientManagementResponse(ClientManagementStatus.OK, response));
+    return new ClientManagementResponse(ClientManagementStatus.OK, response);
   }
 }

@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.management.oidc.client.handler;
+package org.idp.server.control_plane.management.oidc.client.io;
 
-import org.idp.server.control_plane.management.oidc.client.io.ClientRegistrationRequest;
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.core.openid.oauth.configuration.client.ClientIdentifier;
 
 /**
@@ -25,4 +26,14 @@ import org.idp.server.core.openid.oauth.configuration.client.ClientIdentifier;
  * <p>Combines client identifier and registration request for handler/service pattern.
  */
 public record ClientUpdateRequest(
-    ClientIdentifier clientIdentifier, ClientRegistrationRequest registrationRequest) {}
+    ClientIdentifier identifier, ClientRegistrationRequest registrationRequest)
+    implements ClientManagementRequest {
+
+  @Override
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("client_id", identifier.value());
+    map.put("registration_request", registrationRequest.toMap());
+    return map;
+  }
+}

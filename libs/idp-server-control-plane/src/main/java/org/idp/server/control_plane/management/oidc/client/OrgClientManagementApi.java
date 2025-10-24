@@ -19,16 +19,14 @@ package org.idp.server.control_plane.management.oidc.client;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
 import org.idp.server.control_plane.management.oidc.client.io.ClientRegistrationRequest;
-import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.configuration.client.ClientIdentifier;
 import org.idp.server.core.openid.oauth.configuration.client.ClientQueries;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -111,10 +109,8 @@ public interface OrgClientManagementApi {
    * @return client management response with creation result
    */
   ClientManagementResponse create(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       ClientRegistrationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
@@ -122,48 +118,38 @@ public interface OrgClientManagementApi {
   /**
    * Finds a list of clients within the organization.
    *
-   * @param organizationIdentifier the organization to search in
+   * @param authenticationContext the organization authentication context
    * @param tenantIdentifier the tenant for database access
-   * @param operator the user performing the operation
-   * @param oAuthToken the OAuth token for the request
    * @param queries query parameters for filtering and pagination
    * @param requestAttributes additional request attributes
    * @return client management response with client list
    */
   ClientManagementResponse findList(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       ClientQueries queries,
       RequestAttributes requestAttributes);
 
   /**
    * Gets a specific client within the organization.
    *
-   * @param organizationIdentifier the organization to search in
+   * @param authenticationContext the organization authentication context
    * @param tenantIdentifier the tenant for database access
-   * @param operator the user performing the operation
-   * @param oAuthToken the OAuth token for the request
    * @param clientIdentifier the client to retrieve
    * @param requestAttributes additional request attributes
    * @return client management response with client details
    */
   ClientManagementResponse get(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       ClientIdentifier clientIdentifier,
       RequestAttributes requestAttributes);
 
   /**
    * Updates a client within the organization.
    *
-   * @param organizationIdentifier the organization containing the client
+   * @param authenticationContext the organization authentication context
    * @param tenantIdentifier the tenant for database access
-   * @param operator the user performing the operation
-   * @param oAuthToken the OAuth token for the request
    * @param clientIdentifier the client to update
    * @param request the updated client registration request
    * @param requestAttributes additional request attributes
@@ -171,10 +157,8 @@ public interface OrgClientManagementApi {
    * @return client management response with update result
    */
   ClientManagementResponse update(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       ClientIdentifier clientIdentifier,
       ClientRegistrationRequest request,
       RequestAttributes requestAttributes,
@@ -183,20 +167,16 @@ public interface OrgClientManagementApi {
   /**
    * Deletes a client within the organization.
    *
-   * @param organizationIdentifier the organization containing the client
+   * @param authenticationContext the organization authentication context
    * @param tenantIdentifier the tenant for database access
-   * @param operator the user performing the operation
-   * @param oAuthToken the OAuth token for the request
    * @param clientIdentifier the client to delete
    * @param requestAttributes additional request attributes
    * @param dryRun if true, performs validation without deleting the client
    * @return client management response with deletion result
    */
   ClientManagementResponse delete(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       ClientIdentifier clientIdentifier,
       RequestAttributes requestAttributes,
       boolean dryRun);

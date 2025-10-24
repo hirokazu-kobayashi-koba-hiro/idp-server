@@ -16,14 +16,19 @@
 
 package org.idp.server.control_plane.management.oidc.client.handler;
 
-import org.idp.server.control_plane.management.oidc.client.ClientRegistrationContext;
-import org.idp.server.control_plane.management.oidc.client.ClientRegistrationContextCreator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import org.idp.server.control_plane.management.oidc.client.ClientManagementContextBuilder;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
+import org.idp.server.control_plane.management.oidc.client.io.ClientManagementStatus;
 import org.idp.server.control_plane.management.oidc.client.io.ClientRegistrationRequest;
 import org.idp.server.control_plane.management.oidc.client.validator.ClientRegistrationRequestValidator;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -35,13 +40,16 @@ import org.idp.server.platform.type.RequestAttributes;
 public class ClientCreationService implements ClientManagementService<ClientRegistrationRequest> {
 
   private final ClientConfigurationCommandRepository commandRepository;
+  private final JsonConverter jsonConverter;
 
   public ClientCreationService(ClientConfigurationCommandRepository commandRepository) {
     this.commandRepository = commandRepository;
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override
-  public ClientManagementResult execute(
+  public ClientManagementResponse execute(
+      ClientManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -54,20 +62,25 @@ public class ClientCreationService implements ClientManagementService<ClientRegi
         new ClientRegistrationRequestValidator(request, dryRun);
     validator.validate(); // throws InvalidRequestException if invalid
 
-    // Create context
-    ClientRegistrationContextCreator contextCreator =
-        new ClientRegistrationContextCreator(tenant, request, dryRun);
-    ClientRegistrationContext context = contextCreator.create();
+    // Build ClientConfiguration (add client_id if missing)
+    Map<String, Object> map = new HashMap<>(request.toMap());
+    if (!request.hasClientId()) {
+      map.put("client_id", UUID.randomUUID().toString());
+    }
+    ClientConfiguration clientConfiguration = jsonConverter.read(map, ClientConfiguration.class);
 
+    // Update context builder with after state
+    contextBuilder.withAfter(clientConfiguration);
+
+    Map<String, Object> response = Map.of("result", clientConfiguration.toMap(), "dry_run", dryRun);
     if (dryRun) {
-      ClientManagementResponse response = context.toResponse();
-      return ClientManagementResult.success(tenant.identifier(), response, context);
+
+      return new ClientManagementResponse(ClientManagementStatus.CREATED, response);
     }
 
     // Register client
-    commandRepository.register(tenant, context.configuration());
+    commandRepository.register(tenant, clientConfiguration);
 
-    ClientManagementResponse response = context.toResponse();
-    return ClientManagementResult.success(tenant.identifier(), response, context);
+    return new ClientManagementResponse(ClientManagementStatus.CREATED, response);
   }
 }

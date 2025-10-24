@@ -18,6 +18,7 @@ package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
 import org.idp.server.control_plane.management.oidc.client.handler.ClientCreationService;
@@ -25,23 +26,16 @@ import org.idp.server.control_plane.management.oidc.client.handler.ClientDeletio
 import org.idp.server.control_plane.management.oidc.client.handler.ClientFindListService;
 import org.idp.server.control_plane.management.oidc.client.handler.ClientFindService;
 import org.idp.server.control_plane.management.oidc.client.handler.ClientManagementHandler;
-import org.idp.server.control_plane.management.oidc.client.handler.ClientManagementResult;
 import org.idp.server.control_plane.management.oidc.client.handler.ClientManagementService;
-import org.idp.server.control_plane.management.oidc.client.handler.ClientUpdateRequest;
 import org.idp.server.control_plane.management.oidc.client.handler.ClientUpdateService;
-import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
-import org.idp.server.control_plane.management.oidc.client.io.ClientRegistrationRequest;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.control_plane.management.oidc.client.io.*;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientIdentifier;
 import org.idp.server.core.openid.oauth.configuration.client.ClientQueries;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
@@ -50,8 +44,6 @@ import org.idp.server.platform.type.RequestAttributes;
 public class ClientManagementEntryService implements ClientManagementApi {
 
   private final ClientManagementHandler handler;
-  private final TenantQueryRepository tenantQueryRepository;
-  private final ClientConfigurationQueryRepository clientConfigurationQueryRepository;
   private final AuditLogPublisher auditLogPublisher;
 
   public ClientManagementEntryService(
@@ -73,39 +65,21 @@ public class ClientManagementEntryService implements ClientManagementApi {
         new ClientDeletionService(
             clientConfigurationQueryRepository, clientConfigurationCommandRepository));
 
-    this.handler = new ClientManagementHandler(services, this);
-
-    this.tenantQueryRepository = tenantQueryRepository;
-    this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
+    this.handler = new ClientManagementHandler(services, this, tenantQueryRepository);
     this.auditLogPublisher = auditLogPublisher;
   }
 
   @Override
   public ClientManagementResponse create(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       ClientRegistrationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
     ClientManagementResult result =
-        handler.handle("create", tenant, operator, oAuthToken, request, requestAttributes, dryRun);
-
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "ClientManagementApi.create",
-              tenant,
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
+        handler.handle(
+            "create", authenticationContext, tenantIdentifier, request, requestAttributes, dryRun);
 
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
@@ -116,84 +90,64 @@ public class ClientManagementEntryService implements ClientManagementApi {
   @Override
   @Transaction(readOnly = true)
   public ClientManagementResponse findList(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       ClientQueries queries,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
+    ClientFindListRequest findListRequest = new ClientFindListRequest(queries);
     ClientManagementResult result =
-        handler.handle("findList", tenant, operator, oAuthToken, queries, requestAttributes, false);
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "ClientManagementApi.findList",
+        handler.handle(
             "findList",
-            tenant,
-            operator,
-            oAuthToken,
-            requestAttributes);
+            authenticationContext,
+            tenantIdentifier,
+            findListRequest,
+            requestAttributes,
+            false);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
-    return result.toResponse();
+    return result.toResponse(false);
   }
 
   @Override
   @Transaction(readOnly = true)
   public ClientManagementResponse get(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       ClientIdentifier clientIdentifier,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
+    ClientFindRequest findRequest = new ClientFindRequest(clientIdentifier);
     ClientManagementResult result =
         handler.handle(
-            "get", tenant, operator, oAuthToken, clientIdentifier, requestAttributes, false);
+            "get", authenticationContext, tenantIdentifier, findRequest, requestAttributes, false);
 
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "ClientManagementApi.get", "get", tenant, operator, oAuthToken, requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
-    return result.toResponse();
+    return result.toResponse(false);
   }
 
   @Override
   public ClientManagementResponse update(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       ClientIdentifier clientIdentifier,
       ClientRegistrationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    // Wrap request for handler
     ClientUpdateRequest updateRequest = new ClientUpdateRequest(clientIdentifier, request);
-
     ClientManagementResult result =
         handler.handle(
-            "update", tenant, operator, oAuthToken, updateRequest, requestAttributes, dryRun);
-
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "ClientManagementApi.update",
-              tenant,
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
+            "update",
+            authenticationContext,
+            tenantIdentifier,
+            updateRequest,
+            requestAttributes,
+            dryRun);
 
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
@@ -203,32 +157,25 @@ public class ClientManagementEntryService implements ClientManagementApi {
 
   @Override
   public ClientManagementResponse delete(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       ClientIdentifier clientIdentifier,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    ClientConfiguration clientConfiguration =
-        clientConfigurationQueryRepository.findWithDisabled(tenant, clientIdentifier, true);
-
+    ClientDeleteRequest deleteRequest = new ClientDeleteRequest(clientIdentifier);
     ClientManagementResult result =
         handler.handle(
-            "delete", tenant, operator, oAuthToken, clientIdentifier, requestAttributes, dryRun);
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnDeletion(
-            "ClientManagementApi.delete",
             "delete",
-            tenant,
-            operator,
-            oAuthToken,
-            clientConfiguration.toMap(),
-            requestAttributes);
+            authenticationContext,
+            tenantIdentifier,
+            deleteRequest,
+            requestAttributes,
+            dryRun);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
-    return result.toResponse();
+    return result.toResponse(dryRun);
   }
 }

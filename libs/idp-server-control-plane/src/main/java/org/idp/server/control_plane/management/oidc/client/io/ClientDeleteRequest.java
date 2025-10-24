@@ -17,28 +17,17 @@
 package org.idp.server.control_plane.management.oidc.client.io;
 
 import java.util.Map;
+import org.idp.server.core.openid.oauth.configuration.client.ClientIdentifier;
 
-public class ClientRegistrationRequest implements ClientManagementRequest {
+/**
+ * Request wrapper for client delete operations.
+ *
+ * <p>Wraps ClientIdentifier for delete operations.
+ */
+public record ClientDeleteRequest(ClientIdentifier identifier) implements ClientManagementRequest {
 
-  Map<String, Object> values;
-
-  public ClientRegistrationRequest(Map<String, Object> values) {
-    this.values = values;
-  }
-
+  @Override
   public Map<String, Object> toMap() {
-    return values;
-  }
-
-  public Object get(String key) {
-    return values.get(key);
-  }
-
-  public boolean hasClientId() {
-    return values.containsKey("client_id");
-  }
-
-  public String getClientId() {
-    return (String) values.get("client_id");
+    return Map.of("client_id", identifier.value());
   }
 }

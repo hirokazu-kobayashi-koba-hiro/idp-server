@@ -17,28 +17,28 @@
 package org.idp.server.control_plane.management.oidc.client.io;
 
 import java.util.Map;
+import org.idp.server.control_plane.management.oidc.client.handler.ClientManagementHandler;
 
-public class ClientRegistrationRequest implements ClientManagementRequest {
+/**
+ * Marker interface for client management request objects.
+ *
+ * <p>Enables polymorphic handling of different request types in Handler layer:
+ *
+ * <ul>
+ *   <li>ClientRequest (create operation)
+ *   <li>ClientUpdateRequest (update operation)
+ *   <li>ClientIdentifier (get/delete operations)
+ *   <li>ClientQueries (findList operation)
+ * </ul>
+ *
+ * @see ClientManagementHandler
+ */
+public interface ClientManagementRequest {
 
-  Map<String, Object> values;
-
-  public ClientRegistrationRequest(Map<String, Object> values) {
-    this.values = values;
-  }
-
-  public Map<String, Object> toMap() {
-    return values;
-  }
-
-  public Object get(String key) {
-    return values.get(key);
-  }
-
-  public boolean hasClientId() {
-    return values.containsKey("client_id");
-  }
-
-  public String getClientId() {
-    return (String) values.get("client_id");
-  }
+  /**
+   * Converts request to Map for audit logging.
+   *
+   * @return request data as map
+   */
+  Map<String, Object> toMap();
 }
