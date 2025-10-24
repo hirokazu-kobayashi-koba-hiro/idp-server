@@ -56,9 +56,8 @@ public class UserManagementV1Api implements ParameterTransformable {
 
     UserManagementResponse response =
         userManagementApi.create(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             new UserRegistrationRequest(body),
             requestAttributes,
             dryRun);
@@ -79,9 +78,8 @@ public class UserManagementV1Api implements ParameterTransformable {
     RequestAttributes requestAttributes = transform(httpServletRequest);
     UserManagementResponse response =
         userManagementApi.findList(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             new UserQueries(queryParams),
             requestAttributes);
 
@@ -103,9 +101,8 @@ public class UserManagementV1Api implements ParameterTransformable {
 
     UserManagementResponse response =
         userManagementApi.get(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             userIdentifier,
             requestAttributes);
 
@@ -129,9 +126,8 @@ public class UserManagementV1Api implements ParameterTransformable {
 
     UserManagementResponse response =
         userManagementApi.update(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             userIdentifier,
             new UserRegistrationRequest(body),
             requestAttributes,
@@ -157,9 +153,8 @@ public class UserManagementV1Api implements ParameterTransformable {
 
     UserManagementResponse response =
         userManagementApi.patch(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             userIdentifier,
             new UserRegistrationRequest(body),
             requestAttributes,
@@ -185,9 +180,8 @@ public class UserManagementV1Api implements ParameterTransformable {
 
     UserManagementResponse response =
         userManagementApi.updatePassword(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             userIdentifier,
             new UserRegistrationRequest(body),
             requestAttributes,
@@ -212,9 +206,8 @@ public class UserManagementV1Api implements ParameterTransformable {
 
     UserManagementResponse response =
         userManagementApi.delete(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             userIdentifier,
             requestAttributes,
             dryRun);
@@ -239,9 +232,8 @@ public class UserManagementV1Api implements ParameterTransformable {
 
     UserManagementResponse response =
         userManagementApi.updateRoles(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             userIdentifier,
             new UserRegistrationRequest(body),
             requestAttributes,
@@ -267,9 +259,8 @@ public class UserManagementV1Api implements ParameterTransformable {
 
     UserManagementResponse response =
         userManagementApi.updateTenantAssignments(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             userIdentifier,
             new UserRegistrationRequest(body),
             requestAttributes,
@@ -295,9 +286,8 @@ public class UserManagementV1Api implements ParameterTransformable {
 
     UserManagementResponse response =
         userManagementApi.updateOrganizationAssignments(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             userIdentifier,
             new UserRegistrationRequest(body),
             requestAttributes,

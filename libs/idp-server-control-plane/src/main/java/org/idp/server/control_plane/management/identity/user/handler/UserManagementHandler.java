@@ -17,6 +17,7 @@
 package org.idp.server.control_plane.management.identity.user.handler;
 
 import java.util.Map;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.ApiPermissionVerifier;
 import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
@@ -92,13 +93,9 @@ public class UserManagementHandler {
   /**
    * Handles user management operations.
    *
-   * <p>Catches ManagementApiException and wraps them in Result. EntryService will check {@code
-   * result.hasException()} and re-throw for transaction rollback.
-   *
    * @param method the operation method (e.g., "create", "update", "delete")
-   * @param tenantIdentifier the tenant context
-   * @param operator the user performing the operation
-   * @param oAuthToken the OAuth token for the operation
+   * @param authenticationContext the admin authentication context
+   * @param tenantIdentifier the tenant identifier
    * @param request the operation-specific request object
    * @param requestAttributes HTTP request attributes for audit logging
    * @param dryRun if true, validate but don't persist changes
@@ -106,12 +103,14 @@ public class UserManagementHandler {
    */
   public UserManagementResult handle(
       String method,
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserManagementRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
+
+    User operator = authenticationContext.operator();
+    OAuthToken oAuthToken = authenticationContext.oAuthToken();
 
     // 1. Service selection
     UserManagementService<?> service = services.get(method);

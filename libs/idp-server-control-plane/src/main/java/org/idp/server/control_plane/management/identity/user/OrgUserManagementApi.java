@@ -19,16 +19,14 @@ package org.idp.server.control_plane.management.identity.user;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
-import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.UserQueries;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
@@ -154,10 +152,8 @@ public interface OrgUserManagementApi {
    * @return user management response with creation result
    */
   UserManagementResponse create(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
@@ -174,10 +170,8 @@ public interface OrgUserManagementApi {
    * @return user management response with user list
    */
   UserManagementResponse findList(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserQueries queries,
       RequestAttributes requestAttributes);
 
@@ -193,10 +187,8 @@ public interface OrgUserManagementApi {
    * @return user management response with user details
    */
   UserManagementResponse get(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       RequestAttributes requestAttributes);
 
@@ -214,10 +206,8 @@ public interface OrgUserManagementApi {
    * @return user management response with update result
    */
   UserManagementResponse update(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
@@ -236,10 +226,8 @@ public interface OrgUserManagementApi {
    * @return user management response with deletion result
    */
   UserManagementResponse delete(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       RequestAttributes requestAttributes,
       boolean dryRun);
@@ -258,10 +246,8 @@ public interface OrgUserManagementApi {
    * @return user management response with update result
    */
   UserManagementResponse patch(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
@@ -281,10 +267,8 @@ public interface OrgUserManagementApi {
    * @return user management response with update result
    */
   UserManagementResponse updatePassword(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
@@ -304,10 +288,8 @@ public interface OrgUserManagementApi {
    * @return user management response with update result
    */
   UserManagementResponse updateRoles(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
@@ -327,10 +309,8 @@ public interface OrgUserManagementApi {
    * @return user management response with update result
    */
   UserManagementResponse updateTenantAssignments(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
@@ -350,10 +330,8 @@ public interface OrgUserManagementApi {
    * @return user management response with update result
    */
   UserManagementResponse updateOrganizationAssignments(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,

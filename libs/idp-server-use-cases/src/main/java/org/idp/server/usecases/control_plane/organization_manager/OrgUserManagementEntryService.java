@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.OrganizationAccessVerifier;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.base.verifier.UserVerifier;
 import org.idp.server.control_plane.management.identity.user.*;
 import org.idp.server.control_plane.management.identity.user.ManagementEventPublisher;
@@ -27,7 +28,6 @@ import org.idp.server.control_plane.management.identity.user.handler.*;
 import org.idp.server.control_plane.management.identity.user.io.*;
 import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationRelatedDataVerifier;
 import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationVerifier;
-import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.UserQueries;
 import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegation;
@@ -35,12 +35,10 @@ import org.idp.server.core.openid.identity.event.UserLifecycleEventPublisher;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.identity.role.RoleQueryRepository;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -116,7 +114,6 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     this.handler =
         createHandler(
             tenantQueryRepository,
-            organizationRepository,
             userQueryRepository,
             userCommandRepository,
             passwordEncodeDelegation,
@@ -128,7 +125,6 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
 
   private OrgUserManagementHandler createHandler(
       TenantQueryRepository tenantQueryRepository,
-      OrganizationRepository organizationRepository,
       UserQueryRepository userQueryRepository,
       UserCommandRepository userCommandRepository,
       PasswordEncodeDelegation passwordEncodeDelegation,
@@ -176,15 +172,13 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
         new UserOrganizationAssignmentsUpdateService(userQueryRepository, userCommandRepository));
 
     return new OrgUserManagementHandler(
-        services, this, tenantQueryRepository, organizationRepository);
+        services, this, tenantQueryRepository, new OrganizationAccessVerifier());
   }
 
   @Override
   public UserManagementResponse create(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
@@ -192,14 +186,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     // Delegate to Handler/Service pattern
     UserManagementResult result =
         handler.handle(
-            "create",
-            organizationIdentifier,
-            tenantIdentifier,
-            operator,
-            oAuthToken,
-            request,
-            requestAttributes,
-            dryRun);
+            "create", authenticationContext, tenantIdentifier, request, requestAttributes, dryRun);
 
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
@@ -210,10 +197,8 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
   @Override
   @Transaction(readOnly = true)
   public UserManagementResponse findList(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserQueries queries,
       RequestAttributes requestAttributes) {
 
@@ -221,10 +206,8 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     UserManagementResult result =
         handler.handle(
             "findList",
-            organizationIdentifier,
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
             new UserFindListRequest(queries),
             requestAttributes,
             false);
@@ -238,10 +221,8 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
   @Override
   @Transaction(readOnly = true)
   public UserManagementResponse get(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       RequestAttributes requestAttributes) {
 
@@ -249,10 +230,8 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     UserManagementResult result =
         handler.handle(
             "get",
-            organizationIdentifier,
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
             new UserFindRequest(userIdentifier),
             requestAttributes,
             false);
@@ -265,10 +244,8 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
 
   @Override
   public UserManagementResponse update(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
@@ -279,10 +256,8 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     UserManagementResult result =
         handler.handle(
             "update",
-            organizationIdentifier,
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
             updateRequest,
             requestAttributes,
             dryRun);
@@ -295,10 +270,8 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
 
   @Override
   public UserManagementResponse delete(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       RequestAttributes requestAttributes,
       boolean dryRun) {
@@ -307,10 +280,8 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     UserManagementResult result =
         handler.handle(
             "delete",
-            organizationIdentifier,
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
             new UserDeleteRequest(userIdentifier),
             requestAttributes,
             dryRun);
@@ -323,10 +294,8 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
 
   @Override
   public UserManagementResponse patch(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
@@ -337,10 +306,8 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     UserManagementResult result =
         handler.handle(
             "patch",
-            organizationIdentifier,
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
             updateRequest,
             requestAttributes,
             dryRun);
@@ -353,10 +320,8 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
 
   @Override
   public UserManagementResponse updatePassword(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
@@ -367,10 +332,8 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     UserManagementResult result =
         handler.handle(
             "updatePassword",
-            organizationIdentifier,
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
             updateRequest,
             requestAttributes,
             dryRun);
@@ -383,10 +346,8 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
 
   @Override
   public UserManagementResponse updateRoles(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
@@ -397,10 +358,8 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     UserManagementResult result =
         handler.handle(
             "updateRoles",
-            organizationIdentifier,
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
             updateRequest,
             requestAttributes,
             dryRun);
@@ -413,10 +372,8 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
 
   @Override
   public UserManagementResponse updateTenantAssignments(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
@@ -427,10 +384,8 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     UserManagementResult result =
         handler.handle(
             "updateTenantAssignments",
-            organizationIdentifier,
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
             updateRequest,
             requestAttributes,
             dryRun);
@@ -443,10 +398,8 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
 
   @Override
   public UserManagementResponse updateOrganizationAssignments(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
@@ -457,10 +410,8 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     UserManagementResult result =
         handler.handle(
             "updateOrganizationAssignments",
-            organizationIdentifier,
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
             updateRequest,
             requestAttributes,
             dryRun);

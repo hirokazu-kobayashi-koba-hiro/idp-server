@@ -19,6 +19,7 @@ package org.idp.server.control_plane.management.identity.user.handler;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.base.OrganizationAccessVerifier;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
@@ -30,8 +31,6 @@ import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.NotFoundException;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -74,32 +73,28 @@ import org.idp.server.platform.type.RequestAttributes;
 public class OrgUserManagementHandler {
 
   private final Map<String, UserManagementService<?>> services;
-  private final OrgUserManagementApi entryService;
+  private final OrgUserManagementApi api;
   private final TenantQueryRepository tenantQueryRepository;
-  private final OrganizationRepository organizationRepository;
   private final OrganizationAccessVerifier organizationAccessVerifier;
   LoggerWrapper log = LoggerWrapper.getLogger(OrgUserManagementHandler.class);
 
   public OrgUserManagementHandler(
       Map<String, UserManagementService<?>> services,
-      OrgUserManagementApi entryService,
+      OrgUserManagementApi api,
       TenantQueryRepository tenantQueryRepository,
-      OrganizationRepository organizationRepository) {
+      OrganizationAccessVerifier organizationAccessVerifier) {
     this.services = services;
-    this.entryService = entryService;
+    this.api = api;
     this.tenantQueryRepository = tenantQueryRepository;
-    this.organizationRepository = organizationRepository;
-    this.organizationAccessVerifier = new OrganizationAccessVerifier();
+    this.organizationAccessVerifier = organizationAccessVerifier;
   }
 
   /**
    * Handles organization-level user management operation.
    *
    * @param operation the operation name (e.g., "create", "update", "delete")
-   * @param organizationIdentifier the organization identifier
+   * @param authenticationContext the organization authentication context
    * @param tenantIdentifier the tenant identifier
-   * @param operator the operator performing the action
-   * @param oAuthToken the OAuth token
    * @param request the request object (type varies by operation)
    * @param requestAttributes the request attributes
    * @param dryRun whether this is a dry-run operation
@@ -107,13 +102,15 @@ public class OrgUserManagementHandler {
    */
   public UserManagementResult handle(
       String operation,
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserManagementRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
+
+    Organization organization = authenticationContext.organization();
+    User operator = authenticationContext.operator();
+    OAuthToken oAuthToken = authenticationContext.oAuthToken();
 
     // 1. Service selection
     UserManagementService<?> service = services.get(operation);
@@ -128,11 +125,11 @@ public class OrgUserManagementHandler {
 
     try {
       // 3. Organization and Tenant retrieval
-      Organization organization = organizationRepository.get(organizationIdentifier);
+      // Organization already retrieved from authenticationContext
       Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
       // 4. Get required permissions based on tenant type
-      AdminPermissions permissions = entryService.getRequiredPermissions(operation, tenant);
+      AdminPermissions permissions = api.getRequiredPermissions(operation, tenant);
 
       // 5. Organization-level access control (includes permission verification)
       organizationAccessVerifier.verify(organization, tenantIdentifier, operator, permissions);

@@ -18,6 +18,7 @@ package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.verifier.UserVerifier;
 import org.idp.server.control_plane.management.identity.user.*;
@@ -36,7 +37,6 @@ import org.idp.server.control_plane.management.identity.user.handler.UserUpdateS
 import org.idp.server.control_plane.management.identity.user.io.*;
 import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationRelatedDataVerifier;
 import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationVerifier;
-import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.UserQueries;
 import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegation;
@@ -44,7 +44,6 @@ import org.idp.server.core.openid.identity.event.UserLifecycleEventPublisher;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.identity.role.RoleQueryRepository;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
@@ -158,16 +157,15 @@ public class UserManagementEntryService implements UserManagementApi {
 
   @Override
   public UserManagementResponse create(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
     UserManagementResult result =
         handler.handle(
-            "create", tenantIdentifier, operator, oAuthToken, request, requestAttributes, dryRun);
+            "create", authenticationContext, tenantIdentifier, request, requestAttributes, dryRun);
 
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
@@ -178,9 +176,8 @@ public class UserManagementEntryService implements UserManagementApi {
   @Override
   @Transaction(readOnly = true)
   public UserManagementResponse findList(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserQueries queries,
       RequestAttributes requestAttributes) {
 
@@ -188,9 +185,8 @@ public class UserManagementEntryService implements UserManagementApi {
     UserManagementResult result =
         handler.handle(
             "findList",
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
             new UserFindListRequest(queries),
             requestAttributes,
             false);
@@ -204,9 +200,8 @@ public class UserManagementEntryService implements UserManagementApi {
   @Override
   @Transaction(readOnly = true)
   public UserManagementResponse get(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       RequestAttributes requestAttributes) {
 
@@ -214,9 +209,8 @@ public class UserManagementEntryService implements UserManagementApi {
     UserManagementResult result =
         handler.handle(
             "get",
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
             new UserFindRequest(userIdentifier),
             requestAttributes,
             false);
@@ -229,9 +223,8 @@ public class UserManagementEntryService implements UserManagementApi {
 
   @Override
   public UserManagementResponse update(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
@@ -242,9 +235,8 @@ public class UserManagementEntryService implements UserManagementApi {
     UserManagementResult result =
         handler.handle(
             "update",
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
             updateRequest,
             requestAttributes,
             dryRun);
@@ -257,9 +249,8 @@ public class UserManagementEntryService implements UserManagementApi {
 
   @Override
   public UserManagementResponse patch(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
@@ -270,9 +261,8 @@ public class UserManagementEntryService implements UserManagementApi {
     UserManagementResult result =
         handler.handle(
             "patch",
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
             updateRequest,
             requestAttributes,
             dryRun);
@@ -285,9 +275,8 @@ public class UserManagementEntryService implements UserManagementApi {
 
   @Override
   public UserManagementResponse updatePassword(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
@@ -298,9 +287,8 @@ public class UserManagementEntryService implements UserManagementApi {
     UserManagementResult result =
         handler.handle(
             "updatePassword",
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
             updateRequest,
             requestAttributes,
             dryRun);
@@ -313,9 +301,8 @@ public class UserManagementEntryService implements UserManagementApi {
 
   @Override
   public UserManagementResponse delete(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       RequestAttributes requestAttributes,
       boolean dryRun) {
@@ -324,9 +311,8 @@ public class UserManagementEntryService implements UserManagementApi {
     UserManagementResult result =
         handler.handle(
             "delete",
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
             new UserDeleteRequest(userIdentifier),
             requestAttributes,
             dryRun);
@@ -339,9 +325,8 @@ public class UserManagementEntryService implements UserManagementApi {
 
   @Override
   public UserManagementResponse updateRoles(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
@@ -351,9 +336,8 @@ public class UserManagementEntryService implements UserManagementApi {
     UserManagementResult result =
         handler.handle(
             "updateRoles",
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
             updateRequest,
             requestAttributes,
             dryRun);
@@ -366,9 +350,8 @@ public class UserManagementEntryService implements UserManagementApi {
 
   @Override
   public UserManagementResponse updateTenantAssignments(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
@@ -378,9 +361,8 @@ public class UserManagementEntryService implements UserManagementApi {
     UserManagementResult result =
         handler.handle(
             "updateTenantAssignments",
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
             updateRequest,
             requestAttributes,
             dryRun);
@@ -393,9 +375,8 @@ public class UserManagementEntryService implements UserManagementApi {
 
   @Override
   public UserManagementResponse updateOrganizationAssignments(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
@@ -405,9 +386,8 @@ public class UserManagementEntryService implements UserManagementApi {
     UserManagementResult result =
         handler.handle(
             "updateOrganizationAssignments",
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
             updateRequest,
             requestAttributes,
             dryRun);
