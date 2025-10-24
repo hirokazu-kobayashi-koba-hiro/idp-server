@@ -19,10 +19,11 @@ package org.idp.server.control_plane.management.authentication.interaction.handl
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.control_plane.management.authentication.interaction.AuthenticationInteractionManagementContextBuilder;
+import org.idp.server.control_plane.management.authentication.interaction.io.AuthenticationInteractionFindListRequest;
 import org.idp.server.control_plane.management.authentication.interaction.io.AuthenticationInteractionManagementResponse;
 import org.idp.server.control_plane.management.authentication.interaction.io.AuthenticationInteractionManagementStatus;
 import org.idp.server.core.openid.authentication.interaction.AuthenticationInteraction;
-import org.idp.server.core.openid.authentication.interaction.AuthenticationInteractionQueries;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -43,7 +44,8 @@ import org.idp.server.platform.type.RequestAttributes;
  * </ul>
  */
 public class AuthenticationInteractionFindListService
-    implements AuthenticationInteractionManagementService<AuthenticationInteractionQueries> {
+    implements AuthenticationInteractionManagementService<
+        AuthenticationInteractionFindListRequest> {
 
   private final AuthenticationInteractionQueryRepository authenticationInteractionQueryRepository;
 
@@ -53,45 +55,37 @@ public class AuthenticationInteractionFindListService
   }
 
   @Override
-  public AuthenticationInteractionManagementResult execute(
+  public AuthenticationInteractionManagementResponse execute(
+      AuthenticationInteractionManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      AuthenticationInteractionQueries queries,
+      AuthenticationInteractionFindListRequest request,
       RequestAttributes requestAttributes) {
 
-    // 1. Get total count
-    long totalCount = authenticationInteractionQueryRepository.findTotalCount(tenant, queries);
+    long totalCount =
+        authenticationInteractionQueryRepository.findTotalCount(tenant, request.queries());
 
-    // 2. Handle empty result
     if (totalCount == 0) {
       Map<String, Object> response = new HashMap<>();
       response.put("list", List.of());
       response.put("total_count", 0);
-      response.put("limit", queries.limit());
-      response.put("offset", queries.offset());
-      return AuthenticationInteractionManagementResult.success(
-          tenant,
-          queries,
-          new AuthenticationInteractionManagementResponse(
-              AuthenticationInteractionManagementStatus.OK, response));
+      response.put("limit", request.queries().limit());
+      response.put("offset", request.queries().offset());
+      return new AuthenticationInteractionManagementResponse(
+          AuthenticationInteractionManagementStatus.OK, response);
     }
 
-    // 3. Query list
     List<AuthenticationInteraction> interactions =
-        authenticationInteractionQueryRepository.findList(tenant, queries);
+        authenticationInteractionQueryRepository.findList(tenant, request.queries());
 
-    // 4. Build response
     Map<String, Object> response = new HashMap<>();
     response.put("list", interactions.stream().map(AuthenticationInteraction::toMap).toList());
     response.put("total_count", totalCount);
-    response.put("limit", queries.limit());
-    response.put("offset", queries.offset());
+    response.put("limit", request.queries().limit());
+    response.put("offset", request.queries().offset());
 
-    return AuthenticationInteractionManagementResult.success(
-        tenant,
-        queries,
-        new AuthenticationInteractionManagementResponse(
-            AuthenticationInteractionManagementStatus.OK, response));
+    return new AuthenticationInteractionManagementResponse(
+        AuthenticationInteractionManagementStatus.OK, response);
   }
 }

@@ -16,153 +16,100 @@
 
 package org.idp.server.control_plane.management.authentication.interaction.handler;
 
+import java.util.HashMap;
+import java.util.Map;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.authentication.interaction.io.AuthenticationInteractionManagementResponse;
 import org.idp.server.control_plane.management.authentication.interaction.io.AuthenticationInteractionManagementStatus;
 import org.idp.server.control_plane.management.exception.*;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
- * Result wrapper for authentication interaction management operations.
+ * Result object for authentication interaction management operations.
  *
- * <p>This class encapsulates the outcome of authentication interaction management Service
- * execution, including success results and exceptions.
- *
- * <h2>Purpose</h2>
+ * <p>Encapsulates the outcome of authentication interaction management Handler/Service pattern
+ * operations. Follows the Result-Exception Hybrid pattern:
  *
  * <ul>
- *   <li>Encapsulate Service execution results
- *   <li>Preserve Tenant for audit logging even on error
- *   <li>Convert exceptions to appropriate HTTP responses
+ *   <li>Service layer throws ManagementApiException on validation/verification failures
+ *   <li>Handler layer catches exceptions and converts to Result
+ *   <li>EntryService layer converts Result to HTTP response
  * </ul>
  *
- * <h2>Usage Pattern</h2>
- *
- * <pre>{@code
- * // In Service: return success
- * return AuthenticationInteractionManagementResult.success(tenant, context, response);
- *
- * // In Handler: catch exception and wrap
- * try {
- *   return service.execute(...);
- * } catch (ManagementApiException e) {
- *   return AuthenticationInteractionManagementResult.error(tenant, e);
- * }
- *
- * // In EntryService: convert to HTTP response
- * if (result.hasException()) {
- *   return result.toResponse();
- * }
- * }</pre>
+ * @see AuthenticationInteractionManagementHandler
+ * @see AuthenticationInteractionManagementService
  */
 public class AuthenticationInteractionManagementResult {
 
-  private final Tenant tenant;
-  private final Object context;
-  private final AuthenticationInteractionManagementResponse response;
+  private final AuditableContext context;
   private final ManagementApiException exception;
+  private final AuthenticationInteractionManagementResponse response;
 
   private AuthenticationInteractionManagementResult(
-      Tenant tenant,
-      Object context,
-      AuthenticationInteractionManagementResponse response,
-      ManagementApiException exception) {
-    this.tenant = tenant;
+      AuditableContext context,
+      ManagementApiException exception,
+      AuthenticationInteractionManagementResponse response) {
     this.context = context;
-    this.response = response;
     this.exception = exception;
+    this.response = response;
   }
 
   /**
-   * Creates a success result.
+   * Creates a successful result with context.
    *
-   * @param tenant the tenant context
-   * @param context the operation context (for audit logging)
+   * @param context the operation context
    * @param response the success response
-   * @return success result
+   * @return successful result with context
    */
   public static AuthenticationInteractionManagementResult success(
-      Tenant tenant, Object context, AuthenticationInteractionManagementResponse response) {
-    return new AuthenticationInteractionManagementResult(tenant, context, response, null);
+      AuditableContext context, AuthenticationInteractionManagementResponse response) {
+    return new AuthenticationInteractionManagementResult(context, null, response);
   }
 
   /**
-   * Creates an error result.
+   * Creates an error result from an exception.
    *
-   * @param tenant the tenant context (may be null if tenant retrieval failed)
+   * @param context the operation context (may be partial)
    * @param exception the exception that occurred
    * @return error result
    */
   public static AuthenticationInteractionManagementResult error(
-      Tenant tenant, ManagementApiException exception) {
-    return new AuthenticationInteractionManagementResult(tenant, null, null, exception);
+      AuditableContext context, ManagementApiException exception) {
+    return new AuthenticationInteractionManagementResult(context, exception, null);
   }
 
-  /**
-   * Checks if this result contains an exception.
-   *
-   * @return true if exception exists
-   */
+  private static AuthenticationInteractionManagementStatus mapExceptionToStatus(
+      ManagementApiException exception) {
+    if (exception instanceof ResourceNotFoundException) {
+      return AuthenticationInteractionManagementStatus.NOT_FOUND;
+    }
+    if (exception instanceof PermissionDeniedException
+        || exception instanceof OrganizationAccessDeniedException) {
+      return AuthenticationInteractionManagementStatus.FORBIDDEN;
+    }
+    return AuthenticationInteractionManagementStatus.INVALID_REQUEST;
+  }
+
+  public AuditableContext context() {
+    return context;
+  }
+
   public boolean hasException() {
     return exception != null;
   }
 
-  /**
-   * Gets the tenant context.
-   *
-   * @return tenant
-   */
-  public Tenant tenant() {
-    return tenant;
-  }
-
-  /**
-   * Gets the operation context for audit logging.
-   *
-   * @return context object
-   */
-  public Object context() {
-    return context;
-  }
-
-  /**
-   * Gets the exception if present.
-   *
-   * @return exception
-   */
   public ManagementApiException getException() {
     return exception;
   }
 
-  /**
-   * Converts this result to HTTP response.
-   *
-   * <p>For success: returns the stored response For error: converts exception to appropriate HTTP
-   * status
-   *
-   * @return HTTP response
-   */
   public AuthenticationInteractionManagementResponse toResponse() {
-    if (exception != null) {
-      java.util.Map<String, Object> errorResponse = new java.util.HashMap<>();
+    if (hasException()) {
+      Map<String, Object> errorResponse = new HashMap<>();
       errorResponse.put("error", exception.errorCode());
       errorResponse.put("error_description", exception.errorDescription());
       errorResponse.putAll(exception.errorDetails());
-
       AuthenticationInteractionManagementStatus status = mapExceptionToStatus(exception);
       return new AuthenticationInteractionManagementResponse(status, errorResponse);
     }
     return response;
-  }
-
-  private AuthenticationInteractionManagementStatus mapExceptionToStatus(ManagementApiException e) {
-    if (e instanceof InvalidRequestException) {
-      return AuthenticationInteractionManagementStatus.INVALID_REQUEST;
-    } else if (e instanceof PermissionDeniedException
-        || e instanceof OrganizationAccessDeniedException) {
-      return AuthenticationInteractionManagementStatus.FORBIDDEN;
-    } else if (e instanceof ResourceNotFoundException) {
-      return AuthenticationInteractionManagementStatus.NOT_FOUND;
-    }
-    return AuthenticationInteractionManagementStatus.SERVER_ERROR;
   }
 }

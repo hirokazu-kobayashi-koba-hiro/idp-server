@@ -16,6 +16,8 @@
 
 package org.idp.server.control_plane.management.authentication.interaction.handler;
 
+import org.idp.server.control_plane.management.authentication.interaction.AuthenticationInteractionManagementContextBuilder;
+import org.idp.server.control_plane.management.authentication.interaction.io.AuthenticationInteractionFindRequest;
 import org.idp.server.control_plane.management.authentication.interaction.io.AuthenticationInteractionManagementResponse;
 import org.idp.server.control_plane.management.authentication.interaction.io.AuthenticationInteractionManagementStatus;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
@@ -50,18 +52,17 @@ public class AuthenticationInteractionFindService
   }
 
   @Override
-  public AuthenticationInteractionManagementResult execute(
+  public AuthenticationInteractionManagementResponse execute(
+      AuthenticationInteractionManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
       AuthenticationInteractionFindRequest request,
       RequestAttributes requestAttributes) {
 
-    // 1. Query authentication interaction
     AuthenticationInteraction interaction =
         authenticationInteractionQueryRepository.find(tenant, request.identifier(), request.type());
 
-    // 2. Check existence
     if (!interaction.exists()) {
       throw new ResourceNotFoundException(
           "Authentication interaction not found: "
@@ -70,11 +71,10 @@ public class AuthenticationInteractionFindService
               + request.type());
     }
 
-    // 3. Build response
-    return AuthenticationInteractionManagementResult.success(
-        tenant,
-        interaction,
-        new AuthenticationInteractionManagementResponse(
-            AuthenticationInteractionManagementStatus.OK, interaction.toMap()));
+    // Update context builder with result (for audit logging)
+    contextBuilder.withResult(interaction);
+
+    return new AuthenticationInteractionManagementResponse(
+        AuthenticationInteractionManagementStatus.OK, interaction.toMap());
   }
 }

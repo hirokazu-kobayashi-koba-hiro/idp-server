@@ -54,9 +54,8 @@ public class AuthenticationInteractionManagementV1Api implements ParameterTransf
 
     AuthenticationInteractionManagementResponse response =
         managementApi.findList(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             new AuthenticationInteractionQueries(queryParams),
             requestAttributes);
 
@@ -78,9 +77,8 @@ public class AuthenticationInteractionManagementV1Api implements ParameterTransf
 
     AuthenticationInteractionManagementResponse response =
         managementApi.get(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             type,
             requestAttributes);

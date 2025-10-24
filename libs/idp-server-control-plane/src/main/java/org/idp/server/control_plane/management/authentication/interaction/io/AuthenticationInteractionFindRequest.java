@@ -14,15 +14,22 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.management.authentication.interaction.handler;
+package org.idp.server.control_plane.management.authentication.interaction.io;
 
+import java.util.Map;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 
 /**
- * Request for finding a single authentication interaction.
+ * Request wrapper for authentication interaction find (get) operations.
  *
- * @param identifier the authentication transaction identifier
- * @param type the interaction type
+ * <p>Wraps AuthenticationTransactionIdentifier and type for get operations.
  */
 public record AuthenticationInteractionFindRequest(
-    AuthenticationTransactionIdentifier identifier, String type) {}
+    AuthenticationTransactionIdentifier identifier, String type)
+    implements AuthenticationInteractionManagementRequest {
+
+  @Override
+  public Map<String, Object> toMap() {
+    return Map.of("transaction_id", identifier.value(), "type", type);
+  }
+}
