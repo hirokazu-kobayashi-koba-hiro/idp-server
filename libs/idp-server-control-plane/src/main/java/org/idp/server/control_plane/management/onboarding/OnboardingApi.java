@@ -19,12 +19,11 @@ package org.idp.server.control_plane.management.onboarding;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingRequest;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingResponse;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
@@ -50,9 +49,8 @@ public interface OnboardingApi {
   }
 
   OnboardingResponse onboard(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier adminTenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       OnboardingRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);

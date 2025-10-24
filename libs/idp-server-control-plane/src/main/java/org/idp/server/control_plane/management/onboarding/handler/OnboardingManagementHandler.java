@@ -16,13 +16,18 @@
 
 package org.idp.server.control_plane.management.onboarding.handler;
 
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.ApiPermissionVerifier;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
+import org.idp.server.control_plane.management.onboarding.OnboardingManagementContextBuilder;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingRequest;
+import org.idp.server.control_plane.management.onboarding.io.OnboardingResponse;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -56,6 +61,7 @@ public class OnboardingManagementHandler {
   private final OnboardingService service;
   private final OnboardingApi api;
   private final ApiPermissionVerifier apiPermissionVerifier;
+  LoggerWrapper log = LoggerWrapper.getLogger(OnboardingManagementHandler.class);
 
   /**
    * Creates a new onboarding management handler.
@@ -72,30 +78,50 @@ public class OnboardingManagementHandler {
   /**
    * Handles an onboarding request.
    *
+   * @param authenticationContext the admin authentication context
    * @param adminTenantIdentifier the admin tenant identifier
-   * @param operator the user performing the operation
-   * @param oAuthToken the OAuth token
    * @param request the onboarding request
    * @param requestAttributes HTTP request attributes
    * @param dryRun whether to perform a dry run (preview only)
    * @return the operation result
    */
   public OnboardingManagementResult handle(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier adminTenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       OnboardingRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
+
+    User operator = authenticationContext.operator();
+    OAuthToken oAuthToken = authenticationContext.oAuthToken();
+
+    // Context Builder creation (before permission verification - enables audit logging on errors)
+    OnboardingManagementContextBuilder contextBuilder =
+        new OnboardingManagementContextBuilder(
+            adminTenantIdentifier, operator, oAuthToken, requestAttributes, request, dryRun);
 
     try {
       AdminPermissions requiredPermissions = api.getRequiredPermissions("onboard");
       apiPermissionVerifier.verify(operator, requiredPermissions);
 
-      return service.execute(
-          adminTenantIdentifier, operator, oAuthToken, request, requestAttributes, dryRun);
+      OnboardingResponse response =
+          service.execute(
+              contextBuilder,
+              adminTenantIdentifier,
+              operator,
+              oAuthToken,
+              request,
+              requestAttributes,
+              dryRun);
+
+      AuditableContext context = contextBuilder.build();
+      return OnboardingManagementResult.success(context, response);
+
     } catch (ManagementApiException e) {
-      return OnboardingManagementResult.error(adminTenantIdentifier, e);
+
+      log.warn(e.getMessage());
+      AuditableContext errorContext = contextBuilder.buildPartial(e);
+      return OnboardingManagementResult.error(errorContext, e);
     }
   }
 }

@@ -19,7 +19,7 @@ package org.idp.server.control_plane.management.onboarding.verifier;
 import org.idp.server.control_plane.base.verifier.TenantVerifier;
 import org.idp.server.control_plane.base.verifier.VerificationResult;
 import org.idp.server.control_plane.management.exception.InvalidRequestException;
-import org.idp.server.control_plane.management.onboarding.OnboardingContext;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OnboardingVerifier {
 
@@ -29,8 +29,8 @@ public class OnboardingVerifier {
     this.tenantVerifier = tenantVerifier;
   }
 
-  public void verify(OnboardingContext context) {
-    VerificationResult verificationResult = tenantVerifier.verify(context.tenant());
+  public void verify(Tenant tenant) {
+    VerificationResult verificationResult = tenantVerifier.verify(tenant);
     throwExceptionIfInvalid(verificationResult);
   }
 

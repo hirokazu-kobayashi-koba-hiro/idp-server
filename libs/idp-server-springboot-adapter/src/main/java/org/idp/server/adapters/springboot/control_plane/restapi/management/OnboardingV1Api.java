@@ -54,9 +54,8 @@ public class OnboardingV1Api implements ParameterTransformable {
     RequestAttributes requestAttributes = transform(httpServletRequest);
     OnboardingResponse response =
         onboardingApi.onboard(
+            operatorPrincipal.authenticationContext(),
             adminTenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             new OnboardingRequest(request),
             requestAttributes,
             dryRun);

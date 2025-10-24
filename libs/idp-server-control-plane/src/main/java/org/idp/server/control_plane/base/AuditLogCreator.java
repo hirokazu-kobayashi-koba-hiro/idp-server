@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
-import org.idp.server.control_plane.management.onboarding.OnboardingContext;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
@@ -249,58 +248,6 @@ public class AuditLogCreator {
     JsonNodeWrapper attributes = JsonNodeWrapper.fromMap(errorAttributes);
 
     boolean dryRun = false;
-    LocalDateTime createdAt = SystemDateTime.now();
-    return new AuditLog(
-        id,
-        type,
-        description,
-        tenantId,
-        clientId,
-        userId,
-        externalUserId,
-        userPayload,
-        targetResource,
-        targetResourceAction,
-        request,
-        before,
-        after,
-        outcomeResult,
-        outcomeReason,
-        targetTenantId,
-        ipAddress,
-        userAgent,
-        attributes,
-        dryRun,
-        createdAt);
-  }
-
-  public static AuditLog create(
-      String type,
-      Tenant tenant,
-      User user,
-      OAuthToken oAuthToken,
-      OnboardingContext context,
-      RequestAttributes requestAttributes) {
-
-    String id = UUID.randomUUID().toString();
-    String description = "onboarding";
-    String tenantId = tenant.identifier().value();
-    String clientId = oAuthToken.requestedClientId().value();
-    String userId = user.sub();
-    String externalUserId = user.externalUserId();
-    JsonNodeWrapper userPayload = JsonNodeWrapper.fromMap(user.toMap());
-    String targetResource = requestAttributes.resource().value();
-    String targetResourceAction = requestAttributes.action().value();
-    String ipAddress = requestAttributes.getIpAddress().value();
-    String userAgent = requestAttributes.getUserAgent().value();
-    JsonNodeWrapper request = JsonNodeWrapper.fromMap(context.toMap());
-    JsonNodeWrapper before = JsonNodeWrapper.empty();
-    JsonNodeWrapper after = JsonNodeWrapper.fromMap(context.toMap());
-    String outcomeResult = "success";
-    String outcomeReason = null;
-    String targetTenantId = tenantId;
-    JsonNodeWrapper attributes = JsonNodeWrapper.empty();
-    boolean dryRun = context.isDryRun();
     LocalDateTime createdAt = SystemDateTime.now();
     return new AuditLog(
         id,
