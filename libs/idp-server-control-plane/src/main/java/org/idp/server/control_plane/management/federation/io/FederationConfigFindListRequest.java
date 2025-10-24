@@ -16,22 +16,18 @@
 
 package org.idp.server.control_plane.management.federation.io;
 
+import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.openid.federation.FederationQueries;
 
-public class FederationConfigRequest implements FederationConfigManagementRequest {
-
-  Map<String, Object> values;
-
-  public FederationConfigRequest(Map<String, Object> values) {
-    this.values = values;
-  }
+public record FederationConfigFindListRequest(FederationQueries queries)
+    implements FederationConfigManagementRequest {
 
   @Override
   public Map<String, Object> toMap() {
-    return values;
-  }
-
-  public Object get(String key) {
-    return values.get(key);
+    Map<String, Object> map = new HashMap<>();
+    map.put("limit", queries.limit());
+    map.put("offset", queries.offset());
+    return map;
   }
 }

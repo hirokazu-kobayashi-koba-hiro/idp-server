@@ -800,9 +800,9 @@ public class IdpServerApplication {
     this.federationConfigurationManagementApi =
         ManagementTypeEntryServiceProxy.createProxy(
             new FederationConfigurationManagementEntryService(
+                tenantQueryRepository,
                 federationConfigurationQueryRepository,
                 federationConfigurationCommandRepository,
-                tenantQueryRepository,
                 auditLogPublisher),
             FederationConfigurationManagementApi.class,
             databaseTypeProvider);
@@ -960,11 +960,11 @@ public class IdpServerApplication {
 
     this.orgFederationConfigManagementApi =
         ManagementTypeEntryServiceProxy.createProxy(
-            new OrgFederationConfigManagementEntryService(
+            new OrgFederationConfigurationManagementEntryService(
                 tenantQueryRepository,
                 organizationRepository,
-                federationConfigurationCommandRepository,
                 federationConfigurationQueryRepository,
+                federationConfigurationCommandRepository,
                 auditLogPublisher),
             OrgFederationConfigManagementApi.class,
             databaseTypeProvider);

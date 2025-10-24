@@ -16,6 +16,8 @@
 
 package org.idp.server.control_plane.management.federation.handler;
 
+import org.idp.server.control_plane.management.federation.FederationConfigManagementContextBuilder;
+import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -24,26 +26,36 @@ import org.idp.server.platform.type.RequestAttributes;
 /**
  * Service interface for federation configuration management operations.
  *
- * <p>Part of Handler/Service pattern. Each operation (create, update, delete, find, findList) has
- * its own service implementation that handles business logic.
+ * <p>Defines the contract for services in the Handler/Service pattern. Each operation (create,
+ * update, delete, etc.) has its own service implementation.
  *
- * @param <T> the request type for this service
- * @see FederationConfigManagementResult
+ * <p>Services are responsible for:
+ *
+ * <ul>
+ *   <li>Request validation (throwing InvalidRequestException)
+ *   <li>Business logic execution
+ *   <li>Populating context builder with before/after states
+ *   <li>Repository operations (or dry-run simulation)
+ * </ul>
+ *
+ * @param <T> the request type (varies by operation)
  */
 public interface FederationConfigManagementService<T> {
 
   /**
    * Executes the federation configuration management operation.
    *
+   * @param builder the context builder (to be populated with before/after states)
    * @param tenant the tenant
    * @param operator the operator user
    * @param oAuthToken the OAuth token
-   * @param request the request object (type varies by operation)
+   * @param request the request (type varies by operation)
    * @param requestAttributes the request attributes
    * @param dryRun whether to perform a dry run
-   * @return the result of the operation
+   * @return the response (not Result - Handler will convert to Result)
    */
-  FederationConfigManagementResult execute(
+  FederationConfigManagementResponse execute(
+      FederationConfigManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,

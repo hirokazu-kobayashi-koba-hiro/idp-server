@@ -16,13 +16,18 @@
 
 package org.idp.server.control_plane.management.federation.handler;
 
-import org.idp.server.control_plane.management.federation.FederationConfigRegistrationContext;
-import org.idp.server.control_plane.management.federation.FederationConfigRegistrationContextCreator;
+import java.util.Map;
+import java.util.UUID;
+import org.idp.server.control_plane.management.federation.FederationConfigManagementContextBuilder;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
+import org.idp.server.control_plane.management.federation.io.FederationConfigManagementStatus;
 import org.idp.server.control_plane.management.federation.io.FederationConfigRequest;
+import org.idp.server.core.openid.federation.FederationConfiguration;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationCommandRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -43,7 +48,8 @@ public class FederationConfigCreationService
   }
 
   @Override
-  public FederationConfigManagementResult execute(
+  public FederationConfigManagementResponse execute(
+      FederationConfigManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -51,20 +57,39 @@ public class FederationConfigCreationService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    // Create context
-    FederationConfigRegistrationContextCreator contextCreator =
-        new FederationConfigRegistrationContextCreator(tenant, request, dryRun);
-    FederationConfigRegistrationContext context = contextCreator.create();
+    // 1. Create configuration from request
+    FederationConfiguration configuration = createConfiguration(request);
+
+    // 2. Populate builder with created configuration
+    builder.withAfter(configuration);
+
+    // 3. Build response
+    Map<String, Object> contents = Map.of("result", configuration.toMap(), "dry_run", dryRun);
 
     if (dryRun) {
-      FederationConfigManagementResponse response = context.toResponse();
-      return FederationConfigManagementResult.success(tenant.identifier(), response, context);
+      return new FederationConfigManagementResponse(FederationConfigManagementStatus.OK, contents);
     }
 
-    // Register configuration
-    commandRepository.register(tenant, context.configuration());
+    // 4. Repository operation
+    commandRepository.register(tenant, configuration);
 
-    FederationConfigManagementResponse response = context.toResponse();
-    return FederationConfigManagementResult.success(tenant.identifier(), response, context);
+    return new FederationConfigManagementResponse(
+        FederationConfigManagementStatus.CREATED, contents);
+  }
+
+  private FederationConfiguration createConfiguration(FederationConfigRequest request) {
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+    JsonNodeWrapper configJson = jsonConverter.readTree(request.toMap());
+
+    String id =
+        configJson.contains("id")
+            ? configJson.getValueOrEmptyAsString("id")
+            : UUID.randomUUID().toString();
+    String type = configJson.getValueOrEmptyAsString("type");
+    String ssoProvider = configJson.getValueOrEmptyAsString("sso_provider");
+    JsonNodeWrapper payloadJson = configJson.getValueAsJsonNode("payload");
+    Map<String, Object> payload = payloadJson.toMap();
+
+    return new FederationConfiguration(id, type, ssoProvider, payload);
   }
 }

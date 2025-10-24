@@ -24,6 +24,7 @@ import org.idp.server.adapters.springboot.control_plane.model.OperatorPrincipal;
 import org.idp.server.control_plane.management.federation.FederationConfigurationManagementApi;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
 import org.idp.server.control_plane.management.federation.io.FederationConfigRequest;
+import org.idp.server.control_plane.management.federation.io.FederationConfigUpdateRequest;
 import org.idp.server.core.openid.federation.FederationConfigurationIdentifier;
 import org.idp.server.core.openid.federation.FederationQueries;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -57,9 +58,8 @@ public class FederationConfigurationManagementV1Api implements ParameterTransfor
 
     FederationConfigManagementResponse response =
         federationConfigurationManagementApi.create(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             new FederationConfigRequest(body),
             requestAttributes,
             dryRun);
@@ -81,9 +81,8 @@ public class FederationConfigurationManagementV1Api implements ParameterTransfor
 
     FederationConfigManagementResponse response =
         federationConfigurationManagementApi.findList(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             new FederationQueries(queryParams),
             requestAttributes);
 
@@ -104,9 +103,8 @@ public class FederationConfigurationManagementV1Api implements ParameterTransfor
 
     FederationConfigManagementResponse response =
         federationConfigurationManagementApi.get(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             requestAttributes);
 
@@ -129,11 +127,10 @@ public class FederationConfigurationManagementV1Api implements ParameterTransfor
 
     FederationConfigManagementResponse response =
         federationConfigurationManagementApi.update(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
-            new FederationConfigRequest(body),
+            new FederationConfigUpdateRequest(identifier, new FederationConfigRequest(body)),
             requestAttributes,
             dryRun);
     HttpHeaders httpHeaders = new HttpHeaders();
@@ -154,9 +151,8 @@ public class FederationConfigurationManagementV1Api implements ParameterTransfor
 
     FederationConfigManagementResponse response =
         federationConfigurationManagementApi.delete(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             requestAttributes,
             dryRun);

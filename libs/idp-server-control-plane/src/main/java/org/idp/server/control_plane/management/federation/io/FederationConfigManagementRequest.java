@@ -18,20 +18,17 @@ package org.idp.server.control_plane.management.federation.io;
 
 import java.util.Map;
 
-public class FederationConfigRequest implements FederationConfigManagementRequest {
+/**
+ * Marker interface for federation configuration management request objects.
+ *
+ * <p>Enables polymorphic handling of different request types in Handler layer.
+ */
+public interface FederationConfigManagementRequest {
 
-  Map<String, Object> values;
-
-  public FederationConfigRequest(Map<String, Object> values) {
-    this.values = values;
-  }
-
-  @Override
-  public Map<String, Object> toMap() {
-    return values;
-  }
-
-  public Object get(String key) {
-    return values.get(key);
-  }
+  /**
+   * Converts request to Map for audit logging.
+   *
+   * @return request data as map
+   */
+  Map<String, Object> toMap();
 }

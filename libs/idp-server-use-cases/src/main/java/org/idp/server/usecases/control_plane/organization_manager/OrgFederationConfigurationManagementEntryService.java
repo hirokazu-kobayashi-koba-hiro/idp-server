@@ -19,23 +19,19 @@ package org.idp.server.usecases.control_plane.organization_manager;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
+import org.idp.server.control_plane.base.OrganizationAccessVerifier;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.management.federation.OrgFederationConfigManagementApi;
 import org.idp.server.control_plane.management.federation.handler.*;
-import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
-import org.idp.server.control_plane.management.federation.io.FederationConfigRequest;
-import org.idp.server.core.openid.federation.FederationConfiguration;
+import org.idp.server.control_plane.management.federation.io.*;
 import org.idp.server.core.openid.federation.FederationConfigurationIdentifier;
 import org.idp.server.core.openid.federation.FederationQueries;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationCommandRepository;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationQueryRepository;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
@@ -47,23 +43,44 @@ import org.idp.server.platform.type.RequestAttributes;
  * that allow organization administrators to manage federation configurations within their
  * organization boundaries.
  *
+ * <p>Organization-level operations follow the standard access control pattern:
+ *
+ * <ol>
+ *   <li><strong>Organization access verification</strong> - Ensures the user has access to the
+ *       organization
+ *   <li><strong>Permission verification</strong> - Validates the user has necessary
+ *       FEDERATION_CONFIG_* permissions
+ * </ol>
+ *
+ * <p>This service provides federation configuration CRUD operations with comprehensive audit
+ * logging for organization-level configuration management.
+ *
  * @see OrgFederationConfigManagementApi
+ * @see OrganizationAccessVerifier
  * @see
  *     org.idp.server.usecases.control_plane.system_manager.FederationConfigurationManagementEntryService
  */
 @Transaction
-public class OrgFederationConfigManagementEntryService implements OrgFederationConfigManagementApi {
+public class OrgFederationConfigurationManagementEntryService
+    implements OrgFederationConfigManagementApi {
 
   private final OrgFederationConfigManagementHandler handler;
-  private final TenantQueryRepository tenantQueryRepository;
-  private final FederationConfigurationQueryRepository federationConfigurationQueryRepository;
   private final AuditLogPublisher auditLogPublisher;
 
-  public OrgFederationConfigManagementEntryService(
+  /**
+   * Creates a new organization federation configuration management entry service.
+   *
+   * @param tenantQueryRepository the tenant query repository
+   * @param organizationRepository the organization repository
+   * @param federationConfigurationQueryRepository the federation configuration query repository
+   * @param federationConfigurationCommandRepository the federation configuration command repository
+   * @param auditLogPublisher the audit log publisher
+   */
+  public OrgFederationConfigurationManagementEntryService(
       TenantQueryRepository tenantQueryRepository,
       OrganizationRepository organizationRepository,
-      FederationConfigurationCommandRepository federationConfigurationCommandRepository,
       FederationConfigurationQueryRepository federationConfigurationQueryRepository,
+      FederationConfigurationCommandRepository federationConfigurationCommandRepository,
       AuditLogPublisher auditLogPublisher) {
 
     Map<String, FederationConfigManagementService<?>> services = new HashMap<>();
@@ -81,48 +98,27 @@ public class OrgFederationConfigManagementEntryService implements OrgFederationC
         new FederationConfigDeletionService(
             federationConfigurationQueryRepository, federationConfigurationCommandRepository));
 
-    this.handler = new OrgFederationConfigManagementHandler(services, organizationRepository, this);
-
-    this.tenantQueryRepository = tenantQueryRepository;
-    this.federationConfigurationQueryRepository = federationConfigurationQueryRepository;
+    this.handler =
+        new OrgFederationConfigManagementHandler(
+            services,
+            this,
+            tenantQueryRepository,
+            organizationRepository,
+            new OrganizationAccessVerifier());
     this.auditLogPublisher = auditLogPublisher;
   }
 
   @Override
   public FederationConfigManagementResponse create(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       FederationConfigRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
     FederationConfigManagementResult result =
         handler.handle(
-            "create",
-            organizationIdentifier,
-            tenant,
-            operator,
-            oAuthToken,
-            request,
-            requestAttributes,
-            dryRun);
-
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "OrgFederationConfigManagementApi.create",
-              tenant,
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
+            "create", authenticationContext, tenantIdentifier, request, requestAttributes, dryRun);
 
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
@@ -133,34 +129,17 @@ public class OrgFederationConfigManagementEntryService implements OrgFederationC
   @Override
   @Transaction(readOnly = true)
   public FederationConfigManagementResponse findList(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       FederationQueries queries,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
+    FederationConfigFindListRequest request = new FederationConfigFindListRequest(queries);
     FederationConfigManagementResult result =
         handler.handle(
-            "findList",
-            organizationIdentifier,
-            tenant,
-            operator,
-            oAuthToken,
-            queries,
-            requestAttributes,
-            false);
+            "findList", authenticationContext, tenantIdentifier, request, requestAttributes, false);
 
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "OrgFederationConfigManagementApi.findList",
-            "findList",
-            tenant,
-            operator,
-            oAuthToken,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);
@@ -169,34 +148,17 @@ public class OrgFederationConfigManagementEntryService implements OrgFederationC
   @Override
   @Transaction(readOnly = true)
   public FederationConfigManagementResponse get(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       FederationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
+    FederationConfigFindRequest request = new FederationConfigFindRequest(identifier);
     FederationConfigManagementResult result =
         handler.handle(
-            "get",
-            organizationIdentifier,
-            tenant,
-            operator,
-            oAuthToken,
-            identifier,
-            requestAttributes,
-            false);
+            "get", authenticationContext, tenantIdentifier, request, requestAttributes, false);
 
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "OrgFederationConfigManagementApi.get",
-            "get",
-            tenant,
-            operator,
-            oAuthToken,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);
@@ -204,44 +166,16 @@ public class OrgFederationConfigManagementEntryService implements OrgFederationC
 
   @Override
   public FederationConfigManagementResponse update(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       FederationConfigurationIdentifier identifier,
-      FederationConfigRequest request,
+      FederationConfigUpdateRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    // Wrap request for handler
-    FederationConfigUpdateRequest updateRequest =
-        new FederationConfigUpdateRequest(identifier, request);
-
     FederationConfigManagementResult result =
         handler.handle(
-            "update",
-            organizationIdentifier,
-            tenant,
-            operator,
-            oAuthToken,
-            updateRequest,
-            requestAttributes,
-            dryRun);
-
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "OrgFederationConfigManagementApi.update",
-              tenant,
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
+            "update", authenticationContext, tenantIdentifier, request, requestAttributes, dryRun);
 
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
@@ -251,53 +185,23 @@ public class OrgFederationConfigManagementEntryService implements OrgFederationC
 
   @Override
   public FederationConfigManagementResponse delete(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       FederationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    // Get configuration for audit log before deletion
-    FederationConfiguration configuration =
-        federationConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
-
+    FederationConfigDeleteRequest deleteRequest = new FederationConfigDeleteRequest(identifier);
     FederationConfigManagementResult result =
         handler.handle(
             "delete",
-            organizationIdentifier,
-            tenant,
-            operator,
-            oAuthToken,
-            identifier,
+            authenticationContext,
+            tenantIdentifier,
+            deleteRequest,
             requestAttributes,
             dryRun);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "OrgFederationConfigManagementApi.delete",
-              tenant,
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnDeletion(
-            "OrgFederationConfigManagementApi.delete",
-            "delete",
-            tenant,
-            operator,
-            oAuthToken,
-            configuration.payload(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

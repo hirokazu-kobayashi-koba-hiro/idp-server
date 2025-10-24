@@ -18,39 +18,56 @@ package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.management.federation.FederationConfigurationManagementApi;
 import org.idp.server.control_plane.management.federation.handler.*;
-import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
-import org.idp.server.control_plane.management.federation.io.FederationConfigRequest;
-import org.idp.server.core.openid.federation.FederationConfiguration;
+import org.idp.server.control_plane.management.federation.io.*;
 import org.idp.server.core.openid.federation.FederationConfigurationIdentifier;
 import org.idp.server.core.openid.federation.FederationQueries;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationCommandRepository;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationQueryRepository;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
+/**
+ * System-level federation configuration management entry service.
+ *
+ * <p>This service implements federation configuration management operations using the
+ * Handler/Service pattern. Responsibilities include:
+ *
+ * <ul>
+ *   <li>Orchestrating Handler/Service components
+ *   <li>Audit log publication
+ *   <li>HTTP response generation from Result objects
+ * </ul>
+ *
+ * @see FederationConfigurationManagementApi
+ * @see FederationConfigManagementHandler
+ */
 @Transaction
 public class FederationConfigurationManagementEntryService
     implements FederationConfigurationManagementApi {
 
   private final FederationConfigManagementHandler handler;
-  private final TenantQueryRepository tenantQueryRepository;
-  private final FederationConfigurationQueryRepository federationConfigurationQueryRepository;
   private final AuditLogPublisher auditLogPublisher;
 
+  /**
+   * Creates a new federation configuration management entry service.
+   *
+   * @param tenantQueryRepository the tenant query repository
+   * @param federationConfigurationQueryRepository the federation configuration query repository
+   * @param federationConfigurationCommandRepository the federation configuration command repository
+   * @param auditLogPublisher the audit log publisher
+   */
   public FederationConfigurationManagementEntryService(
+      TenantQueryRepository tenantQueryRepository,
       FederationConfigurationQueryRepository federationConfigurationQueryRepository,
       FederationConfigurationCommandRepository federationConfigurationCommandRepository,
-      TenantQueryRepository tenantQueryRepository,
       AuditLogPublisher auditLogPublisher) {
 
     Map<String, FederationConfigManagementService<?>> services = new HashMap<>();
@@ -68,39 +85,21 @@ public class FederationConfigurationManagementEntryService
         new FederationConfigDeletionService(
             federationConfigurationQueryRepository, federationConfigurationCommandRepository));
 
-    this.handler = new FederationConfigManagementHandler(services, this);
-
-    this.tenantQueryRepository = tenantQueryRepository;
-    this.federationConfigurationQueryRepository = federationConfigurationQueryRepository;
+    this.handler = new FederationConfigManagementHandler(services, this, tenantQueryRepository);
     this.auditLogPublisher = auditLogPublisher;
   }
 
   @Override
   public FederationConfigManagementResponse create(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       FederationConfigRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
     FederationConfigManagementResult result =
-        handler.handle("create", tenant, operator, oAuthToken, request, requestAttributes, dryRun);
-
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "FederationConfigurationManagementApi.create",
-              tenant,
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
+        handler.handle(
+            "create", authenticationContext, tenantIdentifier, request, requestAttributes, dryRun);
 
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
@@ -111,25 +110,17 @@ public class FederationConfigurationManagementEntryService
   @Override
   @Transaction(readOnly = true)
   public FederationConfigManagementResponse findList(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       FederationQueries queries,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
+    FederationConfigFindListRequest request = new FederationConfigFindListRequest(queries);
     FederationConfigManagementResult result =
-        handler.handle("findList", tenant, operator, oAuthToken, queries, requestAttributes, false);
+        handler.handle(
+            "findList", authenticationContext, tenantIdentifier, request, requestAttributes, false);
 
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "FederationConfigurationManagementApi.findList",
-            "findList",
-            tenant,
-            operator,
-            oAuthToken,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);
@@ -138,25 +129,17 @@ public class FederationConfigurationManagementEntryService
   @Override
   @Transaction(readOnly = true)
   public FederationConfigManagementResponse get(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       FederationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
+    FederationConfigFindRequest request = new FederationConfigFindRequest(identifier);
     FederationConfigManagementResult result =
-        handler.handle("get", tenant, operator, oAuthToken, identifier, requestAttributes, false);
+        handler.handle(
+            "get", authenticationContext, tenantIdentifier, request, requestAttributes, false);
 
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "FederationConfigurationManagementApi.get",
-            "get",
-            tenant,
-            operator,
-            oAuthToken,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);
@@ -164,39 +147,16 @@ public class FederationConfigurationManagementEntryService
 
   @Override
   public FederationConfigManagementResponse update(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       FederationConfigurationIdentifier identifier,
-      FederationConfigRequest request,
+      FederationConfigUpdateRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    // Wrap request for handler
-    FederationConfigUpdateRequest updateRequest =
-        new FederationConfigUpdateRequest(identifier, request);
-
     FederationConfigManagementResult result =
         handler.handle(
-            "update", tenant, operator, oAuthToken, updateRequest, requestAttributes, dryRun);
-
-    if (result.hasException()) {
-      // Use before config for audit log if available
-      FederationConfiguration before =
-          federationConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "FederationConfigurationManagementApi.update",
-              tenant,
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
+            "update", authenticationContext, tenantIdentifier, request, requestAttributes, dryRun);
 
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
@@ -206,45 +166,23 @@ public class FederationConfigurationManagementEntryService
 
   @Override
   public FederationConfigManagementResponse delete(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       FederationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    // Get configuration for audit log before deletion
-    FederationConfiguration configuration =
-        federationConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
-
+    FederationConfigDeleteRequest deleteRequest = new FederationConfigDeleteRequest(identifier);
     FederationConfigManagementResult result =
         handler.handle(
-            "delete", tenant, operator, oAuthToken, identifier, requestAttributes, dryRun);
-
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "FederationConfigurationManagementApi.delete",
-              tenant,
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnDeletion(
-            "FederationConfigurationManagementApi.delete",
             "delete",
-            tenant,
-            operator,
-            oAuthToken,
-            configuration.payload(),
-            requestAttributes);
+            authenticationContext,
+            tenantIdentifier,
+            deleteRequest,
+            requestAttributes,
+            dryRun);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

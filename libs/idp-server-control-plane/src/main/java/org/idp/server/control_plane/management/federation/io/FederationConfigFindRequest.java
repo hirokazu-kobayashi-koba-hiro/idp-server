@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.management.federation.handler;
+package org.idp.server.control_plane.management.federation.io;
 
-import org.idp.server.control_plane.management.federation.io.FederationConfigRequest;
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.core.openid.federation.FederationConfigurationIdentifier;
 
-/**
- * Request wrapper for federation configuration update operations.
- *
- * @param identifier the federation configuration identifier
- * @param request the federation configuration request
- */
-public record FederationConfigUpdateRequest(
-    FederationConfigurationIdentifier identifier, FederationConfigRequest request) {}
+public record FederationConfigFindRequest(FederationConfigurationIdentifier identifier)
+    implements FederationConfigManagementRequest {
+
+  @Override
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("id", identifier.value());
+    return map;
+  }
+}

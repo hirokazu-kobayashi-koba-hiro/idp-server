@@ -18,10 +18,11 @@ package org.idp.server.control_plane.management.federation.handler;
 
 import java.util.Map;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
+import org.idp.server.control_plane.management.federation.FederationConfigManagementContextBuilder;
+import org.idp.server.control_plane.management.federation.io.FederationConfigDeleteRequest;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementStatus;
 import org.idp.server.core.openid.federation.FederationConfiguration;
-import org.idp.server.core.openid.federation.FederationConfigurationIdentifier;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationCommandRepository;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
@@ -36,7 +37,7 @@ import org.idp.server.platform.type.RequestAttributes;
  * pattern.
  */
 public class FederationConfigDeletionService
-    implements FederationConfigManagementService<FederationConfigurationIdentifier> {
+    implements FederationConfigManagementService<FederationConfigDeleteRequest> {
 
   private final FederationConfigurationQueryRepository queryRepository;
   private final FederationConfigurationCommandRepository commandRepository;
@@ -49,21 +50,25 @@ public class FederationConfigDeletionService
   }
 
   @Override
-  public FederationConfigManagementResult execute(
+  public FederationConfigManagementResponse execute(
+      FederationConfigManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      FederationConfigurationIdentifier identifier,
+      FederationConfigDeleteRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
     FederationConfiguration configuration =
-        queryRepository.findWithDisabled(tenant, identifier, true);
+        queryRepository.findWithDisabled(tenant, request.identifier(), true);
 
     if (!configuration.exists()) {
       throw new ResourceNotFoundException(
-          "Federation configuration not found: " + identifier.value());
+          "Federation configuration not found: " + request.identifier().value());
     }
+
+    // Populate builder with configuration to be deleted
+    builder.withBefore(configuration);
 
     if (dryRun) {
       Map<String, Object> response =
@@ -74,16 +79,12 @@ public class FederationConfigDeletionService
               configuration.identifier().value(),
               "dry_run",
               true);
-      return FederationConfigManagementResult.success(
-          tenant.identifier(),
-          new FederationConfigManagementResponse(FederationConfigManagementStatus.OK, response));
+      return new FederationConfigManagementResponse(FederationConfigManagementStatus.OK, response);
     }
 
     commandRepository.delete(tenant, configuration);
 
-    return FederationConfigManagementResult.success(
-        tenant.identifier(),
-        new FederationConfigManagementResponse(
-            FederationConfigManagementStatus.NO_CONTENT, Map.of()));
+    return new FederationConfigManagementResponse(
+        FederationConfigManagementStatus.NO_CONTENT, Map.of());
   }
 }
