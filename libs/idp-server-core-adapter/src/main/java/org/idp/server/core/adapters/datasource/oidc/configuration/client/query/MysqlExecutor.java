@@ -67,7 +67,7 @@ public class MysqlExecutor implements ClientConfigSqlExecutor {
 
     String sqlTemplateClientIdAlias =
         """
-                        SELECT id, id_alias, tenant_id, payload
+                        SELECT id, id_alias, tenant_id, payload, created_at, updated_at
                         FROM client_configuration
                         WHERE tenant_id = ? AND id_alias = ?"""
             + (includeDisabled ? "" : " AND enabled = true")
@@ -90,7 +90,7 @@ public class MysqlExecutor implements ClientConfigSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                        SELECT id, id_alias, tenant_id, payload
+                        SELECT id, id_alias, tenant_id, payload, created_at, updated_at
                         FROM client_configuration
                         WHERE tenant_id = ? AND id = ?"""
             + (includeDisabled ? "" : " AND enabled = true")
@@ -110,7 +110,7 @@ public class MysqlExecutor implements ClientConfigSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                        SELECT id, id_alias, tenant_id, payload
+                        SELECT id, id_alias, tenant_id, payload, created_at, updated_at
                         FROM client_configuration
                         WHERE tenant_id = ?"""
             + (includeDisabled ? "" : " AND enabled = true")
@@ -232,7 +232,7 @@ public class MysqlExecutor implements ClientConfigSqlExecutor {
 
     String sqlTemplate =
         """
-        SELECT id, id_alias, tenant_id, payload
+        SELECT id, id_alias, tenant_id, payload, created_at, updated_at
         FROM client_configuration
         """
             + where

@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.oauth.configuration.client;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
@@ -64,6 +65,8 @@ public class ClientConfiguration implements JsonReadable, Configurable {
   String authorizationEncryptedResponseAlg;
   String authorizationEncryptedResponseEnc;
   boolean enabled = true;
+  LocalDateTime createdAt;
+  LocalDateTime updatedAt;
   // extension
   ClientExtensionConfiguration extension = new ClientExtensionConfiguration();
 
@@ -348,6 +351,32 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     return enabled;
   }
 
+  public LocalDateTime createdAt() {
+    return createdAt;
+  }
+
+  public boolean hasCreatedAt() {
+    return createdAt != null;
+  }
+
+  public LocalDateTime updatedAt() {
+    return updatedAt;
+  }
+
+  public boolean hasUpdatedAt() {
+    return updatedAt != null;
+  }
+
+  public ClientConfiguration setCreatedAt(LocalDateTime createdAt) {
+    this.createdAt = createdAt;
+    return this;
+  }
+
+  public ClientConfiguration setUpdatedAt(LocalDateTime updatedAt) {
+    this.updatedAt = updatedAt;
+    return this;
+  }
+
   public boolean hasAccessTokenDuration() {
     return extension.hasAccessTokenDuration();
   }
@@ -425,6 +454,8 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     map.put("authorization_encrypted_response_alg", authorizationEncryptedResponseAlg);
     map.put("authorization_encrypted_response_enc", authorizationEncryptedResponseEnc);
     map.put("enabled", enabled);
+    if (hasCreatedAt()) map.put("created_at", createdAt.toString());
+    if (hasUpdatedAt()) map.put("updated_at", updatedAt.toString());
     map.put("extension", extension.toMap());
     return map;
   }

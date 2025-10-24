@@ -47,6 +47,15 @@ describe("client management api", () => {
       expect(createResponse.status).toBe(201);
       clientCreated = true;
 
+      // Verify created_at and updated_at are present in create response
+      expect(createResponse.data.result.created_at).toBeDefined();
+      expect(createResponse.data.result.updated_at).toBeDefined();
+      // Verify they are in ISO 8601 format (YYYY-MM-DDTHH:mm:ss[.nanos], no Z suffix)
+      // LocalDateTime.toString() outputs: 2025-01-15T10:30:45 or 2025-01-15T10:30:45.123456789
+      expect(createResponse.data.result.created_at).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/);
+      expect(createResponse.data.result.updated_at).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/);
+      console.log("✅ Timestamps present in create response:", createResponse.data.result.created_at);
+
       const createdClientId = testClientId;
       console.log("Created Client ID:", createdClientId);
 
@@ -61,7 +70,12 @@ describe("client management api", () => {
       expect(listResponse1.status).toBe(200);
       const clientsEnabled = listResponse1.data.list.filter(client => client.client_id === createdClientId);
       expect(clientsEnabled.length).toBe(1);
-      console.log("✅ Client found in list when enabled=true");
+      // Verify timestamps in list response
+      expect(clientsEnabled[0].created_at).toBeDefined();
+      expect(clientsEnabled[0].updated_at).toBeDefined();
+      expect(clientsEnabled[0].created_at).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/);
+      expect(clientsEnabled[0].updated_at).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/);
+      console.log("✅ Client found in list when enabled=true, created_at:", clientsEnabled[0].created_at);
 
       // Step 3: Verify individual client retrieval works (enabled=true)
       const detailResponse1 = await get({
@@ -73,7 +87,12 @@ describe("client management api", () => {
       console.log("Detail Response 1:", detailResponse1.status, detailResponse1.data);
       expect(detailResponse1.status).toBe(200);
       expect(detailResponse1.data.client_id).toBe(createdClientId);
-      console.log("✅ Client detail retrieved when enabled=true");
+      // Verify timestamps in detail response
+      expect(detailResponse1.data.created_at).toBeDefined();
+      expect(detailResponse1.data.updated_at).toBeDefined();
+      expect(detailResponse1.data.created_at).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/);
+      expect(detailResponse1.data.updated_at).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/);
+      console.log("✅ Client detail retrieved when enabled=true, created_at:", detailResponse1.data.created_at);
 
       // Step 4: Update client to enabled=false
       const updateResponse = await putWithJson({
@@ -92,7 +111,12 @@ describe("client management api", () => {
       });
       console.log("Update Response:", updateResponse.data);
       expect(updateResponse.status).toBe(200);
-      console.log("✅ Client updated to enabled=false");
+      // Verify timestamps in update response
+      expect(updateResponse.data.result.created_at).toBeDefined();
+      expect(updateResponse.data.result.updated_at).toBeDefined();
+      expect(updateResponse.data.result.created_at).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/);
+      expect(updateResponse.data.result.updated_at).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/);
+      console.log("✅ Client updated to enabled=false, updated_at:", updateResponse.data.result.updated_at);
 
       // Step 5: Verify the client does NOT appear in the list (enabled=false)
       const listResponse2 = await get({
