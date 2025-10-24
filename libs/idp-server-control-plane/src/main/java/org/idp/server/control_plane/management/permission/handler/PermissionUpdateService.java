@@ -22,6 +22,7 @@ import org.idp.server.control_plane.management.exception.ResourceNotFoundExcepti
 import org.idp.server.control_plane.management.permission.PermissionManagementContextBuilder;
 import org.idp.server.control_plane.management.permission.io.PermissionManagementResponse;
 import org.idp.server.control_plane.management.permission.io.PermissionManagementStatus;
+import org.idp.server.control_plane.management.permission.io.PermissionRequest;
 import org.idp.server.control_plane.management.permission.io.PermissionUpdateRequest;
 import org.idp.server.control_plane.management.permission.validator.PermissionRequestValidator;
 import org.idp.server.core.openid.identity.User;
@@ -106,19 +107,10 @@ public class PermissionUpdateService
     return new PermissionManagementResponse(PermissionManagementStatus.OK, contents);
   }
 
-  private Permission updatePermission(
-      Permission before,
-      org.idp.server.control_plane.management.permission.io.PermissionRequest request) {
-    JsonNodeWrapper requestJson = JsonNodeWrapper.fromMap(request.toMap());
-
-    String id = before.id(); // ID cannot be changed
-    String name =
-        requestJson.contains("name") ? requestJson.getValueOrEmptyAsString("name") : before.name();
-    String description =
-        requestJson.contains("description")
-            ? requestJson.getValueOrEmptyAsString("description")
-            : before.description();
-
+  private Permission updatePermission(Permission before, PermissionRequest request) {
+    String id = before.id();
+    String name = request.getValueAsString("name");
+    String description = request.optValueAsString("description", "");
     return new Permission(id, name, description);
   }
 }

@@ -103,7 +103,7 @@ public class FederationConfigUpdateService
     JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
     JsonNodeWrapper configJson = jsonConverter.readTree(request.toMap());
 
-    String id = configJson.getValueOrEmptyAsString("id");
+    String id = before.identifier().value();
     String type = configJson.getValueOrEmptyAsString("type");
     String ssoProvider = configJson.getValueOrEmptyAsString("sso_provider");
     JsonNodeWrapper payloadJson = configJson.getValueAsJsonNode("payload");
