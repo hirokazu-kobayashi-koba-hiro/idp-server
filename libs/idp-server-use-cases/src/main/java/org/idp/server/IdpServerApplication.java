@@ -140,6 +140,7 @@ import org.idp.server.platform.date.TimeConfig;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.protocol.ProtocolContainer;
+import org.idp.server.platform.health.HealthCheckApi;
 import org.idp.server.platform.http.HttpClientFactory;
 import org.idp.server.platform.http.HttpRequestExecutor;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
@@ -191,6 +192,8 @@ public class IdpServerApplication {
   UserLifecycleEventApi userLifecycleEventApi;
   OnboardingApi onboardingApi;
   TenantManagementApi tenantManagementApi;
+
+  HealthCheckApi healthCheckApi;
 
   TenantInvitationManagementApi tenantInvitationManagementApi;
   AuthorizationServerManagementApi authorizationServerManagementApi;
@@ -699,6 +702,12 @@ public class IdpServerApplication {
                 userQueryRepository,
                 organizationRepository),
             UserAuthenticationApi.class,
+            databaseTypeProvider);
+
+    this.healthCheckApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new HealthCheckEntryService(tenantQueryRepository),
+            HealthCheckApi.class,
             databaseTypeProvider);
 
     // admin
@@ -1292,5 +1301,9 @@ public class IdpServerApplication {
 
   public OrgSecurityEventHookManagementApi orgSecurityEventHookManagementApi() {
     return orgSecurityEventHookManagementApi;
+  }
+
+  public HealthCheckApi healthCheckApi() {
+    return healthCheckApi;
   }
 }
