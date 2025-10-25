@@ -18,12 +18,24 @@ package org.idp.server.core.adapters.datasource.oidc.configuration.client.query;
 
 import java.util.Map;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.platform.date.LocalDateTimeParser;
 import org.idp.server.platform.json.JsonConverter;
 
 class ModelConverter {
   private static final JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   static ClientConfiguration convert(Map<String, String> stringMap) {
-    return jsonConverter.read(stringMap.get("payload"), ClientConfiguration.class);
+    ClientConfiguration clientConfiguration =
+        jsonConverter.read(stringMap.get("payload"), ClientConfiguration.class);
+
+    if (stringMap.containsKey("created_at")) {
+      clientConfiguration.setCreatedAt(LocalDateTimeParser.parse(stringMap.get("created_at")));
+    }
+
+    if (stringMap.containsKey("updated_at")) {
+      clientConfiguration.setUpdatedAt(LocalDateTimeParser.parse(stringMap.get("updated_at")));
+    }
+
+    return clientConfiguration;
   }
 }

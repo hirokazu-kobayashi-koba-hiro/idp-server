@@ -62,7 +62,8 @@ public class PostgresqlExecutor implements ClientConfigCommandSqlExecutor {
                 UPDATE client_configuration
                 SET id_alias = ?,
                 payload = ?::jsonb,
-                enabled = ?
+                enabled = ?,
+                updated_at = now()
                 WHERE tenant_id = ?::uuid
                 AND id = ?::uuid
                 """;
