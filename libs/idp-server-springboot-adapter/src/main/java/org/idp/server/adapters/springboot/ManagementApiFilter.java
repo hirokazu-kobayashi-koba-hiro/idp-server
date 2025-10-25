@@ -24,9 +24,10 @@ import java.util.List;
 import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.control_plane.model.IdpControlPlaneAuthority;
 import org.idp.server.adapters.springboot.control_plane.model.OperatorPrincipal;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
+import org.idp.server.control_plane.base.AdminUserAuthenticationApi;
 import org.idp.server.control_plane.base.definition.IdpControlPlaneScope;
 import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.identity.UserAuthenticationApi;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnauthorizedException;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -41,11 +42,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class ManagementApiFilter extends OncePerRequestFilter {
 
-  UserAuthenticationApi userAuthenticationApi;
+  AdminUserAuthenticationApi adminUserAuthenticationApi;
   LoggerWrapper logger = LoggerWrapper.getLogger(ManagementApiFilter.class);
 
   public ManagementApiFilter(IdpServerApplication idpServerApplication) {
-    this.userAuthenticationApi = idpServerApplication.operatorAuthenticationApi();
+    this.adminUserAuthenticationApi = idpServerApplication.adminUserAuthenticationApi();
   }
 
   @Override
@@ -57,11 +58,12 @@ public class ManagementApiFilter extends OncePerRequestFilter {
 
     try {
       TenantIdentifier adminTenantIdentifier = AdminTenantContext.getTenantIdentifier();
-      Pairs<User, OAuthToken> result =
-          userAuthenticationApi.authenticate(adminTenantIdentifier, authorization, clientCert);
+      Pairs<User, AdminAuthenticationContext> result =
+          adminUserAuthenticationApi.authenticate(adminTenantIdentifier, authorization, clientCert);
 
       User user = result.getLeft();
-      OAuthToken oAuthToken = result.getRight();
+      AdminAuthenticationContext authenticationContext = result.getRight();
+      OAuthToken oAuthToken = authenticationContext.oAuthToken();
 
       if (oAuthToken.isClientCredentialsGrant()) {
         response.setHeader(
@@ -88,7 +90,7 @@ public class ManagementApiFilter extends OncePerRequestFilter {
         return;
       }
 
-      OperatorPrincipal operatorPrincipal = new OperatorPrincipal(user, oAuthToken, scopes);
+      OperatorPrincipal operatorPrincipal = new OperatorPrincipal(authenticationContext, scopes);
       SecurityContextHolder.getContext().setAuthentication(operatorPrincipal);
       filterChain.doFilter(request, response);
     } catch (UnauthorizedException e) {

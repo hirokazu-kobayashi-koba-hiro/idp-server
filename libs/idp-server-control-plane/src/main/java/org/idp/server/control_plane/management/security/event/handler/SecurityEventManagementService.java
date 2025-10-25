@@ -16,6 +16,8 @@
 
 package org.idp.server.control_plane.management.security.event.handler;
 
+import org.idp.server.control_plane.management.security.event.SecurityEventManagementContextBuilder;
+import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementResponse;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -41,15 +43,16 @@ public interface SecurityEventManagementService<T> {
   /**
    * Executes the security event management operation.
    *
-   * @param tenant the tenant context
+   * @param targetTenant the tenant context
    * @param operator the user performing the operation
    * @param oAuthToken the OAuth token
    * @param request the operation-specific request object
    * @param requestAttributes HTTP request attributes for audit logging
    * @return SecurityEventManagementResult containing operation outcome or exception
    */
-  SecurityEventManagementResult execute(
-      Tenant tenant,
+  SecurityEventManagementResponse execute(
+      SecurityEventManagementContextBuilder builder,
+      Tenant targetTenant,
       User operator,
       OAuthToken oAuthToken,
       T request,

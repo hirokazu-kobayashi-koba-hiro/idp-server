@@ -16,18 +16,35 @@
 
 package org.idp.server.control_plane.management.tenant.handler;
 
-import org.idp.server.control_plane.management.tenant.TenantManagementRegistrationContext;
-import org.idp.server.control_plane.management.tenant.TenantManagementRegistrationContextCreator;
+import java.util.HashMap;
+import java.util.Map;
+import org.idp.server.control_plane.management.onboarding.io.TenantRegistrationRequest;
+import org.idp.server.control_plane.management.tenant.TenantManagementContextBuilder;
+import org.idp.server.control_plane.management.tenant.io.OrgTenantCreationRequest;
+import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
+import org.idp.server.control_plane.management.tenant.io.TenantManagementStatus;
+import org.idp.server.control_plane.management.tenant.io.TenantRequest;
 import org.idp.server.control_plane.management.tenant.validator.TenantRequestValidator;
 import org.idp.server.control_plane.management.tenant.verifier.TenantManagementVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.multi_tenancy.organization.AssignedTenant;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantAttributes;
 import org.idp.server.platform.multi_tenancy.tenant.TenantCommandRepository;
+import org.idp.server.platform.multi_tenancy.tenant.TenantType;
+import org.idp.server.platform.multi_tenancy.tenant.config.CorsConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.config.SessionConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.config.UIConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
+import org.idp.server.platform.security.event.SecurityEventUserAttributeConfiguration;
+import org.idp.server.platform.security.log.SecurityEventLogConfiguration;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
@@ -80,7 +97,8 @@ public class OrgTenantCreationService implements TenantManagementService<OrgTena
   }
 
   @Override
-  public TenantManagementResult execute(
+  public TenantManagementResponse execute(
+      TenantManagementContextBuilder builder,
       Tenant adminTenant,
       User operator,
       OAuthToken oAuthToken,
@@ -94,27 +112,101 @@ public class OrgTenantCreationService implements TenantManagementService<OrgTena
     // 2. Get organization from request (already retrieved by Handler)
     Organization organization = request.organization();
 
-    // 3. Context creation
-    TenantManagementRegistrationContextCreator contextCreator =
-        new TenantManagementRegistrationContextCreator(
-            adminTenant, request.tenantRequest(), organization, operator, dryRun);
-    TenantManagementRegistrationContext context = contextCreator.create();
+    Tenant newTenant = createTenant(request.tenantRequest());
+    AuthorizationServerConfiguration newAuthorizationServer =
+        createAuthorization(request.tenantRequest());
 
     // 4. Business rule verification
-    tenantManagementVerifier.verify(context);
+    tenantManagementVerifier.verify(newTenant);
+
+    AssignedTenant assignedTenant =
+        new AssignedTenant(
+            newTenant.identifierValue(), newTenant.name().value(), newTenant.type().name());
+    Organization assignedOrganization = organization.updateWithTenant(assignedTenant);
+    operator.addAssignedTenant(newTenant.identifier());
+
+    // Populate audit context with created tenant
+    builder.withTargetTenantIdentifier(newTenant.identifier());
+    builder.withAfter(newTenant);
+
+    Map<String, Object> contents = new HashMap<>();
+    contents.put("result", newTenant.toMap());
+    contents.put("dry_run", dryRun);
 
     // 5. Dry-run check
     if (dryRun) {
-      return TenantManagementResult.success(adminTenant, context, context.toResponse());
+      return new TenantManagementResponse(TenantManagementStatus.OK, contents);
     }
 
     // 6. Repository operations
-    tenantCommandRepository.register(context.newTenant());
-    organizationRepository.update(context.organization());
-    authorizationServerConfigurationCommandRepository.register(
-        context.newTenant(), context.authorizationServerConfiguration());
-    userCommandRepository.update(adminTenant, context.user());
+    tenantCommandRepository.register(newTenant);
+    organizationRepository.update(assignedOrganization);
+    authorizationServerConfigurationCommandRepository.register(newTenant, newAuthorizationServer);
+    userCommandRepository.update(adminTenant, operator);
 
-    return TenantManagementResult.success(adminTenant, context, context.toResponse());
+    return new TenantManagementResponse(TenantManagementStatus.CREATED, contents);
+  }
+
+  public Tenant createTenant(TenantRequest request) {
+
+    TenantRegistrationRequest tenantRequest =
+        JsonConverter.snakeCaseInstance()
+            .read(request.get("tenant"), TenantRegistrationRequest.class);
+
+    TenantAttributes attributes =
+        tenantRequest.attributes() != null
+            ? new TenantAttributes(tenantRequest.attributes())
+            : new TenantAttributes();
+
+    UIConfiguration uiConfiguration =
+        tenantRequest.uiConfig() != null
+            ? new UIConfiguration(tenantRequest.uiConfig())
+            : new UIConfiguration();
+
+    CorsConfiguration corsConfiguration =
+        tenantRequest.corsConfig() != null
+            ? new CorsConfiguration(tenantRequest.corsConfig())
+            : new CorsConfiguration();
+
+    SessionConfiguration sessionConfiguration =
+        tenantRequest.sessionConfig() != null
+            ? new SessionConfiguration(tenantRequest.sessionConfig())
+            : new SessionConfiguration();
+
+    SecurityEventLogConfiguration securityEventLogConfiguration =
+        tenantRequest.securityEventLogConfig() != null
+            ? new SecurityEventLogConfiguration(tenantRequest.securityEventLogConfig())
+            : new SecurityEventLogConfiguration();
+
+    SecurityEventUserAttributeConfiguration securityEventUserAttributeConfiguration =
+        tenantRequest.securityEventUserConfig() != null
+            ? new SecurityEventUserAttributeConfiguration(tenantRequest.securityEventUserConfig())
+            : new SecurityEventUserAttributeConfiguration();
+
+    TenantIdentityPolicy identityPolicyConfig =
+        convertIdentityPolicyConfig(tenantRequest.identityPolicyConfig());
+
+    return new Tenant(
+        tenantRequest.tenantIdentifier(),
+        tenantRequest.tenantName(),
+        TenantType.PUBLIC,
+        tenantRequest.tenantDomain(),
+        tenantRequest.authorizationProvider(),
+        attributes,
+        uiConfiguration,
+        corsConfiguration,
+        sessionConfiguration,
+        securityEventLogConfiguration,
+        securityEventUserAttributeConfiguration,
+        identityPolicyConfig);
+  }
+
+  private AuthorizationServerConfiguration createAuthorization(TenantRequest request) {
+    return JsonConverter.snakeCaseInstance()
+        .read(request.get("authorization_server"), AuthorizationServerConfiguration.class);
+  }
+
+  private TenantIdentityPolicy convertIdentityPolicyConfig(Map<String, Object> configMap) {
+    return TenantIdentityPolicy.fromMap(configMap);
   }
 }

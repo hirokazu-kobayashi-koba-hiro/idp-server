@@ -306,7 +306,7 @@ describe("organization tenant management api", () => {
         body: {
           "name": `Updated Organization Tenant ${timestamp}`,
           "description": "Updated description for organization tenant",
-          "tenant_type": "BUSINESS"
+          "domain": "BUSINESS"
         }
       });
       console.log("Update tenant response:", updateResponse.data);
@@ -408,7 +408,7 @@ describe("organization tenant management api", () => {
         }
       });
       console.log("Dry run create response:", dryRunCreateResponse.data);
-      expect(dryRunCreateResponse.status).toBe(201);
+      expect(dryRunCreateResponse.status).toBe(200);
       expect(dryRunCreateResponse.data).toHaveProperty("result");
 
       // Verify tenant was not actually created by listing tenants
@@ -513,7 +513,7 @@ describe("organization tenant management api", () => {
         body: {
           "name": `Dry Run Updated Tenant ${timestamp}`,
           "description": "Dry run updated description",
-          "tenant_type": "BUSINESS"
+          "domain": "BUSINESS"
         }
       });
       console.log("Dry run update response:", dryRunUpdateResponse.data);

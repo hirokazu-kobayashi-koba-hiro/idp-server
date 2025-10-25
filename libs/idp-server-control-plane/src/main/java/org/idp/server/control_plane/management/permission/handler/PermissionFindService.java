@@ -17,6 +17,8 @@
 package org.idp.server.control_plane.management.permission.handler;
 
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
+import org.idp.server.control_plane.management.permission.PermissionManagementContextBuilder;
+import org.idp.server.control_plane.management.permission.io.PermissionFindRequest;
 import org.idp.server.control_plane.management.permission.io.PermissionManagementResponse;
 import org.idp.server.control_plane.management.permission.io.PermissionManagementStatus;
 import org.idp.server.core.openid.identity.User;
@@ -28,11 +30,18 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Service for finding a single permission.
+ * Service for retrieving a single permission by identifier.
  *
- * <p>Handles permission retrieval by identifier.
+ * <p>Handles permission retrieval logic following the Handler/Service pattern.
+ *
+ * <h2>Responsibilities</h2>
+ *
+ * <ul>
+ *   <li>Permission retrieval by identifier
+ *   <li>NOT_FOUND response when permission doesn't exist
+ * </ul>
  */
-public class PermissionFindService implements PermissionManagementService<PermissionIdentifier> {
+public class PermissionFindService implements PermissionManagementService<PermissionFindRequest> {
 
   private final PermissionQueryRepository permissionQueryRepository;
 
@@ -41,14 +50,16 @@ public class PermissionFindService implements PermissionManagementService<Permis
   }
 
   @Override
-  public PermissionManagementResult execute(
+  public PermissionManagementResponse execute(
+      PermissionManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      PermissionIdentifier identifier,
+      PermissionFindRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    PermissionIdentifier identifier = request.identifier();
     Permission permission = permissionQueryRepository.find(tenant, identifier);
 
     if (!permission.exists()) {
@@ -56,8 +67,9 @@ public class PermissionFindService implements PermissionManagementService<Permis
           String.format("Permission not found: %s", identifier.value()));
     }
 
-    return PermissionManagementResult.success(
-        tenant,
-        new PermissionManagementResponse(PermissionManagementStatus.OK, permission.toMap()));
+    // Populate builder with found permission
+    builder.withBefore(permission);
+
+    return new PermissionManagementResponse(PermissionManagementStatus.OK, permission.toMap());
   }
 }

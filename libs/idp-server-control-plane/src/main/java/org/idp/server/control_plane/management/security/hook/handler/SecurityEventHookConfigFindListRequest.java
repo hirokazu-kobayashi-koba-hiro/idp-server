@@ -16,12 +16,15 @@
 
 package org.idp.server.control_plane.management.security.hook.handler;
 
+import java.util.Map;
+
 /**
  * Request wrapper for findList operation.
  *
  * <p>Encapsulates pagination parameters for list retrieval.
  */
-public class SecurityEventHookConfigFindListRequest {
+public class SecurityEventHookConfigFindListRequest
+    implements SecurityEventHookConfigManagementRequest {
 
   private final int limit;
   private final int offset;
@@ -37,5 +40,10 @@ public class SecurityEventHookConfigFindListRequest {
 
   public int offset() {
     return offset;
+  }
+
+  @Override
+  public Map<String, Object> toMap() {
+    return Map.of("limit", limit, "offset", offset);
   }
 }

@@ -18,18 +18,18 @@ package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.management.authentication.interaction.AuthenticationInteractionManagementApi;
 import org.idp.server.control_plane.management.authentication.interaction.handler.*;
+import org.idp.server.control_plane.management.authentication.interaction.io.AuthenticationInteractionFindListRequest;
+import org.idp.server.control_plane.management.authentication.interaction.io.AuthenticationInteractionFindRequest;
 import org.idp.server.control_plane.management.authentication.interaction.io.AuthenticationInteractionManagementResponse;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.openid.authentication.interaction.AuthenticationInteractionQueries;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.*;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
@@ -38,25 +38,13 @@ import org.idp.server.platform.type.RequestAttributes;
 public class AuthenticationInteractionManagementEntryService
     implements AuthenticationInteractionManagementApi {
 
-  AuditLogPublisher auditLogPublisher;
-  LoggerWrapper log =
-      LoggerWrapper.getLogger(AuthenticationInteractionManagementEntryService.class);
-
-  // Handler/Service pattern
-  private AuthenticationInteractionManagementHandler handler;
+  private final AuthenticationInteractionManagementHandler handler;
+  private final AuditLogPublisher auditLogPublisher;
 
   public AuthenticationInteractionManagementEntryService(
       AuthenticationInteractionQueryRepository authenticationInteractionQueryRepository,
       TenantQueryRepository tenantQueryRepository,
       AuditLogPublisher auditLogPublisher) {
-    this.auditLogPublisher = auditLogPublisher;
-
-    this.handler = createHandler(authenticationInteractionQueryRepository, tenantQueryRepository);
-  }
-
-  private AuthenticationInteractionManagementHandler createHandler(
-      AuthenticationInteractionQueryRepository authenticationInteractionQueryRepository,
-      TenantQueryRepository tenantQueryRepository) {
 
     Map<String, AuthenticationInteractionManagementService<?>> services = new HashMap<>();
     services.put(
@@ -65,45 +53,30 @@ public class AuthenticationInteractionManagementEntryService
     services.put(
         "get", new AuthenticationInteractionFindService(authenticationInteractionQueryRepository));
 
-    return new AuthenticationInteractionManagementHandler(services, this, tenantQueryRepository);
+    this.handler =
+        new AuthenticationInteractionManagementHandler(services, this, tenantQueryRepository);
+    this.auditLogPublisher = auditLogPublisher;
   }
 
   @Override
   @Transaction(readOnly = true)
   public AuthenticationInteractionManagementResponse findList(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationInteractionQueries queries,
       RequestAttributes requestAttributes) {
 
-    // Delegate to Handler/Service pattern
+    AuthenticationInteractionFindListRequest findListRequest =
+        new AuthenticationInteractionFindListRequest(queries);
     AuthenticationInteractionManagementResult result =
         handler.handle(
-            "findList", tenantIdentifier, operator, oAuthToken, queries, requestAttributes);
-
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "AuthenticationInteractionManagementApi.findList",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse();
-    }
-
-    // Record audit log (read operation)
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "AuthenticationInteractionManagementApi.findList",
             "findList",
-            result.tenant(),
-            operator,
-            oAuthToken,
+            authenticationContext,
+            tenantIdentifier,
+            findListRequest,
             requestAttributes);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse();
@@ -112,41 +85,19 @@ public class AuthenticationInteractionManagementEntryService
   @Override
   @Transaction(readOnly = true)
   public AuthenticationInteractionManagementResponse get(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationTransactionIdentifier identifier,
       String type,
       RequestAttributes requestAttributes) {
 
-    // Delegate to Handler/Service pattern
-    AuthenticationInteractionFindRequest request =
+    AuthenticationInteractionFindRequest findRequest =
         new AuthenticationInteractionFindRequest(identifier, type);
     AuthenticationInteractionManagementResult result =
-        handler.handle("get", tenantIdentifier, operator, oAuthToken, request, requestAttributes);
+        handler.handle(
+            "get", authenticationContext, tenantIdentifier, findRequest, requestAttributes);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "AuthenticationInteractionManagementApi.get",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse();
-    }
-
-    // Record audit log (read operation)
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "AuthenticationInteractionManagementApi.get",
-            "get",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse();

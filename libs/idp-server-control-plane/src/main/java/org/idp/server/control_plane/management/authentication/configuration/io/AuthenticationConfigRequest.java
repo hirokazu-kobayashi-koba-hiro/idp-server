@@ -18,7 +18,12 @@ package org.idp.server.control_plane.management.authentication.configuration.io;
 
 import java.util.Map;
 
-public class AuthenticationConfigRequest {
+/**
+ * Request for authentication configuration creation.
+ *
+ * <p>Wraps configuration data for create/update operations.
+ */
+public class AuthenticationConfigRequest implements AuthenticationConfigManagementRequest {
 
   Map<String, Object> values;
 
@@ -26,11 +31,20 @@ public class AuthenticationConfigRequest {
     this.values = values;
   }
 
+  @Override
   public Map<String, Object> toMap() {
     return values;
   }
 
   public Object get(String key) {
     return values.get(key);
+  }
+
+  public boolean hasId() {
+    return values.containsKey("id");
+  }
+
+  public String getId() {
+    return (String) values.get("id");
   }
 }

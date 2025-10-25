@@ -19,14 +19,14 @@ package org.idp.server.control_plane.management.federation;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
 import org.idp.server.control_plane.management.federation.io.FederationConfigRequest;
+import org.idp.server.control_plane.management.federation.io.FederationConfigUpdateRequest;
 import org.idp.server.core.openid.federation.FederationConfigurationIdentifier;
 import org.idp.server.core.openid.federation.FederationQueries;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
@@ -52,40 +52,35 @@ public interface FederationConfigurationManagementApi {
   }
 
   FederationConfigManagementResponse create(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       FederationConfigRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
   FederationConfigManagementResponse findList(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       FederationQueries queries,
       RequestAttributes requestAttributes);
 
   FederationConfigManagementResponse get(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       FederationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes);
 
   FederationConfigManagementResponse update(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       FederationConfigurationIdentifier identifier,
-      FederationConfigRequest request,
+      FederationConfigUpdateRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
   FederationConfigManagementResponse delete(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       FederationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun);

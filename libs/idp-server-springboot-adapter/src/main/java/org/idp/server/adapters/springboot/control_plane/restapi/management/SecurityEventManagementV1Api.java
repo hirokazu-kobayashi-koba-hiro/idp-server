@@ -54,9 +54,8 @@ public class SecurityEventManagementV1Api implements ParameterTransformable {
 
     SecurityEventManagementResponse response =
         securityEventManagementApi.findList(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             new SecurityEventQueries(queryParams),
             requestAttributes);
 
@@ -77,9 +76,8 @@ public class SecurityEventManagementV1Api implements ParameterTransformable {
 
     SecurityEventManagementResponse response =
         securityEventManagementApi.get(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             requestAttributes);
 

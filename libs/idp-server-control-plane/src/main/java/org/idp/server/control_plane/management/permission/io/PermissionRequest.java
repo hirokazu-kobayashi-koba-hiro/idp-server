@@ -18,7 +18,7 @@ package org.idp.server.control_plane.management.permission.io;
 
 import java.util.Map;
 
-public class PermissionRequest {
+public class PermissionRequest implements PermissionManagementRequest {
 
   Map<String, Object> values;
 

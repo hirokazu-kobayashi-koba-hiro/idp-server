@@ -18,10 +18,11 @@ package org.idp.server.control_plane.management.federation.handler;
 
 import java.util.List;
 import java.util.Map;
+import org.idp.server.control_plane.management.federation.FederationConfigManagementContextBuilder;
+import org.idp.server.control_plane.management.federation.io.FederationConfigFindListRequest;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementStatus;
 import org.idp.server.core.openid.federation.FederationConfiguration;
-import org.idp.server.core.openid.federation.FederationQueries;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -35,7 +36,7 @@ import org.idp.server.platform.type.RequestAttributes;
  * Handler/Service pattern.
  */
 public class FederationConfigFindListService
-    implements FederationConfigManagementService<FederationQueries> {
+    implements FederationConfigManagementService<FederationConfigFindListRequest> {
 
   private final FederationConfigurationQueryRepository queryRepository;
 
@@ -44,28 +45,28 @@ public class FederationConfigFindListService
   }
 
   @Override
-  public FederationConfigManagementResult execute(
+  public FederationConfigManagementResponse execute(
+      FederationConfigManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      FederationQueries queries,
+      FederationConfigFindListRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    long totalCount = queryRepository.findTotalCount(tenant, queries);
+    long totalCount = queryRepository.findTotalCount(tenant, request.queries());
     if (totalCount == 0) {
       Map<String, Object> response =
           Map.of(
               "list", List.of(),
               "total_count", totalCount,
-              "limit", queries.limit(),
-              "offset", queries.offset());
-      return FederationConfigManagementResult.success(
-          tenant.identifier(),
-          new FederationConfigManagementResponse(FederationConfigManagementStatus.OK, response));
+              "limit", request.queries().limit(),
+              "offset", request.queries().offset());
+      return new FederationConfigManagementResponse(FederationConfigManagementStatus.OK, response);
     }
 
-    List<FederationConfiguration> configurations = queryRepository.findList(tenant, queries);
+    List<FederationConfiguration> configurations =
+        queryRepository.findList(tenant, request.queries());
 
     Map<String, Object> response =
         Map.of(
@@ -74,12 +75,10 @@ public class FederationConfigFindListService
             "total_count",
             totalCount,
             "limit",
-            queries.limit(),
+            request.queries().limit(),
             "offset",
-            queries.offset());
+            request.queries().offset());
 
-    return FederationConfigManagementResult.success(
-        tenant.identifier(),
-        new FederationConfigManagementResponse(FederationConfigManagementStatus.OK, response));
+    return new FederationConfigManagementResponse(FederationConfigManagementStatus.OK, response);
   }
 }

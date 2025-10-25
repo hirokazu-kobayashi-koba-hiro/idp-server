@@ -18,20 +18,20 @@ package org.idp.server.usecases.control_plane.organization_manager;
 
 import java.util.Map;
 import org.idp.server.control_plane.base.AuditLogCreator;
+import org.idp.server.control_plane.base.OrganizationAccessVerifier;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.management.security.event.OrgSecurityEventManagementApi;
 import org.idp.server.control_plane.management.security.event.handler.OrgSecurityEventManagementHandler;
 import org.idp.server.control_plane.management.security.event.handler.SecurityEventFindListService;
 import org.idp.server.control_plane.management.security.event.handler.SecurityEventFindService;
 import org.idp.server.control_plane.management.security.event.handler.SecurityEventManagementResult;
 import org.idp.server.control_plane.management.security.event.handler.SecurityEventManagementService;
+import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementFindListRequest;
+import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementFindRequest;
 import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementResponse;
-import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -99,44 +99,20 @@ public class OrgSecurityEventManagementEntryService implements OrgSecurityEventM
   @Override
   @Transaction(readOnly = true)
   public SecurityEventManagementResponse findList(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       SecurityEventQueries queries,
       RequestAttributes requestAttributes) {
 
     SecurityEventManagementResult result =
         handler.handle(
             "findList",
-            organizationIdentifier,
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
-            queries,
+            new SecurityEventManagementFindListRequest(queries),
             requestAttributes);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "OrgSecurityEventManagementApi.findList",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse();
-    }
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "OrgSecurityEventManagementApi.findList",
-            "findList",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse();
@@ -145,44 +121,20 @@ public class OrgSecurityEventManagementEntryService implements OrgSecurityEventM
   @Override
   @Transaction(readOnly = true)
   public SecurityEventManagementResponse get(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       SecurityEventIdentifier identifier,
       RequestAttributes requestAttributes) {
 
     SecurityEventManagementResult result =
         handler.handle(
             "get",
-            organizationIdentifier,
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
-            identifier,
+            new SecurityEventManagementFindRequest(identifier),
             requestAttributes);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "OrgSecurityEventManagementApi.get",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse();
-    }
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "OrgSecurityEventManagementApi.get",
-            "get",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse();

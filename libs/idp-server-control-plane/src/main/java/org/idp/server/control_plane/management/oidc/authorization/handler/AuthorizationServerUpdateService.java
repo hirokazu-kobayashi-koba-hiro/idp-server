@@ -16,8 +16,10 @@
 
 package org.idp.server.control_plane.management.oidc.authorization.handler;
 
-import org.idp.server.control_plane.management.oidc.authorization.AuthorizationServerUpdateContext;
-import org.idp.server.control_plane.management.oidc.authorization.AuthorizationServerUpdateContextCreator;
+import java.util.Map;
+import org.idp.server.control_plane.management.oidc.authorization.AuthorizationServerManagementContextBuilder;
+import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerManagementResponse;
+import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerManagementStatus;
 import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerUpdateRequest;
 import org.idp.server.control_plane.management.oidc.authorization.validator.AuthorizationServerRequestValidator;
 import org.idp.server.core.openid.identity.User;
@@ -25,6 +27,9 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.json.JsonDiffCalculator;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -39,16 +44,19 @@ public class AuthorizationServerUpdateService
 
   private final AuthorizationServerConfigurationQueryRepository queryRepository;
   private final AuthorizationServerConfigurationCommandRepository commandRepository;
+  private final JsonConverter jsonConverter;
 
   public AuthorizationServerUpdateService(
       AuthorizationServerConfigurationQueryRepository queryRepository,
       AuthorizationServerConfigurationCommandRepository commandRepository) {
     this.queryRepository = queryRepository;
     this.commandRepository = commandRepository;
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override
-  public AuthorizationServerManagementResult execute(
+  public AuthorizationServerManagementResponse execute(
+      AuthorizationServerManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -64,21 +72,27 @@ public class AuthorizationServerUpdateService
     // Get existing configuration
     AuthorizationServerConfiguration before = queryRepository.getWithDisabled(tenant, true);
 
-    // Create context
-    AuthorizationServerUpdateContextCreator contextCreator =
-        new AuthorizationServerUpdateContextCreator(tenant, before, request, dryRun);
-    AuthorizationServerUpdateContext context = contextCreator.create();
+    // Build updated configuration
+    AuthorizationServerConfiguration after =
+        jsonConverter.read(request.toMap(), AuthorizationServerConfiguration.class);
 
-    // Dry run check
+    // Update context builder with before and after states
+    contextBuilder.withBefore(before).withAfter(after);
+
+    JsonNodeWrapper beforeJson = JsonNodeWrapper.fromMap(before.toMap());
+    JsonNodeWrapper afterJson = JsonNodeWrapper.fromMap(after.toMap());
+    Map<String, Object> diff = JsonDiffCalculator.deepDiff(beforeJson, afterJson);
+    Map<String, Object> response = Map.of("result", after.toMap(), "diff", diff, "dry_run", dryRun);
+
     if (dryRun) {
-      return AuthorizationServerManagementResult.success(
-          tenant.identifier(), context.toResponse(), context);
+      return new AuthorizationServerManagementResponse(
+          AuthorizationServerManagementStatus.OK, response);
     }
 
     // Update configuration
-    commandRepository.update(tenant, context.after());
+    commandRepository.update(tenant, after);
 
-    return AuthorizationServerManagementResult.success(
-        tenant.identifier(), context.toResponse(), context);
+    return new AuthorizationServerManagementResponse(
+        AuthorizationServerManagementStatus.OK, response);
   }
 }

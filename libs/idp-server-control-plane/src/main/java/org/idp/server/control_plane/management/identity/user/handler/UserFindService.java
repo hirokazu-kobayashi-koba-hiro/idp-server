@@ -16,6 +16,8 @@
 
 package org.idp.server.control_plane.management.identity.user.handler;
 
+import org.idp.server.control_plane.management.identity.user.UserManagementContextBuilder;
+import org.idp.server.control_plane.management.identity.user.io.UserFindRequest;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
 import org.idp.server.core.openid.identity.User;
@@ -47,7 +49,7 @@ import org.idp.server.platform.type.RequestAttributes;
  *   <li>Transaction management
  * </ul>
  */
-public class UserFindService implements UserManagementService<UserIdentifier> {
+public class UserFindService implements UserManagementService<UserFindRequest> {
 
   private final UserQueryRepository userQueryRepository;
 
@@ -56,19 +58,21 @@ public class UserFindService implements UserManagementService<UserIdentifier> {
   }
 
   @Override
-  public UserManagementResult execute(
+  public UserManagementResponse execute(
+      UserManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      UserIdentifier userIdentifier,
+      UserFindRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
+
+    UserIdentifier userIdentifier = request.userIdentifier();
 
     // 1. User existence verification
     User user = userQueryRepository.get(tenant, userIdentifier);
 
-    // 2. Return user data
-    return UserManagementResult.success(
-        tenant, user, new UserManagementResponse(UserManagementStatus.OK, user.toMap()));
+    // 3. Return user data
+    return new UserManagementResponse(UserManagementStatus.OK, user.toMap());
   }
 }

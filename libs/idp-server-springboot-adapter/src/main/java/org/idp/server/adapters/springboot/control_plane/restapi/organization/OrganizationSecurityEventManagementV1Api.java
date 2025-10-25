@@ -23,7 +23,6 @@ import org.idp.server.adapters.springboot.application.restapi.ParameterTransform
 import org.idp.server.adapters.springboot.control_plane.model.OrganizationOperatorPrincipal;
 import org.idp.server.control_plane.management.security.event.OrgSecurityEventManagementApi;
 import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementResponse;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.SecurityEventQueries;
 import org.idp.server.platform.security.event.SecurityEventIdentifier;
@@ -81,18 +80,13 @@ public class OrganizationSecurityEventManagementV1Api implements ParameterTransf
       @RequestParam Map<String, String> queryParams,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
-
     SecurityEventQueries queries = new SecurityEventQueries(queryParams);
 
     SecurityEventManagementResponse response =
         orgSecurityEventManagementApi.findList(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             queries,
             requestAttributes);
 
@@ -120,16 +114,12 @@ public class OrganizationSecurityEventManagementV1Api implements ParameterTransf
       @PathVariable String eventId,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     SecurityEventManagementResponse response =
         orgSecurityEventManagementApi.get(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new SecurityEventIdentifier(eventId),
             requestAttributes);
 

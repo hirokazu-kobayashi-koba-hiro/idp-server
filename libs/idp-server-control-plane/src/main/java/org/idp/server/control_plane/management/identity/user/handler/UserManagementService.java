@@ -16,6 +16,8 @@
 
 package org.idp.server.control_plane.management.identity.user.handler;
 
+import org.idp.server.control_plane.management.identity.user.UserManagementContextBuilder;
+import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -69,17 +71,20 @@ public interface UserManagementService<REQUEST> {
   /**
    * Executes the user management operation.
    *
-   * <p>Note: Tenant is passed from Handler layer to avoid duplicate retrieval.
+   * <p>Receives context builder from Handler, executes business logic, and populates the builder
+   * with operation data.
    *
+   * @param builder the context builder to populate with operation data
    * @param tenant the tenant context (retrieved by Handler layer)
    * @param operator the user performing the operation
    * @param oAuthToken the OAuth token for the operation
    * @param request the operation-specific request object (type-safe via generics)
    * @param requestAttributes HTTP request attributes for audit logging
    * @param dryRun if true, validate but don't persist changes
-   * @return UserManagementResult containing operation outcome
+   * @return UserManagementResponse containing outcome
    */
-  UserManagementResult execute(
+  UserManagementResponse execute(
+      UserManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,

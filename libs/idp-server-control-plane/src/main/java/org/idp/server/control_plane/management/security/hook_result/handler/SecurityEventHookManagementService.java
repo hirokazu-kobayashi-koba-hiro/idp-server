@@ -16,6 +16,8 @@
 
 package org.idp.server.control_plane.management.security.hook_result.handler;
 
+import org.idp.server.control_plane.management.security.hook_result.SecurityEventHookManagementContextBuilder;
+import org.idp.server.control_plane.management.security.hook_result.io.SecurityEventHookManagementResponse;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -59,7 +61,8 @@ public interface SecurityEventHookManagementService<T> {
    * @param requestAttributes HTTP request attributes for audit logging
    * @return operation result (success or error wrapped in Result)
    */
-  SecurityEventHookManagementResult execute(
+  SecurityEventHookManagementResponse execute(
+      SecurityEventHookManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,

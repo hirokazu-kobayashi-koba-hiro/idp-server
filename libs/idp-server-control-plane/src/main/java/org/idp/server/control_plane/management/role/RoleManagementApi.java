@@ -19,14 +19,13 @@ package org.idp.server.control_plane.management.role;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.role.io.RoleManagementResponse;
 import org.idp.server.control_plane.management.role.io.RoleRequest;
-import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.role.RoleIdentifier;
 import org.idp.server.core.openid.identity.role.RoleQueries;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
@@ -39,6 +38,7 @@ public interface RoleManagementApi {
     map.put("findList", new AdminPermissions(Set.of(DefaultAdminPermission.ROLE_READ)));
     map.put("get", new AdminPermissions(Set.of(DefaultAdminPermission.ROLE_READ)));
     map.put("update", new AdminPermissions(Set.of(DefaultAdminPermission.ROLE_UPDATE)));
+    map.put("removePermissions", new AdminPermissions(Set.of(DefaultAdminPermission.ROLE_UPDATE)));
     map.put("delete", new AdminPermissions(Set.of(DefaultAdminPermission.ROLE_DELETE)));
     AdminPermissions adminPermissions = map.get(method);
     if (adminPermissions == null) {
@@ -48,49 +48,43 @@ public interface RoleManagementApi {
   }
 
   RoleManagementResponse create(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       RoleRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
   RoleManagementResponse findList(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       RoleQueries queries,
       RequestAttributes requestAttributes);
 
   RoleManagementResponse get(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       RoleIdentifier identifier,
       RequestAttributes requestAttributes);
 
   RoleManagementResponse update(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       RoleIdentifier identifier,
       RoleRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
   RoleManagementResponse removePermissions(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       RoleIdentifier identifier,
       RoleRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
   RoleManagementResponse delete(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       RoleIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun);

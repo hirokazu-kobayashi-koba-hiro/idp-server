@@ -56,9 +56,8 @@ public class ClientManagementV1Api implements ParameterTransformable {
 
     ClientManagementResponse response =
         clientManagementApi.create(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             new ClientRegistrationRequest(body),
             requestAttributes,
             dryRun);
@@ -79,9 +78,8 @@ public class ClientManagementV1Api implements ParameterTransformable {
 
     ClientManagementResponse response =
         clientManagementApi.findList(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             new ClientQueries(queryParams),
             requestAttributes);
 
@@ -102,9 +100,8 @@ public class ClientManagementV1Api implements ParameterTransformable {
 
     ClientManagementResponse response =
         clientManagementApi.get(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             clientIdentifier,
             requestAttributes);
 
@@ -127,9 +124,8 @@ public class ClientManagementV1Api implements ParameterTransformable {
 
     ClientManagementResponse response =
         clientManagementApi.update(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             clientIdentifier,
             new ClientRegistrationRequest(body),
             requestAttributes,
@@ -152,9 +148,8 @@ public class ClientManagementV1Api implements ParameterTransformable {
 
     ClientManagementResponse response =
         clientManagementApi.delete(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             clientIdentifier,
             requestAttributes,
             dryRun);

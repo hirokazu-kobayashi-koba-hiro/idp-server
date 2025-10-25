@@ -17,10 +17,11 @@
 package org.idp.server.control_plane.management.federation.handler;
 
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
+import org.idp.server.control_plane.management.federation.FederationConfigManagementContextBuilder;
+import org.idp.server.control_plane.management.federation.io.FederationConfigFindRequest;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementStatus;
 import org.idp.server.core.openid.federation.FederationConfiguration;
-import org.idp.server.core.openid.federation.FederationConfigurationIdentifier;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -34,7 +35,7 @@ import org.idp.server.platform.type.RequestAttributes;
  * Handler/Service pattern.
  */
 public class FederationConfigFindService
-    implements FederationConfigManagementService<FederationConfigurationIdentifier> {
+    implements FederationConfigManagementService<FederationConfigFindRequest> {
 
   private final FederationConfigurationQueryRepository queryRepository;
 
@@ -43,25 +44,27 @@ public class FederationConfigFindService
   }
 
   @Override
-  public FederationConfigManagementResult execute(
+  public FederationConfigManagementResponse execute(
+      FederationConfigManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      FederationConfigurationIdentifier identifier,
+      FederationConfigFindRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
     FederationConfiguration configuration =
-        queryRepository.findWithDisabled(tenant, identifier, true);
+        queryRepository.findWithDisabled(tenant, request.identifier(), true);
 
     if (!configuration.exists()) {
       throw new ResourceNotFoundException(
-          "Federation configuration not found: " + identifier.value());
+          "Federation configuration not found: " + request.identifier().value());
     }
 
-    return FederationConfigManagementResult.success(
-        tenant.identifier(),
-        new FederationConfigManagementResponse(
-            FederationConfigManagementStatus.OK, configuration.toMap()));
+    // Populate builder with found configuration
+    builder.withBefore(configuration);
+
+    return new FederationConfigManagementResponse(
+        FederationConfigManagementStatus.OK, configuration.toMap());
   }
 }

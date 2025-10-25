@@ -17,7 +17,6 @@
 package org.idp.server.control_plane.management.authentication.policy;
 
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigRequest;
-import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigurationRequest;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -43,10 +42,8 @@ public class AuthenticationPolicyConfigUpdateContextCreator {
   }
 
   public AuthenticationPolicyConfigUpdateContext create() {
-    AuthenticationPolicyConfigurationRequest configurationRequest =
-        jsonConverter.read(request.toMap(), AuthenticationPolicyConfigurationRequest.class);
-
-    AuthenticationPolicyConfiguration after = configurationRequest.toConfiguration(before.id());
+    AuthenticationPolicyConfiguration after =
+        jsonConverter.read(request.toMap(), AuthenticationPolicyConfiguration.class);
 
     return new AuthenticationPolicyConfigUpdateContext(tenant, before, after, dryRun);
   }

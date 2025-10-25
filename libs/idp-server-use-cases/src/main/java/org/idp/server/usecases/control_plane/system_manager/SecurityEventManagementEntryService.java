@@ -17,6 +17,7 @@
 package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.Map;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.management.security.event.SecurityEventManagementApi;
 import org.idp.server.control_plane.management.security.event.handler.SecurityEventFindListService;
@@ -24,9 +25,9 @@ import org.idp.server.control_plane.management.security.event.handler.SecurityEv
 import org.idp.server.control_plane.management.security.event.handler.SecurityEventManagementHandler;
 import org.idp.server.control_plane.management.security.event.handler.SecurityEventManagementResult;
 import org.idp.server.control_plane.management.security.event.handler.SecurityEventManagementService;
+import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementFindListRequest;
+import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementFindRequest;
 import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementResponse;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
@@ -59,37 +60,20 @@ public class SecurityEventManagementEntryService implements SecurityEventManagem
   @Override
   @Transaction(readOnly = true)
   public SecurityEventManagementResponse findList(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       SecurityEventQueries queries,
       RequestAttributes requestAttributes) {
 
     SecurityEventManagementResult result =
         handler.handle(
-            "findList", tenantIdentifier, operator, oAuthToken, queries, requestAttributes);
-
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "SecurityEventManagementApi.findList",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse();
-    }
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "SecurityEventManagementApi.findList",
             "findList",
-            result.tenant(),
-            operator,
-            oAuthToken,
+            authenticationContext,
+            tenantIdentifier,
+            new SecurityEventManagementFindListRequest(queries),
             requestAttributes);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse();
@@ -98,37 +82,20 @@ public class SecurityEventManagementEntryService implements SecurityEventManagem
   @Override
   @Transaction(readOnly = true)
   public SecurityEventManagementResponse get(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       SecurityEventIdentifier identifier,
       RequestAttributes requestAttributes) {
 
     SecurityEventManagementResult result =
         handler.handle(
-            "get", tenantIdentifier, operator, oAuthToken, identifier, requestAttributes);
-
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "SecurityEventManagementApi.get",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse();
-    }
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "SecurityEventManagementApi.get",
             "get",
-            result.tenant(),
-            operator,
-            oAuthToken,
+            authenticationContext,
+            tenantIdentifier,
+            new SecurityEventManagementFindRequest(identifier),
             requestAttributes);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse();

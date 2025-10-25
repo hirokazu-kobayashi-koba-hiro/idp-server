@@ -18,11 +18,10 @@ package org.idp.server.control_plane.management.onboarding.handler;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
-import org.idp.server.control_plane.management.onboarding.OnboardingContext;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingResponse;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingStatus;
-import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 /**
  * Result object for onboarding management operations.
@@ -41,59 +40,39 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
  */
 public class OnboardingManagementResult {
 
-  private final TenantIdentifier adminTenantIdentifier;
+  private final AuditableContext context;
   private final ManagementApiException exception;
   private final OnboardingResponse response;
-  private final OnboardingContext context;
 
   private OnboardingManagementResult(
-      TenantIdentifier adminTenantIdentifier,
-      ManagementApiException exception,
-      OnboardingResponse response,
-      OnboardingContext context) {
-    this.adminTenantIdentifier = adminTenantIdentifier;
+      AuditableContext context, ManagementApiException exception, OnboardingResponse response) {
+    this.context = context;
     this.exception = exception;
     this.response = response;
-    this.context = context;
-  }
-
-  /**
-   * Creates a successful result.
-   *
-   * @param adminTenantIdentifier the admin tenant identifier
-   * @param response the success response
-   * @return successful result
-   */
-  public static OnboardingManagementResult success(
-      TenantIdentifier adminTenantIdentifier, OnboardingResponse response) {
-    return new OnboardingManagementResult(adminTenantIdentifier, null, response, null);
   }
 
   /**
    * Creates a successful result with context.
    *
-   * @param adminTenantIdentifier the admin tenant identifier
-   * @param response the success response
    * @param context the operation context
+   * @param response the success response
    * @return successful result with context
    */
   public static OnboardingManagementResult success(
-      TenantIdentifier adminTenantIdentifier,
-      OnboardingResponse response,
-      OnboardingContext context) {
-    return new OnboardingManagementResult(adminTenantIdentifier, null, response, context);
+      AuditableContext context, OnboardingResponse response) {
+    return new OnboardingManagementResult(context, null, response);
   }
 
   /**
    * Creates an error result from an exception.
    *
-   * @param adminTenantIdentifier the admin tenant identifier
+   * @param context the operation context (may be partial)
    * @param exception the exception that occurred
    * @return error result
    */
   public static OnboardingManagementResult error(
-      TenantIdentifier adminTenantIdentifier, ManagementApiException exception) {
-    return new OnboardingManagementResult(adminTenantIdentifier, exception, null, null);
+      AuditableContext context, ManagementApiException exception) {
+    return new OnboardingManagementResult(context, exception, null);
   }
 
   /**
@@ -106,8 +85,8 @@ public class OnboardingManagementResult {
     return OnboardingStatus.INVALID_REQUEST;
   }
 
-  public TenantIdentifier adminTenantIdentifier() {
-    return adminTenantIdentifier;
+  public AuditableContext context() {
+    return context;
   }
 
   public boolean hasException() {
@@ -116,10 +95,6 @@ public class OnboardingManagementResult {
 
   public ManagementApiException getException() {
     return exception;
-  }
-
-  public OnboardingContext context() {
-    return context;
   }
 
   public OnboardingResponse toResponse(boolean dryRun) {

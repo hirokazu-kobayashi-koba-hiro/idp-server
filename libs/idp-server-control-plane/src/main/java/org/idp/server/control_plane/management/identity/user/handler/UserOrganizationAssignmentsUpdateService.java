@@ -16,14 +16,20 @@
 
 package org.idp.server.control_plane.management.identity.user.handler;
 
-import org.idp.server.control_plane.management.identity.user.UserOrganizationAssignmentsUpdateContextCreator;
-import org.idp.server.control_plane.management.identity.user.UserUpdateContext;
+import java.util.Map;
+import org.idp.server.control_plane.management.identity.user.UserManagementContextBuilder;
+import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
+import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
+import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
+import org.idp.server.control_plane.management.identity.user.io.UserUpdateRequest;
 import org.idp.server.control_plane.management.identity.user.validator.UserOrganizationAssignmentsUpdateRequestValidator;
 import org.idp.server.control_plane.management.identity.user.validator.UserRequestValidationResult;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.json.JsonDiffCalculator;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -63,8 +69,13 @@ public class UserOrganizationAssignmentsUpdateService
     this.userCommandRepository = userCommandRepository;
   }
 
+  public String type() {
+    return "user_update_assignment_organization";
+  }
+
   @Override
-  public UserManagementResult execute(
+  public UserManagementResponse execute(
+      UserManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -84,20 +95,44 @@ public class UserOrganizationAssignmentsUpdateService
       throw validate.toException();
     }
 
-    // 3. Context creation
-    UserOrganizationAssignmentsUpdateContextCreator contextCreator =
-        new UserOrganizationAssignmentsUpdateContextCreator(
-            tenant, before, request.registrationRequest(), dryRun);
-    UserUpdateContext context = contextCreator.create();
+    User after = updateUser(request.registrationRequest(), before);
 
-    // 4. Dry-run check
+    // 4. Set before/after users to builder for context completion
+    builder.withBefore(before);
+    builder.withAfter(after);
+
+    JsonNodeWrapper beforeJson = JsonNodeWrapper.fromMap(before.toMap());
+    JsonNodeWrapper afterJson = JsonNodeWrapper.fromMap(after.toMap());
+    Map<String, Object> diff = JsonDiffCalculator.deepDiff(beforeJson, afterJson);
+    Map<String, Object> contents = Map.of("result", after.toMap(), "diff", diff, "dry_run", dryRun);
+    UserManagementResponse response = new UserManagementResponse(UserManagementStatus.OK, contents);
+    // 5. Dry-run check
     if (dryRun) {
-      return UserManagementResult.success(tenant, context, context.toResponse());
+      return response;
     }
 
-    // 5. Repository operation
-    userCommandRepository.update(tenant, context.after());
+    // 6. Repository operation
+    userCommandRepository.update(tenant, after);
 
-    return UserManagementResult.success(tenant, context, context.toResponse());
+    return response;
+  }
+
+  public User updateUser(UserRegistrationRequest request, User before) {
+    User updated = before;
+
+    // Update assigned organizations if provided
+    if (request.containsKey("assigned_organizations")) {
+      updated = updated.setAssignedOrganizations(request.assignedOrganizations());
+    }
+
+    // Update current organization if provided
+    if (request.containsKey("current_organization_id") && request.currentOrganizationId() != null) {
+      updated =
+          updated.setCurrentOrganizationId(
+              new org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier(
+                  request.currentOrganizationId()));
+    }
+
+    return updated;
   }
 }

@@ -213,7 +213,8 @@ describe("Organization Tenant Management API - Structured Tests", () => {
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenant.id}`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
-            "tenant_type": "BUSINESS"
+            "name": "test",
+            "domain": "BUSINESS"
           }
         });
 
@@ -233,7 +234,7 @@ describe("Organization Tenant Management API - Structured Tests", () => {
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             "name": updatedName,
-            "tenant_type": "BUSINESS"
+            "domain": "BUSINESS"
           }
         });
 
@@ -426,7 +427,7 @@ describe("Organization Tenant Management API - Structured Tests", () => {
           body: {
             "name": updatedName,
             "description": "Updated description",
-            "tenant_type": "BUSINESS"
+            "domain": "BUSINESS"
           }
         });
 
@@ -489,7 +490,7 @@ describe("Organization Tenant Management API - Structured Tests", () => {
           }
         });
 
-        expect(response.status).toBe(201);
+        expect(response.status).toBe(200);
         expect(response.data).toHaveProperty("dry_run", true);
 
         // Verify tenant was not actually created
@@ -511,7 +512,7 @@ describe("Organization Tenant Management API - Structured Tests", () => {
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             "name": "Dry Run Updated Name",
-            "tenant_type": "BUSINESS"
+            "domain": "BUSINESS"
           }
         });
 

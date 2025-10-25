@@ -24,7 +24,6 @@ import org.idp.server.adapters.springboot.control_plane.model.OrganizationOperat
 import org.idp.server.control_plane.management.security.hook.OrgSecurityEventHookConfigManagementApi;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookRequest;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfigurationIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
@@ -93,16 +92,12 @@ public class OrganizationSecurityEventHookConfigManagementV1Api implements Param
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     SecurityEventHookConfigManagementResponse response =
         orgSecurityEventHookConfigManagementApi.create(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new SecurityEventHookRequest(body),
             requestAttributes,
             dryRun);
@@ -133,16 +128,12 @@ public class OrganizationSecurityEventHookConfigManagementV1Api implements Param
       @RequestParam(value = "offset", required = false, defaultValue = "0") int offset,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     SecurityEventHookConfigManagementResponse response =
         orgSecurityEventHookConfigManagementApi.findList(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             limit,
             offset,
             requestAttributes);
@@ -171,16 +162,12 @@ public class OrganizationSecurityEventHookConfigManagementV1Api implements Param
       @PathVariable("configId") SecurityEventHookConfigurationIdentifier configId,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     SecurityEventHookConfigManagementResponse response =
         orgSecurityEventHookConfigManagementApi.get(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             configId,
             requestAttributes);
 
@@ -212,16 +199,12 @@ public class OrganizationSecurityEventHookConfigManagementV1Api implements Param
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     SecurityEventHookConfigManagementResponse response =
         orgSecurityEventHookConfigManagementApi.update(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             configId,
             new SecurityEventHookRequest(body),
             requestAttributes,
@@ -253,16 +236,12 @@ public class OrganizationSecurityEventHookConfigManagementV1Api implements Param
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     SecurityEventHookConfigManagementResponse response =
         orgSecurityEventHookConfigManagementApi.delete(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             configId,
             requestAttributes,
             dryRun);

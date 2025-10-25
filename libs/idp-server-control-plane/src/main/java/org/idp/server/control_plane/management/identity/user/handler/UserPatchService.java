@@ -16,16 +16,24 @@
 
 package org.idp.server.control_plane.management.identity.user.handler;
 
+import java.util.Map;
 import org.idp.server.control_plane.management.identity.user.ManagementEventPublisher;
-import org.idp.server.control_plane.management.identity.user.UserPatchContextCreator;
-import org.idp.server.control_plane.management.identity.user.UserUpdateContext;
-import org.idp.server.control_plane.management.identity.user.validator.UserRequestValidationResult;
+import org.idp.server.control_plane.management.identity.user.UserManagementContextBuilder;
+import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
+import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
+import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
+import org.idp.server.control_plane.management.identity.user.io.UserUpdateRequest;
 import org.idp.server.control_plane.management.identity.user.validator.UserUpdateRequestValidator;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.UserUpdater;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.json.JsonDiffCalculator;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -69,7 +77,8 @@ public class UserPatchService implements UserManagementService<UserUpdateRequest
   }
 
   @Override
-  public UserManagementResult execute(
+  public UserManagementResponse execute(
+      UserManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -83,33 +92,58 @@ public class UserPatchService implements UserManagementService<UserUpdateRequest
     // 2. Validation
     UserUpdateRequestValidator validator =
         new UserUpdateRequestValidator(request.registrationRequest(), dryRun);
-    UserRequestValidationResult validate = validator.validate();
-    if (!validate.isValid()) {
-      throw validate.toException();
-    }
+    validator.validate();
 
-    // 3. Patch context creation (merges existing + updates)
-    UserPatchContextCreator patchContextCreator =
-        new UserPatchContextCreator(tenant, before, request.registrationRequest(), dryRun);
-    UserUpdateContext context = patchContextCreator.create();
+    User after = patchUser(tenant, request.registrationRequest(), before);
 
-    // 4. Dry-run check
+    // 4. Set before/after users to builder for context completion
+    builder.withBefore(before);
+    builder.withAfter(after);
+
+    JsonNodeWrapper beforeJson = JsonNodeWrapper.fromMap(before.toMap());
+    JsonNodeWrapper afterJson = JsonNodeWrapper.fromMap(after.toMap());
+    Map<String, Object> diff = JsonDiffCalculator.deepDiff(beforeJson, afterJson);
+    Map<String, Object> contents = Map.of("result", after.toMap(), "diff", diff, "dry_run", dryRun);
+    UserManagementResponse response = new UserManagementResponse(UserManagementStatus.OK, contents);
+
+    // 5. Dry-run check
     if (dryRun) {
-      return UserManagementResult.success(tenant, context, context.toResponse());
+      return response;
     }
 
-    // 5. Repository operation
-    userCommandRepository.update(tenant, context.after());
+    // 6. Repository operation
+    userCommandRepository.update(tenant, after);
 
-    // 6. Security event publishing
+    // 7. Security event publishing
     managementEventPublisher.publish(
         tenant,
         operator,
-        context.after(),
+        after,
         oAuthToken,
         DefaultSecurityEventType.user_edit.toEventType(),
         requestAttributes);
 
-    return UserManagementResult.success(tenant, context, context.toResponse());
+    return response;
+  }
+
+  public User patchUser(Tenant tenant, UserRegistrationRequest request, User before) {
+    User newUser = JsonConverter.snakeCaseInstance().read(request.toMap(), User.class);
+
+    // Apply tenant identity policy to newUser if not set
+    if (newUser.preferredUsername() == null || newUser.preferredUsername().isBlank()) {
+      TenantIdentityPolicy policy = tenant.identityPolicyConfig();
+      newUser.applyIdentityPolicy(policy);
+    }
+
+    UserUpdater updater = new UserUpdater(newUser, before);
+    User updated = updater.update();
+
+    // Apply policy to merged user if still not set
+    if (updated.preferredUsername() == null || updated.preferredUsername().isBlank()) {
+      TenantIdentityPolicy policy = tenant.identityPolicyConfig();
+      updated.applyIdentityPolicy(policy);
+    }
+
+    return updated;
   }
 }

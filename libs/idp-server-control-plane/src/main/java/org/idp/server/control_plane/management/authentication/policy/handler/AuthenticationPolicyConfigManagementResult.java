@@ -18,157 +18,108 @@ package org.idp.server.control_plane.management.authentication.policy.handler;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementStatus;
 import org.idp.server.control_plane.management.exception.*;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
- * Result of an authentication policy configuration management service operation.
+ * Result object for authentication policy configuration management operations.
  *
- * <p>Encapsulates the outcome of authentication policy configuration management operations
- * including success/error status, response data, exception, and context for audit logging.
+ * <p>Encapsulates the outcome of authentication policy configuration management Handler/Service
+ * pattern operations. Follows the Result-Exception Hybrid pattern:
  *
- * <h2>Usage Pattern</h2>
+ * <ul>
+ *   <li>Service layer throws ManagementApiException on validation/verification failures
+ *   <li>Handler layer catches exceptions and converts to Result
+ *   <li>EntryService layer converts Result to HTTP response
+ * </ul>
  *
- * <pre>{@code
- * // Service throws exception
- * validator.validate();  // throws InvalidRequestException
- *
- * // Handler catches and wraps in Result
- * try {
- *   return service.execute(...);
- * } catch (ManagementApiException e) {
- *   return AuthenticationPolicyConfigManagementResult.error(tenant, e);
- * }
- *
- * // Protocol checks and re-throws for transaction rollback
- * if (result.hasException()) {
- *   auditBuilder.failure(result.getException().errorCode());
- *   throw result.getException();
- * }
- * }</pre>
+ * @see AuthenticationPolicyConfigManagementHandler
+ * @see AuthenticationPolicyConfigManagementService
  */
 public class AuthenticationPolicyConfigManagementResult {
 
-  private final AuthenticationPolicyConfigManagementResponse response;
-  private final Tenant tenant;
-  private final Object context;
+  private final AuditableContext context;
   private final ManagementApiException exception;
+  private final AuthenticationPolicyConfigManagementResponse response;
 
   private AuthenticationPolicyConfigManagementResult(
-      AuthenticationPolicyConfigManagementResponse response,
-      Tenant tenant,
-      Object context,
-      ManagementApiException exception) {
-    this.response = response;
-    this.tenant = tenant;
+      AuditableContext context,
+      ManagementApiException exception,
+      AuthenticationPolicyConfigManagementResponse response) {
     this.context = context;
     this.exception = exception;
+    this.response = response;
   }
 
   /**
-   * Creates a successful result.
+   * Creates a successful result with context.
    *
-   * @param tenant the tenant context
-   * @param context the operation context for audit logging
-   * @param response the AuthenticationPolicyConfigManagementResponse
-   * @return AuthenticationPolicyConfigManagementResult with success response
+   * @param context the operation context
+   * @param response the success response
+   * @return successful result with context
    */
   public static AuthenticationPolicyConfigManagementResult success(
-      Tenant tenant, Object context, AuthenticationPolicyConfigManagementResponse response) {
-    return new AuthenticationPolicyConfigManagementResult(response, tenant, context, null);
+      AuditableContext context, AuthenticationPolicyConfigManagementResponse response) {
+    return new AuthenticationPolicyConfigManagementResult(context, null, response);
   }
 
   /**
-   * Creates an error result from exception.
+   * Creates an error result from an exception.
    *
-   * <p>The exception will be re-thrown by Protocol layer to trigger transaction rollback.
-   *
-   * @param tenant the tenant context (needed for audit logging)
-   * @param exception the exception that caused the error
-   * @return AuthenticationPolicyConfigManagementResult with exception
+   * @param context the operation context (may be partial)
+   * @param exception the exception that occurred
+   * @return error result
    */
   public static AuthenticationPolicyConfigManagementResult error(
-      Tenant tenant, ManagementApiException exception) {
-    return new AuthenticationPolicyConfigManagementResult(null, tenant, null, exception);
+      AuditableContext context, ManagementApiException exception) {
+    return new AuthenticationPolicyConfigManagementResult(context, exception, null);
   }
 
   /**
-   * Checks if this result contains an exception.
+   * Maps exception types to HTTP status codes.
    *
-   * @return true if exception exists, false otherwise
+   * @param exception the exception to map
+   * @return corresponding HTTP status
    */
+  private static AuthenticationPolicyConfigManagementStatus mapExceptionToStatus(
+      ManagementApiException exception) {
+    if (exception instanceof ResourceNotFoundException) {
+      return AuthenticationPolicyConfigManagementStatus.NOT_FOUND;
+    }
+    if (exception instanceof PermissionDeniedException
+        || exception instanceof OrganizationAccessDeniedException) {
+      return AuthenticationPolicyConfigManagementStatus.FORBIDDEN;
+    }
+    if (exception instanceof InvalidRequestException) {
+      return AuthenticationPolicyConfigManagementStatus.INVALID_REQUEST;
+    }
+    return AuthenticationPolicyConfigManagementStatus.SERVER_ERROR;
+  }
+
+  public AuditableContext context() {
+    return context;
+  }
+
   public boolean hasException() {
     return exception != null;
   }
 
-  /**
-   * Returns the exception if present.
-   *
-   * @return ManagementApiException or null if success
-   */
   public ManagementApiException getException() {
     return exception;
   }
 
-  /**
-   * Converts to AuthenticationPolicyConfigManagementResponse.
-   *
-   * <p>If exception exists, automatically generates error response from exception details.
-   *
-   * @param dryRun whether this is a dry-run operation
-   * @return AuthenticationPolicyConfigManagementResponse with status and data
-   */
   public AuthenticationPolicyConfigManagementResponse toResponse(boolean dryRun) {
     if (hasException()) {
+      AuthenticationPolicyConfigManagementStatus status = mapExceptionToStatus(exception);
       Map<String, Object> errorResponse = new HashMap<>();
       errorResponse.put("dry_run", dryRun);
       errorResponse.put("error", exception.errorCode());
       errorResponse.put("error_description", exception.errorDescription());
       errorResponse.putAll(exception.errorDetails());
-
-      AuthenticationPolicyConfigManagementStatus status = mapExceptionToStatus(exception);
       return new AuthenticationPolicyConfigManagementResponse(status, errorResponse);
     }
     return response;
-  }
-
-  /**
-   * Maps exception type to AuthenticationPolicyConfigManagementStatus.
-   *
-   * @param exception the exception to map
-   * @return corresponding AuthenticationPolicyConfigManagementStatus
-   */
-  private AuthenticationPolicyConfigManagementStatus mapExceptionToStatus(
-      ManagementApiException exception) {
-    if (exception instanceof InvalidRequestException) {
-      return AuthenticationPolicyConfigManagementStatus.INVALID_REQUEST;
-    } else if (exception instanceof PermissionDeniedException
-        || exception instanceof OrganizationAccessDeniedException) {
-      return AuthenticationPolicyConfigManagementStatus.FORBIDDEN;
-    } else if (exception instanceof ResourceNotFoundException) {
-      return AuthenticationPolicyConfigManagementStatus.NOT_FOUND;
-    }
-    return AuthenticationPolicyConfigManagementStatus.SERVER_ERROR;
-  }
-
-  /**
-   * Returns the tenant context for audit logging.
-   *
-   * @return Tenant or null if error result
-   */
-  public Tenant tenant() {
-    return tenant;
-  }
-
-  /**
-   * Returns the operation context for audit logging.
-   *
-   * @return operation context (e.g., AuthenticationPolicyConfigRegistrationContext) or null if
-   *     error result
-   */
-  public Object context() {
-    return context;
   }
 }

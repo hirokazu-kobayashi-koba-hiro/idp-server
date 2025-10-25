@@ -94,16 +94,12 @@ public class OrganizationAuthenticationPolicyConfigManagementV1Api
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AuthenticationPolicyConfigManagementResponse response =
         orgAuthenticationPolicyConfigManagementApi.create(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new AuthenticationPolicyConfigRequest(body),
             requestAttributes,
             dryRun);
@@ -143,10 +139,8 @@ public class OrganizationAuthenticationPolicyConfigManagementV1Api
 
     AuthenticationPolicyConfigManagementResponse response =
         orgAuthenticationPolicyConfigManagementApi.findList(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             limit,
             offset,
             requestAttributes);
@@ -175,16 +169,12 @@ public class OrganizationAuthenticationPolicyConfigManagementV1Api
       @PathVariable String configId,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AuthenticationPolicyConfigManagementResponse response =
         orgAuthenticationPolicyConfigManagementApi.get(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new AuthenticationPolicyConfigurationIdentifier(configId),
             requestAttributes);
 
@@ -216,16 +206,12 @@ public class OrganizationAuthenticationPolicyConfigManagementV1Api
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AuthenticationPolicyConfigManagementResponse response =
         orgAuthenticationPolicyConfigManagementApi.update(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new AuthenticationPolicyConfigurationIdentifier(configId),
             new AuthenticationPolicyConfigRequest(body),
             requestAttributes,
@@ -257,16 +243,12 @@ public class OrganizationAuthenticationPolicyConfigManagementV1Api
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AuthenticationPolicyConfigManagementResponse response =
         orgAuthenticationPolicyConfigManagementApi.delete(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new AuthenticationPolicyConfigurationIdentifier(configId),
             requestAttributes,
             dryRun);

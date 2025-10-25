@@ -17,13 +17,22 @@
 package org.idp.server.control_plane.management.permission.handler;
 
 import java.util.Map;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.ApiPermissionVerifier;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
+import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.permission.PermissionManagementApi;
+import org.idp.server.control_plane.management.permission.PermissionManagementContextBuilder;
+import org.idp.server.control_plane.management.permission.io.PermissionManagementRequest;
+import org.idp.server.control_plane.management.permission.io.PermissionManagementResponse;
+import org.idp.server.control_plane.management.permission.io.PermissionManagementResult;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.exception.NotFoundException;
 import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -62,6 +71,7 @@ public class PermissionManagementHandler {
   private final PermissionManagementApi api;
   private final TenantQueryRepository tenantQueryRepository;
   private final ApiPermissionVerifier apiPermissionVerifier;
+  LoggerWrapper log = LoggerWrapper.getLogger(PermissionManagementHandler.class);
 
   /**
    * Creates a new permission management handler.
@@ -84,40 +94,89 @@ public class PermissionManagementHandler {
    * Handles a permission management request.
    *
    * @param method the operation method (create, findList, get, update, delete)
+   * @param authenticationContext the admin authentication context
    * @param tenantIdentifier the tenant identifier
-   * @param operator the user performing the operation
-   * @param oAuthToken the OAuth token
    * @param request the operation-specific request object
    * @param requestAttributes HTTP request attributes
    * @param dryRun whether to perform a dry run (preview only)
    * @return the operation result
    */
-  @SuppressWarnings("unchecked")
-  public <REQUEST> PermissionManagementResult handle(
+  public PermissionManagementResult handle(
       String method,
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      REQUEST request,
+      PermissionManagementRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    Tenant tenant = null;
-    try {
-      tenant = tenantQueryRepository.get(tenantIdentifier);
+    User operator = authenticationContext.operator();
+    OAuthToken oAuthToken = authenticationContext.oAuthToken();
 
+    // 1. Service selection
+    PermissionManagementService<?> service = services.get(method);
+    if (service == null) {
+      throw new UnSupportedException("Unsupported operation method: " + method);
+    }
+
+    // 2. Context Builder creation (before Tenant retrieval - enables audit logging on errors)
+    PermissionManagementContextBuilder contextBuilder =
+        new PermissionManagementContextBuilder(
+            tenantIdentifier, operator, oAuthToken, requestAttributes, request, dryRun);
+
+    try {
+      // 3. Tenant retrieval
+      Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+      // 4. Permission verification
       AdminPermissions requiredPermissions = api.getRequiredPermissions(method);
       apiPermissionVerifier.verify(operator, requiredPermissions);
 
-      PermissionManagementService<REQUEST> service =
-          (PermissionManagementService<REQUEST>) services.get(method);
-      if (service == null) {
-        throw new UnSupportedException("Unsupported operation method: " + method);
-      }
+      // 5. Delegate to service
+      PermissionManagementResponse response =
+          executeService(
+              service,
+              contextBuilder,
+              tenant,
+              operator,
+              oAuthToken,
+              request,
+              requestAttributes,
+              dryRun);
 
-      return service.execute(tenant, operator, oAuthToken, request, requestAttributes, dryRun);
+      AuditableContext context = contextBuilder.build();
+      return PermissionManagementResult.success(context, response);
+    } catch (NotFoundException e) {
+
+      log.warn(e.getMessage());
+      ResourceNotFoundException notFound = new ResourceNotFoundException(e.getMessage());
+      AuditableContext context = contextBuilder.buildPartial(notFound);
+      return PermissionManagementResult.error(context, notFound);
+
     } catch (ManagementApiException e) {
-      return PermissionManagementResult.error(tenant, e);
+
+      log.warn(e.getMessage());
+      AuditableContext errorContext = contextBuilder.buildPartial(e);
+      return PermissionManagementResult.error(errorContext, e);
     }
+  }
+
+  /**
+   * Executes the service with type-safe request handling.
+   *
+   * <p>This helper method uses generics to ensure type safety when calling service.execute().
+   */
+  @SuppressWarnings("unchecked")
+  private <T> PermissionManagementResponse executeService(
+      PermissionManagementService<T> service,
+      PermissionManagementContextBuilder builder,
+      Tenant tenant,
+      User operator,
+      OAuthToken oAuthToken,
+      Object request,
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
+    T typedRequest = (T) request;
+    return service.execute(
+        builder, tenant, operator, oAuthToken, typedRequest, requestAttributes, dryRun);
   }
 }

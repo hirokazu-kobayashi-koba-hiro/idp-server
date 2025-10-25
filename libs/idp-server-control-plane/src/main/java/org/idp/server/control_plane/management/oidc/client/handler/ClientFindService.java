@@ -17,12 +17,13 @@
 package org.idp.server.control_plane.management.oidc.client.handler;
 
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
+import org.idp.server.control_plane.management.oidc.client.ClientManagementContextBuilder;
+import org.idp.server.control_plane.management.oidc.client.io.ClientFindRequest;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementStatus;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
-import org.idp.server.core.openid.oauth.configuration.client.ClientIdentifier;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
@@ -33,7 +34,7 @@ import org.idp.server.platform.type.RequestAttributes;
  * <p>Handles business logic for retrieving a single client configuration. Part of Handler/Service
  * pattern.
  */
-public class ClientFindService implements ClientManagementService<ClientIdentifier> {
+public class ClientFindService implements ClientManagementService<ClientFindRequest> {
 
   private final ClientConfigurationQueryRepository queryRepository;
 
@@ -42,23 +43,25 @@ public class ClientFindService implements ClientManagementService<ClientIdentifi
   }
 
   @Override
-  public ClientManagementResult execute(
+  public ClientManagementResponse execute(
+      ClientManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      ClientIdentifier clientIdentifier,
+      ClientFindRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
     ClientConfiguration clientConfiguration =
-        queryRepository.findWithDisabled(tenant, clientIdentifier, true);
+        queryRepository.findWithDisabled(tenant, request.identifier(), true);
 
     if (!clientConfiguration.exists()) {
-      throw new ResourceNotFoundException("Client not found: " + clientIdentifier.value());
+      throw new ResourceNotFoundException("Client not found: " + request.identifier().value());
     }
 
-    return ClientManagementResult.success(
-        tenant.identifier(),
-        new ClientManagementResponse(ClientManagementStatus.OK, clientConfiguration.toMap()));
+    // Update context builder with before state (for audit logging)
+    contextBuilder.withBefore(clientConfiguration);
+
+    return new ClientManagementResponse(ClientManagementStatus.OK, clientConfiguration.toMap());
   }
 }

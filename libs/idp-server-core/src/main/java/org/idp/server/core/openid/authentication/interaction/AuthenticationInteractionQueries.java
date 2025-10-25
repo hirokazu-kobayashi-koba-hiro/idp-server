@@ -68,4 +68,14 @@ public class AuthenticationInteractionQueries implements UuidConvertable {
     }
     return Integer.parseInt(values.get("offset"));
   }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("limit", limit());
+    map.put("offset", offset());
+    if (values != null) {
+      map.putAll(values);
+    }
+    return map;
+  }
 }

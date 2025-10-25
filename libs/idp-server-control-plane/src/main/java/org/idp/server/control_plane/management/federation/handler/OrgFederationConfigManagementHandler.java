@@ -17,107 +17,124 @@
 package org.idp.server.control_plane.management.federation.handler;
 
 import java.util.Map;
+import org.idp.server.control_plane.base.AuditableContext;
+import org.idp.server.control_plane.base.OrganizationAccessVerifier;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
-import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
+import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
+import org.idp.server.control_plane.management.federation.FederationConfigManagementContextBuilder;
 import org.idp.server.control_plane.management.federation.OrgFederationConfigManagementApi;
-import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
+import org.idp.server.control_plane.management.federation.io.FederationConfigManagementRequest;
+import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
+import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResult;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.exception.NotFoundException;
+import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
  * Handler for organization-level federation configuration management operations.
  *
- * <p>Orchestrates federation configuration management operations with organization-level access
- * control. Delegates to shared service implementations after verifying organization access. Part of
+ * <p>Orchestrates organization-scoped federation configuration management requests following the
  * Handler/Service pattern.
- *
- * @see FederationConfigManagementService
- * @see FederationConfigManagementResult
- * @see OrganizationAccessVerifier
  */
 public class OrgFederationConfigManagementHandler {
 
   private final Map<String, FederationConfigManagementService<?>> services;
+  private final OrgFederationConfigManagementApi api;
+  private final TenantQueryRepository tenantQueryRepository;
   private final OrganizationRepository organizationRepository;
   private final OrganizationAccessVerifier organizationAccessVerifier;
-  private final OrgFederationConfigManagementApi api;
+  LoggerWrapper log = LoggerWrapper.getLogger(OrgFederationConfigManagementHandler.class);
 
   public OrgFederationConfigManagementHandler(
       Map<String, FederationConfigManagementService<?>> services,
+      OrgFederationConfigManagementApi api,
+      TenantQueryRepository tenantQueryRepository,
       OrganizationRepository organizationRepository,
-      OrgFederationConfigManagementApi api) {
+      OrganizationAccessVerifier organizationAccessVerifier) {
     this.services = services;
-    this.organizationRepository = organizationRepository;
-    this.organizationAccessVerifier = new OrganizationAccessVerifier();
     this.api = api;
+    this.tenantQueryRepository = tenantQueryRepository;
+    this.organizationRepository = organizationRepository;
+    this.organizationAccessVerifier = organizationAccessVerifier;
   }
 
-  /**
-   * Handles organization-level federation configuration management operations.
-   *
-   * @param method the method name (create, findList, get, update, delete)
-   * @param organizationIdentifier the organization identifier
-   * @param tenant the tenant
-   * @param operator the operator user
-   * @param oAuthToken the OAuth token
-   * @param request the request object (type varies by method)
-   * @param requestAttributes the request attributes
-   * @param dryRun whether to perform a dry run
-   * @return the result of the operation
-   */
-  public <T> FederationConfigManagementResult handle(
+  public FederationConfigManagementResult handle(
       String method,
-      OrganizationIdentifier organizationIdentifier,
-      Tenant tenant,
-      User operator,
-      OAuthToken oAuthToken,
-      T request,
+      OrganizationAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      FederationConfigManagementRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    Organization organization = authenticationContext.organization();
+    User operator = authenticationContext.operator();
+    OAuthToken oAuthToken = authenticationContext.oAuthToken();
+
+    FederationConfigManagementService<?> service = services.get(method);
+    if (service == null) {
+      throw new UnSupportedException("Unsupported operation method: " + method);
+    }
+
+    FederationConfigManagementContextBuilder contextBuilder =
+        new FederationConfigManagementContextBuilder(
+            tenantIdentifier, operator, oAuthToken, requestAttributes, request, dryRun);
+
     try {
-      AdminPermissions requiredPermissions = api.getRequiredPermissions(method);
+      Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-      Organization organization = organizationRepository.get(organizationIdentifier);
+      AdminPermissions permissions = api.getRequiredPermissions(method);
+      organizationAccessVerifier.verify(organization, tenantIdentifier, operator, permissions);
 
-      organizationAccessVerifier.verify(
-          organization, tenant.identifier(), operator, requiredPermissions);
+      FederationConfigManagementResponse response =
+          executeService(
+              service,
+              contextBuilder,
+              tenant,
+              operator,
+              oAuthToken,
+              request,
+              requestAttributes,
+              dryRun);
 
-      return executeService(
-          method, tenant, operator, oAuthToken, request, requestAttributes, dryRun);
+      AuditableContext context = contextBuilder.build();
+      return FederationConfigManagementResult.success(context, response);
+    } catch (NotFoundException e) {
+
+      log.warn(e.getMessage());
+      ResourceNotFoundException notFound = new ResourceNotFoundException(e.getMessage());
+      AuditableContext context = contextBuilder.buildPartial(notFound);
+      return FederationConfigManagementResult.error(context, notFound);
 
     } catch (ManagementApiException e) {
-      return FederationConfigManagementResult.error(tenant.identifier(), e);
-    } catch (IllegalArgumentException e) {
-      InvalidRequestException invalidRequestException =
-          new InvalidRequestException("Invalid request parameters: " + e.getMessage());
-      return FederationConfigManagementResult.error(tenant.identifier(), invalidRequestException);
+
+      log.warn(e.getMessage());
+      AuditableContext errorContext = contextBuilder.buildPartial(e);
+      return FederationConfigManagementResult.error(errorContext, e);
     }
   }
 
   @SuppressWarnings("unchecked")
-  private <T> FederationConfigManagementResult executeService(
-      String method,
+  private <T> FederationConfigManagementResponse executeService(
+      FederationConfigManagementService<T> service,
+      FederationConfigManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      T request,
+      Object request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
-
-    FederationConfigManagementService<T> service =
-        (FederationConfigManagementService<T>) services.get(method);
-
-    if (service == null) {
-      throw new IllegalArgumentException("Unsupported method: " + method);
-    }
-
-    return service.execute(tenant, operator, oAuthToken, request, requestAttributes, dryRun);
+    T typedRequest = (T) request;
+    return service.execute(
+        builder, tenant, operator, oAuthToken, typedRequest, requestAttributes, dryRun);
   }
 }

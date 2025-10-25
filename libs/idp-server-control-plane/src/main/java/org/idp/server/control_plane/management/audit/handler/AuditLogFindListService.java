@@ -19,27 +19,28 @@ package org.idp.server.control_plane.management.audit.handler;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.control_plane.management.audit.AuditLogManagementContextBuilder;
+import org.idp.server.control_plane.management.audit.io.AuditLogFindListRequest;
 import org.idp.server.control_plane.management.audit.io.AuditLogManagementResponse;
 import org.idp.server.control_plane.management.audit.io.AuditLogManagementStatus;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
-import org.idp.server.platform.audit.AuditLogQueries;
 import org.idp.server.platform.audit.AuditLogQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Service for retrieving paginated audit log list.
+ * Service for finding list of audit logs.
  *
  * <p>Handles audit log list retrieval logic with pagination support.
  *
  * <h2>Responsibilities</h2>
  *
  * <ul>
- *   <li>Query total count of matching audit logs
- *   <li>Retrieve paginated audit log list
- *   <li>Format response with pagination metadata
+ *   <li>Query repository for total count
+ *   <li>Query repository for audit log list
+ *   <li>Build paginated response
  * </ul>
  */
 public class AuditLogFindListService implements AuditLogManagementService<AuditLogFindListRequest> {
@@ -51,40 +52,33 @@ public class AuditLogFindListService implements AuditLogManagementService<AuditL
   }
 
   @Override
-  public AuditLogManagementResult execute(
+  public AuditLogManagementResponse execute(
+      AuditLogManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
       AuditLogFindListRequest request,
       RequestAttributes requestAttributes) {
 
-    AuditLogQueries queries = request.queries();
+    long totalCount = auditLogQueryRepository.findTotalCount(tenant, request.queries());
 
-    // 1. Query total count
-    long totalCount = auditLogQueryRepository.findTotalCount(tenant, queries);
-
-    // 2. Early return if no results
     if (totalCount == 0) {
       Map<String, Object> response = new HashMap<>();
       response.put("list", List.of());
       response.put("total_count", 0);
-      response.put("limit", queries.limit());
-      response.put("offset", queries.offset());
-      return AuditLogManagementResult.success(
-          tenant, new AuditLogManagementResponse(AuditLogManagementStatus.OK, response));
+      response.put("limit", request.queries().limit());
+      response.put("offset", request.queries().offset());
+      return new AuditLogManagementResponse(AuditLogManagementStatus.OK, response);
     }
 
-    // 3. Retrieve paginated list
-    List<AuditLog> auditLogs = auditLogQueryRepository.findList(tenant, queries);
+    List<AuditLog> interactions = auditLogQueryRepository.findList(tenant, request.queries());
 
-    // 4. Format response
     Map<String, Object> response = new HashMap<>();
-    response.put("list", auditLogs.stream().map(AuditLog::toMap).toList());
+    response.put("list", interactions.stream().map(AuditLog::toMap).toList());
     response.put("total_count", totalCount);
-    response.put("limit", queries.limit());
-    response.put("offset", queries.offset());
+    response.put("limit", request.queries().limit());
+    response.put("offset", request.queries().offset());
 
-    return AuditLogManagementResult.success(
-        tenant, new AuditLogManagementResponse(AuditLogManagementStatus.OK, response));
+    return new AuditLogManagementResponse(AuditLogManagementStatus.OK, response);
   }
 }

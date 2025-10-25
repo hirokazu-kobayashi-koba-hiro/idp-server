@@ -37,10 +37,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/v1/management/tenants/{tenant-id}/audit-logs")
 public class AuditLogManagementV1Api implements ParameterTransformable {
 
-  AuditLogManagementApi auditLogManagementApi;
+  AuditLogManagementApi managementApi;
 
   public AuditLogManagementV1Api(IdpServerApplication idpServerApplication) {
-    this.auditLogManagementApi = idpServerApplication.auditLogManagementApi();
+    this.managementApi = idpServerApplication.auditLogManagementApi();
   }
 
   @GetMapping
@@ -53,10 +53,9 @@ public class AuditLogManagementV1Api implements ParameterTransformable {
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AuditLogManagementResponse response =
-        auditLogManagementApi.findList(
+        managementApi.findList(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             new AuditLogQueries(queryParams),
             requestAttributes);
 
@@ -76,10 +75,9 @@ public class AuditLogManagementV1Api implements ParameterTransformable {
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AuditLogManagementResponse response =
-        auditLogManagementApi.get(
+        managementApi.get(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             requestAttributes);
 

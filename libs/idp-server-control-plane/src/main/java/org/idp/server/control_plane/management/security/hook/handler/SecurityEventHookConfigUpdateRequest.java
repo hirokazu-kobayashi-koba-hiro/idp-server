@@ -16,6 +16,7 @@
 
 package org.idp.server.control_plane.management.security.hook.handler;
 
+import java.util.Map;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookRequest;
 import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfigurationIdentifier;
 
@@ -24,7 +25,8 @@ import org.idp.server.platform.security.hook.configuration.SecurityEventHookConf
  *
  * <p>Combines identifier and update request data.
  */
-public class SecurityEventHookConfigUpdateRequest {
+public class SecurityEventHookConfigUpdateRequest
+    implements SecurityEventHookConfigManagementRequest {
 
   private final SecurityEventHookConfigurationIdentifier identifier;
   private final SecurityEventHookRequest request;
@@ -41,5 +43,10 @@ public class SecurityEventHookConfigUpdateRequest {
 
   public SecurityEventHookRequest request() {
     return request;
+  }
+
+  @Override
+  public Map<String, Object> toMap() {
+    return request.toMap();
   }
 }

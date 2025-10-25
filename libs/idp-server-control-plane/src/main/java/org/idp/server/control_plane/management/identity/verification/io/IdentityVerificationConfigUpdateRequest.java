@@ -17,31 +17,17 @@
 package org.idp.server.control_plane.management.identity.verification.io;
 
 import java.util.Map;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
 
-public class IdentityVerificationConfigUpdateRequest {
+public record IdentityVerificationConfigUpdateRequest(
+    IdentityVerificationConfigurationIdentifier identifier,
+    IdentityVerificationConfigRegistrationRequest configRequest)
+    implements IdentityVerificationConfigManagementRequest {
 
-  String configurationId;
-  Map<String, Object> values;
-
-  public IdentityVerificationConfigUpdateRequest(Map<String, Object> values) {
-    this.values = values;
-  }
-
-  public IdentityVerificationConfigUpdateRequest(
-      String configurationId, Map<String, Object> values) {
-    this.configurationId = configurationId;
-    this.values = values;
-  }
-
-  public String configurationId() {
-    return configurationId;
-  }
-
+  @Override
   public Map<String, Object> toMap() {
-    return values;
-  }
-
-  public Object get(String key) {
-    return values.get(key);
+    Map<String, Object> map = configRequest.toMap();
+    map.put("id", identifier.value());
+    return map;
   }
 }

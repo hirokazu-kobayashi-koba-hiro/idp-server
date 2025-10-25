@@ -16,17 +16,23 @@
 
 package org.idp.server.control_plane.management.identity.verification.handler;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
-import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigUpdateContext;
-import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigUpdateContextCreator;
+import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigManagementContextBuilder;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
+import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementStatus;
+import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigRegistrationRequest;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigUpdateRequest;
+import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigurationRequest;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
-import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationCommandRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.json.JsonDiffCalculator;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -51,7 +57,8 @@ public class IdentityVerificationConfigUpdateService
   }
 
   @Override
-  public IdentityVerificationConfigManagementResult execute(
+  public IdentityVerificationConfigManagementResponse execute(
+      IdentityVerificationConfigManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -59,29 +66,51 @@ public class IdentityVerificationConfigUpdateService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    IdentityVerificationConfigurationIdentifier identifier =
-        new IdentityVerificationConfigurationIdentifier(request.configurationId());
-    IdentityVerificationConfiguration configuration = queryRepository.find(tenant, identifier);
+    // 1. Retrieve existing configuration (throws ResourceNotFoundException if not found)
+    IdentityVerificationConfiguration before = queryRepository.find(tenant, request.identifier());
 
-    if (!configuration.exists()) {
+    if (!before.exists()) {
       throw new ResourceNotFoundException(
-          "Identity verification configuration not found: " + identifier.value());
+          "Identity verification configuration not found: " + request.identifier().value());
     }
 
-    IdentityVerificationConfigUpdateContextCreator contextCreator =
-        new IdentityVerificationConfigUpdateContextCreator(tenant, request, configuration, dryRun);
-    IdentityVerificationConfigUpdateContext context = contextCreator.create();
+    // 2. Create updated configuration
+    IdentityVerificationConfiguration after = updateConfiguration(before, request.configRequest());
+
+    // 3. Populate builder with before/after
+    builder.withBefore(before);
+    builder.withAfter(after);
+
+    // 4. Build response
+    JsonNodeWrapper beforeJson = JsonNodeWrapper.fromMap(before.toMap());
+    JsonNodeWrapper afterJson = JsonNodeWrapper.fromMap(after.toMap());
+    Map<String, Object> contents = new HashMap<>();
+    contents.put("result", after.toMap());
+    contents.put("diff", JsonDiffCalculator.deepDiff(beforeJson, afterJson));
+    contents.put("dry_run", dryRun);
 
     if (dryRun) {
-      IdentityVerificationConfigManagementResponse response = context.toResponse();
-      return IdentityVerificationConfigManagementResult.success(
-          tenant.identifier(), response, context);
+      return new IdentityVerificationConfigManagementResponse(
+          IdentityVerificationConfigManagementStatus.OK, contents);
     }
 
-    commandRepository.update(tenant, context.afterType(), context.after());
+    // 5. Repository operation
+    commandRepository.update(tenant, after.type(), after);
 
-    IdentityVerificationConfigManagementResponse response = context.toResponse();
-    return IdentityVerificationConfigManagementResult.success(
-        tenant.identifier(), response, context);
+    return new IdentityVerificationConfigManagementResponse(
+        IdentityVerificationConfigManagementStatus.OK, contents);
+  }
+
+  private IdentityVerificationConfiguration updateConfiguration(
+      IdentityVerificationConfiguration before,
+      IdentityVerificationConfigRegistrationRequest request) {
+
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+    IdentityVerificationConfigurationRequest configurationRequest =
+        jsonConverter.read(request.toMap(), IdentityVerificationConfigurationRequest.class);
+
+    String identifier = before.id();
+
+    return configurationRequest.toConfiguration(identifier);
   }
 }

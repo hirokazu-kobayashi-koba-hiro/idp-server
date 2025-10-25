@@ -19,6 +19,8 @@ package org.idp.server.control_plane.management.identity.user.handler;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.management.identity.user.ManagementEventPublisher;
+import org.idp.server.control_plane.management.identity.user.UserManagementContextBuilder;
+import org.idp.server.control_plane.management.identity.user.io.UserDeleteRequest;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
 import org.idp.server.core.openid.identity.User;
@@ -54,7 +56,7 @@ import org.idp.server.platform.type.RequestAttributes;
  *   <li>Transaction management
  * </ul>
  */
-public class UserDeletionService implements UserManagementService<UserIdentifier> {
+public class UserDeletionService implements UserManagementService<UserDeleteRequest> {
 
   private final UserQueryRepository userQueryRepository;
   private final UserCommandRepository userCommandRepository;
@@ -73,19 +75,21 @@ public class UserDeletionService implements UserManagementService<UserIdentifier
   }
 
   @Override
-  public UserManagementResult execute(
+  public UserManagementResponse execute(
+      UserManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      UserIdentifier userIdentifier,
+      UserDeleteRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    UserIdentifier userIdentifier = request.userIdentifier();
     // 1. User existence verification
     User user = userQueryRepository.get(tenant, userIdentifier);
 
-    // 2. Create deletion context for audit logging
-    UserDeletionContext context = new UserDeletionContext(user, dryRun);
+    // 2. Set user to builder for context completion
+    builder.withBefore(user);
 
     // 3. Dry-run check
     if (dryRun) {
@@ -93,8 +97,7 @@ public class UserDeletionService implements UserManagementService<UserIdentifier
       response.put("message", "Deletion simulated successfully");
       response.put("sub", user.sub());
       response.put("dry_run", true);
-      return UserManagementResult.success(
-          tenant, context, new UserManagementResponse(UserManagementStatus.OK, response));
+      return new UserManagementResponse(UserManagementStatus.OK, response);
     }
 
     // 4. Repository operation
@@ -118,7 +121,6 @@ public class UserDeletionService implements UserManagementService<UserIdentifier
     Map<String, Object> response = new HashMap<>();
     response.put("message", "User deleted successfully");
     response.put("sub", user.sub());
-    return UserManagementResult.success(
-        tenant, context, new UserManagementResponse(UserManagementStatus.NO_CONTENT, response));
+    return new UserManagementResponse(UserManagementStatus.NO_CONTENT, response);
   }
 }

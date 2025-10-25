@@ -497,7 +497,7 @@ describe("organization user management api", () => {
         }
       });
       console.log("Dry run create response:", dryRunCreateResponse.data);
-      expect(dryRunCreateResponse.status).toBe(201);
+      expect(dryRunCreateResponse.status).toBe(200);
       expect(dryRunCreateResponse.data).toHaveProperty("result");
       expect(dryRunCreateResponse.data).toHaveProperty("dry_run", true);
 

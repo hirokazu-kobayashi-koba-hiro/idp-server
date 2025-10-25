@@ -19,6 +19,8 @@ package org.idp.server.control_plane.management.permission.handler;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.control_plane.management.permission.PermissionManagementContextBuilder;
+import org.idp.server.control_plane.management.permission.io.PermissionFindListRequest;
 import org.idp.server.control_plane.management.permission.io.PermissionManagementResponse;
 import org.idp.server.control_plane.management.permission.io.PermissionManagementStatus;
 import org.idp.server.core.openid.identity.User;
@@ -30,11 +32,19 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Service for finding permission lists.
+ * Service for retrieving a list of permissions with pagination.
  *
- * <p>Handles permission list retrieval with pagination and filtering.
+ * <p>Handles permission list retrieval logic following the Handler/Service pattern.
+ *
+ * <h2>Responsibilities</h2>
+ *
+ * <ul>
+ *   <li>Paginated permission list retrieval from repository
+ *   <li>Response construction with list data, total_count, limit, offset
+ * </ul>
  */
-public class PermissionFindListService implements PermissionManagementService<PermissionQueries> {
+public class PermissionFindListService
+    implements PermissionManagementService<PermissionFindListRequest> {
 
   private final PermissionQueryRepository permissionQueryRepository;
 
@@ -43,33 +53,35 @@ public class PermissionFindListService implements PermissionManagementService<Pe
   }
 
   @Override
-  public PermissionManagementResult execute(
+  public PermissionManagementResponse execute(
+      PermissionManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      PermissionQueries queries,
+      PermissionFindListRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    PermissionQueries queries = request.queries();
     long totalCount = permissionQueryRepository.findTotalCount(tenant, queries);
+    Map<String, Object> response = new HashMap<>();
+
     if (totalCount == 0) {
-      Map<String, Object> response = new HashMap<>();
       response.put("list", List.of());
       response.put("total_count", 0);
       response.put("limit", queries.limit());
       response.put("offset", queries.offset());
-      return PermissionManagementResult.success(
-          tenant, new PermissionManagementResponse(PermissionManagementStatus.OK, response));
+      response.put("dry_run", dryRun);
+      return new PermissionManagementResponse(PermissionManagementStatus.OK, response);
     }
 
-    List<Permission> permissionList = permissionQueryRepository.findList(tenant, queries);
-    Map<String, Object> response = new HashMap<>();
-    response.put("list", permissionList.stream().map(Permission::toMap).toList());
+    List<Permission> permissions = permissionQueryRepository.findList(tenant, queries);
+    response.put("list", permissions.stream().map(Permission::toMap).toList());
     response.put("total_count", totalCount);
     response.put("limit", queries.limit());
     response.put("offset", queries.offset());
+    response.put("dry_run", dryRun);
 
-    return PermissionManagementResult.success(
-        tenant, new PermissionManagementResponse(PermissionManagementStatus.OK, response));
+    return new PermissionManagementResponse(PermissionManagementStatus.OK, response);
   }
 }

@@ -105,7 +105,7 @@ public class MysqlExecutor implements SecurityEventHookConfigSqlExecutor {
 
   @Override
   public List<Map<String, String>> selectList(Tenant tenant, int limit, int offset) {
-    return selectList(tenant, limit, offset, false);
+    return selectList(tenant, limit, offset, true);
   }
 
   @Override

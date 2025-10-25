@@ -18,7 +18,8 @@ package org.idp.server.control_plane.management.identity.verification.io;
 
 import java.util.Map;
 
-public class IdentityVerificationConfigRegistrationRequest {
+public class IdentityVerificationConfigRegistrationRequest
+    implements IdentityVerificationConfigManagementRequest {
 
   Map<String, Object> values;
 

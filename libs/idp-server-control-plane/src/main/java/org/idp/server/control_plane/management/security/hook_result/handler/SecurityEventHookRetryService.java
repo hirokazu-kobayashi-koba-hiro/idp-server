@@ -17,8 +17,10 @@
 package org.idp.server.control_plane.management.security.hook_result.handler;
 
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
+import org.idp.server.control_plane.management.security.hook_result.SecurityEventHookManagementContextBuilder;
 import org.idp.server.control_plane.management.security.hook_result.io.SecurityEventHookManagementResponse;
 import org.idp.server.control_plane.management.security.hook_result.io.SecurityEventHookManagementStatus;
+import org.idp.server.control_plane.management.security.hook_result.io.SecurityEventHookRetryRequest;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -59,7 +61,7 @@ import org.idp.server.platform.type.RequestAttributes;
  * </ol>
  */
 public class SecurityEventHookRetryService
-    implements SecurityEventHookManagementService<SecurityEventHookResultIdentifier> {
+    implements SecurityEventHookManagementService<SecurityEventHookRetryRequest> {
 
   private final SecurityEventHookResultQueryRepository securityEventHookResultQueryRepository;
   private final SecurityEventHookResultCommandRepository securityEventHookResultCommandRepository;
@@ -80,13 +82,15 @@ public class SecurityEventHookRetryService
   }
 
   @Override
-  public SecurityEventHookManagementResult execute(
+  public SecurityEventHookManagementResponse execute(
+      SecurityEventHookManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      SecurityEventHookResultIdentifier identifier,
+      SecurityEventHookRetryRequest request,
       RequestAttributes requestAttributes) {
 
+    SecurityEventHookResultIdentifier identifier = request.securityEventHookResultIdentifier();
     SecurityEventHookResult previousHookResult =
         securityEventHookResultQueryRepository.find(tenant, identifier);
 
@@ -111,9 +115,7 @@ public class SecurityEventHookRetryService
     securityEventHookResultCommandRepository.updateStatus(tenant, previousHookResult, retryStatus);
     securityEventHookResultCommandRepository.register(tenant, securityEventHookResult);
 
-    SecurityEventHookManagementResponse response =
-        new SecurityEventHookManagementResponse(
-            SecurityEventHookManagementStatus.OK, securityEventHookResult.toMap());
-    return SecurityEventHookManagementResult.success(tenant, response);
+    return new SecurityEventHookManagementResponse(
+        SecurityEventHookManagementStatus.OK, securityEventHookResult.toMap());
   }
 }

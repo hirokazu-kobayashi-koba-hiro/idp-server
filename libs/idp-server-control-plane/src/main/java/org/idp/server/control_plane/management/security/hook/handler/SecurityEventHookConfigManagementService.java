@@ -16,6 +16,8 @@
 
 package org.idp.server.control_plane.management.security.hook.handler;
 
+import org.idp.server.control_plane.management.security.hook.SecurityEventHookConfigManagementContextBuilder;
+import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -37,11 +39,20 @@ import org.idp.server.platform.type.RequestAttributes;
  * <ul>
  *   <li>T: Operation-specific request type
  *   <li>create: SecurityEventHookRequest
- *   <li>findList: No request object (uses method parameters)
- *   <li>get: SecurityEventHookConfigurationIdentifier
+ *   <li>findList: SecurityEventHookConfigFindListRequest
+ *   <li>get: SecurityEventHookConfigurationIdentifier (wrapped in request)
  *   <li>update: SecurityEventHookConfigUpdateRequest (identifier + request)
- *   <li>delete: SecurityEventHookConfigurationIdentifier
+ *   <li>delete: SecurityEventHookConfigurationIdentifier (wrapped in request)
  * </ul>
+ *
+ * <h2>Context Builder Pattern</h2>
+ *
+ * <p>Services receive a ContextBuilder for incremental context construction:
+ *
+ * <pre>{@code
+ * builder.withAfter(configuration);  // Service populates builder
+ * AuditableContext context = builder.build();  // Handler builds complete context
+ * }</pre>
  *
  * <h2>Exception Handling</h2>
  *
@@ -54,15 +65,17 @@ public interface SecurityEventHookConfigManagementService<T> {
   /**
    * Executes the security event hook configuration management operation.
    *
-   * @param tenant tenant context
+   * @param builder context builder for incremental context construction
+   * @param tenant tenant context (retrieved by Handler)
    * @param operator user performing the operation
    * @param oAuthToken authentication token
    * @param request operation-specific request object
    * @param requestAttributes HTTP request attributes for audit logging
    * @param dryRun whether to simulate the operation without persisting changes
-   * @return operation result (success or error wrapped in Result)
+   * @return operation response (Handler wraps in Result)
    */
-  SecurityEventHookConfigManagementResult execute(
+  SecurityEventHookConfigManagementResponse execute(
+      SecurityEventHookConfigManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,

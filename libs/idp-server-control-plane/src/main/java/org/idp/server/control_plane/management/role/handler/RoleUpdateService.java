@@ -16,9 +16,14 @@
 
 package org.idp.server.control_plane.management.role.handler;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
-import org.idp.server.control_plane.management.role.RoleUpdateContext;
-import org.idp.server.control_plane.management.role.RoleUpdateContextCreator;
+import org.idp.server.control_plane.management.role.RoleManagementContextBuilder;
+import org.idp.server.control_plane.management.role.io.RoleManagementResponse;
+import org.idp.server.control_plane.management.role.io.RoleManagementStatus;
+import org.idp.server.control_plane.management.role.io.RoleRequest;
+import org.idp.server.control_plane.management.role.io.RoleUpdateRequest;
 import org.idp.server.control_plane.management.role.validator.RoleRequestValidator;
 import org.idp.server.control_plane.management.role.verifier.RoleRegistrationVerifier;
 import org.idp.server.core.openid.identity.User;
@@ -29,6 +34,8 @@ import org.idp.server.core.openid.identity.role.RoleCommandRepository;
 import org.idp.server.core.openid.identity.role.RoleQueryRepository;
 import org.idp.server.core.openid.identity.role.Roles;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.json.JsonDiffCalculator;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -63,7 +70,8 @@ public class RoleUpdateService implements RoleManagementService<RoleUpdateReques
   }
 
   @Override
-  public RoleManagementResult execute(
+  public RoleManagementResponse execute(
+      RoleManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -71,6 +79,7 @@ public class RoleUpdateService implements RoleManagementService<RoleUpdateReques
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    // 1. Retrieve existing role (throws ResourceNotFoundException if not found)
     Role before = roleQueryRepository.find(tenant, request.identifier());
 
     if (!before.exists()) {
@@ -78,21 +87,46 @@ public class RoleUpdateService implements RoleManagementService<RoleUpdateReques
           String.format("Role not found: %s", request.identifier().value()));
     }
 
+    // 2. Request validation
     new RoleRequestValidator(request.roleRequest(), dryRun).validate();
 
+    // 3. Create updated role
     Roles roles = roleQueryRepository.findAll(tenant);
-    Permissions permissionList = permissionQueryRepository.findAll(tenant);
-    RoleUpdateContextCreator creator =
-        new RoleUpdateContextCreator(
-            tenant, before, request.roleRequest(), roles, permissionList, dryRun);
-    RoleUpdateContext context = creator.create();
+    Permissions permissions = permissionQueryRepository.findAll(tenant);
+    Role after = updateRole(before, request.roleRequest(), permissions);
 
-    new RoleRegistrationVerifier().verify(context);
+    // 4. Business rule verification
+    new RoleRegistrationVerifier(request.roleRequest(), roles, permissions).verify(before.id());
 
-    if (!dryRun) {
-      roleCommandRepository.update(tenant, context.after());
+    // 5. Populate builder with before and after roles
+    builder.withBefore(before);
+    builder.withAfter(after);
+
+    // 6. Build response
+    JsonNodeWrapper beforeJson = JsonNodeWrapper.fromMap(before.toMap());
+    JsonNodeWrapper afterJson = JsonNodeWrapper.fromMap(after.toMap());
+    Map<String, Object> contents = new HashMap<>();
+    contents.put("result", after.toMap());
+    contents.put("diff", JsonDiffCalculator.deepDiff(beforeJson, afterJson));
+    contents.put("dry_run", dryRun);
+
+    if (dryRun) {
+      return new RoleManagementResponse(RoleManagementStatus.OK, contents);
     }
 
-    return RoleManagementResult.success(tenant, context.toResponse(), context);
+    // 7. Repository operation
+    roleCommandRepository.update(tenant, after);
+
+    return new RoleManagementResponse(RoleManagementStatus.OK, contents);
+  }
+
+  private Role updateRole(Role before, RoleRequest request, Permissions permissions) {
+    String id = before.id();
+    String name = request.name();
+    String description = request.description();
+
+    Permissions filtered = permissions.filterById(request.permissions());
+
+    return new Role(id, name, description, filtered.toList());
   }
 }

@@ -18,13 +18,14 @@ package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.management.security.hook.*;
 import org.idp.server.control_plane.management.security.hook.handler.*;
+import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigDeleteRequest;
+import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigFindRequest;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookRequest;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
@@ -77,38 +78,17 @@ public class SecurityEventHookConfigurationManagementEntryService
 
   @Override
   public SecurityEventHookConfigManagementResponse create(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       SecurityEventHookRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
     SecurityEventHookConfigManagementResult result =
         handler.handle(
-            "create", tenantIdentifier, operator, oAuthToken, request, requestAttributes, dryRun);
+            "create", authenticationContext, tenantIdentifier, request, requestAttributes, dryRun);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "SecurityEventHookConfigurationManagementApi.create",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
-
-    AuditLog auditLog =
-        AuditLogCreator.create(
-            "SecurityEventHookConfigurationManagementApi.create",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (SecurityEventHookConfigRegistrationContext) result.context(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -117,9 +97,8 @@ public class SecurityEventHookConfigurationManagementEntryService
   @Override
   @Transaction(readOnly = true)
   public SecurityEventHookConfigManagementResponse findList(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       int limit,
       int offset,
       RequestAttributes requestAttributes) {
@@ -128,29 +107,9 @@ public class SecurityEventHookConfigurationManagementEntryService
         new SecurityEventHookConfigFindListRequest(limit, offset);
     SecurityEventHookConfigManagementResult result =
         handler.handle(
-            "findList", tenantIdentifier, operator, oAuthToken, request, requestAttributes, false);
+            "findList", authenticationContext, tenantIdentifier, request, requestAttributes, false);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "SecurityEventHookConfigurationManagementApi.findList",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(false);
-    }
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "SecurityEventHookConfigurationManagementApi.findList",
-            "findList",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);
@@ -159,37 +118,17 @@ public class SecurityEventHookConfigurationManagementEntryService
   @Override
   @Transaction(readOnly = true)
   public SecurityEventHookConfigManagementResponse get(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       SecurityEventHookConfigurationIdentifier identifier,
       RequestAttributes requestAttributes) {
 
+    SecurityEventHookConfigFindRequest request = new SecurityEventHookConfigFindRequest(identifier);
     SecurityEventHookConfigManagementResult result =
         handler.handle(
-            "get", tenantIdentifier, operator, oAuthToken, identifier, requestAttributes, false);
+            "get", authenticationContext, tenantIdentifier, request, requestAttributes, false);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "SecurityEventHookConfigurationManagementApi.get",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(false);
-    }
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "SecurityEventHookConfigurationManagementApi.get",
-            "get",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);
@@ -197,9 +136,8 @@ public class SecurityEventHookConfigurationManagementEntryService
 
   @Override
   public SecurityEventHookConfigManagementResponse update(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       SecurityEventHookConfigurationIdentifier identifier,
       SecurityEventHookRequest request,
       RequestAttributes requestAttributes,
@@ -210,34 +148,13 @@ public class SecurityEventHookConfigurationManagementEntryService
     SecurityEventHookConfigManagementResult result =
         handler.handle(
             "update",
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
             updateRequest,
             requestAttributes,
             dryRun);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "SecurityEventHookConfigurationManagementApi.update",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "SecurityEventHookConfigurationManagementApi.update",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (SecurityEventHookConfigUpdateContext) result.context(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -245,45 +162,19 @@ public class SecurityEventHookConfigurationManagementEntryService
 
   @Override
   public SecurityEventHookConfigManagementResponse delete(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       SecurityEventHookConfigurationIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    SecurityEventHookConfigDeleteRequest request =
+        new SecurityEventHookConfigDeleteRequest(identifier);
     SecurityEventHookConfigManagementResult result =
         handler.handle(
-            "delete",
-            tenantIdentifier,
-            operator,
-            oAuthToken,
-            identifier,
-            requestAttributes,
-            dryRun);
+            "delete", authenticationContext, tenantIdentifier, request, requestAttributes, dryRun);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "SecurityEventHookConfigurationManagementApi.delete",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnDeletion(
-            "SecurityEventHookConfigurationManagementApi.delete",
-            "delete",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (Map<String, Object>) result.context(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

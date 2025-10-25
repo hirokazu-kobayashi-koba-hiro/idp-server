@@ -17,7 +17,9 @@
 package org.idp.server.control_plane.management.identity.user.verifier;
 
 import org.idp.server.control_plane.base.verifier.UserVerifier;
-import org.idp.server.control_plane.management.identity.user.UserRegistrationContext;
+import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class UserRegistrationVerifier {
 
@@ -31,11 +33,10 @@ public class UserRegistrationVerifier {
     this.userRegistrationRelatedDataVerifier = userRegistrationRelatedDataVerifier;
   }
 
-  public void verify(UserRegistrationContext context) {
-    userVerifier.verify(context.tenant(), context.user());
-    userRegistrationRelatedDataVerifier.verifyRoles(context.tenant(), context.request());
-    userRegistrationRelatedDataVerifier.verifyTenantAssignments(context.request());
-    userRegistrationRelatedDataVerifier.verifyOrganizationAssignments(
-        context.tenant(), context.request());
+  public void verify(Tenant tenant, User user, UserRegistrationRequest request) {
+    userVerifier.verify(tenant, user);
+    userRegistrationRelatedDataVerifier.verifyRoles(tenant, request);
+    userRegistrationRelatedDataVerifier.verifyTenantAssignments(request);
+    userRegistrationRelatedDataVerifier.verifyOrganizationAssignments(tenant, request);
   }
 }

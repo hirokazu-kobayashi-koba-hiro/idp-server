@@ -16,6 +16,8 @@
 
 package org.idp.server.control_plane.management.tenant.handler;
 
+import org.idp.server.control_plane.management.tenant.TenantManagementContextBuilder;
+import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -30,36 +32,8 @@ import org.idp.server.platform.type.RequestAttributes;
  */
 public interface TenantManagementService<T> {
 
-  /**
-   * Executes the tenant management operation.
-   *
-   * <p>Responsibilities:
-   *
-   * <ul>
-   *   <li>Request validation
-   *   <li>Context creation
-   *   <li>Business rule verification
-   *   <li>Repository operations
-   *   <li>Event publishing
-   * </ul>
-   *
-   * <p>NOT responsibilities (handled by Handler/EntryService):
-   *
-   * <ul>
-   *   <li>Permission checking
-   *   <li>Audit logging
-   *   <li>Transaction management
-   * </ul>
-   *
-   * @param adminTenant the admin tenant (passed from Handler)
-   * @param operator the user performing the operation
-   * @param oAuthToken the OAuth token for the operation
-   * @param request the operation-specific request object
-   * @param requestAttributes HTTP request attributes for audit logging
-   * @param dryRun if true, validate but don't persist changes
-   * @return TenantManagementResult containing operation outcome
-   */
-  TenantManagementResult execute(
+  TenantManagementResponse execute(
+      TenantManagementContextBuilder builder,
       Tenant adminTenant,
       User operator,
       OAuthToken oAuthToken,

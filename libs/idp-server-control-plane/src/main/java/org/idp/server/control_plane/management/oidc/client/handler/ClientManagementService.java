@@ -16,6 +16,8 @@
 
 package org.idp.server.control_plane.management.oidc.client.handler;
 
+import org.idp.server.control_plane.management.oidc.client.ClientManagementContextBuilder;
+import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -29,22 +31,24 @@ import org.idp.server.platform.type.RequestAttributes;
  *
  * @param <T> the request type for this service
  * @see ClientManagementHandler
- * @see ClientManagementResult
+ * @see org.idp.server.control_plane.management.oidc.client.io.ClientManagementResult
  */
 public interface ClientManagementService<T> {
 
   /**
    * Executes the client management operation.
    *
+   * @param contextBuilder the context builder for audit logging
    * @param tenant the tenant
    * @param operator the operator user
    * @param oAuthToken the OAuth token
    * @param request the request object (type varies by operation)
    * @param requestAttributes the request attributes
    * @param dryRun whether to perform a dry run
-   * @return the result of the operation
+   * @return the response of the operation
    */
-  ClientManagementResult execute(
+  ClientManagementResponse execute(
+      ClientManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,

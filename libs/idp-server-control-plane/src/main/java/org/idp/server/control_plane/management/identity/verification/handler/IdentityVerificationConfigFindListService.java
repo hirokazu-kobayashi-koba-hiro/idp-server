@@ -18,6 +18,8 @@ package org.idp.server.control_plane.management.identity.verification.handler;
 
 import java.util.List;
 import java.util.Map;
+import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigManagementContextBuilder;
+import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigFindListRequest;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementStatus;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
@@ -35,7 +37,8 @@ import org.idp.server.platform.type.RequestAttributes;
  * Handler/Service pattern.
  */
 public class IdentityVerificationConfigFindListService
-    implements IdentityVerificationConfigManagementService<IdentityVerificationQueries> {
+    implements IdentityVerificationConfigManagementService<
+        IdentityVerificationConfigFindListRequest> {
 
   private final IdentityVerificationConfigurationQueryRepository queryRepository;
 
@@ -45,14 +48,16 @@ public class IdentityVerificationConfigFindListService
   }
 
   @Override
-  public IdentityVerificationConfigManagementResult execute(
+  public IdentityVerificationConfigManagementResponse execute(
+      IdentityVerificationConfigManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      IdentityVerificationQueries queries,
+      IdentityVerificationConfigFindListRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    IdentityVerificationQueries queries = request.queries();
     long totalCount = queryRepository.findTotalCount(tenant, queries);
     if (totalCount == 0) {
       Map<String, Object> response =
@@ -61,14 +66,15 @@ public class IdentityVerificationConfigFindListService
               "total_count", totalCount,
               "limit", queries.limit(),
               "offset", queries.offset());
-      return IdentityVerificationConfigManagementResult.success(
-          tenant.identifier(),
-          new IdentityVerificationConfigManagementResponse(
-              IdentityVerificationConfigManagementStatus.OK, response));
+      return new IdentityVerificationConfigManagementResponse(
+          IdentityVerificationConfigManagementStatus.OK, response);
     }
 
     List<IdentityVerificationConfiguration> configurations =
         queryRepository.findList(tenant, queries);
+
+    // Note: For list operations, we don't populate builder.withBefore()
+    // as there's no single "before" state for multiple items
 
     Map<String, Object> response =
         Map.of(
@@ -81,9 +87,7 @@ public class IdentityVerificationConfigFindListService
             "offset",
             queries.offset());
 
-    return IdentityVerificationConfigManagementResult.success(
-        tenant.identifier(),
-        new IdentityVerificationConfigManagementResponse(
-            IdentityVerificationConfigManagementStatus.OK, response));
+    return new IdentityVerificationConfigManagementResponse(
+        IdentityVerificationConfigManagementStatus.OK, response);
   }
 }

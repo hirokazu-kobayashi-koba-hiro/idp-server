@@ -19,6 +19,8 @@ package org.idp.server.control_plane.management.tenant.handler;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.control_plane.management.tenant.TenantManagementContextBuilder;
+import org.idp.server.control_plane.management.tenant.io.TenantFindListRequest;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementStatus;
 import org.idp.server.core.openid.identity.User;
@@ -38,7 +40,7 @@ import org.idp.server.platform.type.RequestAttributes;
  *   <li>Tenant list retrieval from repository based on operator's assigned tenants
  * </ul>
  */
-public class TenantFindListService implements TenantManagementService<Void> {
+public class TenantFindListService implements TenantManagementService<TenantFindListRequest> {
 
   private final TenantQueryRepository tenantQueryRepository;
 
@@ -47,24 +49,22 @@ public class TenantFindListService implements TenantManagementService<Void> {
   }
 
   @Override
-  public TenantManagementResult execute(
+  public TenantManagementResponse execute(
+      TenantManagementContextBuilder builder,
       Tenant adminTenant,
       User operator,
       OAuthToken oAuthToken,
-      Void request,
+      TenantFindListRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
     // 1. Retrieve tenant list based on operator's assigned tenants
-    List<Tenant> tenants =
-        tenantQueryRepository.findList(operator.assignedTenantsAsTenantIdentifiers());
+    List<Tenant> tenants = tenantQueryRepository.findList(request.tenantIdentifiers());
 
     // 2. Build response
     Map<String, Object> responseMap = new HashMap<>();
     responseMap.put("list", tenants.stream().map(Tenant::toMap).toList());
 
-    TenantManagementResponse response =
-        new TenantManagementResponse(TenantManagementStatus.OK, responseMap);
-    return TenantManagementResult.success(adminTenant, null, response);
+    return new TenantManagementResponse(TenantManagementStatus.OK, responseMap);
   }
 }

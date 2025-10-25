@@ -84,16 +84,12 @@ public class OrganizationUserManagementV1Api implements ParameterTransformable {
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     UserManagementResponse response =
         orgUserManagementApi.create(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new UserRegistrationRequest(body),
             requestAttributes,
             dryRun);
@@ -110,10 +106,6 @@ public class OrganizationUserManagementV1Api implements ParameterTransformable {
    * @param organizationOperatorPrincipal the authenticated organization operator
    * @param organizationId the organization identifier from path
    * @param tenantId the tenant identifier from path
-   * @param limitValue the maximum number of results to return
-   * @param offsetValue the offset for pagination
-   * @param userId optional user ID filter
-   * @param username optional username filter
    * @param httpServletRequest the HTTP request
    * @return the user list response
    */
@@ -125,18 +117,14 @@ public class OrganizationUserManagementV1Api implements ParameterTransformable {
       @RequestParam Map<String, String> queryParams,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     UserQueries queries = new UserQueries(queryParams);
 
     UserManagementResponse response =
         orgUserManagementApi.findList(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             queries,
             requestAttributes);
 
@@ -170,10 +158,8 @@ public class OrganizationUserManagementV1Api implements ParameterTransformable {
 
     UserManagementResponse response =
         orgUserManagementApi.get(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new UserIdentifier(userId),
             requestAttributes);
 
@@ -211,10 +197,8 @@ public class OrganizationUserManagementV1Api implements ParameterTransformable {
 
     UserManagementResponse response =
         orgUserManagementApi.update(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new UserIdentifier(userId),
             new UserRegistrationRequest(body),
             requestAttributes,
@@ -265,10 +249,8 @@ public class OrganizationUserManagementV1Api implements ParameterTransformable {
 
     UserManagementResponse response =
         orgUserManagementApi.patch(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new UserIdentifier(userId),
             new UserRegistrationRequest(body),
             requestAttributes,
@@ -308,10 +290,8 @@ public class OrganizationUserManagementV1Api implements ParameterTransformable {
 
     UserManagementResponse response =
         orgUserManagementApi.updatePassword(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new UserIdentifier(userId),
             new UserRegistrationRequest(body),
             requestAttributes,
@@ -338,10 +318,8 @@ public class OrganizationUserManagementV1Api implements ParameterTransformable {
 
     UserManagementResponse response =
         orgUserManagementApi.delete(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new UserIdentifier(userId),
             requestAttributes,
             dryRun);
@@ -374,16 +352,12 @@ public class OrganizationUserManagementV1Api implements ParameterTransformable {
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     UserManagementResponse response =
         orgUserManagementApi.updateRoles(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new UserIdentifier(userId),
             new UserRegistrationRequest(body),
             requestAttributes,
@@ -417,16 +391,12 @@ public class OrganizationUserManagementV1Api implements ParameterTransformable {
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     UserManagementResponse response =
         orgUserManagementApi.updateTenantAssignments(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new UserIdentifier(userId),
             new UserRegistrationRequest(body),
             requestAttributes,
@@ -460,16 +430,12 @@ public class OrganizationUserManagementV1Api implements ParameterTransformable {
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     UserManagementResponse response =
         orgUserManagementApi.updateOrganizationAssignments(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new UserIdentifier(userId),
             new UserRegistrationRequest(body),
             requestAttributes,

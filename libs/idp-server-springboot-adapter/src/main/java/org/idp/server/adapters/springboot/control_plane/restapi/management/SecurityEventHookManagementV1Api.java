@@ -54,9 +54,8 @@ public class SecurityEventHookManagementV1Api implements ParameterTransformable 
 
     SecurityEventHookManagementResponse response =
         securityEventHookManagementApi.findList(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             new SecurityEventHookResultQueries(queryParams),
             requestAttributes);
 
@@ -77,9 +76,8 @@ public class SecurityEventHookManagementV1Api implements ParameterTransformable 
 
     SecurityEventHookManagementResponse response =
         securityEventHookManagementApi.get(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             requestAttributes);
 
@@ -100,9 +98,8 @@ public class SecurityEventHookManagementV1Api implements ParameterTransformable 
 
     SecurityEventHookManagementResponse response =
         securityEventHookManagementApi.retry(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             requestAttributes);
 

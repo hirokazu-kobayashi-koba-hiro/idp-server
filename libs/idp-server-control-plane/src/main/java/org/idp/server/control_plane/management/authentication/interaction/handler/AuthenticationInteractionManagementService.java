@@ -16,6 +16,8 @@
 
 package org.idp.server.control_plane.management.authentication.interaction.handler;
 
+import org.idp.server.control_plane.management.authentication.interaction.AuthenticationInteractionManagementContextBuilder;
+import org.idp.server.control_plane.management.authentication.interaction.io.AuthenticationInteractionManagementResponse;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -24,47 +26,31 @@ import org.idp.server.platform.type.RequestAttributes;
 /**
  * Service interface for authentication interaction management operations.
  *
- * <p>This interface defines the contract for authentication interaction management Service
- * implementations following the Handler-Service-Repository pattern.
+ * <p>Part of Handler/Service pattern. Implementations handle specific authentication interaction
+ * management operations (get, findList).
  *
- * <h2>Responsibilities</h2>
- *
- * <ul>
- *   <li>Execute business logic for authentication interaction operations
- *   <li>Query repository for authentication interaction data
- *   <li>Build response with appropriate data
- * </ul>
- *
- * <h2>NOT Responsibilities</h2>
- *
- * <ul>
- *   <li>Permission verification (handled by Handler)
- *   <li>Organization access control (handled by Handler)
- *   <li>Tenant retrieval (handled by Handler)
- *   <li>Audit logging (handled by EntryService)
- *   <li>Transaction management (handled by EntryService)
- * </ul>
- *
- * @param <REQUEST> the request type for the specific operation
- * @see AuthenticationInteractionManagementResult
+ * @param <T> the request type for this service
  * @see AuthenticationInteractionManagementHandler
+ * @see AuthenticationInteractionManagementResult
  */
-public interface AuthenticationInteractionManagementService<REQUEST> {
+public interface AuthenticationInteractionManagementService<T> {
 
   /**
    * Executes the authentication interaction management operation.
    *
-   * @param tenant the tenant context (already retrieved by Handler)
-   * @param operator the user performing the operation
-   * @param oAuthToken the OAuth token for the operation
-   * @param request the operation-specific request object
-   * @param requestAttributes HTTP request attributes for audit logging
-   * @return AuthenticationInteractionManagementResult containing operation outcome
+   * @param contextBuilder the context builder for audit logging
+   * @param tenant the tenant
+   * @param operator the operator user
+   * @param oAuthToken the OAuth token
+   * @param request the request object (type varies by operation)
+   * @param requestAttributes the request attributes
+   * @return the response of the operation
    */
-  AuthenticationInteractionManagementResult execute(
+  AuthenticationInteractionManagementResponse execute(
+      AuthenticationInteractionManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      REQUEST request,
+      T request,
       RequestAttributes requestAttributes);
 }

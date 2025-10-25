@@ -100,7 +100,7 @@ describe("Organization Authentication Policy Config Management API - Structured 
           }
         });
 
-        expect(response.status).toBe(201);
+        expect(response.status).toBe(200);
         expect(response.data).toHaveProperty("dry_run", true);
         expect(response.data).toHaveProperty("result");
         expect(response.data.result).toHaveProperty("id");
@@ -201,7 +201,7 @@ describe("Organization Authentication Policy Config Management API - Structured 
           }
         });
 
-        expect(response.status).toBe(201);
+        expect(response.status).toBe(200);
         expect(response.data).toHaveProperty("dry_run", true);
         expect(response.data).toHaveProperty("result");
       });

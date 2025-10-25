@@ -25,7 +25,6 @@ import org.idp.server.control_plane.management.audit.OrgAuditLogManagementApi;
 import org.idp.server.control_plane.management.audit.io.AuditLogManagementResponse;
 import org.idp.server.platform.audit.AuditLogIdentifier;
 import org.idp.server.platform.audit.AuditLogQueries;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;
@@ -37,7 +36,7 @@ import org.springframework.web.bind.annotation.*;
 /**
  * Organization-level audit log management API controller.
  *
- * <p>This controller handles audit log management operations within an organization context. It
+ * <p>This controller handles audit log monitoring operations within an organization context. It
  * provides read-only operations for audit logs belonging to a specific organization and tenant,
  * with proper authentication and authorization through the OrganizationOperatorPrincipal.
  *
@@ -45,8 +44,9 @@ import org.springframework.web.bind.annotation.*;
  * proper isolation and access control.
  *
  * <p>API endpoints: - GET /organizations/{organizationId}/tenants/{tenantId}/audit-logs - List
- * organization audit logs - GET
- * /organizations/{organizationId}/tenants/{tenantId}/audit-logs/{logId} - Get specific audit log
+ * audit logs - GET
+ * /organizations/{organizationId}/tenants/{tenantId}/audit-logs/{transactionId}/types/{type} - Get
+ * specific interaction
  *
  * @see OrgAuditLogManagementApi
  * @see OrganizationOperatorPrincipal
@@ -62,13 +62,12 @@ public class OrganizationAuditLogManagementV1Api implements ParameterTransformab
   }
 
   /**
-   * Lists all audit logs belonging to the organization.
+   * Lists audit logs within the organization.
    *
    * @param organizationOperatorPrincipal the authenticated organization operator
    * @param organizationId the organization identifier from path
    * @param tenantId the tenant identifier from path
-   * @param queryParams all query parameters including limit, offset, from, to, type, description,
-   *     target_resource, target_action, client_id, user_id, external_user_id, attributes.*
+   * @param queryParams the query parameters for filtering
    * @param httpServletRequest the HTTP request
    * @return the audit log list response
    */
@@ -80,19 +79,13 @@ public class OrganizationAuditLogManagementV1Api implements ParameterTransformab
       @RequestParam Map<String, String> queryParams,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
-
-    AuditLogQueries queries = new AuditLogQueries(queryParams);
 
     AuditLogManagementResponse response =
         orgAuditLogManagementApi.findList(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
-            queries,
+            new AuditLogQueries(queryParams),
             requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
@@ -107,29 +100,26 @@ public class OrganizationAuditLogManagementV1Api implements ParameterTransformab
    * @param organizationOperatorPrincipal the authenticated organization operator
    * @param organizationId the organization identifier from path
    * @param tenantId the tenant identifier from path
-   * @param logId the audit log identifier from path
+   * @param transactionId the authentication transaction identifier
+   * @param type the interaction type
    * @param httpServletRequest the HTTP request
    * @return the audit log details response
    */
-  @GetMapping("/{logId}")
+  @GetMapping("/{auditLogId}")
   public ResponseEntity<?> get(
       @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
       @PathVariable String organizationId,
       @PathVariable String tenantId,
-      @PathVariable String logId,
+      @PathVariable("auditLogId") AuditLogIdentifier auditLogId,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AuditLogManagementResponse response =
         orgAuditLogManagementApi.get(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
-            new AuditLogIdentifier(logId),
+            auditLogId,
             requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();

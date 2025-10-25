@@ -17,52 +17,42 @@
 package org.idp.server.control_plane.management.authentication.transaction.handler;
 
 import java.util.Map;
+import org.idp.server.control_plane.base.AuditableContext;
+import org.idp.server.control_plane.base.OrganizationAccessVerifier;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
+import org.idp.server.control_plane.management.authentication.transaction.AuthenticationTransactionManagementContextBuilder;
 import org.idp.server.control_plane.management.authentication.transaction.OrgAuthenticationTransactionManagementApi;
+import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionManagementRequest;
+import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionManagementResponse;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
-import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
+import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.exception.NotFoundException;
 import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Organization-level authentication transaction management handler.
+ * Handler for organization-level authentication transaction management operations.
  *
- * <p>Orchestrates organization-scoped authentication transaction management operations by
- * delegating to appropriate Service implementations via strategy pattern.
+ * <p>Orchestrates organization-scoped authentication transaction management requests following the
+ * Handler/Service pattern. This handler adds organization-level access control on top of the
+ * standard authentication transaction management flow.
  *
  * <h2>Organization-Level Access Control</h2>
  *
- * <p>Unlike system-level operations, organization-level operations require:
- *
  * <ol>
- *   <li>Organization access verification (via OrganizationAccessVerifier)
- *   <li>Permission verification (same as system-level)
- *   <li>Tenant retrieval within organization context
+ *   <li>Organization membership verification
+ *   <li>Tenant access verification within the organization
+ *   <li>Organization-tenant relationship verification
+ *   <li>Required permissions verification
  * </ol>
- *
- * <h2>Responsibilities</h2>
- *
- * <ul>
- *   <li>Organization access control verification
- *   <li>Service selection and execution
- *   <li>Result/Exception wrapping
- * </ul>
- *
- * <h2>NOT Responsibilities</h2>
- *
- * <ul>
- *   <li>Business logic (delegated to Service)
- *   <li>Audit logging (handled by EntryService)
- *   <li>Transaction management (handled by EntryService)
- * </ul>
  *
  * @see AuthenticationTransactionManagementService
  * @see AuthenticationTransactionManagementResult
@@ -71,92 +61,108 @@ import org.idp.server.platform.type.RequestAttributes;
 public class OrgAuthenticationTransactionManagementHandler {
 
   private final Map<String, AuthenticationTransactionManagementService<?>> services;
-  private final OrgAuthenticationTransactionManagementApi entryService;
+  private final OrgAuthenticationTransactionManagementApi api;
   private final TenantQueryRepository tenantQueryRepository;
-  private final OrganizationRepository organizationRepository;
   private final OrganizationAccessVerifier organizationAccessVerifier;
+  LoggerWrapper log = LoggerWrapper.getLogger(OrgAuthenticationTransactionManagementHandler.class);
 
   public OrgAuthenticationTransactionManagementHandler(
       Map<String, AuthenticationTransactionManagementService<?>> services,
-      OrgAuthenticationTransactionManagementApi entryService,
+      OrgAuthenticationTransactionManagementApi api,
       TenantQueryRepository tenantQueryRepository,
-      OrganizationRepository organizationRepository) {
+      OrganizationAccessVerifier organizationAccessVerifier) {
     this.services = services;
-    this.entryService = entryService;
+    this.api = api;
     this.tenantQueryRepository = tenantQueryRepository;
-    this.organizationRepository = organizationRepository;
-    this.organizationAccessVerifier = new OrganizationAccessVerifier();
+    this.organizationAccessVerifier = organizationAccessVerifier;
   }
 
   /**
-   * Handles organization-level authentication transaction management operation.
+   * Handles an organization-level authentication transaction management request.
    *
-   * <p>Organization-level operations include additional access control verification to ensure the
-   * operator has access to both the organization and the tenant.
-   *
-   * @param method the operation method (e.g., "findList", "get")
-   * @param organizationIdentifier the organization identifier
-   * @param tenantIdentifier the tenant context
-   * @param operator the user performing the operation
-   * @param oAuthToken the OAuth token for the operation
+   * @param method the operation method (get, findList)
+   * @param authenticationContext the organization authentication context
+   * @param tenantIdentifier the tenant identifier
    * @param request the operation-specific request object
-   * @param requestAttributes HTTP request attributes for audit logging
-   * @param dryRun if true, validate but don't persist changes
-   * @return AuthenticationTransactionManagementResult containing operation outcome or exception
+   * @param requestAttributes HTTP request attributes
+   * @param dryRun whether to perform a dry run (preview only)
+   * @return the operation result
    */
   public AuthenticationTransactionManagementResult handle(
       String method,
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      Object request,
+      AuthenticationTransactionManagementRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    Tenant tenant = null;
+    Organization organization = authenticationContext.organization();
+    User operator = authenticationContext.operator();
+    OAuthToken oAuthToken = authenticationContext.oAuthToken();
+
+    // 1. Service selection
+    AuthenticationTransactionManagementService<?> service = services.get(method);
+    if (service == null) {
+      throw new UnSupportedException("Unsupported operation method: " + method);
+    }
+
+    // 2. Context Builder creation
+    AuthenticationTransactionManagementContextBuilder contextBuilder =
+        new AuthenticationTransactionManagementContextBuilder(
+            tenantIdentifier, operator, oAuthToken, requestAttributes, request);
+
     try {
-      // 0. Get organization and tenant
-      Organization organization = organizationRepository.get(organizationIdentifier);
-      tenant = tenantQueryRepository.get(tenantIdentifier);
+      // 3. Tenant retrieval
+      Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-      // 1. Organization access verification (4-step verification)
-      AdminPermissions requiredPermissions = entryService.getRequiredPermissions(method);
-      organizationAccessVerifier.verify(
-          organization, tenantIdentifier, operator, requiredPermissions);
+      // 4. Organization access verification
+      AdminPermissions permissions = api.getRequiredPermissions(method);
+      organizationAccessVerifier.verify(organization, tenantIdentifier, operator, permissions);
 
-      // 2. Service selection
-      AuthenticationTransactionManagementService<?> service = services.get(method);
-      if (service == null) {
-        throw new UnSupportedException("Unsupported operation method: " + method);
-      }
+      // 5. Delegate to service
+      AuthenticationTransactionManagementResponse response =
+          executeService(
+              service,
+              contextBuilder,
+              tenant,
+              operator,
+              oAuthToken,
+              request,
+              requestAttributes,
+              dryRun);
 
-      // 3. Delegate to service (pass tenant to avoid duplicate retrieval)
-      return executeService(
-          service, tenant, operator, oAuthToken, request, requestAttributes, dryRun);
+      AuditableContext context = contextBuilder.build();
+      return AuthenticationTransactionManagementResult.success(context, response);
+    } catch (NotFoundException e) {
+
+      log.warn(e.getMessage());
+      ResourceNotFoundException notFound = new ResourceNotFoundException(e.getMessage());
+      AuditableContext context = contextBuilder.buildPartial(notFound);
+      return AuthenticationTransactionManagementResult.error(context, notFound);
 
     } catch (ManagementApiException e) {
-      // Wrap exception in Result with tenant for audit logging
-      return AuthenticationTransactionManagementResult.error(
-          tenant != null ? tenant.identifier() : tenantIdentifier, e);
+
+      log.warn(e.getMessage());
+      AuditableContext partialContext = contextBuilder.buildPartial(e);
+      return AuthenticationTransactionManagementResult.error(partialContext, e);
     }
   }
 
-  /**
-   * Executes the service with type-safe request handling.
-   *
-   * <p>This helper method uses generics to ensure type safety when calling service.execute().
-   */
   @SuppressWarnings("unchecked")
-  private <REQUEST> AuthenticationTransactionManagementResult executeService(
-      AuthenticationTransactionManagementService<REQUEST> service,
+  private <T> AuthenticationTransactionManagementResponse executeService(
+      AuthenticationTransactionManagementService<?> service,
+      AuthenticationTransactionManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      Object request,
+      T request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
-    return service.execute(
-        tenant, operator, oAuthToken, (REQUEST) request, requestAttributes, dryRun);
+
+    AuthenticationTransactionManagementService<T> typedService =
+        (AuthenticationTransactionManagementService<T>) service;
+
+    return typedService.execute(
+        contextBuilder, tenant, operator, oAuthToken, request, requestAttributes, dryRun);
   }
 }

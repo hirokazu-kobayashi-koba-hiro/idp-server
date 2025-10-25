@@ -17,14 +17,20 @@
 package org.idp.server.control_plane.management.security.hook.handler;
 
 import java.util.Map;
+import org.idp.server.control_plane.base.AuditableContext;
+import org.idp.server.control_plane.base.OrganizationAccessVerifier;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
+import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.security.hook.OrgSecurityEventHookConfigManagementApi;
-import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
+import org.idp.server.control_plane.management.security.hook.SecurityEventHookConfigManagementContextBuilder;
+import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.exception.NotFoundException;
 import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -63,6 +69,7 @@ public class OrgSecurityEventHookConfigManagementHandler {
   private final TenantQueryRepository tenantQueryRepository;
   private final OrganizationRepository organizationRepository;
   private final OrganizationAccessVerifier organizationAccessVerifier;
+  LoggerWrapper log = LoggerWrapper.getLogger(OrgSecurityEventHookConfigManagementHandler.class);
 
   public OrgSecurityEventHookConfigManagementHandler(
       Map<String, SecurityEventHookConfigManagementService<?>> services,
@@ -83,10 +90,8 @@ public class OrgSecurityEventHookConfigManagementHandler {
    * <p>Performs 4-step organization access control before delegating to Service.
    *
    * @param method the operation method (e.g., "create", "findList", "get", "update", "delete")
-   * @param organizationIdentifier the organization identifier
+   * @param authenticationContext the organization authentication context
    * @param tenantIdentifier the tenant identifier
-   * @param operator the user performing the operation
-   * @param oAuthToken the OAuth token for the operation
    * @param request the operation-specific request object
    * @param requestAttributes HTTP request attributes for audit logging
    * @param dryRun whether to simulate the operation without persisting changes
@@ -94,42 +99,60 @@ public class OrgSecurityEventHookConfigManagementHandler {
    */
   public SecurityEventHookConfigManagementResult handle(
       String method,
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      Object request,
+      SecurityEventHookConfigManagementRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    Tenant orgTenant = null;
+    User operator = authenticationContext.operator();
+    OAuthToken oAuthToken = authenticationContext.oAuthToken();
+    Organization organization = authenticationContext.organization();
+
+    // 1. Service selection
+    SecurityEventHookConfigManagementService<?> service = services.get(method);
+    if (service == null) {
+      throw new UnSupportedException("Unsupported operation method: " + method);
+    }
+
+    // 2. Context Builder creation (before any retrieval - enables audit logging on errors)
+    SecurityEventHookConfigManagementContextBuilder contextBuilder =
+        new SecurityEventHookConfigManagementContextBuilder(
+            tenantIdentifier, operator, oAuthToken, requestAttributes, request, dryRun);
+
     try {
-      // 1. Organization retrieval
-      Organization organization = organizationRepository.get(organizationIdentifier);
-
-      // 2. Org tenant retrieval for audit logging
-      orgTenant = tenantQueryRepository.get(organization.findOrgTenant().tenantIdentifier());
-
       // 3. Organization access verification (4-step verification)
       organizationAccessVerifier.verify(
           organization, tenantIdentifier, operator, managementApi.getRequiredPermissions(method));
 
-      // 4. Service selection
-      SecurityEventHookConfigManagementService<?> service = services.get(method);
-      if (service == null) {
-        throw new UnSupportedException("Unsupported operation method: " + method);
-      }
-
-      // 5. Tenant retrieval (the actual target tenant)
+      // 4. Tenant retrieval (the actual target tenant)
       Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-      // 6. Delegate to service
-      return executeService(
-          service, tenant, operator, oAuthToken, request, requestAttributes, dryRun);
+      // 5. Delegate to service
+      SecurityEventHookConfigManagementResponse response =
+          executeService(
+              service,
+              contextBuilder,
+              tenant,
+              operator,
+              oAuthToken,
+              request,
+              requestAttributes,
+              dryRun);
 
+      AuditableContext context = contextBuilder.build();
+      return SecurityEventHookConfigManagementResult.success(context, response);
+    } catch (NotFoundException e) {
+
+      log.warn(e.getMessage());
+      ResourceNotFoundException notFound = new ResourceNotFoundException(e.getMessage());
+      AuditableContext context = contextBuilder.buildPartial(notFound);
+      return SecurityEventHookConfigManagementResult.error(context, notFound);
     } catch (ManagementApiException e) {
-      // Wrap exception in Result with org tenant for audit logging
-      return SecurityEventHookConfigManagementResult.error(orgTenant, e);
+
+      log.warn(e.getMessage());
+      AuditableContext errorContext = contextBuilder.buildPartial(e);
+      return SecurityEventHookConfigManagementResult.error(errorContext, e);
     }
   }
 
@@ -144,7 +167,16 @@ public class OrgSecurityEventHookConfigManagementHandler {
    *   <li>EntryService methods pass the correct request type for each operation
    * </ul>
    *
+   * <p>Following the UserManagement pattern:
+   *
+   * <ol>
+   *   <li>Service returns Response directly (and populates builder with withAfter/withBefore)
+   *   <li>Handler calls builder.build() to create Context
+   *   <li>Handler wraps Response in Result.success(context, response)
+   * </ol>
+   *
    * @param service the service to execute
+   * @param builder context builder for incremental context construction
    * @param tenant the tenant (for context and audit logging)
    * @param operator the user performing the operation
    * @param oAuthToken the OAuth token
@@ -153,16 +185,18 @@ public class OrgSecurityEventHookConfigManagementHandler {
    * @param dryRun whether to simulate the operation
    * @return SecurityEventHookConfigManagementResult containing operation outcome
    */
-  private <T> SecurityEventHookConfigManagementResult executeService(
+  @SuppressWarnings("unchecked")
+  private <T> SecurityEventHookConfigManagementResponse executeService(
       SecurityEventHookConfigManagementService<T> service,
+      SecurityEventHookConfigManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
       Object request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
-    @SuppressWarnings("unchecked")
     T typedRequest = (T) request;
-    return service.execute(tenant, operator, oAuthToken, typedRequest, requestAttributes, dryRun);
+    return service.execute(
+        builder, tenant, operator, oAuthToken, typedRequest, requestAttributes, dryRun);
   }
 }

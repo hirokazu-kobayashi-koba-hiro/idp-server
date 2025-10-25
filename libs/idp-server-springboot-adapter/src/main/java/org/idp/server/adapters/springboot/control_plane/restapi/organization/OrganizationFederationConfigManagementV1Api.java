@@ -24,9 +24,9 @@ import org.idp.server.adapters.springboot.control_plane.model.OrganizationOperat
 import org.idp.server.control_plane.management.federation.OrgFederationConfigManagementApi;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
 import org.idp.server.control_plane.management.federation.io.FederationConfigRequest;
+import org.idp.server.control_plane.management.federation.io.FederationConfigUpdateRequest;
 import org.idp.server.core.openid.federation.FederationConfigurationIdentifier;
 import org.idp.server.core.openid.federation.FederationQueries;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;
@@ -91,16 +91,12 @@ public class OrganizationFederationConfigManagementV1Api implements ParameterTra
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     FederationConfigManagementResponse response =
         orgFederationConfigManagementApi.create(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new FederationConfigRequest(body),
             requestAttributes,
             dryRun);
@@ -129,16 +125,12 @@ public class OrganizationFederationConfigManagementV1Api implements ParameterTra
       @RequestParam Map<String, String> queryParams,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     FederationConfigManagementResponse response =
         orgFederationConfigManagementApi.findList(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new FederationQueries(queryParams),
             requestAttributes);
 
@@ -166,16 +158,12 @@ public class OrganizationFederationConfigManagementV1Api implements ParameterTra
       @PathVariable("configId") FederationConfigurationIdentifier configId,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     FederationConfigManagementResponse response =
         orgFederationConfigManagementApi.get(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             configId,
             requestAttributes);
 
@@ -207,18 +195,14 @@ public class OrganizationFederationConfigManagementV1Api implements ParameterTra
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     FederationConfigManagementResponse response =
         orgFederationConfigManagementApi.update(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             configId,
-            new FederationConfigRequest(body),
+            new FederationConfigUpdateRequest(configId, new FederationConfigRequest(body)),
             requestAttributes,
             dryRun);
 
@@ -248,16 +232,12 @@ public class OrganizationFederationConfigManagementV1Api implements ParameterTra
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     FederationConfigManagementResponse response =
         orgFederationConfigManagementApi.delete(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             configId,
             requestAttributes,
             dryRun);

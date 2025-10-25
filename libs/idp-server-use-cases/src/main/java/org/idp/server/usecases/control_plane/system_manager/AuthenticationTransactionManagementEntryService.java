@@ -18,6 +18,7 @@ package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.management.authentication.transaction.AuthenticationTransactionManagementApi;
 import org.idp.server.control_plane.management.authentication.transaction.handler.AuthenticationTransactionFindListService;
@@ -25,17 +26,15 @@ import org.idp.server.control_plane.management.authentication.transaction.handle
 import org.idp.server.control_plane.management.authentication.transaction.handler.AuthenticationTransactionManagementHandler;
 import org.idp.server.control_plane.management.authentication.transaction.handler.AuthenticationTransactionManagementResult;
 import org.idp.server.control_plane.management.authentication.transaction.handler.AuthenticationTransactionManagementService;
+import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionFindListRequest;
+import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionFindRequest;
 import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionManagementResponse;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionQueries;
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionQueryRepository;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
@@ -44,27 +43,13 @@ import org.idp.server.platform.type.RequestAttributes;
 public class AuthenticationTransactionManagementEntryService
     implements AuthenticationTransactionManagementApi {
 
-  AuditLogPublisher auditLogPublisher;
-  TenantQueryRepository tenantQueryRepository;
-  LoggerWrapper log =
-      LoggerWrapper.getLogger(AuthenticationTransactionManagementEntryService.class);
-
-  // Handler/Service pattern
-  private AuthenticationTransactionManagementHandler handler;
+  private final AuthenticationTransactionManagementHandler handler;
+  private final AuditLogPublisher auditLogPublisher;
 
   public AuthenticationTransactionManagementEntryService(
       AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
       TenantQueryRepository tenantQueryRepository,
       AuditLogPublisher auditLogPublisher) {
-    this.auditLogPublisher = auditLogPublisher;
-    this.tenantQueryRepository = tenantQueryRepository;
-
-    this.handler = createHandler(authenticationTransactionQueryRepository, tenantQueryRepository);
-  }
-
-  private AuthenticationTransactionManagementHandler createHandler(
-      AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
-      TenantQueryRepository tenantQueryRepository) {
 
     Map<String, AuthenticationTransactionManagementService<?>> services = new HashMap<>();
     services.put(
@@ -73,47 +58,31 @@ public class AuthenticationTransactionManagementEntryService
     services.put(
         "get", new AuthenticationTransactionFindService(authenticationTransactionQueryRepository));
 
-    return new AuthenticationTransactionManagementHandler(services, this, tenantQueryRepository);
+    this.handler =
+        new AuthenticationTransactionManagementHandler(services, this, tenantQueryRepository);
+    this.auditLogPublisher = auditLogPublisher;
   }
 
   @Override
   @Transaction(readOnly = true)
   public AuthenticationTransactionManagementResponse findList(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationTransactionQueries queries,
       RequestAttributes requestAttributes) {
 
-    // Delegate to Handler/Service pattern
+    AuthenticationTransactionFindListRequest findListRequest =
+        new AuthenticationTransactionFindListRequest(queries);
     AuthenticationTransactionManagementResult result =
         handler.handle(
-            "findList", tenantIdentifier, operator, oAuthToken, queries, requestAttributes, false);
-
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "AuthenticationTransactionManagementApi.findList",
-              tenant,
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      throw result.getException();
-    }
-
-    // Record audit log (read operation)
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "AuthenticationTransactionManagementApi.findList",
             "findList",
-            tenant,
-            operator,
-            oAuthToken,
-            requestAttributes);
+            authenticationContext,
+            tenantIdentifier,
+            findListRequest,
+            requestAttributes,
+            false);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);
@@ -122,41 +91,18 @@ public class AuthenticationTransactionManagementEntryService
   @Override
   @Transaction(readOnly = true)
   public AuthenticationTransactionManagementResponse get(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationTransactionIdentifier identifier,
       RequestAttributes requestAttributes) {
 
-    // Delegate to Handler/Service pattern
+    AuthenticationTransactionFindRequest findRequest =
+        new AuthenticationTransactionFindRequest(identifier);
     AuthenticationTransactionManagementResult result =
         handler.handle(
-            "get", tenantIdentifier, operator, oAuthToken, identifier, requestAttributes, false);
+            "get", authenticationContext, tenantIdentifier, findRequest, requestAttributes, false);
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "AuthenticationTransactionManagementApi.get",
-              tenant,
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      throw result.getException();
-    }
-
-    // Record audit log (read operation)
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "AuthenticationTransactionManagementApi.get",
-            "get",
-            tenant,
-            operator,
-            oAuthToken,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);

@@ -16,11 +16,11 @@
 
 package org.idp.server.usecases.application.system;
 
-import org.idp.server.core.openid.identity.OrganizationUserAuthenticationApi;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
+import org.idp.server.control_plane.base.OrganizationUserAuthenticationApi;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.TokenProtocol;
 import org.idp.server.core.openid.token.TokenProtocols;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionInternalRequest;
@@ -69,7 +69,7 @@ public class OrganizationUserAuthenticationEntryService
    * @return a pair of authenticated User and OAuthToken
    * @throws UnauthorizedException if authentication fails
    */
-  public Pairs<User, OAuthToken> authenticate(
+  public Pairs<User, OrganizationAuthenticationContext> authenticate(
       OrganizationIdentifier organizationId, String authorizationHeader, String clientCert) {
 
     Organization organization = organizationRepository.get(organizationId);
@@ -89,12 +89,17 @@ public class OrganizationUserAuthenticationEntryService
     }
 
     if (introspectionResponse.isClientCredentialsGrant()) {
-      return Pairs.of(User.notFound(), introspectionResponse.oAuthToken());
+      throw new UnauthorizedException(
+          "error=invalid_token error_description=client_credentials_grant is forbidden management api.");
     }
 
     UserIdentifier userIdentifier = new UserIdentifier(introspectionResponse.subject());
     User user = userQueryRepository.get(tenant, userIdentifier);
 
-    return new Pairs<>(user, introspectionResponse.oAuthToken());
+    OrganizationAuthenticationContext authenticationContext =
+        new OrganizationAuthenticationContext(
+            organization, tenant, introspectionResponse.oAuthToken(), user);
+
+    return new Pairs<>(user, authenticationContext);
   }
 }

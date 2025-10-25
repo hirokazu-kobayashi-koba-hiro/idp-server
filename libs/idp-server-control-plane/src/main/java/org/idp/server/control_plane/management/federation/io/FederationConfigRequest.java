@@ -18,7 +18,7 @@ package org.idp.server.control_plane.management.federation.io;
 
 import java.util.Map;
 
-public class FederationConfigRequest {
+public class FederationConfigRequest implements FederationConfigManagementRequest {
 
   Map<String, Object> values;
 
@@ -26,6 +26,7 @@ public class FederationConfigRequest {
     this.values = values;
   }
 
+  @Override
   public Map<String, Object> toMap() {
     return values;
   }

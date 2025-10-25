@@ -519,7 +519,7 @@ describe("Organization Role Management API - Structured Tests", () => {
           }
         });
 
-        expect(response.status).toBe(201);
+        expect(response.status).toBe(200);
         expect(response.data).toHaveProperty("dry_run", true);
         expect(response.data).toHaveProperty("result");
         expect(response.data.result).toHaveProperty("id");

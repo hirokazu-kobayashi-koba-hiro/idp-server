@@ -117,7 +117,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
           }
         });
 
-        expect(response.status).toBe(201);
+        expect(response.status).toBe(200);
         expect(response.data).toHaveProperty("dry_run", true);
         expect(response.data).toHaveProperty("result");
 
@@ -445,7 +445,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
           }
         });
 
-        expect(response.status).toBe(201);
+        expect(response.status).toBe(200);
         expect(response.data).toHaveProperty("dry_run", true);
         expect(response.data).toHaveProperty("result");
       });
@@ -644,7 +644,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
           }
         });
 
-        expect(response.status).toBe(400); // Update operation currently returns 400 - API needs investigation
+        expect(response.status).toBe(200);
 
         // Clean up
         await deletion({
@@ -896,6 +896,8 @@ describe("Organization Federation Config Management API - Structured Tests", () 
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
+            type: "oidc",
+            sso_provider: ssoProvider,
             payload: {
               description: "Updated lifecycle test",
               userinfoExecution: {
@@ -918,7 +920,7 @@ describe("Organization Federation Config Management API - Structured Tests", () 
           }
         });
 
-        expect(updateResponse.status).toBe(400); // Update operation currently returns 400 - API needs investigation
+        expect(updateResponse.status).toBe(200);
 
         // Note: Update operation failed, skipping verification of updated values
 

@@ -56,9 +56,8 @@ public class PermissionManagementV1Api implements ParameterTransformable {
 
     PermissionManagementResponse response =
         permissionManagementApi.create(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             new PermissionRequest(body),
             requestAttributes,
             dryRun);
@@ -80,9 +79,8 @@ public class PermissionManagementV1Api implements ParameterTransformable {
 
     PermissionManagementResponse response =
         permissionManagementApi.findList(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             new PermissionQueries(queryParams),
             requestAttributes);
 
@@ -103,9 +101,8 @@ public class PermissionManagementV1Api implements ParameterTransformable {
 
     PermissionManagementResponse response =
         permissionManagementApi.get(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             requestAttributes);
 
@@ -128,9 +125,8 @@ public class PermissionManagementV1Api implements ParameterTransformable {
 
     PermissionManagementResponse response =
         permissionManagementApi.update(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             new PermissionRequest(body),
             requestAttributes,
@@ -153,9 +149,8 @@ public class PermissionManagementV1Api implements ParameterTransformable {
 
     PermissionManagementResponse response =
         permissionManagementApi.delete(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             requestAttributes,
             dryRun);

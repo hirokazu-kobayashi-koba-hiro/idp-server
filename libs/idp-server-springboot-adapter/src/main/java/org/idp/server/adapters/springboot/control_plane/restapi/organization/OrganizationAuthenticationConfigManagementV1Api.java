@@ -35,21 +35,21 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Organization-level authentication configuration management API controller.
+ * Organization-level authentication policy configuration management API controller.
  *
- * <p>This controller handles authentication configuration management operations within an
- * organization context. It provides CRUD operations for authentication configurations belonging to
- * a specific organization and tenant, with proper authentication and authorization through the
- * OrganizationOperatorPrincipal.
+ * <p>This controller handles authentication policy configuration management operations within an
+ * organization context. It provides CRUD operations for authentication policy configurations
+ * belonging to a specific organization and tenant, with proper authentication and authorization
+ * through the OrganizationOperatorPrincipal.
  *
- * <p>All operations are performed within the context of the organization's admin tenant, ensuring
- * proper isolation and access control.
+ * <p>All operations are performed within the context of the organization's tenant, ensuring proper
+ * isolation and access control.
  *
  * <p>API endpoints: - POST
  * /organizations/{organizationId}/tenants/{tenantId}/authentication-configurations - Create
- * authentication config - GET
+ * authentication policy config - GET
  * /organizations/{organizationId}/tenants/{tenantId}/authentication-configurations - List
- * authentication configs - GET
+ * authentication policy configs - GET
  * /organizations/{organizationId}/tenants/{tenantId}/authentication-configurations/{configId} - Get
  * specific config - PUT
  * /organizations/{organizationId}/tenants/{tenantId}/authentication-configurations/{configId} -
@@ -74,15 +74,15 @@ public class OrganizationAuthenticationConfigManagementV1Api implements Paramete
   }
 
   /**
-   * Creates a new authentication configuration within the organization.
+   * Creates a new authentication policy configuration within the organization.
    *
    * @param organizationOperatorPrincipal the authenticated organization operator
    * @param organizationId the organization identifier from path
    * @param tenantId the tenant identifier from path
-   * @param body the authentication configuration request body
+   * @param body the authentication policy configuration request body
    * @param dryRun whether to perform a dry run (validation only)
    * @param httpServletRequest the HTTP request
-   * @return the authentication configuration creation response
+   * @return the authentication policy configuration creation response
    */
   @PostMapping
   public ResponseEntity<?> post(
@@ -93,16 +93,12 @@ public class OrganizationAuthenticationConfigManagementV1Api implements Paramete
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AuthenticationConfigManagementResponse response =
         orgAuthenticationConfigManagementApi.create(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new AuthenticationConfigRequest(body),
             requestAttributes,
             dryRun);
@@ -114,7 +110,7 @@ public class OrganizationAuthenticationConfigManagementV1Api implements Paramete
   }
 
   /**
-   * Lists all authentication configurations belonging to the organization.
+   * Lists all authentication policy configurations belonging to the organization.
    *
    * @param organizationOperatorPrincipal the authenticated organization operator
    * @param organizationId the organization identifier from path
@@ -122,7 +118,7 @@ public class OrganizationAuthenticationConfigManagementV1Api implements Paramete
    * @param limitValue the maximum number of results to return
    * @param offsetValue the offset for pagination
    * @param httpServletRequest the HTTP request
-   * @return the authentication configuration list response
+   * @return the authentication policy configuration list response
    */
   @GetMapping
   public ResponseEntity<?> getList(
@@ -142,10 +138,8 @@ public class OrganizationAuthenticationConfigManagementV1Api implements Paramete
 
     AuthenticationConfigManagementResponse response =
         orgAuthenticationConfigManagementApi.findList(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             limit,
             offset,
             requestAttributes);
@@ -157,14 +151,14 @@ public class OrganizationAuthenticationConfigManagementV1Api implements Paramete
   }
 
   /**
-   * Gets a specific authentication configuration within the organization.
+   * Gets a specific authentication policy configuration within the organization.
    *
    * @param organizationOperatorPrincipal the authenticated organization operator
    * @param organizationId the organization identifier from path
    * @param tenantId the tenant identifier from path
-   * @param configId the authentication configuration identifier from path
+   * @param configId the authentication policy configuration identifier from path
    * @param httpServletRequest the HTTP request
-   * @return the authentication configuration details response
+   * @return the authentication policy configuration details response
    */
   @GetMapping("/{configId}")
   public ResponseEntity<?> get(
@@ -174,16 +168,12 @@ public class OrganizationAuthenticationConfigManagementV1Api implements Paramete
       @PathVariable String configId,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AuthenticationConfigManagementResponse response =
         orgAuthenticationConfigManagementApi.get(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new AuthenticationConfigurationIdentifier(configId),
             requestAttributes);
 
@@ -194,16 +184,16 @@ public class OrganizationAuthenticationConfigManagementV1Api implements Paramete
   }
 
   /**
-   * Updates a specific authentication configuration within the organization.
+   * Updates a specific authentication policy configuration within the organization.
    *
    * @param organizationOperatorPrincipal the authenticated organization operator
    * @param organizationId the organization identifier from path
    * @param tenantId the tenant identifier from path
-   * @param configId the authentication configuration identifier from path
-   * @param body the authentication configuration update request body
+   * @param configId the authentication policy configuration identifier from path
+   * @param body the authentication policy configuration update request body
    * @param dryRun whether to perform a dry run (validation only)
    * @param httpServletRequest the HTTP request
-   * @return the authentication configuration update response
+   * @return the authentication policy configuration update response
    */
   @PutMapping("/{configId}")
   public ResponseEntity<?> put(
@@ -215,16 +205,12 @@ public class OrganizationAuthenticationConfigManagementV1Api implements Paramete
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AuthenticationConfigManagementResponse response =
         orgAuthenticationConfigManagementApi.update(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new AuthenticationConfigurationIdentifier(configId),
             new AuthenticationConfigRequest(body),
             requestAttributes,
@@ -237,15 +223,15 @@ public class OrganizationAuthenticationConfigManagementV1Api implements Paramete
   }
 
   /**
-   * Deletes a specific authentication configuration within the organization.
+   * Deletes a specific authentication policy configuration within the organization.
    *
    * @param organizationOperatorPrincipal the authenticated organization operator
    * @param organizationId the organization identifier from path
    * @param tenantId the tenant identifier from path
-   * @param configId the authentication configuration identifier from path
+   * @param configId the authentication policy configuration identifier from path
    * @param dryRun whether to perform a dry run (validation only)
    * @param httpServletRequest the HTTP request
-   * @return the authentication configuration deletion response
+   * @return the authentication policy configuration deletion response
    */
   @DeleteMapping("/{configId}")
   public ResponseEntity<?> delete(
@@ -256,16 +242,12 @@ public class OrganizationAuthenticationConfigManagementV1Api implements Paramete
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AuthenticationConfigManagementResponse response =
         orgAuthenticationConfigManagementApi.delete(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new AuthenticationConfigurationIdentifier(configId),
             requestAttributes,
             dryRun);

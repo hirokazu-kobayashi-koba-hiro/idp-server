@@ -23,5 +23,9 @@ public interface ConfigRegistrationContext {
 
   Map<String, Object> payload();
 
+  Map<String, Object> requestPayload();
+
+  String targetTenantId();
+
   boolean isDryRun();
 }

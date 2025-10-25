@@ -17,13 +17,20 @@
 package org.idp.server.control_plane.management.identity.user.handler;
 
 import java.util.Map;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.ApiPermissionVerifier;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
+import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.identity.user.UserManagementApi;
+import org.idp.server.control_plane.management.identity.user.UserManagementContextBuilder;
+import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.exception.NotFoundException;
 import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -71,6 +78,7 @@ public class UserManagementHandler {
   private final UserManagementApi managementApi;
   private final ApiPermissionVerifier apiPermissionVerifier;
   private final TenantQueryRepository tenantQueryRepository;
+  LoggerWrapper log = LoggerWrapper.getLogger(UserManagementHandler.class);
 
   public UserManagementHandler(
       Map<String, UserManagementService<?>> services,
@@ -85,13 +93,9 @@ public class UserManagementHandler {
   /**
    * Handles user management operations.
    *
-   * <p>Catches ManagementApiException and wraps them in Result. EntryService will check {@code
-   * result.hasException()} and re-throw for transaction rollback.
-   *
    * @param method the operation method (e.g., "create", "update", "delete")
-   * @param tenantIdentifier the tenant context
-   * @param operator the user performing the operation
-   * @param oAuthToken the OAuth token for the operation
+   * @param authenticationContext the admin authentication context
+   * @param tenantIdentifier the tenant identifier
    * @param request the operation-specific request object
    * @param requestAttributes HTTP request attributes for audit logging
    * @param dryRun if true, validate but don't persist changes
@@ -99,36 +103,59 @@ public class UserManagementHandler {
    */
   public UserManagementResult handle(
       String method,
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      Object request,
+      UserManagementRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    Tenant tenant = null;
-    try {
-      // 0. Get tenant first (needed for audit logging even if operation fails)
-      tenant = tenantQueryRepository.get(tenantIdentifier);
+    User operator = authenticationContext.operator();
+    OAuthToken oAuthToken = authenticationContext.oAuthToken();
 
-      // 1. Permission verification with tenant type check (throws PermissionDeniedException if
+    // 1. Service selection
+    UserManagementService<?> service = services.get(method);
+    if (service == null) {
+      throw new UnSupportedException("Unsupported operation method: " + method);
+    }
+
+    // 2. Context Builder creation (before Tenant retrieval - enables audit logging on errors)
+    UserManagementContextBuilder contextBuilder =
+        new UserManagementContextBuilder(
+            tenantIdentifier, operator, oAuthToken, requestAttributes, request, dryRun);
+
+    try {
+      // 3. Get tenant
+      Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+      // 4. Permission verification with tenant type check (throws PermissionDeniedException if
       // denied)
       AdminPermissions requiredPermissions = managementApi.getRequiredPermissions(method, tenant);
       apiPermissionVerifier.verify(operator, requiredPermissions);
 
-      // 2. Service selection
-      UserManagementService<?> service = services.get(method);
-      if (service == null) {
-        throw new UnSupportedException("Unsupported operation method: " + method);
-      }
+      // 5. Delegate to service (pass tenant to avoid duplicate retrieval)
+      UserManagementResponse response =
+          executeService(
+              service,
+              contextBuilder,
+              tenant,
+              operator,
+              oAuthToken,
+              request,
+              requestAttributes,
+              dryRun);
 
-      // 3. Delegate to service (pass tenant to avoid duplicate retrieval)
-      return executeService(
-          service, tenant, operator, oAuthToken, request, requestAttributes, dryRun);
-
+      AuditableContext context = contextBuilder.build();
+      return UserManagementResult.success(context, response);
+    } catch (NotFoundException notFoundException) {
+      ResourceNotFoundException resourceNotFoundException =
+          new ResourceNotFoundException(notFoundException.getMessage());
+      AuditableContext errorContext = contextBuilder.buildPartial(resourceNotFoundException);
+      return UserManagementResult.error(errorContext, resourceNotFoundException);
     } catch (ManagementApiException e) {
-      // Wrap exception in Result with tenant for audit logging
-      return UserManagementResult.error(tenant, e);
+      log.warn(e.getMessage());
+      // Partial Context creation for audit logging (may not have Tenant if retrieval failed)
+      AuditableContext errorContext = contextBuilder.buildPartial(e);
+      return UserManagementResult.error(errorContext, e);
     }
   }
 
@@ -145,8 +172,9 @@ public class UserManagementHandler {
    * </ul>
    */
   @SuppressWarnings("unchecked")
-  private <REQUEST> UserManagementResult executeService(
+  private <REQUEST> UserManagementResponse executeService(
       UserManagementService<REQUEST> service,
+      UserManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -154,6 +182,6 @@ public class UserManagementHandler {
       RequestAttributes requestAttributes,
       boolean dryRun) {
     return service.execute(
-        tenant, operator, oAuthToken, (REQUEST) request, requestAttributes, dryRun);
+        builder, tenant, operator, oAuthToken, (REQUEST) request, requestAttributes, dryRun);
   }
 }

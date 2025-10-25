@@ -16,12 +16,18 @@
 
 package org.idp.server.control_plane.management.security.hook.handler;
 
-import org.idp.server.control_plane.management.security.hook.SecurityEventHookConfigRegistrationContext;
-import org.idp.server.control_plane.management.security.hook.SecurityEventHookConfigRegistrationContextCreator;
+import java.util.Map;
+import java.util.UUID;
+import org.idp.server.control_plane.management.security.hook.SecurityEventHookConfigManagementContextBuilder;
+import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
+import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementStatus;
+import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigurationRequest;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookRequest;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationCommandRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -34,7 +40,8 @@ import org.idp.server.platform.type.RequestAttributes;
  * <h2>Responsibilities</h2>
  *
  * <ul>
- *   <li>Context creation from request
+ *   <li>Configuration creation from request
+ *   <li>Builder population (withAfter)
  *   <li>Dry-run simulation support
  *   <li>Configuration registration
  * </ul>
@@ -53,7 +60,8 @@ public class SecurityEventHookConfigCreateService
   }
 
   @Override
-  public SecurityEventHookConfigManagementResult execute(
+  public SecurityEventHookConfigManagementResponse execute(
+      SecurityEventHookConfigManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -61,18 +69,30 @@ public class SecurityEventHookConfigCreateService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    SecurityEventHookConfigRegistrationContextCreator contextCreator =
-        new SecurityEventHookConfigRegistrationContextCreator(tenant, request, dryRun);
-    SecurityEventHookConfigRegistrationContext context = contextCreator.create();
+    // 1. Create configuration from request
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+    SecurityEventHookConfigurationRequest configurationRequest =
+        jsonConverter.read(request.toMap(), SecurityEventHookConfigurationRequest.class);
+    String id =
+        configurationRequest.hasId() ? configurationRequest.id() : UUID.randomUUID().toString();
+    SecurityEventHookConfiguration configuration = configurationRequest.toConfiguration(id);
 
-    if (context.isDryRun()) {
-      return SecurityEventHookConfigManagementResult.successWithContext(
-          tenant, context.toResponse(), context);
+    // 2. Populate builder with created configuration
+    builder.withAfter(configuration);
+
+    // 3. Build response
+    Map<String, Object> contents = Map.of("result", configuration.toMap(), "dry_run", dryRun);
+
+    // 4. Dry-run check
+    if (dryRun) {
+      return new SecurityEventHookConfigManagementResponse(
+          SecurityEventHookConfigManagementStatus.OK, contents);
     }
 
-    securityEventHookConfigurationCommandRepository.register(tenant, context.configuration());
+    // 5. Register configuration
+    securityEventHookConfigurationCommandRepository.register(tenant, configuration);
 
-    return SecurityEventHookConfigManagementResult.successWithContext(
-        tenant, context.toResponse(), context);
+    return new SecurityEventHookConfigManagementResponse(
+        SecurityEventHookConfigManagementStatus.CREATED, contents);
   }
 }

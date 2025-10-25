@@ -16,45 +16,42 @@
 
 package org.idp.server.control_plane.management.authentication.policy.handler;
 
-import org.idp.server.control_plane.management.authentication.policy.AuthenticationPolicyConfigRegistrationContext;
-import org.idp.server.control_plane.management.authentication.policy.AuthenticationPolicyConfigRegistrationContextCreator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import org.idp.server.control_plane.management.authentication.policy.AuthenticationPolicyConfigManagementContextBuilder;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementResponse;
+import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementStatus;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigRequest;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationCommandRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
  * Service for creating authentication policy configurations.
  *
- * <p>Handles authentication policy configuration creation logic extracted from
- * AuthenticationPolicyConfigurationManagementEntryService.
- *
- * <h2>Responsibilities</h2>
- *
- * <ul>
- *   <li>Context creation
- *   <li>Configuration registration in repository
- *   <li>Dry-run support
- * </ul>
+ * <p>Handles business logic for creating authentication policy configurations. Part of
+ * Handler/Service pattern.
  */
 public class AuthenticationPolicyConfigCreationService
     implements AuthenticationPolicyConfigManagementService<AuthenticationPolicyConfigRequest> {
 
-  private final AuthenticationPolicyConfigurationCommandRepository
-      authenticationPolicyConfigurationCommandRepository;
+  private final AuthenticationPolicyConfigurationCommandRepository commandRepository;
+  private final JsonConverter jsonConverter;
 
   public AuthenticationPolicyConfigCreationService(
-      AuthenticationPolicyConfigurationCommandRepository
-          authenticationPolicyConfigurationCommandRepository) {
-    this.authenticationPolicyConfigurationCommandRepository =
-        authenticationPolicyConfigurationCommandRepository;
+      AuthenticationPolicyConfigurationCommandRepository commandRepository) {
+    this.commandRepository = commandRepository;
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override
-  public AuthenticationPolicyConfigManagementResult execute(
+  public AuthenticationPolicyConfigManagementResponse execute(
+      AuthenticationPolicyConfigManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -62,22 +59,27 @@ public class AuthenticationPolicyConfigCreationService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    // 1. Context creation
-    AuthenticationPolicyConfigRegistrationContextCreator contextCreator =
-        new AuthenticationPolicyConfigRegistrationContextCreator(tenant, request, dryRun);
-    AuthenticationPolicyConfigRegistrationContext context = contextCreator.create();
+    // Build AuthenticationPolicyConfiguration (add id if missing)
+    Map<String, Object> map = new HashMap<>(request.toMap());
+    if (!request.hasId()) {
+      map.put("id", UUID.randomUUID().toString());
+    }
+    AuthenticationPolicyConfiguration configuration =
+        jsonConverter.read(map, AuthenticationPolicyConfiguration.class);
 
-    // 2. Dry-run check
+    // Update context builder with after state
+    contextBuilder.withAfter(configuration);
+
+    Map<String, Object> response = Map.of("result", configuration.toMap(), "dry_run", dryRun);
     if (dryRun) {
-      AuthenticationPolicyConfigManagementResponse response = context.toResponse();
-      return AuthenticationPolicyConfigManagementResult.success(tenant, context, response);
+      return new AuthenticationPolicyConfigManagementResponse(
+          AuthenticationPolicyConfigManagementStatus.OK, response);
     }
 
-    // 3. Register configuration
-    authenticationPolicyConfigurationCommandRepository.register(tenant, context.configuration());
+    // Register configuration
+    commandRepository.register(tenant, configuration);
 
-    // 4. Return success
-    AuthenticationPolicyConfigManagementResponse response = context.toResponse();
-    return AuthenticationPolicyConfigManagementResult.success(tenant, context, response);
+    return new AuthenticationPolicyConfigManagementResponse(
+        AuthenticationPolicyConfigManagementStatus.CREATED, response);
   }
 }

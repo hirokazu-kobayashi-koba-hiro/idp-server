@@ -19,14 +19,13 @@ package org.idp.server.control_plane.management.permission;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.permission.io.PermissionManagementResponse;
 import org.idp.server.control_plane.management.permission.io.PermissionRequest;
-import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.permission.PermissionIdentifier;
 import org.idp.server.core.openid.identity.permission.PermissionQueries;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
@@ -48,40 +47,35 @@ public interface PermissionManagementApi {
   }
 
   PermissionManagementResponse create(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       PermissionRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
   PermissionManagementResponse findList(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       PermissionQueries queries,
       RequestAttributes requestAttributes);
 
   PermissionManagementResponse get(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       PermissionIdentifier identifier,
       RequestAttributes requestAttributes);
 
   PermissionManagementResponse update(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       PermissionIdentifier identifier,
       PermissionRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
   PermissionManagementResponse delete(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       PermissionIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun);

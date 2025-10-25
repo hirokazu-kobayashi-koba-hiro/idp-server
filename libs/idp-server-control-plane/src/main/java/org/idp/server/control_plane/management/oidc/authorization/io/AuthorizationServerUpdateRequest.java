@@ -18,7 +18,7 @@ package org.idp.server.control_plane.management.oidc.authorization.io;
 
 import java.util.Map;
 
-public class AuthorizationServerUpdateRequest {
+public class AuthorizationServerUpdateRequest implements AuthorizationServerManagementRequest {
 
   Map<String, Object> values;
 
@@ -26,6 +26,7 @@ public class AuthorizationServerUpdateRequest {
     this.values = values;
   }
 
+  @Override
   public Map<String, Object> toMap() {
     return values;
   }

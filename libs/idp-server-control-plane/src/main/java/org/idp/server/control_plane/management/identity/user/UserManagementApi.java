@@ -19,14 +19,13 @@ package org.idp.server.control_plane.management.identity.user;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
-import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.UserQueries;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -87,84 +86,74 @@ public interface UserManagementApi {
   }
 
   UserManagementResponse create(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
   UserManagementResponse findList(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserQueries queries,
       RequestAttributes requestAttributes);
 
   UserManagementResponse get(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       RequestAttributes requestAttributes);
 
   UserManagementResponse update(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
   UserManagementResponse patch(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
   UserManagementResponse updatePassword(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
   UserManagementResponse delete(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
   UserManagementResponse updateRoles(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
   UserManagementResponse updateTenantAssignments(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
   UserManagementResponse updateOrganizationAssignments(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       UserIdentifier userIdentifier,
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,

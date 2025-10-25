@@ -16,14 +16,21 @@
 
 package org.idp.server.control_plane.management.identity.user.handler;
 
-import org.idp.server.control_plane.management.identity.user.UserRolesUpdateContextCreator;
-import org.idp.server.control_plane.management.identity.user.UserUpdateContext;
+import java.util.Map;
+import org.idp.server.control_plane.management.identity.user.UserManagementContextBuilder;
+import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
+import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
+import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
+import org.idp.server.control_plane.management.identity.user.io.UserUpdateRequest;
 import org.idp.server.control_plane.management.identity.user.validator.UserRolesUpdateRequestValidator;
 import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationRelatedDataVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.json.JsonDiffCalculator;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -68,7 +75,8 @@ public class UserRolesUpdateService implements UserManagementService<UserUpdateR
   }
 
   @Override
-  public UserManagementResult execute(
+  public UserManagementResponse execute(
+      UserManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -81,15 +89,29 @@ public class UserRolesUpdateService implements UserManagementService<UserUpdateR
     new UserRolesUpdateRequestValidator(request.registrationRequest(), dryRun).validate();
     relatedDataVerifier.verifyRoles(tenant, request.registrationRequest());
 
-    UserUpdateContext context =
-        new UserRolesUpdateContextCreator(tenant, before, request.registrationRequest(), dryRun)
-            .create();
+    User after = updateUser(request.registrationRequest(), before);
+
+    // Set before/after users to builder for context completion
+    builder.withBefore(before);
+    builder.withAfter(after);
+
+    JsonNodeWrapper beforeJson = JsonNodeWrapper.fromMap(before.toMap());
+    JsonNodeWrapper afterJson = JsonNodeWrapper.fromMap(after.toMap());
+    Map<String, Object> diff = JsonDiffCalculator.deepDiff(beforeJson, afterJson);
+    Map<String, Object> contents = Map.of("result", after.toMap(), "diff", diff, "dry_run", dryRun);
+    UserManagementResponse response = new UserManagementResponse(UserManagementStatus.OK, contents);
 
     if (dryRun) {
-      return UserManagementResult.success(tenant, context, context.toResponse());
+      return response;
     }
 
-    userCommandRepository.update(tenant, context.after());
-    return UserManagementResult.success(tenant, context, context.toResponse());
+    userCommandRepository.update(tenant, after);
+    return response;
+  }
+
+  public User updateUser(UserRegistrationRequest request, User before) {
+    User newUser = JsonConverter.snakeCaseInstance().read(request.toMap(), User.class);
+
+    return before.setRoles(newUser.roles());
   }
 }

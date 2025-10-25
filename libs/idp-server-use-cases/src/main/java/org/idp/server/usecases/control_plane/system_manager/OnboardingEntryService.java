@@ -16,17 +16,16 @@
 
 package org.idp.server.usecases.control_plane.system_manager;
 
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.verifier.TenantVerifier;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
-import org.idp.server.control_plane.management.onboarding.OnboardingContext;
 import org.idp.server.control_plane.management.onboarding.handler.OnboardingManagementHandler;
 import org.idp.server.control_plane.management.onboarding.handler.OnboardingManagementResult;
 import org.idp.server.control_plane.management.onboarding.handler.OnboardingService;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingRequest;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingResponse;
 import org.idp.server.control_plane.management.onboarding.verifier.OnboardingVerifier;
-import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserRegistrator;
 import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.core.openid.identity.permission.PermissionCommandRepository;
@@ -35,7 +34,6 @@ import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.identity.role.RoleCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationCommandRepository;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
@@ -89,39 +87,17 @@ public class OnboardingEntryService implements OnboardingApi {
   }
 
   public OnboardingResponse onboard(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier adminTenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       OnboardingRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
     OnboardingManagementResult result =
         handler.handle(
-            adminTenantIdentifier, operator, oAuthToken, request, requestAttributes, dryRun);
+            authenticationContext, adminTenantIdentifier, request, requestAttributes, dryRun);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "OnboardingApi.onboard",
-              tenantQueryRepository.get(result.adminTenantIdentifier()),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
-
-    OnboardingContext context = result.context();
-    AuditLog auditLog =
-        AuditLogCreator.create(
-            "OnboardingApi.onboard",
-            tenantQueryRepository.get(result.adminTenantIdentifier()),
-            operator,
-            oAuthToken,
-            context,
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

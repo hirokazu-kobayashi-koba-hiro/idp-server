@@ -56,9 +56,8 @@ public class SecurityEventHookConfigurationManagementV1Api implements ParameterT
 
     SecurityEventHookConfigManagementResponse response =
         securityEventHookConfigurationManagementApi.create(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             new SecurityEventHookRequest(body),
             requestAttributes,
             dryRun);
@@ -81,9 +80,8 @@ public class SecurityEventHookConfigurationManagementV1Api implements ParameterT
 
     SecurityEventHookConfigManagementResponse response =
         securityEventHookConfigurationManagementApi.findList(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             Integer.parseInt(limitValue),
             Integer.parseInt(offsetValue),
             requestAttributes);
@@ -105,9 +103,8 @@ public class SecurityEventHookConfigurationManagementV1Api implements ParameterT
 
     SecurityEventHookConfigManagementResponse response =
         securityEventHookConfigurationManagementApi.get(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             requestAttributes);
 
@@ -130,9 +127,8 @@ public class SecurityEventHookConfigurationManagementV1Api implements ParameterT
 
     SecurityEventHookConfigManagementResponse response =
         securityEventHookConfigurationManagementApi.update(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             new SecurityEventHookRequest(body),
             requestAttributes,
@@ -155,9 +151,8 @@ public class SecurityEventHookConfigurationManagementV1Api implements ParameterT
 
     SecurityEventHookConfigManagementResponse response =
         securityEventHookConfigurationManagementApi.delete(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             requestAttributes,
             dryRun);

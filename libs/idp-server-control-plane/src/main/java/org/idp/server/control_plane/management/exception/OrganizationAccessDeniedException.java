@@ -18,13 +18,13 @@ package org.idp.server.control_plane.management.exception;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.OrganizationAccessVerifier;
 
 /**
  * Exception thrown when organization-level access control verification fails.
  *
- * <p>This exception is thrown by {@link
- * org.idp.server.control_plane.organization.access.OrganizationAccessVerifier} when any of the
- * 4-step verification process fails:
+ * <p>This exception is thrown by {@link OrganizationAccessVerifier} when any of the 4-step
+ * verification process fails:
  *
  * <ol>
  *   <li>Organization membership verification
@@ -46,7 +46,7 @@ import java.util.Map;
  * }
  * }</pre>
  *
- * @see org.idp.server.control_plane.organization.access.OrganizationAccessVerifier
+ * @see OrganizationAccessVerifier
  * @see ManagementApiException
  */
 public class OrganizationAccessDeniedException extends ManagementApiException {

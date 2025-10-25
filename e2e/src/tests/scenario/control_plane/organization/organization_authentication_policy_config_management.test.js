@@ -202,7 +202,7 @@ describe("Organization Authentication Policy Config Management API Test", () => 
       body: createRequest,
     });
 
-    expect(dryRunResponse.status).toBe(201);
+    expect(dryRunResponse.status).toBe(200);
     expect(dryRunResponse.data).toHaveProperty("dry_run", true);
     expect(dryRunResponse.data).toHaveProperty("result");
     expect(dryRunResponse.data.result).toHaveProperty("id", configId);

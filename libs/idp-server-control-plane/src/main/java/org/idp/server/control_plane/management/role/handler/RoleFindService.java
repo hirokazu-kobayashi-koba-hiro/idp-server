@@ -17,6 +17,8 @@
 package org.idp.server.control_plane.management.role.handler;
 
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
+import org.idp.server.control_plane.management.role.RoleManagementContextBuilder;
+import org.idp.server.control_plane.management.role.io.RoleFindRequest;
 import org.idp.server.control_plane.management.role.io.RoleManagementResponse;
 import org.idp.server.control_plane.management.role.io.RoleManagementStatus;
 import org.idp.server.core.openid.identity.User;
@@ -39,7 +41,7 @@ import org.idp.server.platform.type.RequestAttributes;
  *   <li>NOT_FOUND response when role doesn't exist
  * </ul>
  */
-public class RoleFindService implements RoleManagementService<RoleIdentifier> {
+public class RoleFindService implements RoleManagementService<RoleFindRequest> {
 
   private final RoleQueryRepository roleQueryRepository;
 
@@ -48,21 +50,25 @@ public class RoleFindService implements RoleManagementService<RoleIdentifier> {
   }
 
   @Override
-  public RoleManagementResult execute(
+  public RoleManagementResponse execute(
+      RoleManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      RoleIdentifier identifier,
+      RoleFindRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    RoleIdentifier identifier = request.identifier();
     Role role = roleQueryRepository.find(tenant, identifier);
 
     if (!role.exists()) {
       throw new ResourceNotFoundException(String.format("Role not found: %s", identifier.value()));
     }
 
-    return RoleManagementResult.success(
-        tenant, new RoleManagementResponse(RoleManagementStatus.OK, role.toMap()));
+    // Populate builder with found role
+    builder.withBefore(role);
+
+    return new RoleManagementResponse(RoleManagementStatus.OK, role.toMap());
   }
 }

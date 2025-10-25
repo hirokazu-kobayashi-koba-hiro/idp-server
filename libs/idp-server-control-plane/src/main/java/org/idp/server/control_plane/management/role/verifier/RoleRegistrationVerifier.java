@@ -16,23 +16,31 @@
 
 package org.idp.server.control_plane.management.role.verifier;
 
-import org.idp.server.control_plane.management.role.RoleRegistrationContext;
-import org.idp.server.control_plane.management.role.RoleUpdateContext;
+import org.idp.server.control_plane.management.role.io.RoleRequest;
+import org.idp.server.core.openid.identity.permission.Permissions;
+import org.idp.server.core.openid.identity.role.Roles;
 
 public class RoleRegistrationVerifier {
 
-  public RoleRegistrationVerifier() {}
+  private final RoleRequest roleRequest;
+  private final Roles roles;
+  private final Permissions permissions;
 
-  public void verify(RoleRegistrationContext context) {
+  public RoleRegistrationVerifier(RoleRequest roleRequest, Roles roles, Permissions permissions) {
+    this.roleRequest = roleRequest;
+    this.roles = roles;
+    this.permissions = permissions;
+  }
+
+  public void verify() {
     RolePermissionVerifier rolePermissionVerifier =
-        new RolePermissionVerifier(context.request(), context.roles(), context.permissions(), null);
+        new RolePermissionVerifier(roleRequest, roles, permissions, null);
     rolePermissionVerifier.verify();
   }
 
-  public void verify(RoleUpdateContext context) {
+  public void verify(String updatingRoleId) {
     RolePermissionVerifier rolePermissionVerifier =
-        new RolePermissionVerifier(
-            context.request(), context.roles(), context.permissions(), context.before().id());
+        new RolePermissionVerifier(roleRequest, roles, permissions, updatingRoleId);
     rolePermissionVerifier.verify();
   }
 }

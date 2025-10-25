@@ -16,6 +16,8 @@
 
 package org.idp.server.control_plane.management.authentication.policy.handler;
 
+import org.idp.server.control_plane.management.authentication.policy.AuthenticationPolicyConfigManagementContextBuilder;
+import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementResponse;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -24,10 +26,11 @@ import org.idp.server.platform.type.RequestAttributes;
 /**
  * Service interface for authentication policy configuration management operations.
  *
- * <p>Part of Handler/Service pattern. Each operation (create, findList, get, update, delete) has
- * its own service implementation that handles business logic.
+ * <p>Part of Handler/Service pattern. Implementations handle specific authentication policy
+ * configuration management operations (create, update, delete, find, findList).
  *
  * @param <T> the request type for this service
+ * @see AuthenticationPolicyConfigManagementHandler
  * @see AuthenticationPolicyConfigManagementResult
  */
 public interface AuthenticationPolicyConfigManagementService<T> {
@@ -35,15 +38,17 @@ public interface AuthenticationPolicyConfigManagementService<T> {
   /**
    * Executes the authentication policy configuration management operation.
    *
+   * @param contextBuilder the context builder for audit logging
    * @param tenant the tenant
    * @param operator the operator user
    * @param oAuthToken the OAuth token
    * @param request the request object (type varies by operation)
    * @param requestAttributes the request attributes
    * @param dryRun whether to perform a dry run
-   * @return the result of the operation
+   * @return the response of the operation
    */
-  AuthenticationPolicyConfigManagementResult execute(
+  AuthenticationPolicyConfigManagementResponse execute(
+      AuthenticationPolicyConfigManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,

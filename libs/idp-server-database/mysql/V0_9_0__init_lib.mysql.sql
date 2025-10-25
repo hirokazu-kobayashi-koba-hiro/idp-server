@@ -10,26 +10,26 @@ CREATE TABLE organization
 
 CREATE TABLE tenant
 (
-    id                     CHAR(36)     NOT NULL,
-    name                   VARCHAR(255) NOT NULL,
-    type                   VARCHAR(10)  NOT NULL,
-    domain                 TEXT         NOT NULL,
-    authorization_provider VARCHAR(255) NOT NULL,
+    id                         CHAR(36)     NOT NULL,
+    name                       VARCHAR(255) NOT NULL,
+    type                       VARCHAR(10)  NOT NULL,
+    domain                     TEXT         NOT NULL,
+    authorization_provider     VARCHAR(255) NOT NULL,
 
     -- Configuration columns (category-based JSON)
-    security_event_log_config  JSON,  -- Security event logging configuration
-    security_event_user_config JSON,  -- Security event user attribute configuration
-    identity_policy_config     JSON,  -- Identity policy configuration
-    ui_config                  JSON,  -- UI/authorization page configuration
-    cors_config                JSON,  -- CORS configuration
-    session_config             JSON,  -- Cookie/session configuration
+    security_event_log_config  JSON, -- Security event logging configuration
+    security_event_user_config JSON, -- Security event user attribute configuration
+    identity_policy_config     JSON, -- Identity policy configuration
+    ui_config                  JSON, -- UI/authorization page configuration
+    cors_config                JSON, -- CORS configuration
+    session_config             JSON, -- Cookie/session configuration
 
     -- Legacy columns (will be deprecated)
-    attributes             JSON,
-    features               JSON,
+    attributes                 JSON,
+    features                   JSON,
 
-    created_at             DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at             DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at                 DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at                 DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -768,23 +768,27 @@ CREATE TABLE idp_user_lifecycle_event_result
 
 CREATE TABLE audit_log
 (
-    id                     CHAR(36)                            NOT NULL,
-    type                   VARCHAR(255)                        NOT NULL,
-    description            VARCHAR(255)                        NOT NULL,
-    tenant_id              CHAR(36)                            NOT NULL,
-    client_id              VARCHAR(255)                        NOT NULL,
-    user_id                CHAR(36)                            NOT NULL,
+    id                     CHAR(36)     NOT NULL,
+    type                   VARCHAR(255) NOT NULL,
+    description            VARCHAR(255) NOT NULL,
+    tenant_id              CHAR(36)     NOT NULL,
+    client_id              VARCHAR(255) NOT NULL,
+    user_id                CHAR(36)     NOT NULL,
     external_user_id       VARCHAR(255),
-    user_payload           JSON                                NOT NULL,
-    target_resource        TEXT                                NOT NULL,
-    target_resource_action TEXT                                NOT NULL,
+    user_payload           JSON         NOT NULL,
+    target_tenant_id       TEXT,
+    target_resource        TEXT         NOT NULL,
+    target_resource_action TEXT         NOT NULL,
+    request_payload        JSON,
     before_payload         JSON,
     after_payload          JSON,
+    outcome_result         VARCHAR(50)  NOT NULL DEFAULT 'unknown',
+    outcome_reason         VARCHAR(255),
     ip_address             TEXT,
     user_agent             TEXT,
     dry_run                BOOLEAN,
     attributes             JSON,
-    created_at             TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at             TIMESTAMP             DEFAULT CURRENT_TIMESTAMP NOT NULL,
     PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -794,3 +798,6 @@ CREATE INDEX idx_audit_log_user_id ON audit_log (user_id);
 CREATE INDEX idx_audit_log_external_user_id ON audit_log (external_user_id);
 CREATE INDEX idx_audit_log_created_at ON audit_log (created_at);
 CREATE INDEX idx_audit_log_tenant_created_at ON audit_log (tenant_id, created_at);
+CREATE INDEX idx_audit_log_outcome ON audit_log (outcome_result);
+CREATE INDEX idx_audit_log_type_created ON audit_log (type, created_at);
+CREATE INDEX idx_audit_log_target_tenant ON audit_log (target_tenant_id, created_at);

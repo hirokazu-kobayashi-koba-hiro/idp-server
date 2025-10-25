@@ -27,7 +27,6 @@ import org.idp.server.control_plane.management.identity.verification.io.Identity
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigUpdateRequest;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfigurationIdentifier;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationQueries;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 import org.springframework.http.HttpHeaders;
@@ -59,16 +58,12 @@ public class OrganizationIdentityVerificationConfigManagementV1Api
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     IdentityVerificationConfigManagementResponse response =
         orgIdentityVerificationConfigManagementApi.create(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new IdentityVerificationConfigRegistrationRequest(body),
             requestAttributes,
             dryRun);
@@ -87,17 +82,13 @@ public class OrganizationIdentityVerificationConfigManagementV1Api
       @RequestParam Map<String, String> queryParams,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
     IdentityVerificationQueries queries = new IdentityVerificationQueries(queryParams);
 
     IdentityVerificationConfigManagementResponse response =
         orgIdentityVerificationConfigManagementApi.findList(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             queries,
             requestAttributes);
 
@@ -115,16 +106,12 @@ public class OrganizationIdentityVerificationConfigManagementV1Api
       @PathVariable String configurationId,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     IdentityVerificationConfigManagementResponse response =
         orgIdentityVerificationConfigManagementApi.get(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new IdentityVerificationConfigurationIdentifier(configurationId),
             requestAttributes);
 
@@ -144,18 +131,17 @@ public class OrganizationIdentityVerificationConfigManagementV1Api
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
+    IdentityVerificationConfigurationIdentifier identifier =
+        new IdentityVerificationConfigurationIdentifier(configurationId);
     IdentityVerificationConfigManagementResponse response =
         orgIdentityVerificationConfigManagementApi.update(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
-            new IdentityVerificationConfigurationIdentifier(configurationId),
-            new IdentityVerificationConfigUpdateRequest(body),
+            identifier,
+            new IdentityVerificationConfigUpdateRequest(
+                identifier, new IdentityVerificationConfigRegistrationRequest(body)),
             requestAttributes,
             dryRun);
 
@@ -174,16 +160,12 @@ public class OrganizationIdentityVerificationConfigManagementV1Api
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
-    OrganizationIdentifier organizationIdentifier =
-        organizationOperatorPrincipal.getOrganizationId();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     IdentityVerificationConfigManagementResponse response =
         orgIdentityVerificationConfigManagementApi.delete(
-            organizationIdentifier,
+            organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new IdentityVerificationConfigurationIdentifier(configurationId),
             requestAttributes,
             dryRun);

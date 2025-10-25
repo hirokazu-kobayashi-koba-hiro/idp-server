@@ -452,7 +452,7 @@ describe("Organization Permission Management API - Structured Tests", () => {
           }
         });
 
-        expect(response.status).toBe(201); // Dry run creation still returns 201
+        expect(response.status).toBe(200); // Dry run returns 200
         expect(response.data).toHaveProperty("dry_run", true);
         expect(response.data).toHaveProperty("result");
 

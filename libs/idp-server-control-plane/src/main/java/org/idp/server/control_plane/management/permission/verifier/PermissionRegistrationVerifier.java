@@ -16,30 +16,38 @@
 
 package org.idp.server.control_plane.management.permission.verifier;
 
-import org.idp.server.control_plane.base.verifier.VerificationResult;
+import java.util.ArrayList;
+import java.util.List;
 import org.idp.server.control_plane.management.exception.InvalidRequestException;
-import org.idp.server.control_plane.management.permission.PermissionRegistrationContext;
+import org.idp.server.control_plane.management.permission.io.PermissionRequest;
+import org.idp.server.core.openid.identity.permission.Permissions;
+import org.idp.server.platform.json.JsonNodeWrapper;
 
 public class PermissionRegistrationVerifier {
 
-  PermissionVerifier permissionVerifier;
+  private final PermissionRequest request;
+  private final Permissions existingPermissions;
 
-  public PermissionRegistrationVerifier(PermissionVerifier permissionVerifier) {
-    this.permissionVerifier = permissionVerifier;
+  public PermissionRegistrationVerifier(
+      PermissionRequest request, Permissions existingPermissions) {
+    this.request = request;
+    this.existingPermissions = existingPermissions;
   }
 
-  public void verify(PermissionRegistrationContext context) {
+  public void verify() {
+    JsonNodeWrapper requestJson = JsonNodeWrapper.fromMap(request.toMap());
+    String name = requestJson.getValueOrEmptyAsString("name");
 
-    VerificationResult verificationResult =
-        permissionVerifier.verify(context.tenant(), context.permission());
+    List<String> errors = new ArrayList<>();
 
-    throwExceptionIfInvalid(verificationResult);
-  }
+    // Check if permission with same name already exists
+    Permissions filtered = existingPermissions.filterByName(List.of(name));
+    if (filtered.exists()) {
+      errors.add("Permission '" + name + "' already exists");
+    }
 
-  void throwExceptionIfInvalid(VerificationResult result) {
-    if (!result.isValid()) {
-      throw new InvalidRequestException(
-          "permission registration verification is failed", result.errors());
+    if (!errors.isEmpty()) {
+      throw new InvalidRequestException("permission registration verification failed", errors);
     }
   }
 }

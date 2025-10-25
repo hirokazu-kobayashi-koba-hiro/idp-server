@@ -16,31 +16,24 @@
 
 package org.idp.server.control_plane.management.audit.handler;
 
+import org.idp.server.control_plane.management.audit.AuditLogManagementContextBuilder;
+import org.idp.server.control_plane.management.audit.io.AuditLogFindRequest;
 import org.idp.server.control_plane.management.audit.io.AuditLogManagementResponse;
 import org.idp.server.control_plane.management.audit.io.AuditLogManagementStatus;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
-import org.idp.server.platform.audit.AuditLogIdentifier;
 import org.idp.server.platform.audit.AuditLogQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Service for retrieving a single audit log.
+ * Service for finding a single audit log.
  *
- * <p>Handles audit log retrieval logic with existence validation.
- *
- * <h2>Responsibilities</h2>
- *
- * <ul>
- *   <li>Retrieve audit log by identifier
- *   <li>Validate existence
- *   <li>Format response
- * </ul>
+ * <p>Handles audit log retrieval logic.
  */
-public class AuditLogFindService implements AuditLogManagementService<AuditLogIdentifier> {
+public class AuditLogFindService implements AuditLogManagementService<AuditLogFindRequest> {
 
   private final AuditLogQueryRepository auditLogQueryRepository;
 
@@ -49,23 +42,23 @@ public class AuditLogFindService implements AuditLogManagementService<AuditLogId
   }
 
   @Override
-  public AuditLogManagementResult execute(
+  public AuditLogManagementResponse execute(
+      AuditLogManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      AuditLogIdentifier identifier,
+      AuditLogFindRequest request,
       RequestAttributes requestAttributes) {
 
-    // 1. Retrieve audit log
-    AuditLog auditLog = auditLogQueryRepository.find(tenant, identifier);
+    AuditLog auditLog = auditLogQueryRepository.find(tenant, request.identifier());
 
-    // 2. Validate existence
     if (!auditLog.exists()) {
-      throw new ResourceNotFoundException("Audit log not found: " + identifier.value());
+      throw new ResourceNotFoundException("Audit log not found: " + request.identifier().value());
     }
 
-    // 3. Return success response
-    return AuditLogManagementResult.success(
-        tenant, new AuditLogManagementResponse(AuditLogManagementStatus.OK, auditLog.toMap()));
+    // Update context builder with result (for audit logging)
+    contextBuilder.withResult(auditLog);
+
+    return new AuditLogManagementResponse(AuditLogManagementStatus.OK, auditLog.toMap());
   }
 }

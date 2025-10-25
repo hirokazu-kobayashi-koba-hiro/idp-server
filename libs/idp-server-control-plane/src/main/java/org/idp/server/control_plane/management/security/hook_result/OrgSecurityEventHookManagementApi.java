@@ -19,13 +19,11 @@ package org.idp.server.control_plane.management.security.hook_result;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.security.hook_result.io.SecurityEventHookManagementResponse;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.hook.SecurityEventHookResultIdentifier;
 import org.idp.server.platform.security.hook.SecurityEventHookResultQueries;
@@ -61,41 +59,20 @@ public interface OrgSecurityEventHookManagementApi {
   }
 
   SecurityEventHookManagementResponse findList(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       SecurityEventHookResultQueries queries,
       RequestAttributes requestAttributes);
 
   SecurityEventHookManagementResponse get(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       SecurityEventHookResultIdentifier identifier,
       RequestAttributes requestAttributes);
 
-  /**
-   * Retries a failed security event hook execution.
-   *
-   * <p>This operation retrieves the original failed hook result, reconstructs the security event
-   * from stored execution context, fetches the latest hook configuration, and re-executes the hook
-   * with the same parameters.
-   *
-   * @param organizationIdentifier org id
-   * @param tenantIdentifier tenant context
-   * @param operator user performing the retry operation
-   * @param oAuthToken authentication token
-   * @param identifier identifier of the failed hook result to retry
-   * @param requestAttributes request context information
-   * @return result of the retry operation
-   */
   SecurityEventHookManagementResponse retry(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       SecurityEventHookResultIdentifier identifier,
       RequestAttributes requestAttributes);
 }

@@ -18,6 +18,8 @@ package org.idp.server.control_plane.management.identity.verification.handler;
 
 import java.util.Map;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
+import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigManagementContextBuilder;
+import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigDeleteRequest;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementStatus;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
@@ -37,7 +39,7 @@ import org.idp.server.platform.type.RequestAttributes;
  */
 public class IdentityVerificationConfigDeletionService
     implements IdentityVerificationConfigManagementService<
-        IdentityVerificationConfigurationIdentifier> {
+        IdentityVerificationConfigDeleteRequest> {
 
   private final IdentityVerificationConfigurationQueryRepository queryRepository;
   private final IdentityVerificationConfigurationCommandRepository commandRepository;
@@ -50,20 +52,25 @@ public class IdentityVerificationConfigDeletionService
   }
 
   @Override
-  public IdentityVerificationConfigManagementResult execute(
+  public IdentityVerificationConfigManagementResponse execute(
+      IdentityVerificationConfigManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      IdentityVerificationConfigurationIdentifier identifier,
+      IdentityVerificationConfigDeleteRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    IdentityVerificationConfigurationIdentifier identifier = request.identifier();
     IdentityVerificationConfiguration configuration = queryRepository.find(tenant, identifier);
 
     if (!configuration.exists()) {
       throw new ResourceNotFoundException(
           "Identity verification configuration not found: " + identifier.value());
     }
+
+    // Populate builder with configuration being deleted
+    builder.withBefore(configuration);
 
     if (dryRun) {
       Map<String, Object> response =
@@ -74,17 +81,13 @@ public class IdentityVerificationConfigDeletionService
               configuration.id(),
               "dry_run",
               true);
-      return IdentityVerificationConfigManagementResult.success(
-          tenant.identifier(),
-          new IdentityVerificationConfigManagementResponse(
-              IdentityVerificationConfigManagementStatus.OK, response));
+      return new IdentityVerificationConfigManagementResponse(
+          IdentityVerificationConfigManagementStatus.OK, response);
     }
 
     commandRepository.delete(tenant, configuration.type(), configuration);
 
-    return IdentityVerificationConfigManagementResult.success(
-        tenant.identifier(),
-        new IdentityVerificationConfigManagementResponse(
-            IdentityVerificationConfigManagementStatus.NO_CONTENT, Map.of()));
+    return new IdentityVerificationConfigManagementResponse(
+        IdentityVerificationConfigManagementStatus.NO_CONTENT, Map.of());
   }
 }

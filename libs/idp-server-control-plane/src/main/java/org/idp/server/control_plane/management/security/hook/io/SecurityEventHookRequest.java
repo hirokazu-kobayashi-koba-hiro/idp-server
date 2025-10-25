@@ -17,8 +17,9 @@
 package org.idp.server.control_plane.management.security.hook.io;
 
 import java.util.Map;
+import org.idp.server.control_plane.management.security.hook.handler.SecurityEventHookConfigManagementRequest;
 
-public class SecurityEventHookRequest {
+public class SecurityEventHookRequest implements SecurityEventHookConfigManagementRequest {
 
   Map<String, Object> values;
 
@@ -26,6 +27,7 @@ public class SecurityEventHookRequest {
     this.values = values;
   }
 
+  @Override
   public Map<String, Object> toMap() {
     return values;
   }

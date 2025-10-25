@@ -18,7 +18,7 @@ package org.idp.server.control_plane.management.oidc.client.io;
 
 import java.util.Map;
 
-public class ClientRegistrationRequest {
+public class ClientRegistrationRequest implements ClientManagementRequest {
 
   Map<String, Object> values;
 

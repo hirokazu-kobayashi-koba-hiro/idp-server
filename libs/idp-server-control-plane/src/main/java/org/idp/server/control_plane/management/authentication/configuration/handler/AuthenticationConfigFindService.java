@@ -16,11 +16,12 @@
 
 package org.idp.server.control_plane.management.authentication.configuration.handler;
 
+import org.idp.server.control_plane.management.authentication.configuration.AuthenticationConfigManagementContextBuilder;
+import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigFindRequest;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementStatus;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
-import org.idp.server.core.openid.authentication.config.AuthenticationConfigurationIdentifier;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -28,53 +29,43 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Service for finding a single authentication configuration.
+ * Service for authentication policy configuration retrieval operations.
  *
- * <p>Handles authentication configuration retrieval logic.
- *
- * <h2>Responsibilities</h2>
- *
- * <ul>
- *   <li>Query repository for authentication configuration
- *   <li>Validate existence
- *   <li>Build response with configuration data
- * </ul>
+ * <p>Handles business logic for retrieving a single authentication policy configuration. Part of
+ * Handler/Service pattern.
  */
 public class AuthenticationConfigFindService
-    implements AuthenticationConfigManagementService<AuthenticationConfigurationIdentifier> {
+    implements AuthenticationConfigManagementService<AuthenticationConfigFindRequest> {
 
-  private final AuthenticationConfigurationQueryRepository
-      authenticationConfigurationQueryRepository;
+  private final AuthenticationConfigurationQueryRepository queryRepository;
 
   public AuthenticationConfigFindService(
-      AuthenticationConfigurationQueryRepository authenticationConfigurationQueryRepository) {
-    this.authenticationConfigurationQueryRepository = authenticationConfigurationQueryRepository;
+      AuthenticationConfigurationQueryRepository queryRepository) {
+    this.queryRepository = queryRepository;
   }
 
   @Override
-  public AuthenticationConfigManagementResult execute(
+  public AuthenticationConfigManagementResponse execute(
+      AuthenticationConfigManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      AuthenticationConfigurationIdentifier identifier,
+      AuthenticationConfigFindRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    // 1. Query authentication configuration (including disabled ones)
     AuthenticationConfiguration configuration =
-        authenticationConfigurationQueryRepository.findWithDisabled(tenant, identifier, true);
+        queryRepository.findWithDisabled(tenant, request.identifier(), true);
 
-    // 2. Check existence
     if (!configuration.exists()) {
       throw new ResourceNotFoundException(
-          "Authentication configuration not found: " + identifier.value());
+          "Authentication policy configuration not found: " + request.identifier().value());
     }
 
-    // 3. Build response
-    return AuthenticationConfigManagementResult.success(
-        tenant,
-        configuration,
-        new AuthenticationConfigManagementResponse(
-            AuthenticationConfigManagementStatus.OK, configuration.toMap()));
+    // Update context builder with before state (for audit logging)
+    contextBuilder.withBefore(configuration);
+
+    return new AuthenticationConfigManagementResponse(
+        AuthenticationConfigManagementStatus.OK, configuration.toMap());
   }
 }

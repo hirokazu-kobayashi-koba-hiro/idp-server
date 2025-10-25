@@ -88,10 +88,8 @@ public class OrganizationPermissionManagementV1Api implements ParameterTransform
 
     PermissionManagementResponse response =
         orgPermissionManagementApi.create(
-            organizationId,
+            organizationOperatorPrincipal.authenticationContext(),
             tenantId,
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new PermissionRequest(body),
             requestAttributes,
             dryRun);
@@ -124,10 +122,8 @@ public class OrganizationPermissionManagementV1Api implements ParameterTransform
 
     PermissionManagementResponse response =
         orgPermissionManagementApi.findList(
-            organizationId,
+            organizationOperatorPrincipal.authenticationContext(),
             tenantId,
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             new PermissionQueries(queryParams),
             requestAttributes);
 
@@ -159,10 +155,8 @@ public class OrganizationPermissionManagementV1Api implements ParameterTransform
 
     PermissionManagementResponse response =
         orgPermissionManagementApi.get(
-            organizationId,
+            organizationOperatorPrincipal.authenticationContext(),
             tenantId,
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             identifier,
             requestAttributes);
 
@@ -198,10 +192,8 @@ public class OrganizationPermissionManagementV1Api implements ParameterTransform
 
     PermissionManagementResponse response =
         orgPermissionManagementApi.update(
-            organizationId,
+            organizationOperatorPrincipal.authenticationContext(),
             tenantId,
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             identifier,
             new PermissionRequest(body),
             requestAttributes,
@@ -236,10 +228,8 @@ public class OrganizationPermissionManagementV1Api implements ParameterTransform
 
     PermissionManagementResponse response =
         orgPermissionManagementApi.delete(
-            organizationId,
+            organizationOperatorPrincipal.authenticationContext(),
             tenantId,
-            organizationOperatorPrincipal.getUser(),
-            organizationOperatorPrincipal.getOAuthToken(),
             identifier,
             requestAttributes,
             dryRun);

@@ -19,23 +19,22 @@ package org.idp.server.control_plane.management.authentication.configuration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.idp.server.control_plane.base.OrganizationAccessVerifier;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.configuration.io.AuthenticationConfigRequest;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfigurationIdentifier;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Organization-level authentication configuration management API.
+ * Organization-level authentication policy configuration management API.
  *
- * <p>This interface defines operations for managing authentication configurations within an
- * organization context. It provides CRUD operations for authentication configurations with
+ * <p>This interface defines operations for managing authentication policy configurations within an
+ * organization context. It provides CRUD operations for authentication policy configurations with
  * organization-level access control.
  *
  * <p>Organization-level operations follow the standard access control pattern:
@@ -44,13 +43,13 @@ import org.idp.server.platform.type.RequestAttributes;
  *   <li><strong>Organization access verification</strong> - Ensures the user has access to the
  *       organization
  *   <li><strong>Permission verification</strong> - Validates the user has necessary
- *       AUTHENTICATION_CONFIG_* permissions
+ *       AUTHENTICATION_POLICY_CONFIG_* permissions
  * </ol>
  *
  * <p>All operations support dry-run functionality for safe preview of changes.
  *
  * @see AuthenticationConfigurationManagementApi
- * @see org.idp.server.control_plane.organization.access.OrganizationAccessVerifier
+ * @see OrganizationAccessVerifier
  */
 public interface OrgAuthenticationConfigManagementApi {
 
@@ -58,17 +57,19 @@ public interface OrgAuthenticationConfigManagementApi {
     Map<String, AdminPermissions> map = new HashMap<>();
     map.put(
         "create",
-        new AdminPermissions(Set.of(DefaultAdminPermission.AUTHENTICATION_CONFIG_CREATE)));
+        new AdminPermissions(Set.of(DefaultAdminPermission.AUTHENTICATION_POLICY_CONFIG_CREATE)));
     map.put(
         "findList",
-        new AdminPermissions(Set.of(DefaultAdminPermission.AUTHENTICATION_CONFIG_READ)));
-    map.put("get", new AdminPermissions(Set.of(DefaultAdminPermission.AUTHENTICATION_CONFIG_READ)));
+        new AdminPermissions(Set.of(DefaultAdminPermission.AUTHENTICATION_POLICY_CONFIG_READ)));
+    map.put(
+        "get",
+        new AdminPermissions(Set.of(DefaultAdminPermission.AUTHENTICATION_POLICY_CONFIG_READ)));
     map.put(
         "update",
-        new AdminPermissions(Set.of(DefaultAdminPermission.AUTHENTICATION_CONFIG_UPDATE)));
+        new AdminPermissions(Set.of(DefaultAdminPermission.AUTHENTICATION_POLICY_CONFIG_UPDATE)));
     map.put(
         "delete",
-        new AdminPermissions(Set.of(DefaultAdminPermission.AUTHENTICATION_CONFIG_DELETE)));
+        new AdminPermissions(Set.of(DefaultAdminPermission.AUTHENTICATION_POLICY_CONFIG_DELETE)));
     AdminPermissions adminPermissions = map.get(method);
     if (adminPermissions == null) {
       throw new UnSupportedException("Method " + method + " not supported");
@@ -76,107 +77,37 @@ public interface OrgAuthenticationConfigManagementApi {
     return adminPermissions;
   }
 
-  /**
-   * Creates a new authentication configuration within the organization.
-   *
-   * @param organizationIdentifier the organization identifier
-   * @param tenantIdentifier the tenant identifier
-   * @param operator the operator user
-   * @param oAuthToken the OAuth token
-   * @param request the authentication configuration request
-   * @param requestAttributes the request attributes
-   * @param dryRun whether to perform a dry run (validation only)
-   * @return the authentication configuration creation response
-   */
   AuthenticationConfigManagementResponse create(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationConfigRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
-  /**
-   * Lists authentication configurations within the organization.
-   *
-   * @param organizationIdentifier the organization identifier
-   * @param tenantIdentifier the tenant identifier
-   * @param operator the operator user
-   * @param oAuthToken the OAuth token
-   * @param limit the maximum number of results to return
-   * @param offset the offset for pagination
-   * @param requestAttributes the request attributes
-   * @return the authentication configuration list response
-   */
   AuthenticationConfigManagementResponse findList(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       int limit,
       int offset,
       RequestAttributes requestAttributes);
 
-  /**
-   * Gets a specific authentication configuration within the organization.
-   *
-   * @param organizationIdentifier the organization identifier
-   * @param tenantIdentifier the tenant identifier
-   * @param operator the operator user
-   * @param oAuthToken the OAuth token
-   * @param identifier the authentication configuration identifier
-   * @param requestAttributes the request attributes
-   * @return the authentication configuration details response
-   */
   AuthenticationConfigManagementResponse get(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes);
 
-  /**
-   * Updates a specific authentication configuration within the organization.
-   *
-   * @param organizationIdentifier the organization identifier
-   * @param tenantIdentifier the tenant identifier
-   * @param operator the operator user
-   * @param oAuthToken the OAuth token
-   * @param identifier the authentication configuration identifier
-   * @param request the authentication configuration update request
-   * @param requestAttributes the request attributes
-   * @param dryRun whether to perform a dry run (validation only)
-   * @return the authentication configuration update response
-   */
   AuthenticationConfigManagementResponse update(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationConfigurationIdentifier identifier,
       AuthenticationConfigRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
-  /**
-   * Deletes a specific authentication configuration within the organization.
-   *
-   * @param organizationIdentifier the organization identifier
-   * @param tenantIdentifier the tenant identifier
-   * @param operator the operator user
-   * @param oAuthToken the OAuth token
-   * @param identifier the authentication configuration identifier
-   * @param requestAttributes the request attributes
-   * @param dryRun whether to perform a dry run (validation only)
-   * @return the authentication configuration deletion response
-   */
   AuthenticationConfigManagementResponse delete(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationConfigurationIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun);

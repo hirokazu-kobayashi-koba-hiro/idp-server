@@ -19,6 +19,7 @@ package org.idp.server.control_plane.management.security.hook.handler;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.control_plane.management.security.hook.SecurityEventHookConfigManagementContextBuilder;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementStatus;
 import org.idp.server.core.openid.identity.User;
@@ -54,7 +55,8 @@ public class SecurityEventHookConfigFindListService
   }
 
   @Override
-  public SecurityEventHookConfigManagementResult execute(
+  public SecurityEventHookConfigManagementResponse execute(
+      SecurityEventHookConfigManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -69,10 +71,8 @@ public class SecurityEventHookConfigFindListService
       response.put("total_count", 0);
       response.put("limit", request.limit());
       response.put("offset", request.offset());
-      return SecurityEventHookConfigManagementResult.success(
-          tenant,
-          new SecurityEventHookConfigManagementResponse(
-              SecurityEventHookConfigManagementStatus.OK, response));
+      return new SecurityEventHookConfigManagementResponse(
+          SecurityEventHookConfigManagementStatus.OK, response);
     }
 
     List<SecurityEventHookConfiguration> configurations =
@@ -86,9 +86,7 @@ public class SecurityEventHookConfigFindListService
     response.put("limit", request.limit());
     response.put("offset", request.offset());
 
-    return SecurityEventHookConfigManagementResult.success(
-        tenant,
-        new SecurityEventHookConfigManagementResponse(
-            SecurityEventHookConfigManagementStatus.OK, response));
+    return new SecurityEventHookConfigManagementResponse(
+        SecurityEventHookConfigManagementStatus.OK, response);
   }
 }

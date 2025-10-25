@@ -18,18 +18,16 @@ package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.management.role.*;
 import org.idp.server.control_plane.management.role.handler.*;
-import org.idp.server.control_plane.management.role.io.RoleManagementResponse;
-import org.idp.server.control_plane.management.role.io.RoleRequest;
-import org.idp.server.core.openid.identity.User;
+import org.idp.server.control_plane.management.role.io.*;
 import org.idp.server.core.openid.identity.permission.PermissionQueryRepository;
 import org.idp.server.core.openid.identity.role.RoleCommandRepository;
 import org.idp.server.core.openid.identity.role.RoleIdentifier;
 import org.idp.server.core.openid.identity.role.RoleQueries;
 import org.idp.server.core.openid.identity.role.RoleQueryRepository;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
@@ -97,38 +95,17 @@ public class RoleManagementEntryService implements RoleManagementApi {
 
   @Override
   public RoleManagementResponse create(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       RoleRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
     RoleManagementResult result =
         handler.handle(
-            "create", tenantIdentifier, operator, oAuthToken, request, requestAttributes, dryRun);
+            "create", authenticationContext, tenantIdentifier, request, requestAttributes, dryRun);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "RoleManagementApi.create",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
-
-    AuditLog auditLog =
-        AuditLogCreator.create(
-            "RoleManagementApi.create",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (RoleRegistrationContext) result.context(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -137,37 +114,21 @@ public class RoleManagementEntryService implements RoleManagementApi {
   @Override
   @Transaction(readOnly = true)
   public RoleManagementResponse findList(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       RoleQueries queries,
       RequestAttributes requestAttributes) {
 
     RoleManagementResult result =
         handler.handle(
-            "findList", tenantIdentifier, operator, oAuthToken, queries, requestAttributes, false);
-
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "RoleManagementApi.findList",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(false);
-    }
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "RoleManagementApi.findList",
             "findList",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            requestAttributes);
+            authenticationContext,
+            tenantIdentifier,
+            new RoleFindListRequest(queries),
+            requestAttributes,
+            false);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);
@@ -176,37 +137,21 @@ public class RoleManagementEntryService implements RoleManagementApi {
   @Override
   @Transaction(readOnly = true)
   public RoleManagementResponse get(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       RoleIdentifier identifier,
       RequestAttributes requestAttributes) {
 
     RoleManagementResult result =
         handler.handle(
-            "get", tenantIdentifier, operator, oAuthToken, identifier, requestAttributes, false);
-
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "RoleManagementApi.get",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(false);
-    }
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnRead(
-            "RoleManagementApi.get",
             "get",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            requestAttributes);
+            authenticationContext,
+            tenantIdentifier,
+            new RoleFindRequest(identifier),
+            requestAttributes,
+            false);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);
@@ -214,9 +159,8 @@ public class RoleManagementEntryService implements RoleManagementApi {
 
   @Override
   public RoleManagementResponse update(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       RoleIdentifier identifier,
       RoleRequest request,
       RequestAttributes requestAttributes,
@@ -226,34 +170,13 @@ public class RoleManagementEntryService implements RoleManagementApi {
     RoleManagementResult result =
         handler.handle(
             "update",
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
             updateRequest,
             requestAttributes,
             dryRun);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "RoleManagementApi.update",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "RoleManagementApi.update",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (RoleUpdateContext) result.context(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -261,9 +184,8 @@ public class RoleManagementEntryService implements RoleManagementApi {
 
   @Override
   public RoleManagementResponse removePermissions(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       RoleIdentifier identifier,
       RoleRequest request,
       RequestAttributes requestAttributes,
@@ -274,34 +196,13 @@ public class RoleManagementEntryService implements RoleManagementApi {
     RoleManagementResult result =
         handler.handle(
             "removePermissions",
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
             removeRequest,
             requestAttributes,
             dryRun);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "RoleManagementApi.removePermissions",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnUpdate(
-            "RoleManagementApi.removePermissions",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (RoleRemovePermissionContext) result.context(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
@@ -309,9 +210,8 @@ public class RoleManagementEntryService implements RoleManagementApi {
 
   @Override
   public RoleManagementResponse delete(
+      AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       RoleIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun) {
@@ -319,35 +219,13 @@ public class RoleManagementEntryService implements RoleManagementApi {
     RoleManagementResult result =
         handler.handle(
             "delete",
+            authenticationContext,
             tenantIdentifier,
-            operator,
-            oAuthToken,
-            identifier,
+            new RoleDeleteRequest(identifier),
             requestAttributes,
             dryRun);
 
-    if (result.hasException()) {
-      AuditLog auditLog =
-          AuditLogCreator.createOnError(
-              "RoleManagementApi.delete",
-              result.tenant(),
-              operator,
-              oAuthToken,
-              result.getException(),
-              requestAttributes);
-      auditLogPublisher.publish(auditLog);
-      return result.toResponse(dryRun);
-    }
-
-    AuditLog auditLog =
-        AuditLogCreator.createOnDeletion(
-            "RoleManagementApi.delete",
-            "delete",
-            result.tenant(),
-            operator,
-            oAuthToken,
-            (Map<String, Object>) result.context(),
-            requestAttributes);
+    AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);

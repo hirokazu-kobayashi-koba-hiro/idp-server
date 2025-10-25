@@ -19,6 +19,8 @@ package org.idp.server.control_plane.management.security.event.handler;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.control_plane.management.security.event.SecurityEventManagementContextBuilder;
+import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementFindListRequest;
 import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementResponse;
 import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementStatus;
 import org.idp.server.core.openid.identity.User;
@@ -42,7 +44,7 @@ import org.idp.server.platform.type.RequestAttributes;
  * </ul>
  */
 public class SecurityEventFindListService
-    implements SecurityEventManagementService<SecurityEventQueries> {
+    implements SecurityEventManagementService<SecurityEventManagementFindListRequest> {
 
   private final SecurityEventQueryRepository securityEventQueryRepository;
 
@@ -51,26 +53,26 @@ public class SecurityEventFindListService
   }
 
   @Override
-  public SecurityEventManagementResult execute(
-      Tenant tenant,
+  public SecurityEventManagementResponse execute(
+      SecurityEventManagementContextBuilder builder,
+      Tenant targetTenant,
       User operator,
       OAuthToken oAuthToken,
-      SecurityEventQueries queries,
+      SecurityEventManagementFindListRequest request,
       RequestAttributes requestAttributes) {
 
-    long totalCount = securityEventQueryRepository.findTotalCount(tenant, queries);
+    SecurityEventQueries queries = request.queries();
+    long totalCount = securityEventQueryRepository.findTotalCount(targetTenant, queries);
     if (totalCount == 0) {
       Map<String, Object> response = new HashMap<>();
       response.put("list", List.of());
       response.put("total_count", 0);
       response.put("limit", queries.limit());
       response.put("offset", queries.offset());
-      SecurityEventManagementResponse managementResponse =
-          new SecurityEventManagementResponse(SecurityEventManagementStatus.OK, response);
-      return SecurityEventManagementResult.success(tenant, managementResponse);
+      return new SecurityEventManagementResponse(SecurityEventManagementStatus.OK, response);
     }
 
-    List<SecurityEvent> events = securityEventQueryRepository.findList(tenant, queries);
+    List<SecurityEvent> events = securityEventQueryRepository.findList(targetTenant, queries);
 
     Map<String, Object> response = new HashMap<>();
     response.put("list", events.stream().map(SecurityEvent::toMap).toList());
@@ -78,8 +80,6 @@ public class SecurityEventFindListService
     response.put("limit", queries.limit());
     response.put("offset", queries.offset());
 
-    SecurityEventManagementResponse managementResponse =
-        new SecurityEventManagementResponse(SecurityEventManagementStatus.OK, response);
-    return SecurityEventManagementResult.success(tenant, managementResponse);
+    return new SecurityEventManagementResponse(SecurityEventManagementStatus.OK, response);
   }
 }

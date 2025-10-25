@@ -18,13 +18,13 @@ package org.idp.server.control_plane.management.security.hook.handler;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.base.AuditableContext;
 import org.idp.server.control_plane.management.exception.ManagementApiException;
 import org.idp.server.control_plane.management.exception.OrganizationAccessDeniedException;
 import org.idp.server.control_plane.management.exception.PermissionDeniedException;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementResponse;
 import org.idp.server.control_plane.management.security.hook.io.SecurityEventHookConfigManagementStatus;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
  * Result wrapper for security event hook configuration management operations.
@@ -48,53 +48,41 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
  */
 public class SecurityEventHookConfigManagementResult {
 
-  private final Tenant tenant;
   private final ManagementApiException exception;
-  private final Object response;
-  private final Object context;
+  private final SecurityEventHookConfigManagementResponse response;
+  private final AuditableContext context;
 
   private SecurityEventHookConfigManagementResult(
-      Tenant tenant, ManagementApiException exception, Object response, Object context) {
-    this.tenant = tenant;
+      ManagementApiException exception,
+      SecurityEventHookConfigManagementResponse response,
+      AuditableContext context) {
     this.exception = exception;
     this.response = response;
     this.context = context;
   }
 
   /**
-   * Creates a successful result without context.
+   * Creates a successful result.
    *
-   * @param tenant tenant context (for audit logging)
+   * @param context operation context (for audit logging)
    * @param response operation-specific response object
    * @return success result
    */
-  public static SecurityEventHookConfigManagementResult success(Tenant tenant, Object response) {
-    return new SecurityEventHookConfigManagementResult(tenant, null, response, null);
-  }
-
-  /**
-   * Creates a successful result with context (for create/update operations).
-   *
-   * @param tenant tenant context (for audit logging)
-   * @param response operation-specific response object
-   * @param context registration or update context
-   * @return success result with context
-   */
-  public static SecurityEventHookConfigManagementResult successWithContext(
-      Tenant tenant, Object response, Object context) {
-    return new SecurityEventHookConfigManagementResult(tenant, null, response, context);
+  public static SecurityEventHookConfigManagementResult success(
+      AuditableContext context, SecurityEventHookConfigManagementResponse response) {
+    return new SecurityEventHookConfigManagementResult(null, response, context);
   }
 
   /**
    * Creates an error result.
    *
-   * @param tenant tenant context (for audit logging)
+   * @param context partial context (for audit logging even on errors)
    * @param exception domain exception that occurred
    * @return error result
    */
   public static SecurityEventHookConfigManagementResult error(
-      Tenant tenant, ManagementApiException exception) {
-    return new SecurityEventHookConfigManagementResult(tenant, exception, null, null);
+      AuditableContext context, ManagementApiException exception) {
+    return new SecurityEventHookConfigManagementResult(exception, null, context);
   }
 
   /**
@@ -116,21 +104,11 @@ public class SecurityEventHookConfigManagementResult {
   }
 
   /**
-   * Gets the tenant context.
-   *
-   * @return tenant (for audit logging)
-   */
-  public Tenant tenant() {
-    return tenant;
-  }
-
-  /**
    * Gets the context for audit logging.
    *
-   * @return context (SecurityEventHookConfigRegistrationContext or
-   *     SecurityEventHookConfigUpdateContext)
+   * @return context (SecurityEventHookConfigManagementContext)
    */
-  public Object context() {
+  public AuditableContext context() {
     return context;
   }
 
@@ -158,7 +136,7 @@ public class SecurityEventHookConfigManagementResult {
       errorResponse.putAll(exception.errorDetails());
       return new SecurityEventHookConfigManagementResponse(status, errorResponse);
     }
-    return (SecurityEventHookConfigManagementResponse) response;
+    return response;
   }
 
   /**

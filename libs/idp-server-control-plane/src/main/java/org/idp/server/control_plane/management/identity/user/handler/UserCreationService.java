@@ -16,17 +16,23 @@
 
 package org.idp.server.control_plane.management.identity.user.handler;
 
+import java.util.Map;
+import java.util.UUID;
 import org.idp.server.control_plane.management.identity.user.ManagementEventPublisher;
-import org.idp.server.control_plane.management.identity.user.UserRegistrationContext;
-import org.idp.server.control_plane.management.identity.user.UserRegistrationContextCreator;
+import org.idp.server.control_plane.management.identity.user.UserManagementContextBuilder;
+import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
+import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
 import org.idp.server.control_plane.management.identity.user.validator.UserRegistrationRequestValidator;
 import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationVerifier;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -74,7 +80,8 @@ public class UserCreationService implements UserManagementService<UserRegistrati
   }
 
   @Override
-  public UserManagementResult execute(
+  public UserManagementResponse execute(
+      UserManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -85,31 +92,56 @@ public class UserCreationService implements UserManagementService<UserRegistrati
     // 1. Validation (throws InvalidRequestException if validation fails)
     new UserRegistrationRequestValidator(request, dryRun).validate();
 
-    // 2. Context creation
-    UserRegistrationContextCreator contextCreator =
-        new UserRegistrationContextCreator(tenant, request, dryRun, passwordEncodeDelegation);
-    UserRegistrationContext context = contextCreator.create();
+    // 2. User creation
+    User user = createUser(tenant, request);
 
-    // 3. Business rule verification (throws exception if verification fails)
-    verifier.verify(context);
+    // 3. Set user to builder for context completion
+    builder.withAfter(user);
 
-    // 4. Dry-run check
+    // 4. Business rule verification (throws exception if verification fails)
+    verifier.verify(tenant, user, request);
+
+    Map<String, Object> contents = Map.of("result", user.toMap(), "dry_run", dryRun);
+
+    // 5. Dry-run check
     if (dryRun) {
-      return UserManagementResult.success(tenant, context, context.toResponse());
+      return new UserManagementResponse(UserManagementStatus.OK, contents);
     }
 
-    // 5. Repository operation
-    userCommandRepository.register(tenant, context.user());
+    // 6. Repository operation
+    userCommandRepository.register(tenant, user);
 
-    // 6. Security event publishing
+    // 7. Security event publishing
     managementEventPublisher.publish(
         tenant,
         operator,
-        context.user(),
+        user,
         oAuthToken,
         DefaultSecurityEventType.user_create.toEventType(),
         requestAttributes);
 
-    return UserManagementResult.success(tenant, context, context.toResponse());
+    return new UserManagementResponse(UserManagementStatus.CREATED, contents);
+  }
+
+  User createUser(Tenant tenant, UserRegistrationRequest request) {
+    User user = JsonConverter.snakeCaseInstance().read(request.toMap(), User.class);
+
+    // Generate sub if not provided
+    if (!user.hasSub()) {
+      user.setSub(UUID.randomUUID().toString());
+    }
+
+    // Apply tenant identity policy to set preferred_username if not set
+    if (user.preferredUsername() == null || user.preferredUsername().isBlank()) {
+      TenantIdentityPolicy policy = tenant.identityPolicyConfig();
+      user.applyIdentityPolicy(policy);
+    }
+
+    // Encode password
+    String encoded = passwordEncodeDelegation.encode(user.rawPassword());
+    user.setHashedPassword(encoded);
+    user.setStatus(UserStatus.REGISTERED);
+
+    return user;
   }
 }

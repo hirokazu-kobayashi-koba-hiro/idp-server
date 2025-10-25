@@ -16,11 +16,12 @@
 
 package org.idp.server.control_plane.management.authentication.transaction.handler;
 
+import org.idp.server.control_plane.management.authentication.transaction.AuthenticationTransactionManagementContextBuilder;
+import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionFindRequest;
 import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionManagementResponse;
 import org.idp.server.control_plane.management.authentication.transaction.io.AuthenticationTransactionManagementStatus;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.core.openid.authentication.AuthenticationTransaction;
-import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -42,7 +43,7 @@ import org.idp.server.platform.type.RequestAttributes;
  * </ul>
  */
 public class AuthenticationTransactionFindService
-    implements AuthenticationTransactionManagementService<AuthenticationTransactionIdentifier> {
+    implements AuthenticationTransactionManagementService<AuthenticationTransactionFindRequest> {
 
   private final AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository;
 
@@ -52,26 +53,27 @@ public class AuthenticationTransactionFindService
   }
 
   @Override
-  public AuthenticationTransactionManagementResult execute(
+  public AuthenticationTransactionManagementResponse execute(
+      AuthenticationTransactionManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      AuthenticationTransactionIdentifier identifier,
+      AuthenticationTransactionFindRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
     AuthenticationTransaction authenticationTransaction =
-        authenticationTransactionQueryRepository.find(tenant, identifier);
+        authenticationTransactionQueryRepository.find(tenant, request.identifier());
 
     if (!authenticationTransaction.exists()) {
       throw new ResourceNotFoundException(
-          String.format("Authentication transaction %s not found", identifier.value()));
+          String.format("Authentication transaction %s not found", request.identifier().value()));
     }
 
-    AuthenticationTransactionManagementResponse managementResponse =
-        new AuthenticationTransactionManagementResponse(
-            AuthenticationTransactionManagementStatus.OK, authenticationTransaction.toRequestMap());
-    return AuthenticationTransactionManagementResult.success(
-        tenant.identifier(), managementResponse);
+    // Update context builder with result (for audit logging)
+    contextBuilder.withResult(authenticationTransaction);
+
+    return new AuthenticationTransactionManagementResponse(
+        AuthenticationTransactionManagementStatus.OK, authenticationTransaction.toRequestMap());
   }
 }

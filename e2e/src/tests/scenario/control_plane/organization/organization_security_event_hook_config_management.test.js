@@ -108,7 +108,7 @@ describe("organization security event hook configuration management api", () => 
         console.log("Dry run create response:", dryRunCreateResponse.data);
 
         // Dry run should return 201 with preview information
-        expect(dryRunCreateResponse.status).toBe(201);
+        expect(dryRunCreateResponse.status).toBe(200);
         expect(dryRunCreateResponse.data).toHaveProperty("dry_run", true);
         expect(dryRunCreateResponse.data).toHaveProperty("result");
         console.log("✅ Dry run create functionality verified");

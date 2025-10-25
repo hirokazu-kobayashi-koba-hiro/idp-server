@@ -19,6 +19,8 @@ package org.idp.server.control_plane.management.identity.user.handler;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.control_plane.management.identity.user.UserManagementContextBuilder;
+import org.idp.server.control_plane.management.identity.user.io.UserFindListRequest;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
 import org.idp.server.core.openid.identity.User;
@@ -50,7 +52,7 @@ import org.idp.server.platform.type.RequestAttributes;
  *   <li>Transaction management
  * </ul>
  */
-public class UserFindListService implements UserManagementService<UserQueries> {
+public class UserFindListService implements UserManagementService<UserFindListRequest> {
 
   private final UserQueryRepository userQueryRepository;
 
@@ -59,13 +61,16 @@ public class UserFindListService implements UserManagementService<UserQueries> {
   }
 
   @Override
-  public UserManagementResult execute(
+  public UserManagementResponse execute(
+      UserManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      UserQueries queries,
+      UserFindListRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
+
+    UserQueries queries = request.userQueries();
 
     // 1. Get total count
     long totalCount = userQueryRepository.findTotalCount(tenant, queries);
@@ -75,8 +80,7 @@ public class UserFindListService implements UserManagementService<UserQueries> {
       response.put("total_count", 0);
       response.put("limit", queries.limit());
       response.put("offset", queries.offset());
-      return UserManagementResult.success(
-          tenant, queries, new UserManagementResponse(UserManagementStatus.OK, response));
+      return new UserManagementResponse(UserManagementStatus.OK, response);
     }
 
     // 2. Get user list
@@ -89,7 +93,6 @@ public class UserFindListService implements UserManagementService<UserQueries> {
     response.put("limit", queries.limit());
     response.put("offset", queries.offset());
 
-    return UserManagementResult.success(
-        tenant, queries, new UserManagementResponse(UserManagementStatus.OK, response));
+    return new UserManagementResponse(UserManagementStatus.OK, response);
   }
 }

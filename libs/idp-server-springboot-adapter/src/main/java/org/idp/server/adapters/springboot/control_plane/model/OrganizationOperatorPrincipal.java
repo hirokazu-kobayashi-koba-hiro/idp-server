@@ -17,11 +17,10 @@
 package org.idp.server.adapters.springboot.control_plane.model;
 
 import java.util.List;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
-import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 
 /**
@@ -36,36 +35,24 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
  */
 public class OrganizationOperatorPrincipal extends AbstractAuthenticationToken {
 
-  private final User user;
-  private final OAuthToken oAuthToken;
-  private final OrganizationIdentifier organizationId;
-  private final TenantIdentifier adminTenantId;
+  private final OrganizationAuthenticationContext authenticationContext;
 
   /**
    * Constructs a new OrganizationOperatorPrincipal.
    *
-   * @param user the authenticated user
-   * @param oAuthToken the OAuth token
-   * @param organizationId the organization identifier
-   * @param adminTenantId the admin tenant identifier for the organization
+   * @param authenticationContext the authentication contextr
    * @param authorities the organization-level authorities
    */
   public OrganizationOperatorPrincipal(
-      User user,
-      OAuthToken oAuthToken,
-      OrganizationIdentifier organizationId,
-      TenantIdentifier adminTenantId,
+      OrganizationAuthenticationContext authenticationContext,
       List<IdpControlPlaneAuthority> authorities) {
     super(authorities);
-    this.user = user;
-    this.oAuthToken = oAuthToken;
-    this.organizationId = organizationId;
-    this.adminTenantId = adminTenantId;
+    this.authenticationContext = authenticationContext;
   }
 
   @Override
   public Object getCredentials() {
-    return oAuthToken;
+    return authenticationContext.oAuthToken();
   }
 
   @Override
@@ -79,7 +66,7 @@ public class OrganizationOperatorPrincipal extends AbstractAuthenticationToken {
    * @return the user
    */
   public User getUser() {
-    return user;
+    return authenticationContext.operator();
   }
 
   /**
@@ -88,7 +75,7 @@ public class OrganizationOperatorPrincipal extends AbstractAuthenticationToken {
    * @return the OAuth token
    */
   public OAuthToken getOAuthToken() {
-    return oAuthToken;
+    return authenticationContext.oAuthToken();
   }
 
   /**
@@ -97,33 +84,10 @@ public class OrganizationOperatorPrincipal extends AbstractAuthenticationToken {
    * @return the organization identifier
    */
   public OrganizationIdentifier getOrganizationId() {
-    return organizationId;
+    return authenticationContext.organization().identifier();
   }
 
-  /**
-   * Gets the admin tenant identifier for the organization.
-   *
-   * @return the admin tenant identifier
-   */
-  public TenantIdentifier getAdminTenantId() {
-    return adminTenantId;
-  }
-
-  /**
-   * Gets the requested client ID from the OAuth token.
-   *
-   * @return the requested client ID
-   */
-  public RequestedClientId getRequestedClientId() {
-    return oAuthToken.requestedClientId();
-  }
-
-  /**
-   * Checks if the token is a client credentials grant.
-   *
-   * @return true if client credentials grant
-   */
-  public boolean isClientCredentialsGrant() {
-    return oAuthToken.isClientCredentialsGrant();
+  public OrganizationAuthenticationContext authenticationContext() {
+    return authenticationContext;
   }
 }

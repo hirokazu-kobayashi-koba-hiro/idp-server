@@ -17,8 +17,9 @@
 package org.idp.server.control_plane.management.tenant.io;
 
 import java.util.Map;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
-public class TenantRequest {
+public class TenantRequest implements TenantManagementRequest {
 
   Map<String, Object> values;
 
@@ -26,8 +27,17 @@ public class TenantRequest {
     this.values = values;
   }
 
+  public TenantIdentifier tenantIdentifier() {
+    return new TenantIdentifier();
+  }
+
   public Map<String, Object> toMap() {
     return values;
+  }
+
+  @Override
+  public boolean hasTenantIdentifier() {
+    return false;
   }
 
   public Object get(String key) {

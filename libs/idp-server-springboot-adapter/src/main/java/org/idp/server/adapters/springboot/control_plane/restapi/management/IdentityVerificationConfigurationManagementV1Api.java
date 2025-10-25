@@ -59,9 +59,8 @@ public class IdentityVerificationConfigurationManagementV1Api implements Paramet
 
     IdentityVerificationConfigManagementResponse response =
         identityVerificationConfigManagementApi.create(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             new IdentityVerificationConfigRegistrationRequest(body),
             requestAttributes,
             dryRun);
@@ -83,9 +82,8 @@ public class IdentityVerificationConfigurationManagementV1Api implements Paramet
 
     IdentityVerificationConfigManagementResponse response =
         identityVerificationConfigManagementApi.findList(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             new IdentityVerificationQueries(queryParams),
             requestAttributes);
 
@@ -106,9 +104,8 @@ public class IdentityVerificationConfigurationManagementV1Api implements Paramet
 
     IdentityVerificationConfigManagementResponse response =
         identityVerificationConfigManagementApi.get(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             requestAttributes);
 
@@ -131,11 +128,11 @@ public class IdentityVerificationConfigurationManagementV1Api implements Paramet
 
     IdentityVerificationConfigManagementResponse response =
         identityVerificationConfigManagementApi.update(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
-            new IdentityVerificationConfigUpdateRequest(body),
+            new IdentityVerificationConfigUpdateRequest(
+                identifier, new IdentityVerificationConfigRegistrationRequest(body)),
             requestAttributes,
             dryRun);
     HttpHeaders httpHeaders = new HttpHeaders();
@@ -156,9 +153,8 @@ public class IdentityVerificationConfigurationManagementV1Api implements Paramet
 
     IdentityVerificationConfigManagementResponse response =
         identityVerificationConfigManagementApi.delete(
+            operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            operatorPrincipal.getUser(),
-            operatorPrincipal.getOAuthToken(),
             identifier,
             requestAttributes,
             dryRun);

@@ -16,16 +16,21 @@
 
 package org.idp.server.control_plane.management.oidc.client.handler;
 
+import java.util.Map;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
-import org.idp.server.control_plane.management.oidc.client.ClientUpdateContext;
-import org.idp.server.control_plane.management.oidc.client.ClientUpdateContextCreator;
+import org.idp.server.control_plane.management.oidc.client.ClientManagementContextBuilder;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
+import org.idp.server.control_plane.management.oidc.client.io.ClientManagementStatus;
+import org.idp.server.control_plane.management.oidc.client.io.ClientUpdateRequest;
 import org.idp.server.control_plane.management.oidc.client.validator.ClientRegistrationRequestValidator;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.json.JsonDiffCalculator;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -38,16 +43,19 @@ public class ClientUpdateService implements ClientManagementService<ClientUpdate
 
   private final ClientConfigurationQueryRepository queryRepository;
   private final ClientConfigurationCommandRepository commandRepository;
+  private final JsonConverter jsonConverter;
 
   public ClientUpdateService(
       ClientConfigurationQueryRepository queryRepository,
       ClientConfigurationCommandRepository commandRepository) {
     this.queryRepository = queryRepository;
     this.commandRepository = commandRepository;
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override
-  public ClientManagementResult execute(
+  public ClientManagementResponse execute(
+      ClientManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -57,11 +65,10 @@ public class ClientUpdateService implements ClientManagementService<ClientUpdate
 
     // Find existing client
     ClientConfiguration before =
-        queryRepository.findWithDisabled(tenant, request.clientIdentifier(), true);
+        queryRepository.findWithDisabled(tenant, request.identifier(), true);
 
     if (!before.exists()) {
-      throw new ResourceNotFoundException(
-          "Client not found: " + request.clientIdentifier().value());
+      throw new ResourceNotFoundException("Client not found: " + request.identifier().value());
     }
 
     // Validation
@@ -69,20 +76,25 @@ public class ClientUpdateService implements ClientManagementService<ClientUpdate
         new ClientRegistrationRequestValidator(request.registrationRequest(), dryRun);
     validator.validate(); // throws InvalidRequestException if invalid
 
-    // Create context
-    ClientUpdateContextCreator contextCreator =
-        new ClientUpdateContextCreator(tenant, before, request.registrationRequest(), dryRun);
-    ClientUpdateContext context = contextCreator.create();
+    // Build updated ClientConfiguration
+    ClientConfiguration after =
+        jsonConverter.read(request.registrationRequest().toMap(), ClientConfiguration.class);
+
+    // Update context builder with before and after states
+    contextBuilder.withBefore(before).withAfter(after);
+
+    JsonNodeWrapper beforeJson = JsonNodeWrapper.fromMap(before.toMap());
+    JsonNodeWrapper afterJson = JsonNodeWrapper.fromMap(after.toMap());
+    Map<String, Object> diff = JsonDiffCalculator.deepDiff(beforeJson, afterJson);
+    Map<String, Object> response = Map.of("result", after.toMap(), "diff", diff, "dry_run", dryRun);
 
     if (dryRun) {
-      ClientManagementResponse response = context.toResponse();
-      return ClientManagementResult.success(tenant.identifier(), response, context);
+      return new ClientManagementResponse(ClientManagementStatus.OK, response);
     }
 
     // Update client
-    commandRepository.update(tenant, context.after());
+    commandRepository.update(tenant, after);
 
-    ClientManagementResponse response = context.toResponse();
-    return ClientManagementResult.success(tenant.identifier(), response, context);
+    return new ClientManagementResponse(ClientManagementStatus.OK, response);
   }
 }

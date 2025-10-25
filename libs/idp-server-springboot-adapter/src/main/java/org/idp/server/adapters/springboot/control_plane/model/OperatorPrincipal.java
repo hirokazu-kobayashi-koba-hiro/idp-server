@@ -17,26 +17,25 @@
 package org.idp.server.adapters.springboot.control_plane.model;
 
 import java.util.List;
+import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 
 public class OperatorPrincipal extends AbstractAuthenticationToken {
 
-  User user;
-  OAuthToken oauthToken;
+  AdminAuthenticationContext authenticationContext;
 
   public OperatorPrincipal(
-      User user, OAuthToken oAuthToken, List<IdpControlPlaneAuthority> idpControlPlaneAuthorities) {
+      AdminAuthenticationContext authenticationContext,
+      List<IdpControlPlaneAuthority> idpControlPlaneAuthorities) {
     super(idpControlPlaneAuthorities);
-    this.user = user;
-    this.oauthToken = oAuthToken;
+    this.authenticationContext = authenticationContext;
   }
 
   @Override
   public Object getCredentials() {
-    return oauthToken;
+    return authenticationContext.oAuthToken();
   }
 
   @Override
@@ -45,14 +44,14 @@ public class OperatorPrincipal extends AbstractAuthenticationToken {
   }
 
   public User getUser() {
-    return user;
+    return authenticationContext.operator();
   }
 
   public OAuthToken getOAuthToken() {
-    return oauthToken;
+    return authenticationContext.oAuthToken();
   }
 
-  public RequestedClientId getRequestedClientId() {
-    return oauthToken.requestedClientId();
+  public AdminAuthenticationContext authenticationContext() {
+    return authenticationContext;
   }
 }

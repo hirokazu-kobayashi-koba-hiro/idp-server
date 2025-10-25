@@ -19,6 +19,8 @@ package org.idp.server.control_plane.management.role.handler;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
+import org.idp.server.control_plane.management.role.RoleManagementContextBuilder;
+import org.idp.server.control_plane.management.role.io.RoleDeleteRequest;
 import org.idp.server.control_plane.management.role.io.RoleManagementResponse;
 import org.idp.server.control_plane.management.role.io.RoleManagementStatus;
 import org.idp.server.core.openid.identity.User;
@@ -43,7 +45,7 @@ import org.idp.server.platform.type.RequestAttributes;
  *   <li>NO_CONTENT response on success
  * </ul>
  */
-public class RoleDeleteService implements RoleManagementService<RoleIdentifier> {
+public class RoleDeleteService implements RoleManagementService<RoleDeleteRequest> {
 
   private final RoleQueryRepository roleQueryRepository;
   private final RoleCommandRepository roleCommandRepository;
@@ -55,34 +57,35 @@ public class RoleDeleteService implements RoleManagementService<RoleIdentifier> 
   }
 
   @Override
-  public RoleManagementResult execute(
+  public RoleManagementResponse execute(
+      RoleManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      RoleIdentifier identifier,
+      RoleDeleteRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    RoleIdentifier identifier = request.identifier();
     Role role = roleQueryRepository.find(tenant, identifier);
 
     if (!role.exists()) {
       throw new ResourceNotFoundException(String.format("Role not found: %s", identifier.value()));
     }
 
+    // Populate builder with role to be deleted
+    builder.withBefore(role);
+
     if (dryRun) {
       Map<String, Object> response = new HashMap<>();
       response.put("message", "Deletion simulated successfully");
       response.put("id", role.id());
       response.put("dry_run", true);
-      return RoleManagementResult.success(
-          tenant, new RoleManagementResponse(RoleManagementStatus.OK, response), role.toMap());
+      return new RoleManagementResponse(RoleManagementStatus.OK, response);
     }
 
     roleCommandRepository.delete(tenant, role);
 
-    return RoleManagementResult.success(
-        tenant,
-        new RoleManagementResponse(RoleManagementStatus.NO_CONTENT, Map.of()),
-        role.toMap());
+    return new RoleManagementResponse(RoleManagementStatus.NO_CONTENT, Map.of());
   }
 }

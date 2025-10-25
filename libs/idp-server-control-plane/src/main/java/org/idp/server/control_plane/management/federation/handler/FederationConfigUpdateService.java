@@ -16,15 +16,22 @@
 
 package org.idp.server.control_plane.management.federation.handler;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
-import org.idp.server.control_plane.management.federation.FederationConfigUpdateContext;
-import org.idp.server.control_plane.management.federation.FederationConfigUpdateContextCreator;
+import org.idp.server.control_plane.management.federation.FederationConfigManagementContextBuilder;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
+import org.idp.server.control_plane.management.federation.io.FederationConfigManagementStatus;
+import org.idp.server.control_plane.management.federation.io.FederationConfigRequest;
+import org.idp.server.control_plane.management.federation.io.FederationConfigUpdateRequest;
 import org.idp.server.core.openid.federation.FederationConfiguration;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationCommandRepository;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.json.JsonDiffCalculator;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -48,7 +55,8 @@ public class FederationConfigUpdateService
   }
 
   @Override
-  public FederationConfigManagementResult execute(
+  public FederationConfigManagementResponse execute(
+      FederationConfigManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -56,7 +64,7 @@ public class FederationConfigUpdateService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    // Find existing configuration
+    // 1. Retrieve existing configuration
     FederationConfiguration before =
         queryRepository.findWithDisabled(tenant, request.identifier(), true);
 
@@ -65,20 +73,42 @@ public class FederationConfigUpdateService
           "Federation configuration not found: " + request.identifier().value());
     }
 
-    // Create context
-    FederationConfigUpdateContextCreator contextCreator =
-        new FederationConfigUpdateContextCreator(tenant, before, request.request(), dryRun);
-    FederationConfigUpdateContext context = contextCreator.create();
+    // 2. Create updated configuration
+    FederationConfiguration after = updateConfiguration(before, request.request());
+
+    // 3. Populate builder with before/after
+    builder.withBefore(before);
+    builder.withAfter(after);
+
+    // 4. Build response with diff
+    JsonNodeWrapper beforeJson = JsonNodeWrapper.fromMap(before.toMap());
+    JsonNodeWrapper afterJson = JsonNodeWrapper.fromMap(after.toMap());
+    Map<String, Object> contents = new HashMap<>();
+    contents.put("result", after.toMap());
+    contents.put("diff", JsonDiffCalculator.deepDiff(beforeJson, afterJson));
+    contents.put("dry_run", dryRun);
 
     if (dryRun) {
-      FederationConfigManagementResponse response = context.toResponse();
-      return FederationConfigManagementResult.success(tenant.identifier(), response, context);
+      return new FederationConfigManagementResponse(FederationConfigManagementStatus.OK, contents);
     }
 
-    // Update configuration
-    commandRepository.update(tenant, context.after());
+    // 5. Repository operation
+    commandRepository.update(tenant, after);
 
-    FederationConfigManagementResponse response = context.toResponse();
-    return FederationConfigManagementResult.success(tenant.identifier(), response, context);
+    return new FederationConfigManagementResponse(FederationConfigManagementStatus.OK, contents);
+  }
+
+  private FederationConfiguration updateConfiguration(
+      FederationConfiguration before, FederationConfigRequest request) {
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+    JsonNodeWrapper configJson = jsonConverter.readTree(request.toMap());
+
+    String id = before.identifier().value();
+    String type = configJson.getValueOrEmptyAsString("type");
+    String ssoProvider = configJson.getValueOrEmptyAsString("sso_provider");
+    JsonNodeWrapper payloadJson = configJson.getValueAsJsonNode("payload");
+    Map<String, Object> payload = payloadJson.toMap();
+
+    return new FederationConfiguration(id, type, ssoProvider, payload);
   }
 }

@@ -129,4 +129,14 @@ public class SecurityEventHookResultQueries implements UuidConvertable {
     }
     return Integer.parseInt(values.get("offset"));
   }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    for (Map.Entry<String, String> entry : values.entrySet()) {
+      String key = entry.getKey();
+      String value = entry.getValue();
+      map.put(key, value);
+    }
+    return map;
+  }
 }

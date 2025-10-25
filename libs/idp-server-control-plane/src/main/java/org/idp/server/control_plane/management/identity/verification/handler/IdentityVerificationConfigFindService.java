@@ -17,6 +17,8 @@
 package org.idp.server.control_plane.management.identity.verification.handler;
 
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
+import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigManagementContextBuilder;
+import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigFindRequest;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementStatus;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
@@ -34,8 +36,7 @@ import org.idp.server.platform.type.RequestAttributes;
  * Handler/Service pattern.
  */
 public class IdentityVerificationConfigFindService
-    implements IdentityVerificationConfigManagementService<
-        IdentityVerificationConfigurationIdentifier> {
+    implements IdentityVerificationConfigManagementService<IdentityVerificationConfigFindRequest> {
 
   private final IdentityVerificationConfigurationQueryRepository queryRepository;
 
@@ -45,14 +46,16 @@ public class IdentityVerificationConfigFindService
   }
 
   @Override
-  public IdentityVerificationConfigManagementResult execute(
+  public IdentityVerificationConfigManagementResponse execute(
+      IdentityVerificationConfigManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      IdentityVerificationConfigurationIdentifier identifier,
+      IdentityVerificationConfigFindRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    IdentityVerificationConfigurationIdentifier identifier = request.identifier();
     IdentityVerificationConfiguration configuration = queryRepository.find(tenant, identifier);
 
     if (!configuration.exists()) {
@@ -60,9 +63,10 @@ public class IdentityVerificationConfigFindService
           "Identity verification configuration not found: " + identifier.value());
     }
 
-    return IdentityVerificationConfigManagementResult.success(
-        tenant.identifier(),
-        new IdentityVerificationConfigManagementResponse(
-            IdentityVerificationConfigManagementStatus.OK, configuration.toMap()));
+    // Populate builder with retrieved configuration (as "before" for read operations)
+    builder.withBefore(configuration);
+
+    return new IdentityVerificationConfigManagementResponse(
+        IdentityVerificationConfigManagementStatus.OK, configuration.toMap());
   }
 }

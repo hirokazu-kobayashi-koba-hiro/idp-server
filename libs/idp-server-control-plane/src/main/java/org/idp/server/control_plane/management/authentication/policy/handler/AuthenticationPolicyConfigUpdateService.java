@@ -16,54 +16,49 @@
 
 package org.idp.server.control_plane.management.authentication.policy.handler;
 
-import org.idp.server.control_plane.management.authentication.policy.AuthenticationPolicyConfigUpdateContext;
-import org.idp.server.control_plane.management.authentication.policy.AuthenticationPolicyConfigUpdateContextCreator;
+import java.util.HashMap;
+import java.util.Map;
+import org.idp.server.control_plane.management.authentication.policy.AuthenticationPolicyConfigManagementContextBuilder;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementResponse;
+import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementStatus;
+import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigUpdateRequest;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.json.JsonDiffCalculator;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Service for updating authentication policy configurations.
+ * Service for authentication policy configuration update operations.
  *
- * <p>Handles authentication policy configuration update logic.
- *
- * <h2>Responsibilities</h2>
- *
- * <ul>
- *   <li>Retrieve existing configuration
- *   <li>Context creation
- *   <li>Configuration update in repository
- *   <li>Dry-run support
- * </ul>
+ * <p>Handles business logic for updating authentication policy configurations. Part of
+ * Handler/Service pattern.
  */
 public class AuthenticationPolicyConfigUpdateService
     implements AuthenticationPolicyConfigManagementService<
         AuthenticationPolicyConfigUpdateRequest> {
 
-  private final AuthenticationPolicyConfigurationQueryRepository
-      authenticationPolicyConfigurationQueryRepository;
-  private final AuthenticationPolicyConfigurationCommandRepository
-      authenticationPolicyConfigurationCommandRepository;
+  private final AuthenticationPolicyConfigurationQueryRepository queryRepository;
+  private final AuthenticationPolicyConfigurationCommandRepository commandRepository;
+  private final JsonConverter jsonConverter;
 
   public AuthenticationPolicyConfigUpdateService(
-      AuthenticationPolicyConfigurationQueryRepository
-          authenticationPolicyConfigurationQueryRepository,
-      AuthenticationPolicyConfigurationCommandRepository
-          authenticationPolicyConfigurationCommandRepository) {
-    this.authenticationPolicyConfigurationQueryRepository =
-        authenticationPolicyConfigurationQueryRepository;
-    this.authenticationPolicyConfigurationCommandRepository =
-        authenticationPolicyConfigurationCommandRepository;
+      AuthenticationPolicyConfigurationQueryRepository queryRepository,
+      AuthenticationPolicyConfigurationCommandRepository commandRepository) {
+    this.queryRepository = queryRepository;
+    this.commandRepository = commandRepository;
+    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override
-  public AuthenticationPolicyConfigManagementResult execute(
+  public AuthenticationPolicyConfigManagementResponse execute(
+      AuthenticationPolicyConfigManagementContextBuilder contextBuilder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
@@ -71,32 +66,46 @@ public class AuthenticationPolicyConfigUpdateService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    // 1. Retrieve existing configuration
+    // Find existing configuration
     AuthenticationPolicyConfiguration before =
-        authenticationPolicyConfigurationQueryRepository.find(tenant, request.identifier());
+        queryRepository.findWithDisabled(tenant, request.identifier(), true);
 
     if (!before.exists()) {
       throw new ResourceNotFoundException(
           "Authentication policy configuration not found: " + request.identifier().value());
     }
 
-    // 2. Context creation
-    AuthenticationPolicyConfigUpdateContextCreator contextCreator =
-        new AuthenticationPolicyConfigUpdateContextCreator(
-            tenant, before, request.request(), dryRun);
-    AuthenticationPolicyConfigUpdateContext context = contextCreator.create();
+    // Build updated configuration
+    AuthenticationPolicyConfiguration after = update(before, request);
 
-    // 3. Dry-run check
+    // Update context builder with before and after states
+    contextBuilder.withBefore(before).withAfter(after);
+
+    JsonNodeWrapper beforeJson = JsonNodeWrapper.fromMap(before.toMap());
+    JsonNodeWrapper afterJson = JsonNodeWrapper.fromMap(after.toMap());
+    Map<String, Object> diff = JsonDiffCalculator.deepDiff(beforeJson, afterJson);
+    Map<String, Object> response = Map.of("result", after.toMap(), "diff", diff, "dry_run", dryRun);
+
     if (dryRun) {
-      AuthenticationPolicyConfigManagementResponse response = context.toResponse();
-      return AuthenticationPolicyConfigManagementResult.success(tenant, context, response);
+      return new AuthenticationPolicyConfigManagementResponse(
+          AuthenticationPolicyConfigManagementStatus.OK, response);
     }
 
-    // 4. Update configuration
-    authenticationPolicyConfigurationCommandRepository.update(tenant, context.after());
+    // Update configuration
+    commandRepository.update(tenant, after);
 
-    // 5. Return success
-    AuthenticationPolicyConfigManagementResponse response = context.toResponse();
-    return AuthenticationPolicyConfigManagementResult.success(tenant, context, response);
+    return new AuthenticationPolicyConfigManagementResponse(
+        AuthenticationPolicyConfigManagementStatus.OK, response);
+  }
+
+  public AuthenticationPolicyConfiguration update(
+      AuthenticationPolicyConfiguration before, AuthenticationPolicyConfigUpdateRequest request) {
+
+    String id = before.id();
+
+    Map<String, Object> configMap = new HashMap<>(request.toMap());
+    configMap.put("id", id);
+
+    return jsonConverter.read(configMap, AuthenticationPolicyConfiguration.class);
   }
 }

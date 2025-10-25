@@ -26,8 +26,9 @@ import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.control_plane.model.IdpControlPlaneAuthority;
 import org.idp.server.adapters.springboot.control_plane.model.OrganizationOperatorPrincipal;
 import org.idp.server.adapters.springboot.control_plane.model.OrganizationResolver;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
+import org.idp.server.control_plane.base.OrganizationUserAuthenticationApi;
 import org.idp.server.control_plane.base.definition.IdpControlPlaneScope;
-import org.idp.server.core.openid.identity.OrganizationUserAuthenticationApi;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.BadRequestException;
@@ -83,11 +84,12 @@ public class OrgManagementFilter extends OncePerRequestFilter {
       String authorization = request.getHeader("Authorization");
       String clientCert = request.getHeader("x-ssl-cert");
 
-      Pairs<User, OAuthToken> authResult =
+      Pairs<User, OrganizationAuthenticationContext> authResult =
           organizationUserAuthenticationApi.authenticate(organizationId, authorization, clientCert);
 
       User user = authResult.getLeft();
-      OAuthToken oAuthToken = authResult.getRight();
+      OrganizationAuthenticationContext authenticationContext = authResult.getRight();
+      OAuthToken oAuthToken = authenticationContext.oAuthToken();
       TenantLoggingContext.setTenant(oAuthToken.tenantIdentifier());
       TenantLoggingContext.setClientId(oAuthToken.requestedClientId().value());
 
@@ -114,8 +116,7 @@ public class OrgManagementFilter extends OncePerRequestFilter {
 
       // 6. Create organization-aware principal and set security context
       OrganizationOperatorPrincipal principal =
-          new OrganizationOperatorPrincipal(
-              user, oAuthToken, organizationId, oAuthToken.tenantIdentifier(), authorities);
+          new OrganizationOperatorPrincipal(authenticationContext, authorities);
       SecurityContextHolder.getContext().setAuthentication(principal);
 
       logger.info(

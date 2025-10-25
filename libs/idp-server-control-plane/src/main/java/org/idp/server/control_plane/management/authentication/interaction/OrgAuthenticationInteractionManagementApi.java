@@ -19,15 +19,14 @@ package org.idp.server.control_plane.management.authentication.interaction;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.idp.server.control_plane.base.OrganizationAccessVerifier;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.authentication.interaction.io.AuthenticationInteractionManagementResponse;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.openid.authentication.interaction.AuthenticationInteractionQueries;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.exception.UnSupportedException;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -51,7 +50,7 @@ import org.idp.server.platform.type.RequestAttributes;
  * purposes within organization boundaries.
  *
  * @see AuthenticationInteractionManagementApi
- * @see org.idp.server.control_plane.organization.access.OrganizationAccessVerifier
+ * @see OrganizationAccessVerifier
  */
 public interface OrgAuthenticationInteractionManagementApi {
 
@@ -73,39 +72,31 @@ public interface OrgAuthenticationInteractionManagementApi {
   /**
    * Lists authentication interactions within the organization.
    *
-   * @param organizationIdentifier the organization identifier
+   * @param authenticationContext the organization authentication context
    * @param tenantIdentifier the tenant identifier
-   * @param operator the operator user
-   * @param oAuthToken the OAuth token
    * @param queries the authentication interaction queries
    * @param requestAttributes the request attributes
    * @return the authentication interaction list response
    */
   AuthenticationInteractionManagementResponse findList(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationInteractionQueries queries,
       RequestAttributes requestAttributes);
 
   /**
    * Gets a specific authentication interaction within the organization.
    *
-   * @param organizationIdentifier the organization identifier
+   * @param authenticationContext the organization authentication context
    * @param tenantIdentifier the tenant identifier
-   * @param operator the operator user
-   * @param oAuthToken the OAuth token
    * @param identifier the authentication transaction identifier
    * @param type the interaction type
    * @param requestAttributes the request attributes
    * @return the authentication interaction details response
    */
   AuthenticationInteractionManagementResponse get(
-      OrganizationIdentifier organizationIdentifier,
+      OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
       AuthenticationTransactionIdentifier identifier,
       String type,
       RequestAttributes requestAttributes);

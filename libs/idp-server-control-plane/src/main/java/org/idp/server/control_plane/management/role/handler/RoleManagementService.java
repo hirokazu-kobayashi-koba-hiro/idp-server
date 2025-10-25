@@ -16,6 +16,9 @@
 
 package org.idp.server.control_plane.management.role.handler;
 
+import org.idp.server.control_plane.management.role.RoleManagementContextBuilder;
+import org.idp.server.control_plane.management.role.io.RoleManagementResponse;
+import org.idp.server.control_plane.management.role.io.RoleManagementResult;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -39,28 +42,39 @@ import org.idp.server.platform.type.RequestAttributes;
  *   <li>Handler catches exceptions and converts them to Result objects
  * </ul>
  *
- * @param <REQUEST> the specific request type for the operation
+ * <h2>Context Builder Pattern</h2>
+ *
+ * <p>Services receive a ContextBuilder for incremental context construction:
+ *
+ * <pre>{@code
+ * builder.withAfter(role);  // Service populates builder
+ * AuditableContext context = builder.build();  // Handler builds complete context
+ * }</pre>
+ *
+ * @param <T> the specific request type for the operation
  * @see RoleManagementHandler
  * @see RoleManagementResult
  */
-public interface RoleManagementService<REQUEST> {
+public interface RoleManagementService<T> {
 
   /**
    * Executes the role management operation.
    *
+   * @param builder context builder for incremental context construction
    * @param tenant the tenant
    * @param operator the user performing the operation
    * @param oAuthToken the OAuth token
    * @param request the operation-specific request object
    * @param requestAttributes HTTP request attributes
    * @param dryRun whether to perform a dry run (preview only)
-   * @return the operation result
+   * @return the operation response (Handler wraps in Result)
    */
-  RoleManagementResult execute(
+  RoleManagementResponse execute(
+      RoleManagementContextBuilder builder,
       Tenant tenant,
       User operator,
       OAuthToken oAuthToken,
-      REQUEST request,
+      T request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 }
