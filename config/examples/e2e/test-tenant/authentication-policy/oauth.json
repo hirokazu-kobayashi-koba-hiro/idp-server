@@ -19,6 +19,22 @@
         "fido-uaf",
         "external-token"
       ],
+      "step_definitions": [
+        {
+          "method": "email",
+          "order": 1,
+          "requires_user": false,
+          "allow_registration": true,
+          "user_identity_source": "email"
+        },
+        {
+          "method": "sms",
+          "order": 2,
+          "requires_user": true,
+          "allow_registration": true,
+          "user_identity_source": "phone_number"
+        }
+      ],
       "acr_mapping_rules": {
         "urn:mace:incommon:iap:gold": [
           "fido-uaf",

@@ -28,6 +28,8 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionResult;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
+import org.idp.server.core.openid.authentication.policy.AuthenticationStepDefinition;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.exception.UserTooManyFoundResultException;
@@ -88,6 +90,8 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
       String phoneNumber = resolvePhoneNumber(transaction, request);
 
       if (phoneNumber.isEmpty()) {
+        log.warn("Phone number is empty. method={}", method());
+
         Map<String, Object> response = new HashMap<>();
         response.put("error", "invalid_request");
         response.put("error_description", "phoneNumber is unspecified.");
@@ -103,6 +107,29 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
 
       String providerId = request.optValueAsString("provider_id", "idp-server");
       User user = resolveUser(tenant, transaction, phoneNumber, providerId, userQueryRepository);
+
+      // Check if user was not found (registration disabled or 2nd factor without authenticated
+      // user)
+      if (!user.exists()) {
+        log.warn(
+            "User resolution failed. phoneNumber={}, providerId={}, method={}",
+            phoneNumber,
+            providerId,
+            method());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("error", "user_not_found");
+        response.put(
+            "error_description",
+            "User not found and registration is not allowed for this authentication flow.");
+
+        return AuthenticationInteractionRequestResult.clientError(
+            response,
+            type,
+            operationType(),
+            method(),
+            DefaultSecurityEventType.sms_verification_challenge_failure);
+      }
 
       AuthenticationExecutor executor = executors.get(executionConfig.function());
 
@@ -123,6 +150,10 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
           MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
 
       if (executionResult.isClientError()) {
+        log.warn(
+            "SMS verification execution failed (client error). method={}, contents={}",
+            method(),
+            contents);
         return AuthenticationInteractionRequestResult.clientError(
             contents,
             type,
@@ -132,6 +163,10 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
       }
 
       if (executionResult.isServerError()) {
+        log.error(
+            "SMS verification execution failed (server error). method={}, contents={}",
+            method(),
+            contents);
         return AuthenticationInteractionRequestResult.serverError(
             contents,
             type,
@@ -150,6 +185,12 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
           DefaultSecurityEventType.sms_verification_challenge_success);
     } catch (UserTooManyFoundResultException tooManyFoundResultException) {
 
+      log.error(
+          "Too many users found for phone number. phoneNumber={}, method={}",
+          request.getValueAsString("phone_number"),
+          method(),
+          tooManyFoundResultException);
+
       Map<String, Object> response =
           Map.of(
               "error",
@@ -165,6 +206,60 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
     }
   }
 
+  /**
+   * Get current authentication step definition from policy.
+   *
+   * @param transaction authentication transaction
+   * @param method authentication method name
+   * @return step definition, or null if not found
+   */
+  private AuthenticationStepDefinition getCurrentStepDefinition(
+      AuthenticationTransaction transaction, String method) {
+
+    if (!transaction.hasAuthenticationPolicy()) {
+      return null;
+    }
+
+    AuthenticationPolicy policy = transaction.authenticationPolicy();
+    if (!policy.hasStepDefinitions()) {
+      return null;
+    }
+
+    return policy.stepDefinitions().stream()
+        .filter(step -> method.equals(step.authenticationMethod()))
+        .findFirst()
+        .orElse(null);
+  }
+
+  /**
+   * Resolve user for authentication (1st factor - user identification).
+   *
+   * <p><b>Issue #800 Fix:</b> Search database by input identifier FIRST, before checking
+   * transaction.
+   *
+   * <p><b>AuthenticationStepDefinition Integration:</b>
+   *
+   * <ul>
+   *   <li>allowRegistration: controls whether new user creation is allowed
+   *   <li>userIdentitySource: determines which field to use for identification
+   * </ul>
+   *
+   * <p><b>Resolution Logic:</b>
+   *
+   * <ol>
+   *   <li>Search database by input phone number (HIGHEST PRIORITY - Issue #800 fix)
+   *   <li>Reuse transaction user if same identity (Challenge resend scenario)
+   *   <li>Create new user if allowRegistration=true
+   *   <li>Throw exception if user not found and registration disabled
+   * </ol>
+   *
+   * @param tenant tenant
+   * @param transaction authentication transaction
+   * @param phoneNumber input phone number
+   * @param providerId provider ID
+   * @param userQueryRepository user query repository
+   * @return resolved user
+   */
   private User resolveUser(
       Tenant tenant,
       AuthenticationTransaction transaction,
@@ -172,17 +267,68 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
       String providerId,
       UserQueryRepository userQueryRepository) {
 
-    if (transaction.hasUser()) {
-      User user = transaction.user();
-      user.setPhoneNumber(phoneNumber);
-      return user;
+    // Get step definition from policy
+    AuthenticationStepDefinition stepDefinition = getCurrentStepDefinition(transaction, method());
+
+    // SECURITY: 2nd factor requires authenticated user (prevent authentication bypass)
+    if (stepDefinition != null && stepDefinition.requiresUser()) {
+      if (!transaction.hasUser()) {
+        // 2nd factor without authenticated user -> security violation
+        log.warn(
+            "2nd factor requires authenticated user but transaction has no user. method={}, phoneNumber={}",
+            method(),
+            phoneNumber);
+        return User.notFound();
+      }
+      // 2nd factor: return authenticated user (immutable)
+      log.debug(
+          "2nd factor: returning authenticated user. method={}, sub={}",
+          method(),
+          transaction.user().sub());
+      return transaction.user();
     }
 
+    // === 1st factor user identification ===
+
+    // 1. Database search FIRST (Issue #800 fix)
     User existingUser = userQueryRepository.findByPhone(tenant, phoneNumber, providerId);
     if (existingUser.exists()) {
+      log.debug("User found in database. phoneNumber={}, sub={}", phoneNumber, existingUser.sub());
       return existingUser;
     }
+    log.debug("User not found in database. phoneNumber={}", phoneNumber);
 
+    // 2. Reuse transaction user if same identity (Challenge resend scenario)
+    if (transaction.hasUser()) {
+      User transactionUser = transaction.user();
+
+      if (phoneNumber.equals(transactionUser.phoneNumber())) {
+        log.debug(
+            "Reusing transaction user (same phone). phoneNumber={}, sub={}",
+            phoneNumber,
+            transactionUser.sub());
+        return transactionUser; // Same identity -> reuse
+      }
+      // Different identity -> discard previous user and create new
+      log.debug(
+          "Transaction user has different phone. requested={}, transaction={}",
+          phoneNumber,
+          transactionUser.phoneNumber());
+    }
+
+    // 3. New user creation decision
+    boolean allowRegistration =
+            stepDefinition != null && stepDefinition.allowRegistration(); // default: disabled
+
+    if (!allowRegistration) {
+      log.warn(
+          "User not found and registration disabled. phoneNumber={}, allowRegistration=false",
+          phoneNumber);
+      return User.notFound();
+    }
+
+    // 4. Create new user
+    log.debug("Creating new user. phoneNumber={}, allowRegistration=true", phoneNumber);
     User user = new User();
     String id = UUID.randomUUID().toString();
     user.setSub(id);
@@ -193,13 +339,40 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
 
   private String resolvePhoneNumber(
       AuthenticationTransaction transaction, AuthenticationInteractionRequest request) {
+
+    AuthenticationStepDefinition stepDefinition = getCurrentStepDefinition(transaction, method());
+
+    // 2nd factor: use authenticated user's phone number only (ignore request input)
+    if (stepDefinition != null && stepDefinition.requiresUser()) {
+      if (transaction.hasUser() && transaction.user().hasPhoneNumber()) {
+        String phoneNumber = transaction.user().phoneNumber();
+        log.debug("2nd factor: using authenticated user's phone. phoneNumber={}", phoneNumber);
+        return phoneNumber;
+      }
+
+      if (stepDefinition.allowRegistration()) {
+        String phoneNumber = request.optValueAsString("phone_number", "");
+        log.debug("2nd factor: using authenticated user's phone. phoneNumber={}", phoneNumber);
+        return phoneNumber;
+      }
+      log.warn(
+          "2nd factor authentication failed: no authenticated user in transaction. method={}",
+          method());
+      return ""; // No authenticated user -> error
+    }
+
+    // 1st factor: get from request or transaction
     if (request.containsKey("phone_number")) {
-      return request.getValueAsString("phone_number");
+      String phoneNumber = request.getValueAsString("phone_number");
+      log.debug("1st factor: phone from request. phoneNumber={}", phoneNumber);
+      return phoneNumber;
     }
     if (transaction.hasUser()) {
       User user = transaction.user();
+      log.debug("1st factor: phone from transaction user. phoneNumber={}", user.phoneNumber());
       return user.phoneNumber();
     }
+    log.debug("No phone number found in request or transaction");
     return "";
   }
 }
