@@ -82,7 +82,7 @@ describe("organization authentication config management api", () => {
       console.log("Dry run create response:", dryRunCreateResponse.data);
 
       // Dry run should return 200 with preview information
-      expect(dryRunCreateResponse.status).toBe(201);
+      expect(dryRunCreateResponse.status).toBe(200);
       expect(dryRunCreateResponse.data).toHaveProperty("dry_run", true);
       expect(dryRunCreateResponse.data).toHaveProperty("result");
       expect(dryRunCreateResponse.data.result).toHaveProperty("id");
