@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
+import { describe, expect, it, beforeAll } from "@jest/globals";
 import { deletion, get, postWithJson, putWithJson } from "../../../../lib/http";
 import { requestToken } from "../../../../api/oauthClient";
 import { backendUrl } from "../../../testConfig";

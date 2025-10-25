@@ -28,6 +28,7 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
@@ -62,12 +63,7 @@ public class ClientCreationService implements ClientManagementService<ClientRegi
         new ClientRegistrationRequestValidator(request, dryRun);
     validator.validate(); // throws InvalidRequestException if invalid
 
-    // Build ClientConfiguration (add client_id if missing)
-    Map<String, Object> map = new HashMap<>(request.toMap());
-    if (!request.hasClientId()) {
-      map.put("client_id", UUID.randomUUID().toString());
-    }
-    ClientConfiguration clientConfiguration = jsonConverter.read(map, ClientConfiguration.class);
+    ClientConfiguration clientConfiguration = createClientConfiguration(request);
 
     // Update context builder with after state
     contextBuilder.withAfter(clientConfiguration);
@@ -82,5 +78,17 @@ public class ClientCreationService implements ClientManagementService<ClientRegi
     commandRepository.register(tenant, clientConfiguration);
 
     return new ClientManagementResponse(ClientManagementStatus.CREATED, response);
+  }
+
+  private ClientConfiguration createClientConfiguration(ClientRegistrationRequest request) {
+    // Build ClientConfiguration (add client_id if missing)
+    Map<String, Object> map = new HashMap<>(request.toMap());
+    if (!request.hasClientId()) {
+      map.put("client_id", UUID.randomUUID().toString());
+    }
+    ClientConfiguration clientConfiguration = jsonConverter.read(map, ClientConfiguration.class);
+    clientConfiguration.setCreatedAt(SystemDateTime.now());
+    clientConfiguration.setUpdatedAt(SystemDateTime.now());
+    return clientConfiguration;
   }
 }

@@ -16,11 +16,13 @@
 
 package org.idp.server.control_plane.management.oidc.client.handler;
 
+import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.oidc.client.ClientManagementContextBuilder;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementStatus;
+import org.idp.server.control_plane.management.oidc.client.io.ClientRegistrationRequest;
 import org.idp.server.control_plane.management.oidc.client.io.ClientUpdateRequest;
 import org.idp.server.control_plane.management.oidc.client.validator.ClientRegistrationRequestValidator;
 import org.idp.server.core.openid.identity.User;
@@ -28,6 +30,7 @@ import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonDiffCalculator;
 import org.idp.server.platform.json.JsonNodeWrapper;
@@ -77,8 +80,7 @@ public class ClientUpdateService implements ClientManagementService<ClientUpdate
     validator.validate(); // throws InvalidRequestException if invalid
 
     // Build updated ClientConfiguration
-    ClientConfiguration after =
-        jsonConverter.read(request.registrationRequest().toMap(), ClientConfiguration.class);
+    ClientConfiguration after = updateClientConfiguration(request.registrationRequest(), before);
 
     // Update context builder with before and after states
     contextBuilder.withBefore(before).withAfter(after);
@@ -96,5 +98,16 @@ public class ClientUpdateService implements ClientManagementService<ClientUpdate
     commandRepository.update(tenant, after);
 
     return new ClientManagementResponse(ClientManagementStatus.OK, response);
+  }
+
+  private ClientConfiguration updateClientConfiguration(
+      ClientRegistrationRequest request, ClientConfiguration before) {
+    // Build ClientConfiguration (add client_id if missing)
+    Map<String, Object> map = new HashMap<>(request.toMap());
+    map.put("client_id", before.clientIdValue());
+    ClientConfiguration clientConfiguration = jsonConverter.read(map, ClientConfiguration.class);
+    clientConfiguration.setCreatedAt(before.createdAt());
+    clientConfiguration.setUpdatedAt(SystemDateTime.now());
+    return clientConfiguration;
   }
 }
