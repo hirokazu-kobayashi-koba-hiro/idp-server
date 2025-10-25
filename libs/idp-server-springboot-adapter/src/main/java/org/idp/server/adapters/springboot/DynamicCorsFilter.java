@@ -106,9 +106,13 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
 
   @Override
   protected boolean shouldNotFilter(HttpServletRequest request) {
-    return request.getRequestURI().contains("/health")
-        || request.getRequestURI().contains("/admin")
-        || request.getRequestURI().contains("/backchannel")
-        || request.getRequestURI().contains("/auth-views/");
+    String uri = request.getRequestURI();
+    // Skip CORS for actuator endpoints and simple /health, but allow CORS for tenant-specific
+    // /v1/health
+    return uri.equals("/health")
+        || uri.startsWith("/actuator/")
+        || uri.contains("/admin")
+        || uri.contains("/backchannel")
+        || uri.contains("/auth-views/");
   }
 }
