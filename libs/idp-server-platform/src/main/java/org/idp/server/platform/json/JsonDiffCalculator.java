@@ -16,8 +16,10 @@
 
 package org.idp.server.platform.json;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -49,6 +51,44 @@ public class JsonDiffCalculator {
     Map<String, Object> diff = new HashMap<>();
     diffRecursive("", before, after, diff);
     return diff;
+  }
+
+  /**
+   * Converts a JSON array to a List, preserving primitive types and recursively converting nested
+   * structures.
+   *
+   * @param wrapper the JSON array wrapper
+   * @return List of converted elements
+   */
+  private static List<Object> convertArrayToList(JsonNodeWrapper wrapper) {
+    List<Object> list = new ArrayList<>();
+    wrapper
+        .elements()
+        .forEach(
+            element -> {
+              switch (element.nodeType()) {
+                case OBJECT:
+                  list.add(element.toMap());
+                  break;
+                case ARRAY:
+                  list.add(convertArrayToList(element));
+                  break;
+                case STRING:
+                  list.add(element.asText());
+                  break;
+                case INT:
+                  list.add(element.asInt());
+                  break;
+                case BOOLEAN:
+                case LONG:
+                case DOUBLE:
+                case NULL:
+                default:
+                  list.add(element.node());
+                  break;
+              }
+            });
+    return list;
   }
 
   /**
@@ -91,7 +131,9 @@ public class JsonDiffCalculator {
       case ARRAY:
         // Shallow comparison for arrays
         if (!before.node().equals(after.node())) {
-          diff.put(path, after.toMap());
+          // Convert array to List, recursively converting nested structures
+          List<Object> afterList = convertArrayToList(after);
+          diff.put(path, afterList);
         }
         break;
       default:
