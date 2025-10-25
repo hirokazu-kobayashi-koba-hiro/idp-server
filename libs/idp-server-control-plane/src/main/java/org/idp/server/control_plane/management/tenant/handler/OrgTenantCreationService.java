@@ -125,6 +125,10 @@ public class OrgTenantCreationService implements TenantManagementService<OrgTena
     Organization assignedOrganization = organization.updateWithTenant(assignedTenant);
     operator.addAssignedTenant(newTenant.identifier());
 
+    // Populate audit context with created tenant
+    builder.withTargetTenantIdentifier(newTenant.identifier());
+    builder.withAfter(newTenant);
+
     Map<String, Object> contents = new HashMap<>();
     contents.put("result", newTenant.toMap());
     contents.put("dry_run", dryRun);

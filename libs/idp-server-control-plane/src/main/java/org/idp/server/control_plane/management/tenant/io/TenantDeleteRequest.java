@@ -27,4 +27,9 @@ public record TenantDeleteRequest(TenantIdentifier tenantIdentifier)
   public Map<String, Object> toMap() {
     return Map.of();
   }
+
+  @Override
+  public boolean hasTenantIdentifier() {
+    return true;
+  }
 }

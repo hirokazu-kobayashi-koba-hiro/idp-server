@@ -35,6 +35,11 @@ public class TenantRequest implements TenantManagementRequest {
     return values;
   }
 
+  @Override
+  public boolean hasTenantIdentifier() {
+    return false;
+  }
+
   public Object get(String key) {
     return values.get(key);
   }

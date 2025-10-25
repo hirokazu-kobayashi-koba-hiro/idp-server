@@ -8,4 +8,6 @@ public interface TenantManagementRequest {
   TenantIdentifier tenantIdentifier();
 
   Map<String, Object> toMap();
+
+  boolean hasTenantIdentifier();
 }

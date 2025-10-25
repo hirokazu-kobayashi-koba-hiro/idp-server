@@ -122,9 +122,12 @@ public class OrgTenantManagementHandler {
     Tenant orgTenant = authenticationContext.organizerTenant();
     User operator = authenticationContext.operator();
     OAuthToken oAuthToken = authenticationContext.oAuthToken();
-    TenantManagementContextBuilder builder =
+    TenantManagementContextBuilder contextBuilder =
         new TenantManagementContextBuilder(
-            request.tenantIdentifier(), operator, oAuthToken, requestAttributes, request, dryRun);
+            operator, oAuthToken, requestAttributes, request, dryRun);
+    if (request.hasTenantIdentifier()) {
+      contextBuilder.withTargetTenantIdentifier(request.tenantIdentifier());
+    }
 
     try {
       // 0. Get required permissions
@@ -140,27 +143,27 @@ public class OrgTenantManagementHandler {
       TenantManagementResponse response =
           executeService(
               service,
-              builder,
+              contextBuilder,
               orgTenant,
               operator,
               oAuthToken,
               request,
               requestAttributes,
               dryRun);
-      AuditableContext context = builder.build();
+      AuditableContext context = contextBuilder.build();
 
       return TenantManagementResult.success(context, response);
     } catch (NotFoundException e) {
 
       log.warn(e.getMessage());
       ResourceNotFoundException notFound = new ResourceNotFoundException(e.getMessage());
-      AuditableContext context = builder.buildPartial(notFound);
+      AuditableContext context = contextBuilder.buildPartial(notFound);
       return TenantManagementResult.error(context, notFound);
 
     } catch (ManagementApiException e) {
 
       log.warn(e.getMessage());
-      AuditableContext context = builder.buildPartial(e);
+      AuditableContext context = contextBuilder.buildPartial(e);
       return TenantManagementResult.error(context, e);
     }
   }

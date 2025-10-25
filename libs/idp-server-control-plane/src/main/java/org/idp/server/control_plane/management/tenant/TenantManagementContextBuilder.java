@@ -31,25 +31,29 @@ public class TenantManagementContextBuilder {
   private final OAuthToken oAuthToken;
   private final RequestAttributes requestAttributes;
   private final TenantManagementRequest request;
-  private final TenantIdentifier tenantIdentifier;
   private final boolean dryRun;
 
+  private TenantIdentifier tenantIdentifier = new TenantIdentifier();
   private Tenant before; // nullable: null in error scenarios
   private Tenant after; // nullable: null in error scenarios
 
   public TenantManagementContextBuilder(
-      TenantIdentifier tenantIdentifier,
       User operator,
       OAuthToken oAuthToken,
       RequestAttributes requestAttributes,
       TenantManagementRequest request,
       boolean dryRun) {
-    this.tenantIdentifier = tenantIdentifier;
     this.operator = operator;
     this.oAuthToken = oAuthToken;
     this.requestAttributes = requestAttributes;
     this.request = request;
     this.dryRun = dryRun;
+  }
+
+  public TenantManagementContextBuilder withTargetTenantIdentifier(
+      TenantIdentifier tenantIdentifier) {
+    this.tenantIdentifier = tenantIdentifier;
+    return this;
   }
 
   public TenantManagementContextBuilder withBefore(Tenant before) {

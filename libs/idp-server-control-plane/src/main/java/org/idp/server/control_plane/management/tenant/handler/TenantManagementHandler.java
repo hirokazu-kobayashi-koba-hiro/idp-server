@@ -95,9 +95,12 @@ public class TenantManagementHandler {
     Tenant adminTenant = authenticationContext.adminTenant();
     User operator = authenticationContext.operator();
     OAuthToken oAuthToken = authenticationContext.oAuthToken();
-    TenantManagementContextBuilder builder =
+    TenantManagementContextBuilder contextBuilder =
         new TenantManagementContextBuilder(
-            request.tenantIdentifier(), operator, oAuthToken, requestAttributes, request, dryRun);
+            operator, oAuthToken, requestAttributes, request, dryRun);
+    if (request.hasTenantIdentifier()) {
+      contextBuilder.withTargetTenantIdentifier(request.tenantIdentifier());
+    }
 
     try {
 
@@ -109,7 +112,7 @@ public class TenantManagementHandler {
       TenantManagementResponse tenantManagementResponse =
           executeService(
               service,
-              builder,
+              contextBuilder,
               adminTenant,
               operator,
               oAuthToken,
@@ -117,20 +120,20 @@ public class TenantManagementHandler {
               requestAttributes,
               dryRun);
 
-      AuditableContext context = builder.build();
+      AuditableContext context = contextBuilder.build();
 
       return TenantManagementResult.success(context, tenantManagementResponse);
     } catch (NotFoundException e) {
 
       log.warn(e.getMessage());
       ResourceNotFoundException notFound = new ResourceNotFoundException(e.getMessage());
-      AuditableContext context = builder.buildPartial(notFound);
+      AuditableContext context = contextBuilder.buildPartial(notFound);
       return TenantManagementResult.error(context, notFound);
 
     } catch (ManagementApiException e) {
 
       log.warn(e.getMessage());
-      AuditableContext context = builder.buildPartial(e);
+      AuditableContext context = contextBuilder.buildPartial(e);
       return TenantManagementResult.error(context, e);
     }
   }

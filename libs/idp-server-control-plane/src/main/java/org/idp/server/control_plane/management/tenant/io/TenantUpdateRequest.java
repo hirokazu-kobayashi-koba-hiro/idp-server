@@ -31,4 +31,9 @@ public record TenantUpdateRequest(TenantIdentifier tenantIdentifier, TenantReque
   public Map<String, Object> toMap() {
     return tenantRequest.toMap();
   }
+
+  @Override
+  public boolean hasTenantIdentifier() {
+    return true;
+  }
 }

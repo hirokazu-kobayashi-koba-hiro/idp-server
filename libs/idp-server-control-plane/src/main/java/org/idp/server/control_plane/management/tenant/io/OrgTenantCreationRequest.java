@@ -37,4 +37,9 @@ public record OrgTenantCreationRequest(Organization organization, TenantRequest 
   public Map<String, Object> toMap() {
     return tenantRequest.toMap();
   }
+
+  @Override
+  public boolean hasTenantIdentifier() {
+    return false;
+  }
 }
