@@ -49,11 +49,13 @@ import org.idp.server.control_plane.management.security.hook.io.SecurityEventHoo
 public class SecurityEventHookConfigManagementResult {
 
   private final ManagementApiException exception;
-  private final Object response;
+  private final SecurityEventHookConfigManagementResponse response;
   private final AuditableContext context;
 
   private SecurityEventHookConfigManagementResult(
-      ManagementApiException exception, Object response, AuditableContext context) {
+      ManagementApiException exception,
+      SecurityEventHookConfigManagementResponse response,
+      AuditableContext context) {
     this.exception = exception;
     this.response = response;
     this.context = context;
@@ -134,7 +136,7 @@ public class SecurityEventHookConfigManagementResult {
       errorResponse.putAll(exception.errorDetails());
       return new SecurityEventHookConfigManagementResponse(status, errorResponse);
     }
-    return (SecurityEventHookConfigManagementResponse) response;
+    return response;
   }
 
   /**
