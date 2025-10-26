@@ -1,0 +1,63 @@
+{
+  "client_id": "2c8e3c01-07c6-425d-8114-f5268f5d4f19",
+  "client_id_alias": "federationClient",
+  "client_secret": "142xG9AaUsoMhZTLLDGugbYsoSRXDaXeE8wtCUAxcneSH8HEdKpMPe3L6dAZqYFw",
+  "client_id_issued_at": 2893256800,
+  "client_secret_expires_at": 2893276800,
+  "redirect_uris": [
+    "https://client.example.org/callback",
+    "https://client.example.org/callback2",
+    "http://localhost:8081/callback",
+    "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/idp_oidc_basic/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/idp_oidc_implicit/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/idp_oidc_hybrid/callback"
+  ],
+  "response_types": [
+    "code",
+    "token",
+    "id_token",
+    "code token",
+    "code token id_token",
+    "token id_token",
+    "code id_token",
+    "none"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token",
+    "password",
+    "client_credentials",
+    "urn:openid:params:grant-type:ciba"
+  ],
+  "scope": "openid profile email address phone management verified_claims:family_name claims:ex_sub claims:status claims:authentication_devices claims:roles claims:permissions claims:assigned_tenants claims:assigned_organizations claims:authentication_devices claims:authentication_devices offline_access account transfers read write identity_verification_application identity_verification_application_delete identity_credentials_update",
+  "client_name": "federationClient",
+  "client_name#ja-Jpan-JP": "federationClient",
+  "token_endpoint_auth_method": "client_secret_post",
+  "logo_uri": "https://client.example.org/logo.png",
+  "tos_uri": "https://idp-auth-frontend-diqt.vercel.app/terms",
+  "policy_uri": "https://idp-auth-frontend-diqt.vercel.app/privacy",
+  "jwks": "{\n    \"keys\": [{\n    \"kty\": \"EC\",\n    \"d\": \"uj7jNVQIfSCBdiV4A_yVnY8htLZS7nskIXAGIVDb9oM\",\n    \"use\": \"sig\",\n    \"crv\": \"P-256\",\n    \"kid\": \"request_secret_post\",\n    \"x\": \"H4E6D5GqxTrZshUvkG-z0sAWNkbixERVSpm3YjcIU1U\",\n    \"y\": \"413NbE2n5PeQJlG1Nfq_nCbqR_ZKbVAzsyyrmYph7Fs\",\n    \"alg\": \"ES256\"\n}]\n}",
+  "backchannel_token_delivery_mode": "poll",
+  "backchannel_client_notification_endpoint": "",
+  "backchannel_authentication_request_signing_alg": "ES256",
+  "backchannel_user_code_parameter": true,
+  "application_type": "web",
+  "authorization_details_types":[
+    "payment_initiation",
+    "account_information",
+    "openid_credential"
+  ],
+  "extension": {
+    "access_token_duration": 120,
+    "available_federations": [
+      {
+        "id": "b7481833-c95a-4c7a-9481-94b30008c8ef",
+        "type": "oidc",
+        "sso_provider": "b7481833-c95a-4c7a-9481-94b30008c8ef",
+        "auto_selected": true
+      }
+    ],
+    "default_ciba_authentication_interaction_type": "authentication-device-notification-no-action"
+  }
+}

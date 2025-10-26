@@ -120,6 +120,7 @@ client_files=(
   selfSignedTlsClientAuth.json
   selfSignedTlsClientAuth2.json
   unsupportedClient.json
+  federationClient.json
 )
 
 for client_file in "${client_files[@]}"; do

@@ -18,7 +18,6 @@ package org.idp.server.authentication.interactors.sms;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 import org.idp.server.core.openid.authentication.*;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
 import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
@@ -28,7 +27,10 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionResult;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
+import org.idp.server.core.openid.authentication.policy.AuthenticationStepDefinition;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
+import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.exception.UserTooManyFoundResultException;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
@@ -43,13 +45,16 @@ import org.idp.server.platform.type.RequestAttributes;
 public class SmsAuthenticationChallengeInteractor implements AuthenticationInteractor {
 
   AuthenticationExecutors executors;
+  AuthenticationInteractionCommandRepository interactionCommandRepository;
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
   LoggerWrapper log = LoggerWrapper.getLogger(SmsAuthenticationChallengeInteractor.class);
 
   public SmsAuthenticationChallengeInteractor(
       AuthenticationExecutors executors,
+      AuthenticationInteractionCommandRepository interactionCommandRepository,
       AuthenticationConfigurationQueryRepository configurationQueryRepository) {
     this.executors = executors;
+    this.interactionCommandRepository = interactionCommandRepository;
     this.configurationQueryRepository = configurationQueryRepository;
   }
 
@@ -85,9 +90,12 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
           configuration.getAuthenticationConfig("sms-authentication-challenge");
       AuthenticationExecutionConfig executionConfig = authenticationInteractionConfig.execution();
 
+      String providerId = request.optValueAsString("provider_id", "idp-server");
       String phoneNumber = resolvePhoneNumber(transaction, request);
 
       if (phoneNumber.isEmpty()) {
+        log.warn("Phone number is empty. method={}", method());
+
         Map<String, Object> response = new HashMap<>();
         response.put("error", "invalid_request");
         response.put("error_description", "phoneNumber is unspecified.");
@@ -100,9 +108,6 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
             response,
             DefaultSecurityEventType.sms_verification_challenge_failure);
       }
-
-      String providerId = request.optValueAsString("provider_id", "idp-server");
-      User user = resolveUser(tenant, transaction, phoneNumber, providerId, userQueryRepository);
 
       AuthenticationExecutor executor = executors.get(executionConfig.function());
 
@@ -123,6 +128,10 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
           MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
 
       if (executionResult.isClientError()) {
+        log.warn(
+            "SMS verification execution failed (client error). method={}, contents={}",
+            method(),
+            contents);
         return AuthenticationInteractionRequestResult.clientError(
             contents,
             type,
@@ -132,6 +141,10 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
       }
 
       if (executionResult.isServerError()) {
+        log.error(
+            "SMS verification execution failed (server error). method={}, contents={}",
+            method(),
+            contents);
         return AuthenticationInteractionRequestResult.serverError(
             contents,
             type,
@@ -140,15 +153,29 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
             DefaultSecurityEventType.sms_verification_challenge_failure);
       }
 
+      SmslVerificationChallengeRequest smslVerificationChallengeRequest =
+          new SmslVerificationChallengeRequest(providerId, phoneNumber);
+      interactionCommandRepository.register(
+          tenant,
+          transaction.identifier(),
+          "sms-authentication-challenge-request",
+          smslVerificationChallengeRequest);
+
       return new AuthenticationInteractionRequestResult(
           AuthenticationInteractionStatus.SUCCESS,
           type,
           operationType(),
           method(),
-          user,
+          transaction.user(),
           contents,
           DefaultSecurityEventType.sms_verification_challenge_success);
     } catch (UserTooManyFoundResultException tooManyFoundResultException) {
+
+      log.error(
+          "Too many users found for phone number. phoneNumber={}, method={}",
+          request.getValueAsString("phone_number"),
+          method(),
+          tooManyFoundResultException);
 
       Map<String, Object> response =
           Map.of(
@@ -165,41 +192,72 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
     }
   }
 
-  private User resolveUser(
-      Tenant tenant,
-      AuthenticationTransaction transaction,
-      String phoneNumber,
-      String providerId,
-      UserQueryRepository userQueryRepository) {
+  /**
+   * Get current authentication step definition from policy.
+   *
+   * @param transaction authentication transaction
+   * @param method authentication method name
+   * @return step definition, or null if not found
+   */
+  private AuthenticationStepDefinition getCurrentStepDefinition(
+      AuthenticationTransaction transaction, String method) {
 
-    if (transaction.hasUser()) {
-      User user = transaction.user();
-      user.setPhoneNumber(phoneNumber);
-      return user;
+    if (!transaction.hasAuthenticationPolicy()) {
+      return null;
     }
 
-    User existingUser = userQueryRepository.findByPhone(tenant, phoneNumber, providerId);
-    if (existingUser.exists()) {
-      return existingUser;
+    AuthenticationPolicy policy = transaction.authenticationPolicy();
+    if (!policy.hasStepDefinitions()) {
+      return null;
     }
 
-    User user = new User();
-    String id = UUID.randomUUID().toString();
-    user.setSub(id);
-    user.setPhoneNumber(phoneNumber);
-
-    return user;
+    return policy.stepDefinitions().stream()
+        .filter(step -> method.equals(step.authenticationMethod()))
+        .findFirst()
+        .orElse(null);
   }
 
   private String resolvePhoneNumber(
       AuthenticationTransaction transaction, AuthenticationInteractionRequest request) {
+
+    AuthenticationStepDefinition stepDefinition = getCurrentStepDefinition(transaction, method());
+
+    // 2nd factor: use authenticated user's phone number only (ignore request input)
+    if (stepDefinition != null && stepDefinition.requiresUser() && !transaction.hasUser()) {
+      log.debug("2nd factor: using authenticated user's phone. But user is not specified.");
+      return "";
+    }
+
+    if (stepDefinition != null && stepDefinition.requiresUser()) {
+      if (transaction.hasUser() && transaction.user().hasPhoneNumber()) {
+        String phoneNumber = transaction.user().phoneNumber();
+        log.debug("2nd factor: using authenticated user's phone. phoneNumber={}", phoneNumber);
+        return phoneNumber;
+      }
+
+      if (stepDefinition.allowRegistration()) {
+        String phoneNumber = request.optValueAsString("phone_number", "");
+        log.debug("2nd factor: using authenticated user's phone. phoneNumber={}", phoneNumber);
+        return phoneNumber;
+      }
+      log.warn(
+          "2nd factor authentication failed: no authenticated user in transaction. method={}",
+          method());
+      return ""; // No authenticated user -> error
+    }
+
+    // 1st factor: get from request or transaction
     if (request.containsKey("phone_number")) {
-      return request.getValueAsString("phone_number");
+      String phoneNumber = request.getValueAsString("phone_number");
+      log.debug("1st factor: phone from request. phoneNumber={}", phoneNumber);
+      return phoneNumber;
     }
     if (transaction.hasUser()) {
       User user = transaction.user();
+      log.debug("1st factor: phone from transaction user. phoneNumber={}", user.phoneNumber());
       return user.phoneNumber();
     }
+    log.debug("No phone number found in request or transaction");
     return "";
   }
 }

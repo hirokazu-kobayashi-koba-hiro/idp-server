@@ -18,7 +18,6 @@ package org.idp.server.authentication.interactors.email;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 import org.idp.server.core.openid.authentication.*;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
 import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
@@ -28,6 +27,8 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionResult;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
+import org.idp.server.core.openid.authentication.policy.AuthenticationStepDefinition;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.openid.identity.User;
@@ -90,9 +91,12 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
           configuration.getAuthenticationConfig("email-authentication-challenge");
       AuthenticationExecutionConfig execution = authenticationConfig.execution();
 
+      String providerId = request.optValueAsString("provider_id", "idp-server");
       String email = resolveEmail(transaction, request);
 
       if (email.isEmpty()) {
+        log.warn("Email is empty. method={}", method());
+
         Map<String, Object> response = new HashMap<>();
         response.put("error", "invalid_request");
         response.put("error_description", "email is unspecified.");
@@ -121,6 +125,10 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
           MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
 
       if (executionResult.isClientError()) {
+        log.warn(
+            "Email verification execution failed (client error). method={}, contents={}",
+            method(),
+            contents);
         return AuthenticationInteractionRequestResult.clientError(
             contents,
             type,
@@ -130,6 +138,10 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
       }
 
       if (executionResult.isServerError()) {
+        log.error(
+            "Email verification execution failed (server error). method={}, contents={}",
+            method(),
+            contents);
         return AuthenticationInteractionRequestResult.serverError(
             contents,
             type,
@@ -138,18 +150,29 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
             DefaultSecurityEventType.email_verification_request_failure);
       }
 
-      String providerId = request.optValueAsString("provider_id", "idp-server");
-      User user = resolveUser(tenant, transaction, email, providerId, userQueryRepository);
+      EmailVerificationChallengeRequest emailVerificationChallengeRequest =
+          new EmailVerificationChallengeRequest(providerId, email);
+      interactionCommandRepository.register(
+          tenant,
+          transaction.identifier(),
+          "email-authentication-challenge-request",
+          emailVerificationChallengeRequest);
 
       return new AuthenticationInteractionRequestResult(
           AuthenticationInteractionStatus.SUCCESS,
           type,
           operationType(),
           method(),
-          user,
+          transaction.user(),
           contents,
           DefaultSecurityEventType.email_verification_request_success);
     } catch (UserTooManyFoundResultException tooManyFoundResultException) {
+
+      log.error(
+          "Too many users found for email. email={}, method={}",
+          request.getValueAsString("email"),
+          method(),
+          tooManyFoundResultException);
 
       Map<String, Object> response =
           Map.of(
@@ -166,41 +189,73 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
     }
   }
 
-  private User resolveUser(
-      Tenant tenant,
-      AuthenticationTransaction transaction,
-      String email,
-      String providerId,
-      UserQueryRepository userQueryRepository) {
+  /**
+   * Get current step definition from authentication policy.
+   *
+   * @param transaction authentication transaction
+   * @param method authentication method name
+   * @return step definition or null if not found
+   */
+  private AuthenticationStepDefinition getCurrentStepDefinition(
+      AuthenticationTransaction transaction, String method) {
 
-    if (transaction.hasUser()) {
-      User user = transaction.user();
-      user.setEmail(email);
-      return user;
+    if (!transaction.hasAuthenticationPolicy()) {
+      return null;
     }
 
-    User existingUser = userQueryRepository.findByEmail(tenant, email, providerId);
-    if (existingUser.exists()) {
-      return existingUser;
+    AuthenticationPolicy policy = transaction.authenticationPolicy();
+    if (!policy.hasStepDefinitions()) {
+      return null;
     }
 
-    User user = new User();
-    String id = UUID.randomUUID().toString();
-    user.setSub(id);
-    user.setEmail(email);
-
-    return user;
+    return policy.stepDefinitions().stream()
+        .filter(step -> method.equals(step.authenticationMethod()))
+        .findFirst()
+        .orElse(null);
   }
 
   private String resolveEmail(
       AuthenticationTransaction transaction, AuthenticationInteractionRequest request) {
+
+    AuthenticationStepDefinition stepDefinition = getCurrentStepDefinition(transaction, method());
+
+    // 2nd factor: use authenticated user's email only (ignore request input)
+    if (stepDefinition != null && stepDefinition.requiresUser() && !transaction.hasUser()) {
+      log.debug("2nd factor: using authenticated user's email. But user is not specified.");
+      return "";
+    }
+
+    if (stepDefinition != null && stepDefinition.requiresUser()) {
+      if (transaction.hasUser() && transaction.user().hasEmail()) {
+        String email = transaction.user().email();
+        log.debug("2nd factor: using authenticated user's email. email={}", email);
+        return email;
+      }
+
+      if (stepDefinition.allowRegistration()) {
+        String email = request.optValueAsString("email", "");
+        log.debug("2nd factor: using authenticated user's email. email={}", email);
+        return email;
+      }
+
+      log.warn(
+          "2nd factor authentication failed: no authenticated user in transaction. method={}",
+          method());
+      return ""; // No authenticated user -> error
+    }
+
+    // 1st factor: get from request or transaction
     if (request.containsKey("email")) {
-      return request.getValueAsString("email");
+      String email = request.getValueAsString("email");
+      log.debug("1st factor: email from request. email={}", email);
+      return email;
     }
     if (transaction.hasUser()) {
       User user = transaction.user();
+      log.debug("1st factor: email from transaction user. email={}", user.email());
       return user.email();
     }
+    log.debug("No email found in request or transaction");
     return "";
   }
 }

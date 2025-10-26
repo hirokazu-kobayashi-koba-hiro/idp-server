@@ -212,3 +212,25 @@ for security_event_hook_config_file in "${security_event_hook_config_files[@]}";
   -d "${DRY_RUN}"
 
 done
+
+##authentication-policy
+echo "-------------------------------------------------"
+echo ""
+echo "authentication-policy"
+
+authentication_policy_files=(
+  oauth.json
+)
+
+for authentication_policy_file in "${authentication_policy_files[@]}"; do
+  echo "🔧 Registering: $(basename "$authentication_policy_file")"
+
+./config/scripts/upsert-authentication-policy.sh \
+  -t "${TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/tenant-${TENANT_ID}/authentication-policy/${authentication_policy_file}" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+done

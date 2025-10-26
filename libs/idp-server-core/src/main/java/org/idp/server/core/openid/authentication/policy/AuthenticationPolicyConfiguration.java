@@ -76,7 +76,7 @@ public class AuthenticationPolicyConfiguration
         policies.stream()
             .filter(
                 authenticationPolicy ->
-                    authenticationPolicy.anyMatch(requestedClientId, acrValues, scopes))
+                    authenticationPolicy.allMatch(requestedClientId, acrValues, scopes))
             .max(Comparator.comparingInt(AuthenticationPolicy::priority))
             .orElse(new AuthenticationPolicy());
 

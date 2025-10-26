@@ -41,8 +41,8 @@ public class AuthenticationPolicy implements JsonReadable {
 
   public AuthenticationPolicy() {}
 
-  public boolean anyMatch(RequestedClientId requestedClientId, AcrValues acrValues, Scopes scopes) {
-    return conditions.anyMatch(requestedClientId, acrValues, scopes);
+  public boolean allMatch(RequestedClientId requestedClientId, AcrValues acrValues, Scopes scopes) {
+    return conditions.allMatch(requestedClientId, acrValues, scopes);
   }
 
   public int priority() {
