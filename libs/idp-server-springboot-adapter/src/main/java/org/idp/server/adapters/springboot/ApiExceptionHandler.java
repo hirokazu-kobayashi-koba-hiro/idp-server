@@ -103,7 +103,11 @@ public class ApiExceptionHandler {
   public ResponseEntity<?> handleException(SqlDuplicateKeyException exception) {
     log.error(exception.getMessage(), exception);
     Map<String, String> response =
-        Map.of("error", "invalid_request", "error_description", exception.getMessage());
+        Map.of(
+            "error",
+            "invalid_request",
+            "error_description",
+            "The request could not be completed due to a conflict with existing data.");
     return new ResponseEntity<>(response, HttpStatus.CONFLICT);
   }
 
