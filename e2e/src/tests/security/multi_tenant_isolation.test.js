@@ -1,5 +1,9 @@
 import { describe, expect, it } from "@jest/globals";
-import { adminServerConfig, serverConfig, clientSecretPostClient } from "../testConfig";
+import {
+  adminServerConfig,
+  serverConfig,
+  clientSecretPostClient,
+} from "../testConfig";
 import { inspectToken, requestToken } from "../../api/oauthClient";
 import { get } from "../../lib/http";
 import { requestAuthorizations } from "../../oauth/request";
@@ -16,7 +20,6 @@ import { requestAuthorizations } from "../../oauth/request";
  * Related Issue: #734 - マルチテナント分離のための行レベルセキュリティ(RLS)の完全性を検証
  */
 describe("Security: Multi-Tenant API Isolation (Issue #734)", () => {
-
   /**
    * Test Strategy:
    * 1. Authenticate as a user in Tenant A
@@ -72,7 +75,9 @@ describe("Security: Multi-Tenant API Isolation (Issue #734)", () => {
     // =====================================================================
     // Step 2: Get user info in Tenant A (should succeed)
     // =====================================================================
-    console.log("\n📋 Step 2: Access own user info in Tenant A (should succeed)");
+    console.log(
+      "\n📋 Step 2: Access own user info in Tenant A (should succeed)"
+    );
     console.log("-".repeat(80));
 
     const tenantAUserInfo = await get({
@@ -153,7 +158,9 @@ describe("Security: Multi-Tenant API Isolation (Issue #734)", () => {
     // =====================================================================
     // Step 2: Introspect token in same tenant (should succeed)
     // =====================================================================
-    console.log("\n📋 Step 2: Introspect token in same tenant (should succeed)");
+    console.log(
+      "\n📋 Step 2: Introspect token in same tenant (should succeed)"
+    );
     console.log("-".repeat(80));
 
     const sameTenantIntrospection = await inspectToken({
@@ -231,11 +238,15 @@ describe("Security: Multi-Tenant API Isolation (Issue #734)", () => {
     // =====================================================================
     // Step 2: Access own resource owner endpoint (should succeed)
     // =====================================================================
-    console.log("\n📋 Step 2: Access own resource owner endpoint (should succeed)");
+    console.log(
+      "\n📋 Step 2: Access own resource owner endpoint (should succeed)"
+    );
     console.log("-".repeat(80));
 
     const ownResourceOwner = await get({
-      url: serverConfig.resourceOwnerEndpoint + "/identity-verification/applications",
+      url:
+        serverConfig.resourceOwnerEndpoint +
+        "/identity-verification/applications",
       headers: {
         Authorization: `Bearer ${tenantAAccessToken}`,
       },
@@ -249,7 +260,10 @@ describe("Security: Multi-Tenant API Isolation (Issue #734)", () => {
     // =====================================================================
     console.log("\n📋 Step 3: Attempt cross-tenant resource owner access");
     console.log("-".repeat(80));
-    console.log(`   Request: GET ${adminServerConfig.resourceOwnerEndpoint}` + "/identity-verification/applications");
+    console.log(
+      `   Request: GET ${adminServerConfig.resourceOwnerEndpoint}` +
+        "/identity-verification/applications"
+    );
 
     const crossTenantResourceOwner = await get({
       url: adminServerConfig.resourceOwnerEndpoint,

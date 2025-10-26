@@ -1,9 +1,10 @@
 import { describe, expect, it } from "@jest/globals";
 import { backendUrl, clientSecretPostClient, serverConfig } from "../../testConfig";
 import { faker } from "@faker-js/faker";
-import { postAuthentication, requestToken } from "../../../api/oauthClient";
+import { getJwks, postAuthentication, requestToken } from "../../../api/oauthClient";
 import { get } from "../../../lib/http";
 import { requestAuthorizations } from "../../../oauth/request";
+import { verifyAndDecodeJwt } from "../../../lib/jose";
 
 /**
  * Issue #800 Test Suite: Authentication Step Definitions (1st/2nd Factor)
@@ -253,6 +254,20 @@ describe("Issue #800: Authentication Step Definitions (1st/2nd Factor)", () => {
       });
       console.log("Token response:", tokenResponse.data);
       expect(tokenResponse.data).toHaveProperty("id_token");
+
+      const jwksResponse = await getJwks({ endpoint: serverConfig.jwksEndpoint });
+      console.log(jwksResponse.data);
+      expect(jwksResponse.status).toBe(200);
+
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: tokenResponse.data.id_token,
+        jwks: jwksResponse.data,
+      });
+      console.log(decodedIdToken);
+      const payload = decodedIdToken.payload;
+      expect(decodedIdToken.verifyResult).toBe(true);
+      expect(payload).toHaveProperty("email");
+      expect(payload).toHaveProperty("phone_number");
     });
 
   });

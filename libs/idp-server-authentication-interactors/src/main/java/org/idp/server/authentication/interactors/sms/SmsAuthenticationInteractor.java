@@ -218,6 +218,9 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
 
     // Get step definition from policy
     AuthenticationStepDefinition stepDefinition = getCurrentStepDefinition(transaction, method());
+    // New user creation decision
+    boolean allowRegistration =
+        stepDefinition != null && stepDefinition.allowRegistration(); // default: disabled
 
     // SECURITY: 2nd factor requires authenticated user (prevent authentication bypass)
     if (stepDefinition != null && stepDefinition.requiresUser()) {
@@ -228,6 +231,16 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
             method(),
             phoneNumber);
         return User.notFound();
+      }
+      if (allowRegistration) {
+        log.info(
+            "2nd factor requires authenticated and allowRegistration. method={}, phoneNumber={}",
+            method(),
+            phoneNumber);
+
+        User user = transaction.user();
+        user.setPhoneNumber(phoneNumber);
+        return user;
       }
       // 2nd factor: return authenticated user (immutable)
       log.debug(
@@ -264,10 +277,6 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
           phoneNumber,
           transactionUser.phoneNumber());
     }
-
-    // 3. New user creation decision
-    boolean allowRegistration =
-        stepDefinition != null && stepDefinition.allowRegistration(); // default: disabled
 
     if (!allowRegistration) {
       log.warn(
