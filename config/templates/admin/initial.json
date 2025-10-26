@@ -7,15 +7,28 @@
   "tenant": {
     "id": "${ADMIN_TENANT_ID}",
     "name": "admin-tenant",
+    "tenant_type": "BUSINESS",
     "domain": "${AUTHORIZATION_SERVER_URL}",
+    "description": "Admin tenant for system management",
     "authorization_provider": "idp-server",
-    "database_type": "postgresql",
-    "attributes": {
+    "session_config": {
       "cookie_name": "ADMIN_TENANT_IDP_SERVER_SESSION",
+      "cookie_same_site": "None",
       "use_secure_cookie": false,
+      "use_http_only_cookie": true,
+      "cookie_path": "/",
+      "timeout_seconds": 3600
+    },
+    "cors_config": {
       "allow_origins": [
         ${ALLOW_ORIGINS}
-      ]
+      ],
+      "allow_headers": "Authorization, Content-Type, Accept, x-device-id",
+      "allow_methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+      "allow_credentials": true
+    },
+    "identity_policy_config": {
+      "identity_unique_key_type": "EMAIL_OR_EXTERNAL_USER_ID"
     }
   },
   "authorization_server": {

@@ -379,7 +379,8 @@ public class PostgresqlExecutor implements UserSqlExecutor {
   }
 
   @Override
-  public Map<String, String> selectByPreferredUsername(Tenant tenant, String preferredUsername) {
+  public Map<String, String> selectByPreferredUsername(
+      Tenant tenant, String providerId, String preferredUsername) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
@@ -387,10 +388,12 @@ public class PostgresqlExecutor implements UserSqlExecutor {
             selectSql,
             """
                         WHERE idp_user.tenant_id = ?::uuid
+                        AND idp_user.provider_id = ?
                         AND idp_user.preferred_username = ?
                     """);
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierUUID());
+    params.add(providerId);
     params.add(preferredUsername);
 
     return sqlExecutor.selectOne(sqlTemplate, params);

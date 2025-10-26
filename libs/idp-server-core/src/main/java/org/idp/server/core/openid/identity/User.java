@@ -196,23 +196,49 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
    * Applies tenant identity policy to set preferred_username automatically.
    *
    * <p>Sets the preferred_username field based on the tenant's unique key policy. The value is
-   * normalized according to the policy type (username, email, phone, or external_user_id).
+   * normalized according to the policy type (username, email, phone, or external_user_id). For
+   * fallback policies (e.g., EMAIL_OR_EXTERNAL_USER_ID), falls back to external_user_id when the
+   * primary value is not available.
+   *
+   * <p>Issue #729: Added support for fallback policies to handle cases where external identity
+   * providers don't provide certain claims (e.g., email).
    *
    * @param policy tenant identity policy
    * @return this user instance
    */
   public User applyIdentityPolicy(
       org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy policy) {
-    String sourceValue =
+    String value =
         switch (policy.uniqueKeyType()) {
-          case USERNAME -> this.preferredUsername;
-          case EMAIL -> this.email;
-          case PHONE -> this.phoneNumber;
+          case USERNAME, USERNAME_OR_EXTERNAL_USER_ID -> this.name;
+          case EMAIL, EMAIL_OR_EXTERNAL_USER_ID -> this.email;
+          case PHONE, PHONE_OR_EXTERNAL_USER_ID -> this.phoneNumber;
           case EXTERNAL_USER_ID -> this.externalUserId;
         };
-    String normalizedValue = policy.normalize(sourceValue);
-    if (normalizedValue != null) {
-      this.preferredUsername = normalizedValue;
+
+    // Fallback to external_user_id for policies with _OR_EXTERNAL_USER_ID suffix
+    if ((value == null || value.isBlank()) && this.externalUserId != null) {
+      boolean shouldFallback =
+          switch (policy.uniqueKeyType()) {
+            case USERNAME_OR_EXTERNAL_USER_ID,
+                    EMAIL_OR_EXTERNAL_USER_ID,
+                    PHONE_OR_EXTERNAL_USER_ID ->
+                true;
+            default -> false;
+          };
+
+      if (shouldFallback) {
+        // For external providers, use "provider.external_user_id" format (Keycloak style)
+        // For local provider (idp-server), use external_user_id as-is
+        value =
+            "idp-server".equals(this.providerId)
+                ? this.externalUserId
+                : this.providerId + "." + this.externalUserId;
+      }
+    }
+
+    if (value != null && !value.isBlank()) {
+      this.preferredUsername = value;
     }
     return this;
   }

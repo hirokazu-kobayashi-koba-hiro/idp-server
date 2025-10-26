@@ -34,11 +34,36 @@ public class TenantIdentityPolicy {
     /** Use username as unique key */
     USERNAME,
 
+    /**
+     * Use username as unique key, fallback to external user ID if username is not available
+     *
+     * <p>This policy is useful for external identity providers that may not provide a preferred
+     * username claim.
+     */
+    USERNAME_OR_EXTERNAL_USER_ID,
+
     /** Use email address as unique key */
     EMAIL,
 
+    /**
+     * Use email address as unique key, fallback to external user ID if email is not available
+     *
+     * <p>This is the recommended policy for external identity providers that may not always provide
+     * email addresses (e.g., GitHub with private email, Twitter).
+     *
+     * <p>Issue #729: Supports multiple IdPs with same email while handling missing email cases.
+     */
+    EMAIL_OR_EXTERNAL_USER_ID,
+
     /** Use phone number as unique key */
     PHONE,
+
+    /**
+     * Use phone number as unique key, fallback to external user ID if phone is not available
+     *
+     * <p>This policy is useful for phone-based authentication with external providers.
+     */
+    PHONE_OR_EXTERNAL_USER_ID,
 
     /** Use external user ID as unique key */
     EXTERNAL_USER_ID
@@ -47,18 +72,29 @@ public class TenantIdentityPolicy {
   private UniqueKeyType uniqueKeyType;
 
   public TenantIdentityPolicy(UniqueKeyType uniqueKeyType) {
-    this.uniqueKeyType = uniqueKeyType != null ? uniqueKeyType : UniqueKeyType.EMAIL;
+    this.uniqueKeyType =
+        uniqueKeyType != null ? uniqueKeyType : UniqueKeyType.EMAIL_OR_EXTERNAL_USER_ID;
   }
 
-  /** Default policy: use EMAIL as unique key */
+  /**
+   * Default policy: use EMAIL_OR_EXTERNAL_USER_ID as unique key
+   *
+   * <p>This policy uses email when available, but falls back to external_user_id when email is not
+   * provided by the identity provider. This is the recommended setting for systems that integrate
+   * with multiple external identity providers.
+   *
+   * <p>Issue #729: Changed from EMAIL to EMAIL_OR_EXTERNAL_USER_ID to support external IdPs that
+   * don't always provide email addresses.
+   */
   public static TenantIdentityPolicy defaultPolicy() {
-    return new TenantIdentityPolicy(UniqueKeyType.EMAIL);
+    return new TenantIdentityPolicy(UniqueKeyType.EMAIL_OR_EXTERNAL_USER_ID);
   }
 
   /**
    * Constructs identity policy from map
    *
-   * <p>Reads "identity_unique_key_type" from map. If not configured, defaults to EMAIL.
+   * <p>Reads "identity_unique_key_type" from map. If not configured, defaults to
+   * EMAIL_OR_EXTERNAL_USER_ID.
    *
    * @param map configuration map
    * @return identity policy
@@ -67,7 +103,8 @@ public class TenantIdentityPolicy {
     if (map == null || map.isEmpty()) {
       return defaultPolicy();
     }
-    String keyTypeValue = (String) map.getOrDefault("identity_unique_key_type", "EMAIL");
+    String keyTypeValue =
+        (String) map.getOrDefault("identity_unique_key_type", "EMAIL_OR_EXTERNAL_USER_ID");
     try {
       UniqueKeyType uniqueKeyType = UniqueKeyType.valueOf(keyTypeValue.toUpperCase());
       return new TenantIdentityPolicy(uniqueKeyType);
@@ -80,13 +117,14 @@ public class TenantIdentityPolicy {
    * Constructs identity policy from tenant attributes
    *
    * <p>Reads "identity_unique_key_type" from tenant attributes. If not configured, defaults to
-   * EMAIL.
+   * EMAIL_OR_EXTERNAL_USER_ID.
    *
    * @param attributes tenant attributes
    * @return identity policy
    */
   public static TenantIdentityPolicy fromTenantAttributes(TenantAttributes attributes) {
-    String keyTypeValue = attributes.optValueAsString("identity_unique_key_type", "EMAIL");
+    String keyTypeValue =
+        attributes.optValueAsString("identity_unique_key_type", "EMAIL_OR_EXTERNAL_USER_ID");
     try {
       UniqueKeyType uniqueKeyType = UniqueKeyType.valueOf(keyTypeValue.toUpperCase());
       return new TenantIdentityPolicy(uniqueKeyType);
@@ -121,21 +159,5 @@ public class TenantIdentityPolicy {
       map.put("identity_unique_key_type", uniqueKeyType.name());
     }
     return map;
-  }
-
-  /**
-   * Returns the value as-is without normalization.
-   *
-   * <p>Normalization removed to preserve original values from external systems. Username, email,
-   * phone, and external_user_id are stored exactly as provided.
-   *
-   * @param value the value
-   * @return the value unchanged (null if blank)
-   */
-  public String normalize(String value) {
-    if (value == null || value.isBlank()) {
-      return null;
-    }
-    return value;
   }
 }

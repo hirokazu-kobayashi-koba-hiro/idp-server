@@ -203,9 +203,10 @@ public class UserQueryDataSource implements UserQueryRepository {
   }
 
   @Override
-  public User findByPreferredUsername(Tenant tenant, String preferredUsername) {
+  public User findByPreferredUsername(Tenant tenant, String providerId, String preferredUsername) {
     try {
-      Map<String, String> result = executor.selectByPreferredUsername(tenant, preferredUsername);
+      Map<String, String> result =
+          executor.selectByPreferredUsername(tenant, providerId, preferredUsername);
 
       if (Objects.isNull(result) || result.isEmpty()) {
         return new User();

@@ -35,6 +35,9 @@
     "security_event_user_config": {
       "include_phone_number": true,
       "include_email": true
+    },
+    "identity_policy_config": {
+      "identity_unique_key_type": "EMAIL_OR_EXTERNAL_USER_ID"
     }
   },
   "authorization_server": {

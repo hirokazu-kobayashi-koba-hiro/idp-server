@@ -241,11 +241,12 @@ CREATE INDEX idx_idp_user_tenant_email ON idp_user (tenant_id, email);
 CREATE INDEX idx_idp_user_tenant_phone ON idp_user (tenant_id, phone_number);
 CREATE INDEX idx_user_devices_gin_path_ops
     ON idp_user USING GIN (authentication_devices jsonb_path_ops);
--- Ensure uniqueness of preferred_username within tenant
-CREATE UNIQUE INDEX idx_idp_user_tenant_preferred_username ON idp_user (tenant_id, preferred_username);
+-- Ensure uniqueness of preferred_username within tenant and provider
+-- Issue #729: Allow same preferred_username (e.g., user@example.com) across different IdPs
+CREATE UNIQUE INDEX idx_idp_user_tenant_provider_preferred_username ON idp_user (tenant_id, provider_id, preferred_username);
 
 COMMENT
-ON COLUMN idp_user.preferred_username IS 'Tenant-scoped unique user identifier. Stores normalized username/email/phone/external_user_id based on tenant unique key policy.';
+ON COLUMN idp_user.preferred_username IS 'Tenant and provider-scoped unique user identifier. Stores normalized username/email/phone/external_user_id based on tenant unique key policy. Multiple IdPs can use the same preferred_username (e.g., user@example.com from Google and GitHub).';
 
 -- No RLS: User-based filtering required instead of tenant-based
 -- Reason: A single user can be assigned to multiple tenants (cross-tenant functionality).

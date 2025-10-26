@@ -2,8 +2,6 @@
   "type": "object",
   "required": [
     "provider_id",
-    "name",
-    "email",
     "raw_password"
   ],
   "properties": {
