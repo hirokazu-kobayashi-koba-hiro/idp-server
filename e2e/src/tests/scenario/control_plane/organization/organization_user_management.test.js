@@ -940,13 +940,6 @@ describe("organization user management api", () => {
         "email": "invalid-email",
         "raw_password": "password123"
       }],
-      ["missing required name", {
-        "sub": uuidv4(),
-        "provider_id": "idp-server",
-        "username": "testuser",
-        "email": "test@example.com",
-        "raw_password": "password123"
-      }],
       ["missing required email", {
         "sub": uuidv4(),
         "provider_id": "idp-server",

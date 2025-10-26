@@ -12,7 +12,7 @@ CREATE TABLE tenant
 (
     id                     UUID         NOT NULL,
     name                   VARCHAR(255) NOT NULL,
-    type                   VARCHAR(10)  NOT NULL,
+    type                   VARCHAR(20)  NOT NULL,
     domain                 TEXT         NOT NULL,
     authorization_provider VARCHAR(255) NOT NULL,
 
@@ -204,9 +204,9 @@ CREATE TABLE idp_user
     middle_name                    VARCHAR(255),
     nickname                       VARCHAR(255),
     preferred_username             VARCHAR(255)            NOT NULL,
-    profile                        VARCHAR(255),
-    picture                        VARCHAR(255),
-    website                        VARCHAR(255),
+    profile                        TEXT,
+    picture                        TEXT,
+    website                        TEXT,
     email                          VARCHAR(255),
     email_verified                 BOOLEAN,
     gender                         VARCHAR(255),
@@ -226,7 +226,10 @@ CREATE TABLE idp_user
     updated_at                     TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
-    CONSTRAINT uk_external_user unique (tenant_id, provider_id, external_user_id)
+    CONSTRAINT uk_external_user UNIQUE (tenant_id, provider_id, external_user_id),
+    -- Issue #729: Ensure uniqueness of preferred_username within tenant and provider
+    -- Allow same preferred_username (e.g., user@example.com) across different IdPs
+    CONSTRAINT uk_preferred_username UNIQUE (tenant_id, provider_id, preferred_username)
 );
 
 ALTER TABLE idp_user ENABLE ROW LEVEL SECURITY;
@@ -241,9 +244,6 @@ CREATE INDEX idx_idp_user_tenant_email ON idp_user (tenant_id, email);
 CREATE INDEX idx_idp_user_tenant_phone ON idp_user (tenant_id, phone_number);
 CREATE INDEX idx_user_devices_gin_path_ops
     ON idp_user USING GIN (authentication_devices jsonb_path_ops);
--- Ensure uniqueness of preferred_username within tenant and provider
--- Issue #729: Allow same preferred_username (e.g., user@example.com) across different IdPs
-CREATE UNIQUE INDEX idx_idp_user_tenant_provider_preferred_username ON idp_user (tenant_id, provider_id, preferred_username);
 
 COMMENT
 ON COLUMN idp_user.preferred_username IS 'Tenant and provider-scoped unique user identifier. Stores normalized username/email/phone/external_user_id based on tenant unique key policy. Multiple IdPs can use the same preferred_username (e.g., user@example.com from Google and GitHub).';
@@ -403,7 +403,7 @@ CREATE TABLE authorization_request
     request_object        TEXT,
     request_uri           TEXT,
     code_challenge        TEXT,
-    code_challenge_method VARCHAR(10),
+    code_challenge_method VARCHAR(20),
     authorization_details JSONB,
     custom_params         JSONB                   NOT NULL,
     expires_in            TEXT                    NOT NULL,
@@ -461,7 +461,7 @@ CREATE TABLE oauth_token
     id                              UUID                    NOT NULL,
     tenant_id                       UUID                    NOT NULL,
     token_issuer                    TEXT                    NOT NULL,
-    token_type                      VARCHAR(10)             NOT NULL,
+    token_type                      VARCHAR(20)             NOT NULL,
     encrypted_access_token          JSONB                   NOT NULL,
     hashed_access_token             TEXT                    NOT NULL,
     access_token_custom_claims      JSONB,
@@ -511,7 +511,7 @@ CREATE TABLE backchannel_authentication_request
     id                        UUID                    NOT NULL,
     tenant_id                 UUID                    NOT NULL,
     profile                   VARCHAR(255)            NOT NULL,
-    delivery_mode             VARCHAR(10)             NOT NULL,
+    delivery_mode             VARCHAR(20)             NOT NULL,
     scopes                    TEXT                    NOT NULL,
     client_id                 VARCHAR(255)            NOT NULL,
     id_token_hint             TEXT,
@@ -547,7 +547,7 @@ CREATE TABLE ciba_grant
     auth_req_id                           VARCHAR(255)            NOT NULL,
     expires_at                            TIMESTAMP               NOT NULL,
     polling_interval                      TEXT                    NOT NULL,
-    status                                VARCHAR(100)            NOT NULL,
+    status                                VARCHAR(32)             NOT NULL,
     user_id                               UUID                    NOT NULL,
     user_payload                          JSONB                   NOT NULL,
     authentication                        JSONB,
@@ -955,7 +955,7 @@ CREATE TABLE idp_user_lifecycle_event_result
     user_id        UUID         NOT NULL,
     lifecycle_type VARCHAR(255) NOT NULL,
     executor_name  VARCHAR(255) NOT NULL,
-    status         VARCHAR(16)  NOT NULL,
+    status         VARCHAR(32)  NOT NULL,
     payload        JSONB,
     created_at     TIMESTAMP DEFAULT now(),
     PRIMARY KEY (id)
@@ -984,7 +984,7 @@ CREATE TABLE audit_log
     request_payload        JSONB,
     before_payload         JSONB,
     after_payload          JSONB,
-    outcome_result         VARCHAR(50)             NOT NULL DEFAULT 'unknown',
+    outcome_result         VARCHAR(20)             NOT NULL DEFAULT 'unknown',
     outcome_reason         VARCHAR(255),
     ip_address             TEXT,
     user_agent             TEXT,
