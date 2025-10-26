@@ -31,6 +31,7 @@ public class UserVerifier {
   public void verify(Tenant tenant, User user) {
     throwExceptionIfUserIdAlreadyExists(tenant, user);
     throwExceptionIfUserEmailAlreadyExists(tenant, user);
+    throwExceptionIfPreferredUsernameNotSet(user);
   }
 
   void throwExceptionIfUserIdAlreadyExists(Tenant tenant, User user) {
@@ -41,9 +42,24 @@ public class UserVerifier {
   }
 
   void throwExceptionIfUserEmailAlreadyExists(Tenant tenant, User user) {
+    // Skip email duplicate check if email is not provided
+    // Issue #729: EMAIL_OR_EXTERNAL_USER_ID policy allows users without email
+    if (user.email() == null || user.email().isBlank()) {
+      return;
+    }
+
     User byEmail = userQueryRepository.findByEmail(tenant, user.email(), user.providerId());
     if (byEmail.exists()) {
       throw new InvalidRequestException("User email is already exists");
+    }
+  }
+
+  void throwExceptionIfPreferredUsernameNotSet(User user) {
+    // Issue #729: Verify that preferred_username was successfully set by identity policy
+    // This ensures the policy fallback mechanism worked correctly
+    if (user.preferredUsername() == null || user.preferredUsername().isBlank()) {
+      throw new InvalidRequestException(
+          "User preferred_username could not be determined from tenant identity policy.Ensure required fields (email, name, phone_number, or external_user_id) are provided.");
     }
   }
 }

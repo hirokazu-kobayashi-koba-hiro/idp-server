@@ -173,10 +173,12 @@ CREATE TABLE idp_user
 
 CREATE INDEX idx_idp_user_tenant_provider ON idp_user (tenant_id, provider_id, external_user_id);
 CREATE INDEX idx_idp_user_tenant_email ON idp_user (tenant_id, email);
-CREATE UNIQUE INDEX idx_idp_user_tenant_preferred_username ON idp_user (tenant_id, preferred_username);
+-- Ensure uniqueness of preferred_username within tenant and provider
+-- Issue #729: Allow same preferred_username (e.g., user@example.com) across different IdPs
+CREATE UNIQUE INDEX idx_idp_user_tenant_provider_preferred_username ON idp_user (tenant_id, provider_id, preferred_username);
 
 ALTER TABLE idp_user MODIFY COLUMN preferred_username VARCHAR (255) NOT NULL
-    COMMENT 'Tenant-scoped unique user identifier. Stores normalized username/email/phone/external_user_id based on tenant unique key policy.';
+    COMMENT 'Tenant and provider-scoped unique user identifier. Stores normalized username/email/phone/external_user_id based on tenant unique key policy. Multiple IdPs can use the same preferred_username (e.g., user@example.com from Google and GitHub).';
 
 CREATE TABLE idp_user_assigned_tenants
 (

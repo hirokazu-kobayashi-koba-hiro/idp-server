@@ -47,7 +47,8 @@ public interface UserSqlExecutor {
 
   Map<String, String> selectByAuthenticationDevice(Tenant tenant, String deviceId);
 
-  Map<String, String> selectByPreferredUsername(Tenant tenant, String preferredUsername);
+  Map<String, String> selectByPreferredUsername(
+      Tenant tenant, String providerId, String preferredUsername);
 
   Map<String, String> selectAssignedOrganization(Tenant tenant, UserIdentifier userIdentifier);
 

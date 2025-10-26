@@ -364,7 +364,6 @@ curl -X GET "http://localhost:8080/..."
 2. **動作しない例**: 古いAPI、誤った設定
 3. **専門用語の乱用**: 説明なしでACR, PKCE等を使用
 4. **特定企業・サービス名**: Google, Slack等（一般化する）
-5. **内部リポジトリ参照**: `sbishinsei-idp-config`等
 
 ---
 

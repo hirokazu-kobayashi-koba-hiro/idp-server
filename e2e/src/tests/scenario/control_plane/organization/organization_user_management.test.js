@@ -139,7 +139,7 @@ describe("organization user management api", () => {
       expect(result).toHaveProperty("family_name", `User${timestamp}`);
       expect(result).toHaveProperty("middle_name", "Test");
       expect(result).toHaveProperty("nickname", `orguser${timestamp}`);
-      expect(result).toHaveProperty("preferred_username", `orguser${timestamp}`);
+      expect(result).toHaveProperty("preferred_username", `orguser${timestamp}@example.com`);
       expect(result).toHaveProperty("profile", `https://example.com/profile/${timestamp}`);
       expect(result).toHaveProperty("picture", `https://example.com/picture/${timestamp}.jpg`);
       expect(result).toHaveProperty("website", `https://example.com/user/${timestamp}`);
@@ -226,7 +226,7 @@ describe("organization user management api", () => {
       expect(detailData).toHaveProperty("family_name", `User${timestamp}`);
       expect(detailData).toHaveProperty("middle_name", "Test");
       expect(detailData).toHaveProperty("nickname", `orguser${timestamp}`);
-      expect(detailData).toHaveProperty("preferred_username", `orguser${timestamp}`);
+      expect(detailData).toHaveProperty("preferred_username", `orguser${timestamp}@example.com`);
       expect(detailData).toHaveProperty("profile", `https://example.com/profile/${timestamp}`);
       expect(detailData).toHaveProperty("picture", `https://example.com/picture/${timestamp}.jpg`);
       expect(detailData).toHaveProperty("website", `https://example.com/user/${timestamp}`);
@@ -343,7 +343,7 @@ describe("organization user management api", () => {
       expect(updateResult).toHaveProperty("family_name", `UpdatedUser${timestamp}`);
       expect(updateResult).toHaveProperty("middle_name", "Updated");
       expect(updateResult).toHaveProperty("nickname", `updated_orguser${timestamp}`);
-      expect(updateResult).toHaveProperty("preferred_username", `updated_orguser${timestamp}`);
+      expect(updateResult).toHaveProperty("preferred_username", `updated.orguser${timestamp}@example.com`);
       expect(updateResult).toHaveProperty("profile", `https://example.com/updated_profile/${timestamp}`);
       expect(updateResult).toHaveProperty("picture", `https://example.com/updated_picture/${timestamp}.jpg`);
       expect(updateResult).toHaveProperty("website", `https://example.com/updated_user/${timestamp}`);
@@ -510,7 +510,7 @@ describe("organization user management api", () => {
       expect(dryRunResult).toHaveProperty("family_name", `User${timestamp}`);
       expect(dryRunResult).toHaveProperty("middle_name", "Test");
       expect(dryRunResult).toHaveProperty("nickname", `dryrun_orguser${timestamp}`);
-      expect(dryRunResult).toHaveProperty("preferred_username", `dryrun_orguser${timestamp}`);
+      expect(dryRunResult).toHaveProperty("preferred_username", `dryrun.orguser${timestamp}@example.com`);
       expect(dryRunResult).toHaveProperty("profile", `https://example.com/dryrun_profile/${timestamp}`);
       expect(dryRunResult).toHaveProperty("picture", `https://example.com/dryrun_picture/${timestamp}.jpg`);
       expect(dryRunResult).toHaveProperty("website", `https://example.com/dryrun_user/${timestamp}`);

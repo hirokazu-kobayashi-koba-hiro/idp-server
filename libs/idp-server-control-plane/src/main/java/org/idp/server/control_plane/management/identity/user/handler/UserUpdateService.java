@@ -130,18 +130,11 @@ public class UserUpdateService implements UserManagementService<UserUpdateReques
     User newUser = JsonConverter.snakeCaseInstance().read(request.toMap(), User.class);
     newUser.setSub(before.sub());
 
-    // Apply tenant identity policy to set preferred_username if not set
-    if (newUser.preferredUsername() == null || newUser.preferredUsername().isBlank()) {
-      // First try to preserve existing preferred_username
-      if (before.hasPreferredUsername()) {
-        newUser.setPreferredUsername(before.preferredUsername());
-      } else {
-        // If before also doesn't have it, apply policy
-        TenantIdentityPolicy policy =
-            TenantIdentityPolicy.fromTenantAttributes(tenant.attributes());
-        newUser.applyIdentityPolicy(policy);
-      }
-    }
+    // Always recalculate preferred_username based on tenant identity policy
+    // OIDC Core: preferred_username is mutable and should reflect current user attributes
+    // Issue #729: When email/phone/username changes, preferred_username must update accordingly
+    TenantIdentityPolicy policy = TenantIdentityPolicy.fromTenantAttributes(tenant.attributes());
+    newUser.applyIdentityPolicy(policy);
 
     return newUser;
   }

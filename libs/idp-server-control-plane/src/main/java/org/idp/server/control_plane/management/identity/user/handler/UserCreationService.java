@@ -131,11 +131,11 @@ public class UserCreationService implements UserManagementService<UserRegistrati
       user.setSub(UUID.randomUUID().toString());
     }
 
-    // Apply tenant identity policy to set preferred_username if not set
-    if (user.preferredUsername() == null || user.preferredUsername().isBlank()) {
-      TenantIdentityPolicy policy = tenant.identityPolicyConfig();
-      user.applyIdentityPolicy(policy);
-    }
+    // Always recalculate preferred_username based on tenant identity policy
+    // OIDC Core: preferred_username is mutable and should reflect current user attributes
+    // Issue #729: Always apply policy to ensure consistency with email/phone/username changes
+    TenantIdentityPolicy policy = tenant.identityPolicyConfig();
+    user.applyIdentityPolicy(policy);
 
     // Encode password
     String encoded = passwordEncodeDelegation.encode(user.rawPassword());

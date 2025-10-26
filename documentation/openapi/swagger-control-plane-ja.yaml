@@ -4836,12 +4836,6 @@ components:
               type: string
               maxLength: 255
               description: Tenant name
-            tenant_type:
-              type: string
-              enum:
-                - BUSINESS
-                - PERSONAL
-              description: Tenant type
             domain:
               type: string
               format: uri
@@ -7030,9 +7024,29 @@ components:
       properties:
         identity_unique_key_type:
           type: string
-          enum: [USERNAME, EMAIL, PHONE, EXTERNAL_USER_ID]
-          default: EMAIL
-          description: ユーザー識別キー種別
+          enum:
+            - USERNAME
+            - USERNAME_OR_EXTERNAL_USER_ID
+            - EMAIL
+            - EMAIL_OR_EXTERNAL_USER_ID
+            - PHONE
+            - PHONE_OR_EXTERNAL_USER_ID
+            - EXTERNAL_USER_ID
+          default: EMAIL_OR_EXTERNAL_USER_ID
+          description: |
+            ユーザー識別キー種別（Issue #729対応）
+
+            - USERNAME: usernameを一意キーとして使用
+            - USERNAME_OR_EXTERNAL_USER_ID: usernameを使用、なければexternal_user_idにフォールバック
+            - EMAIL: emailを一意キーとして使用
+            - EMAIL_OR_EXTERNAL_USER_ID: emailを使用、なければexternal_user_idにフォールバック（推奨デフォルト）
+            - PHONE: phone_numberを一意キーとして使用
+            - PHONE_OR_EXTERNAL_USER_ID: phone_numberを使用、なければexternal_user_idにフォールバック
+            - EXTERNAL_USER_ID: external_user_idを一意キーとして使用
+
+            フォールバック時の形式:
+            - 外部IdP: `{provider_id}.{external_user_id}` (例: google.123456)
+            - ローカル(idp-server): `{external_user_id}` (例: uuid)
 
   responses:
     BadRequest:

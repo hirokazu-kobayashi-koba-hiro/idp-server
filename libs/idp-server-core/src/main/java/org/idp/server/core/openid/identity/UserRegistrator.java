@@ -38,10 +38,9 @@ public class UserRegistrator {
     User existingUser = userQueryRepository.findById(tenant, user.userIdentifier());
 
     if (existingUser.exists()) {
-      applyIdentityPolicyIfNeeded(tenant, user);
       UserUpdater userUpdater = new UserUpdater(user, existingUser);
       User updatedUser = userUpdater.update();
-      applyIdentityPolicyToExistingUserIfNeeded(tenant, updatedUser);
+      applyIdentityPolicyIfNeeded(tenant, updatedUser);
       userCommandRepository.update(tenant, updatedUser);
       return updatedUser;
     }
@@ -62,34 +61,21 @@ public class UserRegistrator {
   }
 
   /**
-   * Applies tenant identity policy to set preferred_username if not already set.
+   * Applies tenant identity policy to recalculate preferred_username.
    *
-   * <p>The preferred_username field is used as the tenant-scoped unique identifier. If it's not
-   * set, this method extracts the appropriate value based on the tenant's identity policy
-   * (username, email, phone, or external_user_id).
+   * <p>The preferred_username field is recalculated based on the tenant's identity policy
+   * (username, email, phone, or external_user_id). According to OIDC Core specification,
+   * preferred_username is mutable and can change over time (e.g., when email is updated).
+   *
+   * <p>Issue #729: Always recalculate preferred_username to ensure it reflects the latest user
+   * attributes (email, phone, etc.) according to the tenant's policy.
    *
    * @param tenant the tenant context
    * @param user the user to apply policy to
    */
   private void applyIdentityPolicyIfNeeded(Tenant tenant, User user) {
-    if (user.preferredUsername() == null || user.preferredUsername().isBlank()) {
-      user.applyIdentityPolicy(tenant.identityPolicyConfig());
-    }
-  }
-
-  /**
-   * Applies tenant identity policy to existing user if preferred_username is missing.
-   *
-   * <p>This method is called after merging updates to ensure that existing users with null
-   * preferred_username (from before migration V1_0_5) get the value populated based on tenant
-   * policy.
-   *
-   * @param tenant the tenant context
-   * @param user the existing user after update
-   */
-  private void applyIdentityPolicyToExistingUserIfNeeded(Tenant tenant, User user) {
-    if (user.preferredUsername() == null || user.preferredUsername().isBlank()) {
-      user.applyIdentityPolicy(tenant.identityPolicyConfig());
-    }
+    // Always recalculate preferred_username based on current user attributes
+    // OIDC Core: preferred_username is mutable and can change over time
+    user.applyIdentityPolicy(tenant.identityPolicyConfig());
   }
 }

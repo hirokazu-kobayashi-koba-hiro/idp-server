@@ -68,26 +68,30 @@ public class UserVerifier {
   }
 
   /**
-   * Verifies that the user's preferred_username is unique within the tenant.
+   * Verifies that the user's preferred_username is unique within the tenant and provider.
    *
    * <p>The preferred_username field contains a normalized identifier based on the tenant's identity
    * policy (username, email, phone, or external_user_id). This field must be unique within the
-   * tenant scope to ensure proper user identity management.
+   * tenant and provider scope to ensure proper user identity management.
+   *
+   * <p>Issue #729: Multiple IdPs (e.g., Google, GitHub) can use the same preferred_username (e.g.,
+   * user@example.com) within the same tenant, as uniqueness is enforced per provider.
    *
    * @param tenant the tenant context
    * @param user the user to verify
    * @throws UserDuplicateException if a user with the same preferred_username already exists in the
-   *     tenant
+   *     tenant and provider
    */
   void throwExceptionIfDuplicatePreferredUsername(Tenant tenant, User user) {
     User existingUser =
-        userQueryRepository.findByPreferredUsername(tenant, user.preferredUsername());
+        userQueryRepository.findByPreferredUsername(
+            tenant, user.providerId(), user.preferredUsername());
 
     if (existingUser.exists() && !existingUser.userIdentifier().equals(user.userIdentifier())) {
       throw new UserDuplicateException(
           String.format(
-              "User with preferred_username '%s' already exists in tenant '%s'",
-              user.preferredUsername(), tenant.identifier().value()));
+              "User with preferred_username '%s' already exists for provider '%s' in tenant '%s'",
+              user.preferredUsername(), user.providerId(), tenant.identifier().value()));
     }
   }
 }
