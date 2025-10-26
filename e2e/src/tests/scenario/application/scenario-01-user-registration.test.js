@@ -285,7 +285,7 @@ describe("Issue #800: Authentication Step Definitions (1st/2nd Factor)", () => {
         // Expected: Should return error because requires_user=true but no authenticated user
         expect(challengeResponse.status).toBe(400);
         expect(challengeResponse.data).toHaveProperty("error");
-        expect(challengeResponse.data.error).toBe("user_not_found");
+        expect(challengeResponse.data.error).toBe("invalid_request");
       };
 
       const { authorizationResponse } = await requestAuthorizations({

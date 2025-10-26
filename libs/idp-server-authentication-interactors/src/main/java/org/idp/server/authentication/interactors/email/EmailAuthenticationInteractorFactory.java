@@ -21,6 +21,7 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.openid.authentication.plugin.AuthenticationInteractorFactory;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
+import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
 
 public class EmailAuthenticationInteractorFactory implements AuthenticationInteractorFactory {
 
@@ -29,8 +30,11 @@ public class EmailAuthenticationInteractorFactory implements AuthenticationInter
 
     AuthenticationExecutors authenticationExecutors =
         container.resolve(AuthenticationExecutors.class);
+    AuthenticationInteractionQueryRepository interactionQueryRepository =
+        container.resolve(AuthenticationInteractionQueryRepository.class);
     AuthenticationConfigurationQueryRepository configurationQueryRepository =
         container.resolve(AuthenticationConfigurationQueryRepository.class);
-    return new EmailAuthenticationInteractor(authenticationExecutors, configurationQueryRepository);
+    return new EmailAuthenticationInteractor(
+        authenticationExecutors, interactionQueryRepository, configurationQueryRepository);
   }
 }

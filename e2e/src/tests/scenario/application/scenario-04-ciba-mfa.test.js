@@ -278,6 +278,7 @@ describe("ciba - mfa", () => {
         provider_id: "idp-server"
       }
     });
+    console.log(JSON.stringify(authenticationResponse.data, null, 2));
     expect(authenticationResponse.status).toBe(200);
 
     const transactionId = authenticationTransaction.id;
@@ -313,6 +314,7 @@ describe("ciba - mfa", () => {
         "verification_code": verificationCode,
       }
     });
+    console.log(JSON.stringify(authenticationResponse.data, null, 2));
     expect(authenticationResponse.status).toBe(200);
 
     authenticationResponse = await postAuthenticationDeviceInteraction({

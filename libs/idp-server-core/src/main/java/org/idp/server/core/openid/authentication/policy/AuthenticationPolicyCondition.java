@@ -39,16 +39,16 @@ public class AuthenticationPolicyCondition implements JsonReadable {
     this.scopes = scopes;
   }
 
-  public boolean anyMatch(RequestedClientId requestedClientId, AcrValues acrValues, Scopes scopes) {
-    if (clientIds.contains(requestedClientId.value())) {
-      return true;
+  public boolean allMatch(RequestedClientId requestedClientId, AcrValues acrValues, Scopes scopes) {
+    if (!clientIds.isEmpty() && !clientIds.contains(requestedClientId.value())) {
+      return false;
     }
 
-    if (this.acrValues.stream().anyMatch(acrValues::contains)) {
-      return true;
+    if (!this.acrValues.isEmpty() && this.acrValues.stream().noneMatch(acrValues::contains)) {
+      return false;
     }
 
-    return this.scopes.stream().anyMatch(scopes::contains);
+    return !this.scopes.isEmpty() && this.scopes.stream().anyMatch(scopes::contains);
   }
 
   public List<String> clientIds() {

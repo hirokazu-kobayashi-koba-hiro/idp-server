@@ -1,32 +1,12 @@
 {
-  "id": "6eaa7647-abd6-4c94-9758-ef7f9fdcccdd",
-  "flow": "ciba",
+  "id": "2a0001fa-548f-44cd-a089-f81ecb94af81",
+  "flow": "oauth",
   "enabled": true,
   "policies": [
     {
       "description": "default_authentication_policy",
-      "priority": 1,
-      "conditions": {
-        "scopes": [
-          "openid"
-        ]
-      },
-      "step_definitions": [
-        {
-          "method": "email",
-          "order": 2,
-          "requires_user": true,
-          "allow_registration": false,
-          "user_identity_source": "email"
-        },
-        {
-          "method": "sms",
-          "order": 2,
-          "requires_user": true,
-          "allow_registration": false,
-          "user_identity_source": "phone_number"
-        }
-      ],
+      "priority": 10,
+      "conditions": {},
       "available_methods": [
         "password",
         "email",
@@ -34,6 +14,22 @@
         "webauthn",
         "fido-uaf",
         "external-token"
+      ],
+      "step_definitions": [
+        {
+          "method": "email",
+          "order": 1,
+          "requires_user": false,
+          "allow_registration": true,
+          "user_identity_source": "email"
+        },
+        {
+          "method": "sms",
+          "order": 2,
+          "requires_user": true,
+          "allow_registration": true,
+          "user_identity_source": "phone_number"
+        }
       ],
       "acr_mapping_rules": {
         "urn:mace:incommon:iap:gold": [
@@ -208,78 +204,6 @@
               "value": 5
             }
           ],
-          [
-            {
-              "path": "$.fido-uaf-authentication.failure_count",
-              "type": "integer",
-              "operation": "gte",
-              "value": 5
-            }
-          ]
-        ]
-      }
-    },
-    {
-      "description": "gold",
-      "priority": 10,
-      "conditions": {
-        "acr_values": [
-          "urn:mace:incommon:iap:gold"
-        ]
-      },
-      "available_methods": [
-        "password",
-        "email",
-        "sms",
-        "webauthn",
-        "fido-uaf",
-        "external-token"
-      ],
-      "acr_mapping_rules": {
-        "urn:mace:incommon:iap:gold": [
-          "fido-uaf",
-          "webauthn"
-        ],
-        "urn:mace:incommon:iap:silver": [
-          "email",
-          "sms"
-        ],
-        "urn:mace:incommon:iap:bronze": [
-          "password",
-          "external-token"
-        ]
-      },
-      "level_of_authentication_scopes": {
-        "transfers": [
-          "fido-uaf", "webauthn"
-        ]
-      },
-      "success_conditions": {
-        "any_of": [
-          [
-            {
-              "path": "$.fido-uaf-authentication.success_count",
-              "type": "integer",
-              "operation": "gte",
-              "value": 1
-            }
-          ]
-        ]
-      },
-      "failure_conditions": {
-        "any_of": [
-          [
-            {
-              "path": "$.fido-uaf-authentication.failure_count",
-              "type": "integer",
-              "operation": "gte",
-              "value": 5
-            }
-          ]
-        ]
-      },
-      "lock_conditions": {
-        "any_of": [
           [
             {
               "path": "$.fido-uaf-authentication.failure_count",
