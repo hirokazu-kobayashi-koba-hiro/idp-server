@@ -58,41 +58,18 @@ jobs:
       - name: Run tests
         run: ./gradlew test
 
-      - name: Build all modules (app bootJar + libs jars)
-        run: ./gradlew build -x test -PreleaseVersion=${{ steps.version.outputs.version_number }}
-
-      - name: Collect and package library modules
+      - name: Create release artifacts
         run: |
-          mkdir -p release-artifacts
-          echo "Collecting library modules..."
-          find libs -name '*.jar' -path '*/build/libs/*' -not -name '*-plain.jar' -exec cp {} release-artifacts/ \;
+          chmod +x scripts/release.sh
+          ./scripts/release.sh ${{ steps.version.outputs.version_number }}
 
-          # Check if any JARs were found
-          JAR_COUNT=$(ls release-artifacts/*.jar 2>/dev/null | wc -l)
-          if [ $JAR_COUNT -eq 0 ]; then
-            echo "Error: No library JARs found to package"
-            exit 1
-          fi
-
-          echo "Found $JAR_COUNT library JARs:"
-          ls -la release-artifacts/
-          echo "Creating libraries zip archive..."
-          cd release-artifacts
-          zip -r "../idp-server-libs-${{ steps.version.outputs.version_number }}.zip" *.jar
-          cd ..
-          ls -la idp-server-libs-*.zip
-
-      - name: Generate checksums
+      - name: Verify release artifacts
         run: |
-          echo "Generating SHA256 checksums..."
-          # Use dynamic JAR detection
-          APP_JAR=$(ls app/build/libs/idp-server-*.jar)
-          LIBS_ZIP=$(ls idp-server-libs-*.zip)
-
-          sha256sum "$APP_JAR" > checksums.txt
-          sha256sum "$LIBS_ZIP" >> checksums.txt
-          echo "Generated checksums:"
-          cat checksums.txt
+          echo "📋 リリース成果物:"
+          cat build/release/manifest.txt
+          echo ""
+          echo "🔐 チェックサム:"
+          cat build/release/checksums.txt
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -105,7 +82,9 @@ jobs:
             ### 📦 Assets
             - **idp-server-${{ steps.version.outputs.version_number }}.jar**: Main application jar
             - **idp-server-libs-${{ steps.version.outputs.version_number }}.zip**: Library modules archive
+            - **idp-server-database-${{ steps.version.outputs.version_number }}.zip**: MySQL/PostgreSQL DDL scripts
             - **checksums.txt**: SHA256 checksums for verification
+            - **manifest.txt**: List of included files
 
             ### 📋 Changes
             This release includes all changes from the latest commits. See commit history for detailed changes.
@@ -116,9 +95,11 @@ jobs:
             3. Verify integrity using the provided checksums
 
           files: |
-            app/build/libs/idp-server-${{ steps.version.outputs.version_number }}.jar
-            idp-server-libs-${{ steps.version.outputs.version_number }}.zip
-            checksums.txt
+            build/release/idp-server-${{ steps.version.outputs.version_number }}.jar
+            build/release/idp-server-libs-${{ steps.version.outputs.version_number }}.zip
+            build/release/idp-server-database-${{ steps.version.outputs.version_number }}.zip
+            build/release/checksums.txt
+            build/release/manifest.txt
           generate_release_notes: true
           draft: false
           prerelease: ${{ contains(steps.version.outputs.version, '-') }}
@@ -127,7 +108,9 @@ jobs:
         run: |
           echo "✅ Release ${{ steps.version.outputs.version }} created successfully!"
           echo "📦 Artifacts uploaded:"
-          echo "  - Main application: app/build/libs/idp-server-*.jar"
-          echo "  - Library modules: idp-server-libs-${{ steps.version.outputs.version_number }}.zip"
-          echo "  - Checksums: checksums.txt"
+          echo "  - Main application: build/release/idp-server-${{ steps.version.outputs.version_number }}.jar"
+          echo "  - Library modules: build/release/idp-server-libs-${{ steps.version.outputs.version_number }}.zip"
+          echo "  - Database scripts: build/release/idp-server-database-${{ steps.version.outputs.version_number }}.zip"
+          echo "  - Checksums: build/release/checksums.txt"
+          echo "  - Manifest: build/release/manifest.txt"
           echo "🔗 Release URL: https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.version }}"
