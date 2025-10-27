@@ -351,6 +351,55 @@ describe("Monkey test CIBA Flow", () => {
     });
   });
 
+  describe("CIBA login_hint format validation", () => {
+    const endpoint = serverConfig.backchannelAuthenticationEndpoint;
+    const clientId = clientSecretPostClient.clientId;
+    const clientSecret = clientSecretPostClient.clientSecret;
+
+    //TODO to be more correct error. based on implementation at 2025-10-27.
+    const invalidLoginHintCases = [
+      ["sub: with invalid UUID", "sub:not-a-valid-uuid", 400, "invalid_request"],
+      ["sub: with empty string after prefix", "sub:", 400, "invalid_request"],
+      ["device: with invalid UUID", "device:invalid-device-id", 400, "invalid_request"],
+      ["device: with empty string", "device:", 400, "invalid_request"],
+      ["phone: without proper format", "phone:", 400, "unknown_user_id"],
+      ["email: without proper format", "email:", 400, "unknown_user_id"],
+      ["ex-sub: with invalid format", "ex-sub:", 400, "unknown_user_id"],
+      ["unknown prefix", "unknown:value", 400, "unknown_user_id"],
+      ["just random string without prefix", "just-random-string-without-any-prefix", 400, "unknown_user_id"],
+      ["empty string", "", 400, "invalid_request"],
+      ["only whitespace", "   ", 400, "unknown_user_id"],
+      ["malformed UUID in sub", "sub:12345-not-uuid", 400, "invalid_request"],
+      ["malformed UUID in device", "device:abc-def-ghi", 400, "invalid_request"],
+    ];
+
+    test.each(invalidLoginHintCases)(
+      "login_hint validation: %s → %s should return %s with %s",
+      async (description, loginHintValue, expectedStatus, expectedError) => {
+        const res = await requestBackchannelAuthentications({
+          endpoint,
+          clientId,
+          clientSecret,
+          scope: "openid",
+          loginHint: loginHintValue,
+          userCode: serverConfig.ciba.userCode,
+          bindingMessage: serverConfig.ciba.bindingMessage
+        });
+
+        console.log(`\n🧪 Test: ${description}`);
+        console.log("🔸 login_hint:", loginHintValue);
+        console.log("📥 Status:", res.status);
+        console.log("📄 Error:", res.data?.error);
+        console.log("📄 Description:", res.data?.error_description);
+
+        expect(res.status).toBe(expectedStatus);
+        if (expectedError) {
+          expect(res.data?.error).toBe(expectedError);
+        }
+      }
+    );
+  });
+
   describe("CIBA Token monkey test", () => {
 
     const tokenParamValidationCases = [
