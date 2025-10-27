@@ -48,9 +48,7 @@ public class RefreshTokenVerifier {
   void throwExceptionIfExpiredToken() {
     LocalDateTime now = SystemDateTime.now();
     if (oAuthToken.isExpiredRefreshToken(now)) {
-      throw new TokenBadRequestException(
-          "invalid_grant",
-          String.format("refresh token is expired (%s)", context.refreshToken().value()));
+      throw new TokenBadRequestException("invalid_grant", "refresh token is expired");
     }
   }
 }
