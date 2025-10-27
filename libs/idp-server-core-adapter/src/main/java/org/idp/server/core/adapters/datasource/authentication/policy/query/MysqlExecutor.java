@@ -99,7 +99,7 @@ public class MysqlExecutor implements AuthenticationPolicyConfigurationSqlExecut
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                SELECT COUNT(id)
+                SELECT COUNT(id) as count
                 FROM authentication_policy
                 WHERE tenant_id = ?
             """;

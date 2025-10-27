@@ -92,13 +92,13 @@ public class MysqlExecutor implements UserSqlExecutor {
             """
                   WHERE idp_user.tenant_id = ?
                   AND JSON_CONTAINS(COALESCE(idp_user.authentication_devices, JSON_ARRAY()),
-                                    JSON_OBJECT('id', ?),
+                                    JSON_ARRAY(JSON_OBJECT('id', ?)),
                                     '$')
                   AND idp_user.provider_id = ?
               """);
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifier().value());
-    params.add(deviceId.value());
+    params.add(deviceId.valueAsUuid().toString());
     params.add(providerId);
 
     return sqlExecutor.selectOne(sqlTemplate, params);
@@ -370,15 +370,11 @@ public class MysqlExecutor implements UserSqlExecutor {
         String.format(
             selectSql,
             """
-                    JOIN JSON_TABLE(
-                                   idp_user.authentication_devices,
-                                   '$[*]' COLUMNS (
-                                     device_id VARCHAR(255) PATH '$.id'
-                                   )
-                                 ) AS device
-                                 ON device.device_id = ?
-                                 WHERE idp_user.tenant_id = ?
-                    """);
+            WHERE idp_user.tenant_id = ?
+            AND JSON_CONTAINS(COALESCE(idp_user.authentication_devices, JSON_ARRAY()),
+                             JSON_ARRAY(JSON_OBJECT('id', ?)),
+                              '$')
+            """);
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
     params.add(deviceId);
@@ -425,7 +421,7 @@ public class MysqlExecutor implements UserSqlExecutor {
                       ), JSON_ARRAY()) AS assigned_organizations,
              idp_user_current_organization.organization_id AS current_organization_id
          FROM idp_user_assigned_organizations
-         JOIN idp_user_current_organization on idp_user_current_organization.user_id = idp_user_assigned_organizations.user_id
+         LEFT JOIN idp_user_current_organization on idp_user_current_organization.user_id = idp_user_assigned_organizations.user_id
          WHERE idp_user_assigned_organizations.user_id = ?
          GROUP BY idp_user_assigned_organizations.user_id;
       """;
@@ -451,7 +447,7 @@ public class MysqlExecutor implements UserSqlExecutor {
                        ), JSON_ARRAY()) AS assigned_tenants,
               idp_user_current_tenant.tenant_id AS current_tenant_id
           FROM idp_user_assigned_tenants
-          JOIN idp_user_current_tenant ON idp_user_current_tenant.user_id = idp_user_assigned_tenants.user_id
+          LEFT JOIN idp_user_current_tenant ON idp_user_current_tenant.user_id = idp_user_assigned_tenants.user_id
           WHERE idp_user_assigned_tenants.user_id = ?
           GROUP BY idp_user_assigned_tenants.user_id;
       """;

@@ -50,6 +50,10 @@ Create a `.env` file with strong passwords with init-generate-env.sh:
 ./init-generate-env.sh
 ```
 
+```shell
+./init-generate-env.sh mysql
+```
+
 **CRITICAL SECURITY NOTICE**: Database credentials must be set via environment variables. No default passwords are provided.
 
 **Setup AdminTenant Configuration**
@@ -66,6 +70,14 @@ docker compose build
 
 # Start all services (includes automatic database initialization)
 docker compose up -d
+```
+
+**mysql**
+
+```shell
+docker-compose -f docker-compose-mysql.yaml build
+
+docker-compose -f docker-compose-mysql.yaml up -d
 ```
 
 That's it! The setup includes:
