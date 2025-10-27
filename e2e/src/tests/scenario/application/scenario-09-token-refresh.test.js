@@ -73,7 +73,7 @@ describe("token refresh strategy", () => {
 
     expect(refreshTokenResponse.status).toBe(400);
     expect(refreshTokenResponse.data.error).toEqual("invalid_grant");
-
+    expect(refreshTokenResponse.data.error_description).toEqual("refresh token is expired");
   });
 
 
