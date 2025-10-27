@@ -24,6 +24,7 @@ import org.idp.server.control_plane.management.identity.user.io.UserRegistration
 import org.idp.server.control_plane.management.identity.user.io.UserUpdateRequest;
 import org.idp.server.control_plane.management.identity.user.validator.UserOrganizationAssignmentsUpdateRequestValidator;
 import org.idp.server.control_plane.management.identity.user.validator.UserRequestValidationResult;
+import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationRelatedDataVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
@@ -62,11 +63,15 @@ public class UserOrganizationAssignmentsUpdateService
 
   private final UserQueryRepository userQueryRepository;
   private final UserCommandRepository userCommandRepository;
+  private final UserRegistrationRelatedDataVerifier relatedDataVerifier;
 
   public UserOrganizationAssignmentsUpdateService(
-      UserQueryRepository userQueryRepository, UserCommandRepository userCommandRepository) {
+      UserQueryRepository userQueryRepository,
+      UserCommandRepository userCommandRepository,
+      UserRegistrationRelatedDataVerifier relatedDataVerifier) {
     this.userQueryRepository = userQueryRepository;
     this.userCommandRepository = userCommandRepository;
+    this.relatedDataVerifier = relatedDataVerifier;
   }
 
   public String type() {
@@ -94,7 +99,9 @@ public class UserOrganizationAssignmentsUpdateService
     if (!validate.isValid()) {
       throw validate.toException();
     }
+    relatedDataVerifier.verifyOrganizationAssignments(tenant, request.registrationRequest());
 
+    // 3. Context creation
     User after = updateUser(request.registrationRequest(), before);
 
     // 4. Set before/after users to builder for context completion
@@ -118,19 +125,21 @@ public class UserOrganizationAssignmentsUpdateService
   }
 
   public User updateUser(UserRegistrationRequest request, User before) {
-    User updated = before;
+    // Create deep copy to avoid mutating 'before' object
+    org.idp.server.platform.json.JsonConverter jsonConverter =
+        org.idp.server.platform.json.JsonConverter.snakeCaseInstance();
+    User updated = jsonConverter.read(jsonConverter.write(before), User.class);
 
     // Update assigned organizations if provided
     if (request.containsKey("assigned_organizations")) {
-      updated = updated.setAssignedOrganizations(request.assignedOrganizations());
+      updated.setAssignedOrganizations(request.assignedOrganizations());
     }
 
     // Update current organization if provided
     if (request.containsKey("current_organization_id") && request.currentOrganizationId() != null) {
-      updated =
-          updated.setCurrentOrganizationId(
-              new org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier(
-                  request.currentOrganizationId()));
+      updated.setCurrentOrganizationId(
+          new org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier(
+              request.currentOrganizationId()));
     }
 
     return updated;

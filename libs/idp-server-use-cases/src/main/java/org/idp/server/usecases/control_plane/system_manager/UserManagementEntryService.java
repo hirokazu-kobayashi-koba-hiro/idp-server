@@ -110,7 +110,7 @@ public class UserManagementEntryService implements UserManagementApi {
       UserLifecycleEventPublisher userLifecycleEventPublisher,
       ManagementEventPublisher managementEventPublisher) {
 
-    UserRegistrationRelatedDataVerifier updateVerifier =
+    UserRegistrationRelatedDataVerifier relatedDataVerifier =
         new UserRegistrationRelatedDataVerifier(
             roleQueryRepository, tenantQueryRepository, organizationRepository);
 
@@ -144,13 +144,16 @@ public class UserManagementEntryService implements UserManagementApi {
     services.put("get", new UserFindService(userQueryRepository));
     services.put(
         "updateRoles",
-        new UserRolesUpdateService(userQueryRepository, userCommandRepository, updateVerifier));
+        new UserRolesUpdateService(
+            userQueryRepository, userCommandRepository, relatedDataVerifier));
     services.put(
         "updateTenantAssignments",
-        new UserTenantAssignmentsUpdateService(userQueryRepository, userCommandRepository));
+        new UserTenantAssignmentsUpdateService(
+            userQueryRepository, userCommandRepository, relatedDataVerifier));
     services.put(
         "updateOrganizationAssignments",
-        new UserOrganizationAssignmentsUpdateService(userQueryRepository, userCommandRepository));
+        new UserOrganizationAssignmentsUpdateService(
+            userQueryRepository, userCommandRepository, relatedDataVerifier));
 
     return new UserManagementHandler(services, this, tenantQueryRepository);
   }

@@ -404,6 +404,191 @@ describe("organization user management api", () => {
       expect(deleteResponse.status).toBe(204);
     });
 
+    it("create user with organization assignment", async () => {
+      // Get OAuth token with org-management scope
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const timestamp = Date.now();
+      const userId = uuidv4();
+
+      // Create user with organization assignment at creation time
+      const createResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: {
+          "sub": userId,
+          "provider_id": "idp-server",
+          "name": `Org Assigned User ${timestamp}`,
+          "email": `orgassigned${timestamp}@example.com`,
+          "raw_password": "OrgAssignedPassword123!",
+          "assigned_organizations": [orgId]
+        }
+      });
+      console.log("Create user with org assignment response:", createResponse.data);
+      expect(createResponse.status).toBe(201);
+      expect(createResponse.data).toHaveProperty("result");
+      expect(createResponse.data.result).toHaveProperty("assigned_organizations");
+      expect(createResponse.data.result.assigned_organizations).toContain(orgId);
+
+      // Verify assignment persisted
+      const userDetailResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      expect(userDetailResponse.status).toBe(200);
+      expect(userDetailResponse.data.assigned_organizations).toContain(orgId);
+
+      // Cleanup
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+    });
+
+
+    it("create user with multiple tenant assignments", async () => {
+      // Get OAuth token with org-management scope
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      // Get list of tenants in the organization
+      const tenantsResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      expect(tenantsResponse.status).toBe(200);
+
+      const availableTenants = tenantsResponse.data.list || [];
+      if (availableTenants.length < 2) {
+        console.log("⚠️ Skipping test: At least 2 tenants required, found:", availableTenants.length);
+        return;
+      }
+
+      const tenant1Id = availableTenants[0].id;
+      const tenant2Id = availableTenants[1].id;
+
+      const timestamp = Date.now();
+      const userId = uuidv4();
+
+      // Create user with multiple tenants at creation time
+      const createResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: {
+          "sub": userId,
+          "provider_id": "idp-server",
+          "name": `Multi Tenant Create User ${timestamp}`,
+          "email": `multitenantcreate${timestamp}@example.com`,
+          "raw_password": "MultiTenantCreatePassword123!",
+          "assigned_tenants": [tenant1Id, tenant2Id]
+        }
+      });
+      console.log("Create user with multi tenant assignments response:", createResponse.data);
+      expect(createResponse.status).toBe(201);
+      expect(createResponse.data).toHaveProperty("result");
+      expect(createResponse.data.result).toHaveProperty("assigned_tenants");
+      expect(createResponse.data.result.assigned_tenants).toContain(tenant1Id);
+      expect(createResponse.data.result.assigned_tenants).toContain(tenant2Id);
+
+      // Cleanup
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+    });
+
+    it("create user with both organization and tenant assignments", async () => {
+      // Get OAuth token with org-management scope
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const timestamp = Date.now();
+      const userId = uuidv4();
+
+      // Create user with both organization and tenant assignments at creation time
+      const createResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: {
+          "sub": userId,
+          "provider_id": "idp-server",
+          "name": `Full Assignment User ${timestamp}`,
+          "email": `fullassignment${timestamp}@example.com`,
+          "raw_password": "FullAssignmentPassword123!",
+          "assigned_organizations": [orgId],
+          "assigned_tenants": [tenantId]
+        }
+      });
+      console.log("Create user with full assignments response:", createResponse.data);
+      expect(createResponse.status).toBe(201);
+      expect(createResponse.data).toHaveProperty("result");
+      expect(createResponse.data.result).toHaveProperty("assigned_organizations");
+      expect(createResponse.data.result).toHaveProperty("assigned_tenants");
+      expect(createResponse.data.result.assigned_organizations).toContain(orgId);
+      expect(createResponse.data.result.assigned_tenants).toContain(tenantId);
+
+      // Verify both assignments persisted
+      const userDetailResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      expect(userDetailResponse.status).toBe(200);
+      expect(userDetailResponse.data.assigned_organizations).toContain(orgId);
+      expect(userDetailResponse.data.assigned_tenants).toContain(tenantId);
+
+      // Cleanup
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+    });
+
     it("dry run functionality with comprehensive parameters", async () => {
       // Get OAuth token with org-management scope
       const tokenResponse = await requestToken({
@@ -1570,7 +1755,7 @@ describe("organization user management api", () => {
       }
     });
 
-    it("tenant assignments update", async () => {
+    it("tenant assignments update with single tenant", async () => {
       // Get OAuth token with org-management scope
       const tokenResponse = await requestToken({
         endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
@@ -1616,6 +1801,8 @@ describe("organization user management api", () => {
       console.log("Tenant assignments update response:", tenantAssignmentsUpdateResponse.data);
       expect(tenantAssignmentsUpdateResponse.status).toBe(200);
       expect(tenantAssignmentsUpdateResponse.data).toHaveProperty("result");
+      expect(tenantAssignmentsUpdateResponse.data.result).toHaveProperty("assigned_tenants");
+      expect(tenantAssignmentsUpdateResponse.data.result.assigned_tenants).toContain(tenantId);
 
       // Test dry run
       const tenantAssignmentsDryRunResponse = await patchWithJson({
@@ -1640,7 +1827,228 @@ describe("organization user management api", () => {
       });
     });
 
-    it("organization assignments update", async () => {
+    it("tenant assignments update with multiple tenants", async () => {
+      // Get OAuth token with org-management scope
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      // Get list of tenants in the organization
+      const tenantsResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      expect(tenantsResponse.status).toBe(200);
+
+      // Get at least 2 tenant IDs for testing
+      const availableTenants = tenantsResponse.data.list || [];
+      if (availableTenants.length < 2) {
+        console.log("⚠️ Skipping test: At least 2 tenants required, found:", availableTenants.length);
+        return;
+      }
+
+      const tenant1Id = availableTenants[0].id;
+      const tenant2Id = availableTenants[1].id;
+
+      const timestamp = Date.now();
+      const userId = uuidv4();
+
+      // Create user
+      const createResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: {
+          "sub": userId,
+          "provider_id": "idp-server",
+          "name": `Multi Tenant User ${timestamp}`,
+          "email": `multitenant${timestamp}@example.com`,
+          "raw_password": "MultiTenantPassword123!"
+        }
+      });
+      expect(createResponse.status).toBe(201);
+
+      // Assign user to multiple tenants
+      const multiTenantResponse = await patchWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}/tenant-assignments`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: {
+          "assigned_tenants": [tenant1Id, tenant2Id]
+        }
+      });
+      console.log("Multiple tenant assignments response:", multiTenantResponse.data);
+      expect(multiTenantResponse.status).toBe(200);
+      expect(multiTenantResponse.data).toHaveProperty("result");
+
+      // Verify both tenants are assigned
+      const result = multiTenantResponse.data.result;
+      expect(result).toHaveProperty("assigned_tenants");
+      expect(Array.isArray(result.assigned_tenants)).toBe(true);
+      expect(result.assigned_tenants).toContain(tenant1Id);
+      expect(result.assigned_tenants).toContain(tenant2Id);
+
+      // Get user to verify assignments persisted
+      const userDetailResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      expect(userDetailResponse.status).toBe(200);
+      expect(userDetailResponse.data.assigned_tenants).toContain(tenant1Id);
+      expect(userDetailResponse.data.assigned_tenants).toContain(tenant2Id);
+
+      // Cleanup
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+    });
+
+    it("tenant assignments removal (empty array)", async () => {
+      // Get OAuth token with org-management scope
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const timestamp = Date.now();
+      const userId = uuidv4();
+
+      // Create user
+      const createResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: {
+          "sub": userId,
+          "provider_id": "idp-server",
+          "name": `Tenant Removal User ${timestamp}`,
+          "email": `tenantremoval${timestamp}@example.com`,
+          "raw_password": "TenantRemovalPassword123!"
+        }
+      });
+      expect(createResponse.status).toBe(201);
+
+      // First assign a tenant
+      const assignResponse = await patchWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}/tenant-assignments`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: {
+          "assigned_tenants": [tenantId]
+        }
+      });
+      expect(assignResponse.status).toBe(200);
+
+      // Remove all tenant assignments using empty array
+      const removeResponse = await patchWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}/tenant-assignments`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: {
+          "assigned_tenants": []
+        }
+      });
+      console.log("Tenant assignments removal response:", removeResponse.data);
+      expect(removeResponse.status).toBe(200);
+      expect(removeResponse.data).toHaveProperty("result");
+
+      // Verify assignments were removed
+      const result = removeResponse.data.result;
+      expect(result).not.toHaveProperty("assigned_tenants");
+
+      // Cleanup
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+    });
+
+    it("tenant assignments with invalid tenant ID", async () => {
+      // Get OAuth token with org-management scope
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const timestamp = Date.now();
+      const userId = uuidv4();
+      const invalidTenantId = uuidv4();
+
+      // Create user
+      const createResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: {
+          "sub": userId,
+          "provider_id": "idp-server",
+          "name": `Invalid Tenant User ${timestamp}`,
+          "email": `invalidtenant${timestamp}@example.com`,
+          "raw_password": "InvalidTenantPassword123!"
+        }
+      });
+      expect(createResponse.status).toBe(201);
+
+      // Try to assign non-existent tenant
+      const invalidResponse = await patchWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}/tenant-assignments`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: {
+          "assigned_tenants": [invalidTenantId]
+        }
+      });
+      console.log("Invalid tenant assignment response:", invalidResponse.data);
+      expect([400, 404]).toContain(invalidResponse.status);
+
+      // Cleanup
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+    });
+
+    it("organization assignments update with single organization", async () => {
       // Get OAuth token with org-management scope
       const tokenResponse = await requestToken({
         endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
@@ -1686,6 +2094,8 @@ describe("organization user management api", () => {
       console.log("Organization assignments update response:", orgAssignmentsUpdateResponse.data);
       expect(orgAssignmentsUpdateResponse.status).toBe(200);
       expect(orgAssignmentsUpdateResponse.data).toHaveProperty("result");
+      expect(orgAssignmentsUpdateResponse.data.result).toHaveProperty("assigned_organizations");
+      expect(orgAssignmentsUpdateResponse.data.result.assigned_organizations).toContain(orgId);
 
       // Test dry run
       const orgAssignmentsDryRunResponse = await patchWithJson({
@@ -1700,6 +2110,134 @@ describe("organization user management api", () => {
       console.log("Organization assignments dry run response:", orgAssignmentsDryRunResponse.data);
       expect(orgAssignmentsDryRunResponse.status).toBe(200);
       expect(orgAssignmentsDryRunResponse.data).toHaveProperty("dry_run", true);
+
+      // Cleanup
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+    });
+
+    it("organization assignments removal (empty array)", async () => {
+      // Get OAuth token with org-management scope
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const timestamp = Date.now();
+      const userId = uuidv4();
+
+      // Create user
+      const createResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: {
+          "sub": userId,
+          "provider_id": "idp-server",
+          "name": `Org Removal User ${timestamp}`,
+          "email": `orgremoval${timestamp}@example.com`,
+          "raw_password": "OrgRemovalPassword123!"
+        }
+      });
+      expect(createResponse.status).toBe(201);
+
+      // First assign an organization
+      const assignResponse = await patchWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}/organization-assignments`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: {
+          "assigned_organizations": [orgId]
+        }
+      });
+      expect(assignResponse.status).toBe(200);
+
+      // Remove all organization assignments using empty array
+      const removeResponse = await patchWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}/organization-assignments`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: {
+          "assigned_organizations": []
+        }
+      });
+      console.log("Organization assignments removal response:", removeResponse.data);
+      expect(removeResponse.status).toBe(200);
+      expect(removeResponse.data).toHaveProperty("result");
+
+      // Verify assignments were removed
+      const result = removeResponse.data.result;
+      expect(result).not.toHaveProperty("assigned_organizations");
+
+      // Cleanup
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+    });
+
+    it("organization assignments with invalid organization ID", async () => {
+      // Get OAuth token with org-management scope
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const timestamp = Date.now();
+      const userId = uuidv4();
+      const invalidOrgId = uuidv4();
+
+      // Create user
+      const createResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: {
+          "sub": userId,
+          "provider_id": "idp-server",
+          "name": `Invalid Org User ${timestamp}`,
+          "email": `invalidorg${timestamp}@example.com`,
+          "raw_password": "InvalidOrgPassword123!"
+        }
+      });
+      expect(createResponse.status).toBe(201);
+
+      // Try to assign non-existent organization
+      const invalidResponse = await patchWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}/organization-assignments`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: {
+          "assigned_organizations": [invalidOrgId]
+        }
+      });
+      console.log("Invalid organization assignment response:", invalidResponse.data);
+      expect([400, 404]).toContain(invalidResponse.status);
 
       // Cleanup
       await deletion({
