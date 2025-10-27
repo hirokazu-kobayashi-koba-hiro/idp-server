@@ -23,10 +23,12 @@ import org.idp.server.control_plane.management.identity.user.io.UserManagementSt
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
 import org.idp.server.control_plane.management.identity.user.io.UserUpdateRequest;
 import org.idp.server.control_plane.management.identity.user.validator.UserTenantAssignmentsUpdateRequestValidator;
+import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationRelatedDataVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonDiffCalculator;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -61,11 +63,15 @@ public class UserTenantAssignmentsUpdateService
 
   private final UserQueryRepository userQueryRepository;
   private final UserCommandRepository userCommandRepository;
+  private final UserRegistrationRelatedDataVerifier relatedDataVerifier;
 
   public UserTenantAssignmentsUpdateService(
-      UserQueryRepository userQueryRepository, UserCommandRepository userCommandRepository) {
+      UserQueryRepository userQueryRepository,
+      UserCommandRepository userCommandRepository,
+      UserRegistrationRelatedDataVerifier relatedDataVerifier) {
     this.userQueryRepository = userQueryRepository;
     this.userCommandRepository = userCommandRepository;
+    this.relatedDataVerifier = relatedDataVerifier;
   }
 
   public String type() {
@@ -89,6 +95,7 @@ public class UserTenantAssignmentsUpdateService
     UserTenantAssignmentsUpdateRequestValidator validator =
         new UserTenantAssignmentsUpdateRequestValidator(request.registrationRequest(), dryRun);
     validator.validate();
+    relatedDataVerifier.verifyTenantAssignments(request.registrationRequest());
 
     // 3. Context creation
     User after = updateUser(request.registrationRequest(), before);
@@ -115,19 +122,21 @@ public class UserTenantAssignmentsUpdateService
   }
 
   public User updateUser(UserRegistrationRequest request, User before) {
-    User updated = before;
+    // Create deep copy to avoid mutating 'before' object
+    // Note: toMap() converts LocalDateTime to string, so we need to restore them
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+    User updated = jsonConverter.read(jsonConverter.write(before), User.class);
 
     // Update assigned tenants if provided
     if (request.containsKey("assigned_tenants")) {
-      updated = updated.setAssignedTenants(request.assignedTenants());
+      updated.setAssignedTenants(request.assignedTenants());
     }
 
     // Update current tenant if provided
     if (request.containsKey("current_tenant_id") && request.currentTenant() != null) {
-      updated =
-          updated.setCurrentTenantId(
-              new org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier(
-                  request.currentTenant()));
+      updated.setCurrentTenantId(
+          new org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier(
+              request.currentTenant()));
     }
 
     return updated;

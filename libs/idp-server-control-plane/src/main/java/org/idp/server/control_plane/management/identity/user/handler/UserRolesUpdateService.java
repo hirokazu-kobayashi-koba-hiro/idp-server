@@ -110,8 +110,13 @@ public class UserRolesUpdateService implements UserManagementService<UserUpdateR
   }
 
   public User updateUser(UserRegistrationRequest request, User before) {
-    User newUser = JsonConverter.snakeCaseInstance().read(request.toMap(), User.class);
+    // Create deep copy to avoid mutating 'before' object
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+    User updated = jsonConverter.read(jsonConverter.write(before), User.class);
 
-    return before.setRoles(newUser.roles());
+    User newUser = jsonConverter.read(request.toMap(), User.class);
+    updated.setRoles(newUser.roles());
+
+    return updated;
   }
 }

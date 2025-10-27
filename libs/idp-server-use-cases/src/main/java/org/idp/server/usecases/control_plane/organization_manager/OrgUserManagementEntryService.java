@@ -129,7 +129,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
       UserCommandRepository userCommandRepository,
       PasswordEncodeDelegation passwordEncodeDelegation,
       UserRegistrationVerifier verifier,
-      UserRegistrationRelatedDataVerifier updateVerifier,
+      UserRegistrationRelatedDataVerifier relatedDataVerifier,
       UserLifecycleEventPublisher userLifecycleEventPublisher,
       ManagementEventPublisher managementEventPublisher) {
 
@@ -163,13 +163,16 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     services.put("get", new UserFindService(userQueryRepository));
     services.put(
         "updateRoles",
-        new UserRolesUpdateService(userQueryRepository, userCommandRepository, updateVerifier));
+        new UserRolesUpdateService(
+            userQueryRepository, userCommandRepository, relatedDataVerifier));
     services.put(
         "updateTenantAssignments",
-        new UserTenantAssignmentsUpdateService(userQueryRepository, userCommandRepository));
+        new UserTenantAssignmentsUpdateService(
+            userQueryRepository, userCommandRepository, relatedDataVerifier));
     services.put(
         "updateOrganizationAssignments",
-        new UserOrganizationAssignmentsUpdateService(userQueryRepository, userCommandRepository));
+        new UserOrganizationAssignmentsUpdateService(
+            userQueryRepository, userCommandRepository, relatedDataVerifier));
 
     return new OrgUserManagementHandler(
         services, this, tenantQueryRepository, new OrganizationAccessVerifier());

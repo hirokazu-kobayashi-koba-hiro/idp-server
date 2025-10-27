@@ -132,11 +132,13 @@ public class UserRegistrationRelatedDataVerifier {
         Optional.ofNullable(request.assignedOrganizations()).orElse(List.of());
 
     Set<String> allOrgIds = new LinkedHashSet<>(assignedOrganizations);
+    if (currentOrganizationId != null && !currentOrganizationId.trim().isEmpty()) {
+      allOrgIds.add(currentOrganizationId);
+    }
+
     if (allOrgIds.isEmpty()) {
       return;
     }
-
-    allOrgIds.add(currentOrganizationId);
 
     OrganizationQueries queries = OrganizationQueries.ids(allOrgIds);
     List<Organization> existingOrganizations = organizationRepository.findList(queries);
