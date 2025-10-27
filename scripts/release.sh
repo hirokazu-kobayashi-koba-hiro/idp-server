@@ -73,20 +73,56 @@ if [ "$JAR_COUNT" -eq 0 ]; then
   exit 1
 fi
 
-# DDLスクリプトの収集
+# DDLスクリプトの収集（_で始まるファイルは除外 = Flyway適用外）
 echo ""
 echo "📜 データベーススクリプトを収集中..."
 DB_DIR="$RELEASE_DIR/database"
-mkdir -p $DB_DIR
+mkdir -p $DB_DIR/mysql $DB_DIR/postgresql
 
+# MySQL DDL（_で始まるファイルを除外）
 if [ -d "libs/idp-server-database/mysql" ]; then
-  cp -r libs/idp-server-database/mysql $DB_DIR/
-  echo "  ✓ MySQL DDL scripts"
+  MYSQL_COUNT=0
+  for file in libs/idp-server-database/mysql/*.sql; do
+    filename=$(basename "$file")
+    # _で始まるファイルはスキップ（実験的スクリプト）
+    if [[ "$filename" =~ ^_ ]]; then
+      echo "  ⊗ スキップ $filename (experimental)"
+      continue
+    fi
+    cp "$file" $DB_DIR/mysql/
+    echo "  ✓ $filename"
+    MYSQL_COUNT=$((MYSQL_COUNT + 1))
+  done
+  [ $MYSQL_COUNT -gt 0 ] && echo "  ✓ MySQL: $MYSQL_COUNT files"
 fi
 
+# PostgreSQL DDL（_で始まるファイルを除外）
 if [ -d "libs/idp-server-database/postgresql" ]; then
-  cp -r libs/idp-server-database/postgresql $DB_DIR/
-  echo "  ✓ PostgreSQL DDL scripts"
+  PGSQL_COUNT=0
+
+  # メインDDLファイル
+  for file in libs/idp-server-database/postgresql/*.sql; do
+    [ -f "$file" ] || continue
+    filename=$(basename "$file")
+    # _で始まるファイルはスキップ（実験的スクリプト）
+    if [[ "$filename" =~ ^_ ]]; then
+      echo "  ⊗ スキップ $filename (experimental)"
+      continue
+    fi
+    cp "$file" $DB_DIR/postgresql/
+    echo "  ✓ $filename"
+    PGSQL_COUNT=$((PGSQL_COUNT + 1))
+  done
+
+  # サブディレクトリ
+  for subdir in init operation user; do
+    if [ -d "libs/idp-server-database/postgresql/$subdir" ]; then
+      cp -r "libs/idp-server-database/postgresql/$subdir" $DB_DIR/postgresql/
+      echo "  ✓ $subdir/"
+    fi
+  done
+
+  [ $PGSQL_COUNT -gt 0 ] && echo "  ✓ PostgreSQL: $PGSQL_COUNT files"
 fi
 
 # ZIPアーカイブの作成
