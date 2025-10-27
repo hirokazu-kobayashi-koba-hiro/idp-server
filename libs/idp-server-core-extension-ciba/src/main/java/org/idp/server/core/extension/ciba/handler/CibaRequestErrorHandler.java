@@ -26,6 +26,7 @@ import org.idp.server.core.openid.oauth.configuration.exception.ClientConfigurat
 import org.idp.server.core.openid.oauth.configuration.exception.ServerConfigurationNotFoundException;
 import org.idp.server.core.openid.oauth.type.oauth.Error;
 import org.idp.server.core.openid.oauth.type.oauth.ErrorDescription;
+import org.idp.server.platform.exception.BadRequestException;
 import org.idp.server.platform.log.LoggerWrapper;
 
 public class CibaRequestErrorHandler {
@@ -55,6 +56,14 @@ public class CibaRequestErrorHandler {
           CibaRequestStatus.FORBIDDEN,
           new BackchannelAuthenticationErrorResponse(
               forbidden.error(), forbidden.errorDescription()));
+    }
+
+    if (exception instanceof BadRequestException badRequest) {
+      log.warn(exception.getMessage());
+      return new CibaIssueResponse(
+          CibaRequestStatus.BAD_REQUEST,
+          new BackchannelAuthenticationErrorResponse(
+              new Error("invalid_request"), new ErrorDescription(badRequest.getMessage())));
     }
 
     if (exception instanceof ClientConfigurationNotFoundException) {
