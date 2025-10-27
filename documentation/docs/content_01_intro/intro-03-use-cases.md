@@ -45,9 +45,9 @@
 
 | # | ユーザーストーリー | システム機能 | 実装詳細 |
 |---|---------------|------------|---------|
-| 1 | **アプリケーションにログインしたい** | OAuth 2.0 認可コードフローによる認証・認可 | <details><summary>フロー概要</summary>認可リクエスト → 認証画面（ログイン） → 同意画面 → 認可コード発行 → RP へリダイレクト<br><br>**関連仕様**: [RFC 6749 Section 4.1](https://www.rfc-editor.org/rfc/rfc6749#section-4.1)</details> |
+| 1 | **アプリケーションにログインしたい** | OAuth 2.0 認可コードフローによる認証・認可 | <details><summary>フロー概要</summary>認可リクエスト → 認証画面（ログイン） → 同意画面 → 認可コード発行 → RP へリダイレクト<br/><br/>**関連仕様**: [RFC 6749 Section 4.1](https://www.rfc-editor.org/rfc/rfc6749#section-4.1)</details> |
 | 2 | **Google/GitHub アカウントでログインしたい** | フェデレーション認証（外部 IdP 連携） | <details><summary>フロー概要</summary>外部 IdP へリダイレクト → 外部 IdP で認証 → コールバック処理 → IdP セッション確立</details> |
-| 3 | **ATM・IoT デバイスで認証したい** | CIBA（バックチャンネル認証） | <details><summary>フロー概要</summary>デバイスが認証リクエスト送信 → ユーザーがモバイルアプリで承認/拒否 → デバイスがトークン取得<br><br>**関連仕様**: [OpenID Connect CIBA](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html)</details> |
+| 3 | **ATM・IoT デバイスで認証したい** | CIBA（バックチャンネル認証） | <details><summary>フロー概要</summary>デバイスが認証リクエスト送信 → ユーザーがモバイルアプリで承認/拒否 → デバイスがトークン取得<br/><br/>**関連仕様**: [OpenID Connect CIBA](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html)</details> |
 | 4 | **一度ログインしたら他のアプリでも自動ログインしたい** | SSO（シングルサインオン）セッション管理 | <details><summary>フロー概要</summary>既存セッション確認 → 自動認可（同意画面スキップ） → 認可コード発行</details> |
 | 5 | **すべてのアプリからログアウトしたい** | RP-Initiated Logout（全セッション終了） | <details><summary>フロー概要</summary>IdP セッション削除 → 全 RP へログアウト通知（Front-Channel/Back-Channel）</details> |
 
@@ -55,37 +55,37 @@
 
 | # | ユーザーストーリー | システム機能 | 実装詳細 |
 |---|---------------|------------|---------|
-| 1 | **API を呼び出したい** | アクセストークン発行・リフレッシュ | <details><summary>フロー概要</summary>認可コードをトークンに交換（Token Exchange）<br>トークン期限切れ時はリフレッシュトークンで更新<br><br>**関連仕様**: [RFC 6749 Section 6](https://www.rfc-editor.org/rfc/rfc6749#section-6)</details> |
-| 2 | **ログアウト時にトークンを無効化したい** | トークン失効（Revocation） | <details><summary>概要</summary>アクセストークン・リフレッシュトークンを無効化し、以降の利用を防止<br><br>**関連仕様**: [RFC 7009](https://www.rfc-editor.org/rfc/rfc7009)</details> |
+| 1 | **API を呼び出したい** | アクセストークン発行・リフレッシュ | <details><summary>フロー概要</summary>認可コードをトークンに交換（Token Exchange）<br/>トークン期限切れ時はリフレッシュトークンで更新<br/><br/>**関連仕様**: [RFC 6749 Section 6](https://www.rfc-editor.org/rfc/rfc6749#section-6)</details> |
+| 2 | **ログアウト時にトークンを無効化したい** | トークン失効（Revocation） | <details><summary>概要</summary>アクセストークン・リフレッシュトークンを無効化し、以降の利用を防止<br/><br/>**関連仕様**: [RFC 7009](https://www.rfc-editor.org/rfc/rfc7009)</details> |
 | 3 | **ユーザーのプロフィール情報を取得したい** | UserInfo エンドポイント | <details><summary>概要</summary>アクセストークンを使って email・name・profile 等のユーザー属性を取得</details> |
 
 ### 本人確認（eKYC）
 
 | # | ユーザーストーリー | システム機能 | 実装詳細 |
 |---|---------------|------------|---------|
-| 1 | **オンラインで本人確認を完了したい** | eKYC 申請・審査結果取得 | <details><summary>フロー概要</summary>身元確認申請送信 → 外部 eKYC サービスで審査 → 結果コールバック受信 → ユーザーが結果取得<br><br>**操作**: 申請・履歴照会・結果取得・キャンセル<br>**外部連携**: eKYC サービスとの HTTP 連携（動的テンプレート対応）</details> |
+| 1 | **オンラインで本人確認を完了したい** | eKYC 申請・審査結果取得 | <details><summary>フロー概要</summary>身元確認申請送信 → 外部 eKYC サービスで審査 → 結果コールバック受信 → ユーザーが結果取得<br/><br/>**操作**: 申請・履歴照会・結果取得・キャンセル<br/>**外部連携**: eKYC サービスとの HTTP 連携（動的テンプレート対応）</details> |
 
 ### 多要素認証・デバイス管理
 
 | # | ユーザーストーリー | システム機能 | 実装詳細 |
 |---|---------------|------------|---------|
 | 1 | **SMS・Email で追加認証したい** | MFA（多要素認証）フロー | <details><summary>フロー概要</summary>MFA トランザクション開始 → コード送信（SMS/Email） → ユーザーがコード入力 → 検証完了</details> |
-| 2 | **生体認証・FIDO で認証したい** | FIDO UAF 統合 | <details><summary>概要</summary>FIDO UAF プロトコルによる生体認証<br>デバイス登録履歴・最終利用日時の管理</details> |
+| 2 | **生体認証・FIDO で認証したい** | FIDO UAF 統合 | <details><summary>概要</summary>FIDO UAF プロトコルによる生体認証<br/>デバイス登録履歴・最終利用日時の管理</details> |
 
 ### システム統合（RP・リソースサーバー向け）
 
 | # | 利用者 | ユーザーストーリー | システム機能 | 実装詳細 |
 |---|-------|---------------|------------|---------|
-| 1 | RP | **IdP の設定を自動取得したい** | OIDC Discovery（メタデータ配信） | <details><summary>概要</summary>IdP エンドポイント・サポート機能・公開鍵を JSON で配信<br>RP は動的に設定を取得可能</details> |
-| 2 | リソースサーバー | **アクセストークンの有効性を確認したい** | Token Introspection | <details><summary>概要</summary>トークンの有効性・スコープ・有効期限を検証<br><br>**関連仕様**: [RFC 7662](https://www.rfc-editor.org/rfc/rfc7662)</details> |
+| 1 | RP | **IdP の設定を自動取得したい** | OIDC Discovery（メタデータ配信） | <details><summary>概要</summary>IdP エンドポイント・サポート機能・公開鍵を JSON で配信<br/>RP は動的に設定を取得可能</details> |
+| 2 | リソースサーバー | **アクセストークンの有効性を確認したい** | Token Introspection | <details><summary>概要</summary>トークンの有効性・スコープ・有効期限を検証<br/><br/>**関連仕様**: [RFC 7662](https://www.rfc-editor.org/rfc/rfc7662)</details> |
 | 3 | 外部システム | **テナント設定を動的に取得したい** | テナントメタデータ配信 | <details><summary>概要</summary>テナント固有の設定（外部 API URL・カスタム属性等）を JSON で配信</details> |
 
 ### バックグラウンド処理（非同期ワーカー）
 
 | # | ユーザーストーリー | システム機能 | 実装詳細 |
 |---|---------------|------------|---------|
-| 1 | **ユーザー作成時に Welcome メールを送りたい** | ユーザーライフサイクルイベント処理 | <details><summary>トリガー</summary>イベント: ユーザー作成/更新/削除<br>処理: 通知送信・外部システム連携・監査ログ記録</details> |
-| 2 | **不正ログイン時にアカウントをロックしたい** | セキュリティイベント処理 | <details><summary>トリガー</summary>イベント: 連続ログイン失敗・異常アクセス検知<br>処理: アカウントロック・管理者通知・SSF イベント送信</details> |
+| 1 | **ユーザー作成時に Welcome メールを送りたい** | ユーザーライフサイクルイベント処理 | <details><summary>トリガー</summary>イベント: ユーザー作成/更新/削除<br/>処理: 通知送信・外部システム連携・監査ログ記録</details> |
+| 2 | **不正ログイン時にアカウントをロックしたい** | セキュリティイベント処理 | <details><summary>トリガー</summary>イベント: 連続ログイン失敗・異常アクセス検知<br/>処理: アカウントロック・管理者通知・SSF イベント送信</details> |
 
 ## コントロールプレーン
 
@@ -103,16 +103,16 @@
 
 | # | ユーザーストーリー | システム機能 | 実装詳細 |
 |---|---------------|------------|---------|
-| 1 | **複数のテナントを管理したい** | テナント CRUD | <details><summary>操作</summary>テナント作成・一覧取得・詳細取得・設定更新・削除<br><br>**dry_run 対応**: 変更前プレビュー可能</details> |
-| 2 | **OAuth クライアントを登録・管理したい** | Client CRUD | <details><summary>操作</summary>クライアント登録・一覧取得・詳細取得・設定更新・削除<br><br>**設定項目**: redirect_uri・grant_types・scopes・token 有効期限等</details> |
-| 3 | **ユーザーアカウントを管理したい** | User CRUD + 権限管理 | <details><summary>操作</summary>基本 CRUD + パスワード更新・ロール割当・テナント割当・組織割当<br><br>**マルチテナント対応**: ユーザーは複数テナント・組織に所属可能</details> |
+| 1 | **複数のテナントを管理したい** | テナント CRUD | <details><summary>操作</summary>テナント作成・一覧取得・詳細取得・設定更新・削除<br/><br/>**dry_run 対応**: 変更前プレビュー可能</details> |
+| 2 | **OAuth クライアントを登録・管理したい** | Client CRUD | <details><summary>操作</summary>クライアント登録・一覧取得・詳細取得・設定更新・削除<br/><br/>**設定項目**: redirect_uri・grant_types・scopes・token 有効期限等</details> |
+| 3 | **ユーザーアカウントを管理したい** | User CRUD + 権限管理 | <details><summary>操作</summary>基本 CRUD + パスワード更新・ロール割当・テナント割当・組織割当<br/><br/>**マルチテナント対応**: ユーザーは複数テナント・組織に所属可能</details> |
 | 4 | **IdP の動作設定を変更したい** | 認可サーバー設定 | <details><summary>設定項目</summary>トークン有効期限・サポートする grant_type・PKCE 必須化・セッション設定等</details> |
 
 ### 認証・認可設定
 
 | # | ユーザーストーリー | システム機能 | 実装詳細 |
 |---|---------------|------------|---------|
-| 1 | **認証フローをカスタマイズしたい** | 認証設定管理 | <details><summary>設定例</summary>MFA 必須化・パスワードポリシー・セッションタイムアウト・認証手段の優先順位等<br><br>**動的テンプレート対応**: JSON で柔軟に設定可能</details> |
+| 1 | **認証フローをカスタマイズしたい** | 認証設定管理 | <details><summary>設定例</summary>MFA 必須化・パスワードポリシー・セッションタイムアウト・認証手段の優先順位等<br/><br/>**動的テンプレート対応**: JSON で柔軟に設定可能</details> |
 | 2 | **Google・GitHub ログインを有効化したい** | フェデレーション設定 | <details><summary>設定例</summary>外部 IdP 種別（Google・GitHub・SAML 等）・OAuth 2.0 Client ID/Secret・スコープ・属性マッピング</details> |
 | 3 | **本人確認プロバイダーを連携したい** | 身元確認設定 | <details><summary>設定例</summary>eKYC サービス API 連携・審査フロー定義・コールバック URL・HTTP リクエストテンプレート</details> |
 
@@ -121,10 +121,10 @@
 | # | ユーザーストーリー | システム機能 | 実装詳細 |
 |---|---------------|------------|---------|
 | 1 | **セキュリティイベントを外部に通知したい** | Security Event Hook 設定 | <details><summary>設定例</summary>Webhook URL・通知イベント種別（ログイン失敗・アカウントロック等）・認証方式（HMAC・OAuth 2.0）</details> |
-| 2 | **ユーザー操作履歴を監査したい** | 監査ログ閲覧 | <details><summary>概要</summary>全ての管理操作（CRUD）の履歴を記録・照会可能<br>フィルタリング: 日時・操作種別・ユーザー・リソース種別</details> |
+| 2 | **ユーザー操作履歴を監査したい** | 監査ログ閲覧 | <details><summary>概要</summary>全ての管理操作（CRUD）の履歴を記録・照会可能<br/>フィルタリング: 日時・操作種別・ユーザー・リソース種別</details> |
 
 ### チーム管理
 
 | # | ユーザーストーリー | システム機能 | 実装詳細 |
 |---|---------------|------------|---------|
-| 1 | **他のメンバーをテナントに招待したい** | メンバー招待管理 | <details><summary>フロー概要</summary>招待メール送信 → 受信者が招待リンククリック → アカウント作成 → テナントメンバーとして登録<br><br>**期限管理**: 招待の有効期限・使用済み招待の無効化</details> |
+| 1 | **他のメンバーをテナントに招待したい** | メンバー招待管理 | <details><summary>フロー概要</summary>招待メール送信 → 受信者が招待リンククリック → アカウント作成 → テナントメンバーとして登録<br/><br/>**期限管理**: 招待の有効期限・使用済み招待の無効化</details> |
