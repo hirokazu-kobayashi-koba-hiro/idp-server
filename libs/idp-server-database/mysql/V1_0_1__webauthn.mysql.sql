@@ -1,9 +1,9 @@
 CREATE TABLE webauthn_credentials
 (
-    id                 VARBINARY(255) PRIMARY KEY,
+    id                 VARBINARY(767) PRIMARY KEY,
     idp_user_id        VARCHAR(256)            NOT NULL,
     rp_id              VARCHAR(256)            NOT NULL,
-    attestation_object VARBINARY(255)                   NOT NULL,
+    attestation_object MEDIUMBLOB              NOT NULL,
     sign_count         BIGINT                  NOT NULL,
     created_at         DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at         DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,

@@ -1,6 +1,15 @@
 #!/bin/zsh
 
-echo "🔐 Generating secrets and configuration..."
+# Usage: ./init-generate-env.sh [postgresql|mysql]
+DATABASE_TYPE=${1:-postgresql}
+
+if [[ "$DATABASE_TYPE" != "postgresql" && "$DATABASE_TYPE" != "mysql" ]]; then
+  echo "❌ Invalid database type: $DATABASE_TYPE"
+  echo "Usage: $0 [postgresql|mysql]"
+  exit 1
+fi
+
+echo "🔐 Generating secrets and configuration for $DATABASE_TYPE..."
 
 # Generate secrets
 IDP_SERVER_API_KEY=$(uuidgen | tr 'A-Z' 'a-z')
@@ -9,6 +18,8 @@ ENCRYPTION_KEY=$(head -c 32 /dev/urandom | base64)
 
 # Generate secure database passwords
 POSTGRES_PASSWORD=$(head -c 24 /dev/urandom | base64)
+MYSQL_ROOT_PASSWORD=$(head -c 24 /dev/urandom | base64)
+MYSQL_PASSWORD=$(head -c 24 /dev/urandom | base64)
 DB_OWNER_PASSWORD=$(head -c 24 /dev/urandom | base64)
 IDP_DB_ADMIN_PASSWORD=$(head -c 24 /dev/urandom | base64)
 IDP_DB_APP_PASSWORD=$(head -c 24 /dev/urandom | base64)
@@ -89,23 +100,27 @@ ADMIN_CLIENT_ID_ALIAS=$ADMIN_CLIENT_ID_ALIAS
 ADMIN_CLIENT_SECRET=$ADMIN_CLIENT_SECRET
 
 # Database Configuration
+DATABASE_TYPE=$(echo $DATABASE_TYPE | tr 'a-z' 'A-Z')
+
 # PostgreSQL superuser password
 POSTGRES_PASSWORD=$POSTGRES_PASSWORD
 
+# MySQL passwords
+MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD
+MYSQL_PASSWORD=$MYSQL_PASSWORD
+
 # Database owner password (for migrations)
 DB_OWNER_PASSWORD=$DB_OWNER_PASSWORD
-DB_OWNER_USER=idp
-MYSQL_ROOT_PASSWORD=root
-MYSQL_PASSWORD=idpserver
+DB_OWNER_USER=idpserver
 
-# Admin user password (RLS bypass for management operations)
+# Admin user password (RLS bypass for management operations - PostgreSQL only)
 IDP_DB_ADMIN_PASSWORD=$IDP_DB_ADMIN_PASSWORD
 CONTROL_PLANE_DB_WRITER_USER_NAME=idp_admin_user
 CONTROL_PLANE_DB_WRITER_PASSWORD=$IDP_DB_ADMIN_PASSWORD
 CONTROL_PLANE_DB_READER_USER_NAME=idp_admin_user
 CONTROL_PLANE_DB_READER_PASSWORD=$IDP_DB_ADMIN_PASSWORD
 
-# Application user password (RLS-compliant operations)
+# Application user password (RLS-compliant operations - PostgreSQL only)
 IDP_DB_APP_PASSWORD=$IDP_DB_APP_PASSWORD
 DB_WRITER_USER_NAME=idp_app_user
 DB_WRITER_PASSWORD=$IDP_DB_APP_PASSWORD
@@ -114,18 +129,26 @@ DB_READER_PASSWORD=$IDP_DB_APP_PASSWORD
 
 EOF
 
-echo "✅ .env file generated"
+echo "✅ .env file generated for $DATABASE_TYPE"
 echo ""
 echo "📋 Summary:"
 echo "  - Secrets: config/secrets/local/encryption-keys.json, client-secrets.json"
 echo "  - Environment: .env (references secrets, no hardcoded values)"
+echo "  - Database: $DATABASE_TYPE"
 echo ""
 echo "⚠️  IMPORTANT: Never commit config/secrets/ to git!"
 echo ""
-echo "Next steps:"
-echo "  1. Generate JWKS: ./config/scripts/migrate-secrets.sh (if using template JWKS)"
-echo "  2. Start services: docker-compose up -d"
-echo "  3. Initialize: ./setup.sh"
+if [[ "$DATABASE_TYPE" == "POSTGRESQL" ]]; then
+  echo "Next steps:"
+  echo "  1. Generate JWKS: ./config/scripts/migrate-secrets.sh (if using template JWKS)"
+  echo "  2. Start services: docker-compose up -d"
+  echo "  3. Initialize: ./setup.sh"
+else
+  echo "Next steps (MySQL):"
+  echo "  1. Generate JWKS: ./config/scripts/migrate-secrets.sh (if using template JWKS)"
+  echo "  2. Start services: docker-compose -f docker-compose-mysql.yaml up -d"
+  echo "  3. Initialize: ./setup.sh"
+fi
 
 echo "Admin Tenant env"
 echo "export ADMIN_ORGANIZATION_ID='${ADMIN_ORGANIZATION_ID}'"

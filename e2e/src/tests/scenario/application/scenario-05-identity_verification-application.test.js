@@ -345,6 +345,7 @@ describe("identity-verification application", () => {
           password: serverConfig.ciba.userCode,
         }
       });
+      console.log(JSON.stringify(authenticationResponse.data, null, 2));
       expect(authenticationResponse.status).toBe(200);
 
       const tokenResponse = await requestToken({

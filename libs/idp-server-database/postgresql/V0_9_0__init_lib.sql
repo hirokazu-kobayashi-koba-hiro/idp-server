@@ -978,7 +978,7 @@ CREATE TABLE audit_log
     user_id                UUID                    NOT NULL,
     external_user_id       VARCHAR(255),
     user_payload           JSONB                   NOT NULL,
-    target_tenant_id       TEXT,
+    target_tenant_id       VARCHAR(255),
     target_resource        TEXT                    NOT NULL,
     target_resource_action TEXT                    NOT NULL,
     request_payload        JSONB,

@@ -233,59 +233,16 @@ CREATE TABLE idp_user_roles
 
 CREATE INDEX idx_idp_user_roles_user_role ON idp_user_roles (user_id, role_id);
 
-CREATE TABLE idp_user_permission_override
-(
-    id            CHAR(36)                           NOT NULL,
-    user_id       CHAR(36)                           NOT NULL,
-    permission_id CHAR(36)                           NOT NULL,
-    granted       TINYINT                            NOT NULL,
-    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    PRIMARY KEY (id),
-    UNIQUE (user_id, permission_id),
-    FOREIGN KEY (user_id) REFERENCES idp_user (id) ON DELETE CASCADE,
-    FOREIGN KEY (permission_id) REFERENCES permission (id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 CREATE VIEW user_effective_permissions_view AS
 SELECT u.id          AS user_id,
        u.tenant_id   AS tenant_id,
        p.name        AS permission_name,
        p.description AS permission_description,
-       'ROLE'        AS source,
        rp.created_at AS granted_at
 FROM idp_user u
          JOIN idp_user_roles ur ON u.id = ur.user_id
          JOIN role_permission rp ON ur.role_id = rp.role_id
-         JOIN permission p ON rp.permission_id = p.id
-         LEFT JOIN idp_user_permission_override ovr
-                   ON u.id = ovr.user_id AND ovr.permission_id = p.id AND ovr.granted = false
-WHERE ovr.id IS NULL
-
-UNION
-
-SELECT u.id           AS user_id,
-       u.tenant_id    AS tenant_id,
-       p.name         AS permission_name,
-       p.description  AS permission_description,
-       'OVERRIDE'     AS source,
-       ovr.created_at AS granted_at
-FROM idp_user_permission_override ovr
-         JOIN idp_user u ON ovr.user_id = u.id
-         JOIN permission p ON ovr.permission_id = p.id
-WHERE ovr.granted = true;
-
-CREATE TABLE organization_members
-(
-    id              CHAR(36)                           NOT NULL,
-    idp_user_id     CHAR(36)                           NOT NULL,
-    organization_id VARCHAR(255)                       NOT NULL,
-    role            VARCHAR(100)                       NOT NULL,
-    joined_at       DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    PRIMARY KEY (id),
-    UNIQUE (idp_user_id, organization_id),
-    FOREIGN KEY (idp_user_id) REFERENCES idp_user (id) ON DELETE CASCADE,
-    FOREIGN KEY (organization_id) REFERENCES organization (id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+         JOIN permission p ON rp.permission_id = p.id;
 
 CREATE TABLE idp_user_current_organization
 (
@@ -494,21 +451,6 @@ CREATE TABLE authorization_granted
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE INDEX idx_authorization_granted_tenant_client_user ON authorization_granted (tenant_id, client_id, user_id);
-
-CREATE TABLE verifiable_credential_transaction
-(
-    id                    VARCHAR(255)                       NOT NULL,
-    tenant_id             CHAR(36)                           NOT NULL,
-    credential_issuer     TEXT                               NOT NULL,
-    client_id             VARCHAR(255)                       NOT NULL,
-    user_id               CHAR(36)                           NOT NULL,
-    verifiable_credential JSON                               NOT NULL,
-    status                VARCHAR(10)                        NOT NULL,
-    created_at            DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at            DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    PRIMARY KEY (id),
-    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE security_event
 (
@@ -778,7 +720,7 @@ CREATE TABLE audit_log
     user_id                CHAR(36)     NOT NULL,
     external_user_id       VARCHAR(255),
     user_payload           JSON         NOT NULL,
-    target_tenant_id       TEXT,
+    target_tenant_id       VARCHAR(255),
     target_resource        TEXT         NOT NULL,
     target_resource_action TEXT         NOT NULL,
     request_payload        JSON,
