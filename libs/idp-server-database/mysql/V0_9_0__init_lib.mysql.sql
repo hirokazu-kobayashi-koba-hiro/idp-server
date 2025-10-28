@@ -24,13 +24,14 @@ CREATE TABLE tenant
     cors_config                JSON, -- CORS configuration
     session_config             JSON, -- Cookie/session configuration
 
-    -- Legacy columns (will be deprecated)
     attributes                 JSON,
     features                   JSON,
+    main_organization_id CHAR(36)                    NOT NULL,
 
     created_at                 DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at                 DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id)
+    PRIMARY KEY (id),
+    FOREIGN KEY (main_organization_id) REFERENCES organization (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- CREATE UNIQUE INDEX unique_admin_tenant ON tenant (type) WHERE type = 'ADMIN';

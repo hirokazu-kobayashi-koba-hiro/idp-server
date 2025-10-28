@@ -40,7 +40,7 @@ public class LoginHintResolver implements UserHintResolver {
                 "sub:",
                 hints -> {
                   UserIdentifier userIdentifier = new UserIdentifier(hints.getLeft());
-                  return userQueryRepository.get(tenant, userIdentifier);
+                  return userQueryRepository.findById(tenant, userIdentifier);
                 }),
             new PrefixMatcher(
                 "ex-sub:",

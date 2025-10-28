@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
+import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.config.CorsConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.config.SessionConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.config.UIConfiguration;
@@ -42,6 +43,7 @@ public class Tenant {
   SecurityEventLogConfiguration securityEventLogConfiguration;
   SecurityEventUserAttributeConfiguration securityEventUserAttributeConfiguration;
   TenantIdentityPolicy identityPolicyConfig;
+  OrganizationIdentifier mainOrganizationIdentifier;
 
   public Tenant() {}
 
@@ -57,7 +59,8 @@ public class Tenant {
       SessionConfiguration sessionConfiguration,
       SecurityEventLogConfiguration securityEventLogConfiguration,
       SecurityEventUserAttributeConfiguration securityEventUserAttributeConfiguration,
-      TenantIdentityPolicy identityPolicyConfig) {
+      TenantIdentityPolicy identityPolicyConfig,
+      OrganizationIdentifier mainOrganizationIdentifier) {
     this.identifier = identifier;
     this.name = name;
     this.type = type;
@@ -70,6 +73,7 @@ public class Tenant {
     this.securityEventLogConfiguration = securityEventLogConfiguration;
     this.securityEventUserAttributeConfiguration = securityEventUserAttributeConfiguration;
     this.identityPolicyConfig = identityPolicyConfig;
+    this.mainOrganizationIdentifier = mainOrganizationIdentifier;
   }
 
   public TenantIdentifier identifier() {
@@ -122,6 +126,7 @@ public class Tenant {
     map.put("security_event_log_config", securityEventLogConfiguration.toMap());
     map.put("security_event_user_config", securityEventUserAttributeConfiguration.toMap());
     map.put("identity_policy_config", identityPolicyConfig.toMap());
+    map.put("main_organization_id", mainOrganizationIdentifier.value());
     return map;
   }
 
@@ -159,6 +164,10 @@ public class Tenant {
 
   public SessionConfiguration sessionConfiguration() {
     return sessionConfiguration;
+  }
+
+  public OrganizationIdentifier mainOrganizationIdentifier() {
+    return mainOrganizationIdentifier;
   }
 
   /**

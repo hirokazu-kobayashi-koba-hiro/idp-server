@@ -46,7 +46,7 @@
         "details": {
           "security_event_type_identifier": "https://schemas.openid.net/secevent/risc/event-type/account-credential-change-required",
           "kid": "ssf-debug",
-          "url": "http://localhost:4000/token",
+          "url": "http://host.docker.internal:4000/token",
           "security_event_token_headers": {
             "key": "value"
           },
@@ -63,7 +63,7 @@
         "details": {
           "security_event_type_identifier": "https://schemas.openid.net/secevent/risc/event-type/account-purged",
           "kid": "ssf-debug",
-          "url": "http://localhost:4000/token",
+          "url": "http://host.docker.internal:4000/token",
           "security_event_token_headers": {
             "key": "value"
           },

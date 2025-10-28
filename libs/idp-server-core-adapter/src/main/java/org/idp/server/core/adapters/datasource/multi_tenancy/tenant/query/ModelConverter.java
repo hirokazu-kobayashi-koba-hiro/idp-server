@@ -21,6 +21,7 @@ import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.*;
 import org.idp.server.platform.multi_tenancy.tenant.config.CorsConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.config.SessionConfiguration;
@@ -55,6 +56,8 @@ class ModelConverter {
             result.getOrDefault("security_event_user_config", ""));
     TenantIdentityPolicy identityPolicyConfig =
         convertIdentityPolicyConfig(result.getOrDefault("identity_policy_config", ""));
+    OrganizationIdentifier mainOrganizationIdentifier =
+        new OrganizationIdentifier(result.getOrDefault("main_organization_id", ""));
 
     return new Tenant(
         tenantIdentifier,
@@ -68,7 +71,8 @@ class ModelConverter {
         sessionConfiguration,
         securityEventLogConfiguration,
         securityEventUserAttributeConfiguration,
-        identityPolicyConfig);
+        identityPolicyConfig,
+        mainOrganizationIdentifier);
   }
 
   private static TenantAttributes convertAttributes(String value) {

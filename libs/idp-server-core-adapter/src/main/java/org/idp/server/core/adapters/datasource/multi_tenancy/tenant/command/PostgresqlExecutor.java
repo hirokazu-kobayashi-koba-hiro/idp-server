@@ -45,7 +45,8 @@ public class PostgresqlExecutor implements TenantCommandSqlExecutor {
             session_config,
             security_event_log_config,
             security_event_user_config,
-            identity_policy_config
+            identity_policy_config,
+            main_organization_id
             )
             VALUES (
             ?::uuid,
@@ -59,7 +60,8 @@ public class PostgresqlExecutor implements TenantCommandSqlExecutor {
             ?::jsonb,
             ?::jsonb,
             ?::jsonb,
-            ?::jsonb
+            ?::jsonb,
+            ?::uuid
             )
             """;
     List<Object> params = new ArrayList<>();
@@ -75,6 +77,7 @@ public class PostgresqlExecutor implements TenantCommandSqlExecutor {
     params.add(jsonConverter.write(tenant.securityEventLogConfiguration().toMap()));
     params.add(jsonConverter.write(tenant.securityEventUserAttributeConfiguration().toMap()));
     params.add(jsonConverter.write(tenant.identityPolicyConfig().toMap()));
+    params.add(tenant.mainOrganizationIdentifier().valueAsUuid());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

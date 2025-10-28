@@ -31,9 +31,7 @@ public class OrganizationDataSource implements OrganizationRepository {
   @Override
   public void register(Organization organization) {
     executor.insert(organization);
-    if (organization.hasAssignedTenants()) {
-      executor.upsertAssignedTenants(organization);
-    }
+    // Must not register assigned tenant. Because tenant does not register.
   }
 
   @Override

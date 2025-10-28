@@ -45,6 +45,7 @@ import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.organization.AssignedTenant;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
+import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantAttributes;
@@ -138,7 +139,7 @@ public class OnboardingService {
     Roles roles = DefaultAdminRole.create(permissions);
 
     Organization organization = organizationRequest.toOrganization();
-    Tenant tenant = createTenant(tenantRequest);
+    Tenant tenant = createTenant(tenantRequest, organization.identifier());
 
     AssignedTenant assignedTenant =
         new AssignedTenant(tenant.identifierValue(), tenant.name().value(), tenant.type().name());
@@ -185,10 +186,11 @@ public class OnboardingService {
     }
 
     // 6. Repository operations
+    organizationRepository.register(organization);
     tenantCommandRepository.register(tenant);
     authorizationServerConfigurationCommandRepository.register(
         tenant, authorizationServerConfiguration);
-    organizationRepository.register(assignedOrganization);
+    organizationRepository.update(assignedOrganization);
     permissionCommandRepository.bulkRegister(tenant, permissions);
     roleCommandRepository.bulkRegister(tenant, roles);
     userRegistrator.registerOrUpdate(tenant, updatedUser);
@@ -197,7 +199,8 @@ public class OnboardingService {
     return new OnboardingResponse(OnboardingStatus.CREATED, contents);
   }
 
-  private Tenant createTenant(TenantRegistrationRequest tenantRequest) {
+  private Tenant createTenant(
+      TenantRegistrationRequest tenantRequest, OrganizationIdentifier mainOrganizationIdentifier) {
     TenantAttributes attributes =
         tenantRequest.attributes() != null
             ? new TenantAttributes(tenantRequest.attributes())
@@ -243,6 +246,7 @@ public class OnboardingService {
         sessionConfiguration,
         securityEventLogConfiguration,
         securityEventUserAttributeConfiguration,
-        identityPolicyConfig);
+        identityPolicyConfig,
+        mainOrganizationIdentifier);
   }
 }

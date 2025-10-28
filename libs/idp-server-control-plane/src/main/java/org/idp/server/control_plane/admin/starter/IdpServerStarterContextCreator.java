@@ -123,7 +123,8 @@ public class IdpServerStarterContextCreator {
             sessionConfiguration,
             securityEventLogConfiguration,
             securityEventUserAttributeConfiguration,
-            identityPolicyConfig);
+            identityPolicyConfig,
+            organization.identifier());
 
     AssignedTenant assignedTenant =
         new AssignedTenant(tenant.identifierValue(), tenant.name().value(), tenant.type().name());
