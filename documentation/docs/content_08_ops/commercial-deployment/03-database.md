@@ -157,7 +157,7 @@ psql -h $IDP_DB_HOST -p $IDP_DB_PORT -U $IDP_DB_ADMIN_USER -d $IDP_DB_NAME -f ./
 ```
  schemaname |       tablename        |      policyname       |        policy_condition
 ------------+------------------------+-----------------------+------------------------------
- public     | client_configuration   | tenant_isolation_policy | (tenant_id = current_setting('app.tenant_id'::text))
+ public     | tenant                 | tenant_isolation_policy | (id = current_setting('app.tenant_id'::text)::uuid)
 (29 rows)
 ```
 
@@ -171,33 +171,33 @@ psql -h $IDP_DB_HOST -p $IDP_DB_PORT -U $IDP_DB_ADMIN_USER -d $IDP_DB_NAME -f ./
 
 #### 管理用ユーザー接続確認
 
-```shell 
-psql -h $IDP_DB_HOST -p $IDP_DB_PORT -U $IDP_DB_ADMIN_USER -d $IDP_DB_NAME -c "SELECT COUNT(*) FROM client_configuration;"
+```shell
+psql -h $IDP_DB_HOST -p $IDP_DB_PORT -U $IDP_DB_ADMIN_USER -d $IDP_DB_NAME -c "SELECT COUNT(*) FROM tenant;"
 ```
 
 #### アプリケーション用ユーザー接続確認
 
 
 ```shell
-psql -h $IDP_DB_HOST -p $IDP_DB_PORT -U $IDP_DB_APP_USER -d $IDP_DB_NAME -c "SELECT COUNT(*) FROM client_configuration"
+psql -h $IDP_DB_HOST -p $IDP_DB_PORT -U $IDP_DB_APP_USER -d $IDP_DB_NAME -c "SELECT COUNT(*) FROM tenant"
 ```
 
 **期待結果**: アプリケーションユーザーはRLS適用のため、テナント設定に応じたデータのみアクセス可能
 
 ```sql
 -- テナント設定なし
-SELECT COUNT(*) FROM tenant_invitation;
+SELECT COUNT(*) FROM tenant;
 -- 結果: count = 0 または ERROR: app.tenant_id is not set
 
 -- テナント設定あり (例: テナントAのUUID設定)
 SET app.tenant_id = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
-SELECT COUNT(*) FROM tenant_invitation;
--- 結果: count = 3 (テナントAのデータのみ)
+SELECT COUNT(*) FROM tenant;
+-- 結果: count = 1 (テナントA自身のデータのみ)
 
 -- 異なるテナント設定 (例: テナントBのUUID設定)
 SET app.tenant_id = 'bbbbbbbb-cccc-dddd-eeee-ffffffffffff';
-SELECT COUNT(*) FROM tenant_invitation;
--- 結果: count = 5 (テナントBのデータのみ)
+SELECT COUNT(*) FROM tenant;
+-- 結果: count = 1 (テナントB自身のデータのみ)
 ```
 
 ### 3. 動作確認チェックポイント
@@ -265,12 +265,12 @@ ORDER BY grantee, table_name;
 ```
     grantee     |       table_name       | privilege_type
 ----------------+------------------------+----------------
- idp_admin_user | client_configuration   | SELECT
- idp_admin_user | client_configuration   | INSERT
- idp_admin_user | client_configuration   | UPDATE
- idp_admin_user | client_configuration   | DELETE
- idp_app_user   | client_configuration   | SELECT
- idp_app_user   | client_configuration   | INSERT
+ idp_admin_user | tenant                 | SELECT
+ idp_admin_user | tenant                 | INSERT
+ idp_admin_user | tenant                 | UPDATE
+ idp_admin_user | tenant                 | DELETE
+ idp_app_user   | tenant                 | SELECT
+ idp_app_user   | tenant                 | INSERT
  (続く...)
 ```
 
