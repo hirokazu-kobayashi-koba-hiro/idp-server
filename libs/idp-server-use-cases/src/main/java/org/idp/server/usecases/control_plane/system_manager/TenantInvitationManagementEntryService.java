@@ -48,19 +48,16 @@ public class TenantInvitationManagementEntryService implements TenantInvitationM
   TenantInvitationQueryRepository tenantInvitationQueryRepository;
   TenantQueryRepository tenantQueryRepository;
   EmailSenders emailSenders;
-  AdminDashboardUrl adminDashboardUrl;
 
   public TenantInvitationManagementEntryService(
       TenantInvitationCommandRepository tenantInvitationCommandRepository,
       TenantInvitationQueryRepository tenantInvitationQueryRepository,
       TenantQueryRepository tenantQueryRepository,
-      EmailSenders emailSenders,
-      AdminDashboardUrl adminDashboardUrl) {
+      EmailSenders emailSenders) {
     this.tenantInvitationCommandRepository = tenantInvitationCommandRepository;
     this.tenantInvitationQueryRepository = tenantInvitationQueryRepository;
     this.tenantQueryRepository = tenantQueryRepository;
     this.emailSenders = emailSenders;
-    this.adminDashboardUrl = adminDashboardUrl;
   }
 
   @Override
@@ -80,8 +77,9 @@ public class TenantInvitationManagementEntryService implements TenantInvitationM
       return validate.errorResponse();
     }
 
+    // TODO tenant config
     TenantInvitationContextCreator contextCreator =
-        new TenantInvitationContextCreator(tenant, request, adminDashboardUrl, dryRun);
+        new TenantInvitationContextCreator(tenant, request, new AdminDashboardUrl("TODO"), dryRun);
     TenantInvitationContext context = contextCreator.create();
 
     if (dryRun) {
@@ -153,8 +151,9 @@ public class TenantInvitationManagementEntryService implements TenantInvitationM
       return validate.errorResponse();
     }
 
+    // TODO tenant config
     TenantInvitationContextCreator contextCreator =
-        new TenantInvitationContextCreator(tenant, request, adminDashboardUrl, dryRun);
+        new TenantInvitationContextCreator(tenant, request, new AdminDashboardUrl("TODO"), dryRun);
     TenantInvitationContext context = contextCreator.create();
 
     if (dryRun) {

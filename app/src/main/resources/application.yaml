@@ -1,7 +1,6 @@
 idp:
   configurations:
    adminTenantId: "${ADMIN_TENANT_ID:67e7eae6-62b0-4500-9eff-87459f63fc66}"
-   adminDashboardUrl: "${ADMIN_DASHBOARD_URL:http://localhost:3000}"
    apiKey: ${IDP_SERVER_API_KEY}
    apiSecret: ${IDP_SERVER_API_SECRET}
    encryptionKey: ${ENCRYPTION_KEY}

@@ -53,7 +53,6 @@ idp-server の設定は `application.yaml` で定義され、環境変数で上�
 | パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
 |-----------|----------|------|-------------|-----------|
 | `adminTenantId` | `ADMIN_TENANT_ID` | 管理テナントID | `67e7eae6-62b0-4500-9eff-87459f63fc66` | 本番固有UUID |
-| `adminDashboardUrl` | `ADMIN_DASHBOARD_URL` | 管理ダッシュボードURL | `http://localhost:3000` | `https://admin.your-domain.com` |
 | `apiKey` | `IDP_SERVER_API_KEY` | 管理API認証キー | なし (必須) | Secrets Manager |
 | `apiSecret` | `IDP_SERVER_API_SECRET` | 管理API認証シークレット | なし (必須) | Secrets Manager |
 | `encryptionKey` | `ENCRYPTION_KEY` | データ暗号化キー (AES-256) | なし (必須) | Secrets Manager |

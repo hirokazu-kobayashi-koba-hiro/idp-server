@@ -27,7 +27,6 @@ import org.idp.server.authentication.interactors.plugin.WebAuthnExecutorPluginLo
 import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutors;
 import org.idp.server.control_plane.admin.operation.IdpServerOperationApi;
 import org.idp.server.control_plane.admin.starter.IdpServerStarterApi;
-import org.idp.server.control_plane.base.AdminDashboardUrl;
 import org.idp.server.control_plane.base.AdminUserAuthenticationApi;
 import org.idp.server.control_plane.base.OrganizationUserAuthenticationApi;
 import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
@@ -236,7 +235,6 @@ public class IdpServerApplication {
   public IdpServerApplication(
       String adminTenantId,
       ApplicationDatabaseTypeProvider databaseTypeProvider,
-      AdminDashboardUrl adminDashboardUrl,
       DbConnectionProvider dbConnectionProvider,
       String encryptionKey,
       String databaseType,
@@ -746,8 +744,7 @@ public class IdpServerApplication {
                 tenantInvitationCommandRepository,
                 tenantInvitationQueryRepository,
                 tenantQueryRepository,
-                emailSenders,
-                adminDashboardUrl),
+                emailSenders),
             TenantInvitationManagementApi.class,
             databaseTypeProvider);
 

@@ -33,7 +33,6 @@ import org.idp.server.core.openid.federation.sso.SsoProvider;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserRegistrator;
 import org.idp.server.core.openid.identity.event.UserLifecycleEvent;
-import org.idp.server.core.openid.identity.event.UserLifecycleEventPayload;
 import org.idp.server.core.openid.identity.event.UserLifecycleEventPublisher;
 import org.idp.server.core.openid.identity.event.UserLifecycleType;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
@@ -310,19 +309,6 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
     if (authorize.isOk()) {
       userRegistrator.registerOrUpdate(tenant, user);
-
-      String invitationId =
-          authorizationRequest.customParams().getValueAsStringOrEmpty("invitation_id");
-      if (invitationId != null && !invitationId.isEmpty()) {
-        Map<String, Object> payload = Map.of("invitation_id", invitationId, "status", "accepted");
-        UserLifecycleEvent event =
-            new UserLifecycleEvent(
-                tenant,
-                user,
-                UserLifecycleType.INVITE_COMPLETE,
-                new UserLifecycleEventPayload(payload));
-        userLifecycleEventPublisher.publish(event);
-      }
 
       authenticationTransactionCommandRepository.delete(
           tenant, authenticationTransaction.identifier());
