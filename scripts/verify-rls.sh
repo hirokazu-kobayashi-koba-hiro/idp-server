@@ -46,7 +46,7 @@ PSQL_ADMIN="psql \"$ADMIN_DSN\" -v ON_ERROR_STOP=1 -X -t -A -F $'\t'"
 
 
 RLS_TABLES=(
-  tenant tenant_invitation organization_tenants authorization_server_configuration
+  tenant organization_tenants authorization_server_configuration
   permission role role_permission idp_user_roles client_configuration
   authorization_request authorization_code_grant oauth_token
   backchannel_authentication_request ciba_grant authorization_granted
