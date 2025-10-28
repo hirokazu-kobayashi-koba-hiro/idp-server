@@ -38,7 +38,8 @@ public class MysqlExecutor implements TenantQuerySqlExecutor {
                 session_config,
                 security_event_log_config,
                 security_event_user_config,
-                identity_policy_config
+                identity_policy_config,
+                main_organization_id
                 FROM tenant \n
               """;
 

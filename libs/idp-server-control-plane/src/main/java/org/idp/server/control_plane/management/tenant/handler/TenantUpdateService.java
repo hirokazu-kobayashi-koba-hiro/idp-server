@@ -153,7 +153,8 @@ public class TenantUpdateService implements TenantManagementService<TenantUpdate
         sessionConfiguration,
         securityEventLogConfiguration,
         securityEventUserAttributeConfiguration,
-        identityPolicyConfig);
+        identityPolicyConfig,
+        before.mainOrganizationIdentifier());
   }
 
   private TenantIdentityPolicy convertIdentityPolicyConfig(Map<String, Object> configMap) {

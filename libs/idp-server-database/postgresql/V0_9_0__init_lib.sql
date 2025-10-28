@@ -24,13 +24,14 @@ CREATE TABLE tenant
     cors_config                JSONB,  -- CORS configuration
     session_config             JSONB,  -- Cookie/session configuration
 
-    -- Legacy columns (will be deprecated)
     attributes             JSONB,
     features               JSONB,
+    main_organization_id UUID                    NOT NULL,
 
     created_at             TIMESTAMP    NOT NULL DEFAULT now(),
     updated_at             TIMESTAMP    NOT NULL DEFAULT now(),
-    PRIMARY KEY (id)
+    PRIMARY KEY (id),
+    FOREIGN KEY (main_organization_id) REFERENCES organization (id)
 );
 
 ALTER TABLE tenant ENABLE ROW LEVEL SECURITY;

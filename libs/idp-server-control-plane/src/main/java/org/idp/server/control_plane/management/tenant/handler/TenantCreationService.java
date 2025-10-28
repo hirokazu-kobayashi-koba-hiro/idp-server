@@ -105,7 +105,7 @@ public class TenantCreationService implements TenantManagementService<TenantRequ
     OrganizationIdentifier organizationIdentifier = operator.currentOrganizationIdentifier();
     Organization organization = organizationRepository.get(organizationIdentifier);
 
-    Tenant newTenant = createTenant(request);
+    Tenant newTenant = createTenant(request, organizationIdentifier);
     AuthorizationServerConfiguration newAuthorizationServer = createAuthorization(request);
 
     builder.withAfter(newTenant);
@@ -137,7 +137,8 @@ public class TenantCreationService implements TenantManagementService<TenantRequ
     return new TenantManagementResponse(TenantManagementStatus.CREATED, contents);
   }
 
-  public Tenant createTenant(TenantRequest request) {
+  public Tenant createTenant(
+      TenantRequest request, OrganizationIdentifier mainOrganizationIdentifier) {
 
     TenantRegistrationRequest tenantRequest =
         JsonConverter.snakeCaseInstance()
@@ -188,7 +189,8 @@ public class TenantCreationService implements TenantManagementService<TenantRequ
         sessionConfiguration,
         securityEventLogConfiguration,
         securityEventUserAttributeConfiguration,
-        identityPolicyConfig);
+        identityPolicyConfig,
+        mainOrganizationIdentifier);
   }
 
   private AuthorizationServerConfiguration createAuthorization(TenantRequest request) {

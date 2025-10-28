@@ -34,6 +34,7 @@ import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.organization.AssignedTenant;
 import org.idp.server.platform.multi_tenancy.organization.Organization;
+import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantAttributes;
@@ -112,7 +113,7 @@ public class OrgTenantCreationService implements TenantManagementService<OrgTena
     // 2. Get organization from request (already retrieved by Handler)
     Organization organization = request.organization();
 
-    Tenant newTenant = createTenant(request.tenantRequest());
+    Tenant newTenant = createTenant(request.tenantRequest(), organization.identifier());
     AuthorizationServerConfiguration newAuthorizationServer =
         createAuthorization(request.tenantRequest());
 
@@ -147,7 +148,8 @@ public class OrgTenantCreationService implements TenantManagementService<OrgTena
     return new TenantManagementResponse(TenantManagementStatus.CREATED, contents);
   }
 
-  public Tenant createTenant(TenantRequest request) {
+  public Tenant createTenant(
+      TenantRequest request, OrganizationIdentifier mainOrganizationIdentifier) {
 
     TenantRegistrationRequest tenantRequest =
         JsonConverter.snakeCaseInstance()
@@ -198,7 +200,8 @@ public class OrgTenantCreationService implements TenantManagementService<OrgTena
         sessionConfiguration,
         securityEventLogConfiguration,
         securityEventUserAttributeConfiguration,
-        identityPolicyConfig);
+        identityPolicyConfig,
+        mainOrganizationIdentifier);
   }
 
   private AuthorizationServerConfiguration createAuthorization(TenantRequest request) {

@@ -49,7 +49,7 @@ public class IdTokenHintResolver implements UserHintResolver {
       String sub = claims.getSub();
       UserIdentifier userIdentifier = new UserIdentifier(sub);
 
-      return userQueryRepository.get(tenant, userIdentifier);
+      return userQueryRepository.findById(tenant, userIdentifier);
     } catch (Exception e) {
       log.error("Invalid id_token_hint: error={}", e.getMessage(), e);
       return User.notFound();
