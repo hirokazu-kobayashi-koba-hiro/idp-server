@@ -122,8 +122,9 @@ describe("System-Level Tenant Management API", () => {
           Authorization: `Bearer ${accessToken}`,
         },
         body: {
-          "tenant_domain": "http://localhost:8080",
-          "enabled": true
+            "name": `Updated Organization Tenant ${timestamp}`,
+            "description": "Updated description for organization tenant",
+            "domain": "BUSINESS"
         }
       });
       console.log("Update tenant response:", updateResponse.status);
@@ -169,7 +170,7 @@ describe("System-Level Tenant Management API", () => {
           url: `${backendUrl}/v1/management/tenants/${nonExistentId}`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
-            "tenant_domain": "http://localhost:8080",
+            "domain": "http://localhost:8080",
             "enabled": true
           }
         });
