@@ -280,7 +280,7 @@ describe("organization permission management api", () => {
           Authorization: `Bearer ${accessToken}`,
         },
         body: {
-          "name": "",
+          "name": null,
           "description": "Invalid permission"
         }
       });

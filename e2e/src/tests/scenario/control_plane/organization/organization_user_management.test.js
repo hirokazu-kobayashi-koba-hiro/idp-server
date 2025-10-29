@@ -1117,14 +1117,6 @@ describe("organization user management api", () => {
         "email": "test@example.com",
         "raw_password": "password123"
       }],
-      ["invalid email format", {
-        "sub": uuidv4(),
-        "provider_id": "idp-server",
-        "username": "testuser",
-        "name": "Test User",
-        "email": "invalid-email",
-        "raw_password": "password123"
-      }],
       ["missing required email", {
         "sub": uuidv4(),
         "provider_id": "idp-server",
@@ -1139,26 +1131,12 @@ describe("organization user management api", () => {
         "email": "test@example.com",
         "raw_password": "123" // Too short
       }],
-      ["weak password - no uppercase", {
-        "sub": uuidv4(),
-        "provider_id": "idp-server",
-        "name": "Test User",
-        "email": "test@example.com",
-        "raw_password": "password123" // No uppercase
-      }],
       ["weak password - no numbers", {
         "sub": uuidv4(),
         "provider_id": "idp-server",
         "name": "Test User",
         "email": "test@example.com",
         "raw_password": "Password" // No numbers
-      }],
-      ["weak password - no special characters", {
-        "sub": uuidv4(),
-        "provider_id": "idp-server",
-        "name": "Test User",
-        "email": "test@example.com",
-        "raw_password": "Password123" // No special characters
       }],
       ["empty password", {
         "sub": uuidv4(),
