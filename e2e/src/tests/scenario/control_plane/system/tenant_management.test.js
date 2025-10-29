@@ -30,6 +30,63 @@ describe("System-Level Tenant Management API", () => {
     accessToken = tokenResponse.data.access_token;
   });
 
+  describe("Success Pattern", () => {
+    it("should retrieve existing tenant", async () => {
+      // Use admin tenant ID that we know exists
+      const response = await get({
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}`,
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+
+      console.log("GET existing tenant response:", response.status, response.data.id);
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty("id", adminServerConfig.tenantId);
+      expect(response.data).toHaveProperty("name");
+      expect(response.data).toHaveProperty("tenant_domain");
+    });
+
+    it("should update existing tenant", async () => {
+      const response = await putWithJson({
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: {
+          "tenant_domain": "http://localhost:8080",
+          "enabled": true
+        }
+      });
+
+      console.log("PUT existing tenant response:", response.status);
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty("result");
+      expect(response.data.result).toHaveProperty("id", adminServerConfig.tenantId);
+      expect(response.data.result).toHaveProperty("enabled", true);
+    });
+
+    it("should support dry-run update", async () => {
+      const response = await putWithJson({
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}?dry_run=true`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: {
+          "tenant_domain": "http://localhost:8080",
+          "enabled": false
+        }
+      });
+
+      console.log("Dry-run update response:", response.status);
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty("dry_run", true);
+      expect(response.data).toHaveProperty("result");
+
+      // Verify tenant was not actually updated
+      const verifyResponse = await get({
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}`,
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      expect(verifyResponse.status).toBe(200);
+      expect(verifyResponse.data).toHaveProperty("enabled", true); // Should still be true
+    });
+  });
+
   describe("Resource Not Found Tests", () => {
     describe("GET /v1/management/tenants/{id}", () => {
       it("should return 404 for non-existent tenant ID", async () => {
