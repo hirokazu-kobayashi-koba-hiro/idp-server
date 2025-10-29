@@ -58,6 +58,7 @@ class ModelConverter {
         convertIdentityPolicyConfig(result.getOrDefault("identity_policy_config", ""));
     OrganizationIdentifier mainOrganizationIdentifier =
         new OrganizationIdentifier(result.getOrDefault("main_organization_id", ""));
+    boolean enabled = parseDatabaseBoolean(result.get("enabled"), true);
 
     return new Tenant(
         tenantIdentifier,
@@ -72,7 +73,8 @@ class ModelConverter {
         securityEventLogConfiguration,
         securityEventUserAttributeConfiguration,
         identityPolicyConfig,
-        mainOrganizationIdentifier);
+        mainOrganizationIdentifier,
+        enabled);
   }
 
   private static TenantAttributes convertAttributes(String value) {
@@ -194,5 +196,29 @@ class ModelConverter {
           exception.getMessage());
       return TenantIdentityPolicy.defaultPolicy();
     }
+  }
+
+  /**
+   * Parses database boolean values to Java boolean.
+   *
+   * <p>Handles different database boolean representations:
+   *
+   * <ul>
+   *   <li>PostgreSQL: "t"/"f" or "true"/"false"
+   *   <li>MySQL: "1"/"0" or "true"/"false"
+   *   <li>Standard: "true"/"false"
+   * </ul>
+   *
+   * @param value the database boolean value as string
+   * @param defaultValue the default value if parsing fails
+   * @return parsed boolean value
+   */
+  static boolean parseDatabaseBoolean(String value, boolean defaultValue) {
+    if (value == null || value.isEmpty()) {
+      return defaultValue;
+    }
+
+    String normalized = value.toLowerCase().trim();
+    return "t".equals(normalized) || "true".equals(normalized) || "1".equals(normalized);
   }
 }

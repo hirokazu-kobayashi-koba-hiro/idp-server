@@ -46,9 +46,11 @@ public class MysqlExecutor implements TenantCommandSqlExecutor {
                 security_event_log_config,
                 security_event_user_config,
                 identity_policy_config,
-                main_organization_id
+                main_organization_id,
+                enabled
                 )
                 VALUES (
+                ?,
                 ?,
                 ?,
                 ?,
@@ -78,6 +80,7 @@ public class MysqlExecutor implements TenantCommandSqlExecutor {
     params.add(jsonConverter.write(tenant.securityEventUserAttributeConfiguration().toMap()));
     params.add(jsonConverter.write(tenant.identityPolicyConfig().toMap()));
     params.add(tenant.mainOrganizationIdentifier().value());
+    params.add(tenant.isEnabled());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -97,7 +100,8 @@ public class MysqlExecutor implements TenantCommandSqlExecutor {
                 session_config = ?,
                 security_event_log_config = ?,
                 security_event_user_config = ?,
-                identity_policy_config = ?
+                identity_policy_config = ?,
+                enabled = ?
                 WHERE id = ?;
                 """;
     List<Object> params = new ArrayList<>();
@@ -110,6 +114,7 @@ public class MysqlExecutor implements TenantCommandSqlExecutor {
     params.add(jsonConverter.write(tenant.securityEventLogConfiguration().toMap()));
     params.add(jsonConverter.write(tenant.securityEventUserAttributeConfiguration().toMap()));
     params.add(jsonConverter.write(tenant.identityPolicyConfig().toMap()));
+    params.add(tenant.isEnabled());
     params.add(tenant.identifier().value());
 
     sqlExecutor.execute(sqlTemplate, params);

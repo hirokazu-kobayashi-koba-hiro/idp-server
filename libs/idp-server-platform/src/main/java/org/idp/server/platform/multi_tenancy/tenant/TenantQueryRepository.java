@@ -24,6 +24,8 @@ public interface TenantQueryRepository {
 
   Tenant find(TenantIdentifier tenantIdentifier);
 
+  Tenant findWithDisabled(TenantIdentifier tenantIdentifier, boolean includeDisabled);
+
   Tenant getAdmin();
 
   Tenant findAdmin();

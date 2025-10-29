@@ -37,6 +37,7 @@ import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.log.TenantLoggingContext;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationNotFoundException;
+import org.idp.server.platform.multi_tenancy.tenant.TenantNotFoundException;
 import org.idp.server.platform.type.Pairs;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -132,7 +133,7 @@ public class OrgManagementFilter extends OncePerRequestFilter {
       String errorMessage = extractErrorMessage(e.getMessage());
       respondWithError(
           response, HttpServletResponse.SC_UNAUTHORIZED, "invalid_token", errorMessage);
-    } catch (OrganizationNotFoundException e) {
+    } catch (OrganizationNotFoundException | TenantNotFoundException e) {
       logger.warn("Organization management authentication failed: {}", e.getMessage());
       respondWithError(
           response, HttpServletResponse.SC_NOT_FOUND, "invalid_request", e.getMessage());

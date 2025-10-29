@@ -66,7 +66,7 @@ public class TenantDeletionService implements TenantManagementService<TenantDele
 
     TenantIdentifier tenantIdentifier = request.tenantIdentifier();
     // 1. Retrieve existing tenant
-    Tenant before = tenantQueryRepository.get(tenantIdentifier);
+    Tenant before = tenantQueryRepository.findWithDisabled(tenantIdentifier, true);
 
     builder.withBefore(before);
 

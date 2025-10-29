@@ -28,6 +28,7 @@ class ModelConvertor {
     OrganizationName name = new OrganizationName(result.getOrDefault("name", ""));
     OrganizationDescription description =
         new OrganizationDescription(result.getOrDefault("description", ""));
+    boolean enabled = Boolean.parseBoolean(result.getOrDefault("enabled", "true"));
     List<AssignedTenant> assignedTenantList = new ArrayList<>();
     if (result.containsKey("tenants") && !result.get("tenants").equals("[]")) {
       JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(result.get("tenants"));
@@ -46,6 +47,6 @@ class ModelConvertor {
     }
     AssignedTenants assignedTenants = new AssignedTenants(assignedTenantList);
 
-    return new Organization(identifier, name, description, assignedTenants);
+    return new Organization(identifier, name, description, assignedTenants, enabled);
   }
 }

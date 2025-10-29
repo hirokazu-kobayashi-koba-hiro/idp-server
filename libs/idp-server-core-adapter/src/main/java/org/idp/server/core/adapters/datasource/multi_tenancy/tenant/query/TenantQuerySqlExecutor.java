@@ -24,6 +24,8 @@ public interface TenantQuerySqlExecutor {
 
   Map<String, String> selectOne(TenantIdentifier tenantIdentifier);
 
+  Map<String, String> selectOne(TenantIdentifier tenantIdentifier, boolean includeDisabled);
+
   Map<String, String> selectAdmin();
 
   List<Map<String, String>> selectList(List<TenantIdentifier> tenantIdentifiers);

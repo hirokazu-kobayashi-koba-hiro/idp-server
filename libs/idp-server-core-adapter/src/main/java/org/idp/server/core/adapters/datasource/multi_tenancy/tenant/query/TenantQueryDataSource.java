@@ -54,7 +54,10 @@ public class TenantQueryDataSource implements TenantQueryRepository {
 
     Tenant convert = ModelConverter.convert(result);
 
-    cacheStore.put(key, convert);
+    // Cache only when enabled = true
+    if (convert.isEnabled()) {
+      cacheStore.put(key, convert);
+    }
 
     return convert;
   }
@@ -76,7 +79,35 @@ public class TenantQueryDataSource implements TenantQueryRepository {
 
     Tenant convert = ModelConverter.convert(result);
 
-    cacheStore.put(key, convert);
+    // Cache only when enabled = true
+    if (convert.isEnabled()) {
+      cacheStore.put(key, convert);
+    }
+
+    return convert;
+  }
+
+  @Override
+  public Tenant findWithDisabled(TenantIdentifier tenantIdentifier, boolean includeDisabled) {
+    String key = key(tenantIdentifier);
+    Optional<Tenant> optionalTenant = cacheStore.find(key, Tenant.class);
+
+    if (optionalTenant.isPresent()) {
+      return optionalTenant.get();
+    }
+
+    Map<String, String> result = executor.selectOne(tenantIdentifier, includeDisabled);
+
+    if (Objects.isNull(result) || result.isEmpty()) {
+      return new Tenant();
+    }
+
+    Tenant convert = ModelConverter.convert(result);
+
+    // Cache only when enabled = true
+    if (convert.isEnabled()) {
+      cacheStore.put(key, convert);
+    }
 
     return convert;
   }

@@ -190,7 +190,8 @@ public class TenantCreationService implements TenantManagementService<TenantRequ
         securityEventLogConfiguration,
         securityEventUserAttributeConfiguration,
         identityPolicyConfig,
-        mainOrganizationIdentifier);
+        mainOrganizationIdentifier,
+        true);
   }
 
   private AuthorizationServerConfiguration createAuthorization(TenantRequest request) {

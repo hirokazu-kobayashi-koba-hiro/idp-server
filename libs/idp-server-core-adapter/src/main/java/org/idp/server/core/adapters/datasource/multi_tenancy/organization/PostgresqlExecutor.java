@@ -30,13 +30,14 @@ public class PostgresqlExecutor implements OrganizationSqlExecutor {
 
     String sqlOrganizationTemplate =
         """
-                INSERT INTO organization(id, name, description)
-                VALUES (?::uuid, ?, ?);
+                INSERT INTO organization(id, name, description, enabled)
+                VALUES (?::uuid, ?, ?, ?);
                 """;
     List<Object> organizationParams = new ArrayList<>();
     organizationParams.add(organization.identifier().valueAsUuid());
     organizationParams.add(organization.name().value());
     organizationParams.add(organization.description().value());
+    organizationParams.add(organization.isEnabled());
 
     sqlExecutor.execute(sqlOrganizationTemplate, organizationParams);
   }
@@ -82,7 +83,8 @@ public class PostgresqlExecutor implements OrganizationSqlExecutor {
         """
                 UPDATE organization
                 SET name = ?,
-                description = ?
+                description = ?,
+                enabled = ?
                 WHERE
                 id = ?::uuid
                 """;
@@ -90,6 +92,7 @@ public class PostgresqlExecutor implements OrganizationSqlExecutor {
     List<Object> organizationParams = new ArrayList<>();
     organizationParams.add(organization.name().value());
     organizationParams.add(organization.description().value());
+    organizationParams.add(organization.isEnabled());
     organizationParams.add(organization.identifier().valueAsUuid());
 
     sqlExecutor.execute(sqlTemplate, organizationParams);
@@ -105,6 +108,7 @@ public class PostgresqlExecutor implements OrganizationSqlExecutor {
                 organization.id,
                 organization.name,
                 organization.description,
+                organization.enabled,
                 COALESCE(
                 JSON_AGG(JSON_BUILD_OBJECT('id', tenant.id, 'name', tenant.name, 'type', tenant.type))
                 FILTER (WHERE tenant.id IS NOT NULL),
@@ -114,10 +118,12 @@ public class PostgresqlExecutor implements OrganizationSqlExecutor {
                 LEFT JOIN organization_tenants ON organization_tenants.organization_id = organization.id
                 LEFT JOIN tenant ON organization_tenants.tenant_id = tenant.id
             WHERE organization.id = ?::uuid
+            AND organization.enabled = true
             GROUP BY
             organization.id,
             organization.name,
-            organization.description
+            organization.description,
+            organization.enabled
           """;
     List<Object> params = new ArrayList<>();
     params.add(identifier.valueAsUuid());
@@ -136,6 +142,7 @@ public class PostgresqlExecutor implements OrganizationSqlExecutor {
                 organization.id,
                 organization.name,
                 organization.description,
+                organization.enabled,
                 COALESCE(
                 JSON_AGG(JSON_BUILD_OBJECT('id', tenant.id, 'name', tenant.name, 'type', tenant.type))
                 FILTER (WHERE tenant.id IS NOT NULL),
@@ -159,7 +166,8 @@ public class PostgresqlExecutor implements OrganizationSqlExecutor {
             GROUP BY
             organization.id,
             organization.name,
-            organization.description
+            organization.description,
+            organization.enabled
             LIMIT ? OFFSET ?
             """);
 

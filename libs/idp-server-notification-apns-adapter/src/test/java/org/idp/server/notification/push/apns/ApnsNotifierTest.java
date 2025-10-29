@@ -67,7 +67,8 @@ class ApnsNotifierTest {
             new SecurityEventLogConfiguration(),
             new SecurityEventUserAttributeConfiguration(),
             TenantIdentityPolicy.defaultPolicy(),
-            new OrganizationIdentifier("test-org"));
+            new OrganizationIdentifier("test-org"),
+            true);
 
     // Create notification template
     NotificationTemplate template =
@@ -112,7 +113,8 @@ class ApnsNotifierTest {
             new SecurityEventLogConfiguration(),
             new SecurityEventUserAttributeConfiguration(),
             TenantIdentityPolicy.defaultPolicy(),
-            new OrganizationIdentifier("test-org"));
+            new OrganizationIdentifier("test-org"),
+            true);
 
     NotificationTemplate emptyTemplate = new NotificationTemplate();
     String payload = apnsNotifier.createApnsPayload(emptyTemplate, tenant);
@@ -144,7 +146,8 @@ class ApnsNotifierTest {
             new SecurityEventLogConfiguration(),
             new SecurityEventUserAttributeConfiguration(),
             TenantIdentityPolicy.defaultPolicy(),
-            new OrganizationIdentifier("test-org"));
+            new OrganizationIdentifier("test-org"),
+            true);
 
     String cacheKey = apnsNotifier.createCacheKey(tenant);
 
@@ -167,7 +170,8 @@ class ApnsNotifierTest {
             new SecurityEventLogConfiguration(),
             new SecurityEventUserAttributeConfiguration(),
             TenantIdentityPolicy.defaultPolicy(),
-            new OrganizationIdentifier("test-org"));
+            new OrganizationIdentifier("test-org"),
+            true);
 
     HttpResponse<String> response = mock(HttpResponse.class);
     when(response.statusCode()).thenReturn(400);
@@ -193,7 +197,8 @@ class ApnsNotifierTest {
             new SecurityEventLogConfiguration(),
             new SecurityEventUserAttributeConfiguration(),
             TenantIdentityPolicy.defaultPolicy(),
-            new OrganizationIdentifier("test-org"));
+            new OrganizationIdentifier("test-org"),
+            true);
 
     HttpResponse<String> response = mock(HttpResponse.class);
     when(response.statusCode()).thenReturn(403);
