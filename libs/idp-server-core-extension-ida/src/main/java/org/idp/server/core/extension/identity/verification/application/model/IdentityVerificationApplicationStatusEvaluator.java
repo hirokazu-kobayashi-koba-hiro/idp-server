@@ -54,6 +54,13 @@ public class IdentityVerificationApplicationStatusEvaluator {
       return IdentityVerificationApplicationStatus.CANCELLED;
     }
 
+    IdentityVerificationConditionConfig appliedConfig = config.applied();
+    ConditionTransitionResult appliedRequestResult = isAnySatisfied(appliedConfig, context.toMap());
+
+    if (appliedRequestResult.isSuccess()) {
+      return IdentityVerificationApplicationStatus.APPLIED;
+    }
+
     return IdentityVerificationApplicationStatus.APPLYING;
   }
 
@@ -82,6 +89,13 @@ public class IdentityVerificationApplicationStatusEvaluator {
 
     if (cancellationRequestResult.isSuccess()) {
       return IdentityVerificationApplicationStatus.CANCELLED;
+    }
+
+    IdentityVerificationConditionConfig appliedConfig = config.applied();
+    ConditionTransitionResult appliedRequestResult = isAnySatisfied(appliedConfig, context.toMap());
+
+    if (appliedRequestResult.isSuccess()) {
+      return IdentityVerificationApplicationStatus.APPLIED;
     }
 
     return IdentityVerificationApplicationStatus.EXAMINATION_PROCESSING;

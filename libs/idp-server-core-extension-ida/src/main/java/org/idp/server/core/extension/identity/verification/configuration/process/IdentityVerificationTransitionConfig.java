@@ -25,6 +25,7 @@ public class IdentityVerificationTransitionConfig implements JsonReadable {
   IdentityVerificationConditionConfig rejected = new IdentityVerificationConditionConfig();
   IdentityVerificationConditionConfig canceled = new IdentityVerificationConditionConfig();
   IdentityVerificationConditionConfig approved = new IdentityVerificationConditionConfig();
+  IdentityVerificationConditionConfig applied = new IdentityVerificationConditionConfig();
 
   public IdentityVerificationTransitionConfig() {}
 
@@ -61,11 +62,23 @@ public class IdentityVerificationTransitionConfig implements JsonReadable {
     return approved != null && approved.exists();
   }
 
+  public IdentityVerificationConditionConfig applied() {
+    if (applied == null) {
+      return new IdentityVerificationConditionConfig();
+    }
+    return applied;
+  }
+
+  public boolean hasApplied() {
+    return applied != null && applied.exists();
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     if (hasRejected()) map.put("rejected", rejected.toMap());
     if (hasCanceled()) map.put("canceled", canceled.toMap());
     if (hasApproved()) map.put("approved", approved.toMap());
+    if (hasApplied()) map.put("applied", applied.toMap());
     return map;
   }
 }

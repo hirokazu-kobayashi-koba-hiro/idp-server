@@ -29,325 +29,6 @@
 | `result`     | `verified_claims` `source_details` のマッピング定義 | -  |
 | `attributes` | 申込参照APIのレスポンスに含める属性情報。                      | -  |
 
-## 申込みステータス
-
-身元確認申込みは、申請の受付から承認・否認に至るまで複数のステータスを経由します。
-本項では、各ステータスの意味と代表的な利用タイミングについて解説します。
-
-ステータスは、申込み処理の進行状況を表すものであり、申込み一覧画面や詳細画面での表示などでご利用してください。
-
-以下は、申込みにおける代表的なステータス一覧とその説明です。
-
-| ステータス名                   | 説明                                                             |
-|--------------------------|----------------------------------------------------------------|
-| `requested`              | 申請リクエストが正常に受理された直後の状態です。                                       |
-| `applying`               | ユーザーまたは外部システムが必要な情報を入力・収集中の状態です。フォーム入力中や追加書類のアップロード待ちなどが該当します。 |
-| `examination_processing` | 申請内容に対する審査が実施されている状態です。外部eKYCサービスとの連携や人手による審査が行われている場合も含まれます。  |
-| `approved`               | 審査の結果、申請が承認された状態です。ユーザーの身元確認が完了し、検証済みクレームの登録などが行われます。          |
-| `rejected`               | 審査の結果、申請が却下された状態です。必要に応じて理由の提示や再申請の導線提示が推奨されます。                |
-| `expired`                | 有効期限切れなどにより、申請が無効となった状態です。一定期間操作が行われなかった場合などに自動的に遷移することがあります。  |
-| `cancelled`              | ユーザーまたは管理者によって申請が任意に中断された状態です。取り下げやキャンセル操作などが該当します。            |
-| `unknown`                | 状態が特定できない不明な状態です。移行中やデータ不整合、バージョン差異等により例外的に発生する可能性があります。       |
-
-## 申込APIのパスの動的設定
-
-身元確認申込みAPIは、テンプレートのprocesses定義の基づいて、テナント単位で動的にルーティングされる仕組みになっています。
-
-APIのパスの verification-type と process が、テンプレートの "type" フィールドと "processes"
-に定義されたキーにより組み立てられます。
-
-※テナント間で設定は共有されません。ただし、別テナントに同一の設定を適用するこは可能。
-
-**アプリからの申込み用API**
-
-```
-初回申込み
-POST /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{process}
-※リソースオーナーのアクセストークンが必要
-
-後続処理
-POST /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{id}/{process}
-※リソースオーナーのアクセストークンが必要
-
-申込み一覧取得
-GET /{tenant-id}/v1/me/identity-verification/applications
-※リソースオーナーのアクセストークンが必要
-※クエリパラメータ: type, status, limit, offset
-
-申込み削除
-DELETE /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{id}
-※リソースオーナーのアクセストークンが必要
-
-検証結果取得
-GET /{tenant-id}/v1/me/identity-verification/results
-※リソースオーナーのアクセストークンが必要
-※検証済みクレーム（verified_claims）の取得
-```
-
-### APIエンドポイント詳細
-
-#### 申込み一覧取得 API
-- **パス**: `GET /{tenant-id}/v1/me/identity-verification/applications`
-- **認証**: リソースオーナーのアクセストークン必須
-- **クエリパラメータ**:
-  - `type` (optional): 申込み種別でフィルタリング
-  - `status` (optional): 申込みステータスでフィルタリング（requested, applying, examination_processing, approved, rejected, expired, cancelled）
-  - `limit` (optional): 取得件数制限（デフォルト: 20）
-  - `offset` (optional): 取得開始位置（デフォルト: 0）
-
-#### 申込み削除 API
-- **パス**: `DELETE /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{id}`
-- **認証**: リソースオーナーのアクセストークン必須
-- **説明**: 申込みの削除または取り下げ処理。ステータスがcancelledに変更される
-
-#### 検証結果取得 API
-- **パス**: `GET /{tenant-id}/v1/me/identity-verification/results`
-- **認証**: リソースオーナーのアクセストークン必須
-- **レスポンス**: ユーザーに紐づく検証済みクレーム（verified_claims）とその詳細情報
-
-[リソースオーナー用のAPI仕様（身元確認関連の申込みAPIを含む）](/docs/content_07_reference/api-resource-owner-ja/)
-
-**審査結果コールバックAPI**
-
-```
-審査結果コールバック
-POST /{tenant-id}/internal/v1/identity-verification/callback/{verification-type}/{process}
-※テンプレートのcommonへの設定および、申込み詳細(application_details)から申込みを特定できるパラメータを含める必要があります。
-
-{
- "id": "UUID",
- "type": "investment-account-opening"
- "common": {
-    "external_service": "mocky",
-    "callback_application_id_param": "application_id"
-  },
-  "processes": {},
-  "result: {}
-}
-
-審査結果コールバック
-POST /{tenant-id}/internal/v1/identity-verification/callback/{verification-type}/{id}/{process}
-
-```
-
-[外部ステム連携用インターナルAPI仕様（身元確認関連のコールバックAPIを含む）](/docs/content_07_reference/api-internal-ja/)
-
-## 条件付き実行機能 (Conditional Execution)
-
-身元確認のpre_hookコンポーネント（検証とパラメータ解決）に条件を設定することで、アプリケーションのコンテキストに応じて実行を制御できます。
-
-### 概要
-
-条件付き実行機能により、以下の利点があります：
-
-- **パフォーマンス最適化**: 不要な処理をスキップ
-- **柔軟な制御**: ユーザー属性や申込み内容に応じた動的な処理
-- **コスト削減**: 外部API呼び出しの最適化
-- **セキュリティ向上**: リスクベースの認証制御
-
-### 設定方法
-
-pre_hookコンポーネントに `condition` フィールドを追加します：
-
-```json
-{
-  "pre_hook": {
-    "verifications": [
-      {
-        "type": "user_claim",
-        "details": { ... },
-        "condition": {
-          "operation": "eq",
-          "path": "$.user.role",
-          "value": "admin"
-        }
-      }
-    ],
-    "additional_parameters": [
-      {
-        "type": "http_request",
-        "details": { ... },
-        "condition": {
-          "operation": "gte",
-          "path": "$.request.amount",
-          "value": 10000
-        }
-      }
-    ]
-  }
-}
-```
-
-### 条件演算子
-
-| 演算子 | 説明 | 例 |
-|-------|------|---|
-| `eq` | 等しい | `{"operation": "eq", "path": "$.user.role", "value": "admin"}` |
-| `ne` | 等しくない | `{"operation": "ne", "path": "$.user.status", "value": "suspended"}` |
-| `gt` | より大きい | `{"operation": "gt", "path": "$.request.amount", "value": 1000}` |
-| `gte` | 以上 | `{"operation": "gte", "path": "$.user.age", "value": 18}` |
-| `lt` | より小さい | `{"operation": "lt", "path": "$.risk_score", "value": 50}` |
-| `lte` | 以下 | `{"operation": "lte", "path": "$.retry_count", "value": 3}` |
-| `in` | 含まれる | `{"operation": "in", "path": "$.user.region", "value": ["US", "EU"]}` |
-| `nin` | 含まれない | `{"operation": "nin", "path": "$.user.status", "value": ["banned", "suspended"]}` |
-| `exists` | 存在する | `{"operation": "exists", "path": "$.user.verified"}` |
-| `missing` | 存在しない | `{"operation": "missing", "path": "$.user.temp_flag"}` |
-| `contains` | 文字列を含む | `{"operation": "contains", "path": "$.user.email", "value": "@company.com"}` |
-| `regex` | 正規表現 | `{"operation": "regex", "path": "$.user.phone", "value": "^\\+81"}` |
-
-### 複合演算子による条件の組み合わせ
-
-`allOf`と`anyOf`は**複合演算子**です：
-
-| 演算子 | 説明 | 使用例 |
-|---------|------------|---------|
-| `allOf` | すべての条件を満たす（AND） | `{"operation": "allOf", "value": [condition1, condition2]}` |
-| `anyOf` | いずれかの条件を満たす（OR） | `{"operation": "anyOf", "value": [condition1, condition2]}` |
-
-**例1：allOf（role==admin AND verified==true）**
-
-```json
-{
-  "operation": "allOf",
-  "value": [
-    {"operation": "eq", "path": "$.user.role", "value": "admin"},
-    {"operation": "eq", "path": "$.user.verified", "value": true}
-  ]
-}
-```
-
-**例2：anyOf（role==admin OR role==editor）**
-
-```json
-{
-  "operation": "anyOf",
-  "value": [
-    {"operation": "eq", "path": "$.user.role", "value": "admin"},
-    {"operation": "eq", "path": "$.user.role", "value": "editor"}
-  ]
-}
-```
-
-**例3：ネストした複合条件（(role==admin AND verified==true) OR age>=21）**
-
-```json
-{
-  "operation": "anyOf",
-  "value": [
-    {
-      "operation": "allOf",
-      "value": [
-        {"operation": "eq", "path": "$.user.role", "value": "admin"},
-        {"operation": "eq", "path": "$.user.verified", "value": true}
-      ]
-    },
-    {"operation": "gte", "path": "$.user.age", "value": 21}
-  ]
-}
-```
-
-### コンテキストデータ
-
-条件評価で利用可能なコンテキストデータ（実行時コンテキストと同一形式）：
-
-```json
-{
-  "user": {
-    "sub": "ユーザーID",
-    "role": "admin",
-    "verified": true,
-    "age": 25
-  },
-  "application": {
-    "id": "申込みID",
-    "type": "申込み種別",
-    "process": "プロセス種別",
-    "status": "申込みステータス"
-  },
-  "request_body": {
-    "user_id": "リクエストデータ",
-    "amount": 50000
-  },
-  "request_attributes": {
-    "ip": "クライアントIP",
-    "user_agent": "ユーザーエージェント"
-  }
-}
-```
-
-### 実用例
-
-#### 1. 管理者のみ実行
-
-```json
-{
-  "type": "enhanced_verification",
-  "details": { ... },
-  "condition": {
-    "operation": "eq",
-    "path": "$.user.role",
-    "value": "admin"
-  }
-}
-```
-
-#### 2. 高額取引時のみ実行
-
-```json
-{
-  "type": "additional_risk_check",
-  "details": { ... },
-  "condition": {
-    "operation": "gte",
-    "path": "$.request_body.amount",
-    "value": 100000
-  }
-}
-```
-
-#### 3. 複合条件
-
-```json
-{
-  "type": "premium_verification",
-  "details": { ... },
-  "condition": {
-    "operation": "allOf",
-    "value": [
-      {
-        "operation": "eq",
-        "path": "$.user.tier",
-        "value": "premium"
-      },
-      {
-        "operation": "gte",
-        "path": "$.user.age",
-        "value": 18
-      }
-    ]
-  }
-}
-```
-
-#### 4. 地域ベースの条件
-
-```json
-{
-  "type": "geo_compliance_check",
-  "details": { ... },
-  "condition": {
-    "operation": "in",
-    "path": "$.user.country",
-    "value": ["US", "CA", "GB"]
-  }
-}
-```
-
-### 後方互換性
-
-- 既存設定（condition未指定）は変更なく動作
-- 新規設定のみconditionフィールドを追加
-- 段階的な移行が可能
 
 ## 申込みフロー例
 
@@ -400,14 +81,120 @@ sequenceDiagram
 stateDiagram-v2
     [*] --> requested
     requested --> applying: ユーザー入力中
-    applying --> examination_processing: 入力完了→eKYC送信
+    applying --> applied: 入力完了
+    applied --> examination_processing: 審査開始
     examination_processing --> approved: 審査承認
     examination_processing --> rejected: 審査否認
     requested --> cancelled: ユーザー操作
     applying --> cancelled: ユーザー操作
+    applied --> cancelled: ユーザー操作
 ```
 
 ---
+
+## 申込みステータス
+
+身元確認申込みは、申請の受付から承認・否認に至るまで複数のステータスを経由します。
+本項では、各ステータスの意味と代表的な利用タイミングについて解説します。
+
+ステータスは、申込み処理の進行状況を表すものであり、申込み一覧画面や詳細画面での表示などでご利用してください。
+
+以下は、申込みにおける代表的なステータス一覧とその説明です。
+
+| ステータス名                   | 説明                                                             |
+|--------------------------|----------------------------------------------------------------|
+| `requested`              | 申請リクエストが正常に受理された直後の状態です。                                       |
+| `applying`               | ユーザーまたは外部システムが必要な情報を入力・収集中の状態です。フォーム入力中や追加書類のアップロード待ちなどが該当します。 |
+| `applied`                | 申請情報の送信が完了し、審査待ちの状態です。全ての申込み処理が終了した後に遷移します。                  |
+| `examination_processing` | 申請内容に対する審査が実施されている状態です。外部eKYCサービスとの連携や人手による審査が行われている場合も含まれます。  |
+| `approved`               | 審査の結果、申請が承認された状態です。ユーザーの身元確認が完了し、検証済みクレームの登録などが行われます。          |
+| `rejected`               | 審査の結果、申請が却下された状態です。必要に応じて理由の提示や再申請の導線提示が推奨されます。                |
+| `expired`                | 有効期限切れなどにより、申請が無効となった状態です。一定期間操作が行われなかった場合などに自動的に遷移することがあります。  |
+| `cancelled`              | ユーザーまたは管理者によって申請が任意に中断された状態です。取り下げやキャンセル操作などが該当します。            |
+| `unknown`                | 状態が特定できない不明な状態です。移行中やデータ不整合、バージョン差異等により例外的に発生する可能性があります。       |
+
+## 申込APIのパスの動的設定
+
+身元確認申込みAPIは、テンプレートのprocesses定義の基づいて、テナント単位で動的にルーティングされる仕組みになっています。
+
+APIのパスの verification-type と process が、テンプレートの "type" フィールドと "processes"
+に定義されたキーにより組み立てられます。
+
+※テナント間で設定は共有されません。ただし、別テナントに同一の設定を適用するこは可能。
+
+**アプリからの申込み用API**
+
+```
+初回申込み
+POST /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{process}
+※リソースオーナーのアクセストークンが必要
+
+後続処理
+POST /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{id}/{process}
+※リソースオーナーのアクセストークンが必要
+
+申込み一覧取得
+GET /{tenant-id}/v1/me/identity-verification/applications
+※リソースオーナーのアクセストークンが必要
+※クエリパラメータ: type, status, limit, offset
+
+申込み削除
+DELETE /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{id}
+※リソースオーナーのアクセストークンが必要
+
+検証結果取得
+GET /{tenant-id}/v1/me/identity-verification/results
+※リソースオーナーのアクセストークンが必要
+※検証済みクレーム（verified_claims）の取得
+```
+
+### APIエンドポイント詳細
+
+#### 申込み一覧取得 API
+- **パス**: `GET /{tenant-id}/v1/me/identity-verification/applications`
+- **認証**: リソースオーナーのアクセストークン必須
+- **クエリパラメータ**:
+  - `type` (optional): 申込み種別でフィルタリング
+  - `status` (optional): 申込みステータスでフィルタリング（requested, applying, applied, examination_processing, approved, rejected, expired, cancelled）
+  - `limit` (optional): 取得件数制限（デフォルト: 20）
+  - `offset` (optional): 取得開始位置（デフォルト: 0）
+
+#### 申込み削除 API
+- **パス**: `DELETE /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{id}`
+- **認証**: リソースオーナーのアクセストークン必須
+- **説明**: 申込みの削除または取り下げ処理。ステータスがcancelledに変更される
+
+#### 検証結果取得 API
+- **パス**: `GET /{tenant-id}/v1/me/identity-verification/results`
+- **認証**: リソースオーナーのアクセストークン必須
+- **レスポンス**: ユーザーに紐づく検証済みクレーム（verified_claims）とその詳細情報
+
+[リソースオーナー用のAPI仕様（身元確認関連の申込みAPIを含む）](/docs/content_07_reference/api-resource-owner-ja/)
+
+**審査結果コールバックAPI**
+
+```
+審査結果コールバック
+POST /{tenant-id}/internal/v1/identity-verification/callback/{verification-type}/{process}
+※テンプレートのcommonへの設定および、申込み詳細(application_details)から申込みを特定できるパラメータを含める必要があります。
+
+{
+ "id": "UUID",
+ "type": "investment-account-opening"
+ "common": {
+    "external_service": "mocky",
+    "callback_application_id_param": "application_id"
+  },
+  "processes": {},
+  "result: {}
+}
+
+審査結果コールバック
+POST /{tenant-id}/internal/v1/identity-verification/callback/{verification-type}/{id}/{process}
+
+```
+
+[外部ステム連携用インターナルAPI仕様（身元確認関連のコールバックAPIを含む）](/docs/content_07_reference/api-internal-ja/)
 
 ## process詳細
 
@@ -907,14 +694,16 @@ from で参照できるトップレベルのオブジェクトは以下の通り
 |-------------|--------------------------------------------|
 | `approved`  | 承認された場合の遷移条件。通常は本人確認が成功し、検証済みクレームの発行対象となる。 |
 | `rejected`  | 却下された場合の遷移条件。eKYCの不一致や審査NGの場合など。           |
+| `applied`   | 申込み完了時の遷移条件。全ての入力処理が完了し、審査待ちとなる時点で遷移する。 |
 | `cancelled` | ユーザーまたは管理者によって明示的にキャンセルされた場合の遷移条件。         |
 
 **遷移条件**
 
-下記の3種の条件を設定することで、対応する状態へ遷移する:
+下記の4種の条件を設定することで、対応する状態へ遷移する:
 
 * `approved`: 承認
 * `rejected`: 否認
+* `applied`: 申込み完了
 * `cancelled`: キャンセル
 
 **条件の基本構造**
@@ -1149,6 +938,223 @@ from で参照できるトップレベルのオブジェクトは以下の通り
 | `response_status_code`  | executionで外部APIを利用した際のレスポンスのステータスコード。 |
 | `response_headers`      | executionで外部APIを利用した際のレスポンスヘッダー。      |
 | `response_body`         | executionで外部APIを利用した場合のレスポンスのボディー。    |
+
+## 条件付き実行機能 (Conditional Execution)
+
+身元確認のpre_hookコンポーネント（検証とパラメータ解決）に条件を設定することで、アプリケーションのコンテキストに応じて実行を制御できます。
+
+### 概要
+
+条件付き実行機能により、以下の利点があります：
+
+- **パフォーマンス最適化**: 不要な処理をスキップ
+- **柔軟な制御**: ユーザー属性や申込み内容に応じた動的な処理
+- **コスト削減**: 外部API呼び出しの最適化
+- **セキュリティ向上**: リスクベースの認証制御
+
+### 設定方法
+
+pre_hookコンポーネントに `condition` フィールドを追加します：
+
+```json
+{
+  "pre_hook": {
+    "verifications": [
+      {
+        "type": "user_claim",
+        "details": { ... },
+        "condition": {
+          "operation": "eq",
+          "path": "$.user.role",
+          "value": "admin"
+        }
+      }
+    ],
+    "additional_parameters": [
+      {
+        "type": "http_request",
+        "details": { ... },
+        "condition": {
+          "operation": "gte",
+          "path": "$.request.amount",
+          "value": 10000
+        }
+      }
+    ]
+  }
+}
+```
+
+### 条件演算子
+
+| 演算子 | 説明 | 例 |
+|-------|------|---|
+| `eq` | 等しい | `{"operation": "eq", "path": "$.user.role", "value": "admin"}` |
+| `ne` | 等しくない | `{"operation": "ne", "path": "$.user.status", "value": "suspended"}` |
+| `gt` | より大きい | `{"operation": "gt", "path": "$.request.amount", "value": 1000}` |
+| `gte` | 以上 | `{"operation": "gte", "path": "$.user.age", "value": 18}` |
+| `lt` | より小さい | `{"operation": "lt", "path": "$.risk_score", "value": 50}` |
+| `lte` | 以下 | `{"operation": "lte", "path": "$.retry_count", "value": 3}` |
+| `in` | 含まれる | `{"operation": "in", "path": "$.user.region", "value": ["US", "EU"]}` |
+| `nin` | 含まれない | `{"operation": "nin", "path": "$.user.status", "value": ["banned", "suspended"]}` |
+| `exists` | 存在する | `{"operation": "exists", "path": "$.user.verified"}` |
+| `missing` | 存在しない | `{"operation": "missing", "path": "$.user.temp_flag"}` |
+| `contains` | 文字列を含む | `{"operation": "contains", "path": "$.user.email", "value": "@company.com"}` |
+| `regex` | 正規表現 | `{"operation": "regex", "path": "$.user.phone", "value": "^\\+81"}` |
+
+### 複合演算子による条件の組み合わせ
+
+`allOf`と`anyOf`は**複合演算子**です：
+
+| 演算子 | 説明 | 使用例 |
+|---------|------------|---------|
+| `allOf` | すべての条件を満たす（AND） | `{"operation": "allOf", "value": [condition1, condition2]}` |
+| `anyOf` | いずれかの条件を満たす（OR） | `{"operation": "anyOf", "value": [condition1, condition2]}` |
+
+**例1：allOf（role==admin AND verified==true）**
+
+```json
+{
+  "operation": "allOf",
+  "value": [
+    {"operation": "eq", "path": "$.user.role", "value": "admin"},
+    {"operation": "eq", "path": "$.user.verified", "value": true}
+  ]
+}
+```
+
+**例2：anyOf（role==admin OR role==editor）**
+
+```json
+{
+  "operation": "anyOf",
+  "value": [
+    {"operation": "eq", "path": "$.user.role", "value": "admin"},
+    {"operation": "eq", "path": "$.user.role", "value": "editor"}
+  ]
+}
+```
+
+**例3：ネストした複合条件（(role==admin AND verified==true) OR age>=21）**
+
+```json
+{
+  "operation": "anyOf",
+  "value": [
+    {
+      "operation": "allOf",
+      "value": [
+        {"operation": "eq", "path": "$.user.role", "value": "admin"},
+        {"operation": "eq", "path": "$.user.verified", "value": true}
+      ]
+    },
+    {"operation": "gte", "path": "$.user.age", "value": 21}
+  ]
+}
+```
+
+### コンテキストデータ
+
+条件評価で利用可能なコンテキストデータ（実行時コンテキストと同一形式）：
+
+```json
+{
+  "user": {
+    "sub": "ユーザーID",
+    "role": "admin",
+    "verified": true,
+    "age": 25
+  },
+  "application": {
+    "id": "申込みID",
+    "type": "申込み種別",
+    "process": "プロセス種別",
+    "status": "申込みステータス"
+  },
+  "request_body": {
+    "user_id": "リクエストデータ",
+    "amount": 50000
+  },
+  "request_attributes": {
+    "ip": "クライアントIP",
+    "user_agent": "ユーザーエージェント"
+  }
+}
+```
+
+### 実用例
+
+#### 1. 管理者のみ実行
+
+```json
+{
+  "type": "enhanced_verification",
+  "details": { ... },
+  "condition": {
+    "operation": "eq",
+    "path": "$.user.role",
+    "value": "admin"
+  }
+}
+```
+
+#### 2. 高額取引時のみ実行
+
+```json
+{
+  "type": "additional_risk_check",
+  "details": { ... },
+  "condition": {
+    "operation": "gte",
+    "path": "$.request_body.amount",
+    "value": 100000
+  }
+}
+```
+
+#### 3. 複合条件
+
+```json
+{
+  "type": "premium_verification",
+  "details": { ... },
+  "condition": {
+    "operation": "allOf",
+    "value": [
+      {
+        "operation": "eq",
+        "path": "$.user.tier",
+        "value": "premium"
+      },
+      {
+        "operation": "gte",
+        "path": "$.user.age",
+        "value": 18
+      }
+    ]
+  }
+}
+```
+
+#### 4. 地域ベースの条件
+
+```json
+{
+  "type": "geo_compliance_check",
+  "details": { ... },
+  "condition": {
+    "operation": "in",
+    "path": "$.user.country",
+    "value": ["US", "CA", "GB"]
+  }
+}
+```
+
+### 後方互換性
+
+- 既存設定（condition未指定）は変更なく動作
+- 新規設定のみconditionフィールドを追加
+- 段階的な移行が可能
 
 ## 身元確認結果
 

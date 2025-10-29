@@ -19,6 +19,7 @@ package org.idp.server.core.extension.identity.verification.application.model;
 public enum IdentityVerificationApplicationStatus {
   REQUESTED("requested"),
   APPLYING("applying"),
+  APPLIED("applied"),
   EXAMINATION_PROCESSING("examination_processing"),
   APPROVED("approved"),
   REJECTED("rejected"),
@@ -48,7 +49,10 @@ public enum IdentityVerificationApplicationStatus {
   }
 
   public boolean isRunning() {
-    return this == REQUESTED || this == APPLYING || this == EXAMINATION_PROCESSING;
+    return this == REQUESTED
+        || this == APPLYING
+        || this == APPLIED
+        || this == EXAMINATION_PROCESSING;
   }
 
   public boolean isApproved() {
