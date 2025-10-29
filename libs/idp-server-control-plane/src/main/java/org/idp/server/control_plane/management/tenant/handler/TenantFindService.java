@@ -16,6 +16,7 @@
 
 package org.idp.server.control_plane.management.tenant.handler;
 
+import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.tenant.TenantManagementContextBuilder;
 import org.idp.server.control_plane.management.tenant.io.TenantFindRequest;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
@@ -67,8 +68,11 @@ public class TenantFindService implements TenantManagementService<TenantFindRequ
       boolean dryRun) {
 
     TenantIdentifier tenantIdentifier = request.tenantIdentifier();
-    // 1. Retrieve tenant (throws ResourceNotFoundException if not found)
+    // 1. Retrieve tenant
     Tenant tenant = tenantQueryRepository.findWithDisabled(tenantIdentifier, true);
+    if (!tenant.exists()) {
+      throw new ResourceNotFoundException("Tenant not found: " + tenantIdentifier.value());
+    }
 
     // 2. Return success result (no context for read-only operation)
     return new TenantManagementResponse(TenantManagementStatus.OK, tenant.toMap());
