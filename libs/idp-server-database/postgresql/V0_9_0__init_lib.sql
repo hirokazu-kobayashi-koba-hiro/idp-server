@@ -206,7 +206,9 @@ CREATE TABLE idp_user
     created_at                     TIMESTAMP DEFAULT now() NOT NULL,
     updated_at                     TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (id),
-    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
+    -- FK constraint removed for performance with billion-scale records (Issue #832)
+    -- Application layer handles referential integrity via TenantDataCleanupService
+    -- FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
     CONSTRAINT uk_external_user UNIQUE (tenant_id, provider_id, external_user_id),
     -- Issue #729: Ensure uniqueness of preferred_username within tenant and provider
     -- Allow same preferred_username (e.g., user@example.com) across different IdPs
@@ -472,8 +474,10 @@ CREATE TABLE oauth_token
     expires_at                      TIMESTAMP               NOT NULL,
     created_at                      TIMESTAMP DEFAULT now() NOT NULL,
     updated_at                      TIMESTAMP DEFAULT now() NOT NULL,
-    PRIMARY KEY (id),
-    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
+    PRIMARY KEY (id)
+    -- FK constraint removed for performance with billion-scale records (Issue #832)
+    -- Application layer handles referential integrity via TenantDataCleanupService
+    -- FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
 ALTER TABLE oauth_token ENABLE ROW LEVEL SECURITY;
