@@ -18,6 +18,7 @@ package org.idp.server.control_plane.management.tenant.handler;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.onboarding.io.TenantRegistrationRequest;
 import org.idp.server.control_plane.management.tenant.TenantManagementContextBuilder;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
@@ -74,10 +75,14 @@ public class TenantUpdateService implements TenantManagementService<TenantUpdate
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    // 1. Retrieve existing tenant (throws ResourceNotFoundException if not found)
+    // 1. Retrieve existing tenant
     Tenant before = tenantQueryRepository.findWithDisabled(request.tenantIdentifier(), true);
+    if (!before.exists()) {
+      throw new ResourceNotFoundException(
+          "Tenant not found: " + request.tenantIdentifier().value());
+    }
 
-    // 1. Request validation
+    // 2. Request validation
     new TenantUpdateRequestValidator(request.tenantRequest()).validate();
 
     Tenant after = updateTenant(request.tenantRequest(), before);
