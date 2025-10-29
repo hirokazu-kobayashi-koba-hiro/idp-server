@@ -383,13 +383,13 @@ describe("Issue #800: Authentication Step Definitions (1st/2nd Factor)", () => {
         performAuthFlow()
       ]);
 
-      const idToken1 = results[0].status === 'fulfilled' ? results[0].value : null;
-      const idToken2 = results[1].status === 'fulfilled' ? results[1].value : null;
+      const idToken1 = results[0].status === "fulfilled" ? results[0].value : null;
+      const idToken2 = results[1].status === "fulfilled" ? results[1].value : null;
 
       console.log("Flow 1 result:", idToken1 ? "SUCCESS" : "FAILED",
-                  results[0].status === 'rejected' ? results[0].reason?.message : "");
+                  results[0].status === "rejected" ? results[0].reason?.message : "");
       console.log("Flow 2 result:", idToken2 ? "SUCCESS" : "FAILED",
-                  results[1].status === 'rejected' ? results[1].reason?.message : "");
+                  results[1].status === "rejected" ? results[1].reason?.message : "");
 
       // Get Management API token for verification
       const adminTokenResponse = await requestToken({
@@ -432,7 +432,7 @@ describe("Issue #800: Authentication Step Definitions (1st/2nd Factor)", () => {
       console.log("Success count:", successCount);
 
       // Exactly one flow should succeed
-      if (successCount == 1) {
+      if (successCount === 1) {
         // Verify the successful ID token
         const successToken = idToken1 || idToken2;
         expect(successToken).toBeTruthy();
@@ -448,7 +448,7 @@ describe("Issue #800: Authentication Step Definitions (1st/2nd Factor)", () => {
 
         const jwksResponse = await getJwks({ endpoint: serverConfig.jwksEndpoint });
         const decoded1 = verifyAndDecodeJwt({ jwt: idToken1, jwks: jwksResponse.data });
-        const decoded2 = verifyAndDecodeJwt({ jwt: idToken1, jwks: jwksResponse.data });
+        const decoded2 = verifyAndDecodeJwt({ jwt: idToken2, jwks: jwksResponse.data });
 
         expect(decoded1.payload.sub).toBe(idpServerUsers[0].sub);
         expect(decoded1.payload.email).toBe(sharedEmail);
