@@ -410,7 +410,7 @@ describe("Issue #800: Authentication Step Definitions (1st/2nd Factor)", () => {
           Authorization: `Bearer ${accessToken}`
         }
       });
-
+      console.log(JSON.stringify(usersResponse.data, null, 2));
       console.log("Total users with email", sharedEmail, ":", usersResponse.data.list?.length || 0);
 
       // Filter by idp-server provider (local users)

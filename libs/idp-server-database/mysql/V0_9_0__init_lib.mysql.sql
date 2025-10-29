@@ -155,7 +155,9 @@ CREATE TABLE idp_user
     created_at                     DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at                     DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     PRIMARY KEY (id),
-    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
+    -- FK constraint removed for performance with billion-scale records (Issue #832)
+    -- Application layer handles referential integrity via TenantDataCleanupService
+    -- FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
     CONSTRAINT uk_tenant_provider_user UNIQUE (tenant_id, provider_id, external_user_id),
     -- Issue #729: Ensure uniqueness of preferred_username within tenant and provider
     -- Allow same preferred_username (e.g., user@example.com) across different IdPs
@@ -355,8 +357,10 @@ CREATE TABLE oauth_token
     expires_at                      DATETIME                           NOT NULL,
     created_at                      DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at                      DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    PRIMARY KEY (id),
-    FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
+    PRIMARY KEY (id)
+    -- FK constraint removed for performance with billion-scale records (Issue #832)
+    -- Application layer handles referential integrity via TenantDataCleanupService
+    -- FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE INDEX idx_oauth_token_hashed_access_token ON oauth_token (tenant_id, hashed_access_token);
