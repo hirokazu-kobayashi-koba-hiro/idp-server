@@ -33,13 +33,14 @@ public class MysqlExecutor implements OrganizationSqlExecutor {
 
     String sqlOrganizationTemplate =
         """
-                INSERT INTO organization(id, name, description)
-                VALUES (?, ?, ?);
+                INSERT INTO organization(id, name, description, enabled)
+                VALUES (?, ?, ?, ?);
                 """;
     List<Object> organizationParams = new ArrayList<>();
     organizationParams.add(organization.identifier().value());
     organizationParams.add(organization.name().value());
     organizationParams.add(organization.description().value());
+    organizationParams.add(organization.isEnabled());
 
     sqlExecutor.execute(sqlOrganizationTemplate, organizationParams);
   }
@@ -87,7 +88,8 @@ public class MysqlExecutor implements OrganizationSqlExecutor {
         """
                 UPDATE organization
                 SET name = ?,
-                description = ?
+                description = ?,
+                enabled = ?
                 WHERE
                 id = ?
                 """;
@@ -95,6 +97,7 @@ public class MysqlExecutor implements OrganizationSqlExecutor {
     List<Object> organizationParams = new ArrayList<>();
     organizationParams.add(organization.name().value());
     organizationParams.add(organization.description().value());
+    organizationParams.add(organization.isEnabled());
     organizationParams.add(organization.identifier().value());
 
     sqlExecutor.execute(sqlTemplate, organizationParams);
@@ -110,6 +113,7 @@ public class MysqlExecutor implements OrganizationSqlExecutor {
               organization.id,
               organization.name,
               organization.description,
+              organization.enabled,
               COALESCE(
                 JSON_ARRAYAGG(
                   IF(tenant.id IS NOT NULL,
@@ -124,10 +128,12 @@ public class MysqlExecutor implements OrganizationSqlExecutor {
             LEFT JOIN tenant
               ON tenant.id = organization_tenants.tenant_id
             WHERE organization.id = ?
+            AND organization.enabled = true
             GROUP BY
               organization.id,
               organization.name,
-              organization.description;
+              organization.description,
+              organization.enabled;
           """;
     List<Object> params = new ArrayList<>();
     params.add(identifier.value());
@@ -146,6 +152,7 @@ public class MysqlExecutor implements OrganizationSqlExecutor {
                 organization.id,
                 organization.name,
                 organization.description,
+                organization.enabled,
                 COALESCE(
                 JSON_ARRAYAGG(JSON_OBJECT('id', tenant.id, 'name', tenant.name, 'type', tenant.type)),
                 JSON_ARRAY()
@@ -173,7 +180,8 @@ public class MysqlExecutor implements OrganizationSqlExecutor {
             GROUP BY
             organization.id,
             organization.name,
-            organization.description
+            organization.description,
+            organization.enabled
             LIMIT ? OFFSET ?
             """);
 

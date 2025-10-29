@@ -39,17 +39,26 @@ public class PostgresqlExecutor implements TenantQuerySqlExecutor {
                 security_event_log_config,
                 security_event_user_config,
                 identity_policy_config,
-                main_organization_id
+                main_organization_id,
+                enabled
                 FROM tenant
               """;
 
   @Override
   public Map<String, String> selectOne(TenantIdentifier tenantIdentifier) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
+    return selectOne(tenantIdentifier, false);
+  }
 
-    String sqlTemplate = selectSql + " " + """
-            WHERE id = ?::uuid
-            """;
+  @Override
+  public Map<String, String> selectOne(TenantIdentifier tenantIdentifier, boolean includeDisabled) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        selectSql
+            + " "
+            + """
+            WHERE id = ?::uuid"""
+            + (includeDisabled ? "" : "\n                        AND enabled = true")
+            + ";";
     List<Object> params = new ArrayList<>();
     params.add(tenantIdentifier.valueAsUuid());
 
@@ -61,8 +70,12 @@ public class PostgresqlExecutor implements TenantQuerySqlExecutor {
 
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sqlTemplate = selectSql + " " + """
+    String sqlTemplate =
+        selectSql
+            + " "
+            + """
             WHERE type = ?
+            AND enabled = true
             """;
     List<Object> params = new ArrayList<>();
     params.add("ADMIN");

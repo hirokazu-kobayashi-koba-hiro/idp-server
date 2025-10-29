@@ -46,7 +46,8 @@ public class PostgresqlExecutor implements TenantCommandSqlExecutor {
             security_event_log_config,
             security_event_user_config,
             identity_policy_config,
-            main_organization_id
+            main_organization_id,
+            enabled
             )
             VALUES (
             ?::uuid,
@@ -61,7 +62,8 @@ public class PostgresqlExecutor implements TenantCommandSqlExecutor {
             ?::jsonb,
             ?::jsonb,
             ?::jsonb,
-            ?::uuid
+            ?::uuid,
+            ?
             )
             """;
     List<Object> params = new ArrayList<>();
@@ -78,6 +80,7 @@ public class PostgresqlExecutor implements TenantCommandSqlExecutor {
     params.add(jsonConverter.write(tenant.securityEventUserAttributeConfiguration().toMap()));
     params.add(jsonConverter.write(tenant.identityPolicyConfig().toMap()));
     params.add(tenant.mainOrganizationIdentifier().valueAsUuid());
+    params.add(tenant.isEnabled());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -97,7 +100,8 @@ public class PostgresqlExecutor implements TenantCommandSqlExecutor {
                 session_config = ?::jsonb,
                 security_event_log_config = ?::jsonb,
                 security_event_user_config = ?::jsonb,
-                identity_policy_config = ?::jsonb
+                identity_policy_config = ?::jsonb,
+                enabled = ?
                 WHERE id = ?::uuid;
                 """;
     List<Object> params = new ArrayList<>();
@@ -110,6 +114,7 @@ public class PostgresqlExecutor implements TenantCommandSqlExecutor {
     params.add(jsonConverter.write(tenant.securityEventLogConfiguration().toMap()));
     params.add(jsonConverter.write(tenant.securityEventUserAttributeConfiguration().toMap()));
     params.add(jsonConverter.write(tenant.identityPolicyConfig().toMap()));
+    params.add(tenant.isEnabled());
     params.add(tenant.identifierUUID());
 
     sqlExecutor.execute(sqlTemplate, params);

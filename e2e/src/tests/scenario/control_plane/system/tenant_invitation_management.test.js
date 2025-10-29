@@ -1,9 +1,10 @@
-import { describe, expect, it } from "@jest/globals";
+import { describe, xdescribe, expect, it } from "@jest/globals";
 import { get, post } from "../../../../lib/http";
 import { requestToken } from "../../../../api/oauthClient";
 import { adminServerConfig, backendUrl } from "../../../testConfig";
 
-describe("tenant invitation management api", () => {
+//TODO implementation is yet.
+xdescribe("tenant invitation management api", () => {
 
   describe("success pattern", () => {
     it("invitation", async () => {

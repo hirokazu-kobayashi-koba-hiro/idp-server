@@ -28,6 +28,7 @@ class ModelConvertor {
     OrganizationName name = new OrganizationName(result.getOrDefault("name", ""));
     OrganizationDescription description =
         new OrganizationDescription(result.getOrDefault("description", ""));
+    boolean enabled = parseDatabaseBoolean(result.get("enabled"), true);
     List<AssignedTenant> assignedTenantList = new ArrayList<>();
     if (result.containsKey("tenants") && !result.get("tenants").equals("[]")) {
       JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(result.get("tenants"));
@@ -46,6 +47,30 @@ class ModelConvertor {
     }
     AssignedTenants assignedTenants = new AssignedTenants(assignedTenantList);
 
-    return new Organization(identifier, name, description, assignedTenants);
+    return new Organization(identifier, name, description, assignedTenants, enabled);
+  }
+
+  /**
+   * Parses database boolean values to Java boolean.
+   *
+   * <p>Handles different database boolean representations:
+   *
+   * <ul>
+   *   <li>PostgreSQL: "t"/"f" or "true"/"false"
+   *   <li>MySQL: "1"/"0" or "true"/"false"
+   *   <li>Standard: "true"/"false"
+   * </ul>
+   *
+   * @param value the database boolean value as string
+   * @param defaultValue the default value if parsing fails
+   * @return parsed boolean value
+   */
+  static boolean parseDatabaseBoolean(String value, boolean defaultValue) {
+    if (value == null || value.isEmpty()) {
+      return defaultValue;
+    }
+
+    String normalized = value.toLowerCase().trim();
+    return "t".equals(normalized) || "true".equals(normalized) || "1".equals(normalized);
   }
 }

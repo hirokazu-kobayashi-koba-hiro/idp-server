@@ -75,7 +75,7 @@ public class TenantUpdateService implements TenantManagementService<TenantUpdate
       boolean dryRun) {
 
     // 1. Retrieve existing tenant (throws ResourceNotFoundException if not found)
-    Tenant before = tenantQueryRepository.get(request.tenantIdentifier());
+    Tenant before = tenantQueryRepository.findWithDisabled(request.tenantIdentifier(), true);
 
     // 1. Request validation
     new TenantUpdateRequestValidator(request.tenantRequest()).validate();
@@ -154,7 +154,8 @@ public class TenantUpdateService implements TenantManagementService<TenantUpdate
         securityEventLogConfiguration,
         securityEventUserAttributeConfiguration,
         identityPolicyConfig,
-        before.mainOrganizationIdentifier());
+        before.mainOrganizationIdentifier(),
+        tenantRequest.enabled());
   }
 
   private TenantIdentityPolicy convertIdentityPolicyConfig(Map<String, Object> configMap) {

@@ -68,7 +68,7 @@ public class TenantFindService implements TenantManagementService<TenantFindRequ
 
     TenantIdentifier tenantIdentifier = request.tenantIdentifier();
     // 1. Retrieve tenant (throws ResourceNotFoundException if not found)
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    Tenant tenant = tenantQueryRepository.findWithDisabled(tenantIdentifier, true);
 
     // 2. Return success result (no context for read-only operation)
     return new TenantManagementResponse(TenantManagementStatus.OK, tenant.toMap());

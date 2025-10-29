@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import org.idp.server.platform.configuration.Configurable;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.config.CorsConfiguration;
@@ -29,7 +30,7 @@ import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
 import org.idp.server.platform.security.event.SecurityEventUserAttributeConfiguration;
 import org.idp.server.platform.security.log.SecurityEventLogConfiguration;
 
-public class Tenant {
+public class Tenant implements Configurable {
   TenantIdentifier identifier;
   TenantName name;
   TenantType type;
@@ -44,6 +45,7 @@ public class Tenant {
   SecurityEventUserAttributeConfiguration securityEventUserAttributeConfiguration;
   TenantIdentityPolicy identityPolicyConfig;
   OrganizationIdentifier mainOrganizationIdentifier;
+  boolean enabled = true;
 
   public Tenant() {}
 
@@ -60,7 +62,8 @@ public class Tenant {
       SecurityEventLogConfiguration securityEventLogConfiguration,
       SecurityEventUserAttributeConfiguration securityEventUserAttributeConfiguration,
       TenantIdentityPolicy identityPolicyConfig,
-      OrganizationIdentifier mainOrganizationIdentifier) {
+      OrganizationIdentifier mainOrganizationIdentifier,
+      boolean enabled) {
     this.identifier = identifier;
     this.name = name;
     this.type = type;
@@ -74,6 +77,7 @@ public class Tenant {
     this.securityEventUserAttributeConfiguration = securityEventUserAttributeConfiguration;
     this.identityPolicyConfig = identityPolicyConfig;
     this.mainOrganizationIdentifier = mainOrganizationIdentifier;
+    this.enabled = enabled;
   }
 
   public TenantIdentifier identifier() {
@@ -112,6 +116,11 @@ public class Tenant {
     return Objects.nonNull(identifier) && identifier.exists();
   }
 
+  @Override
+  public boolean isEnabled() {
+    return enabled;
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("id", identifier.value());
@@ -127,6 +136,7 @@ public class Tenant {
     map.put("security_event_user_config", securityEventUserAttributeConfiguration.toMap());
     map.put("identity_policy_config", identityPolicyConfig.toMap());
     map.put("main_organization_id", mainOrganizationIdentifier.value());
+    map.put("enabled", enabled);
     return map;
   }
 

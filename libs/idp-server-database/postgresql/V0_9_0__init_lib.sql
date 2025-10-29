@@ -5,6 +5,7 @@ CREATE TABLE organization
     description TEXT,
     created_at  TIMESTAMP DEFAULT now() NOT NULL,
     updated_at  TIMESTAMP DEFAULT now() NOT NULL,
+    enabled     BOOLEAN   DEFAULT TRUE  NOT NULL,
     PRIMARY KEY (id)
 );
 
@@ -30,6 +31,7 @@ CREATE TABLE tenant
 
     created_at             TIMESTAMP    NOT NULL DEFAULT now(),
     updated_at             TIMESTAMP    NOT NULL DEFAULT now(),
+    enabled                BOOLEAN      NOT NULL DEFAULT TRUE,
     PRIMARY KEY (id),
     FOREIGN KEY (main_organization_id) REFERENCES organization (id)
 );
@@ -50,6 +52,9 @@ CREATE INDEX idx_tenant_identity_policy_config ON tenant USING GIN (identity_pol
 CREATE INDEX idx_tenant_ui_config ON tenant USING GIN (ui_config);
 CREATE INDEX idx_tenant_cors_config ON tenant USING GIN (cors_config);
 CREATE INDEX idx_tenant_session_config ON tenant USING GIN (session_config);
+CREATE INDEX idx_tenant_enabled ON tenant (enabled);
+
+CREATE INDEX idx_organization_enabled ON organization (enabled);
 
 CREATE TABLE organization_tenants
 (

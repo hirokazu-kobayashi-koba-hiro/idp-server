@@ -5,6 +5,7 @@ CREATE TABLE organization
     description TEXT,
     created_at  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    enabled     BOOLEAN DEFAULT TRUE               NOT NULL,
     PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -30,11 +31,15 @@ CREATE TABLE tenant
 
     created_at                 DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at                 DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    enabled                    BOOLEAN      NOT NULL DEFAULT TRUE,
     PRIMARY KEY (id),
     FOREIGN KEY (main_organization_id) REFERENCES organization (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- CREATE UNIQUE INDEX unique_admin_tenant ON tenant (type) WHERE type = 'ADMIN';
+
+CREATE INDEX idx_tenant_enabled ON tenant (enabled);
+CREATE INDEX idx_organization_enabled ON organization (enabled);
 
 CREATE TABLE organization_tenants
 (

@@ -247,6 +247,7 @@ public class OnboardingService {
         securityEventLogConfiguration,
         securityEventUserAttributeConfiguration,
         identityPolicyConfig,
-        mainOrganizationIdentifier);
+        mainOrganizationIdentifier,
+        true);
   }
 }

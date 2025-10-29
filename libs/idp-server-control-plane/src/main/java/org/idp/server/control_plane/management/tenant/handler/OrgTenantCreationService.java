@@ -201,7 +201,8 @@ public class OrgTenantCreationService implements TenantManagementService<OrgTena
         securityEventLogConfiguration,
         securityEventUserAttributeConfiguration,
         identityPolicyConfig,
-        mainOrganizationIdentifier);
+        mainOrganizationIdentifier,
+        true);
   }
 
   private AuthorizationServerConfiguration createAuthorization(TenantRequest request) {

@@ -17,13 +17,15 @@
 package org.idp.server.platform.multi_tenancy.organization;
 
 import java.util.HashMap;
+import org.idp.server.platform.configuration.Configurable;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
-public class Organization {
+public class Organization implements Configurable {
   OrganizationIdentifier identifier;
   OrganizationName name;
   OrganizationDescription description;
   AssignedTenants assignedTenants;
+  boolean enabled = true;
 
   public Organization() {}
 
@@ -31,7 +33,7 @@ public class Organization {
       OrganizationIdentifier identifier,
       OrganizationName name,
       OrganizationDescription description) {
-    this(identifier, name, description, new AssignedTenants());
+    this(identifier, name, description, new AssignedTenants(), true);
   }
 
   public Organization(
@@ -39,10 +41,20 @@ public class Organization {
       OrganizationName name,
       OrganizationDescription description,
       AssignedTenants assignedTenants) {
+    this(identifier, name, description, assignedTenants, true);
+  }
+
+  public Organization(
+      OrganizationIdentifier identifier,
+      OrganizationName name,
+      OrganizationDescription description,
+      AssignedTenants assignedTenants,
+      boolean enabled) {
     this.identifier = identifier;
     this.name = name;
     this.description = description;
     this.assignedTenants = assignedTenants;
+    this.enabled = enabled;
   }
 
   public OrganizationIdentifier identifier() {
@@ -72,6 +84,7 @@ public class Organization {
     result.put("name", name.value());
     result.put("description", description.value());
     result.put("assigned_tenants", assignedTenants.toMapList());
+    result.put("enabled", enabled);
     return result;
   }
 
@@ -81,6 +94,11 @@ public class Organization {
 
   public boolean exists() {
     return identifier != null && identifier.exists();
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return enabled;
   }
 
   /**
