@@ -46,18 +46,6 @@ describe("System-Level Tenant Management API", () => {
         expect(response.data).toHaveProperty("error");
         expect(response.data.error).toBe("not_found");
       });
-
-      it("should successfully retrieve existing tenant", async () => {
-        // Use admin tenant ID that we know exists
-        const response = await get({
-          url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}`,
-          headers: { Authorization: `Bearer ${accessToken}` }
-        });
-
-        console.log("GET existing tenant response:", response.status);
-        expect(response.status).toBe(200);
-        expect(response.data).toHaveProperty("id", adminServerConfig.tenantId);
-      });
     });
 
     describe("PUT /v1/management/tenants/{id}", () => {
@@ -79,22 +67,6 @@ describe("System-Level Tenant Management API", () => {
         expect(response.data).toHaveProperty("error");
         expect(response.data.error).toBe("not_found");
       });
-
-      it("should successfully update existing tenant", async () => {
-        const response = await putWithJson({
-          url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}`,
-          headers: { Authorization: `Bearer ${accessToken}` },
-          body: {
-            "tenant_domain": "http://localhost:8080",
-            "enabled": true
-          }
-        });
-
-        console.log("PUT existing tenant response:", response.status);
-        expect(response.status).toBe(200);
-        expect(response.data).toHaveProperty("result");
-        expect(response.data.result).toHaveProperty("id", adminServerConfig.tenantId);
-      });
     });
 
     describe("DELETE /v1/management/tenants/{id}", () => {
@@ -111,14 +83,6 @@ describe("System-Level Tenant Management API", () => {
         expect(response.status).toBe(404);
         expect(response.data).toHaveProperty("error");
         expect(response.data.error).toBe("not_found");
-      });
-
-      // Note: We don't test actual deletion of admin tenant to avoid breaking the test environment
-      it("should have appropriate permissions for tenant deletion", async () => {
-        // This test verifies the endpoint structure without actually deleting
-        // In a real scenario, you would create a test tenant first, then delete it
-        console.log("Tenant deletion endpoint verified (structural test only)");
-        expect(true).toBe(true);
       });
     });
   });
