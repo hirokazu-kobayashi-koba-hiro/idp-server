@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolver;
@@ -175,6 +176,7 @@ public class HttpRequestExecutor {
    *   <li>Body mapping with automatic JSON serialization
    *   <li>Multiple authentication methods (OAuth 2.0, HMAC SHA-256)
    *   <li>Content type negotiation (JSON, form-encoded)
+   *   <li>Response success criteria evaluation based on response body content
    * </ul>
    *
    * <h3>Authentication Support</h3>
@@ -191,12 +193,20 @@ public class HttpRequestExecutor {
    *   <li><strong>POST/PUT/DELETE</strong>: Body content with path parameters
    * </ul>
    *
+   * <h3>Response Success Criteria</h3>
+   *
+   * <p>If {@link HttpRequestExecutionConfigInterface#hasResponseSuccessCriteria()} returns true,
+   * the response body will be evaluated against configured criteria even for HTTP 200 responses.
+   * This enables detection of error conditions indicated in the response body rather than HTTP
+   * status code.
+   *
    * @param configuration the HTTP request configuration defining URL, method, mapping rules, and
    *     authentication
    * @param httpRequestBaseParams the base parameters to map into the request
    * @return {@link HttpRequestResult} containing the response or error details
    * @see HttpRequestExecutionConfigInterface
    * @see HttpRequestBaseParams
+   * @see ResponseSuccessCriteria
    */
   public HttpRequestResult execute(
       HttpRequestExecutionConfigInterface configuration,
@@ -205,12 +215,15 @@ public class HttpRequestExecutor {
     // Build the HTTP request with OAuth authentication if configured
     HttpRequest httpRequest = buildHttpRequest(configuration, httpRequestBaseParams);
 
-    // Use retry if configured, otherwise simple execution
-    if (configuration.hasRetryConfiguration()) {
-      return executeWithRetry(httpRequest, configuration.retryConfiguration());
-    }
+    // Get response success criteria if configured
+    ResponseSuccessCriteria criteria = configuration.responseSuccessCriteria();
 
-    return execute(httpRequest);
+    // Execute with retry if configured, otherwise simple execution
+    if (configuration.hasRetryConfiguration()) {
+      return executeWithRetryAndCriteria(httpRequest, configuration.retryConfiguration(), criteria);
+    } else {
+      return executeWithCriteria(httpRequest, criteria);
+    }
   }
 
   private HttpRequest buildHttpRequest(
@@ -355,6 +368,68 @@ public class HttpRequestExecutor {
 
       return new HttpRequestResult(
           httpResponse.statusCode(), httpResponse.headers().map(), jsonResponse);
+    } catch (IOException | InterruptedException e) {
+      log.warn("Http request was error: {}", e.getMessage(), e);
+      return createExceptionResult(e);
+    }
+  }
+
+  /**
+   * Executes HTTP request and evaluates response against success criteria.
+   *
+   * <p>This method combines basic HTTP execution with response body evaluation. If the HTTP
+   * response is successful (status < 400) but fails to meet the configured criteria, the response
+   * is converted to an error result with status code 502 (Bad Gateway).
+   *
+   * <h3>Evaluation Logic</h3>
+   *
+   * <ol>
+   *   <li>Execute HTTP request normally
+   *   <li>If response status >= 400, return as-is (already an error)
+   *   <li>If response status < 400 and criteria provided, evaluate response body
+   *   <li>If criteria not met, convert to 502 error with original response preserved
+   * </ol>
+   *
+   * @param httpRequest the HTTP request to execute
+   * @param criteria response success criteria to evaluate, null to skip evaluation
+   * @return {@link HttpRequestResult} with appropriate status code based on criteria evaluation
+   * @see ResponseSuccessCriteria
+   * @see #execute(HttpRequest)
+   */
+  private HttpRequestResult executeWithCriteria(
+      HttpRequest httpRequest, ResponseSuccessCriteria criteria) {
+
+    try {
+      log.info("Http Request: {} {}", httpRequest.uri(), httpRequest.method());
+
+      HttpResponse<String> httpResponse =
+          httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+
+      log.debug("Http Response status: {}", httpResponse.statusCode());
+      log.debug("Http Response body: {}", httpResponse.body());
+
+      JsonNodeWrapper jsonResponse = resolveResponseBody(httpResponse);
+
+      // Only evaluate criteria for successful HTTP responses (< 400)
+      // Error responses (>= 400) are returned as-is
+      if (httpResponse.statusCode() >= 400 || criteria == null || !criteria.exists()) {
+        return new HttpRequestResult(
+            httpResponse.statusCode(), httpResponse.headers().map(), jsonResponse);
+      }
+
+      // Evaluate response body against success criteria
+      String json = jsonResponse.toJson();
+      JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(json);
+      boolean evaluateResult = criteria.evaluate(jsonPathWrapper);
+
+      if (evaluateResult) {
+        return new HttpRequestResult(
+            httpResponse.statusCode(), httpResponse.headers().map(), jsonResponse);
+      }
+
+      // Criteria failed - return configured error status code with original response body
+      return new HttpRequestResult(
+          criteria.errorStatusCode(), httpResponse.headers().map(), jsonResponse);
     } catch (IOException | InterruptedException e) {
       log.warn("Http request was error: {}", e.getMessage(), e);
       return createExceptionResult(e);
@@ -542,6 +617,132 @@ public class HttpRequestExecutor {
 
     HttpRequest enhancedRequest = builder.build();
     return execute(enhancedRequest);
+  }
+
+  /**
+   * Executes HTTP request with retry mechanism and response success criteria evaluation.
+   *
+   * <p>This method combines retry logic with response body evaluation. After each successful
+   * response (status < 400), the response is evaluated against the provided criteria. If criteria
+   * are not met, the response is treated as a failure for retry purposes.
+   *
+   * @param httpRequest the HTTP request to execute
+   * @param retryConfig retry configuration
+   * @param criteria response success criteria to evaluate, null to skip evaluation
+   * @return {@link HttpRequestResult} containing the response or error details
+   * @see #executeWithRetry(HttpRequest, HttpRetryConfiguration)
+   * @see #executeWithCriteria(HttpRequest, ResponseSuccessCriteria)
+   */
+  private HttpRequestResult executeWithRetryAndCriteria(
+      HttpRequest httpRequest,
+      HttpRetryConfiguration retryConfig,
+      ResponseSuccessCriteria criteria) {
+
+    String correlationId = generateCorrelationId();
+    String idempotencyKey = null;
+
+    log.info(
+        "Starting HTTP request with retry and criteria: method={}, uri={}, maxRetries={},"
+            + " hasCriteria={}, correlationId={}",
+        httpRequest.method(),
+        httpRequest.uri(),
+        retryConfig.maxRetries(),
+        (criteria != null && !criteria.conditions().isEmpty()),
+        correlationId);
+
+    for (int attempt = 0; attempt <= retryConfig.maxRetries(); attempt++) {
+      try {
+        // Idempotency Key management
+        HttpRequest enhancedRequest = httpRequest;
+        if (retryConfig.idempotencyRequired()) {
+          if (idempotencyKey == null) {
+            idempotencyKey = idempotencyKeyManager.generateKey(httpRequest);
+          }
+          enhancedRequest = idempotencyKeyManager.addIdempotencyKey(httpRequest, idempotencyKey);
+        }
+
+        // Execute with criteria evaluation
+        HttpRequestResult result = executeWithCriteria(enhancedRequest, criteria);
+
+        // Success case
+        if (result.isSuccess()) {
+          if (attempt > 0) {
+            log.info(
+                "HTTP request succeeded after retry: method={}, uri={}, attempt={}/{},"
+                    + " statusCode={}, correlationId={}",
+                httpRequest.method(),
+                httpRequest.uri(),
+                attempt + 1,
+                retryConfig.maxRetries() + 1,
+                result.statusCode(),
+                correlationId);
+          } else {
+            log.info(
+                "HTTP request succeeded: method={}, uri={}, statusCode={}, correlationId={}",
+                httpRequest.method(),
+                httpRequest.uri(),
+                result.statusCode(),
+                correlationId);
+          }
+          return result;
+        }
+
+        // Retry judgment
+        if (!isRetryableResult(result, retryConfig)) {
+          log.warn(
+              "HTTP request failed with non-retryable error: uri={}, statusCode={}, attempt={},"
+                  + " correlationId={}",
+              httpRequest.uri(),
+              result.statusCode(),
+              attempt + 1,
+              correlationId);
+          return result;
+        }
+
+        // Max retries check
+        if (attempt == retryConfig.maxRetries()) {
+          log.error(
+              "HTTP request failed after max retries: uri={}, maxRetries={}, finalStatusCode={},"
+                  + " correlationId={}",
+              httpRequest.uri(),
+              retryConfig.maxRetries(),
+              result.statusCode(),
+              correlationId);
+          return createMaxRetriesExceededResult(result, retryConfig);
+        }
+
+        // Wait before retry - check for server-specified delay first
+        Duration delay = calculateRetryDelay(attempt, result, retryConfig);
+        log.warn(
+            "HTTP request failed, retrying: uri={}, attempt={}, statusCode={}, nextDelay={},"
+                + " correlationId={}",
+            httpRequest.uri(),
+            attempt + 1,
+            result.statusCode(),
+            delay,
+            correlationId);
+
+        if (!waitBeforeRetry(delay)) {
+          log.error(
+              "HTTP request retry interrupted: uri={}, attempt={}, correlationId={}",
+              httpRequest.uri(),
+              attempt + 1,
+              correlationId);
+          return createInterruptedResult();
+        }
+      } catch (Exception e) {
+        log.error(
+            "Unexpected exception in retry loop: uri={}, attempt={}, correlationId={}",
+            httpRequest.uri(),
+            attempt + 1,
+            correlationId,
+            e);
+        return createExceptionResult(e, "unexpected_exception");
+      }
+    }
+
+    // This should never be reached, but just in case
+    return createUnexpectedTerminationResult();
   }
 
   /**

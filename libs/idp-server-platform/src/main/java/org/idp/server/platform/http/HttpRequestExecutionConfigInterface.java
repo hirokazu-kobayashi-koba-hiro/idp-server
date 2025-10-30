@@ -57,4 +57,12 @@ public interface HttpRequestExecutionConfigInterface {
   default int requestTimeoutSeconds() {
     return 30;
   }
+
+  default boolean hasResponseSuccessCriteria() {
+    return false;
+  }
+
+  default ResponseSuccessCriteria responseSuccessCriteria() {
+    return ResponseSuccessCriteria.empty();
+  }
 }

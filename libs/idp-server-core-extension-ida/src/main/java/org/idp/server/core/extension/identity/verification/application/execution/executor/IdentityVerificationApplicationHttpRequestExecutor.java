@@ -61,7 +61,9 @@ public class IdentityVerificationApplicationHttpRequestExecutor
         httpRequestExecutor.execute(httpRequestConfig, httpRequestBaseParams);
 
     return new IdentityVerificationExecutionResult(
-        resolveStatus(httpRequestResult), resolveResult(httpRequestResult));
+        resolveStatus(httpRequestResult),
+        httpRequestResult.statusCode(),
+        resolveResult(httpRequestResult));
   }
 
   private IdentityVerificationExecutionStatus resolveStatus(HttpRequestResult httpRequestResult) {

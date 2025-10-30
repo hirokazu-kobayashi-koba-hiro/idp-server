@@ -25,6 +25,41 @@ import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.mapper.MappingRule;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
+/**
+ * Configuration for external HTTP API calls in identity verification process execution phase.
+ *
+ * <p>Supports response success criteria with customizable error status codes for fine-grained error
+ * handling based on external API responses.
+ *
+ * <p>Example configuration with custom error status code:
+ *
+ * <pre>{@code
+ * {
+ *   "url": "https://api.example.com/verify",
+ *   "method": "POST",
+ *   "auth_type": "oauth2",
+ *   "response_success_criteria": {
+ *     "conditions": [
+ *       {"path": "$.status", "operation": "eq", "value": "approved"},
+ *       {"path": "$.error", "operation": "missing"}
+ *     ],
+ *     "match_mode": "ALL",
+ *     "error_status_code": 422
+ *   }
+ * }
+ * }</pre>
+ *
+ * <p>Common {@code error_status_code} patterns:
+ *
+ * <ul>
+ *   <li>400/422: External API validation errors (input data issues)
+ *   <li>401: Authentication failures from external service
+ *   <li>403: Permission denied by external service
+ *   <li>404: Resource not found in external system
+ *   <li>502: External service errors (default if not specified)
+ *   <li>503: External service temporarily unavailable
+ * </ul>
+ */
 public class IdentityVerificationHttpRequestConfig
     implements HttpRequestExecutionConfigInterface, JsonReadable {
   String url;
@@ -38,6 +73,7 @@ public class IdentityVerificationHttpRequestConfig
   List<MappingRule> queryMappingRules = new ArrayList<>();
   HttpRetryConfiguration retryConfiguration = HttpRetryConfiguration.noRetry();
   Integer requestTimeoutSeconds;
+  ResponseSuccessCriteria responseSuccessCriteria;
 
   public IdentityVerificationHttpRequestConfig() {}
 
@@ -161,6 +197,16 @@ public class IdentityVerificationHttpRequestConfig
     return requestTimeoutSeconds != null ? requestTimeoutSeconds : 30;
   }
 
+  public boolean hasResponseSuccessCriteria() {
+    return responseSuccessCriteria != null
+        && responseSuccessCriteria.conditions() != null
+        && !responseSuccessCriteria.conditions().isEmpty();
+  }
+
+  public ResponseSuccessCriteria responseSuccessCriteria() {
+    return responseSuccessCriteria;
+  }
+
   public boolean exists() {
     return url != null && !url.isEmpty();
   }
@@ -178,6 +224,8 @@ public class IdentityVerificationHttpRequestConfig
     if (hasQueryMappingRules()) map.put("query_mapping_rules", queryMappingRulesMap());
     if (hasRetryConfiguration()) map.put("retry_configuration", retryConfiguration.toMap());
     if (hasRequestTimeout()) map.put("request_timeout_seconds", requestTimeoutSeconds);
+    if (hasResponseSuccessCriteria())
+      map.put("response_success_criteria", responseSuccessCriteria.toMap());
     return map;
   }
 }
