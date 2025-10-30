@@ -96,6 +96,13 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
     return transition.approved();
   }
 
+  public IdentityVerificationConditionConfig applied() {
+    if (transition == null) {
+      return new IdentityVerificationConditionConfig();
+    }
+    return transition.applied();
+  }
+
   public boolean hasOAuthAuthorization() {
     if (execution == null || !execution.hasHttpRequest()) {
       return false;

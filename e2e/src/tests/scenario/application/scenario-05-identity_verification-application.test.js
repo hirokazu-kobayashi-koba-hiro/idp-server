@@ -81,21 +81,6 @@ describe("identity-verification application", () => {
         .replace("{type}", type)
         .replace("{id}", applicationId);
 
-      const registrationResponse = await post({
-        url: processEndpoint.replace("{process}", "crm-registration"),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${accessToken}`
-        },
-        body: {
-          "trust_framework":"eidas",
-          "evidence_document_type": "driver_license",
-        }
-      });
-      console.log(registrationResponse.data);
-      expect(registrationResponse.status).toBe(200);
-
-
       const requestEkycResponse = await post({
         url: processEndpoint.replace("{process}", "request-ekyc"),
         headers: {
@@ -143,6 +128,44 @@ describe("identity-verification application", () => {
       expect(applicationsResponse.data.list[0]).toHaveProperty("requested_at");
       expect(applicationsResponse.data.list[0].attributes.label).toEqual("証券口座開設");
 
+      const registrationResponse = await post({
+        url: processEndpoint.replace("{process}", "crm-registration"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`
+        },
+        body: {
+          "account": {
+            "name": "jone"
+          },
+          "attributes": {
+            "id_doc": "driver_license"
+          },
+        }
+      });
+      console.log(registrationResponse.data);
+      expect(registrationResponse.status).toBe(200);
+
+      applicationsResponse = await get({
+        url: serverConfig.identityVerificationApplicationsEndpoint + `?id=${applicationId}&type=${type}&status=applied`,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`
+        }
+      });
+      console.log(JSON.stringify(applicationsResponse.data, null, 2));
+      expect(applicationsResponse.status).toBe(200);
+      expect(applicationsResponse.data.list.length).toBe(1);
+      expect(applicationsResponse.data.list[0].id).toEqual(applicationId);
+      expect(applicationsResponse.data.list[0].application_details.external_application_id).toEqual(externalId);
+      expect(applicationsResponse.data.list[0].type).toEqual(type);
+      expect(applicationsResponse.data.list[0].tenant_id).toEqual(serverConfig.tenantId);
+      expect(applicationsResponse.data.list[0].client_id).toEqual(clientSecretPostClient.clientId);
+      expect(applicationsResponse.data.list[0].user_id).toEqual(user.sub);
+      expect(applicationsResponse.data.list[0]).toHaveProperty("application_details");
+      expect(applicationsResponse.data.list[0].status).toEqual("applied");
+      expect(applicationsResponse.data.list[0]).toHaveProperty("requested_at");
+      expect(applicationsResponse.data.list[0].attributes.label).toEqual("証券口座開設");
 
       const callbackEndpoint = serverConfig.identityVerificationApplicationsPublicCallbackEndpoint
         .replace("{type}", type)

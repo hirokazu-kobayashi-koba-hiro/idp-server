@@ -383,6 +383,19 @@
             "to": "*"
           }
         ]
+      },
+      "transition": {
+        "applied": {
+          "any_of": [
+            [
+              {
+                "path": "$.status_code",
+                "operation": "eq",
+                "value": 200
+              }
+            ]
+          ]
+        }
       }
     },
     "callback-examination": {
