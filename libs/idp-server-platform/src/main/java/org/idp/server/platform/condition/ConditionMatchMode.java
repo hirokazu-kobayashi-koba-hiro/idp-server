@@ -26,5 +26,15 @@ package org.idp.server.platform.condition;
  */
 public enum ConditionMatchMode {
   ALL,
-  ANY
+  ANY;
+
+  public static ConditionMatchMode of(String mode) {
+    for (ConditionMatchMode conditionMatchMode : ConditionMatchMode.values()) {
+      if (conditionMatchMode.name().equalsIgnoreCase(mode)) {
+        return conditionMatchMode;
+      }
+    }
+    // default value is ALL
+    return ALL;
+  }
 }

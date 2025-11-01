@@ -58,16 +58,16 @@ import org.idp.server.platform.json.JsonReadable;
  */
 public class HttpResponseResolveConfig implements JsonReadable {
   private List<ConditionDefinition> conditions;
-  private ConditionMatchMode matchMode;
+  private String matchMode;
   private int mappedStatusCode;
 
   public HttpResponseResolveConfig() {
     this.conditions = new ArrayList<>();
-    this.matchMode = ConditionMatchMode.ALL;
+    this.matchMode = ConditionMatchMode.ALL.name().toLowerCase();
   }
 
   public HttpResponseResolveConfig(
-      List<ConditionDefinition> conditions, ConditionMatchMode matchMode, int mappedStatusCode) {
+      List<ConditionDefinition> conditions, String matchMode, int mappedStatusCode) {
     this.conditions = conditions;
     this.matchMode = matchMode;
     this.mappedStatusCode = mappedStatusCode;
@@ -78,7 +78,7 @@ public class HttpResponseResolveConfig implements JsonReadable {
   }
 
   public ConditionMatchMode matchMode() {
-    return matchMode;
+    return ConditionMatchMode.of(matchMode);
   }
 
   public int mappedStatusCode() {
@@ -92,7 +92,7 @@ public class HttpResponseResolveConfig implements JsonReadable {
       conditionMaps.add(condition.toMap());
     }
     map.put("conditions", conditionMaps);
-    map.put("match_mode", matchMode.name().toLowerCase());
+    map.put("match_mode", matchMode);
     map.put("mapped_status_code", mappedStatusCode);
 
     return map;

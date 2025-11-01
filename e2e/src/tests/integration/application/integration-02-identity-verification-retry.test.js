@@ -1,14 +1,19 @@
 import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
 import { get, postWithJson, deletion } from "../../../lib/http";
 import { requestToken } from "../../../api/oauthClient";
-import { backendUrl, clientSecretPostClient, serverConfig, federationServerConfig } from "../../testConfig";
+import {
+  backendUrl,
+  clientSecretPostClient,
+  serverConfig,
+  federationServerConfig,
+  mockApiBaseUrl
+} from "../../testConfig";
 import { createFederatedUser, registerFidoUaf } from "../../../user";
 import { v4 as uuidv4 } from "uuid";
 
 describe("Identity Verification with HttpRequestExecutor Retry Functionality", () => {
   const orgId = "72cf4a12-8da3-40fb-8ae4-a77e3cda95e2";
   const tenantId = serverConfig.tenantId;
-  const mockApiBaseUrl = "http://localhost:4000";
 
   let orgAccessToken; // Organization admin token for Management API
   let userAccessToken; // Resource owner token for identity verification API
