@@ -80,9 +80,9 @@ public class HttpResponseResolver {
     mergedData.put("status_code", statusCode);
     mergedData.put("response_headers", headers);
     if (body.isArray()) {
-        mergedData.put("response_body", body.toListAsMap());
+      mergedData.put("response_body", body.toListAsMap());
     } else {
-        mergedData.put("response_body", body.toMap());
+      mergedData.put("response_body", body.toMap());
     }
 
     String mergedJson = jsonConverter.write(mergedData);

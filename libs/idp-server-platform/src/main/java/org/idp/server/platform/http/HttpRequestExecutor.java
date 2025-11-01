@@ -17,15 +17,9 @@
 package org.idp.server.platform.http;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.Duration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -34,104 +28,50 @@ import org.idp.server.platform.oauth.OAuthAuthorizationResolver;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 
 /**
- * Executes HTTP requests with support for OAuth authentication, retry mechanisms, and idempotency.
+ * Executes HTTP requests with OAuth authentication and retry support.
  *
- * <p>This class provides a comprehensive HTTP client implementation for enterprise applications,
- * offering robust error handling, automatic retries, and OAuth 2.0 integration. It serves as the
- * central component for all HTTP communications in the identity platform.
- *
- * <h3>Core Features</h3>
+ * <p>Provides configuration-driven and direct HTTP execution with:
  *
  * <ul>
- *   <li><strong>Basic HTTP Operations</strong>: GET, POST, PUT, DELETE with automatic content
- *       negotiation
- *   <li><strong>OAuth 2.0 Integration</strong>: Automatic Bearer token resolution and header
- *       injection
- *   <li><strong>Retry Mechanism</strong>: Exponential backoff with configurable retry policies
- *   <li><strong>Idempotency Support</strong>: Duplicate request prevention with unique key
- *       generation
- *   <li><strong>Exception Mapping</strong>: Network errors mapped to appropriate HTTP status codes
+ *   <li>OAuth 2.0 Bearer token authentication
+ *   <li>Automatic retry with exponential backoff (delegated to {@link HttpRetryStrategy})
+ *   <li>Response resolution with configurable conditions (delegated to {@link
+ *       HttpResponseResolver})
+ *   <li>Request building from configuration (delegated to {@link HttpRequestBuilder})
  * </ul>
- *
- * <h3>Configuration-Based Execution</h3>
- *
- * <p>Supports configuration-driven HTTP requests through {@link
- * HttpRequestExecutionConfigInterface}:
- *
- * <ul>
- *   <li>Dynamic URL construction with path parameter interpolation
- *   <li>Header mapping from request parameters
- *   <li>Body mapping with automatic JSON serialization
- *   <li>Query parameter handling for GET requests
- *   <li>HMAC authentication support
- * </ul>
- *
- * <h3>Direct Request Execution</h3>
- *
- * <p>For direct HTTP request execution:
- *
- * <ul>
- *   <li>{@link #execute(HttpRequest)} - Basic HTTP execution
- *   <li>{@link #executeWithOAuth(HttpRequest, OAuthAuthorizationConfiguration)} - With OAuth
- *   <li>{@link #executeWithRetry(HttpRequest, HttpRetryConfiguration)} - With retry mechanism
- *   <li>{@link #executeWithRetry(HttpRequest, OAuthAuthorizationConfiguration,
- *       HttpRetryConfiguration)} - Full-featured
- * </ul>
- *
- * <h3>Error Handling Strategy</h3>
- *
- * <p>Network exceptions are systematically mapped to HTTP status codes:
- *
- * <ul>
- *   <li>ConnectException → 503 (Service Unavailable)
- *   <li>SocketTimeoutException → 504 (Gateway Timeout)
- *   <li>HttpTimeoutException → 504 (Gateway Timeout)
- *   <li>InterruptedException → 503 (Service Unavailable)
- *   <li>IOException → 502 (Bad Gateway)
- * </ul>
- *
- * <h3>Thread Safety</h3>
- *
- * <p>This class is thread-safe and can be shared across multiple threads. The underlying {@link
- * HttpClient} is thread-safe, and all internal state is either immutable or properly synchronized.
  *
  * <h3>Usage Examples</h3>
  *
  * <pre>{@code
- * // Basic usage
+ * // Configuration-based execution
  * HttpRequestExecutor executor = new HttpRequestExecutor(httpClient, oauthResolvers);
- * HttpRequest request = HttpRequest.newBuilder()
- *     .uri(URI.create("https://api.example.com/data"))
- *     .GET()
- *     .build();
- * HttpRequestResult result = executor.execute(request);
+ * HttpRequestResult result = executor.execute(config, params);
  *
- * // With retry mechanism
- * HttpRetryConfiguration retryConfig = HttpRetryConfiguration.defaultRetry();
+ * // Direct execution with retry
+ * HttpRequest request = HttpRequest.newBuilder().uri(uri).GET().build();
  * HttpRequestResult result = executor.executeWithRetry(request, retryConfig);
  *
- * // With OAuth and retry
- * OAuthAuthorizationConfiguration oauthConfig = // ... configure OAuth
+ * // OAuth + Retry
  * HttpRequestResult result = executor.executeWithRetry(request, oauthConfig, retryConfig);
  * }</pre>
  *
- * @see HttpRequestExecutionConfigInterface
- * @see HttpRetryConfiguration
+ * <p><strong>Thread-safe</strong>: Can be shared across multiple threads.
+ *
+ * @see HttpRetryStrategy
+ * @see HttpResponseResolver
+ * @see HttpRequestBuilder
  * @see OAuthAuthorizationConfiguration
- * @see IdempotencyKeyManager
  */
 public class HttpRequestExecutor {
 
   HttpClient httpClient;
   OAuthAuthorizationResolvers oAuthAuthorizationResolvers;
-  JsonConverter jsonConverter;
-  IdempotencyKeyManager idempotencyKeyManager;
+  HttpRequestBuilder requestBuilder;
+  HttpRetryStrategy retryStrategy;
   LoggerWrapper log = LoggerWrapper.getLogger(HttpRequestExecutor.class);
 
   /**
    * Creates a new HttpRequestExecutor with default JSON converter.
-   *
-   * <p>Uses snake_case JSON conversion strategy and initializes idempotency management.
    *
    * @param httpClient the HTTP client for executing requests
    * @param oAuthAuthorizationResolvers OAuth resolvers for token resolution
@@ -140,15 +80,12 @@ public class HttpRequestExecutor {
       HttpClient httpClient, OAuthAuthorizationResolvers oAuthAuthorizationResolvers) {
     this.httpClient = httpClient;
     this.oAuthAuthorizationResolvers = oAuthAuthorizationResolvers;
-    this.jsonConverter = JsonConverter.snakeCaseInstance();
-    this.idempotencyKeyManager = new IdempotencyKeyManager();
+    this.requestBuilder = new HttpRequestBuilder(oAuthAuthorizationResolvers);
+    this.retryStrategy = new HttpRetryStrategy();
   }
 
   /**
    * Creates a new HttpRequestExecutor with custom JSON converter.
-   *
-   * <p>Allows customization of JSON serialization strategy while maintaining OAuth and idempotency
-   * capabilities.
    *
    * @param httpClient the HTTP client for executing requests
    * @param oAuthAuthorizationResolvers OAuth resolvers for token resolution
@@ -160,63 +97,26 @@ public class HttpRequestExecutor {
       JsonConverter jsonConverter) {
     this.httpClient = httpClient;
     this.oAuthAuthorizationResolvers = oAuthAuthorizationResolvers;
-    this.jsonConverter = jsonConverter;
-    this.idempotencyKeyManager = new IdempotencyKeyManager();
+    this.requestBuilder = new HttpRequestBuilder(oAuthAuthorizationResolvers, jsonConverter);
+    this.retryStrategy = new HttpRetryStrategy();
   }
 
   /**
-   * Executes an HTTP request based on configuration and request parameters.
+   * Executes HTTP request based on configuration with dynamic parameter mapping.
    *
-   * <p>This method provides configuration-driven HTTP request execution with support for:
+   * <p>Request building is delegated to {@link HttpRequestBuilder}.
    *
-   * <ul>
-   *   <li>Dynamic URL construction with path parameter interpolation
-   *   <li>Header mapping from request parameters
-   *   <li>Body mapping with automatic JSON serialization
-   *   <li>Multiple authentication methods (OAuth 2.0, HMAC SHA-256)
-   *   <li>Content type negotiation (JSON, form-encoded)
-   *   <li>Response success criteria evaluation based on response body content
-   * </ul>
-   *
-   * <h3>Authentication Support</h3>
-   *
-   * <ul>
-   *   <li><strong>OAuth 2.0</strong>: Automatic Bearer token resolution and injection
-   *   <li><strong>HMAC SHA-256</strong>: Request signing with configurable fields and formats
-   * </ul>
-   *
-   * <h3>HTTP Method Handling</h3>
-   *
-   * <ul>
-   *   <li><strong>GET</strong>: Query parameters from mapping rules
-   *   <li><strong>POST/PUT/DELETE</strong>: Body content with path parameters
-   * </ul>
-   *
-   * <h3>Response Success Criteria</h3>
-   *
-   * <p>If {@link HttpRequestExecutionConfigInterface#hasResponseConfigs()} returns true, the
-   * response body will be evaluated against configured criteria even for HTTP 200 responses. This
-   * enables detection of error conditions indicated in the response body rather than HTTP status
-   * code.
-   *
-   * @param configuration the HTTP request configuration defining URL, method, mapping rules, and
-   *     authentication
-   * @param httpRequestBaseParams the base parameters to map into the request
-   * @return {@link HttpRequestResult} containing the response or error details
-   * @see HttpRequestExecutionConfigInterface
-   * @see HttpRequestBaseParams
+   * @param configuration request configuration (URL, method, auth, mapping rules)
+   * @param httpRequestBaseParams parameters to map into request
+   * @return HTTP request result
    */
   public HttpRequestResult execute(
       HttpRequestExecutionConfigInterface configuration,
       HttpRequestBaseParams httpRequestBaseParams) {
 
-    // Build the HTTP request with OAuth authentication if configured
-    HttpRequest httpRequest = buildHttpRequest(configuration, httpRequestBaseParams);
-
-    // Get response success criteria if configured
+    HttpRequest httpRequest = requestBuilder.build(configuration, httpRequestBaseParams);
     HttpResponseResolveConfigs responseResolveConfigs = configuration.responseResolveConfigs();
 
-    // Execute with retry if configured, otherwise simple execution
     if (configuration.hasRetryConfiguration()) {
       return executeWithRetryAndCriteria(
           httpRequest, configuration.retryConfiguration(), responseResolveConfigs);
@@ -225,133 +125,20 @@ public class HttpRequestExecutor {
     return executeWithCriteria(httpRequest, responseResolveConfigs);
   }
 
-  private HttpRequest buildHttpRequest(
-      HttpRequestExecutionConfigInterface configuration,
-      HttpRequestBaseParams httpRequestBaseParams) {
-
-    if (configuration.httpMethod().isGet()) {
-      return buildGetRequest(configuration, httpRequestBaseParams);
-    }
-
-    HttpRequestDynamicMapper pathMapper =
-        new HttpRequestDynamicMapper(configuration.pathMappingRules(), httpRequestBaseParams);
-    Map<String, String> pathParams = pathMapper.toPathParams();
-    HttpRequestUrl interpolatedUrl = configuration.httpRequestUrl().interpolate(pathParams);
-
-    HttpRequestDynamicMapper headerMapper =
-        new HttpRequestDynamicMapper(configuration.headerMappingRules(), httpRequestBaseParams);
-    Map<String, String> headers = headerMapper.toHeaders();
-
-    HttpRequestDynamicMapper bodyMapper =
-        new HttpRequestDynamicMapper(configuration.bodyMappingRules(), httpRequestBaseParams);
-
-    Map<String, Object> requestBody = bodyMapper.toBody();
-
-    switch (configuration.httpRequestAuthType()) {
-      case OAUTH2 -> {
-        OAuthAuthorizationConfiguration oAuthAuthorizationConfig =
-            configuration.oauthAuthorization();
-        OAuthAuthorizationResolver resolver =
-            oAuthAuthorizationResolvers.get(oAuthAuthorizationConfig.type());
-        String accessToken = resolver.resolve(oAuthAuthorizationConfig);
-        headers.put("Authorization", "Bearer " + accessToken);
-      }
-      case HMAC_SHA256 -> {
-        HmacAuthenticationConfig hmacAuthenticationConfig = configuration.hmacAuthentication();
-        HttpHmacAuthorizationHeaderCreator httpHmacAuthorizationHeaderCreator =
-            new HttpHmacAuthorizationHeaderCreator(
-                hmacAuthenticationConfig.apiKey(), hmacAuthenticationConfig.secret());
-        String hmacAuthentication =
-            httpHmacAuthorizationHeaderCreator.create(
-                configuration.httpMethod().name(),
-                configuration.httpRequestUrl().value(),
-                requestBody,
-                hmacAuthenticationConfig.signingFields(),
-                hmacAuthenticationConfig.signatureFormat());
-
-        headers.put("Authorization", hmacAuthentication);
-      }
-    }
-
-    HttpRequest.Builder httpRequestBuilder =
-        HttpRequest.newBuilder()
-            .uri(URI.create(interpolatedUrl.value()))
-            .timeout(Duration.ofSeconds(configuration.requestTimeoutSeconds()));
-
-    setHeaders(httpRequestBuilder, headers);
-    setParams(httpRequestBuilder, configuration.httpMethod(), headers, requestBody);
-
-    return httpRequestBuilder.build();
-  }
-
   public HttpRequestResult get(
       HttpRequestExecutionConfigInterface configuration,
       HttpRequestBaseParams httpRequestBaseParams) {
-    HttpRequest httpRequest = buildGetRequest(configuration, httpRequestBaseParams);
+    HttpRequest httpRequest = requestBuilder.build(configuration, httpRequestBaseParams);
     return execute(httpRequest);
   }
 
-  private HttpRequest buildGetRequest(
-      HttpRequestExecutionConfigInterface configuration,
-      HttpRequestBaseParams httpRequestBaseParams) {
-
-    HttpRequestDynamicMapper pathMapper =
-        new HttpRequestDynamicMapper(configuration.pathMappingRules(), httpRequestBaseParams);
-    Map<String, String> pathParams = pathMapper.toPathParams();
-    HttpRequestUrl interpolatedUrl = configuration.httpRequestUrl().interpolate(pathParams);
-
-    HttpRequestDynamicMapper headerMapper =
-        new HttpRequestDynamicMapper(configuration.headerMappingRules(), httpRequestBaseParams);
-    Map<String, String> headers = headerMapper.toHeaders();
-    HttpRequestDynamicMapper bodyMapper =
-        new HttpRequestDynamicMapper(configuration.queryMappingRules(), httpRequestBaseParams);
-
-    Map<String, String> queryParams = bodyMapper.toQueryParams();
-
-    if (configuration.httpRequestAuthType().isOauth2()) {
-      OAuthAuthorizationConfiguration oAuthAuthorizationConfig = configuration.oauthAuthorization();
-      OAuthAuthorizationResolver resolver =
-          oAuthAuthorizationResolvers.get(oAuthAuthorizationConfig.type());
-      String accessToken = resolver.resolve(oAuthAuthorizationConfig);
-      headers.put("Authorization", "Bearer " + accessToken);
-    }
-
-    String urlWithQueryParams = interpolatedUrl.withQueryParams(new HttpQueryParams(queryParams));
-
-    HttpRequest.Builder httpRequestBuilder =
-        HttpRequest.newBuilder()
-            .uri(URI.create(urlWithQueryParams))
-            .timeout(Duration.ofSeconds(configuration.requestTimeoutSeconds()));
-
-    setHeaders(httpRequestBuilder, headers);
-    setParams(httpRequestBuilder, HttpMethod.GET, headers, Map.of());
-
-    return httpRequestBuilder.build();
-  }
-
   /**
-   * Executes a basic HTTP request without additional features.
+   * Executes HTTP request with automatic exception mapping.
    *
-   * <p>This method provides direct HTTP request execution with automatic exception mapping but no
-   * retry mechanism or OAuth authentication. Network exceptions are converted to appropriate HTTP
-   * status codes for consistent error handling.
+   * <p>Network exceptions are mapped to HTTP status codes by {@link HttpResponseResolver}.
    *
-   * <h3>Exception Handling</h3>
-   *
-   * <p>Network-level exceptions are automatically mapped to HTTP status codes:
-   *
-   * <ul>
-   *   <li>ConnectException → 503 (Service Unavailable)
-   *   <li>SocketTimeoutException → 504 (Gateway Timeout)
-   *   <li>HttpTimeoutException → 504 (Gateway Timeout)
-   *   <li>InterruptedException → 503 (Service Unavailable)
-   *   <li>IOException → 502 (Bad Gateway)
-   * </ul>
-   *
-   * @param httpRequest the HTTP request to execute
-   * @return {@link HttpRequestResult} containing the response or error details
-   * @see #executeWithOAuth(HttpRequest, OAuthAuthorizationConfiguration)
-   * @see #executeWithRetry(HttpRequest, HttpRetryConfiguration)
+   * @param httpRequest request to execute
+   * @return HTTP request result
    */
   public HttpRequestResult execute(HttpRequest httpRequest) {
     try {
@@ -374,25 +161,14 @@ public class HttpRequestExecutor {
   }
 
   /**
-   * Executes HTTP request and evaluates response against success criteria.
+   * Executes HTTP request and evaluates response against configured conditions.
    *
-   * <p>This method combines basic HTTP execution with response body evaluation. If the HTTP
-   * response is successful (status < 400) but fails to meet the configured criteria, the response
-   * is converted to an error result with status code 502 (Bad Gateway).
-   *
-   * <h3>Evaluation Logic</h3>
-   *
-   * <ol>
-   *   <li>Execute HTTP request normally
-   *   <li>If response status >= 400, return as-is (already an error)
-   *   <li>If response status < 400 and criteria provided, evaluate response body
-   *   <li>If criteria not met, convert to 502 error with original response preserved
-   * </ol>
+   * <p>Response is evaluated by {@link HttpResponseResolver} to map status codes based on response
+   * content.
    *
    * @param httpRequest the HTTP request to execute
-   * @param resolveConfigs response success criteria to evaluate, null to skip evaluation
-   * @return {@link HttpRequestResult} with appropriate status code based on criteria evaluation
-   * @see #execute(HttpRequest)
+   * @param resolveConfigs response resolution configurations, null to skip evaluation
+   * @return HTTP request result with resolved status code
    */
   private HttpRequestResult executeWithCriteria(
       HttpRequest httpRequest, HttpResponseResolveConfigs resolveConfigs) {
@@ -414,32 +190,13 @@ public class HttpRequestExecutor {
   }
 
   /**
-   * Executes an HTTP request with OAuth 2.0 authentication.
+   * Executes HTTP request with OAuth 2.0 Bearer token authentication.
    *
-   * <p>This method adds OAuth Bearer token authentication to HTTP requests by resolving access
-   * tokens through the configured OAuth authorization resolvers. If the OAuth configuration is
-   * null, the request is executed without authentication.
-   *
-   * <h3>OAuth Process</h3>
-   *
-   * <ol>
-   *   <li>Resolve access token using configured {@link OAuthAuthorizationResolver}
-   *   <li>Add Authorization header with "Bearer {token}" format
-   *   <li>Copy all existing headers from the original request
-   *   <li>Execute the enhanced request with OAuth authentication
-   * </ol>
-   *
-   * <h3>Token Resolution</h3>
-   *
-   * <p>Access tokens are resolved based on the OAuth configuration type, supporting multiple OAuth
-   * flows and token sources through the resolver registry.
+   * <p>Resolves access token via {@link OAuthAuthorizationResolver} and adds Authorization header.
    *
    * @param httpRequest the HTTP request to execute
-   * @param oAuthConfig OAuth configuration for token resolution, null for no authentication
-   * @return {@link HttpRequestResult} containing the response or error details
-   * @see OAuthAuthorizationConfiguration
-   * @see OAuthAuthorizationResolver
-   * @see #execute(HttpRequest)
+   * @param oAuthConfig OAuth configuration for token resolution, null to skip authentication
+   * @return HTTP request result
    */
   public HttpRequestResult executeWithOAuth(
       HttpRequest httpRequest, OAuthAuthorizationConfiguration oAuthConfig) {
@@ -476,558 +233,58 @@ public class HttpRequestExecutor {
   }
 
   /**
-   * Executes HTTP request with retry mechanism and response success criteria evaluation.
-   *
-   * <p>This method combines retry logic with response body evaluation. After each successful
-   * response (status < 400), the response is evaluated against the provided criteria. If criteria
-   * are not met, the response is treated as a failure for retry purposes.
+   * Executes HTTP request with retry and response condition evaluation.
    *
    * @param httpRequest the HTTP request to execute
    * @param retryConfig retry configuration
-   * @param resolveConfigs response success criteria to evaluate, null to skip evaluation
-   * @return {@link HttpRequestResult} containing the response or error details
-   * @see #executeWithRetry(HttpRequest, HttpRetryConfiguration)
+   * @param resolveConfigs response resolution configurations, null to skip evaluation
+   * @return HTTP request result with retry applied
    */
   private HttpRequestResult executeWithRetryAndCriteria(
       HttpRequest httpRequest,
       HttpRetryConfiguration retryConfig,
       HttpResponseResolveConfigs resolveConfigs) {
 
-    String correlationId = generateCorrelationId();
-    String idempotencyKey = null;
-
-    log.info(
-        "Starting HTTP request with retry and criteria: method={}, uri={}, maxRetries={},"
-            + " hasCriteria={}, correlationId={}",
-        httpRequest.method(),
-        httpRequest.uri(),
-        retryConfig.maxRetries(),
-        (resolveConfigs != null && !resolveConfigs.configs().isEmpty()),
-        correlationId);
-
-    for (int attempt = 0; attempt <= retryConfig.maxRetries(); attempt++) {
-      try {
-        // Idempotency Key management
-        HttpRequest enhancedRequest = httpRequest;
-        if (retryConfig.idempotencyRequired()) {
-          if (idempotencyKey == null) {
-            idempotencyKey = idempotencyKeyManager.generateKey(httpRequest);
-          }
-          enhancedRequest = idempotencyKeyManager.addIdempotencyKey(httpRequest, idempotencyKey);
-        }
-
-        // Execute with criteria evaluation
-        HttpRequestResult result = executeWithCriteria(enhancedRequest, resolveConfigs);
-
-        // Success case
-        if (result.isSuccess()) {
-          if (attempt > 0) {
-            log.info(
-                "HTTP request succeeded after retry: method={}, uri={}, attempt={}/{},"
-                    + " statusCode={}, correlationId={}",
-                httpRequest.method(),
-                httpRequest.uri(),
-                attempt + 1,
-                retryConfig.maxRetries() + 1,
-                result.statusCode(),
-                correlationId);
-          } else {
-            log.info(
-                "HTTP request succeeded: method={}, uri={}, statusCode={}, correlationId={}",
-                httpRequest.method(),
-                httpRequest.uri(),
-                result.statusCode(),
-                correlationId);
-          }
-          return result;
-        }
-
-        // Retry judgment
-        if (!isRetryableResult(result, retryConfig)) {
-          log.warn(
-              "HTTP request failed with non-retryable error: uri={}, statusCode={}, attempt={},"
-                  + " correlationId={}",
-              httpRequest.uri(),
-              result.statusCode(),
-              attempt + 1,
-              correlationId);
-          return result;
-        }
-
-        // Max retries check
-        if (attempt == retryConfig.maxRetries()) {
-          log.error(
-              "HTTP request failed after max retries: uri={}, maxRetries={}, finalStatusCode={},"
-                  + " correlationId={}",
-              httpRequest.uri(),
-              retryConfig.maxRetries(),
-              result.statusCode(),
-              correlationId);
-          return createMaxRetriesExceededResult(result, retryConfig);
-        }
-
-        // Wait before retry - check for server-specified delay first
-        Duration delay = calculateRetryDelay(attempt, result, retryConfig);
-        log.warn(
-            "HTTP request failed, retrying: uri={}, attempt={}, statusCode={}, nextDelay={},"
-                + " correlationId={}",
-            httpRequest.uri(),
-            attempt + 1,
-            result.statusCode(),
-            delay,
-            correlationId);
-
-        if (!waitBeforeRetry(delay)) {
-          log.error(
-              "HTTP request retry interrupted: uri={}, attempt={}, correlationId={}",
-              httpRequest.uri(),
-              attempt + 1,
-              correlationId);
-          return createInterruptedResult();
-        }
-      } catch (Exception e) {
-        log.error(
-            "Unexpected exception in retry loop: uri={}, attempt={}, correlationId={}",
-            httpRequest.uri(),
-            attempt + 1,
-            correlationId,
-            e);
-        return HttpResponseResolver.resolveException(e, "unexpected_exception");
-      }
-    }
-
-    // This should never be reached, but just in case
-    return createUnexpectedTerminationResult();
+    return retryStrategy.executeWithRetry(
+        httpRequest, retryConfig, req -> executeWithCriteria(req, resolveConfigs));
   }
 
   /**
-   * Executes an HTTP request with retry mechanism based on the provided configuration.
+   * Executes HTTP request with retry mechanism (delegated to {@link HttpRetryStrategy}).
    *
-   * <p>This method implements exponential backoff retry strategy for handling transient network
-   * failures and server errors. Network exceptions are automatically mapped to appropriate HTTP
-   * status codes for consistent retry behavior.
-   *
-   * <h3>Exception Mapping</h3>
-   *
-   * <ul>
-   *   <li>{@code IOException} → 502 (Bad Gateway)
-   *   <li>{@code ConnectException} → 503 (Service Unavailable)
-   *   <li>{@code SocketTimeoutException} → 504 (Gateway Timeout)
-   *   <li>{@code HttpTimeoutException} → 504 (Gateway Timeout)
-   *   <li>{@code InterruptedException} → 503 (Service Unavailable)
-   * </ul>
-   *
-   * <h3>Retry Behavior</h3>
-   *
-   * <ul>
-   *   <li>Retries are performed for status codes defined in {@link
-   *       HttpRetryConfiguration#retryableStatusCodes()}
-   *   <li>Default retryable status codes: 408, 429, 500, 502, 503, 504
-   *   <li>Exponential backoff delays (default: 1s → 5s → 30s)
-   *   <li>Maximum of 3 retries by default
-   * </ul>
-   *
-   * <h3>Correlation Tracking</h3>
-   *
-   * Each retry attempt is tracked with a unique correlation ID for debugging and monitoring
-   * purposes.
+   * <p>Supports exponential backoff, idempotency keys, and Retry-After header parsing.
    *
    * @param httpRequest the HTTP request to execute
-   * @param retryConfig the retry configuration specifying max retries, backoff delays, and
-   *     retryable conditions
-   * @return {@link HttpRequestResult} containing the response or error details
-   * @see HttpRetryConfiguration
-   * @see #executeWithRetry(HttpRequest, OAuthAuthorizationConfiguration, HttpRetryConfiguration)
+   * @param retryConfig retry configuration
+   * @return HTTP request result with retry applied
+   * @see HttpRetryStrategy
    */
   public HttpRequestResult executeWithRetry(
       HttpRequest httpRequest, HttpRetryConfiguration retryConfig) {
-    return executeWithRetry(httpRequest, null, retryConfig);
+    return retryStrategy.executeWithRetry(httpRequest, retryConfig, this::execute);
   }
 
   /**
-   * Executes an HTTP request with OAuth authentication and retry mechanism.
+   * Executes HTTP request with OAuth authentication and retry mechanism.
    *
-   * <p>This method combines OAuth authorization with the retry functionality, automatically adding
-   * OAuth Bearer tokens to requests before applying the retry strategy. If OAuth configuration is
-   * null, the request is executed without authentication.
-   *
-   * <h3>OAuth Integration</h3>
-   *
-   * <ul>
-   *   <li>Automatically resolves OAuth access tokens using configured {@link
-   *       OAuthAuthorizationResolver}
-   *   <li>Adds Authorization header with Bearer token format
-   *   <li>OAuth authentication is applied before each retry attempt
-   * </ul>
-   *
-   * <h3>Idempotency Support</h3>
-   *
-   * When {@link HttpRetryConfiguration#idempotencyRequired()} is true:
-   *
-   * <ul>
-   *   <li>Generates unique Idempotency-Key header for duplicate request prevention
-   *   <li>Same idempotency key is used across all retry attempts
-   *   <li>Key format: "idem_{requestHash}_{uuid8}"
-   * </ul>
+   * <p>Combines OAuth Bearer token authentication with retry logic (delegated to {@link
+   * HttpRetryStrategy}).
    *
    * @param httpRequest the HTTP request to execute
-   * @param oAuthConfig OAuth configuration for token resolution, null for no authentication
-   * @param retryConfig retry configuration specifying max retries, backoff delays, and retryable
-   *     conditions
-   * @return {@link HttpRequestResult} containing the response or error details
-   * @see OAuthAuthorizationConfiguration
-   * @see IdempotencyKeyManager
-   * @see #executeWithRetry(HttpRequest, HttpRetryConfiguration)
+   * @param oAuthConfig OAuth configuration for token resolution, null to skip authentication
+   * @param retryConfig retry configuration
+   * @return HTTP request result with OAuth and retry applied
    */
   public HttpRequestResult executeWithRetry(
       HttpRequest httpRequest,
       OAuthAuthorizationConfiguration oAuthConfig,
       HttpRetryConfiguration retryConfig) {
 
-    String correlationId = generateCorrelationId();
-    String idempotencyKey = null;
-
-    log.info(
-        "Starting HTTP request with retry: method={}, uri={}, maxRetries={}, idempotencyRequired={}, correlationId={}",
-        httpRequest.method(),
-        httpRequest.uri(),
-        retryConfig.maxRetries(),
-        retryConfig.idempotencyRequired(),
-        correlationId);
-
-    for (int attempt = 0; attempt <= retryConfig.maxRetries(); attempt++) {
-      try {
-        // Idempotency Key management
-        HttpRequest enhancedRequest = httpRequest;
-        if (retryConfig.idempotencyRequired()) {
-          if (idempotencyKey == null) {
-            idempotencyKey = idempotencyKeyManager.generateKey(httpRequest);
-          }
-          enhancedRequest = idempotencyKeyManager.addIdempotencyKey(httpRequest, idempotencyKey);
-        }
-
-        // Apply OAuth authentication if needed
-        HttpRequestResult result =
-            (oAuthConfig != null)
-                ? executeWithOAuth(enhancedRequest, oAuthConfig)
-                : execute(enhancedRequest);
-
-        // Success case
-        if (result.isSuccess()) {
-          if (attempt > 0) {
-            log.info(
-                "HTTP request succeeded after retry: method={}, uri={}, attempt={}/{}, statusCode={}, correlationId={}",
-                httpRequest.method(),
-                httpRequest.uri(),
-                attempt + 1,
-                retryConfig.maxRetries() + 1,
-                result.statusCode(),
-                correlationId);
-          } else {
-            log.info(
-                "HTTP request succeeded: method={}, uri={}, statusCode={}, correlationId={}",
-                httpRequest.method(),
-                httpRequest.uri(),
-                result.statusCode(),
-                correlationId);
-          }
-          return result;
-        }
-
-        // Retry judgment
-        if (!isRetryableResult(result, retryConfig)) {
-          log.warn(
-              "HTTP request failed with non-retryable error: uri={}, statusCode={}, attempt={}, correlationId={}",
-              httpRequest.uri(),
-              result.statusCode(),
-              attempt + 1,
-              correlationId);
-          return result;
-        }
-
-        // Max retries check
-        if (attempt == retryConfig.maxRetries()) {
-          log.error(
-              "HTTP request failed after max retries: uri={}, maxRetries={}, finalStatusCode={}, correlationId={}",
-              httpRequest.uri(),
-              retryConfig.maxRetries(),
-              result.statusCode(),
-              correlationId);
-          return createMaxRetriesExceededResult(result, retryConfig);
-        }
-
-        // Wait before retry - check for server-specified delay first
-        Duration delay = calculateRetryDelay(attempt, result, retryConfig);
-        log.warn(
-            "HTTP request failed, retrying: uri={}, attempt={}, statusCode={}, nextDelay={}, correlationId={}",
-            httpRequest.uri(),
-            attempt + 1,
-            result.statusCode(),
-            delay,
-            correlationId);
-
-        if (!waitBeforeRetry(delay)) {
-          log.error(
-              "HTTP request retry interrupted: uri={}, attempt={}, correlationId={}",
-              httpRequest.uri(),
-              attempt + 1,
-              correlationId);
-          return createInterruptedResult();
-        }
-      } catch (Exception e) {
-        log.error(
-            "Unexpected exception in retry loop: uri={}, attempt={}, correlationId={}",
-            httpRequest.uri(),
-            attempt + 1,
-            correlationId,
-            e);
-        return HttpResponseResolver.resolveException(e, "unexpected_exception");
-      }
+    if (oAuthConfig == null) {
+      return retryStrategy.executeWithRetry(httpRequest, retryConfig, this::execute);
     }
 
-    // This should never be reached, but just in case
-    return createUnexpectedTerminationResult();
-  }
-
-  private boolean isRetryableResult(HttpRequestResult result, HttpRetryConfiguration config) {
-    // Check if status code is explicitly configured as retryable
-    if (!config.retryableStatusCodes().contains(result.statusCode())) {
-      return false;
-    }
-
-    // Special handling for 499 status code - check response body for retryable flag
-    if (result.statusCode() == 499) {
-      return isRetryable499Response(result);
-    }
-
-    return true;
-  }
-
-  /**
-   * Determines if a 499 response should be retried based on the response body.
-   *
-   * <p>For 499 (Client Closed Request) responses, the retryability is determined by checking the
-   * "retryable" field in the JSON response body. If the response is not valid JSON or the field is
-   * missing, the response is considered non-retryable by default.
-   *
-   * @param result the HTTP response result with status code 499
-   * @return true if the response indicates it's retryable, false otherwise
-   */
-  private boolean isRetryable499Response(HttpRequestResult result) {
-    try {
-      JsonNodeWrapper body = result.body();
-      if (body == null || !body.exists()) {
-        log.debug("499 response has no body, treating as non-retryable");
-        return false;
-      }
-
-      if (!body.contains("retryable")) {
-        log.debug("499 response missing 'retryable' field, treating as non-retryable");
-        return false;
-      }
-
-      boolean retryable = body.getValueAsBoolean("retryable");
-      log.debug("499 response retryable flag: {}", retryable);
-      return retryable;
-
-    } catch (Exception e) {
-      log.debug(
-          "Failed to parse 499 response body as JSON, treating as non-retryable: {}",
-          e.getMessage());
-      return false;
-    }
-  }
-
-  /**
-   * Calculates the retry delay, considering server-specified Retry-After header if present.
-   *
-   * <p>This method implements the HTTP standard by respecting the Retry-After header when present
-   * in the response. If no Retry-After header is found, it falls back to the configured exponential
-   * backoff strategy.
-   *
-   * @param attempt the current retry attempt number
-   * @param result the HTTP response result that may contain Retry-After header
-   * @param config the retry configuration with default backoff delays
-   * @return the calculated delay duration
-   */
-  private Duration calculateRetryDelay(
-      int attempt, HttpRequestResult result, HttpRetryConfiguration config) {
-    // Check for Retry-After header first
-    Duration serverSpecifiedDelay = parseRetryAfterHeader(result);
-    if (serverSpecifiedDelay != null) {
-      log.debug("Using server-specified Retry-After delay: {}", serverSpecifiedDelay);
-      return serverSpecifiedDelay;
-    }
-
-    // Fall back to configured backoff strategy
-    return calculateBackoffDelay(attempt, config);
-  }
-
-  /**
-   * Parses the Retry-After header from HTTP response.
-   *
-   * <p>Supports both delay-seconds format (integer) and HTTP-date format as per RFC 7231.
-   *
-   * @param result the HTTP response result
-   * @return the parsed delay duration, or null if no valid Retry-After header found
-   */
-  private Duration parseRetryAfterHeader(HttpRequestResult result) {
-    Map<String, List<String>> headers = result.headers();
-    if (headers == null) {
-      return null;
-    }
-
-    // Look for Retry-After header (case-insensitive)
-    List<String> retryAfterValues = null;
-    for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
-      if ("retry-after".equalsIgnoreCase(entry.getKey())) {
-        retryAfterValues = entry.getValue();
-        break;
-      }
-    }
-
-    if (retryAfterValues == null || retryAfterValues.isEmpty()) {
-      return null;
-    }
-
-    String retryAfterValue = retryAfterValues.getFirst().trim();
-
-    try {
-      // Try parsing as delay-seconds (integer)
-      int delaySeconds = Integer.parseInt(retryAfterValue);
-      if (delaySeconds >= 0) {
-        return Duration.ofSeconds(delaySeconds);
-      }
-    } catch (NumberFormatException e) {
-      // If not a number, could be HTTP-date format
-      // For simplicity, we'll log and ignore HTTP-date format for now
-      log.debug("Retry-After header contains HTTP-date format, not supported: {}", retryAfterValue);
-    }
-
-    return null;
-  }
-
-  private Duration calculateBackoffDelay(int attempt, HttpRetryConfiguration config) {
-    Duration[] delays = config.backoffDelays();
-    if (attempt < delays.length) {
-      return delays[attempt];
-    }
-
-    // If attempt exceeds configured delays, use the last delay
-    return delays[delays.length - 1];
-  }
-
-  private boolean waitBeforeRetry(Duration delay) {
-    try {
-      Thread.sleep(delay.toMillis());
-      return true;
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      log.warn("Retry wait interrupted: {}", e.getMessage());
-      return false;
-    }
-  }
-
-  private HttpRequestResult createMaxRetriesExceededResult(
-      HttpRequestResult lastResult, HttpRetryConfiguration config) {
-
-    Map<String, Object> errorBody = new HashMap<>();
-    errorBody.put("error", "max_retries_exceeded");
-    errorBody.put(
-        "error_description", String.format("Request failed after %d retries", config.maxRetries()));
-    errorBody.put("max_retries", config.maxRetries());
-    errorBody.put("final_status_code", lastResult.statusCode());
-    errorBody.put("retryable", false);
-
-    // Add enhanced context information
-    Map<String, Object> context = new HashMap<>();
-    context.put("retry_strategy", config.strategy());
-    context.put("total_attempts", config.maxRetries() + 1);
-    context.put("backoff_delays", config.backoffDelays());
-    context.put("retryable_status_codes", config.retryableStatusCodes());
-    errorBody.put("retry_context", context);
-
-    return new HttpRequestResult(
-        lastResult.statusCode(), lastResult.headers(), JsonNodeWrapper.fromObject(errorBody));
-  }
-
-  private HttpRequestResult createUnexpectedTerminationResult() {
-    Map<String, Object> errorBody = new HashMap<>();
-    errorBody.put("error", "unexpected_retry_termination");
-    errorBody.put("error_description", "Retry loop terminated unexpectedly");
-    errorBody.put("retryable", false);
-
-    return new HttpRequestResult(499, Map.of(), JsonNodeWrapper.fromObject(errorBody));
-  }
-
-  private HttpRequestResult createInterruptedResult() {
-    Map<String, Object> errorBody = new HashMap<>();
-    errorBody.put("error", "retry_interrupted");
-    errorBody.put("error_description", "Retry wait was interrupted");
-    errorBody.put("retryable", false);
-
-    return new HttpRequestResult(499, Map.of(), JsonNodeWrapper.fromObject(errorBody));
-  }
-
-  private String generateCorrelationId() {
-    return "req_" + UUID.randomUUID().toString().substring(0, 8);
-  }
-
-  private void setHeaders(
-      HttpRequest.Builder httpRequestBuilder, Map<String, String> httpRequestStaticHeaders) {
-
-    log.debug("Http Request headers: {}", jsonConverter.write(httpRequestStaticHeaders));
-
-    httpRequestStaticHeaders.forEach(httpRequestBuilder::header);
-    if (!httpRequestStaticHeaders.containsKey("Content-Type")) {
-      httpRequestBuilder.setHeader("Content-Type", "application/json");
-    }
-  }
-
-  private void setParams(
-      HttpRequest.Builder builder,
-      HttpMethod httpMethod,
-      Map<String, String> headers,
-      Map<String, Object> requestBody) {
-
-    switch (httpMethod) {
-      case GET:
-        builder.GET();
-        break;
-      case POST:
-        {
-          log.debug("Http Request body: {}", jsonConverter.write(requestBody));
-          if ("application/x-www-form-urlencoded".equals(headers.get("Content-Type"))) {
-            HttpQueryParams httpQueryParams = HttpQueryParams.fromMapObject(requestBody);
-            builder.POST(HttpRequest.BodyPublishers.ofString(httpQueryParams.params()));
-          } else {
-            builder.POST(HttpRequest.BodyPublishers.ofString(jsonConverter.write(requestBody)));
-          }
-          break;
-        }
-      case PUT:
-        {
-          log.debug("Http Request body: {}", jsonConverter.write(requestBody));
-          if ("application/x-www-form-urlencoded".equals(headers.get("Content-Type"))) {
-            HttpQueryParams httpQueryParams = HttpQueryParams.fromMapObject(requestBody);
-            builder.PUT(HttpRequest.BodyPublishers.ofString(httpQueryParams.params()));
-          } else {
-            builder.PUT(HttpRequest.BodyPublishers.ofString(jsonConverter.write(requestBody)));
-          }
-          break;
-        }
-      case DELETE:
-        {
-          log.debug("Http Request body: {}", jsonConverter.write(requestBody));
-          if ("application/x-www-form-urlencoded".equals(headers.get("Content-Type"))) {
-            HttpQueryParams httpQueryParams = HttpQueryParams.fromMapObject(requestBody);
-            builder.method("DELETE", HttpRequest.BodyPublishers.ofString(httpQueryParams.params()));
-          } else {
-            builder.method(
-                "DELETE", HttpRequest.BodyPublishers.ofString(jsonConverter.write(requestBody)));
-          }
-          break;
-        }
-    }
+    return retryStrategy.executeWithRetry(
+        httpRequest, retryConfig, req -> executeWithOAuth(req, oAuthConfig));
   }
 }
