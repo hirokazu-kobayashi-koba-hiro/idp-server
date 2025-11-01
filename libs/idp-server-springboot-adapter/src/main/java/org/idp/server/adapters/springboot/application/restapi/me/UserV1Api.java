@@ -110,10 +110,12 @@ public class UserV1Api implements ParameterTransformable {
     OAuthToken oAuthToken = resourceOwnerPrincipal.getOAuthToken();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    userOperationApi.delete(tenantIdentifier, user, oAuthToken, requestAttributes);
+    UserOperationResponse response =
+        userOperationApi.delete(tenantIdentifier, user, oAuthToken, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
-    return new ResponseEntity<>(Map.of(), httpHeaders, HttpStatus.valueOf(204));
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 }
