@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.UUID;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
-import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolver;
@@ -195,10 +194,10 @@ public class HttpRequestExecutor {
    *
    * <h3>Response Success Criteria</h3>
    *
-   * <p>If {@link HttpRequestExecutionConfigInterface#hasResponseSuccessCriteria()} returns true,
-   * the response body will be evaluated against configured criteria even for HTTP 200 responses.
-   * This enables detection of error conditions indicated in the response body rather than HTTP
-   * status code.
+   * <p>If {@link HttpRequestExecutionConfigInterface#hasResponseConfigs()} returns true, the
+   * response body will be evaluated against configured criteria even for HTTP 200 responses. This
+   * enables detection of error conditions indicated in the response body rather than HTTP status
+   * code.
    *
    * @param configuration the HTTP request configuration defining URL, method, mapping rules, and
    *     authentication
@@ -206,7 +205,6 @@ public class HttpRequestExecutor {
    * @return {@link HttpRequestResult} containing the response or error details
    * @see HttpRequestExecutionConfigInterface
    * @see HttpRequestBaseParams
-   * @see ResponseSuccessCriteria
    */
   public HttpRequestResult execute(
       HttpRequestExecutionConfigInterface configuration,
@@ -216,14 +214,15 @@ public class HttpRequestExecutor {
     HttpRequest httpRequest = buildHttpRequest(configuration, httpRequestBaseParams);
 
     // Get response success criteria if configured
-    ResponseSuccessCriteria criteria = configuration.responseSuccessCriteria();
+    HttpResponseResolveConfigs responseResolveConfigs = configuration.responseResolveConfigs();
 
     // Execute with retry if configured, otherwise simple execution
     if (configuration.hasRetryConfiguration()) {
-      return executeWithRetryAndCriteria(httpRequest, configuration.retryConfiguration(), criteria);
-    } else {
-      return executeWithCriteria(httpRequest, criteria);
+      return executeWithRetryAndCriteria(
+          httpRequest, configuration.retryConfiguration(), responseResolveConfigs);
     }
+
+    return executeWithCriteria(httpRequest, responseResolveConfigs);
   }
 
   private HttpRequest buildHttpRequest(
@@ -364,13 +363,13 @@ public class HttpRequestExecutor {
       log.debug("Http Response status: {}", httpResponse.statusCode());
       log.debug("Http Response body: {}", httpResponse.body());
 
-      JsonNodeWrapper jsonResponse = resolveResponseBody(httpResponse);
+      JsonNodeWrapper jsonResponse = HttpResponseResolver.resolveResponseBody(httpResponse);
 
       return new HttpRequestResult(
           httpResponse.statusCode(), httpResponse.headers().map(), jsonResponse);
     } catch (IOException | InterruptedException e) {
       log.warn("Http request was error: {}", e.getMessage(), e);
-      return createExceptionResult(e);
+      return HttpResponseResolver.resolveException(e);
     }
   }
 
@@ -391,13 +390,12 @@ public class HttpRequestExecutor {
    * </ol>
    *
    * @param httpRequest the HTTP request to execute
-   * @param criteria response success criteria to evaluate, null to skip evaluation
+   * @param resolveConfigs response success criteria to evaluate, null to skip evaluation
    * @return {@link HttpRequestResult} with appropriate status code based on criteria evaluation
-   * @see ResponseSuccessCriteria
    * @see #execute(HttpRequest)
    */
   private HttpRequestResult executeWithCriteria(
-      HttpRequest httpRequest, ResponseSuccessCriteria criteria) {
+      HttpRequest httpRequest, HttpResponseResolveConfigs resolveConfigs) {
 
     try {
       log.info("Http Request: {} {}", httpRequest.uri(), httpRequest.method());
@@ -408,152 +406,10 @@ public class HttpRequestExecutor {
       log.debug("Http Response status: {}", httpResponse.statusCode());
       log.debug("Http Response body: {}", httpResponse.body());
 
-      JsonNodeWrapper jsonResponse = resolveResponseBody(httpResponse);
-
-      // Only evaluate criteria for successful HTTP responses (< 400)
-      // Error responses (>= 400) are returned as-is
-      if (httpResponse.statusCode() >= 400 || criteria == null || !criteria.exists()) {
-        return new HttpRequestResult(
-            httpResponse.statusCode(), httpResponse.headers().map(), jsonResponse);
-      }
-
-      // Evaluate response body against success criteria
-      String json = jsonResponse.toJson();
-      JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(json);
-      boolean evaluateResult = criteria.evaluate(jsonPathWrapper);
-
-      if (evaluateResult) {
-        return new HttpRequestResult(
-            httpResponse.statusCode(), httpResponse.headers().map(), jsonResponse);
-      }
-
-      // Criteria failed - return configured error status code with original response body
-      return new HttpRequestResult(
-          criteria.errorStatusCode(), httpResponse.headers().map(), jsonResponse);
+      return HttpResponseResolver.resolve(httpResponse, resolveConfigs);
     } catch (IOException | InterruptedException e) {
       log.warn("Http request was error: {}", e.getMessage(), e);
-      return createExceptionResult(e);
-    }
-  }
-
-  /**
-   * Creates an HttpRequestResult from a network exception with appropriate status code mapping.
-   *
-   * <p>This method converts network-level exceptions into HTTP response objects with semantically
-   * appropriate status codes for consistent error handling and retry logic.
-   *
-   * @param e the exception that occurred during HTTP request execution
-   * @return HttpRequestResult with mapped status code and error details
-   */
-  private HttpRequestResult createExceptionResult(Exception e) {
-    int statusCode = mapExceptionToStatusCode(e);
-
-    Map<String, Object> message = new HashMap<>();
-    message.put("error", "network_error");
-    message.put("error_description", e.getMessage());
-    message.put("exception_type", e.getClass().getSimpleName());
-
-    // Add machine-readable retry information
-    Map<String, Object> retryInfo = new HashMap<>();
-    retryInfo.put("retryable", isRetryableExceptionType(e));
-    retryInfo.put("reason", getRetryableReason(e));
-    retryInfo.put("category", getExceptionCategory(e));
-    message.put("retry_info", retryInfo);
-
-    return new HttpRequestResult(statusCode, Map.of(), JsonNodeWrapper.fromObject(message));
-  }
-
-  /**
-   * Determines if an exception type is generally considered retryable.
-   *
-   * @param e the exception to evaluate
-   * @return true if the exception type is typically retryable
-   */
-  private boolean isRetryableExceptionType(Exception e) {
-    return e instanceof java.net.ConnectException
-        || e instanceof java.net.SocketTimeoutException
-        || e instanceof java.net.http.HttpTimeoutException
-        || e instanceof InterruptedException
-        || e instanceof IOException;
-  }
-
-  /**
-   * Gets a machine-readable reason for why an exception is or isn't retryable.
-   *
-   * @param e the exception to categorize
-   * @return a string describing the retry reason
-   */
-  private String getRetryableReason(Exception e) {
-    if (e instanceof java.net.ConnectException) {
-      return "connection_failed";
-    } else if (e instanceof java.net.SocketTimeoutException) {
-      return "socket_timeout";
-    } else if (e instanceof java.net.http.HttpTimeoutException) {
-      return "http_timeout";
-    } else if (e instanceof InterruptedException) {
-      return "thread_interrupted";
-    } else if (e instanceof IOException) {
-      return "io_error";
-    } else {
-      return "unknown_error";
-    }
-  }
-
-  /**
-   * Categorizes an exception into a broad category for retry decision making.
-   *
-   * @param e the exception to categorize
-   * @return a string representing the exception category
-   */
-  private String getExceptionCategory(Exception e) {
-    if (e instanceof java.net.ConnectException) {
-      return "network_connectivity";
-    } else if (e instanceof java.net.SocketTimeoutException
-        || e instanceof java.net.http.HttpTimeoutException) {
-      return "timeout";
-    } else if (e instanceof InterruptedException) {
-      return "interruption";
-    } else if (e instanceof IOException) {
-      return "io_failure";
-    } else {
-      return "unexpected";
-    }
-  }
-
-  /**
-   * Maps network exceptions to appropriate HTTP status codes for consistent error classification.
-   *
-   * <p>This mapping enables proper retry behavior by converting network-level failures into HTTP
-   * status codes that can be evaluated against retry configuration.
-   *
-   * <h3>Exception Mapping</h3>
-   *
-   * <ul>
-   *   <li>{@link java.net.ConnectException} → 503 (Service Unavailable) - Cannot establish
-   *       connection
-   *   <li>{@link java.net.SocketTimeoutException} → 504 (Gateway Timeout) - Network timeout
-   *   <li>{@link java.net.http.HttpTimeoutException} → 504 (Gateway Timeout) - HTTP client timeout
-   *   <li>{@link InterruptedException} → 503 (Service Unavailable) - Thread interruption
-   *   <li>{@link IOException} → 502 (Bad Gateway) - General I/O failure
-   *   <li>Other exceptions → 500 (Internal Server Error) - Fallback for unexpected errors
-   * </ul>
-   *
-   * @param e the exception to map
-   * @return HTTP status code representing the exception type
-   */
-  private int mapExceptionToStatusCode(Exception e) {
-    if (e instanceof java.net.ConnectException) {
-      return 503; // Service Unavailable
-    } else if (e instanceof java.net.SocketTimeoutException) {
-      return 504; // Gateway Timeout
-    } else if (e instanceof java.net.http.HttpTimeoutException) {
-      return 504; // Gateway Timeout
-    } else if (e instanceof InterruptedException) {
-      return 503; // Service Unavailable
-    } else if (e instanceof IOException) {
-      return 502; // Bad Gateway
-    } else {
-      return 500; // Internal Server Error
+      return HttpResponseResolver.resolveException(e);
     }
   }
 
@@ -628,15 +484,14 @@ public class HttpRequestExecutor {
    *
    * @param httpRequest the HTTP request to execute
    * @param retryConfig retry configuration
-   * @param criteria response success criteria to evaluate, null to skip evaluation
+   * @param resolveConfigs response success criteria to evaluate, null to skip evaluation
    * @return {@link HttpRequestResult} containing the response or error details
    * @see #executeWithRetry(HttpRequest, HttpRetryConfiguration)
-   * @see #executeWithCriteria(HttpRequest, ResponseSuccessCriteria)
    */
   private HttpRequestResult executeWithRetryAndCriteria(
       HttpRequest httpRequest,
       HttpRetryConfiguration retryConfig,
-      ResponseSuccessCriteria criteria) {
+      HttpResponseResolveConfigs resolveConfigs) {
 
     String correlationId = generateCorrelationId();
     String idempotencyKey = null;
@@ -647,7 +502,7 @@ public class HttpRequestExecutor {
         httpRequest.method(),
         httpRequest.uri(),
         retryConfig.maxRetries(),
-        (criteria != null && !criteria.conditions().isEmpty()),
+        (resolveConfigs != null && !resolveConfigs.configs().isEmpty()),
         correlationId);
 
     for (int attempt = 0; attempt <= retryConfig.maxRetries(); attempt++) {
@@ -662,7 +517,7 @@ public class HttpRequestExecutor {
         }
 
         // Execute with criteria evaluation
-        HttpRequestResult result = executeWithCriteria(enhancedRequest, criteria);
+        HttpRequestResult result = executeWithCriteria(enhancedRequest, resolveConfigs);
 
         // Success case
         if (result.isSuccess()) {
@@ -737,7 +592,7 @@ public class HttpRequestExecutor {
             attempt + 1,
             correlationId,
             e);
-        return createExceptionResult(e, "unexpected_exception");
+        return HttpResponseResolver.resolveException(e, "unexpected_exception");
       }
     }
 
@@ -926,7 +781,7 @@ public class HttpRequestExecutor {
             attempt + 1,
             correlationId,
             e);
-        return createExceptionResult(e, "unexpected_exception");
+        return HttpResponseResolver.resolveException(e, "unexpected_exception");
       }
     }
 
@@ -983,11 +838,6 @@ public class HttpRequestExecutor {
     }
   }
 
-  private boolean isRetryableException(Exception e, HttpRetryConfiguration config) {
-    return config.retryableExceptions().stream()
-        .anyMatch(retryableClass -> retryableClass.isAssignableFrom(e.getClass()));
-  }
-
   /**
    * Calculates the retry delay, considering server-specified Retry-After header if present.
    *
@@ -1040,7 +890,7 @@ public class HttpRequestExecutor {
       return null;
     }
 
-    String retryAfterValue = retryAfterValues.get(0).trim();
+    String retryAfterValue = retryAfterValues.getFirst().trim();
 
     try {
       // Try parsing as delay-seconds (integer)
@@ -1101,43 +951,6 @@ public class HttpRequestExecutor {
         lastResult.statusCode(), lastResult.headers(), JsonNodeWrapper.fromObject(errorBody));
   }
 
-  private HttpRequestResult createExceptionResult(Exception e, String errorType) {
-    int statusCode = mapExceptionToStatusCode(e);
-
-    Map<String, Object> errorBody = new HashMap<>();
-    errorBody.put("error", errorType);
-    errorBody.put("error_description", e.getMessage());
-    errorBody.put("exception_type", e.getClass().getSimpleName());
-    errorBody.put("retryable", false);
-
-    // Add machine-readable retry information
-    Map<String, Object> retryInfo = new HashMap<>();
-    retryInfo.put("retryable", false);
-    retryInfo.put("reason", "max_retries_exceeded");
-    retryInfo.put("category", getExceptionCategory(e));
-    retryInfo.put("original_reason", getRetryableReason(e));
-    errorBody.put("retry_info", retryInfo);
-
-    return new HttpRequestResult(statusCode, Map.of(), JsonNodeWrapper.fromObject(errorBody));
-  }
-
-  private HttpRequestResult createMaxRetriesExceededExceptionResult(
-      Exception e, HttpRetryConfiguration config) {
-    Map<String, Object> errorBody = new HashMap<>();
-    errorBody.put("error", "max_retries_exceeded_with_exception");
-    errorBody.put(
-        "error_description",
-        String.format(
-            "Request failed with exception after %d retries: %s",
-            config.maxRetries(), e.getMessage()));
-    errorBody.put("max_retries", config.maxRetries());
-    errorBody.put("exception_type", e.getClass().getSimpleName());
-    errorBody.put("retryable", false);
-
-    return new HttpRequestResult(
-        mapExceptionToStatusCode(e), Map.of(), JsonNodeWrapper.fromObject(errorBody));
-  }
-
   private HttpRequestResult createUnexpectedTerminationResult() {
     Map<String, Object> errorBody = new HashMap<>();
     errorBody.put("error", "unexpected_retry_termination");
@@ -1158,14 +971,6 @@ public class HttpRequestExecutor {
 
   private String generateCorrelationId() {
     return "req_" + UUID.randomUUID().toString().substring(0, 8);
-  }
-
-  private JsonNodeWrapper resolveResponseBody(HttpResponse<String> httpResponse) {
-    if (httpResponse.body() == null || httpResponse.body().isEmpty()) {
-      return JsonNodeWrapper.empty();
-    }
-
-    return JsonNodeWrapper.fromString(httpResponse.body());
   }
 
   private void setHeaders(

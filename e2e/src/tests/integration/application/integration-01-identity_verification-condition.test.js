@@ -1,16 +1,3 @@
-/*
- * Copyright 2025 Hirokazu Kobayashi
- *
- * E2E Test: Identity Verification with HttpRequestExecutor Retry Functionality
- *
- * This test verifies that the HttpRequestExecutor retry functionality works correctly
- * within the context of identity verification configurations using the Management API.
- * It tests:
- * - Organization-level Management API to register identity verification configurations with retry settings
- * - External service calls via Mockoon that simulate failures and eventual success
- * - End-to-end retry behavior including backoff delays and success/failure patterns
- */
-
 import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
 import { get, postWithJson, deletion } from "../../../lib/http";
 import { requestToken } from "../../../api/oauthClient";
@@ -18,10 +5,10 @@ import { backendUrl, clientSecretPostClient, serverConfig, federationServerConfi
 import { createFederatedUser, registerFidoUaf } from "../../../user";
 import { v4 as uuidv4 } from "uuid";
 
-describe("Identity Verification with HttpRequestExecutor Retry Functionality", () => {
+describe("Identity Verification with Condition", () => {
   const orgId = "72cf4a12-8da3-40fb-8ae4-a77e3cda95e2";
   const tenantId = serverConfig.tenantId;
-  const mockApiBaseUrl = "http://localhost:4000"
+  const mockApiBaseUrl = "http://localhost:4000";
 
   let orgAccessToken; // Organization admin token for Management API
   let userAccessToken; // Resource owner token for identity verification API
@@ -30,7 +17,7 @@ describe("Identity Verification with HttpRequestExecutor Retry Functionality", (
   let configurationType; // For dynamic API routing
 
   beforeAll(async () => {
-    console.log("Setting up Identity Verification Retry Test...");
+    console.log("Setting up Identity Verification Condition Test...");
 
     // Authenticate as organization admin for Management API
     const orgAuthResponse = await requestToken({
@@ -69,16 +56,16 @@ describe("Identity Verification with HttpRequestExecutor Retry Functionality", (
     // Clean up: delete the test configuration if created
     if (configId) {
 
-        await deletion({
-          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
-          headers: { Authorization: `Bearer ${orgAccessToken}` }
-        });
-        console.log(`Cleaned up test configuration: ${configId}`);
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
+        headers: { Authorization: `Bearer ${orgAccessToken}` }
+      });
+      console.log(`Cleaned up test configuration: ${configId}`);
     }
-    console.log("Identity Verification Retry Test completed");
+    console.log("Identity Verification Condition Test completed");
   });
 
-  describe("HttpRequestExecutor Retry Integration Test", () => {
+  describe("HttpRequestExecutor Condition Integration Test", () => {
 
     it("should create configuration, execute identity verification, and verify retry functionality", async () => {
       // Step 1: Create configuration with retry settings
@@ -117,9 +104,19 @@ describe("Identity Verification with HttpRequestExecutor Retry Functionality", (
             "execution": {
               "type": "http_request",
               "http_request": {
-                "url": `${mockApiBaseUrl}/e2e/retry/identity-verification`,
+                "url": `${mockApiBaseUrl}/crm-registration`,
                 "method": "POST",
                 "auth_type": "none",
+                "response_resolve_configs": [
+                  {
+                    "conditions": [
+                      {"path": "$.status_code", "operation": "in", "value": [200, 201]},
+                      {"path": "$.response_body.status", "operation": "eq", "value": "ok"}
+                    ],
+                    "match_mode": "ALL",
+                    "mapped_status_code": 400
+                  }
+                ],
                 "header_mapping_rules": [
                   {
                     "static_value": "application/json",
@@ -252,20 +249,14 @@ describe("Identity Verification with HttpRequestExecutor Retry Functionality", (
       expect(getResponse.data).toHaveProperty("type", configurationType);
       expect(getResponse.data).toHaveProperty("processes");
 
-      // Verify retry configuration is set
-      const httpRequest = getResponse.data.processes?.verify?.execution?.http_request;
-      expect(httpRequest).toHaveProperty("retry_configuration");
-      expect(httpRequest.retry_configuration).toHaveProperty("max_retries", 3);
-      expect(httpRequest.retry_configuration.retryable_status_codes).toContain(503);
-      expect(httpRequest.retry_configuration).toHaveProperty("idempotency_required", true);
+      // Use the dynamic identity verification API: /{tenant}/v1/me/identity-verification/applications/{type}/{process}
+      // First try with existing type from serverConfig
+      const applyUrl = serverConfig.identityVerificationApplyEndpoint
+        .replace("{type}", configurationType)
+        .replace("{process}", "verify");
 
-      console.log("✅ Identity verification configuration created successfully with retry configuration");
+      console.log(`Calling identity verification API: ${applyUrl}`);
 
-      // Step 2: Execute identity verification with retry
-      console.log("Testing identity verification with retry configuration...");
-      console.log(`Using configuration type: ${configurationType}`);
-
-      // Execute identity verification through the dynamic API
       const verificationData = {
         "trust_framework": "eidas",
         "evidence": [
@@ -298,16 +289,6 @@ describe("Identity Verification with HttpRequestExecutor Retry Functionality", (
         }
       };
 
-      const startTime = Date.now();
-
-      // Use the dynamic identity verification API: /{tenant}/v1/me/identity-verification/applications/{type}/{process}
-      // First try with existing type from serverConfig
-      const applyUrl = serverConfig.identityVerificationApplyEndpoint
-        .replace("{type}", configurationType)
-        .replace("{process}", "verify");
-
-      console.log(`Calling identity verification API: ${applyUrl}`);
-
       response = await postWithJson({
         url: applyUrl,
         body: verificationData,
@@ -319,51 +300,13 @@ describe("Identity Verification with HttpRequestExecutor Retry Functionality", (
         }
       });
 
-      const totalTime = Date.now() - startTime;
       console.log(response.headers);
 
-      console.log(`Identity Verification Execution Results:`);
-      console.log(`  Status: ${response.status}`);
-      console.log(`  Total Time: ${totalTime}ms`);
-      console.log(`  Response:`, JSON.stringify(response.data, null, 2));
+      console.log("Identity Verification Execution Results:");
+      console.log("  Response:", JSON.stringify(response.data, null, 2));
 
-      // Identity verification should succeed (HttpRequestExecutor should handle retries internally)
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(400);
 
-      // Analyze retry behavior based on response time
-      if (totalTime > 3000) {
-        console.log("🔄 Response time suggests retry logic was executed");
-        console.log(`   Time taken: ${totalTime}ms (indicates multiple attempts with backoff)`);
-      } else {
-        console.log(`⚡ Quick response: ${totalTime}ms`);
-      }
-
-      console.log("✅ Identity verification executed through dynamic API and HttpRequestExecutor");
-
-      // Step 3: Verify configuration was properly stored
-      console.log("Verifying retry configuration integration...");
-
-      const configResponse = await get({
-        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
-        headers: { Authorization: `Bearer ${orgAccessToken}` }
-      });
-
-      expect(configResponse.status).toBe(200);
-      const retryConfig = configResponse.data.processes?.verify?.execution?.http_request?.retry_configuration;
-      expect(retryConfig).toBeDefined();
-      expect(retryConfig.max_retries).toBe(3);
-      expect(retryConfig.retryable_status_codes).toEqual(expect.arrayContaining([502, 503, 504]));
-      expect(retryConfig.idempotency_required).toBe(true);
-      expect(retryConfig.backoff_delays).toEqual([1000, 2000, 4000]);
-
-      console.log("✅ Identity verification configuration retry settings verified");
-      console.log(`  - Configuration ID: ${configId}`);
-      console.log(`  - Configuration Type: ${configurationType}`);
-      console.log("  - Max retries: 3");
-      console.log("  - Retryable status codes: [502, 503, 504]");
-      console.log("  - Idempotency required: true");
-      console.log("  - Backoff delays: [PT1S, PT2S, PT4S]");
-      console.log(`  - Dynamic API endpoint: /${tenantId}/v1/me/identity-verification/applications/${configurationType}/verify`);
     });
 
   });

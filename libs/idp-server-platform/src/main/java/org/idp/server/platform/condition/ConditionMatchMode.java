@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.platform.http;
+package org.idp.server.platform.condition;
 
 /**
  * Defines how multiple conditions should be combined.

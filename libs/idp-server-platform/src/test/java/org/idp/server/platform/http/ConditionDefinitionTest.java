@@ -18,16 +18,17 @@ package org.idp.server.platform.http;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.idp.server.platform.condition.ConditionDefinition;
 import org.idp.server.platform.condition.ConditionOperation;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-class ResponseConditionTest {
+class ConditionDefinitionTest {
 
   @Test
   @DisplayName("operation() converts string to ConditionOperation enum")
   void testOperationConvertsStringToEnum() {
-    ResponseCondition condition = new ResponseCondition();
+    ConditionDefinition condition = new ConditionDefinition();
     condition.operation = "eq";
 
     ConditionOperation result = condition.operation();
@@ -43,7 +44,7 @@ class ResponseConditionTest {
     };
 
     for (String op : validOperations) {
-      ResponseCondition condition = new ResponseCondition();
+      ConditionDefinition condition = new ConditionDefinition();
       condition.operation = op;
 
       ConditionOperation result = condition.operation();
@@ -56,7 +57,7 @@ class ResponseConditionTest {
   @Test
   @DisplayName("operation() returns UNKNOWN for invalid operation string")
   void testOperationReturnsUnknownForInvalid() {
-    ResponseCondition condition = new ResponseCondition();
+    ConditionDefinition condition = new ConditionDefinition();
     condition.operation = "invalid_operation";
 
     ConditionOperation result = condition.operation();
@@ -67,13 +68,13 @@ class ResponseConditionTest {
   @Test
   @DisplayName("operation() is case-insensitive")
   void testOperationIsCaseInsensitive() {
-    ResponseCondition condition1 = new ResponseCondition();
+    ConditionDefinition condition1 = new ConditionDefinition();
     condition1.operation = "EQ";
 
-    ResponseCondition condition2 = new ResponseCondition();
+    ConditionDefinition condition2 = new ConditionDefinition();
     condition2.operation = "eq";
 
-    ResponseCondition condition3 = new ResponseCondition();
+    ConditionDefinition condition3 = new ConditionDefinition();
     condition3.operation = "Eq";
 
     assertEquals(ConditionOperation.EQ, condition1.operation());
@@ -84,8 +85,8 @@ class ResponseConditionTest {
   @Test
   @DisplayName("constructor from ConditionOperation enum stores lowercase string")
   void testConstructorFromEnumStoresLowercase() {
-    ResponseCondition condition =
-        new ResponseCondition("$.status", ConditionOperation.EQ, "success");
+    ConditionDefinition condition =
+        new ConditionDefinition("$.status", ConditionOperation.EQ, "success");
 
     assertEquals("eq", condition.operation);
     assertEquals("$.status", condition.path);
@@ -95,7 +96,7 @@ class ResponseConditionTest {
   @Test
   @DisplayName("path() returns the stored path")
   void testPathReturnsStoredValue() {
-    ResponseCondition condition = new ResponseCondition();
+    ConditionDefinition condition = new ConditionDefinition();
     condition.path = "$.data.status";
 
     assertEquals("$.data.status", condition.path());
@@ -104,7 +105,7 @@ class ResponseConditionTest {
   @Test
   @DisplayName("value() returns the stored value")
   void testValueReturnsStoredValue() {
-    ResponseCondition condition = new ResponseCondition();
+    ConditionDefinition condition = new ConditionDefinition();
     condition.value = "expected_value";
 
     assertEquals("expected_value", condition.value());
@@ -113,7 +114,7 @@ class ResponseConditionTest {
   @Test
   @DisplayName("value() can store null")
   void testValueCanStoreNull() {
-    ResponseCondition condition = new ResponseCondition();
+    ConditionDefinition condition = new ConditionDefinition();
     condition.value = null;
 
     assertNull(condition.value());
@@ -122,15 +123,15 @@ class ResponseConditionTest {
   @Test
   @DisplayName("value() can store different types")
   void testValueCanStoreDifferentTypes() {
-    ResponseCondition stringCondition = new ResponseCondition();
+    ConditionDefinition stringCondition = new ConditionDefinition();
     stringCondition.value = "string_value";
     assertEquals("string_value", stringCondition.value());
 
-    ResponseCondition intCondition = new ResponseCondition();
+    ConditionDefinition intCondition = new ConditionDefinition();
     intCondition.value = 123;
     assertEquals(123, intCondition.value());
 
-    ResponseCondition boolCondition = new ResponseCondition();
+    ConditionDefinition boolCondition = new ConditionDefinition();
     boolCondition.value = true;
     assertEquals(true, boolCondition.value());
   }
@@ -138,7 +139,7 @@ class ResponseConditionTest {
   @Test
   @DisplayName("default constructor creates empty condition")
   void testDefaultConstructor() {
-    ResponseCondition condition = new ResponseCondition();
+    ConditionDefinition condition = new ConditionDefinition();
 
     assertNull(condition.path);
     assertNull(condition.operation);

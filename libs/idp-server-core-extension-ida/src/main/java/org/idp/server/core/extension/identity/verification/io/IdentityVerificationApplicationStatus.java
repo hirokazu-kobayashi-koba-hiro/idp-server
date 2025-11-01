@@ -22,7 +22,11 @@ public enum IdentityVerificationApplicationStatus {
   UNAUTHORIZED(401),
   FORBIDDEN(403),
   NOT_FOUND(404),
-  SERVER_ERROR(500);
+  CONFLICT(409),
+  TOO_MANY_REQUESTS(429),
+  SERVER_ERROR(500),
+  SERVICE_UNAVAILABLE(503),
+  GATEWAY_TIMEOUT(504);
 
   int statusCode;
 
@@ -36,5 +40,18 @@ public enum IdentityVerificationApplicationStatus {
 
   public boolean isOK() {
     return this == OK;
+  }
+
+  public static IdentityVerificationApplicationStatus fromStatusCode(int statusCode) {
+    for (IdentityVerificationApplicationStatus status : values()) {
+      if (status.statusCode == statusCode) {
+        return status;
+      }
+    }
+    if (statusCode >= 400 && statusCode < 500) {
+      return CLIENT_ERROR;
+    }
+
+    return SERVER_ERROR;
   }
 }

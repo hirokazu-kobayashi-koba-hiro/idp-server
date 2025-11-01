@@ -73,7 +73,7 @@ public class IdentityVerificationHttpRequestConfig
   List<MappingRule> queryMappingRules = new ArrayList<>();
   HttpRetryConfiguration retryConfiguration = HttpRetryConfiguration.noRetry();
   Integer requestTimeoutSeconds;
-  ResponseSuccessCriteria responseSuccessCriteria;
+  List<HttpResponseResolveConfig> responseResolveConfigs = new ArrayList<>();
 
   public IdentityVerificationHttpRequestConfig() {}
 
@@ -197,14 +197,16 @@ public class IdentityVerificationHttpRequestConfig
     return requestTimeoutSeconds != null ? requestTimeoutSeconds : 30;
   }
 
-  public boolean hasResponseSuccessCriteria() {
-    return responseSuccessCriteria != null
-        && responseSuccessCriteria.conditions() != null
-        && !responseSuccessCriteria.conditions().isEmpty();
+  public boolean hasResponseConfigs() {
+    return responseResolveConfigs != null && !responseResolveConfigs.isEmpty();
   }
 
-  public ResponseSuccessCriteria responseSuccessCriteria() {
-    return responseSuccessCriteria;
+  public HttpResponseResolveConfigs responseResolveConfigs() {
+    return new HttpResponseResolveConfigs(responseResolveConfigs);
+  }
+
+  public List<Map<String, Object>> responseResolveConfigsMap() {
+    return responseResolveConfigs.stream().map(HttpResponseResolveConfig::toMap).toList();
   }
 
   public boolean exists() {
@@ -224,8 +226,7 @@ public class IdentityVerificationHttpRequestConfig
     if (hasQueryMappingRules()) map.put("query_mapping_rules", queryMappingRulesMap());
     if (hasRetryConfiguration()) map.put("retry_configuration", retryConfiguration.toMap());
     if (hasRequestTimeout()) map.put("request_timeout_seconds", requestTimeoutSeconds);
-    if (hasResponseSuccessCriteria())
-      map.put("response_success_criteria", responseSuccessCriteria.toMap());
+    if (hasResponseConfigs()) map.put("response_success_criteria", responseResolveConfigsMap());
     return map;
   }
 }

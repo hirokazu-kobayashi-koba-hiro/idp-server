@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package org.idp.server.platform.http;
+package org.idp.server.platform.condition;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.platform.condition.ConditionOperation;
 import org.idp.server.platform.json.JsonReadable;
 
 /**
@@ -34,14 +33,14 @@ import org.idp.server.platform.json.JsonReadable;
  * }
  * }</pre>
  */
-public class ResponseCondition implements JsonReadable {
+public class ConditionDefinition implements JsonReadable {
   public String path;
   public String operation;
   public Object value;
 
-  public ResponseCondition() {}
+  public ConditionDefinition() {}
 
-  public ResponseCondition(String path, ConditionOperation operation, Object value) {
+  public ConditionDefinition(String path, ConditionOperation operation, Object value) {
     this.path = path;
     this.operation = operation.name().toLowerCase();
     this.value = value;

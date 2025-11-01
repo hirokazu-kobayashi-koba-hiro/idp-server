@@ -58,11 +58,11 @@ public interface HttpRequestExecutionConfigInterface {
     return 30;
   }
 
-  default boolean hasResponseSuccessCriteria() {
+  default boolean hasResponseConfigs() {
     return false;
   }
 
-  default ResponseSuccessCriteria responseSuccessCriteria() {
-    return ResponseSuccessCriteria.empty();
+  default HttpResponseResolveConfigs responseResolveConfigs() {
+    return new HttpResponseResolveConfigs();
   }
 }
