@@ -2,11 +2,13 @@ import { describe, expect, it, xit } from "@jest/globals";
 
 import { getJwks, requestToken } from "../../api/oauthClient";
 import {
+  backendUrl,
   clientSecretPostClient,
-  serverConfig,
+  serverConfig
 } from "../testConfig";
 import { requestAuthorizations } from "../../oauth/request";
 import { verifyAndDecodeJwt } from "../../lib/jose";
+import { get } from "../../lib/http";
 
 describe("OpenID Connect for Identity Assurance 1.0 ", () => {
   it("success pattern", async () => {
@@ -112,6 +114,17 @@ describe("OpenID Connect for Identity Assurance 1.0 ", () => {
     expect(payload.iss).toEqual(serverConfig.issuer);
     expect(payload.verified_claims.claims).not.toBeNull();
     expect(payload.verified_claims.verification).not.toBeNull();
+
+    const userinfoResponse = await get({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/userinfo`,
+      headers: {
+        "Authorization": `Bearer ${tokenResponse.data.access_token}`
+      }
+    });
+
+    console.log(JSON.stringify(userinfoResponse.data, null, 2));
+    // expect(userinfoResponse.data.verified_claims.claims).not.toBeNull();
+
   });
 
 });

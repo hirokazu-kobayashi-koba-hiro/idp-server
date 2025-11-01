@@ -21,6 +21,7 @@ import org.idp.server.core.extension.identity.verification.io.IdentityVerificati
 
 public class IdentityVerificationExecutionResult {
   IdentityVerificationExecutionStatus status;
+  int statusCode;
   Map<String, Object> result;
 
   public IdentityVerificationExecutionResult() {}
@@ -28,6 +29,14 @@ public class IdentityVerificationExecutionResult {
   public IdentityVerificationExecutionResult(
       IdentityVerificationExecutionStatus status, Map<String, Object> result) {
     this.status = status;
+    this.statusCode = 0;
+    this.result = result;
+  }
+
+  public IdentityVerificationExecutionResult(
+      IdentityVerificationExecutionStatus status, int statusCode, Map<String, Object> result) {
+    this.status = status;
+    this.statusCode = statusCode;
     this.result = result;
   }
 
@@ -55,5 +64,21 @@ public class IdentityVerificationExecutionResult {
 
   public Map<String, Object> result() {
     return result;
+  }
+
+  public int statusCode() {
+    return statusCode;
+  }
+
+  public boolean isRateLimited() {
+    return statusCode == 429;
+  }
+
+  public boolean isServiceUnavailable() {
+    return statusCode == 503;
+  }
+
+  public boolean isGatewayTimeout() {
+    return statusCode == 504;
   }
 }

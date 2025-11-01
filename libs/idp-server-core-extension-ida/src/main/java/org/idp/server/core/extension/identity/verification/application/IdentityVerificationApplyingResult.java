@@ -78,15 +78,8 @@ public class IdentityVerificationApplyingResult {
       return verifyResult.errorResponse();
     }
 
-    if (executionResult.isClientError()) {
-      return IdentityVerificationApplicationResponse.CLIENT_ERROR(executionResult.result());
-    }
-
-    if (executionResult.isServerError()) {
-      return IdentityVerificationApplicationResponse.SERVER_ERROR(executionResult.result());
-    }
-
-    return IdentityVerificationApplicationResponse.SERVER_ERROR(executionResult.result());
+    return IdentityVerificationApplicationResponse.ERROR(
+        executionResult.statusCode(), executionResult.result());
   }
 
   public IdentityVerificationContext applicationContext() {

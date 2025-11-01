@@ -1,27 +1,19 @@
-/*
- * Copyright 2025 Hirokazu Kobayashi
- *
- * E2E Test: Identity Verification with HttpRequestExecutor Retry Functionality
- *
- * This test verifies that the HttpRequestExecutor retry functionality works correctly
- * within the context of identity verification configurations using the Management API.
- * It tests:
- * - Organization-level Management API to register identity verification configurations with retry settings
- * - External service calls via Mockoon that simulate failures and eventual success
- * - End-to-end retry behavior including backoff delays and success/failure patterns
- */
-
 import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
 import { get, postWithJson, deletion } from "../../../lib/http";
 import { requestToken } from "../../../api/oauthClient";
-import { backendUrl, clientSecretPostClient, serverConfig, federationServerConfig } from "../../testConfig";
+import {
+  backendUrl,
+  clientSecretPostClient,
+  serverConfig,
+  federationServerConfig,
+  mockApiBaseUrl
+} from "../../testConfig";
 import { createFederatedUser, registerFidoUaf } from "../../../user";
 import { v4 as uuidv4 } from "uuid";
 
 describe("Identity Verification with HttpRequestExecutor Retry Functionality", () => {
   const orgId = "72cf4a12-8da3-40fb-8ae4-a77e3cda95e2";
   const tenantId = serverConfig.tenantId;
-  const mockApiBaseUrl = "http://localhost:4000"
 
   let orgAccessToken; // Organization admin token for Management API
   let userAccessToken; // Resource owner token for identity verification API
@@ -322,13 +314,13 @@ describe("Identity Verification with HttpRequestExecutor Retry Functionality", (
       const totalTime = Date.now() - startTime;
       console.log(response.headers);
 
-      console.log(`Identity Verification Execution Results:`);
+      console.log("Identity Verification Execution Results:");
       console.log(`  Status: ${response.status}`);
       console.log(`  Total Time: ${totalTime}ms`);
-      console.log(`  Response:`, JSON.stringify(response.data, null, 2));
+      console.log("  Response:", JSON.stringify(response.data, null, 2));
 
       // Identity verification should succeed (HttpRequestExecutor should handle retries internally)
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(503);
 
       // Analyze retry behavior based on response time
       if (totalTime > 3000) {

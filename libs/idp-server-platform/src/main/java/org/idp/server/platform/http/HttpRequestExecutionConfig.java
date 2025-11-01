@@ -36,6 +36,7 @@ public class HttpRequestExecutionConfig
   List<MappingRule> bodyMappingRules = new ArrayList<>();
   List<MappingRule> queryMappingRules = new ArrayList<>();
   HttpRetryConfiguration retryConfiguration = HttpRetryConfiguration.noRetry();
+  HttpResponseResolveConfigs responseResolveConfigs = new HttpResponseResolveConfigs();
   Integer requestTimeoutSeconds;
 
   public HttpRequestExecutionConfig() {}

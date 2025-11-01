@@ -57,4 +57,12 @@ public interface HttpRequestExecutionConfigInterface {
   default int requestTimeoutSeconds() {
     return 30;
   }
+
+  default boolean hasResponseConfigs() {
+    return false;
+  }
+
+  default HttpResponseResolveConfigs responseResolveConfigs() {
+    return new HttpResponseResolveConfigs();
+  }
 }

@@ -33,9 +33,10 @@ public class IdentityVerificationApplicationResponse {
         IdentityVerificationApplicationStatus.CLIENT_ERROR, response);
   }
 
-  public static IdentityVerificationApplicationResponse SERVER_ERROR(Map<String, Object> response) {
+  public static IdentityVerificationApplicationResponse ERROR(
+      int statusCode, Map<String, Object> response) {
     return new IdentityVerificationApplicationResponse(
-        IdentityVerificationApplicationStatus.SERVER_ERROR, response);
+        IdentityVerificationApplicationStatus.fromStatusCode(statusCode), response);
   }
 
   private IdentityVerificationApplicationResponse(
