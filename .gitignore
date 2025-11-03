@@ -58,3 +58,4 @@ config/generated/
 # Temporary files from scripts
 config/tmp/
 build/release/
+logs/
