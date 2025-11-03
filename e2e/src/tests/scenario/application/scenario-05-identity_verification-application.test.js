@@ -442,7 +442,7 @@ describe("identity-verification application", () => {
           "Authorization": `Bearer ${accessToken}`
         }
       });
-
+      console.log(JSON.stringify(deleteResponse.data, null, 2));
       expect(deleteResponse.status).toBe(200);
 
 
