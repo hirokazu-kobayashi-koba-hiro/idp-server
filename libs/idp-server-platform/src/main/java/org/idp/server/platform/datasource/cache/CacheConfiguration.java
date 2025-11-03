@@ -19,6 +19,9 @@ package org.idp.server.platform.datasource.cache;
 public class CacheConfiguration {
   String host;
   int port;
+  int database;
+  int timeout;
+  String password;
   int maxTotal;
   int maxIdle;
   int minIdle;
@@ -27,9 +30,20 @@ public class CacheConfiguration {
   public CacheConfiguration() {}
 
   public CacheConfiguration(
-      String host, int port, int maxTotal, int maxIdle, int minIdle, int timeToLiveSeconds) {
+      String host,
+      int port,
+      int database,
+      int timeout,
+      String password,
+      int maxTotal,
+      int maxIdle,
+      int minIdle,
+      int timeToLiveSeconds) {
     this.host = host;
     this.port = port;
+    this.database = database;
+    this.timeout = timeout;
+    this.password = password;
     this.maxTotal = maxTotal;
     this.maxIdle = maxIdle;
     this.minIdle = minIdle;
@@ -42,6 +56,18 @@ public class CacheConfiguration {
 
   public int port() {
     return port;
+  }
+
+  public int database() {
+    return database;
+  }
+
+  public int timeout() {
+    return timeout;
+  }
+
+  public String password() {
+    return password;
   }
 
   public int maxTotal() {

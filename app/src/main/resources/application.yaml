@@ -53,6 +53,9 @@ idp:
     redis:
       host: "${REDIS_HOST:localhost}"
       port: ${REDIS_PORT:6379}
+      database: ${REDIS_CACHE_DATABASE:0}
+      timeout: ${REDIS_CACHE_TIMEOUT:10000}
+      password: ${REDIS_CACHE_PASSWORD:}
       maxTotal: ${REDIS_MAX_TOTAL:20}
       maxIdle: ${REDIS_MAX_IDLE:3}
       minIdle: ${REDIS_MIN_IDLE:2}
@@ -85,6 +88,8 @@ spring:
     redis:
       host: "${REDIS_HOST:localhost}"
       port: ${REDIS_PORT:6379}
+      database: ${REDIS_SESSION_DATABASE:0}
+      password: ${REDIS_PASSWORD:}
       timeout: "${REDIS_TIMEOUT:2s}"
       jedis:
         pool:
