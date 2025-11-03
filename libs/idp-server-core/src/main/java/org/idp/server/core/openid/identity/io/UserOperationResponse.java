@@ -27,13 +27,17 @@ public class UserOperationResponse {
     return new UserOperationResponse(UserOperationStatus.OK, contents);
   }
 
-  private UserOperationResponse(UserOperationStatus status, Map<String, Object> contents) {
+  public UserOperationResponse(UserOperationStatus status, Map<String, Object> contents) {
     this.status = status;
     this.contents = contents;
   }
 
   public static UserOperationResponse failure(Map<String, Object> contents) {
     return new UserOperationResponse(UserOperationStatus.INVALID_REQUEST, contents);
+  }
+
+  public static UserOperationResponse insufficientScope(Map<String, Object> contents) {
+    return new UserOperationResponse(UserOperationStatus.FORBIDDEN, contents);
   }
 
   public int statusCode() {

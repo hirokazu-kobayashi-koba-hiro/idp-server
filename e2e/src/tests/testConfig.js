@@ -21,7 +21,7 @@ const cibaUserDeviceId = process.env.CIBA_USER_DEVICE_ID || "7736a252-60b4-45f5-
 const cibaUsername = process.env.CIBA_USERNAME || "ito.ichiro";
 const cibaPassword = process.env.CIBA_PASSWORD || "successUserCode001";
 
-export const mockApiBaseUrl = process.env.MOCK_API_BASE_URL || "http://host.docker.internal:4000";
+export const mockApiBaseUrl = process.env.MOCK_API_BASE_URL || "http://localhost:4000";
 
 /**
  * Creates a server configuration object for the specified tenant ID

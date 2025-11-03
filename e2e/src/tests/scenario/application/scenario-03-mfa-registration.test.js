@@ -457,4 +457,95 @@ describe("user - mfa registration", () => {
 
   });
 
+  describe("error pattern - insufficient scope", () => {
+    it("patch authentication device fails without claims:authentication_devices scope", async () => {
+      // まず通常のスコープでユーザー作成・デバイス登録
+      const { user, accessToken: fullAccessToken } = await createFederatedUser({
+        serverConfig: serverConfig,
+        federationServerConfig: federationServerConfig,
+        client: clientSecretPostClient,
+        adminClient: clientSecretPostClient
+      });
+
+      console.log(user);
+
+      // デバイス登録
+      let mfaRegistrationResponse =
+        await postWithJson({
+          url: serverConfig.resourceOwnerEndpoint + "/mfa/fido-uaf-registration",
+          body: {
+            "app_name": "test-app",
+            "platform": "Android",
+            "os": "Android15",
+            "model": "test device",
+            "locale": "ja",
+            "notification_channel": "fcm",
+            "notification_token": "test token",
+            "priority": 1
+          },
+          headers: {
+            "Authorization": `Bearer ${fullAccessToken}`
+          }
+        });
+      expect(mfaRegistrationResponse.status).toBe(200);
+
+      const transactionId = mfaRegistrationResponse.data.id;
+      let authenticationResponse = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        id: transactionId,
+        interactionType: "fido-uaf-registration-challenge",
+        body: {
+          username: serverConfig.ciba.username,
+          password: serverConfig.ciba.userCode,
+        }
+      });
+      expect(authenticationResponse.status).toBe(200);
+
+      authenticationResponse = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        id: transactionId,
+        interactionType: "fido-uaf-registration",
+        body: {
+          username: serverConfig.ciba.username,
+          password: serverConfig.ciba.userCode,
+        }
+      });
+      expect(authenticationResponse.status).toBe(200);
+      const deviceId = authenticationResponse.data.device_id;
+
+      // 制限されたスコープで新しいトークン取得（claims:authentication_devices を除外）
+      const { accessToken: limitedAccessToken } = await createFederatedUser({
+        serverConfig: serverConfig,
+        federationServerConfig: federationServerConfig,
+        client: clientSecretPostClient,
+        adminClient: clientSecretPostClient,
+        scope: "openid profile email"  // claims:authentication_devices スコープを除外
+      });
+
+      // 制限されたトークンでPATCH実行
+      const patchResponse = await patchWithJson({
+        url: serverConfig.resourceOwnerEndpoint + `/authentication-devices/${deviceId}`,
+        body: {
+          "app_name": "updated-app",
+          "platform": "iOS",
+          "os": "iOS18",
+          "model": "updated device",
+          "locale": "en",
+          "notification_channel": "apns",
+          "notification_token": "updated token",
+          "priority": 10
+        },
+        headers: {
+          "Authorization": `Bearer ${limitedAccessToken}`
+        }
+      });
+
+      console.log(patchResponse.data);
+      expect(patchResponse.status).toBe(403);
+      expect(patchResponse.data.error).toBe("insufficient_scope");
+      expect(patchResponse.data.error_description).toBe("The request requires 'claims:authentication_devices' scope");
+      expect(patchResponse.data.scope).toBe("claims:authentication_devices");
+    });
+  });
+
 });

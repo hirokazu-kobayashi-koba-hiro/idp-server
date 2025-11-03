@@ -34,6 +34,7 @@ import org.idp.server.core.openid.identity.event.UserLifecycleType;
 import org.idp.server.core.openid.identity.io.AuthenticationDevicePatchRequest;
 import org.idp.server.core.openid.identity.io.MfaRegistrationRequest;
 import org.idp.server.core.openid.identity.io.UserOperationResponse;
+import org.idp.server.core.openid.identity.io.UserOperationStatus;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.type.AuthFlow;
@@ -181,6 +182,16 @@ public class UserOperationEntryService implements UserOperationApi {
       RequestAttributes requestAttributes) {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
+    // Scope validation - RFC 6750 Section 3.1
+    if (!oAuthToken.scopes().contains("claims:authentication_devices")) {
+      Map<String, Object> contents = new HashMap<>();
+      contents.put("error", "insufficient_scope");
+      contents.put(
+          "error_description", "The request requires 'claims:authentication_devices' scope");
+      contents.put("scope", "claims:authentication_devices");
+      return UserOperationResponse.insufficientScope(contents);
+    }
+
     AuthenticationDevicePatchValidator validator = new AuthenticationDevicePatchValidator(request);
     JsonSchemaValidationResult validate = validator.validate();
     if (!validate.isValid()) {
@@ -212,12 +223,21 @@ public class UserOperationEntryService implements UserOperationApi {
   }
 
   @Override
-  public void delete(
+  public UserOperationResponse delete(
       TenantIdentifier tenantIdentifier,
       User user,
       OAuthToken oAuthToken,
       RequestAttributes requestAttributes) {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    // Scope validation - RFC 6750 Section 3.1
+    if (!oAuthToken.scopes().contains("openid")) {
+      Map<String, Object> contents = new HashMap<>();
+      contents.put("error", "insufficient_scope");
+      contents.put("error_description", "The request requires 'openid' scope");
+      contents.put("scope", "openid");
+      return UserOperationResponse.insufficientScope(contents);
+    }
 
     userCommandRepository.delete(tenant, user.userIdentifier());
 
@@ -226,5 +246,7 @@ public class UserOperationEntryService implements UserOperationApi {
     userLifecycleEventPublisher.publish(userLifecycleEvent);
     eventPublisher.publish(
         tenant, oAuthToken, DefaultSecurityEventType.user_delete, requestAttributes);
+
+    return new UserOperationResponse(UserOperationStatus.NO_CONTENT, null);
   }
 }
