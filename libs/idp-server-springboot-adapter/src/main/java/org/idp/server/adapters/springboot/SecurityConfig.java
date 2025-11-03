@@ -67,16 +67,15 @@ public class SecurityConfig {
     http.authorizeHttpRequests(
         (authorize) ->
             authorize
-                .requestMatchers(
-                    "/*/v1/me/identity-verification/applications/*/*", HttpMethod.POST.name())
+                .requestMatchers(HttpMethod.POST, "/*/v1/me/identity-verification/applications/*/*")
                 .hasAuthority(IdPApplicationScope.identity_verification_application.name())
                 .requestMatchers(
-                    "/*/v1/me/identity-verification/applications/*/*/*", HttpMethod.POST.name())
+                    HttpMethod.POST, "/*/v1/me/identity-verification/applications/*/*/*")
                 .hasAuthority(IdPApplicationScope.identity_verification_application.name())
                 .requestMatchers("/*/v1/me/identity-verification/applications")
                 .hasAuthority(IdPApplicationScope.identity_verification_application.name())
                 .requestMatchers(
-                    "/*/v1/me/identity-verification/applications/*/*", HttpMethod.DELETE.name())
+                    HttpMethod.DELETE, "/*/v1/me/identity-verification/applications/*/*")
                 .hasAuthority(IdPApplicationScope.identity_verification_application_delete.name())
                 .anyRequest()
                 .permitAll());
