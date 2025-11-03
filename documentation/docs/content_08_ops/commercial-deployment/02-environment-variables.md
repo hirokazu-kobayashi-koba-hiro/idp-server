@@ -58,6 +58,17 @@ idp-server の設定は `application.yaml` で定義され、環境変数で上�
 | `encryptionKey` | `ENCRYPTION_KEY` | データ暗号化キー (AES-256) | なし (必須) | Secrets Manager |
 | `databaseType` | `DATABASE_TYPE` | データベース種類 | `POSTGRESQL` | `POSTGRESQL` |
 
+### idp.server (サーバー設定)
+
+| パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
+|-----------|----------|------|-------------|-----------|
+| `shutdown.delay` | `IDP_SERVER_SHUTDOWN_DELAY` | Graceful shutdown遅延時間 | `5s` | `5s` (負荷に応じて調整) |
+
+**Graceful Shutdown説明:**
+- アプリケーション停止時に新規リクエストを受け付けず、既存リクエストの完了を待つ
+- Kubernetes等のオーケストレータでのローリングアップデート時に重要
+- `delay`は、終了シグナル受信後、既存リクエスト完了を待つ時間
+
 ### idp.session (セッション管理設定)
 
 | パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
@@ -130,6 +141,9 @@ idp-server の設定は `application.yaml` で定義され、環境変数で上�
 | `timeToLiveSecond` | `CACHE_TIME_TO_LIVE_SECOND` | キャッシュTTL (秒) | `300` | `600` |
 | `host` | `REDIS_HOST` | Redis ホスト | `localhost` | ElastiCache エンドポイント |
 | `port` | `REDIS_PORT` | Redis ポート | `6379` | `6379` |
+| `database` | `REDIS_CACHE_DATABASE` | Redis データベース番号 | `0` | `1` (Spring Sessionと分離推奨) |
+| `timeout` | `REDIS_CACHE_TIMEOUT` | 接続タイムアウト (ミリ秒) | `10000` | `5000` |
+| `password` | `REDIS_CACHE_PASSWORD` | Redis パスワード | `(空)` | Secrets Manager |
 | `maxTotal` | `REDIS_MAX_TOTAL` | 最大接続数 | `20` | `100` |
 | `maxIdle` | `REDIS_MAX_IDLE` | 最大アイドル接続数 | `3` | `10` |
 | `minIdle` | `REDIS_MIN_IDLE` | 最小アイドル接続数 | `2` | `5` |
@@ -162,19 +176,38 @@ idp-server の設定は `application.yaml` で定義され、環境変数で上�
 |-----------|----------|------|-------------|-----------|
 | `spring.data.redis.host` | `REDIS_HOST` | Spring Redis ホスト | `localhost` | ElastiCache エンドポイント |
 | `spring.data.redis.port` | `REDIS_PORT` | Spring Redis ポート | `6379` | `6379` |
+| `spring.data.redis.database` | `REDIS_SESSION_DATABASE` | Spring Session用 Redis データベース番号 | `0` | `0` |
+| `spring.data.redis.password` | `REDIS_PASSWORD` | Spring Session用 Redis パスワード | `(空)` | Secrets Manager |
 | `spring.data.redis.timeout` | `REDIS_TIMEOUT` | Redis接続タイムアウト | `2s` | `2s` |
 | `spring.data.redis.jedis.pool.max-active` | `REDIS_JEDIS_POOL_MAX_ACTIVE` | Jedis 最大アクティブ接続数 | `32` | `64` |
 | `spring.data.redis.jedis.pool.max-idle` | `REDIS_JEDIS_POOL_MAX_IDLE` | Jedis 最大アイドル接続数 | `16` | `32` |
 | `spring.data.redis.jedis.pool.min-idle` | `REDIS_JEDIS_POOL_MIN_IDLE` | Jedis 最小アイドル接続数 | `0` | `8` |
 | `spring.session.redis.configure-action` | `SPRING_SESSION_REDIS_CONFIGURE_ACTION` | Redis セッション設定アクション | `none` | `none` |
 | `spring.session.timeout` | `SESSION_TIMEOUT` | セッションタイムアウト | `3600s` | `7200s` |
+| `spring.lifecycle.timeout-per-shutdown-phase` | - | Shutdown phase タイムアウト | `30s` | `30s` |
+
+### management (監視・ヘルスチェック設定)
+
+| パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
+|-----------|----------|------|-------------|-----------|
+| `endpoints.web.exposure.include` | - | 公開するエンドポイント | `health,info` | `health,info` または `health,info,metrics,prometheus` |
+| `endpoint.health.probes.enabled` | - | Kubernetes プローブ有効化 | `true` | `true` |
+| `endpoint.health.show-details` | - | ヘルスチェック詳細表示 | `when-authorized` | `when-authorized` |
+| `health.readiness-state.enabled` | - | Readiness プローブ有効化 | `true` | `true` |
+| `health.liveness-state.enabled` | - | Liveness プローブ有効化 | `true` | `true` |
+
+**Kubernetes ヘルスチェック:**
+- **Readiness**: `/actuator/health/readiness` - アプリケーションがリクエストを受け付ける準備ができているか
+- **Liveness**: `/actuator/health/liveness` - アプリケーションが正常に動作しているか
+- **用途**: Kubernetesのローリングアップデート、自動再起動に使用
 
 ### server (Tomcat サーバー設定)
 
 | パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
 |-----------|----------|------|-------------|-----------|
-| `server.tomcat.threads.max` | `SERVER_TOMCAT_THREADS_MAX` | 最大スレッド数 | `300` | `500` |
-| `server.tomcat.threads.min-spare` | `SERVER_TOMCAT_THREADS_MIN_SPARE` | 最小予備スレッド数 | `50` | `100` |
+| `shutdown` | - | Shutdown モード | `graceful` | `graceful` |
+| `tomcat.threads.max` | `SERVER_TOMCAT_THREADS_MAX` | 最大スレッド数 | `300` | `500` |
+| `tomcat.threads.min-spare` | `SERVER_TOMCAT_THREADS_MIN_SPARE` | 最小予備スレッド数 | `50` | `100` |
 
 ---
 
@@ -308,7 +341,71 @@ app:
 - Writer: (4 × 2) + 1 = 9 → 本番推奨 50 (余裕を持った設定)
 - Reader: 読み込み重視のため Writer の 1.5～2倍
 
-### 2. Redis 設定の最適化
+### 2. Redis データベース分離とパスワード認証
+
+#### Spring SessionとキャッシュでRedisデータベースを分離する理由
+
+**設計思想:**
+- **データ分離**: セッションデータとキャッシュデータを異なるRedisデータベースで管理
+- **運用の柔軟性**: それぞれ異なるTTL、タイムアウト設定が可能
+- **セキュリティ**: 本番環境（AWS ElastiCache、Azure Cache for Redis等）での認証対応
+
+#### 使用例
+
+**ローカル開発環境（認証なし）:**
+```bash
+# デフォルト設定で動作（設定不要）
+# Spring Session: DB 0, 認証なし
+# Cache: DB 0, 認証なし
+```
+
+**AWS ElastiCache（認証あり、DB分離）:**
+```bash
+# Spring Session用
+export REDIS_HOST=my-elasticache.abc123.cache.amazonaws.com
+export REDIS_SESSION_DATABASE=0
+export REDIS_PASSWORD=my_secure_password
+export REDIS_TIMEOUT=5s
+
+# Cache用（同じRedis、異なるDB）
+export REDIS_CACHE_DATABASE=1
+export REDIS_CACHE_PASSWORD=my_secure_password
+export REDIS_CACHE_TIMEOUT=3000
+```
+
+**Azure Cache for Redis（認証あり）:**
+```bash
+# Spring Session用
+export REDIS_HOST=myapp.redis.cache.windows.net
+export REDIS_SESSION_DATABASE=0
+export REDIS_PASSWORD=primary_key_from_azure
+export REDIS_TIMEOUT=2s
+
+# Cache用
+export REDIS_CACHE_DATABASE=2
+export REDIS_CACHE_PASSWORD=primary_key_from_azure
+export REDIS_CACHE_TIMEOUT=5000
+```
+
+#### セキュリティ考慮事項
+
+**パスワード管理:**
+- 環境変数で渡す（平文をapplication.yamlに記載しない）
+- AWS Secrets Manager、HashiCorp Vaultなどのシークレット管理サービス使用推奨
+- Kubernetes Secretsでの管理
+
+**空文字列の扱い:**
+```bash
+# 空文字列 or 指定なし = 認証なし（ローカル開発環境）
+export REDIS_PASSWORD=
+export REDIS_CACHE_PASSWORD=
+
+# パスワード指定 = 認証あり（本番環境）
+export REDIS_PASSWORD=my_secure_password
+export REDIS_CACHE_PASSWORD=cache_specific_password
+```
+
+### 3. Redis 設定の最適化
 
 #### キャッシュTTL設定指針
 ```yaml
@@ -327,7 +424,7 @@ maxIdle: 10      # maxTotal の 10% 程度
 minIdle: 5       # maxIdle の 50% 程度
 ```
 
-### 3. ログレベル設定の戦略
+### 4. ログレベル設定の戦略
 
 #### 本番環境ログレベル方針
 ```yaml
@@ -347,7 +444,7 @@ LOGGING_LEVEL_IDP_SERVER_HTTP_REQUEST_EXECUTOR=info
 - **パフォーマンス**: 大量ログは `warn` 以上
 - **トラブルシューティング**: 必要最小限の `debug` ログ
 
-### 4. セッション管理設定
+### 5. セッション管理設定
 
 #### セッションモード選択
 ```yaml
@@ -373,38 +470,6 @@ spring:
 - **ユーザビリティ**: 長いほど便利
 - **業界標準**: 金融系 15-30分、一般系 1-2時間
 
-### 5. 本番環境向け application-prod.yaml
-
-#### パフォーマンス最適化
-```yaml
-server:
-  tomcat:
-    threads:
-      max: 500           # 高負荷対応
-      min-spare: 100     # 常時待機スレッド
-    connection-timeout: 5000  # ネットワーク遅延考慮
-    max-connections: 10000    # 同時接続上限
-
-  compression:
-    enabled: true        # レスポンス圧縮
-    mime-types:
-      - application/json # API レスポンス圧縮
-```
-
-#### 監視・メトリクス有効化
-```yaml
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,metrics,prometheus
-  endpoint:
-    health:
-      show-details: when-authorized  # セキュリティ考慮
-      probes:
-        enabled: true    # Kubernetes ヘルスチェック対応
-```
-
 ---
 
 ## ⚙️ 本番環境設定チェックリスト
@@ -426,6 +491,13 @@ export DB_WRITER_URL="jdbc:postgresql://rds-primary:5432/idpserver"
 export DB_READER_URL="jdbc:postgresql://rds-replica:5432/idpserver"
 export REDIS_HOST="elasticache-cluster.xxxxx.cache.amazonaws.com"
 export IDP_SESSION_MODE="redis"
+
+# 4. Redis設定（認証あり環境）
+export REDIS_PASSWORD="<redis-password>"
+export REDIS_SESSION_DATABASE=0
+export REDIS_CACHE_DATABASE=1
+export REDIS_CACHE_PASSWORD="<redis-password>"
+export REDIS_CACHE_TIMEOUT=5000
 ```
 
 ### Phase 2: パフォーマンス調整 ⚡
@@ -456,6 +528,8 @@ export SESSION_TIMEOUT=7200s
 - [ ] **暗号化キー**: 32バイト Base64エンコード確認
 - [ ] **DB接続**: Primary/Replica 接続テスト成功
 - [ ] **Redis接続**: ElastiCache クラスター接続成功
+- [ ] **Redis認証**: パスワード設定・認証テスト成功（本番環境）
+- [ ] **RedisDB分離**: Spring Session (DB 0) とキャッシュ (DB 1) の分離確認
 - [ ] **負荷テスト**: 想定TPS での接続プール動作確認
 
 ---

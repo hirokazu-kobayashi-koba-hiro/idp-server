@@ -73,6 +73,15 @@ public class IdPServerConfiguration {
   @Value("${idp.cache.redis.port}")
   int redisPort;
 
+  @Value("${idp.cache.redis.database}")
+  int redisDatabase;
+
+  @Value("${idp.cache.redis.timeout}")
+  int redisTimeout;
+
+  @Value("${idp.cache.redis.password}")
+  String redisPassword;
+
   @Value("${idp.cache.redis.maxTotal}")
   int maxTotal;
 
@@ -153,7 +162,15 @@ public class IdPServerConfiguration {
     if (enabledCache) {
       CacheConfiguration cacheConfiguration =
           new CacheConfiguration(
-              redisHost, redisPort, maxTotal, maxIdle, minIdle, timeToLiveSecond);
+              redisHost,
+              redisPort,
+              redisDatabase,
+              redisTimeout,
+              redisPassword,
+              maxTotal,
+              maxIdle,
+              minIdle,
+              timeToLiveSecond);
       return new JedisCacheStore(cacheConfiguration);
     }
 

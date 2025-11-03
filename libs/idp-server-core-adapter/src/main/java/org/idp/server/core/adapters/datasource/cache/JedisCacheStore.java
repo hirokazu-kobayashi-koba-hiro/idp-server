@@ -37,7 +37,27 @@ public class JedisCacheStore implements CacheStore {
     config.setMaxTotal(cacheConfiguration.maxTotal());
     config.setMaxIdle(cacheConfiguration.maxIdle());
     config.setMinIdle(cacheConfiguration.minIdle());
-    this.jedisPool = new JedisPool(config, cacheConfiguration.host(), cacheConfiguration.port());
+
+    String password = cacheConfiguration.password();
+    if (password != null && !password.isEmpty()) {
+      this.jedisPool =
+          new JedisPool(
+              config,
+              cacheConfiguration.host(),
+              cacheConfiguration.port(),
+              cacheConfiguration.timeout(),
+              password,
+              cacheConfiguration.database());
+    } else {
+      this.jedisPool =
+          new JedisPool(
+              config,
+              cacheConfiguration.host(),
+              cacheConfiguration.port(),
+              cacheConfiguration.timeout(),
+              null,
+              cacheConfiguration.database());
+    }
     this.timeToLiveSecond = cacheConfiguration.timeToLiveSeconds();
   }
 
