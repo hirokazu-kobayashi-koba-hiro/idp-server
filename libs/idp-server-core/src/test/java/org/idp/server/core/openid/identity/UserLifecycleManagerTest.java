@@ -85,19 +85,13 @@ class UserLifecycleManagerTest {
   }
 
   @Test
-  void testFederatedCannotTransitToDeletedPending() {
-    assertFalse(UserLifecycleManager.canTransit(UserStatus.FEDERATED, UserStatus.DELETED_PENDING));
-    assertThrows(
-        UnSupportedException.class,
-        () -> UserLifecycleManager.transit(UserStatus.FEDERATED, UserStatus.DELETED_PENDING));
+  void testFederatedCanTransitToDeletedPending() {
+    assertTrue(UserLifecycleManager.canTransit(UserStatus.FEDERATED, UserStatus.DELETED_PENDING));
   }
 
   @Test
-  void testFederatedCannotTransitToDeactivated() {
-    assertFalse(UserLifecycleManager.canTransit(UserStatus.FEDERATED, UserStatus.DEACTIVATED));
-    assertThrows(
-        UnSupportedException.class,
-        () -> UserLifecycleManager.transit(UserStatus.FEDERATED, UserStatus.DEACTIVATED));
+  void testFederatedCanTransitToDeactivated() {
+    assertTrue(UserLifecycleManager.canTransit(UserStatus.FEDERATED, UserStatus.DEACTIVATED));
   }
 
   @Test
@@ -105,6 +99,6 @@ class UserLifecycleManagerTest {
     assertTrue(UserLifecycleManager.canTransit(UserStatus.INITIALIZED, UserStatus.REGISTERED));
     assertTrue(
         UserLifecycleManager.canTransit(UserStatus.REGISTERED, UserStatus.IDENTITY_VERIFIED));
-    assertTrue(UserLifecycleManager.canTransit(UserStatus.LOCKED, UserStatus.IDENTITY_VERIFIED));
+    assertTrue(UserLifecycleManager.canTransit(UserStatus.LOCKED, UserStatus.DELETED_PENDING));
   }
 }

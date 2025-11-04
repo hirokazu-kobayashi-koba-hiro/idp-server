@@ -235,6 +235,7 @@ public class OidcFederationInteractor implements FederationInteractor {
 
     if (exsitingUser.exists()) {
       user.setSub(exsitingUser.sub());
+      user.setStatus(exsitingUser.status());
     } else {
       user.setSub(UUID.randomUUID().toString());
       user.setStatus(UserStatus.FEDERATED);
