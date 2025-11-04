@@ -120,6 +120,7 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
 
     if (exsitingUser.exists()) {
       user.setSub(exsitingUser.sub());
+      user.setStatus(exsitingUser.status());
     } else {
       user.setSub(UUID.randomUUID().toString());
     }
