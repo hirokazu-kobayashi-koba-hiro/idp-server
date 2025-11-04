@@ -46,6 +46,16 @@ public class IdentityVerificationApplications implements Iterable<IdentityVerifi
                 application.identityVerificationType().equals(type) && application.isRunning());
   }
 
+  public IdentityVerificationApplication findRunningApplicationByType(String typeName) {
+    return values.stream()
+        .filter(
+            application ->
+                application.identityVerificationType().name().equals(typeName)
+                    && application.isRunning())
+        .findFirst()
+        .orElse(new IdentityVerificationApplication());
+  }
+
   public IdentityVerificationApplications filterApproved(List<String> targeTypes) {
     List<IdentityVerificationApplication> filtered =
         values.stream()

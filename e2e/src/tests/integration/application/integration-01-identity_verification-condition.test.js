@@ -12,7 +12,7 @@ import { createFederatedUser, registerFidoUaf } from "../../../user";
 import { v4 as uuidv4 } from "uuid";
 
 describe("Identity Verification with Condition", () => {
-  const orgId = "72cf4a12-8da3-40fb-8ae4-a77e3cda95e2";
+  const orgId = serverConfig.organizationId;
   const tenantId = serverConfig.tenantId;
 
   let orgAccessToken; // Organization admin token for Management API
