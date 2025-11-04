@@ -107,10 +107,13 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
           DefaultSecurityEventType.external_token_authentication_failure);
     }
 
+    Map<String, Object> mappingSource = new HashMap<>();
+    mappingSource.put("request_body", request.toMap());
+    // Keep top-level access for existing mapping rules ($.execution_http_requests[0]...)
+    mappingSource.putAll(executionResult.contents());
+
     User user =
-        toUser(
-            authenticationInteractionConfig.userResolve().userMappingRules(),
-            executionResult.contents());
+        toUser(authenticationInteractionConfig.userResolve().userMappingRules(), mappingSource);
 
     User exsitingUser =
         userQueryRepository.findByProvider(tenant, user.providerId(), user.externalUserId());
