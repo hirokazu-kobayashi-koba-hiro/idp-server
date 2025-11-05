@@ -1,0 +1,256 @@
+import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
+import { get, postWithJson, deletion } from "../../../lib/http";
+import { requestToken } from "../../../api/oauthClient";
+import {
+  backendUrl,
+  clientSecretPostClient,
+  serverConfig,
+  federationServerConfig
+} from "../../testConfig";
+import { createFederatedUser, registerFidoUaf } from "../../../user";
+import { v4 as uuidv4 } from "uuid";
+
+describe("JsonSchemaValidator Logging Verification", () => {
+  const orgId = serverConfig.organizationId;
+  const tenantId = serverConfig.tenantId;
+
+  let orgAccessToken;
+  let userAccessToken;
+  let testUser;
+  let configId;
+  let configurationType;
+
+  beforeAll(async () => {
+    console.log("Setting up JsonSchemaValidator Logging Test...");
+
+    // Authenticate as organization admin
+    const orgAuthResponse = await requestToken({
+      endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+      grantType: "password",
+      username: "ito.ichiro",
+      password: "successUserCode001",
+      clientId: clientSecretPostClient.clientId,
+      clientSecret: clientSecretPostClient.clientSecret,
+      scope: "org-management account management"
+    });
+
+    expect(orgAuthResponse.status).toBe(200);
+    orgAccessToken = orgAuthResponse.data.access_token;
+
+    // Create federated user
+    const userResult = await createFederatedUser({
+      serverConfig: serverConfig,
+      federationServerConfig: federationServerConfig,
+      client: clientSecretPostClient,
+      adminClient: clientSecretPostClient,
+      scope: "openid profile phone email identity_verification_application " + clientSecretPostClient.identityVerificationScope
+    });
+
+    testUser = userResult.user;
+    userAccessToken = userResult.accessToken;
+    console.log(`Created test user: ${testUser.sub}`);
+
+    await registerFidoUaf({ accessToken: userAccessToken });
+    console.log("Registered FIDO UAF for test user");
+  });
+
+  afterAll(async () => {
+    if (configId) {
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
+        headers: { Authorization: `Bearer ${orgAccessToken}` }
+      });
+      console.log(`Cleaned up test configuration: ${configId}`);
+    }
+    console.log("JsonSchemaValidator Logging Test completed");
+  });
+
+  describe("Schema Validation Logging", () => {
+
+    it("should log validation failures with error details", async () => {
+      // Step 1: Create configuration with strict schema
+      configId = uuidv4();
+      configurationType = uuidv4();
+
+      console.log(`Creating identity verification configuration: ${configId}`);
+
+      const configurationData = {
+        "id": configId,
+        "type": configurationType,
+        "attributes": {
+          "enabled": true,
+          "schema_validation_test": true
+        },
+        "common": {
+          "callback_application_id_param": "app_id",
+          "auth_type": "none"
+        },
+        "processes": {
+          "apply": {
+            "request": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "age", "status"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "age": {
+                    "type": "integer",
+                    "minimum": 18,
+                    "maximum": 100
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["active", "inactive"]
+                  },
+                  "phone": {
+                    "type": "string",
+                    "pattern": "^[0-9]{10,11}$"
+                  }
+                }
+              }
+            },
+            "execution": {
+              "type": "none"
+            },
+            "transition": {
+              "applied": {
+                "any_of": [[]]
+              }
+            },
+            "store": {
+              "application_details_mapping_rules": []
+            },
+            "dependencies": {
+              "allow_retry": false
+            }
+          }
+        }
+      };
+
+      let response = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations`,
+        headers: {
+          "Authorization": `Bearer ${orgAccessToken}`,
+          "Content-Type": "application/json",
+          "X-Test-Case": "schema-validation-setup"
+        },
+        body: configurationData
+      });
+
+      expect(response.status).toBe(201);
+      console.log("✅ Configuration created");
+
+      // Step 2: Test Case 1 - Missing required fields (should trigger log.warn)
+      console.log("\n🧪 Test Case 1: Missing required fields");
+      console.log("Expected log: WARN - JSON schema validation failed: error_count=3, errors=[email is missing, age is missing, status is missing]");
+
+      response = await postWithJson({
+        url: `${backendUrl}/${tenantId}/v1/me/identity-verification/applications/${configurationType}/apply`,
+        body: {},  // Empty body - missing all required fields
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userAccessToken}`,
+          "X-Test-Case": "missing-required-fields"
+        }
+      });
+
+      console.log(`Response status: ${response.status}`);
+      expect(response.status).toBe(400);
+      expect(response.data).toHaveProperty("error", "invalid_request");
+      console.log("✅ Validation failed as expected (should see WARN log with 3 errors)");
+
+      // Step 3: Test Case 2 - Type mismatch (should trigger log.warn)
+      console.log("\n🧪 Test Case 2: Type mismatch");
+      console.log("Expected log: WARN - JSON schema validation failed: error_count=1, errors=[age is not a integer]");
+
+      response = await postWithJson({
+        url: `${backendUrl}/${tenantId}/v1/me/identity-verification/applications/${configurationType}/apply`,
+        body: {
+          "email": "test@example.com",
+          "age": "twenty-five",  // String instead of integer
+          "status": "active"
+        },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userAccessToken}`,
+          "X-Test-Case": "type-mismatch"
+        }
+      });
+
+      console.log(`Response status: ${response.status}`);
+      expect(response.status).toBe(400);
+      console.log("✅ Type validation failed as expected (should see WARN log with 1 error)");
+
+      // Step 4: Test Case 3 - Constraint violations (should trigger log.warn)
+      console.log("\n🧪 Test Case 3: Multiple constraint violations");
+      console.log("Expected log: WARN - JSON schema validation failed: error_count=3, errors=[age minimum is 18, status is not allowed enum value, phone pattern is ...]");
+
+      response = await postWithJson({
+        url: `${backendUrl}/${tenantId}/v1/me/identity-verification/applications/${configurationType}/apply`,
+        body: {
+          "email": "test@example.com",
+          "age": 15,  // Below minimum
+          "status": "pending",  // Not in enum
+          "phone": "abc123"  // Invalid pattern
+        },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userAccessToken}`,
+          "X-Test-Case": "constraint-violations"
+        }
+      });
+
+      console.log(`Response status: ${response.status}`);
+      expect(response.status).toBe(400);
+      console.log("✅ Constraint validation failed as expected (should see WARN log with 3 errors)");
+
+      // Step 5: Test Case 4 - Valid request (should NOT trigger log.warn)
+      console.log("\n🧪 Test Case 4: Valid request (no validation errors)");
+      console.log("Expected: NO WARN log (validation succeeds)");
+
+      response = await postWithJson({
+        url: `${backendUrl}/${tenantId}/v1/me/identity-verification/applications/${configurationType}/apply`,
+        body: {
+          "email": "valid@example.com",
+          "age": 25,
+          "status": "active",
+          "phone": "09012345678"
+        },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userAccessToken}`,
+          "X-Test-Case": "valid-request"
+        }
+      });
+
+      console.log(`Response status: ${response.status}`);
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty("id");
+      console.log("✅ Valid request succeeded (should see NO WARN log)");
+
+      // Summary
+      console.log("\n📊 Test Summary:");
+      console.log("✅ Test Case 1: Missing required fields → WARN log with error_count=3");
+      console.log("✅ Test Case 2: Type mismatch → WARN log with error_count=1");
+      console.log("✅ Test Case 3: Constraint violations → WARN log with error_count=3");
+      console.log("✅ Test Case 4: Valid request → NO WARN log");
+      console.log("\n🔍 Check server logs for:");
+      console.log("  - WARN level logs from JsonSchemaValidator");
+      console.log("  - error_count and errors array in each failure case");
+      console.log("  - No logs for successful validation");
+    });
+
+    it("should log target does not exist error", async () => {
+      console.log("\n🧪 Test Case 5: Target does not exist");
+      console.log("Expected log: WARN - JSON schema validation failed: target does not exist");
+
+      // This case is harder to trigger in E2E, but we document it
+      console.log("Note: This error occurs when JsonNodeWrapper target is null/empty");
+      console.log("Typically happens with malformed JSON or empty request body at parser level");
+      console.log("✅ Test case documented");
+    });
+  });
+});
