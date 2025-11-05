@@ -29,9 +29,13 @@ import org.idp.server.core.extension.identity.verification.configuration.process
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationErrorDetails;
 import org.idp.server.platform.http.*;
+import org.idp.server.platform.log.LoggerWrapper;
 
 public class IdentityVerificationApplicationHttpRequestExecutor
     implements IdentityVerificationApplicationExecutor {
+
+  private static final LoggerWrapper log =
+      LoggerWrapper.getLogger(IdentityVerificationApplicationHttpRequestExecutor.class);
 
   HttpRequestExecutor httpRequestExecutor;
 
@@ -55,10 +59,32 @@ public class IdentityVerificationApplicationHttpRequestExecutor
     IdentityVerificationExecutionConfig executionConfig = processConfig.execution();
     IdentityVerificationHttpRequestConfig httpRequestConfig = executionConfig.httpRequest();
 
+    log.info("Identity verification API call started: process={}", processes.name());
+
     HttpRequestBaseParams httpRequestBaseParams = new HttpRequestBaseParams(context.toMap());
 
+    long startTime = System.currentTimeMillis();
     HttpRequestResult httpRequestResult =
         httpRequestExecutor.execute(httpRequestConfig, httpRequestBaseParams);
+    long duration = System.currentTimeMillis() - startTime;
+
+    if (httpRequestResult.isSuccess()) {
+      log.info(
+          "Identity verification API call succeeded: process={}, status_code={}, duration_ms={}",
+          processes.name(),
+          httpRequestResult.statusCode(),
+          duration);
+    } else {
+      log.warn(
+          "Identity verification API call failed: process={}, status_code={}, duration_ms={}, "
+              + "error_category={}",
+          processes.name(),
+          httpRequestResult.statusCode(),
+          duration,
+          httpRequestResult.isClientError() ? "client_error" : "server_error");
+
+      log.debug("API error response body: {}", httpRequestResult.body());
+    }
 
     return new IdentityVerificationExecutionResult(
         resolveStatus(httpRequestResult),
