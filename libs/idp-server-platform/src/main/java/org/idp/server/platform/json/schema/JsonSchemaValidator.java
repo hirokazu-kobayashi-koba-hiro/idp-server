@@ -20,8 +20,11 @@ import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.format.JsonPropertyFormat;
+import org.idp.server.platform.log.LoggerWrapper;
 
 public class JsonSchemaValidator {
+
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(JsonSchemaValidator.class);
 
   JsonSchemaDefinition schemaDefinition;
 
@@ -37,12 +40,14 @@ public class JsonSchemaValidator {
     List<String> errors = new ArrayList<>();
     if (!target.exists()) {
       errors.add("Schema does not exist");
+      log.warn("JSON schema validation failed: target does not exist");
       return JsonSchemaValidationResult.failure(errors);
     }
 
     validateObjectConstraints("", target, schemaDefinition, errors);
 
     if (!errors.isEmpty()) {
+      log.warn("JSON schema validation failed: error_count={}, errors={}", errors.size(), errors);
       return JsonSchemaValidationResult.failure(errors);
     }
 
