@@ -70,6 +70,11 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
         TenantLoggingContext.setTenant(tenantIdentifier);
 
+        String userId = resolveUserSub(args);
+        if (userId != null) {
+          TenantLoggingContext.setUserId(userId);
+        }
+
         String clientId = resolveClientIdAsString(args);
         if (clientId != null) {
           TenantLoggingContext.setClientId(clientId);
@@ -124,6 +129,11 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         OperationContext.set(operationType);
         TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
         TenantLoggingContext.setTenant(tenantIdentifier);
+
+        String userId = resolveUserSub(args);
+        if (userId != null) {
+          TenantLoggingContext.setUserId(userId);
+        }
 
         String clientId = resolveClientIdAsString(args);
         if (clientId != null) {
@@ -188,6 +198,28 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
     }
     throw new MissingRequiredTenantIdentifierException(
         "Missing required TenantIdentifier. Please ensure it is explicitly passed to the service.");
+  }
+
+  protected String resolveUserSub(Object[] args) {
+    for (Object arg : args) {
+      // Use reflection to avoid direct dependency on core module
+      if (arg != null && arg.getClass().getName().endsWith(".User")) {
+        try {
+          java.lang.reflect.Method existsMethod = arg.getClass().getMethod("exists");
+          Boolean exists = (Boolean) existsMethod.invoke(arg);
+          if (Boolean.TRUE.equals(exists)) {
+            java.lang.reflect.Method subMethod = arg.getClass().getMethod("sub");
+            String sub = (String) subMethod.invoke(arg);
+            if (sub != null && !sub.isEmpty()) {
+              return sub;
+            }
+          }
+        } catch (Exception e) {
+          log.trace("Failed to extract user sub via reflection: {}", e.getMessage());
+        }
+      }
+    }
+    return null;
   }
 
   protected String resolveClientIdAsString(Object[] args) {

@@ -22,8 +22,9 @@ import org.slf4j.MDC;
 
 public class TenantLoggingContext {
 
-  private static final String TENANT_ID_KEY = "tenantId";
-  private static final String CLIENT_ID_KEY = "clientId";
+  private static final String TENANT_ID_KEY = "tenant_id";
+  private static final String CLIENT_ID_KEY = "client_id";
+  private static final String USER_ID_KEY = "user_id";
 
   public static void setTenant(TenantIdentifier tenantIdentifier) {
     if (Objects.nonNull(tenantIdentifier) && tenantIdentifier.exists()) {
@@ -53,12 +54,30 @@ public class TenantLoggingContext {
     return Objects.nonNull(MDC.get(CLIENT_ID_KEY));
   }
 
+  public static void setUserId(String userId) {
+    if (Objects.nonNull(userId) && !userId.isEmpty()) {
+      MDC.put(USER_ID_KEY, userId);
+    }
+  }
+
+  public static String getCurrentUserId() {
+    return MDC.get(USER_ID_KEY);
+  }
+
+  public static boolean hasUserId() {
+    return Objects.nonNull(MDC.get(USER_ID_KEY));
+  }
+
   public static void clearTenant() {
     MDC.remove(TENANT_ID_KEY);
   }
 
   public static void clearClientId() {
     MDC.remove(CLIENT_ID_KEY);
+  }
+
+  public static void clearUserId() {
+    MDC.remove(USER_ID_KEY);
   }
 
   public static void clearAll() {
@@ -71,5 +90,9 @@ public class TenantLoggingContext {
 
   public static String getClientIdKey() {
     return CLIENT_ID_KEY;
+  }
+
+  public static String getUserIdKey() {
+    return USER_ID_KEY;
   }
 }
