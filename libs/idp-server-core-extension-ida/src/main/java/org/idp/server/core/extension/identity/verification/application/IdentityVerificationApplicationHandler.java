@@ -71,6 +71,15 @@ public class IdentityVerificationApplicationHandler {
       RequestAttributes requestAttributes,
       IdentityVerificationConfiguration verificationConfiguration) {
 
+    long startTime = System.currentTimeMillis();
+    log.info(
+        "Identity verification application started: type={}, process={}, user={}, "
+            + "has_current_application={}",
+        type.name(),
+        processes.name(),
+        user.userIdentifier().value(),
+        currentApplication.exists());
+
     IdentityVerificationApplicationRequestVerifiedResult verifyResult =
         requestVerifiers.verifyAll(
             tenant,
@@ -84,7 +93,14 @@ public class IdentityVerificationApplicationHandler {
             verificationConfiguration);
 
     if (verifyResult.isError()) {
-
+      long duration = System.currentTimeMillis() - startTime;
+      log.warn(
+          "Identity verification application failed (request verification): type={}, process={}, "
+              + "duration_ms={}, error_count={}",
+          type.name(),
+          processes.name(),
+          duration,
+          verifyResult.errors().size());
       return IdentityVerificationApplyingResult.requestVerificationError(verifyResult);
     }
 
@@ -122,10 +138,25 @@ public class IdentityVerificationApplicationHandler {
         executor.execute(context, processes, verificationConfiguration);
 
     if (!executionResult.isOk()) {
+      long duration = System.currentTimeMillis() - startTime;
+      log.warn(
+          "Identity verification application failed (execution): type={}, process={}, "
+              + "duration_ms={}, status_code={}",
+          type.name(),
+          processes.name(),
+          duration,
+          executionResult.statusCode());
       return IdentityVerificationApplyingResult.executionError(verifyResult, executionResult);
     }
 
     contextBuilder.executionResult(executionResult.result());
+
+    long duration = System.currentTimeMillis() - startTime;
+    log.info(
+        "Identity verification application completed: type={}, process={}, duration_ms={}",
+        type.name(),
+        processes.name(),
+        duration);
 
     return new IdentityVerificationApplyingResult(
         contextBuilder.build(), verifyResult, executionResult);

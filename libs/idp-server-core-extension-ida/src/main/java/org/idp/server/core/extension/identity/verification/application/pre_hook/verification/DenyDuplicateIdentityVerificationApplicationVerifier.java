@@ -24,11 +24,15 @@ import org.idp.server.core.extension.identity.verification.application.model.Ide
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfig;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
 public class DenyDuplicateIdentityVerificationApplicationVerifier
     implements IdentityVerificationApplicationRequestVerifier {
+
+  private static final LoggerWrapper log =
+      LoggerWrapper.getLogger(DenyDuplicateIdentityVerificationApplicationVerifier.class);
 
   @Override
   public String type() {
@@ -48,6 +52,10 @@ public class DenyDuplicateIdentityVerificationApplicationVerifier
       IdentityVerificationConfig verificationConfig) {
 
     if (previousApplications.containsRunningState(type)) {
+      log.warn(
+          "Duplicate application denied: type={}, user={}",
+          type.name(),
+          user.userIdentifier().value());
       List<String> errors = List.of("Duplicate application found for type " + type.name());
       return IdentityVerificationApplicationRequestVerifiedResult.failure(errors);
     }

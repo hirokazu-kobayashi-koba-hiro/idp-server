@@ -29,6 +29,7 @@ import org.idp.server.core.extension.identity.verification.configuration.process
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -90,6 +91,8 @@ import org.idp.server.platform.type.RequestAttributes;
  */
 public class ProcessSequenceVerifier implements IdentityVerificationApplicationRequestVerifier {
 
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(ProcessSequenceVerifier.class);
+
   private final IdentityVerificationConfigurationQueryRepository configurationRepository;
 
   public ProcessSequenceVerifier(
@@ -120,12 +123,28 @@ public class ProcessSequenceVerifier implements IdentityVerificationApplicationR
         configuration.getProcessConfig(process);
     ProcessDependencies dependencies = processConfig.dependencies();
 
+    log.debug(
+        "Process sequence validation started: process={}, has_current_application={}, "
+            + "required_processes={}, allow_retry={}, allow_during_statuses={}",
+        process.name(),
+        currentApplication.exists(),
+        dependencies.requiredProcesses(),
+        dependencies.allowRetry(),
+        dependencies.allowDuringStatuses());
+
     List<String> errors = new ArrayList<>();
 
     // 1. Check required process dependencies
     if (dependencies.hasRequiredProcesses()) {
       List<String> missing = findMissingProcesses(currentApplication, dependencies);
       if (!missing.isEmpty()) {
+        log.warn(
+            "Process dependency violation: process={}, required={}, missing={}, "
+                + "completed_processes={}",
+            process.name(),
+            dependencies.requiredProcesses(),
+            missing,
+            currentApplication.getCompletedProcesses());
         errors.add(
             String.format(
                 "Process '%s' requires completion of: %s. Missing: %s",
@@ -137,6 +156,9 @@ public class ProcessSequenceVerifier implements IdentityVerificationApplicationR
 
     // 2. Check retry restriction
     if (!dependencies.allowRetry() && currentApplication.hasExecutedProcess(process.name())) {
+      log.warn(
+          "Process retry denied: process={}, allow_retry=false, already_executed=true",
+          process.name());
       errors.add(
           String.format(
               "Process '%s' does not allow retry and has already been executed", process.name()));
@@ -146,6 +168,12 @@ public class ProcessSequenceVerifier implements IdentityVerificationApplicationR
     if (dependencies.hasStatusRestrictions()) {
       String currentStatus = currentApplication.status().value();
       if (!dependencies.isAllowedDuringStatus(currentStatus)) {
+        log.warn(
+            "Process status restriction violation: process={}, current_status={}, "
+                + "allowed_statuses={}",
+            process.name(),
+            currentStatus,
+            dependencies.allowDuringStatuses());
         errors.add(
             String.format(
                 "Process '%s' cannot be executed during status: %s. Allowed statuses: %s",
@@ -156,9 +184,15 @@ public class ProcessSequenceVerifier implements IdentityVerificationApplicationR
     }
 
     if (!errors.isEmpty()) {
+      log.info(
+          "Process sequence validation failed: process={}, error_count={}, errors={}",
+          process.name(),
+          errors.size(),
+          errors);
       return IdentityVerificationApplicationRequestVerifiedResult.failure(errors);
     }
 
+    log.debug("Process sequence validation passed: process={}", process.name());
     return IdentityVerificationApplicationRequestVerifiedResult.success();
   }
 

@@ -30,10 +30,13 @@ import org.idp.server.core.extension.identity.verification.io.IdentityVerificati
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.path.JsonPathWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
 public class UserClaimVerifier implements IdentityVerificationApplicationRequestVerifier {
+
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(UserClaimVerifier.class);
 
   JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
@@ -68,6 +71,12 @@ public class UserClaimVerifier implements IdentityVerificationApplicationRequest
       Object requestValue = requestJsonPath.readRaw(userClaimVerificationRule.requestJsonPath());
       Object userValue = userJsonPath.readRaw(userClaimVerificationRule.userClaimJsonPath());
       if (!Objects.equals(requestValue, userValue)) {
+        log.warn(
+            "User claim mismatch: request_path={}, user_path={}, request_value={}, user_value={}",
+            userClaimVerificationRule.requestJsonPath(),
+            userClaimVerificationRule.userClaimJsonPath(),
+            maskSensitiveValue(requestValue),
+            maskSensitiveValue(userValue));
         errors.add(
             String.format(
                 "User claim verification failed. unmatched: %s, user:%s",
@@ -77,9 +86,23 @@ public class UserClaimVerifier implements IdentityVerificationApplicationRequest
     }
 
     if (!errors.isEmpty()) {
+      log.info(
+          "User claim verification failed: type={}, process={}, error_count={}",
+          type.name(),
+          processes.name(),
+          errors.size());
       return IdentityVerificationApplicationRequestVerifiedResult.failure(errors);
     }
 
     return IdentityVerificationApplicationRequestVerifiedResult.success();
+  }
+
+  private static Object maskSensitiveValue(Object value) {
+    if (value instanceof String str) {
+      if (str.length() > 50) {
+        return "***";
+      }
+    }
+    return value;
   }
 }

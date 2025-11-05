@@ -116,6 +116,8 @@ public class SsoCredentialsParameterResolver implements AdditionalRequestParamet
           ssoCredentials.updateWithToken(accessToken, refreshToken, expiresIn);
       ssoCredentialsCommandRepository.register(tenant, user, updateWithToken);
 
+      log.debug("SSO credentials resolved successfully: user={}", user.userIdentifier().value());
+
       return AdditionalParameterResolveResult.success(json.toMap());
     } catch (Exception e) {
       log.error("SSO credentials parameter resolution failed: {}", e.getMessage(), e);

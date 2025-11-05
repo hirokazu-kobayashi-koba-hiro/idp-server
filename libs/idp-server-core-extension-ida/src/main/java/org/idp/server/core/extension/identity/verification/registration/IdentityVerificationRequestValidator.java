@@ -22,8 +22,12 @@ import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaDefinition;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 import org.idp.server.platform.json.schema.JsonSchemaValidator;
+import org.idp.server.platform.log.LoggerWrapper;
 
 public class IdentityVerificationRequestValidator {
+
+  private static final LoggerWrapper log =
+      LoggerWrapper.getLogger(IdentityVerificationRequestValidator.class);
   IdentityVerificationRegistrationConfig registrationConfiguration;
   IdentityVerificationRequest request;
 
@@ -42,6 +46,13 @@ public class IdentityVerificationRequestValidator {
 
     JsonNodeWrapper requestJson = JsonNodeWrapper.fromMap(request.toMap());
     JsonSchemaValidationResult validationResult = jsonSchemaValidator.validate(requestJson);
+
+    if (!validationResult.isValid()) {
+      log.warn(
+          "Identity verification registration request validation failed: error_count={}",
+          validationResult.errors().size());
+      log.debug("Validation errors: {}", validationResult.errors());
+    }
 
     return new IdentityVerificationValidationResult(validationResult);
   }

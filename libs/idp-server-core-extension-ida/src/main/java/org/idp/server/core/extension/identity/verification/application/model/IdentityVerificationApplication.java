@@ -31,11 +31,15 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.mapper.MappingRule;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class IdentityVerificationApplication {
+
+  private static final LoggerWrapper log =
+      LoggerWrapper.getLogger(IdentityVerificationApplication.class);
 
   IdentityVerificationApplicationIdentifier identifier;
   IdentityVerificationType identityVerificationType;

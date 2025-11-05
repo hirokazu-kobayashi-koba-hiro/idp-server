@@ -24,17 +24,24 @@ import org.idp.server.platform.condition.ConditionOperationEvaluator;
 import org.idp.server.platform.condition.ConditionTransitionResult;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 
 public class IdentityVerificationApplicationStatusEvaluator {
 
+  private static final LoggerWrapper log =
+      LoggerWrapper.getLogger(IdentityVerificationApplicationStatusEvaluator.class);
+
   public static IdentityVerificationApplicationStatus evaluateOnProcess(
       IdentityVerificationProcessConfiguration config, IdentityVerificationContext context) {
+
+    log.debug("Status evaluation started (on process)");
 
     IdentityVerificationConditionConfig approvedConfig = config.approved();
     ConditionTransitionResult approvedRequestResult =
         isAnySatisfied(approvedConfig, context.toMap());
 
     if (approvedRequestResult.isSuccess()) {
+      log.info("Status transition: → APPROVED");
       return IdentityVerificationApplicationStatus.APPROVED;
     }
 
@@ -43,6 +50,7 @@ public class IdentityVerificationApplicationStatusEvaluator {
         isAnySatisfied(rejectedConfig, context.toMap());
 
     if (rejectedRequestResult.isSuccess()) {
+      log.info("Status transition: → REJECTED");
       return IdentityVerificationApplicationStatus.REJECTED;
     }
 
@@ -51,6 +59,7 @@ public class IdentityVerificationApplicationStatusEvaluator {
         isAnySatisfied(cancellationConfig, context.toMap());
 
     if (cancellationRequestResult.isSuccess()) {
+      log.info("Status transition: → CANCELLED");
       return IdentityVerificationApplicationStatus.CANCELLED;
     }
 
@@ -58,20 +67,31 @@ public class IdentityVerificationApplicationStatusEvaluator {
     ConditionTransitionResult appliedRequestResult = isAnySatisfied(appliedConfig, context.toMap());
 
     if (appliedRequestResult.isSuccess()) {
+      log.info("Status transition: → APPLIED");
       return IdentityVerificationApplicationStatus.APPLIED;
     }
 
+    log.debug(
+        "Status remains: APPLYING, evaluated_conditions=[approved={}, rejected={}, "
+            + "canceled={}, applied={}]",
+        approvedRequestResult,
+        rejectedRequestResult,
+        cancellationRequestResult,
+        appliedRequestResult);
     return IdentityVerificationApplicationStatus.APPLYING;
   }
 
   public static IdentityVerificationApplicationStatus evaluateOnCallback(
       IdentityVerificationProcessConfiguration config, IdentityVerificationContext context) {
 
+    log.debug("Status evaluation started (on callback)");
+
     IdentityVerificationConditionConfig approvedConfig = config.approved();
     ConditionTransitionResult approvedRequestResult =
         isAnySatisfied(approvedConfig, context.toMap());
 
     if (approvedRequestResult.isSuccess()) {
+      log.info("Status transition (callback): → APPROVED");
       return IdentityVerificationApplicationStatus.APPROVED;
     }
 
@@ -80,6 +100,7 @@ public class IdentityVerificationApplicationStatusEvaluator {
         isAnySatisfied(rejectedConfig, context.toMap());
 
     if (rejectedRequestResult.isSuccess()) {
+      log.info("Status transition (callback): → REJECTED");
       return IdentityVerificationApplicationStatus.REJECTED;
     }
 
@@ -88,6 +109,7 @@ public class IdentityVerificationApplicationStatusEvaluator {
         isAnySatisfied(cancellationConfig, context.toMap());
 
     if (cancellationRequestResult.isSuccess()) {
+      log.info("Status transition (callback): → CANCELLED");
       return IdentityVerificationApplicationStatus.CANCELLED;
     }
 
@@ -95,9 +117,17 @@ public class IdentityVerificationApplicationStatusEvaluator {
     ConditionTransitionResult appliedRequestResult = isAnySatisfied(appliedConfig, context.toMap());
 
     if (appliedRequestResult.isSuccess()) {
+      log.info("Status transition (callback): → APPLIED");
       return IdentityVerificationApplicationStatus.APPLIED;
     }
 
+    log.debug(
+        "Status remains: EXAMINATION_PROCESSING, evaluated_conditions=[approved={}, "
+            + "rejected={}, canceled={}, applied={}]",
+        approvedRequestResult,
+        rejectedRequestResult,
+        cancellationRequestResult,
+        appliedRequestResult);
     return IdentityVerificationApplicationStatus.EXAMINATION_PROCESSING;
   }
 
@@ -123,15 +153,46 @@ public class IdentityVerificationApplicationStatusEvaluator {
 
   static boolean isAllSatisfied(
       List<IdentityVerificationCondition> resultConditions, JsonPathWrapper jsonPathWrapper) {
-    for (IdentityVerificationCondition resultCondition : resultConditions) {
+    log.debug("Evaluating AND conditions: count={}", resultConditions.size());
+
+    for (int i = 0; i < resultConditions.size(); i++) {
+      IdentityVerificationCondition resultCondition = resultConditions.get(i);
 
       Object actualValue = jsonPathWrapper.readRaw(resultCondition.path());
+      boolean result =
+          ConditionOperationEvaluator.evaluate(
+              actualValue, resultCondition.operation(), resultCondition.value());
 
-      if (!ConditionOperationEvaluator.evaluate(
-          actualValue, resultCondition.operation(), resultCondition.value())) {
+      log.debug(
+          "Condition[{}]: path={}, operation={}, expected={}, actual={}, result={}",
+          i,
+          resultCondition.path(),
+          resultCondition.operation(),
+          maskSensitiveValue(resultCondition.value()),
+          maskSensitiveValue(actualValue),
+          result);
+
+      if (!result) {
+        log.debug(
+            "AND condition group failed at index {}: path={}, expected={}, actual={}",
+            i,
+            resultCondition.path(),
+            maskSensitiveValue(resultCondition.value()),
+            maskSensitiveValue(actualValue));
         return false;
       }
     }
+
+    log.debug("All AND conditions satisfied: count={}", resultConditions.size());
     return true;
+  }
+
+  private static Object maskSensitiveValue(Object value) {
+    if (value instanceof String str) {
+      if (str.contains("token") || str.contains("password") || str.length() > 50) {
+        return "***";
+      }
+    }
+    return value;
   }
 }

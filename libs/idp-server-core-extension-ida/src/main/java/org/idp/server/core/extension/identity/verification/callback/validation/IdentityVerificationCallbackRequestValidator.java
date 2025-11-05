@@ -26,9 +26,13 @@ import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaDefinition;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 import org.idp.server.platform.json.schema.JsonSchemaValidator;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.type.RequestAttributes;
 
 public class IdentityVerificationCallbackRequestValidator {
+
+  private static final LoggerWrapper log =
+      LoggerWrapper.getLogger(IdentityVerificationCallbackRequestValidator.class);
   IdentityVerificationProcessConfiguration processConfiguration;
   IdentityVerificationRequest request;
   RequestAttributes requestAttributes;
@@ -50,14 +54,14 @@ public class IdentityVerificationCallbackRequestValidator {
       BasicAuth configurationBasicAuth = basicAuthConfig.basicAuth();
 
       if (!basicAuth.exists()) {
-
+        log.warn("Callback request missing required basic authentication");
         List<String> errors = new ArrayList<>();
         errors.add("The identity verification request requires a basic authentication");
         return new IdentityVerificationCallbackValidationResult(false, errors);
       }
 
       if (!configurationBasicAuth.equals(basicAuth)) {
-
+        log.warn("Callback request basic authentication mismatch");
         List<String> errors = new ArrayList<>();
         errors.add("The identity verification request unmatch a basic authentication");
         return new IdentityVerificationCallbackValidationResult(false, errors);
@@ -69,6 +73,12 @@ public class IdentityVerificationCallbackRequestValidator {
 
     JsonNodeWrapper requestJson = JsonNodeWrapper.fromMap(request.toMap());
     JsonSchemaValidationResult validationResult = jsonSchemaValidator.validate(requestJson);
+
+    if (!validationResult.isValid()) {
+      log.warn(
+          "Callback request validation failed: error_count={}", validationResult.errors().size());
+      log.debug("Validation errors: {}", validationResult.errors());
+    }
 
     return new IdentityVerificationCallbackValidationResult(
         validationResult.isValid(), validationResult.errors());
