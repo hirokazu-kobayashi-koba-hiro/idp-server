@@ -22,7 +22,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.control_plane.model.IdpControlPlaneAuthority;
 import org.idp.server.adapters.springboot.control_plane.model.OrganizationOperatorPrincipal;
 import org.idp.server.adapters.springboot.control_plane.model.OrganizationResolver;
@@ -39,6 +38,7 @@ import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier
 import org.idp.server.platform.multi_tenancy.organization.OrganizationNotFoundException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantNotFoundException;
 import org.idp.server.platform.type.Pairs;
+import org.idp.server.usecases.IdpServerApplication;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;

@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package org.idp.server.platform.proxy;
+package org.idp.server.usecases;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.datasource.*;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.log.TenantLoggingContext;
@@ -70,10 +71,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
         TenantLoggingContext.setTenant(tenantIdentifier);
 
-        String userId = resolveUserSub(args);
-        if (userId != null) {
-          TenantLoggingContext.setUserId(userId);
-        }
+        resolveUserContext(args);
 
         String clientId = resolveClientIdAsString(args);
         if (clientId != null) {
@@ -130,10 +128,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
         TenantLoggingContext.setTenant(tenantIdentifier);
 
-        String userId = resolveUserSub(args);
-        if (userId != null) {
-          TenantLoggingContext.setUserId(userId);
-        }
+        resolveUserContext(args);
 
         String clientId = resolveClientIdAsString(args);
         if (clientId != null) {
@@ -200,26 +195,22 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         "Missing required TenantIdentifier. Please ensure it is explicitly passed to the service.");
   }
 
-  protected String resolveUserSub(Object[] args) {
+  protected void resolveUserContext(Object[] args) {
     for (Object arg : args) {
-      // Use reflection to avoid direct dependency on core module
-      if (arg != null && arg.getClass().getName().endsWith(".User")) {
-        try {
-          java.lang.reflect.Method existsMethod = arg.getClass().getMethod("exists");
-          Boolean exists = (Boolean) existsMethod.invoke(arg);
-          if (Boolean.TRUE.equals(exists)) {
-            java.lang.reflect.Method subMethod = arg.getClass().getMethod("sub");
-            String sub = (String) subMethod.invoke(arg);
-            if (sub != null && !sub.isEmpty()) {
-              return sub;
-            }
+      // Type-safe check using direct import (no reflection needed in use-cases layer)
+      if (arg instanceof User user) {
+        if (user.exists()) {
+          String sub = user.sub();
+          if (sub != null && !sub.isEmpty()) {
+            TenantLoggingContext.setUserId(sub);
           }
-        } catch (Exception e) {
-          log.trace("Failed to extract user sub via reflection: {}", e.getMessage());
+          String exSub = user.externalUserId();
+          if (exSub != null && !exSub.isEmpty()) {
+            TenantLoggingContext.setUserExSub(exSub);
+          }
         }
       }
     }
-    return null;
   }
 
   protected String resolveClientIdAsString(Object[] args) {

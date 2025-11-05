@@ -18,10 +18,10 @@ package org.idp.server.adapters.springboot.application.event;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import org.idp.server.IdpServerApplication;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogApi;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.usecases.IdpServerApplication;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 

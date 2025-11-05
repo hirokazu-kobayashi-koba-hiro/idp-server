@@ -25,6 +25,7 @@ public class TenantLoggingContext {
   private static final String TENANT_ID_KEY = "tenant_id";
   private static final String CLIENT_ID_KEY = "client_id";
   private static final String USER_ID_KEY = "user_id";
+  private static final String USER_EX_SUB_KEY = "user_ex_sub";
 
   public static void setTenant(TenantIdentifier tenantIdentifier) {
     if (Objects.nonNull(tenantIdentifier) && tenantIdentifier.exists()) {
@@ -57,6 +58,12 @@ public class TenantLoggingContext {
   public static void setUserId(String userId) {
     if (Objects.nonNull(userId) && !userId.isEmpty()) {
       MDC.put(USER_ID_KEY, userId);
+    }
+  }
+
+  public static void setUserExSub(String userExSub) {
+    if (Objects.nonNull(userExSub) && !userExSub.isEmpty()) {
+      MDC.put(USER_EX_SUB_KEY, userExSub);
     }
   }
 

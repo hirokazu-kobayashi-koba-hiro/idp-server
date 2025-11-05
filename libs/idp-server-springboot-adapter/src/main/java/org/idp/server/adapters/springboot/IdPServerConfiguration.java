@@ -17,7 +17,6 @@
 package org.idp.server.adapters.springboot;
 
 import java.util.Map;
-import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.delegation.PasswordEncoder;
 import org.idp.server.adapters.springboot.application.delegation.PasswordVerification;
 import org.idp.server.adapters.springboot.application.event.AuditLogPublisherService;
@@ -37,6 +36,7 @@ import org.idp.server.platform.datasource.cache.CacheConfiguration;
 import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.datasource.cache.NoOperationCacheStore;
 import org.idp.server.platform.date.TimeConfig;
+import org.idp.server.usecases.IdpServerApplication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

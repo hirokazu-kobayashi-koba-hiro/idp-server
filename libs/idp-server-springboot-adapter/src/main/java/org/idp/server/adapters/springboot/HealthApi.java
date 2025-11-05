@@ -16,9 +16,9 @@
 
 package org.idp.server.adapters.springboot;
 
-import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.core.openid.userinfo.UserinfoApi;
+import org.idp.server.usecases.IdpServerApplication;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
