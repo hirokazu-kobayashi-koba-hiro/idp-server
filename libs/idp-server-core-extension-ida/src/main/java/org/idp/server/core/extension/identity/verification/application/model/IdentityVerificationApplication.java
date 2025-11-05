@@ -280,6 +280,45 @@ public class IdentityVerificationApplication {
     return identifier != null && identifier.exists();
   }
 
+  /**
+   * Check if the specified process has been completed successfully at least once.
+   *
+   * @param processName Process name to check
+   * @return true if the process has at least one successful execution
+   */
+  public boolean hasCompletedProcess(String processName) {
+    if (processes == null || !processes.contains(processName)) {
+      return false;
+    }
+    IdentityVerificationApplicationProcessResult result = processes.get(processName);
+    return result != null && result.successCount() > 0;
+  }
+
+  /**
+   * Get list of successfully completed process names.
+   *
+   * @return List of process names that have at least one successful execution
+   */
+  public List<String> getCompletedProcesses() {
+    if (processes == null) {
+      return List.of();
+    }
+    return processes.toMap().entrySet().stream()
+        .filter(entry -> entry.getValue().successCount() > 0)
+        .map(Map.Entry::getKey)
+        .toList();
+  }
+
+  /**
+   * Check if the specified process has been executed (regardless of success/failure).
+   *
+   * @param processName Process name to check
+   * @return true if the process has been executed at least once
+   */
+  public boolean hasExecutedProcess(String processName) {
+    return processes != null && processes.contains(processName);
+  }
+
   public Map<String, Object> toMap() {
     HashMap<String, Object> map = new HashMap<>();
     if (identifier != null) {

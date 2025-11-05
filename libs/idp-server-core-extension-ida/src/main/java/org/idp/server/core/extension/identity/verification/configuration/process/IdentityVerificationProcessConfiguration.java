@@ -33,6 +33,7 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
   IdentityVerificationTransitionConfig transition = new IdentityVerificationTransitionConfig();
   IdentityVerificationStoreConfig store = new IdentityVerificationStoreConfig();
   IdentityVerificationResponseConfig response = new IdentityVerificationResponseConfig();
+  ProcessDependencies dependencies = new ProcessDependencies();
 
   public IdentityVerificationProcessConfiguration() {}
 
@@ -145,6 +146,18 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
     return response;
   }
 
+  public ProcessDependencies dependencies() {
+    if (dependencies == null) {
+      return new ProcessDependencies();
+    }
+    return dependencies;
+  }
+
+  public boolean hasDependencies() {
+    return dependencies != null
+        && (dependencies.hasRequiredProcesses() || dependencies.hasStatusRestrictions());
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     if (request != null) map.put("request", request.toMap());
@@ -154,6 +167,7 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
     if (transition != null) map.put("transition", transition.toMap());
     if (store != null) map.put("store", store.toMap());
     if (response != null) map.put("response", response.toMap());
+    if (dependencies != null) map.put("dependencies", dependencies.toMap());
     return map;
   }
 }
