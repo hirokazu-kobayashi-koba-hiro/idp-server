@@ -16,11 +16,11 @@
 
 package org.idp.server.adapters.springboot.application.event;
 
-import org.idp.server.IdpServerApplication;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.log.TenantLoggingContext;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.SecurityEventApi;
+import org.idp.server.usecases.IdpServerApplication;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.task.TaskExecutor;

@@ -18,7 +18,6 @@ package org.idp.server.adapters.springboot.application.restapi.oauth;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
-import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.adapters.springboot.application.restapi.SecurityHeaderConfigurable;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequest;
@@ -34,6 +33,7 @@ import org.idp.server.core.openid.oauth.io.*;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
+import org.idp.server.usecases.IdpServerApplication;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;

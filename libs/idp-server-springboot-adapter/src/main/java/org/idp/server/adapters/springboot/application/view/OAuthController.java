@@ -18,13 +18,13 @@ package org.idp.server.adapters.springboot.application.view;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
-import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.core.openid.oauth.OAuthFlowApi;
 import org.idp.server.core.openid.oauth.io.OAuthRequestResponse;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
+import org.idp.server.usecases.IdpServerApplication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.MultiValueMap;

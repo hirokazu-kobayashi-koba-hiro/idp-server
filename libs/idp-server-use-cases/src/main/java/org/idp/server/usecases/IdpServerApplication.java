@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server;
+package org.idp.server.usecases;
 
 import java.net.http.HttpClient;
 import java.util.Map;
@@ -148,8 +148,6 @@ import org.idp.server.platform.notification.email.EmailSenders;
 import org.idp.server.platform.notification.sms.SmsSenders;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 import org.idp.server.platform.plugin.*;
-import org.idp.server.platform.proxy.ManagementTypeEntryServiceProxy;
-import org.idp.server.platform.proxy.TenantAwareEntryServiceProxy;
 import org.idp.server.platform.security.SecurityEventApi;
 import org.idp.server.platform.security.SecurityEventPublisher;
 import org.idp.server.platform.security.hook.SecurityEventHooks;

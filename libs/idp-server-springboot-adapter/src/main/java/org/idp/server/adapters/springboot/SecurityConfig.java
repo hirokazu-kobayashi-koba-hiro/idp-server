@@ -16,10 +16,10 @@
 
 package org.idp.server.adapters.springboot;
 
-import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.model.IdPApplicationScope;
 import org.idp.server.adapters.springboot.application.session.DynamicCookieSerializer;
 import org.idp.server.platform.multi_tenancy.tenant.TenantMetaDataApi;
+import org.idp.server.usecases.IdpServerApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;

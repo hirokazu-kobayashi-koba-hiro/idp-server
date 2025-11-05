@@ -17,11 +17,11 @@
 package org.idp.server.adapters.springboot.application.restapi.health;
 
 import java.util.Map;
-import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.platform.health.HealthCheckApi;
 import org.idp.server.platform.health.HealthCheckResult;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.usecases.IdpServerApplication;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

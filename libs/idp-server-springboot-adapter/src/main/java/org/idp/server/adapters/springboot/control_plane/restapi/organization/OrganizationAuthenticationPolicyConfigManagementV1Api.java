@@ -18,7 +18,6 @@ package org.idp.server.adapters.springboot.control_plane.restapi.organization;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
-import org.idp.server.IdpServerApplication;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.adapters.springboot.control_plane.model.OrganizationOperatorPrincipal;
 import org.idp.server.control_plane.management.authentication.policy.OrgAuthenticationPolicyConfigManagementApi;
@@ -28,6 +27,7 @@ import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConf
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
+import org.idp.server.usecases.IdpServerApplication;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

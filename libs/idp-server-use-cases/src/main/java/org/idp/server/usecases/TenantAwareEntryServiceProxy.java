@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package org.idp.server.platform.proxy;
+package org.idp.server.usecases;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.datasource.*;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.log.TenantLoggingContext;
@@ -69,6 +70,8 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         OperationContext.set(operationType);
         TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
         TenantLoggingContext.setTenant(tenantIdentifier);
+
+        resolveUserContext(args);
 
         String clientId = resolveClientIdAsString(args);
         if (clientId != null) {
@@ -124,6 +127,8 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         OperationContext.set(operationType);
         TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
         TenantLoggingContext.setTenant(tenantIdentifier);
+
+        resolveUserContext(args);
 
         String clientId = resolveClientIdAsString(args);
         if (clientId != null) {
@@ -188,6 +193,24 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
     }
     throw new MissingRequiredTenantIdentifierException(
         "Missing required TenantIdentifier. Please ensure it is explicitly passed to the service.");
+  }
+
+  protected void resolveUserContext(Object[] args) {
+    for (Object arg : args) {
+      // Type-safe check using direct import (no reflection needed in use-cases layer)
+      if (arg instanceof User user) {
+        if (user.exists()) {
+          String sub = user.sub();
+          if (sub != null && !sub.isEmpty()) {
+            TenantLoggingContext.setUserId(sub);
+          }
+          String exSub = user.externalUserId();
+          if (exSub != null && !exSub.isEmpty()) {
+            TenantLoggingContext.setUserExSub(exSub);
+          }
+        }
+      }
+    }
   }
 
   protected String resolveClientIdAsString(Object[] args) {
