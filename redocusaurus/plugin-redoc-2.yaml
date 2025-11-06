@@ -388,6 +388,10 @@ paths:
                             ユーザーまたは外部システムが必要な情報を入力・収集中の状態です。フォーム入力中や追加書類のアップロード待ちなどが該当します。
                             |
 
+                            | `applied`                |
+                            申請情報の送信が完了し、審査待ちの状態です。全ての申込み処理が終了した後に遷移します。                 
+                            |
+
                             | `examination_processing` |
                             申請内容に対する審査が実施されている状態です。外部eKYCサービスとの連携や人手による審査が行われている場合も含まれます。 
                             |
@@ -414,6 +418,7 @@ paths:
                           enum:
                             - requested
                             - applying
+                            - applied
                             - examination_processing
                             - approved
                             - rejected
