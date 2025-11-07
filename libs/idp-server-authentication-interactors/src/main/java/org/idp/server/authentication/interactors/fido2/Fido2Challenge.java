@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.openid.authentication;
+package org.idp.server.authentication.interactors.fido2;
 
-public enum StandardAuthenticationMethod {
-  PASSWORD("password"),
-  EMAIL("email"),
-  SMS("sms"),
-  FIDO_UAF("fido-uaf"),
-  FIDO2("fido2");
+import java.io.Serializable;
+import org.idp.server.platform.json.JsonReadable;
 
-  private final String type;
+public class Fido2Challenge implements Serializable, JsonReadable {
 
-  StandardAuthenticationMethod(String type) {
-    this.type = type;
+  String challenge;
+
+  public Fido2Challenge() {}
+
+  public Fido2Challenge(String challenge) {
+    this.challenge = challenge;
   }
 
-  public String type() {
-    return type;
+  public String challenge() {
+    return challenge;
   }
 }

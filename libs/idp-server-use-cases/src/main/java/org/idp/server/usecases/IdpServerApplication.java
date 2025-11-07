@@ -19,12 +19,12 @@ package org.idp.server.usecases;
 import java.net.http.HttpClient;
 import java.util.Map;
 import org.idp.server.authentication.interactors.device.AuthenticationDeviceNotifiers;
+import org.idp.server.authentication.interactors.fido2.Fido2Executors;
 import org.idp.server.authentication.interactors.fidouaf.AuthenticationMetaDataApi;
 import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditionalRequestResolvers;
 import org.idp.server.authentication.interactors.plugin.AuthenticationDeviceNotifiersPluginLoader;
 import org.idp.server.authentication.interactors.plugin.FidoUafAdditionalRequestResolverPluginLoader;
 import org.idp.server.authentication.interactors.plugin.WebAuthnExecutorPluginLoader;
-import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutors;
 import org.idp.server.control_plane.admin.operation.IdpServerOperationApi;
 import org.idp.server.control_plane.admin.starter.IdpServerStarterApi;
 import org.idp.server.control_plane.base.AdminUserAuthenticationApi;
@@ -411,9 +411,9 @@ public class IdpServerApplication {
     authenticationDependencyContainer.register(EmailSenders.class, emailSenders);
 
     authenticationDependencyContainer.register(SmsSenders.class, smsSenders);
-    WebAuthnExecutors webAuthnExecutors =
+    Fido2Executors fido2Executors =
         WebAuthnExecutorPluginLoader.load(authenticationDependencyContainer);
-    authenticationDependencyContainer.register(WebAuthnExecutors.class, webAuthnExecutors);
+    authenticationDependencyContainer.register(Fido2Executors.class, fido2Executors);
     AuthenticationDeviceNotifiers authenticationDeviceNotifiers =
         AuthenticationDeviceNotifiersPluginLoader.load(dependencyContainer);
     authenticationDependencyContainer.register(

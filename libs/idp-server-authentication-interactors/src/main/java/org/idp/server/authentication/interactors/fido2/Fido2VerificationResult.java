@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors.webauthn;
+package org.idp.server.authentication.interactors.fido2;
 
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-public class WebAuthnVerificationResult {
+public class Fido2VerificationResult {
 
   Map<String, Object> values;
 
-  public WebAuthnVerificationResult(Map<String, Object> values) {
+  public Fido2VerificationResult(Map<String, Object> values) {
     this.values = values;
   }
 

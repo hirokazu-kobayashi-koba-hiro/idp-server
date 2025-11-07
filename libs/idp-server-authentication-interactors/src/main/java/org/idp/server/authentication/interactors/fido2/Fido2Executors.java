@@ -14,22 +14,26 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors.webauthn;
+package org.idp.server.authentication.interactors.fido2;
 
-import java.io.Serializable;
-import org.idp.server.platform.json.JsonReadable;
+import java.util.Map;
+import org.idp.server.platform.exception.UnSupportedException;
 
-public class WebAuthnChallenge implements Serializable, JsonReadable {
+public class Fido2Executors {
 
-  String challenge;
+  Map<Fido2ExecutorType, Fido2Executor> executors;
 
-  public WebAuthnChallenge() {}
-
-  public WebAuthnChallenge(String challenge) {
-    this.challenge = challenge;
+  public Fido2Executors(Map<Fido2ExecutorType, Fido2Executor> executors) {
+    this.executors = executors;
   }
 
-  public String challenge() {
-    return challenge;
+  public Fido2Executor get(Fido2ExecutorType type) {
+    Fido2Executor executor = executors.get(type);
+
+    if (executor == null) {
+      throw new UnSupportedException("Unsupported web authn executor type: " + type.value());
+    }
+
+    return executor;
   }
 }

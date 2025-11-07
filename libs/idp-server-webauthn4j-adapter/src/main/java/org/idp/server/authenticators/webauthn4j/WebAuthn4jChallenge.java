@@ -24,7 +24,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.UUID;
-import org.idp.server.authentication.interactors.webauthn.WebAuthnChallenge;
+import org.idp.server.authentication.interactors.fido2.Fido2Challenge;
 
 public class WebAuthn4jChallenge implements Challenge {
   byte[] value;
@@ -76,7 +76,7 @@ public class WebAuthn4jChallenge implements Challenge {
     return Base64.getUrlEncoder().encodeToString(value);
   }
 
-  public WebAuthnChallenge toWebAuthnChallenge() {
-    return new WebAuthnChallenge(challengeAsString());
+  public Fido2Challenge toWebAuthnChallenge() {
+    return new Fido2Challenge(challengeAsString());
   }
 }

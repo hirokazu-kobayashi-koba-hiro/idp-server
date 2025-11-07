@@ -19,10 +19,10 @@ package org.idp.server.authentication.interactors.plugin;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutor;
-import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutorFactory;
-import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutorType;
-import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutors;
+import org.idp.server.authentication.interactors.fido2.Fido2Executor;
+import org.idp.server.authentication.interactors.fido2.Fido2ExecutorFactory;
+import org.idp.server.authentication.interactors.fido2.Fido2ExecutorType;
+import org.idp.server.authentication.interactors.fido2.Fido2Executors;
 import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.plugin.PluginLoader;
@@ -32,27 +32,27 @@ public class WebAuthnExecutorPluginLoader extends PluginLoader {
   private static final LoggerWrapper log =
       LoggerWrapper.getLogger(WebAuthnExecutorPluginLoader.class);
 
-  public static WebAuthnExecutors load(AuthenticationDependencyContainer container) {
-    Map<WebAuthnExecutorType, WebAuthnExecutor> executors = new HashMap<>();
+  public static Fido2Executors load(AuthenticationDependencyContainer container) {
+    Map<Fido2ExecutorType, Fido2Executor> executors = new HashMap<>();
 
-    List<WebAuthnExecutorFactory> internals = loadFromInternalModule(WebAuthnExecutorFactory.class);
-    for (WebAuthnExecutorFactory factory : internals) {
-      WebAuthnExecutor webAuthnExecutor = factory.create(container);
-      executors.put(webAuthnExecutor.type(), webAuthnExecutor);
+    List<Fido2ExecutorFactory> internals = loadFromInternalModule(Fido2ExecutorFactory.class);
+    for (Fido2ExecutorFactory factory : internals) {
+      Fido2Executor fido2Executor = factory.create(container);
+      executors.put(fido2Executor.type(), fido2Executor);
       log.info(
           String.format(
-              "Dynamic Registered internal WebAuthnExecutor %s", webAuthnExecutor.type().value()));
+              "Dynamic Registered internal WebAuthnExecutor %s", fido2Executor.type().value()));
     }
 
-    List<WebAuthnExecutorFactory> externals = loadFromExternalModule(WebAuthnExecutorFactory.class);
-    for (WebAuthnExecutorFactory factory : externals) {
-      WebAuthnExecutor webAuthnExecutor = factory.create(container);
-      executors.put(webAuthnExecutor.type(), webAuthnExecutor);
+    List<Fido2ExecutorFactory> externals = loadFromExternalModule(Fido2ExecutorFactory.class);
+    for (Fido2ExecutorFactory factory : externals) {
+      Fido2Executor fido2Executor = factory.create(container);
+      executors.put(fido2Executor.type(), fido2Executor);
       log.info(
           String.format(
-              "Dynamic Registered external WebAuthnExecutor %s", webAuthnExecutor.type().value()));
+              "Dynamic Registered external WebAuthnExecutor %s", fido2Executor.type().value()));
     }
 
-    return new WebAuthnExecutors(executors);
+    return new Fido2Executors(executors);
   }
 }

@@ -17,7 +17,7 @@
 package org.idp.server.authentication.interactors.device;
 
 import java.util.Map;
-import org.idp.server.authentication.interactors.webauthn.WebAuthnCredentialNotFoundException;
+import org.idp.server.authentication.interactors.fido2.Fido2CredentialNotFoundException;
 import org.idp.server.platform.notification.NotificationChannel;
 
 public class AuthenticationDeviceNotificationConfiguration {
@@ -43,7 +43,7 @@ public class AuthenticationDeviceNotificationConfiguration {
   public Map<String, Object> getDetail(NotificationChannel channel) {
 
     if (!details.containsKey(channel.name())) {
-      throw new WebAuthnCredentialNotFoundException(
+      throw new Fido2CredentialNotFoundException(
           "invalid configuration. key: " + channel.name() + " is unregistered.");
     }
 

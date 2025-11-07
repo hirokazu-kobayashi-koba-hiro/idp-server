@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors.webauthn;
+package org.idp.server.authentication.interactors.fido2;
 
-import java.util.HashMap;
-import java.util.Map;
 import org.idp.server.core.openid.authentication.*;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
 import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
@@ -27,21 +25,19 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
-public class WebAuthnAuthenticationInteractor implements AuthenticationInteractor {
+public class Fido2RegistrationChallengeInteractor implements AuthenticationInteractor {
 
   AuthenticationConfigurationQueryRepository configurationRepository;
   AuthenticationExecutors authenticationExecutors;
-  LoggerWrapper log = LoggerWrapper.getLogger(WebAuthnAuthenticationInteractor.class);
+  LoggerWrapper log = LoggerWrapper.getLogger(Fido2RegistrationChallengeInteractor.class);
 
-  public WebAuthnAuthenticationInteractor(
+  public Fido2RegistrationChallengeInteractor(
       AuthenticationConfigurationQueryRepository configurationRepository,
       AuthenticationExecutors authenticationExecutors) {
     this.configurationRepository = configurationRepository;
@@ -50,12 +46,17 @@ public class WebAuthnAuthenticationInteractor implements AuthenticationInteracto
 
   @Override
   public AuthenticationInteractionType type() {
-    return StandardAuthenticationInteraction.WEBAUTHN_AUTHENTICATION.toType();
+    return StandardAuthenticationInteraction.FIDO2_REGISTRATION_CHALLENGE.toType();
+  }
+
+  @Override
+  public OperationType operationType() {
+    return OperationType.CHALLENGE;
   }
 
   @Override
   public String method() {
-    return StandardAuthenticationMethod.WEB_AUTHN.type();
+    return StandardAuthenticationMethod.FIDO2.type();
   }
 
   @Override
@@ -67,9 +68,11 @@ public class WebAuthnAuthenticationInteractor implements AuthenticationInteracto
       RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
-    AuthenticationConfiguration configuration = configurationRepository.get(tenant, "webauthn");
+    log.debug("WebAuthnRegistrationChallengeInteractor called");
+
+    AuthenticationConfiguration configuration = configurationRepository.get(tenant, "fido2");
     AuthenticationInteractionConfig authenticationInteractionConfig =
-        configuration.getAuthenticationConfig("webauthn-authentication");
+        configuration.getAuthenticationConfig("fido2-registration-challenge");
     AuthenticationExecutionConfig execution = authenticationInteractionConfig.execution();
 
     AuthenticationExecutor executor = authenticationExecutors.get(execution.function());
@@ -85,37 +88,38 @@ public class WebAuthnAuthenticationInteractor implements AuthenticationInteracto
             execution);
 
     if (executionResult.isClientError()) {
+
+      log.warn(
+          "Fido2 registration challenge is failed. Client error: {}", executionResult.contents());
+
       return AuthenticationInteractionRequestResult.clientError(
           executionResult.contents(),
           type,
           operationType(),
           method(),
-          DefaultSecurityEventType.webauthn_authentication_failure);
+          DefaultSecurityEventType.fido2_registration_challenge_failure);
     }
 
     if (executionResult.isServerError()) {
+
+      log.warn(
+          "Fido2 registration challenge is failed. Server error: {}", executionResult.contents());
+
       return AuthenticationInteractionRequestResult.serverError(
           executionResult.contents(),
           type,
           operationType(),
           method(),
-          DefaultSecurityEventType.webauthn_authentication_failure);
+          DefaultSecurityEventType.fido2_registration_challenge_failure);
     }
-
-    // TODO
-    UserIdentifier userIdentifier = new UserIdentifier("");
-    User user = userQueryRepository.get(tenant, userIdentifier);
-
-    Map<String, Object> response = new HashMap<>();
-    response.put("user", user.toMap());
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
         operationType(),
         method(),
-        user,
-        response,
-        DefaultSecurityEventType.webauthn_authentication_success);
+        transaction.user(),
+        executionResult.contents(),
+        DefaultSecurityEventType.fido2_registration_challenge_success);
   }
 }

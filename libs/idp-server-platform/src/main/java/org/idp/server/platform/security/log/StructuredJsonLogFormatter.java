@@ -116,7 +116,7 @@ public class StructuredJsonLogFormatter implements SecurityEventLogFormatter {
   private String getEventCategory(SecurityEventType eventType) {
     String type = eventType.value();
     if (type.startsWith("password_")) return "authentication";
-    if (type.startsWith("fido_uaf_") || type.startsWith("webauthn_")) return "mfa";
+    if (type.startsWith("fido_uaf_") || type.startsWith("fido2_")) return "mfa";
     if (type.startsWith("oauth_")) return "oauth";
     if (type.startsWith("federation_")) return "federation";
     if (type.startsWith("user_")) return "user_management";

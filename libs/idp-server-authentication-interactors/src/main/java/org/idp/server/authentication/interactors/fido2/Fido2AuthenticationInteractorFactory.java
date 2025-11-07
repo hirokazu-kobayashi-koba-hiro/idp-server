@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors.webauthn;
+package org.idp.server.authentication.interactors.fido2;
 
 import org.idp.server.core.openid.authentication.AuthenticationInteractor;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
@@ -22,7 +22,7 @@ import org.idp.server.core.openid.authentication.plugin.AuthenticationDependency
 import org.idp.server.core.openid.authentication.plugin.AuthenticationInteractorFactory;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 
-public class WebAuthnAuthenticationInteractorFactory implements AuthenticationInteractorFactory {
+public class Fido2AuthenticationInteractorFactory implements AuthenticationInteractorFactory {
 
   @Override
   public AuthenticationInteractor create(AuthenticationDependencyContainer container) {
@@ -31,6 +31,6 @@ public class WebAuthnAuthenticationInteractorFactory implements AuthenticationIn
         container.resolve(AuthenticationConfigurationQueryRepository.class);
     AuthenticationExecutors authenticationExecutors =
         container.resolve(AuthenticationExecutors.class);
-    return new WebAuthnAuthenticationInteractor(configurationRepository, authenticationExecutors);
+    return new Fido2AuthenticationInteractor(configurationRepository, authenticationExecutors);
   }
 }

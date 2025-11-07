@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors.webauthn;
+package org.idp.server.authentication.interactors.fido2;
 
 import org.idp.server.core.openid.authentication.*;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
@@ -31,13 +31,13 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
-public class WebAuthnRegistrationChallengeInteractor implements AuthenticationInteractor {
+public class Fido2AuthenticationChallengeInteractor implements AuthenticationInteractor {
 
   AuthenticationConfigurationQueryRepository configurationRepository;
   AuthenticationExecutors authenticationExecutors;
-  LoggerWrapper log = LoggerWrapper.getLogger(WebAuthnRegistrationChallengeInteractor.class);
+  LoggerWrapper log = LoggerWrapper.getLogger(Fido2AuthenticationChallengeInteractor.class);
 
-  public WebAuthnRegistrationChallengeInteractor(
+  public Fido2AuthenticationChallengeInteractor(
       AuthenticationConfigurationQueryRepository configurationRepository,
       AuthenticationExecutors authenticationExecutors) {
     this.configurationRepository = configurationRepository;
@@ -46,7 +46,7 @@ public class WebAuthnRegistrationChallengeInteractor implements AuthenticationIn
 
   @Override
   public AuthenticationInteractionType type() {
-    return StandardAuthenticationInteraction.WEBAUTHN_REGISTRATION_CHALLENGE.toType();
+    return StandardAuthenticationInteraction.FIDO2_AUTHENTICATION_CHALLENGE.toType();
   }
 
   @Override
@@ -56,7 +56,7 @@ public class WebAuthnRegistrationChallengeInteractor implements AuthenticationIn
 
   @Override
   public String method() {
-    return StandardAuthenticationMethod.WEB_AUTHN.type();
+    return StandardAuthenticationMethod.FIDO2.type();
   }
 
   @Override
@@ -68,11 +68,11 @@ public class WebAuthnRegistrationChallengeInteractor implements AuthenticationIn
       RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
-    log.debug("WebAuthnRegistrationChallengeInteractor called");
+    log.debug("WebAuthnAuthenticationChallengeInteractor called");
 
-    AuthenticationConfiguration configuration = configurationRepository.get(tenant, "webauthn");
+    AuthenticationConfiguration configuration = configurationRepository.get(tenant, "fido2");
     AuthenticationInteractionConfig authenticationInteractionConfig =
-        configuration.getAuthenticationConfig("webauthn-registration-challenge");
+        configuration.getAuthenticationConfig("fido2-authentication-challenge");
     AuthenticationExecutionConfig execution = authenticationInteractionConfig.execution();
 
     AuthenticationExecutor executor = authenticationExecutors.get(execution.function());
@@ -93,7 +93,7 @@ public class WebAuthnRegistrationChallengeInteractor implements AuthenticationIn
           type,
           operationType(),
           method(),
-          DefaultSecurityEventType.webauthn_registration_challenge_failure);
+          DefaultSecurityEventType.fido2_authentication_challenge_failure);
     }
 
     if (executionResult.isServerError()) {
@@ -102,7 +102,7 @@ public class WebAuthnRegistrationChallengeInteractor implements AuthenticationIn
           type,
           operationType(),
           method(),
-          DefaultSecurityEventType.webauthn_registration_challenge_failure);
+          DefaultSecurityEventType.fido2_authentication_challenge_failure);
     }
 
     return new AuthenticationInteractionRequestResult(
@@ -112,6 +112,6 @@ public class WebAuthnRegistrationChallengeInteractor implements AuthenticationIn
         method(),
         transaction.user(),
         executionResult.contents(),
-        DefaultSecurityEventType.webauthn_registration_challenge_success);
+        DefaultSecurityEventType.fido2_authentication_challenge_success);
   }
 }

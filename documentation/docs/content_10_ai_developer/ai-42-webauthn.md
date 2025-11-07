@@ -20,7 +20,7 @@ WebAuthn/FIDO2実装（webauthn4jライブラリ統合）。
 
 ## WebAuthnExecutor インターフェース
 
-**情報源**: [WebAuthnExecutor.java:23](../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/webauthn/WebAuthnExecutor.java#L23)
+**情報源**: [WebAuthnExecutor.java:23](../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/fido2/WebAuthnExecutor.java#L23)
 
 **重要**: `authentication-interactors` モジュールで定義（Core層ではない）
 
@@ -96,16 +96,16 @@ public class WebAuthn4jExecutor implements WebAuthnExecutor {
 
     // 1. チャレンジ生成
     WebAuthn4jChallenge webAuthn4jChallenge = WebAuthn4jChallenge.generate();
-    WebAuthnChallenge webAuthnChallenge = webAuthn4jChallenge.toWebAuthnChallenge();
+    WebAuthnChallenge fido2Challenge = webAuthn4jChallenge.toWebAuthnChallenge();
 
     // 2. チャレンジを一時保存（Redis/DB）
     transactionCommandRepository.register(
         tenant,
         authenticationTransactionIdentifier,
         type().value(),
-        webAuthnChallenge);
+        fido2Challenge);
 
-    return webAuthnChallenge;
+    return fido2Challenge;
   }
 
   @Override
@@ -117,7 +117,7 @@ public class WebAuthn4jExecutor implements WebAuthnExecutor {
       WebAuthnConfiguration configuration) {
 
     // 1. 保存されたチャレンジ取得
-    WebAuthnChallenge webAuthnChallenge =
+    WebAuthnChallenge fido2Challenge =
         transactionQueryRepository.get(
             tenant,
             authenticationTransactionIdentifier,
@@ -128,7 +128,7 @@ public class WebAuthn4jExecutor implements WebAuthnExecutor {
     WebAuthn4jRegistrationManager registrationManager =
         new WebAuthn4jRegistrationManager(configuration);
 
-    return registrationManager.verify(userId, request, webAuthnChallenge);
+    return registrationManager.verify(userId, request, fido2Challenge);
   }
 }
 ```
@@ -142,7 +142,7 @@ public class WebAuthn4jExecutor implements WebAuthnExecutor {
 ## Plugin登録
 
 ```
-# META-INF/services/org.idp.server.authentication.interactors.webauthn.WebAuthnExecutorFactory
+# META-INF/services/org.idp.server.authentication.interactors.fido2.Fido2ExecutorFactory
 org.idp.server.authenticators.webauthn4j.WebAuthn4jExecutorFactory
 ```
 

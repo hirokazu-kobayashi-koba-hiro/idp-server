@@ -53,7 +53,7 @@ export default function Login() {
 
     try {
       const res = await fetch(
-        `${backendUrl}/${tenantId}/v1/authorizations/${id}/webauthn/authentication/challenge`,
+        `${backendUrl}/${tenantId}/v1/authorizations/${id}/fido2-authentication-challenge`,
         {
           credentials: "include",
         },
@@ -72,7 +72,7 @@ export default function Login() {
       });
 
       const loginRes = await fetch(
-        `${backendUrl}/${tenantId}/v1/authorizations/${id}/webauthn/authentication/response`,
+        `${backendUrl}/${tenantId}/v1/authorizations/${id}/fido2-authentication`,
         {
           method: "POST",
           credentials: "include",

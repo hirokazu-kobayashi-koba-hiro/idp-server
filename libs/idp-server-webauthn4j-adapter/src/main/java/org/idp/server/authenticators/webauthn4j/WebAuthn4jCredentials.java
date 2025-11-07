@@ -19,7 +19,7 @@ package org.idp.server.authenticators.webauthn4j;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import org.idp.server.authentication.interactors.webauthn.WebAuthnCredentialNotFoundException;
+import org.idp.server.authentication.interactors.fido2.Fido2CredentialNotFoundException;
 
 public class WebAuthn4jCredentials implements Iterable<WebAuthn4jCredential> {
 
@@ -42,7 +42,6 @@ public class WebAuthn4jCredentials implements Iterable<WebAuthn4jCredential> {
     return values.stream()
         .filter(item -> item.rpId().equals(rpId))
         .findFirst()
-        .orElseThrow(
-            () -> new WebAuthnCredentialNotFoundException("No credential found for " + rpId));
+        .orElseThrow(() -> new Fido2CredentialNotFoundException("No credential found for " + rpId));
   }
 }

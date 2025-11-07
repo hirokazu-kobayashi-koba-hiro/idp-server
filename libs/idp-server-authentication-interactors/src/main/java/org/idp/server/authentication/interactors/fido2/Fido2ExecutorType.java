@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors.webauthn;
+package org.idp.server.authentication.interactors.fido2;
 
 import java.util.Objects;
 
-public class WebAuthnExecutorType {
+public class Fido2ExecutorType {
   String value;
 
-  public WebAuthnExecutorType() {}
+  public Fido2ExecutorType() {}
 
-  public WebAuthnExecutorType(String value) {
+  public Fido2ExecutorType(String value) {
     this.value = value;
   }
 
@@ -34,7 +34,7 @@ public class WebAuthnExecutorType {
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
-    WebAuthnExecutorType that = (WebAuthnExecutorType) o;
+    Fido2ExecutorType that = (Fido2ExecutorType) o;
     return Objects.equals(value, that.value);
   }
 

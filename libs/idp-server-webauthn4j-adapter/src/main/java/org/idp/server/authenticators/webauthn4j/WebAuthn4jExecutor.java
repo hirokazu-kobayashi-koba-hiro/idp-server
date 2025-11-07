@@ -17,7 +17,7 @@
 package org.idp.server.authenticators.webauthn4j;
 
 import java.util.Map;
-import org.idp.server.authentication.interactors.webauthn.*;
+import org.idp.server.authentication.interactors.fido2.*;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionCommandRepository;
@@ -25,7 +25,7 @@ import org.idp.server.core.openid.authentication.repository.AuthenticationIntera
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public class WebAuthn4jExecutor implements WebAuthnExecutor {
+public class WebAuthn4jExecutor implements Fido2Executor {
 
   AuthenticationInteractionCommandRepository transactionCommandRepository;
   AuthenticationInteractionQueryRepository transactionQueryRepository;
@@ -43,39 +43,38 @@ public class WebAuthn4jExecutor implements WebAuthnExecutor {
   }
 
   @Override
-  public WebAuthnExecutorType type() {
-    return new WebAuthnExecutorType("webauthn4j");
+  public Fido2ExecutorType type() {
+    return new Fido2ExecutorType("webauthn4j");
   }
 
   @Override
-  public WebAuthnChallenge challengeRegistration(
+  public Fido2Challenge challengeRegistration(
       Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionRequest request,
-      WebAuthnConfiguration configuration) {
+      Fido2Configuration configuration) {
 
     WebAuthn4jChallenge webAuthn4jChallenge = WebAuthn4jChallenge.generate();
-    WebAuthnChallenge webAuthnChallenge = webAuthn4jChallenge.toWebAuthnChallenge();
+    Fido2Challenge fido2Challenge = webAuthn4jChallenge.toWebAuthnChallenge();
     transactionCommandRepository.register(
-        tenant, authenticationTransactionIdentifier, type().value(), webAuthnChallenge);
+        tenant, authenticationTransactionIdentifier, type().value(), fido2Challenge);
 
-    return webAuthnChallenge;
+    return fido2Challenge;
   }
 
   @Override
-  public WebAuthnVerificationResult verifyRegistration(
+  public Fido2VerificationResult verifyRegistration(
       Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       String userId,
       AuthenticationInteractionRequest request,
-      WebAuthnConfiguration configuration) {
+      Fido2Configuration configuration) {
 
-    WebAuthnChallenge webAuthnChallenge =
+    Fido2Challenge fido2Challenge =
         transactionQueryRepository.get(
-            tenant, authenticationTransactionIdentifier, type().value(), WebAuthnChallenge.class);
+            tenant, authenticationTransactionIdentifier, type().value(), Fido2Challenge.class);
 
-    WebAuthn4jChallenge webAuthn4jChallenge =
-        new WebAuthn4jChallenge(webAuthnChallenge.challenge());
+    WebAuthn4jChallenge webAuthn4jChallenge = new WebAuthn4jChallenge(fido2Challenge.challenge());
     String requestString = jsonConverter.write(request.toMap());
     WebAuthn4jConfiguration webAuthn4jConfiguration =
         jsonConverter.read(configuration.getDetail(type()), WebAuthn4jConfiguration.class);
@@ -86,37 +85,36 @@ public class WebAuthn4jExecutor implements WebAuthnExecutor {
     WebAuthn4jCredential webAuthn4jCredential = manager.verifyAndCreateCredential();
     credentialRepository.register(webAuthn4jCredential);
 
-    return new WebAuthnVerificationResult(Map.of("registration", webAuthn4jCredential.toMap()));
+    return new Fido2VerificationResult(Map.of("registration", webAuthn4jCredential.toMap()));
   }
 
   @Override
-  public WebAuthnChallenge challengeAuthentication(
+  public Fido2Challenge challengeAuthentication(
       Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionRequest request,
-      WebAuthnConfiguration configuration) {
+      Fido2Configuration configuration) {
 
     WebAuthn4jChallenge webAuthn4jChallenge = WebAuthn4jChallenge.generate();
-    WebAuthnChallenge webAuthnChallenge = webAuthn4jChallenge.toWebAuthnChallenge();
+    Fido2Challenge fido2Challenge = webAuthn4jChallenge.toWebAuthnChallenge();
     transactionCommandRepository.register(
-        tenant, authenticationTransactionIdentifier, type().value(), webAuthnChallenge);
+        tenant, authenticationTransactionIdentifier, type().value(), fido2Challenge);
 
-    return webAuthnChallenge;
+    return fido2Challenge;
   }
 
   @Override
-  public WebAuthnVerificationResult verifyAuthentication(
+  public Fido2VerificationResult verifyAuthentication(
       Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionRequest request,
-      WebAuthnConfiguration configuration) {
+      Fido2Configuration configuration) {
 
-    WebAuthnChallenge webAuthnChallenge =
+    Fido2Challenge fido2Challenge =
         transactionQueryRepository.get(
-            tenant, authenticationTransactionIdentifier, type().value(), WebAuthnChallenge.class);
+            tenant, authenticationTransactionIdentifier, type().value(), Fido2Challenge.class);
 
-    WebAuthn4jChallenge webAuthn4jChallenge =
-        new WebAuthn4jChallenge(webAuthnChallenge.challenge());
+    WebAuthn4jChallenge webAuthn4jChallenge = new WebAuthn4jChallenge(fido2Challenge.challenge());
     String requestString = jsonConverter.write(request.toMap());
     WebAuthn4jConfiguration webAuthn4jConfiguration =
         jsonConverter.read(configuration.getDetail(type()), WebAuthn4jConfiguration.class);
@@ -129,6 +127,6 @@ public class WebAuthn4jExecutor implements WebAuthnExecutor {
 
     manager.verify(webAuthn4jCredentials);
 
-    return new WebAuthnVerificationResult(Map.of("user_id", extractUserId));
+    return new Fido2VerificationResult(Map.of("user_id", extractUserId));
   }
 }

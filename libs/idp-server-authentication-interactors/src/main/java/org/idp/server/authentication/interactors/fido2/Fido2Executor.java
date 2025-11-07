@@ -14,38 +14,38 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors.webauthn;
+package org.idp.server.authentication.interactors.fido2;
 
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public interface WebAuthnExecutor {
+public interface Fido2Executor {
 
-  WebAuthnExecutorType type();
+  Fido2ExecutorType type();
 
-  WebAuthnChallenge challengeRegistration(
+  Fido2Challenge challengeRegistration(
       Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionRequest request,
-      WebAuthnConfiguration configuration);
+      Fido2Configuration configuration);
 
-  WebAuthnVerificationResult verifyRegistration(
+  Fido2VerificationResult verifyRegistration(
       Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       String userId,
       AuthenticationInteractionRequest request,
-      WebAuthnConfiguration configuration);
+      Fido2Configuration configuration);
 
-  WebAuthnChallenge challengeAuthentication(
+  Fido2Challenge challengeAuthentication(
       Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionRequest request,
-      WebAuthnConfiguration configuration);
+      Fido2Configuration configuration);
 
-  WebAuthnVerificationResult verifyAuthentication(
+  Fido2VerificationResult verifyAuthentication(
       Tenant tenant,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
       AuthenticationInteractionRequest request,
-      WebAuthnConfiguration configuration);
+      Fido2Configuration configuration);
 }

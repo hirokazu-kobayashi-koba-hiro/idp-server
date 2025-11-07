@@ -16,16 +16,16 @@
 
 package org.idp.server.authenticators.webauthn4j;
 
-import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutor;
-import org.idp.server.authentication.interactors.webauthn.WebAuthnExecutorFactory;
+import org.idp.server.authentication.interactors.fido2.Fido2Executor;
+import org.idp.server.authentication.interactors.fido2.Fido2ExecutorFactory;
 import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
 
-public class WebAuthn4jExecutorFactory implements WebAuthnExecutorFactory {
+public class WebAuthn4jExecutorFactory implements Fido2ExecutorFactory {
 
   @Override
-  public WebAuthnExecutor create(AuthenticationDependencyContainer container) {
+  public Fido2Executor create(AuthenticationDependencyContainer container) {
 
     AuthenticationInteractionCommandRepository transactionCommandRepository =
         container.resolve(AuthenticationInteractionCommandRepository.class);

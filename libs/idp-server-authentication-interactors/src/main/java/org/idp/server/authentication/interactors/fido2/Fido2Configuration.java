@@ -14,28 +14,28 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors.webauthn;
+package org.idp.server.authentication.interactors.fido2;
 
 import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
 
-public class WebAuthnConfiguration implements JsonReadable {
+public class Fido2Configuration implements JsonReadable {
   String type;
   Map<String, Map<String, Object>> details;
 
-  public WebAuthnConfiguration() {}
+  public Fido2Configuration() {}
 
-  public WebAuthnExecutorType type() {
-    return new WebAuthnExecutorType(type);
+  public Fido2ExecutorType type() {
+    return new Fido2ExecutorType(type);
   }
 
   public Map<String, Map<String, Object>> details() {
     return details;
   }
 
-  public Map<String, Object> getDetail(WebAuthnExecutorType key) {
+  public Map<String, Object> getDetail(Fido2ExecutorType key) {
     if (!details.containsKey(key.value())) {
-      throw new WebAuthnCredentialNotFoundException(
+      throw new Fido2CredentialNotFoundException(
           "invalid configuration. key: " + key.value() + " is unregistered.");
     }
     return details.get(key.value());

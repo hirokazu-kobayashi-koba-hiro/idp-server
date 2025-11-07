@@ -18,7 +18,7 @@ import { useRouter } from "next/router";
 import { backendUrl, useAppContext } from "@/pages/_app";
 import { SignupStepper } from "@/components/SignupStepper";
 
-export default function WebAuthnRegistrationPage() {
+export default function Fido2RegistrationPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -32,7 +32,7 @@ export default function WebAuthnRegistrationPage() {
 
     try {
       const res = await fetch(
-        `${backendUrl}/${tenantId}/v1/authorizations/${id}/webauthn/registration/challenge`,
+        `${backendUrl}/${tenantId}/v1/authorizations/${id}/fido2-registration-challenge`,
         {
           credentials: "include",
         },
@@ -60,7 +60,7 @@ export default function WebAuthnRegistrationPage() {
       });
 
       const registerRes = await fetch(
-        `${backendUrl}/${tenantId}/v1/authorizations/${id}/webauthn/registration/response`,
+        `${backendUrl}/${tenantId}/v1/authorizations/${id}/fido2-registration`,
         {
           method: "POST",
           credentials: "include",

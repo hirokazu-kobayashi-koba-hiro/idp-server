@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors.webauthn;
+package org.idp.server.authentication.interactors.fido2;
 
-import org.idp.server.platform.exception.NotFoundException;
+import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
 
-public class WebAuthnCredentialNotFoundException extends NotFoundException {
-  public WebAuthnCredentialNotFoundException(String message) {
-    super(message);
-  }
+public interface Fido2ExecutorFactory {
+
+  Fido2Executor create(AuthenticationDependencyContainer container);
 }

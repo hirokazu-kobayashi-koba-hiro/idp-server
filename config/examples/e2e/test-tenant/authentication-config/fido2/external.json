@@ -1,0 +1,215 @@
+{
+  "id": "af3f13a3-4b3f-42b6-8dea-8c5c1d780173",
+  "type": "fido2",
+  "attributes": {},
+  "metadata": {
+    "user_id_param": "id"
+  },
+  "interactions": {
+    "fido2-registration-challenge": {
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "http://host.docker.internal:4000/fido2/registration-challenge",
+          "method": "POST",
+          "auth_type": "oauth2",
+          "oauth_authorization": {
+            "type": "password",
+            "token_endpoint": "http://host.docker.internal:4000/token",
+            "client_id": "your-client-id",
+            "username": "username",
+            "password": "password",
+            "scope": "application",
+            "cache_buffer_seconds": 10,
+            "cache_ttl_seconds": 1800,
+            "cache_enabled": true
+          },
+          "header_mapping_rules": [
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            }
+          ],
+          "body_mapping_rules": [
+            {
+              "from": "$.request_body",
+              "to": "*"
+            }
+          ]
+        }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_http_request.response_body",
+            "to": "*"
+          }
+        ]
+      }
+    },
+    "fido2-registration": {
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "http://host.docker.internal:4000/fido2/registration",
+          "method": "POST",
+          "auth_type": "oauth2",
+          "oauth_authorization": {
+            "type": "password",
+            "token_endpoint": "http://host.docker.internal:4000/token",
+            "client_id": "your-client-id",
+            "username": "username",
+            "password": "password",
+            "scope": "application",
+            "cache_buffer_seconds": 10,
+            "cache_ttl_seconds": 1800,
+            "cache_enabled": true
+          },
+          "header_mapping_rules": [
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            }
+          ],
+          "body_mapping_rules": [
+            {
+              "from": "$.request_body",
+              "to": "*"
+            }
+          ]
+        }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_http_request.response_body",
+            "to": "*"
+          }
+        ]
+      }
+    },
+    "fido2-authentication-challenge": {
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "http://host.docker.internal:4000/fido2/authentication-challenge",
+          "method": "POST",
+          "auth_type": "oauth2",
+          "oauth_authorization": {
+            "type": "password",
+            "token_endpoint": "http://host.docker.internal:4000/token",
+            "client_id": "your-client-id",
+            "username": "username",
+            "password": "password",
+            "scope": "application",
+            "cache_buffer_seconds": 10,
+            "cache_ttl_seconds": 1800,
+            "cache_enabled": true
+          },
+          "header_mapping_rules": [
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            }
+          ],
+          "body_mapping_rules": [
+            {
+              "from": "$.request_body",
+              "to": "*"
+            }
+          ]
+        }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_http_request.response_body",
+            "to": "*"
+          }
+        ]
+      }
+    },
+    "fido2-authentication": {
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "http://host.docker.internal:4000/fido2/authentication",
+          "method": "POST",
+          "auth_type": "oauth2",
+          "oauth_authorization": {
+            "type": "password",
+            "token_endpoint": "http://host.docker.internal:4000/token",
+            "client_id": "your-client-id",
+            "username": "username",
+            "password": "password",
+            "scope": "application",
+            "cache_buffer_seconds": 10,
+            "cache_ttl_seconds": 1800,
+            "cache_enabled": true
+          },
+          "header_mapping_rules": [
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            }
+          ],
+          "body_mapping_rules": [
+            {
+              "from": "$.request_body",
+              "to": "*"
+            }
+          ]
+        }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_http_request.response_body",
+            "to": "*"
+          }
+        ]
+      }
+    },
+    "fido2-deregistration": {
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "http://host.docker.internal:4000/fido2/delete-key",
+          "method": "POST",
+          "auth_type": "oauth2",
+          "oauth_authorization": {
+            "type": "password",
+            "token_endpoint": "http://host.docker.internal:4000/token",
+            "client_id": "your-client-id",
+            "username": "username",
+            "password": "password",
+            "scope": "application",
+            "cache_buffer_seconds": 10,
+            "cache_ttl_seconds": 1800,
+            "cache_enabled": true
+          },
+          "header_mapping_rules": [
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            }
+          ],
+          "body_mapping_rules": [
+            {
+              "from": "$.request_body",
+              "to": "*"
+            }
+          ]
+        }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_http_request.response_body",
+            "to": "*"
+          }
+        ]
+      }
+    }
+  }
+}
