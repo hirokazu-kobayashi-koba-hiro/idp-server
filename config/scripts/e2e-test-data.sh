@@ -148,7 +148,7 @@ authentication_config_files=(
   fido-uaf/external.json
   initial-registration/standard.json
   sms/external.json
-  webauthn/webauthn4j.json
+  fido2/webauthn4j.json
 )
 
 for authentication_config_file in "${authentication_config_files[@]}"; do

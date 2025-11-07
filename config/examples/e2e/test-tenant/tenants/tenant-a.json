@@ -232,7 +232,7 @@
             "password",
             "email",
             "sms",
-            "webauthn",
+            "fido2",
             "fido-uaf",
             "legacy"
           ],

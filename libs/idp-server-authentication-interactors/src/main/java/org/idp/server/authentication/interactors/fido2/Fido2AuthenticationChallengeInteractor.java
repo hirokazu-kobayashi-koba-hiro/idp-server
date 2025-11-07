@@ -16,17 +16,22 @@
 
 package org.idp.server.authentication.interactors.fido2;
 
+import java.util.Map;
 import org.idp.server.core.openid.authentication.*;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
 import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
 import org.idp.server.core.openid.authentication.config.AuthenticationInteractionConfig;
+import org.idp.server.core.openid.authentication.config.AuthenticationResponseConfig;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionRequest;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionResult;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
@@ -87,9 +92,19 @@ public class Fido2AuthenticationChallengeInteractor implements AuthenticationInt
             requestAttributes,
             execution);
 
+    AuthenticationResponseConfig responseConfig = authenticationInteractionConfig.response();
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(executionResult.contents());
+    JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
+    Map<String, Object> contents =
+        MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
+
     if (executionResult.isClientError()) {
+
+      log.warn(
+          "Fido2 authentication challenge is failed. Client error: {}", executionResult.contents());
+
       return AuthenticationInteractionRequestResult.clientError(
-          executionResult.contents(),
+          contents,
           type,
           operationType(),
           method(),
@@ -97,8 +112,12 @@ public class Fido2AuthenticationChallengeInteractor implements AuthenticationInt
     }
 
     if (executionResult.isServerError()) {
+
+      log.warn(
+          "Fido2 authentication challenge is failed. Server error: {}", executionResult.contents());
+
       return AuthenticationInteractionRequestResult.serverError(
-          executionResult.contents(),
+          contents,
           type,
           operationType(),
           method(),
@@ -111,7 +130,7 @@ public class Fido2AuthenticationChallengeInteractor implements AuthenticationInt
         operationType(),
         method(),
         transaction.user(),
-        executionResult.contents(),
+        contents,
         DefaultSecurityEventType.fido2_authentication_challenge_success);
   }
 }

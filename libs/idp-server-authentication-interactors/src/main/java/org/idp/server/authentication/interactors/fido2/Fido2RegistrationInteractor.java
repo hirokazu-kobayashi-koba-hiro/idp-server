@@ -16,12 +16,15 @@
 
 package org.idp.server.authentication.interactors.fido2;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.idp.server.core.openid.authentication.*;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
 import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
 import org.idp.server.core.openid.authentication.config.AuthenticationInteractionConfig;
+import org.idp.server.core.openid.authentication.config.AuthenticationResponseConfig;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionRequest;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionResult;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
@@ -32,7 +35,10 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
@@ -88,12 +94,18 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
             requestAttributes,
             execution);
 
+    AuthenticationResponseConfig responseConfig = authenticationInteractionConfig.response();
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(executionResult.contents());
+    JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
+    Map<String, Object> contents =
+        MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
+
     if (executionResult.isClientError()) {
 
       log.warn("Fido2 registration is failed. Client error: {}", executionResult.contents());
 
       return AuthenticationInteractionRequestResult.clientError(
-          executionResult.contents(),
+          contents,
           type,
           operationType(),
           method(),
@@ -105,7 +117,7 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
       log.warn("Fido2 registration is failed. Server error: {}", executionResult.contents());
 
       return AuthenticationInteractionRequestResult.serverError(
-          executionResult.contents(),
+          contents,
           type,
           operationType(),
           method(),
@@ -123,14 +135,20 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
             ? DefaultSecurityEventType.fido2_reset_success
             : DefaultSecurityEventType.fido2_registration_success;
 
-    String deviceId = resolveUserId(executionResult, configuration);
+    String deviceId = UUID.randomUUID().toString();
+    String userId = resolveUserId(contents, configuration);
+    log.info("fido2 registration success deviceId: {}, userId: {}", deviceId, userId);
 
-    User addedDeviceUser = addAuthenticationDevice(baseUser, deviceId, transaction.attributes());
+    User addedDeviceUser =
+        addAuthenticationDevice(baseUser, deviceId, userId, transaction.attributes());
 
     AuthenticationPolicy authenticationPolicy = transaction.authenticationPolicy();
     if (authenticationPolicy.authenticationDeviceRule().requiredIdentityVerification()) {
       addedDeviceUser.setStatus(UserStatus.IDENTITY_VERIFICATION_REQUIRED);
     }
+
+    Map<String, Object> response = new HashMap<>(contents);
+    response.put("device_id", deviceId);
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
@@ -138,17 +156,22 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
         operationType(),
         method(),
         transaction.user(),
-        executionResult.contents(),
+        response,
         eventType);
   }
 
   private String resolveUserId(
-      AuthenticationExecutionResult executionResult, AuthenticationConfiguration configuration) {
+      Map<String, Object> contents, AuthenticationConfiguration configuration) {
 
     Map<String, Object> metadata = configuration.metadata();
     Fido2MetadataConfig fido2MetadataConfig = new Fido2MetadataConfig(metadata);
 
-    return executionResult.getValueAsStringFromContents(fido2MetadataConfig.userIdParam());
+    String userIdParam = fido2MetadataConfig.userIdParam();
+    if (contents.containsKey(userIdParam)) {
+      return contents.get(userIdParam).toString();
+    }
+
+    return "";
   }
 
   private boolean isRestAction(AuthenticationTransaction transaction) {
@@ -156,7 +179,7 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
   }
 
   private User addAuthenticationDevice(
-      User user, String deviceId, AuthenticationTransactionAttributes attributes) {
+      User user, String deviceId, String userId, AuthenticationTransactionAttributes attributes) {
 
     String appName = attributes.getValueOrEmpty("app_name");
     String platform = attributes.getValueOrEmpty("platform");
@@ -174,7 +197,7 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
     AuthenticationDevice authenticationDevice =
         new AuthenticationDevice(
             deviceId,
-            appName,
+            userId,
             platform,
             os,
             model,
