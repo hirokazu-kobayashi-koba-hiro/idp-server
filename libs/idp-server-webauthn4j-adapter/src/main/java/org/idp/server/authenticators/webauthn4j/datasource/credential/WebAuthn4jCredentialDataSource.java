@@ -53,6 +53,20 @@ public class WebAuthn4jCredentialDataSource implements WebAuthn4jCredentialRepos
   }
 
   @Override
+  public WebAuthn4jCredentials findByUsername(String username) {
+    List<Map<String, Object>> results = executor.findByUsername(username);
+
+    if (Objects.isNull(results) || results.isEmpty()) {
+      return new WebAuthn4jCredentials();
+    }
+
+    List<WebAuthn4jCredential> credentials =
+        results.stream().map(ModelConverter::convert).collect(Collectors.toList());
+
+    return new WebAuthn4jCredentials(credentials);
+  }
+
+  @Override
   public WebAuthn4jCredential get(String id) {
     Map<String, Object> result = executor.selectOne(id);
 

@@ -21,6 +21,8 @@ public interface WebAuthn4jCredentialRepository {
 
   WebAuthn4jCredentials findAll(String userId);
 
+  WebAuthn4jCredentials findByUsername(String username);
+
   WebAuthn4jCredential get(String id);
 
   void updateSignCount(String credentialId, long signCount);

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Typography, Button, Stack, Link, Divider, Box } from "@mui/material";
 import { useRouter } from "next/router";
-import { backendUrl } from "@/pages/_app";
+import { backendUrl, useAppContext } from "@/pages/_app";
 import { BaseLayout } from "@/components/layout/BaseLayout";
 import { useQuery } from "@tanstack/react-query";
 import { Loading } from "@/components/Loading";
@@ -11,6 +11,11 @@ import { SsoComponent } from "@/components/sso/SsoComponent";
 import { useAtom } from "jotai";
 import { authSessionIdAtom, authSessionTenantIdAtom } from "@/state/AuthState";
 
+interface credential {
+  id: string;
+  type: string;
+}
+
 export default function Login() {
   const [, setAuthSessionId] = useAtom(authSessionIdAtom);
   const [, setAuthSessionTenantId] = useAtom(authSessionTenantIdAtom);
@@ -18,6 +23,7 @@ export default function Login() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const { email } = useAppContext();
   const { id, tenant_id: tenantId } = router.query;
 
   const { data, isPending } = useQuery({
@@ -52,23 +58,49 @@ export default function Login() {
     setMessage("");
 
     try {
+      console.log(email);
+
       const res = await fetch(
         `${backendUrl}/${tenantId}/v1/authorizations/${id}/fido2-authentication-challenge`,
         {
+          method: "POST",
           credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: email,
+            userVerification: "required",
+            timeout: 6000
+          })
         },
       );
-      const { challenge } = await res.json();
+      const { challenge, allow_credentials } = await res.json();
       const decodedChallenge = challenge.replace(/-/g, "+").replace(/_/g, "/");
 
-      const credential = await navigator.credentials.get({
-        publicKey: {
-          challenge: new Uint8Array(
-            atob(decodedChallenge)
+      // Build publicKeyCredentialRequestOptions
+      const publicKeyOptions: PublicKeyCredentialRequestOptions = {
+        challenge: new Uint8Array(
+          atob(decodedChallenge)
+            .split("")
+            .map((c) => c.charCodeAt(0)),
+        ),
+        timeout: 60000,
+        userVerification: "required",
+      };
+
+      // Add allowCredentials if provided by server
+      if (allow_credentials && allow_credentials.length > 0) {
+        publicKeyOptions.allowCredentials = allow_credentials.map((cred: credential) => ({
+          type: cred.type,
+          id: new Uint8Array(
+            atob(cred.id.replace(/-/g, "+").replace(/_/g, "/"))
               .split("")
-              .map((c) => c.charCodeAt(0)),
+              .map((c: string) => c.charCodeAt(0)),
           ),
-        },
+        }));
+      }
+
+      const credential = await navigator.credentials.get({
+        publicKey: publicKeyOptions,
       });
 
       const loginRes = await fetch(

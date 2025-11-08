@@ -83,9 +83,20 @@ public class WebAuthn4jRegistrationExecutor implements AuthenticationExecutor {
       String userId = UUID.randomUUID().toString();
       log.debug("webauthn4j registration, generated userId: {}", userId);
 
+      // Extract username and displayName from request
+      String username = request.optValueAsString("username", null);
+      String displayName = request.optValueAsString("displayName", null);
+
+      log.debug("webauthn4j registration, username: {}, displayName: {}", username, displayName);
+
       WebAuthn4jRegistrationManager manager =
           new WebAuthn4jRegistrationManager(
-              webAuthn4jConfiguration, webAuthn4jChallenge, requestString, userId);
+              webAuthn4jConfiguration,
+              webAuthn4jChallenge,
+              requestString,
+              userId,
+              username,
+              displayName);
 
       log.debug("webauthn4j registration, verifying and creating credential");
 

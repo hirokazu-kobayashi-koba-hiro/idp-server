@@ -118,18 +118,18 @@ public class IdPUserCreator {
     }
 
     // TODO multi role
-    if (definition.hasProperty("roles") && request.containsKey("role_id")) {
-      String roleId = request.getValueAsString("role_id");
-      String toleName = request.getValueAsString("role_name");
-      List<UserRole> roles = List.of(new UserRole(roleId, toleName));
-      user.setRoles(roles);
-    }
-
-    if (definition.hasProperty("assigned_tenants") && request.containsKey("tenant_id")) {
-      String tenantId = request.getValueAsString("tenant_id");
-      List<String> assignedTenants = List.of(tenantId);
-      user.setAssignedTenants(assignedTenants);
-    }
+//    if (definition.hasProperty("roles") && request.containsKey("role_id")) {
+//      String roleId = request.getValueAsString("role_id");
+//      String toleName = request.getValueAsString("role_name");
+//      List<UserRole> roles = List.of(new UserRole(roleId, toleName));
+//      user.setRoles(roles);
+//    }
+//
+//    if (definition.hasProperty("assigned_tenants") && request.containsKey("tenant_id")) {
+//      String tenantId = request.getValueAsString("tenant_id");
+//      List<String> assignedTenants = List.of(tenantId);
+//      user.setAssignedTenants(assignedTenants);
+//    }
 
     user.transitStatus(UserStatus.REGISTERED);
 

@@ -41,17 +41,23 @@ public class WebAuthn4jRegistrationManager {
   WebAuthn4jChallenge webAuthn4jChallenge;
   String request;
   String userId;
+  String username;
+  String displayName;
 
   public WebAuthn4jRegistrationManager(
       WebAuthn4jConfiguration configuration,
       WebAuthn4jChallenge webAuthn4jChallenge,
       String request,
-      String userId) {
+      String userId,
+      String username,
+      String displayName) {
     this.webAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager();
     this.configuration = configuration;
     this.webAuthn4jChallenge = webAuthn4jChallenge;
     this.request = request;
     this.userId = userId;
+    this.username = username;
+    this.displayName = displayName;
   }
 
   public WebAuthn4jCredential verifyAndCreateCredential() {
@@ -125,8 +131,8 @@ public class WebAuthn4jRegistrationManager {
     return new WebAuthn4jCredential(
         id,
         userId,
-        null, // username - not available in registration data
-        null, // userDisplayName - not available in registration data
+        username, // username from registration challenge request
+        displayName, // user_display_name from registration challenge request
         null, // userIcon - not available in registration data
         configuration.rpId(),
         aaguidString,

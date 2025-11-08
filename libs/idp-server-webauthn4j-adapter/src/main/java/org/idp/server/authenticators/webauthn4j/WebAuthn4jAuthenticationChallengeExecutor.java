@@ -17,6 +17,7 @@
 package org.idp.server.authenticators.webauthn4j;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.authentication.interactors.fido2.Fido2Challenge;
 import org.idp.server.authentication.interactors.fido2.Fido2ExecutorType;
@@ -80,6 +81,32 @@ public class WebAuthn4jAuthenticationChallengeExecutor implements Authentication
 
       Map<String, Object> contents = new HashMap<>();
       contents.put("challenge", webAuthn4jChallenge.challengeAsString());
+
+      // Generate allowCredentials if username is provided
+      if (request.containsKey("username")) {
+        String username = request.getValueAsString("username");
+        log.debug(
+            "webauthn4j authentication challenge, generating allowCredentials for username: {}",
+            username);
+
+        WebAuthn4jCredentials credentials = credentialRepository.findByUsername(username);
+        List<Map<String, Object>> allowCredentials = credentials.toAllowCredentials();
+
+        if (!allowCredentials.isEmpty()) {
+          contents.put("allow_credentials", allowCredentials);
+          log.debug(
+              "webauthn4j authentication challenge, generated {} allowCredentials",
+              allowCredentials.size());
+        } else {
+          log.debug(
+              "webauthn4j authentication challenge, no credentials found for username: {}",
+              username);
+        }
+      } else {
+        log.debug(
+            "webauthn4j authentication challenge, no username provided (passwordless pattern)");
+      }
+
       Map<String, Object> response = new HashMap<>();
       response.put("execution_webauthn4j", contents);
 

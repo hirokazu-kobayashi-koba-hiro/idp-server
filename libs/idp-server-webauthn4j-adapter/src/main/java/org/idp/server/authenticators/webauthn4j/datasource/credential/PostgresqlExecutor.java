@@ -82,6 +82,22 @@ public class PostgresqlExecutor implements WebAuthn4jCredentialSqlExecutor {
   }
 
   @Override
+  public List<Map<String, Object>> findByUsername(String username) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+            SELECT id, idp_user_id, rp_id, attested_credential_data, sign_count, transports
+            FROM webauthn_credentials
+            WHERE username = ?;
+            """;
+    List<Object> params = new ArrayList<>();
+    params.add(username);
+
+    return sqlExecutor.selectListWithType(sqlTemplate, params);
+  }
+
+  @Override
   public Map<String, Object> selectOne(String id) {
 
     SqlExecutor sqlExecutor = new SqlExecutor();

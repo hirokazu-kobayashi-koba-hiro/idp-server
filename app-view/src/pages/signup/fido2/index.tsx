@@ -12,7 +12,6 @@ import {
   useTheme,
   alpha,
 } from "@mui/material";
-import { v4 as uuidv4 } from "uuid";
 import KeyIcon from "@mui/icons-material/Key";
 import { useRouter } from "next/router";
 import { backendUrl, useAppContext } from "@/pages/_app";
@@ -22,7 +21,7 @@ export default function Fido2RegistrationPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const { userId } = useAppContext();
+  const { userId, email } = useAppContext();
   const { id, tenant_id: tenantId } = router.query;
   const theme = useTheme();
 
@@ -31,10 +30,26 @@ export default function Fido2RegistrationPage() {
     setMessage("");
 
     try {
+
       const res = await fetch(
         `${backendUrl}/${tenantId}/v1/authorizations/${id}/fido2-registration-challenge`,
         {
+          method: "POST",
           credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: email,
+            displayName: email,
+            authenticatorSelection: {
+              authenticatorAttachment: "platform",
+              requireResidentKey: true,
+              userVerification: "required"
+            },
+            attestation: "none",
+            extensions: {
+              credProps: true
+            }
+          })
         },
       );
       const { challenge } = await res.json();
@@ -52,8 +67,8 @@ export default function Fido2RegistrationPage() {
           rp: { name: "Passkey Demo" },
           user: {
             id: userIdBytes,
-            name: userId || uuidv4(),
-            displayName: "test",
+            name: email || "",
+            displayName: email || "",
           },
           pubKeyCredParams: [{ type: "public-key", alg: -7 }],
         },

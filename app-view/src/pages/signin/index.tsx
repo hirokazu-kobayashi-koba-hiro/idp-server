@@ -95,7 +95,7 @@ export default function SignIn() {
       },
     );
     if (response.ok) {
-      router.push(`/signin/authorize?id=${id}&tenant_id=${tenantId}`);
+      router.push(`/signin/fido2?id=${id}&tenant_id=${tenantId}`);
     }
   };
 

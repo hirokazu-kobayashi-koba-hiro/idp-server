@@ -19,6 +19,7 @@ package org.idp.server.authenticators.webauthn4j;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import org.idp.server.authentication.interactors.fido2.Fido2CredentialNotFoundException;
 
 public class WebAuthn4jCredentials implements Iterable<WebAuthn4jCredential> {
@@ -43,5 +44,28 @@ public class WebAuthn4jCredentials implements Iterable<WebAuthn4jCredential> {
         .filter(item -> item.rpId().equals(rpId))
         .findFirst()
         .orElseThrow(() -> new Fido2CredentialNotFoundException("No credential found for " + rpId));
+  }
+
+  /**
+   * Converts credentials to WebAuthn allowCredentials format.
+   *
+   * <p>Generates an array of PublicKeyCredentialDescriptor objects for use in authentication
+   * requests. Each descriptor contains the credential ID and transports.
+   *
+   * @return List of credential descriptors, or empty list if no credentials
+   */
+  public List<Map<String, Object>> toAllowCredentials() {
+    return values.stream()
+        .map(
+            credential -> {
+              Map<String, Object> descriptor = new java.util.HashMap<>();
+              descriptor.put("type", "public-key");
+              descriptor.put("id", credential.id());
+              if (credential.transports() != null && !credential.transports().isEmpty()) {
+                descriptor.put("transports", credential.transports());
+              }
+              return descriptor;
+            })
+        .collect(java.util.stream.Collectors.toList());
   }
 }
