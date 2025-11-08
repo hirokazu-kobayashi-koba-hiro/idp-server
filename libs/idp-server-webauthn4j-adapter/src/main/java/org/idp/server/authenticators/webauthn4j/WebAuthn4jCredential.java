@@ -16,30 +16,27 @@
 
 package org.idp.server.authenticators.webauthn4j;
 
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
 public class WebAuthn4jCredential {
-  byte[] id;
-
+  String id;
   String userId;
-
   String rpId;
-
-  byte[] publicKey;
-
-  byte[] attestationObject;
-
+  String publicKey;
+  String attestationObject;
   long signCount;
+  private static final Base64.Decoder urlDecoder = Base64.getUrlDecoder();
 
   public WebAuthn4jCredential() {}
 
   public WebAuthn4jCredential(
-      byte[] id,
+      String id,
       String userId,
       String rpId,
-      byte[] publicKey,
-      byte[] attestationObject,
+      String publicKey,
+      String attestationObject,
       long signCount) {
     this.id = id;
     this.userId = userId;
@@ -49,8 +46,12 @@ public class WebAuthn4jCredential {
     this.signCount = signCount;
   }
 
-  public byte[] id() {
+  public String id() {
     return id;
+  }
+
+  public byte[] idAsBytes() {
+    return urlDecoder.decode(id);
   }
 
   public String userId() {
@@ -61,16 +62,24 @@ public class WebAuthn4jCredential {
     return rpId;
   }
 
-  public byte[] publicKey() {
+  public String publicKey() {
     return publicKey;
+  }
+
+  public byte[] publicKeyAsBytes() {
+    return urlDecoder.decode(publicKey);
   }
 
   public long signCount() {
     return signCount;
   }
 
-  public byte[] attestationObject() {
+  public String attestationObject() {
     return attestationObject;
+  }
+
+  public byte[] attestationObjectAsBytes() {
+    return urlDecoder.decode(attestationObject);
   }
 
   public Map<String, Object> toMap() {

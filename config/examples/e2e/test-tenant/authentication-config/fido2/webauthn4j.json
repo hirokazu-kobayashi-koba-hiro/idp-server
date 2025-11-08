@@ -7,7 +7,7 @@
   "interactions": {
     "fido2-registration-challenge": {
       "execution": {
-        "function": "webauthn4j",
+        "function": "webauthn4j_registration_challenge",
         "details": {
           "rp_id": "localhost",
           "origin": "http://localhost:3000",
@@ -19,11 +19,19 @@
           "authenticator_attachment": "cross-platform",
           "user_verification_required": true
         }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_webauthn4j",
+            "to": "*"
+          }
+        ]
       }
     },
     "fido2-registration": {
       "execution": {
-        "function": "webauthn4j",
+        "function": "webauthn4j_registration",
         "details": {
           "rp_id": "localhost",
           "origin": "http://localhost:3000",
@@ -35,11 +43,19 @@
           "authenticator_attachment": "cross-platform",
           "user_verification_required": true
         }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_webauthn4j",
+            "to": "*"
+          }
+        ]
       }
     },
     "fido2-authentication-challenge": {
       "execution": {
-        "function": "webauthn4j",
+        "function": "webauthn4j_authentication_challenge",
         "details": {
           "rp_id": "localhost",
           "origin": "http://localhost:3000",
@@ -51,11 +67,19 @@
           "authenticator_attachment": "cross-platform",
           "user_verification_required": true
         }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_webauthn4j",
+            "to": "*"
+          }
+        ]
       }
     },
     "fido2-authentication": {
       "execution": {
-        "function": "webauthn4j",
+        "function": "webauthn4j_authentication",
         "details": {
           "rp_id": "localhost",
           "origin": "http://localhost:3000",
@@ -67,6 +91,14 @@
           "authenticator_attachment": "cross-platform",
           "user_verification_required": true
         }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_webauthn4j",
+            "to": "*"
+          }
+        ]
       }
     }
   }

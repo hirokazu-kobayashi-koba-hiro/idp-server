@@ -22,6 +22,7 @@ import com.webauthn4j.credential.CredentialRecordImpl;
 import com.webauthn4j.data.attestation.authenticator.AttestedCredentialData;
 import com.webauthn4j.data.attestation.statement.NoneAttestationStatement;
 import com.webauthn4j.data.extension.authenticator.AuthenticationExtensionsAuthenticatorOutputs;
+import java.util.Base64;
 
 public class WebAuthn4jCredentialConverter {
 
@@ -35,8 +36,9 @@ public class WebAuthn4jCredentialConverter {
   }
 
   public CredentialRecordImpl convert() {
+    Base64.Decoder urlDecoder = Base64.getUrlDecoder();
     AttestedCredentialData deserializedAttestedCredentialData =
-        attestedCredentialDataConverter.convert(credential.attestationObject());
+        attestedCredentialDataConverter.convert(urlDecoder.decode(credential.attestationObject()));
 
     // TODO
     return new CredentialRecordImpl(

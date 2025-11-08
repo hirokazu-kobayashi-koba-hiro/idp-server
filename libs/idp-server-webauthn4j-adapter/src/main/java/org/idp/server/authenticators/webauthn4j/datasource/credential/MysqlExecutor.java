@@ -59,6 +59,23 @@ public class MysqlExecutor implements WebAuthn4jCredentialSqlExecutor {
   }
 
   @Override
+  public Map<String, Object> selectOne(String id) {
+
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+                    SELECT id, idp_user_id, rp_id, attestation_object, sign_count
+                    FROM webauthn_credentials
+                    WHERE id = ?;
+                    """;
+    List<Object> params = new ArrayList<>();
+    params.add(id);
+
+    return sqlExecutor.selectOneWithType(sqlTemplate, params);
+  }
+
+  @Override
   public void updateSignCount(String credentialId, long signCount) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =

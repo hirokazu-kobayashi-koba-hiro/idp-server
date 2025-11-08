@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import org.idp.server.authenticators.webauthn4j.WebAuthn4jCredential;
 import org.idp.server.authenticators.webauthn4j.WebAuthn4jCredentialRepository;
 import org.idp.server.authenticators.webauthn4j.WebAuthn4jCredentials;
+import org.idp.server.platform.exception.NotFoundException;
 
 public class WebAuthn4jCredentialDataSource implements WebAuthn4jCredentialRepository {
 
@@ -49,6 +50,17 @@ public class WebAuthn4jCredentialDataSource implements WebAuthn4jCredentialRepos
         results.stream().map(ModelConverter::convert).collect(Collectors.toList());
 
     return new WebAuthn4jCredentials(credentials);
+  }
+
+  @Override
+  public WebAuthn4jCredential get(String id) {
+    Map<String, Object> result = executor.selectOne(id);
+
+    if (Objects.isNull(result) || result.isEmpty()) {
+      throw new NotFoundException("WebAuthn4jCredential is not found.");
+    }
+
+    return ModelConverter.convert(result);
   }
 
   @Override

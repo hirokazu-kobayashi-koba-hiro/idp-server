@@ -66,7 +66,7 @@ public class SqlExecutor {
       if (results.size() > 1) {
         throw new SqlTooManyResultsException(String.format("find results (%d)", results.size()));
       }
-      return results.get(0);
+      return results.getFirst();
     } catch (SQLException exception) {
       switch (SqlErrorClassifier.classify(exception)) {
         case UNIQUE_VIOLATION ->
@@ -171,6 +171,64 @@ public class SqlExecutor {
         return List.of();
       }
       return results;
+    } catch (SQLException exception) {
+      switch (SqlErrorClassifier.classify(exception)) {
+        case UNIQUE_VIOLATION ->
+            throw new SqlDuplicateKeyException(
+                "Duplicate key violation: " + exception.getMessage(), exception);
+        case NOT_NULL_VIOLATION, CHECK_VIOLATION ->
+            throw new SqlBadRequestException(
+                "Invalid data for: " + exception.getMessage(), exception);
+        default ->
+            throw new SqlRuntimeException(
+                "Sql execution is error: " + exception.getMessage(), exception);
+      }
+    }
+  }
+
+  public Map<String, Object> selectOneWithType(String sql, List<Object> params) {
+    try (PreparedStatement prepareStatement = connection.prepareStatement(sql)) {
+
+      int index = 1;
+      for (Object param : params) {
+        if (param instanceof String stringValue) {
+          prepareStatement.setString(index, stringValue);
+        }
+        if (param instanceof Integer integerValue) {
+          prepareStatement.setInt(index, integerValue);
+        }
+        if (param instanceof Long longValue) {
+          prepareStatement.setLong(index, longValue);
+        }
+        if (param instanceof Boolean booleanValue) {
+          prepareStatement.setBoolean(index, booleanValue);
+        }
+        if (param instanceof byte[] binary) {
+          prepareStatement.setBytes(index, binary);
+        }
+        if (param instanceof UUID uuid) {
+          prepareStatement.setObject(index, uuid);
+        }
+        if (param instanceof LocalDateTime localDateTime) {
+          prepareStatement.setObject(index, localDateTime);
+        }
+        if (param == null) {
+          prepareStatement.setObject(index, null);
+        }
+        index++;
+      }
+
+      List<Map<String, Object>> results = selectWithType(sql, prepareStatement);
+
+      if (results.isEmpty()) {
+        return Map.of();
+      }
+
+      if (results.size() > 1) {
+        throw new SqlTooManyResultsException(String.format("find results (%d)", results.size()));
+      }
+
+      return results.getFirst();
     } catch (SQLException exception) {
       switch (SqlErrorClassifier.classify(exception)) {
         case UNIQUE_VIOLATION ->

@@ -22,9 +22,7 @@ import com.webauthn4j.data.AuthenticationData;
 import com.webauthn4j.data.AuthenticationParameters;
 import com.webauthn4j.data.client.Origin;
 import com.webauthn4j.server.ServerProperty;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Objects;
 
 public class WebAuthn4jAuthenticationManager {
 
@@ -41,17 +39,9 @@ public class WebAuthn4jAuthenticationManager {
     this.request = request;
   }
 
-  public String extractUserId() {
+  public void verify(WebAuthn4jCredential credential) {
     AuthenticationData authenticationData = parseAuthenticationData();
 
-    return new String(
-        Objects.requireNonNull(authenticationData.getUserHandle()), StandardCharsets.UTF_8);
-  }
-
-  public void verify(WebAuthn4jCredentials credentials) {
-    AuthenticationData authenticationData = parseAuthenticationData();
-
-    WebAuthn4jCredential credential = credentials.get(configuration.rpId());
     WebAuthn4jCredentialConverter webAuthnCredentialConverter =
         new WebAuthn4jCredentialConverter(credential);
     CredentialRecordImpl credentialRecord = webAuthnCredentialConverter.convert();

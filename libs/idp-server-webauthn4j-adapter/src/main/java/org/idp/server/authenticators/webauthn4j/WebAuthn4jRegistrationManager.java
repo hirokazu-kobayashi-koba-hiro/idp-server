@@ -21,6 +21,7 @@ import com.webauthn4j.converter.AttestedCredentialDataConverter;
 import com.webauthn4j.converter.util.ObjectConverter;
 import com.webauthn4j.data.RegistrationData;
 import com.webauthn4j.data.RegistrationParameters;
+import java.util.Base64;
 import java.util.Objects;
 
 public class WebAuthn4jRegistrationManager {
@@ -61,9 +62,11 @@ public class WebAuthn4jRegistrationManager {
                 Objects.requireNonNull(verified.getAttestationObject())
                     .getAuthenticatorData()
                     .getAttestedCredentialData()));
+    Base64.Encoder urlEncoder = Base64.getUrlEncoder().withoutPadding();
+    String id = urlEncoder.encodeToString(credentialId);
+    String attestationDataString = urlEncoder.encodeToString(attestedCredentialData);
 
-    return new WebAuthn4jCredential(
-        credentialId, userId, configuration.rpId(), new byte[0], attestedCredentialData, 0);
+    return new WebAuthn4jCredential(id, userId, configuration.rpId(), "", attestationDataString, 0);
   }
 
   private byte[] credentialId(RegistrationData verified) {

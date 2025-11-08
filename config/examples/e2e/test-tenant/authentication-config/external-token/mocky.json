@@ -21,7 +21,7 @@
         "function": "http_requests",
         "http_requests": [
           {
-            "url": "http://host.docker.internal:4000/user/overview",
+            "url": "http://localhost:4000/user/overview",
             "method": "POST",
             "header_mapping_rules": [
               {
@@ -53,7 +53,7 @@
             ]
           },
           {
-            "url": "http://host.docker.internal:4000/user/details",
+            "url": "http://localhost:4000/user/details",
             "method": "POST",
             "header_mapping_rules": [
               { "static_value": "test-client-id", "to": "x-client-id" },

@@ -5,6 +5,7 @@ import {
   postAuthenticationDeviceInteraction,
 } from "../../../api/oauthClient";
 import {
+  backendUrl,
   clientSecretPostClient, federationServerConfig,
   serverConfig
 } from "../../testConfig";
@@ -193,6 +194,7 @@ describe("user - mfa registration", () => {
     });
 
       it("fido2", async () => {
+        const tenantId = serverConfig.tenantId;
           const { user, accessToken } = await createFederatedUser({
               serverConfig: serverConfig,
               federationServerConfig: federationServerConfig,

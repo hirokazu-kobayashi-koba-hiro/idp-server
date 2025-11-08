@@ -22,7 +22,8 @@ import org.idp.server.core.openid.authentication.plugin.AuthenticationDependency
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
 
-public class WebAuthn4jRegistrationChallengeExecutorFactory implements AuthenticationExecutorFactory {
+public class WebAuthn4jRegistrationChallengeExecutorFactory
+    implements AuthenticationExecutorFactory {
 
   @Override
   public AuthenticationExecutor create(AuthenticationDependencyContainer container) {
@@ -31,8 +32,8 @@ public class WebAuthn4jRegistrationChallengeExecutorFactory implements Authentic
         container.resolve(AuthenticationInteractionCommandRepository.class);
     AuthenticationInteractionQueryRepository interactionQueryRepository =
         container.resolve(AuthenticationInteractionQueryRepository.class);
-      WebAuthn4jCredentialRepository credentialRepository =
-              container.resolve(WebAuthn4jCredentialRepository.class);
+    WebAuthn4jCredentialRepository credentialRepository =
+        container.resolve(WebAuthn4jCredentialRepository.class);
     return new WebAuthn4jRegistrationChallengeExecutor(
         interactionCommandRepository, interactionQueryRepository, credentialRepository);
   }

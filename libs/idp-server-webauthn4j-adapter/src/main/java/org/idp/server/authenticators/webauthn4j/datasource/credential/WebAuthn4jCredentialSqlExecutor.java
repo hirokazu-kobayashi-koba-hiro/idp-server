@@ -26,6 +26,8 @@ public interface WebAuthn4jCredentialSqlExecutor {
 
   List<Map<String, Object>> findAll(String userId);
 
+  Map<String, Object> selectOne(String userId);
+
   void updateSignCount(String credentialId, long signCount);
 
   void delete(String credentialId);

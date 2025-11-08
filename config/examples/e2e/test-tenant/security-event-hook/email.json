@@ -21,7 +21,7 @@
           "subject": "default",
           "body": "email common notification",
           "http_request": {
-            "url": "http://host.docker.internal:4000/email-authentication-challenge",
+            "url": "http://localhost:4000/email-authentication-challenge",
             "method": "POST",
             "header_mapping_rules": [
               {
@@ -48,7 +48,7 @@
           "subject": "default",
           "body": "email common notification",
           "http_request": {
-            "url": "http://host.docker.internal:4000/email-authentication-challenge",
+            "url": "http://localhost:4000/email-authentication-challenge",
             "method": "POST",
             "header_mapping_rules": [
               {

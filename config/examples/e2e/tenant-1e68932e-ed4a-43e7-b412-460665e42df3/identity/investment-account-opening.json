@@ -6,7 +6,7 @@
     "callback_application_id_param": "application_id",
     "oauth_authorization": {
       "type": "password",
-      "token_endpoint": "http://host.docker.internal:4000/token",
+      "token_endpoint": "http://localhost:4000/token",
       "client_id": "your-client-id",
       "username": "username",
       "password": "password",
@@ -111,7 +111,7 @@
           {
             "type": "http_request",
             "details": {
-              "url": "http://host.docker.internal:4000/apply",
+              "url": "http://localhost:4000/apply",
               "method": "POST",
               "static_headers": {
                 "Content-Type": "application/json",
@@ -138,7 +138,7 @@
       "execution": {
         "type": "http_request",
         "http_request": {
-          "url": "http://host.docker.internal:4000/apply",
+          "url": "http://localhost:4000/apply",
           "method": "POST",
           "header_mapping_rules": [
             { "static_value": "application/json", "to": "Content-Type" },
@@ -185,7 +185,7 @@
       "execution": {
         "type": "http_request",
         "http_request": {
-          "url": "http://host.docker.internal:4000/{{external_application_id}}/request-ekyc",
+          "url": "http://localhost:4000/{{external_application_id}}/request-ekyc",
           "method": "POST",
           "header_mapping_rules": [
             { "static_value": "application/json", "to": "Content-Type" },
@@ -221,7 +221,7 @@
       "execution": {
         "type": "http_request",
         "http_request": {
-          "url": "http://host.docker.internal:4000/{{external_application_id}}/complete-ekyc",
+          "url": "http://localhost:4000/{{external_application_id}}/complete-ekyc",
           "method": "POST",
           "header_mapping_rules": [
             { "static_value": "application/json", "to": "Content-Type" },
@@ -256,7 +256,7 @@
       "execution": {
         "type": "http_request",
         "http_request": {
-          "url": "http://host.docker.internal:4000/crm-registration",
+          "url": "http://localhost:4000/crm-registration",
           "method": "POST",
           "auth_type": "hmac_sha256",
           "hmac_authentication": {

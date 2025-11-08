@@ -16,6 +16,7 @@
 
 package org.idp.server.authenticators.webauthn4j;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.idp.server.authentication.interactors.fido2.Fido2Challenge;
@@ -82,8 +83,8 @@ public class WebAuthn4jRegistrationExecutor implements AuthenticationExecutor {
     WebAuthn4jCredential webAuthn4jCredential = manager.verifyAndCreateCredential();
     credentialRepository.register(webAuthn4jCredential);
 
-    // TODO
-    Map<String, Object> response = Map.of("registration", webAuthn4jCredential.toMap());
+    Map<String, Object> response = new HashMap<>();
+    response.put("execution_webauthn4j", webAuthn4jCredential.toMap());
 
     return AuthenticationExecutionResult.success(response);
   }

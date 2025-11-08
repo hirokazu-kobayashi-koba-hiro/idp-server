@@ -1,4 +1,4 @@
-import { expect, it } from "@jest/globals";
+import { expect } from "@jest/globals";
 import { faker } from "@faker-js/faker";
 import { backendUrl, clientSecretPostClient, serverConfig } from "../tests/testConfig";
 import { postAuthentication, postAuthenticationDeviceInteraction, requestToken } from "../api/oauthClient";
@@ -7,6 +7,7 @@ import { requestFederation } from "../oauth/federation";
 import { requestAuthorizations } from "../oauth/request";
 import { verifyAndDecodeJwt } from "../lib/jose";
 import { generatePassword } from "../lib/util";
+import { generateRandomUser, generateValidCredentialFromChallenge } from "../lib/fido/fido2";
 
 
 export const createFederatedUser = async ({
@@ -240,4 +241,71 @@ export const registerFidoUaf = async ({
     return {
       authenticationDeviceId: authenticationResponse.data.device_id
     };
+};
+
+export const registerFido2 = async ({
+  accessToken,
+}) => {
+
+  let mfaRegistrationResponse =
+    await postWithJson({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/me/mfa/fido2-registration`,
+      body: {
+        "app_name": "idp-server-app",
+        "platform": "Android",
+        "os": "Android15",
+        "model": "galaxy z fold 6",
+        "locale": "ja",
+        "notification_channel": "fcm",
+        "notification_token": "test token",
+        "priority": 1,
+        action: "reset"
+      },
+      headers: {
+        "Authorization": `Bearer ${accessToken}`
+      }
+    });
+  console.log(mfaRegistrationResponse.data);
+  expect(mfaRegistrationResponse.status).toBe(200);
+
+  const discoverableUser = generateRandomUser();
+  const requestBody = {
+    username: discoverableUser.username,
+    displayName: discoverableUser.displayName,
+    authenticatorSelection: {
+      authenticatorAttachment: "platform",
+      requireResidentKey: true,
+      userVerification: "required"
+    },
+    attestation: "none",
+    extensions: {
+      credProps: true
+    }
+  };
+
+  console.log(JSON.stringify(requestBody, null, 2));
+
+  let authenticationResponse;
+  let transactionId = mfaRegistrationResponse.data.id;
+  authenticationResponse = await postWithJson({
+    url: `${backendUrl}/${serverConfig.tenantId}/v1/authentications/${transactionId}/fido2-registration-challenge`,
+    body: requestBody
+  });
+  console.log(JSON.stringify(authenticationResponse.data, null, 2));
+  expect(authenticationResponse.status).toBe(200);
+
+  const validCredential = generateValidCredentialFromChallenge(authenticationResponse.data);
+  console.log(JSON.stringify(validCredential, null, 2));
+
+  authenticationResponse = await postWithJson({
+    url: `${backendUrl}/${serverConfig.tenantId}/v1/authentications/${transactionId}/fido2-registration`,
+    body: validCredential
+  });
+  console.log(JSON.stringify(authenticationResponse.data, null, 2));
+  expect(authenticationResponse.status).toBe(200);
+
+  return {
+    authenticationDeviceId: authenticationResponse.data.device_id,
+    userId: authenticationResponse.data.id
+  };
 };

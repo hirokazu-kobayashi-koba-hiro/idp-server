@@ -20,6 +20,7 @@ import com.webauthn4j.data.PublicKeyCredentialParameters;
 import com.webauthn4j.data.RegistrationParameters;
 import com.webauthn4j.data.client.Origin;
 import com.webauthn4j.server.ServerProperty;
+import java.util.HashSet;
 import java.util.List;
 
 public class WebAuthn4jConfiguration {
@@ -64,6 +65,14 @@ public class WebAuthn4jConfiguration {
     Origin origin = Origin.create(this.origin);
     ServerProperty serverProperty =
         new ServerProperty(origin, rpId, webAuthn4jChallenge, tokenBindingId);
+
+    ServerProperty serverProperty2 =
+        ServerProperty.builder()
+            .origin(origin)
+            .rpId(rpId)
+            .origins(new HashSet<>())
+            .challenge(null)
+            .build();
 
     // expectations
     List<PublicKeyCredentialParameters> pubKeyCredParams = null;

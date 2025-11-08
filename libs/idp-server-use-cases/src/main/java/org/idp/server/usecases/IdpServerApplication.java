@@ -25,6 +25,7 @@ import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditiona
 import org.idp.server.authentication.interactors.plugin.AuthenticationDeviceNotifiersPluginLoader;
 import org.idp.server.authentication.interactors.plugin.FidoUafAdditionalRequestResolverPluginLoader;
 import org.idp.server.authentication.interactors.plugin.WebAuthnExecutorPluginLoader;
+import org.idp.server.authenticators.webauthn4j.WebAuthn4jCredentialRepository;
 import org.idp.server.control_plane.admin.operation.IdpServerOperationApi;
 import org.idp.server.control_plane.admin.starter.IdpServerStarterApi;
 import org.idp.server.control_plane.base.AdminUserAuthenticationApi;
@@ -379,6 +380,8 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(AuditLogQueryRepository.class);
     AuthenticationInteractionQueryRepository authenticationInteractionQueryRepository =
         applicationComponentContainer.resolve(AuthenticationInteractionQueryRepository.class);
+    WebAuthn4jCredentialRepository webAuthn4jCredentialRepository =
+        applicationComponentContainer.resolve(WebAuthn4jCredentialRepository.class);
 
     HttpClient httpClient = HttpClientFactory.defaultClient();
     HttpRequestExecutor httpRequestExecutor =
@@ -431,6 +434,9 @@ public class IdpServerApplication {
     authenticationDependencyContainer.register(
         OAuthAuthorizationResolvers.class, oAuthAuthorizationResolvers);
     authenticationDependencyContainer.register(HttpRequestExecutor.class, httpRequestExecutor);
+
+    authenticationDependencyContainer.register(
+        WebAuthn4jCredentialRepository.class, webAuthn4jCredentialRepository);
 
     AuthenticationExecutors authenticationExecutors =
         AuthenticationExecutorPluginLoader.load(authenticationDependencyContainer);

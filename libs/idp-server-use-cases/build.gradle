@@ -24,6 +24,7 @@ dependencies {
 	implementation project(':libs:idp-server-authentication-interactors')
 	implementation project(':libs:idp-server-federation-oidc')
 	implementation project(':libs:idp-server-control-plane')
+	implementation project(':libs:idp-server-webauthn4j-adapter')
 
 	testImplementation platform('org.junit:junit-bom:5.10.0')
 	testImplementation 'org.junit.jupiter:junit-jupiter'

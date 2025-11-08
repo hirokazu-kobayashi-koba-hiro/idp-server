@@ -76,14 +76,16 @@ public class WebAuthn4jAuthenticationExecutor implements AuthenticationExecutor 
         new WebAuthn4jAuthenticationManager(
             webAuthn4jConfiguration, webAuthn4jChallenge, requestString);
 
-    String extractUserId = manager.extractUserId();
-    WebAuthn4jCredentials webAuthn4jCredentials = credentialRepository.findAll(extractUserId);
+    String id = request.optValueAsString("id", "");
+    WebAuthn4jCredential webAuthn4jCredential = credentialRepository.get(id);
 
-    manager.verify(webAuthn4jCredentials);
+    manager.verify(webAuthn4jCredential);
 
+    Map<String, Object> contents = new HashMap<>();
+    contents.put("id", id);
+    contents.put("status", "ok");
     Map<String, Object> response = new HashMap<>();
-    response.put("id", extractUserId);
-    response.put("status", "ok");
+    response.put("execution_webauthn4j", contents);
 
     return AuthenticationExecutionResult.success(response);
   }

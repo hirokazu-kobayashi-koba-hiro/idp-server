@@ -174,6 +174,7 @@ authentication_policy_files=(
   fido-uaf-deregistration.json
   fido-uaf-registration.json
   oauth.json
+  fido2-registration.json
 )
 
 for authentication_policy_file in "${authentication_policy_files[@]}"; do

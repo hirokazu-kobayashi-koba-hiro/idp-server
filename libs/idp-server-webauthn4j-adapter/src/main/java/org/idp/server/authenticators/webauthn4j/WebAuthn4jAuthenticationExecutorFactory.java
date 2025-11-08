@@ -31,8 +31,8 @@ public class WebAuthn4jAuthenticationExecutorFactory implements AuthenticationEx
         container.resolve(AuthenticationInteractionCommandRepository.class);
     AuthenticationInteractionQueryRepository interactionQueryRepository =
         container.resolve(AuthenticationInteractionQueryRepository.class);
-      WebAuthn4jCredentialRepository credentialRepository =
-              container.resolve(WebAuthn4jCredentialRepository.class);
+    WebAuthn4jCredentialRepository credentialRepository =
+        container.resolve(WebAuthn4jCredentialRepository.class);
     return new WebAuthn4jAuthenticationExecutor(
         interactionCommandRepository, interactionQueryRepository, credentialRepository);
   }

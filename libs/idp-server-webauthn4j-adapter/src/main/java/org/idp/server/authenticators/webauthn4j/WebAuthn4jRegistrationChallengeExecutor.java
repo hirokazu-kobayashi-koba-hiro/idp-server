@@ -68,8 +68,10 @@ public class WebAuthn4jRegistrationChallengeExecutor implements AuthenticationEx
     Fido2Challenge fido2Challenge = webAuthn4jChallenge.toWebAuthnChallenge();
     transactionCommandRepository.register(tenant, identifier, type().value(), fido2Challenge);
 
+    Map<String, Object> contents = new HashMap<>();
+    contents.put("challenge", webAuthn4jChallenge.challengeAsString());
     Map<String, Object> response = new HashMap<>();
-    response.put("challenge", webAuthn4jChallenge.challengeAsString());
+    response.put("execution_webauthn4j", contents);
 
     return AuthenticationExecutionResult.success(response);
   }
