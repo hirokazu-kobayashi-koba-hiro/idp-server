@@ -29,15 +29,38 @@ public class PostgresqlExecutor implements WebAuthn4jCredentialSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-            INSERT INTO webauthn_credentials (id, idp_user_id, rp_id, attestation_object, sign_count)
-            VALUES (?, ?, ?, ?, ?);
+            INSERT INTO webauthn_credentials (
+              id, idp_user_id, username, user_display_name, user_icon,
+              rp_id, aaguid, attested_credential_data, signature_algorithm, sign_count,
+              attestation_type, rk, cred_protect, transports, created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, to_timestamp(?::bigint / 1000.0));
             """;
     List<Object> params = new ArrayList<>();
     params.add(credential.id());
     params.add(credential.userId());
+    params.add(credential.username());
+    params.add(credential.userDisplayName());
+    params.add(credential.userIcon());
     params.add(credential.rpId());
-    params.add(credential.attestationObject());
+    params.add(
+        credential.aaguid() != null ? credential.aaguid() : "00000000-0000-0000-0000-000000000000");
+    params.add(credential.attestedCredentialData());
+    params.add(credential.signatureAlgorithm());
     params.add(credential.signCount());
+    params.add(credential.attestationType());
+    params.add(credential.rk());
+    params.add(credential.credProtect());
+    // Convert List<String> to JSON array string
+    String transportsJson =
+        credential.transports() != null
+            ? "["
+                + String.join(
+                    ",", credential.transports().stream().map(t -> "\"" + t + "\"").toList())
+                + "]"
+            : "[]";
+    params.add(transportsJson);
+    params.add(credential.createdAt());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -48,7 +71,7 @@ public class PostgresqlExecutor implements WebAuthn4jCredentialSqlExecutor {
 
     String sqlTemplate =
         """
-            SELECT id, idp_user_id, rp_id, attestation_object, sign_count
+            SELECT id, idp_user_id, rp_id, attested_credential_data, sign_count
             FROM webauthn_credentials
             WHERE idp_user_id = ?;
             """;
@@ -65,7 +88,7 @@ public class PostgresqlExecutor implements WebAuthn4jCredentialSqlExecutor {
 
     String sqlTemplate =
         """
-                    SELECT id, idp_user_id, rp_id, attestation_object, sign_count
+                    SELECT id, idp_user_id, rp_id, attested_credential_data, sign_count
                     FROM webauthn_credentials
                     WHERE id = ?;
                     """;

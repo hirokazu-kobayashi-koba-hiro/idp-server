@@ -20,13 +20,15 @@ import com.webauthn4j.data.PublicKeyCredentialParameters;
 import com.webauthn4j.data.RegistrationParameters;
 import com.webauthn4j.data.client.Origin;
 import com.webauthn4j.server.ServerProperty;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class WebAuthn4jConfiguration {
   String rpId;
   String rpName;
-  String origin;
+  @Deprecated String origin;
+  List<String> allowedOrigins;
   byte[] tokenBindingId;
   String attestationPreference;
   String authenticatorAttachment;
@@ -58,23 +60,24 @@ public class WebAuthn4jConfiguration {
     this.userPresenceRequired = userPresenceRequired;
   }
 
-  // FIXME
+  public List<String> getAllowedOrigins() {
+    if (allowedOrigins != null && !allowedOrigins.isEmpty()) {
+      return allowedOrigins;
+    }
+    if (origin != null && !origin.isEmpty()) {
+      return List.of(origin);
+    }
+    return List.of();
+  }
+
   RegistrationParameters toRegistrationParameters(WebAuthn4jChallenge webAuthn4jChallenge) {
 
-    // Server properties
-    Origin origin = Origin.create(this.origin);
+    Set<Origin> origins =
+        getAllowedOrigins().stream().map(Origin::create).collect(Collectors.toSet());
+
     ServerProperty serverProperty =
-        new ServerProperty(origin, rpId, webAuthn4jChallenge, tokenBindingId);
+        ServerProperty.builder().origins(origins).rpId(rpId).challenge(webAuthn4jChallenge).build();
 
-    ServerProperty serverProperty2 =
-        ServerProperty.builder()
-            .origin(origin)
-            .rpId(rpId)
-            .origins(new HashSet<>())
-            .challenge(null)
-            .build();
-
-    // expectations
     List<PublicKeyCredentialParameters> pubKeyCredParams = null;
 
     return new RegistrationParameters(

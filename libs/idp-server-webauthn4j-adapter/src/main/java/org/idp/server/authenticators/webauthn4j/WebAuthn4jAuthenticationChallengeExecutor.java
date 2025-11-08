@@ -28,10 +28,13 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
 import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
 public class WebAuthn4jAuthenticationChallengeExecutor implements AuthenticationExecutor {
+
+  LoggerWrapper log = LoggerWrapper.getLogger(WebAuthn4jAuthenticationChallengeExecutor.class);
 
   AuthenticationInteractionCommandRepository transactionCommandRepository;
   AuthenticationInteractionQueryRepository transactionQueryRepository;
@@ -65,15 +68,31 @@ public class WebAuthn4jAuthenticationChallengeExecutor implements Authentication
       RequestAttributes requestAttributes,
       AuthenticationExecutionConfig configuration) {
 
-    WebAuthn4jChallenge webAuthn4jChallenge = WebAuthn4jChallenge.generate();
-    Fido2Challenge fido2Challenge = webAuthn4jChallenge.toWebAuthnChallenge();
-    transactionCommandRepository.register(tenant, identifier, type().value(), fido2Challenge);
+    try {
+      log.debug("webauthn4j authentication challenge, generating challenge");
 
-    Map<String, Object> contents = new HashMap<>();
-    contents.put("challenge", webAuthn4jChallenge.challengeAsString());
-    Map<String, Object> response = new HashMap<>();
-    response.put("execution_webauthn4j", contents);
+      WebAuthn4jChallenge webAuthn4jChallenge = WebAuthn4jChallenge.generate();
+      Fido2Challenge fido2Challenge = webAuthn4jChallenge.toWebAuthnChallenge();
 
-    return AuthenticationExecutionResult.success(response);
+      log.debug("webauthn4j authentication challenge, registering to transaction");
+
+      transactionCommandRepository.register(tenant, identifier, type().value(), fido2Challenge);
+
+      Map<String, Object> contents = new HashMap<>();
+      contents.put("challenge", webAuthn4jChallenge.challengeAsString());
+      Map<String, Object> response = new HashMap<>();
+      response.put("execution_webauthn4j", contents);
+
+      log.info("webauthn4j authentication challenge generated successfully");
+      return AuthenticationExecutionResult.success(response);
+
+    } catch (Exception e) {
+      log.error("webauthn4j unexpected error during authentication challenge generation", e);
+      Map<String, Object> errorResponse = new HashMap<>();
+      errorResponse.put("error", "server_error");
+      errorResponse.put(
+          "error_description", "An unexpected error occurred during challenge generation");
+      return AuthenticationExecutionResult.serverError(errorResponse);
+    }
   }
 }

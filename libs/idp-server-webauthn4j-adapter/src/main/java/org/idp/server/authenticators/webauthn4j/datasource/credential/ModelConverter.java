@@ -26,10 +26,9 @@ class ModelConverter {
     String id = (String) result.get("id");
     String userId = (String) result.get("user_id");
     String rpId = (String) result.get("rp_id");
-    String publicKey = (String) result.get("public_key");
-    String attestationObject = (String) result.get("attestation_object");
+    String attestedCredentialData = (String) result.get("attested_credential_data");
     long signCount = (long) result.get("sign_count");
 
-    return new WebAuthn4jCredential(id, userId, rpId, publicKey, attestationObject, signCount);
+    return new WebAuthn4jCredential(id, userId, rpId, attestedCredentialData, signCount);
   }
 }

@@ -29,10 +29,13 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
 import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
 public class WebAuthn4jRegistrationExecutor implements AuthenticationExecutor {
+
+  LoggerWrapper log = LoggerWrapper.getLogger(WebAuthn4jRegistrationExecutor.class);
 
   AuthenticationInteractionCommandRepository transactionCommandRepository;
   AuthenticationInteractionQueryRepository transactionQueryRepository;
@@ -66,26 +69,57 @@ public class WebAuthn4jRegistrationExecutor implements AuthenticationExecutor {
       RequestAttributes requestAttributes,
       AuthenticationExecutionConfig configuration) {
 
-    Fido2Challenge fido2Challenge =
-        transactionQueryRepository.get(tenant, identifier, type().value(), Fido2Challenge.class);
+    try {
+      Fido2Challenge fido2Challenge =
+          transactionQueryRepository.get(tenant, identifier, type().value(), Fido2Challenge.class);
 
-    WebAuthn4jChallenge webAuthn4jChallenge = new WebAuthn4jChallenge(fido2Challenge.challenge());
-    String requestString = jsonConverter.write(request.toMap());
-    WebAuthn4jConfiguration webAuthn4jConfiguration =
-        jsonConverter.read(configuration.details(), WebAuthn4jConfiguration.class);
+      log.debug("webauthn4j registration, retrieved challenge from transaction");
 
-    String userId = UUID.randomUUID().toString();
+      WebAuthn4jChallenge webAuthn4jChallenge = new WebAuthn4jChallenge(fido2Challenge.challenge());
+      String requestString = jsonConverter.write(request.toMap());
+      WebAuthn4jConfiguration webAuthn4jConfiguration =
+          jsonConverter.read(configuration.details(), WebAuthn4jConfiguration.class);
 
-    WebAuthn4jRegistrationManager manager =
-        new WebAuthn4jRegistrationManager(
-            webAuthn4jConfiguration, webAuthn4jChallenge, requestString, userId);
+      String userId = UUID.randomUUID().toString();
+      log.debug("webauthn4j registration, generated userId: {}", userId);
 
-    WebAuthn4jCredential webAuthn4jCredential = manager.verifyAndCreateCredential();
-    credentialRepository.register(webAuthn4jCredential);
+      WebAuthn4jRegistrationManager manager =
+          new WebAuthn4jRegistrationManager(
+              webAuthn4jConfiguration, webAuthn4jChallenge, requestString, userId);
 
-    Map<String, Object> response = new HashMap<>();
-    response.put("execution_webauthn4j", webAuthn4jCredential.toMap());
+      log.debug("webauthn4j registration, verifying and creating credential");
 
-    return AuthenticationExecutionResult.success(response);
+      WebAuthn4jCredential webAuthn4jCredential = manager.verifyAndCreateCredential();
+
+      log.debug(
+          "webauthn4j registration, credential created with id: {}", webAuthn4jCredential.id());
+
+      credentialRepository.register(webAuthn4jCredential);
+
+      log.debug("webauthn4j registration, credential registered");
+
+      Map<String, Object> response = new HashMap<>();
+      response.put("execution_webauthn4j", webAuthn4jCredential.toMap());
+
+      log.info(
+          "webauthn4j registration succeeded. credential id: {}, userId: {}",
+          webAuthn4jCredential.id(),
+          userId);
+      return AuthenticationExecutionResult.success(response);
+
+    } catch (WebAuthn4jBadRequestException e) {
+      log.error("webauthn4j registration failed: {}", e.getMessage(), e);
+      Map<String, Object> errorResponse = new HashMap<>();
+      errorResponse.put("error", "registration_failed");
+      errorResponse.put("error_description", e.getMessage());
+      return AuthenticationExecutionResult.clientError(errorResponse);
+
+    } catch (Exception e) {
+      log.error("webauthn4j unexpected error during registration", e);
+      Map<String, Object> errorResponse = new HashMap<>();
+      errorResponse.put("error", "server_error");
+      errorResponse.put("error_description", "An unexpected error occurred during registration");
+      return AuthenticationExecutionResult.serverError(errorResponse);
+    }
   }
 }

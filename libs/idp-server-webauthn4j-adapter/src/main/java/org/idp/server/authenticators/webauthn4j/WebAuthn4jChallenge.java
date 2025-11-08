@@ -20,10 +20,9 @@ import com.webauthn4j.data.client.challenge.Challenge;
 import com.webauthn4j.util.ArrayUtil;
 import com.webauthn4j.util.AssertUtil;
 import com.webauthn4j.util.Base64UrlUtil;
-import java.nio.ByteBuffer;
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.UUID;
 import org.idp.server.authentication.interactors.fido2.Fido2Challenge;
 
 public class WebAuthn4jChallenge implements Challenge {
@@ -40,11 +39,8 @@ public class WebAuthn4jChallenge implements Challenge {
   }
 
   public static WebAuthn4jChallenge generate() {
-
-    UUID uuid = UUID.randomUUID();
-    long hi = uuid.getMostSignificantBits();
-    long lo = uuid.getLeastSignificantBits();
-    byte[] value = ByteBuffer.allocate(16).putLong(hi).putLong(lo).array();
+    byte[] value = new byte[32];
+    new SecureRandom().nextBytes(value);
     return new WebAuthn4jChallenge(value);
   }
 
