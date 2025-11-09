@@ -129,7 +129,8 @@ public class MysqlExecutor implements WebAuthn4jCredentialSqlExecutor {
     String sqlTemplate =
         """
             UPDATE webauthn_credentials
-            SET sign_count = ?
+            SET sign_count = ?,
+                authenticated_at = now()
             WHERE id = ?;
             """;
     List<Object> params = new ArrayList<>();
