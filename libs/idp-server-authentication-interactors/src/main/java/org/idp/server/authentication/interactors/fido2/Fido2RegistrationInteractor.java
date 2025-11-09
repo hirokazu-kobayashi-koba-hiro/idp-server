@@ -124,7 +124,9 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
           DefaultSecurityEventType.fido2_registration_failure);
     }
 
-    User baseUser = transaction.user();
+    // Resolve or create User based on registration result
+    String userId = resolveUsername(contents, configuration);
+    User baseUser = resolveUser(tenant, transaction, userId, userQueryRepository);
     // Handle reset action: remove existing FIDO-UAF devices before adding new one
     if (isRestAction(transaction)) {
       baseUser = baseUser.removeAllAuthenticationDevicesOfType("fido2");
@@ -136,11 +138,9 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
             : DefaultSecurityEventType.fido2_registration_success;
 
     String deviceId = UUID.randomUUID().toString();
-    String userId = resolveUserId(contents, configuration);
     log.info("fido2 registration success deviceId: {}, userId: {}", deviceId, userId);
 
-    User addedDeviceUser =
-        addAuthenticationDevice(baseUser, deviceId, userId, transaction.attributes());
+    User addedDeviceUser = addAuthenticationDevice(baseUser, deviceId, transaction.attributes());
 
     AuthenticationPolicy authenticationPolicy = transaction.authenticationPolicy();
     if (authenticationPolicy.authenticationDeviceRule().requiredIdentityVerification()) {
@@ -155,20 +155,74 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
         type,
         operationType(),
         method(),
-        transaction.user(),
+        addedDeviceUser,
         response,
         eventType);
   }
 
-  private String resolveUserId(
+  /**
+   * Resolves or creates User based on userId (username from FIDO2 credential).
+   *
+   * <p>Resolution strategy (same as Email/SMS authentication - Issue #800 fix pattern):
+   *
+   * <ol>
+   *   <li>Search by preferredUsername in database (highest priority - Issue #800 fix)
+   *   <li>If transaction.hasUser() && same username: reuse existing User
+   *   <li>Create new User with generated UUID
+   * </ol>
+   *
+   * @param tenant the tenant
+   * @param transaction the authentication transaction
+   * @param username the username from FIDO2 credential (userId decoded)
+   * @param userQueryRepository the user query repository
+   * @return the resolved or created User
+   */
+  private User resolveUser(
+      Tenant tenant,
+      AuthenticationTransaction transaction,
+      String username,
+      UserQueryRepository userQueryRepository) {
+
+    // Strategy 1: Reuse transaction.user() if same username
+    if (transaction.hasUser()) {
+      User transactionUser = transaction.user();
+      String transactionUsername = transactionUser.preferredUsername();
+
+      if (username.equals(transactionUsername)) {
+        log.debug("FIDO2 registration: reusing transaction user with same username: {}", username);
+        return transactionUser;
+      }
+      // Different username → discard transaction.user(), create new User
+    }
+
+    // Strategy 2: Database search (Issue #800 fix)
+    User existingUser = userQueryRepository.findByPreferredUsernameNoProvider(tenant, username);
+    if (existingUser.exists()) {
+      log.debug("FIDO2 registration: found existing user by preferredUsername: {}", username);
+      return existingUser;
+    }
+
+    // Strategy 3: Create new User
+    User user = new User();
+    String id = UUID.randomUUID().toString();
+    user.setSub(id);
+    user.setName(username);
+    user.setPreferredUsername(username);
+
+    log.debug(
+        "FIDO2 registration: created new user with sub: {}, preferredUsername: {}", id, username);
+    return user;
+  }
+
+  private String resolveUsername(
       Map<String, Object> contents, AuthenticationConfiguration configuration) {
 
     Map<String, Object> metadata = configuration.metadata();
     Fido2MetadataConfig fido2MetadataConfig = new Fido2MetadataConfig(metadata);
 
-    String userIdParam = fido2MetadataConfig.userIdParam();
-    if (contents.containsKey(userIdParam)) {
-      return contents.get(userIdParam).toString();
+    String usernameParam = fido2MetadataConfig.usernameParam();
+    if (contents.containsKey(usernameParam)) {
+      return contents.get(usernameParam).toString();
     }
 
     return "";
@@ -179,7 +233,7 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
   }
 
   private User addAuthenticationDevice(
-      User user, String deviceId, String userId, AuthenticationTransactionAttributes attributes) {
+      User user, String deviceId, AuthenticationTransactionAttributes attributes) {
 
     String appName = attributes.getValueOrEmpty("app_name");
     String platform = attributes.getValueOrEmpty("platform");
@@ -197,7 +251,7 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
     AuthenticationDevice authenticationDevice =
         new AuthenticationDevice(
             deviceId,
-            userId,
+            appName,
             platform,
             os,
             model,
