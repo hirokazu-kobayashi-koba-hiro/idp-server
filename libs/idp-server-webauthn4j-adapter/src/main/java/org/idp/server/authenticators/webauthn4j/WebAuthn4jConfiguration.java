@@ -23,8 +23,9 @@ import com.webauthn4j.server.ServerProperty;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.idp.server.platform.json.JsonReadable;
 
-public class WebAuthn4jConfiguration {
+public class WebAuthn4jConfiguration implements JsonReadable {
   String rpId;
   String rpName;
   @Deprecated String origin;
@@ -32,10 +33,14 @@ public class WebAuthn4jConfiguration {
   byte[] tokenBindingId;
   String attestationPreference;
   String authenticatorAttachment;
+  String residentKey;
 
   boolean requireResidentKey;
   boolean userVerificationRequired;
   boolean userPresenceRequired;
+
+  List<Integer> pubKeyCredAlgorithms;
+  Long timeout;
 
   public WebAuthn4jConfiguration() {}
 
@@ -118,5 +123,17 @@ public class WebAuthn4jConfiguration {
 
   public boolean userPresenceRequired() {
     return userPresenceRequired;
+  }
+
+  public String residentKey() {
+    return residentKey;
+  }
+
+  public List<Integer> pubKeyCredAlgorithms() {
+    return pubKeyCredAlgorithms;
+  }
+
+  public Long timeout() {
+    return timeout;
   }
 }

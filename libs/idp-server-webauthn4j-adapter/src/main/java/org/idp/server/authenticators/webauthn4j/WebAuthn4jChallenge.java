@@ -17,62 +17,47 @@
 package org.idp.server.authenticators.webauthn4j;
 
 import com.webauthn4j.data.client.challenge.Challenge;
-import com.webauthn4j.util.ArrayUtil;
 import com.webauthn4j.util.AssertUtil;
 import com.webauthn4j.util.Base64UrlUtil;
 import java.security.SecureRandom;
-import java.util.Arrays;
-import java.util.Base64;
-import org.idp.server.authentication.interactors.fido2.Fido2Challenge;
+import java.util.Objects;
+import org.idp.server.platform.json.JsonReadable;
 
-public class WebAuthn4jChallenge implements Challenge {
-  byte[] value;
+public class WebAuthn4jChallenge implements Challenge, JsonReadable {
+  String value;
 
-  public WebAuthn4jChallenge(byte[] value) {
-    AssertUtil.notNull(value, "value cannot be null");
-    this.value = value;
-  }
+  public WebAuthn4jChallenge() {}
 
   public WebAuthn4jChallenge(String base64urlString) {
     AssertUtil.notNull(base64urlString, "base64urlString cannot be null");
-    this.value = Base64UrlUtil.decode(base64urlString);
+    this.value = base64urlString;
   }
 
   public static WebAuthn4jChallenge generate() {
     byte[] value = new byte[32];
     new SecureRandom().nextBytes(value);
-    return new WebAuthn4jChallenge(value);
+    String encodeValue = Base64UrlUtil.encodeToString(value);
+    return new WebAuthn4jChallenge(encodeValue);
   }
 
   public byte[] getValue() {
-    return ArrayUtil.clone(this.value);
+    return Base64UrlUtil.decode(value);
   }
 
+  @Override
   public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    } else if (o != null && this.getClass() == o.getClass()) {
-      WebAuthn4jChallenge that = (WebAuthn4jChallenge) o;
-      return Arrays.equals(this.value, that.value);
-    } else {
-      return false;
-    }
+    if (o == null || getClass() != o.getClass()) return false;
+    WebAuthn4jChallenge that = (WebAuthn4jChallenge) o;
+    return Objects.equals(value, that.value);
   }
 
+  @Override
   public int hashCode() {
-    return Arrays.hashCode(this.value);
-  }
-
-  public String toString() {
-    return ArrayUtil.toHexString(this.value);
+    return Objects.hashCode(value);
   }
 
   public String challengeAsString() {
-
-    return Base64.getUrlEncoder().encodeToString(value);
-  }
-
-  public Fido2Challenge toWebAuthnChallenge() {
-    return new Fido2Challenge(challengeAsString());
+    // WebAuthn specification requires Base64URL encoding without padding
+    return value;
   }
 }

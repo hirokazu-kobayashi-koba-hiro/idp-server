@@ -16,10 +16,11 @@
 
 package org.idp.server.authenticators.webauthn4j;
 
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.authentication.interactors.fido2.Fido2Challenge;
 import org.idp.server.authentication.interactors.fido2.Fido2ExecutorType;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
@@ -73,11 +74,28 @@ public class WebAuthn4jAuthenticationChallengeExecutor implements Authentication
       log.debug("webauthn4j authentication challenge, generating challenge");
 
       WebAuthn4jChallenge webAuthn4jChallenge = WebAuthn4jChallenge.generate();
-      Fido2Challenge fido2Challenge = webAuthn4jChallenge.toWebAuthnChallenge();
 
       log.debug("webauthn4j authentication challenge, registering to transaction");
 
-      transactionCommandRepository.register(tenant, identifier, type().value(), fido2Challenge);
+      WebAuthn4jUser user = extractUserInfo(request);
+
+      log.debug(
+          "webauthn4j registration challenge, creating complete response with user: {}",
+          user.name());
+
+      WebAuthn4jConfiguration config =
+          jsonConverter.read(configuration.details(), WebAuthn4jConfiguration.class);
+
+      // Use static factory method to create response
+      WebAuthn4jRegistrationChallengeResponse challengeResponse =
+          WebAuthn4jRegistrationChallengeResponse.create(webAuthn4jChallenge, user, config);
+
+      log.debug("webauthn4j registration challenge, persisting challenge context");
+
+      WebAuthn4jChallengeContext context =
+          new WebAuthn4jChallengeContext(webAuthn4jChallenge, user);
+
+      transactionCommandRepository.register(tenant, identifier, type().value(), context);
 
       Map<String, Object> contents = new HashMap<>();
       contents.put("challenge", webAuthn4jChallenge.challengeAsString());
@@ -108,7 +126,7 @@ public class WebAuthn4jAuthenticationChallengeExecutor implements Authentication
       }
 
       Map<String, Object> response = new HashMap<>();
-      response.put("execution_webauthn4j", contents);
+      response.put("execution_webauthn4j", challengeResponse.toMap());
 
       log.info("webauthn4j authentication challenge generated successfully");
       return AuthenticationExecutionResult.success(response);
@@ -121,5 +139,23 @@ public class WebAuthn4jAuthenticationChallengeExecutor implements Authentication
           "error_description", "An unexpected error occurred during challenge generation");
       return AuthenticationExecutionResult.serverError(errorResponse);
     }
+  }
+
+  /**
+   * Extracts user information from the authentication request.
+   *
+   * @param request the authentication execution request
+   * @return the WebAuthn4j user information
+   */
+  private WebAuthn4jUser extractUserInfo(AuthenticationExecutionRequest request) {
+    String username = request.getValueAsString("username");
+    String displayName = request.optValueAsString("displayName", username);
+
+    // Generate secure user ID (Base64URL encoded random bytes, no PII)
+    byte[] userIdBytes = new byte[32];
+    new SecureRandom().nextBytes(userIdBytes);
+    String userId = Base64.getUrlEncoder().withoutPadding().encodeToString(userIdBytes);
+
+    return new WebAuthn4jUser(userId, username, displayName);
   }
 }

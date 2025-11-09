@@ -19,7 +19,6 @@ package org.idp.server.authenticators.webauthn4j;
 import com.webauthn4j.data.AuthenticationData;
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.authentication.interactors.fido2.Fido2Challenge;
 import org.idp.server.authentication.interactors.fido2.Fido2ExecutorType;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
@@ -70,10 +69,11 @@ public class WebAuthn4jAuthenticationExecutor implements AuthenticationExecutor 
       AuthenticationExecutionConfig configuration) {
 
     try {
-      Fido2Challenge fido2Challenge =
-          transactionQueryRepository.get(tenant, identifier, type().value(), Fido2Challenge.class);
+      WebAuthn4jChallengeContext context =
+          transactionQueryRepository.get(
+              tenant, identifier, type().value(), WebAuthn4jChallengeContext.class);
 
-      WebAuthn4jChallenge webAuthn4jChallenge = new WebAuthn4jChallenge(fido2Challenge.challenge());
+      WebAuthn4jChallenge webAuthn4jChallenge = context.challenge();
       String requestString = jsonConverter.write(request.toMap());
       WebAuthn4jConfiguration webAuthn4jConfiguration =
           jsonConverter.read(configuration.details(), WebAuthn4jConfiguration.class);

@@ -18,8 +18,6 @@ package org.idp.server.authenticators.webauthn4j;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
-import org.idp.server.authentication.interactors.fido2.Fido2Challenge;
 import org.idp.server.authentication.interactors.fido2.Fido2ExecutorType;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
@@ -70,33 +68,47 @@ public class WebAuthn4jRegistrationExecutor implements AuthenticationExecutor {
       AuthenticationExecutionConfig configuration) {
 
     try {
-      Fido2Challenge fido2Challenge =
-          transactionQueryRepository.get(tenant, identifier, type().value(), Fido2Challenge.class);
+      log.debug("webauthn4j registration, retrieving challenge context from transaction");
 
-      log.debug("webauthn4j registration, retrieved challenge from transaction");
+      WebAuthn4jChallengeContext context =
+          transactionQueryRepository.get(
+              tenant, identifier, type().value(), WebAuthn4jChallengeContext.class);
 
-      WebAuthn4jChallenge webAuthn4jChallenge = new WebAuthn4jChallenge(fido2Challenge.challenge());
+      WebAuthn4jChallenge webAuthn4jChallenge = context.challenge();
+      WebAuthn4jUser expectedUser = context.user();
+
+      log.debug(
+          "webauthn4j registration, retrieved challenge and user info for: {}",
+          expectedUser.name());
+
+      // Validate user ID from request matches the expected user ID from challenge context
+      String receivedUserId = request.optValueAsString("userId", null);
+      if (receivedUserId != null && !expectedUser.id().equals(receivedUserId)) {
+        log.error(
+            "webauthn4j registration failed: user ID mismatch. Expected: {}, Received: {}",
+            expectedUser.id(),
+            receivedUserId);
+        throw new WebAuthn4jBadRequestException(
+            "User ID mismatch. The credential was created for a different user.");
+      }
+
       String requestString = jsonConverter.write(request.toMap());
       WebAuthn4jConfiguration webAuthn4jConfiguration =
           jsonConverter.read(configuration.details(), WebAuthn4jConfiguration.class);
 
-      String userId = UUID.randomUUID().toString();
-      log.debug("webauthn4j registration, generated userId: {}", userId);
-
-      // Extract username and displayName from request
-      String username = request.optValueAsString("username", null);
-      String displayName = request.optValueAsString("displayName", null);
-
-      log.debug("webauthn4j registration, username: {}, displayName: {}", username, displayName);
+      log.debug(
+          "webauthn4j registration, verifying credential for user: {}, displayName: {}",
+          expectedUser.name(),
+          expectedUser.displayName());
 
       WebAuthn4jRegistrationManager manager =
           new WebAuthn4jRegistrationManager(
               webAuthn4jConfiguration,
               webAuthn4jChallenge,
               requestString,
-              userId,
-              username,
-              displayName);
+              expectedUser.id(),
+              expectedUser.name(),
+              expectedUser.displayName());
 
       log.debug("webauthn4j registration, verifying and creating credential");
 
@@ -113,9 +125,10 @@ public class WebAuthn4jRegistrationExecutor implements AuthenticationExecutor {
       response.put("execution_webauthn4j", webAuthn4jCredential.toMap());
 
       log.info(
-          "webauthn4j registration succeeded. credential id: {}, userId: {}",
+          "webauthn4j registration succeeded. credential id: {}, userId: {}, username: {}",
           webAuthn4jCredential.id(),
-          userId);
+          expectedUser.id(),
+          expectedUser.name());
       return AuthenticationExecutionResult.success(response);
 
     } catch (WebAuthn4jBadRequestException e) {
