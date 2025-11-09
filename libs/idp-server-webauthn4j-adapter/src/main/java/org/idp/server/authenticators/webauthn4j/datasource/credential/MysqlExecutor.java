@@ -71,7 +71,10 @@ public class MysqlExecutor implements WebAuthn4jCredentialSqlExecutor {
 
     String sqlTemplate =
         """
-            SELECT id, idp_user_id, rp_id, attested_credential_data, sign_count
+            SELECT id, idp_user_id, username, user_display_name, user_icon,
+                   rp_id, aaguid, attested_credential_data, signature_algorithm, sign_count,
+                   attestation_type, rk, cred_protect, transports,
+                   created_at, updated_at, authenticated_at
             FROM webauthn_credentials
             WHERE idp_user_id = ?;
             """;
@@ -87,7 +90,10 @@ public class MysqlExecutor implements WebAuthn4jCredentialSqlExecutor {
 
     String sqlTemplate =
         """
-            SELECT id, idp_user_id, rp_id, attested_credential_data, sign_count, transports
+            SELECT id, idp_user_id, username, user_display_name, user_icon,
+                   rp_id, aaguid, attested_credential_data, signature_algorithm, sign_count,
+                   attestation_type, rk, cred_protect, transports,
+                   created_at, updated_at, authenticated_at
             FROM webauthn_credentials
             WHERE username = ?;
             """;
@@ -104,10 +110,13 @@ public class MysqlExecutor implements WebAuthn4jCredentialSqlExecutor {
 
     String sqlTemplate =
         """
-                    SELECT id, idp_user_id, rp_id, attested_credential_data, sign_count
-                    FROM webauthn_credentials
-                    WHERE id = ?;
-                    """;
+            SELECT id, idp_user_id, username, user_display_name, user_icon,
+                   rp_id, aaguid, attested_credential_data, signature_algorithm, sign_count,
+                   attestation_type, rk, cred_protect, transports,
+                   created_at, updated_at, authenticated_at
+            FROM webauthn_credentials
+            WHERE id = ?;
+            """;
     List<Object> params = new ArrayList<>();
     params.add(id);
 

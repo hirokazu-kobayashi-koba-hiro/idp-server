@@ -114,13 +114,19 @@ public class WebAuthn4jAuthenticationExecutor implements AuthenticationExecutor 
       credentialRepository.updateSignCount(id, newSignCount);
       log.debug("webauthn4j signCount updated for credential id: {}", id);
 
+      String preferredUsername = webAuthn4jCredential.username();
+
       Map<String, Object> contents = new HashMap<>();
       contents.put("id", id);
       contents.put("status", "ok");
+      contents.put("username", preferredUsername); // for user resolution in upper layer
       Map<String, Object> response = new HashMap<>();
       response.put("execution_webauthn4j", contents);
 
-      log.info("webauthn4j authentication succeeded. credential id: {}", id);
+      log.info(
+          "webauthn4j authentication succeeded. credential id: {}, username: {}",
+          id,
+          preferredUsername);
       return AuthenticationExecutionResult.success(response);
 
     } catch (WebAuthn4jBadRequestException e) {

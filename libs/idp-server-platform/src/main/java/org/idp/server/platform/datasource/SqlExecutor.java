@@ -341,7 +341,10 @@ public class SqlExecutor {
       case Types.DECIMAL, Types.NUMERIC -> resultSet.getBigDecimal(index);
       case Types.BOOLEAN -> resultSet.getBoolean(index);
       case Types.DATE -> resultSet.getDate(index);
-      case Types.TIMESTAMP -> resultSet.getTimestamp(index).toLocalDateTime();
+      case Types.TIMESTAMP -> {
+        java.sql.Timestamp timestamp = resultSet.getTimestamp(index);
+        yield timestamp != null ? timestamp.toLocalDateTime() : null;
+      }
       case Types.TIME -> resultSet.getTime(index);
       case Types.VARCHAR, Types.CHAR, Types.LONGVARCHAR -> resultSet.getString(index);
       case Types.BLOB -> resultSet.getBytes(index);

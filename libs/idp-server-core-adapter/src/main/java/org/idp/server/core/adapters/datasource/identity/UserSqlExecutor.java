@@ -50,6 +50,8 @@ public interface UserSqlExecutor {
   Map<String, String> selectByPreferredUsername(
       Tenant tenant, String providerId, String preferredUsername);
 
+  Map<String, String> selectByPreferredUsernameNoProvider(Tenant tenant, String preferredUsername);
+
   Map<String, String> selectAssignedOrganization(Tenant tenant, UserIdentifier userIdentifier);
 
   Map<String, String> selectAssignedTenant(Tenant tenant, UserIdentifier userIdentifier);

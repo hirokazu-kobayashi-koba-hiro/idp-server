@@ -144,8 +144,7 @@ describe("ciba - mfa", () => {
         clientId: clientSecretPostClient.clientId,
         scope: "openid profile phone email",
         bindingMessage: ciba.bindingMessage,
-        userCode: ciba.userCode,
-        loginHint: ciba.loginHint,
+        loginHint: `sub:${user.sub}`,
         acrValues: "urn:mace:incommon:iap:gold",
         clientSecret: clientSecretPostClient.clientSecret,
       });
@@ -155,7 +154,7 @@ describe("ciba - mfa", () => {
     let authenticationTransactionResponse;
     authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
       endpoint: serverConfig.authenticationDeviceEndpoint,
-      deviceId: serverConfig.ciba.authenticationDeviceId,
+      deviceId: authenticationDeviceId,
       params: {
         "attributes.auth_req_id": backchannelAuthenticationResponse.data.auth_req_id
       },

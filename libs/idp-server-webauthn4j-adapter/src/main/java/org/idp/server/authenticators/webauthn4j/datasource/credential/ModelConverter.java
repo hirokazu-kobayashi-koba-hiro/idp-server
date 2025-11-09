@@ -16,19 +16,64 @@
 
 package org.idp.server.authenticators.webauthn4j.datasource.credential;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.authenticators.webauthn4j.WebAuthn4jCredential;
+import org.idp.server.platform.date.SystemDateTime;
 
 class ModelConverter {
 
   static WebAuthn4jCredential convert(Map<String, Object> result) {
 
     String id = (String) result.get("id");
-    String userId = (String) result.get("user_id");
+    String userId = (String) result.get("idp_user_id");
+    String username = (String) result.get("username");
+    String userDisplayName = (String) result.get("user_display_name");
+    String userIcon = (String) result.get("user_icon");
     String rpId = (String) result.get("rp_id");
+    String aaguid = (String) result.get("aaguid");
     String attestedCredentialData = (String) result.get("attested_credential_data");
-    long signCount = (long) result.get("sign_count");
+    Integer signatureAlgorithm = (Integer) result.get("signature_algorithm");
+    Long signCount = (Long) result.get("sign_count");
+    String attestationType = (String) result.get("attestation_type");
+    Boolean rk = (Boolean) result.get("rk");
+    Integer credProtect = (Integer) result.get("cred_protect");
 
-    return new WebAuthn4jCredential(id, userId, rpId, attestedCredentialData, signCount);
+    // Handle transports - can be List<String> or String depending on database
+    @SuppressWarnings("unchecked")
+    List<String> transports =
+        result.get("transports") instanceof List ? (List<String>) result.get("transports") : null;
+
+    // Convert LocalDateTime to epoch milliseconds
+    Long createdAt = convertToEpochMillis((LocalDateTime) result.get("created_at"));
+    Long updatedAt = convertToEpochMillis((LocalDateTime) result.get("updated_at"));
+    Long authenticatedAt = convertToEpochMillis((LocalDateTime) result.get("authenticated_at"));
+
+    return new WebAuthn4jCredential(
+        id,
+        userId,
+        username,
+        userDisplayName,
+        userIcon,
+        rpId,
+        aaguid,
+        attestedCredentialData,
+        signatureAlgorithm,
+        signCount,
+        attestationType,
+        rk,
+        credProtect,
+        transports,
+        createdAt,
+        updatedAt,
+        authenticatedAt);
+  }
+
+  private static Long convertToEpochMillis(LocalDateTime dateTime) {
+    if (dateTime == null) {
+      return null;
+    }
+    return SystemDateTime.toEpochMilli(dateTime);
   }
 }

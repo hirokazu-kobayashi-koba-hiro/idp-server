@@ -404,6 +404,25 @@ public class MysqlExecutor implements UserSqlExecutor {
   }
 
   @Override
+  public Map<String, String> selectByPreferredUsernameNoProvider(
+      Tenant tenant, String preferredUsername) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        String.format(
+            selectSql,
+            """
+                                    WHERE idp_user.tenant_id = ?
+                                    AND idp_user.preferred_username = ?
+                                """);
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifier().value());
+    params.add(preferredUsername);
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
+  @Override
   public Map<String, String> selectAssignedOrganization(
       Tenant tenant, UserIdentifier userIdentifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();

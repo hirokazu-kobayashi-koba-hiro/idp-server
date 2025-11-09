@@ -16,7 +16,7 @@
 
 package org.idp.server.authenticators.webauthn4j;
 
-import java.security.SecureRandom;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import org.idp.server.authentication.interactors.fido2.Fido2ExecutorType;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
@@ -113,7 +113,13 @@ public class WebAuthn4jRegistrationChallengeExecutor implements AuthenticationEx
   }
 
   /**
-   * Extracts user information from the authentication request.
+   * Extracts user information from the authentication request and resolves IdP User.
+   *
+   * <p>This method follows the WebAuthn4j Spring Security pattern where user.id is generated from
+   * preferredUsername rather than random bytes. This allows deterministic user resolution during
+   * authentication.
+   *
+   * <p>Pattern: user.id = Base64URL(preferredUsername)
    *
    * @param request the authentication execution request
    * @return the WebAuthn4j user information
@@ -122,10 +128,12 @@ public class WebAuthn4jRegistrationChallengeExecutor implements AuthenticationEx
     String username = request.getValueAsString("username");
     String displayName = request.optValueAsString("displayName", username);
 
-    // Generate secure user ID (Base64URL encoded random bytes, no PII)
-    byte[] userIdBytes = new byte[32];
-    new SecureRandom().nextBytes(userIdBytes);
-    String userId = Base64.getUrlEncoder().withoutPadding().encodeToString(userIdBytes);
+    // Generate user ID from username (WebAuthn4j Spring Security pattern)
+    // This allows credential.userId to be decoded back to preferredUsername for user resolution
+    String userId =
+        Base64.getUrlEncoder()
+            .withoutPadding()
+            .encodeToString(username.getBytes(StandardCharsets.UTF_8));
 
     return new WebAuthn4jUser(userId, username, displayName);
   }

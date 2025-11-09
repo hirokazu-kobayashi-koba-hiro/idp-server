@@ -117,28 +117,27 @@ public class Fido2AuthenticationInteractor implements AuthenticationInteractor {
           DefaultSecurityEventType.fido2_authentication_failure);
     }
 
-    String deviceId = resolveUserId(contents, configuration);
-    User user = userQueryRepository.findByAuthenticationDevice(tenant, deviceId);
+    // Resolve user from FIDO2 authentication result
+    // For WebAuthn4j: username (preferredUsername) is returned in the execution result
+    // For other FIDO2 implementations: deviceId might be used
+    User user = resolveUser(tenant, contents, configuration, userQueryRepository);
 
-    //    if (!user.exists()) {
-    //
-    //      log.warn("Fido2 user resolution is failed. deviceId: {}", deviceId);
-    //
-    //      Map<String, Object> userErrorContents = new HashMap<>();
-    //      userErrorContents.put("error", "invalid_request");
-    //      userErrorContents.put(
-    //          "error_description",
-    //          String.format(
-    //              "fido2 authentication is success. but user does not exist. device ID: %s",
-    // deviceId));
-    //
-    //      return AuthenticationInteractionRequestResult.clientError(
-    //          userErrorContents,
-    //          type,
-    //          operationType(),
-    //          method(),
-    //          DefaultSecurityEventType.fido_uaf_authentication_failure);
-    //    }
+    if (!user.exists()) {
+
+      log.warn("Fido2 user resolution failed. contents: {}", contents);
+
+      Map<String, Object> userErrorContents = new HashMap<>();
+      userErrorContents.put("error", "invalid_request");
+      userErrorContents.put(
+          "error_description", "FIDO2 authentication succeeded but user could not be resolved");
+
+      return AuthenticationInteractionRequestResult.clientError(
+          userErrorContents,
+          type,
+          operationType(),
+          method(),
+          DefaultSecurityEventType.fido2_authentication_failure);
+    }
 
     Map<String, Object> response = new HashMap<>(contents);
     response.put("user", user.toMap());
@@ -153,17 +152,43 @@ public class Fido2AuthenticationInteractor implements AuthenticationInteractor {
         DefaultSecurityEventType.fido2_authentication_success);
   }
 
-  private String resolveUserId(
-      Map<String, Object> contents, AuthenticationConfiguration configuration) {
+  /**
+   * Resolves user from FIDO2 authentication result.
+   *
+   * <p>This method supports multiple user resolution strategies:
+   *
+   * <ul>
+   *   <li>WebAuthn4j: Uses 'username' field (preferredUsername decoded from credential.userId)
+   *   <li>FIDO UAF: Uses deviceId from authentication device
+   *   <li>Custom: Uses metadata configuration to specify the resolution field
+   * </ul>
+   *
+   * @param tenant the tenant
+   * @param contents the authentication execution result contents
+   * @param configuration the FIDO2 authentication configuration
+   * @param userQueryRepository the user query repository
+   * @return the resolved user, or User.notFound() if resolution fails
+   */
+  private User resolveUser(
+      Tenant tenant,
+      Map<String, Object> contents,
+      AuthenticationConfiguration configuration,
+      UserQueryRepository userQueryRepository) {
 
-    Map<String, Object> metadata = configuration.metadata();
-    Fido2MetadataConfig fido2MetadataConfig = new Fido2MetadataConfig(metadata);
+    // Strategy 1: Try username resolution (WebAuthn4j pattern)
+    if (contents.containsKey("username")) {
+      String preferredUsername = contents.get("username").toString();
+      log.debug("Resolving user by preferredUsername: {}", preferredUsername);
 
-    String userIdParam = fido2MetadataConfig.userIdParam();
-    if (contents.containsKey(userIdParam)) {
-      return contents.get(userIdParam).toString();
+      User user = userQueryRepository.findByPreferredUsernameNoProvider(tenant, preferredUsername);
+      if (user.exists()) {
+        log.debug("User resolved by preferredUsername: {}", preferredUsername);
+        return user;
+      }
     }
 
-    return "";
+    log.warn(
+        "User resolution failed. No valid username or deviceId found in contents: {}", contents);
+    return User.notFound();
   }
 }
