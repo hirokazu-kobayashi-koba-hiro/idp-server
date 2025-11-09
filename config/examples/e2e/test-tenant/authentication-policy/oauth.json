@@ -108,6 +108,14 @@
           ],
           [
             {
+              "path": "$.fido2-registration.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
               "path": "$.fido2-authentication.success_count",
               "type": "integer",
               "operation": "gte",
@@ -325,6 +333,22 @@
           [
             {
               "path": "$.fido-uaf-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.fido2-registration.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.fido2-authentication.success_count",
               "type": "integer",
               "operation": "gte",
               "value": 1

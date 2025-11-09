@@ -110,16 +110,12 @@ public class WebAuthn4jRegistrationExecutor implements AuthenticationExecutor {
               expectedUser.name(),
               expectedUser.displayName());
 
-      log.debug("webauthn4j registration, verifying and creating credential");
-
       WebAuthn4jCredential webAuthn4jCredential = manager.verifyAndCreateCredential();
 
       log.debug(
           "webauthn4j registration, credential created with id: {}", webAuthn4jCredential.id());
 
       credentialRepository.register(tenant, webAuthn4jCredential);
-
-      log.debug("webauthn4j registration, credential registered");
 
       Map<String, Object> response = new HashMap<>();
       response.put("execution_webauthn4j", webAuthn4jCredential.toMap());

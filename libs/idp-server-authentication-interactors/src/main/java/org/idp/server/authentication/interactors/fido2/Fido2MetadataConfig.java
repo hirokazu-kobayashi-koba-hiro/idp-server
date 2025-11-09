@@ -11,8 +11,8 @@ public class Fido2MetadataConfig implements JsonReadable {
     this.metadata = metadata;
   }
 
-  public String userIdParam() {
-    return optValueAsString("user_id_param", "id");
+  public String usernameParam() {
+    return optValueAsString("username_param", "username");
   }
 
   public String optValueAsString(String key, String defaultValue) {

@@ -74,9 +74,6 @@ public class WebAuthn4jAuthenticationChallengeExecutor implements Authentication
       log.debug("webauthn4j authentication challenge, generating challenge");
 
       WebAuthn4jChallenge webAuthn4jChallenge = WebAuthn4jChallenge.generate();
-
-      log.debug("webauthn4j authentication challenge, registering to transaction");
-
       WebAuthn4jUser user = extractUserInfo(request);
 
       log.debug(
@@ -89,8 +86,6 @@ public class WebAuthn4jAuthenticationChallengeExecutor implements Authentication
       // Use static factory method to create response
       WebAuthn4jRegistrationChallengeResponse challengeResponse =
           WebAuthn4jRegistrationChallengeResponse.create(webAuthn4jChallenge, user, config);
-
-      log.debug("webauthn4j registration challenge, persisting challenge context");
 
       WebAuthn4jChallengeContext context =
           new WebAuthn4jChallengeContext(webAuthn4jChallenge, user);
@@ -115,14 +110,7 @@ public class WebAuthn4jAuthenticationChallengeExecutor implements Authentication
           log.debug(
               "webauthn4j authentication challenge, generated {} allowCredentials",
               allowCredentials.size());
-        } else {
-          log.debug(
-              "webauthn4j authentication challenge, no credentials found for username: {}",
-              username);
         }
-      } else {
-        log.debug(
-            "webauthn4j authentication challenge, no username provided (passwordless pattern)");
       }
 
       Map<String, Object> response = new HashMap<>();

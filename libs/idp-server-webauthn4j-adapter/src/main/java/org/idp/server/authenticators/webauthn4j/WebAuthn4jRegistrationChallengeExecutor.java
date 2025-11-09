@@ -71,14 +71,8 @@ public class WebAuthn4jRegistrationChallengeExecutor implements AuthenticationEx
       log.debug("webauthn4j registration challenge, generating challenge");
 
       WebAuthn4jChallenge webAuthn4jChallenge = WebAuthn4jChallenge.generate();
-
-      log.debug("webauthn4j registration challenge, loading configuration");
-
       WebAuthn4jConfiguration config =
           jsonConverter.read(configuration.details(), WebAuthn4jConfiguration.class);
-
-      log.debug("webauthn4j registration challenge, extracting user information");
-
       WebAuthn4jUser user = extractUserInfo(request);
 
       log.debug(
@@ -88,8 +82,6 @@ public class WebAuthn4jRegistrationChallengeExecutor implements AuthenticationEx
       // Use static factory method to create response
       WebAuthn4jRegistrationChallengeResponse challengeResponse =
           WebAuthn4jRegistrationChallengeResponse.create(webAuthn4jChallenge, user, config);
-
-      log.debug("webauthn4j registration challenge, persisting challenge context");
 
       WebAuthn4jChallengeContext context =
           new WebAuthn4jChallengeContext(webAuthn4jChallenge, user);
