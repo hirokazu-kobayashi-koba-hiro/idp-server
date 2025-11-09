@@ -133,7 +133,6 @@ public class WebAuthn4jRegistrationManager {
         userId,
         username, // username from registration challenge request
         displayName, // user_display_name from registration challenge request
-        null, // userIcon - not available in registration data
         configuration.rpId(),
         aaguidString,
         attestationDataString,

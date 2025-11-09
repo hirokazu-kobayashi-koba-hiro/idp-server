@@ -27,10 +27,9 @@ class ModelConverter {
   static WebAuthn4jCredential convert(Map<String, Object> result) {
 
     String id = (String) result.get("id");
-    String userId = (String) result.get("idp_user_id");
+    String userId = (String) result.get("user_id");
     String username = (String) result.get("username");
     String userDisplayName = (String) result.get("user_display_name");
-    String userIcon = (String) result.get("user_icon");
     String rpId = (String) result.get("rp_id");
     String aaguid = (String) result.get("aaguid");
     String attestedCredentialData = (String) result.get("attested_credential_data");
@@ -55,7 +54,6 @@ class ModelConverter {
         userId,
         username,
         userDisplayName,
-        userIcon,
         rpId,
         aaguid,
         attestedCredentialData,

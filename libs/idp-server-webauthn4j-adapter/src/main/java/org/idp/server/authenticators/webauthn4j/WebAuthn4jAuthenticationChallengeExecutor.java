@@ -107,7 +107,7 @@ public class WebAuthn4jAuthenticationChallengeExecutor implements Authentication
             "webauthn4j authentication challenge, generating allowCredentials for username: {}",
             username);
 
-        WebAuthn4jCredentials credentials = credentialRepository.findByUsername(username);
+        WebAuthn4jCredentials credentials = credentialRepository.findByUsername(tenant, username);
         List<Map<String, Object>> allowCredentials = credentials.toAllowCredentials();
 
         if (!allowCredentials.isEmpty()) {

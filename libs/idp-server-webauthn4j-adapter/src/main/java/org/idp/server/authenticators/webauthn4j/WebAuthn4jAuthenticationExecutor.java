@@ -84,7 +84,7 @@ public class WebAuthn4jAuthenticationExecutor implements AuthenticationExecutor 
       String id = request.optValueAsString("id", "");
       log.debug("webauthn4j authentication, retrieving credential with id: {}", id);
 
-      WebAuthn4jCredential webAuthn4jCredential = credentialRepository.get(id);
+      WebAuthn4jCredential webAuthn4jCredential = credentialRepository.get(tenant, id);
 
       log.debug(
           "webauthn4j authentication, verifying credential id: {}, current signCount: {}",
@@ -111,7 +111,7 @@ public class WebAuthn4jAuthenticationExecutor implements AuthenticationExecutor 
                 + newSignCount);
       }
 
-      credentialRepository.updateSignCount(id, newSignCount);
+      credentialRepository.updateSignCount(tenant, id, newSignCount);
       log.debug("webauthn4j signCount updated for credential id: {}", id);
 
       String preferredUsername = webAuthn4jCredential.username();

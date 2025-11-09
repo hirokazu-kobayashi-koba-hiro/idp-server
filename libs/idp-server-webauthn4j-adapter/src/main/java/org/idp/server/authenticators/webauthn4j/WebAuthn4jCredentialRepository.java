@@ -16,16 +16,18 @@
 
 package org.idp.server.authenticators.webauthn4j;
 
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+
 public interface WebAuthn4jCredentialRepository {
-  void register(WebAuthn4jCredential credential);
+  void register(Tenant tenant, WebAuthn4jCredential credential);
 
-  WebAuthn4jCredentials findAll(String userId);
+  WebAuthn4jCredentials findAll(Tenant tenant, String userId);
 
-  WebAuthn4jCredentials findByUsername(String username);
+  WebAuthn4jCredentials findByUsername(Tenant tenant, String username);
 
-  WebAuthn4jCredential get(String id);
+  WebAuthn4jCredential get(Tenant tenant, String id);
 
-  void updateSignCount(String credentialId, long signCount);
+  void updateSignCount(Tenant tenant, String credentialId, long signCount);
 
-  void delete(String credentialId);
+  void delete(Tenant tenant, String credentialId);
 }

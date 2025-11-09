@@ -1,15 +1,17 @@
--- WebAuthn Credentials table
+-- WebAuthn Credentials table (Multi-Tenant)
 -- Based on LINE FIDO2 Server implementation and WebAuthn4j best practices
 CREATE TABLE webauthn_credentials
 (
     -- Credential Identifier
     id                      VARCHAR(512) PRIMARY KEY,       -- Credential ID (Base64URL encoded)
 
+    -- Multi-Tenant
+    tenant_id               BINARY(16) NOT NULL,            -- Tenant ID for multi-tenancy (UUID as binary)
+
     -- User Information
-    idp_user_id             VARCHAR(256) NOT NULL,          -- Internal user ID
+    user_id                 VARCHAR(256) NOT NULL,          -- FIDO2 User ID (WebAuthn user.id)
     username                VARCHAR(64),                    -- User name for display
     user_display_name       VARCHAR(64),                    -- User display name
-    user_icon               VARCHAR(128),                   -- User icon URL
 
     -- Relying Party
     rp_id                   VARCHAR(256) NOT NULL,          -- Relying Party ID
@@ -31,13 +33,19 @@ CREATE TABLE webauthn_credentials
     -- Timestamps
     created_at              DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at              DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
-    authenticated_at        DATETIME                        -- Last authentication timestamp
+    authenticated_at        DATETIME,                       -- Last authentication timestamp
+
+    -- Foreign Keys
+    CONSTRAINT fk_webauthn_tenant FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Indexes
-CREATE INDEX idx_webauthn_user_id ON webauthn_credentials (idp_user_id);
+CREATE INDEX idx_webauthn_tenant_id ON webauthn_credentials (tenant_id);
+CREATE INDEX idx_webauthn_user_id ON webauthn_credentials (user_id);
+CREATE INDEX idx_webauthn_tenant_user ON webauthn_credentials (tenant_id, user_id);
+CREATE INDEX idx_webauthn_tenant_rp ON webauthn_credentials (tenant_id, rp_id);
+CREATE INDEX idx_webauthn_user_rp ON webauthn_credentials (user_id, rp_id);
 CREATE INDEX idx_webauthn_rp_id ON webauthn_credentials (rp_id);
-CREATE INDEX idx_webauthn_user_rp ON webauthn_credentials (idp_user_id, rp_id);
 CREATE INDEX idx_webauthn_aaguid ON webauthn_credentials (aaguid);
 CREATE INDEX idx_webauthn_rk ON webauthn_credentials (rk);
 CREATE INDEX idx_webauthn_authenticated ON webauthn_credentials (authenticated_at);

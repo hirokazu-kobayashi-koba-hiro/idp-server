@@ -259,7 +259,6 @@ public class WebAuthn4jCredential {
   String userId;
   String username;
   String userDisplayName;
-  String userIcon;
 
   // Relying Party
   String rpId;
@@ -301,7 +300,6 @@ public class WebAuthn4jCredential {
       String userId,
       String username,
       String userDisplayName,
-      String userIcon,
       String rpId,
       String aaguid,
       String attestedCredentialData,
@@ -318,7 +316,6 @@ public class WebAuthn4jCredential {
     this.userId = userId;
     this.username = username;
     this.userDisplayName = userDisplayName;
-    this.userIcon = userIcon;
     this.rpId = rpId;
     this.aaguid = aaguid;
     this.attestedCredentialData = attestedCredentialData;
@@ -351,10 +348,6 @@ public class WebAuthn4jCredential {
 
   public String userDisplayName() {
     return userDisplayName;
-  }
-
-  public String userIcon() {
-    return userIcon;
   }
 
   public String rpId() {
@@ -415,7 +408,6 @@ public class WebAuthn4jCredential {
     result.put("user_id", userId);
     result.put("username", username);
     result.put("user_display_name", userDisplayName);
-    result.put("user_icon", userIcon);
     result.put("rp_id", rpId);
     result.put("aaguid", aaguid);
     result.put("attested_credential_data", attestedCredentialData);

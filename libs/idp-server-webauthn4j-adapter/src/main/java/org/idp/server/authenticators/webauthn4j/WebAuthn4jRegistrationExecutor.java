@@ -117,7 +117,7 @@ public class WebAuthn4jRegistrationExecutor implements AuthenticationExecutor {
       log.debug(
           "webauthn4j registration, credential created with id: {}", webAuthn4jCredential.id());
 
-      credentialRepository.register(webAuthn4jCredential);
+      credentialRepository.register(tenant, webAuthn4jCredential);
 
       log.debug("webauthn4j registration, credential registered");
 
