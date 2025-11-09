@@ -27,7 +27,6 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionResult;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
-import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.authentication.policy.AuthenticationStepDefinition;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionCommandRepository;
@@ -187,31 +186,6 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
           method(),
           DefaultSecurityEventType.email_verification_request_failure);
     }
-  }
-
-  /**
-   * Get current step definition from authentication policy.
-   *
-   * @param transaction authentication transaction
-   * @param method authentication method name
-   * @return step definition or null if not found
-   */
-  private AuthenticationStepDefinition getCurrentStepDefinition(
-      AuthenticationTransaction transaction, String method) {
-
-    if (!transaction.hasAuthenticationPolicy()) {
-      return null;
-    }
-
-    AuthenticationPolicy policy = transaction.authenticationPolicy();
-    if (!policy.hasStepDefinitions()) {
-      return null;
-    }
-
-    return policy.stepDefinitions().stream()
-        .filter(step -> method.equals(step.authenticationMethod()))
-        .findFirst()
-        .orElse(null);
   }
 
   private String resolveEmail(
