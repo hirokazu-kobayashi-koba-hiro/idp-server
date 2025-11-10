@@ -137,6 +137,136 @@ WebAuthnでは、以下のパラメータがユーザーの認証体験に直接
 
 ---
 
+## パラメータの設定箇所と制御
+
+WebAuthn の設定項目は、**サーバーが制御する項目**と**クライアントが制御する項目**に分類されます。
+これを理解することで、適切な設計とセキュリティ実装が可能になります。
+
+### サーバーが決定する項目（クライアントは変更不可）
+
+サーバーが `PublicKeyCredentialCreationOptions` で返す項目。クライアントはそのまま使用し、変更は検証時にエラーとなります。
+
+| カテゴリ | 項目 | 説明 | 例 |
+|---------|------|------|---|
+| **必須** | `challenge` | ランダムチャレンジ（リプレイ攻撃対策） | `"Y2hhbGxlbmdl..."` |
+|  | `rp.id` | Relying Party ID（フィッシング対策の要） | `"example.com"` |
+|  | `rp.name` | Relying Party 表示名 | `"Example Service"` |
+|  | `user.id` | ユーザーID（バイナリ、ユーザー識別の要） | `"dXNlcjEyMw"` |
+|  | `user.name` | ユーザー名（識別子） | `"user@example.com"` |
+|  | `user.displayName` | ユーザー表示名 | `"User Name"` |
+|  | `pubKeyCredParams` | 許可する署名アルゴリズム | `[{type: "public-key", alg: -7}]` |
+| **推奨** | `timeout` | タイムアウト（ミリ秒） | `60000` |
+|  | `authenticatorSelection.authenticatorAttachment` | 認証器タイプ制限 | `"platform"` / `"cross-platform"` |
+|  | `authenticatorSelection.residentKey` | Resident Key要件 | `"required"` / `"preferred"` / `"discouraged"` |
+|  | `authenticatorSelection.userVerification` | User Verification要件 | `"required"` / `"preferred"` / `"discouraged"` |
+|  | `attestation` | Attestation要件 | `"none"` / `"indirect"` / `"direct"` |
+| **オプション** | `excludeCredentials` | 除外するCredential ID | `[{id: "...", type: "public-key"}]` |
+
+**重要な設計原則**:
+- ✅ これらはサーバーのセキュリティポリシーとして設定
+- ✅ クライアントによる変更は検証時に検出され、エラーとなる
+- ❌ 絶対にクライアントに委ねてはいけない: `rp.id`, `challenge`, `user.id`
+
+---
+
+### クライアントが決定/追加できる項目
+
+サーバーから受け取った設定に**クライアント側で追加**できる項目。
+
+#### Extensions（クライアント専用）
+
+**サーバーは指定できません**。クライアントのJavaScriptで設定します。
+
+```javascript
+const credential = await navigator.credentials.create({
+  publicKey: {
+    ...serverOptions,  // サーバーから受け取った設定
+    extensions: {      // ← クライアント側で追加
+      credProtect: 2,
+      enforceCredentialProtectionPolicy: false,
+      credProps: true,
+      largeBlob: {
+        support: "required"
+      }
+    }
+  }
+});
+```
+
+**主要なExtensions**:
+
+| Extension | 説明 | 設定箇所 | 用途 |
+|-----------|------|---------|------|
+| **credProtect** | 認証時のUV要求レベル（1/2/3） | クライアント | 認証時のセキュリティレベル制御 |
+| **credProps** | Credential情報取得（rk等） | クライアント | Resident Key状態の確認 |
+| **largeBlob** | 大容量データ保存 | クライアント | 追加データの認証器保存 |
+| **minPinLength** | 最小PIN長取得 | クライアント | PIN要件の確認 |
+| **hmacSecret** | HMAC秘密鍵生成 | クライアント | 鍵派生 |
+
+**参考**: [FIDO2 登録詳細 - credProtect](protocol-04-fido2-webauthn-detail-registration.md#14-credential-protection-credprotect)
+
+---
+
+#### Transports（認証器が決定）
+
+サーバーは指定できません。認証器が返す情報をクライアントが取得してサーバーに送信します。
+
+```javascript
+const credential = await navigator.credentials.create({...});
+
+// 認証器が返すTransports
+const transports = credential.response.getTransports();
+// 例: ["internal"], ["usb", "nfc"], ["hybrid"]
+
+// サーバーに保存（次回認証時の allowCredentials で使用）
+```
+
+**Transports の用途**:
+- 認証時のブラウザUI最適化（"セキュリティキーを挿入" vs "TouchIDを使用"）
+- `allowCredentials` のヒント情報として利用
+
+---
+
+### サーバー設定の上書き（非推奨）
+
+**理論上は可能ですが、実用上は非推奨**です。
+
+```javascript
+const serverOptions = await fetch('/challenge').then(r => r.json());
+
+// ❌ 非推奨: サーバー設定を上書き
+serverOptions.timeout = 120000;  // サーバーは60000を期待
+serverOptions.authenticatorSelection.residentKey = "discouraged";  // サーバーは"required"を期待
+
+const credential = await navigator.credentials.create({
+  publicKey: serverOptions
+});
+
+// サーバー検証時にエラーの可能性あり
+```
+
+**エラーとなる理由**:
+- サーバーが検証時に「送信した設定」と「実際の結果」を比較
+- 期待値との不一致で検証失敗
+
+---
+
+### 設定責任の分類まとめ
+
+| カテゴリ | 項目 | 設定箇所 | 備考 |
+|---------|------|---------|------|
+| **セキュリティポリシー** | `rp.id`, `challenge`, `user.id`, `pubKeyCredParams` | サーバー必須 | クライアント変更不可 |
+| **認証体験制御** | `userVerification`, `residentKey`, `authenticatorAttachment`, `timeout` | サーバー推奨 | クライアント変更は非推奨 |
+| **認証器拡張機能** | `credProtect`, `credProps`, `largeBlob` | クライアント専用 | サーバーは指定不可 |
+| **認証器固有情報** | `transports`, `aaguid`, `flags` | 認証器決定 | クライアント取得→サーバー保存 |
+
+**設計ガイドライン**:
+- 🔒 **サーバーが制御**: セキュリティポリシー、ユーザー体験、信頼性要件
+- 🖥️ **クライアントが制御**: 認証器拡張機能、デバイス固有設定
+- ⚠️ **絶対禁止**: クライアントへのセキュリティポリシー委譲
+
+---
+
 ## 設定
 
 ### テナント設定項目

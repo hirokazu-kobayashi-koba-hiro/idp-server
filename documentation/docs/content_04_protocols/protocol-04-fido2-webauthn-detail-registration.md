@@ -350,7 +350,7 @@ Attestation形式により、認証器の信頼性評価が可能になります
 
 **HTTPリクエスト例**:
 ```http
-POST /{tenant-id}/v1/authentications/{transaction-id}/interactions/fido2-registration-challenge
+POST /{tenant-id}/v1/authentications/{transaction-id}/fido2-registration-challenge
 Content-Type: application/json
 Authorization: Bearer {access_token}
 
@@ -443,7 +443,7 @@ const credential = await navigator.credentials.create({
 
 **HTTPリクエスト例**:
 ```http
-POST /{tenant-id}/v1/authentications/{transaction-id}/interactions/fido2-registration
+POST /{tenant-id}/v1/authentications/{transaction-id}/fido2-registration
 Content-Type: application/json
 Authorization: Bearer {access_token}
 
