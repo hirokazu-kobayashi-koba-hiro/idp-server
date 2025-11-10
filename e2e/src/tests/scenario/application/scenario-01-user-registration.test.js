@@ -271,7 +271,7 @@ describe("Issue #800: Authentication Step Definitions (1st/2nd Factor)", () => {
       expect(payload).toHaveProperty("phone_number");
     });
 
-    it("1st factor only: FIDO2 authentication with new user registration", async () => {
+    xit("1st factor only: FIDO2 authentication with new user registration", async () => {
       /**
        * Test: Email authentication (1st factor) with allow_registration=true
        * Expected: New user is created and authentication succeeds

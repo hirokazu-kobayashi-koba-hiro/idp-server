@@ -194,7 +194,7 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
   private String resolvePhoneNumber(
       AuthenticationTransaction transaction, AuthenticationInteractionRequest request) {
 
-    AuthenticationStepDefinition stepDefinition = getCurrentStepDefinition(transaction, method());
+    AuthenticationStepDefinition stepDefinition = transaction.getCurrentStepDefinition(method());
 
     // 2nd factor: use authenticated user's phone number only (ignore request input)
     if (stepDefinition != null && stepDefinition.requiresUser() && !transaction.hasUser()) {

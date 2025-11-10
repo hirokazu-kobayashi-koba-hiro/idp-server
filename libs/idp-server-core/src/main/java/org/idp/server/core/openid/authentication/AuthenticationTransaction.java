@@ -25,6 +25,7 @@ import org.idp.server.core.openid.authentication.evaluator.MfaConditionEvaluator
 import org.idp.server.core.openid.authentication.loa.LoaDeniedScopeResolver;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.authentication.policy.AuthenticationResultConditionConfig;
+import org.idp.server.core.openid.authentication.policy.AuthenticationStepDefinition;
 import org.idp.server.core.openid.federation.FederationInteractionResult;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
@@ -297,5 +298,23 @@ public class AuthenticationTransaction {
 
   public boolean hasAuthorizationIdentifier() {
     return authorizationIdentifier != null && authorizationIdentifier.exists();
+  }
+
+  public AuthenticationStepDefinition getCurrentStepDefinition(String method) {
+
+    if (!hasAuthenticationPolicy()) {
+      return null;
+    }
+
+    if (!authenticationPolicy.hasStepDefinitions()) {
+      return null;
+    }
+
+    for (AuthenticationStepDefinition step : authenticationPolicy.stepDefinitions()) {
+      if (method.equals(step.authenticationMethod())) {
+        return step;
+      }
+    }
+    return null;
   }
 }

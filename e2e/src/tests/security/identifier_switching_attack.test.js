@@ -26,7 +26,7 @@ import { requestAuthorizations } from "../../oauth/request";
  * 一般化された脆弱性パターン:
  * - Email認証での識別子切り替え
  * - SMS認証での識別子切り替え
- * - WebAuthn認証での識別子切り替え
+ * - FIDO2認証での識別子切り替え
  *
  * 修正内容 (Issue #800):
  * - resolveUser()でデータベース検索を優先

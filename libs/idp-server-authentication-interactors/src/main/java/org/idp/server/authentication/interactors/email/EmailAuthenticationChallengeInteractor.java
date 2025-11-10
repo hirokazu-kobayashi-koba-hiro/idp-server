@@ -191,7 +191,7 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
   private String resolveEmail(
       AuthenticationTransaction transaction, AuthenticationInteractionRequest request) {
 
-    AuthenticationStepDefinition stepDefinition = getCurrentStepDefinition(transaction, method());
+    AuthenticationStepDefinition stepDefinition = transaction.getCurrentStepDefinition(method());
 
     // 2nd factor: use authenticated user's email only (ignore request input)
     if (stepDefinition != null && stepDefinition.requiresUser() && !transaction.hasUser()) {

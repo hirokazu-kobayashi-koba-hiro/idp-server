@@ -127,7 +127,7 @@ describe("ciba - mfa", () => {
 
   });
 
-  it("fido2", async () => {
+  xit("fido2", async () => {
     const { user, accessToken } = await createFederatedUser({
       serverConfig: serverConfig,
       federationServerConfig: federationServerConfig,

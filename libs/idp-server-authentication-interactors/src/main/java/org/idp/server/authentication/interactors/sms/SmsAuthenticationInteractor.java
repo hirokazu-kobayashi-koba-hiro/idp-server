@@ -191,7 +191,7 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
       UserQueryRepository userQueryRepository) {
 
     // Get step definition from policy
-    AuthenticationStepDefinition stepDefinition = getCurrentStepDefinition(transaction, method());
+    AuthenticationStepDefinition stepDefinition = transaction.getCurrentStepDefinition(method());
     // New user creation decision
     boolean allowRegistration =
         stepDefinition != null && stepDefinition.allowRegistration(); // default: disabled

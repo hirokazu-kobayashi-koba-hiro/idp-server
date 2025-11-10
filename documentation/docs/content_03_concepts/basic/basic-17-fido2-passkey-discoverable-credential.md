@@ -85,9 +85,11 @@ const publicKeyCredentialCreationOptions = {
 
 | 値 | 意味 | 動作 |
 |---|------|------|
-| `"required"` | Discoverable Credential必須 | 対応していない認証器では登録失敗 |
-| `"preferred"` | 可能ならDiscoverable Credential | 対応していれば作成、未対応でも通常のパスキーとして作成 |
-| `"discouraged"` | 通常のパスキー | Discoverable Credentialは作成しない |
+| `"required"` | Discoverable Credential必須 | 作成できない場合は`NotAllowedError`で失敗 |
+| `"preferred"` | Discoverable Credential強く推奨 | 可能ならDiscoverable、不可能ならNon-Discoverable作成 |
+| `"discouraged"` | Non-Discoverable推奨 | 可能ならNon-Discoverable、Discoverableも許容 |
+
+**注意**: `"discouraged"`でもDiscoverable Credentialが作成される可能性があります（認証器の実装依存）。
 
 #### レガシーパラメータ（WebAuthn Level 1）
 
@@ -120,15 +122,27 @@ flowchart TD
         A6 --> A7[認証完了]
     end
 
-    subgraph Discoverable ["Discoverable Credential"]
-        B1[ログイン開始] --> B2[認証器に要求]
-        B2 --> B3[生体認証]
-        B3 --> B4[アカウント一覧表示]
-        B4 --> B5[アカウント選択]
-        B5 --> B6[署名生成]
-        B6 --> B7[認証完了]
+    subgraph Conditional ["Discoverable (Conditional UI)"]
+        B1[入力フィールドクリック] --> B2[オートフィルで<br/>パスキー表示]
+        B2 --> B3[パスキー選択]
+        B3 --> B4[生体認証]
+        B4 --> B5[署名生成]
+        B5 --> B6[認証完了]
+    end
+
+    subgraph Modal ["Discoverable (Modal)"]
+        C1[ログインボタン] --> C2[アカウント選択<br/>モーダル表示]
+        C2 --> C3[アカウント選択]
+        C3 --> C4[生体認証]
+        C4 --> C5[署名生成]
+        C5 --> C6[認証完了]
     end
 ```
+
+**注意**:
+- **Conditional UI**: 最新の推奨方式（idp-server実装済み）
+- **Modal**: 従来型、複数アカウント時に選択UI表示
+- **アカウント選択**: 単一アカウントの場合はスキップ
 
 #### 詳細シーケンス図
 
@@ -152,36 +166,387 @@ sequenceDiagram
     Server-->>WebApp: 認証成功
 ```
 
-##### Discoverable Credential
+##### Discoverable Credential（Conditional UI モード）
 
 ```mermaid
 sequenceDiagram
     participant User as ユーザー
     participant WebApp as Webアプリ
     participant Server as サーバー
+    participant Browser as ブラウザ/OS
     participant Auth as 認証器
 
-    User->>WebApp: ログイン開始
-    WebApp->>Auth: 認証要求（資格情報ID未指定）
+    Note over WebApp,Auth: ページロード時にConditional UI起動
+    WebApp->>Browser: credentials.get(mediation: 'conditional')
+    User->>WebApp: 入力フィールドクリック
+    Browser->>User: オートフィルでパスキー表示
+    User->>Browser: パスキー選択
+    Browser->>Auth: 認証要求
     Auth->>User: 生体認証要求
     User->>Auth: 生体認証実行
-    Auth->>User: アカウント一覧表示
-    User->>Auth: アカウント選択
-    Auth-->>WebApp: 署名データ + ユーザー情報
+    Auth-->>Browser: 署名データ + userHandle
+    Browser-->>WebApp: 認証結果
+    WebApp->>Server: 認証情報送信
+    Server-->>WebApp: 認証成功
+```
+
+##### Discoverable Credential（Modal モード）
+
+```mermaid
+sequenceDiagram
+    participant User as ユーザー
+    participant WebApp as Webアプリ
+    participant Server as サーバー
+    participant Browser as ブラウザ/OS
+    participant Auth as 認証器
+
+    User->>WebApp: ログインボタンクリック
+    WebApp->>Browser: credentials.get(allowCredentials: [])
+    Browser->>User: アカウント選択モーダル表示
+    Note over Browser,User: 複数アカウント時のみ表示<br/>単一アカウントは自動選択
+    User->>Browser: アカウント選択
+    Browser->>Auth: 認証要求
+    Auth->>User: 生体認証要求
+    User->>Auth: 生体認証実行
+    Auth-->>Browser: 署名データ + userHandle
+    Browser-->>WebApp: 認証結果
     WebApp->>Server: 認証情報送信
     Server-->>WebApp: 認証成功
 ```
 
 ### ユースケース比較表
 
-| 特徴 | 通常のパスキー | Discoverable Credential |
+#### Non-Discoverable vs Discoverable
+
+| 特徴 | 通常のパスキー<br/>(Non-Discoverable) | Discoverable Credential |
 |------|---------------|------------------------|
-| **ユーザーID入力** | 必要 | 不要 |
+| **ユーザーID入力** | 必要 | 不要（Conditional UI）<br/>または最小限（Modal） |
 | **UX** | ユーザーID + 生体認証 | 生体認証のみ |
 | **認証器の容量** | 影響なし | 保存数に制限あり |
 | **適用シーン** | 2要素認証の2要素目 | パスワードレスログイン |
 | **実装複雑度** | 標準的 | やや複雑（アカウント管理） |
 | **セキュリティ** | 高い | 高い |
+
+#### Conditional UI vs Modal（両方Discoverable Credential）
+
+| 特徴 | Conditional UI | Modal |
+|------|---------------|-------|
+| **起動方法** | 入力フィールドクリック | ログインボタンクリック |
+| **UI表示** | オートフィルドロップダウン | モーダルダイアログ |
+| **ユーザー体験** | 非常にスムーズ | やや侵入的 |
+| **ブラウザ対応** | Chrome 108+, Safari 16+ | 全対応ブラウザ |
+| **実装** | `mediation: 'conditional'` | `mediation: 'optional'` |
+| **推奨度** | ⭐⭐⭐⭐⭐ 最新推奨 | ⭐⭐⭐ 従来型 |
+| **idp-server** | ✅ 実装済み | ✅ 対応可能 |
+
+### Conditional UI（オートフィル）の標準化状況
+
+#### W3C公式仕様
+
+Conditional UIは**WebAuthn Level 3**の公式仕様に含まれています：
+
+- **公式仕様**: [W3C WebAuthn Level 3](https://www.w3.org/TR/webauthn-3/)
+- **Explainer**: [W3C WebAuthn Conditional UI Explainer](https://github.com/w3c/webauthn/wiki/Explainer:-WebAuthn-Conditional-UI)
+- **Status**: W3C Working Draft（現行標準）
+
+#### 公式定義
+
+> "A new mode for WebAuthn that displays a credential selection UI only if the user has a discoverable credential registered with the Relying Party on their authenticator, with the credential displayed alongside autofilled passwords."
+>
+> — W3C WebAuthn Conditional UI Explainer
+
+#### 公式用語
+
+以下の用語はすべてW3C/標準仕様で使用されています：
+
+| 用語 | 使用箇所 | 意味 |
+|------|---------|------|
+| **Conditional UI** | W3C仕様 | 公式機能名称 |
+| **Conditional Mediation** | API仕様 | `mediation: 'conditional'` パラメータ |
+| **Autofill** | ユーザー向け説明 | オートフィル統合の表現 |
+| **Passkey Autofill** | マーケティング | 一般向け説明 |
+
+#### ブラウザサポート状況
+
+| ブラウザ | サポート開始 | 状況 | 備考 |
+|----------|------------|------|------|
+| **Chrome** | 108+ (2022年10月) | ✅ フルサポート | [公式ガイド](https://developer.chrome.com/docs/identity/webauthn-conditional-ui) |
+| **Safari** | 16+ (2022年9月) | ✅ フルサポート | iOS/macOS両対応 |
+| **Edge** | Chromiumベース | ✅ フルサポート | Chrome同等 |
+| **Firefox** | - | ❌ 未サポート | 2024年時点 |
+
+**MDN Baseline**: 2023年10月から「[Baseline 2023](https://developer.mozilla.org/en-US/docs/Web/API/PublicKeyCredential/isConditionalMediationAvailable_static)」認定（主要ブラウザで利用可能）
+
+#### 実装リファレンス
+
+- **MDN**: [PublicKeyCredential.isConditionalMediationAvailable()](https://developer.mozilla.org/en-US/docs/Web/API/PublicKeyCredential/isConditionalMediationAvailable_static)
+- **Chrome**: [Passwordless sign-in with WebAuthn passkey autofill](https://developer.chrome.com/docs/identity/webauthn-conditional-ui)
+- **Yubico**: [Passkey Autofill Implementation Guidance](https://developers.yubico.com/WebAuthn/Concepts/Passkey_Autofill/)
+
+---
+
+## Discoverable CredentialとConditional UIの関係
+
+### 重要な概念の違い
+
+この2つは**異なる概念**であり、混同しやすいため明確に区別する必要があります：
+
+| 概念 | 分類 | 決定タイミング | 制御パラメータ | 説明 |
+|------|------|-------------|--------------|------|
+| **Discoverable Credential** | 保存形式 | **登録時** | `residentKey: "required"` | 認証器に何を保存するか |
+| **Conditional UI** | 使用方法 | **認証時** | `mediation: 'conditional'` | どうやってパスキーを選択するか |
+
+### 1. Discoverable Credential = パスキーの「保存形式」
+
+認証器（Touch ID等）に**何を保存するか**の違い：
+
+#### Discoverable Credential（登録時）
+
+```javascript
+// 登録時の設定
+authenticatorSelection: {
+  residentKey: "required",        // Discoverable作成
+  userVerification: "required"
+}
+
+// ✅ 認証器内に保存される情報
+// - 秘密鍵（Private Key）
+// - ユーザーID（user.id）
+// - 表示名（user.displayName）
+// - RP ID（example.com）
+```
+
+#### Non-Discoverable Credential（登録時）
+
+```javascript
+// 登録時の設定
+authenticatorSelection: {
+  residentKey: "discouraged",     // Non-Discoverable作成
+  userVerification: "required"
+}
+
+// ⚠️ 認証器内に保存される情報
+// - 秘密鍵（Private Key）
+// - RP ID（example.com）
+// ❌ ユーザーID（保存されない）
+// ❌ 表示名（保存されない）
+```
+
+### 2. Conditional UI = パスキーの「使用方法」
+
+認証時に**どうやってパスキーを選択するか**の違い：
+
+#### Conditional UI（認証時）
+
+```javascript
+// 認証時の設定
+navigator.credentials.get({
+  publicKey: {
+    challenge: ...,
+    allowCredentials: []  // 空 = Discoverable検索
+  },
+  mediation: 'conditional'  // オートフィルで表示
+});
+
+// ✅ ユーザー体験
+// 1. 入力フィールドをクリック
+// 2. オートフィルドロップダウンでパスキー表示
+// 3. パスキー選択
+// 4. 生体認証
+```
+
+#### Modal UI（認証時）
+
+```javascript
+// 認証時の設定
+navigator.credentials.get({
+  publicKey: {
+    challenge: ...,
+    allowCredentials: []  // 空 = Discoverable検索
+  },
+  mediation: 'optional'  // モーダルで表示
+});
+
+// ✅ ユーザー体験
+// 1. ログインボタンをクリック
+// 2. モーダルダイアログでパスキー表示
+// 3. パスキー選択
+// 4. 生体認証
+```
+
+### 3. 関係性の図解
+
+```mermaid
+graph TD
+    A[パスキー登録] --> B{residentKey?}
+    B -->|"required"| C[Discoverable Credential<br/>ユーザー情報も保存]
+    B -->|"discouraged"| D[Non-Discoverable<br/>秘密鍵のみ保存]
+
+    C --> E[認証時の選択肢]
+    D --> F[認証フロー]
+
+    E --> G{mediation?}
+    G -->|"'conditional'"| H[✅ Conditional UI<br/>オートフィル]
+    G -->|"'optional'"| I[✅ Modal UI<br/>モーダル]
+    G -->|"ユーザーID入力"| J[✅ 従来フロー<br/>※非推奨]
+
+    F --> K[ユーザーID入力必須<br/>allowCredentials指定]
+
+    H --> L[入力フィールドクリック<br/>→ オートフィルで選択]
+    I --> M[ボタンクリック<br/>→ モーダルで選択]
+    K --> N[サーバーが資格情報ID返却<br/>→ 認証器に送信]
+
+    style H fill:#e1f5e1
+    style C fill:#e1f5e1
+```
+
+### 4. 組み合わせ可否表
+
+| 登録時（保存形式） | 認証時（使用方法） | 組み合わせ | 説明 |
+|-----------------|----------------|---------|------|
+| **Discoverable** | Conditional UI | ✅ **推奨** | 最新のベストプラクティス（idp-server実装） |
+| **Discoverable** | Modal UI | ✅ 可能 | 従来型の方式 |
+| **Discoverable** | ユーザーID入力 | ✅ 可能 | Discoverableでも可能だが非推奨 |
+| **Non-Discoverable** | Conditional UI | ❌ **不可** | ユーザー情報がないためオートフィル不可 |
+| **Non-Discoverable** | Modal UI | ❌ **不可** | ユーザー情報がないため選択UI不可 |
+| **Non-Discoverable** | ユーザーID入力 | ✅ 唯一の方法 | 2要素認証の2要素目向け |
+
+### 5. なぜConditional UIにはDiscoverable Credentialが必須なのか？
+
+#### 理由：オートフィルには「表示する情報」が必要
+
+```javascript
+// ❌ Non-Discoverable + Conditional UIは不可
+// 問題：認証器に表示名がないため、オートフィルに何を表示すればいいか分からない
+
+navigator.credentials.get({
+  publicKey: {
+    challenge,
+    allowCredentials: []  // 空 = 認証器内を検索
+  },
+  mediation: 'conditional'  // ← 何を表示する？情報がない！
+});
+```
+
+```javascript
+// ✅ Discoverable + Conditional UIは可能
+// 認証器に保存されたユーザー情報をオートフィルで表示
+
+【認証器内の情報】
+- displayName: "田中太郎"
+- name: "tanaka@example.com"
+
+【オートフィルに表示される内容】
+🔐 田中太郎 (tanaka@example.com)
+   └ Touch IDで認証
+```
+
+### 6. 実際のフロー例（idp-server実装）
+
+#### 登録フロー（Discoverable Credential作成）
+
+```javascript
+// app-view/src/pages/signup/fido2/index.tsx
+const publicKeyOptions = {
+  challenge: base64UrlToBuffer(challenge),
+  rp: { name: "IdP Server" },
+  user: {
+    id: base64UrlToBuffer(user.id),
+    name: "user@example.com",        // ← 認証器に保存
+    displayName: "ユーザー名"         // ← 認証器に保存（オートフィルで表示される）
+  },
+  authenticatorSelection: {
+    authenticatorAttachment: "platform",
+    requireResidentKey: true,        // ← Discoverable作成
+    userVerification: "required"
+  },
+  pubKeyCredParams: [
+    { type: "public-key", alg: -7 },   // ES256
+    { type: "public-key", alg: -257 }, // RS256
+  ],
+};
+
+const credential = await navigator.credentials.create({
+  publicKey: publicKeyOptions
+});
+```
+
+#### 認証フロー（Conditional UI使用）
+
+```javascript
+// app-view/src/pages/signin/fido2/index.tsx
+
+// ページロード時にConditional UI起動
+useEffect(() => {
+  if (data && !data.session_enabled) {
+    authChallenge(true);  // isConditional = true
+  }
+}, [data]);
+
+const authChallenge = async (isConditional) => {
+  // チャレンジ取得
+  const response = await fetch(`${backendUrl}/.../fido2-authentication-challenge`, {
+    method: "POST",
+    body: JSON.stringify({ username, userVerification: "required" })
+  });
+  const challengeResponse = await response.json();
+
+  const publicKeyOptions = {
+    challenge: base64UrlToBuffer(challengeResponse.challenge),
+    timeout: 60000,
+    userVerification: "required",
+    // allowCredentialsを空にする = Discoverable検索
+  };
+
+  // Conditional UI起動
+  const credential = await navigator.credentials.get({
+    publicKey: publicKeyOptions,
+    mediation: 'conditional',  // ← オートフィル起動
+  });
+};
+```
+
+```html
+<!-- 入力フィールドにautocomplete属性を追加 -->
+<TextField
+  fullWidth
+  label="Username or Email"
+  value={username}
+  onChange={(e) => setUsername(e.target.value)}
+  autoComplete="username webauthn"  <!-- ← 重要！ -->
+  inputProps={{
+    autoComplete: "username webauthn",
+  }}
+/>
+```
+
+### 7. まとめ
+
+#### 重要ポイント
+
+1. **Discoverable Credential = 登録時の保存形式**
+   - `residentKey: "required"` で作成
+   - ユーザー情報を認証器に保存
+   - 認証時にユーザーID入力が不要になる
+
+2. **Conditional UI = 認証時の使用方法**
+   - `mediation: 'conditional'` で起動
+   - オートフィルでパスキーを表示
+   - 最新のベストプラクティス
+
+3. **関係性**
+   - Conditional UIを使うには**Discoverableが必須**
+   - Discoverableを使うのに**Conditional UIは必須ではない**（Modalでも可）
+   - **推奨組み合わせ**: Discoverable + Conditional UI ← idp-server実装済み
+
+#### 実装チェックリスト
+
+- [ ] 登録時: `requireResidentKey: true` または `residentKey: "required"` を設定
+- [ ] 登録時: `user.displayName` に適切な表示名を設定
+- [ ] 認証時: `mediation: 'conditional'` を指定
+- [ ] 認証時: `allowCredentials` を空にする（または省略）
+- [ ] HTML: 入力フィールドに `autoComplete="username webauthn"` を追加
+- [ ] 機能検出: `PublicKeyCredential.isConditionalMediationAvailable()` で確認
 
 ---
 
@@ -455,8 +820,9 @@ idp-serverは[WebAuthn4j](https://github.com/webauthn4j/webauthn4j)ライブラ�
    - **Discoverable Credential**: ユーザーID入力不要のパスキー（認証器内に保存）
 
 2. **実装の選択**:
-   - **`residentKey: "required"`**: Discoverable Credential必須
-   - **`residentKey: "discouraged"`**: 通常のパスキー
+   - **`residentKey: "required"`**: Discoverable Credential必須（作成不可時はエラー）
+   - **`residentKey: "preferred"`**: Discoverable推奨（可能なら作成）
+   - **`residentKey: "discouraged"`**: Non-Discoverable推奨（Discoverableも許容）
    - **`userVerification: "required"`**: 生体認証必須
 
 3. **運用上の考慮事項**:

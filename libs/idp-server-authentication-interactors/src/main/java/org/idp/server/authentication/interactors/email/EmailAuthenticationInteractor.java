@@ -190,7 +190,7 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
       UserQueryRepository userQueryRepository) {
 
     // Get step definition from policy
-    AuthenticationStepDefinition stepDefinition = getCurrentStepDefinition(transaction, method());
+    AuthenticationStepDefinition stepDefinition = transaction.getCurrentStepDefinition(method());
     // 3. New user creation decision
     boolean allowRegistration =
         stepDefinition != null && stepDefinition.allowRegistration(); // default: disabled

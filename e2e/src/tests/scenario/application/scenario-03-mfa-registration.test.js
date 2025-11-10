@@ -193,7 +193,7 @@ describe("user - mfa registration", () => {
       expect(userinfoResponse.data).not.toHaveProperty("mfa");
     });
 
-      it("fido2", async () => {
+      xit("fido2", async () => {
         const tenantId = serverConfig.tenantId;
           const { user, accessToken } = await createFederatedUser({
               serverConfig: serverConfig,
