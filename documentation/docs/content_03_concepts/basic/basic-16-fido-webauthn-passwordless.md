@@ -189,7 +189,64 @@ sequenceDiagram
     Server-->>WebApp: 認証成功
 ```
 
-### 3. 主要コンポーネント
+### 3. Conditional UI（Autofill）による認証
+
+**Conditional UI**は、WebAuthn Level 3で標準化された、パスキーをよりシームレスに使用できる機能です。
+
+#### 特徴
+
+| 項目 | 説明 |
+|------|------|
+| **表示方法** | ユーザー名入力欄のオートフィル候補としてパスキーが表示される |
+| **動作タイミング** | ページロード時に自動的にバックグラウンドで起動 |
+| **ユーザー操作** | 入力欄をタップ/クリックするだけでパスキー選択が可能 |
+| **ブラウザサポート** | iOS Safari 16+, Chrome 108+, Edge 108+ |
+
+#### 実装方法
+
+```javascript
+// HTML: autocomplete属性を設定
+<input type="text"
+       name="username"
+       autocomplete="username webauthn" />
+
+// JavaScript: mediation: 'conditional' で起動
+const credential = await navigator.credentials.get({
+  publicKey: publicKeyOptions,
+  mediation: 'conditional'  // ← Conditional UI を有効化
+});
+```
+
+#### 通常認証との比較
+
+| モード | トリガー | ユーザー操作 | 用途 |
+|--------|---------|------------|------|
+| **Conditional UI** | ページロード時 | 入力欄タップ → パスキー選択 | スムーズな認証体験 |
+| **Manual（通常）** | ボタンクリック | ボタンクリック → パスキー選択 | 明示的な認証操作 |
+
+#### 並行動作
+
+idp-serverの実装では、Conditional UIとManualボタンが並行動作します：
+
+- **Conditional UI**: ページロード時にバックグラウンドで起動し、ユーザーの操作を待機
+- **Manualボタン**: いつでもクリック可能。クリック時は`AbortController`でConditional UIを中断してManual認証に切り替え
+
+```javascript
+// Conditional UI（バックグラウンド起動）
+useEffect(() => {
+  authChallenge(true);  // isConditional = true
+}, []);
+
+// Manualボタン（既存のConditional UIを中断）
+const handleNext = async () => {
+  if (currentCredentialGetController) {
+    currentCredentialGetController.abort();  // Conditional UIを中断
+  }
+  await authChallenge(false);  // isConditional = false
+};
+```
+
+### 4. 主要コンポーネント
 
 | コンポーネント | 役割 | 実装例 |
 |-------------|------|--------|
@@ -369,6 +426,87 @@ idp-serverは、WebAuthn標準に完全準拠した実装により、
 - **セキュリティキー**: FIDOセキュリティキーに保存されている場合、新しいデバイスで安全に認証できます
 - **古いデバイス使用**: 古いデバイスのパスキーを使用して新しいデバイスでアカウントにサインインし、新しいデバイスでパスキーを作成
 - **アカウント回復**: その他の場合、RPは通常のアカウント回復として処理
+
+### Q18. Discoverable Credentialとは何ですか？通常のパスキーとの違いは？
+**A:** Discoverable Credential（発見可能なクレデンシャル）は、**ユーザー名なしでログイン可能なパスキー**です。
+
+#### 技術的な違い
+
+| 項目 | Non-Discoverable Credential | Discoverable Credential |
+|------|----------------------------|------------------------|
+| **別名** | Server-side Credential | Resident Key, Client-side Credential |
+| **ユーザー名** | 必須 | 不要（認証器内に保存） |
+| **保存場所** | サーバーのみ | サーバー + 認証器内 |
+| **WebAuthn設定** | `requireResidentKey: false` | `requireResidentKey: true` |
+| **登録時の動作** | Credential IDのみ認証器に保存 | Credential ID + ユーザー情報を認証器に保存 |
+| **認証時のフロー** | サーバーが`allowCredentials`で指定 | 認証器が保存済みクレデンシャルを自動提示 |
+
+#### 実装例
+
+```javascript
+// Non-Discoverable Credential（通常）
+const credential = await navigator.credentials.create({
+  publicKey: {
+    authenticatorSelection: {
+      requireResidentKey: false,  // サーバー側で管理
+      residentKey: "discouraged"
+    }
+  }
+});
+
+// Discoverable Credential（ユーザー名不要）
+const credential = await navigator.credentials.create({
+  publicKey: {
+    authenticatorSelection: {
+      requireResidentKey: true,   // 認証器内に保存
+      residentKey: "required"
+    }
+  }
+});
+```
+
+#### ユーザー体験の違い
+
+**Non-Discoverable（従来型）**:
+1. ユーザー名を入力
+2. サーバーが該当ユーザーのCredential IDを返す
+3. そのCredential IDで認証
+
+**Discoverable（パスキー標準）**:
+1. ユーザー名入力不要
+2. 認証器が保存済みクレデンシャル一覧を表示
+3. ユーザーが選択して認証
+
+#### どちらを使うべきか？
+
+| ユースケース | 推奨 | 理由 |
+|------------|------|------|
+| **一般消費者向けサービス** | Discoverable | 最高のUX、ユーザー名入力不要 |
+| **企業向けサービス** | Discoverable | SSO統合、ユーザー名管理の簡素化 |
+| **認証器の容量制約** | Non-Discoverable | セキュリティキーの容量節約 |
+| **レガシー互換** | Non-Discoverable | 古い認証器との互換性 |
+
+#### Conditional UIとの関係
+
+**Conditional UI（オートフィル）**は、Discoverable Credentialと組み合わせることで最大の効果を発揮します：
+
+- **Discoverable + Conditional UI**: ユーザー名入力欄をタップするだけで、認証器内の全パスキーが候補として表示される
+- **Non-Discoverable + Conditional UI**: ユーザー名を入力後、該当するパスキーのみが表示される
+
+**idp-serverの実装**: デフォルトでDiscoverable Credential（`requireResidentKey: true`）を使用し、最高のユーザー体験を提供しています。
+
+### Q19. Conditional UIとDiscoverable Credentialは必須ですか？
+**A:**
+
+| 機能 | 必須か | 理由 |
+|------|--------|------|
+| **Discoverable Credential** | ❌ 任意（推奨） | Non-Discoverableでも動作するが、UXが劣る |
+| **Conditional UI** | ❌ 任意（推奨） | Manualボタンのみでも動作可能 |
+| **組み合わせ** | ✅ 強く推奨 | 最高のUXを実現（SBI証券、Google等が採用） |
+
+**ベストプラクティス**:
+- 登録時: `requireResidentKey: true` でDiscoverable Credentialとして登録
+- 認証時: Conditional UI + Manual ボタンの両方を提供（idp-serverの実装）
 
 ---
 

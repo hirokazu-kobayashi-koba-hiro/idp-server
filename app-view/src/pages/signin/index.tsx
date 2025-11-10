@@ -125,7 +125,7 @@ export default function SignIn() {
     if (data && data.session_enabled === true) {
       execute();
     }
-  }, [data]);
+  }, [data, id, tenantId]);
 
   if (isPending) return <Loading />;
   if (!data) return <Loading />;

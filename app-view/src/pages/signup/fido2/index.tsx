@@ -17,20 +17,70 @@ import { useRouter } from "next/router";
 import { backendUrl, useAppContext } from "@/pages/_app";
 import { SignupStepper } from "@/components/SignupStepper";
 
+/**
+ * Convert Base64URL string to ArrayBuffer
+ * WebAuthn uses Base64URL encoding for binary data transmission
+ */
+const base64UrlToBuffer = (base64url: string): Uint8Array => {
+  const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+  const binaryString = atob(base64);
+  return Uint8Array.from(binaryString, (char) => char.charCodeAt(0));
+};
+
+interface ChallengeResponse {
+  challenge: string;
+  rp?: {
+    id?: string;
+    name: string;
+  };
+  user: {
+    id: string;
+    name: string;
+    displayName: string;
+  };
+  pubKeyCredParams?: PublicKeyCredentialParameters[];
+  timeout?: number;
+  authenticatorSelection?: AuthenticatorSelectionCriteria;
+  attestation?: AttestationConveyancePreference;
+  extensions?: AuthenticationExtensionsClientInputs;
+}
+
 export default function Fido2RegistrationPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const { userId, email } = useAppContext();
+  const [isRegistering, setIsRegistering] = useState(false);
+  const { email } = useAppContext();
   const { id, tenant_id: tenantId } = router.query;
   const theme = useTheme();
 
   const handleRegister = async () => {
+    // Prevent duplicate requests
+    if (isRegistering) {
+      console.warn("Registration already in progress");
+      return;
+    }
+
     setLoading(true);
+    setIsRegistering(true);
     setMessage("");
 
     try {
+      // Check browser compatibility
+      if (!window.PublicKeyCredential) {
+        setMessage("Your browser does not support passkey registration. Please use a modern browser.");
+        return;
+      }
 
+      // Check if platform authenticator is available
+      const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+      console.log("Platform authenticator available:", available);
+
+      if (!available) {
+        console.warn("Platform authenticator (Touch ID) is not available on this device");
+      }
+
+      // Step 1: Request challenge from server
       const res = await fetch(
         `${backendUrl}/${tenantId}/v1/authorizations/${id}/fido2-registration-challenge`,
         {
@@ -52,28 +102,93 @@ export default function Fido2RegistrationPage() {
           })
         },
       );
-      const { challenge } = await res.json();
-      const decodedChallenge = challenge.replace(/-/g, "+").replace(/_/g, "/");
 
-      const userIdBytes = new TextEncoder().encode(userId || "");
+      if (!res.ok) {
+        throw new Error(`Failed to get challenge: ${res.status}`);
+      }
 
-      const credential = await navigator.credentials.create({
-        publicKey: {
-          challenge: new Uint8Array(
-            atob(decodedChallenge)
-              .split("")
-              .map((c) => c.charCodeAt(0)),
-          ),
-          rp: { name: "Passkey Demo" },
-          user: {
-            id: userIdBytes,
-            name: email || "",
-            displayName: email || "",
-          },
-          pubKeyCredParams: [{ type: "public-key", alg: -7 }],
-        },
+      const challengeResponse: ChallengeResponse = await res.json();
+
+      // Debug: Log full server response
+      console.log("Full server response:", challengeResponse);
+
+      const {
+        challenge,
+        rp = { name: "IdP Server" },
+        user,
+        pubKeyCredParams,
+        timeout = 60000,
+        authenticatorSelection,
+        attestation = "none",
+        extensions
+      } = challengeResponse;
+
+      // Debug: Log what server sent
+      console.log("Server authenticatorSelection:", authenticatorSelection);
+      console.log("Using authenticatorSelection:", {
+        authenticatorAttachment: "platform",
+        requireResidentKey: true,
+        userVerification: "required"
       });
 
+      // Step 2: Build PublicKeyCredentialCreationOptions
+      const publicKeyOptions: PublicKeyCredentialCreationOptions = {
+        challenge: base64UrlToBuffer(challenge),
+        rp: rp,
+        user: {
+          id: base64UrlToBuffer(user.id),
+          name: user.name,
+          displayName: user.displayName,
+        },
+        // Force platform authenticator (Touch ID, Face ID, Windows Hello)
+        // NOTE: Server sends cross-platform, but we override it here for better UX
+        authenticatorSelection: {
+          authenticatorAttachment: "platform",
+          requireResidentKey: true,
+          userVerification: "required"
+        },
+        // Include ES256 (-7) and RS256 (-257) for cross-platform compatibility
+        pubKeyCredParams: pubKeyCredParams || [
+          { type: "public-key", alg: -7 },   // ES256 (default)
+          { type: "public-key", alg: -257 }, // RS256 (fallback)
+        ] as PublicKeyCredentialParameters[],
+        timeout,
+        attestation,
+      };
+
+      // Add extensions if provided
+      if (extensions) {
+        publicKeyOptions.extensions = extensions;
+      }
+
+      // NOTE: Intentionally NOT using server's authenticatorSelection
+      // because we want to force platform authenticator for better UX
+
+      // Debug: Log final options being sent to WebAuthn API
+      console.log("Final publicKeyOptions:", publicKeyOptions);
+
+      // Step 3: Create credential
+      const credential = await navigator.credentials.create({
+        publicKey: publicKeyOptions,
+      }) as PublicKeyCredential;
+
+      if (!credential) {
+        throw new Error("No credential received from authenticator");
+      }
+
+      // Step 4: Serialize credential for transmission
+      // const response = credential.response as AuthenticatorAttestationResponse;
+      // const credentialData = {
+      //   id: credential.id,
+      //   rawId: bufferToBase64Url(credential.rawId),
+      //   type: credential.type,
+      //   response: {
+      //     clientDataJSON: bufferToBase64Url(response.clientDataJSON),
+      //     attestationObject: bufferToBase64Url(response.attestationObject),
+      //   },
+      // };
+
+      // Step 5: Submit credential to server
       const registerRes = await fetch(
         `${backendUrl}/${tenantId}/v1/authorizations/${id}/fido2-registration`,
         {
@@ -89,13 +204,34 @@ export default function Fido2RegistrationPage() {
         router.push(`/signup/authorize?id=${id}&tenant_id=${tenantId}`);
         return;
       }
-      setMessage("Registration failed.");
+
+      const errorData = await registerRes.json().catch(() => ({}));
+      setMessage(errorData.error || "Registration failed.");
     } catch (error) {
       console.error(error);
-      setMessage("An error occurred during registration.");
-    }
 
-    setLoading(false);
+      // Handle WebAuthn-specific errors
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          setMessage("Registration was cancelled. Please try again.");
+        } else if (error.name === 'NotAllowedError') {
+          setMessage("Registration was not allowed. Please ensure you have permission and try again.");
+        } else if (error.name === 'InvalidStateError') {
+          setMessage("This authenticator is already registered. Please use a different one or sign in.");
+        } else if (error.name === 'NotSupportedError') {
+          setMessage("This browser does not support passkey registration.");
+        } else if (error.message.includes('Failed to get challenge')) {
+          setMessage("Failed to get registration challenge from server. Please try again.");
+        } else {
+          setMessage(`An error occurred: ${error.message}`);
+        }
+      } else {
+        setMessage("An unexpected error occurred during registration.");
+      }
+    } finally {
+      setLoading(false);
+      setIsRegistering(false);
+    }
   };
 
   return (
@@ -146,7 +282,18 @@ export default function Fido2RegistrationPage() {
           </Box>
 
           {message && (
-            <Typography mt={2} color="error" align="center">
+            <Typography
+              color={message.includes("successful") ? "success.main" : "error"}
+              variant="body2"
+              align="center"
+              sx={{
+                mt: 1,
+                p: 1.5,
+                backgroundColor: message.includes("successful") ? "#F0FDF4" : "#FEF2F2",
+                borderRadius: 1,
+                border: message.includes("successful") ? "1px solid #86EFAC" : "1px solid #FCA5A5"
+              }}
+            >
               {message}
             </Typography>
           )}
