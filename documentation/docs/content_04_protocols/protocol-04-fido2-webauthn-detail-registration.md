@@ -182,17 +182,26 @@ User Verificationは、登録時にユーザー本人確認（生体認証やPIN
 #### `cross-platform` の場合
 
 **登録時の挙動**:
-- ブラウザが外部認証器のみ提示
-- USBセキュリティキー（YubiKey等）、NFCセキュリティキー
-- Platform認証器は選択肢に表示されない
+- ブラウザが外部認証器（Roaming Authenticator）のみ提示
+- 対象Transport:
+  - **usb**: USBセキュリティキー（YubiKey等）
+  - **nfc**: NFCセキュリティキー
+  - **ble**: Bluetoothセキュリティキー
+  - **hybrid**: スマートフォン（QRコード経由）
+- Platform認証器（TouchID/FaceID）は選択肢に表示されない
 
 **データベース保存値**:
-- `transports` カラム: `["usb"]`, `["nfc"]`, `["ble"]` 等
+- `transports` カラム: `["usb"]`, `["nfc"]`, `["ble"]`, `["hybrid"]` 等
 
-**ユーザー体験**:
-- "セキュリティキーを挿入してください" プロンプト表示
+**ユーザー体験**（ブラウザによる優先順位あり）:
+- **最近のブラウザ（Chrome 108+, Safari 16+）**: QRコードが最初に表示される
+  - 「スマートフォンでQRコードをスキャン」プロンプト
+  - 「別の方法」からUSBキーを選択可能
+- **USBキー接続済みの場合**: 「セキュリティキーを挿入してください」も表示
 
-**用途**: セキュリティキー必須のポリシー
+**用途**: セキュリティキーまたはスマホ認証を許可
+
+**⚠️ 注意**: USBキーのみを許可したい場合は、`hints: ["security-key"]` の使用を検討（WebAuthn Level 3）
 
 ---
 
@@ -687,6 +696,117 @@ console.log(window.location.origin);
   ]
 }
 ```
+
+---
+
+### 3.6 USBキーではなくQRコードが表示される
+
+#### 原因: Hybrid Transport（スマホ認証）の優先表示
+
+**症状**:
+```
+cross-platform設定でUSBセキュリティキーを期待
+  ↓
+ブラウザが「スマートフォンでQRコードをスキャン」を表示
+  ↓
+USBキーの選択肢が見つからない
+```
+
+**原因**:
+- 最近のブラウザ（Chrome 108+, Safari 16+）は、Hybrid Transport（QRコード + スマホ）を優先
+- `cross-platform` は以下のすべてを含む:
+  - `usb`, `nfc`, `ble` (物理セキュリティキー)
+  - `hybrid` (スマートフォン経由)
+
+**ブラウザの優先順位**:
+1. Hybrid Transport（QRコード）を最初に表示
+2. 「別の方法を使用」でUSBキーを選択可能
+
+---
+
+#### 解決策1: hints パラメータの使用（推奨）
+
+**WebAuthn Level 3の新機能**を使用してUSBキーを優先:
+
+```javascript
+const credential = await navigator.credentials.create({
+  publicKey: {
+    ...challengeOptions,
+    hints: ["security-key"]  // USBキーを優先
+  }
+});
+```
+
+**hints の値**:
+- `"security-key"`: USBセキュリティキー優先
+- `"hybrid"`: QRコード/スマホ優先
+- `"client-device"`: Platform認証器優先
+
+**対応ブラウザ**: Chrome 119+, Safari 17+
+
+---
+
+#### 解決策2: allowCredentials で transports を指定
+
+**登録済みCredentialの認証時**のみ有効:
+
+```javascript
+const credential = await navigator.credentials.get({
+  publicKey: {
+    challenge: ...,
+    allowCredentials: [
+      {
+        type: "public-key",
+        id: credentialId,
+        transports: ["usb", "nfc"]  // Hybrid除外
+      }
+    ]
+  }
+});
+```
+
+**注意**: 登録時（`create()`）では使用不可
+
+---
+
+#### 解決策3: ユーザー操作
+
+**Chrome/Edge**:
+```
+1. QRコード画面が表示される
+2. 「別の方法を使用」をクリック
+3. 「セキュリティキー（USB/NFC）」を選択
+4. USBキーを挿入
+```
+
+**Safari**:
+```
+1. QRコード画面が表示される
+2. 「他のオプション」をタップ
+3. 「セキュリティキー」を選択
+```
+
+---
+
+#### Hybrid Transport とは
+
+**Hybrid Transport**（旧称: caBLE - cloud-assisted Bluetooth Low Energy）:
+- WebAuthn仕様に含まれる正式なTransport
+- スマートフォンをセキュリティキーとして使用
+- 動作フロー:
+  1. PCでQRコードを表示
+  2. スマホでQRコードをスキャン
+  3. Bluetooth + 暗号化通信で認証
+  4. スマホの生体認証（TouchID/FaceID）で認証完了
+
+**利点**:
+- 物理的なセキュリティキー不要
+- スマホの生体認証を活用
+- クロスプラットフォーム対応
+
+**欠点**:
+- Bluetooth必須
+- 物理的近接性が必要
 
 ---
 

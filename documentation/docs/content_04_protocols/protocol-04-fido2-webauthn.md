@@ -128,7 +128,7 @@ WebAuthnでは、以下のパラメータがユーザーの認証体験に直接
 | **userVerification** | `required` | 毎回PIN/生体認証 | 高セキュリティ認証 |
 |  | `discouraged` | タップのみ | UX優先 |
 | **authenticatorAttachment** | `platform` | デバイス内蔵認証器のみ | TouchID/FaceID |
-|  | `cross-platform` | 外部セキュリティキーのみ | YubiKey等 |
+|  | `cross-platform` | 外部認証器（USB/NFC/Hybrid） | YubiKey、スマホ（QRコード） |
 |  | 未指定 | 全認証器から選択可能 | 柔軟な認証 |
 
 **詳細**:
@@ -407,6 +407,7 @@ FAPI 1.0 Advanced準拠のための設定：
 |------|------|--------|
 | **登録時**"認証器が見つかりません" | authenticatorAttachment制約 | [登録詳細 3.1](protocol-04-fido2-webauthn-detail-registration.md#31-認証器が見つかりません) |
 | **登録時**"ユーザー検証に失敗" | userVerification="required"だが認証器非対応 | [登録詳細 3.2](protocol-04-fido2-webauthn-detail-registration.md#32-ユーザー検証に失敗しました) |
+| **登録時**USBキーではなくQRコード表示 | Hybrid Transport優先表示 | [登録詳細 3.6](protocol-04-fido2-webauthn-detail-registration.md#36-usbキーではなくqrコードが表示される) |
 | **認証時**"認証器が見つかりません" | allowCredentialsとCredential不一致 | [認証詳細 5.1](protocol-04-fido2-webauthn-detail.md#51-認証器が見つかりません) |
 | **認証時**パスワードレスログイン不可 | rk=falseでallowCredentials=[] | [認証詳細 5.3](protocol-04-fido2-webauthn-detail.md#53-パスワードレスログインできない) |
 
