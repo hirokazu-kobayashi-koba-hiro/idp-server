@@ -187,7 +187,8 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
     // Strategy 1: Reuse transaction.user() if same username
     if (transaction.hasUser()) {
       User transactionUser = transaction.user();
-      String transactionUsername = resolveUsernameFromUser(transactionUser, tenant.identityPolicyConfig());
+      String transactionUsername =
+          resolveUsernameFromUser(transactionUser, tenant.identityPolicyConfig());
 
       if (username.equals(transactionUsername)) {
         log.debug("FIDO2 registration: reusing transaction user with same username: {}", username);
@@ -265,33 +266,33 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
     return user.addAuthenticationDevice(authenticationDevice);
   }
 
-    /**
-     * Resolves username from User based on Tenant Identity Policy.
-     *
-     * @param user the user
-     * @param identityPolicy the tenant identity policy
-     * @return username, or empty string if not resolvable
-     */
-    private String resolveUsernameFromUser(User user, TenantIdentityPolicy identityPolicy) {
-        switch (identityPolicy.uniqueKeyType()) {
-            case USERNAME:
-            case USERNAME_OR_EXTERNAL_USER_ID:
-                return user.preferredUsername();
+  /**
+   * Resolves username from User based on Tenant Identity Policy.
+   *
+   * @param user the user
+   * @param identityPolicy the tenant identity policy
+   * @return username, or empty string if not resolvable
+   */
+  private String resolveUsernameFromUser(User user, TenantIdentityPolicy identityPolicy) {
+    switch (identityPolicy.uniqueKeyType()) {
+      case USERNAME:
+      case USERNAME_OR_EXTERNAL_USER_ID:
+        return user.preferredUsername();
 
-            case EMAIL:
-            case EMAIL_OR_EXTERNAL_USER_ID:
-                return user.email();
+      case EMAIL:
+      case EMAIL_OR_EXTERNAL_USER_ID:
+        return user.email();
 
-            case PHONE:
-            case PHONE_OR_EXTERNAL_USER_ID:
-                return user.phoneNumber();
+      case PHONE:
+      case PHONE_OR_EXTERNAL_USER_ID:
+        return user.phoneNumber();
 
-            case EXTERNAL_USER_ID:
-                return user.externalUserId();
+      case EXTERNAL_USER_ID:
+        return user.externalUserId();
 
-            default:
-                // Fallback to preferredUsername
-                return user.preferredUsername();
-        }
+      default:
+        // Fallback to preferredUsername
+        return user.preferredUsername();
     }
+  }
 }
