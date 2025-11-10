@@ -72,12 +72,14 @@ const sidebars = {
     },
     {
       type: "category",
-      label: "認可プロトコル",
+      label: "認証・認可プロトコル",
       collapsed: true,
       items: [
         "content_04_protocols/protocol-01-authorization-code-flow",
         "content_04_protocols/protocol-02-ciba-flow",
-        "content_04_protocols/protocol-03-introspection"
+        "content_04_protocols/protocol-03-introspection",
+        "content_04_protocols/protocol-04-fido2-webauthn",
+        "content_04_protocols/protocol-04-fido2-webauthn-detail-registration",
       ]
     },
     {
