@@ -84,13 +84,12 @@ class ApnsNotifierTest {
 
     JsonNodeWrapper aps = payloadJson.getNode("aps");
     assertTrue(aps.contains("alert"));
-    assertTrue(aps.contains("content-available"));
+    assertFalse(aps.contains("content-available"));
 
     JsonNodeWrapper alert = aps.getNode("alert");
     assertTrue(alert.contains("title"));
     assertTrue(alert.contains("body"));
 
-    assertEquals(1, aps.getValueAsInt("content-available"));
     assertEquals("Test Title", alert.getValueOrEmptyAsString("title"));
     assertEquals("Test Body", alert.getValueOrEmptyAsString("body"));
     assertEquals("Test Sender", payloadJson.getValueOrEmptyAsString("sender"));
