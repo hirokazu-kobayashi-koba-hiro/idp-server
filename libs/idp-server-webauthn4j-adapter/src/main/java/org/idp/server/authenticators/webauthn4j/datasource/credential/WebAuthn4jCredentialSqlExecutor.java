@@ -19,14 +19,19 @@ package org.idp.server.authenticators.webauthn4j.datasource.credential;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.authenticators.webauthn4j.WebAuthn4jCredential;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface WebAuthn4jCredentialSqlExecutor {
 
-  void register(WebAuthn4jCredential credential);
+  void register(Tenant tenant, WebAuthn4jCredential credential);
 
-  List<Map<String, Object>> findAll(String userId);
+  List<Map<String, Object>> findAll(Tenant tenant, String userId);
 
-  void updateSignCount(String credentialId, long signCount);
+  List<Map<String, Object>> findByUsername(Tenant tenant, String username);
 
-  void delete(String credentialId);
+  Map<String, Object> selectOne(Tenant tenant, String id);
+
+  void updateSignCount(Tenant tenant, String credentialId, long signCount);
+
+  void delete(Tenant tenant, String credentialId);
 }

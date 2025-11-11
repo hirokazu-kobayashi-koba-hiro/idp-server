@@ -8,11 +8,13 @@ import {
 } from "../../../api/oauthClient";
 import {
   backendUrl,
-  clientSecretPostClient,
+  clientSecretPostClient, federationServerConfig,
   serverConfig
 } from "../../testConfig";
 import { verifyAndDecodeJwt } from "../../../lib/jose";
 import { get } from "../../../lib/http";
+import { createFederatedUser, registerFido2 } from "../../../user";
+import { generateValidAssertionFromChallenge } from "../../../lib/fido/fido2";
 
 describe("ciba - mfa", () => {
   const ciba = serverConfig.ciba;
@@ -93,6 +95,104 @@ describe("ciba - mfa", () => {
       }
     });
     console.log(authenticationResponse.data);
+    expect(authenticationResponse.status).toBe(200);
+
+    const tokenResponse = await requestToken({
+      endpoint: serverConfig.tokenEndpoint,
+      grantType: "urn:openid:params:grant-type:ciba",
+      authReqId: backchannelAuthenticationResponse.data.auth_req_id,
+      clientId: clientSecretPostClient.clientId,
+      clientSecret: clientSecretPostClient.clientSecret,
+    });
+    console.log(tokenResponse.data);
+    expect(tokenResponse.status).toBe(200);
+    expect(tokenResponse.data.scope).toContain("phone");
+
+    const jwksResponse = await getJwks({ endpoint: serverConfig.jwksEndpoint });
+    console.log(jwksResponse.data);
+    expect(jwksResponse.status).toBe(200);
+
+    const decodedIdToken = verifyAndDecodeJwt({
+      jwt: tokenResponse.data.id_token,
+      jwks: jwksResponse.data,
+    });
+    console.log(decodedIdToken);
+    expect(decodedIdToken.payload).toHaveProperty("amr");
+
+    const decodedAccessToken = verifyAndDecodeJwt({
+      jwt: tokenResponse.data.access_token,
+      jwks: jwksResponse.data
+    });
+    console.log(JSON.stringify(decodedAccessToken, null, 2));
+
+  });
+
+  xit("fido2", async () => {
+    const { user, accessToken } = await createFederatedUser({
+      serverConfig: serverConfig,
+      federationServerConfig: federationServerConfig,
+      client: clientSecretPostClient,
+      adminClient: clientSecretPostClient
+    });
+
+    console.log(user);
+    const { authenticationDeviceId, userId } = await registerFido2({ accessToken });
+
+    let backchannelAuthenticationResponse =
+      await requestBackchannelAuthentications({
+        endpoint: serverConfig.backchannelAuthenticationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        scope: "openid profile phone email",
+        bindingMessage: ciba.bindingMessage,
+        loginHint: `sub:${user.sub}`,
+        acrValues: "urn:mace:incommon:iap:gold",
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+    console.log(backchannelAuthenticationResponse.data);
+    expect(backchannelAuthenticationResponse.status).toBe(200);
+
+    let authenticationTransactionResponse;
+    authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
+      endpoint: serverConfig.authenticationDeviceEndpoint,
+      deviceId: authenticationDeviceId,
+      params: {
+        "attributes.auth_req_id": backchannelAuthenticationResponse.data.auth_req_id
+      },
+    });
+    console.log(authenticationTransactionResponse.data);
+    expect(authenticationTransactionResponse.status).toBe(200);
+
+    const authenticationTransaction = authenticationTransactionResponse.data.list[0];
+    console.log(authenticationTransaction);
+
+    let authenticationResponse;
+
+    const challengeRequest = {
+      userVerification: "required",
+      timeout: 6000
+    };
+
+    authenticationResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      flowType: authenticationTransaction.flow,
+      id: authenticationTransaction.id,
+      interactionType: "fido2-authentication-challenge",
+      body: challengeRequest
+    });
+    console.log(JSON.stringify(authenticationResponse.data, null, 2));
+    expect(authenticationResponse.status).toBe(200);
+
+    const authenticationRequest = generateValidAssertionFromChallenge(authenticationResponse.data, userId);
+    console.log(JSON.stringify(authenticationRequest, null, 2));
+
+    authenticationResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      flowType: authenticationTransaction.flow,
+      id: authenticationTransaction.id,
+      interactionType: "fido2-authentication",
+      body: authenticationRequest
+    });
+    console.log(JSON.stringify(authenticationResponse.data, null, 2));
     expect(authenticationResponse.status).toBe(200);
 
     const tokenResponse = await requestToken({

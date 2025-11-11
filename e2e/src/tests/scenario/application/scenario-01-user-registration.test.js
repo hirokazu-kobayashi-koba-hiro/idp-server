@@ -2,9 +2,10 @@ import { describe, expect, it } from "@jest/globals";
 import { backendUrl, clientSecretPostClient, serverConfig } from "../../testConfig";
 import { faker } from "@faker-js/faker";
 import { getJwks, postAuthentication, requestToken } from "../../../api/oauthClient";
-import { get } from "../../../lib/http";
+import { get, postWithJson } from "../../../lib/http";
 import { requestAuthorizations } from "../../../oauth/request";
 import { verifyAndDecodeJwt } from "../../../lib/jose";
+import { generateValidCredentialFromChallenge } from "../../../lib/fido/fido2";
 
 /**
  * Issue #800 Test Suite: Authentication Step Definitions (1st/2nd Factor)
@@ -268,6 +269,77 @@ describe("Issue #800: Authentication Step Definitions (1st/2nd Factor)", () => {
       expect(decodedIdToken.verifyResult).toBe(true);
       expect(payload).toHaveProperty("email");
       expect(payload).toHaveProperty("phone_number");
+    });
+
+    xit("1st factor only: FIDO2 authentication with new user registration", async () => {
+      /**
+       * Test: Email authentication (1st factor) with allow_registration=true
+       * Expected: New user is created and authentication succeeds
+       */
+      const testUser = {
+        email: faker.internet.email(),
+        name: faker.person.fullName(),
+        zoneinfo: "Asia/Tokyo",
+        locale: "ja-JP",
+        phone_number: faker.phone.number("090-####-####"),
+      };
+
+      const interaction = async (id, user) => {
+
+        const challengeResponse = await postAuthentication({
+          endpoint: serverConfig.authorizationIdEndpoint + "fido2-registration-challenge",
+          id,
+          body: {
+            username: user.email,
+            displayName: user.name,
+            authenticatorSelection: {
+              authenticatorAttachment: "platform",
+              requireResidentKey: true,
+              userVerification: "required"
+            },
+            attestation: "none",
+            extensions: {
+              credProps: true
+            }
+          },
+        });
+        console.log(JSON.stringify(challengeResponse.data, null, 2));
+        expect(challengeResponse.status).toBe(200);
+
+        const validCredential = generateValidCredentialFromChallenge(challengeResponse.data);
+        console.log(JSON.stringify(validCredential, null, 2));
+
+        const authenticationResponse = await postWithJson({
+          url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${id}/fido2-registration`,
+          body: validCredential
+        });
+        console.log(JSON.stringify(authenticationResponse.data, null, 2));
+        expect(authenticationResponse.status).toBe(200);
+      };
+
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "state_" + Date.now(),
+        scope: "openid profile phone email " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+        user: testUser,
+        interaction,
+      });
+      console.log("Authorization response:", authorizationResponse);
+      expect(authorizationResponse.code).not.toBeNull();
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log("Token response:", tokenResponse.data);
+      expect(tokenResponse.data).toHaveProperty("id_token");
     });
 
   });

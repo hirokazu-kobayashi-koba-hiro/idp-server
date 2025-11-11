@@ -23,8 +23,8 @@ public enum StandardAuthFlow {
   CIBA("ciba"),
   FIDO_UAF_REGISTRATION("fido-uaf-registration"),
   FIDO_UAF_DEREGISTRATION("fido-uaf-deregistration"),
-  WEBAUTHN_REGISTRATION("webauthn-registration"),
-  WEBAUTHN_DEREGISTRATION("webauthn-deregistration"),
+  FIDO2_REGISTRATION("fido2-registration"),
+  FIDO2_DEREGISTRATION("fido2-deregistration"),
   MFA_SMS_REGISTRATION("mfa-sms-registration"),
   MFA_EMAIL_REGISTRATION("mfa-email-registration");
 

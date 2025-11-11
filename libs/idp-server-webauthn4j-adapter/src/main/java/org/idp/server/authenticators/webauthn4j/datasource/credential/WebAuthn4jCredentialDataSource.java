@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 import org.idp.server.authenticators.webauthn4j.WebAuthn4jCredential;
 import org.idp.server.authenticators.webauthn4j.WebAuthn4jCredentialRepository;
 import org.idp.server.authenticators.webauthn4j.WebAuthn4jCredentials;
+import org.idp.server.platform.exception.NotFoundException;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class WebAuthn4jCredentialDataSource implements WebAuthn4jCredentialRepository {
 
@@ -33,13 +35,13 @@ public class WebAuthn4jCredentialDataSource implements WebAuthn4jCredentialRepos
   }
 
   @Override
-  public void register(WebAuthn4jCredential credential) {
-    executor.register(credential);
+  public void register(Tenant tenant, WebAuthn4jCredential credential) {
+    executor.register(tenant, credential);
   }
 
   @Override
-  public WebAuthn4jCredentials findAll(String userId) {
-    List<Map<String, Object>> results = executor.findAll(userId);
+  public WebAuthn4jCredentials findAll(Tenant tenant, String userId) {
+    List<Map<String, Object>> results = executor.findAll(tenant, userId);
 
     if (Objects.isNull(results) || results.isEmpty()) {
       return new WebAuthn4jCredentials();
@@ -52,12 +54,37 @@ public class WebAuthn4jCredentialDataSource implements WebAuthn4jCredentialRepos
   }
 
   @Override
-  public void updateSignCount(String credentialId, long signCount) {
-    executor.updateSignCount(credentialId, signCount);
+  public WebAuthn4jCredentials findByUsername(Tenant tenant, String username) {
+    List<Map<String, Object>> results = executor.findByUsername(tenant, username);
+
+    if (Objects.isNull(results) || results.isEmpty()) {
+      return new WebAuthn4jCredentials();
+    }
+
+    List<WebAuthn4jCredential> credentials =
+        results.stream().map(ModelConverter::convert).collect(Collectors.toList());
+
+    return new WebAuthn4jCredentials(credentials);
   }
 
   @Override
-  public void delete(String credentialId) {
-    executor.delete(credentialId);
+  public WebAuthn4jCredential get(Tenant tenant, String id) {
+    Map<String, Object> result = executor.selectOne(tenant, id);
+
+    if (Objects.isNull(result) || result.isEmpty()) {
+      throw new NotFoundException("WebAuthn4jCredential is not found.");
+    }
+
+    return ModelConverter.convert(result);
+  }
+
+  @Override
+  public void updateSignCount(Tenant tenant, String credentialId, long signCount) {
+    executor.updateSignCount(tenant, credentialId, signCount);
+  }
+
+  @Override
+  public void delete(Tenant tenant, String credentialId) {
+    executor.delete(tenant, credentialId);
   }
 }

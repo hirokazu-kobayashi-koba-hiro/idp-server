@@ -81,7 +81,7 @@ FIDO2/WebAuthnは、フィッシング攻撃に対して耐性があります。
 
 - [認証ポリシー](concept-05-authentication-policy.md) - MFA要求の制御
 - [トークン管理](concept-06-token-management.md) - MFA後のトークン発行
-- [FIDO/WebAuthnとパスワードレス認証](basic/basic-16-fido-webauthn-passwordless.md) - FIDO2/WebAuthnの基礎
+- [FIDO/WebAuthnとパスワードレス認証](basic/basic-16-fido2-webauthn-passwordless.md) - FIDO2/WebAuthnの基礎
 - [FIDO2 Passkeyと検出可能なクレデンシャル](basic/basic-17-fido2-passkey-discoverable-credential.md) - Passkeyの仕組み
 
 ## 参考仕様

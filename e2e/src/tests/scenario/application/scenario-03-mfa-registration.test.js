@@ -5,11 +5,13 @@ import {
   postAuthenticationDeviceInteraction,
 } from "../../../api/oauthClient";
 import {
+  backendUrl,
   clientSecretPostClient, federationServerConfig,
   serverConfig
 } from "../../testConfig";
 import { get, patchWithJson, postWithJson } from "../../../lib/http";
 import { createFederatedUser } from "../../../user";
+import {generateRandomUser, generateValidCredentialFromChallenge} from "../../../lib/fido/fido2";
 
 describe("user - mfa registration", () => {
 
@@ -190,6 +192,98 @@ describe("user - mfa registration", () => {
       expect(userinfoResponse.data).not.toHaveProperty("authentication_devices");
       expect(userinfoResponse.data).not.toHaveProperty("mfa");
     });
+
+      xit("fido2", async () => {
+        const tenantId = serverConfig.tenantId;
+          const { user, accessToken } = await createFederatedUser({
+              serverConfig: serverConfig,
+              federationServerConfig: federationServerConfig,
+              client: clientSecretPostClient,
+              adminClient: clientSecretPostClient
+          });
+
+          console.log(user);
+
+          let mfaRegistrationResponse =
+              await postWithJson({
+                  url: `${backendUrl}/${tenantId}/v1/me/mfa/fido2-registration`,
+                  body: {
+                      "app_name": "idp-server-app",
+                      "platform": "Android",
+                      "os": "Android15",
+                      "model": "galaxy z fold 6",
+                      "locale": "ja",
+                      "notification_channel": "fcm",
+                      "notification_token": "test token",
+                      "priority": 1,
+                      action: "reset"
+                  },
+                  headers: {
+                      "Authorization": `Bearer ${accessToken}`
+                  }
+              });
+          console.log(mfaRegistrationResponse.data);
+          expect(mfaRegistrationResponse.status).toBe(200);
+
+          const discoverableUser = generateRandomUser();
+          const requestBody = {
+              username: discoverableUser.username,
+              displayName: discoverableUser.displayName,
+              authenticatorSelection: {
+                  authenticatorAttachment: "platform",
+                  requireResidentKey: true,
+                  userVerification: "required"
+              },
+              attestation: "none",
+              extensions: {
+                  credProps: true
+              }
+          };
+
+          console.log(JSON.stringify(requestBody, null, 2));
+
+          let authenticationResponse;
+          let transactionId = mfaRegistrationResponse.data.id;
+          authenticationResponse = await postWithJson({
+              url: `${backendUrl}/${tenantId}/v1/authentications/${transactionId}/fido2-registration-challenge`,
+              body: requestBody
+          });
+          console.log(JSON.stringify(authenticationResponse.data, null, 2));
+          expect(authenticationResponse.status).toBe(200);
+
+          const validCredential = generateValidCredentialFromChallenge(authenticationResponse.data);
+          console.log(JSON.stringify(validCredential, null, 2));
+
+          authenticationResponse = await postWithJson({
+              url: `${backendUrl}/${tenantId}/v1/authentications/${transactionId}/fido2-registration`,
+              body: validCredential
+          });
+          console.log(JSON.stringify(authenticationResponse.data, null, 2));
+          expect(authenticationResponse.status).toBe(200);
+
+
+          let userinfoResponse = await get({
+              url: `${backendUrl}/${tenantId}/v1/userinfo`,
+              headers: {
+                  "Authorization": `Bearer ${accessToken}`
+              }
+          });
+          console.log(JSON.stringify(userinfoResponse.data, null, 2));
+          expect(userinfoResponse.status).toBe(200);
+          expect(userinfoResponse.data.sub).toEqual(user.sub);
+          expect(userinfoResponse.data).toHaveProperty("authentication_devices");
+          expect(userinfoResponse.data.authentication_devices.length).toBe(1);
+          // expect(userinfoResponse.data.authentication_devices[0].id).toEqual(authenticationDeviceId);
+          expect(userinfoResponse.data.authentication_devices[0]).toHaveProperty("app_name");
+          expect(userinfoResponse.data.authentication_devices[0].platform).toEqual("Android");
+          expect(userinfoResponse.data.authentication_devices[0].os).toEqual("Android15");
+          expect(userinfoResponse.data.authentication_devices[0].model).toEqual("galaxy z fold 6");
+          expect(userinfoResponse.data.authentication_devices[0].locale).toEqual("ja");
+          expect(userinfoResponse.data.authentication_devices[0].notification_channel).toEqual("fcm");
+          expect(userinfoResponse.data.authentication_devices[0].notification_token).toEqual("test token");
+          expect(userinfoResponse.data.authentication_devices[0].available_methods).toContain("fido2");
+          expect(userinfoResponse.data.authentication_devices[0].priority).toEqual(1);
+      });
 
   });
 

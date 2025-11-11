@@ -1,0 +1,45 @@
+{
+  "id": "1e435af6-0505-4a46-8ed6-5e48343f4508",
+  "flow": "fido2-registration",
+  "enabled": true,
+  "policies": [
+    {
+      "description": "default",
+      "priority": 1,
+      "available_methods": [
+        "fido2"
+      ],
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.fido2-registration.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      },
+      "failure_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.fido2-registration.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      },
+      "lock_conditions": {
+        "any_of": []
+      },
+      "authentication_device_rule": {
+        "max_devices": 10,
+        "required_identity_verification": true
+      }
+    }
+  ]
+}

@@ -11,7 +11,7 @@
     "authorization_provider": "idp-server",
     "ui_config": {
       "signup_page": "/signup/",
-      "signin_page": "/signin/"
+      "signin_page": "/signin/fido2/"
     },
     "session_config": {
       "cookie_name": "TEST_TENANT_IDP_SERVER_SESSION",

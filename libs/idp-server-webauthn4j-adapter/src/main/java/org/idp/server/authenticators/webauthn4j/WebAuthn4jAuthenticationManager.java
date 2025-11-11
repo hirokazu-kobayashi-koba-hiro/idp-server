@@ -22,9 +22,9 @@ import com.webauthn4j.data.AuthenticationData;
 import com.webauthn4j.data.AuthenticationParameters;
 import com.webauthn4j.data.client.Origin;
 import com.webauthn4j.server.ServerProperty;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class WebAuthn4jAuthenticationManager {
 
@@ -41,17 +41,9 @@ public class WebAuthn4jAuthenticationManager {
     this.request = request;
   }
 
-  public String extractUserId() {
-    AuthenticationData authenticationData = parseAuthenticationData();
+  public AuthenticationData verifyAndGetAuthenticationData(WebAuthn4jCredential credential) {
+    AuthenticationData parsedData = parseAuthenticationData();
 
-    return new String(
-        Objects.requireNonNull(authenticationData.getUserHandle()), StandardCharsets.UTF_8);
-  }
-
-  public void verify(WebAuthn4jCredentials credentials) {
-    AuthenticationData authenticationData = parseAuthenticationData();
-
-    WebAuthn4jCredential credential = credentials.get(configuration.rpId());
     WebAuthn4jCredentialConverter webAuthnCredentialConverter =
         new WebAuthn4jCredentialConverter(credential);
     CredentialRecordImpl credentialRecord = webAuthnCredentialConverter.convert();
@@ -59,8 +51,7 @@ public class WebAuthn4jAuthenticationManager {
     AuthenticationParameters authenticationParameters =
         toAuthenticationParameters(credentialRecord);
 
-    AuthenticationData verifiedData =
-        verifyAuthenticationData(authenticationData, authenticationParameters);
+    return verifyAuthenticationData(parsedData, authenticationParameters);
   }
 
   private AuthenticationData verifyAuthenticationData(
@@ -82,13 +73,16 @@ public class WebAuthn4jAuthenticationManager {
 
   private AuthenticationParameters toAuthenticationParameters(
       CredentialRecordImpl credentialRecord) {
-    // Server properties
-    Origin origin = Origin.create(configuration.origin());
-    byte[] tokenBindingId = null;
-    ServerProperty serverProperty =
-        new ServerProperty(origin, configuration.rpId(), challenge, tokenBindingId);
+    Set<Origin> origins =
+        configuration.getAllowedOrigins().stream().map(Origin::create).collect(Collectors.toSet());
 
-    // expectations
+    ServerProperty serverProperty =
+        ServerProperty.builder()
+            .origins(origins)
+            .rpId(configuration.rpId())
+            .challenge(challenge)
+            .build();
+
     List<byte[]> allowCredentials = null;
     boolean userVerificationRequired = configuration.userVerificationRequired();
     boolean userPresenceRequired = configuration.userPresenceRequired();

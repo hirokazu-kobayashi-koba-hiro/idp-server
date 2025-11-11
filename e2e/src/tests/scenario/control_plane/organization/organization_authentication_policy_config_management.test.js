@@ -176,7 +176,7 @@ describe("Organization Authentication Policy Config Management API Test", () => 
           conditions: {
             scopes: ["openid"]
           },
-          available_methods: ["password", "webauthn"],
+          available_methods: ["password", "fido2"],
           success_conditions: {
             any_of: [
               [

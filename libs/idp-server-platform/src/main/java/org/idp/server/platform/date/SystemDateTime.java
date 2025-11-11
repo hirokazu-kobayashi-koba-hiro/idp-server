@@ -99,6 +99,10 @@ public class SystemDateTime {
     return localDateTime.atZone(clock.getZone()).toEpochSecond();
   }
 
+  public static long toEpochMilli(LocalDateTime localDateTime) {
+    return localDateTime.atZone(clock.getZone()).toInstant().toEpochMilli();
+  }
+
   public static long currentEpochMilliSecond() {
     return now().atZone(clock.getZone()).toInstant().toEpochMilli();
   }

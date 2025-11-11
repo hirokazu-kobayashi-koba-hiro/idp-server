@@ -449,10 +449,10 @@ describe("Organization Security Event Hook Config Management API - Structured Te
         }
       });
 
-      it("should support FIDO-UAF and WebAuthn event types", async () => {
+      it("should support FIDO-UAF and FIDO2 event types", async () => {
         const fidoEventTypes = [
           "fido_uaf_registration", "fido_uaf_authentication", "fido_uaf_deregistration",
-          "webauthn_registration", "webauthn_authentication", "webauthn_credential_update"
+          "fido2_registration", "fido2_authentication", "fido2_credential_update"
         ];
 
         for (const eventType of fidoEventTypes) {

@@ -16,20 +16,62 @@
 
 package org.idp.server.authenticators.webauthn4j.datasource.credential;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.authenticators.webauthn4j.WebAuthn4jCredential;
+import org.idp.server.platform.date.SystemDateTime;
 
 class ModelConverter {
 
   static WebAuthn4jCredential convert(Map<String, Object> result) {
 
-    byte[] id = (byte[]) result.get("id");
+    String id = (String) result.get("id");
     String userId = (String) result.get("user_id");
+    String username = (String) result.get("username");
+    String userDisplayName = (String) result.get("user_display_name");
     String rpId = (String) result.get("rp_id");
-    byte[] publicKey = (byte[]) result.get("public_key");
-    byte[] attestationObject = (byte[]) result.get("attestation_object");
-    long signCount = (long) result.get("sign_count");
+    String aaguid = (String) result.get("aaguid");
+    String attestedCredentialData = (String) result.get("attested_credential_data");
+    Integer signatureAlgorithm = (Integer) result.get("signature_algorithm");
+    Long signCount = (Long) result.get("sign_count");
+    String attestationType = (String) result.get("attestation_type");
+    Boolean rk = (Boolean) result.get("rk");
+    Integer credProtect = (Integer) result.get("cred_protect");
 
-    return new WebAuthn4jCredential(id, userId, rpId, publicKey, attestationObject, signCount);
+    // Handle transports - can be List<String> or String depending on database
+    @SuppressWarnings("unchecked")
+    List<String> transports =
+        result.get("transports") instanceof List ? (List<String>) result.get("transports") : null;
+
+    // Convert LocalDateTime to epoch milliseconds
+    Long createdAt = convertToEpochMillis((LocalDateTime) result.get("created_at"));
+    Long updatedAt = convertToEpochMillis((LocalDateTime) result.get("updated_at"));
+    Long authenticatedAt = convertToEpochMillis((LocalDateTime) result.get("authenticated_at"));
+
+    return new WebAuthn4jCredential(
+        id,
+        userId,
+        username,
+        userDisplayName,
+        rpId,
+        aaguid,
+        attestedCredentialData,
+        signatureAlgorithm,
+        signCount,
+        attestationType,
+        rk,
+        credProtect,
+        transports,
+        createdAt,
+        updatedAt,
+        authenticatedAt);
+  }
+
+  private static Long convertToEpochMillis(LocalDateTime dateTime) {
+    if (dateTime == null) {
+      return null;
+    }
+    return SystemDateTime.toEpochMilli(dateTime);
   }
 }

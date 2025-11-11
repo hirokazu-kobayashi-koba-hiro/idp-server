@@ -21,18 +21,26 @@ import com.webauthn4j.data.RegistrationParameters;
 import com.webauthn4j.data.client.Origin;
 import com.webauthn4j.server.ServerProperty;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.idp.server.platform.json.JsonReadable;
 
-public class WebAuthn4jConfiguration {
+public class WebAuthn4jConfiguration implements JsonReadable {
   String rpId;
   String rpName;
-  String origin;
+  @Deprecated String origin;
+  List<String> allowedOrigins;
   byte[] tokenBindingId;
   String attestationPreference;
   String authenticatorAttachment;
+  String residentKey;
 
   boolean requireResidentKey;
   boolean userVerificationRequired;
   boolean userPresenceRequired;
+
+  List<Integer> pubKeyCredAlgorithms;
+  Long timeout;
 
   public WebAuthn4jConfiguration() {}
 
@@ -57,15 +65,24 @@ public class WebAuthn4jConfiguration {
     this.userPresenceRequired = userPresenceRequired;
   }
 
-  // FIXME
+  public List<String> getAllowedOrigins() {
+    if (allowedOrigins != null && !allowedOrigins.isEmpty()) {
+      return allowedOrigins;
+    }
+    if (origin != null && !origin.isEmpty()) {
+      return List.of(origin);
+    }
+    return List.of();
+  }
+
   RegistrationParameters toRegistrationParameters(WebAuthn4jChallenge webAuthn4jChallenge) {
 
-    // Server properties
-    Origin origin = Origin.create(this.origin);
-    ServerProperty serverProperty =
-        new ServerProperty(origin, rpId, webAuthn4jChallenge, tokenBindingId);
+    Set<Origin> origins =
+        getAllowedOrigins().stream().map(Origin::create).collect(Collectors.toSet());
 
-    // expectations
+    ServerProperty serverProperty =
+        ServerProperty.builder().origins(origins).rpId(rpId).challenge(webAuthn4jChallenge).build();
+
     List<PublicKeyCredentialParameters> pubKeyCredParams = null;
 
     return new RegistrationParameters(
@@ -106,5 +123,17 @@ public class WebAuthn4jConfiguration {
 
   public boolean userPresenceRequired() {
     return userPresenceRequired;
+  }
+
+  public String residentKey() {
+    return residentKey;
+  }
+
+  public List<Integer> pubKeyCredAlgorithms() {
+    return pubKeyCredAlgorithms;
+  }
+
+  public Long timeout() {
+    return timeout;
   }
 }

@@ -21,7 +21,7 @@ public enum StandardAuthenticationMethod {
   EMAIL("email"),
   SMS("sms"),
   FIDO_UAF("fido-uaf"),
-  WEB_AUTHN("webauthn");
+  FIDO2("fido2");
 
   private final String type;
 

@@ -19,9 +19,14 @@ package org.idp.server.authenticators.webauthn4j;
 import com.webauthn4j.converter.AttestedCredentialDataConverter;
 import com.webauthn4j.converter.util.ObjectConverter;
 import com.webauthn4j.credential.CredentialRecordImpl;
+import com.webauthn4j.data.AuthenticatorTransport;
 import com.webauthn4j.data.attestation.authenticator.AttestedCredentialData;
 import com.webauthn4j.data.attestation.statement.NoneAttestationStatement;
 import com.webauthn4j.data.extension.authenticator.AuthenticationExtensionsAuthenticatorOutputs;
+import com.webauthn4j.data.extension.authenticator.RegistrationExtensionAuthenticatorOutput;
+import java.util.Base64;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class WebAuthn4jCredentialConverter {
 
@@ -35,20 +40,36 @@ public class WebAuthn4jCredentialConverter {
   }
 
   public CredentialRecordImpl convert() {
+    Base64.Decoder urlDecoder = Base64.getUrlDecoder();
     AttestedCredentialData deserializedAttestedCredentialData =
-        attestedCredentialDataConverter.convert(credential.attestationObject());
+        attestedCredentialDataConverter.convert(
+            urlDecoder.decode(credential.attestedCredentialData()));
 
-    // TODO
+    // Restore transports from database (important for UX - browser can choose optimal transport)
+    Set<AuthenticatorTransport> transports =
+        credential.transports() != null
+            ? credential.transports().stream()
+                .map(AuthenticatorTransport::create)
+                .collect(Collectors.toSet())
+            : null;
+
+    // Note: We use NoneAttestationStatement because:
+    // - We only store attestation_type (string) in DB, not the full attestation statement bytes
+    // - Reconstructing original attestation statement requires attestation_object_bytes (not
+    // stored)
+    // - For authentication verification, only AttestedCredentialData and signCount are needed
+    // - AttestationStatement is primarily used during registration, not authentication
     return new CredentialRecordImpl(
-        new NoneAttestationStatement(),
-        null,
-        null,
-        null,
-        credential.signCount(),
-        deserializedAttestedCredentialData,
-        new AuthenticationExtensionsAuthenticatorOutputs<>(),
-        null,
-        null,
-        null);
+        new NoneAttestationStatement(), // attestationStatement
+        null, // uvInitialized - not stored in DB
+        null, // backupEligible - not stored in DB
+        null, // backupState - not stored in DB
+        credential.signCount(), // counter
+        deserializedAttestedCredentialData, // attestedCredentialData
+        new AuthenticationExtensionsAuthenticatorOutputs<
+            RegistrationExtensionAuthenticatorOutput>(), // authenticatorExtensions
+        null, // clientData - not stored in DB
+        null, // clientExtensions - not stored in DB
+        transports); // transports - restored from DB
   }
 }

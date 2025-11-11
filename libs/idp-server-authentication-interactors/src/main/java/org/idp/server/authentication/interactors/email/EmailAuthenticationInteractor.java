@@ -27,7 +27,6 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionResult;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
-import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.authentication.policy.AuthenticationStepDefinition;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
@@ -155,31 +154,6 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
   }
 
   /**
-   * Get current step definition from authentication policy.
-   *
-   * @param transaction authentication transaction
-   * @param method authentication method name
-   * @return step definition or null if not found
-   */
-  private AuthenticationStepDefinition getCurrentStepDefinition(
-      AuthenticationTransaction transaction, String method) {
-
-    if (!transaction.hasAuthenticationPolicy()) {
-      return null;
-    }
-
-    AuthenticationPolicy policy = transaction.authenticationPolicy();
-    if (!policy.hasStepDefinitions()) {
-      return null;
-    }
-
-    return policy.stepDefinitions().stream()
-        .filter(step -> method.equals(step.authenticationMethod()))
-        .findFirst()
-        .orElse(null);
-  }
-
-  /**
    * Resolve user for authentication (1st factor - user identification).
    *
    * <p><b>Issue #800 Fix:</b> Search database by input identifier FIRST, before checking
@@ -216,7 +190,7 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
       UserQueryRepository userQueryRepository) {
 
     // Get step definition from policy
-    AuthenticationStepDefinition stepDefinition = getCurrentStepDefinition(transaction, method());
+    AuthenticationStepDefinition stepDefinition = transaction.getCurrentStepDefinition(method());
     // 3. New user creation decision
     boolean allowRegistration =
         stepDefinition != null && stepDefinition.allowRegistration(); // default: disabled

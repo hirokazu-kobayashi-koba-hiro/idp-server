@@ -17,7 +17,7 @@
       "acr_mapping_rules": {
         "urn:mace:incommon:iap:gold": [
           "fido-uaf",
-          "webauthn"
+          "fido2"
         ],
         "urn:mace:incommon:iap:silver": [
           "email",
@@ -30,7 +30,7 @@
       },
       "level_of_authentication_scopes": {
         "transfers": [
-          "fido-uaf", "webauthn"
+          "fido-uaf", "fido2"
         ]
       },
       "success_conditions": {

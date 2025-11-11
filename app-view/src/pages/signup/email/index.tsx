@@ -61,7 +61,7 @@ export default function EmailVerificationPage() {
     if (!response.ok) {
       setMessage("failed email verification");
     }
-    router.push(`/signup/authorize?id=${id}&tenant_id=${tenantId}`);
+    router.push(`/signup/fido2?id=${id}&tenant_id=${tenantId}`);
   };
 
   return (

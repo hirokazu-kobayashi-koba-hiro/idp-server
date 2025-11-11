@@ -154,7 +154,7 @@ describe("Organization Authentication Policy Config Management API - Structured 
                   client_ids: ["test-client"],
                   scopes: ["openid", "profile"]
                 },
-                available_methods: ["password", "webauthn"],
+                available_methods: ["password", "fido2"],
                 success_conditions: {
                   conditions: []
                 }
@@ -344,7 +344,7 @@ describe("Organization Authentication Policy Config Management API - Structured 
                   client_ids: ["updated-test-client"],
                   scopes: ["openid", "email"]
                 },
-                available_methods: ["webauthn", "sms"],
+                available_methods: ["fido2", "sms"],
                 success_conditions: {
                   conditions: []
                 }
@@ -407,7 +407,7 @@ describe("Organization Authentication Policy Config Management API - Structured 
                   client_ids: ["dry-update-test-client"],
                   acr_values: ["2"]
                 },
-                available_methods: ["webauthn"],
+                available_methods: ["fido2"],
                 success_conditions: {
                   conditions: []
                 }
@@ -568,10 +568,10 @@ describe("Organization Authentication Policy Config Management API - Structured 
                   client_ids: ["lifecycle-test-client"],
                   scopes: ["openid", "profile"]
                 },
-                available_methods: ["password", "webauthn"],
+                available_methods: ["password", "fido2"],
                 acr_mapping_rules: {
                   "1": ["password"],
-                  "2": ["webauthn"]
+                  "2": ["fido2"]
                 },
                 success_conditions: {
                   conditions: []
@@ -610,7 +610,7 @@ describe("Organization Authentication Policy Config Management API - Structured 
                   scopes: ["openid", "email", "profile"],
                   acr_values: ["2"]
                 },
-                available_methods: ["webauthn", "sms"],
+                available_methods: ["fido2", "sms"],
                 level_of_authentication_scopes: {
                   "high": ["email"],
                   "medium": ["profile"]

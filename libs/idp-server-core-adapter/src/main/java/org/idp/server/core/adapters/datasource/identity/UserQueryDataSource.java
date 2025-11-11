@@ -219,6 +219,23 @@ public class UserQueryDataSource implements UserQueryRepository {
     }
   }
 
+  @Override
+  public User findByPreferredUsernameNoProvider(Tenant tenant, String preferredUsername) {
+    try {
+      Map<String, String> result =
+          executor.selectByPreferredUsernameNoProvider(tenant, preferredUsername);
+
+      if (Objects.isNull(result) || result.isEmpty()) {
+        return new User();
+      }
+
+      UserIdentifier userIdentifier = ModelConverter.extractUserIdentifier(result);
+      return collectAssignedDataAndConvert(tenant, userIdentifier, executor, result);
+    } catch (SqlTooManyResultsException exception) {
+      throw new UserTooManyFoundResultException(exception.getMessage());
+    }
+  }
+
   private User collectAssignedDataAndConvert(
       Tenant tenant,
       UserIdentifier userIdentifier,

@@ -1,6 +1,6 @@
 {
   "id": "c2e1023c-ee67-4ecc-b7de-d07bc1b7e71d",
-  "type": "webauthn",
+  "type": "fido2",
   "metadata": {
     "webauthn4j": {
       "rp_id": "localhost",

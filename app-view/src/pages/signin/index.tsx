@@ -95,7 +95,7 @@ export default function SignIn() {
       },
     );
     if (response.ok) {
-      router.push(`/signin/authorize?id=${id}&tenant_id=${tenantId}`);
+      router.push(`/signin/fido2?id=${id}&tenant_id=${tenantId}`);
     }
   };
 
@@ -125,7 +125,7 @@ export default function SignIn() {
     if (data && data.session_enabled === true) {
       execute();
     }
-  }, [data]);
+  }, [data, id, tenantId]);
 
   if (isPending) return <Loading />;
   if (!data) return <Loading />;
