@@ -50,6 +50,10 @@ paths:
             application/json:
               schema:
                 type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /{tenant-id}/v1/me/mfa/{mfa-operation-type}:
     post:
@@ -83,6 +87,12 @@ paths:
                   id:
                     type: string
                     description: 認証トランザクションID
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /{tenant-id}/v1/me/authentication-devices/{device-id}:
     patch:
@@ -103,6 +113,14 @@ paths:
       responses:
         '200':
           description: 200 OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{verification-process}:
     post:
@@ -170,67 +188,21 @@ paths:
                id: "565b030e-04b5-45eb-989e-136e3623dc7d"
                application_number: "abcdefg012345"
         '400':
-          description: 申込みの入力エラー
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - error
-                properties:
-                  error:
-                    type: string
-                    description: |
-                      エラーの種類を示す識別子（"invalid_request"）。
-                  error_description:
-                    type: string
-                    description: |
-                      エラーの概要。
-                  error_details:
-                    type: object
-                    description: |
-                      エラーの詳細内容。バリデーションの具体的な内容や。外部サービスからのエラーレスポンス。
-                example:
-                  error: "invalid_request"
-                  error_description: "The identity verification request is invalid. Please review your input for missing or incorrect fields."
-
+          $ref: '#/components/responses/BadRequest'
         '401':
-          description: |
-           認証エラー。アクセストークンが無効な場合。
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - error
-                properties:
-                  error:
-                    type: string
-                    description: |
-                      エラーの種類を示す識別子（"invalid_token"）。
-                  error_description:
-                    type: string
-                    description: |
-                      エラーの概要。
-
+          $ref: '#/components/responses/Unauthorized'
         '403':
-          description: |
-            権限エラー。スコープ不足。
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - error
-                properties:
-                  error:
-                    type: string
-                    description: |
-                      エラーの種類を示す識別子（"invalid_token"）。
-                  error_description:
-                    type: string
-                    description: |
-                      エラーの概要。
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/me/identity-verification/applications:
     get:
@@ -400,6 +372,10 @@ paths:
                   offset:
                     type: integer
                     description:  ページネーション用のオフセット
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
 
 
@@ -447,6 +423,18 @@ paths:
                 additionalProperties:
                   description: |
                     設定ファイルの `response` に設定した項目が返却される
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
 
   /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{id}:
@@ -464,6 +452,14 @@ paths:
       responses:
         '204':
           description: No Content
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /{tenant-id}/v1/me/identity-verification/results:
     get:
@@ -627,9 +623,185 @@ paths:
                   offset:
                     type: integer
                     description: ページネーション用のオフセット
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
 
 components:
+  responses:
+    BadRequest:
+      description: |
+        リクエストパラメータが不正、検証エラー、プロセスシーケンスエラー
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "invalid_request"
+              error_description:
+                type: string
+                example: "Request validation failed"
+              error_messages:
+                type: array
+                items:
+                  type: string
+                description: |
+                  検証エラーの詳細メッセージ配列（JSON Schema検証エラー、プロセスシーケンスエラー等）
+          examples:
+            schema_validation_error:
+              value:
+                error: "invalid_request"
+                error_description: "The identity verification request is invalid. Please review your input for missing or incorrect fields."
+                error_messages:
+                  - "last_name is missing"
+                  - "first_name is missing"
+                  - "birthdate is missing"
+            type_mismatch_error:
+              value:
+                error: "invalid_request"
+                error_description: "The identity verification request is invalid. Please review your input for missing or incorrect fields."
+                error_messages:
+                  - "age is not a integer"
+                  - "address is not a object"
+            process_sequence_error:
+              value:
+                error: "invalid_request"
+                error_description: "Process sequence violation"
+                error_messages:
+                  - "process 'complete-verification' is not available at current state"
+
+    Unauthorized:
+      description: |
+        認証エラー。アクセストークンが無効または期限切れ
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "invalid_token"
+              error_description:
+                type: string
+                example: "The access token is invalid or expired"
+
+    Forbidden:
+      description: |
+        権限エラー。スコープ不足
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "insufficient_scope"
+              error_description:
+                type: string
+                example: "The request requires higher privileges than provided by the access token"
+
+    NotFound:
+      description: |
+        リソースが存在しない
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "not_found"
+              error_description:
+                type: string
+                example: "The requested resource was not found"
+
+    Conflict:
+      description: |
+        リソースの状態が競合している
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "conflict"
+              error_description:
+                type: string
+                example: "A verification application is already in progress"
+              existing_application_id:
+                type: string
+                format: uuid
+
+    TooManyRequests:
+      description: |
+        レート制限超過
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "too_many_requests"
+              error_description:
+                type: string
+                example: "Too many requests. Please try again later."
+              retry_after:
+                type: integer
+                example: 60
+
+    InternalServerError:
+      description: |
+        サーバー内部エラー
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "server_error"
+              error_description:
+                type: string
+                example: "An internal server error occurred"
+
+    ServiceUnavailable:
+      description: |
+        サービス一時利用不可
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "service_unavailable"
+              error_description:
+                type: string
+                example: "The service is temporarily unavailable. Please try again later."
+
+    GatewayTimeout:
+      description: |
+        外部サービスタイムアウト
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "gateway_timeout"
+              error_description:
+                type: string
+                example: "The external service request timed out"
+
   securitySchemes:
     OAuth2:
       type: oauth2
