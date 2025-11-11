@@ -433,11 +433,11 @@ navigator.credentials.get({
 // 認証器に保存されたユーザー情報をオートフィルで表示
 
 【認証器内の情報】
-- displayName: "田中太郎"
-- name: "tanaka@example.com"
+- displayName: "伊藤一朗"
+- name: "itou@example.com"
 
 【オートフィルに表示される内容】
-🔐 田中太郎 (tanaka@example.com)
+🔐 伊藤一朗 (itou@example.com)
    └ Touch IDで認証
 ```
 
@@ -608,8 +608,8 @@ Discoverable Credentialでは、認証器に保存するユーザー情報を適
 ```javascript
 user: {
   id: new TextEncoder().encode("user123"),     // ユーザーの一意ID
-  name: "user@example.com",                    // ユーザー名（メールアドレス等）
-  displayName: "田中太郎"                      // 表示名
+  name: "itou@example.com",                    // ユーザー名（メールアドレス等）
+  displayName: "伊藤一朗"                      // 表示名
 }
 ```
 
@@ -621,180 +621,139 @@ user: {
 
 ## セキュリティ考慮事項
 
-### Discoverable Credential特有のリスク
+### よくある誤解と正しい理解
 
-#### 1. ユーザー列挙攻撃（User Enumeration）
-- **リスク**: デバイスに保存されたアカウント一覧からユーザー情報が露出
-- **対策**:
-  - 表示名に個人識別情報を含めない
-  - 匿名化されたユーザーIDの使用
-  - デバイスロック機能の必須化
+Discoverable Credentialのセキュリティについて、よくある誤解と正しい理解を整理します。
 
-#### 2. 認証器容量制限
-- **リスク**: セキュリティキーの容量制限（25〜100個程度）によるサービス拒否
-- **対策**:
-  - 容量監視とアラート機能
-  - 不要なクレデンシャルの定期削除
-  - 企業環境での容量管理ポリシー
+#### 誤解1: 「displayNameに実名を使うとプライバシーリスクがある」
 
-#### 3. 認証情報の永続化リスク
-- **リスク**: デバイス内に保存された認証情報の長期保持
-- **対策**:
-  - 定期的なクレデンシャル更新
-  - アクセス頻度による自動削除
-  - 組織レベルでの認証ポリシー管理
+❌ **誤解**:
+- 表示名に個人識別情報（実名）を含めてはいけない
+- displayNameは匿名化すべき
 
-### デバイス紛失時の対応
+✅ **正しい理解**:
+- **displayNameは実名使用が推奨**される
+- プライバシー保護が必要なのは`user.id`（user handle）
+- displayNameはユーザーが選択できるべき
 
-#### 1. クラウド同期有効時
-- **復旧**: 新デバイスでアカウント設定後、自動的にパスキーが復元
-- **対象**: iOS（iCloud）、Android（Google）、サードパーティ（1Password等）
-- **注意**: クラウドアカウント侵害時の影響範囲が大きい
+**W3C WebAuthn仕様**:
+> "The displayName is a human-palatable name for the user account, intended only for display. For example, 'Alex Müller' or '田中倫'. The Relying Party SHOULD let the user choose this, and SHOULD NOT restrict the choice more than necessary."
 
-#### 2. クラウド同期無効時（セキュリティキー等）
-- **復旧不可**: デバイス紛失でパスキーも失われる
-- **対策**: 複数のバックアップ認証手段を事前準備
-- **推奨**: 複数の独立した認証器の登録
+**正しい実装**:
+```javascript
+user: {
+  id: crypto.randomUUID(),          // ✅ ランダムUUID（PII禁止）
+  name: "itou@example.com",         // ✅ メールアドレス可（識別用）
+  displayName: "伊藤一朗"           // ✅ 実名推奨（ユーザーフレンドリー）
+}
+```
 
-### プライバシー保護
+#### 誤解2: 「Discoverable Credentialはユーザー列挙攻撃に脆弱」
+
+❌ **誤解**:
+- デバイスに保存されたアカウント一覧から簡単にユーザー情報が漏洩する
+- サーバー側でユーザー列挙攻撃のリスクが増える
+
+✅ **正しい理解**:
+- Discoverable Credentialを使うことで、むしろ**サーバー側でのユーザー列挙攻撃を防げる**
+- デバイス内の情報にアクセスするには「物理アクセス + デバイスロック突破 + 生体認証突破」が必要
+- 適切なデバイスロック設定で十分なセキュリティを確保できる
+
+**W3C WebAuthn Working Group の見解（Issue #578）**:
+- 生体認証やPINで保護された認証器では、displayName等の情報を保存しても問題ない
+- 本当のリスクは「認証機能のない認証器」での使用
+
+**推奨対策**:
+- Platform Authenticator（Touch ID, Face ID, Windows Hello）の使用
+- デバイスロック（パスコード/パスワード）の必須化
+- セキュリティキー使用時はPIN設定を推奨
+
+#### 誤解3: 「パスキーは定期的に更新すべき」
+
+❌ **誤解**:
+- パスワードのように定期的にクレデンシャルを更新すべき
+- アクセス頻度によって自動削除すべき
+
+✅ **正しい理解**:
+- パスキーは**永続的に使用する**ことが想定されている
+- 公開鍵暗号方式のため、サーバー側に秘密情報は保存されない
+- 定期更新は不要であり、ユーザー体験を損なう
+
+**実際のリスクと対策**:
+- **リスク**: デバイス紛失時のアクセス不能
+- **対策**: 複数デバイスへの登録、バックアップ認証手段の用意
+
+### 実際のセキュリティリスクと対策
+
+#### 1. 物理デバイス紛失・盗難
+
+**リスクシナリオ**:
+- デバイス紛失 + デバイスロック未設定 → パスキー不正使用の可能性
+
+**推奨対策**:
+- [ ] デバイスロック（パスコード/パスワード）必須化
+- [ ] 生体認証の有効化（Touch ID, Face ID等）
+- [ ] 複数デバイスへのパスキー登録
+- [ ] リモートワイプ機能の有効化（企業環境）
+- [ ] バックアップ認証手段の用意
+
+#### 2. 認証器容量制限（セキュリティキー）
+
+**リスクシナリオ**:
+- セキュリティキーの容量（25〜100個程度）超過 → 新規登録不可
+
+**推奨対策**:
+- [ ] 企業環境での容量管理ポリシー策定
+- [ ] 不要なクレデンシャルの定期削除フロー
+- [ ] 容量監視とアラート機能（可能であれば）
+- [ ] Platform Authenticatorの併用推奨（実質無制限）
+
+#### 3. デバイス紛失時の復旧
+
+**クラウド同期有効時（Platform Authenticator）**:
+- **復旧**: 新デバイスでクラウドアカウント設定後、自動的にパスキー復元
+- **対象**: iOS（iCloud Keychain）、Android（Google Password Manager）、1Password等
+- **メリット**: デバイス紛失時も別デバイスで継続使用可能
+- **デメリット**: クラウドアカウント侵害時の影響範囲が大きい
+
+**クラウド同期無効時（セキュリティキー等）**:
+- **復旧**: 不可能（デバイス紛失 = パスキー喪失）
+- **対策**: 複数デバイスへの事前登録必須
+- **推奨**: バックアップ認証手段（パスワード、SMS等）を併用
+
+### プライバシー保護の正しい理解
 
 #### 認証器に保存される情報
-- ユーザーID（暗号化された形）
-- 表示名
-- アイコンURL（任意）
-- サイト情報（Origin）
 
-#### 推奨事項
-- **最小限の情報**: 個人を特定できる情報は避ける
-- **匿名化**: 可能な限り匿名化された識別子を使用
-- **データ最小化**: 必要最小限のユーザー情報のみ保存
-- **プライバシーポリシー**: ユーザーへの適切な情報開示
-
----
-
-## UX考慮事項とフォールバック戦略
-
-### ユーザー体験設計
-
-#### 1. 初回登録時のガイダンス
-- **明確な説明**: Discoverable Credentialの利点とリスクの説明
-- **ステップバイステップ**: 登録プロセスの視覚的なガイド
-- **デバイス選択**: Platform認証器 vs Cross-Platform認証器の選択支援
-
-#### 2. 認証失敗時の対応
-- **エラーメッセージ**: わかりやすいエラー説明と対処法
-- **段階的フォールバック**: 複数の認証手段への誘導
-- **ヘルプガイド**: 認証器トラブルシューティング
-
-#### 3. 複数アカウント管理
-- **アカウント識別**: 明確なアカウント表示（アイコン、名前）
-- **アカウント切り替え**: 直感的なアカウント選択UI
-- **アカウント削除**: 不要なアカウントの安全な削除機能
-
-### フォールバック戦略
-
-#### レベル1: 代替認証器
-```mermaid
-flowchart TD
-    A[Discoverable Credential認証] --> B{認証成功?}
-    B -->|Yes| C[ログイン完了]
-    B -->|No| D[別の認証器を試行]
-    D --> E{代替認証器あり?}
-    E -->|Yes| F[代替認証器で認証]
-    E -->|No| G[レベル2フォールバック]
-    F --> H{認証成功?}
-    H -->|Yes| C
-    H -->|No| G
+```javascript
+// Discoverable Credentialで認証器に保存される情報
+{
+  user: {
+    id: "550e8400-e29b-41d4-a716-446655440000",  // ランダムUUID
+    name: "itou@example.com",                   // ユーザー名（識別用）
+    displayName: "伊藤一朗"                      // 表示名（UI表示用）
+  },
+  rpId: "example.com",                          // サイト情報
+  credentialId: "..."                           // 資格情報ID
+}
 ```
 
-#### レベル2: 従来の認証方式
-```mermaid
-flowchart TD
-    A[認証器認証失敗] --> B[パスワード認証]
-    B --> C{パスワード認証成功?}
-    C -->|Yes| D[ログイン完了]
-    C -->|No| E[SMS/Email認証]
-    E --> F{SMS/Email認証成功?}
-    F -->|Yes| D
-    F -->|No| G[サポート問い合わせ]
-```
+#### 各フィールドのプライバシー考慮事項
 
-#### レベル3: アカウント回復
-- **バックアップコード**: 事前に発行されたワンタイムコード
-- **管理者による回復**: 企業環境でのアカウント回復
-- **身元確認**: 本人確認書類による手動回復
+| フィールド | プライバシー要件 | 推奨値 | 理由 |
+|-----------|----------------|--------|------|
+| **user.id** | ❗ PII禁止 | ランダムUUID | 仕様で明示的に禁止 |
+| **user.name** | ⚠️ 変更可能性考慮 | メールアドレス可 | 識別用途、変更時は新規登録必要 |
+| **user.displayName** | ✅ ユーザーフレンドリー | 実名推奨 | ユーザーが選択、オートフィルで表示 |
 
-### 認証エラーハンドリング
+**W3C WebAuthn仕様（user.id）**:
+> "The user handle MUST NOT contain personally identifying information about the user, such as a username or e-mail address."
 
-#### 一般的なエラーと対処法
-
-| エラー | 原因 | ユーザー向け対処法 | システム側対応 |
-|--------|------|------------------|----------------|
-| **認証器未検出** | デバイス未接続 | デバイス接続確認 | 接続状態監視 |
-| **ユーザー検証失敗** | 生体認証失敗 | 再試行・PIN入力 | 試行回数制限 |
-| **タイムアウト** | 応答時間超過 | 操作の再実行 | タイムアウト延長 |
-| **アカウント未登録** | 認証器に未保存 | 新規登録・代替認証 | 登録状態確認 |
-
-### ブラウザ・デバイス互換性
-
-#### サポート状況
-
-| ブラウザ | Platform認証器 | Cross-Platform認証器 | 制限事項 |
-|----------|---------------|---------------|----------|
-| **Chrome 67+** | ✅ 完全対応 | ✅ 完全対応 | なし |
-| **Safari 14+** | ✅ Touch ID対応 | ✅ 制限あり | iOSのみ完全対応 |
-| **Firefox 60+** | ✅ 対応 | ✅ 対応 | 一部機能制限 |
-| **Edge 18+** | ✅ Windows Hello | ✅ 対応 | Windows環境推奨 |
-
-#### OS・デバイス対応
-
-| OS | Platform認証器 | 特徴 | 制限事項 |
-|----|---------------|------|----------|
-| **iOS 16+** | Touch ID, Face ID | iCloud同期 | Safari必須 |
-| **Android 9+** | 指紋認証, 顔認証 | Google同期 | Chrome推奨 |
-| **Windows 10+** | Windows Hello | Microsoft同期 | Edge/Chrome対応 |
-| **macOS** | Touch ID | iCloud同期 | Safari/Chrome対応 |
-
-#### 非対応環境への対応
-
-1. **機能検出**: WebAuthn API対応の事前チェック
-2. **代替認証**: パスワード + SMS認証へのフォールバック
-3. **ユーザー通知**: 対応ブラウザ・OSへのアップグレード推奨
-4. **段階的移行**: 対応環境から順次パスキー導入
-
----
-
-## idp-serverでのサポート状況
-
-### 基本機能サポート
-
-| 機能 | サポート状況 | 実装方式 |
-|-----|-------------|----------|
-| **基本認証フロー** | | |
-| Discoverable Credential登録 | ✅ 対応済み | `residentKey: "required"` または `requireResidentKey: true` |
-| 通常のパスキー登録 | ✅ 対応済み | `residentKey: "discouraged"` または `requireResidentKey: false` |
-| **認証器タイプ** | | |
-| Platform Authenticator | ✅ 対応済み | ブラウザ対応デバイス |
-| Roaming Authenticator | ✅ 対応済み | セキュリティキー対応 |
-| **パラメータ制御** | | |
-| requireResidentKeyパラメータ | ✅ 対応済み | レガシーパラメータ（WebAuthn Level 1） |
-| residentKeyパラメータ | ✅ 対応済み | 標準パラメータ（WebAuthn Level 2+） |
-| userVerification制御 | ✅ 対応済み | 認証強度選択可能 |
-
-> **⚠️ 重要**: idp-serverは両方のパラメータをサポートしています。
-> - `residentKey`（enum型）: WebAuthn Level 2標準パラメータ（推奨）
-> - `requireResidentKey`（boolean型）: レガシーパラメータ（後方互換性）
-
-### WebAuthn4j連携
-
-idp-serverは[WebAuthn4j](https://github.com/webauthn4j/webauthn4j)ライブラリを使用してWebAuthn機能を実装：
-
-- **Discoverable Credential対応**: WebAuthn4j 0.9.0以降で完全対応
-- **仕様準拠**: WebAuthn Level 3仕様に準拠
-- **拡張機能**: カスタム認証ロジックのプラグイン対応
-
-> **📝 実装詳細**: 具体的な設定方法や実装例については、
-> [WebAuthn設定ガイド](../../content_06_developer-guide/05-configuration/authn/webauthn.md)を参照してください。
+**重要なポイント**:
+- ✅ **displayNameは実名使用が推奨**（ユーザー体験向上のため）
+- ✅ Platform Authenticatorは生体認証で保護されている
+- ✅ デバイスロック設定でさらに保護層を追加
+- ❌ user.idにPIIを含めてはいけない（唯一の絶対要件）
 
 ---
 
@@ -806,7 +765,7 @@ idp-serverは[WebAuthn4j](https://github.com/webauthn4j/webauthn4j)ライブラ�
 - **[FIDO2 Client to Authenticator Protocol](https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-errata-20220621.html)** - CTAP仕様
 
 ### 関連ドキュメント
-- **[FIDO2・WebAuthn パスワードレス認証](basic-16-fido-webauthn-passwordless.md)** - FIDO2/WebAuthnの基礎概念
+- **[FIDO2・WebAuthn パスワードレス認証](basic-16-fido2-webauthn-passwordless.md)** - FIDO2/WebAuthnの基礎概念
 - **[WebAuthn設定](../../content_06_developer-guide/05-configuration/authn/webauthn.md)** - idp-serverでのWebAuthn設定方法
 
 ---
@@ -815,31 +774,60 @@ idp-serverは[WebAuthn4j](https://github.com/webauthn4j/webauthn4j)ライブラ�
 
 ### 重要なポイント
 
-1. **定義の違い**:
-   - **パスキー**: FIDO2を使った認証資格情報の総称
-   - **Discoverable Credential**: ユーザーID入力不要のパスキー（認証器内に保存）
+1. **Discoverable Credential = 保存形式（登録時）**
+   - `residentKey: "required"` でユーザー情報を認証器に保存
+   - ユーザーID入力が不要になる
+   - 認証器に保存される情報: 秘密鍵、user.id、user.name、user.displayName
 
-2. **実装の選択**:
-   - **`residentKey: "required"`**: Discoverable Credential必須（作成不可時はエラー）
-   - **`residentKey: "preferred"`**: Discoverable推奨（可能なら作成）
-   - **`residentKey: "discouraged"`**: Non-Discoverable推奨（Discoverableも許容）
-   - **`userVerification: "required"`**: 生体認証必須
+2. **Conditional UI = 使用方法（認証時）**
+   - `mediation: 'conditional'` でオートフィル起動
+   - W3C WebAuthn Level 3の公式機能
+   - Chrome 108+, Safari 16+で対応（MDN Baseline 2023）
+   - idp-server実装済み（推奨）
 
-3. **運用上の考慮事項**:
-   - **容量制限**: セキュリティキーは保存数に制限
-   - **バックアップ**: デバイス紛失対策としてバックアップ手段を用意
-   - **プライバシー**: 認証器に保存する情報は最小限に
+3. **関係性**
+   - Conditional UIを使うには**Discoverableが必須**
+   - Discoverableを使うのに**Conditional UIは必須ではない**（Modalでも可）
+   - **推奨組み合わせ**: Discoverable + Conditional UI
 
-### 実装の判断基準
+### よくある誤解
 
-| 要件 | 推奨実装 | 理由 |
-|------|----------|------|
-| パスワード完全廃止 | Discoverable Credential | ユーザーID入力不要 |
-| 2要素認証の2要素目 | 通常のパスキー | 既存ID管理システムとの親和性 |
-| 企業セキュリティキー | 通常のパスキー | 容量制限回避 |
-| 個人デバイス | Discoverable Credential | UX向上 |
+| 誤解 | 正しい理解 |
+|------|-----------|
+| displayNameは匿名化すべき | ✅ **実名使用が推奨**（user.idのみPII禁止） |
+| ユーザー列挙攻撃に脆弱 | ✅ むしろサーバー側の列挙攻撃を**防げる** |
+| 定期的に更新すべき | ✅ **永続的使用が想定**、更新不要 |
+
+### 実装チェックリスト
+
+**登録時（Discoverable Credential作成）**:
+- [ ] `residentKey: "required"` または `requireResidentKey: true` を設定
+- [ ] `user.id` はランダムUUID（PII禁止、仕様で明示）
+- [ ] `user.name` にメールアドレス等の識別子
+- [ ] `user.displayName` に実名設定（ユーザーが選択、オートフィルで表示）
+- [ ] `authenticatorAttachment: "platform"` 推奨（Touch ID等）
+
+**認証時（Conditional UI使用）**:
+- [ ] `mediation: 'conditional'` を指定
+- [ ] `allowCredentials` を空にする（または省略）
+- [ ] HTML入力フィールドに `autoComplete="username webauthn"` を追加
+- [ ] ページロード時に `credentials.get()` を起動
+- [ ] 機能検出: `PublicKeyCredential.isConditionalMediationAvailable()` で確認
+
+**セキュリティ対策**:
+- [ ] デバイスロック（パスコード/パスワード）必須化
+- [ ] 生体認証の有効化
+- [ ] 複数デバイスへのパスキー登録推奨
+- [ ] バックアップ認証手段の用意
+
+### 参考リソース
+
+- **W3C仕様**: [WebAuthn Level 3](https://www.w3.org/TR/webauthn-3/)
+- **Conditional UI**: [W3C Explainer](https://github.com/w3c/webauthn/wiki/Explainer:-WebAuthn-Conditional-UI)
+- **実装ガイド**: [Chrome Developers](https://developer.chrome.com/docs/identity/webauthn-conditional-ui)
+- **idp-server実装**: [WebAuthn設定ガイド](../../content_06_developer-guide/05-configuration/authn/webauthn.md)
 
 ---
 
-> パスキーとDiscoverable Credentialの違いを理解し、適切な実装選択により、
+> Discoverable CredentialとConditional UIの違いを理解し、適切な実装により、
 > セキュアで使いやすいパスワードレス認証システムを構築しましょう！

@@ -79,7 +79,7 @@ title: 📚 ドキュメント索引
 | 13 | `basic-13-id-token-jwt.md` | IDトークンとJWT | JWTの構造 |
 | 14 | `basic-14-oidc-claim-design.md` | OIDCユーザー属性（クレーム）設計 | クレーム設計 |
 | 15 | `basic-15-oidc-discovery-dynamic-registration-standard.md` | OIDC Discovery & Dynamic Registration | メタデータ自動取得 |
-| 16 | `basic-16-fido-webauthn-passwordless.md` | FIDO2・WebAuthn パスワードレス認証 | パスワードレス認証 |
+| 16 | `basic-16-fido2-webauthn-passwordless.md` | FIDO2・WebAuthn パスワードレス認証 | パスワードレス認証 |
 | 17 | `basic-17-fido2-passkey-discoverable-credential.md` | FIDO2・パスキー・Discoverable Credential | パスキーの基本 |
 
 ---
