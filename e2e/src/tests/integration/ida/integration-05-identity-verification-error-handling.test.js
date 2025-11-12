@@ -579,6 +579,40 @@ describe("Identity Verification Error Handling", () => {
       }
     });
 
+    it("should successfully process when external service returns 200", async () => {
+      console.log("\n🧪 Test: External service returns 200 Success");
+
+      const applyUrl = `${backendUrl}/${tenantId}/v1/me/identity-verification/applications/${errorTestConfigType}/apply`;
+
+      const response = await postWithJson({
+        url: applyUrl,
+        body: {
+          "test_case": "external_200"
+          // No status parameter → Mockoon returns 200 by default
+        },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userAccessToken}`
+        }
+      });
+
+      console.log(`Response status: ${response.status}`);
+      console.log("Response data:", JSON.stringify(response.data, null, 2));
+
+      // Successful external call should return 200 with application ID
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty("id");
+
+      // Verify application ID is a valid UUID
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      expect(response.data.id).toMatch(uuidRegex);
+
+      // Note: Only 'id' is returned in success response
+      // External service response is stored in database but not returned to client
+
+      console.log("✅ External 200 success correctly processed with valid application ID");
+    });
+
     it("should handle 400 Bad Request from external service", async () => {
       console.log("\n🧪 Test: External service returns 400 Bad Request");
 
@@ -695,123 +729,6 @@ describe("Identity Verification Error Handling", () => {
       console.log("✅ External 403 propagated with client_error category and authorization error details");
     });
 
-    it("should handle 500 Internal Server Error from external service", async () => {
-      console.log("\n🧪 Test: External service returns 500 Internal Server Error");
-
-      const applyUrl = `${backendUrl}/${tenantId}/v1/me/identity-verification/applications/${errorTestConfigType}/apply`;
-
-      const response = await postWithJson({
-        url: applyUrl,
-        body: {
-          "test_case": "external_500",
-          "status": "500"
-        },
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${userAccessToken}`
-        }
-      });
-
-      console.log(`Response status: ${response.status}`);
-      console.log("Response data:", JSON.stringify(response.data, null, 2));
-
-      // External 500 (5xx) should be mapped to SERVER_ERROR (500)
-      expect(response.status).toBe(500);
-      expect(response.data).toHaveProperty("error", "execution_failed");
-      expect(response.data).toHaveProperty("error_description");
-      expect(response.data.error_description).toContain("execution failed");
-      expect(response.data).toHaveProperty("error_details");
-      expect(response.data.error_details).toHaveProperty("execution_type", "http_request");
-      expect(response.data.error_details).toHaveProperty("status_category", "server_error");
-      expect(response.data.error_details).toHaveProperty("status_code", 500);
-      expect(response.data).toHaveProperty("error_messages");
-
-      // Verify external service error response is included
-      expect(response.data.error_details).toHaveProperty("response_body");
-      expect(response.data.error_details.response_body).toHaveProperty("error", "server_error");
-      expect(response.data.error_details.response_body).toHaveProperty("error_id");
-
-      console.log("✅ External 500 correctly mapped to SERVER_ERROR (500) with error tracking");
-    });
-
-    it("should handle 503 Service Unavailable from external service", async () => {
-      console.log("\n🧪 Test: External service returns 503 Service Unavailable");
-
-      const applyUrl = `${backendUrl}/${tenantId}/v1/me/identity-verification/applications/${errorTestConfigType}/apply`;
-
-      const response = await postWithJson({
-        url: applyUrl,
-        body: {
-          "test_case": "external_503",
-          "status": "503"
-        },
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${userAccessToken}`
-        }
-      });
-
-      console.log(`Response status: ${response.status}`);
-      console.log("Response data:", JSON.stringify(response.data, null, 2));
-
-      // External 503 is propagated as-is by idp-server
-      expect(response.status).toBe(503);
-      expect(response.data).toHaveProperty("error", "execution_failed");
-      expect(response.data).toHaveProperty("error_description");
-      expect(response.data.error_description).toContain("execution failed");
-      expect(response.data).toHaveProperty("error_details");
-      expect(response.data.error_details).toHaveProperty("execution_type", "http_request");
-      expect(response.data.error_details).toHaveProperty("status_category", "server_error");
-      expect(response.data.error_details).toHaveProperty("status_code", 503);
-      expect(response.data).toHaveProperty("error_messages");
-
-      // Verify external service error response is included
-      expect(response.data.error_details).toHaveProperty("response_body");
-      expect(response.data.error_details.response_body).toHaveProperty("error", "service_unavailable");
-      expect(response.data.error_details.response_body).toHaveProperty("retryable", true);
-
-      console.log("✅ External 503 propagated with server_error category and retryable flag");
-    });
-
-    it("should handle 504 Gateway Timeout from external service", async () => {
-      console.log("\n🧪 Test: External service returns 504 Gateway Timeout");
-
-      const applyUrl = `${backendUrl}/${tenantId}/v1/me/identity-verification/applications/${errorTestConfigType}/apply`;
-
-      const response = await postWithJson({
-        url: applyUrl,
-        body: {
-          "test_case": "external_504",
-          "status": "504"
-        },
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${userAccessToken}`
-        }
-      });
-
-      console.log(`Response status: ${response.status}`);
-      console.log("Response data:", JSON.stringify(response.data, null, 2));
-
-      // External 504 is propagated as-is by idp-server
-      expect(response.status).toBe(504);
-      expect(response.data).toHaveProperty("error", "execution_failed");
-      expect(response.data).toHaveProperty("error_description");
-      expect(response.data.error_description).toContain("execution failed");
-      expect(response.data).toHaveProperty("error_details");
-      expect(response.data.error_details).toHaveProperty("execution_type", "http_request");
-      expect(response.data.error_details).toHaveProperty("status_category", "server_error");
-      expect(response.data.error_details).toHaveProperty("status_code", 504);
-      expect(response.data).toHaveProperty("error_messages");
-
-      // Verify external service error response is included
-      expect(response.data.error_details).toHaveProperty("response_body");
-      expect(response.data.error_details.response_body).toHaveProperty("error", "gateway_timeout");
-      expect(response.data.error_details.response_body).toHaveProperty("timeout_seconds", 30);
-
-      console.log("✅ External 504 propagated with server_error category and timeout information");
-    });
-
     it("should handle 408 Request Timeout from external service", async () => {
       console.log("\n🧪 Test: External service returns 408 Request Timeout");
 
@@ -851,16 +768,16 @@ describe("Identity Verification Error Handling", () => {
       console.log("✅ External 408 propagated with client_error category and timeout information");
     });
 
-    it("should handle 429 Too Many Requests from external service", async () => {
-      console.log("\n🧪 Test: External service returns 429 Too Many Requests");
+    it("should handle 409 Conflict from external service", async () => {
+      console.log("\n🧪 Test: External service returns 409 Conflict");
 
       const applyUrl = `${backendUrl}/${tenantId}/v1/me/identity-verification/applications/${errorTestConfigType}/apply`;
 
       const response = await postWithJson({
         url: applyUrl,
         body: {
-          "test_case": "external_429",
-          "status": "429"
+          "test_case": "external_409",
+          "status": "409"
         },
         headers: {
           "Content-Type": "application/json",
@@ -871,62 +788,24 @@ describe("Identity Verification Error Handling", () => {
       console.log(`Response status: ${response.status}`);
       console.log("Response data:", JSON.stringify(response.data, null, 2));
 
-      // External 429 is propagated as-is by idp-server
-      expect(response.status).toBe(429);
+      // External 409 is propagated as-is by idp-server
+      expect(response.status).toBe(409);
       expect(response.data).toHaveProperty("error", "execution_failed");
       expect(response.data).toHaveProperty("error_description");
       expect(response.data.error_description).toContain("execution failed");
       expect(response.data).toHaveProperty("error_details");
       expect(response.data.error_details).toHaveProperty("execution_type", "http_request");
       expect(response.data.error_details).toHaveProperty("status_category", "client_error");
-      expect(response.data.error_details).toHaveProperty("status_code", 429);
+      expect(response.data.error_details).toHaveProperty("status_code", 409);
       expect(response.data).toHaveProperty("error_messages");
 
       // Verify external service error response is included
       expect(response.data.error_details).toHaveProperty("response_body");
       expect(response.data.error_details.response_body).toHaveProperty("error", "invalid_request");
-      expect(response.data.error_details.response_body).toHaveProperty("retry_after", 60);
+      expect(response.data.error_details.response_body).toHaveProperty("current_state", "approved");
+      expect(response.data.error_details.response_body).toHaveProperty("requested_state", "applying");
 
-      console.log("✅ External 429 propagated with client_error category and rate limit information");
-    });
-
-    it("should handle 502 Bad Gateway from external service", async () => {
-      console.log("\n🧪 Test: External service returns 502 Bad Gateway");
-
-      const applyUrl = `${backendUrl}/${tenantId}/v1/me/identity-verification/applications/${errorTestConfigType}/apply`;
-
-      const response = await postWithJson({
-        url: applyUrl,
-        body: {
-          "test_case": "external_502",
-          "status": "502"
-        },
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${userAccessToken}`
-        }
-      });
-
-      console.log(`Response status: ${response.status}`);
-      console.log("Response data:", JSON.stringify(response.data, null, 2));
-
-      // External 502 is propagated as-is by idp-server
-      expect(response.status).toBe(502);
-      expect(response.data).toHaveProperty("error", "execution_failed");
-      expect(response.data).toHaveProperty("error_description");
-      expect(response.data.error_description).toContain("execution failed");
-      expect(response.data).toHaveProperty("error_details");
-      expect(response.data.error_details).toHaveProperty("execution_type", "http_request");
-      expect(response.data.error_details).toHaveProperty("status_category", "server_error");
-      expect(response.data.error_details).toHaveProperty("status_code", 502);
-      expect(response.data).toHaveProperty("error_messages");
-
-      // Verify external service error response is included
-      expect(response.data.error_details).toHaveProperty("response_body");
-      expect(response.data.error_details.response_body).toHaveProperty("error", "bad_gateway");
-      expect(response.data.error_details.response_body).toHaveProperty("upstream_error");
-
-      console.log("✅ External 502 propagated with server_error category and upstream error information");
+      console.log("✅ External 409 propagated with client_error category and state transition information");
     });
 
     it("should handle 413 Payload Too Large from external service", async () => {
@@ -1049,16 +928,16 @@ describe("Identity Verification Error Handling", () => {
       console.log("✅ External 422 propagated with client_error category and validation error details");
     });
 
-    it("should successfully process when external service returns 200", async () => {
-      console.log("\n🧪 Test: External service returns 200 Success");
+    it("should handle 429 Too Many Requests from external service", async () => {
+      console.log("\n🧪 Test: External service returns 429 Too Many Requests");
 
       const applyUrl = `${backendUrl}/${tenantId}/v1/me/identity-verification/applications/${errorTestConfigType}/apply`;
 
       const response = await postWithJson({
         url: applyUrl,
         body: {
-          "test_case": "external_200"
-          // No status parameter → Mockoon returns 200 by default
+          "test_case": "external_429",
+          "status": "429"
         },
         headers: {
           "Content-Type": "application/json",
@@ -1069,18 +948,179 @@ describe("Identity Verification Error Handling", () => {
       console.log(`Response status: ${response.status}`);
       console.log("Response data:", JSON.stringify(response.data, null, 2));
 
-      // Successful external call should return 200 with application ID
-      expect(response.status).toBe(200);
-      expect(response.data).toHaveProperty("id");
+      // External 429 is propagated as-is by idp-server
+      expect(response.status).toBe(429);
+      expect(response.data).toHaveProperty("error", "execution_failed");
+      expect(response.data).toHaveProperty("error_description");
+      expect(response.data.error_description).toContain("execution failed");
+      expect(response.data).toHaveProperty("error_details");
+      expect(response.data.error_details).toHaveProperty("execution_type", "http_request");
+      expect(response.data.error_details).toHaveProperty("status_category", "client_error");
+      expect(response.data.error_details).toHaveProperty("status_code", 429);
+      expect(response.data).toHaveProperty("error_messages");
 
-      // Verify application ID is a valid UUID
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      expect(response.data.id).toMatch(uuidRegex);
+      // Verify external service error response is included
+      expect(response.data.error_details).toHaveProperty("response_body");
+      expect(response.data.error_details.response_body).toHaveProperty("error", "invalid_request");
+      expect(response.data.error_details.response_body).toHaveProperty("retry_after", 60);
 
-      // Note: Only 'id' is returned in success response
-      // External service response is stored in database but not returned to client
+      console.log("✅ External 429 propagated with client_error category and rate limit information");
+    });
 
-      console.log("✅ External 200 success correctly processed with valid application ID");
+    it("should handle 500 Internal Server Error from external service", async () => {
+      console.log("\n🧪 Test: External service returns 500 Internal Server Error");
+
+      const applyUrl = `${backendUrl}/${tenantId}/v1/me/identity-verification/applications/${errorTestConfigType}/apply`;
+
+      const response = await postWithJson({
+        url: applyUrl,
+        body: {
+          "test_case": "external_500",
+          "status": "500"
+        },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userAccessToken}`
+        }
+      });
+
+      console.log(`Response status: ${response.status}`);
+      console.log("Response data:", JSON.stringify(response.data, null, 2));
+
+      // External 500 (5xx) should be mapped to SERVER_ERROR (500)
+      expect(response.status).toBe(500);
+      expect(response.data).toHaveProperty("error", "execution_failed");
+      expect(response.data).toHaveProperty("error_description");
+      expect(response.data.error_description).toContain("execution failed");
+      expect(response.data).toHaveProperty("error_details");
+      expect(response.data.error_details).toHaveProperty("execution_type", "http_request");
+      expect(response.data.error_details).toHaveProperty("status_category", "server_error");
+      expect(response.data.error_details).toHaveProperty("status_code", 500);
+      expect(response.data).toHaveProperty("error_messages");
+
+      // Verify external service error response is included
+      expect(response.data.error_details).toHaveProperty("response_body");
+      expect(response.data.error_details.response_body).toHaveProperty("error", "server_error");
+      expect(response.data.error_details.response_body).toHaveProperty("error_id");
+
+      console.log("✅ External 500 correctly mapped to SERVER_ERROR (500) with error tracking");
+    });
+
+    it("should handle 502 Bad Gateway from external service", async () => {
+      console.log("\n🧪 Test: External service returns 502 Bad Gateway");
+
+      const applyUrl = `${backendUrl}/${tenantId}/v1/me/identity-verification/applications/${errorTestConfigType}/apply`;
+
+      const response = await postWithJson({
+        url: applyUrl,
+        body: {
+          "test_case": "external_502",
+          "status": "502"
+        },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userAccessToken}`
+        }
+      });
+
+      console.log(`Response status: ${response.status}`);
+      console.log("Response data:", JSON.stringify(response.data, null, 2));
+
+      // External 502 is propagated as-is by idp-server
+      expect(response.status).toBe(502);
+      expect(response.data).toHaveProperty("error", "execution_failed");
+      expect(response.data).toHaveProperty("error_description");
+      expect(response.data.error_description).toContain("execution failed");
+      expect(response.data).toHaveProperty("error_details");
+      expect(response.data.error_details).toHaveProperty("execution_type", "http_request");
+      expect(response.data.error_details).toHaveProperty("status_category", "server_error");
+      expect(response.data.error_details).toHaveProperty("status_code", 502);
+      expect(response.data).toHaveProperty("error_messages");
+
+      // Verify external service error response is included
+      expect(response.data.error_details).toHaveProperty("response_body");
+      expect(response.data.error_details.response_body).toHaveProperty("error", "bad_gateway");
+      expect(response.data.error_details.response_body).toHaveProperty("upstream_error");
+
+      console.log("✅ External 502 propagated with server_error category and upstream error information");
+    });
+
+    it("should handle 503 Service Unavailable from external service", async () => {
+      console.log("\n🧪 Test: External service returns 503 Service Unavailable");
+
+      const applyUrl = `${backendUrl}/${tenantId}/v1/me/identity-verification/applications/${errorTestConfigType}/apply`;
+
+      const response = await postWithJson({
+        url: applyUrl,
+        body: {
+          "test_case": "external_503",
+          "status": "503"
+        },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userAccessToken}`
+        }
+      });
+
+      console.log(`Response status: ${response.status}`);
+      console.log("Response data:", JSON.stringify(response.data, null, 2));
+
+      // External 503 is propagated as-is by idp-server
+      expect(response.status).toBe(503);
+      expect(response.data).toHaveProperty("error", "execution_failed");
+      expect(response.data).toHaveProperty("error_description");
+      expect(response.data.error_description).toContain("execution failed");
+      expect(response.data).toHaveProperty("error_details");
+      expect(response.data.error_details).toHaveProperty("execution_type", "http_request");
+      expect(response.data.error_details).toHaveProperty("status_category", "server_error");
+      expect(response.data.error_details).toHaveProperty("status_code", 503);
+      expect(response.data).toHaveProperty("error_messages");
+
+      // Verify external service error response is included
+      expect(response.data.error_details).toHaveProperty("response_body");
+      expect(response.data.error_details.response_body).toHaveProperty("error", "service_unavailable");
+      expect(response.data.error_details.response_body).toHaveProperty("retryable", true);
+
+      console.log("✅ External 503 propagated with server_error category and retryable flag");
+    });
+
+    it("should handle 504 Gateway Timeout from external service", async () => {
+      console.log("\n🧪 Test: External service returns 504 Gateway Timeout");
+
+      const applyUrl = `${backendUrl}/${tenantId}/v1/me/identity-verification/applications/${errorTestConfigType}/apply`;
+
+      const response = await postWithJson({
+        url: applyUrl,
+        body: {
+          "test_case": "external_504",
+          "status": "504"
+        },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userAccessToken}`
+        }
+      });
+
+      console.log(`Response status: ${response.status}`);
+      console.log("Response data:", JSON.stringify(response.data, null, 2));
+
+      // External 504 is propagated as-is by idp-server
+      expect(response.status).toBe(504);
+      expect(response.data).toHaveProperty("error", "execution_failed");
+      expect(response.data).toHaveProperty("error_description");
+      expect(response.data.error_description).toContain("execution failed");
+      expect(response.data).toHaveProperty("error_details");
+      expect(response.data.error_details).toHaveProperty("execution_type", "http_request");
+      expect(response.data.error_details).toHaveProperty("status_category", "server_error");
+      expect(response.data.error_details).toHaveProperty("status_code", 504);
+      expect(response.data).toHaveProperty("error_messages");
+
+      // Verify external service error response is included
+      expect(response.data.error_details).toHaveProperty("response_body");
+      expect(response.data.error_details.response_body).toHaveProperty("error", "gateway_timeout");
+      expect(response.data.error_details.response_body).toHaveProperty("timeout_seconds", 30);
+
+      console.log("✅ External 504 propagated with server_error category and timeout information");
     });
 
   });
