@@ -71,14 +71,16 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
 
     if (queries.hasEventType()) {
       List<String> eventTypes = queries.eventTypes();
-      if (eventTypes.size() == 1) {
-        sql.append(" AND type = ?");
-        params.add(eventTypes.get(0));
-      } else {
-        sql.append(" AND type IN (");
-        sql.append(String.join(",", Collections.nCopies(eventTypes.size(), "?")));
-        sql.append(")");
-        params.addAll(eventTypes);
+      if (!eventTypes.isEmpty()) {
+        if (eventTypes.size() == 1) {
+          sql.append(" AND type = ?");
+          params.add(eventTypes.get(0));
+        } else {
+          sql.append(" AND type IN (");
+          sql.append(String.join(",", Collections.nCopies(eventTypes.size(), "?")));
+          sql.append(")");
+          params.addAll(eventTypes);
+        }
       }
     }
 
@@ -137,14 +139,16 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
 
     if (queries.hasEventType()) {
       List<String> eventTypes = queries.eventTypes();
-      if (eventTypes.size() == 1) {
-        sql.append(" AND type = ?");
-        params.add(eventTypes.get(0));
-      } else {
-        sql.append(" AND type IN (");
-        sql.append(String.join(",", Collections.nCopies(eventTypes.size(), "?")));
-        sql.append(")");
-        params.addAll(eventTypes);
+      if (!eventTypes.isEmpty()) {
+        if (eventTypes.size() == 1) {
+          sql.append(" AND type = ?");
+          params.add(eventTypes.get(0));
+        } else {
+          sql.append(" AND type IN (");
+          sql.append(String.join(",", Collections.nCopies(eventTypes.size(), "?")));
+          sql.append(")");
+          params.addAll(eventTypes);
+        }
       }
     }
 
