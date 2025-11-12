@@ -35,9 +35,18 @@ public class MysqlExecutor implements SecurityEventSqlExecutor {
     StringBuilder sql = new StringBuilder(selectSql).append(" WHERE tenant_id = ?");
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
-    sql.append(" AND created_at BETWEEN ? AND ?");
-    params.add(queries.from());
-    params.add(queries.to());
+
+    if (queries.hasFrom() && queries.hasTo()) {
+      sql.append(" AND created_at BETWEEN ? AND ?");
+      params.add(queries.from());
+      params.add(queries.to());
+    } else if (queries.hasFrom()) {
+      sql.append(" AND created_at >= ?");
+      params.add(queries.from());
+    } else if (queries.hasTo()) {
+      sql.append(" AND created_at <= ?");
+      params.add(queries.to());
+    }
 
     if (queries.hasId()) {
       sql.append(" AND id = ?");
@@ -84,9 +93,18 @@ public class MysqlExecutor implements SecurityEventSqlExecutor {
     StringBuilder sql = new StringBuilder(selectSql).append(" WHERE tenant_id = ?");
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
-    sql.append(" AND created_at BETWEEN ? AND ?");
-    params.add(queries.from());
-    params.add(queries.to());
+
+    if (queries.hasFrom() && queries.hasTo()) {
+      sql.append(" AND created_at BETWEEN ? AND ?");
+      params.add(queries.from());
+      params.add(queries.to());
+    } else if (queries.hasFrom()) {
+      sql.append(" AND created_at >= ?");
+      params.add(queries.from());
+    } else if (queries.hasTo()) {
+      sql.append(" AND created_at <= ?");
+      params.add(queries.to());
+    }
 
     if (queries.hasId()) {
       sql.append(" AND id = ?");

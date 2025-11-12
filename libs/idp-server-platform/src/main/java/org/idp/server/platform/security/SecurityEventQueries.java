@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import org.idp.server.platform.date.LocalDateTimeParser;
-import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.uuid.UuidConvertable;
 
 public class SecurityEventQueries implements UuidConvertable {
@@ -34,17 +33,19 @@ public class SecurityEventQueries implements UuidConvertable {
     this.values = Objects.requireNonNullElseGet(values, HashMap::new);
   }
 
+  public boolean hasFrom() {
+    return values.containsKey("from");
+  }
+
+  public boolean hasTo() {
+    return values.containsKey("to");
+  }
+
   public LocalDateTime from() {
-    if (!values.containsKey("from")) {
-      return SystemDateTime.now().minusDays(7);
-    }
     return LocalDateTimeParser.parse(values.get("from"));
   }
 
   public LocalDateTime to() {
-    if (!values.containsKey("to")) {
-      return SystemDateTime.now().plusDays(1);
-    }
     return LocalDateTimeParser.parse(values.get("to"));
   }
 

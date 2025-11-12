@@ -23,6 +23,7 @@ import org.idp.server.control_plane.management.security.event.SecurityEventManag
 import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementFindListRequest;
 import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementResponse;
 import org.idp.server.control_plane.management.security.event.io.SecurityEventManagementStatus;
+import org.idp.server.control_plane.management.security.event.validator.SecurityEventQueryValidator;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -62,6 +63,9 @@ public class SecurityEventFindListService
       RequestAttributes requestAttributes) {
 
     SecurityEventQueries queries = request.queries();
+
+    new SecurityEventQueryValidator(queries).validate();
+
     long totalCount = securityEventQueryRepository.findTotalCount(targetTenant, queries);
     if (totalCount == 0) {
       Map<String, Object> response = new HashMap<>();

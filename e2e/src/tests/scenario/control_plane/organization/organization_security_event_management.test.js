@@ -100,6 +100,199 @@ describe("organization security event management api", () => {
     });
   });
 
+  describe("query parameter validation", () => {
+    it("limit validation - maximum boundary (1000)", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const response = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-events?limit=1000`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      console.log("Limit=1000 response:", response.status);
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty("limit", 1000);
+    });
+
+    it("limit validation - exceeds maximum (1001)", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const response = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-events?limit=1001`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      console.log("Limit=1001 response:", response.status, response.data);
+      expect(response.status).toBe(400);
+    });
+
+    it("limit validation - minimum boundary (1)", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const response = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-events?limit=1`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      console.log("Limit=1 response:", response.status);
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty("limit", 1);
+    });
+
+    it("limit validation - below minimum (0)", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const response = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-events?limit=0`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      console.log("Limit=0 response:", response.status, response.data);
+      expect(response.status).toBe(400);
+    });
+
+    it("limit validation - non-numeric value", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const response = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-events?limit=abc`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      console.log("Limit=abc response:", response.status, response.data);
+      expect(response.status).toBe(400);
+    });
+
+    it("offset validation - negative value", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const response = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-events?offset=-1`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      console.log("Offset=-1 response:", response.status, response.data);
+      expect(response.status).toBe(400);
+    });
+
+    it("from/to parameter - without time range retrieves all events", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const response = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-events?limit=100`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      console.log("Without from/to response:", response.status, "total_count:", response.data.total_count);
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty("list");
+      expect(response.data).toHaveProperty("total_count");
+    });
+
+    it("from/to parameter - with time range filters events", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const from = "2025-01-01T00:00:00Z";
+      const to = "2025-12-31T23:59:59Z";
+      const response = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-events?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&limit=100`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      console.log("With from/to response:", response.status, "total_count:", response.data.total_count);
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty("list");
+    });
+  });
+
   describe("error cases", () => {
     it("unauthorized access without proper scope", async () => {
       // Get token without org-management scope
