@@ -720,7 +720,7 @@
           "sendFileAsBody": false,
           "rules": [
             {
-              "target": "query",
+              "target": "body",
               "modifier": "retryable",
               "value": "false",
               "invert": false,
@@ -747,7 +747,7 @@
           "sendFileAsBody": false,
           "rules": [
             {
-              "target": "query",
+              "target": "body",
               "modifier": "retryable",
               "value": "true",
               "invert": false,
@@ -950,6 +950,442 @@
       "responseMode": null,
       "streamingMode": null,
       "streamingInterval": 0
+    },
+    {
+      "uuid": "e2e-error-responses",
+      "type": "http",
+      "documentation": "E2E test: Error response patterns for identity verification API",
+      "method": "post",
+      "endpoint": "e2e/error-responses",
+      "responses": [
+        {
+          "uuid": "error-400",
+          "body": "{\n  \"error\": \"invalid_request\",\n  \"error_description\": \"The request is missing required parameters or contains invalid values\",\n  \"error_messages\": [\"Field 'name' is required\", \"Field 'birthdate' must be in YYYY-MM-DD format\"]\n}",
+          "latency": 50,
+          "statusCode": 400,
+          "label": "400 Bad Request",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "status",
+              "value": "400",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "error-401",
+          "body": "{\n  \"error\": \"invalid_token\",\n  \"error_description\": \"The access token is invalid or expired\"\n}",
+          "latency": 50,
+          "statusCode": 401,
+          "label": "401 Unauthorized",
+          "headers": [
+            {
+              "key": "WWW-Authenticate",
+              "value": "Bearer error=\"invalid_token\", error_description=\"The access token is invalid or expired\""
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "status",
+              "value": "401",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "error-403",
+          "body": "{\n  \"error\": \"insufficient_scope\",\n  \"error_description\": \"The request requires identity_verification_application_delete scope\",\n  \"scope\": \"identity_verification_application_delete\"\n}",
+          "latency": 50,
+          "statusCode": 403,
+          "label": "403 Forbidden - Insufficient Scope",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "status",
+              "value": "403",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "error-404",
+          "body": "{\n  \"error\": \"invalid_request\",\n  \"error_description\": \"Application (test-type/00000000-0000-0000-0000-000000000000) not found\"\n}",
+          "latency": 50,
+          "statusCode": 404,
+          "label": "404 Not Found",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "status",
+              "value": "404",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "error-413",
+          "body": "{\n  \"error\": \"payload_too_large\",\n  \"error_description\": \"The request payload exceeds the maximum allowed size\",\n  \"max_size_bytes\": 5242880,\n  \"received_size_bytes\": 10485760\n}",
+          "latency": 50,
+          "statusCode": 413,
+          "label": "413 Payload Too Large",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "status",
+              "value": "413",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "error-415",
+          "body": "{\n  \"error\": \"unsupported_media_type\",\n  \"error_description\": \"The media type is not supported\",\n  \"supported_types\": [\"image/png\", \"image/jpeg\"],\n  \"received_type\": \"image/gif\"\n}",
+          "latency": 50,
+          "statusCode": 415,
+          "label": "415 Unsupported Media Type",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "status",
+              "value": "415",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "error-422",
+          "body": "{\n  \"error\": \"validation_error\",\n  \"error_description\": \"The request data failed validation\",\n  \"validation_errors\": [\n    {\"field\": \"birthdate\", \"message\": \"Invalid date format. Expected YYYY-MM-DD\"},\n    {\"field\": \"document_number\", \"message\": \"Document number contains invalid characters\"}\n  ]\n}",
+          "latency": 50,
+          "statusCode": 422,
+          "label": "422 Unprocessable Entity",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "status",
+              "value": "422",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "error-408",
+          "body": "{\n  \"error\": \"request_timeout\",\n  \"error_description\": \"The server timed out waiting for the request\",\n  \"timeout_seconds\": 30\n}",
+          "latency": 1000,
+          "statusCode": 408,
+          "label": "408 Request Timeout",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "status",
+              "value": "408",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "error-409",
+          "body": "{\n  \"error\": \"invalid_request\",\n  \"error_description\": \"Cannot transition from 'approved' to 'applying'. Invalid state transition.\",\n  \"current_state\": \"approved\",\n  \"requested_state\": \"applying\"\n}",
+          "latency": 50,
+          "statusCode": 409,
+          "label": "409 Conflict - State Transition",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "status",
+              "value": "409",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "error-429",
+          "body": "{\n  \"error\": \"invalid_request\",\n  \"error_description\": \"Too many requests. Please try again later.\",\n  \"retry_after\": 60\n}",
+          "latency": 50,
+          "statusCode": 429,
+          "label": "429 Too Many Requests",
+          "headers": [
+            {
+              "key": "Retry-After",
+              "value": "60"
+            },
+            {
+              "key": "X-RateLimit-Limit",
+              "value": "100"
+            },
+            {
+              "key": "X-RateLimit-Remaining",
+              "value": "0"
+            },
+            {
+              "key": "X-RateLimit-Reset",
+              "value": "{{ timestamp }}"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "status",
+              "value": "429",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "error-500",
+          "body": "{\n  \"error\": \"server_error\",\n  \"error_description\": \"An internal server error occurred. Please try again later.\",\n  \"error_id\": \"{{ uuid }}\"\n}",
+          "latency": 100,
+          "statusCode": 500,
+          "label": "500 Internal Server Error",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "status",
+              "value": "500",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "error-502",
+          "body": "{\n  \"error\": \"bad_gateway\",\n  \"error_description\": \"The upstream server returned an invalid response\",\n  \"upstream_error\": \"Connection refused\"\n}",
+          "latency": 100,
+          "statusCode": 502,
+          "label": "502 Bad Gateway",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "status",
+              "value": "502",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "error-503",
+          "body": "{\n  \"error\": \"service_unavailable\",\n  \"error_description\": \"The external identity verification service is temporarily unavailable\",\n  \"retryable\": true\n}",
+          "latency": 100,
+          "statusCode": 503,
+          "label": "503 Service Unavailable",
+          "headers": [
+            {
+              "key": "Retry-After",
+              "value": "5"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "status",
+              "value": "503",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "error-504",
+          "body": "{\n  \"error\": \"gateway_timeout\",\n  \"error_description\": \"The external service did not respond in time\",\n  \"timeout_seconds\": 30\n}",
+          "latency": 100,
+          "statusCode": 504,
+          "label": "504 Gateway Timeout",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "status",
+              "value": "504",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "error-default-200",
+          "body": "{\n  \"status\": \"success\",\n  \"application_id\": \"{{ uuid }}\",\n  \"verification_status\": \"pending\"\n}",
+          "latency": 50,
+          "statusCode": 200,
+          "label": "200 Success (Default)",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
     }
   ],
   "rootChildren": [
@@ -1040,6 +1476,10 @@
     {
       "type": "route",
       "uuid": "e2e-retry-test-performance"
+    },
+    {
+      "type": "route",
+      "uuid": "e2e-error-responses"
     }
   ],
   "proxyMode": false,
