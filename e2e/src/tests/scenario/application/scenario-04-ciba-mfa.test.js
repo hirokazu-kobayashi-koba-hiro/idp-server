@@ -13,7 +13,7 @@ import {
 } from "../../testConfig";
 import { verifyAndDecodeJwt } from "../../../lib/jose";
 import { get } from "../../../lib/http";
-import { createFederatedUser, registerFido2 } from "../../../user";
+import { createFederatedUser, registerFido2, registerFidoUaf } from "../../../user";
 import { generateValidAssertionFromChallenge } from "../../../lib/fido/fido2";
 
 describe("ciba - mfa", () => {
@@ -124,6 +124,174 @@ describe("ciba - mfa", () => {
       jwks: jwksResponse.data
     });
     console.log(JSON.stringify(decodedAccessToken, null, 2));
+
+  });
+
+  it("fido-uaf multi device", async () => {
+    const { user, accessToken } = await createFederatedUser({
+      serverConfig: serverConfig,
+      federationServerConfig: federationServerConfig,
+      client: clientSecretPostClient,
+      adminClient: clientSecretPostClient
+    });
+
+    console.log(user);
+    const { authenticationDeviceId: authenticationDeviceId_1 } = await registerFidoUaf({ accessToken });
+
+    const { authenticationDeviceId: authenticationDeviceId_2 } = await registerFidoUaf({ accessToken });
+
+    let backchannelAuthenticationResponse =
+      await requestBackchannelAuthentications({
+        endpoint: serverConfig.backchannelAuthenticationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        scope: "openid profile phone email",
+        bindingMessage: ciba.bindingMessage,
+        loginHint: `device:${authenticationDeviceId_1},idp:test-provider`,
+        acrValues: "urn:mace:incommon:iap:gold",
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+    console.log(backchannelAuthenticationResponse.data);
+    expect(backchannelAuthenticationResponse.status).toBe(200);
+
+    let authenticationTransactionResponse;
+    authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
+      endpoint: serverConfig.authenticationDeviceEndpoint,
+      deviceId: authenticationDeviceId_1,
+      params: {
+        "attributes.auth_req_id": backchannelAuthenticationResponse.data.auth_req_id
+      },
+    });
+    console.log(authenticationTransactionResponse.data);
+    expect(authenticationTransactionResponse.status).toBe(200);
+
+    let authenticationTransaction = authenticationTransactionResponse.data.list[0];
+    console.log(authenticationTransaction);
+
+    let authenticationResponse;
+
+    authenticationResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      flowType: authenticationTransaction.flow,
+      id: authenticationTransaction.id,
+      interactionType: "fido-uaf-authentication-challenge",
+      body: {}
+    });
+    console.log(authenticationResponse.data);
+    expect(authenticationResponse.status).toBe(200);
+
+    authenticationResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      flowType: authenticationTransaction.flow,
+      id: authenticationTransaction.id,
+      interactionType: "fido-uaf-authentication-challenge",
+      body: {}
+    });
+    expect(authenticationResponse.status).toBe(200);
+
+    authenticationResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      flowType: authenticationTransaction.flow,
+      id: authenticationTransaction.id,
+      interactionType: "fido-uaf-authentication",
+      body: {}
+    });
+    console.log(authenticationResponse.data);
+    expect(authenticationResponse.status).toBe(200);
+
+    let tokenResponse = await requestToken({
+      endpoint: serverConfig.tokenEndpoint,
+      grantType: "urn:openid:params:grant-type:ciba",
+      authReqId: backchannelAuthenticationResponse.data.auth_req_id,
+      clientId: clientSecretPostClient.clientId,
+      clientSecret: clientSecretPostClient.clientSecret,
+    });
+    console.log(tokenResponse.data);
+    expect(tokenResponse.status).toBe(200);
+    expect(tokenResponse.data.scope).toContain("phone");
+
+    const jwksResponse = await getJwks({ endpoint: serverConfig.jwksEndpoint });
+    console.log(jwksResponse.data);
+    expect(jwksResponse.status).toBe(200);
+
+    const decodedIdToken = verifyAndDecodeJwt({
+      jwt: tokenResponse.data.id_token,
+      jwks: jwksResponse.data,
+    });
+    console.log(decodedIdToken);
+    expect(decodedIdToken.payload).toHaveProperty("amr");
+
+    const decodedAccessToken = verifyAndDecodeJwt({
+      jwt: tokenResponse.data.access_token,
+      jwks: jwksResponse.data
+    });
+    console.log(JSON.stringify(decodedAccessToken, null, 2));
+
+
+    backchannelAuthenticationResponse =
+      await requestBackchannelAuthentications({
+        endpoint: serverConfig.backchannelAuthenticationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        scope: "openid profile phone email",
+        bindingMessage: ciba.bindingMessage,
+        loginHint: `device:${authenticationDeviceId_2},idp:test-provider`,
+        acrValues: "urn:mace:incommon:iap:gold",
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+    console.log(backchannelAuthenticationResponse.data);
+    expect(backchannelAuthenticationResponse.status).toBe(200);
+
+    authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
+      endpoint: serverConfig.authenticationDeviceEndpoint,
+      deviceId: authenticationDeviceId_2,
+      params: {
+        "attributes.auth_req_id": backchannelAuthenticationResponse.data.auth_req_id
+      },
+    });
+    console.log(authenticationTransactionResponse.data);
+    expect(authenticationTransactionResponse.status).toBe(200);
+
+    authenticationTransaction = authenticationTransactionResponse.data.list[0];
+    console.log(authenticationTransaction);
+
+    authenticationResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      flowType: authenticationTransaction.flow,
+      id: authenticationTransaction.id,
+      interactionType: "fido-uaf-authentication-challenge",
+      body: {}
+    });
+    console.log(authenticationResponse.data);
+    expect(authenticationResponse.status).toBe(200);
+
+    authenticationResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      flowType: authenticationTransaction.flow,
+      id: authenticationTransaction.id,
+      interactionType: "fido-uaf-authentication-challenge",
+      body: {}
+    });
+    expect(authenticationResponse.status).toBe(200);
+
+    authenticationResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      flowType: authenticationTransaction.flow,
+      id: authenticationTransaction.id,
+      interactionType: "fido-uaf-authentication",
+      body: {}
+    });
+    console.log(authenticationResponse.data);
+    expect(authenticationResponse.status).toBe(200);
+
+    tokenResponse = await requestToken({
+      endpoint: serverConfig.tokenEndpoint,
+      grantType: "urn:openid:params:grant-type:ciba",
+      authReqId: backchannelAuthenticationResponse.data.auth_req_id,
+      clientId: clientSecretPostClient.clientId,
+      clientSecret: clientSecretPostClient.clientSecret,
+    });
+    console.log(tokenResponse.data);
+    expect(tokenResponse.status).toBe(200);
+    expect(tokenResponse.data.scope).toContain("phone");
 
   });
 

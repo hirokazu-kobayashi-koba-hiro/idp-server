@@ -83,7 +83,8 @@ public class CibaAuthenticationTransactionCreator {
     RequestedClientId requestedClientId = backchannelAuthenticationRequest.requestedClientId();
     ClientAttributes clientAttributes = cibaIssueResponse.clientAttributes();
     User user = cibaIssueResponse.user();
-    AuthenticationDevice authenticationDevice = user.findPrimaryAuthenticationDevice();
+    AuthenticationDevice authenticationDevice =
+        extractAuthenticationDevice(backchannelAuthenticationRequest, user);
     AuthorizationDetails authorizationDetails = cibaIssueResponse.request().authorizationDetails();
     AuthenticationContext context =
         new AuthenticationContext(
@@ -105,5 +106,19 @@ public class CibaAuthenticationTransactionCreator {
         context,
         createdAt,
         expiredAt);
+  }
+
+  private static AuthenticationDevice extractAuthenticationDevice(
+      BackchannelAuthenticationRequest request, User user) {
+    if (!request.hasLoginHint()) {
+      return user.findPrimaryAuthenticationDevice();
+    }
+
+    return request
+        .loginHint()
+        .asDeviceIdentifier()
+        .map(deviceId -> user.findAuthenticationDevice(deviceId.value()))
+        .filter(AuthenticationDevice::exists)
+        .orElseGet(user::findPrimaryAuthenticationDevice);
   }
 }
