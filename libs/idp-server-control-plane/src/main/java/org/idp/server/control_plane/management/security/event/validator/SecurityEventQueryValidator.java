@@ -16,6 +16,8 @@
 
 package org.idp.server.control_plane.management.security.event.validator;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
 import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.platform.json.JsonNodeWrapper;
@@ -39,11 +41,31 @@ public class SecurityEventQueryValidator {
     JsonSchemaValidationResult result = schemaValidator.validate(jsonNodeWrapper);
 
     throwExceptionIfInvalid(result);
+    validateLimitRange();
+    validateOffsetRange();
   }
 
   void throwExceptionIfInvalid(JsonSchemaValidationResult result) {
     if (!result.isValid()) {
       throw new InvalidRequestException("Security event query validation failed", result.errors());
+    }
+  }
+
+  void validateLimitRange() {
+    int limit = queries.limit();
+    if (limit < 1 || limit > 1000) {
+      List<String> errors = new ArrayList<>();
+      errors.add("limit must be between 1 and 1000, but was: " + limit);
+      throw new InvalidRequestException("Security event query validation failed", errors);
+    }
+  }
+
+  void validateOffsetRange() {
+    int offset = queries.offset();
+    if (offset < 0) {
+      List<String> errors = new ArrayList<>();
+      errors.add("offset must be non-negative, but was: " + offset);
+      throw new InvalidRequestException("Security event query validation failed", errors);
     }
   }
 }
