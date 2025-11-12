@@ -16,12 +16,16 @@
 
 package org.idp.server.platform.log;
 
+import java.util.HashMap;
+import java.util.Map;
+import org.idp.server.platform.json.JsonConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class LoggerWrapper {
 
   Logger logger;
+  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   public static LoggerWrapper getLogger(Class<?> clazz) {
     return new LoggerWrapper(clazz);
@@ -81,5 +85,85 @@ public class LoggerWrapper {
 
   public void error(String message, Throwable throwable) {
     logger.error(message, throwable);
+  }
+
+  /**
+   * Logs a message with structured data as JSON at TRACE level. The data is serialized as JSON
+   * string and appended to the message. Logback JsonEncoder will parse this JSON and make fields
+   * searchable in Datadog (e.g., @status:INVALID_TOKEN).
+   *
+   * @param message The message to log
+   * @param data Structured data to be serialized as JSON
+   */
+  public void traceJson(String message, Map<String, Object> data) {
+    if (logger.isTraceEnabled()) {
+      logger.trace("{} {}", message, jsonConverter.write(data));
+    }
+  }
+
+  /**
+   * Logs a message with structured data as JSON at DEBUG level. The data is serialized as JSON
+   * string and appended to the message. Logback JsonEncoder will parse this JSON and make fields
+   * searchable in Datadog (e.g., @status:INVALID_TOKEN).
+   *
+   * @param message The message to log
+   * @param data Structured data to be serialized as JSON
+   */
+  public void debugJson(String message, Map<String, Object> data) {
+    if (logger.isDebugEnabled()) {
+      logger.debug("{} {}", message, jsonConverter.write(data));
+    }
+  }
+
+  /**
+   * Logs a message with structured data as JSON at INFO level. The data is serialized as JSON
+   * string and appended to the message. Logback JsonEncoder will parse this JSON and make fields
+   * searchable in Datadog (e.g., @status:INVALID_TOKEN).
+   *
+   * @param message The message to log
+   * @param data Structured data to be serialized as JSON
+   */
+  public void infoJson(String message, Map<String, Object> data) {
+    logger.info("{} {}", message, jsonConverter.write(data));
+  }
+
+  /**
+   * Logs a message with structured data as JSON at WARN level. The data is serialized as JSON
+   * string and appended to the message. Logback JsonEncoder will parse this JSON and make fields
+   * searchable in Datadog (e.g., @status:INVALID_TOKEN).
+   *
+   * @param message The message to log
+   * @param data Structured data to be serialized as JSON
+   */
+  public void warnJson(String message, Map<String, Object> data) {
+    logger.warn("{} {}", message, jsonConverter.write(data));
+  }
+
+  /**
+   * Logs a message with structured data as JSON at ERROR level. The data is serialized as JSON
+   * string and appended to the message. Logback JsonEncoder will parse this JSON and make fields
+   * searchable in Datadog (e.g., @status:INVALID_TOKEN).
+   *
+   * @param message The message to log
+   * @param data Structured data to be serialized as JSON
+   */
+  public void errorJson(String message, Map<String, Object> data) {
+    logger.error("{} {}", message, jsonConverter.write(data));
+  }
+
+  /**
+   * Logs a message with structured data and exception as JSON at ERROR level. The data is
+   * serialized as JSON string and appended to the message. Logback JsonEncoder will parse this JSON
+   * and make fields searchable in Datadog (e.g., @status:INVALID_TOKEN).
+   *
+   * @param message The message to log
+   * @param data Structured data to be serialized as JSON
+   * @param throwable The exception to log
+   */
+  public void errorJson(String message, Map<String, Object> data, Throwable throwable) {
+    Map<String, Object> enrichedData = new HashMap<>(data);
+    enrichedData.put("exception", throwable.getClass().getName());
+    enrichedData.put("exception_message", throwable.getMessage());
+    logger.error("{} {}", message, jsonConverter.write(enrichedData), throwable);
   }
 }
