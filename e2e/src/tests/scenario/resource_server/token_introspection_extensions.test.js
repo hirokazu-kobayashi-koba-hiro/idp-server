@@ -700,7 +700,7 @@ describe("OAuth 2.0 Token Introspection Extensions", () => {
         clientId: selfSignedTlsAuthClient.clientId,
         clientCertFile: selfSignedTlsAuthClient.clientCertFile,
       });
-      console.log(introspectionResponse.data);
+      console.log(JSON.stringify(introspectionResponse.data, null, 2));
       expect(introspectionResponse.status).toBe(200);
       expect(introspectionResponse.data.active).toEqual(false);
       expect(introspectionResponse.data.error).toEqual("invalid_token");
@@ -780,7 +780,7 @@ describe("OAuth 2.0 Token Introspection Extensions", () => {
         clientCert: selfSignedTlsAuthClient.clientCertFile,
         clientCertFile: selfSignedTlsAuthClient.clientCertFile,
       });
-      console.log(introspectionResponse.data);
+      console.log(JSON.stringify(introspectionResponse.data, null, 2));
       expect(introspectionResponse.status).toBe(200);
       expect(introspectionResponse.data.status_code).toBe(401);
       expect(introspectionResponse.data.error).toEqual("invalid_token");
@@ -937,7 +937,7 @@ describe("OAuth 2.0 Token Introspection Extensions", () => {
         clientId: selfSignedTlsAuthClient.clientId,
         clientCertFile: selfSignedTlsAuthClient.clientCertFile,
       });
-      console.log(introspectionResponse.data);
+      console.log(JSON.stringify(introspectionResponse.data, null, 2));
       expect(introspectionResponse.status).toBe(200);
       expect(introspectionResponse.data.active).toEqual(false);
       expect(introspectionResponse.data.error).toEqual("invalid_token");

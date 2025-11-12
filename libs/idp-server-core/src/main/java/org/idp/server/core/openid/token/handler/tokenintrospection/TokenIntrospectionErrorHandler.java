@@ -36,7 +36,7 @@ public class TokenIntrospectionErrorHandler {
 
   public TokenIntrospectionResponse handle(Exception exception) {
     if (exception instanceof TokenIntrospectionBadRequestException badRequest) {
-      log.warn(exception.getMessage());
+      logTokenIntrospectionError("bad_request", badRequest.error().value(), exception.getMessage());
 
       Map<String, Object> contents = new HashMap<>();
       contents.put("active", false);
@@ -48,7 +48,7 @@ public class TokenIntrospectionErrorHandler {
     }
 
     if (exception instanceof TokenInvalidException tokenInvalid) {
-      log.warn(exception.getMessage());
+      logTokenIntrospectionError("invalid_token", "invalid_token", exception.getMessage());
 
       Map<String, Object> contents = new HashMap<>();
       contents.put("active", false);
@@ -60,7 +60,7 @@ public class TokenIntrospectionErrorHandler {
     }
 
     if (exception instanceof TokenCertificationBindingInvalidException bindingInvalidException) {
-      log.warn(exception.getMessage());
+      logTokenIntrospectionError("invalid_client_cert", "invalid_token", exception.getMessage());
 
       Map<String, Object> contents = new HashMap<>();
       contents.put("active", false);
@@ -72,7 +72,8 @@ public class TokenIntrospectionErrorHandler {
     }
 
     if (exception instanceof TokenInsufficientScopeException insufficientScopeException) {
-      log.warn(exception.getMessage());
+      logTokenIntrospectionError(
+          "insufficient_scope", "insufficient_scope", exception.getMessage());
 
       Map<String, Object> contents = new HashMap<>();
       contents.put("active", false);
@@ -84,6 +85,8 @@ public class TokenIntrospectionErrorHandler {
     }
 
     if (exception instanceof ClientUnAuthorizedException) {
+      logTokenIntrospectionError("invalid_client", "invalid_client", exception.getMessage());
+
       Map<String, Object> contents = new HashMap<>();
       contents.put("active", false);
       contents.put("error", "invalid_client");
@@ -94,7 +97,7 @@ public class TokenIntrospectionErrorHandler {
     }
 
     if (exception instanceof ClientConfigurationNotFoundException) {
-      log.warn(exception.getMessage());
+      logTokenIntrospectionError("invalid_client", "invalid_client", exception.getMessage());
 
       Map<String, Object> contents = new HashMap<>();
       contents.put("active", false);
@@ -106,7 +109,9 @@ public class TokenIntrospectionErrorHandler {
     }
 
     if (exception instanceof ServerConfigurationNotFoundException) {
-      log.warn(exception.getMessage());
+      logTokenIntrospectionError(
+          "server_config_not_found", "invalid_client", exception.getMessage());
+
       Map<String, Object> contents = new HashMap<>();
       contents.put("active", false);
       contents.put("error", "invalid_client");
@@ -124,5 +129,15 @@ public class TokenIntrospectionErrorHandler {
     contents.put("status_code", 500);
 
     return new TokenIntrospectionResponse(SERVER_ERROR, contents);
+  }
+
+  private void logTokenIntrospectionError(
+      String status, String errorCode, String errorDescription) {
+    Map<String, Object> logData = new HashMap<>();
+    logData.put("status", status);
+    logData.put("error", errorCode);
+    logData.put("error_description", errorDescription);
+
+    log.warnJson("Token introspection failed", logData);
   }
 }
