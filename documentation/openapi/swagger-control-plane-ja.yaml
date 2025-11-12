@@ -2908,9 +2908,14 @@ paths:
             default: 0
         - name: event_type
           in: query
-          description: セキュリティイベントタイプでフィルター
+          description: |
+            セキュリティイベントタイプでフィルター（カンマ区切りで複数指定可能）
+
+            **単一値**: event_type=user_signin
+            **複数値**: event_type=user_signin,user_signin_failure,user_signout
           schema:
             type: string
+          example: "user_signin,user_signin_failure"
         - name: from
           in: query
           description: セキュリティイベントをフィルターするための開始タイムスタンプ（ISO 8601形式）

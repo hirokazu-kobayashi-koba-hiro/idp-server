@@ -17,6 +17,7 @@
 package org.idp.server.core.adapters.datasource.security.event.query;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.datasource.SqlExecutor;
@@ -69,8 +70,16 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
     }
 
     if (queries.hasEventType()) {
-      sql.append(" AND type = ?");
-      params.add(queries.eventType());
+      List<String> eventTypes = queries.eventTypes();
+      if (eventTypes.size() == 1) {
+        sql.append(" AND type = ?");
+        params.add(eventTypes.get(0));
+      } else {
+        sql.append(" AND type IN (");
+        sql.append(String.join(",", Collections.nCopies(eventTypes.size(), "?")));
+        sql.append(")");
+        params.addAll(eventTypes);
+      }
     }
 
     if (queries.hasDetails()) {
@@ -127,8 +136,16 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
     }
 
     if (queries.hasEventType()) {
-      sql.append(" AND type = ?");
-      params.add(queries.eventType());
+      List<String> eventTypes = queries.eventTypes();
+      if (eventTypes.size() == 1) {
+        sql.append(" AND type = ?");
+        params.add(eventTypes.get(0));
+      } else {
+        sql.append(" AND type IN (");
+        sql.append(String.join(",", Collections.nCopies(eventTypes.size(), "?")));
+        sql.append(")");
+        params.addAll(eventTypes);
+      }
     }
 
     if (queries.hasDetails()) {

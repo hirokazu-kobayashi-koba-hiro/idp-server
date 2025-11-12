@@ -98,6 +98,36 @@ describe("organization security event management api", () => {
       expect(filteredResponse.data).toHaveProperty("list");
       expect(Array.isArray(filteredResponse.data.list)).toBe(true);
     });
+
+    it("filter by multiple event types (comma-separated)", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const multiTypeResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-events?event_type=user_signin,user_signin_failure,user_signout&limit=100`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      console.log("Multi event type response:", multiTypeResponse.status, "count:", multiTypeResponse.data.list?.length);
+      expect(multiTypeResponse.status).toBe(200);
+      expect(multiTypeResponse.data).toHaveProperty("list");
+      expect(Array.isArray(multiTypeResponse.data.list)).toBe(true);
+
+      if (multiTypeResponse.data.list.length > 0) {
+        const types = multiTypeResponse.data.list.map(e => e.type);
+        console.log("Event types found:", [...new Set(types)]);
+      }
+    });
   });
 
   describe("query parameter validation", () => {

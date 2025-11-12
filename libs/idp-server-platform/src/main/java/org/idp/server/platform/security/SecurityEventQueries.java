@@ -17,7 +17,9 @@
 package org.idp.server.platform.security;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -95,6 +97,14 @@ public class SecurityEventQueries implements UuidConvertable {
 
   public String eventType() {
     return values.get("event_type");
+  }
+
+  public List<String> eventTypes() {
+    String value = values.get("event_type");
+    if (value == null || value.isEmpty()) {
+      return List.of();
+    }
+    return Arrays.asList(value.split(","));
   }
 
   public boolean hasDetails() {
