@@ -10,6 +10,7 @@ import {
 } from "../../lib/jose";
 import { toEpocTime } from "../../lib/util";
 import { generateCodeVerifier } from "../../lib/oauth";
+import { postWithJson } from "../../lib/http";
 
 describe("rfc9126 OAuth 2.0 Pushed Authorization Requests", () => {
   it("success pattern normal", async () => {
@@ -213,6 +214,37 @@ describe("rfc9126 OAuth 2.0 Pushed Authorization Requests", () => {
       jwks: jwksResponse.data,
     });
     console.log(decodedIdToken);
+  });
+
+  describe("3. Pushed Authorization Request Endpoint", () => {
+    it("The client makes a request to the PAR endpoint by sending the following parameters using the \"application/x-www-form-urlencoded\" format - RFC 9126 Section 3", async () => {
+      // RFC 9126 Section 3: Content-Type MUST be application/x-www-form-urlencoded
+      // Sending application/json should return HTTP 400 Bad Request
+      const basicAuth = Buffer.from(
+        `${clientSecretPostClient.clientId}:${clientSecretPostClient.clientSecret}`
+      ).toString("base64");
+
+      const response = await postWithJson({
+        url: serverConfig.pushedAuthorizationEndpoint,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Basic ${basicAuth}`,
+        },
+        body: {
+          response_type: "code",
+          client_id: clientSecretPostClient.clientId,
+          redirect_uri: clientSecretPostClient.redirectUri,
+          scope: clientSecretPostClient.scope,
+        },
+      });
+
+      console.log(response.data);
+      expect(response.status).toBe(400);
+      expect(response.data.error).toBe("invalid_request");
+      expect(response.data.error_description).toBe(
+        "Bad request. Content-Type header does not match supported values"
+      );
+    });
   });
 
 });

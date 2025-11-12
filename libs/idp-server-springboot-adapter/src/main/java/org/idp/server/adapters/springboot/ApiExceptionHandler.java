@@ -23,6 +23,7 @@ import org.idp.server.platform.exception.*;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageConversionException;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -116,8 +117,24 @@ public class ApiExceptionHandler {
       HttpMediaTypeNotSupportedException exception, HttpServletRequest httpServletRequest) {
     log.warn(exception.getMessage(), exception);
     return new ResponseEntity<>(
-        Map.of("error", "client_error", "error_description", "please check media type"),
-        HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+        Map.of(
+            "error",
+            "invalid_request",
+            "error_description",
+            "Bad request. Content-Type header does not match supported values"),
+        HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(HttpMessageConversionException.class)
+  public ResponseEntity<?> handleException(HttpMessageConversionException exception) {
+    log.warn(exception.getMessage(), exception);
+    return new ResponseEntity<>(
+        Map.of(
+            "error",
+            "invalid_request",
+            "error_description",
+            "The request is malformed or contains invalid parameters"),
+        HttpStatus.BAD_REQUEST);
   }
 
   @ExceptionHandler

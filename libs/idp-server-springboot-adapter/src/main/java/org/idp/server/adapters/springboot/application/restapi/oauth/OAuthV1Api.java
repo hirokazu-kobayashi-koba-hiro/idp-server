@@ -51,7 +51,7 @@ public class OAuthV1Api implements ParameterTransformable, SecurityHeaderConfigu
     this.oAuthFlowApi = idpServerApplication.oAuthFlowApi();
   }
 
-  @PostMapping("/push")
+  @PostMapping(value = "/push", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
   public ResponseEntity<?> push(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
