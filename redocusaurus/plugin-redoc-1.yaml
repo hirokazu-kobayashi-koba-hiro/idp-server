@@ -95,6 +95,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthenticationTransactionListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /{tenant-id}/v1/authentication-devices/logs:
     post:
       tags:
@@ -111,6 +117,10 @@ paths:
       responses:
         '200':
           description: 200 OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /{tenant-id}/.well-known/fido-uaf/facets:
     get:
       tags:
@@ -130,6 +140,10 @@ paths:
             application/json:
               schema:
                 type: object
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /{tenant-id}/v1/authentications/{id}/fido-uaf-registration-challenge:
     post:
       tags:
@@ -161,6 +175,12 @@ paths:
             application/json:
               schema:
                 type: object
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /{tenant-id}/v1/authentications/{id}/fido-uaf-registration:
     post:
       tags:
@@ -197,6 +217,12 @@ paths:
                     type: string
                     description: |
                       デバイスID。認証デバイスの識別子。認証デバイス側に保存し、認証トランザクションの取得時などで利用します。
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /{tenant-id}/v1/authentications/{id}/fido-uaf-authentication-challenge:
     post:
       tags:
@@ -228,6 +254,12 @@ paths:
             application/json:
               schema:
                 type: object
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /{tenant-id}/v1/authentications/{id}/fido-uaf-authentication:
     post:
       tags:
@@ -255,6 +287,12 @@ paths:
       responses:
         '200':
           description: FIDO認証成功
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /{tenant-id}/v1/authentications/{id}/fido-uaf-deregistration:
     post:
       tags:
@@ -287,7 +325,83 @@ paths:
               schema:
                 type: object
                 description: FIDOサーバーの仕様に沿った任意のレスポンスボディ
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 components:
+  responses:
+    BadRequest:
+      description: |
+        リクエストパラメータが不正、認証失敗、検証エラー
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: invalid_request
+              error_description:
+                type: string
+                example: user is not found or invalid password
+          examples:
+            authentication_failure:
+              value:
+                error: invalid_request
+                error_description: user is not found or invalid password
+            validation_error:
+              value:
+                error: invalid_request
+                error_description: validation error details
+            fido2_user_resolution_error:
+              value:
+                error: invalid_request
+                error_description: FIDO2 authentication succeeded but user could not be resolved
+    Unauthorized:
+      description: |
+        認証エラー。アクセストークンが無効または期限切れ
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: invalid_token
+              error_description:
+                type: string
+                example: The access token is invalid or expired
+    NotFound:
+      description: |
+        認証セッションが存在しない、または有効期限切れ
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: not_found
+              error_description:
+                type: string
+                example: authentication session not found or expired
+    InternalServerError:
+      description: |
+        サーバー内部エラー、外部サービス連携エラー
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: server_error
+              error_description:
+                type: string
+                example: internal server error
   schemas:
     AuthenticationTransactionListResponse:
       type: object

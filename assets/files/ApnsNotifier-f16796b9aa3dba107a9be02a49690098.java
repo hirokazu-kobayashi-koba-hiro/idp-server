@@ -169,7 +169,6 @@ public class ApnsNotifier implements AuthenticationDeviceNotifier {
       alert.put("title", title);
       alert.put("body", body);
       aps.put("alert", alert);
-      aps.put("content-available", 1);
 
       Map<String, Object> payload = new HashMap<>();
       payload.put("aps", aps);
