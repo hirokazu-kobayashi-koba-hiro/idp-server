@@ -35,7 +35,7 @@ public class JsonPathWrapper {
       return JsonPath.read(document, path);
     } catch (PathNotFoundException e) {
 
-      log.warn(e.getMessage());
+      log.info(e.getMessage());
       return null;
     }
   }
@@ -45,7 +45,7 @@ public class JsonPathWrapper {
       return JsonPath.read(document, path);
     } catch (PathNotFoundException e) {
 
-      log.warn(e.getMessage());
+      log.info(e.getMessage());
       return null;
     }
   }
@@ -55,7 +55,7 @@ public class JsonPathWrapper {
       return JsonPath.read(document, path);
     } catch (PathNotFoundException e) {
 
-      log.warn(e.getMessage());
+      log.info(e.getMessage());
       return null;
     }
   }
@@ -65,7 +65,7 @@ public class JsonPathWrapper {
       return JsonPath.read(document, path);
     } catch (PathNotFoundException e) {
 
-      log.warn(e.getMessage());
+      log.info(e.getMessage());
       return null;
     }
   }
@@ -75,7 +75,7 @@ public class JsonPathWrapper {
       return JsonPath.read(document, path);
     } catch (PathNotFoundException e) {
 
-      log.warn(e.getMessage());
+      log.info(e.getMessage());
       return null;
     }
   }
@@ -85,7 +85,7 @@ public class JsonPathWrapper {
       return JsonPath.read(document, path);
     } catch (PathNotFoundException e) {
 
-      log.warn(e.getMessage());
+      log.info(e.getMessage());
       return null;
     }
   }
@@ -95,7 +95,7 @@ public class JsonPathWrapper {
       return JsonPath.read(document, path);
     } catch (PathNotFoundException e) {
 
-      log.warn(e.getMessage());
+      log.info(e.getMessage());
       return null;
     }
   }
@@ -105,7 +105,7 @@ public class JsonPathWrapper {
       return JsonPath.read(document, path);
     } catch (PathNotFoundException e) {
 
-      log.warn(e.getMessage());
+      log.info(e.getMessage());
       return null;
     }
   }

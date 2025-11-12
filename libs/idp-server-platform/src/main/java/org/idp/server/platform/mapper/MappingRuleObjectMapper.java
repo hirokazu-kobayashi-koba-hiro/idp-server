@@ -72,7 +72,7 @@ public class MappingRuleObjectMapper {
     for (FunctionSpec spec : rule.functions()) {
       ValueFunction fn = functionRegistry.get(spec.name());
       if (fn == null) {
-        log.warn("Function not found: name={}, to={}", spec.name(), rule.to());
+        log.error("Function not found: name={}, to={}", spec.name(), rule.to());
         continue;
       }
       v = fn.apply(v, spec.args());
@@ -90,10 +90,10 @@ public class MappingRuleObjectMapper {
           }
         }
       } else if (value == null) {
-        log.warn(
+        log.debug(
             "'*' skipped: value is null (from=" + (rule.hasFrom() ? rule.from() : "n/a") + ")");
       } else {
-        log.warn("'*' requires Map but got: type={}", value.getClass().getSimpleName());
+        log.error("'*' requires Map but got: type={}", value.getClass().getSimpleName());
       }
     } else {
       flatMap.put(rule.to(), value);
