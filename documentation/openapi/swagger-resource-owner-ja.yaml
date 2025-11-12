@@ -50,6 +50,10 @@ paths:
             application/json:
               schema:
                 type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /{tenant-id}/v1/me/mfa/{mfa-operation-type}:
     post:
@@ -83,6 +87,12 @@ paths:
                   id:
                     type: string
                     description: 認証トランザクションID
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /{tenant-id}/v1/me/authentication-devices/{device-id}:
     patch:
@@ -103,6 +113,14 @@ paths:
       responses:
         '200':
           description: 200 OK
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{verification-process}:
     post:
@@ -170,67 +188,31 @@ paths:
                id: "565b030e-04b5-45eb-989e-136e3623dc7d"
                application_number: "abcdefg012345"
         '400':
-          description: 申込みの入力エラー
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - error
-                properties:
-                  error:
-                    type: string
-                    description: |
-                      エラーの種類を示す識別子（"invalid_request"）。
-                  error_description:
-                    type: string
-                    description: |
-                      エラーの概要。
-                  error_details:
-                    type: object
-                    description: |
-                      エラーの詳細内容。バリデーションの具体的な内容や。外部サービスからのエラーレスポンス。
-                example:
-                  error: "invalid_request"
-                  error_description: "The identity verification request is invalid. Please review your input for missing or incorrect fields."
-
+          $ref: '#/components/responses/BadRequest'
         '401':
-          description: |
-           認証エラー。アクセストークンが無効な場合。
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - error
-                properties:
-                  error:
-                    type: string
-                    description: |
-                      エラーの種類を示す識別子（"invalid_token"）。
-                  error_description:
-                    type: string
-                    description: |
-                      エラーの概要。
-
+          $ref: '#/components/responses/Unauthorized'
         '403':
-          description: |
-            権限エラー。スコープ不足。
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - error
-                properties:
-                  error:
-                    type: string
-                    description: |
-                      エラーの種類を示す識別子（"invalid_token"）。
-                  error_description:
-                    type: string
-                    description: |
-                      エラーの概要。
+          $ref: '#/components/responses/Forbidden'
+        '408':
+          $ref: '#/components/responses/RequestTimeout'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/me/identity-verification/applications:
     get:
@@ -400,6 +382,10 @@ paths:
                   offset:
                     type: integer
                     description:  ページネーション用のオフセット
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
 
 
@@ -447,6 +433,28 @@ paths:
                 additionalProperties:
                   description: |
                     設定ファイルの `response` に設定した項目が返却される
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '408':
+          $ref: '#/components/responses/RequestTimeout'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
 
   /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{id}:
@@ -464,6 +472,14 @@ paths:
       responses:
         '204':
           description: No Content
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /{tenant-id}/v1/me/identity-verification/results:
     get:
@@ -627,9 +643,928 @@ paths:
                   offset:
                     type: integer
                     description: ページネーション用のオフセット
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
 
 components:
+  responses:
+    BadRequest:
+      description: |
+        リクエストパラメータが不正、検証エラー、プロセスシーケンスエラー
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+              - error_description
+            properties:
+              error:
+                type: string
+                example: "invalid_request"
+              error_description:
+                type: string
+                example: "Request validation failed"
+              error_messages:
+                type: array
+                items:
+                  type: string
+                description: |
+                  検証エラーの詳細メッセージ配列（JSON Schema検証エラー、プロセスシーケンスエラー等）。オプショナル。
+              error_details:
+                type: object
+                description: |
+                  外部サービス実行時のエラー詳細情報（execution_failed の場合のみ）。オプショナル。
+                required:
+                  - execution_type
+                  - status_category
+                  - status_code
+                properties:
+                  execution_type:
+                    type: string
+                    description: 実行タイプ
+                    example: "http_request"
+                  status_category:
+                    type: string
+                    description: HTTPステータスカテゴリ
+                    enum: ["client_error", "server_error"]
+                  status_code:
+                    type: integer
+                    description: 外部サービスから返されたHTTPステータスコード
+                    example: 400
+                  response_body:
+                    type: object
+                    description: 外部サービスのレスポンスボディ（オプショナル）
+          examples:
+            schema_validation_error:
+              value:
+                error: "invalid_request"
+                error_description: "The identity verification request is invalid. Please review your input for missing or incorrect fields."
+                error_messages:
+                  - "last_name is missing"
+                  - "first_name is missing"
+                  - "birthdate is missing"
+            type_mismatch_error:
+              value:
+                error: "invalid_request"
+                error_description: "The identity verification request is invalid. Please review your input for missing or incorrect fields."
+                error_messages:
+                  - "age is not a integer"
+                  - "address is not a object"
+            process_sequence_error:
+              value:
+                error: "invalid_request"
+                error_description: "Process sequence violation"
+                error_messages:
+                  - "process 'complete-verification' is not available at current state"
+            external_service_400:
+              value:
+                error: "execution_failed"
+                error_description: "execution failed"
+                error_messages:
+                  - "External service returned 400: invalid_request"
+                error_details:
+                  execution_type: "http_request"
+                  status_category: "client_error"
+                  status_code: 400
+                  response_body:
+                    error: "invalid_request"
+                    error_description: "The request is missing required parameters or contains invalid values"
+
+    Unauthorized:
+      description: |
+        認証エラー。アクセストークンが無効または期限切れ、または外部サービスから401エラーが返された場合
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+              - error_description
+            properties:
+              error:
+                type: string
+                example: "invalid_token"
+                description: |
+                  エラーコード。`invalid_token`（アクセストークンが無効または期限切れ）または `execution_failed`（外部サービスエラー）
+              error_description:
+                type: string
+                example: "The access token is invalid or expired"
+              error_messages:
+                type: array
+                items:
+                  type: string
+                description: エラーメッセージ配列。オプショナル。
+              error_details:
+                type: object
+                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
+                required:
+                  - execution_type
+                  - status_category
+                  - status_code
+                properties:
+                  execution_type:
+                    type: string
+                    example: "http_request"
+                  status_category:
+                    type: string
+                    example: "client_error"
+                  status_code:
+                    type: integer
+                    example: 401
+                  response_body:
+                    type: object
+                    description: 外部サービスのレスポンスボディ（オプショナル）
+          examples:
+            invalid_token:
+              value:
+                error: "invalid_token"
+                error_description: "The access token is invalid or expired"
+            external_service_401:
+              value:
+                error: "execution_failed"
+                error_description: "execution failed"
+                error_messages:
+                  - "External service returned 401: invalid_token"
+                error_details:
+                  execution_type: "http_request"
+                  status_category: "client_error"
+                  status_code: 401
+                  response_body:
+                    error: "invalid_token"
+                    error_description: "The access token provided is invalid or expired"
+
+    Forbidden:
+      description: |
+        権限エラー。スコープ不足、または外部サービスから403エラーが返された場合
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+              - error_description
+            properties:
+              error:
+                type: string
+                example: "insufficient_scope"
+                description: |
+                  エラーコード。`insufficient_scope`（スコープ不足）または `execution_failed`（外部サービスエラー）
+              error_description:
+                type: string
+                example: "The request requires higher privileges than provided by the access token"
+              error_messages:
+                type: array
+                items:
+                  type: string
+                description: エラーメッセージ配列。オプショナル。
+              error_details:
+                type: object
+                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
+                required:
+                  - execution_type
+                  - status_category
+                  - status_code
+                properties:
+                  execution_type:
+                    type: string
+                    example: "http_request"
+                  status_category:
+                    type: string
+                    example: "client_error"
+                  status_code:
+                    type: integer
+                    example: 403
+                  response_body:
+                    type: object
+                    description: 外部サービスのレスポンスボディ（オプショナル）
+          examples:
+            insufficient_scope:
+              value:
+                error: "insufficient_scope"
+                error_description: "The request requires higher privileges than provided by the access token"
+            external_service_403:
+              value:
+                error: "execution_failed"
+                error_description: "execution failed"
+                error_messages:
+                  - "External service returned 403: insufficient_scope"
+                error_details:
+                  execution_type: "http_request"
+                  status_category: "client_error"
+                  status_code: 403
+                  response_body:
+                    error: "insufficient_scope"
+                    error_description: "The request requires specific permissions"
+                    scope: "identity_verification_application_delete"
+
+    NotFound:
+      description: |
+        リソースが存在しない
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+              - error_description
+            properties:
+              error:
+                type: string
+                example: "invalid_request"
+                description: |
+                  エラーコード（実装では `invalid_request` を使用）
+              error_description:
+                type: string
+                example: "The requested resource was not found"
+              error_messages:
+                type: array
+                items:
+                  type: string
+                description: エラーメッセージ配列。オプショナル。
+          examples:
+            application_not_found:
+              value:
+                error: "invalid_request"
+                error_description: "identity verification application not found"
+                error_messages:
+                  - "identity verification application not found"
+
+    RequestTimeout:
+      description: |
+        リクエストタイムアウト、または外部サービスから408エラーが返された場合
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+              - error_description
+            properties:
+              error:
+                type: string
+                example: "request_timeout"
+                description: |
+                  エラーコード。`request_timeout`（内部エラー）または `execution_failed`（外部サービスエラー）
+              error_description:
+                type: string
+                example: "The request timed out"
+              error_messages:
+                type: array
+                items:
+                  type: string
+                description: エラーメッセージ配列。オプショナル。
+              error_details:
+                type: object
+                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
+                required:
+                  - execution_type
+                  - status_category
+                  - status_code
+                properties:
+                  execution_type:
+                    type: string
+                    example: "http_request"
+                  status_category:
+                    type: string
+                    example: "client_error"
+                  status_code:
+                    type: integer
+                    example: 408
+                  response_body:
+                    type: object
+                    description: 外部サービスのレスポンスボディ（オプショナル）
+          examples:
+            request_timeout:
+              value:
+                error: "request_timeout"
+                error_description: "The request timed out"
+            external_service_408:
+              value:
+                error: "execution_failed"
+                error_description: "execution failed"
+                error_messages:
+                  - "External service returned 408: request_timeout"
+                error_details:
+                  execution_type: "http_request"
+                  status_category: "client_error"
+                  status_code: 408
+                  response_body:
+                    error: "request_timeout"
+                    error_description: "The server timed out waiting for the request"
+                    timeout_seconds: 30
+
+    Conflict:
+      description: |
+        リソースの状態が競合している、または外部サービスから409エラーが返された場合
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+              - error_description
+            properties:
+              error:
+                type: string
+                example: "conflict"
+                description: |
+                  エラーコード。`conflict`（内部エラー）または `execution_failed`（外部サービスエラー）
+              error_description:
+                type: string
+                example: "A verification application is already in progress"
+              error_messages:
+                type: array
+                items:
+                  type: string
+                description: エラーメッセージ配列。オプショナル。
+              error_details:
+                type: object
+                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
+                required:
+                  - execution_type
+                  - status_category
+                  - status_code
+                properties:
+                  execution_type:
+                    type: string
+                    example: "http_request"
+                  status_category:
+                    type: string
+                    example: "client_error"
+                  status_code:
+                    type: integer
+                    example: 409
+                  response_body:
+                    type: object
+                    description: 外部サービスのレスポンスボディ（オプショナル）
+          examples:
+            conflict:
+              summary: "内部エラー - 競合"
+              description: "idp-server内部で申込みの競合が検出された場合"
+              value:
+                error: "conflict"
+                error_description: "A verification application is already in progress"
+                error_messages:
+                  - "Cannot create new application while previous application is still active"
+            external_service_409:
+              summary: "外部サービスエラー - 状態遷移エラー"
+              description: "外部サービスから409が返された場合。response_bodyには状態遷移情報（current_state, requested_state等）を含む可能性がある。"
+              value:
+                error: "execution_failed"
+                error_description: "execution failed"
+                error_messages:
+                  - "External service returned 409: invalid_request"
+                error_details:
+                  execution_type: "http_request"
+                  status_category: "client_error"
+                  status_code: 409
+                  response_body:
+                    error: "invalid_request"
+                    error_description: "Cannot transition from 'approved' to 'applying'. Invalid state transition."
+                    current_state: "approved"
+                    requested_state: "applying"
+
+    PayloadTooLarge:
+      description: |
+        ペイロードが大きすぎる、または外部サービスから413エラーが返された場合
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+              - error_description
+            properties:
+              error:
+                type: string
+                example: "payload_too_large"
+                description: |
+                  エラーコード。`payload_too_large`（内部エラー）または `execution_failed`（外部サービスエラー）
+              error_description:
+                type: string
+                example: "The request payload is too large"
+              error_messages:
+                type: array
+                items:
+                  type: string
+                description: エラーメッセージ配列。オプショナル。
+              error_details:
+                type: object
+                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
+                required:
+                  - execution_type
+                  - status_category
+                  - status_code
+                properties:
+                  execution_type:
+                    type: string
+                    example: "http_request"
+                  status_category:
+                    type: string
+                    example: "client_error"
+                  status_code:
+                    type: integer
+                    example: 413
+                  response_body:
+                    type: object
+                    description: 外部サービスのレスポンスボディ（オプショナル）
+          examples:
+            payload_too_large:
+              summary: "内部エラー - ペイロード超過"
+              description: "idp-server内部でペイロードサイズ制限に達した場合"
+              value:
+                error: "payload_too_large"
+                error_description: "The request payload is too large"
+            external_service_413:
+              summary: "外部サービスエラー - ペイロード超過"
+              description: "外部サービスから413が返された場合。response_bodyにはペイロードサイズ情報（max_size_bytes, received_size_bytes等）を含む可能性がある。"
+              value:
+                error: "execution_failed"
+                error_description: "execution failed"
+                error_messages:
+                  - "External service returned 413: payload_too_large"
+                error_details:
+                  execution_type: "http_request"
+                  status_category: "client_error"
+                  status_code: 413
+                  response_body:
+                    error: "payload_too_large"
+                    error_description: "The request payload exceeds the maximum allowed size"
+                    max_size_bytes: 5242880
+                    received_size_bytes: 10485760
+
+    UnsupportedMediaType:
+      description: |
+        サポートされていないメディアタイプ、または外部サービスから415エラーが返された場合
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+              - error_description
+            properties:
+              error:
+                type: string
+                example: "unsupported_media_type"
+                description: |
+                  エラーコード。`unsupported_media_type`（内部エラー）または `execution_failed`（外部サービスエラー）
+              error_description:
+                type: string
+                example: "The media type is not supported"
+              error_messages:
+                type: array
+                items:
+                  type: string
+                description: エラーメッセージ配列。オプショナル。
+              error_details:
+                type: object
+                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
+                required:
+                  - execution_type
+                  - status_category
+                  - status_code
+                properties:
+                  execution_type:
+                    type: string
+                    example: "http_request"
+                  status_category:
+                    type: string
+                    example: "client_error"
+                  status_code:
+                    type: integer
+                    example: 415
+                  response_body:
+                    type: object
+                    description: 外部サービスのレスポンスボディ（オプショナル）
+          examples:
+            unsupported_media_type:
+              summary: "内部エラー - 非サポートメディアタイプ"
+              description: "idp-server内部でメディアタイプが拒否された場合"
+              value:
+                error: "unsupported_media_type"
+                error_description: "The media type is not supported"
+            external_service_415:
+              summary: "外部サービスエラー - 非サポートメディアタイプ"
+              description: "外部サービスから415が返された場合。response_bodyにはサポートされるメディアタイプ情報（supported_types, received_type等）を含む可能性がある。"
+              value:
+                error: "execution_failed"
+                error_description: "execution failed"
+                error_messages:
+                  - "External service returned 415: unsupported_media_type"
+                error_details:
+                  execution_type: "http_request"
+                  status_category: "client_error"
+                  status_code: 415
+                  response_body:
+                    error: "unsupported_media_type"
+                    error_description: "The media type is not supported"
+                    supported_types: ["image/png", "image/jpeg"]
+                    received_type: "image/gif"
+
+    UnprocessableEntity:
+      description: |
+        バリデーションエラー、または外部サービスから422エラーが返された場合
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+              - error_description
+            properties:
+              error:
+                type: string
+                example: "validation_error"
+                description: |
+                  エラーコード。`validation_error`（内部エラー）または `execution_failed`（外部サービスエラー）
+              error_description:
+                type: string
+                example: "The request data failed validation"
+              error_messages:
+                type: array
+                items:
+                  type: string
+                description: エラーメッセージ配列。オプショナル。
+              error_details:
+                type: object
+                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
+                required:
+                  - execution_type
+                  - status_category
+                  - status_code
+                properties:
+                  execution_type:
+                    type: string
+                    example: "http_request"
+                  status_category:
+                    type: string
+                    example: "client_error"
+                  status_code:
+                    type: integer
+                    example: 422
+                  response_body:
+                    type: object
+                    description: 外部サービスのレスポンスボディ（オプショナル）
+          examples:
+            validation_error:
+              summary: "内部エラー - バリデーションエラー"
+              description: "idp-server内部でバリデーションエラーが発生した場合"
+              value:
+                error: "validation_error"
+                error_description: "The request data failed validation"
+            external_service_422:
+              summary: "外部サービスエラー - バリデーションエラー"
+              description: "外部サービスから422が返された場合。response_bodyにはバリデーションエラー詳細（validation_errors等）を含む可能性がある。"
+              value:
+                error: "execution_failed"
+                error_description: "execution failed"
+                error_messages:
+                  - "External service returned 422: validation_error"
+                error_details:
+                  execution_type: "http_request"
+                  status_category: "client_error"
+                  status_code: 422
+                  response_body:
+                    error: "validation_error"
+                    error_description: "The request data failed validation"
+                    validation_errors:
+                      - field: "birthdate"
+                        message: "Invalid date format. Expected YYYY-MM-DD"
+                      - field: "document_number"
+                        message: "Document number contains invalid characters"
+
+    TooManyRequests:
+      description: |
+        レート制限超過、または外部サービスから429エラーが返された場合
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+              - error_description
+            properties:
+              error:
+                type: string
+                example: "too_many_requests"
+                description: |
+                  エラーコード。`too_many_requests`（内部エラー）または `execution_failed`（外部サービスエラー）
+              error_description:
+                type: string
+                example: "Too many requests. Please try again later."
+              error_messages:
+                type: array
+                items:
+                  type: string
+                description: エラーメッセージ配列。オプショナル。
+              error_details:
+                type: object
+                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
+                required:
+                  - execution_type
+                  - status_category
+                  - status_code
+                properties:
+                  execution_type:
+                    type: string
+                    example: "http_request"
+                  status_category:
+                    type: string
+                    example: "client_error"
+                  status_code:
+                    type: integer
+                    example: 429
+                  response_body:
+                    type: object
+                    description: 外部サービスのレスポンスボディ（オプショナル）
+          examples:
+            too_many_requests:
+              summary: "内部エラー - レート制限超過"
+              description: "idp-server内部でレート制限に達した場合"
+              value:
+                error: "too_many_requests"
+                error_description: "Too many requests. Please try again later."
+            external_service_429:
+              summary: "外部サービスエラー - レート制限超過"
+              description: "外部サービスから429が返された場合。response_bodyにはレート制限情報（retry_after等）を含む可能性がある。"
+              value:
+                error: "execution_failed"
+                error_description: "execution failed"
+                error_messages:
+                  - "External service returned 429: too_many_requests"
+                error_details:
+                  execution_type: "http_request"
+                  status_category: "client_error"
+                  status_code: 429
+                  response_body:
+                    error: "too_many_requests"
+                    error_description: "Rate limit exceeded. Please try again later."
+                    retry_after: 60
+
+    InternalServerError:
+      description: |
+        サーバー内部エラー、または外部サービスから500エラーが返された場合
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+              - error_description
+            properties:
+              error:
+                type: string
+                example: "server_error"
+                description: |
+                  エラーコード。`server_error`（内部エラー）または `execution_failed`（外部サービスエラー）
+              error_description:
+                type: string
+                example: "An internal server error occurred"
+              error_messages:
+                type: array
+                items:
+                  type: string
+                description: エラーメッセージ配列。オプショナル。
+              error_details:
+                type: object
+                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
+                required:
+                  - execution_type
+                  - status_category
+                  - status_code
+                properties:
+                  execution_type:
+                    type: string
+                    example: "http_request"
+                  status_category:
+                    type: string
+                    example: "server_error"
+                  status_code:
+                    type: integer
+                    example: 500
+                  response_body:
+                    type: object
+                    description: 外部サービスのレスポンスボディ（オプショナル）
+          examples:
+            internal_error:
+              value:
+                error: "server_error"
+                error_description: "An internal server error occurred"
+            external_service_500:
+              value:
+                error: "execution_failed"
+                error_description: "execution failed"
+                error_messages:
+                  - "External service returned 500: server_error"
+                error_details:
+                  execution_type: "http_request"
+                  status_category: "server_error"
+                  status_code: 500
+                  response_body:
+                    error: "server_error"
+                    error_description: "An unexpected error occurred on the external service"
+                    error_id: "err_abc123xyz"
+
+    BadGateway:
+      description: |
+        ゲートウェイエラー、または外部サービスから502エラーが返された場合
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+              - error_description
+            properties:
+              error:
+                type: string
+                example: "bad_gateway"
+                description: |
+                  エラーコード。`bad_gateway`（内部エラー）または `execution_failed`（外部サービスエラー）
+              error_description:
+                type: string
+                example: "The upstream server returned an invalid response"
+              error_messages:
+                type: array
+                items:
+                  type: string
+                description: エラーメッセージ配列。オプショナル。
+              error_details:
+                type: object
+                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
+                required:
+                  - execution_type
+                  - status_category
+                  - status_code
+                properties:
+                  execution_type:
+                    type: string
+                    example: "http_request"
+                  status_category:
+                    type: string
+                    example: "server_error"
+                  status_code:
+                    type: integer
+                    example: 502
+                  response_body:
+                    type: object
+                    description: 外部サービスのレスポンスボディ（オプショナル）
+          examples:
+            bad_gateway:
+              value:
+                error: "bad_gateway"
+                error_description: "The upstream server returned an invalid response"
+            external_service_502:
+              value:
+                error: "execution_failed"
+                error_description: "execution failed"
+                error_messages:
+                  - "External service returned 502: bad_gateway"
+                error_details:
+                  execution_type: "http_request"
+                  status_category: "server_error"
+                  status_code: 502
+                  response_body:
+                    error: "bad_gateway"
+                    error_description: "The upstream server returned an invalid response"
+                    upstream_error: "Connection refused"
+
+    ServiceUnavailable:
+      description: |
+        サービス一時利用不可、または外部サービスから503エラーが返された場合
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+              - error_description
+            properties:
+              error:
+                type: string
+                example: "service_unavailable"
+                description: |
+                  エラーコード。`service_unavailable`（内部エラー）または `execution_failed`（外部サービスエラー）
+              error_description:
+                type: string
+                example: "The service is temporarily unavailable. Please try again later."
+              error_messages:
+                type: array
+                items:
+                  type: string
+                description: エラーメッセージ配列。オプショナル。
+              error_details:
+                type: object
+                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
+                required:
+                  - execution_type
+                  - status_category
+                  - status_code
+                properties:
+                  execution_type:
+                    type: string
+                    example: "http_request"
+                  status_category:
+                    type: string
+                    example: "server_error"
+                  status_code:
+                    type: integer
+                    example: 503
+                  response_body:
+                    type: object
+                    description: 外部サービスのレスポンスボディ（オプショナル）
+          examples:
+            service_unavailable:
+              value:
+                error: "service_unavailable"
+                error_description: "The service is temporarily unavailable. Please try again later."
+            external_service_503:
+              value:
+                error: "execution_failed"
+                error_description: "execution failed"
+                error_messages:
+                  - "External service returned 503: service_unavailable"
+                error_details:
+                  execution_type: "http_request"
+                  status_category: "server_error"
+                  status_code: 503
+                  response_body:
+                    error: "service_unavailable"
+                    error_description: "The external service is temporarily unavailable. Please retry after some time."
+                    retryable: true
+                    retry_after: 60
+
+    GatewayTimeout:
+      description: |
+        外部サービスタイムアウト、または外部サービスから504エラーが返された場合
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+              - error_description
+            properties:
+              error:
+                type: string
+                example: "gateway_timeout"
+                description: |
+                  エラーコード。`gateway_timeout`（内部エラー）または `execution_failed`（外部サービスエラー）
+              error_description:
+                type: string
+                example: "The external service request timed out"
+              error_messages:
+                type: array
+                items:
+                  type: string
+                description: エラーメッセージ配列。オプショナル。
+              error_details:
+                type: object
+                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
+                required:
+                  - execution_type
+                  - status_category
+                  - status_code
+                properties:
+                  execution_type:
+                    type: string
+                    example: "http_request"
+                  status_category:
+                    type: string
+                    example: "server_error"
+                  status_code:
+                    type: integer
+                    example: 504
+                  response_body:
+                    type: object
+                    description: 外部サービスのレスポンスボディ（オプショナル）
+          examples:
+            gateway_timeout:
+              value:
+                error: "gateway_timeout"
+                error_description: "The external service request timed out"
+            external_service_504:
+              value:
+                error: "execution_failed"
+                error_description: "execution failed"
+                error_messages:
+                  - "External service returned 504: gateway_timeout"
+                error_details:
+                  execution_type: "http_request"
+                  status_category: "server_error"
+                  status_code: 504
+                  response_body:
+                    error: "gateway_timeout"
+                    error_description: "The gateway did not receive a timely response from the upstream server"
+                    timeout_seconds: 30
+
   securitySchemes:
     OAuth2:
       type: oauth2
