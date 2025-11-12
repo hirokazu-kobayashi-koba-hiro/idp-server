@@ -3,6 +3,7 @@ import { describe, expect, it } from "@jest/globals";
 import { inspectToken, requestToken, revokeToken } from "../../api/oauthClient";
 import { clientSecretPostClient, serverConfig } from "../testConfig";
 import { requestAuthorizations } from "../../oauth/request";
+import { postWithJson } from "../../lib/http";
 
 describe("RFC 7009 - OAuth 2.0 Token Revocation", () => {
   it("success pattern - revoke access token", async () => {
@@ -292,6 +293,55 @@ describe("RFC 7009 - OAuth 2.0 Token Revocation", () => {
       // Check CORS headers are present
       expect(revokeResponse.status).toBe(200);
       // Note: CORS headers check would require custom axios config
+    });
+  });
+
+  describe("2.1. Revocation Request", () => {
+    it("The client constructs the request by including the following parameters using the \"application/x-www-form-urlencoded\" format - RFC 7009 Section 2.1", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "aiueo",
+        scope: "openid " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+      });
+      expect(authorizationResponse.code).not.toBeNull();
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+
+      // RFC 7009 Section 2.1: Content-Type MUST be application/x-www-form-urlencoded
+      // Sending application/json should return HTTP 415 Unsupported Media Type
+      const basicAuth = Buffer.from(
+        `${clientSecretPostClient.clientId}:${clientSecretPostClient.clientSecret}`
+      ).toString("base64");
+
+      const response = await postWithJson({
+        url: serverConfig.tokenRevocationEndpoint,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Basic ${basicAuth}`,
+        },
+        body: {
+          token: tokenResponse.data.access_token,
+          token_type_hint: "access_token",
+        },
+      });
+
+      console.log(response.data);
+      expect(response.status).toBe(400);
+      expect(response.data.error).toBe("invalid_request");
+      expect(response.data.error_description).toBe(
+        "Bad request. Content-Type header does not match supported values"
+      );
     });
   });
 });

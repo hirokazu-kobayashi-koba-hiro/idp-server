@@ -9,6 +9,7 @@ import {
 } from "../testConfig";
 import { requestAuthorizations } from "../../oauth/request";
 import { matchWithUSASCII } from "../../lib/util";
+import { postWithJson } from "../../lib/http";
 
 describe("The OAuth 2.0 Authorization Framework code", () => {
   it("success pattern", async () => {
@@ -748,6 +749,44 @@ describe("The OAuth 2.0 Authorization Framework code", () => {
       expect(tokenResponse.data.error).toEqual("unsupported_grant_type");
       expect(tokenResponse.data.error_description).toEqual(
         "this request grant_type is authorization_code, but authorization server does not support"
+      );
+    });
+
+    it("The client makes a request to the token endpoint by sending the following parameters using the \"application/x-www-form-urlencoded\" format - RFC 6749 Section 4.1.3", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "aiueo",
+        scope: clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+      });
+      expect(authorizationResponse.code).not.toBeNull();
+
+      // RFC 6749 Section 4.1.3: Content-Type MUST be application/x-www-form-urlencoded
+      // Sending application/json should return HTTP 400 Bad Request
+      const basicAuth = Buffer.from(
+        `${clientSecretPostClient.clientId}:${clientSecretPostClient.clientSecret}`
+      ).toString("base64");
+
+      const response = await postWithJson({
+        url: serverConfig.tokenEndpoint,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Basic ${basicAuth}`,
+        },
+        body: {
+          grant_type: "authorization_code",
+          code: authorizationResponse.code,
+          redirect_uri: clientSecretPostClient.redirectUri,
+        },
+      });
+
+      console.log(response.data);
+      expect(response.status).toBe(400);
+      expect(response.data.error).toBe("invalid_request");
+      expect(response.data.error_description).toBe(
+        "Bad request. Content-Type header does not match supported values"
       );
     });
   });

@@ -29,6 +29,7 @@ import org.idp.server.platform.type.RequestAttributes;
 import org.idp.server.usecases.IdpServerApplication;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
@@ -43,7 +44,7 @@ public class TokenV1Api implements ParameterTransformable, SecurityHeaderConfigu
     this.tokenApi = idpServerApplication.tokenAPi();
   }
 
-  @PostMapping
+  @PostMapping(consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
   public ResponseEntity<?> request(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
@@ -64,7 +65,7 @@ public class TokenV1Api implements ParameterTransformable, SecurityHeaderConfigu
         response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
-  @PostMapping("/introspection")
+  @PostMapping(value = "/introspection", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
   public ResponseEntity<?> inspect(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
@@ -85,7 +86,9 @@ public class TokenV1Api implements ParameterTransformable, SecurityHeaderConfigu
         response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
-  @PostMapping("/introspection-extensions")
+  @PostMapping(
+      value = "/introspection-extensions",
+      consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
   public ResponseEntity<?> inspectWithVerification(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
@@ -106,7 +109,7 @@ public class TokenV1Api implements ParameterTransformable, SecurityHeaderConfigu
         response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
-  @PostMapping("/revocation")
+  @PostMapping(value = "/revocation", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
   public ResponseEntity<?> revoke(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,

@@ -12,6 +12,7 @@ import { requestAuthorizations } from "../../oauth/request";
 import { createBasicAuthHeader } from "../../lib/util";
 import { createClientAssertion } from "../../lib/oauth";
 import { verifyAndDecodeJwt } from "../../lib/jose";
+import { postWithJson } from "../../lib/http";
 
 describe("OAuth 2.0 Token Introspection", () => {
   describe("success pattern", () => {
@@ -213,6 +214,54 @@ describe("OAuth 2.0 Token Introspection", () => {
       console.log(introspectionResponse.data);
       expect(introspectionResponse.status).toBe(200);
       expect(introspectionResponse.data.active).toBe(true);
+    });
+  });
+
+  describe("2.1. Introspection Request", () => {
+    it("The client makes a request to the introspection endpoint by sending the following parameters using the \"application/x-www-form-urlencoded\" format - RFC 7662 Section 2.1", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "aiueo",
+        scope: "openid " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+      });
+      expect(authorizationResponse.code).not.toBeNull();
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+
+      // RFC 7662 Section 2.1: Content-Type MUST be application/x-www-form-urlencoded
+      // Sending application/json should return HTTP 400 Bad Request
+      const basicAuth = Buffer.from(
+        `${clientSecretPostClient.clientId}:${clientSecretPostClient.clientSecret}`
+      ).toString("base64");
+
+      const response = await postWithJson({
+        url: serverConfig.tokenIntrospectionEndpoint,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Basic ${basicAuth}`,
+        },
+        body: {
+          token: tokenResponse.data.access_token,
+        },
+      });
+
+      console.log(response.data);
+      expect(response.status).toBe(400);
+      expect(response.data.error).toBe("invalid_request");
+      expect(response.data.error_description).toBe(
+        "Bad request. Content-Type header does not match supported values"
+      );
     });
   });
 

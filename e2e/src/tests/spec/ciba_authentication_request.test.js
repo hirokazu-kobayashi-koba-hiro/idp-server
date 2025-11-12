@@ -13,6 +13,7 @@ import {
 } from "../testConfig";
 import { createJwt, createJwtWithPrivateKey, generateJti } from "../../lib/jose";
 import { isNumber, sleep, toEpocTime } from "../../lib/util";
+import { postWithJson } from "../../lib/http";
 
 describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core 1.0", () => {
   const ciba = serverConfig.ciba;
@@ -907,5 +908,36 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
       expect(backchannelAuthenticationResponse.data.error_description).toEqual("Client authentication failed: method=client_secret_post, client_id=clientSecretPost, reason=request does not contain client_secret");
     });
 
+  });
+
+  describe("7.1. Authentication Request", () => {
+    it("The client constructs the request by including the following parameters using the \"application/x-www-form-urlencoded\" format - OpenID CIBA Section 7.1", async () => {
+      // OpenID CIBA Section 7.1: Content-Type MUST be application/x-www-form-urlencoded
+      // Sending application/json should return HTTP 415 Unsupported Media Type
+      const basicAuth = Buffer.from(
+        `${clientSecretPostClient.clientId}:${clientSecretPostClient.clientSecret}`
+      ).toString("base64");
+
+      const response = await postWithJson({
+        url: serverConfig.backchannelAuthenticationEndpoint,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Basic ${basicAuth}`,
+        },
+        body: {
+          scope: "openid profile phone email" + clientSecretPostClient.scope,
+          binding_message: ciba.bindingMessage,
+          user_code: ciba.userCode,
+          login_hint: ciba.loginHint,
+        },
+      });
+
+      console.log(response.data);
+      expect(response.status).toBe(400);
+      expect(response.data.error).toBe("invalid_request");
+      expect(response.data.error_description).toBe(
+        "Bad request. Content-Type header does not match supported values"
+      );
+    });
   });
 });

@@ -35,6 +35,7 @@ function createServerConfig(tenantId, baseUrl = backendUrl) {
     issuer: `${baseUrl}/${tenantId}`,
     tenantId,
     authorizationEndpoint: `${baseUrl}/${tenantId}/v1/authorizations`,
+    pushedAuthorizationEndpoint: `${baseUrl}/${tenantId}/v1/authorizations/push`,
     authorizationIdEndpoint: `${baseUrl}/${tenantId}/v1/authorizations/{id}/`,
     authenticationEndpoint: `${baseUrl}/v1/management/tenants/${tenantId}/authentication-transactions`,
     authenticationDeviceEndpoint: `${baseUrl}/${tenantId}/v1/authentication-devices/{id}/authentications`,

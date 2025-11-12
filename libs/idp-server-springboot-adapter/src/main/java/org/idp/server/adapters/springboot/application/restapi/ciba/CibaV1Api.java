@@ -26,6 +26,7 @@ import org.idp.server.platform.type.RequestAttributes;
 import org.idp.server.usecases.IdpServerApplication;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
@@ -40,7 +41,7 @@ public class CibaV1Api implements ParameterTransformable {
     this.cibaFlowApi = idpServerApplication.cibaFlowApi();
   }
 
-  @PostMapping
+  @PostMapping(consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
   public ResponseEntity<?> request(
       @RequestBody(required = false) MultiValueMap<String, String> body,
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
