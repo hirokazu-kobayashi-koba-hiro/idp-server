@@ -17,6 +17,7 @@
 package org.idp.server.security.event.hook.ssf;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.idp.server.platform.date.SystemDateTime;
@@ -57,8 +58,9 @@ public class SecurityEventTokenCreator {
       claims.put("jti", UUID.randomUUID().toString());
       claims.put("iat", SystemDateTime.toEpochSecond(SystemDateTime.now()));
       // aud is RECOMMENDED (not REQUIRED) per RFC 8417 Section 2.2
+      // Per RFC 7519 Section 4.1.3, aud MAY be a string or an array of strings
       if (securityEventTokenEntity.hasAudience()) {
-        claims.put("aud", securityEventTokenEntity.audience());
+        claims.put("aud", securityEventTokenEntity.audienceValue());
       }
       claims.put("events", securityEventTokenEntity.eventAsMap());
 
@@ -81,7 +83,7 @@ public class SecurityEventTokenCreator {
 
   public SecurityEventTokenEntity convert() {
     String setIssuer = metadataConfig.issuer();
-    String audience = resolveAudience();
+    List<String> audience = resolveAudience();
     SharedSecurityEvent sharedSecurityEvent = convertToSecurityEvent();
 
     return new SecurityEventTokenEntity(setIssuer, audience, sharedSecurityEvent);
@@ -90,26 +92,23 @@ public class SecurityEventTokenCreator {
   /**
    * Resolves the audience (aud) value for the SET.
    *
-   * <p>Priority:
+   * <p>Per RFC 8417 Section 2.2, the "aud" claim is RECOMMENDED but not REQUIRED. This method
+   * returns the audience from Stream Configuration if configured, otherwise returns an empty list
+   * to omit the aud claim.
    *
-   * <ol>
-   *   <li>Stream Configuration's aud (if configured)
-   *   <li>Fallback to client ID from security event
-   * </ol>
-   *
-   * @return the audience value
+   * @return the audience list from Stream Configuration, or empty list if not configured
    */
-  private String resolveAudience() {
-    // Priority 1: Use stream configuration's aud if available
+  private List<String> resolveAudience() {
+    // Use stream configuration's aud if available
     if (metadataConfig.hasStreamConfiguration()) {
       StreamConfiguration streamConfig = metadataConfig.streamConfiguration();
       if (streamConfig.hasAud()) {
-        return streamConfig.audValue();
+        return streamConfig.aud();
       }
     }
 
-    // Fallback. Payload aud is not set.
-    return "";
+    // No audience configured - aud claim will be omitted (RFC 8417 allows this)
+    return List.of();
   }
 
   private SharedSecurityEvent convertToSecurityEvent() {

@@ -86,7 +86,9 @@ public class SecurityEventTokenCreatorTest {
         "https://ssf.example.com",
         entity.issuerValue(),
         "issuer should use metadataConfig.issuer (SSF issuer), not tenant issuer");
-    assertEquals("client-id", entity.audience(), "Client ID should be from SecurityEvent");
+    // Without Stream Configuration, aud should be empty (RFC 8417 allows omitting aud)
+    assertTrue(
+        entity.audience().isEmpty(), "aud should be empty when Stream Configuration is not set");
   }
 
   @Test
@@ -136,13 +138,17 @@ public class SecurityEventTokenCreatorTest {
     assertNotNull(entity);
     // Should use stream configuration's aud, not client ID
     assertEquals(
-        "stream-receiver-123",
+        List.of("stream-receiver-123"),
         entity.audience(),
         "aud should use streamConfiguration.aud() when configured");
+    assertEquals(
+        "stream-receiver-123",
+        entity.audienceValue(),
+        "audienceValue() should return single string when list has one element");
   }
 
   @Test
-  void convert_shouldFallbackToClientIdWhenStreamConfigNotSet() {
+  void convert_shouldOmitAudWhenStreamConfigNotSet() {
     // No stream configuration set
     metadataConfig.streamConfiguration = null;
 
@@ -152,15 +158,14 @@ public class SecurityEventTokenCreatorTest {
     SecurityEventTokenEntity entity = creator.convert();
 
     assertNotNull(entity);
-    // Should fallback to client ID
-    assertEquals(
-        "client-id",
-        entity.audience(),
-        "aud should fallback to clientId when streamConfiguration is not set");
+    // Should omit aud when Stream Configuration is not set
+    assertTrue(
+        entity.audience().isEmpty(), "aud should be empty when streamConfiguration is not set");
+    assertFalse(entity.hasAudience(), "hasAudience() should return false");
   }
 
   @Test
-  void convert_shouldFallbackToClientIdWhenStreamConfigAudEmpty() {
+  void convert_shouldOmitAudWhenStreamConfigAudEmpty() {
     // Stream configuration exists but aud is empty
     StreamConfiguration streamConfig = new StreamConfiguration();
     streamConfig.aud = new ArrayList<>();
@@ -172,11 +177,10 @@ public class SecurityEventTokenCreatorTest {
     SecurityEventTokenEntity entity = creator.convert();
 
     assertNotNull(entity);
-    // Should fallback to client ID
-    assertEquals(
-        "client-id",
-        entity.audience(),
-        "aud should fallback to clientId when streamConfiguration.aud is empty");
+    // Should omit aud when Stream Configuration aud is empty
+    assertTrue(
+        entity.audience().isEmpty(), "aud should be empty when streamConfiguration.aud is empty");
+    assertFalse(entity.hasAudience(), "hasAudience() should return false");
   }
 
   @Test

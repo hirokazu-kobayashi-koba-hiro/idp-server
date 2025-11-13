@@ -16,6 +16,7 @@
 
 package org.idp.server.security.event.hook.ssf;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,13 +26,13 @@ import java.util.Map;
  */
 public class SecurityEventTokenEntity {
   String issuer;
-  String audience;
+  List<String> audience;
   SharedSecurityEvent sharedSecurityEvent;
 
   public SecurityEventTokenEntity() {}
 
   public SecurityEventTokenEntity(
-      String issuer, String audience, SharedSecurityEvent sharedSecurityEvent) {
+      String issuer, List<String> audience, SharedSecurityEvent sharedSecurityEvent) {
     this.issuer = issuer;
     this.audience = audience;
     this.sharedSecurityEvent = sharedSecurityEvent;
@@ -41,7 +42,24 @@ public class SecurityEventTokenEntity {
     return issuer;
   }
 
-  public String audience() {
+  public List<String> audience() {
+    return audience;
+  }
+
+  /**
+   * Returns the audience value for JWT claim.
+   *
+   * <p>Per RFC 7519 Section 4.1.3, the "aud" claim MAY be a string or an array of strings.
+   *
+   * @return single string if audience has one element, otherwise the list
+   */
+  public Object audienceValue() {
+    if (audience == null || audience.isEmpty()) {
+      return null;
+    }
+    if (audience.size() == 1) {
+      return audience.get(0);
+    }
     return audience;
   }
 
