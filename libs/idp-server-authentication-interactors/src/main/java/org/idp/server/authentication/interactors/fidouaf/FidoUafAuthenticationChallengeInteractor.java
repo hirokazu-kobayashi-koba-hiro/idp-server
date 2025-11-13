@@ -95,6 +95,9 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
 
     // request
     if (deviceId == null || deviceId.isEmpty()) {
+
+      log.warn("FIDO-UAF authentication challenge failed. device_id is required.");
+
       Map<String, Object> contents = new HashMap<>();
       contents.put("error", "invalid_request");
       contents.put("error_description", "device_id is required.");
@@ -138,6 +141,10 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
         MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
 
     if (executionResult.isClientError()) {
+
+      log.warn(
+          "FIDO-UAF authentication challenge failed. Client error: {}", executionResult.contents());
+
       return AuthenticationInteractionRequestResult.clientError(
           contents,
           type,
@@ -147,6 +154,10 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
     }
 
     if (executionResult.isServerError()) {
+
+      log.warn(
+          "FIDO-UAF authentication challenge failed. Server error: {}", executionResult.contents());
+
       return AuthenticationInteractionRequestResult.serverError(
           contents,
           type,
@@ -154,6 +165,8 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
           method(),
           DefaultSecurityEventType.fido_uaf_authentication_challenge_failure);
     }
+
+    log.debug("FIDO-UAF authentication challenge succeeded for device: {}", deviceId);
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
@@ -171,18 +184,25 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
       RequestAttributes requestAttributes) {
 
     if (request.containsKey("device_id")) {
-      return request.getValueAsString("device_id");
+      String deviceId = request.getValueAsString("device_id");
+      log.debug("Device ID extracted from request: {}", deviceId);
+      return deviceId;
     }
 
     if (requestAttributes.containsKey("x-device-id")) {
-      return requestAttributes.getValueOrEmptyAsString("x-device-id");
+      String deviceId = requestAttributes.getValueOrEmptyAsString("x-device-id");
+      log.debug("Device ID extracted from request attributes (x-device-id): {}", deviceId);
+      return deviceId;
     }
 
     if (transaction.hasAuthenticationDevice()) {
       AuthenticationDevice authenticationDevice = transaction.authenticationDevice();
-      return authenticationDevice.id();
+      String deviceId = authenticationDevice.id();
+      log.debug("Device ID extracted from transaction authentication device: {}", deviceId);
+      return deviceId;
     }
 
+    log.debug("Device ID not found in any source (request, attributes, transaction)");
     return "";
   }
 }
