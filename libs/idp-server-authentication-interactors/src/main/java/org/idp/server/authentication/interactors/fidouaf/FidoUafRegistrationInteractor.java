@@ -24,6 +24,7 @@ import org.idp.server.core.openid.authentication.*;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
 import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
 import org.idp.server.core.openid.authentication.config.AuthenticationInteractionConfig;
+import org.idp.server.core.openid.authentication.config.AuthenticationResponseConfig;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionRequest;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionResult;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
@@ -35,7 +36,10 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
@@ -77,7 +81,7 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
       RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
-    log.info("FidoUafRegistrationInteractor called");
+    log.debug("FidoUafRegistrationInteractor called");
 
     AuthenticationConfiguration configuration =
         configurationQueryRepository.get(tenant, "fido-uaf");
@@ -102,9 +106,18 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
             requestAttributes,
             execution);
 
+    AuthenticationResponseConfig responseConfig = authenticationInteractionConfig.response();
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(executionResult.contents());
+    JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
+    Map<String, Object> contents =
+        MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
+
     if (executionResult.isClientError()) {
+
+      log.warn("FIDO-UAF registration failed. Client error: {}", executionResult.contents());
+
       return AuthenticationInteractionRequestResult.clientError(
-          executionResult.contents(),
+          contents,
           type,
           operationType(),
           method(),
@@ -112,8 +125,11 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
     }
 
     if (executionResult.isServerError()) {
+
+      log.warn("FIDO-UAF registration failed. Server error: {}", executionResult.contents());
+
       return AuthenticationInteractionRequestResult.serverError(
-          executionResult.contents(),
+          contents,
           type,
           operationType(),
           method(),
@@ -146,8 +162,13 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
       addedDeviceUser.setStatus(UserStatus.IDENTITY_VERIFICATION_REQUIRED);
     }
 
-    Map<String, Object> contents = new HashMap<>();
-    contents.put("device_id", deviceId);
+    log.debug(
+        "FIDO-UAF registration succeeded for user: {}, device: {}",
+        addedDeviceUser.sub(),
+        deviceId);
+
+    Map<String, Object> responseContents = new HashMap<>(contents);
+    responseContents.put("device_id", deviceId);
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
@@ -155,7 +176,7 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
         operationType(),
         method(),
         addedDeviceUser,
-        contents,
+        responseContents,
         eventType);
   }
 

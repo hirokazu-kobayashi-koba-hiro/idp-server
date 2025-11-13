@@ -52,7 +52,7 @@ public class FidoUafCancelInteractor implements AuthenticationInteractor {
       RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
-    log.info("FidoUafCancelInteractor called");
+    log.debug("FidoUafCancelInteractor called");
 
     AuthenticationInteractionStatus status = AuthenticationInteractionStatus.SUCCESS;
     Map<String, Object> response = Map.of();

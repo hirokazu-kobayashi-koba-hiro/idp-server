@@ -23,6 +23,7 @@ import org.idp.server.core.openid.authentication.*;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
 import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
 import org.idp.server.core.openid.authentication.config.AuthenticationInteractionConfig;
+import org.idp.server.core.openid.authentication.config.AuthenticationResponseConfig;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionRequest;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionResult;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
@@ -31,7 +32,10 @@ import org.idp.server.core.openid.authentication.repository.AuthenticationConfig
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
@@ -73,7 +77,7 @@ public class FidoUafAuthenticationInteractor implements AuthenticationInteractor
       RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
-    log.info("FidoUafAuthenticationInteractor called");
+    log.debug("FidoUafAuthenticationInteractor called");
 
     AuthenticationConfiguration configuration =
         configurationQueryRepository.get(tenant, "fido-uaf");
@@ -97,9 +101,18 @@ public class FidoUafAuthenticationInteractor implements AuthenticationInteractor
             requestAttributes,
             execution);
 
+    AuthenticationResponseConfig responseConfig = authenticationInteractionConfig.response();
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(executionResult.contents());
+    JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
+    Map<String, Object> contents =
+        MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
+
     if (executionResult.isClientError()) {
+
+      log.warn("FIDO-UAF authentication failed. Client error: {}", executionResult.contents());
+
       return AuthenticationInteractionRequestResult.clientError(
-          executionResult.contents(),
+          contents,
           type,
           operationType(),
           method(),
@@ -107,8 +120,11 @@ public class FidoUafAuthenticationInteractor implements AuthenticationInteractor
     }
 
     if (executionResult.isServerError()) {
+
+      log.warn("FIDO-UAF authentication failed. Server error: {}", executionResult.contents());
+
       return AuthenticationInteractionRequestResult.serverError(
-          executionResult.contents(),
+          contents,
           type,
           operationType(),
           method(),
@@ -125,21 +141,26 @@ public class FidoUafAuthenticationInteractor implements AuthenticationInteractor
     User user = userQueryRepository.findByAuthenticationDevice(tenant, deviceId);
 
     if (!user.exists()) {
-      Map<String, Object> contents = new HashMap<>();
-      contents.put("error", "invalid_request");
-      contents.put(
+
+      log.warn("FIDO-UAF user resolution failed. deviceId: {}", deviceId);
+
+      Map<String, Object> userErrorContents = new HashMap<>();
+      userErrorContents.put("error", "invalid_request");
+      userErrorContents.put(
           "error_description",
           String.format(
-              "fido-uaf authentication is success. but user does not exist. device ID: %s",
+              "FIDO-UAF authentication succeeded but user could not be resolved. device ID: %s",
               deviceId));
 
       return AuthenticationInteractionRequestResult.clientError(
-          contents,
+          userErrorContents,
           type,
           operationType(),
           method(),
           DefaultSecurityEventType.fido_uaf_authentication_failure);
     }
+
+    log.debug("FIDO-UAF authentication succeeded for user: {}", user.sub());
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
@@ -147,7 +168,7 @@ public class FidoUafAuthenticationInteractor implements AuthenticationInteractor
         operationType(),
         method(),
         user,
-        executionResult.contents(),
+        contents,
         DefaultSecurityEventType.fido_uaf_authentication_success);
   }
 }

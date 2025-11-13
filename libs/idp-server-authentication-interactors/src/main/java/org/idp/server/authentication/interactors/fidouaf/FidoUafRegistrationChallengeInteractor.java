@@ -118,6 +118,10 @@ public class FidoUafRegistrationChallengeInteractor implements AuthenticationInt
         MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
 
     if (executionResult.isClientError()) {
+
+      log.warn(
+          "FIDO-UAF registration challenge failed. Client error: {}", executionResult.contents());
+
       return AuthenticationInteractionRequestResult.clientError(
           contents,
           type,
@@ -127,6 +131,10 @@ public class FidoUafRegistrationChallengeInteractor implements AuthenticationInt
     }
 
     if (executionResult.isServerError()) {
+
+      log.warn(
+          "FIDO-UAF registration challenge failed. Server error: {}", executionResult.contents());
+
       return AuthenticationInteractionRequestResult.serverError(
           contents,
           type,

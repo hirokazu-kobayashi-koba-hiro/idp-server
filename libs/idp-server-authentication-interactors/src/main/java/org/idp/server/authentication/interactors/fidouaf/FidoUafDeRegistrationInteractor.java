@@ -110,6 +110,9 @@ public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor
         MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
 
     if (executionResult.isClientError()) {
+
+      log.warn("FIDO-UAF deregistration failed. Client error: {}", executionResult.contents());
+
       return AuthenticationInteractionRequestResult.clientError(
           contents,
           type,
@@ -119,6 +122,9 @@ public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor
     }
 
     if (executionResult.isServerError()) {
+
+      log.warn("FIDO-UAF deregistration failed. Server error: {}", executionResult.contents());
+
       return AuthenticationInteractionRequestResult.serverError(
           contents,
           type,
@@ -131,6 +137,11 @@ public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor
     User user = transaction.user();
 
     User removedDeviceUser = user.removeAuthenticationDevice(deviceId);
+
+    log.debug(
+        "FIDO-UAF deregistration succeeded for user: {}, device: {}",
+        removedDeviceUser.sub(),
+        deviceId);
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
