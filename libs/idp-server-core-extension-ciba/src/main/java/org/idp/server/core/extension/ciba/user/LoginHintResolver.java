@@ -21,10 +21,13 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.Pairs;
 
 public class LoginHintResolver implements UserHintResolver {
+
+  LoggerWrapper log = LoggerWrapper.getLogger(this.getClass());
 
   @Override
   public User resolve(
@@ -39,38 +42,60 @@ public class LoginHintResolver implements UserHintResolver {
             new PrefixMatcher(
                 "sub:",
                 hints -> {
+                  log.debug("Backchannel Authentication Resolving user hint  sub");
                   UserIdentifier userIdentifier = new UserIdentifier(hints.getLeft());
                   return userQueryRepository.findById(tenant, userIdentifier);
                 }),
             new PrefixMatcher(
                 "ex-sub:",
-                hints ->
-                    userQueryRepository.findByExternalIdpSubject(
-                        tenant, hints.getLeft(), hints.getRight())),
+                hints -> {
+                  log.debug("Backchannel Authentication Resolving user hint ex-sub");
+                  return userQueryRepository.findByExternalIdpSubject(
+                      tenant, hints.getLeft(), hints.getRight());
+                }),
             new PrefixMatcher(
                 "device:",
-                hints ->
-                    userQueryRepository.findByDeviceId(
-                        tenant,
-                        new AuthenticationDeviceIdentifier(hints.getLeft()),
-                        hints.getRight())),
+                hints -> {
+                  log.debug("Backchannel Authentication Resolving user hint device");
+                  return userQueryRepository.findByDeviceId(
+                      tenant,
+                      new AuthenticationDeviceIdentifier(hints.getLeft()),
+                      hints.getRight());
+                }),
             new PrefixMatcher(
                 "phone:",
-                hints ->
-                    userQueryRepository.findByPhone(tenant, hints.getLeft(), hints.getRight())),
+                hints -> {
+                  log.debug("Backchannel Authentication Resolving user hint phone");
+                  return userQueryRepository.findByPhone(tenant, hints.getLeft(), hints.getRight());
+                }),
             new PrefixMatcher(
                 "email:",
-                hints ->
-                    userQueryRepository.findByEmail(tenant, hints.getLeft(), hints.getRight())));
+                hints -> {
+                  log.debug("Backchannel Authentication Resolving user hint email");
+                  return userQueryRepository.findByEmail(tenant, hints.getLeft(), hints.getRight());
+                }));
 
-    return matchers.stream()
-        .filter(matcher -> matcher.matches(loginHint))
-        .findFirst()
-        .map(
-            matcher -> {
-              Pairs<String, String> hints = matcher.extractHints(loginHint);
-              return matcher.resolve(hints);
-            })
-        .orElse(User.notFound());
+    User user =
+        matchers.stream()
+            .filter(matcher -> matcher.matches(loginHint))
+            .findFirst()
+            .map(
+                matcher -> {
+                  Pairs<String, String> hints = matcher.extractHints(loginHint);
+                  return matcher.resolve(hints);
+                })
+            .orElseGet(
+                () -> {
+                  log.warn(
+                      "Backchannel Authentication login_hint does not match any supported format: {}",
+                      loginHint);
+                  return User.notFound();
+                });
+
+    if (!user.exists()) {
+      log.warn("Backchannel Authentication user not found for login_hint: {}", loginHint);
+    }
+
+    return user;
   }
 }

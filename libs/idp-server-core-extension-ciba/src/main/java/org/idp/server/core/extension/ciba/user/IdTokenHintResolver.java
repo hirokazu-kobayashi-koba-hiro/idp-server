@@ -38,6 +38,7 @@ public class IdTokenHintResolver implements UserHintResolver {
       UserQueryRepository userQueryRepository) {
 
     try {
+      log.debug("Backchannel Authentication Resolving user hint idToken");
       String idToken = userHint.value();
       String serverJwks = userHintRelatedParams.optValueAsString("serverJwks", "");
       String clientSecret = userHintRelatedParams.optValueAsString("clientSecret", "");

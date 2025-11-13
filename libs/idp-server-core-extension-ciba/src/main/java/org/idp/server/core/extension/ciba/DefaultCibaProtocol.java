@@ -36,6 +36,7 @@ import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.platform.dependency.protocol.DefaultAuthorizationProvider;
 import org.idp.server.platform.http.HttpRequestExecutor;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.log.TenantLoggingContext;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class DefaultCibaProtocol implements CibaProtocol {
@@ -130,6 +131,7 @@ public class DefaultCibaProtocol implements CibaProtocol {
               cibaRequestContext.userHintRelatedParams(),
               userQueryRepository);
 
+      setUserContext(user);
       additionalVerifiers.verify(cibaRequestContext, user);
 
       CibaIssueResponse response =
@@ -141,6 +143,17 @@ public class DefaultCibaProtocol implements CibaProtocol {
     } catch (Exception exception) {
 
       return errorHandler.handle(exception);
+    }
+  }
+
+  private void setUserContext(User user) {
+
+    if (user.exists()) {
+      TenantLoggingContext.setUserId(user.sub());
+
+      if (user.hasExternalUserId()) {
+        TenantLoggingContext.setUserId(user.externalUserId());
+      }
     }
   }
 
