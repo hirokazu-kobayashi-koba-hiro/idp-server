@@ -82,15 +82,7 @@ public class HttpRequestAuthenticationExecutor implements AuthenticationExecutor
     HttpRequestResult executionResult =
         httpRequestExecutor.execute(configuration.httpRequest(), httpRequestBaseParams);
 
-    if (executionResult.isClientError()) {
-      return AuthenticationExecutionResult.clientError(executionResult.body().toMap());
-    }
-
-    if (executionResult.isServerError()) {
-      return AuthenticationExecutionResult.serverError(executionResult.body().toMap());
-    }
-
-    if (configuration.hasHttpRequestStore()) {
+    if (configuration.hasHttpRequestStore() && executionResult.isSuccess()) {
       AuthenticationExecutionStoreConfig httpRequestStore = configuration.httpRequestStore();
       JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(executionResult.toMap());
       JsonPathWrapper pathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
@@ -100,8 +92,21 @@ public class HttpRequestAuthenticationExecutor implements AuthenticationExecutor
           tenant, identifier, httpRequestStore.key(), interactionMap);
     }
 
-    Map<String, Object> interactionMap = new HashMap<>();
-    interactionMap.put("execution_http_request", executionResult.toMap());
-    return AuthenticationExecutionResult.success(interactionMap);
+    return createExecutionResult(executionResult);
+  }
+
+  private AuthenticationExecutionResult createExecutionResult(HttpRequestResult httpResult) {
+    Map<String, Object> response = new HashMap<>();
+    response.put("execution_http_request", httpResult.toMap());
+
+    if (httpResult.isClientError()) {
+      return AuthenticationExecutionResult.clientError(response);
+    }
+
+    if (httpResult.isServerError()) {
+      return AuthenticationExecutionResult.serverError(response);
+    }
+
+    return AuthenticationExecutionResult.success(response);
   }
 }

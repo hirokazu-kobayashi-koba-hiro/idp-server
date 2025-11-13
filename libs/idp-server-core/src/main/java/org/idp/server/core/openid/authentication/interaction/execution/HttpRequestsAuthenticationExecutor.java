@@ -79,7 +79,6 @@ public class HttpRequestsAuthenticationExecutor implements AuthenticationExecuto
 
     List<HttpRequestExecutionConfig> httpRequestExecutionConfigs = configuration.httpRequests();
 
-    Map<String, Object> results = new HashMap<>();
     List<HttpRequestResult> httpRequestResults = new ArrayList<>();
     for (HttpRequestExecutionConfig httpRequestExecutionConfig : httpRequestExecutionConfigs) {
 
@@ -87,20 +86,19 @@ public class HttpRequestsAuthenticationExecutor implements AuthenticationExecuto
       HttpRequestResult executionResult =
           httpRequestExecutor.execute(httpRequestExecutionConfig, httpRequestBaseParams);
 
-      if (executionResult.isClientError()) {
-        return AuthenticationExecutionResult.clientError(executionResult.body().toMap());
-      }
-
-      if (executionResult.isServerError()) {
-        return AuthenticationExecutionResult.serverError(executionResult.body().toMap());
-      }
-
       httpRequestResults.add(executionResult);
+
+      // If error occurs, return immediately with all results collected so far
+      if (executionResult.isClientError() || executionResult.isServerError()) {
+        return createExecutionResult(httpRequestResults, executionResult);
+      }
+
       param.put(
           "execution_http_requests",
           httpRequestResults.stream().map(HttpRequestResult::toMap).toList());
     }
 
+    Map<String, Object> results = new HashMap<>();
     results.put(
         "execution_http_requests",
         httpRequestResults.stream().map(HttpRequestResult::toMap).toList());
@@ -116,5 +114,22 @@ public class HttpRequestsAuthenticationExecutor implements AuthenticationExecuto
     }
 
     return AuthenticationExecutionResult.success(results);
+  }
+
+  private AuthenticationExecutionResult createExecutionResult(
+      List<HttpRequestResult> httpResults, HttpRequestResult lastResult) {
+    Map<String, Object> response = new HashMap<>();
+    response.put(
+        "execution_http_requests", httpResults.stream().map(HttpRequestResult::toMap).toList());
+
+    if (lastResult.isClientError()) {
+      return AuthenticationExecutionResult.clientError(response);
+    }
+
+    if (lastResult.isServerError()) {
+      return AuthenticationExecutionResult.serverError(response);
+    }
+
+    return AuthenticationExecutionResult.success(response);
   }
 }
