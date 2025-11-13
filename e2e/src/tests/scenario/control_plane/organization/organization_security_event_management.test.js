@@ -113,7 +113,7 @@ describe("organization security event management api", () => {
       const accessToken = tokenResponse.data.access_token;
 
       const multiTypeResponse = await get({
-        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-events?event_type=login_success,inspect_token_success&limit=100`,
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-events?event_type=issue_token_success,user_delete&limit=100`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
