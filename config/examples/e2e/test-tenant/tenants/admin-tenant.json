@@ -2,9 +2,10 @@
   "tenant": {
     "id": "67e7eae6-62b0-4500-9eff-87459f63fc66",
     "name": "admin-tenant",
-    "domain": "http://localhost:3000",
+    "domain": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
     "authorization_provider": "idp-server",
     "ui_config": {
+      "base_url": "http://localhost:3000",
       "signup_page": "/signup/",
       "signin_page": "/signin/fido2/"
     },

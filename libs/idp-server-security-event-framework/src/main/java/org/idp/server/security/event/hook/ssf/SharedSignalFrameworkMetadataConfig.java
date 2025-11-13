@@ -36,6 +36,7 @@ public class SharedSignalFrameworkMetadataConfig implements JsonReadable {
   List<String> criticalSubjectMembers;
   List<AuthorizationSchemeConfig> authorizationSchemes;
   String defaultSubjects;
+  StreamConfiguration streamConfiguration;
 
   public SharedSignalFrameworkMetadataConfig() {}
 
@@ -98,6 +99,14 @@ public class SharedSignalFrameworkMetadataConfig implements JsonReadable {
     return defaultSubjects;
   }
 
+  public StreamConfiguration streamConfiguration() {
+    return streamConfiguration;
+  }
+
+  public boolean hasStreamConfiguration() {
+    return streamConfiguration != null;
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("spec_version", specVersion);
@@ -113,6 +122,9 @@ public class SharedSignalFrameworkMetadataConfig implements JsonReadable {
     map.put("critical_subject_members", criticalSubjectMembers);
     map.put("authorization_schemes", authorizationSchemesAsMap());
     map.put("default_subjects", defaultSubjects);
+    if (streamConfiguration != null) {
+      map.put("stream_configuration", streamConfiguration.toMap());
+    }
     return map;
   }
 

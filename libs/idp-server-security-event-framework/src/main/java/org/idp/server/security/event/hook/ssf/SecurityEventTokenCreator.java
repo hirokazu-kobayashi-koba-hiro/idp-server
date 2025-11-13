@@ -17,6 +17,7 @@
 package org.idp.server.security.event.hook.ssf;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.idp.server.platform.date.SystemDateTime;
@@ -56,7 +57,11 @@ public class SecurityEventTokenCreator {
       claims.put("iss", securityEventTokenEntity.issuerValue());
       claims.put("jti", UUID.randomUUID().toString());
       claims.put("iat", SystemDateTime.toEpochSecond(SystemDateTime.now()));
-      claims.put("aud", securityEventTokenEntity.clientIdValue());
+      // aud is RECOMMENDED (not REQUIRED) per RFC 8417 Section 2.2
+      // Per RFC 7519 Section 4.1.3, aud MAY be a string or an array of strings
+      if (securityEventTokenEntity.hasAudience()) {
+        claims.put("aud", securityEventTokenEntity.audienceValue());
+      }
       claims.put("events", securityEventTokenEntity.eventAsMap());
 
       Map<String, Object> headers = transmissionConfig.securityEventTokenHeaders();
@@ -77,11 +82,33 @@ public class SecurityEventTokenCreator {
   }
 
   public SecurityEventTokenEntity convert() {
-    String tokenIssuer = securityEvent.tokenIssuer();
-    String requestedClientId = securityEvent.clientId();
+    String setIssuer = metadataConfig.issuer();
+    List<String> audience = resolveAudience();
     SharedSecurityEvent sharedSecurityEvent = convertToSecurityEvent();
 
-    return new SecurityEventTokenEntity(tokenIssuer, requestedClientId, sharedSecurityEvent);
+    return new SecurityEventTokenEntity(setIssuer, audience, sharedSecurityEvent);
+  }
+
+  /**
+   * Resolves the audience (aud) value for the SET.
+   *
+   * <p>Per RFC 8417 Section 2.2, the "aud" claim is RECOMMENDED but not REQUIRED. This method
+   * returns the audience from Stream Configuration if configured, otherwise returns an empty list
+   * to omit the aud claim.
+   *
+   * @return the audience list from Stream Configuration, or empty list if not configured
+   */
+  private List<String> resolveAudience() {
+    // Use stream configuration's aud if available
+    if (metadataConfig.hasStreamConfiguration()) {
+      StreamConfiguration streamConfig = metadataConfig.streamConfiguration();
+      if (streamConfig.hasAud()) {
+        return streamConfig.aud();
+      }
+    }
+
+    // No audience configured - aud claim will be omitted (RFC 8417 allows this)
+    return List.of();
   }
 
   private SharedSecurityEvent convertToSecurityEvent() {
