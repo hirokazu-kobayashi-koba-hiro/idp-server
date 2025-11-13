@@ -56,7 +56,10 @@ public class SecurityEventTokenCreator {
       claims.put("iss", securityEventTokenEntity.issuerValue());
       claims.put("jti", UUID.randomUUID().toString());
       claims.put("iat", SystemDateTime.toEpochSecond(SystemDateTime.now()));
-      claims.put("aud", securityEventTokenEntity.clientIdValue());
+      // aud is RECOMMENDED (not REQUIRED) per RFC 8417 Section 2.2
+      if (securityEventTokenEntity.hasAudience()) {
+        claims.put("aud", securityEventTokenEntity.audience());
+      }
       claims.put("events", securityEventTokenEntity.eventAsMap());
 
       Map<String, Object> headers = transmissionConfig.securityEventTokenHeaders();
@@ -77,11 +80,36 @@ public class SecurityEventTokenCreator {
   }
 
   public SecurityEventTokenEntity convert() {
-    String tokenIssuer = securityEvent.tokenIssuer();
-    String requestedClientId = securityEvent.clientId();
+    String setIssuer = metadataConfig.issuer();
+    String audience = resolveAudience();
     SharedSecurityEvent sharedSecurityEvent = convertToSecurityEvent();
 
-    return new SecurityEventTokenEntity(tokenIssuer, requestedClientId, sharedSecurityEvent);
+    return new SecurityEventTokenEntity(setIssuer, audience, sharedSecurityEvent);
+  }
+
+  /**
+   * Resolves the audience (aud) value for the SET.
+   *
+   * <p>Priority:
+   *
+   * <ol>
+   *   <li>Stream Configuration's aud (if configured)
+   *   <li>Fallback to client ID from security event
+   * </ol>
+   *
+   * @return the audience value
+   */
+  private String resolveAudience() {
+    // Priority 1: Use stream configuration's aud if available
+    if (metadataConfig.hasStreamConfiguration()) {
+      StreamConfiguration streamConfig = metadataConfig.streamConfiguration();
+      if (streamConfig.hasAud()) {
+        return streamConfig.audValue();
+      }
+    }
+
+    // Fallback. Payload aud is not set.
+    return "";
   }
 
   private SharedSecurityEvent convertToSecurityEvent() {

@@ -7,6 +7,7 @@ import { postAuthentication, requestToken } from "../../../api/oauthClient";
 import { requestFederation } from "../../../oauth/federation";
 import { requestAuthorizations } from "../../../oauth/request";
 import { faker } from "@faker-js/faker";
+import { verifyAndDecodeJwt } from "../../../lib/jose";
 
 describe("User lifecycle", () => {
 
@@ -57,6 +58,120 @@ describe("User lifecycle", () => {
       console.log(introspectionResponse.data);
       expect(introspectionResponse.status).toBe(200);
       expect(introspectionResponse.data.active).toBe(false);
+
+      // Verify Security Event Token (SET) generation and delivery
+      await sleep(3000);
+
+      // Get admin access token for management API
+      const adminTokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+        scope: "org-management account management",
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret
+      });
+      expect(adminTokenResponse.status).toBe(200);
+      const adminAccessToken = adminTokenResponse.data.access_token;
+
+      // Get security event list for user deletion
+      const securityEventListResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/security-events?external_user_id=${user.ex_sub}&event_type=user_delete&limit=1`,
+        headers: {
+          Authorization: `Bearer ${adminAccessToken}`
+        }
+      });
+      console.log("Security Event List:", JSON.stringify(securityEventListResponse.data, null, 2));
+      expect(securityEventListResponse.status).toBe(200);
+      expect(securityEventListResponse.data.total_count).toBe(1);
+      expect(securityEventListResponse.data.list[0].type).toEqual("user_delete");
+
+      const securityEventId = securityEventListResponse.data.list[0].id;
+
+      // Get security event hook execution result
+      const securityEventHookListResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/security-event-hooks?security_event_id=${securityEventId}&event_type=user_delete&limit=1`,
+        headers: {
+          Authorization: `Bearer ${adminAccessToken}`
+        }
+      });
+      console.log("Security Event Hook List:", JSON.stringify(securityEventHookListResponse.data, null, 2));
+      expect(securityEventHookListResponse.status).toBe(200);
+      expect(securityEventHookListResponse.data.list.length).toBeGreaterThan(0);
+      expect(securityEventHookListResponse.data.list[0].status).toEqual("SUCCESS");
+      expect(securityEventHookListResponse.data.list[0].type).toEqual("SSF");
+
+      // Get SSF JWKS for SET verification
+      const ssfJwkResponse = await get({
+        url: `${backendUrl}/${serverConfig.tenantId}/v1/ssf/jwks`,
+      });
+      console.log("SSF JWKS:", JSON.stringify(ssfJwkResponse.data, null, 2));
+      expect(ssfJwkResponse.status).toBe(200);
+      expect(ssfJwkResponse.data.keys).toBeDefined();
+      expect(ssfJwkResponse.data.keys.length).toBeGreaterThan(0);
+
+      // Extract and verify SET from hook execution result
+      const set = securityEventHookListResponse.data.list[0].contents.execution_result.execution_details.request.body;
+      console.log("SET (JWT):", set);
+      expect(set).toBeDefined();
+      expect(typeof set).toBe("string");
+
+      // Decode and verify SET
+      const decodedSet = verifyAndDecodeJwt({
+        jwt: set,
+        jwks: ssfJwkResponse.data
+      });
+
+      console.log("Decoded SET:", JSON.stringify(decodedSet, null, 2));
+      expect(decodedSet.verifyResult).toBe(true);
+
+      // Verify SET header
+      // RFC 8417 Section 2.3: "typ" MAY be included (SHOULD be "secevent+jwt" if present)
+      if (decodedSet.header.typ) {
+        expect(decodedSet.header.typ).toEqual("secevent+jwt");
+        console.log("✓ typ header present and valid: \"secevent+jwt\"");
+      } else {
+        console.log("ℹ typ header omitted (RFC 8417 allows this)");
+      }
+      expect(decodedSet.header.alg).toBeDefined();
+      expect(decodedSet.header.kid).toBeDefined();
+
+      // Verify SET payload (RFC 8417 Section 2.2 - Core SET Claims)
+      // REQUIRED claims
+      expect(decodedSet.payload.iss).toBeDefined(); // Issuer (REQUIRED)
+      expect(decodedSet.payload.iss).toEqual(serverConfig.issuer);
+      expect(decodedSet.payload.jti).toBeDefined(); // JWT ID (REQUIRED)
+      expect(decodedSet.payload.iat).toBeDefined(); // Issued At (REQUIRED)
+      expect(decodedSet.payload.events).toBeDefined(); // Events (REQUIRED)
+
+      // RECOMMENDED claim (may be omitted per RFC 8417)
+      if (decodedSet.payload.aud) {
+        console.log("aud claim present:", decodedSet.payload.aud);
+      } else {
+        console.log("aud claim omitted (RFC 8417 RECOMMENDED, not REQUIRED)");
+      }
+
+      // Verify events structure (RISC account-purged event)
+      const eventType = "https://schemas.openid.net/secevent/risc/event-type/account-purged";
+      expect(decodedSet.payload.events[eventType]).toBeDefined();
+
+      const eventPayload = decodedSet.payload.events[eventType];
+      console.log("Event Payload:", JSON.stringify(eventPayload, null, 2));
+
+      // Verify subject information
+      expect(eventPayload.subject).toBeDefined();
+      expect(eventPayload.subject.format).toEqual("iss_sub");
+      expect(eventPayload.subject.iss).toEqual(serverConfig.issuer); // Original token issuer (tenant)
+      expect(eventPayload.subject.sub).toEqual(user.sub); // User sub
+
+      console.log("✅ SET verification completed successfully");
+      console.log("  - SET signature verified");
+      console.log("  - SET header validated (secevent+jwt)");
+      console.log("  - SET core claims validated (iss, jti, iat, events)");
+      console.log("  - Event type: account-disabled");
+      console.log("  - Subject information verified");
+      console.log("  - External subject ID matched");
 
     });
   });

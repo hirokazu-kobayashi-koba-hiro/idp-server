@@ -17,8 +17,6 @@
 package org.idp.server.security.event.hook.ssf;
 
 import java.util.Map;
-import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
-import org.idp.server.core.openid.oauth.type.oauth.TokenIssuer;
 
 /**
  * SET
@@ -26,33 +24,29 @@ import org.idp.server.core.openid.oauth.type.oauth.TokenIssuer;
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc8417">SET</a>
  */
 public class SecurityEventTokenEntity {
-  TokenIssuer issuer;
-  RequestedClientId requestedClientId;
+  String issuer;
+  String audience;
   SharedSecurityEvent sharedSecurityEvent;
 
   public SecurityEventTokenEntity() {}
 
   public SecurityEventTokenEntity(
-      String issuer, String requestedClientId, SharedSecurityEvent sharedSecurityEvent) {
-    this.issuer = new TokenIssuer(issuer);
-    this.requestedClientId = new RequestedClientId(requestedClientId);
+      String issuer, String audience, SharedSecurityEvent sharedSecurityEvent) {
+    this.issuer = issuer;
+    this.audience = audience;
     this.sharedSecurityEvent = sharedSecurityEvent;
   }
 
-  public TokenIssuer issuer() {
+  public String issuerValue() {
     return issuer;
   }
 
-  public String issuerValue() {
-    return issuer.value();
+  public String audience() {
+    return audience;
   }
 
-  public RequestedClientId clientId() {
-    return requestedClientId;
-  }
-
-  public String clientIdValue() {
-    return requestedClientId.value();
+  public boolean hasAudience() {
+    return audience != null && !audience.isEmpty();
   }
 
   public SharedSecurityEvent securityEvent() {
