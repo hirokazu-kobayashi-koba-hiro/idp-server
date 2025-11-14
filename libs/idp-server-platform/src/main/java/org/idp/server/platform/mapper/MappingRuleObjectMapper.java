@@ -16,7 +16,7 @@
 
 package org.idp.server.platform.mapper;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -37,7 +37,7 @@ public class MappingRuleObjectMapper {
 
     logInputs(mappingRules, jsonPath);
 
-    Map<String, Object> flatMap = new HashMap<>();
+    Map<String, Object> flatMap = new LinkedHashMap<>();
 
     for (MappingRule rule : mappingRules) {
       // Check condition before executing the rule

@@ -17,7 +17,7 @@
 package org.idp.server.platform.mapper;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -73,7 +73,7 @@ public class ObjectCompositor {
    * @return nested {@code Map<String, Object>} structure
    */
   public Map<String, Object> composite() {
-    Map<String, Object> result = new HashMap<>();
+    Map<String, Object> result = new LinkedHashMap<>();
     for (Map.Entry<String, Object> entry : flatMap.entrySet()) {
       String[] keys = entry.getKey().split(regex);
       insertValue(result, keys, entry.getValue());
@@ -130,7 +130,8 @@ public class ObjectCompositor {
             list.set(index, value);
           } else {
             if (list.get(index) == null) {
-              list.set(index, keys[i + 1].matches("\\d+") ? new ArrayList<>() : new HashMap<>());
+              list.set(
+                  index, keys[i + 1].matches("\\d+") ? new ArrayList<>() : new LinkedHashMap<>());
             }
             current = list.get(index);
           }
@@ -141,7 +142,7 @@ public class ObjectCompositor {
             map.put(key, value);
           } else {
             if (!map.containsKey(key)) {
-              map.put(key, keys[i + 1].matches("\\d+") ? new ArrayList<>() : new HashMap<>());
+              map.put(key, keys[i + 1].matches("\\d+") ? new ArrayList<>() : new LinkedHashMap<>());
             }
             current = map.get(key);
           }
