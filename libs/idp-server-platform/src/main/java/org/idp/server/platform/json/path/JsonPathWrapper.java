@@ -23,11 +23,17 @@ import org.idp.server.platform.log.LoggerWrapper;
 public class JsonPathWrapper {
 
   Object document;
+  String originalJson;
   LoggerWrapper log = LoggerWrapper.getLogger(JsonPathWrapper.class);
 
   public JsonPathWrapper(String json) {
     Configuration conf = Configuration.defaultConfiguration();
     this.document = conf.jsonProvider().parse(json);
+    this.originalJson = json;
+  }
+
+  public String toJson() {
+    return originalJson;
   }
 
   public String readAsString(String path) {

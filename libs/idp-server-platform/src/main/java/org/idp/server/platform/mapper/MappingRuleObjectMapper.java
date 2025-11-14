@@ -19,6 +19,8 @@ package org.idp.server.platform.mapper;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.mapper.functions.FunctionRegistry;
@@ -28,9 +30,12 @@ public class MappingRuleObjectMapper {
 
   private static final LoggerWrapper log = LoggerWrapper.getLogger(MappingRuleObjectMapper.class);
   private static final FunctionRegistry functionRegistry = new FunctionRegistry();
+  private static final JsonConverter jsonConverter = JsonConverter.defaultInstance();
 
   public static Map<String, Object> execute(
       List<MappingRule> mappingRules, JsonPathWrapper jsonPath) {
+
+    logInputs(mappingRules, jsonPath);
 
     Map<String, Object> flatMap = new HashMap<>();
 
@@ -46,7 +51,11 @@ public class MappingRuleObjectMapper {
       writeResult(rule, finalValue, flatMap);
     }
 
-    return new ObjectCompositor(flatMap).composite();
+    Map<String, Object> result = new ObjectCompositor(flatMap).composite();
+
+    logOutput(result);
+
+    return result;
   }
 
   /** Resolve base value from staticValue, from(JSONPath) or null. */
@@ -97,6 +106,32 @@ public class MappingRuleObjectMapper {
       }
     } else {
       flatMap.put(rule.to(), value);
+    }
+  }
+
+  /** Log inputs for debugging: mapping rules and source JSON. */
+  private static void logInputs(List<MappingRule> mappingRules, JsonPathWrapper jsonPath) {
+    try {
+      List<Map<String, Object>> rulesAsMap =
+          mappingRules.stream().map(MappingRule::toMap).collect(Collectors.toList());
+
+      String rulesJson = jsonConverter.write(rulesAsMap);
+      String inputJson = jsonPath.toJson();
+
+      log.debug("MappingRuleObjectMapper INPUT - Mapping Rules: {}", rulesJson);
+      log.debug("MappingRuleObjectMapper INPUT - Source JSON: {}", inputJson);
+    } catch (Exception e) {
+      log.warn("Failed to log inputs: {}", e.getMessage());
+    }
+  }
+
+  /** Log output for debugging: mapped result object. */
+  private static void logOutput(Map<String, Object> result) {
+    try {
+      String outputJson = jsonConverter.write(result);
+      log.debug("MappingRuleObjectMapper OUTPUT - Result: {}", outputJson);
+    } catch (Exception e) {
+      log.warn("Failed to log output: {}", e.getMessage());
     }
   }
 }
