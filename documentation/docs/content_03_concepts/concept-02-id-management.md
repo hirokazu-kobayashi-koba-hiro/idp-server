@@ -100,6 +100,70 @@ sequenceDiagram
 
 ---
 
+## IDポリシー（Identity Policy）
+
+### 概要
+
+**IDポリシー**は、テナントごとに「どのユーザー属性を一意識別子・ログイン認証情報として使用するか」を制御します。
+
+このポリシーに基づき、ユーザー作成時に自動的に `preferred_username` が設定されます。
+
+### ポリシータイプ
+
+| ポリシータイプ                    | 一意性の基準               | 用途・ユースケース                             |
+|------------------------------|----------------------|----------------------------------------|
+| `USERNAME`                   | `name`（ユーザー名）       | 社内システム（従業員IDベース）                      |
+| `USERNAME_OR_EXTERNAL_USER_ID` | `name` または `external_user_id` | 社内システム + 外部IdP連携                      |
+| `EMAIL`                      | `email`（メールアドレス）    | 一般向けWebサービス・SaaS                       |
+| `EMAIL_OR_EXTERNAL_USER_ID`  | `email` または `external_user_id` | **デフォルト**。一般向け + 外部IdP連携（Google等）     |
+| `PHONE`                      | `phone_number`（電話番号） | モバイルアプリ・SMS認証ベースサービス                  |
+| `PHONE_OR_EXTERNAL_USER_ID`  | `phone_number` または `external_user_id` | モバイルアプリ + 外部IdP連携                     |
+| `EXTERNAL_USER_ID`           | `external_user_id`   | 完全フェデレーション（外部IdPのみでユーザー管理）            |
+
+### デフォルトポリシー
+
+テナント作成時のデフォルトは **`EMAIL_OR_EXTERNAL_USER_ID`** です。
+
+- **idp-server直接登録**: `email` が `preferred_username` に設定される
+- **外部IdP連携**: `external_user_id` が `preferred_username` に設定される
+
+### preferred_username の自動設定
+
+ユーザー作成時（Initial Registration / Management API）、IDポリシーに従って **自動的に** `preferred_username` が設定されます。
+
+#### 設定の仕組み
+
+- **USERNAME系ポリシー**: `name` が `preferred_username` に設定される
+- **EMAIL系ポリシー**: `email` が `preferred_username` に設定される
+- **PHONE系ポリシー**: `phone_number` が `preferred_username` に設定される
+- **EXTERNAL_USER_ID**: `external_user_id` が `preferred_username` に設定される
+
+**フォールバック動作**（`_OR_EXTERNAL_USER_ID` ポリシー）:
+- 主要属性（email/phone/name）が設定されていない場合、`external_user_id` にフォールバックします
+
+### Password Grant との関係
+
+Password Grant でのユーザー検索には **`preferred_username`** が使用されます。
+
+つまり、トークンリクエストの `username` パラメータには、IDポリシーで設定された `preferred_username` の値を指定する必要があります。
+
+#### 例: EMAIL_OR_EXTERNAL_USER_ID ポリシーの場合
+
+| ユーザー作成方法        | preferred_username に設定される値 | Password Grant での username パラメータ |
+|-----------------|----------------------------|-----------------------------------|
+| Initial Registration | `email` (例: user@example.com) | `user@example.com`                |
+| Google連携       | `external_user_id` (例: google-sub-12345) | `google-sub-12345`                |
+
+### ポリシー変更時の注意事項
+
+⚠️ **既存ユーザーへの影響**
+
+- IDポリシー変更は **新規登録ユーザーのみ** に適用されます
+- 既存ユーザーの `preferred_username` は変更されません
+- 既存ユーザーのログインに影響を与えないよう、慎重に変更してください
+
+---
+
 ### ユーザー属性
 
 | 項目                               | 型       | 説明                                          | 取得用スコープ                              |
@@ -113,7 +177,7 @@ sequenceDiagram
 | `family_name`                    | string  | 姓（Family Name）                              | `profile`                             |
 | `middle_name`                    | string  | ミドルネーム                                      | `profile`                             |
 | `nickname`                       | string  | ニックネーム                                      | `profile`                             |
-| `preferred_username`             | string  | End-User の選好するユーザー名（例：janedoe）              | `profile`                             |
+| `preferred_username`             | string  | End-User の選好するユーザー名（例：janedoe）<br/>**Password Grantでのログイン識別子として使用** | `profile`                             |
 | `profile`                        | string  | プロフィールページのURL                               | `profile`                             |
 | `picture`                        | string  | プロフィール画像のURL                                | `profile`                             |
 | `website`                        | string  | End-User のWebサイトURL                         | `profile`                             |
@@ -171,22 +235,38 @@ scope=openid profile email claims:roles claims:assigned_tenants
 
 | ステータス                            | 説明                                           |
 |----------------------------------|----------------------------------------------|
-| `INITIALIZED`                   | アカウントが未作成の状態（初回アクセスや一時的ID）                   |
-| `REGISTERED`                     | 登録済だが、メールアドレスなど連絡先が未確認の状態                    |
-| `IDENTITY_VERIFICATION_REQUIRED` | サービス利用にあたり本人確認が必要な状態                         |
-| `IDENTITY_VERIFIED`              | eKYCなどの本人確認が完了した状態                           |
-| `LOCKED`                         | 連続ログイン失敗などにより一時的にロックされた状態（MFA再認証や管理者解除が必要）   |
-| `DISABLED`                       | ユーザー自身が無効にした状態                               |
-| `DELETED_PENDING`                | 削除予定状態（一定期間後に完全削除が実行される）                     |
+| `UNREGISTERED`                   | アカウント未作成                                     |
+| `INITIALIZED`                    | ユーザーがアカウントを初期化した状態                           |
+| `FEDERATED`                      | 外部IdPとフェデレーション済み                             |
+| `REGISTERED`                     | 登録済み                                         |
+| `IDENTITY_VERIFICATION_REQUIRED` | 身元確認（eKYC）が必要な状態                             |
+| `IDENTITY_VERIFIED`              | 身元確認済み                                       |
+| `LOCKED`                         | 失敗により一時的にロックされた状態                            |
+| `DISABLED`                       | ユーザーまたは管理者により無効化された状態                        |
+| `SUSPENDED`                      | ポリシー違反により停止された状態                             |
+| `DEACTIVATED`                    | 無効化リクエスト済み、猶予期間中                             |
+| `DELETED_PENDING`                | 猶予期間後に削除予定                                   |
+| `DELETED`                        | 完全削除済み                                       |
+| `UNKNOWN`                        | 不明                                           |
 
 #### ステータス遷移例
 
 ```plaintext
+UNREGISTERED
+   ↓ 初期化
 INITIALIZED
    ↓ 登録
 REGISTERED
    ↓ 身元確認完了
 IDENTITY_VERIFIED
+   ↓ ポリシー違反
+SUSPENDED
+   ↓ 無効化リクエスト
+DEACTIVATED
+   ↓ 猶予期間経過
+DELETED_PENDING
+   ↓ 削除実行
+DELETED
 ```
 
 ##   
