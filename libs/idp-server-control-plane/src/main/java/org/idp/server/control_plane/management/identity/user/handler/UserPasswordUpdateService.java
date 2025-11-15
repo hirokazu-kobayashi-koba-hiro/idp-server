@@ -17,6 +17,7 @@
 package org.idp.server.control_plane.management.identity.user.handler;
 
 import java.util.Map;
+import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.control_plane.management.identity.user.ManagementEventPublisher;
 import org.idp.server.control_plane.management.identity.user.UserManagementContextBuilder;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
@@ -26,12 +27,15 @@ import org.idp.server.control_plane.management.identity.user.io.UserUpdateReques
 import org.idp.server.control_plane.management.identity.user.validator.UserPasswordUpdateRequestValidator;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegation;
+import org.idp.server.core.openid.identity.authentication.PasswordPolicyValidationResult;
+import org.idp.server.core.openid.identity.authentication.PasswordPolicyValidator;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonDiffCalculator;
 import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
@@ -63,6 +67,7 @@ import org.idp.server.platform.type.RequestAttributes;
  */
 public class UserPasswordUpdateService implements UserManagementService<UserUpdateRequest> {
 
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(UserPasswordUpdateService.class);
   private final UserQueryRepository userQueryRepository;
   private final UserCommandRepository userCommandRepository;
   private final PasswordEncodeDelegation passwordEncodeDelegation;
@@ -138,12 +143,30 @@ public class UserPasswordUpdateService implements UserManagementService<UserUpda
       Tenant tenant, UserRegistrationRequest registrationRequest, User before) {
     User newUser = JsonConverter.snakeCaseInstance().read(registrationRequest.toMap(), User.class);
 
+    // Validate password against tenant password policy
+    // Note: Always validate when raw_password field exists (even if empty/null)
+    // to ensure proper error messages for empty passwords
+    log.debug("Applying tenant password policy for password update: user={}", before.sub());
+    TenantIdentityPolicy policy = TenantIdentityPolicy.fromTenantAttributes(tenant.attributes());
+    PasswordPolicyValidator passwordPolicy =
+        new PasswordPolicyValidator(policy.passwordPolicyConfig());
+    PasswordPolicyValidationResult validationResult =
+        passwordPolicy.validate(newUser.rawPassword());
+    if (validationResult.isInvalid()) {
+      log.info(
+          "Password update failed: password policy violation for user={} - {}",
+          before.sub(),
+          validationResult.errorMessage());
+      throw new InvalidRequestException(
+          "Password policy violation: " + validationResult.errorMessage());
+    }
+    log.debug("Password policy validation succeeded for password update: user={}", before.sub());
+
     String hashedPassword = passwordEncodeDelegation.encode(newUser.rawPassword());
     User updated = before.setHashedPassword(hashedPassword);
 
     // Apply tenant identity policy if preferred_username is not set
     if (updated.preferredUsername() == null || updated.preferredUsername().isBlank()) {
-      TenantIdentityPolicy policy = TenantIdentityPolicy.fromTenantAttributes(tenant.attributes());
       updated.applyIdentityPolicy(policy);
     }
 

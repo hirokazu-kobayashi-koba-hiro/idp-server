@@ -18,6 +18,7 @@ package org.idp.server.control_plane.management.identity.user.handler;
 
 import java.util.Map;
 import java.util.UUID;
+import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.control_plane.management.identity.user.ManagementEventPublisher;
 import org.idp.server.control_plane.management.identity.user.UserManagementContextBuilder;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
@@ -28,9 +29,12 @@ import org.idp.server.control_plane.management.identity.user.verifier.UserRegist
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegation;
+import org.idp.server.core.openid.identity.authentication.PasswordPolicyValidationResult;
+import org.idp.server.core.openid.identity.authentication.PasswordPolicyValidator;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
@@ -63,6 +67,7 @@ import org.idp.server.platform.type.RequestAttributes;
  */
 public class UserCreationService implements UserManagementService<UserRegistrationRequest> {
 
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(UserCreationService.class);
   private final UserCommandRepository userCommandRepository;
   private final PasswordEncodeDelegation passwordEncodeDelegation;
   private final UserRegistrationVerifier verifier;
@@ -136,6 +141,21 @@ public class UserCreationService implements UserManagementService<UserRegistrati
     // Issue #729: Always apply policy to ensure consistency with email/phone/username changes
     TenantIdentityPolicy policy = tenant.identityPolicyConfig();
     user.applyIdentityPolicy(policy);
+
+    // Validate password against tenant password policy
+    // Note: Always validate when raw_password field exists (even if empty/null)
+    // to ensure proper error messages for empty passwords
+    log.debug("Applying tenant password policy for user creation");
+    PasswordPolicyValidator passwordPolicy =
+        new PasswordPolicyValidator(policy.passwordPolicyConfig());
+    PasswordPolicyValidationResult validationResult = passwordPolicy.validate(user.rawPassword());
+    if (validationResult.isInvalid()) {
+      log.info(
+          "User creation failed: password policy violation - {}", validationResult.errorMessage());
+      throw new InvalidRequestException(
+          "Password policy violation: " + validationResult.errorMessage());
+    }
+    log.debug("Password policy validation succeeded for user creation");
 
     // Encode password
     String encoded = passwordEncodeDelegation.encode(user.rawPassword());

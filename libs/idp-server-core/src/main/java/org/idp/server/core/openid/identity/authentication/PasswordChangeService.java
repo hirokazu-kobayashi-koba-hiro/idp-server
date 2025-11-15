@@ -79,7 +79,7 @@ public class PasswordChangeService {
 
     // 3. Validate new password against tenant's policy
     PasswordPolicyConfig policyConfig = tenant.identityPolicyConfig().passwordPolicyConfig();
-    BasicPasswordPolicy passwordPolicy = new BasicPasswordPolicy(policyConfig);
+    PasswordPolicyValidator passwordPolicy = new PasswordPolicyValidator(policyConfig);
     PasswordPolicyValidationResult policyResult = passwordPolicy.validate(request.newPassword());
     if (policyResult.isInvalid()) {
       return PasswordChangeResponse.invalidNewPassword(policyResult.errorMessage());

@@ -31,31 +31,88 @@ import java.util.Map;
 public class PasswordPolicyConfig {
 
   private static final int DEFAULT_MIN_LENGTH = 8;
+  private static final int DEFAULT_MAX_LENGTH = 72; // BCrypt limitation
 
   private int minLength;
+  private int maxLength;
   private boolean requireUppercase;
+  private boolean requireLowercase;
   private boolean requireNumber;
   private boolean requireSpecialChar;
+  private String customRegex;
+  private String customRegexErrorMessage;
   private int maxHistory; // For future use (Issue #741 Phase 2)
 
   public PasswordPolicyConfig() {
     this.minLength = DEFAULT_MIN_LENGTH;
+    this.maxLength = DEFAULT_MAX_LENGTH;
     this.requireUppercase = false;
+    this.requireLowercase = false;
     this.requireNumber = false;
     this.requireSpecialChar = false;
+    this.customRegex = null;
+    this.customRegexErrorMessage = null;
     this.maxHistory = 0;
   }
 
   public PasswordPolicyConfig(
       int minLength,
       boolean requireUppercase,
+      boolean requireLowercase,
       boolean requireNumber,
       boolean requireSpecialChar,
       int maxHistory) {
+    this(
+        minLength,
+        DEFAULT_MAX_LENGTH,
+        requireUppercase,
+        requireLowercase,
+        requireNumber,
+        requireSpecialChar,
+        null,
+        null,
+        maxHistory);
+  }
+
+  public PasswordPolicyConfig(
+      int minLength,
+      boolean requireUppercase,
+      boolean requireLowercase,
+      boolean requireNumber,
+      boolean requireSpecialChar,
+      String customRegex,
+      String customRegexErrorMessage,
+      int maxHistory) {
+    this(
+        minLength,
+        DEFAULT_MAX_LENGTH,
+        requireUppercase,
+        requireLowercase,
+        requireNumber,
+        requireSpecialChar,
+        customRegex,
+        customRegexErrorMessage,
+        maxHistory);
+  }
+
+  public PasswordPolicyConfig(
+      int minLength,
+      int maxLength,
+      boolean requireUppercase,
+      boolean requireLowercase,
+      boolean requireNumber,
+      boolean requireSpecialChar,
+      String customRegex,
+      String customRegexErrorMessage,
+      int maxHistory) {
     this.minLength = minLength;
+    this.maxLength = maxLength;
     this.requireUppercase = requireUppercase;
+    this.requireLowercase = requireLowercase;
     this.requireNumber = requireNumber;
     this.requireSpecialChar = requireSpecialChar;
+    this.customRegex = customRegex;
+    this.customRegexErrorMessage = customRegexErrorMessage;
     this.maxHistory = maxHistory;
   }
 
@@ -81,13 +138,25 @@ public class PasswordPolicyConfig {
     }
 
     int minLength = getIntValue(map, "min_length", DEFAULT_MIN_LENGTH);
+    int maxLength = getIntValue(map, "max_length", DEFAULT_MAX_LENGTH);
     boolean requireUppercase = getBooleanValue(map, "require_uppercase", false);
+    boolean requireLowercase = getBooleanValue(map, "require_lowercase", false);
     boolean requireNumber = getBooleanValue(map, "require_number", false);
     boolean requireSpecialChar = getBooleanValue(map, "require_special_char", false);
+    String customRegex = getStringValue(map, "custom_regex", null);
+    String customRegexErrorMessage = getStringValue(map, "custom_regex_error_message", null);
     int maxHistory = getIntValue(map, "max_history", 0);
 
     return new PasswordPolicyConfig(
-        minLength, requireUppercase, requireNumber, requireSpecialChar, maxHistory);
+        minLength,
+        maxLength,
+        requireUppercase,
+        requireLowercase,
+        requireNumber,
+        requireSpecialChar,
+        customRegex,
+        customRegexErrorMessage,
+        maxHistory);
   }
 
   private static int getIntValue(Map<String, Object> map, String key, int defaultValue) {
@@ -107,12 +176,28 @@ public class PasswordPolicyConfig {
     return defaultValue;
   }
 
+  private static String getStringValue(Map<String, Object> map, String key, String defaultValue) {
+    Object value = map.get(key);
+    if (value instanceof String) {
+      return (String) value;
+    }
+    return defaultValue;
+  }
+
   public int minLength() {
     return minLength;
   }
 
+  public int maxLength() {
+    return maxLength;
+  }
+
   public boolean requireUppercase() {
     return requireUppercase;
+  }
+
+  public boolean requireLowercase() {
+    return requireLowercase;
   }
 
   public boolean requireNumber() {
@@ -121,6 +206,14 @@ public class PasswordPolicyConfig {
 
   public boolean requireSpecialChar() {
     return requireSpecialChar;
+  }
+
+  public String customRegex() {
+    return customRegex;
+  }
+
+  public String customRegexErrorMessage() {
+    return customRegexErrorMessage;
   }
 
   public int maxHistory() {
@@ -135,9 +228,17 @@ public class PasswordPolicyConfig {
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("min_length", minLength);
+    map.put("max_length", maxLength);
     map.put("require_uppercase", requireUppercase);
+    map.put("require_lowercase", requireLowercase);
     map.put("require_number", requireNumber);
     map.put("require_special_char", requireSpecialChar);
+    if (customRegex != null) {
+      map.put("custom_regex", customRegex);
+    }
+    if (customRegexErrorMessage != null) {
+      map.put("custom_regex_error_message", customRegexErrorMessage);
+    }
     map.put("max_history", maxHistory);
     return map;
   }

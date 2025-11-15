@@ -89,3 +89,39 @@ export const verifySignature = ({ jws, publicKey }) => {
     return false;
   }
 };
+
+/**
+ * Generate RS256 key pair for JWKS
+ * @returns {Promise<{publicKey: Object, privateKey: Object, jwks: string}>}
+ */
+export const generateRS256KeyPair = async () => {
+  // Generate RS256 key pair
+  const { publicKey, privateKey } = await jose.generateKeyPair("RS256", {
+    modulusLength: 2048,
+  });
+
+  // Export as JWK
+  const publicJwk = await jose.exportJWK(publicKey);
+  const privateJwk = await jose.exportJWK(privateKey);
+
+  // Add key ID and algorithm
+  const kid = uuidv4();
+  publicJwk.kid = kid;
+  publicJwk.alg = "RS256";
+  publicJwk.use = "sig";
+
+  privateJwk.kid = kid;
+  privateJwk.alg = "RS256";
+  privateJwk.use = "sig";
+
+  // Create JWKS with private key (server needs private key for signing)
+  const jwks = {
+    keys: [privateJwk]  // Include private key for token signing
+  };
+
+  return {
+    publicKey: publicJwk,
+    privateKey: privateJwk,
+    jwks: JSON.stringify(jwks),
+  };
+};
