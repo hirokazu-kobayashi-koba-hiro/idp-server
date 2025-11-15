@@ -20,6 +20,8 @@ import org.idp.server.core.openid.authentication.AuthenticationInteractionReques
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequestResult;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.openid.identity.authentication.PasswordChangeRequest;
+import org.idp.server.core.openid.identity.authentication.PasswordChangeResponse;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.openid.identity.io.AuthenticationDevicePatchRequest;
 import org.idp.server.core.openid.identity.io.MfaRegistrationRequest;
@@ -58,5 +60,12 @@ public interface UserOperationApi {
       TenantIdentifier tenantIdentifier,
       User user,
       OAuthToken oAuthToken,
+      RequestAttributes requestAttributes);
+
+  PasswordChangeResponse changePassword(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      PasswordChangeRequest request,
       RequestAttributes requestAttributes);
 }

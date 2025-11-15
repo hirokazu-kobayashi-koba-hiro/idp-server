@@ -25,6 +25,11 @@ import org.idp.server.core.openid.authentication.repository.AuthenticationPolicy
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionQueryRepository;
 import org.idp.server.core.openid.identity.*;
+import org.idp.server.core.openid.identity.authentication.PasswordChangeRequest;
+import org.idp.server.core.openid.identity.authentication.PasswordChangeResponse;
+import org.idp.server.core.openid.identity.authentication.PasswordChangeService;
+import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegation;
+import org.idp.server.core.openid.identity.authentication.PasswordVerificationDelegation;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.openid.identity.device.AuthenticationDevicePatchValidator;
@@ -62,6 +67,8 @@ public class UserOperationEntryService implements UserOperationApi {
   UserEventPublisher eventPublisher;
   UserOperationEventPublisher userOperationEventPublisher;
   UserLifecycleEventPublisher userLifecycleEventPublisher;
+  PasswordVerificationDelegation passwordVerificationDelegation;
+  PasswordEncodeDelegation passwordEncodeDelegation;
 
   public UserOperationEntryService(
       UserQueryRepository userQueryRepository,
@@ -74,7 +81,9 @@ public class UserOperationEntryService implements UserOperationApi {
       AuthenticationInteractors authenticationInteractors,
       UserEventPublisher eventPublisher,
       UserOperationEventPublisher userOperationEventPublisher,
-      UserLifecycleEventPublisher userLifecycleEventPublisher) {
+      UserLifecycleEventPublisher userLifecycleEventPublisher,
+      PasswordVerificationDelegation passwordVerificationDelegation,
+      PasswordEncodeDelegation passwordEncodeDelegation) {
     this.userQueryRepository = userQueryRepository;
     this.userCommandRepository = userCommandRepository;
     this.tenantQueryRepository = tenantQueryRepository;
@@ -87,6 +96,8 @@ public class UserOperationEntryService implements UserOperationApi {
     this.eventPublisher = eventPublisher;
     this.userOperationEventPublisher = userOperationEventPublisher;
     this.userLifecycleEventPublisher = userLifecycleEventPublisher;
+    this.passwordVerificationDelegation = passwordVerificationDelegation;
+    this.passwordEncodeDelegation = passwordEncodeDelegation;
   }
 
   @Override
@@ -248,5 +259,40 @@ public class UserOperationEntryService implements UserOperationApi {
         tenant, oAuthToken, DefaultSecurityEventType.user_delete, requestAttributes);
 
     return new UserOperationResponse(UserOperationStatus.NO_CONTENT, null);
+  }
+
+  @Override
+  public PasswordChangeResponse changePassword(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      PasswordChangeRequest request,
+      RequestAttributes requestAttributes) {
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    // Scope validation - RFC 6750 Section 3.1
+    if (!oAuthToken.scopes().contains("openid")) {
+      Map<String, Object> contents = new HashMap<>();
+      contents.put("error", "insufficient_scope");
+      contents.put("error_description", "The request requires 'openid' scope");
+      contents.put("scope", "openid");
+      return PasswordChangeResponse.insufficientScope(contents);
+    }
+
+    PasswordChangeService passwordChangeService =
+        new PasswordChangeService(
+            passwordVerificationDelegation, passwordEncodeDelegation, userCommandRepository);
+
+    PasswordChangeResponse response = passwordChangeService.changePassword(tenant, user, request);
+
+    if (response.isSuccess()) {
+      eventPublisher.publish(
+          tenant, oAuthToken, DefaultSecurityEventType.password_change_success, requestAttributes);
+    } else {
+      eventPublisher.publish(
+          tenant, oAuthToken, DefaultSecurityEventType.password_change_failure, requestAttributes);
+    }
+
+    return response;
   }
 }
