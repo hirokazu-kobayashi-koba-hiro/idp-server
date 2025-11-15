@@ -27,7 +27,7 @@ describe("Organization User Password Policy", () => {
     const tokenResponse = await requestToken({
       endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
       grantType: "password",
-      username: "ito.ichiro",
+      username: "ito.ichiro@gmail.com",
       password: "successUserCode001",
       scope: "org-management account management",
       clientId: "org-client",

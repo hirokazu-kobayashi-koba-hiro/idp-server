@@ -27,7 +27,7 @@ describe("JsonSchemaValidator Logging Verification", () => {
     const orgAuthResponse = await requestToken({
       endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
       grantType: "password",
-      username: "ito.ichiro",
+      username: "ito.ichiro@gmail.com",
       password: "successUserCode001",
       clientId: clientSecretPostClient.clientId,
       clientSecret: clientSecretPostClient.clientSecret,

@@ -86,7 +86,7 @@ export default function () {
   const adminTokenRes = http.post(`${BASE_URL}/${TENANT_ID}/v1/tokens`,
     {
       grant_type: 'password',
-      username: "ito.ichiro",
+      username: "ito.ichiro@gmail.com",
       password: "successUserCode001",
       client_id: "clientSecretPost",
       client_secret: "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890",
