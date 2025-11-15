@@ -17,7 +17,7 @@ describe("Organization Role Management API - Debug Behavior", () => {
     const tokenResponse = await requestToken({
       endpoint: `${backendUrl}/${testTenantId}/v1/tokens`,
       grantType: "password",
-      username: "ito.ichiro",
+      username: "ito.ichiro@gmail.com",
       password: "successUserCode001",
       scope: "org-management account management",
       clientId: "org-client",

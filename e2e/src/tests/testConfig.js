@@ -18,7 +18,7 @@ const unsupportedTenantId = process.env.IDP_SERVER_UNSUPPORTED_TENANT_ID || DEFA
 const cibaUserSub = process.env.CIBA_USER_SUB || "3ec055a8-8000-44a2-8677-e70ebff414e2";
 const cibaUserEmail = process.env.CIBA_USER_EMAIL || "ito.ichiro@gmail.com";
 const cibaUserDeviceId = process.env.CIBA_USER_DEVICE_ID || "7736a252-60b4-45f5-b817-65ea9a540860";
-const cibaUsername = process.env.CIBA_USERNAME || "ito.ichiro";
+const cibaUsername = process.env.CIBA_USERNAME || "ito.ichiro@gmail.com";
 const cibaPassword = process.env.CIBA_PASSWORD || "successUserCode001";
 
 export const mockApiBaseUrl = process.env.MOCK_API_BASE_URL || "http://host.docker.internal:4000";

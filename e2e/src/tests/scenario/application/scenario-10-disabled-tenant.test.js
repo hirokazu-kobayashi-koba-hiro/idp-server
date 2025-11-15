@@ -18,7 +18,7 @@ describe("Disabled Tenant Scenario", () => {
     const adminTokenResponse = await requestToken({
       endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
       grantType: "password",
-      username: "ito.ichiro",
+      username: "ito.ichiro@gmail.com",
       password: "successUserCode001",
       scope: "org-management account management",
       clientId: "org-client",
@@ -101,6 +101,8 @@ describe("Disabled Tenant Scenario", () => {
       // Step 4: Create test user
       const userId = uuidv4();
       const username = `testuser${timestamp}`;
+      const email = `testuser${timestamp}@example.com`;
+      const preUsername = email;
       const password = "TestPassword123!";
       const createUserResponse = await postWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users`,
@@ -111,7 +113,7 @@ describe("Disabled Tenant Scenario", () => {
           "sub": userId,
           "provider_id": "idp-server",
           "name": username,
-          "email": `testuser${timestamp}@example.com`,
+          "email": email,
           "email_verified": true,
           "raw_password": password
         }
@@ -137,7 +139,7 @@ describe("Disabled Tenant Scenario", () => {
       const tokenResponseEnabled = await requestToken({
         endpoint: tokenEndpoint,
         grantType: "password",
-        username: username,
+        username: preUsername,
         password: password,
         scope: "account",
         clientId: clientId,

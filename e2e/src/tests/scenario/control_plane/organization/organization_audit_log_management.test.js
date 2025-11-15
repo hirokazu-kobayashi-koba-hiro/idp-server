@@ -14,7 +14,7 @@ describe("organization audit log management api", () => {
       const tokenResponse = await requestToken({
         endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
         grantType: "password",
-        username: "ito.ichiro",
+        username: "ito.ichiro@gmail.com",
         password: "successUserCode001",
         scope: "org-management account management",
         clientId: "org-client",
@@ -45,7 +45,7 @@ describe("organization audit log management api", () => {
       const tokenResponse = await requestToken({
         endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
         grantType: "password",
-        username: "ito.ichiro",
+        username: "ito.ichiro@gmail.com",
         password: "successUserCode001",
         scope: "org-management account management",
         clientId: "org-client",
@@ -76,7 +76,7 @@ describe("organization audit log management api", () => {
       const tokenResponse = await requestToken({
         endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
         grantType: "password",
-        username: "ito.ichiro",
+        username: "ito.ichiro@gmail.com",
         password: "successUserCode001",
         scope: "org-management account management",
         clientId: "org-client",
@@ -104,7 +104,7 @@ describe("organization audit log management api", () => {
       const tokenResponse = await requestToken({
         endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
         grantType: "password",
-        username: "ito.ichiro",
+        username: "ito.ichiro@gmail.com",
         password: "successUserCode001",
         scope: "org-management account management",
         clientId: "org-client",
@@ -134,7 +134,7 @@ describe("organization audit log management api", () => {
       const tokenResponse = await requestToken({
         endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
         grantType: "password",
-        username: "ito.ichiro",
+        username: "ito.ichiro@gmail.com",
         password: "successUserCode001",
         scope: "account", // Missing org-management scope
         clientId: "org-client",
@@ -160,7 +160,7 @@ describe("organization audit log management api", () => {
       const tokenResponse = await requestToken({
         endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
         grantType: "password",
-        username: "ito.ichiro",
+        username: "ito.ichiro@gmail.com",
         password: "successUserCode001",
         scope: "org-management account management",
         clientId: "org-client",
@@ -186,7 +186,7 @@ describe("organization audit log management api", () => {
       const tokenResponse = await requestToken({
         endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
         grantType: "password",
-        username: "ito.ichiro",
+        username: "ito.ichiro@gmail.com",
         password: "successUserCode001",
         scope: "org-management account management",
         clientId: "org-client",
@@ -214,7 +214,7 @@ describe("organization audit log management api", () => {
       const tokenResponse = await requestToken({
         endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
         grantType: "password",
-        username: "ito.ichiro",
+        username: "ito.ichiro@gmail.com",
         password: "successUserCode001",
         scope: "org-management account management",
         clientId: "org-client",
@@ -260,7 +260,7 @@ describe("organization audit log management api", () => {
       const tokenResponse = await requestToken({
         endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
         grantType: "password",
-        username: "ito.ichiro",
+        username: "ito.ichiro@gmail.com",
         password: "successUserCode001",
         scope: "org-management account management",
         clientId: "org-client",
