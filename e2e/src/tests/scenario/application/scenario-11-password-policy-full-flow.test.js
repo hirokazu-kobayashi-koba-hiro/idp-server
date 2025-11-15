@@ -64,6 +64,7 @@ describe("Issue #741: Password Policy Full Flow", () => {
         clientId: clientSecretPostClient.clientId,
         clientSecret: clientSecretPostClient.clientSecret
       });
+      console.log(JSON.stringify(adminTokenResponse.data, null, 2));
       expect(adminTokenResponse.status).toBe(200);
       const adminAccessToken = adminTokenResponse.data.access_token;
       console.log("✓ Admin access token obtained\n");
@@ -152,6 +153,7 @@ describe("Issue #741: Password Policy Full Flow", () => {
       console.log("Step 4: Performing initial user registration with authorization flow...");
       const initialPassword = "Initial12!";
       const userEmail = faker.internet.email();
+      const preferredUsername = userEmail;
       const userName = faker.person.fullName();
 
       const interaction = async (id, user) => {
@@ -228,7 +230,7 @@ describe("Issue #741: Password Policy Full Flow", () => {
       const newPasswordTokenResponse = await requestToken({
         endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
         grantType: "password",
-        username: userName,  // Use userName (name field) instead of userEmail due to Issue #897
+        username: preferredUsername,  // Use userName (name field) instead of userEmail due to Issue #897
         password: newPassword,
         scope: "openid profile email",
         clientId: clientId,
