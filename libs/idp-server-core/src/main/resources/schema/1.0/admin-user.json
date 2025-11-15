@@ -158,9 +158,7 @@
       "additionalProperties": true
     },
     "raw_password": {
-      "type": "string",
-      "minLength": 8,
-      "pattern": "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d!@#$%^&*()_+=-]{8,}$"
+      "type": "string"
     },
     "roles": {
       "type": "array",

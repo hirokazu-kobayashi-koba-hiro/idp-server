@@ -671,7 +671,9 @@ public class IdpServerApplication {
                 authenticationInteractors,
                 userEventPublisher,
                 userOperationEventPublisher,
-                userLifecycleEventPublisher),
+                userLifecycleEventPublisher,
+                passwordVerificationDelegation,
+                passwordEncodeDelegation),
             UserOperationApi.class,
             databaseTypeProvider);
 

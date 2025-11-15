@@ -35,6 +35,8 @@ export const requestAuthorizations = async ({
   authorizationDetails,
   customParams,
   action = "authorize",
+  authorizeEndpoint,
+  denyEndpoint,
   user = {
     "username": "ito.ichiro@gmail.com",
     "password": "successUserCode001",
@@ -111,7 +113,7 @@ export const requestAuthorizations = async ({
       await interaction(id, user);
 
       const authorizeResponse = await authorize({
-        endpoint: serverConfig.authorizeEndpoint,
+        endpoint: authorizeEndpoint || serverConfig.authorizeEndpoint,
         id,
         body: {}
       });
@@ -131,7 +133,7 @@ export const requestAuthorizations = async ({
       await interaction(id, user);
 
       const denyResponse = await deny({
-        endpoint: serverConfig.denyEndpoint,
+        endpoint: denyEndpoint || serverConfig.denyEndpoint,
         id,
       });
       console.log(denyResponse.data);

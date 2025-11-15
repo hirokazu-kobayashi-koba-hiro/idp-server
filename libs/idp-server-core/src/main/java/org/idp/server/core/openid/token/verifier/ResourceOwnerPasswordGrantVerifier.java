@@ -38,7 +38,7 @@ public class ResourceOwnerPasswordGrantVerifier {
   void throwExceptionIfUnspecifiedUser() {
     if (!user.exists()) {
       throw new TokenBadRequestException(
-          "does not found user by token request, or invalid password");
+          "invalid_grant", "does not found user by token request, or invalid password");
     }
   }
 

@@ -107,6 +107,8 @@ public enum DefaultSecurityEventType {
   backchannel_authentication_deny("User denied with a backchannel authentication"),
   password_reset("User reset their password"),
   password_change("User changed their password"),
+  password_change_success("User successfully changed their password"),
+  password_change_failure("User failed to change their password"),
   identity_verification_application_apply("identity verification application was applied"),
   identity_verification_application_failure("identity verification application was failed"),
   identity_verification_application_cancel("identity verification application was canceled"),

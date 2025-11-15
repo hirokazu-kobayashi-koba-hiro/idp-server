@@ -70,10 +70,20 @@ public class TenantIdentityPolicy {
   }
 
   private UniqueKeyType uniqueKeyType;
+  private PasswordPolicyConfig passwordPolicyConfig;
 
   public TenantIdentityPolicy(UniqueKeyType uniqueKeyType) {
     this.uniqueKeyType =
         uniqueKeyType != null ? uniqueKeyType : UniqueKeyType.EMAIL_OR_EXTERNAL_USER_ID;
+    this.passwordPolicyConfig = PasswordPolicyConfig.defaultPolicy();
+  }
+
+  public TenantIdentityPolicy(
+      UniqueKeyType uniqueKeyType, PasswordPolicyConfig passwordPolicyConfig) {
+    this.uniqueKeyType =
+        uniqueKeyType != null ? uniqueKeyType : UniqueKeyType.EMAIL_OR_EXTERNAL_USER_ID;
+    this.passwordPolicyConfig =
+        passwordPolicyConfig != null ? passwordPolicyConfig : PasswordPolicyConfig.defaultPolicy();
   }
 
   /**
@@ -93,8 +103,8 @@ public class TenantIdentityPolicy {
   /**
    * Constructs identity policy from map
    *
-   * <p>Reads "identity_unique_key_type" from map. If not configured, defaults to
-   * EMAIL_OR_EXTERNAL_USER_ID.
+   * <p>Reads "identity_unique_key_type" and "password_policy" from map. If not configured, defaults
+   * to EMAIL_OR_EXTERNAL_USER_ID and default password policy.
    *
    * @param map configuration map
    * @return identity policy
@@ -105,12 +115,20 @@ public class TenantIdentityPolicy {
     }
     String keyTypeValue =
         (String) map.getOrDefault("identity_unique_key_type", "EMAIL_OR_EXTERNAL_USER_ID");
+    UniqueKeyType uniqueKeyType;
     try {
-      UniqueKeyType uniqueKeyType = UniqueKeyType.valueOf(keyTypeValue.toUpperCase());
-      return new TenantIdentityPolicy(uniqueKeyType);
+      uniqueKeyType = UniqueKeyType.valueOf(keyTypeValue.toUpperCase());
     } catch (IllegalArgumentException e) {
-      return defaultPolicy();
+      uniqueKeyType = UniqueKeyType.EMAIL_OR_EXTERNAL_USER_ID;
     }
+
+    PasswordPolicyConfig passwordPolicyConfig = PasswordPolicyConfig.defaultPolicy();
+    if (map.containsKey("password_policy")) {
+      Map<String, Object> passwordPolicyMap = (Map<String, Object>) map.get("password_policy");
+      passwordPolicyConfig = PasswordPolicyConfig.fromMap(passwordPolicyMap);
+    }
+
+    return new TenantIdentityPolicy(uniqueKeyType, passwordPolicyConfig);
   }
 
   /**
@@ -118,6 +136,9 @@ public class TenantIdentityPolicy {
    *
    * <p>Reads "identity_unique_key_type" from tenant attributes. If not configured, defaults to
    * EMAIL_OR_EXTERNAL_USER_ID.
+   *
+   * <p>Note: Password policy should be configured via identity_policy_config JSONB column, not
+   * tenant attributes.
    *
    * @param attributes tenant attributes
    * @return identity policy
@@ -137,6 +158,12 @@ public class TenantIdentityPolicy {
     return uniqueKeyType;
   }
 
+  public PasswordPolicyConfig passwordPolicyConfig() {
+    return passwordPolicyConfig != null
+        ? passwordPolicyConfig
+        : PasswordPolicyConfig.defaultPolicy();
+  }
+
   /**
    * Checks if this policy exists (is not null).
    *
@@ -149,7 +176,8 @@ public class TenantIdentityPolicy {
   /**
    * Converts this policy to a Map for JSON serialization.
    *
-   * <p>Returns a map with "identity_unique_key_type" key for database storage.
+   * <p>Returns a map with "identity_unique_key_type" and "password_policy" keys for database
+   * storage.
    *
    * @return map representation
    */
@@ -157,6 +185,9 @@ public class TenantIdentityPolicy {
     Map<String, Object> map = new HashMap<>();
     if (uniqueKeyType != null) {
       map.put("identity_unique_key_type", uniqueKeyType.name());
+    }
+    if (passwordPolicyConfig != null) {
+      map.put("password_policy", passwordPolicyConfig.toMap());
     }
     return map;
   }

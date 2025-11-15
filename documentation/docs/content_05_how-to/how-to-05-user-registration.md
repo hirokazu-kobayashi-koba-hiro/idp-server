@@ -1,29 +1,9 @@
 # ユーザー登録と初回認証
 
-## このドキュメントの目的
+## このドキュメントの位置づけ
 
-**最もシンプルなユーザー登録**を実行し、認証フローで動作確認することが目標です。
-
-具体的には、**ユーザーを作成し、最小限の認証設定でOAuth/OIDC認証フローを実行**します。
-
-### 学べること
-
-✅ **ユーザー管理の基礎**
-- ユーザーとは何か
-- ユーザー登録の必須項目
-- ユーザー情報の確認方法
-
-✅ **実践的な知識**
-- ユーザー作成の実行手順
-- 簡易認証設定（パスワード認証 + 認証ポリシー）
-- 認証フローの動作確認（Authorization Code Flow）
-
-### 所要時間
-⏱️ **約10分**
-
-### このドキュメントの位置づけ
-
-**Phase 1**: 最小構成で動作確認（Step 4/5）
+サーバーセットアップ → 組織作成 → テナント作成 → クライアント登録と進めてきました。
+次は**ユーザーの登録方法**を学びます。
 
 **前提ドキュメント**:
 - [how-to-01: 組織初期化](./how-to-02-organization-initialization.md) - 組織作成済み
@@ -31,35 +11,103 @@
 - [how-to-03: クライアント登録](./how-to-04-client-registration.md) - クライアント登録済み
 
 **次のドキュメント**:
-- [how-to-05: 認証ポリシー基礎編](./how-to-07-authentication-policy-basic.md) - より柔軟な認証設定
+- [how-to-06: 認証ポリシー基礎編](./how-to-07-authentication-policy-basic.md) - より柔軟な認証設定
+
+---
+
+## ユーザー登録の2つの方法
+
+idp-serverでは、サービスの性質に応じて2つの登録方法を提供しています：
+
+### 方法1: initial-registration（セルフサインアップ）
+**ユーザー自身が認証画面で登録**
+
+Auth0/Keycloakと同じように、ログイン画面に「新規登録」を用意し、ユーザーが自分で情報を入力して登録します。
+
+**向いているサービス**:
+- ✅ 一般向けWebサービス（ECサイト、SNS、ブログ等）
+- ✅ モバイルアプリ
+- ✅ 不特定多数のユーザーが利用するSaaS
+
+**このドキュメントで扱う方法です。**
+
+### 方法2: Management API
+**管理者が事前にユーザー作成**
+
+管理画面やスクリプトから、管理者がユーザーを事前に作成します。
+
+**向いているサービス**:
+- ✅ 社内システム（従業員管理）
+- ✅ 招待制サービス
+- ✅ B2B SaaS（取引先企業のユーザー一括登録）
+
+**別ドキュメントで扱います**: Management APIによるユーザー管理（今後追加予定）
+
+---
+
+## このドキュメントで学ぶこと
+
+**initial-registrationを使ったセルフサインアップフロー**を実装します。
+
+### 実装する流れ
+1. ユーザーがログイン画面にアクセス（Authorization Request）
+2. 「新規登録」でメール・パスワード入力（initial-registration API）
+3. 登録完了 → 即座にログイン完了（Authorization Code発行）
+4. アクセストークン・IDトークン取得（Token Request）
+
+### 所要時間
+⏱️ **約10分**
 
 ### 前提条件
 - [how-to-03](./how-to-04-client-registration.md)でクライアント登録完了
-- 組織管理者トークンを取得済み
 - 組織ID・テナントID・クライアントIDを確認済み
+- OAuth 2.0 / OIDC の基本的なフロー理解
 
 ---
 
-## ユーザーとは
+## initial-registration の仕組み
 
-**User（ユーザー）**は、idp-serverで認証・認可される**個人またはエンティティ**です。
+### 認証フロー内でのユーザー登録
 
-ユーザーは必ず1つのテナントに所属し、以下の情報を持ちます：
-- **sub**: ユーザーの一意識別子（UUID）
-- **email**: メールアドレス（ログインID）
-- **name**: 表示名
-- **password**: 認証用パスワード（ハッシュ化保存）
+initial-registrationは、OAuth認可フロー中にユーザー登録を行います：
+
+```
+[ユーザー] → Authorization Request
+           ↓
+[idp-server] → ログイン画面にリダイレクト
+           ↓
+[ユーザー] → 新規登録フォーム入力
+           ↓
+[idp-server] ← initial-registration API
+           ↓ ユーザー作成 + パスワードポリシー検証
+           ↓ 認証成功（OperationType.AUTHENTICATION）
+           ↓
+[idp-server] → Authorization Code発行
+           ↓
+[ユーザー] → Token Request
+           ↓
+[idp-server] → Access Token + ID Token発行
+```
+
+### デフォルト登録スキーマ
+
+テナントにinitial-registration設定がない場合、以下のフィールドで動作します：
+
+**必須項目**:
+- `email`: メールアドレス（ログインID）
+- `password`: パスワード（テナントのパスワードポリシーで検証）
+
+**任意項目**:
+- `name`: 氏名
+- `given_name`: 名
+- `family_name`: 姓
+- `phone_number`: 電話番号
+
+**カスタマイズ可能**: Authentication Configuration APIで登録フィールドを追加・変更できます（後述）
 
 ---
 
-## このドキュメントで行うこと
-
-1. **最初のユーザーを作成**（最小パラメータ）
-2. **ユーザー情報を確認**（取得API）
-3. **簡易認証設定**（パスワード認証 + 認証ポリシー）
-4. **認証フローで動作確認**（Authorization Code Flow → Token取得）
-
-### 環境変数の準備
+## 環境変数の準備
 
 **前提**: [how-to-03](./how-to-04-client-registration.md)で設定した環境変数を使用します。
 
@@ -68,107 +116,16 @@
 echo "Organization ID: $ORGANIZATION_ID"
 echo "Public Tenant ID: $PUBLIC_TENANT_ID"
 echo "Web Client ID: $WEB_CLIENT_ID"
-echo "Admin Token: ${ORG_ADMIN_TOKEN:0:50}..."
+echo "Web Client Secret: ${WEB_CLIENT_SECRET:0:20}..."
 ```
 
 まだ設定していない場合は、how-to-03を参照してください。
 
 ---
 
-## Step 1: 最初のユーザーを作成
+## Step 1: Authorization Request
 
-### 最小設定でユーザー作成
-
-```bash
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/users" \
-  -H 'Content-Type: application/json' \
-  -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" \
-  -d '{
-    "email": "test-user@example.com",
-    "provider_id": "idp-server",
-    "raw_password": "Test1234",
-    "name": "Test User",
-    "email_verified": true
-  }' | jq .
-```
-
-### パラメータ説明
-
-| 項目 | 型 | 必須 | 説明 |
-|-----|---|------|------|
-| `email` | string | ✅ | メールアドレス（ログインID） |
-| `password` | string | ✅ | パスワード（最低8文字、大文字・小文字・数字推奨） |
-| `name` | string | ❌ | 表示名 |
-| `email_verified` | boolean | ❌ | メール検証済みフラグ（デフォルト: `false`） |
-
-**重要**: `email_verified: true`を指定することで、メール検証をスキップして即座にログイン可能になります。
-
-### 期待されるレスポンス
-
-```json
-{
-  "dry_run": false,
-  "result": {
-    "sub": "550e8400-e29b-41d4-a716-446655440001",
-    "email": "test-user@example.com",
-    "name": "Test User",
-    "email_verified": true
-  }
-}
-```
-
-### 確認ポイント
-- ✅ `sub`が発行されている（ユーザーの一意識別子）
-- ✅ `email`が正しく登録されている
-- ✅ `email_verified`が`true`になっている
-
-### 環境変数に保存
-
-```bash
-# 後の手順で使用するため、subを保存
-export TEST_USER_SUB="550e8400-e29b-41d4-a716-446655440001"
-export TEST_USER_EMAIL="test-user@example.com"
-export TEST_USER_PASSWORD="Test1234"
-```
-
----
-
-## Step 2: ユーザー情報を確認
-
-### ユーザー取得API
-
-```bash
-curl -X GET "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/users/${TEST_USER_SUB}" \
-  -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" | jq .
-```
-
-### 期待されるレスポンス
-
-```json
-{
-  "sub": "550e8400-e29b-41d4-a716-446655440001",
-  "email": "test-user@example.com",
-  "name": "Test User",
-  "email_verified": true,
-  "created_at": "2025-01-15T10:30:00Z",
-  "updated_at": "2025-01-15T10:30:00Z"
-}
-```
-
-**注意**: `password`フィールドはレスポンスに含まれません（セキュリティのため）。
-
-### ユーザー一覧取得
-
-```bash
-curl -X GET "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/users" \
-  -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" | jq .
-```
-
----
-
-## Step 3: 認証フローで動作確認
-
-### 3.1 Authorization Request
+### 認可リクエスト実行
 
 ```bash
 curl -v "http://localhost:8080/${PUBLIC_TENANT_ID}/v1/authorizations?\
@@ -180,155 +137,245 @@ state=random-state-123&\
 nonce=random-nonce-456"
 ```
 
-**レスポンス**: ログイン画面にリダイレクトされます。
+### レスポンス
 
 ```
 < HTTP/1.1 302 Found
-< Location: http://localhost:8080/{tenant-id}/login?auth_transaction_id=auth-tx-uuid
+< Location: http://localhost:8080/auth-views/signin/index.html?tenant_id={tenant-id}&id={auth-id}
 ```
 
-### 3.2 認証トランザクションIDを取得
+### 認証トランザクションIDを取得
 
-リダイレクト先URLから`auth_transaction_id`を抽出します。
+リダイレクト先URLから `id` パラメータを抽出します。
 
 ```bash
-# 例: auth-tx-uuid-here
-export AUTH_TRANSACTION_ID="auth-tx-uuid-here"
+# 例: Location: http://localhost:8080/auth-views/signin/index.html?tenant_id=xxx&id=da1af51a-274e-481a-8146-78d5bd205671
+export AUTH_ID="da1af51a-274e-481a-8146-78d5bd205671"
 ```
 
-### 3.3 パスワード認証実行
+---
+
+## Step 2: initial-registration でユーザー登録
+
+### ユーザー登録API実行
 
 ```bash
-curl -X POST "http://localhost:8080/${PUBLIC_TENANT_ID}/v1/authentications/${AUTH_TRANSACTION_ID}" \
+curl -X POST "http://localhost:8080/${PUBLIC_TENANT_ID}/v1/authorizations/${AUTH_ID}/initial-registration" \
   -H 'Content-Type: application/json' \
-  -d "{
-    \"username\": \"${TEST_USER_EMAIL}\",
-    \"password\": \"${TEST_USER_PASSWORD}\"
-  }" | jq .
+  -d '{
+    "email": "newuser@example.com",
+    "password": "SecurePass123!",
+    "name": "New User",
+    "given_name": "New",
+    "family_name": "User"
+  }' | jq .
 ```
 
-**成功レスポンス**:
+### パラメータ説明
+
+| 項目 | 型 | 必須 | 説明 |
+|-----|---|------|------|
+| `email` | string | ✅ | メールアドレス（ログインID、一意） |
+| `password` | string | ✅ | パスワード（テナントのパスワードポリシーで検証） |
+| `name` | string | ❌ | 氏名 |
+| `given_name` | string | ❌ | 名 |
+| `family_name` | string | ❌ | 姓 |
+| `phone_number` | string | ❌ | 電話番号 |
+
+**重要**: `password` はテナントのパスワードポリシーに準拠する必要があります（デフォルト: 最低8文字）。
+
+### 成功レスポンス
+
 ```json
 {
-  "status": "SUCCESS",
-  "redirect_uri": "http://localhost:3000/callback?code=auth-code-abc123&state=random-state-123"
-}
-```
-
-### 3.4 Authorization Codeを抽出
-
-```bash
-# redirect_uriからcodeパラメータを抽出
-export AUTH_CODE="auth-code-abc123"
-```
-http://localhost:3000/callback?code=DTPRqKCRc7MPsK3EQ2wkINbMQWI&iss=https%3A%2F%2Fapp.example.com%2F4c0da82e-ae80-4c37-bd0b-09f194cf64db&state=random-state-123
-### 3.5 トークン取得
-
-```bash
-curl -X POST "http://localhost:8080/${PUBLIC_TENANT_ID}/v1/tokens" \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  -u "${WEB_CLIENT_ID}:${WEB_CLIENT_SECRET}" \
-  -d "grant_type=authorization_code" \
-  -d "code=${AUTH_CODE}" \
-  -d "redirect_uri=http://localhost:3000/callback" | jq .
-```
-
-**成功レスポンス**:
-```json
-{
-  "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "token_type": "Bearer",
-  "expires_in": 3600,
-  "refresh_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "id_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "scope": "openid profile email"
+  "user": {
+    "sub": "1a6e5377-18be-4322-a00e-9ecd7c24335c",
+    "email": "newuser@example.com",
+    "name": "New User",
+    "provider_id": "idp-server",
+    "status": "REGISTERED"
+  }
 }
 ```
 
 ### 確認ポイント
-- ✅ `access_token`が発行されている
-- ✅ `id_token`が発行されている（OIDCフロー）
-- ✅ `refresh_token`が発行されている
-- ✅ `expires_in`が3600秒（1時間）
+- ✅ `sub` が発行されている（ユーザーの一意識別子）
+- ✅ `email` が正しく登録されている
+- ✅ `status` が `REGISTERED` になっている
+
+### 環境変数に保存
+
+```bash
+export NEW_USER_SUB="1a6e5377-18be-4322-a00e-9ecd7c24335c"
+export NEW_USER_EMAIL="newuser@example.com"
+```
+
+---
+
+## Step 3: Authorization Code 取得
+
+initial-registration が成功すると、ユーザーは自動的に認証済み状態になります。次に authorize エンドポイントを呼び出します。
+
+### Authorize実行
+
+```bash
+curl -X POST "http://localhost:8080/${PUBLIC_TENANT_ID}/v1/authorizations/${AUTH_ID}/authorize" \
+  -H 'Content-Type: application/json' \
+  -d '{}' | jq .
+```
+
+### 成功レスポンス
+
+```json
+{
+  "redirect_uri": "http://localhost:3000/callback?code=wsGIhymxIijie8v6xOQhOSo-YAM&iss=http://localhost:8080/{tenant-id}&state=random-state-123"
+}
+```
+
+### Authorization Code を抽出
+
+```bash
+# redirect_uri から code パラメータを抽出
+export AUTH_CODE="wsGIhymxIijie8v6xOQhOSo-YAM"
+```
+
+---
+
+## Step 4: トークン取得
+
+### Token Request実行
+
+```bash
+curl -X POST "http://localhost:8080/${PUBLIC_TENANT_ID}/v1/tokens" \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d "grant_type=authorization_code" \
+  -d "code=${AUTH_CODE}" \
+  -d "redirect_uri=http://localhost:3000/callback" \
+  -d "client_id=${WEB_CLIENT_ID}" \
+  -d "client_secret=${WEB_CLIENT_SECRET}" | jq .
+```
+
+### 成功レスポンス
+
+```json
+{
+  "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6ImF0K2p3dCJ9...",
+  "refresh_token": "YdFkVQXEKDIzZvUhwQMqsKh8LIBBZlnAwow1inqKdjE",
+  "scope": "openid profile email",
+  "id_token": "eyJraWQiOiJiZDlkZGVmMC0wODQ0LTRlMmItYTNiOS1lZjlkNzhiMDlmNGMiLCJhbGciOiJSUzI1NiJ9...",
+  "token_type": "Bearer",
+  "expires_in": 3600
+}
+```
+
+### ID Token の確認
+
+ID Token をデコードして、登録したユーザー情報を確認できます：
+
+```bash
+# ID Token の payload 部分をデコード（jwt.io や jq を使用）
+echo $ID_TOKEN | cut -d'.' -f2 | base64 -d | jq .
+```
+
+```json
+{
+  "sub": "1a6e5377-18be-4322-a00e-9ecd7c24335c",
+  "aud": "1883e958-b8a8-44a9-9ece-be73db6080f8",
+  "auth_time": 1763195688,
+  "amr": ["initial-registration"],
+  "iss": "http://localhost:8080/{tenant-id}",
+  "exp": 1763199288,
+  "iat": 1763195688
+}
+```
+
+### 確認ポイント
+- ✅ `access_token` が発行されている
+- ✅ `id_token` が発行されている（OIDCフロー）
+- ✅ `refresh_token` が発行されている
+- ✅ `amr` に `initial-registration` が含まれている（登録経由で認証）
 
 ---
 
 ## よくあるエラー
 
-### エラー1: ユーザーが存在しない
-
-**エラー**:
-```json
-{
-  "status": "FAILURE",
-  "error": "user_not_found"
-}
-```
-
-**原因**: ユーザーが作成されていない、またはメールアドレスが間違っている
-
-**解決策**:
-```bash
-# ユーザー一覧を確認
-curl "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/users" \
-  -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" | jq .
-
-# 正しいメールアドレスを使用
-```
-
----
-
-### エラー2: パスワード要件違反
+### エラー1: パスワードポリシー違反
 
 **エラー**:
 ```json
 {
   "error": "invalid_request",
-  "error_description": "Password does not meet requirements"
+  "error_description": "invalid request.",
+  "error_messages": ["password minLength is 8"]
 }
 ```
 
-**原因**: パスワードが設定要件を満たしていない
+**原因**: パスワードがテナントのパスワードポリシーを満たしていない
 
 **解決策**:
 ```bash
-# ❌ 間違い: 数字なし
-"password": "TestPassword"
+# ❌ 間違い: 8文字未満
+"password": "Test1"
 
-# ❌ 間違い: 大文字なし
-"password": "test1234"
+# ❌ 間違い: 複雑性要件がある場合
+"password": "12345678"
 
-# ✅ 正しい: 大文字・小文字・数字あり
-"password": "Test1234"
+# ✅ 正しい: デフォルト（最低8文字）
+"password": "SecurePass123!"
+```
+
+**テナントのパスワードポリシー確認**:
+```bash
+curl "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}" \
+  -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" | jq '.identity_policy.password_policy'
 ```
 
 ---
 
-### エラー3: 認証方式が許可されていない
+### エラー2: メールアドレス重複
 
 **エラー**:
 ```json
 {
-  "error": "authentication_method_not_allowed",
-  "error_description": "password authentication is not allowed"
+  "error": "invalid_request",
+  "error_description": "user is conflict with username and password"
 }
 ```
 
-**原因**: 認証ポリシーで`password`が`available_methods`に含まれていない
+**原因**: 同じメールアドレスのユーザーが既に存在
 
 **解決策**:
 ```bash
-# 認証ポリシーを確認
-curl "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/authentication-policies" \
-  -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" | jq .
-
-# available_methods に "password" が含まれているか確認
-# 含まれていない場合は、Step 3.2を実行
+# 別のメールアドレスを使用
+"email": "newuser2@example.com"
 ```
 
 ---
 
-### エラー4: redirect_uri不一致
+### エラー3: 認証トランザクションIDが無効
+
+**エラー**:
+```json
+{
+  "error": "invalid_request",
+  "error_description": "not found oauth request"
+}
+```
+
+**原因**:
+- Authorization Request が実行されていない
+- 認証トランザクションIDが間違っている
+- トランザクションが有効期限切れ
+
+**解決策**:
+```bash
+# Step 1 から再実行
+# Authorization Request → id パラメータ抽出 → initial-registration
+```
+
+---
+
+### エラー4: redirect_uri 不一致
 
 **エラー**:
 ```json
@@ -338,15 +385,15 @@ curl "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenan
 }
 ```
 
-**原因**: Authorization Requestの`redirect_uri`がクライアント登録時の`redirect_uris`に含まれていない
+**原因**: Authorization Request の `redirect_uri` がクライアント登録時の `redirect_uris` に含まれていない
 
 **解決策**:
 ```bash
-# クライアントのredirect_urisを確認
+# クライアントの redirect_uris を確認
 curl "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients/${WEB_CLIENT_ID}" \
   -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" | jq .redirect_uris
 
-# redirect_urisに追加（必要に応じて）
+# redirect_uris に追加（必要に応じて）
 curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients/${WEB_CLIENT_ID}" \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" \
@@ -362,18 +409,19 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
 
 ## API Reference
 
-### ユーザー登録API
+### initial-registration API
 
 ```http
-POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users
-Authorization: Bearer {access_token}
+POST /{tenant-id}/v1/authorizations/{id}/initial-registration
 Content-Type: application/json
 
 {
-  "email": "user@example.com",
-  "password": "Password123",
-  "name": "User Name",
-  "email_verified": true
+  "email": "newuser@example.com",
+  "password": "SecurePass123!",
+  "name": "New User",
+  "given_name": "New",
+  "family_name": "User",
+  "phone_number": "+81-90-1234-5678"
 }
 ```
 
@@ -381,92 +429,98 @@ Content-Type: application/json
 
 | 項目 | 型 | 必須 | 説明 |
 |-----|---|------|------|
-| `email` | string | ✅ | メールアドレス（一意） |
-| `password` | string | ✅ | パスワード（認証設定の要件を満たす必要あり） |
-| `name` | string | ❌ | 表示名 |
+| `email` | string | ✅ | メールアドレス（一意、ログインID） |
+| `password` | string | ✅ | パスワード（テナントのパスワードポリシーで検証） |
+| `name` | string | ❌ | 氏名 |
 | `given_name` | string | ❌ | 名 |
 | `family_name` | string | ❌ | 姓 |
-| `middle_name` | string | ❌ | ミドルネーム |
-| `nickname` | string | ❌ | ニックネーム |
-| `preferred_username` | string | ❌ | 希望ユーザー名 |
-| `profile` | string (URL) | ❌ | プロフィールページURL |
-| `picture` | string (URL) | ❌ | プロフィール画像URL |
-| `website` | string (URL) | ❌ | ウェブサイトURL |
-| `email_verified` | boolean | ❌ | メール検証済みフラグ（デフォルト: `false`） |
-| `gender` | string | ❌ | 性別 |
-| `birthdate` | string (YYYY-MM-DD) | ❌ | 生年月日 |
-| `zoneinfo` | string | ❌ | タイムゾーン（例: `Asia/Tokyo`） |
-| `locale` | string | ❌ | ロケール（例: `ja-JP`） |
-| `phone_number` | string | ❌ | 電話番号（E.164形式推奨） |
-| `phone_number_verified` | boolean | ❌ | 電話番号検証済みフラグ |
-| `address` | object | ❌ | 住所情報 |
+| `phone_number` | string | ❌ | 電話番号 |
+
+**注意**: カスタム登録スキーマを設定している場合、そのスキーマに従う必要があります。
 
 #### レスポンス
 
 ```http
-HTTP/1.1 201 Created
+HTTP/1.1 200 OK
 Content-Type: application/json
 
 {
-  "dry_run": false,
-  "result": {
-    "sub": "550e8400-e29b-41d4-a716-446655440001",
-    "email": "user@example.com",
-    "name": "User Name",
-    "email_verified": true,
-    "created_at": "2025-01-15T10:30:00Z",
-    "updated_at": "2025-01-15T10:30:00Z"
+  "user": {
+    "sub": "1a6e5377-18be-4322-a00e-9ecd7c24335c",
+    "email": "newuser@example.com",
+    "name": "New User",
+    "provider_id": "idp-server",
+    "status": "REGISTERED"
   }
 }
 ```
 
-**注意**: `password`はレスポンスに含まれません（セキュリティのため）。
+**注意**: `password` はレスポンスに含まれません（セキュリティのため）。
 
 ---
 
-### ユーザー取得API
+## カスタム登録スキーマの設定（オプション）
 
-```http
-GET /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{sub}
-Authorization: Bearer {access_token}
-```
+デフォルトスキーマではなく、独自の登録フィールドを定義したい場合は、Authentication Configuration API を使用します。
 
-#### レスポンス
+### 例: 会社名・部署名を必須にする
 
-```json
-{
-  "sub": "550e8400-e29b-41d4-a716-446655440001",
-  "email": "user@example.com",
-  "name": "User Name",
-  "email_verified": true,
-  "created_at": "2025-01-15T10:30:00Z",
-  "updated_at": "2025-01-15T10:30:00Z"
-}
-```
-
----
-
-### ユーザー一覧取得API
-
-```http
-GET /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users
-Authorization: Bearer {access_token}
-```
-
-#### レスポンス
-
-```json
-{
-  "users": [
-    {
-      "sub": "550e8400-e29b-41d4-a716-446655440001",
-      "email": "user@example.com",
-      "name": "User Name",
-      "email_verified": true
+```bash
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/authentication-configurations" \
+  -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" \
+  -d '{
+    "id": "'"$(uuidgen | tr '[:upper:]' '[:lower:]')"'",
+    "type": "initial-registration",
+    "enabled": true,
+    "interactions": {
+      "initial-registration": {
+        "request": {
+          "request_schema": {
+            "type": "object",
+            "required": ["email", "password", "name", "company", "department"],
+            "properties": {
+              "email": {
+                "type": "string",
+                "format": "email",
+                "maxLength": 255
+              },
+              "password": {
+                "type": "string",
+                "minLength": 8
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 255
+              },
+              "company": {
+                "type": "string",
+                "maxLength": 255
+              },
+              "department": {
+                "type": "string",
+                "maxLength": 255
+              }
+            }
+          }
+        }
+      }
     }
-  ],
-  "total": 1
-}
+  }' | jq .
+```
+
+カスタムスキーマを設定後は、`company` と `department` が必須になります：
+
+```bash
+curl -X POST "http://localhost:8080/${PUBLIC_TENANT_ID}/v1/authorizations/${AUTH_ID}/initial-registration" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "email": "employee@example.com",
+    "password": "SecurePass123!",
+    "name": "Employee Name",
+    "company": "Example Corp",
+    "department": "Engineering"
+  }' | jq .
 ```
 
 ---
@@ -475,58 +529,60 @@ Authorization: Bearer {access_token}
 
 ### ✅ 推奨
 
-1. **パスワード要件の厳格化**
+1. **パスワードポリシーの設定**
+
+   テナント作成時に適切なパスワードポリシーを設定：
    ```json
    {
-     "min_length": 12,              // 最低12文字
-     "require_uppercase": true,     // 大文字必須
-     "require_lowercase": true,     // 小文字必須
-     "require_number": true,        // 数字必須
-     "require_special_character": true  // 特殊文字必須
+     "identity_policy": {
+       "password_policy": {
+         "min_length": 12,
+         "max_length": 72
+       }
+     }
    }
    ```
+
+   詳細は [Concept: Password Policy](../content_03_concepts/concept-20-password-policy.md) を参照。
 
 2. **メール検証フロー**
-   ```json
-   {
-     "email_verified": false  // 開発環境以外ではfalseを推奨
-   }
-   ```
-   本番環境では、ユーザーにメール検証リンクを送信し、`email_verified: true`は検証後に設定します。
 
-3. **パスワードハッシュ**
-   idp-serverは自動的に**bcrypt**でパスワードをハッシュ化します。
-   - ✅ 平文パスワードは保存されない
-   - ✅ bcryptのソルト付きハッシュ
-   - ✅ データベース漏洩時も安全
+   本番環境では、登録後にメール検証を実施：
+   - 登録直後は `email_verified: false`
+   - 検証リンクをメール送信
+   - ユーザーがリンクをクリック後、`email_verified: true` に更新
 
-4. **最小権限の原則**
-   ユーザーには必要最小限のスコープのみを許可します。
+3. **Bot対策**
+
+   - reCAPTCHA や hCaptcha の導入
+   - レート制限の設定
+
+4. **登録フィールドの最小化**
+
+   初回登録時は必要最小限のフィールドのみ要求し、プロフィール編集で追加情報を収集。
 
 ### ❌ 避けるべき設定
 
 1. **パスワード要件が緩すぎる**
    ```json
    {
-     "min_length": 4,               // ❌ 短すぎる
-     "require_uppercase": false,    // ❌ 要件が緩すぎる
-     "require_lowercase": false,
-     "require_number": false
+     "min_length": 4  // ❌ 短すぎる
    }
    ```
 
-2. **本番環境でemail_verified: true**
-   ```json
-   {
-     "email_verified": true  // ❌ 本番環境では避けるべき
-   }
-   ```
+2. **本番環境でメール検証なし**
+
+   悪意のあるユーザーが他人のメールアドレスで登録可能になります。
+
+3. **過度な情報収集**
+
+   初回登録で住所・クレジットカード等を要求すると、登録率が低下します。
 
 ---
 
 ## 次のステップ
 
-✅ ユーザー登録と認証フローができました！
+✅ セルフサービスユーザー登録ができました！
 
 ### より高度な認証設定
 - [How-to: 認証ポリシー基礎編](./how-to-07-authentication-policy-basic.md) - より柔軟な認証設定
@@ -535,19 +591,21 @@ Authorization: Bearer {access_token}
 ### 外部IdP連携
 - [How-to: Federation設定](./how-to-11-federation-setup.md) - Google、Azure AD連携
 
-### トークン管理
-- [How-to: トークン戦略](./how-to-09-token-strategy.md) - アクセストークン・リフレッシュトークンの管理
+### パスワード管理
+- [Concept: Password Policy](../content_03_concepts/concept-20-password-policy.md) - パスワードポリシー詳細
+- [How-to: パスワード変更API](./how-to-06-password-change.md) - ユーザー自身によるパスワード変更
 
 ---
 
 ## 関連ドキュメント
 
 - [Concept: 認証ポリシー](../content_03_concepts/concept-05-authentication-policy.md) - 認証ポリシーの詳細
+- [Concept: Password Policy](../content_03_concepts/concept-20-password-policy.md) - パスワードポリシー詳細
 - [Developer Guide: Authentication実装](../content_06_developer-guide/03-application-plane/04-authentication.md) - 開発者向け実装ガイド
 - [API Reference](../content_07_reference/api-reference.md) - Management API仕様
 
 ---
 
-**最終更新**: 2025-10-14
+**最終更新**: 2025-01-15
 **難易度**: ⭐☆☆☆☆（初級）
-**対象**: 初めてユーザー登録を行う管理者・開発者
+**対象**: 初めてユーザー登録機能を実装する管理者・開発者

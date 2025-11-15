@@ -22,6 +22,8 @@ import org.idp.server.adapters.springboot.application.restapi.ParameterTransform
 import org.idp.server.adapters.springboot.application.restapi.model.ResourceOwnerPrincipal;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserOperationApi;
+import org.idp.server.core.openid.identity.authentication.PasswordChangeRequest;
+import org.idp.server.core.openid.identity.authentication.PasswordChangeResponse;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.openid.identity.io.AuthenticationDevicePatchRequest;
 import org.idp.server.core.openid.identity.io.MfaRegistrationRequest;
@@ -112,6 +114,28 @@ public class UserV1Api implements ParameterTransformable {
 
     UserOperationResponse response =
         userOperationApi.delete(tenantIdentifier, user, oAuthToken, requestAttributes);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("Content-Type", "application/json");
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @PostMapping("/password/change")
+  public ResponseEntity<?> changePassword(
+      @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestBody Map<String, Object> requestBody,
+      HttpServletRequest httpServletRequest) {
+
+    User user = resourceOwnerPrincipal.getUser();
+    OAuthToken oAuthToken = resourceOwnerPrincipal.getOAuthToken();
+    PasswordChangeRequest request = new PasswordChangeRequest(requestBody);
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    PasswordChangeResponse response =
+        userOperationApi.changePassword(
+            tenantIdentifier, user, oAuthToken, request, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
