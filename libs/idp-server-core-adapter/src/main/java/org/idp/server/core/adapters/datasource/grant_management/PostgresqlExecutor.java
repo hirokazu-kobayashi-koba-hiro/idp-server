@@ -80,7 +80,7 @@ public class PostgresqlExecutor implements AuthorizationGrantedSqlExecutor {
     params.add(toJson(authorizationGrant.authentication()));
     params.add(authorizationGrant.requestedClientId().value());
     params.add(toJson(authorizationGrant.clientAttributes()));
-    params.add(authorizationGrant.grantType().name());
+    params.add(authorizationGrant.grantType().value());
     params.add(authorizationGrant.scopes().toStringValues());
 
     if (authorizationGrant.hasIdTokenClaims()) {
@@ -142,6 +142,7 @@ public class PostgresqlExecutor implements AuthorizationGrantedSqlExecutor {
               WHERE tenant_id = ?::uuid
               AND client_id = ?
               AND user_id = ?::uuid
+              ORDER BY updated_at DESC
               limit 1;
               """;
     List<Object> params = new ArrayList<>();
@@ -162,6 +163,7 @@ public class PostgresqlExecutor implements AuthorizationGrantedSqlExecutor {
                 SET user_payload = ?::jsonb,
                 authentication = ?::jsonb,
                 client_payload = ?::jsonb,
+                grant_type = ?,
                 scopes = ?,
                 id_token_claims = ?,
                 userinfo_claims = ?,
@@ -178,6 +180,7 @@ public class PostgresqlExecutor implements AuthorizationGrantedSqlExecutor {
     params.add(toJson(authorizationGrant.user()));
     params.add(toJson(authorizationGrant.authentication()));
     params.add(toJson(authorizationGrant.clientAttributes()));
+    params.add(authorizationGrant.grantType().value());
     params.add(authorizationGrant.scopes().toStringValues());
 
     if (authorizationGrant.hasIdTokenClaims()) {

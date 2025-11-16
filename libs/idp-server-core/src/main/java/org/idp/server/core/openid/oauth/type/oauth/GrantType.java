@@ -39,7 +39,7 @@ public enum GrantType {
       return undefined;
     }
     for (GrantType grantType : GrantType.values()) {
-      if (grantType.value.equals(value)) {
+      if (grantType.value.equals(value) || grantType.name().equals(value)) {
         return grantType;
       }
     }
