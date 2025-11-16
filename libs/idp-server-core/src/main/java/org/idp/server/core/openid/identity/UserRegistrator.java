@@ -38,8 +38,7 @@ public class UserRegistrator {
     User existingUser = userQueryRepository.findById(tenant, user.userIdentifier());
 
     if (existingUser.exists()) {
-      UserUpdater userUpdater = new UserUpdater(user, existingUser);
-      User updatedUser = userUpdater.update();
+      User updatedUser = existingUser.updateWith(user);
       applyIdentityPolicyIfNeeded(tenant, updatedUser);
       userCommandRepository.update(tenant, updatedUser);
       return updatedUser;

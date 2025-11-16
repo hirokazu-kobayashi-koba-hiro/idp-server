@@ -455,8 +455,8 @@ describe("Issue #800: Authentication Step Definitions (1st/2nd Factor)", () => {
         performAuthFlow()
       ]);
 
-      const idToken1 = results[0].status === "fulfilled" ? results[0].value : null;
-      const idToken2 = results[1].status === "fulfilled" ? results[1].value : null;
+      const idToken1 = results[0].status === "fulfilled" && results[0].value ? results[0].value : null;
+      const idToken2 = results[1].status === "fulfilled" && results[1].value ? results[1].value : null;
 
       console.log("Flow 1 result:", idToken1 ? "SUCCESS" : "FAILED",
                   results[0].status === "rejected" ? results[0].reason?.message : "");

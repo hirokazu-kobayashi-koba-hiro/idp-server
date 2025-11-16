@@ -42,6 +42,7 @@ public class OAuthAuthorizeRequestValidator {
 
   public void validate() {
     throwExceptionIfNotRequiredParameters();
+    throwExceptionIfInvalidUserStatus();
   }
 
   void throwExceptionIfNotRequiredParameters() {
@@ -55,6 +56,14 @@ public class OAuthAuthorizeRequestValidator {
     }
     if (Objects.isNull(authentication)) {
       throw new OAuthAuthorizeBadRequestException("invalid_request", "authentication is required");
+    }
+  }
+
+  void throwExceptionIfInvalidUserStatus() {
+    if (!user.isActive()) {
+      throw new OAuthAuthorizeBadRequestException(
+          "invalid_request",
+          String.format("User status is not active, cannot authorize. (%s)", user.status().name()));
     }
   }
 }

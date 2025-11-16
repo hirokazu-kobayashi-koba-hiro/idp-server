@@ -120,6 +120,19 @@ export const requestAuthorizations = async ({
 
       // console.log(authorizeResponse.headers);
       console.log(JSON.stringify(authorizeResponse.data, null, 2));
+
+      if (authorizeResponse.status !== 200) {
+
+        return {
+          status: authorizeResponse.status,
+          authorizationResponse: {
+            error: authorizeResponse.data.error,
+            error_description: authorizeResponse.data.error_description
+          },
+          response: authorizeResponse,
+        };
+      }
+
       const authorizationResponse = convertToAuthorizationResponse(
         authorizeResponse.data.redirect_uri
       );
