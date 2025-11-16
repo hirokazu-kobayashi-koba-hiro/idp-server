@@ -235,7 +235,7 @@ public class AuthorizationGrant {
         newAuthentication,
         newRequestClientId,
         newClientAttributes,
-        grantType,
+        newAuthorizationGrant.grantType(),
         newScopes,
         newGrantIdToken,
         newGrantUserinfo,
