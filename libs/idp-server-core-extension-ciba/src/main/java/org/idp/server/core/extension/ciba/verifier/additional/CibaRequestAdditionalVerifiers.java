@@ -31,6 +31,7 @@ public class CibaRequestAdditionalVerifiers {
       PasswordVerificationDelegation passwordVerificationDelegation) {
     this.additionalVerifiers = new ArrayList<>();
     additionalVerifiers.add(new UserResolvedVerifier());
+    additionalVerifiers.add(new UserStatusVerifier());
     additionalVerifiers.add(new UserCodeAsPasswordVerifier(passwordVerificationDelegation));
     additionalVerifiers.add(new IdentityVerificationVerifier());
     List<CibaRequestAdditionalVerifier> extensionVerifiers =
