@@ -17,17 +17,21 @@
 package org.idp.server.authentication.interactors.password;
 
 import org.idp.server.core.openid.authentication.AuthenticationInteractor;
+import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
 import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.openid.authentication.plugin.AuthenticationInteractorFactory;
-import org.idp.server.core.openid.identity.authentication.PasswordVerificationDelegation;
+import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 
 public class PasswordAuthenticationInteractorFactory implements AuthenticationInteractorFactory {
 
   @Override
   public AuthenticationInteractor create(AuthenticationDependencyContainer container) {
 
-    PasswordVerificationDelegation passwordVerificationDelegation =
-        container.resolve(PasswordVerificationDelegation.class);
-    return new PasswordAuthenticationInteractor(passwordVerificationDelegation);
+    AuthenticationExecutors authenticationExecutors =
+        container.resolve(AuthenticationExecutors.class);
+    AuthenticationConfigurationQueryRepository configurationQueryRepository =
+        container.resolve(AuthenticationConfigurationQueryRepository.class);
+    return new PasswordAuthenticationInteractor(
+        authenticationExecutors, configurationQueryRepository);
   }
 }

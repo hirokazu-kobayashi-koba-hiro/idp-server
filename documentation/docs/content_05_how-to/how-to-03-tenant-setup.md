@@ -311,6 +311,8 @@ POST /v1/management/organizations/{organization-id}/tenants
 | `grant_types_supported` | array | ✅ | サポートするグラントタイプ |
 | `token_endpoint_auth_methods_supported` | array | ✅ | サポートするクライアント認証方式 |
 | `subject_types_supported` | array | - | サポートするsubject識別子タイプ |
+| `claims_supported` | array | - | サポートするクレーム（`sub`, `name`, `email`等） |
+| `claim_types_supported` | array | - | サポートするクレームタイプ（`normal`等） |
 
 ---
 
@@ -424,6 +426,8 @@ OAuth/OIDC認証を動かすために、以下の4つのカテゴリのパラメ
 | `response_types_supported` | 認可レスポンス形式 |
 | `grant_types_supported` | トークン取得方法 |
 | `token_endpoint_auth_methods_supported` | クライアント認証方式 |
+| `claims_supported` | 利用可能なクレーム（ユーザー情報項目） |
+| `claim_types_supported` | クレームの種別（現状は`normal`のみサポート） |
 
 ### 🔑 4. JWKS（署名鍵）
 

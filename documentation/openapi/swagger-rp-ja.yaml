@@ -634,6 +634,11 @@ paths:
       description: |
         認証されたエンドユーザーのプロフィール情報を返す。
         OpenID Connect Core 1.0 Section 5 に準拠。
+
+        **返却可能なクレーム（ユーザー情報項目）**:
+        - OpenID Connect Discovery（`/.well-known/openid-configuration`）の `claims_supported` で確認できます
+        - 標準クレーム例: `sub`, `name`, `email`, `email_verified`, `preferred_username`, `phone_number` など
+        - 実際に返却されるクレームは、`scope` パラメータまたは `claims` パラメータでの要求内容に依存します
       security:
         - bearerAuth: [ ]
       responses:
@@ -667,6 +672,11 @@ paths:
       description: |
         認証されたエンドユーザーのプロフィール情報を返す。
         OpenID Connect Core 1.0 Section 5 に準拠。
+
+        **返却可能なクレーム（ユーザー情報項目）**:
+        - OpenID Connect Discovery（`/.well-known/openid-configuration`）の `claims_supported` で確認できます
+        - 標準クレーム例: `sub`, `name`, `email`, `email_verified`, `preferred_username`, `phone_number` など
+        - 実際に返却されるクレームは、`scope` パラメータまたは `claims` パラメータでの要求内容に依存します
       security:
         - bearerAuth: [ ]
       responses:

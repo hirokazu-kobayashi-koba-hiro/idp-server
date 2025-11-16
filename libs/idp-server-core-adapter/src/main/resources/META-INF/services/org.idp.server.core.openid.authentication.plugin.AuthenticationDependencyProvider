@@ -1,3 +1,4 @@
 org.idp.server.core.adapters.datasource.authentication.config.query.AuthenticationConfigurationDataSourceProvider
 org.idp.server.core.adapters.datasource.authentication.interaction.command.AuthenticationInteractionCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.authentication.interaction.query.AuthenticationInteractionQueryDataSourceProvider
+org.idp.server.core.adapters.datasource.identity.UserQueryDataSourceProvider
