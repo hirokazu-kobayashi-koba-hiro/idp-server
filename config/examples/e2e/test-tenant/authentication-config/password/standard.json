@@ -1,0 +1,50 @@
+{
+  "id": "a1b2c3d4-5678-90ab-cdef-1234567890ab",
+  "type": "password",
+  "attributes": {},
+  "metadata": {
+    "type": "password",
+    "description": "Standard password authentication"
+  },
+  "interactions": {
+    "password-authentication": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string",
+              "description": "Username (preferred_username)"
+            },
+            "password": {
+              "type": "string",
+              "description": "Password"
+            },
+            "provider_id": {
+              "type": "string",
+              "description": "Provider ID (default: idp-server)"
+            }
+          },
+          "required": ["username", "password"]
+        }
+      },
+      "pre_hook": {},
+      "execution": {
+        "function": "password_verification"
+      },
+      "post_hook": {},
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.user_id",
+            "to": "user_id"
+          },
+          {
+            "from": "$.username",
+            "to": "username"
+          }
+        ]
+      }
+    }
+  }
+}

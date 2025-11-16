@@ -17,24 +17,57 @@
 package org.idp.server.authentication.interactors.password;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.idp.server.core.openid.authentication.*;
+import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
+import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
+import org.idp.server.core.openid.authentication.config.AuthenticationInteractionConfig;
+import org.idp.server.core.openid.authentication.config.AuthenticationResponseConfig;
+import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionRequest;
+import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionResult;
+import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
+import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
+import org.idp.server.core.openid.authentication.policy.AuthenticationStepDefinition;
+import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.identity.authentication.PasswordVerificationDelegation;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.mapper.MappingRule;
+import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
+/**
+ * Password authentication interactor.
+ *
+ * <p><b>Issue #898:</b> Refactored to use AuthenticationExecutor pattern following
+ * EmailAuthenticationInteractor pattern.
+ *
+ * <p><b>Issue #800:</b> Implements resolveUser() for database-first user resolution.
+ *
+ * <p><b>Issue #897:</b> Uses preferred_username for user lookup via PasswordAuthenticationExecutor.
+ *
+ * @see org.idp.server.authentication.interactors.email.EmailAuthenticationInteractor
+ * @see org.idp.server.authentication.interactors.password.executor.PasswordAuthenticationExecutor
+ */
 public class PasswordAuthenticationInteractor implements AuthenticationInteractor {
 
-  PasswordVerificationDelegation passwordVerificationDelegation;
+  AuthenticationExecutors authenticationExecutors;
+  AuthenticationConfigurationQueryRepository configurationQueryRepository;
+  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
   LoggerWrapper log = LoggerWrapper.getLogger(PasswordAuthenticationInteractor.class);
 
   public PasswordAuthenticationInteractor(
-      PasswordVerificationDelegation passwordVerificationDelegation) {
-    this.passwordVerificationDelegation = passwordVerificationDelegation;
+      AuthenticationExecutors authenticationExecutors,
+      AuthenticationConfigurationQueryRepository configurationQueryRepository) {
+    this.authenticationExecutors = authenticationExecutors;
+    this.configurationQueryRepository = configurationQueryRepository;
   }
 
   @Override
@@ -57,37 +90,272 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
 
     log.debug("PasswordAuthenticationInteractor called");
 
-    String username = request.optValueAsString("username", "");
-    String password = request.optValueAsString("password", "");
-    String providerId = request.optValueAsString("provider_id", "idp-server");
+    AuthenticationConfiguration configuration = getConfig(tenant);
+    AuthenticationInteractionConfig authenticationInteractionConfig =
+        configuration.getAuthenticationConfig("password-authentication");
+    AuthenticationExecutionConfig execution = authenticationInteractionConfig.execution();
+    AuthenticationExecutor executor = authenticationExecutors.get(execution.function());
 
-    User user = userQueryRepository.findByEmail(tenant, username, providerId);
-    if (!passwordVerificationDelegation.verify(password, user.hashedPassword())) {
+    AuthenticationExecutionRequest executionRequest =
+        new AuthenticationExecutionRequest(request.toMap());
+    AuthenticationExecutionResult executionResult =
+        executor.execute(
+            tenant, transaction.identifier(), executionRequest, requestAttributes, execution);
 
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "invalid_request");
-      response.put("error_description", "user is not found or invalid password");
+    AuthenticationResponseConfig responseConfig = authenticationInteractionConfig.response();
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(executionResult.contents());
+    JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
+    Map<String, Object> contents =
+        MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
 
-      return new AuthenticationInteractionRequestResult(
-          AuthenticationInteractionStatus.CLIENT_ERROR,
-          type,
-          operationType(),
-          method(),
-          user,
-          response,
-          DefaultSecurityEventType.password_failure);
+    if (executionResult.isClientError()) {
+      log.warn("Password authentication failed. Client error: {}", executionResult.contents());
+      return AuthenticationInteractionRequestResult.clientError(
+          contents, type, operationType(), method(), DefaultSecurityEventType.password_failure);
     }
 
-    Map<String, Object> response = new HashMap<>();
-    response.put("user", user.toMap());
+    if (executionResult.isServerError()) {
+      log.warn("Password authentication failed. Server error: {}", executionResult.contents());
+      return AuthenticationInteractionRequestResult.serverError(
+          contents, type, operationType(), method(), DefaultSecurityEventType.password_failure);
+    }
+
+    User verifiedUser =
+        resolveUser(
+            tenant, transaction, request, executionResult, configuration, userQueryRepository);
+
+    if (!verifiedUser.exists()) {
+      log.warn(
+          "User resolution failed. username={}, method={}",
+          request.optValueAsString("username", ""),
+          method());
+
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "user_not_found");
+      response.put("error_description", "User not found.");
+
+      return AuthenticationInteractionRequestResult.clientError(
+          response, type, operationType(), method(), DefaultSecurityEventType.password_failure);
+    }
+
+    log.debug("Password authentication succeeded for user: {}", verifiedUser.sub());
+
+    Map<String, Object> responseContents = new HashMap<>(contents);
+    responseContents.put("user", verifiedUser.toMap());
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
         operationType(),
         method(),
-        user,
-        response,
+        verifiedUser,
+        responseContents,
         DefaultSecurityEventType.password_success);
+  }
+
+  private AuthenticationConfiguration getConfig(Tenant tenant) {
+
+    AuthenticationConfiguration configuration =
+        configurationQueryRepository.find(tenant, "password");
+
+    if (configuration.exists()) {
+      log.info("Using configuration-based password authentication");
+      return configuration;
+    }
+
+    log.info("Using default config password authentication");
+    return createDefaultConfiguration();
+  }
+
+  private AuthenticationConfiguration createDefaultConfiguration() {
+    String config =
+        """
+              {
+                "id": "",
+                "type": "password",
+                "attributes": {
+                  "description": "default password configuration"
+                },
+                "metadata": {},
+                "interactions": {
+                  "password-authentication": {
+                    "execution": {
+                      "function": "password_verification"
+                    },
+                    "user_resolve": {},
+                    "response": {
+                      "body_mapping_rules": []
+                    }
+                  }
+                }
+              }
+              """;
+
+    return jsonConverter.read(config, AuthenticationConfiguration.class);
+  }
+
+  /**
+   * Resolve user for password authentication (1st or 2nd factor).
+   *
+   * <p><b>Issue #800 Fix:</b> Search database by input identifier FIRST.
+   *
+   * <p><b>Issue #897:</b> Uses preferred_username for user lookup.
+   *
+   * <p><b>Issue #898:</b> Support external authentication service with user mapping.
+   *
+   * <p><b>Resolution Logic:</b>
+   *
+   * <ol>
+   *   <li>2nd factor: Return authenticated user from transaction (no DB search)
+   *   <li>1st factor with userResolve config: Map external response to User, search by
+   *       externalUserId
+   *   <li>1st factor without userResolve: Search database by preferred_username (Issue #800 fix)
+   *   <li>Return User.notFound() if not found (password authentication does not create new users)
+   * </ol>
+   *
+   * @param tenant tenant
+   * @param transaction authentication transaction
+   * @param request authentication interaction request
+   * @param executionResult authentication execution result
+   * @param configuration authentication configuration (may not exist)
+   * @param userQueryRepository user query repository
+   * @return resolved user
+   */
+  private User resolveUser(
+      Tenant tenant,
+      AuthenticationTransaction transaction,
+      AuthenticationInteractionRequest request,
+      AuthenticationExecutionResult executionResult,
+      AuthenticationConfiguration configuration,
+      UserQueryRepository userQueryRepository) {
+
+    String username = request.optValueAsString("username", "");
+    String providerId = request.optValueAsString("provider_id", "idp-server");
+
+    AuthenticationStepDefinition stepDefinition = transaction.getCurrentStepDefinition(method());
+
+    // SECURITY: 2nd factor requires authenticated user (prevent authentication bypass)
+    if (stepDefinition != null && stepDefinition.requiresUser()) {
+      if (!transaction.hasUser()) {
+        log.warn(
+            "2nd factor requires authenticated user but transaction has no user. method={}, username={}",
+            method(),
+            username);
+        return User.notFound();
+      }
+
+      log.debug(
+          "2nd factor: returning authenticated user. method={}, sub={}",
+          method(),
+          transaction.user().sub());
+      return transaction.user();
+    }
+
+    // === 1st factor user identification ===
+
+    // External authentication with userResolve mapping
+    if (configuration.exists() && executionResult.isSuccess()) {
+      AuthenticationInteractionConfig interactionConfig =
+          configuration.getAuthenticationConfig("password-authentication");
+
+      if (!interactionConfig.userResolve().userMappingRules().isEmpty()) {
+        return resolveUserFromExternalAuth(
+            tenant,
+            providerId,
+            request,
+            executionResult,
+            interactionConfig.userResolve().userMappingRules(),
+            userQueryRepository);
+      }
+    }
+
+    // Database search (Issue #800 fix, Issue #897: use preferred_username)
+    User existingUser = userQueryRepository.findByPreferredUsername(tenant, providerId, username);
+    if (existingUser.exists()) {
+      log.debug("User found in database. username={}, sub={}", username, existingUser.sub());
+      return existingUser;
+    }
+
+    log.warn("User not found in database. username={}", username);
+    return User.notFound();
+  }
+
+  /**
+   * Resolve user from external authentication service response.
+   *
+   * <p>This method follows the same pattern as ExternalTokenAuthenticationInteractor:
+   *
+   * <ol>
+   *   <li>Map external response to User object using userMappingRules
+   *   <li>Search existing user by provider + externalUserId
+   *   <li>If found: reuse sub and status
+   *   <li>If not found: assign new sub (UUID)
+   * </ol>
+   *
+   * @param tenant tenant
+   * @param providerId provider ID
+   * @param request authentication interaction request
+   * @param executionResult authentication execution result
+   * @param userMappingRules user mapping rules from configuration
+   * @param userQueryRepository user query repository
+   * @return resolved user
+   * @see
+   *     org.idp.server.authentication.interactors.external_token.ExternalTokenAuthenticationInteractor#interact
+   */
+  private User resolveUserFromExternalAuth(
+      Tenant tenant,
+      String providerId,
+      AuthenticationInteractionRequest request,
+      AuthenticationExecutionResult executionResult,
+      List<MappingRule> userMappingRules,
+      UserQueryRepository userQueryRepository) {
+
+    // Prepare mapping source (same as ExternalTokenAuthenticationInteractor)
+    Map<String, Object> mappingSource = new HashMap<>();
+    mappingSource.put("request_body", request.toMap());
+    mappingSource.putAll(executionResult.contents());
+
+    // Map to User object
+    User user = toUser(userMappingRules, mappingSource);
+
+    // Search existing user by provider + externalUserId
+    User existingUser =
+        userQueryRepository.findByProvider(tenant, user.providerId(), user.externalUserId());
+
+    if (existingUser.exists()) {
+      log.debug(
+          "Existing user found by externalUserId. providerId={}, externalUserId={}, sub={}",
+          user.providerId(),
+          user.externalUserId(),
+          existingUser.sub());
+      user.setSub(existingUser.sub());
+      user.setStatus(existingUser.status());
+    } else {
+      log.debug(
+          "New user from external auth. providerId={}, externalUserId={}",
+          user.providerId(),
+          user.externalUserId());
+      user.setSub(UUID.randomUUID().toString());
+    }
+
+    return user;
+  }
+
+  /**
+   * Convert execution result to User object using mapping rules.
+   *
+   * <p>This method maps external authentication service response to User object following the same
+   * pattern as ExternalTokenAuthenticationInteractor.
+   *
+   * @param mappingRules user mapping rules from configuration
+   * @param results combined request and execution results
+   * @return mapped User object
+   */
+  private User toUser(List<MappingRule> mappingRules, Map<String, Object> results) {
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(results);
+    JsonPathWrapper jsonPath = new JsonPathWrapper(jsonNodeWrapper.toJson());
+    Map<String, Object> executed = MappingRuleObjectMapper.execute(mappingRules, jsonPath);
+
+    return jsonConverter.read(executed, User.class);
   }
 }

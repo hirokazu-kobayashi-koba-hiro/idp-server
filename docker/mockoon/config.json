@@ -133,6 +133,42 @@
       "streamingInterval": 0
     },
     {
+      "uuid": "a1b2c3d4-5678-90ab-cdef-password-auth",
+      "type": "http",
+      "documentation": "External password authentication service for Issue #898",
+      "method": "post",
+      "endpoint": "auth/password",
+      "responses": [
+        {
+          "uuid": "response-password-auth-success",
+          "body": "{\n  \"user_id\": \"{{ body 'username' }}\",\n  \"email\": \"{{ body 'username' }}\",\n  \"name\": \"Test User\",\n  \"authenticated\": true\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "Success",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
       "uuid": "7cd7a5c2-403d-4381-88cf-552b0206a1d7",
       "type": "http",
       "documentation": "",

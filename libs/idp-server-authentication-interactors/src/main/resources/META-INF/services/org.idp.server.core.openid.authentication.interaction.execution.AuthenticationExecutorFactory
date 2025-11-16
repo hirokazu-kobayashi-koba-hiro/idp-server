@@ -4,3 +4,4 @@ org.idp.server.authentication.interactors.sms.executor.SmsChallengeAuthenticatio
 org.idp.server.authentication.interactors.sms.executor.SmsAuthenticationExecutorFactory
 org.idp.server.authentication.interactors.email.executor.EmailChallengeAuthenticationExecutorFactory
 org.idp.server.authentication.interactors.email.executor.EmailAuthenticationExecutorFactory
+org.idp.server.authentication.interactors.password.executor.PasswordAuthenticationExecutorFactory

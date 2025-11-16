@@ -368,7 +368,83 @@
 
 | フィールド | デフォルト値 | 説明 |
 |-----------|------------|------|
-| `id_token_strict_mode` | `false` | IDトークン厳密モード（FAPI準拠時は`true`） |
+| `id_token_strict_mode` | `false` | IDトークン厳密モード（OIDC仕様準拠、詳細は下記参照） |
+
+##### id_token_strict_mode - IDトークンクレーム制御
+
+**目的**: IDトークンに含めるクレームの判定ロジックをOIDC仕様に厳密準拠させます。
+
+**デフォルト値**: `false`
+
+**動作の違い**:
+
+| モード | `scope=profile`のみ指定 | `claims`パラメータで明示的要求 | 用途 |
+|--------|----------------------|----------------------------|------|
+| `false`（デフォルト） | `name`, `given_name`等を**全て含める** | 明示的に要求されたクレームのみ | 後方互換性・利便性優先 |
+| `true`（厳密モード） | クレームを**含めない** | 明示的に要求されたクレームのみ | OIDC仕様準拠・FAPI準拠 |
+
+**OIDC仕様の解釈**:
+- [OpenID Connect Core 1.0 Section 5.4](https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims): "`profile` scopeは**UserInfoエンドポイントで**クレームへのアクセスを要求する"
+- IDトークンへの包含は、`claims`パラメータでの明示的要求が推奨される
+
+**実装における挙動**:
+
+```java
+// GrantIdTokenClaims.java:218-221
+if (idTokenStrictMode) {
+  return idTokenClaims.hasName();  // claimsパラメータでの明示的要求のみ
+}
+return scopes.contains("profile");  // scopeだけで含める（非厳密モード）
+```
+
+**使用例**:
+
+**非厳密モード（`id_token_strict_mode: false`、デフォルト）**:
+```http
+GET /authorize?scope=openid profile&...
+```
+→ IDトークンに `name`, `given_name`, `family_name` 等が含まれる
+
+**厳密モード（`id_token_strict_mode: true`）**:
+```http
+GET /authorize?scope=openid profile&claims={"id_token":{"name":null}}&...
+```
+→ `name`のみIDトークンに含まれる（`claims`で明示的要求）
+
+**推奨設定**:
+- **一般的なアプリケーション**: `false`（利便性優先）
+- **金融グレード（FAPI）**: `true`（仕様準拠・最小限のデータ公開）
+- **OIDC4IDA**: `true`（検証済みクレームの厳密制御）
+
+**判断基準**:
+
+| 設定値 | 選択条件 | 理由 |
+|-------|---------|------|
+| **`true`** | FAPI/OIDC仕様への厳密準拠が必要 | FAPI、OIDC4IDAではIDトークンのクレームを明示的に要求することが求められる |
+| **`true`** | クライアントが`claims`パラメータに対応済み | OIDC仕様に準拠した実装が可能 |
+| **`false`** | クライアントが`claims`パラメータに対応困難 | レガシーシステム、既存実装の改修コストが高い |
+| **`false`** | 開発・テスト環境での利便性を優先 | クレーム取得を簡素化して開発効率を向上 |
+
+**移行戦略**:
+
+新規プロジェクトの場合:
+1. **最初から`true`で設計**: 将来的な規制対応を見据える
+2. クライアント実装時に`claims`パラメータを考慮
+
+既存プロジェクトの場合:
+1. **段階的移行**:
+   - Phase 1: `false`のまま、クライアントに`claims`パラメータ実装
+   - Phase 2: 検証環境で`true`に変更してテスト
+   - Phase 3: 本番環境で`true`に変更
+2. **互換性確認**: UserInfoエンドポイントで同じクレームが取得できることを確認
+
+**関連設定**:
+- `custom_claims_scope_mapping`: カスタムクレームの`claims:`スコープマッピング
+- `claims_supported`: サポートするクレームの宣言（Discovery）
+
+**実装リファレンス**:
+- [GrantIdTokenClaims.java:218-221](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/grant_management/grant/GrantIdTokenClaims.java#L218-L221)
+- [AuthorizationServerExtensionConfiguration.java:40](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/configuration/AuthorizationServerExtensionConfiguration.java#L40)
 
 #### FAPI設定
 
@@ -410,6 +486,94 @@
 | `domain:action` | `api:read`, `notifications:push` | 機能別アクセス制御 |
 | `claims:field` | `claims:vip_status` | カスタムクレームアクセス |
 | 単独名 | `offline_access` | 標準的な追加スコープ |
+
+---
+
+### Claims（クレーム）設定
+
+OpenID Connectでは、**クレーム（claim）**とはユーザーに関する情報項目（名前、メール、電話番号等）を指します。
+
+#### claims_supported - サポートするクレームの宣言
+
+**目的**: 認可サーバーが返却可能なクレーム（ユーザー情報項目）を宣言します。
+
+**OpenID Connect Discovery仕様**: [OpenID Connect Discovery 1.0 Section 3](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata)
+
+**設定例**:
+```json
+{
+  "claims_supported": [
+    "sub",
+    "name",
+    "email",
+    "email_verified",
+    "preferred_username",
+    "given_name",
+    "family_name",
+    "picture",
+    "phone_number",
+    "phone_number_verified"
+  ]
+}
+```
+
+**標準クレーム（OIDC Core仕様）**:
+
+| クレーム | 説明 | 例 |
+|---------|------|---|
+| `sub` | Subject（ユーザー識別子） | `248289761001` |
+| `name` | フルネーム | `Jane Doe` |
+| `given_name` | 名 | `Jane` |
+| `family_name` | 姓 | `Doe` |
+| `email` | メールアドレス | `janedoe@example.com` |
+| `email_verified` | メール検証済みフラグ | `true` |
+| `preferred_username` | 優先ユーザー名 | `jane.doe` |
+| `phone_number` | 電話番号 | `+1 (555) 123-4567` |
+| `phone_number_verified` | 電話番号検証済みフラグ | `true` |
+| `picture` | プロフィール画像URL | `https://example.com/jane.jpg` |
+| `profile` | プロフィールページURL | `https://example.com/jane` |
+| `website` | ウェブサイトURL | `https://janedoe.com` |
+| `gender` | 性別 | `female` |
+| `birthdate` | 生年月日 | `1990-01-01` |
+| `zoneinfo` | タイムゾーン | `Asia/Tokyo` |
+| `locale` | ロケール | `ja-JP` |
+| `address` | 住所（JSON構造） | `{"formatted": "..."}` |
+
+**参照**: [OpenID Connect Core 1.0 Section 5.1 - Standard Claims](https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims)
+
+**実装における重要な注意点**:
+- `claims_supported`は**宣言のみ**であり、実際に返却されるかはUserInfoエンドポイントやIDトークンの実装に依存します
+- クライアントは`scope`や`claims`リクエストパラメータでクレームを要求します
+- 未実装のクレームを宣言すると、クライアントが誤動作する可能性があります
+
+#### claim_types_supported - クレームタイプの宣言
+
+**目的**: クレームの配布方式の種別を宣言します。
+
+**OpenID Connect Discovery仕様**: [OpenID Connect Discovery 1.0 Section 3](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata)
+
+**現在の実装状況**: **`normal`のみサポート**
+
+**設定例**:
+```json
+{
+  "claim_types_supported": ["normal"]
+}
+```
+
+**OIDC仕様で定義されているクレームタイプ**:
+
+| タイプ | 説明 | idp-server対応状況 |
+|-------|------|--------------------|
+| `normal` | クレームを直接UserInfo/IDトークンに含める | ✅ **サポート済み** |
+| `aggregated` | クレームを外部ソースから集約して返却 | ❌ 未サポート |
+| `distributed` | クレームを外部エンドポイントへのリファレンスとして返却 | ❌ 未サポート |
+
+**参照**: [OpenID Connect Core 1.0 Section 5.6 - Claim Types](https://openid.net/specs/openid-connect-core-1_0.html#ClaimTypes)
+
+**実装リファレンス**: [AuthorizationServerConfiguration.java:58](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/configuration/AuthorizationServerConfiguration.java#L58)
+
+**将来の拡張**: `aggregated`/`distributed`は高度なユースケース（複数IDプロバイダー統合、プライバシー保護）で有用ですが、現状では実装されていません。
 
 ---
 
@@ -981,6 +1145,8 @@ Access to XMLHttpRequest at 'https://idp.example.com/...' from origin 'https://a
 |-----------|------|
 | `userinfo_endpoint` | UserInfoエンドポイント（HTTPS URL） |
 | `registration_endpoint` | 動的クライアント登録エンドポイント |
+| `claims_supported` | サポートするクレーム（ユーザー情報項目）のリスト |
+| `claim_types_supported` | サポートするクレームタイプ（現状は`normal`のみ） |
 
 ##### オプショナルフィールド
 
