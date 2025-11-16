@@ -25,7 +25,6 @@ import org.idp.server.control_plane.management.identity.user.io.UserRegistration
 import org.idp.server.control_plane.management.identity.user.io.UserUpdateRequest;
 import org.idp.server.control_plane.management.identity.user.validator.UserUpdateRequestValidator;
 import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.identity.UserUpdater;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -135,8 +134,7 @@ public class UserPatchService implements UserManagementService<UserUpdateRequest
       newUser.applyIdentityPolicy(policy);
     }
 
-    UserUpdater updater = new UserUpdater(newUser, before);
-    User updated = updater.update();
+    User updated = before.updateWith(newUser);
 
     // Apply policy to merged user if still not set
     if (updated.preferredUsername() == null || updated.preferredUsername().isBlank()) {

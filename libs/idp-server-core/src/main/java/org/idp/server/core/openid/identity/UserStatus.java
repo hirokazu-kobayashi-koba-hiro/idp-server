@@ -61,4 +61,12 @@ public enum UserStatus {
   public boolean isUnregistered() {
     return this == UNREGISTERED;
   }
+
+  public boolean isActive() {
+    return this == INITIALIZED
+        || this == FEDERATED
+        || this == REGISTERED
+        || this == IDENTITY_VERIFIED
+        || this == IDENTITY_VERIFICATION_REQUIRED;
+  }
 }

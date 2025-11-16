@@ -72,6 +72,85 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
   HashMap<String, Object> verifiedClaims = new HashMap<>();
   UserStatus status = UserStatus.INITIALIZED;
 
+  public User() {}
+
+  public User(
+      String sub,
+      String providerId,
+      String externalUserId,
+      HashMap<String, Object> externalProviderOriginalPayload,
+      String name,
+      String givenName,
+      String familyName,
+      String middleName,
+      String nickname,
+      String preferredUsername,
+      String profile,
+      String picture,
+      String website,
+      String email,
+      Boolean emailVerified,
+      String gender,
+      String birthdate,
+      String zoneinfo,
+      String locale,
+      String phoneNumber,
+      Boolean phoneNumberVerified,
+      Address address,
+      LocalDateTime createdAt,
+      LocalDateTime updatedAt,
+      String hashedPassword,
+      String rawPassword,
+      List<AuthenticationDevice> authenticationDevices,
+      HashMap<String, Object> customProperties,
+      List<HashMap<String, Object>> credentials,
+      List<UserRole> roles,
+      List<String> permissions,
+      String currentTenant,
+      List<String> assignedTenants,
+      String currentOrganizationId,
+      List<String> assignedOrganizations,
+      HashMap<String, Object> verifiedClaims,
+      UserStatus status) {
+    this.sub = sub;
+    this.providerId = providerId;
+    this.externalUserId = externalUserId;
+    this.externalProviderOriginalPayload = externalProviderOriginalPayload;
+    this.name = name;
+    this.givenName = givenName;
+    this.familyName = familyName;
+    this.middleName = middleName;
+    this.nickname = nickname;
+    this.preferredUsername = preferredUsername;
+    this.profile = profile;
+    this.picture = picture;
+    this.website = website;
+    this.email = email;
+    this.emailVerified = emailVerified;
+    this.gender = gender;
+    this.birthdate = birthdate;
+    this.zoneinfo = zoneinfo;
+    this.locale = locale;
+    this.phoneNumber = phoneNumber;
+    this.phoneNumberVerified = phoneNumberVerified;
+    this.address = address;
+    this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
+    this.hashedPassword = hashedPassword;
+    this.rawPassword = rawPassword;
+    this.authenticationDevices = authenticationDevices;
+    this.customProperties = customProperties;
+    this.credentials = credentials;
+    this.roles = roles;
+    this.permissions = permissions;
+    this.currentTenant = currentTenant;
+    this.assignedTenants = assignedTenants;
+    this.currentOrganizationId = currentOrganizationId;
+    this.assignedOrganizations = assignedOrganizations;
+    this.verifiedClaims = verifiedClaims;
+    this.status = status;
+  }
+
   public static User notFound() {
     return new User();
   }
@@ -856,7 +935,58 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     return status.isIdentityVerified();
   }
 
+  public boolean isActive() {
+    return status.isActive();
+  }
+
   public boolean enabledFidoUaf() {
     return authenticationDevices.stream().anyMatch(AuthenticationDevice::enabledFidoUaf);
+  }
+
+  public User updateWith(User patchUser) {
+    return new User(
+        this.sub, // sub is immutable
+        this.providerId, // providerId is immutable
+        this.externalUserId, // externalUserId is immutable
+        patchUser.hasExternalProviderOriginalPayload()
+            ? patchUser.externalProviderOriginalPayload()
+            : this.externalProviderOriginalPayload,
+        patchUser.hasName() ? patchUser.name() : this.name,
+        patchUser.hasGivenName() ? patchUser.givenName() : this.givenName,
+        patchUser.hasFamilyName() ? patchUser.familyName() : this.familyName,
+        patchUser.hasMiddleName() ? patchUser.middleName() : this.middleName,
+        patchUser.hasNickname() ? patchUser.nickname() : this.nickname,
+        patchUser.hasPreferredUsername() ? patchUser.preferredUsername() : this.preferredUsername,
+        patchUser.hasProfile() ? patchUser.profile() : this.profile,
+        patchUser.hasPicture() ? patchUser.picture() : this.picture,
+        patchUser.hasWebsite() ? patchUser.website() : this.website,
+        patchUser.hasEmail() ? patchUser.email() : this.email,
+        patchUser.hasEmailVerified() ? patchUser.emailVerified : this.emailVerified,
+        patchUser.hasGender() ? patchUser.gender() : this.gender,
+        patchUser.hasBirthdate() ? patchUser.birthdate() : this.birthdate,
+        patchUser.hasZoneinfo() ? patchUser.zoneinfo() : this.zoneinfo,
+        patchUser.hasLocale() ? patchUser.locale() : this.locale,
+        patchUser.hasPhoneNumber() ? patchUser.phoneNumber() : this.phoneNumber,
+        patchUser.hasPhoneNumberVerified()
+            ? patchUser.phoneNumberVerified
+            : this.phoneNumberVerified,
+        patchUser.hasAddress() ? patchUser.address() : this.address,
+        this.createdAt, // createdAt is immutable
+        patchUser.hasUpdatedAt() ? patchUser.updatedAt() : this.updatedAt,
+        this.hashedPassword, // hashedPassword should not be updated via patch
+        this.rawPassword, // rawPassword should not be updated via patch
+        patchUser.hasAuthenticationDevices()
+            ? patchUser.authenticationDevicesAsList()
+            : this.authenticationDevices,
+        patchUser.hasCustomProperties() ? patchUser.customPropertiesValue() : this.customProperties,
+        this.credentials, // credentials are not patchable via this method
+        patchUser.hasRoles() ? patchUser.roles() : this.roles,
+        this.permissions, // permissions are derived from roles
+        this.currentTenant, // currentTenant should not be updated via patch
+        patchUser.hasAssignedTenants() ? patchUser.assignedTenants() : this.assignedTenants,
+        this.currentOrganizationId, // currentOrganizationId should not be updated via patch
+        this.assignedOrganizations, // assignedOrganizations should not be updated via patch
+        this.verifiedClaims, // verifiedClaims should not be updated via patch
+        patchUser.hasStatus() ? patchUser.status() : this.status);
   }
 }
