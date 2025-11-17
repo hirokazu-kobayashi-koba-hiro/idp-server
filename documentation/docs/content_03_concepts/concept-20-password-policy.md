@@ -46,7 +46,7 @@
 | `require_uppercase` | boolean | false | 大文字（A-Z）を含む必要があるか |
 | `require_lowercase` | boolean | false | 小文字（a-z）を含む必要があるか |
 | `require_number` | boolean | false | 数字（0-9）を含む必要があるか |
-| `require_special_char` | boolean | false | 記号（!@#$%^&*(),.?\":{}|<>）を含む必要があるか |
+| `require_special_char` | boolean | false | 記号（`!@#$%^&*(),.?\":{}|&lt;&gt;`）を含む必要があるか |
 | `custom_regex` | string | null | カスタム正規表現パターン（高度な検証） |
 | `custom_regex_error_message` | string | null | カスタム正規表現エラー時のメッセージ |
 
