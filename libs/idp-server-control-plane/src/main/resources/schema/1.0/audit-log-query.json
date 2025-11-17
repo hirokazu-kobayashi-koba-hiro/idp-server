@@ -3,6 +3,7 @@
   "properties": {
     "type": {
       "type": "string",
+      "minLength": 1,
       "description": "Audit log type filter (comma-separated for multiple types)"
     },
     "from": {
@@ -22,6 +23,7 @@
     },
     "target_tenant_id": {
       "type": "string",
+      "minLength": 1,
       "description": "Target tenant identifier filter"
     },
     "dry_run": {
@@ -31,15 +33,18 @@
     },
     "client_id": {
       "type": "string",
+      "minLength": 1,
       "description": "Client identifier filter"
     },
     "user_id": {
       "type": "string",
       "format": "uuid",
+      "minLength": 1,
       "description": "User identifier filter"
     },
     "external_user_id": {
       "type": "string",
+      "minLength": 1,
       "description": "External user identifier filter"
     },
     "limit": {

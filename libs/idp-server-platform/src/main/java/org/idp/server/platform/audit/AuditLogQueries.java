@@ -72,7 +72,8 @@ public class AuditLogQueries implements UuidConvertable {
   }
 
   public boolean hasType() {
-    return values.containsKey("type");
+    String value = values.get("type");
+    return value != null && !value.isEmpty();
   }
 
   public String type() {
@@ -88,7 +89,8 @@ public class AuditLogQueries implements UuidConvertable {
   }
 
   public boolean hasDescription() {
-    return values.containsKey("description");
+    String value = values.get("description");
+    return value != null && !value.isEmpty();
   }
 
   public String description() {
@@ -96,7 +98,8 @@ public class AuditLogQueries implements UuidConvertable {
   }
 
   public boolean hasTargetResource() {
-    return values.containsKey("target_resource");
+    String value = values.get("target_resource");
+    return value != null && !value.isEmpty();
   }
 
   public String targetResource() {
@@ -104,7 +107,8 @@ public class AuditLogQueries implements UuidConvertable {
   }
 
   public boolean hasTargetAction() {
-    return values.containsKey("target_resource_action");
+    String value = values.get("target_resource_action");
+    return value != null && !value.isEmpty();
   }
 
   public String targetAction() {
@@ -112,7 +116,8 @@ public class AuditLogQueries implements UuidConvertable {
   }
 
   public boolean hasClientId() {
-    return values.containsKey("client_id");
+    String value = values.get("client_id");
+    return value != null && !value.isEmpty();
   }
 
   public String clientId() {
@@ -128,7 +133,8 @@ public class AuditLogQueries implements UuidConvertable {
   }
 
   public boolean hasUserId() {
-    return values.containsKey("user_id");
+    String value = values.get("user_id");
+    return value != null && !value.isEmpty();
   }
 
   public String externalUserId() {
@@ -136,11 +142,13 @@ public class AuditLogQueries implements UuidConvertable {
   }
 
   public boolean hasExternalUserId() {
-    return values.containsKey("external_user_id");
+    String value = values.get("external_user_id");
+    return value != null && !value.isEmpty();
   }
 
   public boolean hasOutcomeResult() {
-    return values.containsKey("outcome_result");
+    String value = values.get("outcome_result");
+    return value != null && !value.isEmpty();
   }
 
   public String outcomeResult() {
@@ -148,7 +156,8 @@ public class AuditLogQueries implements UuidConvertable {
   }
 
   public boolean hasTargetTenantId() {
-    return values.containsKey("target_tenant_id");
+    String value = values.get("target_tenant_id");
+    return value != null && !value.isEmpty();
   }
 
   public String targetTenantId() {

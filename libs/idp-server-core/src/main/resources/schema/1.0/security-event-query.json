@@ -3,6 +3,7 @@
   "properties": {
     "event_type": {
       "type": "string",
+      "minLength": 1,
       "description": "Security event type filter"
     },
     "from": {
@@ -17,15 +18,18 @@
     },
     "client_id": {
       "type": "string",
+      "minLength": 1,
       "description": "Client identifier filter"
     },
     "user_id": {
       "type": "string",
       "format": "uuid",
+      "minLength": 1,
       "description": "User identifier filter"
     },
     "external_user_id": {
       "type": "string",
+      "minLength": 1,
       "description": "External user identifier filter"
     },
     "limit": {
