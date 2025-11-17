@@ -18,7 +18,6 @@ package org.idp.server.authentication.interactors.email;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 import org.idp.server.core.openid.authentication.*;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
 import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
@@ -279,8 +278,6 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
     // 4. Create new user
     log.debug("Creating new user. email={}, allowRegistration=true", email);
     User user = User.initialized();
-    String id = UUID.randomUUID().toString();
-    user.setSub(id);
     user.setEmail(email);
 
     return user;

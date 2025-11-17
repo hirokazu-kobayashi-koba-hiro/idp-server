@@ -16,7 +16,6 @@
 
 package org.idp.server.core.openid.identity;
 
-import java.util.UUID;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.platform.json.schema.JsonSchemaDefinition;
@@ -38,8 +37,6 @@ public class IdPUserCreator {
 
   public User create() {
     User user = User.initialized();
-    String id = UUID.randomUUID().toString();
-    user.setSub(id);
     if (definition.hasProperty("name") && request.containsKey("name")) {
       user.setName(request.getValueAsString("name"));
     }

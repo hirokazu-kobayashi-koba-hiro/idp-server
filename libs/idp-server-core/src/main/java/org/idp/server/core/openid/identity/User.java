@@ -19,6 +19,7 @@ package org.idp.server.core.openid.identity;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.idp.server.core.openid.identity.address.Address;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
@@ -151,11 +152,7 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     this.status = status;
   }
 
-  public static User notFound() {
-    return new User();
-  }
-
-  public static User initialized() {
+  private static User base() {
     User user = new User();
     user.providerId = "idp-server";
     user.status = UserStatus.INITIALIZED;
@@ -168,6 +165,16 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     user.assignedTenants = new ArrayList<>();
     user.assignedOrganizations = new ArrayList<>();
     user.verifiedClaims = new HashMap<>();
+    return user;
+  }
+
+  public static User notFound() {
+    return User.base();
+  }
+
+  public static User initialized() {
+    User user = User.base();
+    user.sub = UUID.randomUUID().toString();
     return user;
   }
 

@@ -18,7 +18,6 @@ package org.idp.server.authentication.interactors.sms;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 import org.idp.server.core.openid.authentication.*;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
 import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
@@ -280,8 +279,6 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
     // 4. Create new user
     log.debug("Creating new user. phoneNumber={}, allowRegistration=true", phoneNumber);
     User user = User.initialized();
-    String id = UUID.randomUUID().toString();
-    user.setSub(id);
     user.setPhoneNumber(phoneNumber);
 
     return user;
