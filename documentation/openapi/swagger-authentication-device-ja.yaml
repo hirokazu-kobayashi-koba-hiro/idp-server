@@ -484,7 +484,7 @@ components:
 
     NotFound:
       description: |
-        認証セッションが存在しない、または有効期限切れ
+        認証トランザクションが存在しない、または有効期限切れ
       content:
         application/json:
           schema:
@@ -492,10 +492,10 @@ components:
             properties:
               error:
                 type: string
-                example: "not_found"
+                example: "invalid_request"
               error_description:
                 type: string
-                example: "authentication session not found or expired"
+                example: "Authentication transaction not found for identifier: {id}"
 
     InternalServerError:
       description: |
