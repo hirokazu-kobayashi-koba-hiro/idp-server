@@ -17,12 +17,13 @@
 package org.idp.server.platform.audit;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import org.idp.server.platform.date.LocalDateTimeParser;
-import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.uuid.UuidConvertable;
 
 public class AuditLogQueries implements UuidConvertable {
@@ -34,16 +35,26 @@ public class AuditLogQueries implements UuidConvertable {
     this.values = Objects.requireNonNullElseGet(values, HashMap::new);
   }
 
+  public boolean hasFrom() {
+    return values.containsKey("from");
+  }
+
   public LocalDateTime from() {
     if (!values.containsKey("from")) {
-      return SystemDateTime.now().minusDays(7);
+      throw new IllegalStateException(
+          "from is not specified. Check hasFrom() before calling this method.");
     }
     return LocalDateTimeParser.parse(values.get("from"));
   }
 
+  public boolean hasTo() {
+    return values.containsKey("to");
+  }
+
   public LocalDateTime to() {
     if (!values.containsKey("to")) {
-      return SystemDateTime.now().plusDays(1);
+      throw new IllegalStateException(
+          "to is not specified. Check hasTo() before calling this method.");
     }
     return LocalDateTimeParser.parse(values.get("to"));
   }
@@ -66,6 +77,14 @@ public class AuditLogQueries implements UuidConvertable {
 
   public String type() {
     return values.get("type");
+  }
+
+  public List<String> types() {
+    String value = values.get("type");
+    if (value == null || value.isEmpty()) {
+      return List.of();
+    }
+    return Arrays.asList(value.split(","));
   }
 
   public boolean hasDescription() {
@@ -118,6 +137,30 @@ public class AuditLogQueries implements UuidConvertable {
 
   public boolean hasExternalUserId() {
     return values.containsKey("external_user_id");
+  }
+
+  public boolean hasOutcomeResult() {
+    return values.containsKey("outcome_result");
+  }
+
+  public String outcomeResult() {
+    return values.get("outcome_result");
+  }
+
+  public boolean hasTargetTenantId() {
+    return values.containsKey("target_tenant_id");
+  }
+
+  public String targetTenantId() {
+    return values.get("target_tenant_id");
+  }
+
+  public boolean hasDryRun() {
+    return values.containsKey("dry_run");
+  }
+
+  public boolean dryRun() {
+    return Boolean.parseBoolean(values.get("dry_run"));
   }
 
   public boolean hasAttributes() {

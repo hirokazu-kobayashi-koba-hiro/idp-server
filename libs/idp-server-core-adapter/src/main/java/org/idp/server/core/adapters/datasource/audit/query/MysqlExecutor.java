@@ -17,6 +17,7 @@
 package org.idp.server.core.adapters.datasource.audit.query;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.audit.AuditLogIdentifier;
@@ -35,9 +36,18 @@ public class MysqlExecutor implements AuditLogSqlExecutor {
     StringBuilder sql = new StringBuilder(selectSql).append(" WHERE tenant_id = ?");
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
-    sql.append(" AND created_at BETWEEN ? AND ?");
-    params.add(queries.from());
-    params.add(queries.to());
+
+    if (queries.hasFrom() && queries.hasTo()) {
+      sql.append(" AND created_at BETWEEN ? AND ?");
+      params.add(queries.from());
+      params.add(queries.to());
+    } else if (queries.hasFrom()) {
+      sql.append(" AND created_at >= ?");
+      params.add(queries.from());
+    } else if (queries.hasTo()) {
+      sql.append(" AND created_at <= ?");
+      params.add(queries.to());
+    }
 
     if (queries.hasId()) {
       sql.append(" AND id = ?");
@@ -45,8 +55,16 @@ public class MysqlExecutor implements AuditLogSqlExecutor {
     }
 
     if (queries.hasType()) {
-      sql.append(" AND type = ?");
-      params.add(queries.type());
+      List<String> types = queries.types();
+      if (types.size() == 1) {
+        sql.append(" AND type = ?");
+        params.add(types.get(0));
+      } else {
+        sql.append(" AND type IN (");
+        sql.append(String.join(",", Collections.nCopies(types.size(), "?")));
+        sql.append(")");
+        params.addAll(types);
+      }
     }
 
     if (queries.hasDescription()) {
@@ -62,6 +80,21 @@ public class MysqlExecutor implements AuditLogSqlExecutor {
     if (queries.hasTargetAction()) {
       sql.append(" AND target_resource_action = ?");
       params.add(queries.targetAction());
+    }
+
+    if (queries.hasOutcomeResult()) {
+      sql.append(" AND outcome_result = ?");
+      params.add(queries.outcomeResult());
+    }
+
+    if (queries.hasTargetTenantId()) {
+      sql.append(" AND target_tenant_id = ?");
+      params.add(queries.targetTenantId());
+    }
+
+    if (queries.hasDryRun()) {
+      sql.append(" AND dry_run = ?");
+      params.add(queries.dryRun());
     }
 
     if (queries.hasClientId()) {
@@ -99,9 +132,18 @@ public class MysqlExecutor implements AuditLogSqlExecutor {
     StringBuilder sql = new StringBuilder(selectSql).append(" WHERE tenant_id = ?");
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
-    sql.append(" AND created_at BETWEEN ? AND ?");
-    params.add(queries.from());
-    params.add(queries.to());
+
+    if (queries.hasFrom() && queries.hasTo()) {
+      sql.append(" AND created_at BETWEEN ? AND ?");
+      params.add(queries.from());
+      params.add(queries.to());
+    } else if (queries.hasFrom()) {
+      sql.append(" AND created_at >= ?");
+      params.add(queries.from());
+    } else if (queries.hasTo()) {
+      sql.append(" AND created_at <= ?");
+      params.add(queries.to());
+    }
 
     if (queries.hasId()) {
       sql.append(" AND id = ?");
@@ -109,8 +151,16 @@ public class MysqlExecutor implements AuditLogSqlExecutor {
     }
 
     if (queries.hasType()) {
-      sql.append(" AND type = ?");
-      params.add(queries.type());
+      List<String> types = queries.types();
+      if (types.size() == 1) {
+        sql.append(" AND type = ?");
+        params.add(types.get(0));
+      } else {
+        sql.append(" AND type IN (");
+        sql.append(String.join(",", Collections.nCopies(types.size(), "?")));
+        sql.append(")");
+        params.addAll(types);
+      }
     }
 
     if (queries.hasDescription()) {
@@ -126,6 +176,21 @@ public class MysqlExecutor implements AuditLogSqlExecutor {
     if (queries.hasTargetAction()) {
       sql.append(" AND target_resource_action = ?");
       params.add(queries.targetAction());
+    }
+
+    if (queries.hasOutcomeResult()) {
+      sql.append(" AND outcome_result = ?");
+      params.add(queries.outcomeResult());
+    }
+
+    if (queries.hasTargetTenantId()) {
+      sql.append(" AND target_tenant_id = ?");
+      params.add(queries.targetTenantId());
+    }
+
+    if (queries.hasDryRun()) {
+      sql.append(" AND dry_run = ?");
+      params.add(queries.dryRun());
     }
 
     if (queries.hasClientId()) {
