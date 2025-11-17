@@ -319,7 +319,7 @@ describe("Standard Use Case: Onboarding Flow with Audit Log Tracking", () => {
         Authorization: `Bearer ${orgAccessToken}`,
       },
     });
-    expect(limitZeroResponse.status).toBe(200);
+    expect(limitZeroResponse.status).toBe(400);
 
     const limitMaxResponse = await get({
       url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/audit-logs?limit=1000`,

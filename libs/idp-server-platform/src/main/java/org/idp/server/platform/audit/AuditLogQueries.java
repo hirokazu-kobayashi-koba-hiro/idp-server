@@ -195,10 +195,12 @@ public class AuditLogQueries implements UuidConvertable {
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
-    map.put("limit", limit());
-    map.put("offset", offset());
     if (values != null) {
-      map.putAll(values);
+      for (Map.Entry<String, String> entry : values.entrySet()) {
+        String key = entry.getKey();
+        String value = entry.getValue();
+        map.put(key, value);
+      }
     }
     return map;
   }

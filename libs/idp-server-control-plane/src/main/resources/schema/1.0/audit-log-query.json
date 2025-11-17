@@ -1,14 +1,57 @@
 {
   "type": "object",
   "properties": {
+    "type": {
+      "type": "string",
+      "description": "Audit log type filter (comma-separated for multiple types)"
+    },
+    "from": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Start timestamp for filtering (ISO 8601 format)"
+    },
+    "to": {
+      "type": "string",
+      "format": "date-time",
+      "description": "End timestamp for filtering (ISO 8601 format)"
+    },
+    "outcome_result": {
+      "type": "string",
+      "enum": ["success", "failure"],
+      "description": "Operation result filter"
+    },
+    "target_tenant_id": {
+      "type": "string",
+      "description": "Target tenant identifier filter"
+    },
+    "dry_run": {
+      "type": "string",
+      "pattern": "^(true|false)$",
+      "description": "Dry run filter"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "Client identifier filter"
+    },
+    "user_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "User identifier filter"
+    },
+    "external_user_id": {
+      "type": "string",
+      "description": "External user identifier filter"
+    },
     "limit": {
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 1000
+      "type": "string",
+      "pattern": "^([1-9][0-9]{0,2}|1000)$",
+      "description": "Maximum number of logs to return (1-1000)"
     },
     "offset": {
-      "type": "integer",
-      "minimum": 0
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "description": "Number of logs to skip for pagination (>=0)"
     }
-  }
+  },
+  "additionalProperties": true
 }
