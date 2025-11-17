@@ -125,3 +125,63 @@ export const generateRS256KeyPair = async () => {
     jwks: JSON.stringify(jwks),
   };
 };
+
+/**
+ * Generate EC P-256 keypair and convert to JWK format
+ *
+ * @param {Object} options - Configuration options
+ * @param {string} options.kid - Key ID (default: "signing_key_1")
+ * @param {string} options.use - Key usage (default: "sig")
+ * @param {string} options.alg - Algorithm (default: "ES256")
+ * @returns {Promise<string>} JSON string of JWKS (for API request body)
+ *
+ * @example
+ * import { generateECP256JWKS } from "../lib/jose";
+ * const jwks = await generateECP256JWKS();
+ * // Returns: '{"keys":[{"kty":"EC","crv":"P-256",...}]}'
+ *
+ * const jwks = await generateECP256JWKS({ kid: "custom_key_id" });
+ */
+export const generateECP256JWKS = async (options = {}) => {
+  const crypto = await import("crypto");
+
+  const { kid = "signing_key_1", use = "sig", alg = "ES256" } = options;
+
+  // Generate EC P-256 keypair using jose library for proper JWK export
+  const { publicKey, privateKey } = await jose.generateKeyPair("ES256", {
+    extractable: true,
+  });
+
+  // Export as JWK
+  const privateJwk = await jose.exportJWK(privateKey);
+
+  // Add metadata
+  const jwk = {
+    ...privateJwk,
+    use,
+    kid,
+    alg,
+  };
+
+  const jwks = { keys: [jwk] };
+  return JSON.stringify(jwks);
+};
+
+/**
+ * Generate EC P-256 keypair and return as JWK object (not stringified)
+ *
+ * @param {Object} options - Configuration options
+ * @param {string} options.kid - Key ID (default: "signing_key_1")
+ * @param {string} options.use - Key usage (default: "sig")
+ * @param {string} options.alg - Algorithm (default: "ES256")
+ * @returns {Promise<Object>} JWKS object
+ *
+ * @example
+ * import { generateECP256JWKSObject } from "../lib/jose";
+ * const jwks = await generateECP256JWKSObject();
+ * // Returns: { keys: [{ kty: "EC", crv: "P-256", ... }] }
+ */
+export const generateECP256JWKSObject = async (options = {}) => {
+  const jwksString = await generateECP256JWKS(options);
+  return JSON.parse(jwksString);
+};
