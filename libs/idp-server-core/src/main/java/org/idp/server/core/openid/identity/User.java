@@ -36,9 +36,9 @@ import org.idp.server.platform.uuid.UuidConvertable;
 
 public class User implements JsonReadable, Serializable, UuidConvertable {
   String sub;
-  String providerId;
+  String providerId = "idp-server";
   String externalUserId;
-  HashMap<String, Object> externalProviderOriginalPayload;
+  HashMap<String, Object> externalProviderOriginalPayload = new HashMap<>();
   String name;
   String givenName;
   String familyName;
@@ -61,16 +61,16 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
   LocalDateTime updatedAt;
   String hashedPassword;
   String rawPassword;
-  List<AuthenticationDevice> authenticationDevices;
-  HashMap<String, Object> customProperties;
-  List<HashMap<String, Object>> credentials;
-  List<UserRole> roles;
-  List<String> permissions;
+  List<AuthenticationDevice> authenticationDevices = new ArrayList<>();
+  HashMap<String, Object> customProperties = new HashMap<>();
+  List<HashMap<String, Object>> credentials = new ArrayList<>();
+  List<UserRole> roles = new ArrayList<>();
+  List<String> permissions = new ArrayList<>();
   String currentTenant;
-  List<String> assignedTenants;
+  List<String> assignedTenants = new ArrayList<>();
   String currentOrganizationId;
-  List<String> assignedOrganizations;
-  HashMap<String, Object> verifiedClaims;
+  List<String> assignedOrganizations = new ArrayList<>();
+  HashMap<String, Object> verifiedClaims = new HashMap<>();
   UserStatus status;
 
   public User() {}
@@ -152,30 +152,12 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     this.status = status;
   }
 
-  private static User base() {
-    User user = new User();
-    user.providerId = "idp-server";
-    user.status = UserStatus.INITIALIZED;
-    user.externalProviderOriginalPayload = new HashMap<>();
-    user.authenticationDevices = new ArrayList<>();
-    user.customProperties = new HashMap<>();
-    user.credentials = new ArrayList<>();
-    user.roles = new ArrayList<>();
-    user.permissions = new ArrayList<>();
-    user.assignedTenants = new ArrayList<>();
-    user.assignedOrganizations = new ArrayList<>();
-    user.verifiedClaims = new HashMap<>();
-    return user;
-  }
-
   public static User notFound() {
-    return User.base();
+    return new User();
   }
 
   public static User initialized() {
-    User user = User.base();
-    user.sub = UUID.randomUUID().toString();
-    return user;
+    return new User().setSub(UUID.randomUUID().toString()).setStatus(UserStatus.INITIALIZED);
   }
 
   public boolean canTransit(UserStatus from, UserStatus to) {

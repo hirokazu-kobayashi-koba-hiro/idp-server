@@ -48,7 +48,10 @@ public interface SecurityEventUserCreatable {
     String zoneinfo = user.zoneinfo();
     String locale = user.locale();
 
-    List<String> roles = user.roles().stream().map(UserRole::roleName).collect(Collectors.toList());
+    List<String> roles =
+        user.hasRoles()
+            ? user.roles().stream().map(UserRole::roleName).collect(Collectors.toList())
+            : List.of();
     List<String> permissions = user.permissions();
     String currentTenant = user.currentTenant();
     List<String> assignedTenants = user.assignedTenants();
