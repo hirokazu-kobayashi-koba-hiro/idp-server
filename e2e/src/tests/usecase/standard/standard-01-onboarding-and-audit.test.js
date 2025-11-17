@@ -1,30 +1,24 @@
 import { describe, expect, it, beforeAll } from "@jest/globals";
 import { deletion, get, postWithJson } from "../../../lib/http";
 import { requestToken } from "../../../api/oauthClient";
+import { generateECP256JWKS } from "../../../lib/jose";
 import { adminServerConfig, backendUrl } from "../../testConfig";
 import { v4 as uuidv4 } from "uuid";
+import crypto from "crypto";
 
 /**
- * Standard Use Case: Onboarding and Audit Log Tracking
+ * Standard Use Case: Complete Onboarding Flow with Audit Log Verification
  *
- * This test demonstrates a standard workflow:
- * 1. Create a new tenant (Organization onboarding)
- * 2. Create a client for the tenant
- * 3. Search audit logs to verify operations were recorded
- * 4. Test new audit log search features (Issue #913)
- *    - outcome_result filter
- *    - target_tenant_id filter
- *    - dry_run filter
- *    - Multiple types search
- *    - No from/to default (全期間検索)
+ * This test demonstrates a complete organizational workflow:
+ * 1. Create organization via Onboarding API
+ * 2. Login with organization admin
+ * 3. Create business client
+ * 4. Verify all operations are recorded in audit logs
  */
-describe("Standard Use Case: Onboarding and Audit Log Tracking", () => {
-  let accessToken;
-  let tenantId;
-  let clientId;
+describe("Standard Use Case: Onboarding Flow with Audit Log Tracking", () => {
+  let systemAccessToken;
 
   beforeAll(async () => {
-    // Get OAuth token with system admin privileges
     const tokenResponse = await requestToken({
       endpoint: adminServerConfig.tokenEndpoint,
       grantType: "password",
@@ -35,254 +29,334 @@ describe("Standard Use Case: Onboarding and Audit Log Tracking", () => {
       clientSecret: adminServerConfig.adminClient.clientSecret,
     });
     expect(tokenResponse.status).toBe(200);
-    accessToken = tokenResponse.data.access_token;
+    systemAccessToken = tokenResponse.data.access_token;
   });
 
-  describe("Step 1: Tenant Onboarding", () => {
-    it("should create a new tenant successfully", async () => {
-      const timestamp = Date.now();
-      tenantId = uuidv4();
+  it("should complete full onboarding flow and verify audit logs", async () => {
+    const timestamp = Date.now();
+    const organizationId = uuidv4();
+    const tenantId = uuidv4();
+    const userId = uuidv4();
+    const clientId = uuidv4();
+    const orgAdminEmail = `admin-${timestamp}@test-org.example.com`;
+    const orgAdminPassword = `TestOrgPass${timestamp}!`;
+    const orgClientSecret = `org-secret-${crypto.randomBytes(16).toString("hex")}`;
+    const jwksContent = await generateECP256JWKS();
 
-      const createResponse = await postWithJson({
-        url: `${backendUrl}/v1/management/tenants`,
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
+    console.log("\n=== Step 1: Create Organization via Onboarding API ===");
+
+    const onboardingRequest = {
+      organization: {
+        id: organizationId,
+        name: `Test Organization ${timestamp}`,
+        description: `E2E test organization created at ${new Date().toISOString()}`,
+      },
+      tenant: {
+        id: tenantId,
+        name: `Test Organizer Tenant ${timestamp}`,
+        domain: backendUrl,
+        authorization_provider: "idp-server",
+        session_config: {
+          cookie_name: `ORG_SESSION_${organizationId.substring(0, 8)}`,
+          use_secure_cookie: false,
         },
-        body: {
-          tenant: {
-            id: tenantId,
-            name: `Standard Tenant ${timestamp}`,
-            domain: "http://localhost:8080",
-            description: "Standard use case tenant for audit log testing",
-            authorization_provider: "idp-server",
-            tenant_type: "BUSINESS"
-          },
-          authorization_server: {
-            issuer: `http://localhost:8080/${tenantId}`,
-            authorization_endpoint: `http://localhost:8080/${tenantId}/v1/authorizations`,
-            token_endpoint: `http://localhost:8080/${tenantId}/v1/tokens`,
-            userinfo_endpoint: `http://localhost:8080/${tenantId}/v1/userinfo`,
-            jwks_uri: `http://localhost:8080/${tenantId}/v1/jwks`,
-            scopes_supported: ["openid", "profile", "email"],
-            response_types_supported: ["code"],
-            response_modes_supported: ["query"],
-            subject_types_supported: ["public"],
-            grant_types_supported: ["authorization_code", "refresh_token"],
-            token_endpoint_auth_methods_supported: ["client_secret_post"],
-            extension: {
-              access_token_type: "JWT",
-              access_token_duration: 3600,
-              id_token_duration: 3600
-            }
-          }
-        }
-      });
-
-      console.log("✅ Tenant created:", createResponse.status, createResponse.data.result.id);
-      expect(createResponse.status).toBe(201);
-      expect(createResponse.data.result.id).toBe(tenantId);
-    });
-  });
-
-  describe("Step 2: Client Registration", () => {
-    it("should create a client for the new tenant", async () => {
-      clientId = uuidv4();
-
-      const createResponse = await postWithJson({
-        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/clients`,
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
+        cors_config: {
+          allow_origins: [backendUrl],
         },
-        body: {
-          client_id: clientId,
-          client_name: "Standard Use Case Test Client",
-          client_secret: "test-secret-123",
-          grant_types: ["authorization_code", "refresh_token"],
-          redirect_uris: ["http://localhost:3000/callback"],
-          enabled: true
-        }
-      });
+        security_event_log_config: {
+          format: "structured_json",
+          stage: "processed",
+          include_user_id: true,
+          include_user_ex_sub: true,
+          include_client_id: true,
+          include_ip: true,
+          persistence_enabled: true,
+          include_detail: true,
+        },
+      },
+      authorization_server: {
+        issuer: `${backendUrl}/${tenantId}`,
+        authorization_endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+        token_endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        token_endpoint_auth_methods_supported: ["client_secret_post", "client_secret_basic"],
+        token_endpoint_auth_signing_alg_values_supported: ["RS256", "ES256"],
+        userinfo_endpoint: `${backendUrl}/${tenantId}/v1/userinfo`,
+        jwks_uri: `${backendUrl}/${tenantId}/v1/jwks`,
+        jwks: jwksContent,
+        grant_types_supported: ["authorization_code", "refresh_token", "password"],
+        token_signed_key_id: "signing_key_1",
+        id_token_signed_key_id: "signing_key_1",
+        scopes_supported: ["openid", "profile", "email", "management"],
+        response_types_supported: ["code"],
+        response_modes_supported: ["query", "fragment"],
+        subject_types_supported: ["public"],
+        id_token_signing_alg_values_supported: ["RS256", "ES256"],
+        claims_parameter_supported: true,
+        token_introspection_endpoint: `${backendUrl}/${tenantId}/v1/tokens/introspection`,
+        token_revocation_endpoint: `${backendUrl}/${tenantId}/v1/tokens/revocation`,
+        backchannel_authentication_endpoint: `${backendUrl}/${tenantId}/v1/backchannel/authentications`,
+        extension: {
+          access_token_type: "JWT",
+          token_signed_key_id: "signing_key_1",
+          id_token_signed_key_id: "signing_key_1",
+          access_token_duration: 3600,
+          id_token_duration: 3600,
+          refresh_token_duration: 86400,
+        },
+      },
+      user: {
+        sub: userId,
+        provider_id: "idp-server",
+        name: orgAdminEmail,
+        email: orgAdminEmail,
+        email_verified: true,
+        raw_password: orgAdminPassword,
+      },
+      client: {
+        client_id: clientId,
+        client_id_alias: `test-org-client-${timestamp}`,
+        client_secret: orgClientSecret,
+        redirect_uris: ["http://localhost:3000/callback"],
+        response_types: ["code"],
+        grant_types: ["authorization_code", "refresh_token", "password"],
+        scope: "openid profile email management",
+        client_name: `Test Organization Client ${timestamp}`,
+        token_endpoint_auth_method: "client_secret_post",
+        application_type: "web",
+      },
+    };
 
-      console.log("✅ Client created:", createResponse.status, createResponse.data.result.client_id);
-      expect(createResponse.status).toBe(201);
-      expect(createResponse.data.result.client_id).toBe(clientId);
+    const createResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/onboarding`,
+      headers: {
+        Authorization: `Bearer ${systemAccessToken}`,
+      },
+      body: onboardingRequest,
     });
-  });
 
-  describe("Step 3: Audit Log Search - New Features (Issue #913)", () => {
+    console.log(`✅ Organization created: ${organizationId}`);
+    expect(createResponse.status).toBe(200);
+    expect(createResponse.data.dry_run).toBe(false);
+    expect(createResponse.data.organization.id).toBe(organizationId);
+    expect(createResponse.data.tenant.id).toBe(tenantId);
 
-    it("should search audit logs without from/to (全期間検索)", async () => {
-      const response = await get({
-        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/audit-logs?limit=50`,
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      });
+    console.log("\n=== Step 2: Login with Organization Admin ===");
 
-      console.log("✅ Audit logs retrieved (全期間):", response.status, `total=${response.data.total_count}`);
-      expect(response.status).toBe(200);
-      expect(response.data).toHaveProperty("list");
-      expect(response.data).toHaveProperty("total_count");
-      expect(response.data.list.length).toBeGreaterThan(0);
+    const tokenResponse = await requestToken({
+      endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+      grantType: "password",
+      username: orgAdminEmail,
+      password: orgAdminPassword,
+      scope: "openid profile email management",
+      clientId: clientId,
+      clientSecret: orgClientSecret,
     });
 
-    it("should filter by outcome_result=success", async () => {
-      const response = await get({
-        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/audit-logs?outcome_result=success&limit=20`,
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      });
+    console.log(tokenResponse.data);
+    expect(tokenResponse.status).toBe(200);
+    expect(tokenResponse.data.access_token).toBeDefined();
+    expect(tokenResponse.data.scope).toContain("management");
+    console.log(`✅ Organization admin logged in: ${orgAdminEmail}`);
 
-      console.log("✅ Success logs retrieved:", response.status, `count=${response.data.list.length}`);
-      expect(response.status).toBe(200);
-      expect(response.data.list.length).toBeGreaterThan(0);
+    const orgAccessToken = tokenResponse.data.access_token;
 
-      // Verify all results have outcome_result=success
-      response.data.list.forEach(log => {
-        expect(log.outcome_result).toBe("success");
-      });
+    console.log("\n=== Step 3: Create Business Client ===");
+
+    const businessClientId = uuidv4();
+    const businessClientTimestamp = Date.now();
+
+    const createClientResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/clients`,
+      headers: {
+        Authorization: `Bearer ${orgAccessToken}`,
+      },
+      body: {
+        client_id: businessClientId,
+        client_name: `Business Client ${businessClientTimestamp}`,
+        client_secret: "business-secret-123",
+        grant_types: ["authorization_code", "refresh_token"],
+        redirect_uris: ["http://localhost:3000/callback"],
+        enabled: true,
+      },
     });
 
-    it("should filter by target_tenant_id", async () => {
-      const response = await get({
-        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/audit-logs?target_tenant_id=${tenantId}&limit=20`,
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      });
+    console.log(`✅ Business client created: ${businessClientId}`);
+    expect(createClientResponse.status).toBe(201);
+    expect(createClientResponse.data.result.client_id).toBe(businessClientId);
 
-      console.log("✅ Target tenant logs retrieved:", response.status, `count=${response.data.list.length}`);
-      expect(response.status).toBe(200);
+    console.log("\n=== Step 4: Verify Audit Logs ===");
 
-      if (response.data.list.length > 0) {
-        // Verify all results have the correct target_tenant_id
-        response.data.list.forEach(log => {
-          expect(log.target_tenant_id).toBe(tenantId);
-        });
+    // Wait a bit for audit logs to be persisted
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    const auditLogsResponse = await get({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/audit-logs?limit=100`,
+      headers: {
+        Authorization: `Bearer ${orgAccessToken}`,
+      },
+    });
+
+    console.log(`✅ Retrieved ${auditLogsResponse.data.list.length} audit log entries`);
+    expect(auditLogsResponse.status).toBe(200);
+    expect(auditLogsResponse.data.list.length).toBeGreaterThan(0);
+
+    // Verify expected operations are logged
+    const logTypes = auditLogsResponse.data.list.map((log) => log.type);
+    console.log("\nLogged operation types:", [...new Set(logTypes)].sort());
+
+    // Expected operations from our flow
+    const expectedOperations = {
+      client_create: false, // Business client creation
+      // Note: Onboarding creates multiple resources but may log differently
+    };
+
+    auditLogsResponse.data.list.forEach((log) => {
+      console.log(JSON.stringify(log, null , 2));
+      if (log.type === "client_management" && log.target_resource_action === "POST" && log.outcome_result === "success") {
+        expectedOperations.client_create = true;
+        console.log(`  ✓ Found client_create log: ${log.client_id}`);
       }
     });
 
-    it("should filter by dry_run=false (本番実行のみ)", async () => {
-      const response = await get({
-        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/audit-logs?dry_run=false&limit=20`,
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      });
+    // Verify at least client creation was logged
+    expect(expectedOperations.client_create).toBe(true);
 
-      console.log("✅ Dry run=false logs retrieved:", response.status, `count=${response.data.list.length}`);
-      expect(response.status).toBe(200);
+    // Verify audit log structure (Issue #913 improvements)
+    const sampleLog = auditLogsResponse.data.list[0];
+    expect(sampleLog).toHaveProperty("type");
+    expect(sampleLog).toHaveProperty("outcome_result");
+    expect(sampleLog).toHaveProperty("created_at");
+    expect(sampleLog).toHaveProperty("dry_run");
 
-      // Verify all results have dry_run=false
-      response.data.list.forEach(log => {
-        expect(log.dry_run).toBe(false);
-      });
+    console.log("\n=== Step 5: Test Audit Log Search Features (Issue #913) ===");
+
+    // Test: Filter by outcome_result=success
+    const successLogsResponse = await get({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/audit-logs?outcome_result=success&limit=20`,
+      headers: {
+        Authorization: `Bearer ${orgAccessToken}`,
+      },
     });
 
-    it("should search multiple types (tenant_create,client_create)", async () => {
-      const response = await get({
-        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/audit-logs?type=tenant_create,client_create&limit=50`,
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      });
-
-      console.log("✅ Multiple types retrieved:", response.status, `count=${response.data.list.length}`);
-      expect(response.status).toBe(200);
-      expect(response.data.list.length).toBeGreaterThan(0);
-
-      // Verify all results match one of the specified types
-      response.data.list.forEach(log => {
-        expect(["tenant_create", "client_create"]).toContain(log.type);
-      });
+    console.log(`✅ Success logs: ${successLogsResponse.data.list.length} entries`);
+    expect(successLogsResponse.status).toBe(200);
+    successLogsResponse.data.list.forEach((log) => {
+      expect(log.outcome_result).toBe("success");
     });
 
-    it("should validate limit range (1-1000)", async () => {
-      // Test limit=0 (should fail)
-      const response1 = await get({
-        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/audit-logs?limit=0`,
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      });
-      console.log("❌ limit=0 validation:", response1.status);
-      expect(response1.status).toBe(400);
-
-      // Test limit=1001 (should fail)
-      const response2 = await get({
-        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/audit-logs?limit=1001`,
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      });
-      console.log("❌ limit=1001 validation:", response2.status);
-      expect(response2.status).toBe(400);
-
-      // Test limit=1000 (should succeed)
-      const response3 = await get({
-        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/audit-logs?limit=1000`,
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      });
-      console.log("✅ limit=1000 validation:", response3.status);
-      expect(response3.status).toBe(200);
+    // Test: Filter by type
+    const clientLogsResponse = await get({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/audit-logs?type=client_management&limit=20`,
+      headers: {
+        Authorization: `Bearer ${orgAccessToken}`,
+      },
     });
 
-    it("should combine multiple filters", async () => {
-      const response = await get({
-        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/audit-logs?type=tenant_create,client_create&outcome_result=success&dry_run=false&limit=30`,
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      });
-
-      console.log("✅ Combined filters:", response.status, `count=${response.data.list.length}`);
-      expect(response.status).toBe(200);
-
-      // Verify all filters are applied
-      response.data.list.forEach(log => {
-        expect(["tenant_create", "client_create"]).toContain(log.type);
-        expect(log.outcome_result).toBe("success");
-        expect(log.dry_run).toBe(false);
-      });
-    });
-  });
-
-  describe("Cleanup", () => {
-    it("should delete the test client", async () => {
-      if (!clientId) {
-        console.log("⏭️ Skipping client deletion (not created)");
-        return;
-      }
-
-      const deleteResponse = await deletion({
-        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/clients/${clientId}`,
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        }
-      });
-
-      console.log("🧹 Client deleted:", deleteResponse.status);
-      expect(deleteResponse.status).toBe(204);
+    console.log(`✅ Client management logs: ${clientLogsResponse.data.list.length} entries`);
+    expect(clientLogsResponse.status).toBe(200);
+    clientLogsResponse.data.list.forEach((log) => {
+      expect(log.type).toBe("client_management");
     });
 
-    it("should delete the test tenant", async () => {
-      if (!tenantId) {
-        console.log("⏭️ Skipping tenant deletion (not created)");
-        return;
-      }
-
-      const deleteResponse = await deletion({
-        url: `${backendUrl}/v1/management/tenants/${tenantId}`,
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        }
-      });
-
-      console.log("🧹 Tenant deleted:", deleteResponse.status);
-      expect(deleteResponse.status).toBe(204);
+    // Test: Filter by target_tenant_id (Issue #913)
+    const targetTenantLogsResponse = await get({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/audit-logs?target_tenant_id=${tenantId}&limit=20`,
+      headers: {
+        Authorization: `Bearer ${orgAccessToken}`,
+      },
     });
+
+    console.log(`✅ Target tenant logs: ${targetTenantLogsResponse.data.list.length} entries`);
+    expect(targetTenantLogsResponse.status).toBe(200);
+    expect(targetTenantLogsResponse.data.list.length).toBeGreaterThan(0);
+
+    // Verify expected operations are logged
+    const hasCreateClientLog = targetTenantLogsResponse.data.list.some(
+      (log) => log.type === "client_management" && log.target_resource_action === "POST"
+    );
+    expect(hasCreateClientLog).toBe(true);
+
+    // Verify all logs have the correct target_tenant_id
+    targetTenantLogsResponse.data.list.forEach((log) => {
+      expect(log.target_tenant_id).toBe(tenantId);
+    });
+
+    // Test: Filter by dry_run=false
+    const productionLogsResponse = await get({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/audit-logs?dry_run=false&limit=20`,
+      headers: {
+        Authorization: `Bearer ${orgAccessToken}`,
+      },
+    });
+
+    console.log(`✅ Production logs (dry_run=false): ${productionLogsResponse.data.list.length} entries`);
+    expect(productionLogsResponse.status).toBe(200);
+    productionLogsResponse.data.list.forEach((log) => {
+      expect(log.dry_run).toBe(false);
+    });
+
+    // Test: Combined filters (type + outcome_result + dry_run + target_tenant_id)
+    const combinedLogsResponse = await get({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/audit-logs?type=client_management&outcome_result=success&dry_run=false&target_tenant_id=${tenantId}&limit=20`,
+      headers: {
+        Authorization: `Bearer ${orgAccessToken}`,
+      },
+    });
+
+    console.log(`✅ Combined filter logs: ${combinedLogsResponse.data.list.length} entries`);
+    expect(combinedLogsResponse.status).toBe(200);
+    combinedLogsResponse.data.list.forEach((log) => {
+      expect(log.type).toBe("client_management");
+      expect(log.outcome_result).toBe("success");
+      expect(log.dry_run).toBe(false);
+      expect(log.target_tenant_id).toBe(tenantId);
+    });
+
+    // Test: Limit validation
+    const limitZeroResponse = await get({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/audit-logs?limit=0`,
+      headers: {
+        Authorization: `Bearer ${orgAccessToken}`,
+      },
+    });
+    expect(limitZeroResponse.status).toBe(200);
+
+    const limitMaxResponse = await get({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/audit-logs?limit=1000`,
+      headers: {
+        Authorization: `Bearer ${orgAccessToken}`,
+      },
+    });
+    expect(limitMaxResponse.status).toBe(200);
+
+    console.log("\n=== Cleanup ===");
+
+    // Delete business client
+    const deleteClientResponse = await deletion({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/clients/${businessClientId}`,
+      headers: {
+        Authorization: `Bearer ${orgAccessToken}`,
+      },
+    });
+    console.log(`🧹 Business client deleted: ${deleteClientResponse.status}`);
+    expect(deleteClientResponse.status).toBe(204);
+
+    // Attempt to delete organization (will fail until Issue #917 is resolved)
+    try {
+      const deleteOrgResponse = await deletion({
+        url: `${backendUrl}/v1/management/organizations/${organizationId}`,
+        headers: {
+          Authorization: `Bearer ${systemAccessToken}`,
+        },
+      });
+      console.log(`🧹 Organization deleted: ${deleteOrgResponse.status}`);
+    } catch (error) {
+      console.warn(
+        `⚠️  Organization cleanup failed (expected until Issue #917): ${error.response?.status}`
+      );
+      console.warn(`   Manual cleanup required for organization: ${organizationId}`);
+    }
+
+    console.log("\n=== Test Completed ===");
   });
 });

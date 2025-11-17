@@ -125,3 +125,90 @@ export const generateRS256KeyPair = async () => {
     jwks: JSON.stringify(jwks),
   };
 };
+
+/**
+ * Generate EC P-256 keypair and convert to JWK format
+ *
+ * @param {Object} options - Configuration options
+ * @param {string} options.kid - Key ID (default: "signing_key_1")
+ * @param {string} options.use - Key usage (default: "sig")
+ * @param {string} options.alg - Algorithm (default: "ES256")
+ * @returns {Promise<string>} JSON string of JWKS (for API request body)
+ *
+ * @example
+ * import { generateECP256JWKS } from "../lib/jose";
+ * const jwks = await generateECP256JWKS();
+ * // Returns: '{"keys":[{"kty":"EC","crv":"P-256",...}]}'
+ *
+ * const jwks = await generateECP256JWKS({ kid: "custom_key_id" });
+ */
+export const generateECP256JWKS = async (options = {}) => {
+  const crypto = await import("crypto");
+  const { promisify } = await import("util");
+  const generateKeyPair = promisify(crypto.generateKeyPair);
+
+  const { kid = "signing_key_1", use = "sig", alg = "ES256" } = options;
+
+  const { publicKey, privateKey } = await generateKeyPair("ec", {
+    namedCurve: "P-256",
+    publicKeyEncoding: {
+      type: "spki",
+      format: "der",
+    },
+    privateKeyEncoding: {
+      type: "pkcs8",
+      format: "der",
+    },
+  });
+
+  // Extract key components from DER format
+  // For P-256, public key is 65 bytes (04 + 32-byte x + 32-byte y)
+  const pubKeyBuffer = Buffer.from(publicKey);
+  // Skip ASN.1 header to get to the actual key bytes
+  const pubKeyStart = pubKeyBuffer.indexOf(Buffer.from([0x04]));
+  const uncompressed = pubKeyBuffer.slice(pubKeyStart);
+
+  const x = uncompressed.slice(1, 33);
+  const y = uncompressed.slice(33, 65);
+
+  // Extract private key (d) - it's the last 32 bytes of the private key DER
+  const privKeyBuffer = Buffer.from(privateKey);
+  const d = privKeyBuffer.slice(-32);
+
+  // Base64url encode without padding
+  const base64url = (buffer) =>
+    buffer.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+
+  const jwk = {
+    kty: "EC",
+    crv: "P-256",
+    x: base64url(x),
+    y: base64url(y),
+    d: base64url(d),
+    use,
+    kid,
+    alg,
+  };
+
+  const jwks = { keys: [jwk] };
+  return JSON.stringify(jwks);
+};
+
+/**
+ * Generate EC P-256 keypair and return as JWK object (not stringified)
+ *
+ * @param {Object} options - Configuration options
+ * @param {string} options.kid - Key ID (default: "signing_key_1")
+ * @param {string} options.use - Key usage (default: "sig")
+ * @param {string} options.alg - Algorithm (default: "ES256")
+ * @returns {Promise<Object>} JWKS object
+ *
+ * @example
+ * import { generateECP256JWKSObject } from "../lib/jose";
+ * const jwks = await generateECP256JWKSObject();
+ * // Returns: { keys: [{ kty: "EC", crv: "P-256", ... }] }
+ */
+export const generateECP256JWKSObject = async (options = {}) => {
+  const jwksString = await generateECP256JWKS(options);
+  return JSON.parse(jwksString);
+};
