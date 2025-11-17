@@ -337,6 +337,106 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /{tenant-id}/v1/authentications/{id}/authentication-cancel:
+    post:
+      tags:
+        - 認証
+      summary: 認証トランザクションのキャンセル
+      description: |
+        進行中の認証トランザクションをユーザーがキャンセルする。
+        キャンセル後、トランザクションは無効化され、認証フローは中断される。
+
+        - OAuth/CIBAフローでの認証拒否
+        - ユーザーによる明示的なキャンセル操作
+        - セキュリティイベント `authentication_cancel_success` が生成される
+      parameters:
+        - in: path
+          name: tenant-id
+          required: true
+          schema:
+            type: string
+          description: テナント識別子
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 認証トランザクションID
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+              example: {}
+      responses:
+        '200':
+          description: キャンセル成功。レスポンスボディは空のJSONオブジェクト。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+                example: {}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{tenant-id}/v1/authentications/{id}/fido-uaf-cancel:
+    post:
+      tags:
+        - FIDO-UAF
+      summary: FIDO-UAF認証のキャンセル
+      description: |
+        FIDO-UAF認証処理をユーザーがキャンセルする。
+        デバイス側での認証処理を中断し、トランザクションを無効化する。
+
+        - FIDO-UAF認証フローでの明示的なキャンセル
+        - デバイス認証の中断
+        - セキュリティイベント `authentication_cancel_success` が生成される
+      parameters:
+        - in: path
+          name: tenant-id
+          required: true
+          schema:
+            type: string
+          description: テナント識別子
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 認証トランザクションID
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+              example: {}
+      responses:
+        '200':
+          description: FIDO-UAFキャンセル成功。レスポンスボディは空のJSONオブジェクト。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+                example: {}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
 components:
   responses:
     BadRequest:
@@ -384,7 +484,7 @@ components:
 
     NotFound:
       description: |
-        認証セッションが存在しない、または有効期限切れ
+        認証トランザクションが存在しない、または有効期限切れ
       content:
         application/json:
           schema:
@@ -392,10 +492,10 @@ components:
             properties:
               error:
                 type: string
-                example: "not_found"
+                example: "invalid_request"
               error_description:
                 type: string
-                example: "authentication session not found or expired"
+                example: "Authentication transaction not found for identifier: {id}"
 
     InternalServerError:
       description: |
