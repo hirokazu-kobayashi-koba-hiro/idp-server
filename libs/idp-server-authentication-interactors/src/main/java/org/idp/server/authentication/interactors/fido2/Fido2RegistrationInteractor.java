@@ -205,7 +205,7 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
     }
 
     // Strategy 3: Create new User
-    User user = new User();
+    User user = User.initialized();
     String id = UUID.randomUUID().toString();
     user.setSub(id);
     user.setName(username);

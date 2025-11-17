@@ -62,7 +62,7 @@ class ModelConverter {
         && !stringMap.get("user_payload").isEmpty()) {
       user = jsonConverter.read(stringMap.get("user_payload"), User.class);
     } else {
-      user = new User();
+      user = User.notFound();
     }
     Authentication authentication =
         jsonConverter.read(stringMap.get("authentication"), Authentication.class);

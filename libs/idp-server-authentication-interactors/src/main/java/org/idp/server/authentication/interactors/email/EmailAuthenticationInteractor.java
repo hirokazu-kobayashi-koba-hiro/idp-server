@@ -278,7 +278,7 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
 
     // 4. Create new user
     log.debug("Creating new user. email={}, allowRegistration=true", email);
-    User user = new User();
+    User user = User.initialized();
     String id = UUID.randomUUID().toString();
     user.setSub(id);
     user.setEmail(email);

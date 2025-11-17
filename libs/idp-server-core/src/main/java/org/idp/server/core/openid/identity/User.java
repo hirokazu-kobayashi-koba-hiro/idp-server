@@ -35,9 +35,9 @@ import org.idp.server.platform.uuid.UuidConvertable;
 
 public class User implements JsonReadable, Serializable, UuidConvertable {
   String sub;
-  String providerId = "idp-server";
+  String providerId;
   String externalUserId;
-  HashMap<String, Object> externalProviderOriginalPayload = new HashMap<>();
+  HashMap<String, Object> externalProviderOriginalPayload;
   String name;
   String givenName;
   String familyName;
@@ -60,17 +60,17 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
   LocalDateTime updatedAt;
   String hashedPassword;
   String rawPassword;
-  List<AuthenticationDevice> authenticationDevices = new ArrayList<>();
-  HashMap<String, Object> customProperties = new HashMap<>();
-  List<HashMap<String, Object>> credentials = new ArrayList<>();
-  List<UserRole> roles = new ArrayList<>();
-  List<String> permissions = new ArrayList<>();
+  List<AuthenticationDevice> authenticationDevices;
+  HashMap<String, Object> customProperties;
+  List<HashMap<String, Object>> credentials;
+  List<UserRole> roles;
+  List<String> permissions;
   String currentTenant;
-  List<String> assignedTenants = new ArrayList<>();
+  List<String> assignedTenants;
   String currentOrganizationId;
-  List<String> assignedOrganizations = new ArrayList<>();
-  HashMap<String, Object> verifiedClaims = new HashMap<>();
-  UserStatus status = UserStatus.INITIALIZED;
+  List<String> assignedOrganizations;
+  HashMap<String, Object> verifiedClaims;
+  UserStatus status;
 
   public User() {}
 
@@ -153,6 +153,22 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
 
   public static User notFound() {
     return new User();
+  }
+
+  public static User initialized() {
+    User user = new User();
+    user.providerId = "idp-server";
+    user.status = UserStatus.INITIALIZED;
+    user.externalProviderOriginalPayload = new HashMap<>();
+    user.authenticationDevices = new ArrayList<>();
+    user.customProperties = new HashMap<>();
+    user.credentials = new ArrayList<>();
+    user.roles = new ArrayList<>();
+    user.permissions = new ArrayList<>();
+    user.assignedTenants = new ArrayList<>();
+    user.assignedOrganizations = new ArrayList<>();
+    user.verifiedClaims = new HashMap<>();
+    return user;
   }
 
   public boolean canTransit(UserStatus from, UserStatus to) {
