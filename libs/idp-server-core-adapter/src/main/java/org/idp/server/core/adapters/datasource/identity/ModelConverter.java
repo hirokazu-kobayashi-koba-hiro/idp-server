@@ -35,7 +35,7 @@ class ModelConverter {
   private static final JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   static User convert(Map<String, String> stringMap) {
-    User user = User.notFound();
+    User user = new User();
 
     user.setSub(stringMap.getOrDefault("id", ""));
     user.setProviderId(stringMap.getOrDefault("provider_id", ""));
