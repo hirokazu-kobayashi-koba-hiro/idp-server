@@ -5,6 +5,7 @@ import { generateECP256JWKS } from "../../../lib/jose";
 import { adminServerConfig, backendUrl } from "../../testConfig";
 import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
+import { sleep } from "../../../lib/util";
 
 /**
  * Standard Use Case: Complete Onboarding Flow with Audit Log Verification
@@ -160,6 +161,20 @@ describe("Standard Use Case: Onboarding Flow with Audit Log Tracking", () => {
 
     const orgAccessToken = tokenResponse.data.access_token;
 
+    await sleep(1000);
+
+    const onboardingAuditLogsResponse = await get({
+      url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/audit-logs?limit=1&type=onboarding`,
+      headers: {
+        Authorization: `Bearer ${systemAccessToken}`,
+      },
+    });
+
+    console.log(JSON.stringify(onboardingAuditLogsResponse.data, null , 2));
+    expect(onboardingAuditLogsResponse.status).toBe(200);
+    expect(onboardingAuditLogsResponse.data).toHaveProperty("total_count");
+    expect(onboardingAuditLogsResponse.data.list[0].type).toEqual("onboarding");
+
     console.log("\n=== Step 3: Create Business Client ===");
 
     const businessClientId = uuidv4();
@@ -190,7 +205,7 @@ describe("Standard Use Case: Onboarding Flow with Audit Log Tracking", () => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const auditLogsResponse = await get({
-      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/audit-logs?limit=100`,
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/audit-logs?target_tenant_id=${tenantId}&limit=100`,
       headers: {
         Authorization: `Bearer ${orgAccessToken}`,
       },
@@ -198,7 +213,7 @@ describe("Standard Use Case: Onboarding Flow with Audit Log Tracking", () => {
 
     console.log(`✅ Retrieved ${auditLogsResponse.data.list.length} audit log entries`);
     expect(auditLogsResponse.status).toBe(200);
-    expect(auditLogsResponse.data.list.length).toBeGreaterThan(0);
+    expect(auditLogsResponse.data.list.length).toBe(1);
 
     // Verify expected operations are logged
     const logTypes = auditLogsResponse.data.list.map((log) => log.type);
@@ -319,7 +334,7 @@ describe("Standard Use Case: Onboarding Flow with Audit Log Tracking", () => {
         Authorization: `Bearer ${orgAccessToken}`,
       },
     });
-    expect(limitZeroResponse.status).toBe(200);
+    expect(limitZeroResponse.status).toBe(400);
 
     const limitMaxResponse = await get({
       url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/audit-logs?limit=1000`,
@@ -328,6 +343,37 @@ describe("Standard Use Case: Onboarding Flow with Audit Log Tracking", () => {
       },
     });
     expect(limitMaxResponse.status).toBe(200);
+
+    // Test: Empty string parameter validation (PR #922 fix)
+    const emptyTypeResponse = await get({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/audit-logs?type=`,
+      headers: {
+        Authorization: `Bearer ${orgAccessToken}`,
+      },
+    });
+    expect(emptyTypeResponse.status).toBe(400);
+    expect(emptyTypeResponse.data.error).toBe("invalid_request");
+    console.log("✅ Empty type parameter correctly rejected");
+
+    const emptyClientIdResponse = await get({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/audit-logs?client_id=`,
+      headers: {
+        Authorization: `Bearer ${orgAccessToken}`,
+      },
+    });
+    expect(emptyClientIdResponse.status).toBe(400);
+    expect(emptyClientIdResponse.data.error).toBe("invalid_request");
+    console.log("✅ Empty client_id parameter correctly rejected");
+
+    const emptyTargetTenantIdResponse = await get({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/audit-logs?target_tenant_id=`,
+      headers: {
+        Authorization: `Bearer ${orgAccessToken}`,
+      },
+    });
+    expect(emptyTargetTenantIdResponse.status).toBe(400);
+    expect(emptyTargetTenantIdResponse.data.error).toBe("invalid_request");
+    console.log("✅ Empty target_tenant_id parameter correctly rejected");
 
     console.log("\n=== Cleanup ===");
 

@@ -64,7 +64,8 @@ public class SecurityEventQueries implements UuidConvertable {
   }
 
   public boolean hasClientId() {
-    return values.containsKey("client_id");
+    String value = values.get("client_id");
+    return value != null && !value.isEmpty();
   }
 
   public String clientId() {
@@ -80,7 +81,8 @@ public class SecurityEventQueries implements UuidConvertable {
   }
 
   public boolean hasUserId() {
-    return values.containsKey("user_id");
+    String value = values.get("user_id");
+    return value != null && !value.isEmpty();
   }
 
   public String externalUserId() {
@@ -88,11 +90,13 @@ public class SecurityEventQueries implements UuidConvertable {
   }
 
   public boolean hasExternalUserId() {
-    return values.containsKey("external_user_id");
+    String value = values.get("external_user_id");
+    return value != null && !value.isEmpty();
   }
 
   public boolean hasEventType() {
-    return values.containsKey("event_type");
+    String value = values.get("event_type");
+    return value != null && !value.isEmpty();
   }
 
   public String eventType() {

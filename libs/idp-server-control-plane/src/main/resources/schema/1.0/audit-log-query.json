@@ -1,10 +1,10 @@
 {
   "type": "object",
   "properties": {
-    "event_type": {
+    "type": {
       "type": "string",
       "minLength": 1,
-      "description": "Security event type filter"
+      "description": "Audit log type filter (comma-separated for multiple types)"
     },
     "from": {
       "type": "string",
@@ -15,6 +15,21 @@
       "type": "string",
       "format": "date-time",
       "description": "End timestamp for filtering (ISO 8601 format)"
+    },
+    "outcome_result": {
+      "type": "string",
+      "enum": ["success", "failure"],
+      "description": "Operation result filter"
+    },
+    "target_tenant_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Target tenant identifier filter"
+    },
+    "dry_run": {
+      "type": "string",
+      "pattern": "^(true|false)$",
+      "description": "Dry run filter"
     },
     "client_id": {
       "type": "string",
@@ -35,12 +50,12 @@
     "limit": {
       "type": "string",
       "pattern": "^([1-9][0-9]{0,2}|1000)$",
-      "description": "Maximum number of events to return (1-1000)"
+      "description": "Maximum number of logs to return (1-1000)"
     },
     "offset": {
       "type": "string",
       "pattern": "^(0|[1-9][0-9]*)$",
-      "description": "Number of events to skip for pagination (>=0)"
+      "description": "Number of logs to skip for pagination (>=0)"
     }
   },
   "additionalProperties": true

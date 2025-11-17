@@ -60,7 +60,7 @@ echo "organizer-tenant"
 
 ## org access-token
 
-ACCESS_TOKEN=$(./config/scripts/get-access-token.sh -u "ito.ichiro" -p "successUserCode001" -t "67e7eae6-62b0-4500-9eff-87459f63fc66" -e "$AUTHORIZATION_SERVER_URL" -c "clientSecretPost" -s "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890")
+ACCESS_TOKEN=$(./config/scripts/get-access-token.sh -u "ito.ichiro@gmail.com" -p "successUserCode001" -t "67e7eae6-62b0-4500-9eff-87459f63fc66" -e "$AUTHORIZATION_SERVER_URL" -c "clientSecretPost" -s "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890")
 
 echo "org access-token"
 echo "$ACCESS_TOKEN"

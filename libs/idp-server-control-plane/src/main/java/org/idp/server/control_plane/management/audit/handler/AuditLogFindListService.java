@@ -23,6 +23,7 @@ import org.idp.server.control_plane.management.audit.AuditLogManagementContextBu
 import org.idp.server.control_plane.management.audit.io.AuditLogFindListRequest;
 import org.idp.server.control_plane.management.audit.io.AuditLogManagementResponse;
 import org.idp.server.control_plane.management.audit.io.AuditLogManagementStatus;
+import org.idp.server.control_plane.management.audit.validator.AuditLogQueryValidator;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.audit.AuditLog;
@@ -59,6 +60,8 @@ public class AuditLogFindListService implements AuditLogManagementService<AuditL
       OAuthToken oAuthToken,
       AuditLogFindListRequest request,
       RequestAttributes requestAttributes) {
+
+    new AuditLogQueryValidator(request.queries()).validate();
 
     long totalCount = auditLogQueryRepository.findTotalCount(tenant, request.queries());
 

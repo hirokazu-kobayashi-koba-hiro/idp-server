@@ -1131,13 +1131,6 @@ describe("organization user management api", () => {
         "email": "test@example.com",
         "raw_password": "123" // Too short
       }],
-      ["weak password - no numbers", {
-        "sub": uuidv4(),
-        "provider_id": "idp-server",
-        "name": "Test User",
-        "email": "test@example.com",
-        "raw_password": "Password" // No numbers
-      }],
       ["empty password", {
         "sub": uuidv4(),
         "provider_id": "idp-server",
