@@ -63,6 +63,8 @@ const sidebars = {
         "content_03_concepts/concept-17-application-logging",
         "content_03_concepts/concept-18-id-token",
         "content_03_concepts/concept-19-client",
+        "content_03_concepts/concept-20-password-policy",
+        "content_03_concepts/concept-21-schema-validation",
         {
           type: "category",
           label: "基礎（読み物）",
