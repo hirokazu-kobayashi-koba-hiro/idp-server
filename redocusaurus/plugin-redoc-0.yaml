@@ -773,9 +773,21 @@ paths:
       summary: ユーザーInfo
       tags:
         - OIDC
-      description: |
+      description: >
         認証されたエンドユーザーのプロフィール情報を返す。
+
         OpenID Connect Core 1.0 Section 5 に準拠。
+
+
+        **返却可能なクレーム（ユーザー情報項目）**:
+
+        - OpenID Connect Discovery（`/.well-known/openid-configuration`）の
+        `claims_supported` で確認できます
+
+        - 標準クレーム例: `sub`, `name`, `email`, `email_verified`,
+        `preferred_username`, `phone_number` など
+
+        - 実際に返却されるクレームは、`scope` パラメータまたは `claims` パラメータでの要求内容に依存します
       security:
         - bearerAuth: []
       responses:
@@ -805,9 +817,21 @@ paths:
       summary: ユーザーInfo
       tags:
         - OIDC
-      description: |
+      description: >
         認証されたエンドユーザーのプロフィール情報を返す。
+
         OpenID Connect Core 1.0 Section 5 に準拠。
+
+
+        **返却可能なクレーム（ユーザー情報項目）**:
+
+        - OpenID Connect Discovery（`/.well-known/openid-configuration`）の
+        `claims_supported` で確認できます
+
+        - 標準クレーム例: `sub`, `name`, `email`, `email_verified`,
+        `preferred_username`, `phone_number` など
+
+        - 実際に返却されるクレームは、`scope` パラメータまたは `claims` パラメータでの要求内容に依存します
       security:
         - bearerAuth: []
       responses:
@@ -1574,18 +1598,28 @@ components:
     ResourceOwnerPasswordTokenRequest:
       type: object
       description: |
-        クライアントがリフレッシュトークンをアクセストークンに交換するために送信するリクエスト。
+        クライアントがリソースオーナーのパスワードクレデンシャルを使用してアクセストークンを取得するために送信するリクエスト。
         OAuth 2.0 / OpenID Connect 仕様に準拠。
       properties:
         grant_type:
           type: string
           description: |
             使用するグラントタイプ。
-            リフレッシュトークンGrantにおいては"refresh_token"。
+            Resource Owner Password Credentials Grantにおいては"password"。
         username:
           type: string
-          description: |
-            リソースオーナーのユーザーネーム
+          description: >
+            リソースオーナーのユーザー識別子。
+
+
+            **重要**: ユーザー検索には `preferred_username` カラムが使用されます。
+
+            - `preferred_username`: ログイン用識別子（OIDC標準クレーム）
+
+            - `name`: 表示名（ログイン用途ではない）
+
+            - ユーザー作成時（Initial Registration / Management API）、テナントのIdentity
+            Policyに従って `preferred_username` が自動設定されます
         password:
           type: string
           description: |
@@ -1946,7 +1980,8 @@ components:
           description: トークンを発行したクライアントのID。
         username:
           type: string
-          description: トークンに関連づけられたユーザー名。
+          description: |
+            トークンに関連づけられたユーザー識別子（preferred_username）。
         token_type:
           type: string
           description: トークンの種別（例：Bearer）。
@@ -2108,7 +2143,10 @@ components:
           description: ニックネーム。`profile` scope または `claims` による要求時に返却される。
         preferred_username:
           type: string
-          description: ユーザーの希望する表示名（例：j.doe）。`profile` scope または `claims` による要求時に返却される。
+          description: |
+            ユーザーの希望する表示名（例：j.doe）。`profile` scope または `claims` による要求時に返却される。
+
+            **重要**: このフィールドは Password Grant でのログイン識別子としても使用されます。
         profile:
           type: string
           format: uri

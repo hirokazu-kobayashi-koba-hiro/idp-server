@@ -126,6 +126,165 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /{tenant-id}/v1/me/password/change:
+    post:
+      tags:
+        - ユーザー
+      summary: パスワード変更
+      description: >
+        認証済みユーザーのパスワードを変更します。
+
+
+        このAPIは以下の手順でパスワード変更を行います：
+
+        1. 現在のパスワードの検証
+
+        2. 新しいパスワードのポリシー検証（テナント設定に基づく）
+
+        3. パスワードの更新
+
+        4. セキュリティイベントの発行（password_change_success/password_change_failure）
+
+
+        ## パスワードポリシー
+
+
+        テナントごとに以下のポリシーを設定可能（`identity_policy_config.password_policy`）：
+
+        - `min_length`: 最小文字数（デフォルト: 8）
+
+        - `require_uppercase`: 大文字必須（デフォルト: false）
+
+        - `require_lowercase`: 小文字必須（デフォルト: false）
+
+        - `require_digit`: 数字必須（デフォルト: false）
+
+        - `require_special_char`: 記号必須（デフォルト: false）
+
+
+        デフォルトポリシーはNIST SP 800-63Bの推奨に従い、最小8文字のみを要求します。
+
+
+        ## セキュリティイベント
+
+
+        パスワード変更の成功・失敗時に以下のセキュリティイベントが発行されます：
+
+        - `password_change_success`: パスワード変更成功時
+
+        - `password_change_failure`: パスワード変更失敗時（検証エラー等）
+
+
+        ## 参考実装
+
+
+        - [Microsoft Graph API:
+        changePassword](https://learn.microsoft.com/en-us/graph/api/user-changepassword)
+
+        - [Okta Users API: Change
+        Password](https://developer.okta.com/docs/reference/api/users/#change-password)
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      security:
+        - OAuth2:
+            - openid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordChangeRequest'
+            example:
+              current_password: CurrentPassword123
+              new_password: NewSecurePassword456
+      responses:
+        '200':
+          description: パスワード変更成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+                    description: 成功メッセージ
+                    example: Password changed successfully.
+        '400':
+          description: |
+            バリデーションエラー
+            - 現在のパスワードが未入力
+            - 新しいパスワードが未入力
+            - 現在のパスワードが不正
+            - 新しいパスワードがポリシー違反
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                  - error_description
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - invalid_request
+                      - invalid_current_password
+                      - invalid_new_password
+                    description: エラーコード
+                  error_description:
+                    type: string
+                    description: エラー詳細メッセージ
+              examples:
+                missing_current_password:
+                  value:
+                    error: invalid_request
+                    error_description: Current password is required.
+                missing_new_password:
+                  value:
+                    error: invalid_request
+                    error_description: New password is required.
+                incorrect_current_password:
+                  value:
+                    error: invalid_current_password
+                    error_description: Current password is incorrect.
+                password_too_short:
+                  value:
+                    error: invalid_new_password
+                    error_description: Password must be at least 8 characters.
+                password_policy_violation:
+                  value:
+                    error: invalid_new_password
+                    error_description: >-
+                      Password must contain at least one uppercase letter, one
+                      lowercase letter, one digit, and one special character.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: |
+            スコープ不足
+            - 必要スコープ: `openid`
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                  - error_description
+                  - scope
+                properties:
+                  error:
+                    type: string
+                    example: insufficient_scope
+                  error_description:
+                    type: string
+                    example: The request requires 'openid' scope
+                  scope:
+                    type: string
+                    example: openid
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{verification-process}:
     post:
       tags:
@@ -1734,3 +1893,42 @@ components:
           description: >
             このデバイスの通知の優先順位（例: 1, 2, 100）。 数値が小さいほど優先度が高く、1が最も高い。
             省略された場合は、認証デバイスの登録数の連番となる。
+    PasswordChangeRequest:
+      type: object
+      required:
+        - current_password
+        - new_password
+      properties:
+        current_password:
+          type: string
+          description: |
+            現在のパスワード。
+
+            このパスワードが正しいかどうかを検証してから新しいパスワードへの変更を行います。
+          example: CurrentPassword123
+        new_password:
+          type: string
+          description: >
+            新しいパスワード。
+
+
+            テナントに設定されたパスワードポリシー（`identity_policy_config.password_policy`）に従って検証されます。
+
+
+            デフォルトポリシー：
+
+            - 最小8文字（NIST SP 800-63B推奨）
+
+
+            設定可能なポリシー：
+
+            - `min_length`: 最小文字数
+
+            - `require_uppercase`: 大文字を含む
+
+            - `require_lowercase`: 小文字を含む
+
+            - `require_digit`: 数字を含む
+
+            - `require_special_char`: 記号を含む
+          example: NewSecurePassword456

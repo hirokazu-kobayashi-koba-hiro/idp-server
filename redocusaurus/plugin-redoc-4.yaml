@@ -2895,7 +2895,7 @@ paths:
           schema:
             type: integer
             minimum: 1
-            maximum: 100
+            maximum: 1000
             default: 20
         - name: offset
           in: query
@@ -2906,9 +2906,10 @@ paths:
             default: 0
         - name: event_type
           in: query
-          description: セキュリティイベントタイプでフィルター
+          description: セキュリティイベントタイプでフィルター（カンマ区切りで複数指定可能）
           schema:
             type: string
+          example: login_success,inspect_token_success
         - name: from
           in: query
           description: セキュリティイベントをフィルターするための開始タイムスタンプ（ISO 8601形式）
@@ -3278,6 +3279,8 @@ components:
       required: false
       schema:
         type: integer
+        minimum: 1
+        maximum: 1000
         default: 20
       description: 返すアイテムの最大数
     Offset:
@@ -3286,6 +3289,7 @@ components:
       required: false
       schema:
         type: integer
+        minimum: 0
         default: 0
       description: アイテムを返す開始インデックス
   schemas:
