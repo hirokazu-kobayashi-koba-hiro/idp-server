@@ -102,7 +102,7 @@ public class RoleManagementContext implements AuditableContext {
 
   @Override
   public String type() {
-    return "role_management";
+    return "role";
   }
 
   @Override
