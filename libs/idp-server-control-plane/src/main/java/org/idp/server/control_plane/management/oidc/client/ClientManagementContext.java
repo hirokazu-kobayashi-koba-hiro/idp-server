@@ -102,7 +102,7 @@ public class ClientManagementContext implements AuditableContext {
 
   @Override
   public String type() {
-    return "client_management";
+    return "client";
   }
 
   @Override

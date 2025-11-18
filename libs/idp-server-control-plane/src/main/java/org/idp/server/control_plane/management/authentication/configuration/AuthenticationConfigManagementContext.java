@@ -95,7 +95,7 @@ public class AuthenticationConfigManagementContext implements AuditableContext {
 
   @Override
   public String type() {
-    return "authentication_config_management";
+    return "authentication_config";
   }
 
   @Override

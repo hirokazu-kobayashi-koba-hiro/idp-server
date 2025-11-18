@@ -102,7 +102,7 @@ public class PermissionManagementContext implements AuditableContext {
 
   @Override
   public String type() {
-    return "permission_management";
+    return "permission";
   }
 
   @Override

@@ -227,7 +227,7 @@ describe("Standard Use Case: Onboarding Flow with Audit Log Tracking", () => {
 
     auditLogsResponse.data.list.forEach((log) => {
       console.log(JSON.stringify(log, null , 2));
-      if (log.type === "client_management" && log.target_resource_action === "POST" && log.outcome_result === "success") {
+      if (log.type === "client" && log.target_resource_action === "POST" && log.outcome_result === "success") {
         expectedOperations.client_create = true;
         console.log(`  ✓ Found client_create log: ${log.client_id}`);
       }
@@ -261,7 +261,7 @@ describe("Standard Use Case: Onboarding Flow with Audit Log Tracking", () => {
 
     // Test: Filter by type
     const clientLogsResponse = await get({
-      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/audit-logs?type=client_management&limit=20`,
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/audit-logs?type=client&limit=20`,
       headers: {
         Authorization: `Bearer ${orgAccessToken}`,
       },
@@ -270,7 +270,7 @@ describe("Standard Use Case: Onboarding Flow with Audit Log Tracking", () => {
     console.log(`✅ Client management logs: ${clientLogsResponse.data.list.length} entries`);
     expect(clientLogsResponse.status).toBe(200);
     clientLogsResponse.data.list.forEach((log) => {
-      expect(log.type).toBe("client_management");
+      expect(log.type).toBe("client");
     });
 
     // Test: Filter by target_tenant_id (Issue #913)
@@ -287,7 +287,7 @@ describe("Standard Use Case: Onboarding Flow with Audit Log Tracking", () => {
 
     // Verify expected operations are logged
     const hasCreateClientLog = targetTenantLogsResponse.data.list.some(
-      (log) => log.type === "client_management" && log.target_resource_action === "POST"
+      (log) => log.type === "client" && log.target_resource_action === "POST"
     );
     expect(hasCreateClientLog).toBe(true);
 
@@ -312,7 +312,7 @@ describe("Standard Use Case: Onboarding Flow with Audit Log Tracking", () => {
 
     // Test: Combined filters (type + outcome_result + dry_run + target_tenant_id)
     const combinedLogsResponse = await get({
-      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/audit-logs?type=client_management&outcome_result=success&dry_run=false&target_tenant_id=${tenantId}&limit=20`,
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/audit-logs?type=client&outcome_result=success&dry_run=false&target_tenant_id=${tenantId}&limit=20`,
       headers: {
         Authorization: `Bearer ${orgAccessToken}`,
       },
@@ -321,7 +321,7 @@ describe("Standard Use Case: Onboarding Flow with Audit Log Tracking", () => {
     console.log(`✅ Combined filter logs: ${combinedLogsResponse.data.list.length} entries`);
     expect(combinedLogsResponse.status).toBe(200);
     combinedLogsResponse.data.list.forEach((log) => {
-      expect(log.type).toBe("client_management");
+      expect(log.type).toBe("client");
       expect(log.outcome_result).toBe("success");
       expect(log.dry_run).toBe(false);
       expect(log.target_tenant_id).toBe(tenantId);
