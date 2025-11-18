@@ -58,7 +58,7 @@ public class FederationInteractionResult {
         authorizationRequestIdentifier,
         tenantIdentifier,
         status,
-        new User(),
+        User.notFound(),
         new Authentication(),
         response,
         eventType);

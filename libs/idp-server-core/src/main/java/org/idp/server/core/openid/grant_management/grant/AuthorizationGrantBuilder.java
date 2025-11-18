@@ -30,7 +30,7 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 public class AuthorizationGrantBuilder {
 
   TenantIdentifier tenantIdentifier;
-  User user = new User();
+  User user = User.notFound();
   Authentication authentication = new Authentication();
   RequestedClientId requestedClientId;
   ClientAttributes clientAttributes = new ClientAttributes();

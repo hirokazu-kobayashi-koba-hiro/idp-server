@@ -129,6 +129,9 @@ public class UserUpdateService implements UserManagementService<UserUpdateReques
   private User updateUser(Tenant tenant, UserRegistrationRequest request, User before) {
     User newUser = JsonConverter.snakeCaseInstance().read(request.toMap(), User.class);
     newUser.setSub(before.sub());
+    if (!newUser.hasStatus()) {
+      newUser.setStatus(before.status());
+    }
 
     // Always recalculate preferred_username based on tenant identity policy
     // OIDC Core: preferred_username is mutable and should reflect current user attributes

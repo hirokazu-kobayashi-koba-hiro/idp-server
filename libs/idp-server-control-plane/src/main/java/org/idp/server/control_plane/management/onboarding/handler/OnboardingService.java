@@ -31,6 +31,7 @@ import org.idp.server.control_plane.management.onboarding.verifier.OnboardingVer
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserRegistrator;
 import org.idp.server.core.openid.identity.UserRole;
+import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.core.openid.identity.permission.PermissionCommandRepository;
 import org.idp.server.core.openid.identity.permission.Permissions;
@@ -132,6 +133,10 @@ public class OnboardingService {
         jsonConverter.read(
             request.get("authorization_server"), AuthorizationServerConfiguration.class);
     User user = jsonConverter.read(request.get("user"), User.class);
+    if (!user.hasStatus()) {
+      user.setStatus(UserStatus.REGISTERED);
+    }
+
     ClientConfiguration clientConfiguration =
         jsonConverter.read(request.get("client"), ClientConfiguration.class);
 

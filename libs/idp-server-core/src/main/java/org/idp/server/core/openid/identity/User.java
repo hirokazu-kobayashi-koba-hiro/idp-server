@@ -19,6 +19,7 @@ package org.idp.server.core.openid.identity;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.idp.server.core.openid.identity.address.Address;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
@@ -70,7 +71,7 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
   String currentOrganizationId;
   List<String> assignedOrganizations = new ArrayList<>();
   HashMap<String, Object> verifiedClaims = new HashMap<>();
-  UserStatus status = UserStatus.INITIALIZED;
+  UserStatus status;
 
   public User() {}
 
@@ -153,6 +154,10 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
 
   public static User notFound() {
     return new User();
+  }
+
+  public static User initialized() {
+    return new User().setSub(UUID.randomUUID().toString()).setStatus(UserStatus.INITIALIZED);
   }
 
   public boolean canTransit(UserStatus from, UserStatus to) {

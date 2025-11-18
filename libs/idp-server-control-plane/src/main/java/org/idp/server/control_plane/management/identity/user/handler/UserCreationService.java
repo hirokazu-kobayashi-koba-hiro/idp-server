@@ -135,6 +135,9 @@ public class UserCreationService implements UserManagementService<UserRegistrati
     if (!user.hasSub()) {
       user.setSub(UUID.randomUUID().toString());
     }
+    if (!user.hasStatus()) {
+      user.setStatus(UserStatus.REGISTERED);
+    }
 
     // Always recalculate preferred_username based on tenant identity policy
     // OIDC Core: preferred_username is mutable and should reflect current user attributes

@@ -76,7 +76,7 @@ public class UserQueryDataSource implements UserQueryRepository {
           executor.selectByExternalIdpSubject(tenant, externalIdpSubject, providerId);
 
       if (Objects.isNull(result) || result.isEmpty()) {
-        return new User();
+        return User.notFound();
       }
 
       UserIdentifier userIdentifier = ModelConverter.extractUserIdentifier(result);
@@ -93,7 +93,7 @@ public class UserQueryDataSource implements UserQueryRepository {
       Map<String, String> result = executor.selectByName(tenant, name, providerId);
 
       if (Objects.isNull(result) || result.isEmpty()) {
-        return new User();
+        return User.notFound();
       }
 
       UserIdentifier userIdentifier = ModelConverter.extractUserIdentifier(result);
@@ -111,7 +111,7 @@ public class UserQueryDataSource implements UserQueryRepository {
       Map<String, String> result = executor.selectByDeviceId(tenant, deviceId, providerId);
 
       if (Objects.isNull(result) || result.isEmpty()) {
-        return new User();
+        return User.notFound();
       }
 
       UserIdentifier userIdentifier = ModelConverter.extractUserIdentifier(result);
@@ -128,7 +128,7 @@ public class UserQueryDataSource implements UserQueryRepository {
       Map<String, String> result = executor.selectByEmail(tenant, email, providerId);
 
       if (Objects.isNull(result) || result.isEmpty()) {
-        return new User();
+        return User.notFound();
       }
 
       UserIdentifier userIdentifier = ModelConverter.extractUserIdentifier(result);
@@ -145,7 +145,7 @@ public class UserQueryDataSource implements UserQueryRepository {
       Map<String, String> result = executor.selectByPhone(tenant, phone, providerId);
 
       if (Objects.isNull(result) || result.isEmpty()) {
-        return new User();
+        return User.notFound();
       }
 
       UserIdentifier userIdentifier = ModelConverter.extractUserIdentifier(result);
@@ -183,7 +183,7 @@ public class UserQueryDataSource implements UserQueryRepository {
     Map<String, String> result = executor.selectByProvider(tenant, providerId, providerUserId);
 
     if (Objects.isNull(result) || result.isEmpty()) {
-      return new User();
+      return User.notFound();
     }
 
     UserIdentifier userIdentifier = ModelConverter.extractUserIdentifier(result);
@@ -195,7 +195,7 @@ public class UserQueryDataSource implements UserQueryRepository {
     Map<String, String> result = executor.selectByAuthenticationDevice(tenant, deviceId);
 
     if (Objects.isNull(result) || result.isEmpty()) {
-      return new User();
+      return User.notFound();
     }
 
     UserIdentifier userIdentifier = ModelConverter.extractUserIdentifier(result);
@@ -209,7 +209,7 @@ public class UserQueryDataSource implements UserQueryRepository {
           executor.selectByPreferredUsername(tenant, providerId, preferredUsername);
 
       if (Objects.isNull(result) || result.isEmpty()) {
-        return new User();
+        return User.notFound();
       }
 
       UserIdentifier userIdentifier = ModelConverter.extractUserIdentifier(result);
@@ -226,7 +226,7 @@ public class UserQueryDataSource implements UserQueryRepository {
           executor.selectByPreferredUsernameNoProvider(tenant, preferredUsername);
 
       if (Objects.isNull(result) || result.isEmpty()) {
-        return new User();
+        return User.notFound();
       }
 
       UserIdentifier userIdentifier = ModelConverter.extractUserIdentifier(result);
