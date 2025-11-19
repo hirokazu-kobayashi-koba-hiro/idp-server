@@ -22,9 +22,11 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.type.vc.CredentialDefinition;
 import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 
 public class AuthorizationDetails implements Iterable<AuthorizationDetail> {
 
+  static final LoggerWrapper logger = LoggerWrapper.getLogger(AuthorizationDetails.class);
   List<AuthorizationDetail> values;
 
   public AuthorizationDetails() {
@@ -44,6 +46,8 @@ public class AuthorizationDetails implements Iterable<AuthorizationDetail> {
 
       return new AuthorizationDetails(authorizationDetailsList);
     } catch (Exception exception) {
+      logger.error("Failed to parse authorization_details from string", exception);
+      logger.debug("authorization_details value: {}", string);
       return new AuthorizationDetails();
     }
   }
@@ -57,6 +61,8 @@ public class AuthorizationDetails implements Iterable<AuthorizationDetail> {
 
       return new AuthorizationDetails(authorizationDetailsList);
     } catch (Exception exception) {
+      logger.error("Failed to parse authorization_details from object", exception);
+      logger.debug("authorization_details object: {}", object);
       return new AuthorizationDetails();
     }
   }
