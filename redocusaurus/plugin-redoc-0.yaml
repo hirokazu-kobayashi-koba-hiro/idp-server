@@ -1762,6 +1762,47 @@ components:
           description: |
             OpenID Connect フローでユーザー情報を表すJWTトークン。
             sub（ユーザーID）や認証時間などのクレームが含まれる。
+        scope:
+          type: string
+          description: |
+            発行されたアクセストークンのスコープ。
+            リクエストされたスコープと異なる場合があります。
+          example: openid profile email
+        authorization_details:
+          type: array
+          description: |
+            Rich Authorization Requests (RFC 9396) に基づく認可詳細情報。
+            リクエスト時に指定された authorization_details に対応する、
+            実際に付与された権限の詳細が含まれます。
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                description: 認可の種類を示す識別子
+              locations:
+                type: array
+                items:
+                  type: string
+                description: 認可が適用されるリソースサーバーのURI
+              actions:
+                type: array
+                items:
+                  type: string
+                description: 許可されたアクション
+              datatypes:
+                type: array
+                items:
+                  type: string
+                description: アクセス可能なデータタイプ
+              identifier:
+                type: string
+                description: リソース識別子
+              privileges:
+                type: array
+                items:
+                  type: string
+                description: 付与された特権
     CibaTokenResponse:
       type: object
       description: >
@@ -1800,6 +1841,47 @@ components:
           description: |
             OpenID Connect フローでユーザー情報を表すJWTトークン。
             sub（ユーザーID）や認証時間などのクレームが含まれる。
+        scope:
+          type: string
+          description: |
+            発行されたアクセストークンのスコープ。
+            リクエストされたスコープと異なる場合があります。
+          example: openid profile email
+        authorization_details:
+          type: array
+          description: |
+            Rich Authorization Requests (RFC 9396) に基づく認可詳細情報。
+            リクエスト時に指定された authorization_details に対応する、
+            実際に付与された権限の詳細が含まれます。
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                description: 認可の種類を示す識別子
+              locations:
+                type: array
+                items:
+                  type: string
+                description: 認可が適用されるリソースサーバーのURI
+              actions:
+                type: array
+                items:
+                  type: string
+                description: 許可されたアクション
+              datatypes:
+                type: array
+                items:
+                  type: string
+                description: アクセス可能なデータタイプ
+              identifier:
+                type: string
+                description: リソース識別子
+              privileges:
+                type: array
+                items:
+                  type: string
+                description: 付与された特権
     TokenErrorResponse:
       type: object
       description: |

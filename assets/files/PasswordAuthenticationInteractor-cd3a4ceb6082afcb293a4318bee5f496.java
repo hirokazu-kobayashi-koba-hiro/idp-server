@@ -32,6 +32,7 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.policy.AuthenticationStepDefinition;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
@@ -336,6 +337,9 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
           user.providerId(),
           user.externalUserId());
       user.setSub(UUID.randomUUID().toString());
+      if (!user.hasStatus()) {
+        user.setStatus(UserStatus.INITIALIZED);
+      }
     }
 
     return user;

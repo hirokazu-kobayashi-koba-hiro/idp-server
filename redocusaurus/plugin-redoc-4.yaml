@@ -2912,13 +2912,19 @@ paths:
           example: login_success,inspect_token_success
         - name: from
           in: query
-          description: セキュリティイベントをフィルターするための開始タイムスタンプ（ISO 8601形式）
+          description: |
+            セキュリティイベントをフィルターするための開始タイムスタンプ（ISO 8601形式）
+
+            **注意**: デフォルト値は設定されていません。省略時は全期間から検索します。
           schema:
             type: string
             format: date-time
         - name: to
           in: query
-          description: セキュリティイベントをフィルターするための終了タイムスタンプ（ISO 8601形式）
+          description: |
+            セキュリティイベントをフィルターするための終了タイムスタンプ（ISO 8601形式）
+
+            **注意**: デフォルト値は設定されていません。省略時は全期間から検索します。
           schema:
             type: string
             format: date-time
@@ -3040,11 +3046,11 @@ paths:
       parameters:
         - name: limit
           in: query
-          description: 取得する監査ログの最大件数
+          description: 取得する監査ログの最大件数（1-1000）
           schema:
             type: integer
             minimum: 1
-            maximum: 100
+            maximum: 1000
             default: 20
         - name: offset
           in: query
@@ -3055,19 +3061,29 @@ paths:
             default: 0
         - name: from
           in: query
-          description: 監査ログ検索の開始日時（ISO 8601形式）。デフォルトは7日前
+          description: |
+            監査ログ検索の開始日時（ISO 8601形式）
+
+            **注意**: デフォルト値は設定されていません。省略時は全期間から検索します。
           schema:
             type: string
             format: date-time
         - name: to
           in: query
-          description: 監査ログ検索の終了日時（ISO 8601形式）。デフォルトは明日
+          description: |
+            監査ログ検索の終了日時（ISO 8601形式）
+
+            **注意**: デフォルト値は設定されていません。省略時は全期間から検索します。
           schema:
             type: string
             format: date-time
         - name: type
           in: query
-          description: 監査ログタイプによるフィルタ
+          description: |
+            監査ログタイプによるフィルタ
+
+            **複数指定**: カンマ区切りで複数のタイプを同時検索可能
+            例: `tenant_create,tenant_update,tenant_delete`
           schema:
             type: string
         - name: description
@@ -3085,6 +3101,35 @@ paths:
           description: 対象アクションによるフィルタ
           schema:
             type: string
+        - name: outcome_result
+          in: query
+          description: |
+            操作結果によるフィルタ
+
+            **用途**: 成功/失敗した操作のみを検索
+            **値**: `success` または `failure`
+          schema:
+            type: string
+            enum:
+              - success
+              - failure
+        - name: target_tenant_id
+          in: query
+          description: |
+            対象テナントIDによるフィルタ
+
+            **用途**: 特定のテナントに対する操作のみを検索（テナント管理操作など）
+          schema:
+            type: string
+        - name: dry_run
+          in: query
+          description: |
+            ドライラン実行フィルタ
+
+            **用途**: 本番実行とドライラン実行を区別して検索
+            **値**: `true` - ドライラン実行のみ, `false` - 本番実行のみ
+          schema:
+            type: boolean
         - name: client_id
           in: query
           description: クライアント識別子によるフィルタ
