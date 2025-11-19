@@ -40,7 +40,7 @@ class ModelConverter {
     builder.add(new BackchannelAuthenticationRequestIdentifier(stringMap.get("id")));
     builder.add(new TenantIdentifier(stringMap.get("tenant_id")));
     builder.add(CibaProfile.valueOf(stringMap.get("profile")));
-    builder.add(BackchannelTokenDeliveryMode.valueOf(stringMap.get("delivery_mode")));
+    builder.add(BackchannelTokenDeliveryMode.of(stringMap.get("delivery_mode")));
     builder.add(new Scopes(stringMap.get("scopes")));
     builder.add(new RequestedClientId(stringMap.get("client_id")));
     builder.add(new IdTokenHint(stringMap.get("id_token_hint")));
