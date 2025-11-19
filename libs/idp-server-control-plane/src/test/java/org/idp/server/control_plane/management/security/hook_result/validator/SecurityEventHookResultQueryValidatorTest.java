@@ -31,7 +31,7 @@ class SecurityEventHookResultQueryValidatorTest {
     Map<String, String> queryParams = new HashMap<>();
     queryParams.put("security_event_id", "123e4567-e89b-12d3-a456-426614174000");
     queryParams.put("event_type", "user_created");
-    queryParams.put("status", "success");
+    queryParams.put("status", "SUCCESS");
     queryParams.put("limit", "100");
     queryParams.put("offset", "0");
 
@@ -195,7 +195,7 @@ class SecurityEventHookResultQueryValidatorTest {
   @Test
   void testValidate_ValidStatus_Success() {
     Map<String, String> queryParams = new HashMap<>();
-    queryParams.put("status", "success");
+    queryParams.put("status", "SUCCESS");
 
     SecurityEventHookResultQueries queries = new SecurityEventHookResultQueries(queryParams);
     SecurityEventHookResultQueryValidator validator =
@@ -205,9 +205,9 @@ class SecurityEventHookResultQueryValidatorTest {
   }
 
   @Test
-  void testValidate_ValidStatusPending_Success() {
+  void testValidate_ValidStatusRetrySuccess_Success() {
     Map<String, String> queryParams = new HashMap<>();
-    queryParams.put("status", "pending");
+    queryParams.put("status", "RETRY_SUCCESS");
 
     SecurityEventHookResultQueries queries = new SecurityEventHookResultQueries(queryParams);
     SecurityEventHookResultQueryValidator validator =
@@ -219,7 +219,31 @@ class SecurityEventHookResultQueryValidatorTest {
   @Test
   void testValidate_ValidStatusFailure_Success() {
     Map<String, String> queryParams = new HashMap<>();
-    queryParams.put("status", "failure");
+    queryParams.put("status", "FAILURE");
+
+    SecurityEventHookResultQueries queries = new SecurityEventHookResultQueries(queryParams);
+    SecurityEventHookResultQueryValidator validator =
+        new SecurityEventHookResultQueryValidator(queries);
+
+    assertDoesNotThrow(() -> validator.validate());
+  }
+
+  @Test
+  void testValidate_ValidStatusRetryFailure_Success() {
+    Map<String, String> queryParams = new HashMap<>();
+    queryParams.put("status", "RETRY_FAILURE");
+
+    SecurityEventHookResultQueries queries = new SecurityEventHookResultQueries(queryParams);
+    SecurityEventHookResultQueryValidator validator =
+        new SecurityEventHookResultQueryValidator(queries);
+
+    assertDoesNotThrow(() -> validator.validate());
+  }
+
+  @Test
+  void testValidate_ValidStatusUnknown_Success() {
+    Map<String, String> queryParams = new HashMap<>();
+    queryParams.put("status", "UNKNOWN");
 
     SecurityEventHookResultQueries queries = new SecurityEventHookResultQueries(queryParams);
     SecurityEventHookResultQueryValidator validator =
@@ -262,7 +286,7 @@ class SecurityEventHookResultQueryValidatorTest {
     queryParams.put("security_event_id", "123e4567-e89b-12d3-a456-426614174000");
     queryParams.put("event_type", "user_created,user_updated");
     queryParams.put("hook_type", "webhook");
-    queryParams.put("status", "success");
+    queryParams.put("status", "SUCCESS");
     queryParams.put("from", "2025-01-01T00:00:00Z");
     queryParams.put("to", "2025-01-31T23:59:59Z");
     queryParams.put("limit", "100");

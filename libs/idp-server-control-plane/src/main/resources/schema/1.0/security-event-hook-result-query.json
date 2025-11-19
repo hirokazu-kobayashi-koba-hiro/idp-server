@@ -18,7 +18,7 @@
     },
     "status": {
       "type": "string",
-      "enum": ["pending", "success", "failure"],
+      "enum": ["SUCCESS", "FAILURE", "RETRY_SUCCESS", "RETRY_FAILURE", "UNKNOWN"],
       "description": "Execution status filter"
     },
     "from": {
