@@ -17,12 +17,13 @@
 package org.idp.server.platform.security.hook;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import org.idp.server.platform.date.LocalDateTimeParser;
-import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.uuid.UuidConvertable;
 
 public class SecurityEventHookResultQueries implements UuidConvertable {
@@ -34,16 +35,26 @@ public class SecurityEventHookResultQueries implements UuidConvertable {
     this.values = Objects.requireNonNullElseGet(values, HashMap::new);
   }
 
+  public boolean hasFrom() {
+    return values.containsKey("from");
+  }
+
   public LocalDateTime from() {
-    if (!values.containsKey("from")) {
-      return SystemDateTime.now().minusDays(7);
+    if (!hasFrom()) {
+      throw new IllegalStateException(
+          "from is not specified. Check hasFrom() before calling this method.");
     }
     return LocalDateTimeParser.parse(values.get("from"));
   }
 
+  public boolean hasTo() {
+    return values.containsKey("to");
+  }
+
   public LocalDateTime to() {
-    if (!values.containsKey("to")) {
-      return SystemDateTime.now().plusDays(1);
+    if (!hasTo()) {
+      throw new IllegalStateException(
+          "to is not specified. Check hasTo() before calling this method.");
     }
     return LocalDateTimeParser.parse(values.get("to"));
   }
@@ -60,12 +71,32 @@ public class SecurityEventHookResultQueries implements UuidConvertable {
     return convertUuid(id());
   }
 
+  public boolean hasSecurityEventId() {
+    return values.containsKey("security_event_id");
+  }
+
+  public String securityEventId() {
+    return values.get("security_event_id");
+  }
+
+  public UUID securityEventIdAsUuid() {
+    return convertUuid(securityEventId());
+  }
+
   public boolean hasEventType() {
     return values.containsKey("event_type");
   }
 
   public String eventType() {
     return values.get("event_type");
+  }
+
+  public List<String> eventTypes() {
+    String value = values.get("event_type");
+    if (value == null || value.isEmpty()) {
+      return List.of();
+    }
+    return Arrays.asList(value.split(","));
   }
 
   public String hookType() {

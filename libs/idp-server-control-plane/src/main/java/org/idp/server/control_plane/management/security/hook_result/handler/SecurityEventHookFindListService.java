@@ -23,6 +23,7 @@ import org.idp.server.control_plane.management.security.hook_result.SecurityEven
 import org.idp.server.control_plane.management.security.hook_result.io.SecurityEventHookFindListRequest;
 import org.idp.server.control_plane.management.security.hook_result.io.SecurityEventHookManagementResponse;
 import org.idp.server.control_plane.management.security.hook_result.io.SecurityEventHookManagementStatus;
+import org.idp.server.control_plane.management.security.hook_result.validator.SecurityEventHookResultQueryValidator;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -64,6 +65,9 @@ public class SecurityEventHookFindListService
       RequestAttributes requestAttributes) {
 
     SecurityEventHookResultQueries queries = request.queries();
+
+    new SecurityEventHookResultQueryValidator(queries).validate();
+
     long totalCount = securityEventHookResultQueryRepository.findTotalCount(tenant, queries);
 
     if (totalCount == 0) {

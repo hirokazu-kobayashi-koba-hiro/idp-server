@@ -17,6 +17,7 @@
 package org.idp.server.core.adapters.datasource.security.hook.result.query;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.datasource.SqlExecutor;
@@ -36,18 +37,40 @@ public class MysqlExecutor implements SecurityEventHookResultSqlExecutor {
     StringBuilder sql = new StringBuilder(selectSql).append(" WHERE tenant_id = ?");
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
-    sql.append(" AND created_at BETWEEN ? AND ?");
-    params.add(queries.from());
-    params.add(queries.to());
+
+    if (queries.hasFrom() && queries.hasTo()) {
+      sql.append(" AND created_at BETWEEN ? AND ?");
+      params.add(queries.from());
+      params.add(queries.to());
+    } else if (queries.hasFrom()) {
+      sql.append(" AND created_at >= ?");
+      params.add(queries.from());
+    } else if (queries.hasTo()) {
+      sql.append(" AND created_at <= ?");
+      params.add(queries.to());
+    }
 
     if (queries.hasId()) {
       sql.append(" AND id = ?");
       params.add(queries.id());
     }
 
+    if (queries.hasSecurityEventId()) {
+      sql.append(" AND security_event_id = ?");
+      params.add(queries.securityEventId());
+    }
+
     if (queries.hasEventType()) {
-      sql.append(" AND security_event_type = ?");
-      params.add(queries.eventType());
+      List<String> eventTypes = queries.eventTypes();
+      if (eventTypes.size() == 1) {
+        sql.append(" AND security_event_type = ?");
+        params.add(eventTypes.get(0));
+      } else {
+        sql.append(" AND security_event_type IN (");
+        sql.append(String.join(",", Collections.nCopies(eventTypes.size(), "?")));
+        sql.append(")");
+        params.addAll(eventTypes);
+      }
     }
 
     if (queries.hasHookType()) {
@@ -91,18 +114,40 @@ public class MysqlExecutor implements SecurityEventHookResultSqlExecutor {
     StringBuilder sql = new StringBuilder(selectSql).append(" WHERE tenant_id = ?");
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
-    sql.append(" AND created_at BETWEEN ? AND ?");
-    params.add(queries.from());
-    params.add(queries.to());
+
+    if (queries.hasFrom() && queries.hasTo()) {
+      sql.append(" AND created_at BETWEEN ? AND ?");
+      params.add(queries.from());
+      params.add(queries.to());
+    } else if (queries.hasFrom()) {
+      sql.append(" AND created_at >= ?");
+      params.add(queries.from());
+    } else if (queries.hasTo()) {
+      sql.append(" AND created_at <= ?");
+      params.add(queries.to());
+    }
 
     if (queries.hasId()) {
       sql.append(" AND id = ?");
       params.add(queries.id());
     }
 
+    if (queries.hasSecurityEventId()) {
+      sql.append(" AND security_event_id = ?");
+      params.add(queries.securityEventId());
+    }
+
     if (queries.hasEventType()) {
-      sql.append(" AND security_event_type = ?");
-      params.add(queries.eventType());
+      List<String> eventTypes = queries.eventTypes();
+      if (eventTypes.size() == 1) {
+        sql.append(" AND security_event_type = ?");
+        params.add(eventTypes.get(0));
+      } else {
+        sql.append(" AND security_event_type IN (");
+        sql.append(String.join(",", Collections.nCopies(eventTypes.size(), "?")));
+        sql.append(")");
+        params.addAll(eventTypes);
+      }
     }
 
     if (queries.hasHookType()) {

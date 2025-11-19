@@ -150,4 +150,9 @@ public class ControlPlaneV1SchemaReader {
     String json = ResourceReader.readClasspath("/schema/1.0/audit-log-query.json");
     return JsonSchemaDefinition.fromJson(json);
   }
+
+  public static JsonSchemaDefinition securityEventHookResultQuerySchema() {
+    String json = ResourceReader.readClasspath("/schema/1.0/security-event-hook-result-query.json");
+    return JsonSchemaDefinition.fromJson(json);
+  }
 }
