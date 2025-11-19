@@ -26,7 +26,9 @@ import org.idp.server.adapters.springboot.application.restapi.model.IdPApplicati
 import org.idp.server.adapters.springboot.application.restapi.model.ResourceOwnerPrincipal;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserAuthenticationApi;
+import org.idp.server.core.openid.identity.exception.UserNotFoundException;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.exception.NotFoundException;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.exception.UnauthorizedException;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -72,8 +74,17 @@ public class ProtectedResourceApiFilter extends OncePerRequestFilter {
       SecurityContextHolder.getContext().setAuthentication(principal);
       filterChain.doFilter(request, response);
     } catch (UnauthorizedException e) {
+      logger.debug("Authentication failed: {}", e.getMessage());
       writeErrorResponse(response, "invalid_token", e.getMessage());
-
+    } catch (UserNotFoundException e) {
+      logger.warn("User not found for token authentication: {}", e.getMessage());
+      writeErrorResponse(
+          response,
+          "invalid_token",
+          "The resource owner associated with the token no longer exists");
+    } catch (NotFoundException e) {
+      logger.warn("Resource not found during token authentication: {}", e.getMessage());
+      writeErrorResponse(response, "invalid_token", "The requested resource no longer exists");
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
       writeErrorResponse(response, "invalid_token", "Unexpected error occurred");
