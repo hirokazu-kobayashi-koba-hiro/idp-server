@@ -47,7 +47,7 @@ public class ClientConfiguration implements JsonReadable, Configurable {
   String softwareId = "";
   String softwareVersion = "";
   List<String> requestUris = new ArrayList<>();
-  String backchannelTokenDeliveryMode = "";
+  String backchannelTokenDeliveryMode = "poll";
   String backchannelClientNotificationEndpoint = "";
   String backchannelAuthenticationRequestSigningAlg = "";
   boolean backchannelUserCodeParameter = false;
