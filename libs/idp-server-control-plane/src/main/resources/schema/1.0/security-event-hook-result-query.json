@@ -1,0 +1,46 @@
+{
+  "type": "object",
+  "properties": {
+    "security_event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Security event identifier filter"
+    },
+    "event_type": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Security event type filter (comma-separated for multiple types)"
+    },
+    "hook_type": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Security event hook type filter"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "success", "failure"],
+      "description": "Execution status filter"
+    },
+    "from": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Start timestamp for filtering (ISO 8601 format)"
+    },
+    "to": {
+      "type": "string",
+      "format": "date-time",
+      "description": "End timestamp for filtering (ISO 8601 format)"
+    },
+    "limit": {
+      "type": "string",
+      "pattern": "^([1-9][0-9]{0,2}|1000)$",
+      "description": "Maximum number of hook results to return (1-1000)"
+    },
+    "offset": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "description": "Number of hook results to skip for pagination (>=0)"
+    }
+  },
+  "additionalProperties": true
+}
