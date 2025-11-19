@@ -12,6 +12,12 @@ idp:
     mode: "${IDP_SESSION_MODE:redis}"
   time:
    zone: "${TIME_ZONE:UTC}"
+  logging:
+    request-response:
+      enabled: "${IDP_LOGGING_REQUEST_RESPONSE_ENABLED:false}"
+      mask-tokens: "${IDP_LOGGING_REQUEST_RESPONSE_MASK_TOKENS:true}"
+      max-body-size: "${IDP_LOGGING_REQUEST_RESPONSE_MAX_BODY_SIZE:10000}"
+      endpoints: "${IDP_LOGGING_REQUEST_RESPONSE_ENDPOINTS:/v1/tokens,/v1/authorizations,/v1/backchannel/authentications,/v1/userinfo}"
   datasource:
     control-plane:
       writer:
@@ -82,6 +88,7 @@ logging:
           usecases: "${LOGGING_LEVEL_IDP_SERVER_USECASES:info}"
           authenticators.webauthn4j: "${LOGGING_LEVEL_IDP_SERVER_AUTHENTICATORS_WEBAUTHN4J:info}"
     org.idp.server.platform.http.HttpRequestExecutor: "${LOGGING_LEVEL_IDP_SERVER_HTTP_REQUEST_EXECUTOR:debug}"
+    org.idp.server.adapters.springboot.logging.RequestResponseLoggingFilter: "${LOGGING_LEVEL_REQUEST_RESPONSE_LOGGING_FILTER:info}"
 
 spring:
   data:
