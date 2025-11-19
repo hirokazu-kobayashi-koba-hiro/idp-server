@@ -169,6 +169,40 @@ idp-server の設定は `application.yaml` で定義され、環境変数で上�
 | `usecases` | `LOGGING_LEVEL_IDP_SERVER_USECASES` | ユースケースログレベル | `info` | `info` |
 | `authenticators.webauthn4j` | `LOGGING_LEVEL_IDP_SERVER_AUTHENTICATORS_WEBAUTHN4J` | WebAuthn4J 認証ログレベル | `info` | `info` |
 | `http.request.executor` | `LOGGING_LEVEL_IDP_SERVER_HTTP_REQUEST_EXECUTOR` | HTTP リクエスト実行ログレベル | `debug` | `info` |
+| `request.response.logging` | `LOGGING_LEVEL_REQUEST_RESPONSE_LOGGING_FILTER` | リクエスト/レスポンスログレベル | `info` | `info` (デバッグ時のみ `debug`) |
+
+### idp.logging.request-response (リクエスト/レスポンスデバッグログ設定)
+
+| パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
+|-----------|----------|------|-------------|-----------|
+| `enabled` | `IDP_LOGGING_REQUEST_RESPONSE_ENABLED` | リクエスト/レスポンスログ有効化 | `false` | `false` (デバッグ時のみ `true`) |
+| `mask-tokens` | `IDP_LOGGING_REQUEST_RESPONSE_MASK_TOKENS` | トークンマスキング有効化 | `true` | `true` |
+| `max-body-size` | `IDP_LOGGING_REQUEST_RESPONSE_MAX_BODY_SIZE` | ログ出力する最大ボディサイズ (バイト) | `10000` | `10000` |
+| `endpoints` | `IDP_LOGGING_REQUEST_RESPONSE_ENDPOINTS` | ログ対象エンドポイント (カンマ区切り) | `/v1/tokens,/v1/authorizations,/v1/backchannel/authentications,/v1/userinfo` | 必要なエンドポイントのみ指定 |
+
+**用途:**
+- OAuth/OIDCエンドポイントのHTTPリクエスト/レスポンスをDEBUGレベルで詳細ログ出力
+- 結合テスト時のパラメータ認識齟齬のデバッグに有用
+- `authorization_details`、カスタムスコープ等の実際の送受信内容を確認可能
+
+**セキュリティ対策:**
+- **多層防御**: Property (`enabled`) + LogLevel (`debug`) + Masking (`mask-tokens`)
+- **デフォルト無効**: `enabled=false` で本番環境での誤動作を防止
+- **自動マスキング**: `access_token`, `refresh_token`, `id_token`, `client_secret`, `password` を自動マスク
+- **選択的ログ**: 特定エンドポイントのみログ出力可能
+
+**設定例:**
+```bash
+# デバッグ時（開発・結合テスト環境）
+IDP_LOGGING_REQUEST_RESPONSE_ENABLED=true
+LOGGING_LEVEL_REQUEST_RESPONSE_LOGGING_FILTER=debug
+
+# マスキング無効（結合テスト専用）
+IDP_LOGGING_REQUEST_RESPONSE_MASK_TOKENS=false
+
+# 本番環境（必ず無効化）
+IDP_LOGGING_REQUEST_RESPONSE_ENABLED=false
+```
 
 ### spring (Spring Boot 設定)
 
