@@ -16,31 +16,60 @@
 
 package org.idp.server.core.extension.ciba.verifier;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.extension.ciba.CibaProfile;
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.platform.exception.UnSupportedException;
 
+/**
+ * CibaRequestVerifier
+ *
+ * <p>CIBA request verification following the same architecture as OAuthRequestVerifier.
+ *
+ * <p>Structure: - Base Verifiers: Profile-specific verification (CIBA, FAPI_CIBA) - Extension
+ * Verifiers: Common verifications across all profiles (RequestObject, AuthorizationDetails)
+ *
+ * <p>RFC 9396 Section 4: AS MUST refuse to process any unknown authorization details type
+ */
 public class CibaRequestVerifier {
 
   Map<CibaProfile, CibaVerifier> baseVerifiers;
+  List<CibaExtensionVerifier> extensionVerifiers;
   CibaRequestContext context;
 
   public CibaRequestVerifier(CibaRequestContext context) {
     this.baseVerifiers = new HashMap<>();
     this.baseVerifiers.put(CibaProfile.CIBA, new CibaRequestNormalProfileVerifier());
     this.baseVerifiers.put(CibaProfile.FAPI_CIBA, new CibaRequestFapiProfileVerifier());
+
+    // Extension Verifiers: Common across all CIBA profiles
+    this.extensionVerifiers = new ArrayList<>();
+    this.extensionVerifiers.add(new CibaRequestObjectVerifier());
+    this.extensionVerifiers.add(new CibaAuthorizationDetailsVerifier());
+
     this.context = context;
   }
 
   public void verify() {
+    // 1. Profile-specific base verification
     CibaVerifier cibaVerifier = baseVerifiers.get(context.profile());
     if (Objects.isNull(cibaVerifier)) {
       throw new UnSupportedException(
           String.format("unsupported ciba profile (%s)", context.profile().name()));
     }
     cibaVerifier.verify(context);
+
+    // 2. Common extension verifications
+    extensionVerifiers.forEach(
+        extensionVerifier -> {
+          if (extensionVerifier.shouldNotVerify(context)) {
+            return;
+          }
+          extensionVerifier.verify(context);
+        });
   }
 }

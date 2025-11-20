@@ -17,8 +17,11 @@
 package org.idp.server.core.openid.oauth.validator;
 
 import java.util.List;
+import java.util.Map;
 import org.idp.server.core.openid.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.openid.oauth.request.OAuthRequestParameters;
+import org.idp.server.core.openid.oauth.type.OAuthRequestKey;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
@@ -44,6 +47,7 @@ public class OAuthRequestValidator {
   public void validate() {
     throwExceptionIfNotContainsClientId();
     throwExceptionIfDuplicateValue();
+    throwExceptionIfInvalidAuthorizationDetails();
   }
 
   void throwExceptionIfNotContainsClientId() {
@@ -71,6 +75,63 @@ public class OAuthRequestValidator {
           String.format(
               "authorization request must not contains duplicate value; keys (%s)", keysValue),
           tenant);
+    }
+  }
+
+  /**
+   * RFC 9396 Section 2 & Section 5 - Authorization Details Validation
+   *
+   * <p>RFC 9396 Section 2 states: "The request parameter authorization_details contains, in JSON
+   * notation, an array of objects."
+   *
+   * <p>RFC 9396 Section 5 states: "The AS MUST abort processing and respond with an error
+   * invalid_authorization_details to the client if any of the following are true: - is missing
+   * required fields for the authorization details type"
+   *
+   * <p>This method validates:
+   *
+   * <ul>
+   *   <li>authorization_details MUST be a valid JSON array
+   *   <li>authorization_details array MUST NOT be empty
+   *   <li>Each element MUST contain required 'type' field
+   * </ul>
+   *
+   * @throws OAuthBadRequestException with error code "invalid_authorization_details"
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9396#section-2">RFC 9396 Section 2</a>
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9396#section-5">RFC 9396 Section 5</a>
+   */
+  void throwExceptionIfInvalidAuthorizationDetails() {
+    if (!oAuthRequestParameters.hasAuthorizationDetails()) {
+      return;
+    }
+
+    try {
+      String object = oAuthRequestParameters.getValueOrEmpty(OAuthRequestKey.authorization_details);
+      JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(object);
+      if (!jsonNodeWrapper.isArray()) {
+        throw new OAuthBadRequestException(
+            "invalid_authorization_details", "authorization_details is not array.", tenant);
+      }
+      List<Map<String, Object>> listAsMap = jsonNodeWrapper.toListAsMap();
+      if (listAsMap.isEmpty()) {
+        throw new OAuthBadRequestException(
+            "invalid_authorization_details", "authorization_detail object is unspecified.", tenant);
+      }
+      listAsMap.forEach(
+          map -> {
+            if (!map.containsKey("type")) {
+              throw new OAuthBadRequestException(
+                  "invalid_authorization_details",
+                  "type is required. authorization_detail object is missing 'type'.",
+                  tenant);
+            }
+          });
+    } catch (Exception e) {
+      if (e instanceof OAuthBadRequestException) {
+        throw (OAuthBadRequestException) e;
+      }
+      throw new OAuthBadRequestException(
+          "invalid_authorization_details", "authorization_details is invalid.", tenant);
     }
   }
 }

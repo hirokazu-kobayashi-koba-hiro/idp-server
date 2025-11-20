@@ -248,4 +248,8 @@ public class OAuthRequestParameters {
 
     return OAuthRequestPattern.NORMAL;
   }
+
+  public boolean hasAuthorizationDetails() {
+    return contains(authorization_details);
+  }
 }
