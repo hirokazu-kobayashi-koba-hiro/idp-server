@@ -50,6 +50,7 @@ import org.idp.server.control_plane.management.oidc.authorization.OrgAuthorizati
 import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
 import org.idp.server.control_plane.management.oidc.client.OrgClientManagementApi;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
+import org.idp.server.control_plane.management.organization.OrganizationManagementApi;
 import org.idp.server.control_plane.management.permission.OrgPermissionManagementApi;
 import org.idp.server.control_plane.management.permission.PermissionManagementApi;
 import org.idp.server.control_plane.management.role.OrgRoleManagementApi;
@@ -188,6 +189,7 @@ public class IdpServerApplication {
   UserLifecycleEventApi userLifecycleEventApi;
   OnboardingApi onboardingApi;
   TenantManagementApi tenantManagementApi;
+  OrganizationManagementApi organizationManagementApi;
 
   HealthCheckApi healthCheckApi;
 
@@ -740,6 +742,12 @@ public class IdpServerApplication {
             TenantManagementApi.class,
             databaseTypeProvider);
 
+    this.organizationManagementApi =
+        ManagementTypeEntryServiceProxy.createProxy(
+            new OrganizationManagementEntryService(organizationRepository, auditLogPublisher),
+            OrganizationManagementApi.class,
+            databaseTypeProvider);
+
     this.tenantInvitationManagementApi =
         ManagementTypeEntryServiceProxy.createProxy(
             new TenantInvitationManagementEntryService(
@@ -1159,6 +1167,10 @@ public class IdpServerApplication {
 
   public TenantManagementApi tenantManagementApi() {
     return tenantManagementApi;
+  }
+
+  public OrganizationManagementApi organizationManagementApi() {
+    return organizationManagementApi;
   }
 
   public TenantInvitationManagementApi tenantInvitationManagementApi() {

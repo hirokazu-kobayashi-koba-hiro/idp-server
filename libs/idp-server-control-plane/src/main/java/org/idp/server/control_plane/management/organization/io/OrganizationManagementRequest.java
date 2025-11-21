@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-package org.idp.server.platform.multi_tenancy.organization;
+package org.idp.server.control_plane.management.organization.io;
 
-import java.util.List;
+import java.util.Map;
+import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 
-public interface OrganizationRepository {
-  void register(Organization organization);
+/**
+ * Marker interface for organization management request types.
+ *
+ * <p>All organization management request DTOs must implement this interface.
+ */
+public interface OrganizationManagementRequest {
 
-  void update(Organization organization);
+  OrganizationIdentifier organizationIdentifier();
 
-  void delete(OrganizationIdentifier identifier);
+  Map<String, Object> toMap();
 
-  Organization get(OrganizationIdentifier identifier);
-
-  List<Organization> findList(OrganizationQueries queries);
+  boolean hasOrganizationIdentifier();
 }
