@@ -91,6 +91,24 @@ describe("role management api", () => {
       expect(updateResponse.data).toHaveProperty("result");
       expect(updateResponse.data).toHaveProperty("diff");
 
+      // Verify permissions are completely replaced (not accumulated)
+      const afterUpdateDetail = await get({
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/roles/${roleId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      expect(afterUpdateDetail.status).toBe(200);
+      expect(afterUpdateDetail.data.permissions).toHaveLength(2);
+      expect(afterUpdateDetail.data.permissions.map(p => p.id)).toEqual([
+        permissionListResponse.data.list[2].id,
+        permissionListResponse.data.list[3].id
+      ]);
+      // Original permissions should be removed
+      expect(afterUpdateDetail.data.permissions.map(p => p.id)).not.toContain(
+        permissionListResponse.data.list[0].id
+      );
+
       // ロール名変更しないPUT（description/permissionsのみ変更）
       const updateNoNameChangeResponse = await putWithJson({
         url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/roles/${roleId}`,
@@ -113,23 +131,30 @@ describe("role management api", () => {
       expect(updateNoNameChangeResponse.data.result.permissions[0].id).toEqual(permissionListResponse.data.list[1].id);
       expect(updateNoNameChangeResponse.data.result.permissions[1].id).toEqual(permissionListResponse.data.list[2].id);
 
-      //TODO implement api
-      // const removeResponse = await putWithJson({
-      //   url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/roles/${roleId}/permissions:remove`,
-      //   headers: {
-      //     Authorization: `Bearer ${accessToken}`,
-      //   },
-      //   body: {
-      //     "permissions": [
-      //       permissionListResponse.data.list[2].id,
-      //       permissionListResponse.data.list[3].id,
-      //     ]
-      //   }
-      // });
-      // console.log(removeResponse.data);
-      // expect(removeResponse.status).toBe(200);
-      // expect(removeResponse.data).toHaveProperty("result");
-      // expect(removeResponse.data).toHaveProperty("diff");
+      // Test: Update with empty permissions array (should remove all permissions)
+      const updateEmptyPermissionsResponse = await putWithJson({
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/roles/${roleId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          "name": updateNoNameChangeResponse.data.result.name,
+          "description": "test-no-permissions",
+          "permissions": []
+        }
+      });
+      expect(updateEmptyPermissionsResponse.status).toBe(200);
+      expect(updateEmptyPermissionsResponse.data).toHaveProperty("result");
+
+      // Verify all permissions are removed
+      const afterEmptyUpdateDetail = await get({
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/roles/${roleId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      expect(afterEmptyUpdateDetail.status).toBe(200);
+      expect(afterEmptyUpdateDetail.data.permissions).toHaveLength(0);
 
       const deleteResponse = await deletion({
         url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/roles/${roleId}`,

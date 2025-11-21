@@ -63,7 +63,9 @@ public class PostgresqlExecutor implements RoleSqlExecutor {
   @Override
   public void update(Tenant tenant, Role role) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
+
+    // 1. Update role table
+    String updateRoleSql =
         """
                 UPDATE role
                 SET name= ?,
@@ -72,14 +74,32 @@ public class PostgresqlExecutor implements RoleSqlExecutor {
                 AND tenant_id = ?::uuid;
                 """;
 
-    List<Object> params = new ArrayList<>();
-    params.add(role.name());
-    params.add(role.description());
-    params.add(role.idAsUuid());
-    params.add(tenant.identifierUUID());
+    List<Object> updateParams = new ArrayList<>();
+    updateParams.add(role.name());
+    updateParams.add(role.description());
+    updateParams.add(role.idAsUuid());
+    updateParams.add(tenant.identifierUUID());
 
-    sqlExecutor.execute(sqlTemplate, params);
-    registerPermission(tenant, role, sqlExecutor);
+    sqlExecutor.execute(updateRoleSql, updateParams);
+
+    // 2. Delete all existing permissions
+    String deletePermissionsSql =
+        """
+                DELETE FROM role_permission
+                WHERE tenant_id = ?::uuid
+                AND role_id = ?::uuid;
+                """;
+
+    List<Object> deleteParams = new ArrayList<>();
+    deleteParams.add(tenant.identifierUUID());
+    deleteParams.add(role.idAsUuid());
+
+    sqlExecutor.execute(deletePermissionsSql, deleteParams);
+
+    // 3. Register new permissions
+    if (!role.permissions().isEmpty()) {
+      registerPermission(tenant, role, sqlExecutor);
+    }
   }
 
   @Override
