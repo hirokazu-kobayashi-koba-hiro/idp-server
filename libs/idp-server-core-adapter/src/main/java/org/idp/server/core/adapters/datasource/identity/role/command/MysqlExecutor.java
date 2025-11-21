@@ -64,7 +64,9 @@ public class MysqlExecutor implements RoleSqlExecutor {
   @Override
   public void update(Tenant tenant, Role role) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
+
+    // 1. Update role table
+    String updateRoleSql =
         """
                 UPDATE role
                 SET name= ?,
@@ -73,14 +75,32 @@ public class MysqlExecutor implements RoleSqlExecutor {
                 AND tenant_id = ?;
                 """;
 
-    List<Object> params = new ArrayList<>();
-    params.add(role.name());
-    params.add(role.description());
-    params.add(role.id());
-    params.add(tenant.identifier().value());
+    List<Object> updateParams = new ArrayList<>();
+    updateParams.add(role.name());
+    updateParams.add(role.description());
+    updateParams.add(role.id());
+    updateParams.add(tenant.identifier().value());
 
-    sqlExecutor.execute(sqlTemplate, params);
-    registerPermission(tenant, role, sqlExecutor);
+    sqlExecutor.execute(updateRoleSql, updateParams);
+
+    // 2. Delete all existing permissions
+    String deletePermissionsSql =
+        """
+                DELETE FROM role_permission
+                WHERE tenant_id = ?
+                AND role_id = ?;
+                """;
+
+    List<Object> deleteParams = new ArrayList<>();
+    deleteParams.add(tenant.identifier().value());
+    deleteParams.add(role.id());
+
+    sqlExecutor.execute(deletePermissionsSql, deleteParams);
+
+    // 3. Register new permissions
+    if (!role.permissions().isEmpty()) {
+      registerPermission(tenant, role, sqlExecutor);
+    }
   }
 
   @Override
