@@ -50,11 +50,6 @@ public class RequestObjectPatternContextCreator implements OAuthRequestContextCr
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
     try {
-      RequestObjectValidator validator =
-          new RequestObjectValidator(
-              parameters, authorizationServerConfiguration, clientConfiguration);
-      validator.validate();
-
       JoseHandler joseHandler = new JoseHandler();
       JoseContext joseContext =
           joseHandler.handle(
@@ -63,6 +58,11 @@ public class RequestObjectPatternContextCreator implements OAuthRequestContextCr
               authorizationServerConfiguration.jwks(),
               clientConfiguration.clientSecretValue());
       joseContext.verifySignature();
+
+      RequestObjectValidator validator =
+          new RequestObjectValidator(
+              tenant, parameters, authorizationServerConfiguration, clientConfiguration);
+      validator.validate(joseContext.claimsAsMap());
 
       OAuthRequestPattern pattern = OAuthRequestPattern.REQUEST_OBJECT;
       Set<String> filteredScopes =

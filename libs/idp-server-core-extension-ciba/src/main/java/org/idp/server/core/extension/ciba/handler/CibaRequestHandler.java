@@ -34,7 +34,7 @@ import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationReque
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationResponse;
 import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationResponseBuilder;
-import org.idp.server.core.extension.ciba.validator.CibaRequestValidator;
+import org.idp.server.core.extension.ciba.validator.CibaNormalRequestValidator;
 import org.idp.server.core.extension.ciba.verifier.CibaRequestVerifier;
 import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.identity.User;
@@ -97,7 +97,7 @@ public class CibaRequestHandler {
     CibaRequestParameters parameters = request.toParameters();
     Tenant tenant = request.tenant();
 
-    CibaRequestValidator validator = new CibaRequestValidator(request);
+    CibaNormalRequestValidator validator = new CibaNormalRequestValidator(request);
     validator.validate();
 
     AuthorizationServerConfiguration authorizationServerConfiguration =
