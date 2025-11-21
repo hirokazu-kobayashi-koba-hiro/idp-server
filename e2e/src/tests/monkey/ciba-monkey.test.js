@@ -179,8 +179,8 @@ describe("Monkey test CIBA Flow", () => {
       ["requestedExpiry", 0, 400, "invalid_request"],
       ["requestedExpiry", -1, 400, "invalid_request"],
       ["requestedExpiry", {}, 400, "invalid_request"],
-      ["authorizationDetails", 42, 400, "invalid_request"],
-      ["authorizationDetails", null, 400, "invalid_request"]
+      ["authorizationDetails", 42, 400, "invalid_authorization_details"],
+      ["authorizationDetails", null, 400, "invalid_authorization_details"]
     ];
     test.each(typeMismatchCases)(
       "Field=%s, Value=%s → Expect Status=%s, Error=%s",

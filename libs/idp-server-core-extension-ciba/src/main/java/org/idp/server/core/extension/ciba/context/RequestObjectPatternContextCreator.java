@@ -21,6 +21,7 @@ import org.idp.server.core.extension.ciba.*;
 import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationBadRequestException;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.extension.ciba.request.RequestObjectPatternFactory;
+import org.idp.server.core.extension.ciba.validator.CibaRequestObjectValidator;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
@@ -53,6 +54,10 @@ public class RequestObjectPatternContextCreator implements CibaRequestContextCre
               authorizationServerConfiguration.jwks(),
               clientConfiguration.clientSecretValue());
       joseContext.verifySignature();
+
+      CibaRequestObjectValidator cibaRequestObjectValidator =
+          new CibaRequestObjectValidator(joseContext.claimsAsMap());
+      cibaRequestObjectValidator.validate();
 
       CibaRequestPattern pattern = CibaRequestPattern.REQUEST_OBJECT;
       Set<String> filteredScopes =

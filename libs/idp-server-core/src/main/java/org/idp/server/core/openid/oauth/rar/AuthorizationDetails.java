@@ -24,6 +24,39 @@ import org.idp.server.core.openid.oauth.type.vc.CredentialDefinition;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
 
+/**
+ * AuthorizationDetails
+ *
+ * <p>Represents the authorization_details parameter as defined in RFC 9396 Section 2.
+ *
+ * <p>RFC 9396 Section 2 - Authorization Details Parameter:
+ *
+ * <pre>
+ * The request parameter authorization_details contains, in JSON notation,
+ * an array of objects. Each JSON object contains the data to specify the
+ * authorization requirements for a certain type of resource.
+ * </pre>
+ *
+ * <p>This class validates:
+ *
+ * <ul>
+ *   <li>authorization_details MUST be a JSON array (RFC 9396 Section 2)
+ *   <li>authorization_details array MUST NOT be empty
+ *   <li>Each element MUST be a valid authorization detail object
+ * </ul>
+ *
+ * <p>RFC 9396 Section 5 - Authorization Error Response:
+ *
+ * <pre>
+ * The AS MUST refuse to process any unknown authorization details type or
+ * authorization details not conforming to the respective type definition.
+ * The AS MUST abort processing and respond with an error
+ * invalid_authorization_details to the client.
+ * </pre>
+ *
+ * @see <a href="https://www.rfc-editor.org/rfc/rfc9396#section-2">RFC 9396 Section 2</a>
+ * @see <a href="https://www.rfc-editor.org/rfc/rfc9396#section-5">RFC 9396 Section 5</a>
+ */
 public class AuthorizationDetails implements Iterable<AuthorizationDetail> {
 
   static final LoggerWrapper logger = LoggerWrapper.getLogger(AuthorizationDetails.class);

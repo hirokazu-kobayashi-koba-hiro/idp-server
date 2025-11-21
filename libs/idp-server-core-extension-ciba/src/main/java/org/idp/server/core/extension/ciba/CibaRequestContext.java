@@ -188,6 +188,10 @@ public class CibaRequestContext implements BackchannelRequestContext {
     return backchannelAuthenticationRequest.authorizationDetails();
   }
 
+  public boolean hasAuthorizationDetails() {
+    return backchannelAuthenticationRequest.authorizationDetails().exists();
+  }
+
   public boolean hasOpenidScope() {
     return scopes().contains("openid");
   }

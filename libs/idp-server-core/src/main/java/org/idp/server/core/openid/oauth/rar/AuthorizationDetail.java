@@ -22,6 +22,41 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.openid.oauth.type.vc.CredentialDefinition;
 
+/**
+ * AuthorizationDetail
+ *
+ * <p>Represents a single authorization detail object as defined in RFC 9396 Section 2.
+ *
+ * <p>RFC 9396 Section 2 - Authorization Details Structure:
+ *
+ * <pre>
+ * type: An identifier for the authorization details type as a string.
+ * This field is REQUIRED.
+ *
+ * locations: An array of strings representing the location of the resource.
+ * actions: An array of strings representing the actions the client wants to perform.
+ * datatypes: An array of strings representing the type of data requested.
+ * identifier: A string identifier indicating the resource to which access is requested.
+ * privileges: An array of strings representing access privileges.
+ * </pre>
+ *
+ * <p>RFC 9396 Section 5 - Required Field Validation:
+ *
+ * <pre>
+ * The AS MUST abort processing and respond with an error
+ * invalid_authorization_details to the client if any of the following are true:
+ * - is missing required fields for the authorization details type
+ * </pre>
+ *
+ * <p>This class validates:
+ *
+ * <ul>
+ *   <li>'type' field MUST be present and non-empty (RFC 9396 Section 2)
+ * </ul>
+ *
+ * @see <a href="https://www.rfc-editor.org/rfc/rfc9396#section-2">RFC 9396 Section 2</a>
+ * @see <a href="https://www.rfc-editor.org/rfc/rfc9396#section-5">RFC 9396 Section 5</a>
+ */
 public class AuthorizationDetail {
   Map<String, Object> values;
 
