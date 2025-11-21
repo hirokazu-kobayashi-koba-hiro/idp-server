@@ -203,7 +203,7 @@ describe("organization role management api", () => {
       expect(dryRunUpdateResponse.data).toHaveProperty("dry_run", true);
       console.log("✅ Dry run role update verified");
 
-      // Step 7: Actually update the role
+      // Step 7: Actually update the role (replace permission1 and permission3 with only permission2)
       const updateRoleResponse = await putWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}/roles/${roleId}`,
         headers: {
@@ -213,9 +213,7 @@ describe("organization role management api", () => {
           "name": `${roleName}-updated`,
           "description": "Updated test organization role",
           "permissions": [
-            permission1Id,
-            permission2Id,
-            permission3Id
+            permission2Id
           ]
         }
       });
@@ -224,12 +222,10 @@ describe("organization role management api", () => {
       expect(updateRoleResponse.data).toHaveProperty("result");
       expect(updateRoleResponse.data.result.name).toBe(`${roleName}-updated`);
       const updatePermissionNames = updateRoleResponse.data.result.permissions.map(p => p.name);
-      expect(updatePermissionNames).toContain(permission1Name);
       expect(updatePermissionNames).toContain(permission2Name);
-      expect(updatePermissionNames).toContain(permission3Name);
       console.log("✅ Role updated successfully");
 
-      // Step 8: Verify the update
+      // Step 8: Verify the update - permissions should be completely replaced (not accumulated)
       const verifyUpdateResponse = await get({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}/roles/${roleId}`,
         headers: {
@@ -239,10 +235,71 @@ describe("organization role management api", () => {
       expect(verifyUpdateResponse.status).toBe(200);
       expect(verifyUpdateResponse.data.name).toBe(`${roleName}-updated`);
       const verifyPermissionNames = verifyUpdateResponse.data.permissions.map(p => p.name);
-      expect(verifyPermissionNames).toContain(permission1Name);
+
+      // Issue #944: Verify permissions are completely replaced, not accumulated
+      expect(verifyUpdateResponse.data.permissions).toHaveLength(1);
       expect(verifyPermissionNames).toContain(permission2Name);
-      expect(verifyPermissionNames).toContain(permission3Name);
-      console.log("✅ Role update verified");
+      // Original permissions should be removed
+      expect(verifyPermissionNames).not.toContain(permission1Name);
+      expect(verifyPermissionNames).not.toContain(permission3Name);
+      console.log("✅ Role update verified - permissions completely replaced (Issue #944)");
+
+      // Step 8-2: Update with multiple permissions
+      const updateMultipleResponse = await putWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}/roles/${roleId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          "name": `${roleName}-updated`,
+          "description": "Updated test organization role",
+          "permissions": [
+            permission1Id,
+            permission3Id
+          ]
+        }
+      });
+      expect(updateMultipleResponse.status).toBe(200);
+
+      // Verify permission2 is removed and permission1, permission3 are added
+      const verifyMultipleUpdateResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}/roles/${roleId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      expect(verifyMultipleUpdateResponse.status).toBe(200);
+      expect(verifyMultipleUpdateResponse.data.permissions).toHaveLength(2);
+      const verifyMultiplePermissionNames = verifyMultipleUpdateResponse.data.permissions.map(p => p.name);
+      expect(verifyMultiplePermissionNames).toContain(permission1Name);
+      expect(verifyMultiplePermissionNames).toContain(permission3Name);
+      expect(verifyMultiplePermissionNames).not.toContain(permission2Name);
+      console.log("✅ Multiple permissions update verified - complete replacement (Issue #944)");
+
+      // Step 8-3: Update with empty permissions array (should remove all permissions)
+      const updateEmptyResponse = await putWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}/roles/${roleId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          "name": `${roleName}-updated`,
+          "description": "Role with no permissions",
+          "permissions": []
+        }
+      });
+      expect(updateEmptyResponse.status).toBe(200);
+
+      // Verify all permissions are removed
+      const verifyEmptyUpdateResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}/roles/${roleId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      expect(verifyEmptyUpdateResponse.status).toBe(200);
+      expect(verifyEmptyUpdateResponse.data.permissions).toHaveLength(0);
+      console.log("✅ Empty permissions update verified - all permissions removed (Issue #944)");
 
       // Step 9: Test dry run for role deletion
       const dryRunDeleteResponse = await deletion({
