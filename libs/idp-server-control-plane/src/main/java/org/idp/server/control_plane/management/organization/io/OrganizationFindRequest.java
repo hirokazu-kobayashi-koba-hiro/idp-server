@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.multi_tenancy.organization;
+package org.idp.server.control_plane.management.organization.io;
 
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.platform.multi_tenancy.organization.Organization;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationQueries;
 
-public interface OrganizationSqlExecutor {
-  void insert(Organization organization);
+public record OrganizationFindRequest(OrganizationIdentifier organizationIdentifier)
+    implements OrganizationManagementRequest {
 
-  void upsertAssignedTenants(Organization organization);
+  @Override
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("organization_id", organizationIdentifier.value());
+    return map;
+  }
 
-  void update(Organization organization);
-
-  void delete(OrganizationIdentifier identifier);
-
-  Map<String, String> selectOne(OrganizationIdentifier identifier);
-
-  List<Map<String, String>> selectList(OrganizationQueries queries);
+  @Override
+  public boolean hasOrganizationIdentifier() {
+    return organizationIdentifier != null && organizationIdentifier.exists();
+  }
 }

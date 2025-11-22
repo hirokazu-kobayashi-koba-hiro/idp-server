@@ -14,18 +14,28 @@
  * limitations under the License.
  */
 
-package org.idp.server.platform.multi_tenancy.organization;
+package org.idp.server.control_plane.management.organization.io;
 
-import java.util.List;
+public enum OrganizationManagementStatus {
+  OK(200),
+  NO_CONTENT(204),
+  INVALID_REQUEST(400),
+  UNAUTHORIZED(401),
+  FORBIDDEN(403),
+  NOT_FOUND(404),
+  SERVER_ERROR(500);
 
-public interface OrganizationRepository {
-  void register(Organization organization);
+  int statusCode;
 
-  void update(Organization organization);
+  OrganizationManagementStatus(int statusCode) {
+    this.statusCode = statusCode;
+  }
 
-  void delete(OrganizationIdentifier identifier);
+  public int statusCode() {
+    return statusCode;
+  }
 
-  Organization get(OrganizationIdentifier identifier);
-
-  List<Organization> findList(OrganizationQueries queries);
+  public boolean isOk() {
+    return this == OK;
+  }
 }

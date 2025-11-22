@@ -43,6 +43,11 @@ public class OrganizationDataSource implements OrganizationRepository {
   }
 
   @Override
+  public void delete(OrganizationIdentifier identifier) {
+    executor.delete(identifier);
+  }
+
+  @Override
   public Organization get(OrganizationIdentifier identifier) {
     Map<String, String> result = executor.selectOne(identifier);
     if (result == null || result.isEmpty()) {

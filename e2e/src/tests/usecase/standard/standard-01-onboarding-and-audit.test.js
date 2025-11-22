@@ -387,21 +387,21 @@ describe("Standard Use Case: Onboarding Flow with Audit Log Tracking", () => {
     console.log(`🧹 Business client deleted: ${deleteClientResponse.status}`);
     expect(deleteClientResponse.status).toBe(204);
 
-    // Attempt to delete organization (will fail until Issue #917 is resolved)
-    try {
-      const deleteOrgResponse = await deletion({
-        url: `${backendUrl}/v1/management/organizations/${organizationId}`,
-        headers: {
-          Authorization: `Bearer ${systemAccessToken}`,
-        },
-      });
-      console.log(`🧹 Organization deleted: ${deleteOrgResponse.status}`);
-    } catch (error) {
-      console.warn(
-        `⚠️  Organization cleanup failed (expected until Issue #917): ${error.response?.status}`
-      );
-      console.warn(`   Manual cleanup required for organization: ${organizationId}`);
-    }
+    const deleteTenantResponse = await deletion({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}`,
+      headers: {
+        Authorization: `Bearer ${orgAccessToken}`,
+      },
+    });
+    console.log(`🧹 Tenant deleted: ${deleteTenantResponse.status}`);
+
+    const deleteOrgResponse = await deletion({
+      url: `${backendUrl}/v1/management/orgs/${organizationId}`,
+      headers: {
+        Authorization: `Bearer ${systemAccessToken}`,
+      },
+    });
+    console.log(`🧹 Organization deleted: ${deleteOrgResponse.status}`);
 
     console.log("\n=== Test Completed ===");
   });

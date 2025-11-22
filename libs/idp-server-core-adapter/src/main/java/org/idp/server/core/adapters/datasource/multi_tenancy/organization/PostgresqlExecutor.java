@@ -99,6 +99,21 @@ public class PostgresqlExecutor implements OrganizationSqlExecutor {
   }
 
   @Override
+  public void delete(OrganizationIdentifier identifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+                DELETE FROM organization WHERE id = ?::uuid
+                """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(identifier.valueAsUuid());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  @Override
   public Map<String, String> selectOne(OrganizationIdentifier identifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
