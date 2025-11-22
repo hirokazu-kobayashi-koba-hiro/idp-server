@@ -222,6 +222,39 @@ curl -X POST http://localhost:8080/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/token
 # }
 ```
 
+
+```bash
+# 1. ブラウザで以下のURLを開く（Public Client2 - Public Tenant使用）
+open "http://localhost:8080/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/authorizations?response_type=code&client_id=ef274ddf-08d4-4049-82b8-5cdadf0890b9&redirect_uri=http://localhost:3000/callback/&scope=openid%20profile%20email&state=test-state"
+
+# 2. ログイン画面で入力
+#    Email: admin@localhost.local
+#    Password: LocalDevPassword123
+
+# 3. リダイレクト先のURLから認可コードを取得
+#    http://localhost:3000/callback/?code=XXXXX&state=test-state
+#    ↑ この code=XXXXX の部分をコピー
+
+# 4. 認可コードをトークンに交換（Public Client - Public Tenant使用）
+curl -X POST http://localhost:8080/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/tokens \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=authorization_code" \
+  -d "code=w30J3188oZr4vnsI3GYce6ZGG-8" \
+  -d "redirect_uri=http://localhost:3000/callback/" \
+  -d "client_id=8a9f5e2c-1b3d-4c6a-9f8e-7d5c3a2b1e4f" \
+  -d "client_secret=local-dev-public-secret-32char"
+
+# 5. レスポンス例（access_token, id_token, refresh_token を取得）
+# {
+#   "access_token": "eyJhbGc...",
+#   "token_type": "Bearer",
+#   "expires_in": 3600,
+#   "refresh_token": "...",
+#   "id_token": "eyJraWQ...",
+#   "scope": "openid profile email"
+# }
+```
+
 ##### 3-2. 管理用クライアント（Admin Client）でのAuthorization Code Flow + Password Grant
 
 管理機能を持つクライアント（`management`スコープ付き、Password Grant対応）でテストします。

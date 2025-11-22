@@ -1,7 +1,10 @@
 import NextAuth from "next-auth";
 import type { OAuthConfig } from "next-auth/providers";
 
+// クライアント側（ブラウザ）用のIssuer URL
 export const issuer = process.env.NEXT_PUBLIC_IDP_SERVER_ISSUER;
+// サーバーサイド用の内部Issuer URL（Docker内部通信用）
+export const internalIssuer = process.env.IDP_SERVER_INTERNAL_ISSUER || issuer;
 export const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL;
 
 interface IdpServerOptions {
@@ -16,7 +19,7 @@ const IdpServer = (options: IdpServerOptions): OAuthConfig<Record<string, unknow
     name: "IdPServer",
     type: "oidc",
     version: "2.0",
-    wellKnown: `${issuer}/.well-known/openid-configuration`,
+    wellKnown: `${internalIssuer}/.well-known/openid-configuration`,
     idToken: false,
     authorization: {
       url: `${issuer}/v1/authorizations`,
@@ -37,7 +40,7 @@ const IdpServer = (options: IdpServerOptions): OAuthConfig<Record<string, unknow
           redirect_uri: `${frontendUrl}/api/auth/callback/idp-server`,
           client_id: process.env.NEXT_PUBLIC_IDP_CLIENT_ID as string,
         });
-        const response = await fetch(`${issuer}/api/v1/tokens`, {
+        const response = await fetch(`${internalIssuer}/v1/tokens`, {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
@@ -70,7 +73,7 @@ const IdpServer = (options: IdpServerOptions): OAuthConfig<Record<string, unknow
         const { access_token, refresh_token, expires_at, id_token } =
           context.params;
 
-        const response = await fetch(`${issuer}/api/v1/userinfo`, {
+        const response = await fetch(`${internalIssuer}/v1/userinfo`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -109,7 +112,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     IdpServer({
       clientId: process.env.NEXT_PUBLIC_IDP_CLIENT_ID,
       clientSecret: process.env.NEXT_IDP_CLIENT_SECRET,
-      issuer: process.env.NEXT_PUBLIC_IDP_SERVER_ISSUER,
+      issuer: internalIssuer,
     }),
   ],
   callbacks: {
@@ -148,7 +151,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       });
 
       await fetch(
-        `${issuer}/v1/logout?${params.toString()}`,
+        `${internalIssuer}/v1/logout?${params.toString()}`,
         {
           method: "GET",
           credentials: "include",

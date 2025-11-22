@@ -315,6 +315,27 @@ services:
     depends_on:
       - idp-server-1
 
+  sample-web:
+    build:
+      context: .
+      dockerfile: docker/sample-web/Dockerfile
+    container_name: sample-web
+    ports:
+      - "3010:3010"
+    environment:
+      NODE_ENV: production
+      AUTH_SECRET: ${AUTH_SECRET:-development_secret_minimum_32_characters_long}
+      AUTH_TRUST_HOST: "true"
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3010}
+      NEXT_PUBLIC_IDP_SERVER_ISSUER: ${NEXT_PUBLIC_IDP_SERVER_ISSUER:-http://localhost:8080/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d}
+      IDP_SERVER_INTERNAL_ISSUER: ${IDP_SERVER_INTERNAL_ISSUER:-http://load-balancer/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d}
+      NEXT_PUBLIC_FRONTEND_URL: ${NEXT_PUBLIC_FRONTEND_URL:-http://localhost:3010}
+      NEXT_PUBLIC_IDP_CLIENT_ID: ${NEXT_PUBLIC_IDP_CLIENT_ID:-ef274ddf-08d4-4049-82b8-5cdadf0890b9}
+      NEXT_IDP_CLIENT_SECRET: ${NEXT_IDP_CLIENT_SECRET:-test-secret-2}
+    depends_on:
+      - idp-server-1
+      - idp-server-2
+
 volumes:
   postgres_primary_data:
   postgres_replica_data:

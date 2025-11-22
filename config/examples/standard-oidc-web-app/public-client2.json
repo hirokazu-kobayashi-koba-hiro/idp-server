@@ -1,0 +1,21 @@
+{
+  "client_id": "ef274ddf-08d4-4049-82b8-5cdadf0890b9",
+  "client_id_alias": "public-web-app-2",
+  "client_secret": "test-secret-2",
+  "redirect_uris": [
+    "http://localhost:3000/callback/",
+    "http://localhost:3001/callback/",
+    "http://localhost:3010/api/auth/callback/idp-server"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token"
+  ],
+  "scope": "openid profile email",
+  "client_name": "Public Web Application2",
+  "token_endpoint_auth_method": "none",
+  "application_type": "web"
+}

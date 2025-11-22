@@ -79,6 +79,13 @@ else
   PUBLIC_CLIENT_ID=""
 fi
 
+PUBLIC_CLIENT2_FILE="${SCRIPT_DIR}/public-client2.json"
+if [ -f "${PUBLIC_CLIENT2_FILE}" ]; then
+  PUBLIC_CLIENT2_ID=$(jq -r '.client_id' "${PUBLIC_CLIENT2_FILE}")
+else
+  PUBLIC_CLIENT2_ID=""
+fi
+
 echo "✅ Resource IDs loaded"
 echo "   Organization ID:       ${ORG_ID}"
 echo "   Organizer Tenant ID:   ${ORGANIZER_TENANT_ID}"
@@ -89,6 +96,9 @@ echo "   User ID:               ${USER_ID}"
 echo "   Admin Client ID:       ${ADMIN_CLIENT_ID}"
 if [ -n "${PUBLIC_CLIENT_ID}" ]; then
   echo "   Public Client ID:      ${PUBLIC_CLIENT_ID}"
+fi
+if [ -n "${PUBLIC_CLIENT2_ID}" ]; then
+  echo "   Public Client 2 ID:    ${PUBLIC_CLIENT2_ID}"
 fi
 echo ""
 
@@ -138,6 +148,33 @@ if [ -n "${PUBLIC_CLIENT_ID}" ] && [ -n "${PUBLIC_TENANT_ID}" ]; then
   echo ""
 else
   echo "⏭️  Step 3: Skipping public client deletion (not configured)"
+  echo ""
+fi
+
+# Step 3-2: Delete public client 2 (in Public Tenant)
+if [ -n "${PUBLIC_CLIENT2_ID}" ] && [ -n "${PUBLIC_TENANT_ID}" ]; then
+  echo "🗑️  Step 3-2: Deleting public web app client 2 (in Public Tenant)..."
+  PUBLIC_CLIENT2_DELETE_RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE \
+    "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${PUBLIC_TENANT_ID}/clients/${PUBLIC_CLIENT2_ID}" \
+    -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}")
+
+  PUBLIC_CLIENT2_DELETE_HTTP_CODE=$(echo "${PUBLIC_CLIENT2_DELETE_RESPONSE}" | tail -n1)
+  PUBLIC_CLIENT2_DELETE_BODY=$(echo "${PUBLIC_CLIENT2_DELETE_RESPONSE}" | sed '$d')
+
+  if [ "${PUBLIC_CLIENT2_DELETE_HTTP_CODE}" = "204" ]; then
+    echo "✅ Public client 2 deleted successfully"
+  elif [ "${PUBLIC_CLIENT2_DELETE_HTTP_CODE}" = "404" ]; then
+    echo "⚠️  Public client 2 not found (may already be deleted)"
+  else
+    echo "⚠️  Public client 2 deletion failed (HTTP ${PUBLIC_CLIENT2_DELETE_HTTP_CODE})"
+    if [ -n "${PUBLIC_CLIENT2_DELETE_BODY}" ]; then
+      echo "Response: ${PUBLIC_CLIENT2_DELETE_BODY}" | jq '.' || echo "${PUBLIC_CLIENT2_DELETE_BODY}"
+    fi
+  fi
+
+  echo ""
+else
+  echo "⏭️  Step 3-2: Skipping public client 2 deletion (not configured)"
   echo ""
 fi
 
@@ -250,5 +287,8 @@ echo "   User ID:               ${USER_ID}"
 echo "   Admin Client ID:       ${ADMIN_CLIENT_ID}"
 if [ -n "${PUBLIC_CLIENT_ID}" ]; then
   echo "   Public Client ID:      ${PUBLIC_CLIENT_ID}"
+fi
+if [ -n "${PUBLIC_CLIENT2_ID}" ]; then
+  echo "   Public Client 2 ID:    ${PUBLIC_CLIENT2_ID}"
 fi
 echo ""

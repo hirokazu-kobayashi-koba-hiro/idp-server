@@ -10,6 +10,7 @@ ENV_FILE="${PROJECT_ROOT}/.env"
 ONBOARDING_REQUEST="${SCRIPT_DIR}/onboarding-request.json"
 PUBLIC_TENANT_FILE="${SCRIPT_DIR}/public-tenant.json"
 PUBLIC_CLIENT_FILE="${SCRIPT_DIR}/public-client.json"
+PUBLIC_CLIENT2_FILE="${SCRIPT_DIR}/public-client2.json"
 
 echo "=========================================="
 echo "🔄 Standard OIDC Web App Update"
@@ -71,6 +72,12 @@ else
   PUBLIC_CLIENT_ID=""
 fi
 
+if [ -f "${PUBLIC_CLIENT2_FILE}" ]; then
+  PUBLIC_CLIENT2_ID=$(jq -r '.client_id' "${PUBLIC_CLIENT2_FILE}")
+else
+  PUBLIC_CLIENT2_ID=""
+fi
+
 echo "✅ Configuration loaded"
 echo "   Organization ID:      ${ORG_ID}"
 echo "   Organizer Tenant ID:  ${ORGANIZER_TENANT_ID}"
@@ -80,6 +87,9 @@ if [ -n "${PUBLIC_TENANT_ID}" ]; then
 fi
 if [ -n "${PUBLIC_CLIENT_ID}" ]; then
   echo "   Public Client ID:     ${PUBLIC_CLIENT_ID}"
+fi
+if [ -n "${PUBLIC_CLIENT2_ID}" ]; then
+  echo "   Public Client 2 ID:   ${PUBLIC_CLIENT2_ID}"
 fi
 echo ""
 
@@ -143,6 +153,22 @@ if [ -n "${PUBLIC_CLIENT_ID}" ] && [ -n "${PUBLIC_TENANT_ID}" ]; then
     echo "   ✓ Public Client exists: ${PUBLIC_CLIENT_ID}"
   else
     echo "   ✗ Public Client not found: ${PUBLIC_CLIENT_ID}"
+  fi
+fi
+
+# Check public client 2
+if [ -n "${PUBLIC_CLIENT2_ID}" ] && [ -n "${PUBLIC_TENANT_ID}" ]; then
+  PUBLIC_CLIENT2_CHECK=$(curl -s -w "\n%{http_code}" -X GET \
+    "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${PUBLIC_TENANT_ID}/clients/${PUBLIC_CLIENT2_ID}" \
+    -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}")
+
+  PUBLIC_CLIENT2_HTTP_CODE=$(echo "${PUBLIC_CLIENT2_CHECK}" | tail -n1)
+  PUBLIC_CLIENT2_EXISTS=false
+  if [ "${PUBLIC_CLIENT2_HTTP_CODE}" = "200" ]; then
+    PUBLIC_CLIENT2_EXISTS=true
+    echo "   ✓ Public Client 2 exists: ${PUBLIC_CLIENT2_ID}"
+  else
+    echo "   ✗ Public Client 2 not found: ${PUBLIC_CLIENT2_ID}"
   fi
 fi
 
@@ -303,6 +329,34 @@ else
   echo ""
 fi
 
+# Step 9: Update public client 2 configuration
+if [ -n "${PUBLIC_CLIENT2_ID}" ] && [ -n "${PUBLIC_TENANT_ID}" ] && [ "${PUBLIC_CLIENT2_EXISTS}" = "true" ]; then
+  echo "🔄 Step 9: Updating public client 2 configuration..."
+
+  PUBLIC_CLIENT2_UPDATE_JSON=$(cat "${PUBLIC_CLIENT2_FILE}")
+
+  PUBLIC_CLIENT2_UPDATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
+    "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${PUBLIC_TENANT_ID}/clients/${PUBLIC_CLIENT2_ID}" \
+    -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -d "${PUBLIC_CLIENT2_UPDATE_JSON}")
+
+  PUBLIC_CLIENT2_UPDATE_HTTP_CODE=$(echo "${PUBLIC_CLIENT2_UPDATE_RESPONSE}" | tail -n1)
+  PUBLIC_CLIENT2_UPDATE_BODY=$(echo "${PUBLIC_CLIENT2_UPDATE_RESPONSE}" | sed '$d')
+
+  if [ "${PUBLIC_CLIENT2_UPDATE_HTTP_CODE}" = "200" ] || [ "${PUBLIC_CLIENT2_UPDATE_HTTP_CODE}" = "201" ]; then
+    echo "✅ Public client 2 configuration updated"
+  else
+    echo "❌ Public client 2 update failed (HTTP ${PUBLIC_CLIENT2_UPDATE_HTTP_CODE})"
+    echo "Response: ${PUBLIC_CLIENT2_UPDATE_BODY}" | jq '.' || echo "${PUBLIC_CLIENT2_UPDATE_BODY}"
+  fi
+
+  echo ""
+else
+  echo "⏭️  Step 9: Skipping public client 2 update (not configured or not exists)"
+  echo ""
+fi
+
 echo "=========================================="
 echo "✅ Update Complete!"
 echo "=========================================="
@@ -316,6 +370,9 @@ fi
 echo "   Admin Client ID:      ${ADMIN_CLIENT_ID}"
 if [ -n "${PUBLIC_CLIENT_ID}" ]; then
   echo "   Public Client ID:     ${PUBLIC_CLIENT_ID}"
+fi
+if [ -n "${PUBLIC_CLIENT2_ID}" ]; then
+  echo "   Public Client 2 ID:   ${PUBLIC_CLIENT2_ID}"
 fi
 echo ""
 echo "🧪 Test Authorization Code Flow (Public Client):"
