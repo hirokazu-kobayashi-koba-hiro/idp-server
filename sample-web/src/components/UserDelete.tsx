@@ -49,9 +49,9 @@ const UserDelete = () => {
         return;
       }
 
-      // Delete successful - sign out and redirect
-      const { signOut } = await import("@/app/auth");
-      await signOut();
+      // Delete successful - API route already signed out the user
+      // Redirect to home page
+      window.location.href = "/";
     } catch {
       setError("エラーが発生しました。もう一度お試しください。");
       setLoading(false);

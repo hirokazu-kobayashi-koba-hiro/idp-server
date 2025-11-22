@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/app/auth";
+import { auth, signOut } from "@/app/auth";
 import { internalIssuer } from "@/app/auth";
 
 export async function DELETE() {
@@ -30,8 +30,11 @@ export async function DELETE() {
       return NextResponse.json(data, { status: response.status });
     }
 
-    // Return 204 No Content on success
-    return new NextResponse(null, { status: 204 });
+    // Delete successful - sign out the user
+    await signOut({ redirect: false });
+
+    // Return success response
+    return NextResponse.json({ message: "User deleted successfully" });
   } catch (error) {
     console.error("User delete error:", error);
     return NextResponse.json(
