@@ -4,7 +4,8 @@
   "client_secret": "local-dev-public-secret-32char",
   "redirect_uris": [
     "http://localhost:3000/callback/",
-    "http://localhost:3001/callback/"
+    "http://localhost:3001/callback/",
+    "http://localhost:3010/api/auth/callback/idp-server"
   ],
   "response_types": [
     "code"
@@ -15,6 +16,6 @@
   ],
   "scope": "openid profile email",
   "client_name": "Local Development Public Web Application",
-  "token_endpoint_auth_method": "client_secret_post",
+  "token_endpoint_auth_method": "none",
   "application_type": "web"
 }

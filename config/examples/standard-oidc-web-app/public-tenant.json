@@ -33,7 +33,8 @@
     "token_endpoint": "http://localhost:8080/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/tokens",
     "token_endpoint_auth_methods_supported": [
       "client_secret_post",
-      "client_secret_basic"
+      "client_secret_basic",
+      "none"
     ],
     "token_endpoint_auth_signing_alg_values_supported": [
       "RS256",
