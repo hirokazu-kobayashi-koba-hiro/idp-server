@@ -159,6 +159,38 @@ if [ "${HTTP_CODE}" = "200" ]; then
     fi
   fi
 
+  # Step 5: Create public web app client 2 in public tenant
+  if [ -n "${PUBLIC_TENANT_ID}" ]; then
+    echo "🔧 Step 5: Creating public web application client 2 in public tenant..."
+
+    PUBLIC_CLIENT2_FILE="${SCRIPT_DIR}/public-client2.json"
+    if [ ! -f "${PUBLIC_CLIENT2_FILE}" ]; then
+      echo "⚠️  public-client2.json not found at ${PUBLIC_CLIENT2_FILE}"
+      echo "⚠️  Skipping public client 2 creation..."
+      echo ""
+    else
+      PUBLIC_CLIENT2_JSON=$(cat "${PUBLIC_CLIENT2_FILE}")
+
+      PUBLIC_CLIENT2_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+        "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${PUBLIC_TENANT_ID}/clients" \
+        -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d "${PUBLIC_CLIENT2_JSON}")
+
+      PUBLIC2_HTTP_CODE=$(echo "${PUBLIC_CLIENT2_RESPONSE}" | tail -n1)
+      PUBLIC2_RESPONSE_BODY=$(echo "${PUBLIC_CLIENT2_RESPONSE}" | sed '$d')
+
+      if [ "${PUBLIC2_HTTP_CODE}" = "200" ] || [ "${PUBLIC2_HTTP_CODE}" = "201" ]; then
+        PUBLIC_CLIENT2_ID=$(echo "${PUBLIC2_RESPONSE_BODY}" | jq -r '.result.client_id')
+        echo "✅ Public web app client 2 created: ${PUBLIC_CLIENT2_ID}"
+      else
+        echo "⚠️  Public client 2 creation failed (HTTP ${PUBLIC2_HTTP_CODE})"
+        echo "Response: ${PUBLIC2_RESPONSE_BODY}" | jq '.' || echo "${PUBLIC2_RESPONSE_BODY}"
+      fi
+      echo ""
+    fi
+  fi
+
   echo "=========================================="
   echo "✅ Setup Complete!"
   echo "=========================================="
@@ -186,6 +218,13 @@ if [ "${HTTP_CODE}" = "200" ]; then
     echo "   Tenant ID:     ${PUBLIC_TENANT_ID}"
     echo "   Client ID:     8a9f5e2c-1b3d-4c6a-9f8e-7d5c3a2b1e4f"
     echo "   Client Secret: local-dev-public-secret-32char"
+    echo "   Scopes:        openid profile email"
+    echo "   Grant Types:   authorization_code, refresh_token"
+    echo ""
+    echo "🌐 Public Web App Client 2 (in Public Tenant):"
+    echo "   Tenant ID:     ${PUBLIC_TENANT_ID}"
+    echo "   Client ID:     ef274ddf-08d4-4049-82b8-5cdadf0890b9"
+    echo "   Client Secret: test-secret-2"
     echo "   Scopes:        openid profile email"
     echo "   Grant Types:   authorization_code, refresh_token"
     echo ""

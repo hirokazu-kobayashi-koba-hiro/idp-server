@@ -59,3 +59,10 @@ config/generated/
 config/tmp/
 build/release/
 logs/
+
+### Sample Web App (Next.js) ###
+sample-web/node_modules/
+sample-web/.next/
+sample-web/.env
+sample-web/.env.local
+sample-web/.env.*.local

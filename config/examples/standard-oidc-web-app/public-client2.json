@@ -1,7 +1,7 @@
 {
-  "client_id": "8a9f5e2c-1b3d-4c6a-9f8e-7d5c3a2b1e4f",
-  "client_id_alias": "local-public-web-app",
-  "client_secret": "local-dev-public-secret-32char",
+  "client_id": "ef274ddf-08d4-4049-82b8-5cdadf0890b9",
+  "client_id_alias": "public-web-app-2",
+  "client_secret": "test-secret-2",
   "redirect_uris": [
     "http://localhost:3000/callback/",
     "http://localhost:3001/callback/",
@@ -15,7 +15,7 @@
     "refresh_token"
   ],
   "scope": "openid profile email",
-  "client_name": "Local Development Public Web Application",
+  "client_name": "Public Web Application2",
   "token_endpoint_auth_method": "none",
   "application_type": "web"
 }
