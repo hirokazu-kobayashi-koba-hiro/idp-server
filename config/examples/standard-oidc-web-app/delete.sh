@@ -59,45 +59,92 @@ if [ ! -f "${ONBOARDING_REQUEST}" ]; then
   exit 1
 fi
 
-echo "📖 Reading resource IDs from onboarding-request.json..."
+echo "📖 Reading resource IDs from configuration files..."
 ORG_ID=$(jq -r '.organization.id' "${ONBOARDING_REQUEST}")
-TENANT_ID=$(jq -r '.tenant.id' "${ONBOARDING_REQUEST}")
+ORGANIZER_TENANT_ID=$(jq -r '.tenant.id' "${ONBOARDING_REQUEST}")
 USER_ID=$(jq -r '.user.sub' "${ONBOARDING_REQUEST}")
-CLIENT_ID=$(jq -r '.client.client_id' "${ONBOARDING_REQUEST}")
+ADMIN_CLIENT_ID=$(jq -r '.client.client_id' "${ONBOARDING_REQUEST}")
+
+PUBLIC_TENANT_FILE="${SCRIPT_DIR}/public-tenant.json"
+if [ -f "${PUBLIC_TENANT_FILE}" ]; then
+  PUBLIC_TENANT_ID=$(jq -r '.tenant.id' "${PUBLIC_TENANT_FILE}")
+else
+  PUBLIC_TENANT_ID=""
+fi
+
+PUBLIC_CLIENT_FILE="${SCRIPT_DIR}/public-client.json"
+if [ -f "${PUBLIC_CLIENT_FILE}" ]; then
+  PUBLIC_CLIENT_ID=$(jq -r '.client_id' "${PUBLIC_CLIENT_FILE}")
+else
+  PUBLIC_CLIENT_ID=""
+fi
 
 echo "✅ Resource IDs loaded"
-echo "   Organization ID: ${ORG_ID}"
-echo "   Tenant ID:       ${TENANT_ID}"
-echo "   User ID:         ${USER_ID}"
-echo "   Client ID:       ${CLIENT_ID}"
+echo "   Organization ID:       ${ORG_ID}"
+echo "   Organizer Tenant ID:   ${ORGANIZER_TENANT_ID}"
+if [ -n "${PUBLIC_TENANT_ID}" ]; then
+  echo "   Public Tenant ID:      ${PUBLIC_TENANT_ID}"
+fi
+echo "   User ID:               ${USER_ID}"
+echo "   Admin Client ID:       ${ADMIN_CLIENT_ID}"
+if [ -n "${PUBLIC_CLIENT_ID}" ]; then
+  echo "   Public Client ID:      ${PUBLIC_CLIENT_ID}"
+fi
 echo ""
 
-# Step 2: Delete client
-echo "🗑️  Step 2: Deleting client..."
-CLIENT_DELETE_RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE \
-  "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${TENANT_ID}/clients/${CLIENT_ID}" \
+# Step 2: Delete admin client (in Organizer Tenant)
+echo "🗑️  Step 2: Deleting admin client (in Organizer Tenant)..."
+ADMIN_CLIENT_DELETE_RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE \
+  "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${ORGANIZER_TENANT_ID}/clients/${ADMIN_CLIENT_ID}" \
   -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}")
 
-CLIENT_DELETE_HTTP_CODE=$(echo "${CLIENT_DELETE_RESPONSE}" | tail -n1)
-CLIENT_DELETE_BODY=$(echo "${CLIENT_DELETE_RESPONSE}" | sed '$d')
+ADMIN_CLIENT_DELETE_HTTP_CODE=$(echo "${ADMIN_CLIENT_DELETE_RESPONSE}" | tail -n1)
+ADMIN_CLIENT_DELETE_BODY=$(echo "${ADMIN_CLIENT_DELETE_RESPONSE}" | sed '$d')
 
-if [ "${CLIENT_DELETE_HTTP_CODE}" = "204" ]; then
-  echo "✅ Client deleted successfully"
-elif [ "${CLIENT_DELETE_HTTP_CODE}" = "404" ]; then
-  echo "⚠️  Client not found (may already be deleted)"
+if [ "${ADMIN_CLIENT_DELETE_HTTP_CODE}" = "204" ]; then
+  echo "✅ Admin client deleted successfully"
+elif [ "${ADMIN_CLIENT_DELETE_HTTP_CODE}" = "404" ]; then
+  echo "⚠️  Admin client not found (may already be deleted)"
 else
-  echo "⚠️  Client deletion failed (HTTP ${CLIENT_DELETE_HTTP_CODE})"
-  if [ -n "${CLIENT_DELETE_BODY}" ]; then
-    echo "Response: ${CLIENT_DELETE_BODY}" | jq '.' || echo "${CLIENT_DELETE_BODY}"
+  echo "⚠️  Admin client deletion failed (HTTP ${ADMIN_CLIENT_DELETE_HTTP_CODE})"
+  if [ -n "${ADMIN_CLIENT_DELETE_BODY}" ]; then
+    echo "Response: ${ADMIN_CLIENT_DELETE_BODY}" | jq '.' || echo "${ADMIN_CLIENT_DELETE_BODY}"
   fi
 fi
 
 echo ""
 
-# Step 3: Delete user
-echo "🗑️  Step 3: Deleting user..."
+# Step 3: Delete public client (in Public Tenant)
+if [ -n "${PUBLIC_CLIENT_ID}" ] && [ -n "${PUBLIC_TENANT_ID}" ]; then
+  echo "🗑️  Step 3: Deleting public web app client (in Public Tenant)..."
+  PUBLIC_CLIENT_DELETE_RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE \
+    "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${PUBLIC_TENANT_ID}/clients/${PUBLIC_CLIENT_ID}" \
+    -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}")
+
+  PUBLIC_CLIENT_DELETE_HTTP_CODE=$(echo "${PUBLIC_CLIENT_DELETE_RESPONSE}" | tail -n1)
+  PUBLIC_CLIENT_DELETE_BODY=$(echo "${PUBLIC_CLIENT_DELETE_RESPONSE}" | sed '$d')
+
+  if [ "${PUBLIC_CLIENT_DELETE_HTTP_CODE}" = "204" ]; then
+    echo "✅ Public client deleted successfully"
+  elif [ "${PUBLIC_CLIENT_DELETE_HTTP_CODE}" = "404" ]; then
+    echo "⚠️  Public client not found (may already be deleted)"
+  else
+    echo "⚠️  Public client deletion failed (HTTP ${PUBLIC_CLIENT_DELETE_HTTP_CODE})"
+    if [ -n "${PUBLIC_CLIENT_DELETE_BODY}" ]; then
+      echo "Response: ${PUBLIC_CLIENT_DELETE_BODY}" | jq '.' || echo "${PUBLIC_CLIENT_DELETE_BODY}"
+    fi
+  fi
+
+  echo ""
+else
+  echo "⏭️  Step 3: Skipping public client deletion (not configured)"
+  echo ""
+fi
+
+# Step 4: Delete user (in Organizer Tenant)
+echo "🗑️  Step 4: Deleting user (in Organizer Tenant)..."
 USER_DELETE_RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE \
-  "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${TENANT_ID}/users/${USER_ID}" \
+  "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${ORGANIZER_TENANT_ID}/users/${USER_ID}" \
   -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}")
 
 USER_DELETE_HTTP_CODE=$(echo "${USER_DELETE_RESPONSE}" | tail -n1)
@@ -116,23 +163,50 @@ fi
 
 echo ""
 
-# Step 4: Delete tenant
-echo "🗑️  Step 4: Deleting tenant..."
-TENANT_DELETE_RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE \
-  "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${TENANT_ID}" \
+# Step 5: Delete public tenant
+if [ -n "${PUBLIC_TENANT_ID}" ]; then
+  echo "🗑️  Step 5: Deleting public tenant..."
+  PUBLIC_TENANT_DELETE_RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE \
+    "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${PUBLIC_TENANT_ID}" \
+    -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}")
+
+  PUBLIC_TENANT_DELETE_HTTP_CODE=$(echo "${PUBLIC_TENANT_DELETE_RESPONSE}" | tail -n1)
+  PUBLIC_TENANT_DELETE_BODY=$(echo "${PUBLIC_TENANT_DELETE_RESPONSE}" | sed '$d')
+
+  if [ "${PUBLIC_TENANT_DELETE_HTTP_CODE}" = "204" ]; then
+    echo "✅ Public tenant deleted successfully"
+  elif [ "${PUBLIC_TENANT_DELETE_HTTP_CODE}" = "404" ]; then
+    echo "⚠️  Public tenant not found (may already be deleted)"
+  else
+    echo "⚠️  Public tenant deletion failed (HTTP ${PUBLIC_TENANT_DELETE_HTTP_CODE})"
+    if [ -n "${PUBLIC_TENANT_DELETE_BODY}" ]; then
+      echo "Response: ${PUBLIC_TENANT_DELETE_BODY}" | jq '.' || echo "${PUBLIC_TENANT_DELETE_BODY}"
+    fi
+  fi
+
+  echo ""
+else
+  echo "⏭️  Step 5: Skipping public tenant deletion (not configured)"
+  echo ""
+fi
+
+# Step 6: Delete organizer tenant
+echo "🗑️  Step 6: Deleting organizer tenant..."
+ORGANIZER_TENANT_DELETE_RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE \
+  "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${ORGANIZER_TENANT_ID}" \
   -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}")
 
-TENANT_DELETE_HTTP_CODE=$(echo "${TENANT_DELETE_RESPONSE}" | tail -n1)
-TENANT_DELETE_BODY=$(echo "${TENANT_DELETE_RESPONSE}" | sed '$d')
+ORGANIZER_TENANT_DELETE_HTTP_CODE=$(echo "${ORGANIZER_TENANT_DELETE_RESPONSE}" | tail -n1)
+ORGANIZER_TENANT_DELETE_BODY=$(echo "${ORGANIZER_TENANT_DELETE_RESPONSE}" | sed '$d')
 
-if [ "${TENANT_DELETE_HTTP_CODE}" = "204" ]; then
-  echo "✅ Tenant deleted successfully"
-elif [ "${TENANT_DELETE_HTTP_CODE}" = "404" ]; then
-  echo "⚠️  Tenant not found (may already be deleted)"
+if [ "${ORGANIZER_TENANT_DELETE_HTTP_CODE}" = "204" ]; then
+  echo "✅ Organizer tenant deleted successfully"
+elif [ "${ORGANIZER_TENANT_DELETE_HTTP_CODE}" = "404" ]; then
+  echo "⚠️  Organizer tenant not found (may already be deleted)"
 else
-  echo "❌ Tenant deletion failed (HTTP ${TENANT_DELETE_HTTP_CODE})"
-  if [ -n "${TENANT_DELETE_BODY}" ]; then
-    echo "Response: ${TENANT_DELETE_BODY}" | jq '.' || echo "${TENANT_DELETE_BODY}"
+  echo "❌ Organizer tenant deletion failed (HTTP ${ORGANIZER_TENANT_DELETE_HTTP_CODE})"
+  if [ -n "${ORGANIZER_TENANT_DELETE_BODY}" ]; then
+    echo "Response: ${ORGANIZER_TENANT_DELETE_BODY}" | jq '.' || echo "${ORGANIZER_TENANT_DELETE_BODY}"
   fi
   echo "⚠️  Cannot proceed to organization deletion"
   exit 1
@@ -140,8 +214,8 @@ fi
 
 echo ""
 
-# Step 5: Delete organization
-echo "🗑️  Step 5: Deleting organization..."
+# Step 7: Delete organization
+echo "🗑️  Step 7: Deleting organization..."
 ORG_DELETE_RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE \
   "${AUTHORIZATION_SERVER_URL}/v1/management/orgs/${ORG_ID}" \
   -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}")
@@ -167,8 +241,14 @@ echo "✅ Delete Complete!"
 echo "=========================================="
 echo ""
 echo "🆔 Deleted Resources:"
-echo "   Organization ID: ${ORG_ID}"
-echo "   Tenant ID:       ${TENANT_ID}"
-echo "   User ID:         ${USER_ID}"
-echo "   Client ID:       ${CLIENT_ID}"
+echo "   Organization ID:       ${ORG_ID}"
+echo "   Organizer Tenant ID:   ${ORGANIZER_TENANT_ID}"
+if [ -n "${PUBLIC_TENANT_ID}" ]; then
+  echo "   Public Tenant ID:      ${PUBLIC_TENANT_ID}"
+fi
+echo "   User ID:               ${USER_ID}"
+echo "   Admin Client ID:       ${ADMIN_CLIENT_ID}"
+if [ -n "${PUBLIC_CLIENT_ID}" ]; then
+  echo "   Public Client ID:      ${PUBLIC_CLIENT_ID}"
+fi
 echo ""

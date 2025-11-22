@@ -2,12 +2,14 @@
 set -e
 
 # Standard OIDC Web Application Update Script
-# This script updates existing tenant/client/user configuration
+# This script updates existing tenant/client configurations
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 ENV_FILE="${PROJECT_ROOT}/.env"
 ONBOARDING_REQUEST="${SCRIPT_DIR}/onboarding-request.json"
+PUBLIC_TENANT_FILE="${SCRIPT_DIR}/public-tenant.json"
+PUBLIC_CLIENT_FILE="${SCRIPT_DIR}/public-client.json"
 
 echo "=========================================="
 echo "🔄 Standard OIDC Web App Update"
@@ -16,12 +18,6 @@ echo "=========================================="
 # Load .env file
 if [ ! -f "${ENV_FILE}" ]; then
   echo "❌ Error: .env file not found at ${ENV_FILE}"
-  exit 1
-fi
-
-# Check onboarding-request.json
-if [ ! -f "${ONBOARDING_REQUEST}" ]; then
-  echo "❌ Error: onboarding-request.json not found at ${ONBOARDING_REQUEST}"
   exit 1
 fi
 
@@ -57,129 +53,275 @@ fi
 echo "✅ Access token obtained: ${SYSTEM_ACCESS_TOKEN:0:20}..."
 echo ""
 
-# Read IDs from onboarding-request.json
-echo "📖 Reading configuration from onboarding-request.json..."
+# Read IDs from configuration files
+echo "📖 Reading configuration from files..."
 ORG_ID=$(jq -r '.organization.id' "${ONBOARDING_REQUEST}")
-TENANT_ID=$(jq -r '.tenant.id' "${ONBOARDING_REQUEST}")
-USER_ID=$(jq -r '.user.sub' "${ONBOARDING_REQUEST}")
-CLIENT_ID=$(jq -r '.client.client_id' "${ONBOARDING_REQUEST}")
+ORGANIZER_TENANT_ID=$(jq -r '.tenant.id' "${ONBOARDING_REQUEST}")
+ADMIN_CLIENT_ID=$(jq -r '.client.client_id' "${ONBOARDING_REQUEST}")
+
+if [ -f "${PUBLIC_TENANT_FILE}" ]; then
+  PUBLIC_TENANT_ID=$(jq -r '.tenant.id' "${PUBLIC_TENANT_FILE}")
+else
+  PUBLIC_TENANT_ID=""
+fi
+
+if [ -f "${PUBLIC_CLIENT_FILE}" ]; then
+  PUBLIC_CLIENT_ID=$(jq -r '.client_id' "${PUBLIC_CLIENT_FILE}")
+else
+  PUBLIC_CLIENT_ID=""
+fi
 
 echo "✅ Configuration loaded"
-echo "   Organization ID: ${ORG_ID}"
-echo "   Tenant ID:       ${TENANT_ID}"
-echo "   Client ID:       ${CLIENT_ID}"
+echo "   Organization ID:      ${ORG_ID}"
+echo "   Organizer Tenant ID:  ${ORGANIZER_TENANT_ID}"
+echo "   Admin Client ID:      ${ADMIN_CLIENT_ID}"
+if [ -n "${PUBLIC_TENANT_ID}" ]; then
+  echo "   Public Tenant ID:     ${PUBLIC_TENANT_ID}"
+fi
+if [ -n "${PUBLIC_CLIENT_ID}" ]; then
+  echo "   Public Client ID:     ${PUBLIC_CLIENT_ID}"
+fi
 echo ""
 
 # Step 2: Check if resources exist
 echo "🔍 Step 2: Checking existing resources..."
 
-# Check organization
-#ORG_CHECK=$(curl -s -w "\n%{http_code}" -X GET \
-#  "${AUTHORIZATION_SERVER_URL}/v1/management" \
-#  -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}")
-#
-#ORG_HTTP_CODE=$(echo "${ORG_CHECK}" | tail -n1)
-#ORG_EXISTS=false
-#if [ "${ORG_HTTP_CODE}" = "200" ]; then
-#  ORG_EXISTS=true
-#  echo "   ✓ Organization exists: ${ORG_ID}"
-#else
-#  echo "   ✗ Organization not found: ${ORG_ID}"
-#fi
-
-# Check tenant
-TENANT_CHECK=$(curl -s -w "\n%{http_code}" -X GET \
-  "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${TENANT_ID}" \
+# Check organizer tenant
+ORGANIZER_TENANT_CHECK=$(curl -s -w "\n%{http_code}" -X GET \
+  "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${ORGANIZER_TENANT_ID}" \
   -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}")
 
-TENANT_HTTP_CODE=$(echo "${TENANT_CHECK}" | tail -n1)
-TENANT_EXISTS=false
-if [ "${TENANT_HTTP_CODE}" = "200" ]; then
-  TENANT_EXISTS=true
-  echo "   ✓ Tenant exists: ${TENANT_ID}"
+ORGANIZER_TENANT_HTTP_CODE=$(echo "${ORGANIZER_TENANT_CHECK}" | tail -n1)
+ORGANIZER_TENANT_EXISTS=false
+if [ "${ORGANIZER_TENANT_HTTP_CODE}" = "200" ]; then
+  ORGANIZER_TENANT_EXISTS=true
+  echo "   ✓ Organizer Tenant exists: ${ORGANIZER_TENANT_ID}"
 else
-  echo "   ✗ Tenant not found: ${TENANT_ID}"
+  echo "   ✗ Organizer Tenant not found: ${ORGANIZER_TENANT_ID}"
 fi
 
-# Check client
-CLIENT_CHECK=$(curl -s -w "\n%{http_code}" -X GET \
-  "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${TENANT_ID}/clients/${CLIENT_ID}" \
+# Check admin client
+ADMIN_CLIENT_CHECK=$(curl -s -w "\n%{http_code}" -X GET \
+  "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${ORGANIZER_TENANT_ID}/clients/${ADMIN_CLIENT_ID}" \
   -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}")
 
-CLIENT_HTTP_CODE=$(echo "${CLIENT_CHECK}" | tail -n1)
-CLIENT_EXISTS=false
-if [ "${CLIENT_HTTP_CODE}" = "200" ]; then
-  CLIENT_EXISTS=true
-  echo "   ✓ Client exists: ${CLIENT_ID}"
+ADMIN_CLIENT_HTTP_CODE=$(echo "${ADMIN_CLIENT_CHECK}" | tail -n1)
+ADMIN_CLIENT_EXISTS=false
+if [ "${ADMIN_CLIENT_HTTP_CODE}" = "200" ]; then
+  ADMIN_CLIENT_EXISTS=true
+  echo "   ✓ Admin Client exists: ${ADMIN_CLIENT_ID}"
 else
-  echo "   ✗ Client not found: ${CLIENT_ID}"
+  echo "   ✗ Admin Client not found: ${ADMIN_CLIENT_ID}"
+fi
+
+# Check public tenant
+if [ -n "${PUBLIC_TENANT_ID}" ]; then
+  PUBLIC_TENANT_CHECK=$(curl -s -w "\n%{http_code}" -X GET \
+    "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${PUBLIC_TENANT_ID}" \
+    -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}")
+
+  PUBLIC_TENANT_HTTP_CODE=$(echo "${PUBLIC_TENANT_CHECK}" | tail -n1)
+  PUBLIC_TENANT_EXISTS=false
+  if [ "${PUBLIC_TENANT_HTTP_CODE}" = "200" ]; then
+    PUBLIC_TENANT_EXISTS=true
+    echo "   ✓ Public Tenant exists: ${PUBLIC_TENANT_ID}"
+  else
+    echo "   ✗ Public Tenant not found: ${PUBLIC_TENANT_ID}"
+  fi
+fi
+
+# Check public client
+if [ -n "${PUBLIC_CLIENT_ID}" ] && [ -n "${PUBLIC_TENANT_ID}" ]; then
+  PUBLIC_CLIENT_CHECK=$(curl -s -w "\n%{http_code}" -X GET \
+    "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${PUBLIC_TENANT_ID}/clients/${PUBLIC_CLIENT_ID}" \
+    -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}")
+
+  PUBLIC_CLIENT_HTTP_CODE=$(echo "${PUBLIC_CLIENT_CHECK}" | tail -n1)
+  PUBLIC_CLIENT_EXISTS=false
+  if [ "${PUBLIC_CLIENT_HTTP_CODE}" = "200" ]; then
+    PUBLIC_CLIENT_EXISTS=true
+    echo "   ✓ Public Client exists: ${PUBLIC_CLIENT_ID}"
+  else
+    echo "   ✗ Public Client not found: ${PUBLIC_CLIENT_ID}"
+  fi
 fi
 
 echo ""
 
 # Step 3: Determine action
-if [ "${TENANT_EXISTS}" = "false" ]; then
+if [ "${ORGANIZER_TENANT_EXISTS}" = "false" ]; then
   echo "⚠️  Resources not found. Please run ./setup.sh first."
   exit 1
 fi
 
-# Step 4: Update tenant configuration
-echo "🔄 Step 3: Updating tenant configuration..."
+# Step 3: Update organizer tenant configuration
+echo "🔄 Step 3: Updating organizer tenant configuration..."
 
-# Extract full tenant configuration from onboarding-request.json
-TENANT_UPDATE_JSON=$(jq '.tenant' "${ONBOARDING_REQUEST}")
+ORGANIZER_TENANT_UPDATE_JSON=$(jq '.tenant' "${ONBOARDING_REQUEST}")
 
-TENANT_UPDATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
-  "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${TENANT_ID}" \
+ORGANIZER_TENANT_UPDATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
+  "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${ORGANIZER_TENANT_ID}" \
   -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
   -H "Content-Type: application/json" \
-  -d "${TENANT_UPDATE_JSON}")
+  -d "${ORGANIZER_TENANT_UPDATE_JSON}")
 
-TENANT_UPDATE_HTTP_CODE=$(echo "${TENANT_UPDATE_RESPONSE}" | tail -n1)
-TENANT_UPDATE_BODY=$(echo "${TENANT_UPDATE_RESPONSE}" | sed '$d')
+ORGANIZER_TENANT_UPDATE_HTTP_CODE=$(echo "${ORGANIZER_TENANT_UPDATE_RESPONSE}" | tail -n1)
+ORGANIZER_TENANT_UPDATE_BODY=$(echo "${ORGANIZER_TENANT_UPDATE_RESPONSE}" | sed '$d')
 
-if [ "${TENANT_UPDATE_HTTP_CODE}" = "200" ]; then
-  echo "✅ Tenant configuration updated"
+if [ "${ORGANIZER_TENANT_UPDATE_HTTP_CODE}" = "200" ]; then
+  echo "✅ Organizer tenant configuration updated"
 else
-  echo "❌ Tenant update failed (HTTP ${TENANT_UPDATE_HTTP_CODE})"
-  echo "Response: ${TENANT_UPDATE_BODY}" | jq '.'
+  echo "❌ Organizer tenant update failed (HTTP ${ORGANIZER_TENANT_UPDATE_HTTP_CODE})"
+  echo "Response: ${ORGANIZER_TENANT_UPDATE_BODY}" | jq '.' || echo "${ORGANIZER_TENANT_UPDATE_BODY}"
 fi
 
 echo ""
 
-# Step 5: Update client configuration
-echo "🔄 Step 4: Updating client configuration..."
+# Step 4: Update organizer authorization server configuration
+echo "🔄 Step 4: Updating organizer authorization server configuration..."
 
-# Extract full client configuration from onboarding-request.json
-CLIENT_UPDATE_JSON=$(jq '.client' "${ONBOARDING_REQUEST}")
+ORGANIZER_AUTHZ_SERVER_UPDATE_JSON=$(jq '.authorization_server' "${ONBOARDING_REQUEST}")
 
-CLIENT_UPDATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
-  "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${TENANT_ID}/clients/${CLIENT_ID}" \
+ORGANIZER_AUTHZ_SERVER_UPDATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
+  "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${ORGANIZER_TENANT_ID}/authorization-server" \
   -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
   -H "Content-Type: application/json" \
-  -d "${CLIENT_UPDATE_JSON}")
+  -d "${ORGANIZER_AUTHZ_SERVER_UPDATE_JSON}")
 
-CLIENT_UPDATE_HTTP_CODE=$(echo "${CLIENT_UPDATE_RESPONSE}" | tail -n1)
-CLIENT_UPDATE_BODY=$(echo "${CLIENT_UPDATE_RESPONSE}" | sed '$d')
+ORGANIZER_AUTHZ_SERVER_UPDATE_HTTP_CODE=$(echo "${ORGANIZER_AUTHZ_SERVER_UPDATE_RESPONSE}" | tail -n1)
+ORGANIZER_AUTHZ_SERVER_UPDATE_BODY=$(echo "${ORGANIZER_AUTHZ_SERVER_UPDATE_RESPONSE}" | sed '$d')
 
-if [ "${CLIENT_UPDATE_HTTP_CODE}" = "200" ] || [ "${CLIENT_UPDATE_HTTP_CODE}" = "201" ]; then
-  echo "✅ Client configuration updated"
+if [ "${ORGANIZER_AUTHZ_SERVER_UPDATE_HTTP_CODE}" = "200" ] || [ "${ORGANIZER_AUTHZ_SERVER_UPDATE_HTTP_CODE}" = "201" ]; then
+  echo "✅ Organizer authorization server configuration updated"
 else
-  echo "❌ Client update failed (HTTP ${CLIENT_UPDATE_HTTP_CODE})"
-  echo "Response: ${CLIENT_UPDATE_BODY}" | jq '.'
+  echo "❌ Organizer authorization server update failed (HTTP ${ORGANIZER_AUTHZ_SERVER_UPDATE_HTTP_CODE})"
+  echo "Response: ${ORGANIZER_AUTHZ_SERVER_UPDATE_BODY}" | jq '.' || echo "${ORGANIZER_AUTHZ_SERVER_UPDATE_BODY}"
 fi
 
 echo ""
+
+# Step 5: Update admin client configuration
+echo "🔄 Step 5: Updating admin client configuration..."
+
+ADMIN_CLIENT_UPDATE_JSON=$(jq '.client' "${ONBOARDING_REQUEST}")
+
+ADMIN_CLIENT_UPDATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
+  "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${ORGANIZER_TENANT_ID}/clients/${ADMIN_CLIENT_ID}" \
+  -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d "${ADMIN_CLIENT_UPDATE_JSON}")
+
+ADMIN_CLIENT_UPDATE_HTTP_CODE=$(echo "${ADMIN_CLIENT_UPDATE_RESPONSE}" | tail -n1)
+ADMIN_CLIENT_UPDATE_BODY=$(echo "${ADMIN_CLIENT_UPDATE_RESPONSE}" | sed '$d')
+
+if [ "${ADMIN_CLIENT_UPDATE_HTTP_CODE}" = "200" ] || [ "${ADMIN_CLIENT_UPDATE_HTTP_CODE}" = "201" ]; then
+  echo "✅ Admin client configuration updated"
+else
+  echo "❌ Admin client update failed (HTTP ${ADMIN_CLIENT_UPDATE_HTTP_CODE})"
+  echo "Response: ${ADMIN_CLIENT_UPDATE_BODY}" | jq '.' || echo "${ADMIN_CLIENT_UPDATE_BODY}"
+fi
+
+echo ""
+
+# Step 6: Update public tenant configuration
+if [ -n "${PUBLIC_TENANT_ID}" ] && [ "${PUBLIC_TENANT_EXISTS}" = "true" ]; then
+  echo "🔄 Step 6: Updating public tenant configuration..."
+
+  # Extract tenant configuration only
+  PUBLIC_TENANT_UPDATE_JSON=$(jq '.tenant' "${PUBLIC_TENANT_FILE}")
+
+  PUBLIC_TENANT_UPDATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
+    "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${PUBLIC_TENANT_ID}" \
+    -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -d "${PUBLIC_TENANT_UPDATE_JSON}")
+
+  PUBLIC_TENANT_UPDATE_HTTP_CODE=$(echo "${PUBLIC_TENANT_UPDATE_RESPONSE}" | tail -n1)
+  PUBLIC_TENANT_UPDATE_BODY=$(echo "${PUBLIC_TENANT_UPDATE_RESPONSE}" | sed '$d')
+
+  if [ "${PUBLIC_TENANT_UPDATE_HTTP_CODE}" = "200" ]; then
+    echo "✅ Public tenant configuration updated"
+  else
+    echo "❌ Public tenant update failed (HTTP ${PUBLIC_TENANT_UPDATE_HTTP_CODE})"
+    echo "Response: ${PUBLIC_TENANT_UPDATE_BODY}" | jq '.' || echo "${PUBLIC_TENANT_UPDATE_BODY}"
+  fi
+
+  echo ""
+
+  # Step 7: Update public authorization server configuration
+  echo "🔄 Step 7: Updating public authorization server configuration..."
+
+  PUBLIC_AUTHZ_SERVER_UPDATE_JSON=$(jq '.authorization_server' "${PUBLIC_TENANT_FILE}")
+
+  PUBLIC_AUTHZ_SERVER_UPDATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
+    "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${PUBLIC_TENANT_ID}/authorization-server" \
+    -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -d "${PUBLIC_AUTHZ_SERVER_UPDATE_JSON}")
+
+  PUBLIC_AUTHZ_SERVER_UPDATE_HTTP_CODE=$(echo "${PUBLIC_AUTHZ_SERVER_UPDATE_RESPONSE}" | tail -n1)
+  PUBLIC_AUTHZ_SERVER_UPDATE_BODY=$(echo "${PUBLIC_AUTHZ_SERVER_UPDATE_RESPONSE}" | sed '$d')
+
+  if [ "${PUBLIC_AUTHZ_SERVER_UPDATE_HTTP_CODE}" = "200" ] || [ "${PUBLIC_AUTHZ_SERVER_UPDATE_HTTP_CODE}" = "201" ]; then
+    echo "✅ Public authorization server configuration updated"
+  else
+    echo "❌ Public authorization server update failed (HTTP ${PUBLIC_AUTHZ_SERVER_UPDATE_HTTP_CODE})"
+    echo "Response: ${PUBLIC_AUTHZ_SERVER_UPDATE_BODY}" | jq '.' || echo "${PUBLIC_AUTHZ_SERVER_UPDATE_BODY}"
+  fi
+
+  echo ""
+else
+  echo "⏭️  Step 6-7: Skipping public tenant update (not configured or not exists)"
+  echo ""
+fi
+
+# Step 8: Update public client configuration
+if [ -n "${PUBLIC_CLIENT_ID}" ] && [ -n "${PUBLIC_TENANT_ID}" ] && [ "${PUBLIC_CLIENT_EXISTS}" = "true" ]; then
+  echo "🔄 Step 8: Updating public client configuration..."
+
+  PUBLIC_CLIENT_UPDATE_JSON=$(cat "${PUBLIC_CLIENT_FILE}")
+
+  PUBLIC_CLIENT_UPDATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
+    "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${PUBLIC_TENANT_ID}/clients/${PUBLIC_CLIENT_ID}" \
+    -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -d "${PUBLIC_CLIENT_UPDATE_JSON}")
+
+  PUBLIC_CLIENT_UPDATE_HTTP_CODE=$(echo "${PUBLIC_CLIENT_UPDATE_RESPONSE}" | tail -n1)
+  PUBLIC_CLIENT_UPDATE_BODY=$(echo "${PUBLIC_CLIENT_UPDATE_RESPONSE}" | sed '$d')
+
+  if [ "${PUBLIC_CLIENT_UPDATE_HTTP_CODE}" = "200" ] || [ "${PUBLIC_CLIENT_UPDATE_HTTP_CODE}" = "201" ]; then
+    echo "✅ Public client configuration updated"
+  else
+    echo "❌ Public client update failed (HTTP ${PUBLIC_CLIENT_UPDATE_HTTP_CODE})"
+    echo "Response: ${PUBLIC_CLIENT_UPDATE_BODY}" | jq '.' || echo "${PUBLIC_CLIENT_UPDATE_BODY}"
+  fi
+
+  echo ""
+else
+  echo "⏭️  Step 8: Skipping public client update (not configured or not exists)"
+  echo ""
+fi
 
 echo "=========================================="
 echo "✅ Update Complete!"
 echo "=========================================="
 echo ""
 echo "🆔 Updated Resources:"
-echo "   Organization ID: ${ORG_ID}"
-echo "   Tenant ID:       ${TENANT_ID}"
-echo "   Client ID:       ${CLIENT_ID}"
+echo "   Organization ID:      ${ORG_ID}"
+echo "   Organizer Tenant ID:  ${ORGANIZER_TENANT_ID}"
+if [ -n "${PUBLIC_TENANT_ID}" ]; then
+  echo "   Public Tenant ID:     ${PUBLIC_TENANT_ID}"
+fi
+echo "   Admin Client ID:      ${ADMIN_CLIENT_ID}"
+if [ -n "${PUBLIC_CLIENT_ID}" ]; then
+  echo "   Public Client ID:     ${PUBLIC_CLIENT_ID}"
+fi
 echo ""
-echo "🧪 Test Authorization Code Flow:"
-echo "   open \"${AUTHORIZATION_SERVER_URL}/${TENANT_ID}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=http://localhost:3000/callback/&scope=openid%20profile%20email&state=test-state\""
+echo "🧪 Test Authorization Code Flow (Public Client):"
+if [ -n "${PUBLIC_TENANT_ID}" ] && [ -n "${PUBLIC_CLIENT_ID}" ]; then
+  echo "   open \"${AUTHORIZATION_SERVER_URL}/${PUBLIC_TENANT_ID}/v1/authorizations?response_type=code&client_id=${PUBLIC_CLIENT_ID}&redirect_uri=http://localhost:3000/callback/&scope=openid%20profile%20email&state=test-state\""
+else
+  echo "   (Public client not configured)"
+fi
 echo ""

@@ -89,37 +89,124 @@ if [ "${HTTP_CODE}" = "200" ]; then
 
   # Extract IDs from response
   ORG_ID=$(echo "${RESPONSE_BODY}" | jq -r '.organization.id')
-  TENANT_ID=$(echo "${RESPONSE_BODY}" | jq -r '.tenant.id')
+  ORGANIZER_TENANT_ID=$(echo "${RESPONSE_BODY}" | jq -r '.tenant.id')
+
+  echo "✅ Onboarding completed - Organization, Organizer Tenant, Admin User, and Admin Client created"
+  echo ""
+
+  # Step 3: Create public tenant
+  echo "🏢 Step 3: Creating public tenant..."
+
+  PUBLIC_TENANT_FILE="${SCRIPT_DIR}/public-tenant.json"
+  if [ ! -f "${PUBLIC_TENANT_FILE}" ]; then
+    echo "⚠️  public-tenant.json not found at ${PUBLIC_TENANT_FILE}"
+    echo "⚠️  Skipping public tenant and client creation..."
+    echo ""
+    PUBLIC_TENANT_ID=""
+  else
+    PUBLIC_TENANT_JSON=$(cat "${PUBLIC_TENANT_FILE}")
+
+    PUBLIC_TENANT_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+      "${AUTHORIZATION_SERVER_URL}/v1/management/tenants" \
+      -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
+      -H "Content-Type: application/json" \
+      -d "${PUBLIC_TENANT_JSON}")
+
+    PUBLIC_TENANT_HTTP_CODE=$(echo "${PUBLIC_TENANT_RESPONSE}" | tail -n1)
+    PUBLIC_TENANT_RESPONSE_BODY=$(echo "${PUBLIC_TENANT_RESPONSE}" | sed '$d')
+
+    if [ "${PUBLIC_TENANT_HTTP_CODE}" = "200" ] || [ "${PUBLIC_TENANT_HTTP_CODE}" = "201" ]; then
+      PUBLIC_TENANT_ID=$(echo "${PUBLIC_TENANT_RESPONSE_BODY}" | jq -r '.result.id')
+      echo "✅ Public tenant created: ${PUBLIC_TENANT_ID}"
+    else
+      echo "⚠️  Public tenant creation failed (HTTP ${PUBLIC_TENANT_HTTP_CODE})"
+      echo "Response: ${PUBLIC_TENANT_RESPONSE_BODY}" | jq '.' || echo "${PUBLIC_TENANT_RESPONSE_BODY}"
+      echo "⚠️  Skipping public client creation..."
+      PUBLIC_TENANT_ID=""
+    fi
+    echo ""
+  fi
+
+  # Step 4: Create public web app client in public tenant
+  if [ -n "${PUBLIC_TENANT_ID}" ]; then
+    echo "🔧 Step 4: Creating public web application client in public tenant..."
+
+    PUBLIC_CLIENT_FILE="${SCRIPT_DIR}/public-client.json"
+    if [ ! -f "${PUBLIC_CLIENT_FILE}" ]; then
+      echo "⚠️  public-client.json not found at ${PUBLIC_CLIENT_FILE}"
+      echo "⚠️  Skipping public client creation..."
+      echo ""
+    else
+      PUBLIC_CLIENT_JSON=$(cat "${PUBLIC_CLIENT_FILE}")
+
+      PUBLIC_CLIENT_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+        "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${PUBLIC_TENANT_ID}/clients" \
+        -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d "${PUBLIC_CLIENT_JSON}")
+
+      PUBLIC_HTTP_CODE=$(echo "${PUBLIC_CLIENT_RESPONSE}" | tail -n1)
+      PUBLIC_RESPONSE_BODY=$(echo "${PUBLIC_CLIENT_RESPONSE}" | sed '$d')
+
+      if [ "${PUBLIC_HTTP_CODE}" = "200" ] || [ "${PUBLIC_HTTP_CODE}" = "201" ]; then
+        PUBLIC_CLIENT_ID=$(echo "${PUBLIC_RESPONSE_BODY}" | jq -r '.result.client_id')
+        echo "✅ Public web app client created: ${PUBLIC_CLIENT_ID}"
+      else
+        echo "⚠️  Public client creation failed (HTTP ${PUBLIC_HTTP_CODE})"
+        echo "Response: ${PUBLIC_RESPONSE_BODY}" | jq '.' || echo "${PUBLIC_RESPONSE_BODY}"
+      fi
+      echo ""
+    fi
+  fi
 
   echo "=========================================="
   echo "✅ Setup Complete!"
   echo "=========================================="
   echo ""
   echo "🆔 Created Resources:"
-  echo "   Organization ID: ${ORG_ID}"
-  echo "   Tenant ID:       ${TENANT_ID}"
-  echo "   Admin Email:     admin@localhost.local"
-  echo "   Admin Password:  LocalDevPassword123"
-  echo "   Client ID:       fcdfdf17-d633-448d-b2f0-af1c8ce3ff19"
-  echo "   Client Secret:   local-dev-secret-32-chars-long"
+  echo "   Organization ID:      ${ORG_ID}"
+  echo "   Organizer Tenant ID:  ${ORGANIZER_TENANT_ID}"
+  if [ -n "${PUBLIC_TENANT_ID}" ]; then
+    echo "   Public Tenant ID:     ${PUBLIC_TENANT_ID}"
+  fi
   echo ""
-  echo "🧪 Test Authorization Code Flow:"
-  echo "   1. Open browser:"
-  echo "      open \"${AUTHORIZATION_SERVER_URL}/${TENANT_ID}/v1/authorizations?response_type=code&client_id=fcdfdf17-d633-448d-b2f0-af1c8ce3ff19&redirect_uri=http://localhost:3000/callback&scope=openid%20profile%20email&state=test-state\""
+  echo "👤 Admin User:"
+  echo "   Email:    admin@localhost.local"
+  echo "   Password: LocalDevPassword123"
   echo ""
-  echo "   2. Login with:"
-  echo "      Email: admin@localhost.local"
-  echo "      Password: LocalDevPassword123"
+  echo "🔑 Admin Client (in Organizer Tenant):"
+  echo "   Tenant ID:     ${ORGANIZER_TENANT_ID}"
+  echo "   Client ID:     fcdfdf17-d633-448d-b2f0-af1c8ce3ff19"
+  echo "   Client Secret: local-dev-admin-secret-32chars"
+  echo "   Scopes:        openid profile email management"
+  echo "   Grant Types:   authorization_code, refresh_token, password"
   echo ""
-  echo "   3. Get code from redirect URL and exchange:"
-  echo "      curl -X POST ${AUTHORIZATION_SERVER_URL}/${TENANT_ID}/v1/tokens \\"
-  echo "        -H \"Content-Type: application/x-www-form-urlencoded\" \\"
-  echo "        -d \"grant_type=authorization_code\" \\"
-  echo "        -d \"code=YOUR_CODE_HERE\" \\"
-  echo "        -d \"redirect_uri=http://localhost:3000/callback\" \\"
-  echo "        -d \"client_id=fcdfdf17-d633-448d-b2f0-af1c8ce3ff19\" \\"
-  echo "        -d \"client_secret=local-dev-secret-32-chars-long\""
-  echo ""
+  if [ -n "${PUBLIC_TENANT_ID}" ]; then
+    echo "🌐 Public Web App Client (in Public Tenant):"
+    echo "   Tenant ID:     ${PUBLIC_TENANT_ID}"
+    echo "   Client ID:     8a9f5e2c-1b3d-4c6a-9f8e-7d5c3a2b1e4f"
+    echo "   Client Secret: local-dev-public-secret-32char"
+    echo "   Scopes:        openid profile email"
+    echo "   Grant Types:   authorization_code, refresh_token"
+    echo ""
+    echo "🧪 Test Authorization Code Flow (Public Client):"
+    echo "   1. Open browser:"
+    echo "      open \"${AUTHORIZATION_SERVER_URL}/${PUBLIC_TENANT_ID}/v1/authorizations?response_type=code&client_id=8a9f5e2c-1b3d-4c6a-9f8e-7d5c3a2b1e4f&redirect_uri=http://localhost:3000/callback/&scope=openid%20profile%20email&state=test-state\""
+    echo ""
+    echo "   2. Login with:"
+    echo "      Email: admin@localhost.local"
+    echo "      Password: LocalDevPassword123"
+    echo ""
+    echo "   3. Get code from redirect URL and exchange:"
+    echo "      curl -X POST ${AUTHORIZATION_SERVER_URL}/${PUBLIC_TENANT_ID}/v1/tokens \\"
+    echo "        -H \"Content-Type: application/x-www-form-urlencoded\" \\"
+    echo "        -d \"grant_type=authorization_code\" \\"
+    echo "        -d \"code=YOUR_CODE_HERE\" \\"
+    echo "        -d \"redirect_uri=http://localhost:3000/callback/\" \\"
+    echo "        -d \"client_id=8a9f5e2c-1b3d-4c6a-9f8e-7d5c3a2b1e4f\" \\"
+    echo "        -d \"client_secret=local-dev-public-secret-32char\""
+    echo ""
+  fi
 else
   echo "❌ Onboarding failed (HTTP ${HTTP_CODE})"
   echo ""

@@ -15,14 +15,29 @@
 
 ```
 standard-oidc-web-app/
-├── onboarding-request.json  # localhost用オンボーディングAPIリクエスト
+├── onboarding-request.json  # localhost用オンボーディングAPIリクエスト（組織+Organizerテナント+管理用クライアント）
+├── public-tenant.json       # 一般向けPublicテナント設定
+├── public-client.json       # 一般Webアプリ用クライアント設定
 ├── jwks.json                # EC P-256鍵ペア（開発用サンプル）
 ├── setup.sh                 # 初回セットアップスクリプト（.env連携）
 ├── update.sh                # 設定更新スクリプト（既存リソース更新）
+├── delete.sh                # リソース削除スクリプト
 └── README.md                # このファイル
 ```
 
-**注意**: このテナントは**Authorization Code Flow**のみサポートします（Password Grantは非サポート）。
+**リソース構成**:
+```
+Organization (76c1b7c2-c362-42b6-a19e-f346e7967699)
+├── Organizer Tenant (d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df)  ← 管理用
+│   ├── Admin User (admin@localhost.local)
+│   └── Admin Client (fcdfdf17-d633-448d-b2f0-af1c8ce3ff19)
+│       - Scopes: openid profile email management
+│       - Grant Types: authorization_code, refresh_token, password
+└── Public Tenant (a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d)     ← 一般向け
+    └── Public Client (8a9f5e2c-1b3d-4c6a-9f8e-7d5c3a2b1e4f)
+        - Scopes: openid profile email
+        - Grant Types: authorization_code, refresh_token
+```
 
 ## そのまま使用できる設定値
 
@@ -31,13 +46,16 @@ standard-oidc-web-app/
 | 項目 | 設定値 | 説明 |
 |------|--------|------|
 | **Organization ID** | `76c1b7c2-c362-42b6-a19e-f346e7967699` | 開発組織ID |
-| **Tenant ID** | `d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df` | テナントID |
+| **Organizer Tenant ID** | `d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df` | 管理用テナントID |
+| **Public Tenant ID** | `a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d` | 一般向けテナントID |
 | **User ID (sub)** | `481b2c4c-dfa4-456a-ab1f-9bf41b692aca` | 管理者ユーザーID |
-| **Client ID** | `fcdfdf17-d633-448d-b2f0-af1c8ce3ff19` | クライアントID |
+| **Admin Client ID** | `fcdfdf17-d633-448d-b2f0-af1c8ce3ff19` | 管理用クライアントID（Organizer Tenant） |
+| **Admin Client Secret** | `local-dev-admin-secret-32chars` | 管理用シークレット |
+| **Public Client ID** | `8a9f5e2c-1b3d-4c6a-9f8e-7d5c3a2b1e4f` | 一般WebアプリクライアントID（Public Tenant） |
+| **Public Client Secret** | `local-dev-public-secret-32char` | 一般Webアプリシークレット |
 | **Domain** | `http://localhost:8080` | IDP Server URL |
 | **CORS Origins** | `http://localhost:3000`, `http://localhost:8080` | 許可オリジン |
-| **Redirect URI** | `http://localhost:3000/callback` | コールバックURL |
-| **Client Secret** | `local-dev-secret-32-chars-long` | 開発用シークレット |
+| **Redirect URIs** | `http://localhost:3000/callback/`, `http://localhost:3001/callback/` | コールバックURL |
 | **Admin Email** | `admin@localhost.local` | 管理者メール |
 | **Admin Password** | `LocalDevPassword123` | 管理者パスワード |
 | **Session Cookie** | `LOCAL_DEV_SESSION` | Cookie名 |
@@ -56,9 +74,12 @@ cd /path/to/idp-server/config/examples/standard-oidc-web-app
 **`setup.sh` が自動実行すること:**
 1. `.env` から管理者情報を読み込み
 2. システム管理者トークンを取得
-3. オンボーディングAPIを実行（新規作成）
-4. 作成されたリソースのIDを表示
-5. 動作確認用の手順を表示
+3. オンボーディングAPIを実行（組織・Organizerテナント・ユーザー・管理用クライアント作成）
+4. `public-tenant.json` を読み込み、Publicテナントを作成
+5. Publicテナントを組織に割り当て
+6. `public-client.json` を読み込み、Publicテナントに一般Webアプリクライアントを作成
+7. 作成されたリソースのIDを表示
+8. 動作確認用の手順を表示（Publicクライアント/Publicテナントを使用）
 
 ### 🔄 設定更新（update.sh）
 
@@ -97,22 +118,26 @@ cd /path/to/idp-server/config/examples/standard-oidc-web-app
 
 **`delete.sh` が自動実行すること:**
 1. `.env` から管理者情報を読み込み
-2. `onboarding-request.json` からリソースIDを読み込み
+2. `onboarding-request.json`, `public-tenant.json`, `public-client.json` からリソースIDを読み込み
 3. システム管理者トークンを取得
-4. クライアントを削除（Management API経由）
-5. ユーザーを削除（Management API経由）
-6. テナントを削除（Management API経由）
-7. 組織を削除（Management API経由）
+4. 管理用クライアントを削除（Organizerテナント内）
+5. 一般Webアプリクライアントを削除（Publicテナント内）※存在する場合のみ
+6. ユーザーを削除（Organizerテナント内）
+7. Publicテナントを削除※存在する場合のみ
+8. Organizerテナントを削除
+9. 組織を削除
 
 **削除順序の重要性:**
 - データベース外部キー制約を回避するため、**子リソースから順に削除**
-- クライアント → ユーザー → テナント → 組織の順序を厳守
+- Admin Client → Public Client → User → Public Tenant → Organizer Tenant → Organization の順序を厳守
 - 各ステップでエラーが発生した場合は適切に処理
 
 **削除される項目:**
-- クライアント（Client）
-- ユーザー（User）
-- テナント（Tenant）
+- 管理用クライアント（Admin Client in Organizer Tenant）
+- 一般Webアプリクライアント（Public Client in Public Tenant）
+- ユーザー（User in Organizer Tenant）
+- Publicテナント（Public Tenant）
+- Organizerテナント（Organizer Tenant）
 - 組織（Organization）
 - 組織-テナント関係（organization_tenants - テナント削除時に自動削除）
 
@@ -159,13 +184,15 @@ curl -X POST ${AUTHORIZATION_SERVER_URL}/v1/management/onboarding \
   -d @onboarding-request.json
 ```
 
-#### 3. 動作確認（Authorization Code Flow）
+#### 3. 動作確認
 
-ブラウザで認可エンドポイントにアクセスして、Authorization Code Flowをテストします。
+##### 3-1. 一般Webアプリクライアント（Public Client）でのAuthorization Code Flow
+
+一般的なWebアプリケーションを想定したクライアント（`openid profile email`スコープのみ）でテストします。
 
 ```bash
-# 1. ブラウザで以下のURLを開く
-open "http://localhost:8080/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/authorizations?response_type=code&client_id=fcdfdf17-d633-448d-b2f0-af1c8ce3ff19&redirect_uri=http://localhost:3000/callback&scope=openid%20profile%20email&state=test-state"
+# 1. ブラウザで以下のURLを開く（Public Client - Public Tenant使用）
+open "http://localhost:8080/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/authorizations?response_type=code&client_id=8a9f5e2c-1b3d-4c6a-9f8e-7d5c3a2b1e4f&redirect_uri=http://localhost:3000/callback/&scope=openid%20profile%20email&state=test-state"
 
 # 2. ログイン画面で入力
 #    Email: admin@localhost.local
@@ -175,15 +202,73 @@ open "http://localhost:8080/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/authorizatio
 #    http://localhost:3000/callback/?code=XXXXX&state=test-state
 #    ↑ この code=XXXXX の部分をコピー
 
-# 4. 認可コードをトークンに交換
+# 4. 認可コードをトークンに交換（Public Client - Public Tenant使用）
+curl -X POST http://localhost:8080/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/tokens \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=authorization_code" \
+  -d "code=w30J3188oZr4vnsI3GYce6ZGG-8" \
+  -d "redirect_uri=http://localhost:3000/callback/" \
+  -d "client_id=8a9f5e2c-1b3d-4c6a-9f8e-7d5c3a2b1e4f" \
+  -d "client_secret=local-dev-public-secret-32char"
+
+# 5. レスポンス例（access_token, id_token, refresh_token を取得）
+# {
+#   "access_token": "eyJhbGc...",
+#   "token_type": "Bearer",
+#   "expires_in": 3600,
+#   "refresh_token": "...",
+#   "id_token": "eyJraWQ...",
+#   "scope": "openid profile email"
+# }
+```
+
+##### 3-2. 管理用クライアント（Admin Client）でのAuthorization Code Flow + Password Grant
+
+管理機能を持つクライアント（`management`スコープ付き、Password Grant対応）でテストします。
+
+```bash
+# 方法A: Authorization Code Flow（管理用クライアント - Organizer Tenant使用）
+# 1. ブラウザで以下のURLを開く（Admin Client）
+open "http://localhost:8080/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/authorizations?response_type=code&client_id=fcdfdf17-d633-448d-b2f0-af1c8ce3ff19&redirect_uri=http://localhost:3000/callback/&scope=openid%20profile%20email%20management&state=test-state"
+
+# 2. ログイン → コード取得 → トークン交換（手順は3-1と同じ）
 curl -X POST http://localhost:8080/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/tokens \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=authorization_code" \
-  -d "code=RfvantsAQknPn4raHQiwsW1C4rI" \
+  -d "code=Up5wHgULsd5BMXr2Oa3mPryRd5Y" \
   -d "redirect_uri=http://localhost:3000/callback/" \
   -d "client_id=fcdfdf17-d633-448d-b2f0-af1c8ce3ff19" \
-  -d "client_secret=local-dev-secret-32-chars-long"
+  -d "client_secret=local-dev-admin-secret-32chars"
+
+# 方法B: Password Grant（管理用クライアントのみ対応 - Organizer Tenant使用）
+curl -X POST http://localhost:8080/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/tokens \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=password" \
+  -d "username=admin@localhost.local" \
+  -d "password=LocalDevPassword123" \
+  -d "client_id=fcdfdf17-d633-448d-b2f0-af1c8ce3ff19" \
+  -d "client_secret=local-dev-admin-secret-32chars" \
+  -d "scope=openid profile email management"
+
+# レスポンス例（managementスコープ付き）
+# {
+#   "access_token": "eyJhbGc...",
+#   "token_type": "Bearer",
+#   "expires_in": 3600,
+#   "refresh_token": "...",
+#   "id_token": "eyJraWQ...",
+#   "scope": "openid profile email management"
+# }
 ```
+
+**クライアント比較:**
+
+| 項目 | Public Client | Admin Client |
+|------|---------------|--------------|
+| Client ID | `8a9f5e2c-1b3d-4c6a-9f8e-7d5c3a2b1e4f` | `fcdfdf17-d633-448d-b2f0-af1c8ce3ff19` |
+| Scopes | `openid profile email` | `openid profile email management` |
+| Grant Types | `authorization_code`, `refresh_token` | `authorization_code`, `refresh_token`, `password` |
+| 用途 | 一般的なWebアプリ | 管理画面・API管理ツール |
 
 
 ## 設定項目の詳細説明
