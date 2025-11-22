@@ -1,18 +1,51 @@
-import {Container, Paper, Stack, Typography} from "@mui/material";
+import { Button, Container, Stack, Typography } from "@mui/material";
+import { auth } from "@/app/auth";
+import { redirect } from "next/navigation";
+import UserInfo from "@/components/UserInfo";
+import TokenViewer from "@/components/TokenViewer";
+import LogoutIcon from "@mui/icons-material/Logout";
 
-const Home = () => {
+const Home = async () => {
+  const session = await auth();
 
-    return (
-        <>
-            <Container maxWidth={"xs"} sx={{ m:4, alignContent: "center" }}>
-                <Paper sx={{ p:4 }}>
-                    <Stack spacing={4}>
-                        <Typography variant={"h5"}>Home</Typography>
-                    </Stack>
-                </Paper>
-            </Container>
-        </>
-    )
-}
+  if (!session) {
+    redirect("/");
+  }
+
+  return (
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Stack spacing={4}>
+        {/* Header */}
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Typography variant="h4" component="h1">
+            ダッシュボード
+          </Typography>
+          <form
+            action={async () => {
+              "use server";
+              const { signOut } = await import("@/app/auth");
+              await signOut();
+            }}
+          >
+            <Button
+              type="submit"
+              variant="outlined"
+              color="error"
+              startIcon={<LogoutIcon />}
+            >
+              ログアウト
+            </Button>
+          </form>
+        </Stack>
+
+        {/* User Info */}
+        <UserInfo session={session} />
+
+        {/* Token Viewer */}
+        <TokenViewer session={session} />
+      </Stack>
+    </Container>
+  );
+};
 
 export default Home;

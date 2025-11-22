@@ -1,9 +1,16 @@
 import NextAuth from "next-auth";
+import type { OAuthConfig } from "next-auth/providers";
 
 export const issuer = process.env.NEXT_PUBLIC_IDP_SERVER_ISSUER;
 export const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL;
 
-const IdpServer = (options: any) => ({
+interface IdpServerOptions {
+  clientId?: string;
+  clientSecret?: string;
+  issuer?: string;
+}
+
+const IdpServer = (options: IdpServerOptions): OAuthConfig<Record<string, unknown>> => ({
   ...{
     id: "idp-server",
     name: "IdPServer",
@@ -21,7 +28,7 @@ const IdpServer = (options: any) => ({
     },
     checks: ["pkce", "state"],
     token: {
-      async request(context: any) {
+      async request(context: { params: { code: string } }) {
         console.log("------------- token request -----------------");
         const { code } = context.params;
         const params = new URLSearchParams({
@@ -51,7 +58,14 @@ const IdpServer = (options: any) => ({
       },
     },
     userinfo: {
-      async request(context: any) {
+      async request(context: {
+        params: {
+          access_token: string;
+          refresh_token: string;
+          expires_at: number;
+          id_token: string;
+        };
+      }) {
         console.log(context.params);
         const { access_token, refresh_token, expires_at, id_token } =
           context.params;
@@ -80,9 +94,9 @@ const IdpServer = (options: any) => ({
         };
       },
     },
-    profile: (profile: any) => {
+    profile: (profile: Record<string, unknown>) => {
       return {
-        id: profile.sub,
+        id: (profile.sub as string) || "",
         ...profile,
       };
     },
@@ -90,7 +104,7 @@ const IdpServer = (options: any) => ({
   ...options,
 });
 
-export const { handlers, auth } = NextAuth({
+export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     IdpServer({
       clientId: process.env.NEXT_PUBLIC_IDP_CLIENT_ID,
@@ -105,6 +119,8 @@ export const { handlers, auth } = NextAuth({
       console.log(account);
       if (account) {
         token.accessToken = account.access_token;
+        token.refreshToken = account.refresh_token;
+        token.idToken = account.id_token;
       }
 
       return token;
@@ -114,16 +130,25 @@ export const { handlers, auth } = NextAuth({
       // Note, that `rest.session` can be any arbitrary object, remember to validate it!
       console.log(session, token, trigger, newSession);
 
-      session.accessToken = token.accessToken;
+      session.accessToken = token.accessToken as string | undefined;
+      session.refreshToken = token.refreshToken as string | undefined;
+      session.idToken = token.idToken as string | undefined;
       return session;
     },
   },
   events: {
     async signOut() {
-      console.log("------------- signOut -----------------");
+      console.log("------------- signOut event -----------------");
+
+      // RP-Initiated Logout: バックエンドのログアウトAPIを呼び出し
+      // Note: eventsハンドラーではsessionにアクセスできないため、client_idのみで呼び出し
+      const params = new URLSearchParams({
+        client_id: process.env.NEXT_PUBLIC_IDP_CLIENT_ID as string,
+        post_logout_redirect_uri: `${frontendUrl}/logout`,
+      });
 
       await fetch(
-        `${issuer}/v1/logout?client_id=${process.env.NEXT_PUBLIC_IDP_CLIENT_ID}`,
+        `${issuer}/v1/logout?${params.toString()}`,
         {
           method: "GET",
           credentials: "include",
