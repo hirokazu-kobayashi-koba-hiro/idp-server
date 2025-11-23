@@ -19,7 +19,7 @@
     const res = http.get(`${baseUrl}/${tenantId}/v1/authorizations?scope=openid+profile+phone+emailaccount+management&response_type=id_token&client_id=${clientId}&redirect_uri=${redirectUri}&state=aiueo&nonce=nonce`, { redirects: 0 });
 
     check(res, {
-      'status is 200': (r) => r.status === 200,
+      'status is 302': (r) => r.status === 302,
     });
 
   }

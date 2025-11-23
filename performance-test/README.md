@@ -46,6 +46,7 @@ psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user (
   email_verified,
   phone_number,
   phone_number_verified,
+  preferred_username,
   status,
   authentication_devices
 ) FROM './performance-test/data/generated_users_100k.tsv' WITH (FORMAT csv, HEADER false,  DELIMITER E'\t')"

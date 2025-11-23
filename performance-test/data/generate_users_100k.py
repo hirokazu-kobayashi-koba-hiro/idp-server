@@ -27,7 +27,7 @@ with open(OUTPUT_FILE, "w") as f:
         devices_str = json.dumps(devices, ensure_ascii=False)
         # " to "" ""
         devices_escaped = '"' + devices_str.replace('"', '""') + '"'
-        line = f"{user_sub}\t{TENANT_ID}\t{PROVIDER_ID}\t{user_id}\t{user_id}\t{email}\ttrue\t{phone}\ttrue\tIDENTITY_VERIFIED\t{devices_escaped}\n"
+        line = f"{user_sub}\t{TENANT_ID}\t{PROVIDER_ID}\t{user_id}\t{user_id}\t{email}\ttrue\t{phone}\ttrue\t{email}\tIDENTITY_VERIFIED\t{devices_escaped}\n"
         f.write(line)
         if i % 1000 == 0:
             print(f"progress: {i}")
