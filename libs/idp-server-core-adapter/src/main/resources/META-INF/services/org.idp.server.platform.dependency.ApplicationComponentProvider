@@ -53,3 +53,7 @@ org.idp.server.core.adapters.datasource.authentication.policy.command.Authentica
 org.idp.server.core.adapters.datasource.authentication.policy.query.AuthenticationPolicyConfigurationQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.identity.permission.query.PermissionQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.identity.role.query.RoleQueryDataSourceProvider
+org.idp.server.core.adapters.datasource.statistics.command.TenantStatisticsDataCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.statistics.query.TenantStatisticsDataQueryDataSourceProvider
+org.idp.server.core.adapters.datasource.statistics.command.DailyActiveUserCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.statistics.query.DailyActiveUserQueryDataSourceProvider
