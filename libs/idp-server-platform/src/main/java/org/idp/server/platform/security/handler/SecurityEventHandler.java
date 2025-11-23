@@ -16,6 +16,7 @@
 
 package org.idp.server.platform.security.handler;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -30,6 +31,9 @@ import org.idp.server.platform.security.log.SecurityEventLogService;
 import org.idp.server.platform.security.repository.SecurityEventCommandRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookResultCommandRepository;
+import org.idp.server.platform.statistics.repository.DailyActiveUserCommandRepository;
+import org.idp.server.platform.statistics.repository.TenantStatisticsDataCommandRepository;
+import org.idp.server.platform.user.UserIdentifier;
 
 public class SecurityEventHandler {
 
@@ -38,6 +42,8 @@ public class SecurityEventHandler {
   SecurityEventHooks securityEventHooks;
   SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository;
   SecurityEventLogService logService;
+  TenantStatisticsDataCommandRepository statisticsRepository;
+  DailyActiveUserCommandRepository dailyActiveUserRepository;
 
   LoggerWrapper log = LoggerWrapper.getLogger(SecurityEventHandler.class);
 
@@ -45,17 +51,24 @@ public class SecurityEventHandler {
       SecurityEventHooks securityEventHooks,
       SecurityEventHookResultCommandRepository resultsCommandRepository,
       SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository,
-      SecurityEventLogService logService) {
+      SecurityEventLogService logService,
+      TenantStatisticsDataCommandRepository statisticsRepository,
+      DailyActiveUserCommandRepository dailyActiveUserRepository) {
     this.securityEventHooks = securityEventHooks;
     this.resultsCommandRepository = resultsCommandRepository;
     this.securityEventHookConfigurationQueryRepository =
         securityEventHookConfigurationQueryRepository;
     this.logService = logService;
+    this.statisticsRepository = statisticsRepository;
+    this.dailyActiveUserRepository = dailyActiveUserRepository;
   }
 
   public void handle(Tenant tenant, SecurityEvent securityEvent) {
 
     logService.logEvent(tenant, securityEvent);
+
+    // Update statistics synchronously (same transaction)
+    updateStatistics(tenant, securityEvent);
 
     SecurityEventHookConfigurations securityEventHookConfigurations =
         securityEventHookConfigurationQueryRepository.find(tenant);
@@ -85,5 +98,101 @@ public class SecurityEventHandler {
     if (!results.isEmpty()) {
       resultsCommandRepository.bulkRegister(tenant, results);
     }
+  }
+
+  /**
+   * Update tenant statistics based on security event
+   *
+   * <p>Processes security events and incrementally updates daily statistics metrics such as DAU,
+   * login counts, token issuance, etc.
+   *
+   * @param tenant the tenant
+   * @param securityEvent the security event
+   */
+  private void updateStatistics(Tenant tenant, SecurityEvent securityEvent) {
+    if (securityEvent == null) {
+      return;
+    }
+
+    String eventType = securityEvent.type().value();
+    LocalDate eventDate = securityEvent.createdAt().value().toLocalDate();
+
+    switch (eventType) {
+      case "login_success":
+        UserIdentifier userId =
+            securityEvent.hasUser()
+                ? new UserIdentifier(securityEvent.user().subAsUuid().toString())
+                : null;
+        handleLoginSuccess(tenant, userId, eventDate);
+        break;
+
+      case "password_failure":
+        incrementMetric(tenant, eventDate, "login_failure_count");
+        break;
+
+      case "issue_token_success":
+        incrementMetric(tenant, eventDate, "tokens_issued");
+        break;
+
+      case "user_signup":
+      case "user_create":
+        incrementMetric(tenant, eventDate, "new_users");
+        break;
+
+      default:
+        // Ignore other event types
+        break;
+    }
+  }
+
+  /**
+   * Handle login success event
+   *
+   * <p>Increments login_success_count and tracks unique daily active users (DAU)
+   */
+  private void handleLoginSuccess(Tenant tenant, UserIdentifier userId, LocalDate eventDate) {
+    if (userId == null) {
+      return;
+    }
+
+    // Increment login success count
+    incrementMetric(tenant, eventDate, "login_success_count");
+
+    // Track DAU - add user to daily active users table and increment DAU count if new
+    boolean isNewActiveUser =
+        dailyActiveUserRepository.addActiveUserAndReturnIfNew(
+            tenant.identifier(), eventDate, userId);
+
+    if (isNewActiveUser) {
+      log.info(
+          "New daily active user: tenant={}, date={}, user={}",
+          tenant.identifierValue(),
+          eventDate,
+          userId.value());
+      // Increment DAU count in tenant_statistics_data
+      incrementMetric(tenant, eventDate, "dau");
+    } else {
+      log.debug(
+          "User already active today: tenant={}, date={}, user={}",
+          tenant.identifierValue(),
+          eventDate,
+          userId.value());
+    }
+  }
+
+  /**
+   * Increment a numeric metric by 1
+   *
+   * @param tenant the tenant
+   * @param date statistics date
+   * @param metricName metric name to increment
+   */
+  private void incrementMetric(Tenant tenant, LocalDate date, String metricName) {
+    log.info(
+        "Incrementing metric: tenant={}, date={}, metric={}",
+        tenant.identifierValue(),
+        date,
+        metricName);
+    statisticsRepository.incrementMetric(tenant.identifier(), date, metricName, 1);
   }
 }

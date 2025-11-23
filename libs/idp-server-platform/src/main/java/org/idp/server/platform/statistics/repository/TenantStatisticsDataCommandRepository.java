@@ -1,0 +1,119 @@
+package org.idp.server.platform.statistics.repository;
+
+import java.time.LocalDate;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.statistics.TenantStatisticsData;
+import org.idp.server.platform.statistics.TenantStatisticsDataIdentifier;
+
+/**
+ * Command repository for TenantStatisticsData
+ *
+ * <p>Provides write operations for daily tenant statistics.
+ *
+ * <p>Supports UPSERT: use {@link #save(TenantStatisticsData)} to insert or update based on unique
+ * constraint (tenant_id, stat_date).
+ *
+ * <p>Example usage:
+ *
+ * <pre>{@code
+ * TenantStatisticsData data = TenantStatisticsData.builder()
+ *     .tenantId(tenantId)
+ *     .statDate(LocalDate.now().minusDays(1))
+ *     .addMetric("dau", 1250)
+ *     .addMetric("login_success_rate", 97.5)
+ *     .build();
+ *
+ * // UPSERT: insert if not exists, update if exists
+ * repository.save(data);
+ * }</pre>
+ *
+ * @see TenantStatisticsData
+ * @see TenantStatisticsDataQueryRepository
+ */
+public interface TenantStatisticsDataCommandRepository {
+
+  /**
+   * Save statistics (UPSERT)
+   *
+   * <p>If data with same (tenant_id, stat_date) exists, it will be updated. Otherwise, new data
+   * will be inserted.
+   *
+   * <p>Leverages PostgreSQL's ON CONFLICT DO UPDATE.
+   *
+   * @param data statistics to save
+   */
+  void save(TenantStatisticsData data);
+
+  /**
+   * Register new statistics (INSERT only)
+   *
+   * <p>Use when certain data doesn't exist yet.
+   *
+   * @param data statistics to register
+   * @throws org.idp.server.platform.exception.DuplicateResourceException if already exists
+   */
+  void register(TenantStatisticsData data);
+
+  /**
+   * Update existing statistics
+   *
+   * @param data statistics to update
+   * @throws org.idp.server.platform.exception.ResourceNotFoundException if not exists
+   */
+  void update(TenantStatisticsData data);
+
+  /**
+   * Delete statistics by ID
+   *
+   * @param id statistics identifier
+   */
+  void delete(TenantStatisticsDataIdentifier id);
+
+  /**
+   * Delete statistics by tenant and date
+   *
+   * @param tenantId tenant identifier
+   * @param date target date
+   */
+  void deleteByDate(TenantIdentifier tenantId, LocalDate date);
+
+  /**
+   * Delete old statistics (data retention)
+   *
+   * <p>Example: Delete data older than 365 days
+   *
+   * <pre>{@code
+   * repository.deleteOlderThan(LocalDate.now().minusDays(365));
+   * }</pre>
+   *
+   * @param before delete data older than this date (exclusive)
+   */
+  void deleteOlderThan(LocalDate before);
+
+  /**
+   * Delete all statistics for a tenant
+   *
+   * @param tenantId tenant identifier
+   */
+  void deleteByTenantId(TenantIdentifier tenantId);
+
+  /**
+   * Increment a numeric metric value (real-time update)
+   *
+   * <p>Creates new record if (tenant_id, stat_date) doesn't exist. If metric doesn't exist,
+   * initializes to increment value.
+   *
+   * <p>Example:
+   *
+   * <pre>{@code
+   * // Increment login_success_count by 1
+   * repository.incrementMetric(tenantId, LocalDate.now(), "login_success_count", 1);
+   * }</pre>
+   *
+   * @param tenantId tenant identifier
+   * @param date statistics date
+   * @param metricName metric name to increment
+   * @param increment value to add (can be negative for decrement)
+   */
+  void incrementMetric(TenantIdentifier tenantId, LocalDate date, String metricName, int increment);
+}

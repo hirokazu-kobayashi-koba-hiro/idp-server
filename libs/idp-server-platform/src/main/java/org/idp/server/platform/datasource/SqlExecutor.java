@@ -17,6 +17,7 @@
 package org.idp.server.platform.datasource;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -49,6 +50,9 @@ public class SqlExecutor {
         }
         if (param instanceof UUID uuid) {
           prepareStatement.setObject(index, uuid);
+        }
+        if (param instanceof LocalDate localDate) {
+          prepareStatement.setObject(index, localDate);
         }
         if (param instanceof LocalDateTime localDateTime) {
           prepareStatement.setObject(index, localDateTime);
@@ -105,6 +109,9 @@ public class SqlExecutor {
         if (param instanceof UUID uuid) {
           prepareStatement.setObject(index, uuid);
         }
+        if (param instanceof LocalDate localDate) {
+          prepareStatement.setObject(index, localDate);
+        }
         if (param instanceof LocalDateTime localDateTime) {
           prepareStatement.setObject(index, localDateTime);
         }
@@ -157,6 +164,9 @@ public class SqlExecutor {
         if (param instanceof UUID uuid) {
           prepareStatement.setObject(index, uuid);
         }
+        if (param instanceof LocalDate localDate) {
+          prepareStatement.setObject(index, localDate);
+        }
         if (param instanceof LocalDateTime localDateTime) {
           prepareStatement.setObject(index, localDateTime);
         }
@@ -208,6 +218,9 @@ public class SqlExecutor {
         }
         if (param instanceof UUID uuid) {
           prepareStatement.setObject(index, uuid);
+        }
+        if (param instanceof LocalDate localDate) {
+          prepareStatement.setObject(index, localDate);
         }
         if (param instanceof LocalDateTime localDateTime) {
           prepareStatement.setObject(index, localDateTime);
@@ -268,6 +281,9 @@ public class SqlExecutor {
         if (param instanceof UUID uuid) {
           prepareStatement.setObject(index, uuid);
         }
+        if (param instanceof LocalDate localDate) {
+          prepareStatement.setObject(index, localDate);
+        }
         if (param instanceof LocalDateTime localDateTime) {
           prepareStatement.setObject(index, localDateTime);
         }
@@ -277,6 +293,68 @@ public class SqlExecutor {
         index++;
       }
       prepareStatement.executeUpdate();
+
+    } catch (SQLException exception) {
+      switch (SqlErrorClassifier.classify(exception)) {
+        case UNIQUE_VIOLATION ->
+            throw new SqlDuplicateKeyException(
+                "Duplicate key violation: " + exception.getMessage(), exception);
+        case NOT_NULL_VIOLATION, CHECK_VIOLATION ->
+            throw new SqlBadRequestException(
+                "Invalid data for: " + exception.getMessage(), exception);
+        default ->
+            throw new SqlRuntimeException(
+                "Sql execution is error: " + exception.getMessage(), exception);
+      }
+    }
+  }
+
+  /**
+   * Execute SQL with RETURNING clause and check if any row was returned
+   *
+   * <p>Useful for INSERT ... ON CONFLICT DO NOTHING RETURNING * to detect if insertion succeeded
+   *
+   * @param sql SQL statement with RETURNING clause
+   * @param params SQL parameters
+   * @return true if at least one row was returned, false otherwise
+   */
+  public boolean executeAndCheckReturned(String sql, List<Object> params) {
+    try (PreparedStatement prepareStatement = connection.prepareStatement(sql)) {
+
+      int index = 1;
+      for (Object param : params) {
+        if (param instanceof String stringValue) {
+          prepareStatement.setString(index, stringValue);
+        }
+        if (param instanceof Integer integerValue) {
+          prepareStatement.setInt(index, integerValue);
+        }
+        if (param instanceof Long longValue) {
+          prepareStatement.setLong(index, longValue);
+        }
+        if (param instanceof Boolean booleanValue) {
+          prepareStatement.setBoolean(index, booleanValue);
+        }
+        if (param instanceof byte[] binary) {
+          prepareStatement.setBytes(index, binary);
+        }
+        if (param instanceof UUID uuid) {
+          prepareStatement.setObject(index, uuid);
+        }
+        if (param instanceof LocalDate localDate) {
+          prepareStatement.setObject(index, localDate);
+        }
+        if (param instanceof LocalDateTime localDateTime) {
+          prepareStatement.setObject(index, localDateTime);
+        }
+        if (param == null) {
+          prepareStatement.setObject(index, null);
+        }
+        index++;
+      }
+
+      ResultSet resultSet = prepareStatement.executeQuery();
+      return resultSet.next(); // Returns true if at least one row was returned
 
     } catch (SQLException exception) {
       switch (SqlErrorClassifier.classify(exception)) {
@@ -340,7 +418,10 @@ public class SqlExecutor {
       case Types.DOUBLE -> resultSet.getDouble(index);
       case Types.DECIMAL, Types.NUMERIC -> resultSet.getBigDecimal(index);
       case Types.BOOLEAN -> resultSet.getBoolean(index);
-      case Types.DATE -> resultSet.getDate(index);
+      case Types.DATE -> {
+        java.sql.Date date = resultSet.getDate(index);
+        yield date != null ? date.toLocalDate() : null;
+      }
       case Types.TIMESTAMP -> {
         java.sql.Timestamp timestamp = resultSet.getTimestamp(index);
         yield timestamp != null ? timestamp.toLocalDateTime() : null;
