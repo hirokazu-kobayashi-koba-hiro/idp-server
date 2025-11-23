@@ -144,7 +144,7 @@ public class IdpServerStarterContextCreator {
         rolesList.stream().map(role -> new UserRole(role.id(), role.name())).toList();
     user.setHashedPassword(encode);
     User updatedUser =
-        user.transitStatus(UserStatus.REGISTERED)
+        user.setStatus(UserStatus.REGISTERED)
             .setRoles(userRoles)
             .setAssignedTenants(List.of(tenant.identifierValue()))
             .setCurrentTenantId(tenant.identifier())

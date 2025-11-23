@@ -152,6 +152,8 @@ import org.idp.server.platform.security.SecurityEventApi;
 import org.idp.server.platform.security.SecurityEventPublisher;
 import org.idp.server.platform.security.hook.SecurityEventHooks;
 import org.idp.server.platform.security.repository.*;
+import org.idp.server.platform.statistics.repository.DailyActiveUserCommandRepository;
+import org.idp.server.platform.statistics.repository.TenantStatisticsDataCommandRepository;
 import org.idp.server.security.event.hook.ssf.SharedSignalsFrameworkMetaDataApi;
 import org.idp.server.usecases.application.enduser.*;
 import org.idp.server.usecases.application.identity_verification_service.IdentityVerificationCallbackEntryService;
@@ -382,6 +384,10 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(AuthenticationInteractionQueryRepository.class);
     WebAuthn4jCredentialRepository webAuthn4jCredentialRepository =
         applicationComponentContainer.resolve(WebAuthn4jCredentialRepository.class);
+    TenantStatisticsDataCommandRepository tenantStatisticsCommandRepository =
+        applicationComponentContainer.resolve(TenantStatisticsDataCommandRepository.class);
+    DailyActiveUserCommandRepository dailyActiveUserCommandRepository =
+        applicationComponentContainer.resolve(DailyActiveUserCommandRepository.class);
 
     HttpClient httpClient = HttpClientFactory.defaultClient();
     HttpRequestExecutor httpRequestExecutor =
@@ -631,7 +637,9 @@ public class IdpServerApplication {
                 securityEventCommandRepository,
                 securityEventHookResultCommandRepository,
                 hookQueryRepository,
-                tenantQueryRepository),
+                tenantQueryRepository,
+                tenantStatisticsCommandRepository,
+                dailyActiveUserCommandRepository),
             SecurityEventApi.class,
             databaseTypeProvider);
 
