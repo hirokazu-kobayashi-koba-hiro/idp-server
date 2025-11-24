@@ -17,6 +17,7 @@
 package org.idp.server.platform.security.handler;
 
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -114,34 +115,24 @@ public class SecurityEventHandler {
       return;
     }
 
+    // Convert UTC timestamp to tenant's local date
     String eventType = securityEvent.type().value();
-    LocalDate eventDate = securityEvent.createdAt().value().toLocalDate();
+    LocalDate eventDate =
+        securityEvent
+            .createdAt()
+            .value()
+            .atZone(ZoneOffset.UTC)
+            .withZoneSameInstant(tenant.timezone())
+            .toLocalDate();
 
-    switch (eventType) {
-      case "login_success":
-        UserIdentifier userId =
-            securityEvent.hasUser()
-                ? new UserIdentifier(securityEvent.user().subAsUuid().toString())
-                : null;
-        handleLoginSuccess(tenant, userId, eventDate);
-        break;
-
-      case "password_failure":
-        incrementMetric(tenant, eventDate, "login_failure_count");
-        break;
-
-      case "issue_token_success":
-        incrementMetric(tenant, eventDate, "tokens_issued");
-        break;
-
-      case "user_signup":
-      case "user_create":
-        incrementMetric(tenant, eventDate, "new_users");
-        break;
-
-      default:
-        // Ignore other event types
-        break;
+    if (eventType.equals("login_success")) {
+      UserIdentifier userId =
+          securityEvent.hasUser()
+              ? new UserIdentifier(securityEvent.user().subAsUuid().toString())
+              : null;
+      handleLoginSuccess(tenant, userId, eventDate);
+    } else {
+      incrementMetric(tenant, eventDate, eventType);
     }
   }
 
@@ -164,7 +155,7 @@ public class SecurityEventHandler {
             tenant.identifier(), eventDate, userId);
 
     if (isNewActiveUser) {
-      log.info(
+      log.debug(
           "New daily active user: tenant={}, date={}, user={}",
           tenant.identifierValue(),
           eventDate,
@@ -188,7 +179,7 @@ public class SecurityEventHandler {
    * @param metricName metric name to increment
    */
   private void incrementMetric(Tenant tenant, LocalDate date, String metricName) {
-    log.info(
+    log.debug(
         "Incrementing metric: tenant={}, date={}, metric={}",
         tenant.identifierValue(),
         date,
