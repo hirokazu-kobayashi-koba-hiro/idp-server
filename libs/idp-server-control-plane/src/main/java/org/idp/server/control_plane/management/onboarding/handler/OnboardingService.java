@@ -184,6 +184,8 @@ public class OnboardingService {
         Map.of(
             "organization", assignedOrganization.toMap(),
             "tenant", tenant.toMap(),
+            "user", updatedUser.toMap(),
+            "client", clientConfiguration.toMap(),
             "dry_run", dryRun);
 
     if (dryRun) {

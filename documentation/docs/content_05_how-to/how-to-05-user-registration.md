@@ -193,7 +193,7 @@ curl -X POST "http://localhost:8080/${PUBLIC_TENANT_ID}/v1/authorizations/${AUTH
     "email": "newuser@example.com",
     "name": "New User",
     "provider_id": "idp-server",
-    "status": "REGISTERED"
+    "status": "INITIALIZED"
   }
 }
 ```
@@ -201,7 +201,7 @@ curl -X POST "http://localhost:8080/${PUBLIC_TENANT_ID}/v1/authorizations/${AUTH
 ### 確認ポイント
 - ✅ `sub` が発行されている（ユーザーの一意識別子）
 - ✅ `email` が正しく登録されている
-- ✅ `status` が `REGISTERED` になっている
+- ✅ `status` が `INITIALIZED` になっている
 
 ### 環境変数に保存
 

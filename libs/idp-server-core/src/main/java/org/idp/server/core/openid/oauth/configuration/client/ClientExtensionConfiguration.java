@@ -29,6 +29,7 @@ public class ClientExtensionConfiguration implements JsonReadable {
   boolean supportedJar = false;
   List<AvailableFederation> availableFederations;
   String defaultCibaAuthenticationInteractionType = "authentication-device-notification-no-action";
+  boolean cibaRequireRar = false;
 
   public ClientExtensionConfiguration() {}
 
@@ -76,6 +77,10 @@ public class ClientExtensionConfiguration implements JsonReadable {
         && !defaultCibaAuthenticationInteractionType.isEmpty();
   }
 
+  public boolean isCibaRequireRar() {
+    return cibaRequireRar;
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("access_token_duration", accessTokenDuration);
@@ -86,6 +91,7 @@ public class ClientExtensionConfiguration implements JsonReadable {
     if (hasDefaultCibaAuthenticationInteractionType())
       map.put(
           "default_ciba_authentication_interaction_type", defaultCibaAuthenticationInteractionType);
+    map.put("ciba_require_rar", cibaRequireRar);
     return map;
   }
 }

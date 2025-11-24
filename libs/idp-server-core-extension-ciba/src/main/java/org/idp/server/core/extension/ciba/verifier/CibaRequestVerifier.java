@@ -49,6 +49,7 @@ public class CibaRequestVerifier {
     // Extension Verifiers: Common across all CIBA profiles
     this.extensionVerifiers = new ArrayList<>();
     this.extensionVerifiers.add(new CibaRequestObjectVerifier());
+    this.extensionVerifiers.add(new CibaRequiredRarVerifier());
     this.extensionVerifiers.add(new CibaAuthorizationDetailsVerifier());
 
     this.context = context;
@@ -66,7 +67,7 @@ public class CibaRequestVerifier {
     // 2. Common extension verifications
     extensionVerifiers.forEach(
         extensionVerifier -> {
-          if (extensionVerifier.shouldNotVerify(context)) {
+          if (!extensionVerifier.shouldVerify(context)) {
             return;
           }
           extensionVerifier.verify(context);

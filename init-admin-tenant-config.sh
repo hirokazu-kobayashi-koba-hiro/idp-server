@@ -5,7 +5,7 @@ set -a; [ -f .env ] && source .env; set +a
 echo "env: $ENV"
 echo "url: $AUTHORIZATION_SERVER_URL"
 
-mkdir -p ./config/generated/admin-tenant
+mkdir -p ./config/generated/${ENV}/admin-tenant
 
 # tenant
 export TENANT_NAME=admin-tenant

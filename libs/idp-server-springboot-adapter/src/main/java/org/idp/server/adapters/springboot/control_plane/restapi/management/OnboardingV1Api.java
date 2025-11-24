@@ -62,6 +62,7 @@ public class OnboardingV1Api implements ParameterTransformable {
 
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");
-    return new ResponseEntity<>(response.contents(), headers, HttpStatus.OK);
+    return new ResponseEntity<>(
+        response.contents(), headers, HttpStatus.valueOf(response.statusCode()));
   }
 }

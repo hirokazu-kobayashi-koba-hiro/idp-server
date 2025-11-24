@@ -20,8 +20,8 @@ import org.idp.server.core.extension.ciba.CibaRequestContext;
 
 public interface CibaExtensionVerifier {
 
-  default boolean shouldNotVerify(CibaRequestContext context) {
-    return false;
+  default boolean shouldVerify(CibaRequestContext context) {
+    return true;
   }
 
   void verify(CibaRequestContext context);

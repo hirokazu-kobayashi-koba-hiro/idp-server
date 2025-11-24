@@ -132,6 +132,12 @@ public class IdpServerStarterContextCreator {
     Organization updatedWithTenant = organization.updateWithTenant(assignedTenant);
 
     User user = jsonConverter.read(request.get("user"), User.class);
+
+    // Ensure status is initialized if not provided in JSON
+    if (user.status() == null) {
+      user.setStatus(UserStatus.INITIALIZED);
+    }
+
     String encode = passwordEncodeDelegation.encode(user.rawPassword());
 
     // Apply tenant identity policy to set preferred_username if not set
