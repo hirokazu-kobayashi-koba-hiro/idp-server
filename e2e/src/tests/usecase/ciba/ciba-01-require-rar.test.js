@@ -146,7 +146,7 @@ describe("CIBA Use Case: Client-Level RAR Requirement", () => {
     });
 
     console.log("Onboarding response:", JSON.stringify(onboardingResponse.data, null, 2));
-    expect(onboardingResponse.status).toBe(200);
+    expect(onboardingResponse.status).toBe(201);
 
     console.log("\n=== Step 2: Login as Organization Admin ===");
 
@@ -400,7 +400,7 @@ describe("CIBA Use Case: Client-Level RAR Requirement", () => {
     });
 
     console.log(JSON.stringify(onboardingResponse.data, null, 2));
-    expect(onboardingResponse.status).toBe(200);
+    expect(onboardingResponse.status).toBe(201);
 
     console.log("\n=== Step 2: Login as Organization Admin ===");
 
