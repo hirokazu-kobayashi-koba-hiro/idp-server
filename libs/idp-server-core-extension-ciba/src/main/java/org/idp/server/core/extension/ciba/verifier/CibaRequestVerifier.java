@@ -67,7 +67,7 @@ public class CibaRequestVerifier {
     // 2. Common extension verifications
     extensionVerifiers.forEach(
         extensionVerifier -> {
-          if (extensionVerifier.shouldNotVerify(context)) {
+          if (!extensionVerifier.shouldVerify(context)) {
             return;
           }
           extensionVerifier.verify(context);
