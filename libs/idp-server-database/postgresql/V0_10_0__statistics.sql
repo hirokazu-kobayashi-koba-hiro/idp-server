@@ -107,6 +107,7 @@ CREATE TABLE daily_active_users (
     stat_date DATE NOT NULL,
     user_id UUID NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     -- Unique constraint to prevent duplicates
     PRIMARY KEY (tenant_id, stat_date, user_id)
@@ -169,3 +170,77 @@ END;
 $$ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION cleanup_old_dau(INTEGER) IS 'Delete DAU data older than specified days';
+
+-- =====================================================
+-- monthly_active_users
+-- Track unique monthly active users (MAU)
+-- =====================================================
+
+CREATE TABLE monthly_active_users (
+    tenant_id UUID NOT NULL,
+    stat_month DATE NOT NULL,
+    user_id UUID NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    -- Unique constraint to prevent duplicates
+    PRIMARY KEY (tenant_id, stat_month, user_id)
+);
+
+-- Index for MAU count queries
+CREATE INDEX idx_mau_tenant_month ON monthly_active_users (tenant_id, stat_month);
+
+-- Index for user-specific queries
+CREATE INDEX idx_mau_user ON monthly_active_users (user_id, stat_month);
+
+-- Row Level Security (RLS)
+ALTER TABLE monthly_active_users ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY tenant_isolation_policy ON monthly_active_users
+    USING (tenant_id = current_setting('app.tenant_id')::uuid);
+
+ALTER TABLE monthly_active_users FORCE ROW LEVEL SECURITY;
+
+-- Comments
+COMMENT ON TABLE monthly_active_users IS 'Monthly active users tracking (one row per unique user per calendar month)';
+COMMENT ON COLUMN monthly_active_users.stat_month IS 'First day of the calendar month (e.g., 2025-01-01)';
+COMMENT ON COLUMN monthly_active_users.user_id IS 'Active user identifier';
+
+-- =====================================================
+-- MAU calculation function
+-- =====================================================
+
+-- Get MAU count for a specific tenant and month
+CREATE OR REPLACE FUNCTION get_mau_count(p_tenant_id UUID, p_stat_month DATE)
+RETURNS INTEGER AS $$
+DECLARE
+    mau_count INTEGER;
+BEGIN
+    SELECT COUNT(DISTINCT user_id) INTO mau_count
+    FROM monthly_active_users
+    WHERE tenant_id = p_tenant_id AND stat_month = p_stat_month;
+
+    RETURN COALESCE(mau_count, 0);
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION get_mau_count(UUID, DATE) IS 'Get MAU count for a specific tenant and calendar month (stat_month should be first day of month)';
+
+-- =====================================================
+-- Data retention for MAU
+-- =====================================================
+
+CREATE OR REPLACE FUNCTION cleanup_old_mau(retention_days INTEGER)
+RETURNS INTEGER AS $$
+DECLARE
+    deleted_count INTEGER;
+BEGIN
+    DELETE FROM monthly_active_users
+    WHERE stat_month < DATE_TRUNC('month', CURRENT_DATE) - (retention_days || ' days')::INTERVAL;
+
+    GET DIAGNOSTICS deleted_count = ROW_COUNT;
+    RETURN deleted_count;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION cleanup_old_mau(INTEGER) IS 'Delete MAU data older than specified days (based on stat_month)';

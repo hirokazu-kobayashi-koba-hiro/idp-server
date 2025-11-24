@@ -24,17 +24,17 @@ import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.user.UserIdentifier;
 
-public class DailyActiveUserPostgresqlExecutor implements DailyActiveUserSqlExecutor {
+public class MonthlyActiveUserPostgresqlExecutor implements MonthlyActiveUserSqlExecutor {
 
   @Override
-  public void addActiveUser(TenantIdentifier tenantId, LocalDate date, UserIdentifier userId) {
+  public void addActiveUser(TenantIdentifier tenantId, LocalDate statMonth, UserIdentifier userId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sql =
         """
-                INSERT INTO daily_active_users (
+                INSERT INTO monthly_active_users (
                     tenant_id,
-                    stat_date,
+                    stat_month,
                     user_id,
                     created_at,
                     updated_at
@@ -45,13 +45,13 @@ public class DailyActiveUserPostgresqlExecutor implements DailyActiveUserSqlExec
                     NOW(),
                     NOW()
                 )
-                ON CONFLICT (tenant_id, stat_date, user_id)
+                ON CONFLICT (tenant_id, stat_month, user_id)
                 DO UPDATE SET updated_at = NOW()
                 """;
 
     List<Object> params = new ArrayList<>();
     params.add(tenantId.value());
-    params.add(date);
+    params.add(statMonth);
     params.add(userId.value());
 
     sqlExecutor.execute(sql, params);
@@ -59,14 +59,14 @@ public class DailyActiveUserPostgresqlExecutor implements DailyActiveUserSqlExec
 
   @Override
   public boolean addActiveUserAndReturnIfNew(
-      TenantIdentifier tenantId, LocalDate date, UserIdentifier userId) {
+      TenantIdentifier tenantId, LocalDate statMonth, UserIdentifier userId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sql =
         """
-                INSERT INTO daily_active_users (
+                INSERT INTO monthly_active_users (
                     tenant_id,
-                    stat_date,
+                    stat_month,
                     user_id,
                     created_at,
                     updated_at
@@ -77,31 +77,31 @@ public class DailyActiveUserPostgresqlExecutor implements DailyActiveUserSqlExec
                     NOW(),
                     NOW()
                 )
-                ON CONFLICT (tenant_id, stat_date, user_id) DO NOTHING
+                ON CONFLICT (tenant_id, stat_month, user_id) DO NOTHING
                 RETURNING user_id
                 """;
 
     List<Object> params = new ArrayList<>();
     params.add(tenantId.value());
-    params.add(date);
+    params.add(statMonth);
     params.add(userId.value());
 
     return sqlExecutor.executeAndCheckReturned(sql, params);
   }
 
   @Override
-  public void deleteByDate(TenantIdentifier tenantId, LocalDate date) {
+  public void deleteByMonth(TenantIdentifier tenantId, LocalDate statMonth) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sql =
         """
-                DELETE FROM daily_active_users
-                WHERE tenant_id = ?::uuid AND stat_date = ?
+                DELETE FROM monthly_active_users
+                WHERE tenant_id = ?::uuid AND stat_month = ?
                 """;
 
     List<Object> params = new ArrayList<>();
     params.add(tenantId.value());
-    params.add(date);
+    params.add(statMonth);
 
     sqlExecutor.execute(sql, params);
   }
@@ -112,8 +112,8 @@ public class DailyActiveUserPostgresqlExecutor implements DailyActiveUserSqlExec
 
     String sql =
         """
-                DELETE FROM daily_active_users
-                WHERE stat_date < ?
+                DELETE FROM monthly_active_users
+                WHERE stat_month < ?
                 """;
 
     List<Object> params = new ArrayList<>();
@@ -128,7 +128,7 @@ public class DailyActiveUserPostgresqlExecutor implements DailyActiveUserSqlExec
 
     String sql =
         """
-                DELETE FROM daily_active_users
+                DELETE FROM monthly_active_users
                 WHERE tenant_id = ?::uuid
                 """;
 
@@ -139,19 +139,19 @@ public class DailyActiveUserPostgresqlExecutor implements DailyActiveUserSqlExec
   }
 
   @Override
-  public int getDauCount(TenantIdentifier tenantId, LocalDate date) {
+  public int getMauCount(TenantIdentifier tenantId, LocalDate statMonth) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sql =
         """
-                SELECT COUNT(DISTINCT user_id) as dau_count
-                FROM daily_active_users
-                WHERE tenant_id = ?::uuid AND stat_date = ?
+                SELECT COUNT(DISTINCT user_id) as mau_count
+                FROM monthly_active_users
+                WHERE tenant_id = ?::uuid AND stat_month = ?
                 """;
 
     List<Object> params = new ArrayList<>();
     params.add(tenantId.value());
-    params.add(date);
+    params.add(statMonth);
 
     Map<String, Object> result = sqlExecutor.selectOneWithType(sql, params);
 
@@ -159,10 +159,10 @@ public class DailyActiveUserPostgresqlExecutor implements DailyActiveUserSqlExec
       return 0;
     }
 
-    Object dauCountObj = result.get("dau_count");
-    if (dauCountObj instanceof Long longValue) {
+    Object mauCountObj = result.get("mau_count");
+    if (mauCountObj instanceof Long longValue) {
       return longValue.intValue();
-    } else if (dauCountObj instanceof Integer intValue) {
+    } else if (mauCountObj instanceof Integer intValue) {
       return intValue;
     }
 

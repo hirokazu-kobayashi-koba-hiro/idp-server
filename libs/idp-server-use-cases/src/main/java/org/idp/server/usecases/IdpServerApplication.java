@@ -155,6 +155,7 @@ import org.idp.server.platform.security.SecurityEventPublisher;
 import org.idp.server.platform.security.hook.SecurityEventHooks;
 import org.idp.server.platform.security.repository.*;
 import org.idp.server.platform.statistics.repository.DailyActiveUserCommandRepository;
+import org.idp.server.platform.statistics.repository.MonthlyActiveUserCommandRepository;
 import org.idp.server.platform.statistics.repository.TenantStatisticsCommandRepository;
 import org.idp.server.platform.statistics.repository.TenantStatisticsQueryRepository;
 import org.idp.server.security.event.hook.ssf.SharedSignalsFrameworkMetaDataApi;
@@ -395,6 +396,8 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(TenantStatisticsQueryRepository.class);
     DailyActiveUserCommandRepository dailyActiveUserCommandRepository =
         applicationComponentContainer.resolve(DailyActiveUserCommandRepository.class);
+    MonthlyActiveUserCommandRepository monthlyActiveUserCommandRepository =
+        applicationComponentContainer.resolve(MonthlyActiveUserCommandRepository.class);
 
     HttpClient httpClient = HttpClientFactory.defaultClient();
     HttpRequestExecutor httpRequestExecutor =
@@ -646,7 +649,8 @@ public class IdpServerApplication {
                 hookQueryRepository,
                 tenantQueryRepository,
                 tenantStatisticsCommandRepository,
-                dailyActiveUserCommandRepository),
+                dailyActiveUserCommandRepository,
+                monthlyActiveUserCommandRepository),
             SecurityEventApi.class,
             databaseTypeProvider);
 
