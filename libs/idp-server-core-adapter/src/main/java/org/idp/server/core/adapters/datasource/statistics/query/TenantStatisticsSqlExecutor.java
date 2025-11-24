@@ -20,12 +20,12 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.statistics.TenantStatisticsDataIdentifier;
+import org.idp.server.platform.statistics.TenantStatisticsIdentifier;
 import org.idp.server.platform.statistics.TenantStatisticsQueries;
 
-public interface TenantStatisticsDataSqlExecutor {
+public interface TenantStatisticsSqlExecutor {
 
-  Map<String, String> selectOne(TenantStatisticsDataIdentifier id);
+  Map<String, String> selectOne(TenantStatisticsIdentifier id);
 
   Map<String, String> selectByDate(TenantIdentifier tenantId, LocalDate date);
 

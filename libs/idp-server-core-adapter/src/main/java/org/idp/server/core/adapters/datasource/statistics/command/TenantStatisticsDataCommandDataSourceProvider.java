@@ -19,23 +19,23 @@ package org.idp.server.core.adapters.datasource.statistics.command;
 import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
-import org.idp.server.platform.statistics.repository.TenantStatisticsDataCommandRepository;
+import org.idp.server.platform.statistics.repository.TenantStatisticsCommandRepository;
 
 public class TenantStatisticsDataCommandDataSourceProvider
-    implements ApplicationComponentProvider<TenantStatisticsDataCommandRepository> {
+    implements ApplicationComponentProvider<TenantStatisticsCommandRepository> {
 
   @Override
-  public Class<TenantStatisticsDataCommandRepository> type() {
-    return TenantStatisticsDataCommandRepository.class;
+  public Class<TenantStatisticsCommandRepository> type() {
+    return TenantStatisticsCommandRepository.class;
   }
 
   @Override
-  public TenantStatisticsDataCommandRepository provide(
+  public TenantStatisticsCommandRepository provide(
       ApplicationComponentDependencyContainer container) {
     ApplicationDatabaseTypeProvider databaseTypeProvider =
         container.resolve(ApplicationDatabaseTypeProvider.class);
-    TenantStatisticsDataSqlExecutor executor =
+    TenantStatisticsSqlExecutor executor =
         TenantStatisticsDataSqlExecutors.of(databaseTypeProvider.provide());
-    return new TenantStatisticsDataCommandDataSource(executor);
+    return new TenantStatisticsCommandDataSource(executor);
   }
 }
