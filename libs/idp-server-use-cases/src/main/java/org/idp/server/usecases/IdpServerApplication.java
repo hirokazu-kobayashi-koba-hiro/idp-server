@@ -155,8 +155,8 @@ import org.idp.server.platform.security.SecurityEventPublisher;
 import org.idp.server.platform.security.hook.SecurityEventHooks;
 import org.idp.server.platform.security.repository.*;
 import org.idp.server.platform.statistics.repository.DailyActiveUserCommandRepository;
-import org.idp.server.platform.statistics.repository.TenantStatisticsDataCommandRepository;
-import org.idp.server.platform.statistics.repository.TenantStatisticsDataQueryRepository;
+import org.idp.server.platform.statistics.repository.TenantStatisticsCommandRepository;
+import org.idp.server.platform.statistics.repository.TenantStatisticsQueryRepository;
 import org.idp.server.security.event.hook.ssf.SharedSignalsFrameworkMetaDataApi;
 import org.idp.server.usecases.application.enduser.*;
 import org.idp.server.usecases.application.identity_verification_service.IdentityVerificationCallbackEntryService;
@@ -389,10 +389,10 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(AuthenticationInteractionQueryRepository.class);
     WebAuthn4jCredentialRepository webAuthn4jCredentialRepository =
         applicationComponentContainer.resolve(WebAuthn4jCredentialRepository.class);
-    TenantStatisticsDataCommandRepository tenantStatisticsCommandRepository =
-        applicationComponentContainer.resolve(TenantStatisticsDataCommandRepository.class);
-    TenantStatisticsDataQueryRepository tenantStatisticsDataQueryRepository =
-        applicationComponentContainer.resolve(TenantStatisticsDataQueryRepository.class);
+    TenantStatisticsCommandRepository tenantStatisticsCommandRepository =
+        applicationComponentContainer.resolve(TenantStatisticsCommandRepository.class);
+    TenantStatisticsQueryRepository tenantStatisticsQueryRepository =
+        applicationComponentContainer.resolve(TenantStatisticsQueryRepository.class);
     DailyActiveUserCommandRepository dailyActiveUserCommandRepository =
         applicationComponentContainer.resolve(DailyActiveUserCommandRepository.class);
 
@@ -760,7 +760,7 @@ public class IdpServerApplication {
     this.tenantStatisticsApi =
         ManagementTypeEntryServiceProxy.createProxy(
             new TenantStatisticsEntryService(
-                tenantStatisticsDataQueryRepository, tenantQueryRepository, auditLogPublisher),
+                tenantStatisticsQueryRepository, tenantQueryRepository, auditLogPublisher),
             TenantStatisticsApi.class,
             databaseTypeProvider);
 
@@ -952,7 +952,7 @@ public class IdpServerApplication {
     this.orgTenantStatisticsApi =
         ManagementTypeEntryServiceProxy.createProxy(
             new OrgTenantStatisticsEntryService(
-                tenantStatisticsDataQueryRepository,
+                tenantStatisticsQueryRepository,
                 organizationRepository,
                 tenantQueryRepository,
                 auditLogPublisher),

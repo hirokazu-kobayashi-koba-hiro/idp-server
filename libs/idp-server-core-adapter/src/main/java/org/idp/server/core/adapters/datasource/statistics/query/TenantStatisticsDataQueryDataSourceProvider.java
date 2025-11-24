@@ -19,23 +19,23 @@ package org.idp.server.core.adapters.datasource.statistics.query;
 import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
-import org.idp.server.platform.statistics.repository.TenantStatisticsDataQueryRepository;
+import org.idp.server.platform.statistics.repository.TenantStatisticsQueryRepository;
 
 public class TenantStatisticsDataQueryDataSourceProvider
-    implements ApplicationComponentProvider<TenantStatisticsDataQueryRepository> {
+    implements ApplicationComponentProvider<TenantStatisticsQueryRepository> {
 
   @Override
-  public Class<TenantStatisticsDataQueryRepository> type() {
-    return TenantStatisticsDataQueryRepository.class;
+  public Class<TenantStatisticsQueryRepository> type() {
+    return TenantStatisticsQueryRepository.class;
   }
 
   @Override
-  public TenantStatisticsDataQueryRepository provide(
+  public TenantStatisticsQueryRepository provide(
       ApplicationComponentDependencyContainer container) {
     ApplicationDatabaseTypeProvider databaseTypeProvider =
         container.resolve(ApplicationDatabaseTypeProvider.class);
-    TenantStatisticsDataSqlExecutors executors = new TenantStatisticsDataSqlExecutors();
-    TenantStatisticsDataSqlExecutor executor = executors.get(databaseTypeProvider.provide());
+    TenantStatisticsSqlExecutors executors = new TenantStatisticsSqlExecutors();
+    TenantStatisticsSqlExecutor executor = executors.get(databaseTypeProvider.provide());
     return new TenantStatisticsDataQueryDataSource(executor);
   }
 }

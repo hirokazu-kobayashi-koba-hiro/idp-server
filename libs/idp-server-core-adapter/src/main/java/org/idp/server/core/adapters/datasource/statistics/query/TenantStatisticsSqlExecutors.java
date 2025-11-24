@@ -21,18 +21,18 @@ import java.util.Map;
 import org.idp.server.platform.datasource.DatabaseType;
 import org.idp.server.platform.exception.UnSupportedException;
 
-public class TenantStatisticsDataSqlExecutors {
+public class TenantStatisticsSqlExecutors {
 
-  Map<DatabaseType, TenantStatisticsDataSqlExecutor> executors;
+  Map<DatabaseType, TenantStatisticsSqlExecutor> executors;
 
-  public TenantStatisticsDataSqlExecutors() {
+  public TenantStatisticsSqlExecutors() {
     this.executors = new HashMap<>();
     executors.put(DatabaseType.POSTGRESQL, new PostgresqlExecutor());
     executors.put(DatabaseType.MYSQL, new MysqlExecutor());
   }
 
-  public TenantStatisticsDataSqlExecutor get(DatabaseType databaseType) {
-    TenantStatisticsDataSqlExecutor executor = executors.get(databaseType);
+  public TenantStatisticsSqlExecutor get(DatabaseType databaseType) {
+    TenantStatisticsSqlExecutor executor = executors.get(databaseType);
 
     if (executor == null) {
       throw new UnSupportedException("Unknown dialect " + databaseType.name());

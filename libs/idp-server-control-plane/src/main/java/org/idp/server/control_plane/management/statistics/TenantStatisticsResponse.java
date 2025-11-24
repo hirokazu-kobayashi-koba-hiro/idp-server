@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.json.JsonConverter;
-import org.idp.server.platform.statistics.TenantStatisticsData;
+import org.idp.server.platform.statistics.TenantStatistics;
 
 public class TenantStatisticsResponse {
 
@@ -33,12 +33,12 @@ public class TenantStatisticsResponse {
   }
 
   public static TenantStatisticsResponse success(
-      String tenantId, String from, String to, List<TenantStatisticsData> dailyStatistics) {
+      String tenantId, String from, String to, List<TenantStatistics> dailyStatistics) {
     Map<String, Object> contents = new HashMap<>();
     contents.put("tenant_id", tenantId);
     contents.put("period", Map.of("from", from, "to", to));
     contents.put(
-        "daily_statistics", dailyStatistics.stream().map(TenantStatisticsData::toMap).toList());
+        "daily_statistics", dailyStatistics.stream().map(TenantStatistics::toMap).toList());
     return new TenantStatisticsResponse(TenantStatisticsStatus.OK, contents);
   }
 

@@ -3,11 +3,11 @@
 -- Simple version with hardcoded metrics
 
 -- =====================================================
--- tenant_statistics_data
+-- tenant_statistics
 -- Daily statistics with hardcoded metrics in JSONB
 -- =====================================================
 
-CREATE TABLE tenant_statistics_data (
+CREATE TABLE tenant_statistics (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL,
     stat_date DATE NOT NULL,
@@ -27,32 +27,34 @@ CREATE TABLE tenant_statistics_data (
     */
 
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     -- One record per tenant per date
     UNIQUE(tenant_id, stat_date)
 );
 
 -- Index for time-series queries
-CREATE INDEX idx_stats_tenant_date ON tenant_statistics_data (tenant_id, stat_date DESC);
+CREATE INDEX idx_stats_tenant_date ON tenant_statistics (tenant_id, stat_date DESC);
 
 -- Index for date-only queries (cross-tenant analytics)
-CREATE INDEX idx_stats_date ON tenant_statistics_data (stat_date);
+CREATE INDEX idx_stats_date ON tenant_statistics (stat_date);
 
 -- JSONB GIN index for flexible queries
-CREATE INDEX idx_stats_metrics_gin ON tenant_statistics_data USING GIN (metrics);
+CREATE INDEX idx_stats_metrics_gin ON tenant_statistics USING GIN (metrics);
 
 -- Row Level Security (RLS)
-ALTER TABLE tenant_statistics_data ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tenant_statistics ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY tenant_isolation_policy ON tenant_statistics_data
+CREATE POLICY tenant_isolation_policy ON tenant_statistics
     USING (tenant_id = current_setting('app.tenant_id')::uuid);
 
-ALTER TABLE tenant_statistics_data FORCE ROW LEVEL SECURITY;
+ALTER TABLE tenant_statistics FORCE ROW LEVEL SECURITY;
 
 -- Comments
-COMMENT ON TABLE tenant_statistics_data IS 'Daily tenant statistics with hardcoded metrics (DAU, login rate, tokens, etc.)';
-COMMENT ON COLUMN tenant_statistics_data.stat_date IS 'Date of statistics (daily granularity)';
-COMMENT ON COLUMN tenant_statistics_data.metrics IS 'Calculated statistics in JSONB format (hardcoded metrics in application code)';
+COMMENT ON TABLE tenant_statistics IS 'Daily tenant statistics with hardcoded metrics (DAU, login rate, tokens, etc.)';
+COMMENT ON COLUMN tenant_statistics.stat_date IS 'Date of statistics (daily granularity)';
+COMMENT ON COLUMN tenant_statistics.metrics IS 'Calculated statistics in JSONB format (hardcoded metrics in application code)';
+COMMENT ON COLUMN tenant_statistics.updated_at IS 'Timestamp of last update (for recalculation tracking)';
 
 -- =====================================================
 -- Data retention function (optional)
@@ -64,7 +66,7 @@ RETURNS INTEGER AS $$
 DECLARE
     deleted_count INTEGER;
 BEGIN
-    DELETE FROM tenant_statistics_data
+    DELETE FROM tenant_statistics
     WHERE stat_date < CURRENT_DATE - (retention_days || ' days')::INTERVAL;
 
     GET DIAGNOSTICS deleted_count = ROW_COUNT;
@@ -87,8 +89,9 @@ SELECT
     metrics->>'login_success_rate' AS login_success_rate,
     metrics->>'tokens_issued' AS tokens_issued,
     metrics->>'new_users' AS new_users,
-    created_at
-FROM tenant_statistics_data
+    created_at,
+    updated_at
+FROM tenant_statistics
 WHERE stat_date >= CURRENT_DATE - INTERVAL '30 days'
 ORDER BY tenant_id, stat_date DESC;
 

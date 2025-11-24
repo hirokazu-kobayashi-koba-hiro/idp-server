@@ -20,7 +20,7 @@ import org.idp.server.platform.datasource.DatabaseType;
 
 public class TenantStatisticsDataSqlExecutors {
 
-  public static TenantStatisticsDataSqlExecutor of(DatabaseType databaseType) {
+  public static TenantStatisticsSqlExecutor of(DatabaseType databaseType) {
     return switch (databaseType) {
       case POSTGRESQL -> new PostgresqlExecutor();
       case MYSQL -> new MysqlExecutor();

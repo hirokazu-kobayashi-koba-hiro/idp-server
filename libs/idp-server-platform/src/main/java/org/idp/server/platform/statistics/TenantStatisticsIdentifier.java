@@ -20,18 +20,18 @@ import java.util.Objects;
 import java.util.UUID;
 import org.idp.server.platform.uuid.UuidConvertable;
 
-/** Identifier for TenantStatisticsData */
-public class TenantStatisticsDataIdentifier implements UuidConvertable {
+/** Identifier for TenantStatistics */
+public class TenantStatisticsIdentifier implements UuidConvertable {
 
   String value;
 
-  public TenantStatisticsDataIdentifier() {}
+  public TenantStatisticsIdentifier() {}
 
-  public TenantStatisticsDataIdentifier(String value) {
+  public TenantStatisticsIdentifier(String value) {
     this.value = value;
   }
 
-  public TenantStatisticsDataIdentifier(UUID value) {
+  public TenantStatisticsIdentifier(UUID value) {
     this.value = value.toString();
   }
 
@@ -46,7 +46,7 @@ public class TenantStatisticsDataIdentifier implements UuidConvertable {
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
-    TenantStatisticsDataIdentifier that = (TenantStatisticsDataIdentifier) o;
+    TenantStatisticsIdentifier that = (TenantStatisticsIdentifier) o;
     return Objects.equals(value, that.value);
   }
 
