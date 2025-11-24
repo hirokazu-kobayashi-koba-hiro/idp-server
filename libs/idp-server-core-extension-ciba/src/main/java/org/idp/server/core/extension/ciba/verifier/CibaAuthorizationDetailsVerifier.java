@@ -52,8 +52,8 @@ import org.idp.server.core.openid.oauth.verifier.extension.AuthorizationDetailsV
 public class CibaAuthorizationDetailsVerifier implements CibaExtensionVerifier {
 
   @Override
-  public boolean shouldNotVerify(CibaRequestContext context) {
-    return !context.hasAuthorizationDetails();
+  public boolean shouldVerify(CibaRequestContext context) {
+    return context.hasAuthorizationDetails();
   }
 
   @Override

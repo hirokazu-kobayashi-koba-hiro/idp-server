@@ -24,8 +24,8 @@ import org.idp.server.core.openid.oauth.verifier.extension.RequestObjectVerifyab
 public class CibaRequestObjectVerifier implements CibaExtensionVerifier, RequestObjectVerifyable {
 
   @Override
-  public boolean shouldNotVerify(CibaRequestContext context) {
-    return !context.isRequestObjectPattern();
+  public boolean shouldVerify(CibaRequestContext context) {
+    return context.isRequestObjectPattern();
   }
 
   public void verify(CibaRequestContext context) {

@@ -77,8 +77,8 @@ import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationBad
 public class CibaRequiredRarVerifier implements CibaExtensionVerifier {
 
   @Override
-  public boolean shouldNotVerify(CibaRequestContext context) {
-    return !context.clientConfiguration().isCibaRequireRar();
+  public boolean shouldVerify(CibaRequestContext context) {
+    return context.clientConfiguration().isCibaRequireRar();
   }
 
   @Override
