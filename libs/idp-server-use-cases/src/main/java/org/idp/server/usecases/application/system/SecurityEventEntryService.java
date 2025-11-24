@@ -29,6 +29,7 @@ import org.idp.server.platform.security.repository.SecurityEventCommandRepositor
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookResultCommandRepository;
 import org.idp.server.platform.statistics.repository.DailyActiveUserCommandRepository;
+import org.idp.server.platform.statistics.repository.MonthlyActiveUserCommandRepository;
 import org.idp.server.platform.statistics.repository.TenantStatisticsCommandRepository;
 
 @Transaction
@@ -44,7 +45,8 @@ public class SecurityEventEntryService implements SecurityEventApi {
       SecurityEventHookConfigurationQueryRepository hookQueryRepository,
       TenantQueryRepository tenantQueryRepository,
       TenantStatisticsCommandRepository statisticsRepository,
-      DailyActiveUserCommandRepository dailyActiveUserRepository) {
+      DailyActiveUserCommandRepository dailyActiveUserRepository,
+      MonthlyActiveUserCommandRepository monthlyActiveUserRepository) {
     this.securityEventHandler =
         new SecurityEventHandler(
             securityEventHooks,
@@ -52,7 +54,8 @@ public class SecurityEventEntryService implements SecurityEventApi {
             hookQueryRepository,
             new SecurityEventLogService(securityEventCommandRepository),
             statisticsRepository,
-            dailyActiveUserRepository);
+            dailyActiveUserRepository,
+            monthlyActiveUserRepository);
     this.tenantQueryRepository = tenantQueryRepository;
   }
 
