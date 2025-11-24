@@ -126,7 +126,7 @@ public class IdPUserCreator {
     //      user.setAssignedTenants(assignedTenants);
     //    }
 
-    user.transitStatus(UserStatus.REGISTERED);
+    user.setStatus(UserStatus.INITIALIZED);
 
     return user;
   }
