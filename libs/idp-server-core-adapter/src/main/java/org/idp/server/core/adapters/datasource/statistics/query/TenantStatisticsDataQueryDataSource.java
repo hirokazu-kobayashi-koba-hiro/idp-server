@@ -22,9 +22,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.idp.server.platform.exception.NotFoundException;
-import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.statistics.TenantStatisticsData;
 import org.idp.server.platform.statistics.TenantStatisticsDataIdentifier;
+import org.idp.server.platform.statistics.TenantStatisticsQueries;
 import org.idp.server.platform.statistics.repository.TenantStatisticsDataQueryRepository;
 
 public class TenantStatisticsDataQueryDataSource implements TenantStatisticsDataQueryRepository {
@@ -37,8 +38,8 @@ public class TenantStatisticsDataQueryDataSource implements TenantStatisticsData
 
   @Override
   public List<TenantStatisticsData> findByDateRange(
-      TenantIdentifier tenantId, LocalDate from, LocalDate to) {
-    List<Map<String, String>> results = executor.selectByDateRange(tenantId, from, to);
+      Tenant tenant, TenantStatisticsQueries queries) {
+    List<Map<String, String>> results = executor.selectByDateRange(tenant.identifier(), queries);
 
     if (results == null || results.isEmpty()) {
       return new ArrayList<>();
@@ -48,8 +49,8 @@ public class TenantStatisticsDataQueryDataSource implements TenantStatisticsData
   }
 
   @Override
-  public Optional<TenantStatisticsData> findByDate(TenantIdentifier tenantId, LocalDate date) {
-    Map<String, String> result = executor.selectByDate(tenantId, date);
+  public Optional<TenantStatisticsData> findByDate(Tenant tenant, LocalDate date) {
+    Map<String, String> result = executor.selectByDate(tenant.identifier(), date);
 
     if (result == null || result.isEmpty()) {
       return Optional.empty();
@@ -59,7 +60,7 @@ public class TenantStatisticsDataQueryDataSource implements TenantStatisticsData
   }
 
   @Override
-  public TenantStatisticsData get(TenantStatisticsDataIdentifier id) {
+  public TenantStatisticsData get(Tenant tenant, TenantStatisticsDataIdentifier id) {
     Map<String, String> result = executor.selectOne(id);
 
     if (result == null || result.isEmpty()) {
@@ -70,7 +71,7 @@ public class TenantStatisticsDataQueryDataSource implements TenantStatisticsData
   }
 
   @Override
-  public Optional<TenantStatisticsData> find(TenantStatisticsDataIdentifier id) {
+  public Optional<TenantStatisticsData> find(Tenant tenant, TenantStatisticsDataIdentifier id) {
     Map<String, String> result = executor.selectOne(id);
 
     if (result == null || result.isEmpty()) {
@@ -81,8 +82,8 @@ public class TenantStatisticsDataQueryDataSource implements TenantStatisticsData
   }
 
   @Override
-  public long countByDateRange(TenantIdentifier tenantId, LocalDate from, LocalDate to) {
-    Map<String, String> result = executor.selectCount(tenantId, from, to);
+  public long countByDateRange(Tenant tenant, LocalDate from, LocalDate to) {
+    Map<String, String> result = executor.selectCount(tenant.identifier(), from, to);
 
     if (result == null || result.isEmpty()) {
       return 0;
@@ -92,8 +93,8 @@ public class TenantStatisticsDataQueryDataSource implements TenantStatisticsData
   }
 
   @Override
-  public Optional<TenantStatisticsData> findLatest(TenantIdentifier tenantId) {
-    Map<String, String> result = executor.selectLatest(tenantId);
+  public Optional<TenantStatisticsData> findLatest(Tenant tenant) {
+    Map<String, String> result = executor.selectLatest(tenant.identifier());
 
     if (result == null || result.isEmpty()) {
       return Optional.empty();
@@ -103,8 +104,8 @@ public class TenantStatisticsDataQueryDataSource implements TenantStatisticsData
   }
 
   @Override
-  public boolean exists(TenantIdentifier tenantId, LocalDate date) {
-    Map<String, String> result = executor.selectExists(tenantId, date);
+  public boolean exists(Tenant tenant, LocalDate date) {
+    Map<String, String> result = executor.selectExists(tenant.identifier(), date);
 
     if (result == null || result.isEmpty()) {
       return false;

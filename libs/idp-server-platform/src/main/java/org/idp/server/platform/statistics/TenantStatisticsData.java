@@ -121,9 +121,7 @@ public class TenantStatisticsData {
    */
   public Map<String, Object> toMap() {
     return Map.of(
-        "id", id.value(),
-        "tenant_id", tenantId.value(),
-        "stat_date", statDate.toString(),
+        "date", statDate.toString(),
         "metrics", metrics,
         "created_at", createdAt.toString());
   }

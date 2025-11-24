@@ -18,7 +18,10 @@ package org.idp.server.core.adapters.datasource.statistics.query;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Map;
+import org.idp.server.platform.date.LocalDateTimeParser;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.statistics.TenantStatisticsData;
@@ -37,12 +40,16 @@ public class ModelConvertor {
 
     Map<String, Object> metricsMap = jsonConverter.read(metrics, Map.class);
 
+    // LocalDateTimeParser supports both PostgreSQL TIMESTAMP and ISO-8601 formats
+    LocalDateTime localDateTime = LocalDateTimeParser.parse(createdAt);
+    Instant createdAtInstant = localDateTime.atZone(ZoneOffset.UTC).toInstant();
+
     return TenantStatisticsData.builder()
         .id(new TenantStatisticsDataIdentifier(id))
         .tenantId(new TenantIdentifier(tenantId))
         .statDate(LocalDate.parse(statDate))
         .metrics(metricsMap)
-        .createdAt(Instant.parse(createdAt))
+        .createdAt(createdAtInstant)
         .build();
   }
 }

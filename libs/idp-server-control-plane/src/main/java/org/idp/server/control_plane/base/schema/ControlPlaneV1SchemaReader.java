@@ -151,6 +151,11 @@ public class ControlPlaneV1SchemaReader {
     return JsonSchemaDefinition.fromJson(json);
   }
 
+  public static JsonSchemaDefinition tenantStatisticsRequestSchema() {
+    String json = ResourceReader.readClasspath("/schema/1.0/tenant-statistics-request.json");
+    return JsonSchemaDefinition.fromJson(json);
+  }
+
   public static JsonSchemaDefinition securityEventHookResultQuerySchema() {
     String json = ResourceReader.readClasspath("/schema/1.0/security-event-hook-result-query.json");
     return JsonSchemaDefinition.fromJson(json);

@@ -14,27 +14,19 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.statistics.query;
+package org.idp.server.control_plane.management.statistics;
 
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.statistics.TenantStatisticsDataIdentifier;
 import org.idp.server.platform.statistics.TenantStatisticsQueries;
 
-public interface TenantStatisticsDataSqlExecutor {
+public record TenantStatisticsRequest(TenantIdentifier tenantId, TenantStatisticsQueries queries) {
 
-  Map<String, String> selectOne(TenantStatisticsDataIdentifier id);
+  public LocalDate from() {
+    return queries.fromAsLocalDate();
+  }
 
-  Map<String, String> selectByDate(TenantIdentifier tenantId, LocalDate date);
-
-  List<Map<String, String>> selectByDateRange(
-      TenantIdentifier tenantId, TenantStatisticsQueries queries);
-
-  Map<String, String> selectCount(TenantIdentifier tenantId, LocalDate from, LocalDate to);
-
-  Map<String, String> selectLatest(TenantIdentifier tenantId);
-
-  Map<String, String> selectExists(TenantIdentifier tenantId, LocalDate date);
+  public LocalDate to() {
+    return queries.toAsLocalDate();
+  }
 }
