@@ -23,6 +23,7 @@ import java.util.Map;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.statistics.TenantStatisticsDataIdentifier;
+import org.idp.server.platform.statistics.TenantStatisticsQueries;
 
 public class MysqlExecutor implements TenantStatisticsDataSqlExecutor {
 
@@ -61,7 +62,7 @@ public class MysqlExecutor implements TenantStatisticsDataSqlExecutor {
 
   @Override
   public List<Map<String, String>> selectByDateRange(
-      TenantIdentifier tenantId, LocalDate from, LocalDate to) {
+      TenantIdentifier tenantId, TenantStatisticsQueries queries) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sql =
         """
@@ -75,8 +76,8 @@ public class MysqlExecutor implements TenantStatisticsDataSqlExecutor {
 
     List<Object> params = new ArrayList<>();
     params.add(tenantId.value());
-    params.add(from);
-    params.add(to);
+    params.add(queries.fromAsLocalDate());
+    params.add(queries.toAsLocalDate());
 
     return sqlExecutor.selectList(sql, params);
   }
