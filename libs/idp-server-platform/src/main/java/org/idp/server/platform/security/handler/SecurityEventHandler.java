@@ -33,6 +33,7 @@ import org.idp.server.platform.security.repository.SecurityEventCommandRepositor
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookResultCommandRepository;
 import org.idp.server.platform.statistics.repository.DailyActiveUserCommandRepository;
+import org.idp.server.platform.statistics.repository.MonthlyActiveUserCommandRepository;
 import org.idp.server.platform.statistics.repository.TenantStatisticsCommandRepository;
 import org.idp.server.platform.user.UserIdentifier;
 
@@ -45,6 +46,7 @@ public class SecurityEventHandler {
   SecurityEventLogService logService;
   TenantStatisticsCommandRepository statisticsRepository;
   DailyActiveUserCommandRepository dailyActiveUserRepository;
+  MonthlyActiveUserCommandRepository monthlyActiveUserRepository;
 
   LoggerWrapper log = LoggerWrapper.getLogger(SecurityEventHandler.class);
 
@@ -54,7 +56,8 @@ public class SecurityEventHandler {
       SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository,
       SecurityEventLogService logService,
       TenantStatisticsCommandRepository statisticsRepository,
-      DailyActiveUserCommandRepository dailyActiveUserRepository) {
+      DailyActiveUserCommandRepository dailyActiveUserRepository,
+      MonthlyActiveUserCommandRepository monthlyActiveUserRepository) {
     this.securityEventHooks = securityEventHooks;
     this.resultsCommandRepository = resultsCommandRepository;
     this.securityEventHookConfigurationQueryRepository =
@@ -62,6 +65,7 @@ public class SecurityEventHandler {
     this.logService = logService;
     this.statisticsRepository = statisticsRepository;
     this.dailyActiveUserRepository = dailyActiveUserRepository;
+    this.monthlyActiveUserRepository = monthlyActiveUserRepository;
   }
 
   public void handle(Tenant tenant, SecurityEvent securityEvent) {
@@ -139,7 +143,7 @@ public class SecurityEventHandler {
   /**
    * Handle login success event
    *
-   * <p>Increments login_success_count and tracks unique daily active users (DAU)
+   * <p>Increments login_success_count and tracks unique daily/monthly active users (DAU/MAU)
    */
   private void handleLoginSuccess(Tenant tenant, UserIdentifier userId, LocalDate eventDate) {
     if (userId == null) {
@@ -150,23 +154,43 @@ public class SecurityEventHandler {
     incrementMetric(tenant, eventDate, "login_success_count");
 
     // Track DAU - add user to daily active users table and increment DAU count if new
-    boolean isNewActiveUser =
+    boolean isNewDailyUser =
         dailyActiveUserRepository.addActiveUserAndReturnIfNew(
             tenant.identifier(), eventDate, userId);
 
-    if (isNewActiveUser) {
+    if (isNewDailyUser) {
       log.debug(
           "New daily active user: tenant={}, date={}, user={}",
           tenant.identifierValue(),
           eventDate,
           userId.value());
-      // Increment DAU count in tenant_statistics_data
       incrementMetric(tenant, eventDate, "dau");
     } else {
       log.debug(
           "User already active today: tenant={}, date={}, user={}",
           tenant.identifierValue(),
           eventDate,
+          userId.value());
+    }
+
+    // Track MAU - add user to monthly active users table and increment MAU count if new
+    LocalDate statMonth = eventDate.withDayOfMonth(1); // First day of calendar month
+    boolean isNewMonthlyUser =
+        monthlyActiveUserRepository.addActiveUserAndReturnIfNew(
+            tenant.identifier(), statMonth, userId);
+
+    if (isNewMonthlyUser) {
+      log.debug(
+          "New monthly active user: tenant={}, month={}, user={}",
+          tenant.identifierValue(),
+          statMonth,
+          userId.value());
+      incrementMetric(tenant, eventDate, "mau");
+    } else {
+      log.debug(
+          "User already active this month: tenant={}, month={}, user={}",
+          tenant.identifierValue(),
+          statMonth,
           userId.value());
     }
   }
