@@ -136,10 +136,15 @@ describe("Standard Use Case: Onboarding Flow with Audit Log Tracking", () => {
     });
 
     console.log(`✅ Organization created: ${organizationId}`);
-    expect(createResponse.status).toBe(200);
+    expect(createResponse.status).toBe(201);
     expect(createResponse.data.dry_run).toBe(false);
     expect(createResponse.data.organization.id).toBe(organizationId);
     expect(createResponse.data.tenant.id).toBe(tenantId);
+    expect(createResponse.data.user).toBeDefined();
+    expect(createResponse.data.user.sub).toBe(userId);
+    expect(createResponse.data.user.email).toBe(orgAdminEmail);
+    expect(createResponse.data.client).toBeDefined();
+    expect(createResponse.data.client.client_id).toBe(clientId);
 
     console.log("\n=== Step 2: Login with Organization Admin ===");
 
