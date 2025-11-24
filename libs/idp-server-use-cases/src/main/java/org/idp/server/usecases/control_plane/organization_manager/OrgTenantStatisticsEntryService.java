@@ -31,7 +31,7 @@ import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.statistics.TenantStatisticsQueries;
-import org.idp.server.platform.statistics.repository.TenantStatisticsDataQueryRepository;
+import org.idp.server.platform.statistics.repository.TenantStatisticsQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
@@ -63,7 +63,7 @@ public class OrgTenantStatisticsEntryService implements OrgTenantStatisticsApi {
   private final AuditLogPublisher auditLogPublisher;
 
   public OrgTenantStatisticsEntryService(
-      TenantStatisticsDataQueryRepository repository,
+      TenantStatisticsQueryRepository repository,
       OrganizationRepository organizationRepository,
       TenantQueryRepository tenantQueryRepository,
       AuditLogPublisher auditLogPublisher) {

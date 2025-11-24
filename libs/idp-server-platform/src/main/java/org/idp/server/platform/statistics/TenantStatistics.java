@@ -25,7 +25,7 @@ import java.util.Objects;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 /**
- * Tenant daily statistics data
+ * Tenant daily statistics
  *
  * <p>Holds calculated daily statistics with hardcoded metrics in JSONB format.
  *
@@ -44,7 +44,7 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
  * <p>Example usage:
  *
  * <pre>{@code
- * TenantStatisticsData data = TenantStatisticsData.builder()
+ * TenantStatistics statistics = TenantStatistics.builder()
  *     .tenantId(tenantId)
  *     .statDate(LocalDate.now().minusDays(1))
  *     .addMetric("dau", 1250)
@@ -52,24 +52,26 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
  *     .addMetric("tokens_issued", 800)
  *     .build();
  *
- * Integer dau = data.getIntegerMetric("dau");
- * Double successRate = data.getNumberMetric("login_success_rate");
+ * Integer dau = statistics.getIntegerMetric("dau");
+ * Double successRate = statistics.getNumberMetric("login_success_rate");
  * }</pre>
  */
-public class TenantStatisticsData {
+public class TenantStatistics {
 
-  private final TenantStatisticsDataIdentifier id;
+  private final TenantStatisticsIdentifier id;
   private final TenantIdentifier tenantId;
   private final LocalDate statDate;
   private final Map<String, Object> metrics;
   private final Instant createdAt;
+  private final Instant updatedAt;
 
-  private TenantStatisticsData(Builder builder) {
+  private TenantStatistics(Builder builder) {
     this.id = builder.id;
     this.tenantId = Objects.requireNonNull(builder.tenantId, "tenantId must not be null");
     this.statDate = Objects.requireNonNull(builder.statDate, "statDate must not be null");
     this.metrics = Collections.unmodifiableMap(new HashMap<>(builder.metrics));
     this.createdAt = builder.createdAt != null ? builder.createdAt : Instant.now();
+    this.updatedAt = builder.updatedAt != null ? builder.updatedAt : Instant.now();
   }
 
   /**
@@ -139,12 +141,13 @@ public class TenantStatisticsData {
     return Map.of(
         "date", statDate.toString(),
         "metrics", metrics,
-        "created_at", createdAt.toString());
+        "created_at", createdAt.toString(),
+        "updated_at", updatedAt.toString());
   }
 
   // Getters
 
-  public TenantStatisticsDataIdentifier id() {
+  public TenantStatisticsIdentifier id() {
     return id;
   }
 
@@ -164,6 +167,10 @@ public class TenantStatisticsData {
     return createdAt;
   }
 
+  public Instant updatedAt() {
+    return updatedAt;
+  }
+
   // Builder
 
   public static Builder builder() {
@@ -171,13 +178,14 @@ public class TenantStatisticsData {
   }
 
   public static class Builder {
-    private TenantStatisticsDataIdentifier id;
+    private TenantStatisticsIdentifier id;
     private TenantIdentifier tenantId;
     private LocalDate statDate;
     private Map<String, Object> metrics = new HashMap<>();
     private Instant createdAt;
+    private Instant updatedAt;
 
-    public Builder id(TenantStatisticsDataIdentifier id) {
+    public Builder id(TenantStatisticsIdentifier id) {
       this.id = id;
       return this;
     }
@@ -207,8 +215,13 @@ public class TenantStatisticsData {
       return this;
     }
 
-    public TenantStatisticsData build() {
-      return new TenantStatisticsData(this);
+    public Builder updatedAt(Instant updatedAt) {
+      this.updatedAt = updatedAt;
+      return this;
+    }
+
+    public TenantStatistics build() {
+      return new TenantStatistics(this);
     }
   }
 
@@ -216,7 +229,7 @@ public class TenantStatisticsData {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    TenantStatisticsData that = (TenantStatisticsData) o;
+    TenantStatistics that = (TenantStatistics) o;
     return Objects.equals(id, that.id)
         && Objects.equals(tenantId, that.tenantId)
         && Objects.equals(statDate, that.statDate)
@@ -230,7 +243,7 @@ public class TenantStatisticsData {
 
   @Override
   public String toString() {
-    return "TenantStatisticsData{"
+    return "TenantStatistics{"
         + "id="
         + id
         + ", tenantId="
@@ -241,6 +254,8 @@ public class TenantStatisticsData {
         + metrics.size()
         + ", createdAt="
         + createdAt
+        + ", updatedAt="
+        + updatedAt
         + '}';
   }
 }

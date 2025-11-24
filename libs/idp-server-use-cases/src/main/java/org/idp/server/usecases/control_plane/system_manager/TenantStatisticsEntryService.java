@@ -29,7 +29,7 @@ import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.statistics.TenantStatisticsQueries;
-import org.idp.server.platform.statistics.repository.TenantStatisticsDataQueryRepository;
+import org.idp.server.platform.statistics.repository.TenantStatisticsQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
 @Transaction
@@ -39,7 +39,7 @@ public class TenantStatisticsEntryService implements TenantStatisticsApi {
   private final AuditLogPublisher auditLogPublisher;
 
   public TenantStatisticsEntryService(
-      TenantStatisticsDataQueryRepository repository,
+      TenantStatisticsQueryRepository repository,
       TenantQueryRepository tenantQueryRepository,
       AuditLogPublisher auditLogPublisher) {
     TenantStatisticsFindService findService = new TenantStatisticsFindService(repository);

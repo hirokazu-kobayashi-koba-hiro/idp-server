@@ -18,36 +18,35 @@ package org.idp.server.core.adapters.datasource.statistics.command;
 
 import java.time.LocalDate;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.statistics.TenantStatisticsData;
-import org.idp.server.platform.statistics.TenantStatisticsDataIdentifier;
-import org.idp.server.platform.statistics.repository.TenantStatisticsDataCommandRepository;
+import org.idp.server.platform.statistics.TenantStatistics;
+import org.idp.server.platform.statistics.TenantStatisticsIdentifier;
+import org.idp.server.platform.statistics.repository.TenantStatisticsCommandRepository;
 
-public class TenantStatisticsDataCommandDataSource
-    implements TenantStatisticsDataCommandRepository {
+public class TenantStatisticsCommandDataSource implements TenantStatisticsCommandRepository {
 
-  TenantStatisticsDataSqlExecutor executor;
+  TenantStatisticsSqlExecutor executor;
 
-  public TenantStatisticsDataCommandDataSource(TenantStatisticsDataSqlExecutor executor) {
+  public TenantStatisticsCommandDataSource(TenantStatisticsSqlExecutor executor) {
     this.executor = executor;
   }
 
   @Override
-  public void save(TenantStatisticsData data) {
+  public void save(TenantStatistics data) {
     executor.upsert(data);
   }
 
   @Override
-  public void register(TenantStatisticsData data) {
+  public void register(TenantStatistics data) {
     executor.insert(data);
   }
 
   @Override
-  public void update(TenantStatisticsData data) {
+  public void update(TenantStatistics data) {
     executor.update(data);
   }
 
   @Override
-  public void delete(TenantStatisticsDataIdentifier id) {
+  public void delete(TenantStatisticsIdentifier id) {
     executor.delete(id);
   }
 

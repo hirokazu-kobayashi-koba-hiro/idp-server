@@ -23,68 +23,73 @@ import java.util.UUID;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.statistics.TenantStatisticsData;
-import org.idp.server.platform.statistics.TenantStatisticsDataIdentifier;
+import org.idp.server.platform.statistics.TenantStatistics;
+import org.idp.server.platform.statistics.TenantStatisticsIdentifier;
 
-public class PostgresqlExecutor implements TenantStatisticsDataSqlExecutor {
+public class PostgresqlExecutor implements TenantStatisticsSqlExecutor {
 
   @Override
-  public void upsert(TenantStatisticsData data) {
+  public void upsert(TenantStatistics data) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     JsonConverter jsonConverter = JsonConverter.defaultInstance();
 
     String sql =
         """
-                INSERT INTO tenant_statistics_data (
+                INSERT INTO tenant_statistics (
                     id,
                     tenant_id,
                     stat_date,
                     metrics,
-                    created_at
+                    created_at,
+                    updated_at
                 ) VALUES (
                     ?::uuid,
                     ?::uuid,
                     ?,
                     ?::jsonb,
+                    ?,
                     ?
                 )
                 ON CONFLICT (tenant_id, stat_date)
                 DO UPDATE SET
                     metrics = EXCLUDED.metrics,
-                    created_at = EXCLUDED.created_at
+                    updated_at = EXCLUDED.updated_at
                 """;
 
     List<Object> params = new ArrayList<>();
     params.add(
         data.id() != null
             ? data.id().toString()
-            : new TenantStatisticsDataIdentifier(UUID.randomUUID()).value());
+            : new TenantStatisticsIdentifier(UUID.randomUUID()).value());
     params.add(data.tenantId().value());
     params.add(data.statDate());
     params.add(jsonConverter.write(data.metrics()));
     params.add(data.createdAt());
+    params.add(data.updatedAt());
 
     sqlExecutor.execute(sql, params);
   }
 
   @Override
-  public void insert(TenantStatisticsData data) {
+  public void insert(TenantStatistics data) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     JsonConverter jsonConverter = JsonConverter.defaultInstance();
 
     String sql =
         """
-                INSERT INTO tenant_statistics_data (
+                INSERT INTO tenant_statistics (
                     id,
                     tenant_id,
                     stat_date,
                     metrics,
-                    created_at
+                    created_at,
+                    updated_at
                 ) VALUES (
                     ?::uuid,
                     ?::uuid,
                     ?,
                     ?::jsonb,
+                    ?,
                     ?
                 )
                 """;
@@ -93,43 +98,44 @@ public class PostgresqlExecutor implements TenantStatisticsDataSqlExecutor {
     params.add(
         data.id() != null
             ? data.id().toString()
-            : new TenantStatisticsDataIdentifier(UUID.randomUUID()).value());
+            : new TenantStatisticsIdentifier(UUID.randomUUID()).value());
     params.add(data.tenantId().value());
     params.add(data.statDate());
     params.add(jsonConverter.write(data.metrics()));
     params.add(data.createdAt());
+    params.add(data.updatedAt());
 
     sqlExecutor.execute(sql, params);
   }
 
   @Override
-  public void update(TenantStatisticsData data) {
+  public void update(TenantStatistics data) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     JsonConverter jsonConverter = JsonConverter.defaultInstance();
 
     String sql =
         """
-                UPDATE tenant_statistics_data
+                UPDATE tenant_statistics
                 SET metrics = ?::jsonb,
-                    created_at = ?
+                    updated_at = ?
                 WHERE id = ?::uuid
                 """;
 
     List<Object> params = new ArrayList<>();
     params.add(jsonConverter.write(data.metrics()));
-    params.add(data.createdAt());
+    params.add(data.updatedAt());
     params.add(data.id().value());
 
     sqlExecutor.execute(sql, params);
   }
 
   @Override
-  public void delete(TenantStatisticsDataIdentifier id) {
+  public void delete(TenantStatisticsIdentifier id) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sql =
         """
-                DELETE FROM tenant_statistics_data WHERE id = ?::uuid
+                DELETE FROM tenant_statistics WHERE id = ?::uuid
                 """;
 
     List<Object> params = new ArrayList<>();
@@ -144,7 +150,7 @@ public class PostgresqlExecutor implements TenantStatisticsDataSqlExecutor {
 
     String sql =
         """
-                DELETE FROM tenant_statistics_data
+                DELETE FROM tenant_statistics
                 WHERE tenant_id = ?::uuid AND stat_date = ?
                 """;
 
@@ -161,7 +167,7 @@ public class PostgresqlExecutor implements TenantStatisticsDataSqlExecutor {
 
     String sql =
         """
-                DELETE FROM tenant_statistics_data
+                DELETE FROM tenant_statistics
                 WHERE stat_date < ?
                 """;
 
@@ -177,7 +183,7 @@ public class PostgresqlExecutor implements TenantStatisticsDataSqlExecutor {
 
     String sql =
         """
-                DELETE FROM tenant_statistics_data WHERE tenant_id = ?::uuid
+                DELETE FROM tenant_statistics WHERE tenant_id = ?::uuid
                 """;
 
     List<Object> params = new ArrayList<>();
@@ -193,26 +199,29 @@ public class PostgresqlExecutor implements TenantStatisticsDataSqlExecutor {
 
     String sql =
         """
-                INSERT INTO tenant_statistics_data (
+                INSERT INTO tenant_statistics (
                     id,
                     tenant_id,
                     stat_date,
                     metrics,
-                    created_at
+                    created_at,
+                    updated_at
                 ) VALUES (
                     gen_random_uuid(),
                     ?::uuid,
                     ?,
                     jsonb_build_object(?::text, ?::int),
+                    now(),
                     now()
                 )
                 ON CONFLICT (tenant_id, stat_date)
                 DO UPDATE SET
                     metrics = jsonb_set(
-                        tenant_statistics_data.metrics,
+                        tenant_statistics.metrics,
                         ARRAY[?::text],
-                        to_jsonb(COALESCE((tenant_statistics_data.metrics->>?::text)::int, 0) + ?::int)
-                    )
+                        to_jsonb(COALESCE((tenant_statistics.metrics->>?::text)::int, 0) + ?::int)
+                    ),
+                    updated_at = now()
                 """;
 
     List<Object> params = new ArrayList<>();

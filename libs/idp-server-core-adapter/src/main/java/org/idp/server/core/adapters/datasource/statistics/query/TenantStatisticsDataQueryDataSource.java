@@ -23,22 +23,21 @@ import java.util.Map;
 import java.util.Optional;
 import org.idp.server.platform.exception.NotFoundException;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.statistics.TenantStatisticsData;
-import org.idp.server.platform.statistics.TenantStatisticsDataIdentifier;
+import org.idp.server.platform.statistics.TenantStatistics;
+import org.idp.server.platform.statistics.TenantStatisticsIdentifier;
 import org.idp.server.platform.statistics.TenantStatisticsQueries;
-import org.idp.server.platform.statistics.repository.TenantStatisticsDataQueryRepository;
+import org.idp.server.platform.statistics.repository.TenantStatisticsQueryRepository;
 
-public class TenantStatisticsDataQueryDataSource implements TenantStatisticsDataQueryRepository {
+public class TenantStatisticsDataQueryDataSource implements TenantStatisticsQueryRepository {
 
-  TenantStatisticsDataSqlExecutor executor;
+  TenantStatisticsSqlExecutor executor;
 
-  public TenantStatisticsDataQueryDataSource(TenantStatisticsDataSqlExecutor executor) {
+  public TenantStatisticsDataQueryDataSource(TenantStatisticsSqlExecutor executor) {
     this.executor = executor;
   }
 
   @Override
-  public List<TenantStatisticsData> findByDateRange(
-      Tenant tenant, TenantStatisticsQueries queries) {
+  public List<TenantStatistics> findByDateRange(Tenant tenant, TenantStatisticsQueries queries) {
     List<Map<String, String>> results = executor.selectByDateRange(tenant.identifier(), queries);
 
     if (results == null || results.isEmpty()) {
@@ -49,7 +48,7 @@ public class TenantStatisticsDataQueryDataSource implements TenantStatisticsData
   }
 
   @Override
-  public Optional<TenantStatisticsData> findByDate(Tenant tenant, LocalDate date) {
+  public Optional<TenantStatistics> findByDate(Tenant tenant, LocalDate date) {
     Map<String, String> result = executor.selectByDate(tenant.identifier(), date);
 
     if (result == null || result.isEmpty()) {
@@ -60,18 +59,18 @@ public class TenantStatisticsDataQueryDataSource implements TenantStatisticsData
   }
 
   @Override
-  public TenantStatisticsData get(Tenant tenant, TenantStatisticsDataIdentifier id) {
+  public TenantStatistics get(Tenant tenant, TenantStatisticsIdentifier id) {
     Map<String, String> result = executor.selectOne(id);
 
     if (result == null || result.isEmpty()) {
-      throw new NotFoundException("TenantStatisticsData not found: " + id);
+      throw new NotFoundException("TenantStatistics not found: " + id);
     }
 
     return ModelConvertor.convert(result);
   }
 
   @Override
-  public Optional<TenantStatisticsData> find(Tenant tenant, TenantStatisticsDataIdentifier id) {
+  public Optional<TenantStatistics> find(Tenant tenant, TenantStatisticsIdentifier id) {
     Map<String, String> result = executor.selectOne(id);
 
     if (result == null || result.isEmpty()) {
@@ -93,7 +92,7 @@ public class TenantStatisticsDataQueryDataSource implements TenantStatisticsData
   }
 
   @Override
-  public Optional<TenantStatisticsData> findLatest(Tenant tenant) {
+  public Optional<TenantStatistics> findLatest(Tenant tenant) {
     Map<String, String> result = executor.selectLatest(tenant.identifier());
 
     if (result == null || result.isEmpty()) {

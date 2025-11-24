@@ -33,7 +33,7 @@ import org.idp.server.platform.security.repository.SecurityEventCommandRepositor
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookResultCommandRepository;
 import org.idp.server.platform.statistics.repository.DailyActiveUserCommandRepository;
-import org.idp.server.platform.statistics.repository.TenantStatisticsDataCommandRepository;
+import org.idp.server.platform.statistics.repository.TenantStatisticsCommandRepository;
 import org.idp.server.platform.user.UserIdentifier;
 
 public class SecurityEventHandler {
@@ -43,7 +43,7 @@ public class SecurityEventHandler {
   SecurityEventHooks securityEventHooks;
   SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository;
   SecurityEventLogService logService;
-  TenantStatisticsDataCommandRepository statisticsRepository;
+  TenantStatisticsCommandRepository statisticsRepository;
   DailyActiveUserCommandRepository dailyActiveUserRepository;
 
   LoggerWrapper log = LoggerWrapper.getLogger(SecurityEventHandler.class);
@@ -53,7 +53,7 @@ public class SecurityEventHandler {
       SecurityEventHookResultCommandRepository resultsCommandRepository,
       SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository,
       SecurityEventLogService logService,
-      TenantStatisticsDataCommandRepository statisticsRepository,
+      TenantStatisticsCommandRepository statisticsRepository,
       DailyActiveUserCommandRepository dailyActiveUserRepository) {
     this.securityEventHooks = securityEventHooks;
     this.resultsCommandRepository = resultsCommandRepository;

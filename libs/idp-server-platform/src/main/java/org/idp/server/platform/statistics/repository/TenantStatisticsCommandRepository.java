@@ -18,21 +18,21 @@ package org.idp.server.platform.statistics.repository;
 
 import java.time.LocalDate;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.statistics.TenantStatisticsData;
-import org.idp.server.platform.statistics.TenantStatisticsDataIdentifier;
+import org.idp.server.platform.statistics.TenantStatistics;
+import org.idp.server.platform.statistics.TenantStatisticsIdentifier;
 
 /**
- * Command repository for TenantStatisticsData
+ * Command repository for TenantStatistics
  *
  * <p>Provides write operations for daily tenant statistics.
  *
- * <p>Supports UPSERT: use {@link #save(TenantStatisticsData)} to insert or update based on unique
+ * <p>Supports UPSERT: use {@link #save(TenantStatistics)} to insert or update based on unique
  * constraint (tenant_id, stat_date).
  *
  * <p>Example usage:
  *
  * <pre>{@code
- * TenantStatisticsData data = TenantStatisticsData.builder()
+ * TenantStatistics statistics = TenantStatistics.builder()
  *     .tenantId(tenantId)
  *     .statDate(LocalDate.now().minusDays(1))
  *     .addMetric("dau", 1250)
@@ -40,13 +40,13 @@ import org.idp.server.platform.statistics.TenantStatisticsDataIdentifier;
  *     .build();
  *
  * // UPSERT: insert if not exists, update if exists
- * repository.save(data);
+ * repository.save(statistics);
  * }</pre>
  *
- * @see TenantStatisticsData
- * @see TenantStatisticsDataQueryRepository
+ * @see TenantStatistics
+ * @see TenantStatisticsQueryRepository
  */
-public interface TenantStatisticsDataCommandRepository {
+public interface TenantStatisticsCommandRepository {
 
   /**
    * Save statistics (UPSERT)
@@ -56,34 +56,34 @@ public interface TenantStatisticsDataCommandRepository {
    *
    * <p>Leverages PostgreSQL's ON CONFLICT DO UPDATE.
    *
-   * @param data statistics to save
+   * @param statistics statistics to save
    */
-  void save(TenantStatisticsData data);
+  void save(TenantStatistics statistics);
 
   /**
    * Register new statistics (INSERT only)
    *
    * <p>Use when certain data doesn't exist yet.
    *
-   * @param data statistics to register
+   * @param statistics statistics to register
    * @throws org.idp.server.platform.exception.DuplicateResourceException if already exists
    */
-  void register(TenantStatisticsData data);
+  void register(TenantStatistics statistics);
 
   /**
    * Update existing statistics
    *
-   * @param data statistics to update
+   * @param statistics statistics to update
    * @throws org.idp.server.platform.exception.ResourceNotFoundException if not exists
    */
-  void update(TenantStatisticsData data);
+  void update(TenantStatistics statistics);
 
   /**
    * Delete statistics by ID
    *
    * @param id statistics identifier
    */
-  void delete(TenantStatisticsDataIdentifier id);
+  void delete(TenantStatisticsIdentifier id);
 
   /**
    * Delete statistics by tenant and date

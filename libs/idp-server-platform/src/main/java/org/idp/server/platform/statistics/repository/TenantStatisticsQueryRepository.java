@@ -20,12 +20,12 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.statistics.TenantStatisticsData;
-import org.idp.server.platform.statistics.TenantStatisticsDataIdentifier;
+import org.idp.server.platform.statistics.TenantStatistics;
+import org.idp.server.platform.statistics.TenantStatisticsIdentifier;
 import org.idp.server.platform.statistics.TenantStatisticsQueries;
 
 /**
- * Query repository for TenantStatisticsData
+ * Query repository for TenantStatistics
  *
  * <p>Provides read-only operations for daily tenant statistics retrieval.
  *
@@ -36,19 +36,19 @@ import org.idp.server.platform.statistics.TenantStatisticsQueries;
  * TenantStatisticsQueries queries = new TenantStatisticsQueries(
  *     Map.of("from", "2025-01-01", "to", "2025-01-07")
  * );
- * List<TenantStatisticsData> stats = repository.findByDateRange(tenant, queries);
+ * List<TenantStatistics> stats = repository.findByDateRange(tenant, queries);
  *
  * // Get specific date
- * Optional<TenantStatisticsData> todayStats = repository.findByDate(
+ * Optional<TenantStatistics> todayStats = repository.findByDate(
  *     tenant,
  *     LocalDate.now()
  * );
  * }</pre>
  *
- * @see TenantStatisticsData
- * @see TenantStatisticsDataCommandRepository
+ * @see TenantStatistics
+ * @see TenantStatisticsCommandRepository
  */
-public interface TenantStatisticsDataQueryRepository {
+public interface TenantStatisticsQueryRepository {
 
   /**
    * Find statistics by date range
@@ -57,7 +57,7 @@ public interface TenantStatisticsDataQueryRepository {
    * @param queries query parameters containing from/to dates
    * @return list of statistics (empty if not found)
    */
-  List<TenantStatisticsData> findByDateRange(Tenant tenant, TenantStatisticsQueries queries);
+  List<TenantStatistics> findByDateRange(Tenant tenant, TenantStatisticsQueries queries);
 
   /**
    * Find statistics for specific date
@@ -66,7 +66,7 @@ public interface TenantStatisticsDataQueryRepository {
    * @param date target date
    * @return optional statistics (empty if not found)
    */
-  Optional<TenantStatisticsData> findByDate(Tenant tenant, LocalDate date);
+  Optional<TenantStatistics> findByDate(Tenant tenant, LocalDate date);
 
   /**
    * Get statistics by ID
@@ -76,7 +76,7 @@ public interface TenantStatisticsDataQueryRepository {
    * @return statistics
    * @throws org.idp.server.platform.exception.ResourceNotFoundException if not found
    */
-  TenantStatisticsData get(Tenant tenant, TenantStatisticsDataIdentifier id);
+  TenantStatistics get(Tenant tenant, TenantStatisticsIdentifier id);
 
   /**
    * Find statistics by ID
@@ -85,7 +85,7 @@ public interface TenantStatisticsDataQueryRepository {
    * @param id statistics identifier
    * @return optional statistics (empty if not found)
    */
-  Optional<TenantStatisticsData> find(Tenant tenant, TenantStatisticsDataIdentifier id);
+  Optional<TenantStatistics> find(Tenant tenant, TenantStatisticsIdentifier id);
 
   /**
    * Count statistics records in date range
@@ -103,7 +103,7 @@ public interface TenantStatisticsDataQueryRepository {
    * @param tenant tenant
    * @return optional latest statistics (empty if no data exists)
    */
-  Optional<TenantStatisticsData> findLatest(Tenant tenant);
+  Optional<TenantStatistics> findLatest(Tenant tenant);
 
   /**
    * Check if statistics exists for date

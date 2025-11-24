@@ -22,17 +22,17 @@ import org.idp.server.control_plane.management.statistics.validator.TenantStatis
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.statistics.TenantStatisticsData;
+import org.idp.server.platform.statistics.TenantStatistics;
 import org.idp.server.platform.statistics.TenantStatisticsQueries;
-import org.idp.server.platform.statistics.repository.TenantStatisticsDataQueryRepository;
+import org.idp.server.platform.statistics.repository.TenantStatisticsQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
 public class TenantStatisticsFindService
     implements TenantStatisticsManagementService<TenantStatisticsQueries> {
 
-  private final TenantStatisticsDataQueryRepository repository;
+  private final TenantStatisticsQueryRepository repository;
 
-  public TenantStatisticsFindService(TenantStatisticsDataQueryRepository repository) {
+  public TenantStatisticsFindService(TenantStatisticsQueryRepository repository) {
     this.repository = repository;
   }
 
@@ -46,7 +46,7 @@ public class TenantStatisticsFindService
 
     new TenantStatisticsRequestValidator(queries).validate();
 
-    List<TenantStatisticsData> statistics = repository.findByDateRange(tenant, queries);
+    List<TenantStatistics> statistics = repository.findByDateRange(tenant, queries);
 
     return TenantStatisticsResponse.success(
         tenant.identifier().value(),

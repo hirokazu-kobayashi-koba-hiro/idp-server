@@ -22,18 +22,18 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.statistics.TenantStatisticsDataIdentifier;
+import org.idp.server.platform.statistics.TenantStatisticsIdentifier;
 import org.idp.server.platform.statistics.TenantStatisticsQueries;
 
-public class PostgresqlExecutor implements TenantStatisticsDataSqlExecutor {
+public class PostgresqlExecutor implements TenantStatisticsSqlExecutor {
 
   @Override
-  public Map<String, String> selectOne(TenantStatisticsDataIdentifier id) {
+  public Map<String, String> selectOne(TenantStatisticsIdentifier id) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sql =
         """
-                SELECT id, tenant_id, stat_date, metrics, created_at
-                FROM tenant_statistics_data
+                SELECT id, tenant_id, stat_date, metrics, created_at, updated_at
+                FROM tenant_statistics
                 WHERE id = ?::uuid
                 """;
 
@@ -48,8 +48,8 @@ public class PostgresqlExecutor implements TenantStatisticsDataSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sql =
         """
-                SELECT id, tenant_id, stat_date, metrics, created_at
-                FROM tenant_statistics_data
+                SELECT id, tenant_id, stat_date, metrics, created_at, updated_at
+                FROM tenant_statistics
                 WHERE tenant_id = ?::uuid AND stat_date = ?
                 """;
 
@@ -66,8 +66,8 @@ public class PostgresqlExecutor implements TenantStatisticsDataSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sql =
         """
-                SELECT id, tenant_id, stat_date, metrics, created_at
-                FROM tenant_statistics_data
+                SELECT id, tenant_id, stat_date, metrics, created_at, updated_at
+                FROM tenant_statistics
                 WHERE tenant_id = ?::uuid
                   AND stat_date >= ?
                   AND stat_date <= ?
@@ -88,7 +88,7 @@ public class PostgresqlExecutor implements TenantStatisticsDataSqlExecutor {
     String sql =
         """
                 SELECT COUNT(*) as count
-                FROM tenant_statistics_data
+                FROM tenant_statistics
                 WHERE tenant_id = ?::uuid
                   AND stat_date >= ?
                   AND stat_date <= ?
@@ -107,8 +107,8 @@ public class PostgresqlExecutor implements TenantStatisticsDataSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sql =
         """
-                SELECT id, tenant_id, stat_date, metrics, created_at
-                FROM tenant_statistics_data
+                SELECT id, tenant_id, stat_date, metrics, created_at, updated_at
+                FROM tenant_statistics
                 WHERE tenant_id = ?::uuid
                 ORDER BY stat_date DESC
                 LIMIT 1
@@ -126,7 +126,7 @@ public class PostgresqlExecutor implements TenantStatisticsDataSqlExecutor {
     String sql =
         """
                 SELECT COUNT(*) as count
-                FROM tenant_statistics_data
+                FROM tenant_statistics
                 WHERE tenant_id = ?::uuid AND stat_date = ?
                 """;
 

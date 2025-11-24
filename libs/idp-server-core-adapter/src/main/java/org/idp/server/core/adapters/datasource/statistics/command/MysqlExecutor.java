@@ -23,25 +23,27 @@ import java.util.UUID;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.statistics.TenantStatisticsData;
-import org.idp.server.platform.statistics.TenantStatisticsDataIdentifier;
+import org.idp.server.platform.statistics.TenantStatistics;
+import org.idp.server.platform.statistics.TenantStatisticsIdentifier;
 
-public class MysqlExecutor implements TenantStatisticsDataSqlExecutor {
+public class MysqlExecutor implements TenantStatisticsSqlExecutor {
 
   @Override
-  public void upsert(TenantStatisticsData data) {
+  public void upsert(TenantStatistics data) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     JsonConverter jsonConverter = JsonConverter.defaultInstance();
 
     String sql =
         """
-                INSERT INTO tenant_statistics_data (
+                INSERT INTO tenant_statistics (
                     id,
                     tenant_id,
                     stat_date,
                     metrics,
-                    created_at
+                    created_at,
+                    updated_at
                 ) VALUES (
+                    ?,
                     ?,
                     ?,
                     ?,
@@ -50,36 +52,39 @@ public class MysqlExecutor implements TenantStatisticsDataSqlExecutor {
                 )
                 ON DUPLICATE KEY UPDATE
                     metrics = VALUES(metrics),
-                    created_at = VALUES(created_at)
+                    updated_at = VALUES(updated_at)
                 """;
 
     List<Object> params = new ArrayList<>();
     params.add(
         data.id() != null
             ? data.id().toString()
-            : new TenantStatisticsDataIdentifier(UUID.randomUUID()).value());
+            : new TenantStatisticsIdentifier(UUID.randomUUID()).value());
     params.add(data.tenantId().value());
     params.add(data.statDate());
     params.add(jsonConverter.write(data.metrics()));
     params.add(data.createdAt());
+    params.add(data.updatedAt());
 
     sqlExecutor.execute(sql, params);
   }
 
   @Override
-  public void insert(TenantStatisticsData data) {
+  public void insert(TenantStatistics data) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     JsonConverter jsonConverter = JsonConverter.defaultInstance();
 
     String sql =
         """
-                INSERT INTO tenant_statistics_data (
+                INSERT INTO tenant_statistics (
                     id,
                     tenant_id,
                     stat_date,
                     metrics,
-                    created_at
+                    created_at,
+                    updated_at
                 ) VALUES (
+                    ?,
                     ?,
                     ?,
                     ?,
@@ -92,43 +97,43 @@ public class MysqlExecutor implements TenantStatisticsDataSqlExecutor {
     params.add(
         data.id() != null
             ? data.id().toString()
-            : new TenantStatisticsDataIdentifier(UUID.randomUUID()).value());
+            : new TenantStatisticsIdentifier(UUID.randomUUID()).value());
     params.add(data.tenantId().value());
     params.add(data.statDate());
     params.add(jsonConverter.write(data.metrics()));
     params.add(data.createdAt());
+    params.add(data.updatedAt());
 
     sqlExecutor.execute(sql, params);
   }
 
   @Override
-  public void update(TenantStatisticsData data) {
+  public void update(TenantStatistics data) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     JsonConverter jsonConverter = JsonConverter.defaultInstance();
 
     String sql =
         """
-                UPDATE tenant_statistics_data
+                UPDATE tenant_statistics
                 SET metrics = ?,
-                    created_at = ?
+                    updated_at = ?
                 WHERE id = ?
                 """;
 
     List<Object> params = new ArrayList<>();
     params.add(jsonConverter.write(data.metrics()));
-    params.add(data.createdAt());
+    params.add(data.updatedAt());
     params.add(data.id().value());
 
     sqlExecutor.execute(sql, params);
   }
 
   @Override
-  public void delete(TenantStatisticsDataIdentifier id) {
+  public void delete(TenantStatisticsIdentifier id) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    String sql =
-        """
-                DELETE FROM tenant_statistics_data WHERE id = ?
+    String sql = """
+                DELETE FROM tenant_statistics WHERE id = ?
                 """;
 
     List<Object> params = new ArrayList<>();
@@ -143,7 +148,7 @@ public class MysqlExecutor implements TenantStatisticsDataSqlExecutor {
 
     String sql =
         """
-                DELETE FROM tenant_statistics_data
+                DELETE FROM tenant_statistics
                 WHERE tenant_id = ? AND stat_date = ?
                 """;
 
@@ -160,7 +165,7 @@ public class MysqlExecutor implements TenantStatisticsDataSqlExecutor {
 
     String sql =
         """
-                DELETE FROM tenant_statistics_data
+                DELETE FROM tenant_statistics
                 WHERE stat_date < ?
                 """;
 
@@ -176,7 +181,7 @@ public class MysqlExecutor implements TenantStatisticsDataSqlExecutor {
 
     String sql =
         """
-                DELETE FROM tenant_statistics_data WHERE tenant_id = ?
+                DELETE FROM tenant_statistics WHERE tenant_id = ?
                 """;
 
     List<Object> params = new ArrayList<>();
@@ -192,17 +197,19 @@ public class MysqlExecutor implements TenantStatisticsDataSqlExecutor {
 
     String sql =
         """
-                INSERT INTO tenant_statistics_data (
+                INSERT INTO tenant_statistics (
                     id,
                     tenant_id,
                     stat_date,
                     metrics,
-                    created_at
+                    created_at,
+                    updated_at
                 ) VALUES (
                     ?,
                     ?,
                     ?,
                     JSON_OBJECT(?, ?),
+                    ?,
                     ?
                 )
                 ON DUPLICATE KEY UPDATE
@@ -210,19 +217,23 @@ public class MysqlExecutor implements TenantStatisticsDataSqlExecutor {
                         metrics,
                         CONCAT('$.', ?),
                         COALESCE(JSON_EXTRACT(metrics, CONCAT('$.', ?)), 0) + ?
-                    )
+                    ),
+                    updated_at = ?
                 """;
 
+    java.time.Instant now = java.time.Instant.now();
     List<Object> params = new ArrayList<>();
-    params.add(new TenantStatisticsDataIdentifier(UUID.randomUUID()).value());
+    params.add(new TenantStatisticsIdentifier(UUID.randomUUID()).value());
     params.add(tenantId.value());
     params.add(date);
     params.add(metricName);
     params.add(increment);
-    params.add(java.time.Instant.now());
+    params.add(now);
+    params.add(now);
     params.add(metricName);
     params.add(metricName);
     params.add(increment);
+    params.add(now);
 
     sqlExecutor.execute(sql, params);
   }

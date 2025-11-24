@@ -24,12 +24,12 @@ import java.util.Map;
 import org.idp.server.platform.date.LocalDateTimeParser;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.statistics.TenantStatisticsData;
-import org.idp.server.platform.statistics.TenantStatisticsDataIdentifier;
+import org.idp.server.platform.statistics.TenantStatistics;
+import org.idp.server.platform.statistics.TenantStatisticsIdentifier;
 
 public class ModelConvertor {
 
-  static TenantStatisticsData convert(Map<String, String> values) {
+  static TenantStatistics convert(Map<String, String> values) {
     JsonConverter jsonConverter = JsonConverter.defaultInstance();
 
     String id = values.get("id");
@@ -37,19 +37,24 @@ public class ModelConvertor {
     String statDate = values.get("stat_date");
     String metrics = values.get("metrics");
     String createdAt = values.get("created_at");
+    String updatedAt = values.get("updated_at");
 
     Map<String, Object> metricsMap = jsonConverter.read(metrics, Map.class);
 
     // LocalDateTimeParser supports both PostgreSQL TIMESTAMP and ISO-8601 formats
-    LocalDateTime localDateTime = LocalDateTimeParser.parse(createdAt);
-    Instant createdAtInstant = localDateTime.atZone(ZoneOffset.UTC).toInstant();
+    LocalDateTime createdAtLocalDateTime = LocalDateTimeParser.parse(createdAt);
+    Instant createdAtInstant = createdAtLocalDateTime.atZone(ZoneOffset.UTC).toInstant();
 
-    return TenantStatisticsData.builder()
-        .id(new TenantStatisticsDataIdentifier(id))
+    LocalDateTime updatedAtLocalDateTime = LocalDateTimeParser.parse(updatedAt);
+    Instant updatedAtInstant = updatedAtLocalDateTime.atZone(ZoneOffset.UTC).toInstant();
+
+    return TenantStatistics.builder()
+        .id(new TenantStatisticsIdentifier(id))
         .tenantId(new TenantIdentifier(tenantId))
         .statDate(LocalDate.parse(statDate))
         .metrics(metricsMap)
         .createdAt(createdAtInstant)
+        .updatedAt(updatedAtInstant)
         .build();
   }
 }
