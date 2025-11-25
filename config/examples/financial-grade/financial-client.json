@@ -1,0 +1,39 @@
+{
+  "client_id": "d4e5f6a7-b8c9-d0e1-f2a3-b4c5d6e7f8a9",
+  "client_id_alias": "financial-web-app",
+  "redirect_uris": [
+    "https://localhost:3000/callback/",
+    "https://localhost:3001/callback/"
+  ],
+  "response_types": [
+    "code",
+    "code id_token"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token",
+    "urn:openid:params:grant-type:ciba"
+  ],
+  "scope": "openid profile email address phone offline_access account transfers read write",
+  "client_name": "Financial Grade Web Application",
+  "client_name#ja-JP": "金融グレードWebアプリケーション",
+  "token_endpoint_auth_method": "self_signed_tls_client_auth",
+  "jwks": "{\"keys\":[{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"83AwFzD6HrS-plQ9Cy8_42UJzeY5qLi6wrlyHkbAfnQ\",\"y\":\"4_V3u9ZRjiodYAvV9viNStHndcfloH3gPRauS9-t5MY\",\"d\":\"VIIhNqNlTTVB9rdet7FwhCdGspyCLqmrRF5VN4WBk04\",\"use\":\"sig\",\"kid\":\"financial_client_key\",\"alg\":\"ES256\",\"x5c\":[\"MIIBvDCCAWKgAwIBAgIJANE4UY3YTKgGMAoGCCqGSM49BAMCMDkxNzA1BgNVBAMMLmZpbmFuY2lhbC13ZWItYXBwLE89RmluYW5jaWFsIEluc3RpdHV0aW9uLEM9SlAwHhcNMjUxMTI1MTI1OTQyWhcNMjYxMTI1MTI1OTQyWjA5MTcwNQYDVQQDDC5maW5hbmNpYWwtd2ViLWFwcCxPPUZpbmFuY2lhbCBJbnN0aXR1dGlvbixDPUpQMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE83AwFzD6HrS+plQ9Cy8/42UJzeY5qLi6wrlyHkbAfnTj9Xe71lGOKh1gC9X2+I1K0ed1x+WgfeA9Fq5L363kxqNTMFEwTwYDVR0RBEgwRoIdZmluYW5jaWFsLXdlYi1hcHAuZXhhbXBsZS5jb22GJWh0dHBzOi8vZmluYW5jaWFsLXdlYi1hcHAuZXhhbXBsZS5jb20wCgYIKoZIzj0EAwIDSAAwRQIhAL45Mrtj1tP/lHyh02I1A/yX2xP50ivzqWBQ2Zt7T7EmAiAYyaocTuHJJRYp+CtgrhNWva2g4ieYFRMDF2OHibv5sw==\"]}]}",
+  "backchannel_token_delivery_mode": "poll",
+  "backchannel_authentication_request_signing_alg": "ES256",
+  "backchannel_user_code_parameter": true,
+  "application_type": "web",
+  "authorization_details_types": [
+    "payment_initiation",
+    "account_information"
+  ],
+  "tls_client_certificate_bound_access_tokens": true,
+  "request_object_signing_alg": "ES256",
+  "id_token_signed_response_alg": "ES256",
+  "userinfo_signed_response_alg": "ES256",
+  "default_max_age": 3600,
+  "require_auth_time": true,
+  "default_acr_values": [
+    "urn:mace:incommon:iap:gold"
+  ]
+}

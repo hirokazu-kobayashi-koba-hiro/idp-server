@@ -1,0 +1,47 @@
+{
+  "client_id": "${CLIENT_ID}",
+  "client_id_alias": "financial-client",
+  "client_id_issued_at": 2893256800,
+  "redirect_uris": [
+    "${REDIRECT_URI}"
+  ],
+  "response_types": [
+    "code",
+    "code id_token"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token",
+    "urn:openid:params:grant-type:ciba"
+  ],
+  "scope": "openid profile email address phone offline_access account transfers read write identity_verification_application identity_credentials_update management",
+  "client_name": "Financial Institution Client",
+  "client_name#ja-JP": "金融機関クライアント",
+  "token_endpoint_auth_method": "private_key_jwt",
+  "token_endpoint_auth_signing_alg": "ES256",
+  "logo_uri": "${LOGO_URI}",
+  "tos_uri": "${TOS_URI}",
+  "policy_uri": "${POLICY_URI}",
+  "jwks": "${CLIENT_JWKS}",
+  "backchannel_token_delivery_mode": "poll",
+  "backchannel_authentication_request_signing_alg": "ES256",
+  "backchannel_user_code_parameter": true,
+  "application_type": "web",
+  "authorization_details_types": [
+    "payment_initiation",
+    "account_information"
+  ],
+  "tls_client_certificate_bound_access_tokens": true,
+  "request_object_signing_alg": "ES256",
+  "id_token_signed_response_alg": "ES256",
+  "id_token_encrypted_response_alg": "RSA-OAEP",
+  "id_token_encrypted_response_enc": "A256GCM",
+  "userinfo_signed_response_alg": "ES256",
+  "userinfo_encrypted_response_alg": "RSA-OAEP",
+  "userinfo_encrypted_response_enc": "A256GCM",
+  "default_max_age": 3600,
+  "require_auth_time": true,
+  "default_acr_values": [
+    "urn:mace:incommon:iap:gold"
+  ]
+}

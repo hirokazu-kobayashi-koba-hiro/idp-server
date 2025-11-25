@@ -1,0 +1,198 @@
+{
+  "organization": {
+    "id": "f1a2b3c4-d5e6-f7a8-b9c0-d1e2f3a4b5c6",
+    "name": "Financial Grade Organization",
+    "description": "FAPI-compliant financial institution with high security requirements"
+  },
+  "tenant": {
+    "id": "e7f8a9b0-c1d2-e3f4-a5b6-c7d8e9f0a1b2",
+    "name": "Financial Grade Organizer Tenant",
+    "type": "ORGANIZER",
+    "domain": "http://localhost:8080",
+    "authorization_provider": "idp-server",
+    "session_config": {
+      "cookie_name": "FINANCIAL_SESSION",
+      "cookie_same_site": "strict",
+      "use_secure_cookie": true,
+      "use_http_only_cookie": true,
+      "cookie_path": "/"
+    },
+    "cors_config": {
+      "allow_origins": [
+        "http://localhost:3000"
+      ],
+      "allow_headers": "Authorization, Content-Type, Accept, x-device-id",
+      "allow_methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+      "allow_credentials": true
+    },
+    "security_event_log_config": {
+      "format": "structured_json",
+      "debug_logging": false,
+      "stage": "production",
+      "include_user_id": true,
+      "include_user_ex_sub": true,
+      "include_client_id": true,
+      "include_ip_address": true,
+      "include_user_agent": true,
+      "include_event_detail": true,
+      "include_user_detail": true,
+      "include_user_pii": false,
+      "allowed_user_pii_keys": "",
+      "include_trace_context": true,
+      "service_name": "idp-server-financial",
+      "custom_tags": "environment:production,industry:financial",
+      "tracing_enabled": true,
+      "persistence_enabled": true,
+      "detail_scrub_keys": "authorization,cookie,set-cookie,proxy-authorization,password,secret,token,refresh_token,access_token,id_token,client_secret,api_key,api_secret,bearer"
+    },
+    "security_event_user_config": {
+      "include_id": true,
+      "include_name": true,
+      "include_external_user_id": true,
+      "include_email": true,
+      "include_phone_number": true,
+      "include_given_name": true,
+      "include_family_name": true,
+      "include_preferred_username": false,
+      "include_profile": false,
+      "include_picture": false,
+      "include_website": false,
+      "include_gender": false,
+      "include_birthdate": true,
+      "include_zoneinfo": false,
+      "include_locale": false,
+      "include_address": true,
+      "include_roles": true,
+      "include_permissions": true,
+      "include_current_tenant": true,
+      "include_assigned_tenants": true,
+      "include_verified_claims": true
+    }
+  },
+  "authorization_server": {
+    "issuer": "http://localhost:8080/e7f8a9b0-c1d2-e3f4-a5b6-c7d8e9f0a1b2",
+    "authorization_endpoint": "http://localhost:8080/e7f8a9b0-c1d2-e3f4-a5b6-c7d8e9f0a1b2/v1/authorizations",
+    "token_endpoint": "http://localhost:8080/e7f8a9b0-c1d2-e3f4-a5b6-c7d8e9f0a1b2/v1/tokens",
+    "token_endpoint_auth_methods_supported": [
+      "client_secret_post",
+      "client_secret_basic",
+      "private_key_jwt",
+      "tls_client_auth",
+      "self_signed_tls_client_auth"
+    ],
+    "token_endpoint_auth_signing_alg_values_supported": [
+      "RS256",
+      "ES256"
+    ],
+    "userinfo_endpoint": "http://localhost:8080/e7f8a9b0-c1d2-e3f4-a5b6-c7d8e9f0a1b2/v1/userinfo",
+    "jwks_uri": "http://localhost:8080/e7f8a9b0-c1d2-e3f4-a5b6-c7d8e9f0a1b2/v1/jwks",
+    "jwks": "{\"keys\":[{\"kty\":\"EC\",\"x\":\"_g1pn_N84_T82eU-YVN4pcgQt3tfvZWJMPabMFNgbVg\",\"y\":\"B3vLi4eGNz9rzoj493h7zHBpM5G3lSM7Af57fru2-FE\",\"crv\":\"P-256\",\"d\":\"xHfNjJqElnZajzexFG49MQqO01TrveM4mL4tlz8T9jw\",\"use\":\"sig\",\"kid\":\"financial_signing_key\",\"alg\":\"ES256\"}]}",
+    "grant_types_supported": [
+      "authorization_code",
+      "refresh_token",
+      "password",
+      "urn:openid:params:grant-type:ciba"
+    ],
+    "token_signed_key_id": "financial_signing_key",
+    "id_token_signed_key_id": "financial_signing_key",
+    "scopes_supported": [
+      "openid",
+      "profile",
+      "email",
+      "address",
+      "phone",
+      "offline_access",
+      "account",
+      "transfers",
+      "read",
+      "write",
+      "management"
+    ],
+    "response_types_supported": [
+      "code",
+      "code id_token"
+    ],
+    "response_modes_supported": [
+      "query",
+      "fragment"
+    ],
+    "subject_types_supported": [
+      "pairwise"
+    ],
+    "id_token_signing_alg_values_supported": [
+      "RS256",
+      "ES256"
+    ],
+    "request_object_signing_alg_values_supported": [
+      "RS256",
+      "ES256"
+    ],
+    "claims_parameter_supported": true,
+    "token_introspection_endpoint": "http://localhost:8080/e7f8a9b0-c1d2-e3f4-a5b6-c7d8e9f0a1b2/v1/tokens/introspection",
+    "token_revocation_endpoint": "http://localhost:8080/e7f8a9b0-c1d2-e3f4-a5b6-c7d8e9f0a1b2/v1/tokens/revocation",
+    "backchannel_token_delivery_modes_supported": [
+      "poll",
+      "ping"
+    ],
+    "backchannel_authentication_endpoint": "http://localhost:8080/e7f8a9b0-c1d2-e3f4-a5b6-c7d8e9f0a1b2/v1/backchannel/authentications",
+    "backchannel_authentication_request_signing_alg_values_supported": [
+      "RS256",
+      "ES256"
+    ],
+    "backchannel_user_code_parameter_supported": true,
+    "authorization_details_types_supported": [
+      "payment_initiation",
+      "account_information"
+    ],
+    "tls_client_certificate_bound_access_tokens": true,
+    "extension": {
+      "access_token_type": "JWT",
+      "token_signed_key_id": "financial_signing_key",
+      "id_token_signed_key_id": "financial_signing_key",
+      "access_token_duration": 900,
+      "id_token_duration": 3600,
+      "refresh_token_duration": 2592000,
+      "id_token_strict_mode": true,
+      "default_max_age": 3600,
+      "fapi_baseline_scopes": [
+        "read",
+        "account"
+      ],
+      "fapi_advance_scopes": [
+        "write",
+        "transfers"
+      ],
+      "required_identity_verification_scopes": [
+        "transfers"
+      ]
+    }
+  },
+  "user": {
+    "sub": "a1b2c3d4-e5f6-a7b8-c9d0-e1f2a3b4c5d6",
+    "provider_id": "idp-server",
+    "name": "financial-admin@example.com",
+    "email": "financial-admin@example.com",
+    "email_verified": true,
+    "raw_password": "FinancialAdminSecure123!"
+  },
+  "client": {
+    "client_id": "b2c3d4e5-f6a7-b8c9-d0e1-f2a3b4c5d6e7",
+    "client_id_alias": "financial-admin-client",
+    "client_secret": "financial-admin-secret-change-in-production-minimum-32-characters",
+    "redirect_uris": [
+      "http://localhost:3000/callback/"
+    ],
+    "response_types": [
+      "code"
+    ],
+    "grant_types": [
+      "authorization_code",
+      "refresh_token",
+      "password"
+    ],
+    "scope": "openid profile email management",
+    "client_name": "Financial Grade Admin Client",
+    "token_endpoint_auth_method": "client_secret_post",
+    "application_type": "web"
+  }
+}

@@ -80,7 +80,7 @@ ONBOARDING_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
 HTTP_CODE=$(echo "${ONBOARDING_RESPONSE}" | tail -n1)
 RESPONSE_BODY=$(echo "${ONBOARDING_RESPONSE}" | sed '$d')
 
-if [ "${HTTP_CODE}" = "200" ]; then
+if [ "${HTTP_CODE}" = "201" ]; then
   echo "✅ Onboarding successful!"
   echo ""
   echo "📊 Response:"

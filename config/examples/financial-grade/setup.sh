@@ -1,0 +1,257 @@
+#!/bin/bash
+set -e
+
+# Financial Grade Setup Script
+# This script automates the FAPI-compliant financial institution setup
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+ENV_FILE="${PROJECT_ROOT}/.env"
+ONBOARDING_REQUEST="${SCRIPT_DIR}/onboarding-request.json"
+
+echo "=========================================="
+echo "🏦 Financial Grade FAPI Setup"
+echo "=========================================="
+
+# Load .env file
+if [ ! -f "${ENV_FILE}" ]; then
+  echo "❌ Error: .env file not found at ${ENV_FILE}"
+  exit 1
+fi
+
+echo "📖 Loading environment variables from .env..."
+set -a
+source "${ENV_FILE}"
+set +a
+
+# Validate required variables
+if [ -z "${AUTHORIZATION_SERVER_URL}" ]; then
+  echo "❌ Error: AUTHORIZATION_SERVER_URL not set in .env"
+  exit 1
+fi
+
+if [ -z "${ADMIN_TENANT_ID}" ]; then
+  echo "❌ Error: ADMIN_TENANT_ID not set in .env"
+  exit 1
+fi
+
+if [ -z "${ADMIN_USER_EMAIL}" ]; then
+  echo "❌ Error: ADMIN_USER_EMAIL not set in .env"
+  exit 1
+fi
+
+echo "✅ Environment variables loaded"
+echo "   Server: ${AUTHORIZATION_SERVER_URL}"
+echo "   Tenant: ${ADMIN_TENANT_ID}"
+echo "   Admin:  ${ADMIN_USER_EMAIL}"
+echo ""
+
+# Step 1: Get access token
+echo "🔐 Step 1: Getting system administrator access token..."
+TOKEN_RESPONSE=$(curl -s -X POST \
+  "${AUTHORIZATION_SERVER_URL}/${ADMIN_TENANT_ID}/v1/tokens" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=password" \
+  --data-urlencode "username=${ADMIN_USER_EMAIL}" \
+  --data-urlencode "password=${ADMIN_USER_PASSWORD}" \
+  --data-urlencode "client_id=${ADMIN_CLIENT_ID}" \
+  --data-urlencode "client_secret=${ADMIN_CLIENT_SECRET}" \
+  --data-urlencode "scope=account management")
+
+SYSTEM_ACCESS_TOKEN=$(echo "${TOKEN_RESPONSE}" | jq -r '.access_token')
+
+if [ -z "${SYSTEM_ACCESS_TOKEN}" ] || [ "${SYSTEM_ACCESS_TOKEN}" = "null" ]; then
+  echo "❌ Error: Failed to get access token"
+  echo "Response: ${TOKEN_RESPONSE}"
+  exit 1
+fi
+
+echo "✅ Access token obtained: ${SYSTEM_ACCESS_TOKEN:0:20}..."
+echo ""
+
+# Step 2: Execute onboarding API
+echo "🚀 Step 2: Executing Financial Grade onboarding..."
+ONBOARDING_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+  "${AUTHORIZATION_SERVER_URL}/v1/management/onboarding" \
+  -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d @"${ONBOARDING_REQUEST}")
+
+HTTP_CODE=$(echo "${ONBOARDING_RESPONSE}" | tail -n1)
+RESPONSE_BODY=$(echo "${ONBOARDING_RESPONSE}" | sed '$d')
+
+if [ "${HTTP_CODE}" = "201" ]; then
+  echo "✅ Onboarding successful!"
+  echo ""
+  echo "📊 Response:"
+  echo "${RESPONSE_BODY}" | jq '.'
+  echo ""
+
+  # Extract IDs from response
+  ORG_ID=$(echo "${RESPONSE_BODY}" | jq -r '.organization.id')
+  ORGANIZER_TENANT_ID=$(echo "${RESPONSE_BODY}" | jq -r '.tenant.id')
+  ADMIN_USER_ID=$(echo "${RESPONSE_BODY}" | jq -r '.user.sub')
+  ADMIN_CLIENT_ID=$(echo "${RESPONSE_BODY}" | jq -r '.client.client_id')
+
+  echo "✅ Onboarding completed - Organization, Organizer Tenant, Admin User, and Admin Client created"
+  echo ""
+
+  # Step 3: Get organization admin access token
+  echo "🔐 Step 3: Getting organization administrator access token..."
+  ORG_ADMIN_EMAIL=$(echo "${RESPONSE_BODY}" | jq -r '.user.email')
+  ORG_ADMIN_PASSWORD="FinancialAdminSecure123!"
+  ADMIN_CLIENT_SECRET=$(echo "${RESPONSE_BODY}" | jq -r '.client.client_secret')
+
+  ORG_TOKEN_RESPONSE=$(curl -s -X POST \
+    "${AUTHORIZATION_SERVER_URL}/${ORGANIZER_TENANT_ID}/v1/tokens" \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    --data-urlencode "grant_type=password" \
+    --data-urlencode "username=${ORG_ADMIN_EMAIL}" \
+    --data-urlencode "password=${ORG_ADMIN_PASSWORD}" \
+    --data-urlencode "client_id=${ADMIN_CLIENT_ID}" \
+    --data-urlencode "client_secret=${ADMIN_CLIENT_SECRET}" \
+    --data-urlencode "scope=account management")
+
+  ORG_ACCESS_TOKEN=$(echo "${ORG_TOKEN_RESPONSE}" | jq -r '.access_token')
+
+  if [ -z "${ORG_ACCESS_TOKEN}" ] || [ "${ORG_ACCESS_TOKEN}" = "null" ]; then
+    echo "❌ Error: Failed to get organization admin access token"
+    echo "Response: ${ORG_TOKEN_RESPONSE}"
+    exit 1
+  fi
+
+  echo "✅ Organization admin access token obtained: ${ORG_ACCESS_TOKEN:0:20}..."
+  echo ""
+
+  # Step 4: Create financial business tenant
+  echo "🏢 Step 4: Creating financial grade business tenant..."
+
+  FINANCIAL_TENANT_FILE="${SCRIPT_DIR}/financial-tenant.json"
+  if [ ! -f "${FINANCIAL_TENANT_FILE}" ]; then
+    echo "⚠️  financial-tenant.json not found at ${FINANCIAL_TENANT_FILE}"
+    echo "⚠️  Skipping tenant and client creation..."
+    echo ""
+    FINANCIAL_TENANT_ID=""
+  else
+    FINANCIAL_TENANT_JSON=$(cat "${FINANCIAL_TENANT_FILE}")
+
+    TENANT_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+      "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants" \
+      -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+      -H "Content-Type: application/json" \
+      -d "${FINANCIAL_TENANT_JSON}")
+
+    TENANT_HTTP_CODE=$(echo "${TENANT_RESPONSE}" | tail -n1)
+    TENANT_RESPONSE_BODY=$(echo "${TENANT_RESPONSE}" | sed '$d')
+
+    if [ "${TENANT_HTTP_CODE}" = "200" ] || [ "${TENANT_HTTP_CODE}" = "201" ]; then
+      FINANCIAL_TENANT_ID=$(echo "${TENANT_RESPONSE_BODY}" | jq -r '.result.id')
+      echo "✅ Financial grade business tenant created: ${FINANCIAL_TENANT_ID}"
+    else
+      echo "⚠️  Financial tenant creation failed (HTTP ${TENANT_HTTP_CODE})"
+      echo "Response: ${TENANT_RESPONSE_BODY}" | jq '.' || echo "${TENANT_RESPONSE_BODY}"
+      echo "⚠️  Skipping client and authentication policy creation..."
+      FINANCIAL_TENANT_ID=""
+    fi
+    echo ""
+  fi
+
+  # Step 5: Create financial web app client
+  if [ -n "${FINANCIAL_TENANT_ID}" ]; then
+    echo "🔧 Step 5: Creating financial grade web application client..."
+
+    FINANCIAL_CLIENT_FILE="${SCRIPT_DIR}/financial-client.json"
+    if [ ! -f "${FINANCIAL_CLIENT_FILE}" ]; then
+      echo "⚠️  financial-client.json not found at ${FINANCIAL_CLIENT_FILE}"
+      echo "⚠️  Skipping client creation..."
+      echo ""
+    else
+      FINANCIAL_CLIENT_JSON=$(cat "${FINANCIAL_CLIENT_FILE}")
+
+      CLIENT_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+        "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${FINANCIAL_TENANT_ID}/clients" \
+        -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d "${FINANCIAL_CLIENT_JSON}")
+
+      CLIENT_HTTP_CODE=$(echo "${CLIENT_RESPONSE}" | tail -n1)
+      CLIENT_RESPONSE_BODY=$(echo "${CLIENT_RESPONSE}" | sed '$d')
+
+      if [ "${CLIENT_HTTP_CODE}" = "200" ] || [ "${CLIENT_HTTP_CODE}" = "201" ]; then
+        FINANCIAL_CLIENT_ID=$(echo "${CLIENT_RESPONSE_BODY}" | jq -r '.result.client_id')
+        echo "✅ Financial grade web app client created: ${FINANCIAL_CLIENT_ID}"
+      else
+        echo "⚠️  Financial client creation failed (HTTP ${CLIENT_HTTP_CODE})"
+        echo "Response: ${CLIENT_RESPONSE_BODY}" | jq '.' || echo "${CLIENT_RESPONSE_BODY}"
+      fi
+      echo ""
+    fi
+  fi
+
+  # Step 6: Create authentication policy
+  if [ -n "${FINANCIAL_TENANT_ID}" ]; then
+    echo "🔒 Step 6: Creating financial grade authentication policy..."
+
+    AUTH_POLICY_FILE="${SCRIPT_DIR}/authentication-policy/oauth.json"
+    if [ ! -f "${AUTH_POLICY_FILE}" ]; then
+      echo "⚠️  oauth.json not found at ${AUTH_POLICY_FILE}"
+      echo "⚠️  Skipping authentication policy creation..."
+      echo ""
+    else
+      AUTH_POLICY_JSON=$(cat "${AUTH_POLICY_FILE}")
+
+      POLICY_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+        "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${FINANCIAL_TENANT_ID}/authentication-policies" \
+        -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d "${AUTH_POLICY_JSON}")
+
+      POLICY_HTTP_CODE=$(echo "${POLICY_RESPONSE}" | tail -n1)
+      POLICY_RESPONSE_BODY=$(echo "${POLICY_RESPONSE}" | sed '$d')
+
+      if [ "${POLICY_HTTP_CODE}" = "200" ] || [ "${POLICY_HTTP_CODE}" = "201" ]; then
+        AUTH_POLICY_ID=$(echo "${POLICY_RESPONSE_BODY}" | jq -r '.result.id')
+        echo "✅ Financial grade authentication policy created: ${AUTH_POLICY_ID}"
+      else
+        echo "⚠️  Authentication policy creation failed (HTTP ${POLICY_HTTP_CODE})"
+        echo "Response: ${POLICY_RESPONSE_BODY}" | jq '.' || echo "${POLICY_RESPONSE_BODY}"
+      fi
+      echo ""
+    fi
+  fi
+
+  echo "=========================================="
+  echo "✅ Financial Grade Setup Complete!"
+  echo "=========================================="
+  echo ""
+  echo "🆔 Created Resources:"
+  echo "   Organization ID:        ${ORG_ID}"
+  echo "   Organizer Tenant ID:    ${ORGANIZER_TENANT_ID}"
+  echo "   Admin User ID:          ${ADMIN_USER_ID}"
+  echo "   Admin Client ID:        ${ADMIN_CLIENT_ID}"
+  if [ -n "${FINANCIAL_TENANT_ID}" ]; then
+    echo "   Financial Tenant ID:    ${FINANCIAL_TENANT_ID}"
+  fi
+  if [ -n "${FINANCIAL_CLIENT_ID}" ]; then
+    echo "   Financial Client ID:    ${FINANCIAL_CLIENT_ID}"
+  fi
+  if [ -n "${AUTH_POLICY_ID}" ]; then
+    echo "   Auth Policy ID:         ${AUTH_POLICY_ID}"
+  fi
+  echo ""
+  echo "🔍 Next Steps:"
+  echo "   1. Verify FAPI compliance:"
+  echo "      curl ${AUTHORIZATION_SERVER_URL}/${FINANCIAL_TENANT_ID}/.well-known/openid-configuration | jq '.tls_client_certificate_bound_access_tokens'"
+  echo ""
+  echo "   2. Check FAPI scopes:"
+  echo "      curl ${AUTHORIZATION_SERVER_URL}/${FINANCIAL_TENANT_ID}/.well-known/openid-configuration | jq '.extension.fapi_advance_scopes'"
+  echo ""
+  echo "   3. Test authentication policy:"
+  echo "      curl ${AUTHORIZATION_SERVER_URL}/${FINANCIAL_TENANT_ID}/.well-known/openid-configuration | jq '.extension.authentication_policies'"
+  echo ""
+
+else
+  echo "❌ Onboarding failed (HTTP ${HTTP_CODE})"
+  echo "Response: ${RESPONSE_BODY}" | jq '.' || echo "${RESPONSE_BODY}"
+  exit 1
+fi
