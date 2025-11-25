@@ -64,6 +64,6 @@ public class TenantStatisticsV1Api implements ParameterTransformable {
     httpHeaders.add("content-type", "application/json");
 
     return new ResponseEntity<>(
-        response.toJson(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 }
