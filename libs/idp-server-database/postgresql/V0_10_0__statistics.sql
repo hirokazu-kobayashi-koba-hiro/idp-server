@@ -77,27 +77,6 @@ $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION cleanup_old_statistics(INTEGER) IS 'Delete statistics data older than specified days (e.g., SELECT cleanup_old_statistics(365))';
 
 -- =====================================================
--- Utility view (optional)
--- =====================================================
-
--- Latest 30 days statistics view
-CREATE VIEW latest_statistics AS
-SELECT
-    tenant_id,
-    stat_date,
-    metrics->>'dau' AS dau,
-    metrics->>'login_success_rate' AS login_success_rate,
-    metrics->>'tokens_issued' AS tokens_issued,
-    metrics->>'new_users' AS new_users,
-    created_at,
-    updated_at
-FROM tenant_statistics
-WHERE stat_date >= CURRENT_DATE - INTERVAL '30 days'
-ORDER BY tenant_id, stat_date DESC;
-
-COMMENT ON VIEW latest_statistics IS 'Latest 30 days statistics with extracted common metrics';
-
--- =====================================================
 -- daily_active_users
 -- Track unique daily active users separately
 -- =====================================================

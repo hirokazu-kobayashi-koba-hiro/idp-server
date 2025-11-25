@@ -18,24 +18,8 @@ package org.idp.server.core.adapters.datasource.statistics.command;
 
 import java.time.LocalDate;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.statistics.TenantStatistics;
-import org.idp.server.platform.statistics.TenantStatisticsIdentifier;
 
 public interface TenantStatisticsSqlExecutor {
-
-  void upsert(TenantStatistics data);
-
-  void insert(TenantStatistics data);
-
-  void update(TenantStatistics data);
-
-  void delete(TenantStatisticsIdentifier id);
-
-  void deleteByDate(TenantIdentifier tenantId, LocalDate date);
-
-  void deleteOlderThan(LocalDate before);
-
-  void deleteByTenantId(TenantIdentifier tenantId);
 
   void incrementMetric(TenantIdentifier tenantId, LocalDate date, String metricName, int increment);
 }
