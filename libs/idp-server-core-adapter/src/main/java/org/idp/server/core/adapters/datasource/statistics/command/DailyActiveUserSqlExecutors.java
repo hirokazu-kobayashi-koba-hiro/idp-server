@@ -23,9 +23,7 @@ public class DailyActiveUserSqlExecutors {
   public static DailyActiveUserSqlExecutor of(DatabaseType databaseType) {
     return switch (databaseType) {
       case POSTGRESQL -> new DailyActiveUserPostgresqlExecutor();
-      case MYSQL ->
-          throw new UnsupportedOperationException(
-              "MySQL support for DailyActiveUser not yet implemented");
+      case MYSQL -> new DailyActiveUserMysqlExecutor();
       default ->
           throw new UnsupportedOperationException("Unsupported database type: " + databaseType);
     };

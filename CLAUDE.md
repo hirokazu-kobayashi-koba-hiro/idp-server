@@ -30,6 +30,14 @@ Controller → UseCase (EntryService) → Core (Handler-Service-Repository) → 
 cd e2e && npm test
 ```
 
+## 🔍 新機能実装時の全DB確認手順（必須）
+
+### 📋 実装前チェックリスト（PostgreSQL + MySQL両対応）
+
+**重要**: このプロジェクトはPostgreSQLとMySQLの両方をサポートしています。新機能実装時は必ず両方の実装を確認・実装してください。
+
+**教訓**: 「PostgreSQLで動く」≠「完成」。必ずMySQL実装もセットで確認。
+
 ## コードレビュー（Codex AI）
 **自動レビュー機能**: コミットメッセージに `@codex review` を含めることで、AIによる自動コードレビューが実行される
 
@@ -198,6 +206,18 @@ private TenantManagementStatus mapExceptionToStatus(ManagementApiException e) {
 - **命名規則**: `get()`必須存在, `find()`任意存在, `is/has/can`判定メソッド
 - 📖 [詳細: core.md - Repository](documentation/docs/content_10_ai_developer/ai-11-core.md#3-repository---データアクセス抽象化)
 
+### データベース実装差異パターン（PostgreSQL vs MySQL）
+
+**重要**: このプロジェクトはPostgreSQLとMySQLの両方をサポート。両DB実装は必須。
+
+#### 主要な構文差異
+- **UUID**: PostgreSQL=UUID型/`gen_random_uuid()`, MySQL=CHAR(36)/`UUID()`
+- **UPSERT**: PostgreSQL=`ON CONFLICT`, MySQL=`ON DUPLICATE KEY UPDATE`
+- **新規判定**: PostgreSQL=`RETURNING`, MySQL=`ROW_COUNT()`
+- **JSON**: PostgreSQL=JSONB/`jsonb_set()`, MySQL=JSON/`JSON_SET()`
+
+**教訓**: SQL構文差異をExecutor層で吸収。上位層（Repository, Service）はDB非依存を維持。
+
 ### Plugin 拡張パターン
 - **Map<Type, Service>**: `Map<GrantType, OAuthTokenCreationService>` で動的選択
 - **PluginLoader**: **静的メソッドAPI** - `PluginLoader.loadFromInternalModule(Class)`
@@ -229,6 +249,28 @@ private TenantManagementStatus mapExceptionToStatus(ManagementApiException e) {
 - **Map濫用**: `Map<String, Object>` ではなく専用クラス使用
 - **DTO肥大化**: DTOにドメインロジック含有禁止
 - **永続化層ロジック**: データソース層でのビジネスロジック実行禁止
+
+## 🗑️ YAGNI原則の適用（未使用メソッド削除）
+
+### 原則
+**"You Aren't Gonna Need It"** - 実際に使用されていない機能は削除する
+
+### 判断基準
+1. **使用箇所の全体検索**: `Grep`ツールでコードベース全体を検索
+2. **実装完全性チェック**: 全層（Interface, SqlExecutor, PostgreSQL, MySQL, DataSource）で実装されているか
+3. **削除対象**: 実装は完全だが使用箇所が0のメソッド
+
+**教訓**: 「実装済み」≠「必要」。使用されていないコードは保守負債。
+
+## 🗑️ 中途半端な実装の削除基準
+
+### 削除判断基準
+1. **機能不完全**: 仕様の一部のみ実装（新機能追加後も未対応）
+2. **柔軟性不足**: 固定値・固定期間で拡張性なし
+3. **代替手段存在**: アプリケーション層で同等以上の柔軟な実装が可能
+4. **保守負債**: 新機能追加時に常に更新が必要だが放置されている
+
+**教訓**: 「一度作った機能」でも、完成度不足・保守放棄なら削除して再設計。中途半端な実装は技術負債。
 
 ## ⚠️ レイヤー責任違反の重要教訓
 **データソース層でのビジネスロジック実行は絶対禁止**
@@ -832,3 +874,5 @@ throw new UnsupportedOperationException("実装予定");
 - [ ] **組織レベルAPIでOrganization必要な場合は専用Request Wrapper + 専用Service作成**
 - [ ] **Handler層でManagementApiExceptionをcatchしてResultに変換**
 - [ ] **EntryService層でresult.toResponse()でHTTPステータス適切化（throw禁止）**
+- [ ] **両DB実装確認**（PostgreSQL + MySQL DDL, Executor, Factory）
+- [ ] **未使用メソッド削除**（YAGNI原則、使用箇所0なら削除）

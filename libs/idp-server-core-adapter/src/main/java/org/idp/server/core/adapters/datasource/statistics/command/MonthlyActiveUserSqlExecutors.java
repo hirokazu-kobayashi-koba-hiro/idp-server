@@ -23,9 +23,7 @@ public class MonthlyActiveUserSqlExecutors {
   public static MonthlyActiveUserSqlExecutor of(DatabaseType databaseType) {
     return switch (databaseType) {
       case POSTGRESQL -> new MonthlyActiveUserPostgresqlExecutor();
-      case MYSQL ->
-          throw new UnsupportedOperationException(
-              "MySQL support for MonthlyActiveUser not yet implemented");
+      case MYSQL -> new MonthlyActiveUserMysqlExecutor();
       default ->
           throw new UnsupportedOperationException("Unsupported database type: " + databaseType);
     };

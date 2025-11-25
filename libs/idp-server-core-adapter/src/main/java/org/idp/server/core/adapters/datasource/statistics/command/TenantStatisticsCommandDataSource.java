@@ -18,8 +18,6 @@ package org.idp.server.core.adapters.datasource.statistics.command;
 
 import java.time.LocalDate;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.statistics.TenantStatistics;
-import org.idp.server.platform.statistics.TenantStatisticsIdentifier;
 import org.idp.server.platform.statistics.repository.TenantStatisticsCommandRepository;
 
 public class TenantStatisticsCommandDataSource implements TenantStatisticsCommandRepository {
@@ -28,41 +26,6 @@ public class TenantStatisticsCommandDataSource implements TenantStatisticsComman
 
   public TenantStatisticsCommandDataSource(TenantStatisticsSqlExecutor executor) {
     this.executor = executor;
-  }
-
-  @Override
-  public void save(TenantStatistics data) {
-    executor.upsert(data);
-  }
-
-  @Override
-  public void register(TenantStatistics data) {
-    executor.insert(data);
-  }
-
-  @Override
-  public void update(TenantStatistics data) {
-    executor.update(data);
-  }
-
-  @Override
-  public void delete(TenantStatisticsIdentifier id) {
-    executor.delete(id);
-  }
-
-  @Override
-  public void deleteByDate(TenantIdentifier tenantId, LocalDate date) {
-    executor.deleteByDate(tenantId, date);
-  }
-
-  @Override
-  public void deleteOlderThan(LocalDate before) {
-    executor.deleteOlderThan(before);
-  }
-
-  @Override
-  public void deleteByTenantId(TenantIdentifier tenantId) {
-    executor.deleteByTenantId(tenantId);
   }
 
   @Override
