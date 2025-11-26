@@ -17,21 +17,15 @@
 package org.idp.server.core.openid.token.tokenintrospection.verifier;
 
 import java.time.LocalDateTime;
-import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertification;
-import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertificationThumbprint;
-import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertificationThumbprintCalculator;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
-import org.idp.server.core.openid.token.AccessToken;
 import org.idp.server.core.openid.token.OAuthToken;
-import org.idp.server.core.openid.token.tokenintrospection.exception.TokenCertificationBindingInvalidException;
 import org.idp.server.core.openid.token.tokenintrospection.exception.TokenInsufficientScopeException;
 import org.idp.server.core.openid.token.tokenintrospection.exception.TokenInvalidException;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.x509.X509CertInvalidException;
 
 public class TokenIntrospectionExtensionVerifier {
 
@@ -82,33 +76,8 @@ public class TokenIntrospectionExtensionVerifier {
   }
 
   private void verifySenderConstrainedIfRequired() {
-    if (!oAuthToken.hasClientCertification()) {
-      return;
-    }
-
-    if (!clientCert.exists()) {
-      throw new TokenCertificationBindingInvalidException(
-          "Sender-constrained access token requires mTLS client certificate, but none was provided.");
-    }
-
-    try {
-      ClientCertification clientCertification = ClientCertification.parse(clientCert.plainValue());
-      ClientCertificationThumbprint thumbprint =
-          new ClientCertificationThumbprintCalculator(clientCertification).calculate();
-
-      AccessToken accessToken = oAuthToken.accessToken();
-      if (!accessToken.matchThumbprint(thumbprint)) {
-        throw new TokenCertificationBindingInvalidException(
-            "mTLS client certificate thumbprint does not match the sender-constrained access token.");
-      }
-
-    } catch (X509CertInvalidException e) {
-      log.warn(e.getMessage(), e);
-      throw new TokenCertificationBindingInvalidException(
-          String.format(
-              "Invalid mTLS client certificate format for sender-constrained access token: %s",
-              e.getMessage()));
-    }
+    CertificateBindingVerifier certificateBindingVerifier = new CertificateBindingVerifier();
+    certificateBindingVerifier.verify(clientCert, oAuthToken);
   }
 
   private void verifyScope() {
