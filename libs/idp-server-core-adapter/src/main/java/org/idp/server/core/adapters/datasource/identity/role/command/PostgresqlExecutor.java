@@ -64,7 +64,6 @@ public class PostgresqlExecutor implements RoleSqlExecutor {
   public void update(Tenant tenant, Role role) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    // 1. Update role table
     String updateRoleSql =
         """
                 UPDATE role
@@ -81,25 +80,6 @@ public class PostgresqlExecutor implements RoleSqlExecutor {
     updateParams.add(tenant.identifierUUID());
 
     sqlExecutor.execute(updateRoleSql, updateParams);
-
-    // 2. Delete all existing permissions
-    String deletePermissionsSql =
-        """
-                DELETE FROM role_permission
-                WHERE tenant_id = ?::uuid
-                AND role_id = ?::uuid;
-                """;
-
-    List<Object> deleteParams = new ArrayList<>();
-    deleteParams.add(tenant.identifierUUID());
-    deleteParams.add(role.idAsUuid());
-
-    sqlExecutor.execute(deletePermissionsSql, deleteParams);
-
-    // 3. Register new permissions
-    if (!role.permissions().isEmpty()) {
-      registerPermission(tenant, role, sqlExecutor);
-    }
   }
 
   @Override
@@ -141,6 +121,30 @@ public class PostgresqlExecutor implements RoleSqlExecutor {
     }
 
     sqlExecutor.execute(sql, params);
+  }
+
+  @Override
+  public void deleteAllPermissions(Tenant tenant, Role role) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+                DELETE FROM role_permission
+                WHERE tenant_id = ?::uuid
+                AND role_id = ?::uuid;
+                """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierUUID());
+    params.add(role.idAsUuid());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  @Override
+  public void registerPermissions(Tenant tenant, Role role) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    registerPermission(tenant, role, sqlExecutor);
   }
 
   private void bulkRegisterRole(Tenant tenant, Roles roles, SqlExecutor sqlExecutor) {
@@ -188,6 +192,12 @@ public class PostgresqlExecutor implements RoleSqlExecutor {
                       params.add(role.idAsUuid());
                       params.add(permission.idAsUuid());
                     }));
+
+    // Guard: Skip if no permissions across all roles (would generate invalid SQL)
+    if (sqlValues.isEmpty()) {
+      return;
+    }
+
     sqlTemplateBuilder.append(String.join(",", sqlValues));
     sqlTemplateBuilder.append(" ON CONFLICT (role_id, permission_id) DO NOTHING;");
 
@@ -195,6 +205,11 @@ public class PostgresqlExecutor implements RoleSqlExecutor {
   }
 
   private void registerPermission(Tenant tenant, Role role, SqlExecutor sqlExecutor) {
+    // Guard: Skip if no permissions (would generate invalid SQL)
+    if (role.permissions().isEmpty()) {
+      return;
+    }
+
     StringBuilder sqlTemplateBuilder = new StringBuilder();
     sqlTemplateBuilder.append(
         """

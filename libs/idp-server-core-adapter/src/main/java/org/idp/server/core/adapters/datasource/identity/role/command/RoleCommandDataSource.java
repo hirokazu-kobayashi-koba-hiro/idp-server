@@ -42,7 +42,17 @@ public class RoleCommandDataSource implements RoleCommandRepository {
 
   @Override
   public void update(Tenant tenant, Role role) {
+    // RFC 7231 PUT semantics: Complete role resource replacement
+    // 1. Update role table (name, description)
     executor.update(tenant, role);
+
+    // 2. Delete all existing permissions
+    executor.deleteAllPermissions(tenant, role);
+
+    // 3. Register new permissions (if any)
+    if (!role.permissions().isEmpty()) {
+      executor.registerPermissions(tenant, role);
+    }
   }
 
   @Override

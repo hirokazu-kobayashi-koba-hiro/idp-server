@@ -65,7 +65,6 @@ public class MysqlExecutor implements RoleSqlExecutor {
   public void update(Tenant tenant, Role role) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    // 1. Update role table
     String updateRoleSql =
         """
                 UPDATE role
@@ -82,25 +81,6 @@ public class MysqlExecutor implements RoleSqlExecutor {
     updateParams.add(tenant.identifier().value());
 
     sqlExecutor.execute(updateRoleSql, updateParams);
-
-    // 2. Delete all existing permissions
-    String deletePermissionsSql =
-        """
-                DELETE FROM role_permission
-                WHERE tenant_id = ?
-                AND role_id = ?;
-                """;
-
-    List<Object> deleteParams = new ArrayList<>();
-    deleteParams.add(tenant.identifier().value());
-    deleteParams.add(role.id());
-
-    sqlExecutor.execute(deletePermissionsSql, deleteParams);
-
-    // 3. Register new permissions
-    if (!role.permissions().isEmpty()) {
-      registerPermission(tenant, role, sqlExecutor);
-    }
   }
 
   @Override
@@ -142,6 +122,30 @@ public class MysqlExecutor implements RoleSqlExecutor {
     }
 
     sqlExecutor.execute(sql, params);
+  }
+
+  @Override
+  public void deleteAllPermissions(Tenant tenant, Role role) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+                DELETE FROM role_permission
+                WHERE tenant_id = ?
+                AND role_id = ?;
+                """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifier().value());
+    params.add(role.id());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  @Override
+  public void registerPermissions(Tenant tenant, Role role) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    registerPermission(tenant, role, sqlExecutor);
   }
 
   private void bulkRegisterRole(Tenant tenant, Roles roles, SqlExecutor sqlExecutor) {
@@ -190,6 +194,12 @@ public class MysqlExecutor implements RoleSqlExecutor {
                       params.add(role.id());
                       params.add(permission.id());
                     }));
+
+    // Guard: Skip if no permissions across all roles (would generate invalid SQL)
+    if (sqlValues.isEmpty()) {
+      return;
+    }
+
     sqlTemplateBuilder.append(String.join(",", sqlValues));
     sqlTemplateBuilder.append(" ON DUPLICATE KEY UPDATE id = id;");
 
@@ -197,6 +207,11 @@ public class MysqlExecutor implements RoleSqlExecutor {
   }
 
   private void registerPermission(Tenant tenant, Role role, SqlExecutor sqlExecutor) {
+    // Guard: Skip if no permissions (would generate invalid SQL)
+    if (role.permissions().isEmpty()) {
+      return;
+    }
+
     StringBuilder sqlTemplateBuilder = new StringBuilder();
     sqlTemplateBuilder.append(
         """

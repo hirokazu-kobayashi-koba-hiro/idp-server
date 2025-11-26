@@ -32,4 +32,8 @@ public interface RoleSqlExecutor {
   void delete(Tenant tenant, Role role);
 
   void deletePermissions(Tenant tenant, Role role, Permissions removedTarget);
+
+  void deleteAllPermissions(Tenant tenant, Role role);
+
+  void registerPermissions(Tenant tenant, Role role);
 }
