@@ -1,0 +1,256 @@
+{
+  "id": "fb02c3d4-e5f6-a7b8-c9d0-e1f2a3b4c5d6",
+  "type": "fido-uaf",
+  "attributes": {
+    "type": "external",
+    "service_name": "mocky",
+    "device_id_param": "user_id"
+  },
+  "metadata": {},
+  "interactions": {
+    "fido-uaf-facets": {
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "http://host.docker.internal:4000/fido-uaf/facets",
+          "method": "GET",
+          "auth_type": "oauth2",
+          "oauth_authorization": {
+            "type": "password",
+            "token_endpoint": "http://host.docker.internal:4000/token",
+            "client_id": "your-client-id",
+            "username": "username",
+            "password": "password",
+            "scope": "application",
+            "cache_buffer_seconds": 10,
+            "cache_ttl_seconds": 1800,
+            "cache_enabled": true
+          },
+          "header_mapping_rules": [
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            },
+            {
+              "static_value": "test",
+              "to": "x-test"
+            }
+          ]
+        }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_http_request.response_body",
+            "to": "*"
+          }
+        ]
+      }
+    },
+    "fido-uaf-registration-challenge": {
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "http://host.docker.internal:4000/fido-uaf/registration-challenge",
+          "method": "POST",
+          "auth_type": "oauth2",
+          "oauth_authorization": {
+            "type": "password",
+            "token_endpoint": "http://host.docker.internal:4000/token",
+            "client_id": "your-client-id",
+            "username": "username",
+            "password": "password",
+            "scope": "application",
+            "cache_buffer_seconds": 10,
+            "cache_ttl_seconds": 1800,
+            "cache_enabled": true
+          },
+          "header_mapping_rules": [
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            }
+          ],
+          "body_mapping_rules": [
+            {
+              "from": "$.request_body",
+              "to": "*"
+            }
+          ]
+        }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_http_request.response_body",
+            "to": "*"
+          }
+        ]
+      }
+    },
+    "fido-uaf-registration": {
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "http://host.docker.internal:4000/fido-uaf/registration",
+          "method": "POST",
+          "auth_type": "oauth2",
+          "oauth_authorization": {
+            "type": "password",
+            "token_endpoint": "http://host.docker.internal:4000/token",
+            "client_id": "your-client-id",
+            "username": "username",
+            "password": "password",
+            "scope": "application",
+            "cache_buffer_seconds": 10,
+            "cache_ttl_seconds": 1800,
+            "cache_enabled": true
+          },
+          "header_mapping_rules": [
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            }
+          ],
+          "body_mapping_rules": [
+            {
+              "from": "$.request_body",
+              "to": "*"
+            }
+          ]
+        }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_http_request.response_body",
+            "to": "*"
+          }
+        ]
+      }
+    },
+    "fido-uaf-authentication-challenge": {
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "http://host.docker.internal:4000/fido-uaf/authentication-challenge",
+          "method": "POST",
+          "auth_type": "oauth2",
+          "oauth_authorization": {
+            "type": "password",
+            "token_endpoint": "http://host.docker.internal:4000/token",
+            "client_id": "your-client-id",
+            "username": "username",
+            "password": "password",
+            "scope": "application",
+            "cache_buffer_seconds": 10,
+            "cache_ttl_seconds": 1800,
+            "cache_enabled": true
+          },
+          "header_mapping_rules": [
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            }
+          ],
+          "body_mapping_rules": [
+            {
+              "from": "$.request_body",
+              "to": "*"
+            }
+          ]
+        }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_http_request.response_body",
+            "to": "*"
+          }
+        ]
+      }
+    },
+    "fido-uaf-authentication": {
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "http://host.docker.internal:4000/fido-uaf/authentication",
+          "method": "POST",
+          "auth_type": "oauth2",
+          "oauth_authorization": {
+            "type": "password",
+            "token_endpoint": "http://host.docker.internal:4000/token",
+            "client_id": "your-client-id",
+            "username": "username",
+            "password": "password",
+            "scope": "application",
+            "cache_buffer_seconds": 10,
+            "cache_ttl_seconds": 1800,
+            "cache_enabled": true
+          },
+          "header_mapping_rules": [
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            }
+          ],
+          "body_mapping_rules": [
+            {
+              "from": "$.request_body",
+              "to": "*"
+            }
+          ]
+        }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_http_request.response_body",
+            "to": "*"
+          }
+        ]
+      }
+    },
+    "fido-uaf-deregistration": {
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "http://host.docker.internal:4000/fido-uaf/delete-key",
+          "method": "POST",
+          "auth_type": "oauth2",
+          "oauth_authorization": {
+            "type": "password",
+            "token_endpoint": "http://host.docker.internal:4000/token",
+            "client_id": "your-client-id",
+            "username": "username",
+            "password": "password",
+            "scope": "application",
+            "cache_buffer_seconds": 10,
+            "cache_ttl_seconds": 1800,
+            "cache_enabled": true
+          },
+          "header_mapping_rules": [
+            {
+              "static_value": "application/json",
+              "to": "Content-Type"
+            }
+          ],
+          "body_mapping_rules": [
+            {
+              "from": "$.request_body",
+              "to": "*"
+            }
+          ]
+        }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_http_request.response_body",
+            "to": "*"
+          }
+        ]
+      }
+    }
+  }
+}

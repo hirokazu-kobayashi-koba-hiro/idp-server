@@ -220,6 +220,7 @@ export const requestToken = async ({
  clientAssertionType,
  basicAuth,
  clientCertFile,
+ additionalHeaders,
 }) => {
   let params = new URLSearchParams();
   if (code) {
@@ -268,6 +269,12 @@ export const requestToken = async ({
     headers = {
       ...headers,
       "x-ssl-cert": clientCert
+    };
+  }
+  if (additionalHeaders) {
+    headers = {
+      ...headers,
+      ...additionalHeaders,
     };
   }
   console.log(headers);

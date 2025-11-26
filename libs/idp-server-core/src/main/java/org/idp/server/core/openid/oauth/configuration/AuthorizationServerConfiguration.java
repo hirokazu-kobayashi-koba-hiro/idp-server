@@ -721,6 +721,7 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     map.put("request_parameter_supported", requestParameterSupported);
     map.put("request_uri_parameter_supported", requestUriParameterSupported);
     map.put("require_request_uri_registration", requireRequestUriRegistration);
+    map.put("tls_client_certificate_bound_access_tokens", tlsClientCertificateBoundAccessTokens);
 
     if (hasBackchannelTokenDeliveryModesSupported()) {
       map.put("backchannel_token_delivery_modes_supported", backchannelTokenDeliveryModesSupported);

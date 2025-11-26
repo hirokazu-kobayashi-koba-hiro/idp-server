@@ -1,0 +1,30 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            d1:38:51:8d:d8:4c:a8:06
+    Signature Algorithm: ecdsa-with-SHA256
+        Issuer: CN=financial-web-app,O=Financial Institution,C=JP
+        Validity
+            Not Before: Nov 25 12:59:42 2025 GMT
+            Not After : Nov 25 12:59:42 2026 GMT
+        Subject: CN=financial-web-app,O=Financial Institution,C=JP
+        Subject Public Key Info:
+            Public Key Algorithm: id-ecPublicKey
+                Public-Key: (256 bit)
+                pub: 
+                    04:f3:70:30:17:30:fa:1e:b4:be:a6:54:3d:0b:2f:
+                    3f:e3:65:09:cd:e6:39:a8:b8:ba:c2:b9:72:1e:46:
+                    c0:7e:74:e3:f5:77:bb:d6:51:8e:2a:1d:60:0b:d5:
+                    f6:f8:8d:4a:d1:e7:75:c7:e5:a0:7d:e0:3d:16:ae:
+                    4b:df:ad:e4:c6
+                ASN1 OID: prime256v1
+                NIST CURVE: P-256
+        X509v3 extensions:
+            X509v3 Subject Alternative Name: 
+                DNS:financial-web-app.example.com, URI:https://financial-web-app.example.com
+    Signature Algorithm: ecdsa-with-SHA256
+         30:45:02:21:00:be:39:32:bb:63:d6:d3:ff:94:7c:a1:d3:62:
+         35:03:fc:97:db:13:f9:d2:2b:f3:a9:60:50:d9:9b:7b:4f:b1:
+         26:02:20:18:c9:aa:1c:4e:e1:c9:25:16:29:f8:2b:60:ae:13:
+         56:bd:ad:a0:e2:27:98:15:13:03:17:63:87:89:bb:f9:b3

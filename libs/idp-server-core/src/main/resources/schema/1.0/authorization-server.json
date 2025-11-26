@@ -318,6 +318,45 @@
       "format": "uri",
       "description": "OPTIONAL. URL of a page containing human-readable information that developers might want or need to know when using the OpenID Provider. In particular, if the OpenID Provider does not support Dynamic Client Registration, then information on how to register Clients needs to be provided in this documentation."
     },
+    "backchannel_authentication_endpoint": {
+      "type": "string",
+      "format": "uri",
+      "description": "OPTIONAL. URL of the OP's Backchannel Authentication Endpoint as defined in Section 7 of CIBA."
+    },
+    "backchannel_token_delivery_modes_supported": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "poll",
+          "ping",
+          "push"
+        ]
+      },
+      "description": "OPTIONAL. JSON array containing a list of the backchannel token delivery modes supported as defined in Section 5 of CIBA. Valid values are poll, ping, and push."
+    },
+    "backchannel_authentication_request_signing_alg_values_supported": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "OPTIONAL. JSON array containing a list of the JWS signing algorithms (alg values) supported by the OP for signed authentication requests as defined in Section 7.1 of CIBA."
+    },
+    "backchannel_user_code_parameter_supported": {
+      "type": "boolean",
+      "description": "OPTIONAL. Boolean value specifying whether the OP supports use of the user_code parameter as defined in Section 7.1 of CIBA."
+    },
+    "authorization_details_types_supported": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "OPTIONAL. JSON array containing a list of the authorization_details types supported as defined in RFC 9396 (Rich Authorization Requests)."
+    },
+    "tls_client_certificate_bound_access_tokens": {
+      "type": "boolean",
+      "description": "OPTIONAL. Boolean value specifying whether the authorization server provides TLS client certificate bound access tokens as defined in RFC 8705."
+    },
     "claims_locales_supported": {
       "type": "array",
       "items": {
@@ -365,7 +404,7 @@
     "revocation_endpoint": {
       "type": "string",
       "format": "uri",
-      "description": "OPTIONAL. URL of the revocation endpoint."
+      "description": "OPTIONAL. URL of the authorization server's OAuth 2.0 revocation endpoint defined in RFC 7009."
     },
     "revocation_endpoint_auth_methods_supported": {
       "type": "array",
@@ -398,7 +437,7 @@
     "introspection_endpoint": {
       "type": "string",
       "format": "uri",
-      "description": "OPTIONAL. URL of the introspection endpoint."
+      "description": "OPTIONAL. URL of the authorization server's OAuth 2.0 introspection endpoint defined in RFC 7662."
     },
     "introspection_endpoint_auth_methods_supported": {
       "type": "array",
