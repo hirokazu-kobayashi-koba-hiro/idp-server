@@ -410,4 +410,249 @@ describe("Standard Use Case: Onboarding Flow with Audit Log Tracking", () => {
 
     console.log("\n=== Test Completed ===");
   });
+
+  it("should handle initial-registration errors without transaction pollution (Issue #965)", async () => {
+    console.log("\n=== Issue #965: Initial Registration Transaction Bug Test ===");
+
+    const timestamp = Date.now();
+    const organizationId = uuidv4();
+    const tenantId = uuidv4();
+    const userId = uuidv4();
+    const clientId = uuidv4();
+    const existingUserEmail = `existing-${timestamp}@test.example.com`;
+    const orgAdminPassword = `TestPass${timestamp}!`;
+    const orgClientSecret = `org-secret-${crypto.randomBytes(16).toString("hex")}`;
+    const jwksContent = await generateECP256JWKS();
+
+    console.log("\n=== Step 1: Create Organization with Existing User ===");
+
+    const onboardingRequest = {
+      organization: {
+        id: organizationId,
+        name: `Test Org ${timestamp}`,
+        description: `E2E test organization for Issue #965 created at ${new Date().toISOString()}`,
+      },
+      tenant: {
+        id: tenantId,
+        name: `Test Tenant ${timestamp}`,
+        domain: backendUrl,
+        authorization_provider: "idp-server",
+        session_config: {
+          cookie_name: "TEST_SESSION",
+          use_secure_cookie: false,
+        },
+        cors_config: {
+          allow_origins: [backendUrl],
+        },
+        security_event_log_config: {
+          format: "structured_json",
+          stage: "processed",
+          persistence_enabled: true,
+        },
+      },
+      authorization_server: {
+        issuer: `${backendUrl}/${tenantId}`,
+        authorization_endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+        token_endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        userinfo_endpoint: `${backendUrl}/${tenantId}/v1/userinfo`,
+        jwks_uri: `${backendUrl}/${tenantId}/v1/jwks`,
+        jwks: jwksContent,
+        token_signed_key_id: "signing_key_1",
+        id_token_signed_key_id: "signing_key_1",
+        grant_types_supported: ["authorization_code", "refresh_token"],
+        scopes_supported: ["openid", "profile", "email"],
+        response_types_supported: ["code"],
+        response_modes_supported: ["query"],
+        subject_types_supported: ["public"],
+        id_token_signing_alg_values_supported: ["RS256", "ES256"],
+        token_endpoint_auth_methods_supported: ["client_secret_post"],
+        claims_parameter_supported: true,
+        extension: {
+          access_token_type: "JWT",
+          token_signed_key_id: "signing_key_1",
+          id_token_signed_key_id: "signing_key_1",
+        },
+      },
+      user: {
+        sub: userId,
+        provider_id: "idp-server",
+        name: existingUserEmail,
+        email: existingUserEmail,  // This user will cause conflict later
+        email_verified: true,
+        raw_password: orgAdminPassword,
+      },
+      client: {
+        client_id: clientId,
+        client_id_alias: `test-client-${timestamp}`,
+        client_secret: orgClientSecret,
+        redirect_uris: ["http://localhost:3000/callback"],
+        response_types: ["code"],
+        grant_types: ["authorization_code"],
+        scope: "openid profile email",
+        client_name: `Test Client ${timestamp}`,
+        token_endpoint_auth_method: "client_secret_post",
+        application_type: "web",
+      },
+    };
+
+    const createResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/onboarding`,
+      headers: {
+        Authorization: `Bearer ${systemAccessToken}`,
+      },
+      body: onboardingRequest,
+    });
+
+    if (createResponse.status !== 201) {
+      console.error("Onboarding failed:", JSON.stringify(createResponse.data, null, 2));
+    }
+    expect(createResponse.status).toBe(201);
+    console.log(`✅ Created organization with existing user: ${existingUserEmail}`);
+
+    console.log("\n=== Step 2: Start Authorization Flow ===");
+
+    // Authorization flow starts with a GET request (OAuth 2.0 spec)
+    const authParams = new URLSearchParams({
+      response_type: "code",
+      client_id: clientId,
+      redirect_uri: "http://localhost:3000/callback",
+      scope: "openid profile email",
+      state: "test-state",
+    });
+
+    const authResponse = await get({
+      url: `${backendUrl}/${tenantId}/v1/authorizations?${authParams.toString()}`,
+      headers: {},
+    });
+
+    // Server should redirect (302) to authentication page with authorization ID
+    expect(authResponse.status).toBe(302);
+    const location = authResponse.headers.location;
+    expect(location).toBeDefined();
+
+    // Extract authorization ID from redirect URL
+    // Format: /tenantId/v1/authorizations/authenticate?id={authorizationId}
+    const authorizationId = new URL(location, backendUrl).searchParams.get('id');
+    expect(authorizationId).toBeDefined();
+    console.log(`✅ Authorization started: ${authorizationId}`);
+
+    console.log("\n=== Step 3: First Request - Email Conflict (Should Fail) ===");
+
+    const firstRequest = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authorizationId}/initial-registration`,
+      body: {
+        email: existingUserEmail,  // Conflicts with existing user
+        password: "AnotherPassword123!",
+        name: "Conflicting User",
+      },
+    });
+
+    expect(firstRequest.status).toBe(400);
+    expect(firstRequest.data.error).toBe("invalid_request");
+    expect(firstRequest.data.error_description).toContain("conflict");
+    console.log(`✅ First request correctly rejected with conflict error`);
+
+    console.log("\n=== Step 4: Second Request - Valid Email (Should Succeed) ===");
+
+    // BEFORE FIX (Bug): This would fail with "user not same" error
+    // AFTER FIX: This should succeed
+    const secondRequest = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authorizationId}/initial-registration`,
+      body: {
+        email: `new-user-${timestamp}@test.example.com`,  // Unique email
+        password: "NewPassword123!",
+        name: "New User",
+      },
+    });
+
+    expect(secondRequest.status).toBe(200);
+    expect(secondRequest.data.user).toBeDefined();
+    expect(secondRequest.data.user.email).toBe(`new-user-${timestamp}@test.example.com`);
+    expect(secondRequest.data.user.name).toBe("New User");
+    console.log(`✅ Second request succeeded: ${secondRequest.data.user.email}`);
+
+    // Verify transaction was NOT polluted with existing user data
+    expect(secondRequest.data.user.email).not.toBe(existingUserEmail);
+    console.log(`✅ Transaction was not polluted - registered NEW user, not existing user`);
+
+    console.log("\n=== Step 5: Test Multiple Failures Without Pollution ===");
+
+    // Start another authorization flow
+    const auth2Params = new URLSearchParams({
+      response_type: "code",
+      client_id: clientId,
+      redirect_uri: "http://localhost:3000/callback",
+      scope: "openid profile email",
+      state: "test-state-2",
+    });
+
+    const auth2Response = await get({
+      url: `${backendUrl}/${tenantId}/v1/authorizations?${auth2Params.toString()}`,
+      headers: {},
+    });
+
+    expect(auth2Response.status).toBe(302);
+    const location2 = auth2Response.headers.location;
+    expect(location2).toBeDefined();
+    const auth2Id = new URL(location2, backendUrl).searchParams.get('id');
+    expect(auth2Id).toBeDefined();
+
+    // Multiple failed attempts with same conflicting email
+    const attempt1 = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${auth2Id}/initial-registration`,
+      body: {
+        email: existingUserEmail,
+        password: "Attempt1Pass!",
+        name: "Attempt 1",
+      },
+    });
+    expect(attempt1.status).toBe(400);
+    expect(attempt1.data.error_description).toContain("conflict");
+    console.log(`✅ Attempt 1 failed with conflict`);
+
+    const attempt2 = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${auth2Id}/initial-registration`,
+      body: {
+        email: existingUserEmail,
+        password: "Attempt2Pass!",
+        name: "Attempt 2",
+      },
+    });
+    console.log(JSON.stringify(attempt2.data, null, 2));
+    expect(attempt2.status).toBe(400);
+    expect(attempt2.data.error_description).toContain("conflict");
+    expect(attempt2.data.error_description).not.toContain("not same");  // Should still be conflict, not "user not same"
+    console.log(`✅ Attempt 2 failed with conflict (not "user not same")`);
+
+    // Final attempt with valid email
+    const attempt3 = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${auth2Id}/initial-registration`,
+      body: {
+        email: `final-user-${timestamp}@test.example.com`,
+        password: "FinalPass123!",
+        name: "Final User",
+      },
+    });
+    expect(attempt3.status).toBe(200);
+    expect(attempt3.data.user.email).toBe(`final-user-${timestamp}@test.example.com`);
+    console.log(`✅ Final attempt succeeded after multiple failures`);
+
+    console.log("\n=== Cleanup ===");
+
+    await deletion({
+      url: `${backendUrl}/v1/management/tenants/${tenantId}`,
+      headers: {
+        Authorization: `Bearer ${systemAccessToken}`,
+      },
+    }).catch(() => {});
+
+    await deletion({
+      url: `${backendUrl}/v1/management/orgs/${organizationId}`,
+      headers: {
+        Authorization: `Bearer ${systemAccessToken}`,
+      },
+    }).catch(() => {});
+
+    console.log("✅ Issue #965 test completed successfully");
+  });
 });
