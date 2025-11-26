@@ -272,7 +272,7 @@ public class PostgresqlSqlExecutor implements AuthorizationRequestSqlExecutor {
                 AND tenant_id = ?::uuid;
                 """;
     List<Object> params = new ArrayList<>();
-    params.add(authorizationRequestIdentifier.value());
+    params.add(authorizationRequestIdentifier.valueAsUuid());
     params.add(tenant.identifierValue());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
