@@ -78,8 +78,8 @@ describe("Financial Grade: Setup Verification", () => {
     onboardingConfig.authorization_server.token_endpoint = `${backendUrl}/${organizerTenantId}/v1/tokens`;
     onboardingConfig.authorization_server.userinfo_endpoint = `${backendUrl}/${organizerTenantId}/v1/userinfo`;
     onboardingConfig.authorization_server.jwks_uri = `${backendUrl}/${organizerTenantId}/v1/jwks`;
-    onboardingConfig.authorization_server.token_introspection_endpoint = `${backendUrl}/${organizerTenantId}/v1/tokens/introspection`;
-    onboardingConfig.authorization_server.token_revocation_endpoint = `${backendUrl}/${organizerTenantId}/v1/tokens/revocation`;
+    onboardingConfig.authorization_server.introspection_endpoint = `${backendUrl}/${organizerTenantId}/v1/tokens/introspection`;
+    onboardingConfig.authorization_server.revocation_endpoint = `${backendUrl}/${organizerTenantId}/v1/tokens/revocation`;
     onboardingConfig.authorization_server.backchannel_authentication_endpoint = `${backendUrl}/${organizerTenantId}/v1/backchannel/authentications`;
 
     financialTenantConfig = JSON.parse(JSON.stringify(financialTenantTemplate));
@@ -89,8 +89,8 @@ describe("Financial Grade: Setup Verification", () => {
     financialTenantConfig.authorization_server.token_endpoint = `${backendUrl}/${financialTenantId}/v1/tokens`;
     financialTenantConfig.authorization_server.userinfo_endpoint = `${backendUrl}/${financialTenantId}/v1/userinfo`;
     financialTenantConfig.authorization_server.jwks_uri = `${backendUrl}/${financialTenantId}/v1/jwks`;
-    financialTenantConfig.authorization_server.token_introspection_endpoint = `${backendUrl}/${financialTenantId}/v1/tokens/introspection`;
-    financialTenantConfig.authorization_server.token_revocation_endpoint = `${backendUrl}/${financialTenantId}/v1/tokens/revocation`;
+    financialTenantConfig.authorization_server.introspection_endpoint = `${backendUrl}/${financialTenantId}/v1/tokens/introspection`;
+    financialTenantConfig.authorization_server.revocation_endpoint = `${backendUrl}/${financialTenantId}/v1/tokens/revocation`;
     financialTenantConfig.authorization_server.backchannel_authentication_endpoint = `${backendUrl}/${financialTenantId}/v1/backchannel/authentications`;
 
     financialClientConfig = JSON.parse(JSON.stringify(financialClientTemplate));
@@ -163,7 +163,8 @@ describe("Financial Grade: Setup Verification", () => {
     }
   });
 
-  it("Step 1: Create organization via Onboarding API", async () => {
+  it("Complete Financial Grade Setup and Verification Flow", async () => {
+    // Step 1: Create organization via Onboarding API
     console.log("\n=== Step 1: Creating Financial Grade Organization ===");
 
     const createResponse = await postWithJson({
@@ -182,9 +183,8 @@ describe("Financial Grade: Setup Verification", () => {
     expect(createResponse.data.tenant.id).toBe(organizerTenantId);
     expect(createResponse.data.user.email).toBe(onboardingConfig.user.email);
     expect(createResponse.data.client.client_id).toBe(onboardingConfig.client.client_id);
-  });
 
-  it("Step 2: Login with organization admin", async () => {
+    // Step 2: Login with organization admin
     console.log("\n=== Step 2: Organization Admin Login ===");
 
     const tokenResponse = await requestToken({
@@ -203,12 +203,11 @@ describe("Financial Grade: Setup Verification", () => {
 
     orgAdminToken = tokenResponse.data.access_token;
     console.log(`✅ Organization admin logged in`);
-  });
 
-  it("Step 3: Create financial tenant", async () => {
+    // Step 3: Create financial tenant
     console.log("\n=== Step 3: Creating Financial Tenant ===");
 
-    const createResponse = await postWithJson({
+    const createTenantResponse = await postWithJson({
       url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants`,
       headers: {
         Authorization: `Bearer ${orgAdminToken}`,
@@ -216,13 +215,12 @@ describe("Financial Grade: Setup Verification", () => {
       body: financialTenantConfig,
     });
 
-    expect(createResponse.status).toBe(201);
-    expect(createResponse.data.result.id).toBe(financialTenantId);
+    expect(createTenantResponse.status).toBe(201);
+    expect(createTenantResponse.data.result.id).toBe(financialTenantId);
 
     console.log(`✅ Financial Tenant created: ${financialTenantId}`);
-  });
 
-  it("Step 4: Verify FAPI compliance settings", async () => {
+    // Step 4: Verify FAPI compliance settings
     console.log("\n=== Step 4: Verifying FAPI Compliance ===");
 
     // Get authorization server config via Management API
@@ -246,6 +244,9 @@ describe("Financial Grade: Setup Verification", () => {
     expect(authServer.extension.id_token_strict_mode).toBe(true);
     expect(authServer.extension.refresh_token_duration).toBe(2592000); // 30 days
 
+    // Verify MTLS certificate-bound access tokens (Issue #967)
+    expect(authServer.tls_client_certificate_bound_access_tokens).toBe(true);
+
     // Verify auth methods
     expect(authServer.token_endpoint_auth_methods_supported).toContain("private_key_jwt");
     expect(authServer.token_endpoint_auth_methods_supported).toContain("tls_client_auth");
@@ -258,12 +259,12 @@ describe("Financial Grade: Setup Verification", () => {
     console.log(`✅ FAPI Advance Scopes: ${authServer.extension.fapi_advance_scopes.join(", ")}`);
     console.log(`✅ Access Token Duration: ${authServer.extension.access_token_duration}s`);
     console.log(`✅ ID Token Strict Mode: ${authServer.extension.id_token_strict_mode}`);
-  });
+    console.log(`✅ MTLS Certificate-Bound Tokens: ${authServer.tls_client_certificate_bound_access_tokens}`);
 
-  it("Step 5: Create financial client with MTLS", async () => {
+    // Step 5: Create financial client with MTLS
     console.log("\n=== Step 5: Creating Financial Client (MTLS) ===");
 
-    const createResponse = await postWithJson({
+    const createClientResponse = await postWithJson({
       url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${financialTenantId}/clients`,
       headers: {
         Authorization: `Bearer ${orgAdminToken}`,
@@ -271,20 +272,19 @@ describe("Financial Grade: Setup Verification", () => {
       body: financialClientConfig,
     });
 
-    expect(createResponse.status).toBe(201);
-    expect(createResponse.data.result.client_id).toBe(financialClientId);
-    expect(createResponse.data.result.token_endpoint_auth_method).toBe("self_signed_tls_client_auth");
-    expect(createResponse.data.result.tls_client_certificate_bound_access_tokens).toBe(true);
+    expect(createClientResponse.status).toBe(201);
+    expect(createClientResponse.data.result.client_id).toBe(financialClientId);
+    expect(createClientResponse.data.result.token_endpoint_auth_method).toBe("self_signed_tls_client_auth");
+    expect(createClientResponse.data.result.tls_client_certificate_bound_access_tokens).toBe(true);
 
     console.log(`✅ Financial Client created: ${financialClientId}`);
     console.log(`✅ Auth Method: self_signed_tls_client_auth`);
     console.log(`✅ MTLS Token Binding: enabled`);
-  });
 
-  it("Step 6: Create authentication policy", async () => {
+    // Step 6: Create authentication policy
     console.log("\n=== Step 6: Creating Authentication Policy ===");
 
-    const createResponse = await postWithJson({
+    const createPolicyResponse = await postWithJson({
       url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${financialTenantId}/authentication-policies`,
       headers: {
         Authorization: `Bearer ${orgAdminToken}`,
@@ -292,15 +292,14 @@ describe("Financial Grade: Setup Verification", () => {
       body: authPolicyConfig,
     });
 
-    expect(createResponse.status).toBe(201);
-    expect(createResponse.data.result.id).toBe(authPolicyConfig.id);
-    expect(createResponse.data.result.flow).toBe("oauth");
+    expect(createPolicyResponse.status).toBe(201);
+    expect(createPolicyResponse.data.result.id).toBe(authPolicyConfig.id);
+    expect(createPolicyResponse.data.result.flow).toBe("oauth");
 
     console.log(`✅ Authentication Policy created: ${authPolicyConfig.id}`);
-    console.log(`✅ Flow: ${createResponse.data.result.flow}`);
-  });
+    console.log(`✅ Flow: ${createPolicyResponse.data.result.flow}`);
 
-  it("Step 7: Verify Discovery endpoint", async () => {
+    // Step 7: Verify Discovery endpoint (comprehensive check)
     console.log("\n=== Step 7: Verifying Discovery Endpoint ===");
 
     const discoveryResponse = await get({
@@ -310,16 +309,178 @@ describe("Financial Grade: Setup Verification", () => {
     expect(discoveryResponse.status).toBe(200);
     const discovery = discoveryResponse.data;
 
-    // Verify FAPI compliance
-    expect(discovery.token_endpoint_auth_methods_supported).toContain("self_signed_tls_client_auth");
-    expect(discovery.subject_types_supported).toContain("pairwise");
-    expect(discovery.request_object_signing_alg_values_supported).toBeDefined();
+    // Verify endpoints
+    expect(discovery.issuer).toBe(`${backendUrl}/${financialTenantId}`);
+    expect(discovery.authorization_endpoint).toBe(`${backendUrl}/${financialTenantId}/v1/authorizations`);
+    expect(discovery.token_endpoint).toBe(`${backendUrl}/${financialTenantId}/v1/tokens`);
+    expect(discovery.userinfo_endpoint).toBe(`${backendUrl}/${financialTenantId}/v1/userinfo`);
+    expect(discovery.jwks_uri).toBe(`${backendUrl}/${financialTenantId}/v1/jwks`);
+
+    // RFC 8414: OAuth 2.0 Authorization Server Metadata (required by configuration)
+    expect(discovery.introspection_endpoint).toBe(`${backendUrl}/${financialTenantId}/v1/tokens/introspection`);
+    expect(discovery.revocation_endpoint).toBe(`${backendUrl}/${financialTenantId}/v1/tokens/revocation`);
+    expect(discovery.backchannel_authentication_endpoint).toBe(`${backendUrl}/${financialTenantId}/v1/backchannel/authentications`);
+
+    // Verify token endpoint auth methods (FAPI compliance)
+    expect(discovery.token_endpoint_auth_methods_supported).toEqual(
+      expect.arrayContaining(["private_key_jwt", "tls_client_auth", "self_signed_tls_client_auth"])
+    );
+
+    // Verify token endpoint auth signing algorithms
+    expect(discovery.token_endpoint_auth_signing_alg_values_supported).toEqual(
+      expect.arrayContaining(["RS256", "ES256"])
+    );
+
+    // Verify grant types
+    expect(discovery.grant_types_supported).toEqual(
+      expect.arrayContaining(["authorization_code", "refresh_token", "urn:openid:params:grant-type:ciba"])
+    );
+
+    // Verify scopes
+    expect(discovery.scopes_supported).toEqual(
+      expect.arrayContaining(["openid", "profile", "email", "address", "phone", "offline_access", "account", "transfers", "read", "write"])
+    );
+
+    // Verify response types
+    expect(discovery.response_types_supported).toEqual(
+      expect.arrayContaining(["code", "code id_token"])
+    );
+
+    // Verify response modes
+    expect(discovery.response_modes_supported).toEqual(
+      expect.arrayContaining(["query", "fragment"])
+    );
+
+    // Verify subject types (pairwise for FAPI)
+    expect(discovery.subject_types_supported).toEqual(["pairwise"]);
+
+    // Verify ID token signing algorithms
+    expect(discovery.id_token_signing_alg_values_supported).toEqual(
+      expect.arrayContaining(["RS256", "ES256"])
+    );
+
+    // Verify request object signing algorithms
+    expect(discovery.request_object_signing_alg_values_supported).toEqual(
+      expect.arrayContaining(["RS256", "ES256"])
+    );
+
+    // Verify claims parameter support
+    expect(discovery.claims_parameter_supported).toBe(true);
+
+    // Verify CIBA support
+    expect(discovery.backchannel_token_delivery_modes_supported).toEqual(
+      expect.arrayContaining(["poll", "ping"])
+    );
+    expect(discovery.backchannel_authentication_request_signing_alg_values_supported).toEqual(
+      expect.arrayContaining(["RS256", "ES256"])
+    );
+    expect(discovery.backchannel_user_code_parameter_supported).toBe(true);
+
+    // Verify authorization details types (Open Banking)
+    expect(discovery.authorization_details_types_supported).toEqual(
+      expect.arrayContaining(["payment_initiation", "account_information"])
+    );
+
+    // Verify MTLS certificate-bound access tokens (Issue #967)
+    expect(discovery.tls_client_certificate_bound_access_tokens).toBe(true);
 
     console.log(`✅ Discovery endpoint accessible`);
-    console.log(`✅ FAPI-compliant auth methods supported`);
-  });
+    console.log(`✅ All endpoints verified`);
+    console.log(`✅ FAPI-compliant auth methods: ${discovery.token_endpoint_auth_methods_supported.join(", ")}`);
+    console.log(`✅ Grant types: ${discovery.grant_types_supported.join(", ")}`);
+    console.log(`✅ Subject types: ${discovery.subject_types_supported.join(", ")}`);
+    console.log(`✅ CIBA delivery modes: ${discovery.backchannel_token_delivery_modes_supported.join(", ")}`);
+    console.log(`✅ Authorization details types: ${discovery.authorization_details_types_supported.join(", ")}`);
+    console.log(`✅ MTLS Certificate-Bound Tokens: ${discovery.tls_client_certificate_bound_access_tokens}`);
 
-  it("Step 8: Test MTLS authentication with certificate", async () => {
+    // Step 7.5: Verify Tenant Configuration (Management API)
+    console.log("\n=== Step 7.5: Verifying Tenant Configuration (Management API) ===");
+
+    const getTenantResponse = await get({
+      url: `${backendUrl}/v1/management/tenants/${financialTenantId}`,
+      headers: {
+        Authorization: `Bearer ${systemAccessToken}`,
+      },
+    });
+
+    expect(getTenantResponse.status).toBe(200);
+    const tenant = getTenantResponse.data;
+
+    // Verify tenant basic info
+    expect(tenant.id).toBe(financialTenantId);
+    expect(tenant.name).toBe("Financial Grade Business Tenant");
+    expect(tenant.type).toBe("PUBLIC");
+
+    // Security event log config
+    const logConfig = tenant.security_event_log_config;
+    expect(logConfig.format).toBe("structured_json");
+    expect(logConfig.debug_logging).toBe(false);
+    expect(logConfig.stage).toBe("production");
+    expect(logConfig.include_user_id).toBe(true);
+    expect(logConfig.include_user_ex_sub).toBe(true);
+    expect(logConfig.include_client_id).toBe(true);
+    expect(logConfig.include_ip_address).toBe(true);
+    expect(logConfig.include_user_agent).toBe(true);
+    expect(logConfig.include_event_detail).toBe(true);
+    expect(logConfig.include_user_detail).toBe(true);
+    expect(logConfig.include_user_pii).toBe(false);
+    expect(logConfig.include_trace_context).toBe(true);
+    expect(logConfig.service_name).toBe("idp-server-financial-biz");
+    expect(logConfig.custom_tags).toBe("environment:production,industry:financial,tenant_type:business");
+    expect(logConfig.tracing_enabled).toBe(true);
+    expect(logConfig.persistence_enabled).toBe(true);
+    expect(logConfig.detail_scrub_keys).toContain("authorization");
+    expect(logConfig.detail_scrub_keys).toContain("password");
+    expect(logConfig.detail_scrub_keys).toContain("secret");
+
+    // Security event user config
+    const userConfig = tenant.security_event_user_config;
+    expect(userConfig.include_id).toBe(true);
+    expect(userConfig.include_name).toBe(true);
+    expect(userConfig.include_external_user_id).toBe(true);
+    expect(userConfig.include_email).toBe(true);
+    expect(userConfig.include_phone_number).toBe(true);
+    expect(userConfig.include_given_name).toBe(true);
+    expect(userConfig.include_family_name).toBe(true);
+    expect(userConfig.include_preferred_username).toBe(false);
+    expect(userConfig.include_profile).toBe(false);
+    expect(userConfig.include_picture).toBe(false);
+    expect(userConfig.include_website).toBe(false);
+    expect(userConfig.include_gender).toBe(false);
+    expect(userConfig.include_birthdate).toBe(true);
+    expect(userConfig.include_zoneinfo).toBe(false);
+    expect(userConfig.include_locale).toBe(false);
+    expect(userConfig.include_address).toBe(true);
+    expect(userConfig.include_roles).toBe(true);
+    expect(userConfig.include_permissions).toBe(true);
+    expect(userConfig.include_current_tenant).toBe(true);
+    expect(userConfig.include_assigned_tenants).toBe(true);
+    expect(userConfig.include_verified_claims).toBe(true);
+
+    // Session security settings
+    const sessionConfig = tenant.session_config;
+    expect(sessionConfig.cookie_name).toBe("FINANCIAL_BIZ_SESSION");
+    expect(sessionConfig.cookie_same_site).toBe("strict");
+    expect(sessionConfig.use_secure_cookie).toBe(true);
+    expect(sessionConfig.use_http_only_cookie).toBe(true);
+    expect(sessionConfig.cookie_path).toBe("/");
+
+    // CORS configuration
+    const corsConfig = tenant.cors_config;
+    expect(corsConfig.allow_origins).toEqual(["http://localhost:3000", "http://localhost:3001"]);
+    expect(corsConfig.allow_headers).toContain("Authorization");
+    expect(corsConfig.allow_headers).toContain("Content-Type");
+    expect(corsConfig.allow_methods).toContain("GET");
+    expect(corsConfig.allow_methods).toContain("POST");
+    expect(corsConfig.allow_credentials).toBe(true);
+
+    console.log(`✅ Tenant configuration verified`);
+    console.log(`✅ Security event logging: ${logConfig.format} (stage: ${logConfig.stage})`);
+    console.log(`✅ Session security: SameSite=${sessionConfig.cookie_same_site}, Secure=${sessionConfig.use_secure_cookie}, HttpOnly=${sessionConfig.use_http_only_cookie}`);
+    console.log(`✅ CORS origins: ${corsConfig.allow_origins.join(", ")}`);
+    console.log(`✅ Security event user fields: ${Object.keys(userConfig).filter(k => userConfig[k] === true).length} fields enabled`);
+
+    // Step 8: Test MTLS authentication with certificate
     console.log("\n=== Step 8: Testing MTLS Authentication ===");
 
     // Load client certificate
@@ -327,43 +488,41 @@ describe("Financial Grade: Setup Verification", () => {
 
     if (!fs.existsSync(certPath)) {
       console.log(`⚠️  Certificate not found at ${certPath}, skipping MTLS test`);
-      return;
+    } else {
+      const clientCert = fs.readFileSync(certPath, "utf8");
+      const encodedCert = clientCert.replace(/\n/g, "%0A");
+
+      // Test token request with invalid authorization code
+      // (Should authenticate client successfully but reject invalid code)
+      const mtlsTokenResponse = await postWithJson({
+        url: `${backendUrl}/${financialTenantId}/v1/tokens`,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "x-ssl-cert": encodedCert,
+        },
+        body: new URLSearchParams({
+          grant_type: "authorization_code",
+          code: "invalid_code_for_testing",
+          redirect_uri: "http://localhost:3000/callback/",
+          client_id: financialClientId,
+        }).toString(),
+        isFormData: true,
+      });
+
+      // Should get 400 invalid_grant (not 401 invalid_client)
+      // This proves client authentication succeeded
+      expect(mtlsTokenResponse.status).toBe(400);
+      expect(mtlsTokenResponse.data.error).toBe("invalid_grant");
+
+      console.log(`✅ MTLS client authentication successful`);
+      console.log(`✅ Client authenticated via self_signed_tls_client_auth`);
     }
 
-    const clientCert = fs.readFileSync(certPath, "utf8");
-    const encodedCert = clientCert.replace(/\n/g, "%0A");
-
-    // Test token request with invalid authorization code
-    // (Should authenticate client successfully but reject invalid code)
-    const tokenResponse = await postWithJson({
-      url: `${backendUrl}/${financialTenantId}/v1/tokens`,
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "x-ssl-cert": encodedCert,
-      },
-      body: new URLSearchParams({
-        grant_type: "authorization_code",
-        code: "invalid_code_for_testing",
-        redirect_uri: "http://localhost:3000/callback/",
-        client_id: financialClientId,
-      }).toString(),
-      isFormData: true,
-    });
-
-    // Should get 400 invalid_grant (not 401 invalid_client)
-    // This proves client authentication succeeded
-    expect(tokenResponse.status).toBe(400);
-    expect(tokenResponse.data.error).toBe("invalid_grant");
-
-    console.log(`✅ MTLS client authentication successful`);
-    console.log(`✅ Client authenticated via self_signed_tls_client_auth`);
-  });
-
-  it("Step 9: Test without certificate (should fail)", async () => {
+    // Step 9: Test without certificate (should fail)
     console.log("\n=== Step 9: Testing Without Certificate ===");
 
     // Test token request without certificate
-    const tokenResponse = await postWithJson({
+    const noCertTokenResponse = await postWithJson({
       url: `${backendUrl}/${financialTenantId}/v1/tokens`,
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -378,9 +537,9 @@ describe("Financial Grade: Setup Verification", () => {
     });
 
     // Should get 401 invalid_client (certificate required)
-    expect(tokenResponse.status).toBe(401);
-    expect(tokenResponse.data.error).toBe("invalid_client");
-    expect(tokenResponse.data.error_description).toContain("client_cert");
+    expect(noCertTokenResponse.status).toBe(401);
+    expect(noCertTokenResponse.data.error).toBe("invalid_client");
+    expect(noCertTokenResponse.data.error_description).toContain("client_cert");
 
     console.log(`✅ Correctly rejected request without certificate`);
   });

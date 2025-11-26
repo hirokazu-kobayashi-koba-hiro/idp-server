@@ -35,5 +35,6 @@
   "require_auth_time": true,
   "default_acr_values": [
     "urn:mace:incommon:iap:gold"
-  ]
+  ],
+  "authorization_signed_response_alg": "ES256"
 }

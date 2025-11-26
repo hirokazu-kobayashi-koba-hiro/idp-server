@@ -60,10 +60,10 @@ public class ServerConfigurationResponseCreator {
     map.put(
         "id_token_signing_alg_values_supported",
         authorizationServerConfiguration.idTokenSigningAlgValuesSupported());
-    if (authorizationServerConfiguration.hasIdTokenEncryptionEncValuesSupported()) {
+    if (authorizationServerConfiguration.hasIdTokenEncryptionAlgValuesSupported()) {
       map.put(
           "id_token_encryption_alg_values_supported",
-          authorizationServerConfiguration.idTokenEncryptionEncValuesSupported());
+          authorizationServerConfiguration.idTokenEncryptionAlgValuesSupported());
     }
     if (authorizationServerConfiguration.hasIdTokenEncryptionEncValuesSupported()) {
       map.put(
@@ -108,7 +108,7 @@ public class ServerConfigurationResponseCreator {
     if (authorizationServerConfiguration.hasTokenEndpointAuthSigningAlgValuesSupported()) {
       map.put(
           "token_endpoint_auth_signing_alg_values_supported",
-          authorizationServerConfiguration.tokenEndpointAuthMethodsSupported());
+          authorizationServerConfiguration.tokenEndpointAuthSigningAlgValuesSupported());
     }
     if (authorizationServerConfiguration.hasDisplayValuesSupported()) {
       map.put(
@@ -131,6 +131,24 @@ public class ServerConfigurationResponseCreator {
     map.put(
         "require_request_uri_registration",
         authorizationServerConfiguration.requireRequestUriRegistration());
+    map.put(
+        "tls_client_certificate_bound_access_tokens",
+        authorizationServerConfiguration.isTlsClientCertificateBoundAccessTokens());
+
+    // Introspection and Revocation endpoints
+    if (authorizationServerConfiguration.hasIntrospectionEndpoint()) {
+      map.put("introspection_endpoint", authorizationServerConfiguration.introspectionEndpoint());
+    }
+    if (authorizationServerConfiguration.hasRevocationEndpoint()) {
+      map.put("revocation_endpoint", authorizationServerConfiguration.revocationEndpoint());
+    }
+
+    // Authorization details types (RAR - RFC 9396)
+    if (!authorizationServerConfiguration.authorizationDetailsTypesSupported().isEmpty()) {
+      map.put(
+          "authorization_details_types_supported",
+          authorizationServerConfiguration.authorizationDetailsTypesSupported());
+    }
 
     if (authorizationServerConfiguration.hasBackchannelTokenDeliveryModesSupported()) {
       map.put(
@@ -140,7 +158,7 @@ public class ServerConfigurationResponseCreator {
     if (authorizationServerConfiguration.hasBackchannelAuthenticationEndpoint()) {
       map.put(
           "backchannel_authentication_endpoint",
-          authorizationServerConfiguration.hasBackchannelAuthenticationEndpoint());
+          authorizationServerConfiguration.backchannelAuthenticationEndpoint());
     }
     if (authorizationServerConfiguration
         .hasBackchannelAuthenticationRequestSigningAlgValuesSupported()) {

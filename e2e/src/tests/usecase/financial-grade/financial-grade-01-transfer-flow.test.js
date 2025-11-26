@@ -1,11 +1,13 @@
 import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
 import { deletion, get, postWithJson } from "../../../lib/http";
 import { requestToken } from "../../../api/oauthClient";
-import { adminServerConfig, backendUrl } from "../../testConfig";
+import { adminServerConfig, backendUrl, selfSignedTlsAuthClient, serverConfig } from "../../testConfig";
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
+import { createJwtWithPrivateKey, generateJti } from "../../../lib/jose";
+import { toEpocTime } from "../../../lib/util";
 
 /**
  * Financial Grade Use Case: Transfer Flow with FIDO-UAF
@@ -279,7 +281,7 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
     });
 
     expect(initialRegResponse.status).toBe(201);
-    console.log(`✅ Initial Registration Config created`);
+    console.log("✅ Initial Registration Config created");
 
     const fidoUafResponse = await postWithJson({
       url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${financialTenantId}/authentication-configurations`,
@@ -288,7 +290,7 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
     });
 
     expect(fidoUafResponse.status).toBe(201);
-    console.log(`✅ FIDO-UAF Config created`);
+    console.log("✅ FIDO-UAF Config created");
 
     const smsResponse = await postWithJson({
       url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${financialTenantId}/authentication-configurations`,
@@ -297,7 +299,7 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
     });
 
     expect(smsResponse.status).toBe(201);
-    console.log(`✅ SMS Config created`);
+    console.log("✅ SMS Config created");
 
     // Create authentication policy
     const policyResponse = await postWithJson({
@@ -307,7 +309,7 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
     });
 
     expect(policyResponse.status).toBe(201);
-    console.log(`✅ Authentication Policy created`);
+    console.log("✅ Authentication Policy created");
 
     // === Step 1: User registration via initial-registration ===
     console.log("\n=== Step 1: User Registration ===");
@@ -367,7 +369,7 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
     });
 
     console.log(`Registration response status: ${registrationResponse.status}`);
-    console.log(`Registration response:`, JSON.stringify(registrationResponse.data, null, 2));
+    console.log("Registration response:", JSON.stringify(registrationResponse.data, null, 2));
 
     expect(registrationResponse.status).toBe(200);
     userId = registrationResponse.data.user.sub;
@@ -389,7 +391,7 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
       },
     });
 
-    console.log(`SMS challenge response:`, smsChallengeResponse.status, smsChallengeResponse.data);
+    console.log("SMS challenge response:", smsChallengeResponse.status, smsChallengeResponse.data);
     expect(smsChallengeResponse.status).toBe(200);
 
     // Get verification code from authentication transaction
@@ -400,7 +402,7 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
       },
     });
 
-    console.log(`Auth transaction response:`, authTxResponse.status, authTxResponse.data);
+    console.log("Auth transaction response:", authTxResponse.status, authTxResponse.data);
     expect(authTxResponse.status).toBe(200);
     const transactionId = authTxResponse.data.list[0].id;
 
@@ -411,7 +413,7 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
       },
     });
 
-    console.log(`Interaction response:`, interactionResponse.status, interactionResponse.data);
+    console.log("Interaction response:", interactionResponse.status, interactionResponse.data);
     expect(interactionResponse.status).toBe(200);
     const verificationCode = interactionResponse.data.payload.verification_code;
 
@@ -428,10 +430,10 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
       },
     });
 
-    console.log(`SMS verification response:`, smsVerificationResponse.status, smsVerificationResponse.data);
+    console.log("SMS verification response:", smsVerificationResponse.status, smsVerificationResponse.data);
     expect(smsVerificationResponse.status).toBe(200);
 
-    console.log(`✅ SMS authentication completed`);
+    console.log("✅ SMS authentication completed");
 
     // Authorize
     const authorizeResponse = await postWithJson({
@@ -443,7 +445,7 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
     });
 
     console.log(`Authorize response status: ${authorizeResponse.status}`);
-    console.log(`Authorize response:`, JSON.stringify(authorizeResponse.data, null, 2));
+    console.log("Authorize response:", JSON.stringify(authorizeResponse.data, null, 2));
 
     expect(authorizeResponse.status).toBe(200);
     expect(authorizeResponse.data.redirect_uri).toContain("code=");
@@ -452,7 +454,7 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
     const code = redirectUri.searchParams.get("code");
     expect(code).toBeDefined();
 
-    console.log(`✅ Authorization code obtained`);
+    console.log("✅ Authorization code obtained");
 
     // Exchange code for token (with code_verifier for PKCE)
     const tokenParams = new URLSearchParams({
@@ -477,35 +479,21 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
     expect(tokenResponse.data.access_token).toBeDefined();
     expect(tokenResponse.data.scope).toContain("account");
 
-    console.log(`✅ Access token obtained (account scope)`);
+    console.log("✅ Access token obtained (account scope)");
 
     // === Step 2: FIDO-UAF device registration ===
     console.log("\n=== Step 2: FIDO-UAF Device Registration ===");
+    
+    const userToken = tokenResponse.data.access_token;
 
-    // Get user access token
-    const userTokenResponse = await requestToken({
-      endpoint: `${backendUrl}/${financialTenantId}/v1/tokens`,
-      grantType: "password",
-      username: userEmail,
-      password: userPassword,
-      scope: "openid profile",
-      clientId: financialClientId,
-      additionalHeaders: {
-        "x-ssl-cert": encodedClientCert,
-      },
-    });
-
-    expect(userTokenResponse.status).toBe(200);
-    const userToken = userTokenResponse.data.access_token;
-
-    console.log(`✅ User logged in, token obtained`);
+    console.log("✅ User logged in, token obtained");
 
     // FIDO-UAF registration challenge
     const challengeResponse = await postWithJson({
       url: `${backendUrl}/${financialTenantId}/v1/me/fido-uaf-registration-challenge`,
       headers: {
         Authorization: `Bearer ${userToken}`,
-        "x-ssl-cert": encodedClientCert,
+        // "x-ssl-cert": encodedClientCert,
       },
       body: {},
     });
@@ -513,7 +501,7 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
     console.log(`FIDO-UAF challenge response: ${challengeResponse.status}`);
 
     if (challengeResponse.status === 200 || challengeResponse.status === 500) {
-      console.log(`✅ FIDO-UAF registration flow initiated (mock service may not be available)`);
+      console.log("✅ FIDO-UAF registration flow initiated (mock service may not be available)");
     }
 
     // === Step 3: Authorization with transfers scope (FIDO-UAF required) ===
@@ -526,24 +514,41 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
     // Start authorization with 'transfers' scope
     const transferNonce = crypto.randomBytes(16).toString("base64url");
 
-    const transferAuthzParams = new URLSearchParams({
-      response_type: "code",
+    const request = createJwtWithPrivateKey({
+      payload: {
+        response_type: "code",
+        client_id: financialClientId,
+        iss: financialClientId,
+        aud: financialTenantConfig.authorization_server.issuer,
+        redirect_uri: "https://localhost:3000/callback/",
+        scope: "openid transfers",
+        state: "transfer-test",
+        nonce: transferNonce,
+        code_challenge: transferCodeChallenge,
+        code_challenge_method: "S256",
+        response_mode: "jwt",
+        exp: toEpocTime({ adjusted: 3000 }),
+        iat: toEpocTime({}),
+        nbf: toEpocTime({}),
+        jti: generateJti(),
+      },
+      privateKey: JSON.parse(financialClientConfig.jwks).keys[0],
+    });
+    console.log(request);
+    const fapiParams = new URLSearchParams({
       client_id: financialClientId,
-      redirect_uri: "https://localhost:3000/callback/",
-      scope: "openid transfers",
-      state: "transfer-test",
-      nonce: transferNonce,
-      code_challenge: transferCodeChallenge,
-      code_challenge_method: "S256",
+      request: request,
     });
 
     const transferAuthzResponse = await get({
-      url: `${backendUrl}/${financialTenantId}/v1/authorizations?${transferAuthzParams.toString()}`,
+      url: `${backendUrl}/${financialTenantId}/v1/authorizations?${fapiParams.toString()}`,
     });
 
+    console.log(transferAuthzResponse.headers);
     expect(transferAuthzResponse.status).toBe(302);
     const transferLocation = transferAuthzResponse.headers.location;
     const transferAuthTxId = new URL(transferLocation).searchParams.get("id");
+    expect(transferAuthTxId).not.toBeNull();
 
     console.log(`✅ Authorization request with 'transfers' scope: ${transferAuthTxId}`);
 
@@ -561,8 +566,8 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
 
     // Password authentication should be rejected for 'transfers' scope
     if (passwordAuthResponse.status === 400 || passwordAuthResponse.status === 403) {
-      console.log(`✅ Password authentication correctly rejected for 'transfers' scope`);
-      console.log(`   Policy enforcement working: FIDO-UAF/WebAuthn required`);
+      console.log("✅ Password authentication correctly rejected for 'transfers' scope");
+      console.log("   Policy enforcement working: FIDO-UAF/WebAuthn required");
     } else {
       console.log(`⚠️  Unexpected response: HTTP ${passwordAuthResponse.status}`);
     }
@@ -576,10 +581,10 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
 
     expect(discoveryResponse.status).toBe(200);
 
-    console.log(`✅ Discovery endpoint accessible`);
-    console.log(`✅ Financial Grade configuration verified`);
-    console.log(`   - Pairwise subject type for privacy`);
-    console.log(`   - FAPI scopes configured (read, account, write, transfers)`);
-    console.log(`   - Authentication policies enforce WebAuthn/FIDO-UAF for transfers`);
+    console.log("✅ Discovery endpoint accessible");
+    console.log("✅ Financial Grade configuration verified");
+    console.log("   - Pairwise subject type for privacy");
+    console.log("   - FAPI scopes configured (read, account, write, transfers)");
+    console.log("   - Authentication policies enforce WebAuthn/FIDO-UAF for transfers");
   });
 });
