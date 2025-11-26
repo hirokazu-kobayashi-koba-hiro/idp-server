@@ -26,13 +26,16 @@ import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.openid.token.tokenintrospection.TokenIntrospectionContentsCreator;
 import org.idp.server.core.openid.token.tokenintrospection.validator.TokenIntrospectionValidator;
+import org.idp.server.core.openid.token.tokenintrospection.verifier.CertificateBindingVerifier;
 import org.idp.server.core.openid.token.tokenintrospection.verifier.TokenIntrospectionVerifier;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class TokenIntrospectionInternalHandler {
 
   OAuthTokenCommandRepository oAuthTokenCommandRepository;
   OAuthTokenQueryRepository oAuthTokenQueryRepository;
+  LoggerWrapper log = LoggerWrapper.getLogger(TokenIntrospectionInternalHandler.class);
 
   public TokenIntrospectionInternalHandler(
       OAuthTokenCommandRepository oAuthTokenCommandRepository,
@@ -42,6 +45,8 @@ public class TokenIntrospectionInternalHandler {
   }
 
   public TokenIntrospectionResponse handle(TokenIntrospectionInternalRequest request) {
+    log.debug("Starting internal token introspection");
+
     TokenIntrospectionValidator validator = new TokenIntrospectionValidator(request.toParameters());
     validator.validate();
 
@@ -49,21 +54,34 @@ public class TokenIntrospectionInternalHandler {
     Tenant tenant = request.tenant();
 
     OAuthToken oAuthToken = oAuthTokenQueryRepository.find(tenant, accessTokenEntity);
+    log.debug(
+        "Token found: exists={}, hasCertification={}",
+        oAuthToken.exists(),
+        oAuthToken.hasClientCertification());
+
     TokenIntrospectionVerifier verifier = new TokenIntrospectionVerifier(oAuthToken);
     TokenIntrospectionRequestStatus verifiedStatus = verifier.verify();
 
     if (!verifiedStatus.isOK()) {
+      log.warn("Token verification failed: status={}", verifiedStatus);
       Map<String, Object> contents = TokenIntrospectionContentsCreator.createFailureContents();
       return new TokenIntrospectionResponse(verifiedStatus, oAuthToken, contents);
     }
+
+    // RFC 8705: Verify certificate binding for sender-constrained access tokens
+    log.debug("Verifying certificate binding (if required)");
+    CertificateBindingVerifier certificateBindingVerifier = new CertificateBindingVerifier();
+    certificateBindingVerifier.verify(request.toClientCert(), oAuthToken);
 
     Map<String, Object> contents =
         TokenIntrospectionContentsCreator.createSuccessContents(oAuthToken);
 
     if (oAuthToken.isOneshotToken()) {
+      log.debug("Deleting one-shot token");
       oAuthTokenCommandRepository.delete(request.tenant(), oAuthToken);
     }
 
+    log.debug("Internal token introspection succeeded");
     return new TokenIntrospectionResponse(verifiedStatus, oAuthToken, contents);
   }
 }

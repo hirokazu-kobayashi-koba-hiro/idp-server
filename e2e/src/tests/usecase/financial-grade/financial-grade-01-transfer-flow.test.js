@@ -45,6 +45,9 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
   const authPolicyTemplate = JSON.parse(
     fs.readFileSync(path.join(configDir, "authentication-policy/oauth.json"), "utf8")
   );
+  const fidoUafRegistrationPolicyTemplate = JSON.parse(
+    fs.readFileSync(path.join(configDir, "authentication-policy/fido-uaf-registration.json"), "utf8")
+  );
   const initialRegConfigTemplate = JSON.parse(
     fs.readFileSync(path.join(configDir, "authentication-config/initial-registration/standard.json"), "utf8")
   );
@@ -59,11 +62,16 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
   let financialTenantConfig;
   let financialClientConfig;
   let authPolicyConfig;
+  let fidoUafRegistrationPolicyConfig;
   let initialRegConfig;
   let fidoUafConfig;
   let smsConfig;
   let clientCert;
   let encodedClientCert;
+  let mismatchedClientCert;
+  let encodedMismatchedClientCert;
+  let differentClientCert;
+  let encodedDifferentClientCert;
 
   beforeAll(async () => {
     // Get system admin token
@@ -87,6 +95,7 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
     userId = uuidv4();
     const adminClientId = uuidv4();
     const authPolicyId = uuidv4();
+    const fidoUafRegistrationPolicyId = uuidv4();
     const initialRegConfigId = uuidv4();
     const fidoUafConfigId = uuidv4();
     const smsConfigId = uuidv4();
@@ -94,11 +103,25 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
     userEmail = `financial-user-${timestamp}@example.com`;
     userPassword = `SecurePass${timestamp}!`;
 
-    // Load client certificate
+    // Load client certificate (bound to access token)
     const certPath = path.join(configDir, "certs/client-cert.pem");
     if (fs.existsSync(certPath)) {
       clientCert = fs.readFileSync(certPath, "utf8");
       encodedClientCert = clientCert.replace(/\n/g, "%0A");
+
+      // Generate mismatched certificate by modifying a few Base64 characters
+      // This creates an invalid DER format certificate
+      mismatchedClientCert = clientCert
+        .replace(/MIIBvDCCAWKg/g, "MIIBvDCCAXXg")
+        .replace(/83AwFzD6/g, "93BwGzE7");
+      encodedMismatchedClientCert = mismatchedClientCert.replace(/\n/g, "%0A");
+    }
+
+    // Load different valid certificate (not bound to token)
+    const differentCertPath = path.join(process.cwd(), "src/api/cert/exampleCertificate.pem");
+    if (fs.existsSync(differentCertPath)) {
+      differentClientCert = fs.readFileSync(differentCertPath, "utf8");
+      encodedDifferentClientCert = differentClientCert.replace(/\n/g, "%0A");
     }
 
     // Create unique configs
@@ -133,6 +156,9 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
     authPolicyConfig = JSON.parse(JSON.stringify(authPolicyTemplate));
     authPolicyConfig.id = authPolicyId;
 
+    fidoUafRegistrationPolicyConfig = JSON.parse(JSON.stringify(fidoUafRegistrationPolicyTemplate));
+    fidoUafRegistrationPolicyConfig.id = fidoUafRegistrationPolicyId;
+
     initialRegConfig = JSON.parse(JSON.stringify(initialRegConfigTemplate));
     initialRegConfig.id = initialRegConfigId;
 
@@ -157,6 +183,13 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
     if (financialTenantId && authPolicyConfig) {
       await deletion({
         url: `${backendUrl}/v1/management/tenants/${financialTenantId}/authentication-policies/${authPolicyConfig.id}`,
+        headers: { Authorization: `Bearer ${systemAccessToken}` },
+      }).catch(() => {});
+    }
+
+    if (financialTenantId && fidoUafRegistrationPolicyConfig) {
+      await deletion({
+        url: `${backendUrl}/v1/management/tenants/${financialTenantId}/authentication-policies/${fidoUafRegistrationPolicyConfig.id}`,
         headers: { Authorization: `Bearer ${systemAccessToken}` },
       }).catch(() => {});
     }
@@ -309,7 +342,17 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
     });
 
     expect(policyResponse.status).toBe(201);
-    console.log("✅ Authentication Policy created");
+    console.log("✅ Authentication Policy (OAuth flow) created");
+
+    // Create FIDO-UAF registration policy (me flow)
+    const fidoUafRegPolicyResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${financialTenantId}/authentication-policies`,
+      headers: { Authorization: `Bearer ${orgAdminToken}` },
+      body: fidoUafRegistrationPolicyConfig,
+    });
+
+    expect(fidoUafRegPolicyResponse.status).toBe(201);
+    console.log("✅ FIDO-UAF Registration Policy (me flow) created");
 
     // === Step 1: User registration via initial-registration ===
     console.log("\n=== Step 1: User Registration ===");
@@ -489,8 +532,8 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
     console.log("✅ User logged in, token obtained");
 
     // FIDO-UAF registration challenge
-    const challengeResponse = await postWithJson({
-      url: `${backendUrl}/${financialTenantId}/v1/me/fido-uaf-registration-challenge`,
+    const failedChallengeResponse = await postWithJson({
+      url: `${backendUrl}/${financialTenantId}/v1/me/mfa/fido-uaf-registration`,
       headers: {
         Authorization: `Bearer ${userToken}`,
         // "x-ssl-cert": encodedClientCert,
@@ -498,11 +541,95 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
       body: {},
     });
 
-    console.log(`FIDO-UAF challenge response: ${challengeResponse.status}`);
+    console.log(`FIDO-UAF challenge response: ${JSON.stringify(failedChallengeResponse.data, null, 2)}`);
+    expect(failedChallengeResponse.status).toBe(401);
 
-    if (challengeResponse.status === 200 || challengeResponse.status === 500) {
-      console.log("✅ FIDO-UAF registration flow initiated (mock service may not be available)");
-    }
+    // Test with invalid certificate (DER format corrupted - should fail)
+    const mismatchedChallengeResponse = await postWithJson({
+      url: `${backendUrl}/${financialTenantId}/v1/me/mfa/fido-uaf-registration`,
+      headers: {
+        Authorization: `Bearer ${userToken}`,
+        "x-ssl-cert": encodedMismatchedClientCert,
+      },
+      body: {},
+    });
+
+    console.log(`FIDO-UAF challenge with invalid cert: ${JSON.stringify(mismatchedChallengeResponse.data, null, 2)}`);
+    expect(mismatchedChallengeResponse.status).toBe(401);
+
+    // Test with different valid certificate (valid but not bound - should fail per RFC 8705)
+    const differentChallengeResponse = await postWithJson({
+      url: `${backendUrl}/${financialTenantId}/v1/me/mfa/fido-uaf-registration`,
+      headers: {
+        Authorization: `Bearer ${userToken}`,
+        "x-ssl-cert": encodedDifferentClientCert,
+      },
+      body: {},
+    });
+
+    console.log(`FIDO-UAF challenge with different valid cert: ${JSON.stringify(differentChallengeResponse.data, null, 2)}`);
+    expect(differentChallengeResponse.status).toBe(401);
+
+    // Test with correct certificate (should succeed)
+    const challengeResponse = await postWithJson({
+      url: `${backendUrl}/${financialTenantId}/v1/me/mfa/fido-uaf-registration`,
+      headers: {
+        Authorization: `Bearer ${userToken}`,
+        "x-ssl-cert": encodedClientCert,
+      },
+      body: {},
+    });
+
+    console.log(`FIDO-UAF challenge response: ${JSON.stringify(challengeResponse.data, null, 2)}`);
+    expect(challengeResponse.status).toBe(200);
+
+    // === Certificate Binding Verification for Userinfo API ===
+    console.log("\n=== Certificate Binding Verification: Userinfo API ===");
+
+    // Test 1: No certificate (should fail)
+    const userinfoNoCertResponse = await get({
+      url: `${backendUrl}/${financialTenantId}/v1/userinfo`,
+      headers: {
+        Authorization: `Bearer ${userToken}`,
+      },
+    });
+    console.log(`Userinfo without cert: ${userinfoNoCertResponse.status}`);
+    expect(userinfoNoCertResponse.status).toBe(401);
+
+    // Test 2: Invalid certificate (should fail)
+    const userinfoInvalidCertResponse = await get({
+      url: `${backendUrl}/${financialTenantId}/v1/userinfo`,
+      headers: {
+        Authorization: `Bearer ${userToken}`,
+        "x-ssl-cert": encodedMismatchedClientCert,
+      },
+    });
+    console.log(`Userinfo with invalid cert: ${userinfoInvalidCertResponse.status}`);
+    expect(userinfoInvalidCertResponse.status).toBe(401);
+
+    // Test 3: Different valid certificate (should fail per RFC 8705)
+    const userinfoDifferentCertResponse = await get({
+      url: `${backendUrl}/${financialTenantId}/v1/userinfo`,
+      headers: {
+        Authorization: `Bearer ${userToken}`,
+        "x-ssl-cert": encodedDifferentClientCert,
+      },
+    });
+    console.log(`Userinfo with different valid cert: ${userinfoDifferentCertResponse.status}`);
+    expect(userinfoDifferentCertResponse.status).toBe(401);
+
+    // Test 4: Correct certificate (should succeed)
+    const userinfoResponse = await get({
+      url: `${backendUrl}/${financialTenantId}/v1/userinfo`,
+      headers: {
+        Authorization: `Bearer ${userToken}`,
+        "x-ssl-cert": encodedClientCert,
+      },
+    });
+    console.log(`Userinfo with correct cert: ${JSON.stringify(userinfoResponse.data, null, 2)}`);
+    expect(userinfoResponse.status).toBe(200);
+    expect(userinfoResponse.data).toHaveProperty("sub");
+    console.log("✅ Userinfo API certificate binding verification passed");
 
     // === Step 3: Authorization with transfers scope (FIDO-UAF required) ===
     console.log("\n=== Step 3: Authorization with Transfers Scope ===");
