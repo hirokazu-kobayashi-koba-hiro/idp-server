@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.extension.ciba.CibaProfile;
 import org.idp.server.core.extension.ciba.CibaRequestContext;
+import org.idp.server.core.extension.ciba.plugin.CibaVerifierPluginLoader;
 import org.idp.server.platform.exception.UnSupportedException;
 
 /**
@@ -39,23 +40,21 @@ public class CibaRequestVerifier {
 
   Map<CibaProfile, CibaVerifier> baseVerifiers;
   List<CibaExtensionVerifier> extensionVerifiers;
-  CibaRequestContext context;
 
-  public CibaRequestVerifier(CibaRequestContext context) {
+  public CibaRequestVerifier() {
     this.baseVerifiers = new HashMap<>();
     this.baseVerifiers.put(CibaProfile.CIBA, new CibaRequestNormalProfileVerifier());
-    this.baseVerifiers.put(CibaProfile.FAPI_CIBA, new CibaRequestFapiProfileVerifier());
+    Map<CibaProfile, CibaVerifier> loadedVerifiers = CibaVerifierPluginLoader.load();
+    this.baseVerifiers.putAll(loadedVerifiers);
 
     // Extension Verifiers: Common across all CIBA profiles
     this.extensionVerifiers = new ArrayList<>();
     this.extensionVerifiers.add(new CibaRequestObjectVerifier());
     this.extensionVerifiers.add(new CibaRequiredRarVerifier());
     this.extensionVerifiers.add(new CibaAuthorizationDetailsVerifier());
-
-    this.context = context;
   }
 
-  public void verify() {
+  public void verify(CibaRequestContext context) {
     // 1. Profile-specific base verification
     CibaVerifier cibaVerifier = baseVerifiers.get(context.profile());
     if (Objects.isNull(cibaVerifier)) {

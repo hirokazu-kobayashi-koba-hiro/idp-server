@@ -66,6 +66,7 @@ public class CibaRequestHandler {
   ClientAuthenticationHandler clientAuthenticationHandler;
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
+  CibaRequestVerifier verifier;
 
   /**
    * Constructs a CibaRequestHandler with the specified repository and configuration dependencies.
@@ -90,6 +91,7 @@ public class CibaRequestHandler {
     this.clientAuthenticationHandler = new ClientAuthenticationHandler();
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
+    this.verifier = new CibaRequestVerifier();
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
   }
 
@@ -116,8 +118,7 @@ public class CibaRequestHandler {
             authorizationServerConfiguration,
             clientConfiguration);
 
-    CibaRequestVerifier verifier = new CibaRequestVerifier(context);
-    verifier.verify();
+    verifier.verify(context);
     clientAuthenticationHandler.authenticate(context);
 
     return context;

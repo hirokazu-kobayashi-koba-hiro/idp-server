@@ -369,18 +369,18 @@ export const selfSignedTlsAuthClient = {
   idTokenAlg: "RS256",
   clientCertFile: "selfSignedTlsAuth.pem",
   requestKey: {
-    "p": "8OX-b2ap00yVvPsQ46jFIGBM5NXByTuRI3QTb_Rt_41rjiHy0JNrEIqOkFW7b583rLsOsWPykVNtCwqbjUhWT81ijUneDyzcrCOGlOK9_pZjcqvIIU0fbyXPYox_tejNrv1nixjirnuGFlCDaHZ4ZrWOAN_VPsI7cJLzMyH7jos",
     "kty": "RSA",
-    "q": "652Ra-SB0PSVTKwmVxxmPOqOAaN9c8N4urXMwa67auCEBk51sZzpU2QItrTpP_YxZwYyN1srDdanXOREIemb7lX8zGzcMCvhfS_jY9VqVV1tglLg8mN3EU9EMkLPfIi1rry9E2dofDr4mNhUtAd_gorOuBAau1moQfRu6vbzbjk",
-    "d": "SYqNt4XMFBfjXQmfBGjeMBPi9FeZ-pHCNMb8L4RrCjnkaWErEvlIbIs1Oijt7zCyIq459GTJ9ohrVijQGm-_XsPhFwUPsYTlnKX1tZKHypsRQbdvZkc3xCm0AU-hZ2Y6XBGmEZnV11TCnH-hK5qA3uOvYAXmT681eVSXsqIuLyd_3_YdK6PzFwCUE0wrplTJxQY9m_DGYy0-kxKOMzBcx-LxTJxDtuXXWzMwc_Wxt_h3YJCTtMYQNdRq_3HUbSRnvKL7_tSE0b1MMBLDj-kJqrzm8lEqgL77Dpxribc1eUYTouBj50_IufZP6Zmu_J6GA52vIUZM-QCa-8slvM5v4Q",
+    "n": "8BU7QUaOy7Hd8f70jcdeIfMYNUXUaV5V85-yu3VxuEIeBlz2trV_7RGF5z__2KcqDe9P2m-aclpwy7vNX3eHY7lHlern-8B6fCcX7rqNmT35QCBq4pnF5QgbcpEmL53hkG-E4mYrIkalkLehlF4WxdNCt_TQCkHgqgeaA1bOmRFVFYXoGU6P_EQBf8HGgambs1JtR0TsTZBUjKGAW5uGeEHZg9HDpmnXG0K9d2nPcfrl7_F_dN9kcKdDlIzQPMbEADA-3lA0oSo53Eolfy9N_5O2i_WXjjDQc91V9ZmDszcMGZAJ1mj5UExJuEMJG4Pwxxxrz60I3xSuyjND5vjwgQ",
     "e": "AQAB",
-    "use": "sig",
-    "kid": "self_request_key",
-    "qi": "MtiJiYXnuv74cPEeS5dn7VIbOAQ7M3Gn1MmPjoSzm4rIw61WhFvfmt4I4xpqCuT8X2Es-JUy21y3OVnmc64FjZsaIjRjMykh2c5BENphdr3_E9mX6ePQ8aqlc-IxQcrxyFxxahjtL5i-BVeaUqW0iGK_8sdHDbbDy-sphPtntJ0",
-    "dp": "MBcJ2v1Yq6jfP5GzRm9bouH2l7wgamasy7IRa0kVaG236fDXA1JajjvKx_-FYnwbZi0Ves4kD2TjINAmS2cEa_vpT6FOZiMjjm2tIS2-lgM5qRun4RX_T3Xx14-KsyrdXLCTqg32urRICU5bXVBBKufViFEmxdeKfCepyyxeho8",
-    "alg": "RS256",
-    "dq": "vJr0JqbTV94BiU-gnUipeofTxvIFYV6OzP7sefoSIpq4dIfn5JaTm-JOq1qkAERmBW9LUU6UZ051yIEdHPxwitegNk_J7nGh3eEwp-DVbqIMIC-Ry9XdISkPkSA0ER8qOEbzH44-cHuQNmGtZDNAWdIdae_SRjid3LX69_FYqdk",
-    "n": "3bdmdRnVS_VxFwXpmetBs3n4g0THeWntkGs5wigGA38x5pTEe5B97-KgXdB4f-zL0n_auPjkIOiKGXByOWvG-9J-U5eY0fXcpCky5JxEpcEQbQMxXTsefn-E5jR2Ia1BMuYLxIzvmN4VKmYNXoPnVSbFj554VBpYnRPF9KtiBU2S1USYBdHFZ7iI3NltoKS8Qb13WgUc3nvQvfHToifWWm43R-Q8yocCXP3G7PHFlBHyNCVI0AArEbuqzJED21nRDUm8bFQ187NrmOI029L9WDTvzcnxfU5zPTnDSCt1Dr_KdcSyMClwZ2RNmd8RAGyH1kBZfMFkQU-AFSDMiDN28w"
+    "d": "AU65iz_bC8PbXMHE4Vm6mPdkYmAD176Ak_1yrlLFz6NCK3Jbsm3SZ2UzhSmBBUge6Hc9LGw0JXVBuvmSASgVEmJrM-9E7-MD3MG0D5374ufAi_5oNB1yn4JO51W4ITFKQe6KTQ8JuyGytasrGtAszjtJ7D9lx5hFeOIWbxgwsyKbYE0JwRe5R3ZWFKmdI-YxjQM5jNHOOyDOi0R6SNedAHBEEt31Lp_FNIYe_vBdNvTDI4PFbkcVA6iZeNuE0hZVm3CMHtKJoED8fd7K8cZjq-bib7GPstZwCWlNnudz-2g9oR49Sc6jUBke3UD-6In8ssGhsYjUs1NX_-9jHmZOAQ",
+    "p": "_A2rHFZGlqOYvev0-0AH_A_Rs6FgHaJKoeq6utLLJ8_dDC9sIPiEFkRC6bXu677FkJ1Hmdh3XzXGTmz22vPqDnfPfmkZ3ZGg_yZrcw5kZb-wBesBX24CH3X9dz3l2kIA2GFmPkyJDUhzuKO8W80qx4klnmViQIDfLysVDnrWqYE",
+    "q": "89eUpVFi3VGjT1K0fjukjQK1s0MKQh1GlTppiqi543TXJhr2GjiSkxhTbYzircRIJiIw5q91yTwY3W1BLFXfzvdoASMH0s_BW1u1NRZZPXW-Tr9Tk_MIZc_T8fqzMcNEGEYjHZiQWFguIACqvJFADjRTKTzdOSeLHxvxiGffxwE",
+    "dp": "DcTBYB7mZDwzj8xf6Ymp5f8HOYTLN1MyOH4WDTaOmnIkZRICGhr5PC4maZXio0YcjLXKv4CvpKfPWWFiaruAQaIR15nuK8hUvxteKz7SBSzfdLNNs-TSgN11Jxpef_mzCh7n8udDZVJb3-4xz-H5QEUhpPFs2JExn-X-lHfpWgE",
+    "dq": "Vz8Gb5RMNHYWYbZs4FHE0bNrgeV10SwaaiCJTNSMFmdi575z2fPt9fWZPDRRku0NB5_qMVAMa-E14FxMGmnrd2ksbGO1U-eD_oU0s_b4HTZ4zkJEzEYD9jHDWuxhm2eLgMfvnpJM6185ubejX271JV_xdWrSmLWeYJYl-LF57wE",
+    "qi": "4VvayTv8X63bu2PHIl4NCyu5C_93JvrCedDj0dnxGl-VyIvhrOAtHb0rR1TWouFMIXXxBh8WdI-zRMKM1OvC4mZZK6_maLlYtkvU_e1zXhV4iCmcZAgUIiRwcmbFKQcGFaYRc4X0wCsDjOwpyMVuZ6fKe9NTgl1utqdCKA2Hy5g",
+    "kid": "self_request_key_ps256",
+    "alg": "PS256",
+    "use": "sig"
   }
 };
 

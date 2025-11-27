@@ -1,0 +1,280 @@
+/*
+ * Copyright 2025 Hirokazu Kobayashi
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.idp.server.core.extension.fapi.ciba;
+
+import java.util.Date;
+import org.idp.server.core.extension.ciba.CibaProfile;
+import org.idp.server.core.extension.ciba.CibaRequestContext;
+import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationBadRequestException;
+import org.idp.server.core.extension.ciba.verifier.CibaVerifier;
+import org.idp.server.core.openid.oauth.type.ciba.BackchannelTokenDeliveryMode;
+import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
+import org.idp.server.platform.jose.JoseContext;
+import org.idp.server.platform.jose.JsonWebTokenClaims;
+
+/**
+ * FAPI CIBA Profile Verifier
+ *
+ * <p>Implements the FAPI CIBA Profile security requirements as specified in FAPI CIBA Security
+ * Profile Section 5.2.2.
+ *
+ * <p>This verifier enforces the following requirements:
+ *
+ * <ol>
+ *   <li>Signed Request Object is mandatory
+ *   <li>Request Object lifetime verification (nbf/exp, max 60 minutes)
+ *   <li>Signing algorithm restrictions (PS256 or ES256 only)
+ *   <li>Confidential Client requirement
+ *   <li>binding_message requirement when no unique authorization context exists
+ *   <li>Push mode prohibition
+ *   <li>Client authentication method restrictions (private_key_jwt, tls_client_auth,
+ *       self_signed_tls_client_auth only)
+ *   <li>TLS requirements (enforced at transport layer)
+ * </ol>
+ *
+ * @see <a href="https://openid.net/specs/openid-financial-api-ciba-ID1.html#section-5.2.2">FAPI
+ *     CIBA Security Profile Section 5.2.2</a>
+ */
+public class FapiCibaVerifier implements CibaVerifier {
+
+  private static final long MAX_REQUEST_OBJECT_LIFETIME_MS = 60 * 60 * 1000; // 60 minutes
+
+  @Override
+  public CibaProfile profile() {
+    return CibaProfile.FAPI_CIBA;
+  }
+
+  @Override
+  public void verify(CibaRequestContext context) {
+    throwExceptionIfNotSignedRequestObject(context);
+    throwExceptionIfInvalidRequestObjectLifetime(context);
+    throwExceptionIfInvalidSigningAlgorithm(context);
+    throwExceptionIfNotConfidentialClient(context);
+    throwExceptionIfMissingBindingMessage(context);
+    throwExceptionIfPushMode(context);
+    throwExceptionIfInvalidClientAuthenticationMethod(context);
+    throwExceptionIfNotContainsAud(context);
+    throwIfNotSenderConstrainedAccessToken(context);
+  }
+
+  /**
+   * 5.2.2.1 shall require signed request objects
+   *
+   * <p>FAPI CIBA requires all authentication requests to be made using signed request objects.
+   */
+  void throwExceptionIfNotSignedRequestObject(CibaRequestContext context) {
+    if (!context.isRequestObjectPattern()) {
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_request",
+          "FAPI CIBA Profile requires signed request object. Request must include 'request' parameter with a signed JWT.");
+    }
+  }
+
+  /**
+   * 5.2.2.2 Request Object Lifetime Verification
+   *
+   * <p>shall require the request object to contain an exp claim that has a lifetime of no longer
+   * than 60 minutes after the nbf claim
+   */
+  void throwExceptionIfInvalidRequestObjectLifetime(CibaRequestContext context) {
+    JoseContext joseContext = context.joseContext();
+    if (!joseContext.exists()) {
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_request", "FAPI CIBA Profile requires valid request object with claims.");
+    }
+
+    JsonWebTokenClaims claims = joseContext.claims();
+
+    if (!claims.hasExp()) {
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_request", "FAPI CIBA Profile requires 'exp' claim in request object.");
+    }
+
+    if (!claims.hasNbf()) {
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_request", "FAPI CIBA Profile requires 'nbf' claim in request object.");
+    }
+
+    Date nbf = claims.getNbf();
+    Date exp = claims.getExp();
+
+    long lifetimeMs = exp.getTime() - nbf.getTime();
+
+    if (lifetimeMs > MAX_REQUEST_OBJECT_LIFETIME_MS) {
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_request",
+          String.format(
+              "FAPI CIBA Profile requires request object lifetime to be no longer than 60 minutes. Current lifetime: %d minutes",
+              lifetimeMs / 60000));
+    }
+
+    if (lifetimeMs <= 0) {
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_request",
+          "FAPI CIBA Profile requires 'exp' to be after 'nbf' in request object.");
+    }
+  }
+
+  /**
+   * 5.2.2.3 Signing Algorithm Restrictions
+   *
+   * <p>shall require the request object to be signed with PS256 or ES256 algorithm
+   */
+  void throwExceptionIfInvalidSigningAlgorithm(CibaRequestContext context) {
+    JoseContext joseContext = context.joseContext();
+    if (!joseContext.hasJsonWebSignature()) {
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_request", "FAPI CIBA Profile requires signed request object.");
+    }
+
+    String algorithm = joseContext.jsonWebSignature().algorithm();
+
+    if (!"PS256".equals(algorithm) && !"ES256".equals(algorithm)) {
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_request",
+          String.format(
+              "FAPI CIBA Profile requires signing algorithm to be PS256 or ES256. Current algorithm: %s",
+              algorithm));
+    }
+  }
+
+  /**
+   * 5.2.2.4 Confidential Client Requirement
+   *
+   * <p>shall only support confidential clients
+   */
+  void throwExceptionIfNotConfidentialClient(CibaRequestContext context) {
+    ClientAuthenticationType authenticationType = context.clientAuthenticationType();
+
+    // Public clients use 'none' authentication type
+    if (authenticationType.isNone()) {
+      throw new BackchannelAuthenticationBadRequestException(
+          "unauthorized_client",
+          "FAPI CIBA Profile requires confidential clients. Public clients are not allowed.");
+    }
+  }
+
+  /**
+   * 5.2.2.5 Binding Message Requirement
+   *
+   * <p>shall require a binding_message parameter when there is no unique authorization context (as
+   * per RFC 9396, authorization_details provides unique context)
+   */
+  void throwExceptionIfMissingBindingMessage(CibaRequestContext context) {
+    // If authorization_details exists, it provides unique authorization context
+    if (context.hasAuthorizationDetails()) {
+      return;
+    }
+
+    // Otherwise, binding_message is required
+    if (!context.backchannelAuthenticationRequest().hasBindingMessage()) {
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_request",
+          "FAPI CIBA Profile requires 'binding_message' parameter when authorization_details is not present.");
+    }
+  }
+
+  /**
+   * 5.2.2.6 Push Mode Prohibition
+   *
+   * <p>shall not support push mode for token delivery
+   */
+  void throwExceptionIfPushMode(CibaRequestContext context) {
+    BackchannelTokenDeliveryMode deliveryMode =
+        context.clientConfiguration().backchannelTokenDeliveryMode();
+
+    if (deliveryMode.isPushMode()) {
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_request",
+          "FAPI CIBA Profile does not support push mode for token delivery. Use poll or ping mode.");
+    }
+  }
+
+  /**
+   * 5.2.2.7 Client Authentication Method Restrictions
+   *
+   * <p>shall require client authentication using one of the following methods: - private_key_jwt -
+   * tls_client_auth - self_signed_tls_client_auth
+   *
+   * <p>client_secret_jwt, client_secret_basic, and client_secret_post are not allowed
+   */
+  void throwExceptionIfInvalidClientAuthenticationMethod(CibaRequestContext context) {
+    ClientAuthenticationType authenticationType = context.clientAuthenticationType();
+
+    boolean isValid =
+        authenticationType.isPrivateKeyJwt()
+            || authenticationType.isTlsClientAuth()
+            || authenticationType.isSelfSignedTlsClientAuth();
+
+    if (!isValid) {
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_client",
+          String.format(
+              "FAPI CIBA Profile requires client authentication method to be one of: private_key_jwt, tls_client_auth, self_signed_tls_client_auth. Current method: %s",
+              authenticationType.name()));
+    }
+  }
+
+  /**
+   * FAPI Advance 5.2.2-11: aud claim requirement
+   *
+   * <p>shall require the aud claim in the request object to be, or to be an array containing, the
+   * OP's Issuer Identifier URL
+   */
+  void throwExceptionIfNotContainsAud(CibaRequestContext context) {
+    JoseContext joseContext = context.joseContext();
+    if (!joseContext.exists()) {
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_request", "FAPI CIBA Profile requires valid request object with claims.");
+    }
+
+    JsonWebTokenClaims claims = joseContext.claims();
+    if (!claims.hasAud()) {
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_request",
+          "FAPI CIBA Profile requires the request object to contain an aud claim.");
+    }
+
+    java.util.List<String> aud = claims.getAud();
+    String issuer = context.tokenIssuer().value();
+    if (!aud.contains(issuer)) {
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_request",
+          String.format(
+              "FAPI CIBA Profile requires the aud claim in the request object to contain the OP's Issuer Identifier URL. Expected: %s, Actual: %s",
+              issuer, String.join(", ", aud)));
+    }
+  }
+
+  /**
+   * FAPI Advance 5.2.2-5: Sender-constrained access tokens
+   *
+   * <p>shall only issue sender-constrained access tokens (MTLS binding required)
+   */
+  void throwIfNotSenderConstrainedAccessToken(CibaRequestContext context) {
+    if (!context.serverConfiguration().isTlsClientCertificateBoundAccessTokens()) {
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_request",
+          "FAPI CIBA Profile requires sender-constrained access tokens, but server tls_client_certificate_bound_access_tokens is false.");
+    }
+    if (!context.clientConfiguration().isTlsClientCertificateBoundAccessTokens()) {
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_request",
+          "FAPI CIBA Profile requires sender-constrained access tokens, but client tls_client_certificate_bound_access_tokens is false.");
+    }
+  }
+}
