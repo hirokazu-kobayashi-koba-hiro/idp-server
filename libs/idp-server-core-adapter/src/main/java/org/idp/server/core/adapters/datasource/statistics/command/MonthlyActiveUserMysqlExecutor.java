@@ -1,0 +1,157 @@
+/*
+ * Copyright 2025 Hirokazu Kobayashi
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.idp.server.core.adapters.datasource.statistics.command;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import org.idp.server.platform.datasource.SqlExecutor;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.user.UserIdentifier;
+
+public class MonthlyActiveUserMysqlExecutor implements MonthlyActiveUserSqlExecutor {
+
+  @Override
+  public void addActiveUser(TenantIdentifier tenantId, LocalDate statMonth, UserIdentifier userId) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sql =
+        """
+                INSERT INTO monthly_active_users (
+                    tenant_id,
+                    stat_month,
+                    user_id,
+                    created_at,
+                    updated_at
+                ) VALUES (?, ?, ?, NOW(), NOW())
+                ON DUPLICATE KEY UPDATE updated_at = NOW()
+                """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenantId.value());
+    params.add(statMonth);
+    params.add(userId.value());
+
+    sqlExecutor.execute(sql, params);
+  }
+
+  @Override
+  public boolean addActiveUserAndReturnIfNew(
+      TenantIdentifier tenantId, LocalDate statMonth, UserIdentifier userId) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    // MySQL: Use INSERT IGNORE + ROW_COUNT() to check if new row was inserted
+    String sql =
+        """
+                INSERT IGNORE INTO monthly_active_users (
+                    tenant_id,
+                    stat_month,
+                    user_id,
+                    created_at,
+                    updated_at
+                ) VALUES (?, ?, ?, NOW(), NOW())
+                """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenantId.value());
+    params.add(statMonth);
+    params.add(userId.value());
+
+    return sqlExecutor.executeAndCheckReturned(sql, params);
+  }
+
+  @Override
+  public void deleteByMonth(TenantIdentifier tenantId, LocalDate statMonth) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sql =
+        """
+                DELETE FROM monthly_active_users
+                WHERE tenant_id = ? AND stat_month = ?
+                """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenantId.value());
+    params.add(statMonth);
+
+    sqlExecutor.execute(sql, params);
+  }
+
+  @Override
+  public void deleteOlderThan(LocalDate before) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sql =
+        """
+                DELETE FROM monthly_active_users
+                WHERE stat_month < ?
+                """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(before);
+
+    sqlExecutor.execute(sql, params);
+  }
+
+  @Override
+  public void deleteByTenantId(TenantIdentifier tenantId) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sql =
+        """
+                DELETE FROM monthly_active_users
+                WHERE tenant_id = ?
+                """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenantId.value());
+
+    sqlExecutor.execute(sql, params);
+  }
+
+  @Override
+  public int getMauCount(TenantIdentifier tenantId, LocalDate statMonth) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sql =
+        """
+                SELECT COUNT(DISTINCT user_id) as mau_count
+                FROM monthly_active_users
+                WHERE tenant_id = ? AND stat_month = ?
+                """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenantId.value());
+    params.add(statMonth);
+
+    Map<String, Object> result = sqlExecutor.selectOneWithType(sql, params);
+
+    if (result.isEmpty()) {
+      return 0;
+    }
+
+    Object mauCountObj = result.get("mau_count");
+    if (mauCountObj instanceof Long longValue) {
+      return longValue.intValue();
+    } else if (mauCountObj instanceof Integer intValue) {
+      return intValue;
+    }
+
+    return 0;
+  }
+}

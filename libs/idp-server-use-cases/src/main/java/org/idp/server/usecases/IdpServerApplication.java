@@ -61,6 +61,8 @@ import org.idp.server.control_plane.management.security.hook.OrgSecurityEventHoo
 import org.idp.server.control_plane.management.security.hook.SecurityEventHookConfigurationManagementApi;
 import org.idp.server.control_plane.management.security.hook_result.OrgSecurityEventHookManagementApi;
 import org.idp.server.control_plane.management.security.hook_result.SecurityEventHookManagementApi;
+import org.idp.server.control_plane.management.statistics.OrgTenantStatisticsApi;
+import org.idp.server.control_plane.management.statistics.TenantStatisticsApi;
 import org.idp.server.control_plane.management.tenant.OrgTenantManagementApi;
 import org.idp.server.control_plane.management.tenant.TenantManagementApi;
 import org.idp.server.control_plane.management.tenant.invitation.TenantInvitationManagementApi;
@@ -152,6 +154,10 @@ import org.idp.server.platform.security.SecurityEventApi;
 import org.idp.server.platform.security.SecurityEventPublisher;
 import org.idp.server.platform.security.hook.SecurityEventHooks;
 import org.idp.server.platform.security.repository.*;
+import org.idp.server.platform.statistics.repository.DailyActiveUserCommandRepository;
+import org.idp.server.platform.statistics.repository.MonthlyActiveUserCommandRepository;
+import org.idp.server.platform.statistics.repository.TenantStatisticsCommandRepository;
+import org.idp.server.platform.statistics.repository.TenantStatisticsQueryRepository;
 import org.idp.server.security.event.hook.ssf.SharedSignalsFrameworkMetaDataApi;
 import org.idp.server.usecases.application.enduser.*;
 import org.idp.server.usecases.application.identity_verification_service.IdentityVerificationCallbackEntryService;
@@ -189,6 +195,7 @@ public class IdpServerApplication {
   UserLifecycleEventApi userLifecycleEventApi;
   OnboardingApi onboardingApi;
   TenantManagementApi tenantManagementApi;
+  TenantStatisticsApi tenantStatisticsApi;
   OrganizationManagementApi organizationManagementApi;
 
   HealthCheckApi healthCheckApi;
@@ -214,6 +221,7 @@ public class IdpServerApplication {
   AdminUserAuthenticationApi adminUserAuthenticationApi;
 
   OrgTenantManagementApi orgTenantManagementApi;
+  OrgTenantStatisticsApi orgTenantStatisticsApi;
   OrgClientManagementApi orgClientManagementApi;
   OrgUserManagementApi orgUserManagementApi;
   OrgAuthenticationConfigManagementApi orgAuthenticationConfigManagementApi;
@@ -382,6 +390,14 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(AuthenticationInteractionQueryRepository.class);
     WebAuthn4jCredentialRepository webAuthn4jCredentialRepository =
         applicationComponentContainer.resolve(WebAuthn4jCredentialRepository.class);
+    TenantStatisticsCommandRepository tenantStatisticsCommandRepository =
+        applicationComponentContainer.resolve(TenantStatisticsCommandRepository.class);
+    TenantStatisticsQueryRepository tenantStatisticsQueryRepository =
+        applicationComponentContainer.resolve(TenantStatisticsQueryRepository.class);
+    DailyActiveUserCommandRepository dailyActiveUserCommandRepository =
+        applicationComponentContainer.resolve(DailyActiveUserCommandRepository.class);
+    MonthlyActiveUserCommandRepository monthlyActiveUserCommandRepository =
+        applicationComponentContainer.resolve(MonthlyActiveUserCommandRepository.class);
 
     HttpClient httpClient = HttpClientFactory.defaultClient();
     HttpRequestExecutor httpRequestExecutor =
@@ -631,7 +647,10 @@ public class IdpServerApplication {
                 securityEventCommandRepository,
                 securityEventHookResultCommandRepository,
                 hookQueryRepository,
-                tenantQueryRepository),
+                tenantQueryRepository,
+                tenantStatisticsCommandRepository,
+                dailyActiveUserCommandRepository,
+                monthlyActiveUserCommandRepository),
             SecurityEventApi.class,
             databaseTypeProvider);
 
@@ -740,6 +759,13 @@ public class IdpServerApplication {
                 userCommandRepository,
                 auditLogPublisher),
             TenantManagementApi.class,
+            databaseTypeProvider);
+
+    this.tenantStatisticsApi =
+        ManagementTypeEntryServiceProxy.createProxy(
+            new TenantStatisticsEntryService(
+                tenantStatisticsQueryRepository, tenantQueryRepository, auditLogPublisher),
+            TenantStatisticsApi.class,
             databaseTypeProvider);
 
     this.organizationManagementApi =
@@ -925,6 +951,16 @@ public class IdpServerApplication {
                 userCommandRepository,
                 auditLogPublisher),
             OrgTenantManagementApi.class,
+            databaseTypeProvider);
+
+    this.orgTenantStatisticsApi =
+        ManagementTypeEntryServiceProxy.createProxy(
+            new OrgTenantStatisticsEntryService(
+                tenantStatisticsQueryRepository,
+                organizationRepository,
+                tenantQueryRepository,
+                auditLogPublisher),
+            OrgTenantStatisticsApi.class,
             databaseTypeProvider);
 
     this.orgClientManagementApi =
@@ -1169,6 +1205,10 @@ public class IdpServerApplication {
     return tenantManagementApi;
   }
 
+  public TenantStatisticsApi tenantStatisticsApi() {
+    return tenantStatisticsApi;
+  }
+
   public OrganizationManagementApi organizationManagementApi() {
     return organizationManagementApi;
   }
@@ -1252,6 +1292,10 @@ public class IdpServerApplication {
 
   public OrgTenantManagementApi orgTenantManagementApi() {
     return orgTenantManagementApi;
+  }
+
+  public OrgTenantStatisticsApi orgTenantStatisticsApi() {
+    return orgTenantStatisticsApi;
   }
 
   public OrgClientManagementApi orgClientManagementApi() {

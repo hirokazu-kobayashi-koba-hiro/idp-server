@@ -380,6 +380,65 @@ describe("Standard Use Case: Onboarding Flow with Audit Log Tracking", () => {
     expect(emptyTargetTenantIdResponse.data.error).toBe("invalid_request");
     console.log("✅ Empty target_tenant_id parameter correctly rejected");
 
+    console.log("\n=== Step 6: Test Tenant Statistics API ===");
+
+    // Calculate date range for statistics query
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const fromDate = yesterday.toISOString().split("T")[0];
+    const toDate = tomorrow.toISOString().split("T")[0];
+
+    console.log(`Querying statistics from ${fromDate} to ${toDate}`);
+
+    const statisticsResponse = await get({
+      url: `${backendUrl}/v1/management/tenants/${tenantId}/statistics?from=${fromDate}&to=${toDate}`,
+      headers: {
+        Authorization: `Bearer ${systemAccessToken}`,
+      },
+    });
+
+    console.log(JSON.stringify(statisticsResponse.data, null, 2));
+    expect(statisticsResponse.status).toBe(200);
+    expect(statisticsResponse.data).toHaveProperty("tenant_id", tenantId);
+    expect(statisticsResponse.data).toHaveProperty("period");
+    expect(statisticsResponse.data.period.from).toBe(fromDate);
+    expect(statisticsResponse.data.period.to).toBe(toDate);
+    expect(statisticsResponse.data).toHaveProperty("daily_statistics");
+    expect(Array.isArray(statisticsResponse.data.daily_statistics)).toBe(true);
+
+    console.log(`✅ Retrieved statistics for ${statisticsResponse.data.daily_statistics.length} days`);
+
+    // Verify statistics data structure
+    const dailyStat = statisticsResponse.data.daily_statistics[0];
+    expect(dailyStat).toHaveProperty("date");
+    expect(dailyStat).toHaveProperty("metrics");
+    console.log(`  Sample daily stat: ${dailyStat.date} - ${JSON.stringify(dailyStat.metrics)}`);
+
+    console.log("\n=== Step 7: Test Organization-level Tenant Statistics API ===");
+
+    const orgStatisticsResponse = await get({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/statistics?from=${fromDate}&to=${toDate}`,
+      headers: {
+        Authorization: `Bearer ${orgAccessToken}`,
+      },
+    });
+
+    console.log(JSON.stringify(orgStatisticsResponse.data, null, 2));
+    expect(orgStatisticsResponse.status).toBe(200);
+    expect(orgStatisticsResponse.data).toHaveProperty("tenant_id", tenantId);
+    expect(orgStatisticsResponse.data).toHaveProperty("period");
+    expect(orgStatisticsResponse.data.period.from).toBe(fromDate);
+    expect(orgStatisticsResponse.data.period.to).toBe(toDate);
+    expect(orgStatisticsResponse.data).toHaveProperty("daily_statistics");
+    expect(Array.isArray(orgStatisticsResponse.data.daily_statistics)).toBe(true);
+
+    console.log(`✅ Retrieved org-level statistics for ${orgStatisticsResponse.data.daily_statistics.length} days`);
+
+
     console.log("\n=== Cleanup ===");
 
     // Delete business client
