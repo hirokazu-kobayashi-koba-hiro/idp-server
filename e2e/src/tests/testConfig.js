@@ -289,6 +289,20 @@ export const clientSecretBasicClient = {
   fapiAdvanceScope: "write",
   identityVerificationScope: "transfers",
   idTokenAlg: "RS256",
+  requestKey: {
+    "p": "-lVD9fBw_xEefz47VOpyZDR3Q2hv-duXR9_6agMeIVOdQIf08Mn8KfaAUJTLxsGBeoD24DuOeoGTDo4RsrjfEQWxs_RHEr0occvspb-yEsfSAPsH5IxmshSq_eBtP6GWAGuFFwMh-ef_a4TVAn0rBQD_ouO0em5hpLOoxAlUJL8",
+    "kty": "RSA",
+    "q": "vbL_ZUk6FUzhwpqQoGCuS8NyXo52E-vcHf6EjQwyXl-HV4k6zchQBtCFrlLHyCxdkrQp30Nkg1O8jShQnRpeEHHPWxsYM6OTJov6Lk5IKq8ATkZ433kRleXerljwJYv8BsuFElHp8pvdgHnBYM8FiPOdNYWQoqjgKEr2TVUgdXs",
+    "d": "PijmEVHTA5S7PaBMtcisTvFJMqhV78rfJdImzh94DwprxCEDkS8BhsyzLODrZhvjM2SV6oqTYYA_MGZtI2oySWjh2Dy0uY7rcPtQebPxduL35d43R60luEitMkKjuOPO4UV7WoLrHUW-ISNtowriT9srgyV0tHVykcWcjAhy8G8Qc6HAYsrjYTQoYhg8XZJbL77hSB2l93ABV1Pga7zIbWv006qUj0qMrWqh9RexquOJg3ebhSs-8n4oMZJYQNvH8PWw846ePhNYVbfzcT-FIsEAqag--2rHohAFwJ6ecPOCzKnXrE2A6Yj-Y06nRAUunWzk1kordD0lFbYBRIMB7Q",
+    "e": "AQAB",
+    "use": "sig",
+    "kid": "clientSecretBasicClientRequestKey",
+    "qi": "uDn2B7n1NS0Tpcqy-yDEkM8yXaPUKSSwd7sTJyjyEvPm4alXh_zhsxKKyPJslRBJHEzDNeCzTVZsPf9m2jylPERUCYKHAMYkDs7ztks6KYVmIg6DqufaFMKYN6QehahRD6fsqkO0pGEyUiHPRVXLuKqcQ3lU6NmlsusHY841eCI",
+    "dp": "NHXF5jZbF7jYsUWzXVo8Wq98Bs5OGQhhrZhMfAbnO4iwPaPAOu25QHn97eUgxygqICgClH8mnpmk3bn8D34akRCmatXYRx8I6MAZeaqwgKsLYVU6FDUwGEWoh8eOXXVZYAEoROhNKHfr2PZfRURBzayl5dbeLYIQSFm2Fk72KTU",
+    "alg": "PS256",
+    "dq": "Oal8SnxsxGa_RRkYlzdsI6mATU--gqWyHgfsoLcxZFBjYm9bSYv3D2s5B1kwUx9xPhO3mp7woZ7FdJ7piiemqhb-MbJVs_Sn2RK5dHPlKdxSGnj_auZxOwBJpPNx4-feLu6UP5JYq59HQDNCXbvv8cYjZk54PYlZwcWvgqg6mps",
+    "n": "uX_8M811gfAcAR0cjI2iS9v1Rl44EmGCpfzoEkIS-8wiuJYjlF2dPUicgJn4IcAchywjGc2AN2-9m-58Wva0s-Gu21hWJgVlruA6b9eoL4TjOoIJLzpENdY3FCcw02gJSqToWQogJv24S9Xhat21iyTXK0s4mAhhuTKDfLTzpGfkMny7gcsjbdxfP7NVDcAMPCdVaaZNcGtINLPEu1_jVbRl5BEfwS73S9XnNt0KmvsFgJXUwXYia-7CDJsOYoz6olzc2yq--lgkYUb6NdsS3GQM9Vi4OHR1T55QsF01nMEtjpdp4P3DWsVWutBgah5UkDpwlY4bYcyO4mCe8xjyxQ"
+  }
 };
 
 export const clientSecretJwtClient = {
@@ -301,6 +315,46 @@ export const clientSecretJwtClient = {
   fapiAdvanceScope: "write",
   identityVerificationScope: "transfers",
   idTokenAlg: "RS256",
+  requestKey: {
+    "p": "5m85mFMnvfln_8NG0HbZ7oKlI_bL23d_x2vvqf0tdM4qyUcx82QhMLeOxshZ_hsGEU2jSVqE2-lIpaSeW9hcjsFIBkA7ZeRtTJlj7D4dUL_jRzSR2vbygE2VaewE3ui82MB4mqMx6gfzzIBxzrZomsvHpGd9r-0u7vcwibWYNP8",
+    "kty": "RSA",
+    "q": "mrnNwLIcWyhHPej1AuZ1iI4EnMDM18bPUhViWEagso6AQihMVxsGd0xKKMEBrIID5QIDP85JpVG5udTosvKg9Eh7aHycHgrwTloiL03a7NsbYToE7eS3patsMgXXzf4BrQHTUfFcGQF9bVOpFvjsRbmuNn3WOoH28tU1_yFV8u0",
+    "d": "ehNQh9OlqNA40f6XI4BCuLt2F_bwuy1lgOaf-otz9JRd3TjmzgDgWKZ58Pb8RPFOktvTeLU3YiiErbwJVTT1utv1l5wvohpMh9rUs-CEw_T2sdAkpcZj2DgM2aUoxjjcotBVLaqR6wBQyWYYMRA2xZbtJYtByFLIbuxjABQbnXebqdPT9koAuyYVpYWYp6DQMDe6Pkn06_AupNH6iETCWE6XhzJd5WkVDcxYnZqhR8v3MGiNk-DZEUgknaFu5jNb7BT-x0SIhfOy48WvUgR6irYGv0GTKzQ0UJsq9UfLtJupu94SFkWMJQypsCoKCCqHwKGDIKZQgVovM0lfulonoQ",
+    "e": "AQAB",
+    "use": "sig",
+    "kid": "clientSecretJwtClientRequestKey",
+    "qi": "DDywq2MLT3bOl5IZM3CAdsLomCTzSevjP5TdSxHQNgOfLk5eT8Nqqwff_UZHaO9f7DjpLXyBh5fIpw6oJrJ2j3iG_3_olzoDTHhLWd6jXIz70UEB3rOmHhM9xiFH8Elwc88VJkh2eCgMXb-TCNxweYU22BCHiKPIPNCxCO6Kod4",
+    "dp": "xgM1vstWD01OLN2k8GXxB5-EQM9GhiS9zKPXon9InGK9KZDgP4H_c1mIexCXJGAcaqoIcnQyTra8EnrPCaV2g8VbGuP_JqOPuI7m6o7Fqin6J6no2_vwjogcqJSD6vibrrZV7KvnrG-A9G47XaIpaTtLJt83hgGOnxISx4MgdAk",
+    "alg": "PS256",
+    "dq": "YJCx7x-6PtJGlEb-E09N72njSwmxTsIPxkT-WeXKiWYSeje4XWzKfk4owoKizs1eLOEysfHHWNxGs8pDaNuwxIUwMCgFL2LYU65BQ5Ctn8GntuiFBwwF6emw3w9yfmeXGCjZgHzIY_rgEwlxsJquq12VcwDaYS2XuDqFNrPRdok",
+    "n": "i0YoOsX3CRmEMKmaJrcsMfnl9B1YRCiTPFLuRK5nSMkEez5tTfOxUpU3NG45WJo_KJCiGD8ayi7FOD6Qt6wNZ4YAH3P9o6ttVjjHSiBNvdZewgN8rxnfcYQPaMXPB3DVdzB4EUEnAqqBWn92oO95eYut6cE_0L7igWcq_58mULNzA0VWP8embRDOdErKmXraV853tev2UD811dGRuJ3EhXDFQyaJxziaH6BrhoU2ymBKCrK81sy-hqaPM_YrglLRqpgcNEX7hfYOthkLMu156EqDqZzNg55zyXrOe8_ztU9MX_MIyFsKRJxOS-mr4oM-A-f-hZu5aTlQnJyGd60eEw"
+  }
+};
+
+export const clientSecretJwt2Client = {
+  clientId: "clientSecretJwt2",
+  clientSecret:
+    "clientSecretJwt2Secret1234567890123456789012345678901234567890123456789012345678901234567890",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+  scope: "account",
+  fapiBaselineScope: "read",
+  fapiAdvanceScope: "write",
+  identityVerificationScope: "transfers",
+  idTokenAlg: "RS256",
+  requestKey: {
+    "p": "zydNTOC11ae772O5d9rrjqBCTog4cs357sYR_ggq3kv5dvKJSI4soDccHrGE4PfaHhJ0jZoTfdWGuoivkDaqi2z2aTsaEdGplewizil9ktFA3dL93_T88wBLyeBzxSWrJmyPTfquXyffY2WLG_1lNUYZnFCeOrrwN6sQA8wMXKU",
+    "kty": "RSA",
+    "q": "orVf2uFD8R2zLiifjIfbvDjXToobBtq4wvQxr17nYSQ-QJ7kX0dB8pQgnDRZglJT1kO2_VaIa5r_gndqf-xvRCcQIq6SRXQWSGQxMj34lorkaX4iwA5xa1ZxWUBCU7pRXACnlSrIZsU4-W5wRStGYChs8hE5PjKDNG4FN1wY7cM",
+    "d": "HErgxdw_rtVi1eRBvEqpKICFZ40K0DpgurNaRAHT4FQTyV-H-21qijB5HcuWX4pB5l7m_-fk8saCxI3Ghf3gFWQukhx6hlW7YmO4yhusJ6D0WP-TUYQkM7pqpFGXdCNHfaqMjiHnfL5szzjmCaEZUpjfzxmi5ht_iofljcNqt62GJ9PLeSI66UtE3H7DY8Jmgn30eTmbmPt66a9rr6Q4-Qp3kbKk8r6icqQGoXU1EVGWtxnw3CoAc5VY1ZL32NinpFizd00ZJ2yUvRdv_f3ETP0D5cb3O7o9vp7x2Faan6F_tMPQ_xUqxl5hf4K1uSSm8sdvcZJp2Yn6Fj5MdnSQ2Q",
+    "e": "AQAB",
+    "use": "sig",
+    "kid": "clientSecretJwt2ClientRequestKey",
+    "qi": "Dhd3mOWcVDS0kR8A9WT9aKWcS3ZRO2Py3bti6pMJTsj1ASRyJNI7BeiqqQPy0LQArCuPDFiLKzkITmVNYKnxYpWdtd7FM5yUeYK6dSDnHc2ISXvTePz7n_lUI9hOmplWp3CQsZvyhw1M74klNnw-FwVf9IhAcV2stH4GF55XGPs",
+    "dp": "Lcgt2VPAXBvZ-So9DzQe40Kf5ONONnE3T4IO7-m2L7Lyy0sG9DYXvsDvQglRqLaeSg8iGzl2HVVXlVooEuNCBdZrDw600ENaC3xIpO-ehRgiEeRTn29xh_MEzPUCIQwWK0PK2B0S9IzHXhxPBjyWZZO8jUNz9N7jwCnaPDyYbtE",
+    "alg": "PS256",
+    "dq": "CqLIjUpEYrKKT-4f39PRrVAZ4uxsL9qEUVodFVWi0lrIJvk7_G5wBSdhqlRRtY8kI9FxWMYbTM1o_mJH9-zAqTfUei_nJ9saycii3qHmahDSNYMlSmCnUVjpN-hXbZm0T8tLKRkO2Ijz3Ho3pI3bn9WEqZ4um745jWfTt3axunk",
+    "n": "g6mjRQD90fTefCOMncqxOEFB0tqmpGL6ZxIIKx6qAMM7tF4KfOhsMB4EcLdPOMf7y0xtQ566J4JPM9XPde11uaf7UL9Q9g-zXS6ci51xp2u9gRSHViKtq3KLw_G-jfJcG03S5Qzq6D1loGDynMmJupBXG7YWpSK7Tlra2zUR9ihXsTGfmoYvCAFE2DvbjKzB6WC09e8ApBUNnr-_ouAD379RQ_6CW50qv5NaWHD7_nr08vLYU0bCZ2nevw66R4CPvMAahNBlY1ae_nneJYHyOMbu11CGLU22GXSPp77JGKGNnGCjP8CSsThH2UaICfArt3ZmaLXZ0KwKLWmy2qdSrw"
+  }
 };
 
 export const privateKeyJwtClient = {
@@ -381,6 +435,20 @@ export const selfSignedTlsAuthClient = {
     "kid": "self_request_key_ps256",
     "alg": "PS256",
     "use": "sig"
+  },
+  shortSizeRequestKey: {
+    "p": "-K5-a31eYd1_FwqQp3XvOPXCxoMDh__B7BvzByjcBZPsqkZ35rF4CHQIKjfrU2J3XnnNx7rN07OxCSY59B_MrGUwQSqTO7HSXi98HGttEIXbEA70LRTTd7YD7nxu1E3PsIAhrSXNXu4l7JnXWxWZm8Rtb-VLpv9mdJdPf-M",
+    "kty": "RSA",
+    "q": "w4Muk0zDmIe4VFy8Kgx-i1Y13TDikK4erOz9LrJx_ntv3ufQ1s2Dz8hBo_Hmr_Z2ELKfnT1GCOjTP8FLPUEa7oXMg9aH624b9lWiCxdZoJROUexzHw6ouqF1-HvCk1h6dKMrolhAH0ZVn_3AmsqtUsyQbOcla138w0C8ByE",
+    "d": "V7iYdxp_qjkazXAhiyQFHgsmf4pXSDxAwxUmT2yz_LXAY-SYizJspJm-7rimT4Lk1nguJDjsfGnUcuDcsX5qF337yV2Hy0x1A5a8r8OBwP65tYbeHpAUAjsGkh8A6Zh8pEqXtgi01piDaJTlQGF3tGUWD-wi7p9R13gbze3Md6jS9rhdk30JmWdu_77HebXSmXSatvM20ot8vYZJpiXSOGDa7niS8zXjzRdMUaulNxfaTErZsh6aJor90iiHOFFQabhERZO9Szc7Lew4gBD6L1-P7BLh5HMknPuulpZ0arZmBlh76-7uKtFLEwIrBQ0Vw1HNhwVt6vS7gQ",
+    "e": "AQAB",
+    "use": "sig",
+    "kid": "2000PSKey",
+    "qi": "FU6ffMZ9sYdpeYPmFq8WAX0hi08p6qZkLJW955YQiOvs_7VpGEX9pkdeSd8TCXc7_uZux6t-eatoC--NTiDxQDdivPWxmi9r8jHVG-AK7zY2nAl2bM1YXliActhBD4WCJBged2bXodYClnkfCM63dBnXs8KGk-Nd9oMewUU",
+    "dp": "BlY79nU9YHUKdgXY5cuFiwgILJLOFjsYL_IOYVJTOPkqALTG_WPsURrT0m-WWYuayxeDfOFvuUNM8ZS9yVC-IG57qk1xbwX6_FdtbDP4lYEzsdcPtc5gDR7gPsWA9Xv-HNtHAGiEMTUUVlEdQb7tKSD6QO2w3dKIQ9RPPE0",
+    "alg": "PS256",
+    "dq": "wR3sfXbPpPQ6MKpA-k_JFxyaq9dDk6FJj4mvM9bzHmkSwVy9Pc9WKYEmxSeFs72ANVIasxf4-4fuUgU9qk2KqpvivT7Eltn2KMXA_6-ayjBzhBxIQh8aru4ZNs4YDa7RljAuQ3dkLwAsR5JAEyWrOiPxbICMx5bYuoxQrcE",
+    "n": "vexY1QL7wrVmKvQiZdaP0vE0Vs_eVAbo1qkN_juIqec_HyXXXqlP6Zd2_zw9tIm4ZVN6WHRgl735LCy32JTx7ShvsosDPNfmBRJ9ZBWYfOZ3FGusn7mFumflLvNspYCv4gVpos4TchlsJKxOUxtRSiSFqpnGwES-g5O1J2n_wzxEDONqAzPXxy4Jm5QjmMpqOKuf6AdQIbQkI44UrHVRkVxwkD_NTpR1EP_P-DGKDoxtYHMKCOyDihyL3ROYJq7VgTAcGF7NNmta7G-AX8btCeFP7KNwFzXHpSDxidCFmAkRJu5FbUEx-rl75EeGLkemcGPAFUFuWHKxQw"
   }
 };
 

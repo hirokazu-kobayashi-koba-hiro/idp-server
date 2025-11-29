@@ -18,12 +18,14 @@ package org.idp.server.core.extension.ciba.verifier;
 
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationBadRequestException;
+import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.openid.oauth.type.oauth.GrantType;
 
 public class CibaRequestBaseVerifier {
 
   public void verify(CibaRequestContext context) {
     throwExceptionIfUnSupportedGrantType(context);
+    throwExceptionIfPublicClient(context);
     throwExceptionIfNotContainsOpenidScope(context);
     throwExceptionIfNotContainsAnyHint(context);
     throwExceptionIfNotContainsUserCode(context);
@@ -60,6 +62,22 @@ public class CibaRequestBaseVerifier {
     if (!context.hasUserCode() && context.requiredBackchannelAuthUserCode()) {
       throw new BackchannelAuthenticationBadRequestException(
           "missing_user_code", "user_code is required for this id-provider.");
+    }
+  }
+
+  /**
+   * Public Client Prohibition
+   *
+   * <p>CIBA requires confidential clients for secure backchannel authentication. Public clients
+   * cannot securely authenticate themselves in the backchannel flow.
+   */
+  void throwExceptionIfPublicClient(CibaRequestContext context) {
+    ClientAuthenticationType authenticationType = context.clientAuthenticationType();
+
+    if (authenticationType.isNone()) {
+      throw new BackchannelAuthenticationBadRequestException(
+          "unauthorized_client",
+          "Public clients are not allowed in CIBA. Use confidential client with proper authentication.");
     }
   }
 }

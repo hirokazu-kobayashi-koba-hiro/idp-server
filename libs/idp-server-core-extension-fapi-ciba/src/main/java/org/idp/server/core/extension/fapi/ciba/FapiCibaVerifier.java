@@ -20,6 +20,7 @@ import java.util.Date;
 import org.idp.server.core.extension.ciba.CibaProfile;
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationBadRequestException;
+import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationUnauthorizedException;
 import org.idp.server.core.extension.ciba.verifier.CibaVerifier;
 import org.idp.server.core.openid.oauth.type.ciba.BackchannelTokenDeliveryMode;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
@@ -49,16 +50,10 @@ import org.idp.server.platform.jose.JsonWebTokenClaims;
  * @see <a href="https://openid.net/specs/openid-financial-api-ciba-ID1.html#section-5.2.2">FAPI
  *     CIBA Security Profile Section 5.2.2</a>
  */
-public class FapiCibaVerifier implements CibaVerifier {
+public class FapiCibaVerifier {
 
   private static final long MAX_REQUEST_OBJECT_LIFETIME_MS = 60 * 60 * 1000; // 60 minutes
 
-  @Override
-  public CibaProfile profile() {
-    return CibaProfile.FAPI_CIBA;
-  }
-
-  @Override
   public void verify(CibaRequestContext context) {
     throwExceptionIfNotSignedRequestObject(context);
     throwExceptionIfInvalidRequestObjectLifetime(context);
@@ -85,10 +80,15 @@ public class FapiCibaVerifier implements CibaVerifier {
   }
 
   /**
-   * 5.2.2.2 Request Object Lifetime Verification
+   * 5.2.2.2 Request Object Lifetime Verification (FAPI Part 2 5.2.2-13)
    *
    * <p>shall require the request object to contain an exp claim that has a lifetime of no longer
    * than 60 minutes after the nbf claim
+   *
+   * <p>5.2.2.3 Request Object nbf Validation (FAPI Part 2 5.2.2-17)
+   *
+   * <p>shall require the request object to contain an nbf claim that is no longer than 60 minutes
+   * in the past
    */
   void throwExceptionIfInvalidRequestObjectLifetime(CibaRequestContext context) {
     JoseContext joseContext = context.joseContext();
@@ -111,7 +111,9 @@ public class FapiCibaVerifier implements CibaVerifier {
 
     Date nbf = claims.getNbf();
     Date exp = claims.getExp();
+    Date now = new Date();
 
+    // 5.2.2-13: exp - nbf <= 60 minutes
     long lifetimeMs = exp.getTime() - nbf.getTime();
 
     if (lifetimeMs > MAX_REQUEST_OBJECT_LIFETIME_MS) {
@@ -127,12 +129,34 @@ public class FapiCibaVerifier implements CibaVerifier {
           "invalid_request",
           "FAPI CIBA Profile requires 'exp' to be after 'nbf' in request object.");
     }
+
+    // 5.2.2-17: nbf must not be more than 60 minutes in the past
+    long nbfAgeMs = now.getTime() - nbf.getTime();
+
+    if (nbfAgeMs > MAX_REQUEST_OBJECT_LIFETIME_MS) {
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_request",
+          String.format(
+              "FAPI CIBA Profile requires 'nbf' claim to be no longer than 60 minutes in the past. Current age: %d minutes",
+              nbfAgeMs / 60000));
+    }
   }
 
   /**
-   * 5.2.2.3 Signing Algorithm Restrictions
+   * 5.2.2.3 Signing Algorithm Restrictions (FAPI CIBA 7.10)
    *
-   * <p>shall require the request object to be signed with PS256 or ES256 algorithm
+   * <p>shall use PS256 or ES256 algorithms
+   *
+   * <p>should not use algorithms that use RSASSA-PKCS1-v1_5 (e.g. RS256)
+   *
+   * <p>shall not use none
+   *
+   * <p>5.2.2.4 Key Size Requirements (FAPI Part 1 5.2.2-5, 5.2.2-6)
+   *
+   * <p>shall require and use a key of size 2048 bits or larger for RSA algorithms (PS256)
+   *
+   * <p>shall require and use a key of size 160 bits or larger for elliptic curve algorithms
+   * (ES256)
    */
   void throwExceptionIfInvalidSigningAlgorithm(CibaRequestContext context) {
     JoseContext joseContext = context.joseContext();
@@ -143,12 +167,34 @@ public class FapiCibaVerifier implements CibaVerifier {
 
     String algorithm = joseContext.jsonWebSignature().algorithm();
 
+    // FAPI CIBA 7.10: shall use PS256 or ES256 algorithms
     if (!"PS256".equals(algorithm) && !"ES256".equals(algorithm)) {
       throw new BackchannelAuthenticationBadRequestException(
           "invalid_request",
           String.format(
               "FAPI CIBA Profile requires signing algorithm to be PS256 or ES256. Current algorithm: %s",
               algorithm));
+    }
+
+    // FAPI Part 1 5.2.2-5, 5.2.2-6: Key size requirements
+    int keySize = joseContext.jsonWebKey().keySize();
+
+    if ("PS256".equals(algorithm) && keySize < 2048) {
+      // RSA algorithms require 2048 bits or larger
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_request",
+          String.format(
+              "FAPI CIBA Profile requires RSA key size to be 2048 bits or larger. Current key size: %d bits",
+              keySize));
+    }
+
+    if ("ES256".equals(algorithm) && keySize < 160) {
+      // Elliptic curve algorithms require 160 bits or larger (ES256 uses 256 bits)
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_request",
+          String.format(
+              "FAPI CIBA Profile requires elliptic curve key size to be 160 bits or larger. Current key size: %d bits",
+              keySize));
     }
   }
 
@@ -162,8 +208,8 @@ public class FapiCibaVerifier implements CibaVerifier {
 
     // Public clients use 'none' authentication type
     if (authenticationType.isNone()) {
-      throw new BackchannelAuthenticationBadRequestException(
-          "unauthorized_client",
+      throw new BackchannelAuthenticationUnauthorizedException(
+          "invalid_client",
           "FAPI CIBA Profile requires confidential clients. Public clients are not allowed.");
     }
   }
@@ -211,6 +257,13 @@ public class FapiCibaVerifier implements CibaVerifier {
    * tls_client_auth - self_signed_tls_client_auth
    *
    * <p>client_secret_jwt, client_secret_basic, and client_secret_post are not allowed
+   *
+   * <p>According to CIBA Core Section 13, unsupported authentication method errors should return
+   * HTTP 401 with error code "invalid_client".
+   *
+   * @see <a
+   *     href="https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html#rfc.section.13">CIBA
+   *     Core Section 13</a>
    */
   void throwExceptionIfInvalidClientAuthenticationMethod(CibaRequestContext context) {
     ClientAuthenticationType authenticationType = context.clientAuthenticationType();
@@ -221,7 +274,7 @@ public class FapiCibaVerifier implements CibaVerifier {
             || authenticationType.isSelfSignedTlsClientAuth();
 
     if (!isValid) {
-      throw new BackchannelAuthenticationBadRequestException(
+      throw new BackchannelAuthenticationUnauthorizedException(
           "invalid_client",
           String.format(
               "FAPI CIBA Profile requires client authentication method to be one of: private_key_jwt, tls_client_auth, self_signed_tls_client_auth. Current method: %s",

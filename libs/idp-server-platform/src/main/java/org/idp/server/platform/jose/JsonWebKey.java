@@ -115,4 +115,8 @@ public class JsonWebKey {
       throw new JsonWebKeyInvalidException(e.getMessage(), e);
     }
   }
+
+  public int keySize() {
+      return value.size();
+  }
 }

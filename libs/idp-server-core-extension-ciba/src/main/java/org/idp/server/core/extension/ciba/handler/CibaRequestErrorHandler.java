@@ -18,6 +18,7 @@ package org.idp.server.core.extension.ciba.handler;
 
 import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationBadRequestException;
 import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationForbiddenException;
+import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationUnauthorizedException;
 import org.idp.server.core.extension.ciba.handler.io.CibaIssueResponse;
 import org.idp.server.core.extension.ciba.handler.io.CibaRequestStatus;
 import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationErrorResponse;
@@ -34,6 +35,14 @@ public class CibaRequestErrorHandler {
   LoggerWrapper log = LoggerWrapper.getLogger(CibaRequestErrorHandler.class);
 
   public CibaIssueResponse handle(Exception exception) {
+    if (exception instanceof BackchannelAuthenticationUnauthorizedException unauthorized) {
+      log.warn(exception.getMessage());
+      return new CibaIssueResponse(
+          CibaRequestStatus.UNAUTHORIZE,
+          new BackchannelAuthenticationErrorResponse(
+              unauthorized.error(), unauthorized.errorDescription()));
+    }
+
     if (exception instanceof BackchannelAuthenticationBadRequestException badRequest) {
       log.warn(exception.getMessage());
       return new CibaIssueResponse(
