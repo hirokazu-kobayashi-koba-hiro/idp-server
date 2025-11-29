@@ -17,11 +17,9 @@
 package org.idp.server.core.extension.fapi.ciba;
 
 import java.util.Date;
-import org.idp.server.core.extension.ciba.CibaProfile;
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationBadRequestException;
 import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationUnauthorizedException;
-import org.idp.server.core.extension.ciba.verifier.CibaVerifier;
 import org.idp.server.core.openid.oauth.type.ciba.BackchannelTokenDeliveryMode;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.platform.jose.JoseContext;
@@ -155,8 +153,7 @@ public class FapiCibaVerifier {
    *
    * <p>shall require and use a key of size 2048 bits or larger for RSA algorithms (PS256)
    *
-   * <p>shall require and use a key of size 160 bits or larger for elliptic curve algorithms
-   * (ES256)
+   * <p>shall require and use a key of size 160 bits or larger for elliptic curve algorithms (ES256)
    */
   void throwExceptionIfInvalidSigningAlgorithm(CibaRequestContext context) {
     JoseContext joseContext = context.joseContext();

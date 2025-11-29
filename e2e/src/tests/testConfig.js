@@ -1,4 +1,5 @@
 export const backendUrl = process.env.IDP_SERVER_URL || "http://localhost:8080";
+export const mtlBackendUrl = process.env.IDP_SERVER_MTLS_URL || "https://localhost:8443";
 
 // Default tenant IDs for backward compatibility
 const DEFAULT_ADMIN_TENANT_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"; // Admin tenant for Management API tests
@@ -436,6 +437,16 @@ export const selfSignedTlsAuthClient = {
     "alg": "PS256",
     "use": "sig"
   },
+  es256RequestKey: {
+    "kty": "EC",
+    "d": "hsitETTZG0bvqTq6JcmysuVB0r94fNyt2vTTNHJODnQ",
+    "use": "sig",
+    "crv": "P-256",
+    "kid": "es256Key",
+    "x": "LKepGZKS65l7QzOsEjm_KOX17SW4DHDj41Rb_8KRWaY",
+    "y": "uKhGTzXvred6ODs75P-rsYgQ1oyJyriHucPiKEqLn_Y",
+    "alg": "ES256"
+  },
   shortSizeRequestKey: {
     "p": "-K5-a31eYd1_FwqQp3XvOPXCxoMDh__B7BvzByjcBZPsqkZ35rF4CHQIKjfrU2J3XnnNx7rN07OxCSY59B_MrGUwQSqTO7HSXi98HGttEIXbEA70LRTTd7YD7nxu1E3PsIAhrSXNXu4l7JnXWxWZm8Rtb-VLpv9mdJdPf-M",
     "kty": "RSA",
@@ -452,7 +463,6 @@ export const selfSignedTlsAuthClient = {
   }
 };
 
-
 export const selfSignedTlsClientAuth2 = {
   clientId: "selfSignedTlsClientAuth2",
   clientSecret: "selfSignedTlsClientAuth2",
@@ -462,8 +472,8 @@ export const selfSignedTlsClientAuth2 = {
   fapiAdvanceScope: "write",
   identityVerificationScope: "transfers",
   idTokenAlg: "RS256",
-  clientCertFile: "selfSignedTlsAuth2.pem",
-  requesstKey: {
+  clientCertFile: "selfSignedTlsAuth.pem",
+  requestKey: {
     "kty": "EC",
     "d": "W4ph87WjvxxqrLZr263xD6YgW-Krd2-gI18jPjsZJ04",
     "use": "sig",
@@ -471,6 +481,28 @@ export const selfSignedTlsClientAuth2 = {
     "kid": "selfSignedTlsClientAuth2_request_key",
     "x": "Yoe4KRi-_vc-F7BRkgketw0vS0XywExmRNG0nR-7hq4",
     "y": "-BMXjB9siMwrSJdmswjWosjGnJGUFpKXe0kZ_UQvJ_E",
+    "alg": "ES256"
+  }
+};
+
+export const tlsClientAuth = {
+  clientId: "tlsClientAuth",
+  clientSecret: "tlsClientAuth12345678901234567890123456789012345678901234567890123456789012345678901234567890",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+  scope: "account",
+  fapiBaselineScope: "read",
+  fapiAdvanceScope: "write",
+  identityVerificationScope: "transfers",
+  idTokenAlg: "RS256",
+  clientCertFile: "tlsClientAuth.pem",
+  requestKey: {
+    "kty": "EC",
+    "d": "i9vzoxGroAEQxwGmn4mF6kAWiP5NZ0fMmNkkesY3V4Y",
+    "use": "sig",
+    "crv": "P-256",
+    "kid": "tlsClientRequestKey",
+    "x": "BMbdGWZ3-ui_tZrwXmUXjPJOkkPyXBN1jXRlYAYp0j4",
+    "y": "5PN28UzVlNy8-_Y-oaYTOw2CDWOE4-p0DAixRD0_tm0",
     "alg": "ES256"
   }
 };

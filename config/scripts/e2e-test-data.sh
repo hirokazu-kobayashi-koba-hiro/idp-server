@@ -120,6 +120,7 @@ client_files=(
   publicClient.json
   selfSignedTlsClientAuth.json
   selfSignedTlsClientAuth2.json
+  tlsClientAuth.json
   unsupportedClient.json
   federationClient.json
 )

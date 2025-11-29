@@ -12,114 +12,26 @@ import {
   clientSecretJwt2Client,
   clientSecretJwtClient,
   clientSecretPostClient,
+  mtlBackendUrl,
   privateKeyJwtClient,
   publicClient,
   selfSignedTlsAuthClient,
   selfSignedTlsClientAuth2,
   serverConfig,
+  tlsClientAuth,
 } from "../testConfig";
 import { createJwtWithPrivateKey, generateJti } from "../../lib/jose";
 import { getEntropyBits, isArray, toEpocTime } from "../../lib/util";
 import { certThumbprint, requestAuthorizations } from "../../oauth/request";
 import { calculateCodeChallengeWithS256, generateCodeVerifier } from "../../lib/oauth";
 import { post } from "../../lib/http";
+import { mtlsPost } from "../../lib/http/mtls";
 import { encodedClientCert } from "../../api/cert/clientCert";
+import path from "path";
 
 describe("FAPI CIBA Profile - Financial-grade API: Client Initiated Backchannel Authentication Profile", () => {
   const ciba = serverConfig.ciba;
   const client = selfSignedTlsAuthClient;
-
-  it("success pattern with signed request object", async () => {
-    // Create signed request object with FAPI CIBA requirements
-    const requestObject = createJwtWithPrivateKey({
-      payload: {
-        scope: "openid profile phone email " + client.fapiAdvanceScope,
-        binding_message: ciba.bindingMessage,
-        user_code: ciba.userCode,
-        login_hint: ciba.loginHintDevice,
-        client_id: client.clientId,
-        aud: serverConfig.issuer,
-        iss: client.clientId,
-        exp: toEpocTime({ adjusted: 1800 }), // 30 minutes (within 60 minutes requirement)
-        iat: toEpocTime({}),
-        nbf: toEpocTime({}),
-        jti: generateJti(),
-      },
-      privateKey: client.requestKey,
-    });
-
-    console.log("Request Object JWT:", requestObject);
-
-    // Backchannel authentication request with signed request object
-    let backchannelAuthenticationResponse = await requestBackchannelAuthentications({
-      endpoint: serverConfig.backchannelAuthenticationEndpoint,
-      clientId: client.clientId,
-      request: requestObject,
-      clientCertFile: client.clientCertFile,
-    });
-
-    console.log("Backchannel Authentication Response:", backchannelAuthenticationResponse.data);
-    expect(backchannelAuthenticationResponse.status).toBe(200);
-    expect(backchannelAuthenticationResponse.data).toHaveProperty("auth_req_id");
-    expect(backchannelAuthenticationResponse.data).toHaveProperty("expires_in");
-
-    // Get authentication transaction
-    let authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
-      endpoint: serverConfig.authenticationDeviceEndpoint,
-      deviceId: serverConfig.ciba.authenticationDeviceId,
-      params: {
-        "attributes.auth_req_id": backchannelAuthenticationResponse.data.auth_req_id,
-      },
-    });
-
-    console.log("Authentication Transaction Response:", authenticationTransactionResponse.data);
-    expect(authenticationTransactionResponse.status).toBe(200);
-    expect(authenticationTransactionResponse.data.list).toHaveLength(1);
-
-    const authenticationTransaction = authenticationTransactionResponse.data.list[0];
-
-    // Authenticate with user code
-    const completeResponse = await postAuthenticationDeviceInteraction({
-      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
-      flowType: authenticationTransaction.flow,
-      id: authenticationTransaction.id,
-      interactionType: "password-authentication",
-      body: {
-        username: serverConfig.ciba.username,
-        password: serverConfig.ciba.userCode,
-      },
-    });
-
-    console.log("Authentication Complete Response:", completeResponse.data);
-    expect(completeResponse.status).toBe(200);
-
-    // Request token with CIBA grant
-    const tokenResponse = await requestToken({
-      endpoint: serverConfig.tokenEndpoint,
-      grantType: "urn:openid:params:grant-type:ciba",
-      authReqId: backchannelAuthenticationResponse.data.auth_req_id,
-      clientId: client.clientId,
-      clientCertFile: client.clientCertFile,
-    });
-
-    console.log("Token Response:", tokenResponse.data);
-    expect(tokenResponse.status).toBe(200);
-    expect(tokenResponse.data).toHaveProperty("access_token");
-    expect(tokenResponse.data).toHaveProperty("id_token");
-    expect(tokenResponse.data).toHaveProperty("token_type");
-
-    const introspectionResponse = await inspectToken({
-      endpoint: serverConfig.tokenIntrospectionEndpoint,
-      token: tokenResponse.data.access_token,
-      clientId: selfSignedTlsAuthClient.clientId,
-      clientCertFile: selfSignedTlsAuthClient.clientCertFile,
-    });
-    console.log(introspectionResponse.data);
-    expect(introspectionResponse.status).toBe(200);
-    expect(introspectionResponse.data).toHaveProperty("cnf");
-    const thumbprint = certThumbprint(selfSignedTlsAuthClient.clientCertFile);
-    expect(introspectionResponse.data.cnf["x5t#S256"]).toEqual(thumbprint);
-  });
 
   describe("FAPI CIBA 5.2.2.  In addition the Authorization server, for all operations,", () => {
     it("1. shall only support Confidential Clients for Client Initiated Backchannel Authentication flows;", async () => {
@@ -426,6 +338,253 @@ describe("FAPI CIBA Profile - Financial-grade API: Client Initiated Backchannel 
   });
 
   describe("FAPI Advance 5.2.2.  Authorization server", () => {
+    it("1. shall require a JWS signed JWT request object passed by value with the request parameter (Also CIBA does not support request_uri.)", async () => {
+      // Create signed request object with FAPI CIBA requirements
+      const requestObject = createJwtWithPrivateKey({
+        payload: {
+          scope: "openid profile phone email " + client.fapiAdvanceScope,
+          binding_message: ciba.bindingMessage,
+          user_code: ciba.userCode,
+          login_hint: ciba.loginHintDevice,
+          client_id: client.clientId,
+          aud: serverConfig.issuer,
+          iss: client.clientId,
+          exp: toEpocTime({ adjusted: 1800 }), // 30 minutes (within 60 minutes requirement)
+          iat: toEpocTime({}),
+          nbf: toEpocTime({}),
+          jti: generateJti(),
+        },
+        privateKey: client.requestKey,
+      });
+
+      console.log("Request Object JWT:", requestObject);
+
+      // Backchannel authentication request with signed request object
+      let backchannelAuthenticationResponse = await requestBackchannelAuthentications({
+        endpoint: serverConfig.backchannelAuthenticationEndpoint,
+        clientId: client.clientId,
+        request: requestObject,
+        clientCertFile: client.clientCertFile,
+      });
+
+      console.log("Backchannel Authentication Response:", backchannelAuthenticationResponse.data);
+      expect(backchannelAuthenticationResponse.status).toBe(200);
+      expect(backchannelAuthenticationResponse.data).toHaveProperty("auth_req_id");
+      expect(backchannelAuthenticationResponse.data).toHaveProperty("expires_in");
+
+      // Get authentication transaction
+      let authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
+        endpoint: serverConfig.authenticationDeviceEndpoint,
+        deviceId: serverConfig.ciba.authenticationDeviceId,
+        params: {
+          "attributes.auth_req_id": backchannelAuthenticationResponse.data.auth_req_id,
+        },
+      });
+
+      console.log("Authentication Transaction Response:", authenticationTransactionResponse.data);
+      expect(authenticationTransactionResponse.status).toBe(200);
+      expect(authenticationTransactionResponse.data.list).toHaveLength(1);
+
+      const authenticationTransaction = authenticationTransactionResponse.data.list[0];
+
+      // Authenticate with user code
+      const completeResponse = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        flowType: authenticationTransaction.flow,
+        id: authenticationTransaction.id,
+        interactionType: "password-authentication",
+        body: {
+          username: serverConfig.ciba.username,
+          password: serverConfig.ciba.userCode,
+        },
+      });
+
+      console.log("Authentication Complete Response:", completeResponse.data);
+      expect(completeResponse.status).toBe(200);
+
+      // Request token with CIBA grant
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "urn:openid:params:grant-type:ciba",
+        authReqId: backchannelAuthenticationResponse.data.auth_req_id,
+        clientId: client.clientId,
+        clientCertFile: client.clientCertFile,
+      });
+
+      console.log("Token Response:", tokenResponse.data);
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("access_token");
+      expect(tokenResponse.data).toHaveProperty("id_token");
+      expect(tokenResponse.data).toHaveProperty("token_type");
+
+      const introspectionResponse = await inspectToken({
+        endpoint: serverConfig.tokenIntrospectionEndpoint,
+        token: tokenResponse.data.access_token,
+        clientId: selfSignedTlsAuthClient.clientId,
+        clientCertFile: selfSignedTlsAuthClient.clientCertFile,
+      });
+      console.log(introspectionResponse.data);
+      expect(introspectionResponse.status).toBe(200);
+      expect(introspectionResponse.data).toHaveProperty("cnf");
+      const thumbprint = certThumbprint(selfSignedTlsAuthClient.clientCertFile);
+      expect(introspectionResponse.data.cnf["x5t#S256"]).toEqual(thumbprint);
+    });
+
+    it("Not Applicable. 2. shall require the response_type value code id_token, or the response_type value code in conjunction with the response_mode value jwt;", async () => {
+      console.log("ciba is not support, because backchannel request.");
+    });
+
+    //3. (moved to 5.2.2.1);
+    //4. (moved to 5.2.2.1);
+
+    it("5. shall only issue sender-constrained access tokens;", async () => {
+
+      const requestObject = createJwtWithPrivateKey({
+        payload: {
+          scope: "openid profile phone email " + selfSignedTlsClientAuth2.fapiAdvanceScope,
+          binding_message: ciba.bindingMessage,
+          user_code: ciba.userCode,
+          login_hint: ciba.loginHintDevice,
+          client_id: selfSignedTlsClientAuth2.clientId,
+          aud: serverConfig.issuer,
+          iss: selfSignedTlsClientAuth2.clientId,
+          exp: toEpocTime({ adjusted: 1800 }), // 30 minutes (within 60 minutes requirement)
+          iat: toEpocTime({}),
+          nbf: toEpocTime({}),
+          jti: generateJti(),
+        },
+        privateKey: selfSignedTlsClientAuth2.requestKey,
+      });
+
+      console.log("Request Object JWT:", requestObject);
+
+      // Backchannel authentication request with signed request object
+      let backchannelAuthenticationResponse = await requestBackchannelAuthentications({
+        endpoint: serverConfig.backchannelAuthenticationEndpoint,
+        clientId: selfSignedTlsClientAuth2.clientId,
+        request: requestObject,
+        clientCertFile: selfSignedTlsClientAuth2.clientCertFile,
+      });
+
+      console.log("Backchannel Authentication Response:", backchannelAuthenticationResponse.data);
+      expect(backchannelAuthenticationResponse.status).toBe(400);
+      expect(backchannelAuthenticationResponse.data.error).toEqual("invalid_request");
+      expect(backchannelAuthenticationResponse.data.error_description).toEqual("FAPI CIBA Profile requires sender-constrained access tokens, but client tls_client_certificate_bound_access_tokens is false.")
+    });
+
+    it("5. shall support MTLS as mechanism for constraining the legitimate senders of access tokens;", async () => {
+      // Create signed request object with FAPI CIBA requirements
+      const requestObject = createJwtWithPrivateKey({
+        payload: {
+          scope: "openid profile phone email " + client.fapiAdvanceScope,
+          binding_message: ciba.bindingMessage,
+          user_code: ciba.userCode,
+          login_hint: ciba.loginHintDevice,
+          client_id: client.clientId,
+          aud: serverConfig.issuer,
+          iss: client.clientId,
+          exp: toEpocTime({ adjusted: 1800 }), // 30 minutes (within 60 minutes requirement)
+          iat: toEpocTime({}),
+          nbf: toEpocTime({}),
+          jti: generateJti(),
+        },
+        privateKey: client.requestKey,
+      });
+
+      console.log("Request Object JWT:", requestObject);
+
+      // Backchannel authentication request with signed request object
+      let backchannelAuthenticationResponse = await requestBackchannelAuthentications({
+        endpoint: serverConfig.backchannelAuthenticationEndpoint,
+        clientId: client.clientId,
+        request: requestObject,
+        clientCertFile: client.clientCertFile,
+      });
+
+      console.log("Backchannel Authentication Response:", backchannelAuthenticationResponse.data);
+      expect(backchannelAuthenticationResponse.status).toBe(200);
+      expect(backchannelAuthenticationResponse.data).toHaveProperty("auth_req_id");
+      expect(backchannelAuthenticationResponse.data).toHaveProperty("expires_in");
+
+      // Get authentication transaction
+      let authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
+        endpoint: serverConfig.authenticationDeviceEndpoint,
+        deviceId: serverConfig.ciba.authenticationDeviceId,
+        params: {
+          "attributes.auth_req_id": backchannelAuthenticationResponse.data.auth_req_id,
+        },
+      });
+
+      console.log("Authentication Transaction Response:", authenticationTransactionResponse.data);
+      expect(authenticationTransactionResponse.status).toBe(200);
+      expect(authenticationTransactionResponse.data.list).toHaveLength(1);
+
+      const authenticationTransaction = authenticationTransactionResponse.data.list[0];
+
+      // Authenticate with user code
+      const completeResponse = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        flowType: authenticationTransaction.flow,
+        id: authenticationTransaction.id,
+        interactionType: "password-authentication",
+        body: {
+          username: serverConfig.ciba.username,
+          password: serverConfig.ciba.userCode,
+        },
+      });
+
+      console.log("Authentication Complete Response:", completeResponse.data);
+      expect(completeResponse.status).toBe(200);
+
+      // Request token with CIBA grant
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "urn:openid:params:grant-type:ciba",
+        authReqId: backchannelAuthenticationResponse.data.auth_req_id,
+        clientId: client.clientId,
+        clientCertFile: client.clientCertFile,
+      });
+
+      console.log("Token Response:", tokenResponse.data);
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("access_token");
+      expect(tokenResponse.data).toHaveProperty("id_token");
+      expect(tokenResponse.data).toHaveProperty("token_type");
+
+      const introspectionResponse = await inspectToken({
+        endpoint: serverConfig.tokenIntrospectionEndpoint,
+        token: tokenResponse.data.access_token,
+        clientId: selfSignedTlsAuthClient.clientId,
+        clientCertFile: selfSignedTlsAuthClient.clientCertFile,
+      });
+      console.log(introspectionResponse.data);
+      expect(introspectionResponse.status).toBe(200);
+      expect(introspectionResponse.data).toHaveProperty("cnf");
+      const thumbprint = certThumbprint(selfSignedTlsAuthClient.clientCertFile);
+      expect(introspectionResponse.data.cnf["x5t#S256"]).toEqual(thumbprint);
+    });
+
+    //7.(withdrawn);
+    //8. (moved to 5.2.2.1);
+    //9. (moved to 5.2.2.1);
+
+    it("10. shall only use the parameters included in the signed request object passed via the request or request_uri parameter;", async () => {
+      const backchannelResponse = await requestBackchannelAuthentications({
+        endpoint: serverConfig.backchannelAuthenticationEndpoint,
+        clientId: client.clientId,
+        scope: "openid profile phone email " + client.fapiAdvanceScope,
+        bindingMessage: ciba.bindingMessage,
+        loginHint: ciba.loginHintDevice,
+        userCode: ciba.userCode,
+        clientCertFile: client.clientCertFile, // Confidential client with mTLS
+      });
+
+      console.log("Confidential client response:", backchannelResponse.data);
+      expect(backchannelResponse.status).toBe(400);
+      expect(backchannelResponse.data.error).toEqual("invalid_request");
+      expect(backchannelResponse.data.error_description).toEqual("FAPI CIBA Profile requires signed request object. Request must include 'request' parameter with a signed JWT.");
+    });
+
     it("shall accept confidential client with self_signed_tls_client_auth", async () => {
       // This is the success case - already covered in main test
       // Verifies that confidential client with mTLS is accepted
@@ -458,25 +617,13 @@ describe("FAPI CIBA Profile - Financial-grade API: Client Initiated Backchannel 
       expect(backchannelResponse.data).toHaveProperty("auth_req_id");
     });
 
-    it("should reject request without signed request object", async () => {
-      // Try to make CIBA request without request object (should fail for FAPI CIBA)
-
-      const backchannelResponse = await requestBackchannelAuthentications({
-        endpoint: serverConfig.backchannelAuthenticationEndpoint,
-        clientId: client.clientId,
-        scope: "openid profile phone email " + client.fapiBaselineScope,
-        bindingMessage: ciba.bindingMessage,
-        userCode: ciba.userCode,
-        loginHint: ciba.loginHintDevice,
-        clientCertFile: client.clientCertFile,
-      });
-
-      console.log("Expected error:", backchannelResponse.data);
-      expect(backchannelResponse.status).toBe(400);
-      expect(backchannelResponse.data.error).toBe("invalid_request");
+    it("Not Applicable. 11. may support the pushed authorization request endpoint as described in PAR;", async () => {
+      console.log("ciba is not support, because backchannel request.");
     });
 
-    it("should reject request object with invalid lifetime (> 60 minutes)", async () => {
+    //12 (withdrawn);
+
+    it("13. shall require the request object to contain an exp claim that has a lifetime of no longer than 60 minutes after the nbf claim;", async () => {
       const requestObject = createJwtWithPrivateKey({
         payload: {
           scope: "openid profile phone email " + client.fapiBaselineScope,
@@ -486,7 +633,7 @@ describe("FAPI CIBA Profile - Financial-grade API: Client Initiated Backchannel 
           client_id: client.clientId,
           aud: serverConfig.issuer,
           iss: client.clientId,
-          exp: toEpocTime({ adjusted: 3700 }), // 61+ minutes (exceeds 60 minutes requirement)
+          exp: toEpocTime({ adjusted: 3601 }), // 61+ minutes (exceeds 60 minutes requirement)
           iat: toEpocTime({}),
           nbf: toEpocTime({}),
           jti: generateJti(),
@@ -504,6 +651,301 @@ describe("FAPI CIBA Profile - Financial-grade API: Client Initiated Backchannel 
       console.log("Expected error:", backchannelResponse.data);
       expect(backchannelResponse.status).toBe(400);
       expect(backchannelResponse.data.error).toBe("invalid_request");
+      expect(backchannelResponse.data.error_description).toEqual("FAPI CIBA Profile requires request object lifetime to be no longer than 60 minutes. Current lifetime: 60 minutes");
+    });
+
+    it("14. shall authenticate the confidential client using one of the following methods. tls_client_auth", async () => {
+      // Certificate paths for mTLS (relative to project root)
+      const certPath = path.resolve("./src/api/cert/tlsClientAuth.pem");
+      const keyPath = path.resolve("./src/api/cert/tlsClientAuth.key");
+
+      // Create signed request object with FAPI CIBA requirements
+      const requestObject = createJwtWithPrivateKey({
+        payload: {
+          scope: "openid profile phone email " + tlsClientAuth.fapiAdvanceScope,
+          binding_message: ciba.bindingMessage,
+          user_code: ciba.userCode,
+          login_hint: ciba.loginHintDevice,
+          client_id: tlsClientAuth.clientId,
+          aud: serverConfig.issuer,
+          iss: tlsClientAuth.clientId,
+          exp: toEpocTime({ adjusted: 1800 }), // 30 minutes (within 60 minutes requirement)
+          iat: toEpocTime({}),
+          nbf: toEpocTime({}),
+          jti: generateJti(),
+        },
+        privateKey: tlsClientAuth.requestKey,
+      });
+
+      console.log("Request Object JWT:", requestObject);
+
+      // Backchannel authentication request with mTLS (port 8443)
+      const backchannelEndpoint = `${mtlBackendUrl}/${serverConfig.tenantId}/v1/backchannel/authentications`;
+      let backchannelAuthenticationResponse = await mtlsPost({
+        url: backchannelEndpoint,
+        certPath,
+        keyPath,
+        body: new URLSearchParams({
+          client_id: tlsClientAuth.clientId,
+          request: requestObject,
+        }).toString(),
+      });
+
+      console.log("Backchannel Authentication Response:", backchannelAuthenticationResponse.data);
+      expect(backchannelAuthenticationResponse.status).toBe(200);
+      expect(backchannelAuthenticationResponse.data).toHaveProperty("auth_req_id");
+      expect(backchannelAuthenticationResponse.data).toHaveProperty("expires_in");
+
+      // Get authentication transaction
+      let authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
+        endpoint: serverConfig.authenticationDeviceEndpoint,
+        deviceId: serverConfig.ciba.authenticationDeviceId,
+        params: {
+          "attributes.auth_req_id": backchannelAuthenticationResponse.data.auth_req_id,
+        },
+      });
+
+      console.log("Authentication Transaction Response:", authenticationTransactionResponse.data);
+      expect(authenticationTransactionResponse.status).toBe(200);
+      expect(authenticationTransactionResponse.data.list).toHaveLength(1);
+
+      const authenticationTransaction = authenticationTransactionResponse.data.list[0];
+
+      // Authenticate with user code
+      const completeResponse = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        flowType: authenticationTransaction.flow,
+        id: authenticationTransaction.id,
+        interactionType: "password-authentication",
+        body: {
+          username: serverConfig.ciba.username,
+          password: serverConfig.ciba.userCode,
+        },
+      });
+
+      console.log("Authentication Complete Response:", completeResponse.data);
+      expect(completeResponse.status).toBe(200);
+
+      // Request token with CIBA grant (mTLS)
+      const tokenEndpoint = `${mtlBackendUrl}/${serverConfig.tenantId}/v1/tokens`;
+      const tokenResponse = await mtlsPost({
+        url: tokenEndpoint,
+        certPath,
+        keyPath,
+        body: new URLSearchParams({
+          grant_type: "urn:openid:params:grant-type:ciba",
+          auth_req_id: backchannelAuthenticationResponse.data.auth_req_id,
+          client_id: tlsClientAuth.clientId,
+        }).toString(),
+      });
+
+      console.log("Token Response:", tokenResponse.data);
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("access_token");
+      expect(tokenResponse.data).toHaveProperty("id_token");
+      expect(tokenResponse.data).toHaveProperty("token_type");
+
+      // Token introspection (mTLS)
+      const introspectionEndpoint = `${mtlBackendUrl}/${serverConfig.tenantId}/v1/tokens/introspection`;
+      const introspectionResponse = await mtlsPost({
+        url: introspectionEndpoint,
+        certPath,
+        keyPath,
+        body: new URLSearchParams({
+          token: tokenResponse.data.access_token,
+          client_id: tlsClientAuth.clientId,
+        }).toString(),
+      });
+
+      console.log(introspectionResponse.data);
+      expect(introspectionResponse.status).toBe(200);
+      expect(introspectionResponse.data).toHaveProperty("cnf");
+      const thumbprint = certThumbprint(tlsClientAuth.clientCertFile);
+      expect(introspectionResponse.data.cnf["x5t#S256"]).toEqual(thumbprint);
+    });
+
+    it("14. shall authenticate the confidential client using one of the following methods. self_signed_tls_client_auth", async () => {
+      // Create signed request object with FAPI CIBA requirements
+      const requestObject = createJwtWithPrivateKey({
+        payload: {
+          scope: "openid profile phone email " + client.fapiAdvanceScope,
+          binding_message: ciba.bindingMessage,
+          user_code: ciba.userCode,
+          login_hint: ciba.loginHintDevice,
+          client_id: client.clientId,
+          aud: serverConfig.issuer,
+          iss: client.clientId,
+          exp: toEpocTime({ adjusted: 1800 }), // 30 minutes (within 60 minutes requirement)
+          iat: toEpocTime({}),
+          nbf: toEpocTime({}),
+          jti: generateJti(),
+        },
+        privateKey: client.requestKey,
+      });
+
+      console.log("Request Object JWT:", requestObject);
+
+      // Backchannel authentication request with signed request object
+      let backchannelAuthenticationResponse = await requestBackchannelAuthentications({
+        endpoint: serverConfig.backchannelAuthenticationEndpoint,
+        clientId: client.clientId,
+        request: requestObject,
+        clientCertFile: client.clientCertFile,
+      });
+
+      console.log("Backchannel Authentication Response:", backchannelAuthenticationResponse.data);
+      expect(backchannelAuthenticationResponse.status).toBe(200);
+      expect(backchannelAuthenticationResponse.data).toHaveProperty("auth_req_id");
+      expect(backchannelAuthenticationResponse.data).toHaveProperty("expires_in");
+
+      // Get authentication transaction
+      let authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
+        endpoint: serverConfig.authenticationDeviceEndpoint,
+        deviceId: serverConfig.ciba.authenticationDeviceId,
+        params: {
+          "attributes.auth_req_id": backchannelAuthenticationResponse.data.auth_req_id,
+        },
+      });
+
+      console.log("Authentication Transaction Response:", authenticationTransactionResponse.data);
+      expect(authenticationTransactionResponse.status).toBe(200);
+      expect(authenticationTransactionResponse.data.list).toHaveLength(1);
+
+      const authenticationTransaction = authenticationTransactionResponse.data.list[0];
+
+      // Authenticate with user code
+      const completeResponse = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        flowType: authenticationTransaction.flow,
+        id: authenticationTransaction.id,
+        interactionType: "password-authentication",
+        body: {
+          username: serverConfig.ciba.username,
+          password: serverConfig.ciba.userCode,
+        },
+      });
+
+      console.log("Authentication Complete Response:", completeResponse.data);
+      expect(completeResponse.status).toBe(200);
+
+      // Request token with CIBA grant
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "urn:openid:params:grant-type:ciba",
+        authReqId: backchannelAuthenticationResponse.data.auth_req_id,
+        clientId: client.clientId,
+        clientCertFile: client.clientCertFile,
+      });
+
+      console.log("Token Response:", tokenResponse.data);
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("access_token");
+      expect(tokenResponse.data).toHaveProperty("id_token");
+      expect(tokenResponse.data).toHaveProperty("token_type");
+
+      const introspectionResponse = await inspectToken({
+        endpoint: serverConfig.tokenIntrospectionEndpoint,
+        token: tokenResponse.data.access_token,
+        clientId: selfSignedTlsAuthClient.clientId,
+        clientCertFile: selfSignedTlsAuthClient.clientCertFile,
+      });
+      console.log(introspectionResponse.data);
+      expect(introspectionResponse.status).toBe(200);
+      expect(introspectionResponse.data).toHaveProperty("cnf");
+      const thumbprint = certThumbprint(selfSignedTlsAuthClient.clientCertFile);
+      expect(introspectionResponse.data.cnf["x5t#S256"]).toEqual(thumbprint);
+    });
+
+    xit("14. shall authenticate the confidential client using one of the following methods. private_key_jwt", async () => {
+      // Create signed request object with FAPI CIBA requirements
+      const requestObject = createJwtWithPrivateKey({
+        payload: {
+          scope: "openid profile phone email " + privateKeyJwtClient.fapiAdvanceScope,
+          binding_message: ciba.bindingMessage,
+          user_code: ciba.userCode,
+          login_hint: ciba.loginHintDevice,
+          client_id: privateKeyJwtClient.clientId,
+          aud: serverConfig.issuer,
+          iss: privateKeyJwtClient.clientId,
+          exp: toEpocTime({ adjusted: 1800 }), // 30 minutes (within 60 minutes requirement)
+          iat: toEpocTime({}),
+          nbf: toEpocTime({}),
+          jti: generateJti(),
+        },
+        privateKey: privateKeyJwtClient.requestKey,
+      });
+
+      console.log("Request Object JWT:", requestObject);
+
+      // Backchannel authentication request with signed request object
+      let backchannelAuthenticationResponse = await requestBackchannelAuthentications({
+        endpoint: serverConfig.backchannelAuthenticationEndpoint,
+        clientId: privateKeyJwtClient.clientId,
+        request: requestObject,
+        clientCertFile: privateKeyJwtClient.clientCertFile,
+      });
+
+      console.log("Backchannel Authentication Response:", backchannelAuthenticationResponse.data);
+      expect(backchannelAuthenticationResponse.status).toBe(200);
+      expect(backchannelAuthenticationResponse.data).toHaveProperty("auth_req_id");
+      expect(backchannelAuthenticationResponse.data).toHaveProperty("expires_in");
+
+      // Get authentication transaction
+      let authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
+        endpoint: serverConfig.authenticationDeviceEndpoint,
+        deviceId: serverConfig.ciba.authenticationDeviceId,
+        params: {
+          "attributes.auth_req_id": backchannelAuthenticationResponse.data.auth_req_id,
+        },
+      });
+
+      console.log("Authentication Transaction Response:", authenticationTransactionResponse.data);
+      expect(authenticationTransactionResponse.status).toBe(200);
+      expect(authenticationTransactionResponse.data.list).toHaveLength(1);
+
+      const authenticationTransaction = authenticationTransactionResponse.data.list[0];
+
+      // Authenticate with user code
+      const completeResponse = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        flowType: authenticationTransaction.flow,
+        id: authenticationTransaction.id,
+        interactionType: "password-authentication",
+        body: {
+          username: serverConfig.ciba.username,
+          password: serverConfig.ciba.userCode,
+        },
+      });
+
+      console.log("Authentication Complete Response:", completeResponse.data);
+      expect(completeResponse.status).toBe(200);
+
+      // Request token with CIBA grant
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "urn:openid:params:grant-type:ciba",
+        authReqId: backchannelAuthenticationResponse.data.auth_req_id,
+        clientId: client.clientId,
+        clientCertFile: client.clientCertFile,
+      });
+
+      console.log("Token Response:", tokenResponse.data);
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("access_token");
+      expect(tokenResponse.data).toHaveProperty("id_token");
+      expect(tokenResponse.data).toHaveProperty("token_type");
+
+      const introspectionResponse = await inspectToken({
+        endpoint: serverConfig.tokenIntrospectionEndpoint,
+        token: tokenResponse.data.access_token,
+        clientId: selfSignedTlsAuthClient.clientId,
+        clientCertFile: selfSignedTlsAuthClient.clientCertFile,
+      });
+      console.log(introspectionResponse.data);
+      expect(introspectionResponse.status).toBe(200);
+      expect(introspectionResponse.data).toHaveProperty("cnf");
+      const thumbprint = certThumbprint(selfSignedTlsAuthClient.clientCertFile);
+      expect(introspectionResponse.data.cnf["x5t#S256"]).toEqual(thumbprint);
     });
 
     it("should reject request object with invalid signing algorithm (RS256)", async () => {
@@ -787,14 +1229,38 @@ describe("FAPI CIBA Profile - Financial-grade API: Client Initiated Backchannel 
     });
 
     it("6. shall require and use a key of size 160 bits or larger for elliptic curve algorithms;", async () => {
-      // Note: ES256 uses P-256 curve which is 256 bits (> 160 bits requirement)
-      // This test verifies that EC keys meet the minimum requirement
-      console.log("ES256 uses P-256 curve (256 bits), which exceeds the 160 bits minimum requirement.");
-      console.log("Implementation validates key size in FapiCibaVerifier.throwExceptionIfInvalidSigningAlgorithm()");
+      // ES256 uses P-256 curve (256 bits) which exceeds 160 bits requirement
+      // This test verifies the implementation accepts valid EC keys
+      const requestObject = createJwtWithPrivateKey({
+        payload: {
+          scope: "openid profile phone email " + selfSignedTlsAuthClient.fapiBaselineScope,
+          binding_message: ciba.bindingMessage,
+          user_code: ciba.userCode,
+          login_hint: ciba.loginHintDevice,
+          client_id: selfSignedTlsAuthClient.clientId,
+          aud: serverConfig.issuer,
+          iss: selfSignedTlsAuthClient.clientId,
+          exp: toEpocTime({ adjusted: 1800 }),
+          iat: toEpocTime({}),
+          nbf: toEpocTime({}),
+          jti: generateJti(),
+        },
+        privateKey: selfSignedTlsAuthClient.es256RequestKey,
+      });
 
-      // If we had a test key with < 160 bits, it would be rejected
-      // However, standard EC curves (P-256, P-384, P-521) all exceed 160 bits
-      // This requirement is automatically satisfied by using standard curves
+      const backchannelAuthenticationResponse = await requestBackchannelAuthentications({
+        endpoint: serverConfig.backchannelAuthenticationEndpoint,
+        clientId: selfSignedTlsAuthClient.clientId,
+        request: requestObject,
+        clientCertFile: selfSignedTlsAuthClient.clientCertFile
+      });
+
+      console.log("ES256 request accepted (P-256 curve = 256 bits > 160 bits requirement)");
+      expect(backchannelAuthenticationResponse.status).toBe(200);
+      expect(backchannelAuthenticationResponse.data).toHaveProperty("auth_req_id");
+
+      // Note: Standard EC curves (P-256, P-384, P-521) all exceed 160 bits
+      // Implementation validates key size in FapiCibaVerifier.throwExceptionIfInvalidSigningAlgorithm()
     });
 
     it("Not Applicable. 7. shall require RFC7636 with S256 as the code challenge method;", () => {
@@ -1213,17 +1679,84 @@ describe("FAPI CIBA Profile - Financial-grade API: Client Initiated Backchannel 
     });
 
     it("21. should issue access tokens with a lifetime of under 10 minutes unless the tokens are sender-constrained;", async () => {
-      console.log(
-        "FAPI Part 1 5.2.2-21: Access token lifetime requirements:\n" +
-        "- Tokens WITHOUT sender-constraint (Bearer tokens): < 10 minutes lifetime required\n" +
-        "- Tokens WITH sender-constraint (mTLS bound): Longer lifetime allowed\n" +
-        "\n" +
-        "FAPI CIBA uses sender-constrained tokens (mTLS binding with cnf:x5t#S256),\n" +
-        "so the 10-minute restriction does NOT apply.\n" +
-        "\n" +
-        "Verification: Access tokens include cnf claim binding them to client certificate,\n" +
-        "allowing secure use with longer lifetimes (typically 1 hour)."
-      );
+      // FAPI CIBA uses sender-constrained tokens, so lifetime can exceed 10 minutes
+      const requestObject = createJwtWithPrivateKey({
+        payload: {
+          scope: "openid profile phone email " + client.fapiAdvanceScope,
+          binding_message: ciba.bindingMessage,
+          user_code: ciba.userCode,
+          login_hint: ciba.loginHintDevice,
+          client_id: client.clientId,
+          aud: serverConfig.issuer,
+          iss: client.clientId,
+          exp: toEpocTime({ adjusted: 1800 }),
+          iat: toEpocTime({}),
+          nbf: toEpocTime({}),
+          jti: generateJti(),
+        },
+        privateKey: client.requestKey,
+      });
+
+      const backchannelAuthenticationResponse = await requestBackchannelAuthentications({
+        endpoint: serverConfig.backchannelAuthenticationEndpoint,
+        clientId: client.clientId,
+        request: requestObject,
+        clientCertFile: client.clientCertFile,
+      });
+
+      expect(backchannelAuthenticationResponse.status).toBe(200);
+
+      const authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
+        endpoint: serverConfig.authenticationDeviceEndpoint,
+        deviceId: serverConfig.ciba.authenticationDeviceId,
+        params: {
+          "attributes.auth_req_id": backchannelAuthenticationResponse.data.auth_req_id,
+        },
+      });
+
+      const authenticationTransaction = authenticationTransactionResponse.data.list[0];
+
+      await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        flowType: authenticationTransaction.flow,
+        id: authenticationTransaction.id,
+        interactionType: "password-authentication",
+        body: {
+          username: serverConfig.ciba.username,
+          password: serverConfig.ciba.userCode,
+        },
+      });
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "urn:openid:params:grant-type:ciba",
+        authReqId: backchannelAuthenticationResponse.data.auth_req_id,
+        clientId: client.clientId,
+        clientCertFile: client.clientCertFile,
+      });
+
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("access_token");
+      expect(tokenResponse.data).toHaveProperty("expires_in");
+
+      // Verify token is sender-constrained by inspecting it
+      const tokenInspection = await inspectToken({
+        endpoint: serverConfig.tokenIntrospectionEndpoint,
+        token: tokenResponse.data.access_token,
+        clientId: client.clientId,
+        clientCertFile: client.clientCertFile,
+      });
+
+      expect(tokenInspection.status).toBe(200);
+      expect(tokenInspection.data.active).toBe(true);
+      expect(tokenInspection.data.cnf).toHaveProperty("x5t#S256");
+
+      console.log(`Token expires_in: ${tokenResponse.data.expires_in} seconds`);
+      console.log("Token is sender-constrained (cnf:x5t#S256 present), so lifetime can exceed 10 minutes");
+      console.log("FAPI Part 1 5.2.2-21: 10-minute restriction does NOT apply to sender-constrained tokens");
+
+      // Token can have longer lifetime (typically 1 hour) because it's sender-constrained
+      // No specific assertion on expires_in value needed - just verify it's sender-constrained
     });
 
     it ("22. shall support OIDD, may support RFC8414 and shall not distribute discovery metadata (such as the authorization endpoint) by any other means.", async () => {

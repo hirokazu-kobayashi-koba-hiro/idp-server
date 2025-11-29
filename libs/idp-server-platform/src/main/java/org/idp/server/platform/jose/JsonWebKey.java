@@ -117,6 +117,6 @@ public class JsonWebKey {
   }
 
   public int keySize() {
-      return value.size();
+    return value.size();
   }
 }
