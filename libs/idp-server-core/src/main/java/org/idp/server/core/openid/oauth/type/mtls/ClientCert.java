@@ -16,6 +16,8 @@
 
 package org.idp.server.core.openid.oauth.type.mtls;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import org.idp.server.platform.base64.Base64Codeable;
 
@@ -35,6 +37,10 @@ public class ClientCert implements Base64Codeable {
   public String plainValue() {
     if (value.contains("-----BEGIN CERTIFICATE-----")) {
       return value.replaceAll("%0A", "\n");
+    }
+    if (value.contains("-----BEGIN%20CERTIFICATE-----")) {
+      // URL-encoded certificate from nginx $ssl_client_escaped_cert
+      return URLDecoder.decode(value, StandardCharsets.UTF_8);
     }
     return decodeWithUrlSafe(value);
   }

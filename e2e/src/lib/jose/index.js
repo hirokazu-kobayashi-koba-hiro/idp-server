@@ -41,13 +41,14 @@ export const createJwtWithNoneSignature = ({
 export const createJwtWithPrivateKey = ({
   payload,
   privateKey,
+  algorithm,
   additionalOptions,
 }) => {
   const secret = jwkToPem(privateKey, { private: true });
   const options = {
     ...additionalOptions,
     keyid: privateKey.kid,
-    algorithm: privateKey.alg,
+    algorithm: algorithm || privateKey.alg,  // Use provided algorithm or fall back to key's algorithm
   };
   return createJwt({
     payload,

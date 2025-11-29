@@ -4,7 +4,6 @@ plugins {
 }
 
 group = 'org.idp.server'
-// Version is managed by Git tags in CI/CD, default to SNAPSHOT for local development
 version = project.hasProperty('releaseVersion') ? project.releaseVersion : '0.9.0-SNAPSHOT'
 
 repositories {
@@ -14,18 +13,8 @@ repositories {
 dependencies {
 	implementation project(':libs:idp-server-platform')
 	implementation project(':libs:idp-server-core')
-	implementation project(':libs:idp-server-core-extension-pkce')
 	implementation project(':libs:idp-server-core-extension-fapi')
 	implementation project(':libs:idp-server-core-extension-ciba')
-	implementation project(':libs:idp-server-core-extension-fapi-ciba')
-	implementation project(':libs:idp-server-core-extension-ida')
-	implementation project(':libs:idp-server-core-extension-verifiable-credentials')
-	implementation project(':libs:idp-server-security-event-framework')
-	implementation project(':libs:idp-server-security-event-hooks')
-	implementation project(':libs:idp-server-authentication-interactors')
-	implementation project(':libs:idp-server-federation-oidc')
-	implementation project(':libs:idp-server-control-plane')
-	implementation project(':libs:idp-server-webauthn4j-adapter')
 
 	testImplementation platform('org.junit:junit-bom:5.10.0')
 	testImplementation 'org.junit.jupiter:junit-jupiter'

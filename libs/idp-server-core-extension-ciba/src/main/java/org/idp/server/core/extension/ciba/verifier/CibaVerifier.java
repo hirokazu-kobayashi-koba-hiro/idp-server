@@ -16,9 +16,12 @@
 
 package org.idp.server.core.extension.ciba.verifier;
 
+import org.idp.server.core.extension.ciba.CibaProfile;
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 
 public interface CibaVerifier {
+
+  CibaProfile profile();
 
   void verify(CibaRequestContext context);
 }

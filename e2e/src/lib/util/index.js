@@ -200,3 +200,37 @@ export const generateRandomString = (length) => {
   }
   return result;
 };
+
+/**
+ * Get entropy in bits for a given client secret
+ *
+ * @param {string} targetValue - Client secret
+ * @return {number} Estimated entropy in bits
+ */
+export const getEntropyBits = (targetValue) => {
+  if (!targetValue || targetValue.length === 0) {
+    return 0;
+  }
+
+  try {
+    // Base64URL decode (Node.js)
+    // Base64URLをBase64に変換: '-' → '+', '_' → '/', パディング追加
+    const base64 = targetValue
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
+
+    // パディング追加（4の倍数にする）
+    const paddedBase64 = base64.padEnd(
+      base64.length + ((4 - (base64.length % 4)) % 4),
+      "="
+    );
+
+    // Bufferでデコード
+    const decoded = Buffer.from(paddedBase64, "base64");
+    return decoded.length * 8;
+  } catch (e) {
+    // Not Base64URL - estimate from string length
+    // Assumes ASCII (1 byte per character)
+    return targetValue.length * 8;
+  }
+}

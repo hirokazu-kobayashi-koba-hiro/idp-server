@@ -478,7 +478,8 @@ export const requestBackchannelAuthentications = async ({
   clientSecret,
   clientAssertion,
   clientAssertionType,
-  basicAuth
+  basicAuth,
+  clientCertFile
 }) => {
   let params = new URLSearchParams();
   if (scope) {
@@ -530,7 +531,14 @@ export const requestBackchannelAuthentications = async ({
     params.append("client_assertion_type", clientAssertionType);
   }
   console.log(params.toString());
-  const headers = basicAuth ? basicAuth : {};
+  let headers = basicAuth ? basicAuth : {};
+  if (clientCertFile) {
+    const encoded = encodedClientCert(clientCertFile);
+    headers = {
+      ...headers,
+      "x-ssl-cert": encoded
+    };
+  }
   return await post({
     url: endpoint,
     body: params,

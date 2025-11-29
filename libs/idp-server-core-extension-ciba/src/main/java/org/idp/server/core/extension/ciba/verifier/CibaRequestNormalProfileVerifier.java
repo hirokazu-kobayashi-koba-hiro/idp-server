@@ -16,6 +16,7 @@
 
 package org.idp.server.core.extension.ciba.verifier;
 
+import org.idp.server.core.extension.ciba.CibaProfile;
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 
 /**
@@ -32,6 +33,11 @@ public class CibaRequestNormalProfileVerifier implements CibaVerifier {
 
   public CibaRequestNormalProfileVerifier() {
     this.baseVerifier = new CibaRequestBaseVerifier();
+  }
+
+  @Override
+  public CibaProfile profile() {
+    return CibaProfile.CIBA;
   }
 
   @Override

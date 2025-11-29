@@ -35,6 +35,10 @@ public class JwkParser {
   }
 
   public static JsonWebKeys parseKeys(String value) throws JsonWebKeyInvalidException {
+    if (value == null || value.trim().isEmpty()) {
+      throw new JsonWebKeyInvalidException(
+          "JWKS value is null or empty. Client must have a valid JWKS for signed request object verification.");
+    }
     try {
       JWKSet jwkSet = JWKSet.parse(value);
       List<JWK> keys = jwkSet.getKeys();
@@ -48,6 +52,10 @@ public class JwkParser {
   // FIXME consider where should is implementing
   public static Map<String, Object> parsePublicKeys(String value)
       throws JsonWebKeyInvalidException {
+    if (value == null || value.trim().isEmpty()) {
+      throw new JsonWebKeyInvalidException(
+          "JWKS value is null or empty. Client must have a valid JWKS.");
+    }
     try {
       JWKSet jwkSet = JWKSet.parse(value);
       JWKSet publicJWKSet = jwkSet.toPublicJWKSet();
