@@ -14,7 +14,7 @@
     "refresh_token",
     "urn:openid:params:grant-type:ciba"
   ],
-  "scope": "openid profile email address phone offline_access account transfers read write",
+  "scope": "openid profile email address phone offline_access account transfers read write identity_verification_application",
   "client_name": "FAPI-CIBA Private Key JWT Client",
   "client_name#ja-JP": "FAPI-CIBA Private Key JWTクライアント",
   "token_endpoint_auth_method": "private_key_jwt",

@@ -18,6 +18,7 @@ package org.idp.server.adapters.springboot.application.restapi.me;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
+import org.idp.server.adapters.springboot.application.restapi.FapiInteractionIdConfigurable;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.adapters.springboot.application.restapi.model.ResourceOwnerPrincipal;
 import org.idp.server.core.openid.identity.User;
@@ -41,7 +42,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/{tenant-id}/v1/me")
-public class UserV1Api implements ParameterTransformable {
+public class UserV1Api implements ParameterTransformable, FapiInteractionIdConfigurable {
 
   UserOperationApi userOperationApi;
 
@@ -54,6 +55,7 @@ public class UserV1Api implements ParameterTransformable {
       @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("mfa-operation-type") String mfaOperationType,
+      @RequestHeader(required = false, value = "x-fapi-interaction-id") String fapiInteractionId,
       @RequestBody(required = false) Map<String, Object> requestBody,
       HttpServletRequest httpServletRequest) {
 
@@ -68,6 +70,7 @@ public class UserV1Api implements ParameterTransformable {
             tenantIdentifier, user, oAuthToken, authFlow, request, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
+    addFapiInteractionId(httpHeaders, fapiInteractionId);
     httpHeaders.add("Content-Type", "application/json");
     return new ResponseEntity<>(
         response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
@@ -78,6 +81,7 @@ public class UserV1Api implements ParameterTransformable {
       @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("device-id") AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
+      @RequestHeader(required = false, value = "x-fapi-interaction-id") String fapiInteractionId,
       @RequestBody(required = false) Map<String, Object> requestBody,
       HttpServletRequest httpServletRequest) {
 
@@ -97,6 +101,7 @@ public class UserV1Api implements ParameterTransformable {
             requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
+    addFapiInteractionId(httpHeaders, fapiInteractionId);
     httpHeaders.add("Content-Type", "application/json");
     return new ResponseEntity<>(
         response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
@@ -106,6 +111,7 @@ public class UserV1Api implements ParameterTransformable {
   public ResponseEntity<?> delete(
       @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestHeader(required = false, value = "x-fapi-interaction-id") String fapiInteractionId,
       HttpServletRequest httpServletRequest) {
 
     User user = resourceOwnerPrincipal.getUser();
@@ -116,6 +122,7 @@ public class UserV1Api implements ParameterTransformable {
         userOperationApi.delete(tenantIdentifier, user, oAuthToken, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
+    addFapiInteractionId(httpHeaders, fapiInteractionId);
     httpHeaders.add("Content-Type", "application/json");
     return new ResponseEntity<>(
         response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
@@ -125,6 +132,7 @@ public class UserV1Api implements ParameterTransformable {
   public ResponseEntity<?> changePassword(
       @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestHeader(required = false, value = "x-fapi-interaction-id") String fapiInteractionId,
       @RequestBody Map<String, Object> requestBody,
       HttpServletRequest httpServletRequest) {
 
@@ -138,6 +146,7 @@ public class UserV1Api implements ParameterTransformable {
             tenantIdentifier, user, oAuthToken, request, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
+    addFapiInteractionId(httpHeaders, fapiInteractionId);
     httpHeaders.add("Content-Type", "application/json");
     return new ResponseEntity<>(
         response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));

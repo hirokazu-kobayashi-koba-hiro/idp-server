@@ -6,7 +6,7 @@
   },
   "client": {
     "client_id": "f6a7b8c9-d0e1-f2a3-b4c5-d6e7f8a9b0c1",
-    "scope": "openid read",
+    "scope": "openid read identity_verification_application",
     "hint_type": "login_hint",
     "hint_value": "email:fapi-test@example.com,idp:idp-server",
     "jwks": {
@@ -26,7 +26,7 @@
   },
   "client2": {
     "client_id": "b2c3d4e5-f6a7-b8c9-d0e1-f2a3b4c5d6e7",
-    "scope": "openid read",
+    "scope": "openid read identity_verification_application",
     "acr_value": "urn:mace:incommon:iap:bronze",
     "jwks": {
       "keys": [
@@ -52,6 +52,6 @@
     "cert": "-----BEGIN CERTIFICATE-----\nMIIDfDCCAmSgAwIBAgIUZV5CYa7Xl+ub0MxdUO+Ld0iD9RgwDQYJKoZIhvcNAQEL\nBQAwXDELMAkGA1UEBhMCSlAxDjAMBgNVBAgMBVRva3lvMQ4wDAYDVQQHDAVUb2t5\nbzETMBEGA1UECgwKRXhhbXBsZSBDQTEYMBYGA1UEAwwPRXhhbXBsZSBSb290IENB\nMB4XDTI1MTEzMDAyNDY1N1oXDTI2MTEzMDAyNDY1N1owUDELMAkGA1UEBhMCSlAx\nIDAeBgNVBAoMF0ZBUEktQ0lCQSBDZXJ0aWZpY2F0aW9uMR8wHQYDVQQDDBZmYXBp\nLWNpYmEtdGxzLWNsaWVudC0yMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKC\nAQEAoFZdd41S1+GV3fF9qGuz6UobO6K3VDTL61T9ZJfgZdyVDozcwUdMKItt54dP\nEtIyL/Y163FyqmDd/kw9YalqXphkln/xCKvR9eTpgdVb8mKUPs7iGJkoPZnHDCZx\nl0ZYxwY5d8guHgLJ+BgeffXuIdb5AJS28qdI6Bz97Pf3L2evXXwkjdtDlsTpiGgq\n7DJ1fefS5ecpEVrCxU6vrnOY11CKOeSWYEdr/jf2xKWRooAN4tn0UyZ+dJTI1t9e\nrnZ43zLoFTDYup829d4JykN7UdvG/jXN2gMqO49/+AGzeJFY7I4nDqwE+0YC63Vr\nS5hfH+HKnnzHvRipU7d8pay7IwIDAQABo0IwQDAdBgNVHQ4EFgQUcwlykC8wgWWl\nBF7DwPXi8BlaSgQwHwYDVR0jBBgwFoAUh1d2+l9m1hB3OyMG90Ao0v59hI8wDQYJ\nKoZIhvcNAQELBQADggEBADD6ElZzTTG4P1pkWLH+VowX/e7LAXNopjPrWr2r5N66\n0K5CXR8tMgmCiY8u5H/VFxevE3PWqtiz0G0h99hlrzFRPqXlXAJ3/N0lGeh8w3Qr\n7Ba2o6lJyGHX5AJDO0yzMGerHFnHURqRQL/a0EOHU08cUmuOu3yHC357L5B/g/TB\nmTclFFIyTNJgCObqQHlhNROo6Nyg+R4y0pi0NeQ71TvUxKc6JzonILTK6YuPt+3V\ncwLEScaRMsrrlJnSwIoQX7ZA8ZelZsIuxomH/BsZimBYNWrdlVOT7KhLUSVnwY2U\n9X2Y6edEom6oeUg/PkDTgpBuHjtunjFsH0aJTeRhxd4=\n-----END CERTIFICATE-----"
   },
   "resource": {
-    "resourceUrl": "https://host.docker.internal:8445/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/userinfo"
+    "resourceUrl": "https://host.docker.internal:8445/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/me/identity-verification/applications"
   }
 }

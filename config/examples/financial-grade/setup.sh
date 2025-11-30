@@ -204,16 +204,27 @@ if [ "${HTTP_CODE}" = "201" ]; then
     echo ""
   fi
 
-  # Step 6: Create authentication policy
+  # Step 6: Create authentication policies
   if [ -n "${FINANCIAL_TENANT_ID}" ]; then
-    echo "🔒 Step 6: Creating financial grade authentication policy..."
+    echo "🔒 Step 6: Creating financial grade authentication policies..."
 
-    AUTH_POLICY_FILE="${SCRIPT_DIR}/authentication-policy/oauth.json"
-    if [ ! -f "${AUTH_POLICY_FILE}" ]; then
-      echo "⚠️  oauth.json not found at ${AUTH_POLICY_FILE}"
-      echo "⚠️  Skipping authentication policy creation..."
-      echo ""
-    else
+    # Define authentication policy files to register
+    AUTH_POLICY_FILES=(
+      "oauth.json:OAuth"
+      "ciba.json:CIBA"
+    )
+
+    for POLICY_ENTRY in "${AUTH_POLICY_FILES[@]}"; do
+      POLICY_FILE="${POLICY_ENTRY%%:*}"
+      POLICY_NAME="${POLICY_ENTRY##*:}"
+      AUTH_POLICY_FILE="${SCRIPT_DIR}/authentication-policy/${POLICY_FILE}"
+
+      if [ ! -f "${AUTH_POLICY_FILE}" ]; then
+        echo "   ⚠️  ${POLICY_FILE} not found, skipping..."
+        continue
+      fi
+
+      echo "   📝 Registering ${POLICY_NAME} authentication policy..."
       AUTH_POLICY_JSON=$(cat "${AUTH_POLICY_FILE}")
 
       POLICY_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
@@ -226,14 +237,14 @@ if [ "${HTTP_CODE}" = "201" ]; then
       POLICY_RESPONSE_BODY=$(echo "${POLICY_RESPONSE}" | sed '$d')
 
       if [ "${POLICY_HTTP_CODE}" = "200" ] || [ "${POLICY_HTTP_CODE}" = "201" ]; then
-        AUTH_POLICY_ID=$(echo "${POLICY_RESPONSE_BODY}" | jq -r '.result.id')
-        echo "✅ Financial grade authentication policy created: ${AUTH_POLICY_ID}"
+        CREATED_POLICY_ID=$(echo "${POLICY_RESPONSE_BODY}" | jq -r '.result.id')
+        echo "   ✅ ${POLICY_NAME} authentication policy created: ${CREATED_POLICY_ID}"
       else
-        echo "⚠️  Authentication policy creation failed (HTTP ${POLICY_HTTP_CODE})"
-        echo "Response: ${POLICY_RESPONSE_BODY}" | jq '.' || echo "${POLICY_RESPONSE_BODY}"
+        echo "   ⚠️  ${POLICY_NAME} policy creation failed (HTTP ${POLICY_HTTP_CODE})"
+        echo "   Response: ${POLICY_RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "   ${POLICY_RESPONSE_BODY}"
       fi
-      echo ""
-    fi
+    done
+    echo ""
   fi
 
   # Step 7: Create test user for CIBA

@@ -211,28 +211,47 @@ if [ -n "${FINANCIAL_TENANT_ID}" ]; then
   echo ""
 fi
 
-# Step 6: Update authentication policy
-if [ -n "${FINANCIAL_TENANT_ID}" ] && [ -f "${AUTH_POLICY_FILE}" ]; then
-  echo "🔄 Step 6: Updating authentication policy..."
+# Step 6: Update authentication policies
+if [ -n "${FINANCIAL_TENANT_ID}" ]; then
+  echo "🔄 Step 6: Updating authentication policies..."
 
-  AUTH_POLICY_ID=$(jq -r '.id' "${AUTH_POLICY_FILE}")
-  AUTH_POLICY_UPDATE_JSON=$(cat "${AUTH_POLICY_FILE}")
+  # Define authentication policy files to update
+  AUTH_POLICY_FILES=(
+    "oauth.json:OAuth"
+    "ciba.json:CIBA"
+  )
 
-  POLICY_UPDATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
-    "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${FINANCIAL_TENANT_ID}/authentication-policies/${AUTH_POLICY_ID}" \
-    -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
-    -H "Content-Type: application/json" \
-    -d "${AUTH_POLICY_UPDATE_JSON}")
+  for POLICY_ENTRY in "${AUTH_POLICY_FILES[@]}"; do
+    POLICY_FILE="${POLICY_ENTRY%%:*}"
+    POLICY_NAME="${POLICY_ENTRY##*:}"
+    AUTH_POLICY_FILE_PATH="${SCRIPT_DIR}/authentication-policy/${POLICY_FILE}"
 
-  POLICY_UPDATE_HTTP_CODE=$(echo "${POLICY_UPDATE_RESPONSE}" | tail -n1)
-  POLICY_UPDATE_BODY=$(echo "${POLICY_UPDATE_RESPONSE}" | sed '$d')
+    if [ ! -f "${AUTH_POLICY_FILE_PATH}" ]; then
+      echo "   ⚠️  ${POLICY_FILE} not found, skipping..."
+      continue
+    fi
 
-  if [ "${POLICY_UPDATE_HTTP_CODE}" = "200" ]; then
-    echo "✅ Authentication policy updated"
-  else
-    echo "❌ Authentication policy update failed (HTTP ${POLICY_UPDATE_HTTP_CODE})"
-    echo "Response: ${POLICY_UPDATE_BODY}" | jq '.' || echo "${POLICY_UPDATE_BODY}"
-  fi
+    AUTH_POLICY_ID=$(jq -r '.id' "${AUTH_POLICY_FILE_PATH}")
+    AUTH_POLICY_UPDATE_JSON=$(cat "${AUTH_POLICY_FILE_PATH}")
+
+    echo "   📝 Updating ${POLICY_NAME} authentication policy..."
+
+    POLICY_UPDATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
+      "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${FINANCIAL_TENANT_ID}/authentication-policies/${AUTH_POLICY_ID}" \
+      -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+      -H "Content-Type: application/json" \
+      -d "${AUTH_POLICY_UPDATE_JSON}")
+
+    POLICY_UPDATE_HTTP_CODE=$(echo "${POLICY_UPDATE_RESPONSE}" | tail -n1)
+    POLICY_UPDATE_BODY=$(echo "${POLICY_UPDATE_RESPONSE}" | sed '$d')
+
+    if [ "${POLICY_UPDATE_HTTP_CODE}" = "200" ]; then
+      echo "   ✅ ${POLICY_NAME} authentication policy updated"
+    else
+      echo "   ⚠️  ${POLICY_NAME} policy update failed (HTTP ${POLICY_UPDATE_HTTP_CODE})"
+      echo "   Response: ${POLICY_UPDATE_BODY}" | jq '.' 2>/dev/null || echo "   ${POLICY_UPDATE_BODY}"
+    fi
+  done
 
   echo ""
 fi
