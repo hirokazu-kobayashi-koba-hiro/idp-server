@@ -1,7 +1,8 @@
 import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
 import { deletion, get, postWithJson } from "../../../lib/http";
+import { mtlsGet, mtlsPost, mtlsPostWithJson } from "../../../lib/http/mtls";
 import { requestToken } from "../../../api/oauthClient";
-import { adminServerConfig, backendUrl, selfSignedTlsAuthClient, serverConfig } from "../../testConfig";
+import { adminServerConfig, backendUrl, mtlBackendUrl } from "../../testConfig";
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
 import path from "path";
@@ -66,12 +67,10 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
   let initialRegConfig;
   let fidoUafConfig;
   let smsConfig;
-  let clientCert;
-  let encodedClientCert;
-  let mismatchedClientCert;
-  let encodedMismatchedClientCert;
-  let differentClientCert;
-  let encodedDifferentClientCert;
+  let clientCertPath;
+  let clientKeyPath;
+  let differentCertPath;
+  let differentKeyPath;
 
   beforeAll(async () => {
     // Get system admin token
@@ -103,26 +102,13 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
     userEmail = `financial-user-${timestamp}@example.com`;
     userPassword = `SecurePass${timestamp}!`;
 
-    // Load client certificate (bound to access token)
-    const certPath = path.join(configDir, "certs/client-cert.pem");
-    if (fs.existsSync(certPath)) {
-      clientCert = fs.readFileSync(certPath, "utf8");
-      encodedClientCert = clientCert.replace(/\n/g, "%0A");
+    // Client certificate paths for mTLS
+    clientCertPath = path.join(configDir, "certs/client-cert.pem");
+    clientKeyPath = path.join(configDir, "certs/client-key.pem");
 
-      // Generate mismatched certificate by modifying a few Base64 characters
-      // This creates an invalid DER format certificate
-      mismatchedClientCert = clientCert
-        .replace(/MIIBvDCCAWKg/g, "MIIBvDCCAXXg")
-        .replace(/83AwFzD6/g, "93BwGzE7");
-      encodedMismatchedClientCert = mismatchedClientCert.replace(/\n/g, "%0A");
-    }
-
-    // Load different valid certificate (not bound to token)
-    const differentCertPath = path.join(process.cwd(), "src/api/cert/exampleCertificate.pem");
-    if (fs.existsSync(differentCertPath)) {
-      differentClientCert = fs.readFileSync(differentCertPath, "utf8");
-      encodedDifferentClientCert = differentClientCert.replace(/\n/g, "%0A");
-    }
+    // Different valid certificate (not bound to token) for testing certificate mismatch
+    differentCertPath = path.resolve(process.cwd(), "src/api/cert/selfSignedTlsAuth.pem");
+    differentKeyPath = path.resolve(process.cwd(), "src/api/cert/selfSignedTlsAuth.key");
 
     // Create unique configs
     onboardingConfig = JSON.parse(JSON.stringify(onboardingTemplate));
@@ -255,7 +241,7 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
   });
 
   it("Complete transfer flow: registration -> FIDO-UAF -> transfers scope -> token", async () => {
-    if (!encodedClientCert) {
+    if (!fs.existsSync(clientCertPath) || !fs.existsSync(clientKeyPath)) {
       console.log("⚠️  Client certificate not found, skipping test");
       return;
     }
@@ -391,12 +377,9 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
 
     console.log(`✅ Authorization request started: ${authTxId}`);
 
-    // Register new user
+    // Register new user (front-channel - no mTLS)
     const registrationResponse = await postWithJson({
       url: `${backendUrl}/${financialTenantId}/v1/authorizations/${authTxId}/initial-registration`,
-      headers: {
-        "x-ssl-cert": encodedClientCert,
-      },
       body: {
         email: userEmail,
         name: "Financial User",
@@ -426,9 +409,6 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
 
     const smsChallengeResponse = await postWithJson({
       url: `${backendUrl}/${financialTenantId}/v1/authorizations/${authTxId}/sms-authentication-challenge`,
-      headers: {
-        "x-ssl-cert": encodedClientCert,
-      },
       body: {
         phone_number: "+81-90-1234-5678",
         template: "authentication",
@@ -466,9 +446,6 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
     // Verify SMS code
     const smsVerificationResponse = await postWithJson({
       url: `${backendUrl}/${financialTenantId}/v1/authorizations/${authTxId}/sms-authentication`,
-      headers: {
-        "x-ssl-cert": encodedClientCert,
-      },
       body: {
         verification_code: verificationCode,
       },
@@ -482,9 +459,6 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
     // Authorize
     const authorizeResponse = await postWithJson({
       url: `${backendUrl}/${financialTenantId}/v1/authorizations/${authTxId}/authorize`,
-      headers: {
-        "x-ssl-cert": encodedClientCert,
-      },
       body: {},
     });
 
@@ -500,7 +474,7 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
 
     console.log("✅ Authorization code obtained");
 
-    // Exchange code for token (with code_verifier for PKCE)
+    // Exchange code for token (with code_verifier for PKCE) - mTLS backchannel
     const tokenParams = new URLSearchParams({
       grant_type: "authorization_code",
       code: code,
@@ -509,14 +483,11 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
       code_verifier: codeVerifier,
     });
 
-    const tokenResponse = await postWithJson({
-      url: `${backendUrl}/${financialTenantId}/v1/tokens`,
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "x-ssl-cert": encodedClientCert,
-      },
+    const tokenResponse = await mtlsPost({
+      url: `${mtlBackendUrl}/${financialTenantId}/v1/tokens`,
       body: tokenParams.toString(),
-      isFormData: true,
+      certPath: clientCertPath,
+      keyPath: clientKeyPath,
     });
 
     expect(tokenResponse.status).toBe(200);
@@ -532,53 +503,41 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
 
     console.log("✅ User logged in, token obtained");
 
-    // FIDO-UAF registration challenge
+    // FIDO-UAF registration challenge - test without mTLS (should fail)
     const failedChallengeResponse = await postWithJson({
       url: `${backendUrl}/${financialTenantId}/v1/me/mfa/fido-uaf-registration`,
       headers: {
         Authorization: `Bearer ${userToken}`,
-        // "x-ssl-cert": encodedClientCert,
       },
       body: {},
     });
 
-    console.log(`FIDO-UAF challenge response: ${JSON.stringify(failedChallengeResponse.data, null, 2)}`);
+    console.log(`FIDO-UAF challenge without mTLS: ${JSON.stringify(failedChallengeResponse.data, null, 2)}`);
     expect(failedChallengeResponse.status).toBe(401);
 
-    // Test with invalid certificate (DER format corrupted - should fail)
-    const mismatchedChallengeResponse = await postWithJson({
-      url: `${backendUrl}/${financialTenantId}/v1/me/mfa/fido-uaf-registration`,
-      headers: {
-        Authorization: `Bearer ${userToken}`,
-        "x-ssl-cert": encodedMismatchedClientCert,
-      },
-      body: {},
-    });
-
-    console.log(`FIDO-UAF challenge with invalid cert: ${JSON.stringify(mismatchedChallengeResponse.data, null, 2)}`);
-    expect(mismatchedChallengeResponse.status).toBe(401);
-
     // Test with different valid certificate (valid but not bound - should fail per RFC 8705)
-    const differentChallengeResponse = await postWithJson({
-      url: `${backendUrl}/${financialTenantId}/v1/me/mfa/fido-uaf-registration`,
+    const differentChallengeResponse = await mtlsPostWithJson({
+      url: `${mtlBackendUrl}/${financialTenantId}/v1/me/mfa/fido-uaf-registration`,
       headers: {
         Authorization: `Bearer ${userToken}`,
-        "x-ssl-cert": encodedDifferentClientCert,
       },
       body: {},
+      certPath: differentCertPath,
+      keyPath: differentKeyPath,
     });
 
     console.log(`FIDO-UAF challenge with different valid cert: ${JSON.stringify(differentChallengeResponse.data, null, 2)}`);
     expect(differentChallengeResponse.status).toBe(401);
 
-    // Test with correct certificate (should succeed)
-    const challengeResponse = await postWithJson({
-      url: `${backendUrl}/${financialTenantId}/v1/me/mfa/fido-uaf-registration`,
+    // Test with correct certificate via mTLS (should succeed)
+    const challengeResponse = await mtlsPostWithJson({
+      url: `${mtlBackendUrl}/${financialTenantId}/v1/me/mfa/fido-uaf-registration`,
       headers: {
         Authorization: `Bearer ${userToken}`,
-        "x-ssl-cert": encodedClientCert,
       },
       body: {},
+      certPath: clientCertPath,
+      keyPath: clientKeyPath,
     });
 
     console.log(`FIDO-UAF challenge response: ${JSON.stringify(challengeResponse.data, null, 2)}`);
@@ -587,45 +546,36 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
     // === Certificate Binding Verification for Userinfo API ===
     console.log("\n=== Certificate Binding Verification: Userinfo API ===");
 
-    // Test 1: No certificate (should fail)
+    // Test 1: No mTLS (should fail)
     const userinfoNoCertResponse = await get({
       url: `${backendUrl}/${financialTenantId}/v1/userinfo`,
       headers: {
         Authorization: `Bearer ${userToken}`,
       },
     });
-    console.log(`Userinfo without cert: ${userinfoNoCertResponse.status}`);
+    console.log(`Userinfo without mTLS: ${userinfoNoCertResponse.status}`);
     expect(userinfoNoCertResponse.status).toBe(401);
 
-    // Test 2: Invalid certificate (should fail)
-    const userinfoInvalidCertResponse = await get({
-      url: `${backendUrl}/${financialTenantId}/v1/userinfo`,
+    // Test 2: Different valid certificate via mTLS (should fail per RFC 8705)
+    const userinfoDifferentCertResponse = await mtlsGet({
+      url: `${mtlBackendUrl}/${financialTenantId}/v1/userinfo`,
       headers: {
         Authorization: `Bearer ${userToken}`,
-        "x-ssl-cert": encodedMismatchedClientCert,
       },
-    });
-    console.log(`Userinfo with invalid cert: ${userinfoInvalidCertResponse.status}`);
-    expect(userinfoInvalidCertResponse.status).toBe(401);
-
-    // Test 3: Different valid certificate (should fail per RFC 8705)
-    const userinfoDifferentCertResponse = await get({
-      url: `${backendUrl}/${financialTenantId}/v1/userinfo`,
-      headers: {
-        Authorization: `Bearer ${userToken}`,
-        "x-ssl-cert": encodedDifferentClientCert,
-      },
+      certPath: differentCertPath,
+      keyPath: differentKeyPath,
     });
     console.log(`Userinfo with different valid cert: ${userinfoDifferentCertResponse.status}`);
     expect(userinfoDifferentCertResponse.status).toBe(401);
 
-    // Test 4: Correct certificate (should succeed)
-    const userinfoResponse = await get({
-      url: `${backendUrl}/${financialTenantId}/v1/userinfo`,
+    // Test 3: Correct certificate via mTLS (should succeed)
+    const userinfoResponse = await mtlsGet({
+      url: `${mtlBackendUrl}/${financialTenantId}/v1/userinfo`,
       headers: {
         Authorization: `Bearer ${userToken}`,
-        "x-ssl-cert": encodedClientCert,
       },
+      certPath: clientCertPath,
+      keyPath: clientKeyPath,
     });
     console.log(`Userinfo with correct cert: ${JSON.stringify(userinfoResponse.data, null, 2)}`);
     expect(userinfoResponse.status).toBe(200);
@@ -683,9 +633,6 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
     // Try password authentication (should be rejected by policy)
     const passwordAuthResponse = await postWithJson({
       url: `${backendUrl}/${financialTenantId}/v1/authorizations/${transferAuthTxId}/password-authentication`,
-      headers: {
-        "x-ssl-cert": encodedClientCert,
-      },
       body: {
         username: userEmail,
         password: userPassword,
