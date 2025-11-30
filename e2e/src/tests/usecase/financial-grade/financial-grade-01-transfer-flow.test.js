@@ -364,10 +364,11 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
     // Start authorization request with PKCE and nonce (FAPI required)
     const nonce = crypto.randomBytes(16).toString("base64url");
 
+    console.log(onboardingConfig.client);
     const authzParams = new URLSearchParams({
       response_type: "code",
       client_id: financialClientId,
-      redirect_uri: "https://localhost:3000/callback/",
+      redirect_uri: financialClientConfig.redirect_uris[0],
       scope: "openid profile email account",
       state: "test-state",
       nonce: nonce,
@@ -386,7 +387,7 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
 
     const authTxId = new URL(location).searchParams.get("id");
     console.log(`Auth Transaction ID: ${authTxId}`);
-    expect(authTxId).toBeDefined();
+    expect(authTxId).not.toBeNull();
 
     console.log(`✅ Authorization request started: ${authTxId}`);
 
@@ -503,7 +504,7 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
     const tokenParams = new URLSearchParams({
       grant_type: "authorization_code",
       code: code,
-      redirect_uri: "https://localhost:3000/callback/",
+      redirect_uri: financialClientConfig.redirect_uris[0],
       client_id: financialClientId,
       code_verifier: codeVerifier,
     });
@@ -647,7 +648,7 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
         client_id: financialClientId,
         iss: financialClientId,
         aud: financialTenantConfig.authorization_server.issuer,
-        redirect_uri: "https://localhost:3000/callback/",
+        redirect_uri: financialClientConfig.redirect_uris[0],
         scope: "openid transfers",
         state: "transfer-test",
         nonce: transferNonce,

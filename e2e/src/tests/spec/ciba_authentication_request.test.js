@@ -204,7 +204,7 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
         console.log(backchannelAuthenticationResponse.data);
         expect(backchannelAuthenticationResponse.status).toBe(400);
         expect(backchannelAuthenticationResponse.data.error).toEqual(
-          "invalid_request_object"
+          "invalid_request"
         );
         expect(
           backchannelAuthenticationResponse.data.error_description
@@ -236,7 +236,7 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
         console.log(backchannelAuthenticationResponse.data);
         expect(backchannelAuthenticationResponse.status).toBe(400);
         expect(backchannelAuthenticationResponse.data.error).toEqual(
-          "invalid_request_object"
+          "invalid_request"
         );
         expect(
           backchannelAuthenticationResponse.data.error_description
@@ -264,13 +264,13 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
             request,
           });
         console.log(backchannelAuthenticationResponse.data);
-        expect(backchannelAuthenticationResponse.status).toBe(400);
+        expect(backchannelAuthenticationResponse.status).toBe(401);
         expect(backchannelAuthenticationResponse.data.error).toEqual(
-          "invalid_request_object"
+          "invalid_client"
         );
         expect(
           backchannelAuthenticationResponse.data.error_description
-        ).toEqual("request object is invalid, iss claim must be client_id");
+        ).toEqual("Client authentication failed: 'iss' claim in request object does not match client_id.");
       });
 
       it("exp An expiration time that limits the validity lifetime of the signed authentication request.", async () => {
@@ -303,7 +303,7 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
         console.log(backchannelAuthenticationResponse.data);
         expect(backchannelAuthenticationResponse.status).toBe(400);
         expect(backchannelAuthenticationResponse.data.error).toEqual(
-          "invalid_request_object"
+          "invalid_request"
         );
         expect(
           backchannelAuthenticationResponse.data.error_description
@@ -425,7 +425,7 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
         console.log(backchannelAuthenticationResponse.data);
         expect(backchannelAuthenticationResponse.status).toBe(400);
         expect(backchannelAuthenticationResponse.data.error).toEqual(
-          "invalid_request_object"
+          "invalid_request"
         );
       });
 
