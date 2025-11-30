@@ -11,8 +11,5 @@ COPY mtls.conf /etc/nginx/mtls.conf
 # Create directory for client certificates (mTLS)
 RUN mkdir -p /etc/nginx/certs
 
-# Copy test client certificate for simple verification
-COPY test-client.pem /etc/nginx/certs/test-client.pem
-
-# Copy CA certificate for production mTLS (optional)
-# COPY ca.crt /etc/nginx/certs/ca.crt
+# Copy CA bundle for mTLS (includes self-signed + CA certificates)
+COPY client-ca-bundle.pem /etc/nginx/certs/client-ca-bundle.pem

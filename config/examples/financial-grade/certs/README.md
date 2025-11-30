@@ -136,6 +136,17 @@ openssl x509 -in tls-client.pem -noout -subject -issuer
 #       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ← CAが署名
 ```
 
+```shell
+# 全情報
+  openssl x509 -in tls-client-auth.pem -noout -text
+
+  # Subject DNだけ
+  openssl x509 -in tls-client-auth.pem -noout -subject
+
+  # 有効期限だけ
+  openssl x509 -in tls-client-auth.pem -noout -dates
+```
+
 ### サーバー側設定（nginx例）
 
 ```nginx
@@ -306,11 +317,12 @@ tls-client.pem: OK
 
 ```bash
 # クライアント証明書でHTTPS接続テスト
-curl -v https://idp-server.example.com/health \
-  --cert client-cert.pem \
-  --key client-key.pem \
-  --cacert ca.crt
+curl -v https://localhost:8445/health \
+  --cert tls-client-auth-2.pem \
+  --key tls-client-auth-2.key
+```
 
+```text
 # 成功時: HTTP 200
 # 失敗時: SSL alert handshake failure
 ```

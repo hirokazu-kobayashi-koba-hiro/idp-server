@@ -99,7 +99,7 @@ if [ "${HTTP_CODE}" = "201" ]; then
   # Step 3: Get organization admin access token
   echo "🔐 Step 3: Getting organization administrator access token..."
   ORG_ADMIN_EMAIL=$(echo "${RESPONSE_BODY}" | jq -r '.user.email')
-  ORG_ADMIN_PASSWORD="FinancialAdminSecure123!"
+  ORG_ADMIN_PASSWORD="FapiCibaTestSecure123!"
   ADMIN_CLIENT_SECRET=$(echo "${RESPONSE_BODY}" | jq -r '.client.client_secret')
 
   ORG_TOKEN_RESPONSE=$(curl -s -X POST \
@@ -156,36 +156,52 @@ if [ "${HTTP_CODE}" = "201" ]; then
     echo ""
   fi
 
-  # Step 5: Create financial web app client
+  # Step 5: Create financial web app clients
   if [ -n "${FINANCIAL_TENANT_ID}" ]; then
-    echo "🔧 Step 5: Creating financial grade web application client..."
+    echo "🔧 Step 5: Creating financial grade web application clients..."
 
-    FINANCIAL_CLIENT_FILE="${SCRIPT_DIR}/financial-client.json"
-    if [ ! -f "${FINANCIAL_CLIENT_FILE}" ]; then
-      echo "⚠️  financial-client.json not found at ${FINANCIAL_CLIENT_FILE}"
-      echo "⚠️  Skipping client creation..."
-      echo ""
-    else
-      FINANCIAL_CLIENT_JSON=$(cat "${FINANCIAL_CLIENT_FILE}")
+    # Define client files to register
+    CLIENT_FILES=(
+      "financial-client.json:self_signed_tls_client_auth"
+      "private-key-jwt-client.json:private_key_jwt"
+      "private-key-jwt-client-2.json:private_key_jwt"
+      "tls-client-auth-client.json:tls_client_auth"
+      "tls-client-auth-client-2.json:tls_client_auth"
+    )
+
+    for CLIENT_ENTRY in "${CLIENT_FILES[@]}"; do
+      CLIENT_FILE="${CLIENT_ENTRY%%:*}"
+      CLIENT_AUTH_METHOD="${CLIENT_ENTRY##*:}"
+      CLIENT_FILE_PATH="${SCRIPT_DIR}/${CLIENT_FILE}"
+
+      if [ ! -f "${CLIENT_FILE_PATH}" ]; then
+        echo "⚠️  ${CLIENT_FILE} not found, skipping..."
+        continue
+      fi
+
+      CLIENT_JSON=$(cat "${CLIENT_FILE_PATH}")
+      CLIENT_ALIAS=$(echo "${CLIENT_JSON}" | jq -r '.client_id_alias // .client_id')
+
+      echo "   📝 Registering client: ${CLIENT_ALIAS} (${CLIENT_AUTH_METHOD})..."
 
       CLIENT_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
         "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${FINANCIAL_TENANT_ID}/clients" \
         -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
         -H "Content-Type: application/json" \
-        -d "${FINANCIAL_CLIENT_JSON}")
+        -d "${CLIENT_JSON}")
 
       CLIENT_HTTP_CODE=$(echo "${CLIENT_RESPONSE}" | tail -n1)
       CLIENT_RESPONSE_BODY=$(echo "${CLIENT_RESPONSE}" | sed '$d')
 
       if [ "${CLIENT_HTTP_CODE}" = "200" ] || [ "${CLIENT_HTTP_CODE}" = "201" ]; then
-        FINANCIAL_CLIENT_ID=$(echo "${CLIENT_RESPONSE_BODY}" | jq -r '.result.client_id')
-        echo "✅ Financial grade web app client created: ${FINANCIAL_CLIENT_ID}"
+        CREATED_CLIENT_ID=$(echo "${CLIENT_RESPONSE_BODY}" | jq -r '.result.client_id')
+        echo "   ✅ Created: ${CREATED_CLIENT_ID}"
       else
-        echo "⚠️  Financial client creation failed (HTTP ${CLIENT_HTTP_CODE})"
-        echo "Response: ${CLIENT_RESPONSE_BODY}" | jq '.' || echo "${CLIENT_RESPONSE_BODY}"
+        echo "   ⚠️  Failed (HTTP ${CLIENT_HTTP_CODE})"
+        echo "   Response: ${CLIENT_RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "   ${CLIENT_RESPONSE_BODY}"
       fi
-      echo ""
-    fi
+    done
+    echo ""
   fi
 
   # Step 6: Create authentication policy
@@ -220,6 +236,40 @@ if [ "${HTTP_CODE}" = "201" ]; then
     fi
   fi
 
+  # Step 7: Create test user for CIBA
+  if [ -n "${FINANCIAL_TENANT_ID}" ]; then
+    echo "👤 Step 7: Creating test user for CIBA..."
+
+    FINANCIAL_USER_FILE="${SCRIPT_DIR}/financial-user.json"
+    if [ ! -f "${FINANCIAL_USER_FILE}" ]; then
+      echo "⚠️  financial-user.json not found at ${FINANCIAL_USER_FILE}"
+      echo "⚠️  Skipping test user creation..."
+      echo ""
+    else
+      FINANCIAL_USER_JSON=$(cat "${FINANCIAL_USER_FILE}")
+      FINANCIAL_USER_ID=$(echo "${FINANCIAL_USER_JSON}" | jq -r '.sub')
+
+      USER_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+        "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${FINANCIAL_TENANT_ID}/users" \
+        -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d "${FINANCIAL_USER_JSON}")
+
+      USER_HTTP_CODE=$(echo "${USER_RESPONSE}" | tail -n1)
+      USER_RESPONSE_BODY=$(echo "${USER_RESPONSE}" | sed '$d')
+
+      if [ "${USER_HTTP_CODE}" = "200" ] || [ "${USER_HTTP_CODE}" = "201" ]; then
+        CREATED_USER_ID=$(echo "${USER_RESPONSE_BODY}" | jq -r '.result.sub // .result.id')
+        CREATED_USER_EMAIL=$(echo "${USER_RESPONSE_BODY}" | jq -r '.result.email')
+        echo "✅ Test user created: ${CREATED_USER_EMAIL} (${CREATED_USER_ID})"
+      else
+        echo "⚠️  Test user creation failed (HTTP ${USER_HTTP_CODE})"
+        echo "Response: ${USER_RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "${USER_RESPONSE_BODY}"
+      fi
+      echo ""
+    fi
+  fi
+
   echo "=========================================="
   echo "✅ Financial Grade Setup Complete!"
   echo "=========================================="
@@ -237,6 +287,9 @@ if [ "${HTTP_CODE}" = "201" ]; then
   fi
   if [ -n "${AUTH_POLICY_ID}" ]; then
     echo "   Auth Policy ID:         ${AUTH_POLICY_ID}"
+  fi
+  if [ -n "${CREATED_USER_EMAIL}" ]; then
+    echo "   Test User Email:        ${CREATED_USER_EMAIL}"
   fi
   echo ""
   echo "🔍 Next Steps:"

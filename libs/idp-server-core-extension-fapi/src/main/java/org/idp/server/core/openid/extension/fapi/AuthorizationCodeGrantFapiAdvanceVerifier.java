@@ -19,6 +19,8 @@ package org.idp.server.core.openid.extension.fapi;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationCodeGrant;
 import org.idp.server.core.openid.oauth.AuthorizationProfile;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.openid.token.TokenRequestContext;
@@ -46,6 +48,7 @@ public class AuthorizationCodeGrantFapiAdvanceVerifier
         tokenRequestContext, authorizationRequest, authorizationCodeGrant, clientCredentials);
     throwExceptionIfClientSecretPostOrClientSecretBasicOrClientSecretJwtOrPublicClient(
         tokenRequestContext);
+    throwExceptionIfCertificateBoundRequiredButMissing(tokenRequestContext, clientCredentials);
   }
 
   /**
@@ -75,6 +78,27 @@ public class AuthorizationCodeGrantFapiAdvanceVerifier
     if (clientAuthenticationType.isNone()) {
       throw new TokenBadRequestException(
           "unauthorized_client", "When FAPI Baseline profile, shall not support public clients");
+    }
+  }
+
+  /**
+   * shall only issue sender-constrained access tokens;
+   *
+   * <p>When tls_client_certificate_bound_access_tokens is enabled, client certificate MUST be
+   * present in the token request.
+   */
+  void throwExceptionIfCertificateBoundRequiredButMissing(
+      TokenRequestContext tokenRequestContext, ClientCredentials clientCredentials) {
+    AuthorizationServerConfiguration serverConfiguration =
+        tokenRequestContext.serverConfiguration();
+    ClientConfiguration clientConfiguration = tokenRequestContext.clientConfiguration();
+
+    if (serverConfiguration.isTlsClientCertificateBoundAccessTokens()
+        && clientConfiguration.isTlsClientCertificateBoundAccessTokens()
+        && !clientCredentials.hasClientCertification()) {
+      throw new TokenBadRequestException(
+          "invalid_request",
+          "When FAPI Advance profile with tls_client_certificate_bound_access_tokens enabled, client certificate MUST be present");
     }
   }
 }

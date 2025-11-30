@@ -92,7 +92,8 @@ public class CibaGrantService implements OAuthTokenCreationService, RefreshToken
             tenant, cibaGrant.backchannelAuthenticationRequestIdentifier());
 
     CibaGrantVerifier verifier =
-        new CibaGrantVerifier(tokenRequestContext, backchannelAuthenticationRequest, cibaGrant);
+        new CibaGrantVerifier(
+            tokenRequestContext, backchannelAuthenticationRequest, cibaGrant, clientCredentials);
     verifier.verify();
 
     AuthorizationServerConfiguration authorizationServerConfiguration =

@@ -14,6 +14,7 @@ import {
   clientSecretPostClient,
   mtlBackendUrl,
   privateKeyJwtClient,
+  privateKeyJwtMtlsClient,
   publicClient,
   selfSignedTlsAuthClient,
   selfSignedTlsClientAuth2,
@@ -903,33 +904,56 @@ describe("FAPI CIBA Profile - Financial-grade API: Client Initiated Backchannel 
       expect(introspectionResponse.data.cnf["x5t#S256"]).toEqual(thumbprint);
     });
 
-    xit("14. shall authenticate the confidential client using one of the following methods. private_key_jwt", async () => {
+    it("14. shall authenticate the confidential client using one of the following methods. private_key_jwt", async () => {
+      // Certificate paths for mTLS
+      const certPath = path.resolve("./src/api/cert/privateKeyJwtMtls.pem");
+      const keyPath = path.resolve("./src/api/cert/privateKeyJwtMtls.key");
+
       // Create signed request object with FAPI CIBA requirements
       const requestObject = createJwtWithPrivateKey({
         payload: {
-          scope: "openid profile phone email " + privateKeyJwtClient.fapiAdvanceScope,
+          scope: "openid profile phone email " + privateKeyJwtMtlsClient.fapiAdvanceScope,
           binding_message: ciba.bindingMessage,
           user_code: ciba.userCode,
           login_hint: ciba.loginHintDevice,
-          client_id: privateKeyJwtClient.clientId,
+          client_id: privateKeyJwtMtlsClient.clientId,
           aud: serverConfig.issuer,
-          iss: privateKeyJwtClient.clientId,
+          iss: privateKeyJwtMtlsClient.clientId,
           exp: toEpocTime({ adjusted: 1800 }), // 30 minutes (within 60 minutes requirement)
           iat: toEpocTime({}),
           nbf: toEpocTime({}),
           jti: generateJti(),
         },
-        privateKey: privateKeyJwtClient.requestKey,
+        privateKey: privateKeyJwtMtlsClient.requestKey,
       });
 
       console.log("Request Object JWT:", requestObject);
 
-      // Backchannel authentication request with signed request object
-      let backchannelAuthenticationResponse = await requestBackchannelAuthentications({
-        endpoint: serverConfig.backchannelAuthenticationEndpoint,
-        clientId: privateKeyJwtClient.clientId,
-        request: requestObject,
-        clientCertFile: privateKeyJwtClient.clientCertFile,
+      // Create client assertion for private_key_jwt authentication
+      const clientAssertion = createJwtWithPrivateKey({
+        payload: {
+          iss: privateKeyJwtMtlsClient.clientId,
+          sub: privateKeyJwtMtlsClient.clientId,
+          aud: serverConfig.issuer,
+          exp: toEpocTime({ adjusted: 300 }),
+          iat: toEpocTime({}),
+          jti: generateJti(),
+        },
+        privateKey: privateKeyJwtMtlsClient.requestKey,
+      });
+
+      // Backchannel authentication request with mTLS (port 8443)
+      const backchannelEndpoint = `${mtlBackendUrl}/${serverConfig.tenantId}/v1/backchannel/authentications`;
+      let backchannelAuthenticationResponse = await mtlsPost({
+        url: backchannelEndpoint,
+        certPath,
+        keyPath,
+        body: new URLSearchParams({
+          client_id: privateKeyJwtMtlsClient.clientId,
+          client_assertion_type: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+          client_assertion: clientAssertion,
+          request: requestObject,
+        }).toString(),
       });
 
       console.log("Backchannel Authentication Response:", backchannelAuthenticationResponse.data);
@@ -967,13 +991,32 @@ describe("FAPI CIBA Profile - Financial-grade API: Client Initiated Backchannel 
       console.log("Authentication Complete Response:", completeResponse.data);
       expect(completeResponse.status).toBe(200);
 
-      // Request token with CIBA grant
-      const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
-        grantType: "urn:openid:params:grant-type:ciba",
-        authReqId: backchannelAuthenticationResponse.data.auth_req_id,
-        clientId: client.clientId,
-        clientCertFile: client.clientCertFile,
+      // Create new client assertion for token request
+      const tokenClientAssertion = createJwtWithPrivateKey({
+        payload: {
+          iss: privateKeyJwtMtlsClient.clientId,
+          sub: privateKeyJwtMtlsClient.clientId,
+          aud: serverConfig.issuer,
+          exp: toEpocTime({ adjusted: 300 }),
+          iat: toEpocTime({}),
+          jti: generateJti(),
+        },
+        privateKey: privateKeyJwtMtlsClient.requestKey,
+      });
+
+      // Request token with CIBA grant (mTLS on port 8443)
+      const tokenEndpoint = `${mtlBackendUrl}/${serverConfig.tenantId}/v1/tokens`;
+      const tokenResponse = await mtlsPost({
+        url: tokenEndpoint,
+        certPath,
+        keyPath,
+        body: new URLSearchParams({
+          grant_type: "urn:openid:params:grant-type:ciba",
+          auth_req_id: backchannelAuthenticationResponse.data.auth_req_id,
+          client_id: privateKeyJwtMtlsClient.clientId,
+          client_assertion_type: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+          client_assertion: tokenClientAssertion,
+        }).toString(),
       });
 
       console.log("Token Response:", tokenResponse.data);
@@ -982,16 +1025,36 @@ describe("FAPI CIBA Profile - Financial-grade API: Client Initiated Backchannel 
       expect(tokenResponse.data).toHaveProperty("id_token");
       expect(tokenResponse.data).toHaveProperty("token_type");
 
-      const introspectionResponse = await inspectToken({
-        endpoint: serverConfig.tokenIntrospectionEndpoint,
-        token: tokenResponse.data.access_token,
-        clientId: selfSignedTlsAuthClient.clientId,
-        clientCertFile: selfSignedTlsAuthClient.clientCertFile,
+      // Create client assertion for introspection
+      const introspectionClientAssertion = createJwtWithPrivateKey({
+        payload: {
+          iss: privateKeyJwtMtlsClient.clientId,
+          sub: privateKeyJwtMtlsClient.clientId,
+          aud: serverConfig.issuer,
+          exp: toEpocTime({ adjusted: 300 }),
+          iat: toEpocTime({}),
+          jti: generateJti(),
+        },
+        privateKey: privateKeyJwtMtlsClient.requestKey,
+      });
+
+      // Token introspection (mTLS on port 8443)
+      const introspectionEndpoint = `${mtlBackendUrl}/${serverConfig.tenantId}/v1/tokens/introspection`;
+      const introspectionResponse = await mtlsPost({
+        url: introspectionEndpoint,
+        certPath,
+        keyPath,
+        body: new URLSearchParams({
+          token: tokenResponse.data.access_token,
+          client_id: privateKeyJwtMtlsClient.clientId,
+          client_assertion_type: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+          client_assertion: introspectionClientAssertion,
+        }).toString(),
       });
       console.log(introspectionResponse.data);
       expect(introspectionResponse.status).toBe(200);
       expect(introspectionResponse.data).toHaveProperty("cnf");
-      const thumbprint = certThumbprint(selfSignedTlsAuthClient.clientCertFile);
+      const thumbprint = certThumbprint(privateKeyJwtMtlsClient.clientCertFile);
       expect(introspectionResponse.data.cnf["x5t#S256"]).toEqual(thumbprint);
     });
 

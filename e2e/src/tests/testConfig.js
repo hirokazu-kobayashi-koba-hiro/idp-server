@@ -1,5 +1,5 @@
 export const backendUrl = process.env.IDP_SERVER_URL || "http://localhost:8080";
-export const mtlBackendUrl = process.env.IDP_SERVER_MTLS_URL || "https://localhost:8443";
+export const mtlBackendUrl = process.env.IDP_SERVER_MTLS_URL || "https://localhost:8445";
 
 // Default tenant IDs for backward compatibility
 const DEFAULT_ADMIN_TENANT_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"; // Admin tenant for Management API tests
@@ -396,6 +396,40 @@ export const privateKeyJwtClient = {
     alg: "RS256",
     dq: "BV1CWVHfYv1x55Y4xhgjUghVYSEC45nXvRzjGSTS2IPNbSmLBBAyRT4uG7nPQcBnWc967pqnf5N79rjZSo2GmafCdGD4IQTcSa_pqTEJEYtSqyQQmyiFi7fPHekL7NaE1xjSOAOGNcoYXE-AqLeoF4--l7WEUDNFXS2bKMgiadU",
     n: "tndIPiYnTw8UlbvU4GSD77tPwePNpu1VYmTWmrOA1etvNV7xeU10lHPscmbr702bbo5adEVwWsqwHkS0lvtBBepb3BKhFwl84_Ffqp-P_rqlduQ3Xnri5BfesreOy6nZQcQ95OSR0M4HYgfhrsMXCxQsA1GCDCI7oiKm43icTxaPoH232qfJFG_rInHBEokO-BCK_0Ct-to6dyRLxlDgCoKR4LnWJ_ETfxzb9LSdp6mO3ccD9r9Qit7tgbv-vBzGtMW9Yd_iwbHMo2qRRMnbQMHHK3Vip2xCEIi1v3HC--UUXuecJ_SYG2D69UKC3hvO54ljWKsIyeGAkcTyDZER"
+  },
+};
+
+export const privateKeyJwtMtlsClient = {
+  clientId: "privateKeyJwtMtls",
+  clientSecret: "privateKeyJwtMtlsSecret123456789012345678901234567890123456789012345678901234567890123456",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+  redirectUriWithPort: "https://www.certification.openid.net:443/test/a/idp_oidc_basic/callback",
+  redirectUriWithHttp: "http://localhost:8081/callback",
+  scope: "account",
+  fapiBaselineScope: "read",
+  fapiAdvanceScope: "write",
+  identityVerificationScope: "transfers",
+  idTokenAlg: "RS256",
+  clientCertFile: "privateKeyJwtMtls.pem",
+  clientSecretKey: {
+    "kty": "EC",
+    "d": "W0lsWcJZeCFudlw4s6wUH1P7UWDxpQneroGUr-NbjbY",
+    "use": "sig",
+    "crv": "P-256",
+    "kid": "privateKeyMtlsSecretKey",
+    "x": "n-SgrlqX-2EZ-oC1c8TW2PRa1cAMtfHsipHza7zW_88",
+    "y": "qxMEw6qvhLuglglE9uIiSqZdtBiu9S0xtWW3CbZVTQw",
+    "alg": "ES256"
+  },
+  requestKey: {
+    "kty": "EC",
+    "d": "ddIacq49C3mUEB6jCKhh4IpNgsCsIYls60mPNTLAVQA",
+    "use": "sig",
+    "crv": "P-256",
+    "kid": "privateKeyMtlsRequesttKey",
+    "x": "7NEL__3iYg6nF-qXH9rMDKceeoPX7K8tcFPKAf5QF2w",
+    "y": "c4pN0A_K3t3bqeF_BRzYbsbKe_leUYh5eUZW2JOFSdg",
+    "alg": "ES256"
   },
 };
 

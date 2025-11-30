@@ -1,0 +1,43 @@
+{
+  "client_id": "a1b2c3d4-e5f6-a7b8-c9d0-e1f2a3b4c5d6",
+  "client_id_alias": "fapi-ciba-private-key-jwt-client-2",
+  "redirect_uris": [
+    "https://localhost.emobix.co.uk:8443/test/a/fapi-ciba/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/fapi-ciba/callback?dummy1=lorem&dummy2=ipsum"
+  ],
+  "response_types": [
+    "code",
+    "code id_token"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token",
+    "urn:openid:params:grant-type:ciba"
+  ],
+  "scope": "openid profile email address phone offline_access account transfers read write",
+  "client_name": "FAPI-CIBA Private Key JWT Client 2",
+  "client_name#ja-JP": "FAPI-CIBA Private Key JWTクライアント2",
+  "token_endpoint_auth_method": "private_key_jwt",
+  "token_endpoint_auth_signing_alg": "ES256",
+  "jwks": "{\"keys\":[{\n    \"kty\": \"EC\",\n    \"use\": \"sig\",\n    \"crv\": \"P-256\",\n    \"kid\": \"private_key_jwt_client_key_2\",\n    \"x\": \"GVvDYgE0SguVklJHRLyShLJFkfMwkEOEM18VD7Va1xQ\",\n    \"y\": \"Fvd8f9AL1Nypxauo5b_bk7hM3GW0e1kboSFb1Evs-20\",\n    \"alg\": \"ES256\"\n}]}",
+  "backchannel_token_delivery_mode": "poll",
+  "backchannel_authentication_request_signing_alg": "ES256",
+  "backchannel_user_code_parameter": false,
+  "backchannel_client_notification_endpoint": "https://localhost.emobix.co.uk:8443/test/a/fapi-ciba/ciba-notification-endpoint",
+  "application_type": "web",
+  "authorization_details_types": [
+    "payment_initiation",
+    "account_information"
+  ],
+  "tls_client_certificate_bound_access_tokens": true,
+  "request_object_signing_alg": "ES256",
+  "id_token_signed_response_alg": "ES256",
+  "userinfo_signed_response_alg": "ES256",
+  "authorization_signed_response_alg": "ES256",
+  "default_max_age": 300,
+  "require_auth_time": true,
+  "default_acr_values": [
+    "urn:mace:incommon:iap:gold",
+    "urn:openbanking:psd2:sca"
+  ]
+}

@@ -87,9 +87,9 @@ echo ""
 
 # Step 2: Get organization admin access token
 echo "🔐 Step 2: Getting organization administrator access token..."
-ORG_ADMIN_EMAIL="financial-admin@example.com"
-ORG_ADMIN_PASSWORD="FinancialAdminSecure123!"
-ADMIN_CLIENT_SECRET="financial-admin-secret-change-in-production-minimum-32-characters"
+ORG_ADMIN_EMAIL="fapi-test@example.com"
+ORG_ADMIN_PASSWORD="FapiCibaTestSecure123!"
+ADMIN_CLIENT_SECRET="fapi-ciba-admin-secret-change-in-production-minimum-32-characters"
 
 ORG_TOKEN_RESPONSE=$(curl -s -X POST \
   "${AUTHORIZATION_SERVER_URL}/${ORGANIZER_TENANT_ID}/v1/tokens" \
@@ -162,27 +162,51 @@ if [ -n "${FINANCIAL_TENANT_ID}" ]; then
   echo ""
 fi
 
-# Step 5: Update financial client configuration
-if [ -n "${FINANCIAL_CLIENT_ID}" ] && [ -n "${FINANCIAL_TENANT_ID}" ]; then
-  echo "🔄 Step 5: Updating financial client configuration..."
+# Step 5: Update financial client configurations
+if [ -n "${FINANCIAL_TENANT_ID}" ]; then
+  echo "🔄 Step 5: Updating financial client configurations..."
 
-  FINANCIAL_CLIENT_UPDATE_JSON=$(cat "${FINANCIAL_CLIENT_FILE}")
+  # Define client files to update
+  CLIENT_FILES=(
+    "financial-client.json:self_signed_tls_client_auth"
+    "private-key-jwt-client.json:private_key_jwt"
+    "private-key-jwt-client-2.json:private_key_jwt"
+    "tls-client-auth-client.json:tls_client_auth"
+    "tls-client-auth-client-2.json:tls_client_auth"
+  )
 
-  CLIENT_UPDATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
-    "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${FINANCIAL_TENANT_ID}/clients/${FINANCIAL_CLIENT_ID}" \
-    -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
-    -H "Content-Type: application/json" \
-    -d "${FINANCIAL_CLIENT_UPDATE_JSON}")
+  for CLIENT_ENTRY in "${CLIENT_FILES[@]}"; do
+    CLIENT_FILE="${CLIENT_ENTRY%%:*}"
+    CLIENT_AUTH_METHOD="${CLIENT_ENTRY##*:}"
+    CLIENT_FILE_PATH="${SCRIPT_DIR}/${CLIENT_FILE}"
 
-  CLIENT_UPDATE_HTTP_CODE=$(echo "${CLIENT_UPDATE_RESPONSE}" | tail -n1)
-  CLIENT_UPDATE_BODY=$(echo "${CLIENT_UPDATE_RESPONSE}" | sed '$d')
+    if [ ! -f "${CLIENT_FILE_PATH}" ]; then
+      echo "   ⚠️  ${CLIENT_FILE} not found, skipping..."
+      continue
+    fi
 
-  if [ "${CLIENT_UPDATE_HTTP_CODE}" = "200" ]; then
-    echo "✅ Financial client configuration updated to self_signed_tls_client_auth"
-  else
-    echo "❌ Financial client update failed (HTTP ${CLIENT_UPDATE_HTTP_CODE})"
-    echo "Response: ${CLIENT_UPDATE_BODY}" | jq '.' || echo "${CLIENT_UPDATE_BODY}"
-  fi
+    CLIENT_JSON=$(cat "${CLIENT_FILE_PATH}")
+    CLIENT_ID=$(echo "${CLIENT_JSON}" | jq -r '.client_id')
+    CLIENT_ALIAS=$(echo "${CLIENT_JSON}" | jq -r '.client_id_alias // .client_id')
+
+    echo "   📝 Updating client: ${CLIENT_ALIAS} (${CLIENT_AUTH_METHOD})..."
+
+    CLIENT_UPDATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
+      "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${FINANCIAL_TENANT_ID}/clients/${CLIENT_ID}" \
+      -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+      -H "Content-Type: application/json" \
+      -d "${CLIENT_JSON}")
+
+    CLIENT_UPDATE_HTTP_CODE=$(echo "${CLIENT_UPDATE_RESPONSE}" | tail -n1)
+    CLIENT_UPDATE_BODY=$(echo "${CLIENT_UPDATE_RESPONSE}" | sed '$d')
+
+    if [ "${CLIENT_UPDATE_HTTP_CODE}" = "200" ]; then
+      echo "   ✅ Updated: ${CLIENT_ID}"
+    else
+      echo "   ⚠️  Failed (HTTP ${CLIENT_UPDATE_HTTP_CODE})"
+      echo "   Response: ${CLIENT_UPDATE_BODY}" | jq '.' 2>/dev/null || echo "   ${CLIENT_UPDATE_BODY}"
+    fi
+  done
 
   echo ""
 fi
@@ -208,6 +232,33 @@ if [ -n "${FINANCIAL_TENANT_ID}" ] && [ -f "${AUTH_POLICY_FILE}" ]; then
   else
     echo "❌ Authentication policy update failed (HTTP ${POLICY_UPDATE_HTTP_CODE})"
     echo "Response: ${POLICY_UPDATE_BODY}" | jq '.' || echo "${POLICY_UPDATE_BODY}"
+  fi
+
+  echo ""
+fi
+
+# Step 7: Update test user
+FINANCIAL_USER_FILE="${SCRIPT_DIR}/financial-user.json"
+if [ -n "${FINANCIAL_TENANT_ID}" ] && [ -f "${FINANCIAL_USER_FILE}" ]; then
+  echo "🔄 Step 7: Updating test user..."
+
+  FINANCIAL_USER_JSON=$(cat "${FINANCIAL_USER_FILE}")
+  FINANCIAL_USER_ID=$(echo "${FINANCIAL_USER_JSON}" | jq -r '.sub')
+
+  USER_UPDATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
+    "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${FINANCIAL_TENANT_ID}/users/${FINANCIAL_USER_ID}" \
+    -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -d "${FINANCIAL_USER_JSON}")
+
+  USER_UPDATE_HTTP_CODE=$(echo "${USER_UPDATE_RESPONSE}" | tail -n1)
+  USER_UPDATE_BODY=$(echo "${USER_UPDATE_RESPONSE}" | sed '$d')
+
+  if [ "${USER_UPDATE_HTTP_CODE}" = "200" ]; then
+    echo "✅ Test user updated"
+  else
+    echo "⚠️  Test user update failed (HTTP ${USER_UPDATE_HTTP_CODE})"
+    echo "Response: ${USER_UPDATE_BODY}" | jq '.' 2>/dev/null || echo "${USER_UPDATE_BODY}"
   fi
 
   echo ""

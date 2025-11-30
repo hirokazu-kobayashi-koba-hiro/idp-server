@@ -190,8 +190,8 @@
       "fr-FR",
       "fr-CA"
     ],
-    "token_introspection_endpoint": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/tokens/introspection",
-    "token_revocation_endpoint": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/tokens/revocation",
+    "introspection_endpoint": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/tokens/introspection",
+    "revocation_endpoint": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/tokens/revocation",
     "backchannel_token_delivery_modes_supported": [
       "poll",
       "ping",
@@ -222,19 +222,13 @@
       "A128GCM"
     ],
     "tls_client_certificate_bound_access_tokens": true,
-    "vp_formats_supported": {
-      "jwt_vc_json": {
-        "alg_values_supported": [
-          "ES256K",
-          "ES384"
-        ]
-      },
-      "jwt_vp_json": {
-        "alg_values_supported": [
-          "ES256K",
-          "EdDSA"
-        ]
-      }
+    "mtls_endpoint_aliases": {
+      "token_endpoint": "https:///host.docker.internal:8445/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/tokens",
+      "revocation_endpoint": "https:///host.docker.internal:8445/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/tokens/revocation",
+      "introspection_endpoint": "https:///host.docker.internal:8445/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/tokens/introspection",
+      "userinfo_endpoint": "https:///host.docker.internal:8445/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/userinfo",
+      "backchannel_authentication_endpoint": "https:///host.docker.internal:8445/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/backchannel/authentications",
+      "jwks_uri": "https:///host.docker.internal:8445/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/jwks"
     },
     "extension": {
       "access_token_type": "JWT",
@@ -255,181 +249,7 @@
       ],
       "custom_claims_scope_mapping": true,
       "access_token_user_custom_properties": true,
-      "access_token_selective_verified_claims": true,
-      "authentication_policies": [
-        {
-          "id": "gold",
-          "priority": 1,
-          "conditions": {
-            "acr_values": [
-              "urn:mace:incommon:iap:gold"
-            ]
-          },
-          "available_methods": [
-            "password",
-            "email",
-            "sms",
-            "fido2",
-            "fido-uaf",
-            "legacy"
-          ],
-          "acr_mapping_rules": {
-            "urn:mace:incommon:iap:gold": [
-              "fido-uaf",
-              "fido2"
-            ],
-            "urn:mace:incommon:iap:silver": [
-              "email",
-              "sms"
-            ],
-            "urn:mace:incommon:iap:bronze": [
-              "password",
-              "legacy"
-            ]
-          },
-          "level_of_authentication_scopes": {
-            "transfers": [
-              "fido-uaf", "fido2"
-            ]
-          },
-          "success_conditions": {
-            "any_of": [
-              {
-                "type": "fido-uaf-authentication",
-                "success_count": 1
-              }
-            ]
-          },
-          "failure_conditions": {
-            "any_of": [
-              {
-                "type": "password",
-                "failure_count": 5
-              },
-              {
-                "type": "fido-uaf-authentication",
-                "failure_count": 5
-              }
-            ]
-          },
-          "lock_conditions": {
-            "any_of": [
-              {
-                "type": "password",
-                "failure_count": 5
-              },
-              {
-                "type": "fido-uaf-authentication",
-                "failure_count": 5
-              }
-            ]
-          }
-        },
-        {
-          "id": "default_authentication_policy",
-          "priority": 100,
-          "conditions": {
-            "scopes": [
-              "openid"
-            ]
-          },
-          "available_methods": [
-            "password",
-            "email",
-            "sms",
-            "fido2",
-            "fido-uaf",
-            "legacy"
-          ],
-          "acr_mapping_rules": {
-            "urn:mace:incommon:iap:gold": [
-              "fido-uaf",
-              "fido2"
-            ],
-            "urn:mace:incommon:iap:silver": [
-              "email",
-              "sms"
-            ],
-            "urn:mace:incommon:iap:bronze": [
-              "password",
-              "legacy"
-            ]
-          },
-          "level_of_authentication_scopes": {
-            "transfers": [
-              "fido-uaf", "fido2"
-            ]
-          },
-          "success_conditions": {
-            "any_of": [
-              {
-                "type": "password-authentication",
-                "success_count": 1
-              },
-              {
-                "type": "authentication-device-binding-message",
-                "success_count": 1
-              },
-              {
-                "type": "sms-authentication",
-                "success_count": 1
-              },
-              {
-                "type": "email-authentication",
-                "success_count": 1
-              },
-              {
-                "type": "fido-uaf-authentication",
-                "success_count": 1
-              },
-              {
-                "type": "oidc-google",
-                "success_count": 1
-              },
-              {
-                "type": "oidc-facebook",
-                "success_count": 1
-              },
-              {
-                "type": "oidc-b7481833-c95a-4c7a-9481-94b30008c8ef",
-                "success_count": 1
-              }
-            ]
-          },
-          "failure_conditions": {
-            "any_of": [
-              {
-                "type": "password",
-                "failure_count": 5
-              },
-              {
-                "type": "authentication-device-binding-message",
-                "failure_count": 5
-              },
-              {
-                "type": "fido-uaf-authentication",
-                "failure_count": 5
-              }
-            ]
-          },
-          "lock_conditions": {
-            "any_of": [
-              {
-                "type": "password",
-                "failure_count": 5
-              },
-              {
-                "type": "authentication-device-binding-message",
-                "failure_count": 5
-              },
-              {
-                "type": "fido-uaf-authentication",
-                "failure_count": 5
-              }
-            ]
-          }
-        }
-      ]
+      "access_token_selective_verified_claims": true
     },
     "verified_claims_supported": true,
     "trust_frameworks_supported":[

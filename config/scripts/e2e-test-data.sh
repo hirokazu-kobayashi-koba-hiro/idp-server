@@ -117,6 +117,7 @@ client_files=(
   clientSecretPost.json
   clientSecretPostWithIdTokenEnc.json
   privateKeyJwt.json
+  privateKeyJwtMtls.json
   publicClient.json
   selfSignedTlsClientAuth.json
   selfSignedTlsClientAuth2.json

@@ -192,7 +192,7 @@ public class AccessTokenCreator {
       ClientConfiguration clientConfiguration,
       ClientCredentials clientCredentials) {
 
-    if (clientCredentials.isTlsClientAuthOrSelfSignedTlsClientAuth()
+    if (clientCredentials.hasClientCertification()
         && authorizationServerConfiguration.isTlsClientCertificateBoundAccessTokens()
         && clientConfiguration.isTlsClientCertificateBoundAccessTokens()) {
       ClientCertification clientCertification = clientCredentials.clientCertification();

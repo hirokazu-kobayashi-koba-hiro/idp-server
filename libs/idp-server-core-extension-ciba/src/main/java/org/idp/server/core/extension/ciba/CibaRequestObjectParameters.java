@@ -87,7 +87,9 @@ public class CibaRequestObjectParameters implements BackchannelRequestParameters
   }
 
   public RequestedExpiry requestedExpiry() {
-    return new RequestedExpiry(getValueOrEmpty(requested_expiry));
+    Long value = getValueAsLong(requested_expiry);
+    if (value == null) return new RequestedExpiry();
+    return new RequestedExpiry(value.toString());
   }
 
   public boolean hasRequestedExpiry() {
@@ -178,6 +180,14 @@ public class CibaRequestObjectParameters implements BackchannelRequestParameters
       return "";
     }
     return (String) value;
+  }
+
+  Long getValueAsLong(OAuthRequestKey key) {
+    Object value = values.get(key.name());
+    if (Objects.isNull(value)) {
+      return null;
+    }
+    return (long) value;
   }
 
   boolean contains(OAuthRequestKey key) {

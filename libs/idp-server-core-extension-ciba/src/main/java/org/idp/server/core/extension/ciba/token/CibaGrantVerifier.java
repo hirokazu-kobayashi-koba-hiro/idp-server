@@ -19,6 +19,9 @@ package org.idp.server.core.extension.ciba.token;
 import java.time.LocalDateTime;
 import org.idp.server.core.extension.ciba.grant.CibaGrant;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.token.TokenRequestContext;
 import org.idp.server.core.openid.token.exception.TokenBadRequestException;
 import org.idp.server.platform.date.SystemDateTime;
@@ -40,12 +43,17 @@ public class CibaGrantVerifier {
   TokenRequestContext context;
   BackchannelAuthenticationRequest request;
   CibaGrant cibaGrant;
+  ClientCredentials clientCredentials;
 
   public CibaGrantVerifier(
-      TokenRequestContext context, BackchannelAuthenticationRequest request, CibaGrant cibaGrant) {
+      TokenRequestContext context,
+      BackchannelAuthenticationRequest request,
+      CibaGrant cibaGrant,
+      ClientCredentials clientCredentials) {
     this.context = context;
     this.request = request;
     this.cibaGrant = cibaGrant;
+    this.clientCredentials = clientCredentials;
   }
 
   public void verify() {
@@ -54,6 +62,7 @@ public class CibaGrantVerifier {
     throwExceptionIfExpired();
     throwExceptionIfAuthorizedPending();
     throwExceptionIfAccessDenied();
+    throwExceptionIfFapiCibaAndCertificateBoundRequiredButMissing();
   }
 
   /**
@@ -129,6 +138,19 @@ public class CibaGrantVerifier {
     if (cibaGrant.isAccessDenied()) {
       throw new TokenBadRequestException(
           "access_denied", "The end-user denied the authorization request.");
+    }
+  }
+
+  void throwExceptionIfFapiCibaAndCertificateBoundRequiredButMissing() {
+    AuthorizationServerConfiguration serverConfiguration = context.serverConfiguration();
+    ClientConfiguration clientConfiguration = context.clientConfiguration();
+
+    if (serverConfiguration.isTlsClientCertificateBoundAccessTokens()
+        && clientConfiguration.isTlsClientCertificateBoundAccessTokens()
+        && !clientCredentials.hasClientCertification()) {
+      throw new TokenBadRequestException(
+          "invalid_request",
+          "When FAPI-CIBA profile with tls_client_certificate_bound_access_tokens enabled, client certificate MUST be present");
     }
   }
 }
