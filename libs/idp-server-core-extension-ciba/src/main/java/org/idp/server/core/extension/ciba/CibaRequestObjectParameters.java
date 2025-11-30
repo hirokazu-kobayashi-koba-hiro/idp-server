@@ -182,10 +182,25 @@ public class CibaRequestObjectParameters implements BackchannelRequestParameters
     return (String) value;
   }
 
+  /**
+   * Gets a value as Long, accepting both JSON number and JSON string per CIBA-7.1.1.
+   *
+   * <p>Per CIBA Core Section 7.1.1, requested_expiry may be sent as either a JSON string or a JSON
+   * number, and the OP must accept either type.
+   *
+   * @param key the OAuth request key
+   * @return the value as Long, or null if not present
+   */
   Long getValueAsLong(OAuthRequestKey key) {
     Object value = values.get(key.name());
     if (Objects.isNull(value)) {
       return null;
+    }
+    if (value instanceof Number) {
+      return ((Number) value).longValue();
+    }
+    if (value instanceof String) {
+      return Long.parseLong((String) value);
     }
     return (long) value;
   }

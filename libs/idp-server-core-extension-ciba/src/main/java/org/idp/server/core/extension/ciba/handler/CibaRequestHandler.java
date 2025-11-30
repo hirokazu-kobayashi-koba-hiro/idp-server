@@ -16,7 +16,6 @@
 
 package org.idp.server.core.extension.ciba.handler;
 
-import java.util.UUID;
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.CibaRequestParameters;
 import org.idp.server.core.extension.ciba.CibaRequestPattern;
@@ -130,7 +129,7 @@ public class CibaRequestHandler {
 
     BackchannelAuthenticationResponse response =
         new BackchannelAuthenticationResponseBuilder()
-            .add(new AuthReqId(UUID.randomUUID().toString()))
+            .add(AuthReqId.generate())
             .add(context.expiresIn())
             .add(context.interval())
             .build();

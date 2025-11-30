@@ -18,8 +18,13 @@ package org.idp.server.core.extension.ciba.verifier;
 
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationBadRequestException;
+import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationUnauthorizedException;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.exception.RequestObjectInvalidException;
 import org.idp.server.core.openid.oauth.verifier.extension.RequestObjectVerifyable;
+import org.idp.server.platform.jose.JoseContext;
+import org.idp.server.platform.jose.JsonWebTokenClaims;
 
 public class CibaRequestObjectVerifier implements CibaExtensionVerifier, RequestObjectVerifyable {
 
@@ -32,8 +37,39 @@ public class CibaRequestObjectVerifier implements CibaExtensionVerifier, Request
     try {
       verify(context.joseContext(), context.serverConfiguration(), context.clientConfiguration());
     } catch (RequestObjectInvalidException exception) {
+      // CIBA Core Section 13 does not define 'invalid_request_object' error code
       throw new BackchannelAuthenticationBadRequestException(
-          "invalid_request_object", exception.getMessage());
+          "invalid_request", exception.getMessage());
+    }
+  }
+
+  /**
+   * Overrides the default iss validation to return CIBA-specific error.
+   *
+   * <p>Per CIBA Core Section 13, a mismatch between client_id and iss represents a client
+   * authentication failure, which should return 'invalid_client' (HTTP 401), not
+   * 'invalid_request_object' (HTTP 400).
+   *
+   * <p>Note: CIBA does not define 'invalid_request_object' error code, so missing iss returns
+   * 'invalid_request', while iss mismatch returns 'invalid_client'.
+   */
+  @Override
+  public void throwExceptionIfInvalidIss(
+      JoseContext joseContext,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
+      ClientConfiguration clientConfiguration)
+      throws RequestObjectInvalidException {
+    JsonWebTokenClaims claims = joseContext.claims();
+    if (!claims.hasIss()) {
+      throw new RequestObjectInvalidException(
+          "invalid_request", "request object is invalid, must contains iss claim in jwt payload");
+    }
+    if (!claims.getIss().equals(clientConfiguration.clientIdValue())
+        && !claims.getIss().equals(clientConfiguration.clientIdAlias())) {
+      // CIBA: iss mismatch is client authentication failure (invalid_client, 401)
+      throw new BackchannelAuthenticationUnauthorizedException(
+          "invalid_client",
+          "Client authentication failed: 'iss' claim in request object does not match client_id.");
     }
   }
 }

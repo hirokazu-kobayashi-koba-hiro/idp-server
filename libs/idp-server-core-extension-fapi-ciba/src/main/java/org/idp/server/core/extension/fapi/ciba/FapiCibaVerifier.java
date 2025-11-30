@@ -54,6 +54,7 @@ public class FapiCibaVerifier {
 
   public void verify(CibaRequestContext context) {
     throwExceptionIfNotSignedRequestObject(context);
+    throwExceptionIfMissingIat(context);
     throwExceptionIfInvalidRequestObjectLifetime(context);
     throwExceptionIfInvalidSigningAlgorithm(context);
     throwExceptionIfNotConfidentialClient(context);
@@ -74,6 +75,33 @@ public class FapiCibaVerifier {
       throw new BackchannelAuthenticationBadRequestException(
           "invalid_request",
           "FAPI CIBA Profile requires signed request object. Request must include 'request' parameter with a signed JWT.");
+    }
+  }
+
+  /**
+   * Validates 'iat' claim presence in request object.
+   *
+   * <p><strong>Note:</strong> This requirement is NOT explicitly mandated in FAPI Part 2 Section
+   * 5.2.2. The specification only requires 'nbf' (5.2.2-18) and 'exp' (5.2.2-14) claims.
+   *
+   * <p>However, the OpenID Foundation FAPI CIBA Conformance Test Suite (test:
+   * fapi-ciba-id1-ensure-request-object-missing-iat-fails) validates that the 'iat' claim is
+   * present. This validation is implemented to pass the conformance test suite.
+   *
+   * @see <a
+   *     href="https://openid.net/specs/openid-financial-api-part-2-1_0.html#authorization-server">FAPI
+   *     Part 2 Section 5.2.2</a>
+   */
+  void throwExceptionIfMissingIat(CibaRequestContext context) {
+    JoseContext joseContext = context.joseContext();
+    if (!joseContext.exists()) {
+      return; // Will be caught by other validators
+    }
+
+    JsonWebTokenClaims claims = joseContext.claims();
+    if (!claims.hasIat()) {
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_request", "FAPI CIBA Profile requires 'iat' claim in request object.");
     }
   }
 

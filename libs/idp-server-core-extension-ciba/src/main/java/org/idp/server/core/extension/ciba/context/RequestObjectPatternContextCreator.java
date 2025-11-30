@@ -92,8 +92,9 @@ public class RequestObjectPatternContextCreator implements CibaRequestContextCre
 
       log.error(exception.getMessage(), exception);
 
+      // CIBA Core Section 13 does not define 'invalid_request_object' error code
       throw new BackchannelAuthenticationBadRequestException(
-          "invalid_request_object", exception.getMessage(), exception);
+          "invalid_request", exception.getMessage(), exception);
     }
   }
 }
