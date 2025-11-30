@@ -141,7 +141,9 @@ public class MappingRule implements JsonReadable {
     map.put("from", from);
     map.put("static_value", staticValue);
     map.put("to", to);
-    map.put("functions", functions());
+    map.put(
+        "functions",
+        functions != null ? functions.stream().map(FunctionSpec::toMap).toList() : null);
     map.put("condition", condition != null ? condition.toMap() : null);
     return map;
   }
