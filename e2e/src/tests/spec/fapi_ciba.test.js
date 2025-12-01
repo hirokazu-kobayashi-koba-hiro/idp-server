@@ -1773,8 +1773,8 @@ describe("FAPI CIBA Profile - Financial-grade API: Client Initiated Backchannel 
 
       const clientAssertion = createJwtWithPrivateKey({
         payload: {
-          iss: "clientId",
-          sub: "clientId",
+          iss: privateKeyJwtClient.clientId,
+          sub: privateKeyJwtClient.clientId,
           aud: serverConfig.issuer,
           jti: generateJti(),
           exp: toEpocTime({ adjusted: 3600 }),

@@ -29,10 +29,25 @@ public class CibaNormalRequestValidator implements CibaRequestValidator {
     this.request = request;
   }
 
+  /**
+   * Validates the CIBA request parameters.
+   *
+   * <p>Per RFC 7521 Section 4.2, when using JWT-based client authentication, the client_id can be
+   * identified from:
+   *
+   * <ol>
+   *   <li>Explicit client_id parameter in request body
+   *   <li>HTTP Basic Authentication header
+   *   <li>Issuer (iss) claim from client_assertion JWT
+   * </ol>
+   *
+   * @throws BackchannelAuthenticationBadRequestException if client cannot be identified
+   */
   public void validate() {
     if (!request.hasClientId()) {
       throw new BackchannelAuthenticationBadRequestException(
-          "invalid_request", "client_id is in neither body or header. client_id is required");
+          "invalid_request",
+          "Unable to identify client. Provide client_id parameter, HTTP Basic Authentication, or client_assertion with iss claim.");
     }
     throwExceptionIfInvalidRequestedExpiry();
     throwExceptionIfInvalidAuthorizationDetails();

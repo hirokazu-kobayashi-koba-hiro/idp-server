@@ -60,9 +60,9 @@ public class CibaGrantVerifier {
     throwExceptionIfInvalidAuthReqId();
     throwExceptionIfPushMode();
     throwExceptionIfExpired();
+    throwExceptionIfFapiCibaAndCertificateBoundRequiredButMissing();
     throwExceptionIfAuthorizedPending();
     throwExceptionIfAccessDenied();
-    throwExceptionIfFapiCibaAndCertificateBoundRequiredButMissing();
   }
 
   /**
@@ -141,6 +141,7 @@ public class CibaGrantVerifier {
     }
   }
 
+  // TODO move to FAPI_CIBA module to use plugin pattern
   void throwExceptionIfFapiCibaAndCertificateBoundRequiredButMissing() {
     AuthorizationServerConfiguration serverConfiguration = context.serverConfiguration();
     ClientConfiguration clientConfiguration = context.clientConfiguration();

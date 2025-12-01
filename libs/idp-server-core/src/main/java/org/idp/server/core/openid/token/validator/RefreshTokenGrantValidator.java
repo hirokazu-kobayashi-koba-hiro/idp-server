@@ -32,7 +32,6 @@ public class RefreshTokenGrantValidator {
     throwExceptionIfNotContainsRefreshToken();
     throwExceptionIfUnSupportedGrantTypeWithServer();
     throwExceptionIfUnSupportedGrantTypeWithClient();
-    throwExceptionIfNotContainsClientId();
   }
 
   void throwExceptionIfUnSupportedGrantTypeWithClient() {
@@ -55,16 +54,6 @@ public class RefreshTokenGrantValidator {
     if (!tokenRequestContext.hasRefreshToken()) {
       throw new TokenBadRequestException(
           "token request does not contains refresh_token, refresh_token grant must contains refresh_token");
-    }
-  }
-
-  void throwExceptionIfNotContainsClientId() {
-    if (tokenRequestContext.hasClientSecretBasic()) {
-      return;
-    }
-    if (!tokenRequestContext.hasClientId()) {
-      throw new TokenBadRequestException(
-          "token request does not contains client_id, password must contains client_id");
     }
   }
 }

@@ -894,7 +894,7 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
       console.log(backchannelAuthenticationResponse.data);
       expect(backchannelAuthenticationResponse.status).toBe(400);
       expect(backchannelAuthenticationResponse.data.error).toEqual("invalid_request");
-      expect(backchannelAuthenticationResponse.data.error_description).toEqual("client_id is in neither body or header. client_id is required");
+      expect(backchannelAuthenticationResponse.data.error_description).toEqual("Unable to identify client. Provide client_id parameter, HTTP Basic Authentication, or client_assertion with iss claim.");
     });
 
     it("loginHint is invalid format", async () => {
