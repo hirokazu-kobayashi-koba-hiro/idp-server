@@ -117,8 +117,8 @@ public class CibaRequestHandler {
             authorizationServerConfiguration,
             clientConfiguration);
 
-    verifier.verify(context);
     clientAuthenticationHandler.authenticate(context);
+    verifier.verify(context);
 
     return context;
   }

@@ -18,10 +18,20 @@ package org.idp.server.core.extension.ciba.verifier;
 
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationBadRequestException;
+import org.idp.server.core.openid.oauth.type.ciba.BindingMessage;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.openid.oauth.type.oauth.GrantType;
 
 public class CibaRequestBaseVerifier {
+
+  /**
+   * Maximum length for binding_message.
+   *
+   * <p>Per CIBA Core Section 7.1, the binding_message SHOULD be relatively short and use a limited
+   * set of plain text characters. This limit ensures the message can be displayed on authentication
+   * devices with limited screen space.
+   */
+  private static final int BINDING_MESSAGE_MAX_LENGTH = 6;
 
   public void verify(CibaRequestContext context) {
     throwExceptionIfUnSupportedGrantType(context);
@@ -29,6 +39,7 @@ public class CibaRequestBaseVerifier {
     throwExceptionIfNotContainsOpenidScope(context);
     throwExceptionIfNotContainsAnyHint(context);
     throwExceptionIfNotContainsUserCode(context);
+    throwExceptionIfInvalidBindingMessage(context);
   }
 
   void throwExceptionIfUnSupportedGrantType(CibaRequestContext context) {
@@ -78,6 +89,31 @@ public class CibaRequestBaseVerifier {
       throw new BackchannelAuthenticationBadRequestException(
           "unauthorized_client",
           "Public clients are not allowed in CIBA. Use confidential client with proper authentication.");
+    }
+  }
+
+  /**
+   * Validates the binding_message parameter.
+   *
+   * <p>Per CIBA Core Section 7.1, the binding_message is intended to be displayed on both the
+   * consumption device and the authentication device. It SHOULD be relatively short and use a
+   * limited set of plain text characters.
+   *
+   * <p>Per CIBA Core Section 13, if the binding_message is invalid or unacceptable, the
+   * invalid_binding_message error MUST be returned.
+   */
+  void throwExceptionIfInvalidBindingMessage(CibaRequestContext context) {
+    BindingMessage bindingMessage = context.backchannelAuthenticationRequest().bindingMessage();
+    if (!bindingMessage.exists()) {
+      return;
+    }
+
+    if (bindingMessage.value().length() > BINDING_MESSAGE_MAX_LENGTH) {
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_binding_message",
+          String.format(
+              "binding_message exceeds maximum length of %d characters",
+              BINDING_MESSAGE_MAX_LENGTH));
     }
   }
 }
