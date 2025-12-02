@@ -18,6 +18,7 @@ package org.idp.server.authentication.interactors.cancel;
 
 import java.util.Map;
 import org.idp.server.core.openid.authentication.*;
+import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
@@ -49,10 +50,11 @@ public class AuthenticationCancelInteractor implements AuthenticationInteractor 
       RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
+    User user = transaction.user();
     AuthenticationInteractionStatus status = AuthenticationInteractionStatus.SUCCESS;
     Map<String, Object> response = Map.of();
     DefaultSecurityEventType eventType = DefaultSecurityEventType.authentication_cancel_success;
     return new AuthenticationInteractionRequestResult(
-        status, type, operationType(), method(), response, eventType);
+        status, type, operationType(), method(), user, response, eventType);
   }
 }
