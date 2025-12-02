@@ -16,9 +16,13 @@
 
 package org.idp.server.core.extension.ciba.verifier;
 
+import org.idp.server.core.extension.ciba.CibaProfile;
 import org.idp.server.core.extension.ciba.CibaRequestContext;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 
 public interface CibaVerifier {
 
-  void verify(CibaRequestContext context);
+  CibaProfile profile();
+
+  void verify(CibaRequestContext context, ClientCredentials clientCredentials);
 }

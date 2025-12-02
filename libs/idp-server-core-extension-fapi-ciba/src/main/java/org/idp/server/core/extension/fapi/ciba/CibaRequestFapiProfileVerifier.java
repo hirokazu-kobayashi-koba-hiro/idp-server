@@ -14,20 +14,32 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.ciba.verifier;
+package org.idp.server.core.extension.fapi.ciba;
 
+import org.idp.server.core.extension.ciba.CibaProfile;
 import org.idp.server.core.extension.ciba.CibaRequestContext;
+import org.idp.server.core.extension.ciba.verifier.CibaRequestBaseVerifier;
+import org.idp.server.core.extension.ciba.verifier.CibaVerifier;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 
 public class CibaRequestFapiProfileVerifier implements CibaVerifier {
 
   CibaRequestBaseVerifier baseVerifier;
+  FapiCibaVerifier fapiCibaVerifier;
 
   public CibaRequestFapiProfileVerifier() {
     this.baseVerifier = new CibaRequestBaseVerifier();
+    this.fapiCibaVerifier = new FapiCibaVerifier();
   }
 
   @Override
-  public void verify(CibaRequestContext context) {
+  public CibaProfile profile() {
+    return CibaProfile.FAPI_CIBA;
+  }
+
+  @Override
+  public void verify(CibaRequestContext context, ClientCredentials clientCredentials) {
     baseVerifier.verify(context);
+    fapiCibaVerifier.verify(context, clientCredentials);
   }
 }

@@ -18,6 +18,7 @@ package org.idp.server.adapters.springboot.application.restapi.me;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
+import org.idp.server.adapters.springboot.application.restapi.FapiInteractionIdConfigurable;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.adapters.springboot.application.restapi.model.ResourceOwnerPrincipal;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationApplicationApi;
@@ -38,7 +39,8 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/{tenant-id}/v1/me/identity-verification/applications")
-public class IdentityVerificationApplicationV1Api implements ParameterTransformable {
+public class IdentityVerificationApplicationV1Api
+    implements ParameterTransformable, FapiInteractionIdConfigurable {
 
   IdentityVerificationApplicationApi identityVerificationApplicationApi;
 
@@ -53,6 +55,7 @@ public class IdentityVerificationApplicationV1Api implements ParameterTransforma
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("verification-type") IdentityVerificationType verificationType,
       @PathVariable("process") IdentityVerificationProcess identityVerificationProcess,
+      @RequestHeader(required = false, value = "x-fapi-interaction-id") String fapiInteractionId,
       @RequestBody(required = false) Map<String, Object> requestBody,
       HttpServletRequest httpServletRequest) {
 
@@ -69,6 +72,7 @@ public class IdentityVerificationApplicationV1Api implements ParameterTransforma
             requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
+    addFapiInteractionId(httpHeaders, fapiInteractionId);
     httpHeaders.add("Content-Type", "application/json");
     return new ResponseEntity<>(
         response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
@@ -78,6 +82,7 @@ public class IdentityVerificationApplicationV1Api implements ParameterTransforma
   public ResponseEntity<?> findList(
       @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestHeader(required = false, value = "x-fapi-interaction-id") String fapiInteractionId,
       @RequestParam Map<String, String> queryParams,
       HttpServletRequest httpServletRequest) {
 
@@ -92,6 +97,7 @@ public class IdentityVerificationApplicationV1Api implements ParameterTransforma
             requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
+    addFapiInteractionId(httpHeaders, fapiInteractionId);
     httpHeaders.add("Content-Type", "application/json");
     return new ResponseEntity<>(
         response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
@@ -104,6 +110,7 @@ public class IdentityVerificationApplicationV1Api implements ParameterTransforma
       @PathVariable("id") IdentityVerificationApplicationIdentifier identifier,
       @PathVariable("verification-type") IdentityVerificationType verificationType,
       @PathVariable("verification-process") IdentityVerificationProcess process,
+      @RequestHeader(required = false, value = "x-fapi-interaction-id") String fapiInteractionId,
       @RequestBody(required = false) Map<String, Object> requestBody,
       HttpServletRequest httpServletRequest) {
 
@@ -121,6 +128,7 @@ public class IdentityVerificationApplicationV1Api implements ParameterTransforma
             requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
+    addFapiInteractionId(httpHeaders, fapiInteractionId);
     httpHeaders.add("Content-Type", "application/json");
     return new ResponseEntity<>(
         response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
@@ -132,6 +140,7 @@ public class IdentityVerificationApplicationV1Api implements ParameterTransforma
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("id") IdentityVerificationApplicationIdentifier identifier,
       @PathVariable("verification-type") IdentityVerificationType verificationType,
+      @RequestHeader(required = false, value = "x-fapi-interaction-id") String fapiInteractionId,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
@@ -146,6 +155,7 @@ public class IdentityVerificationApplicationV1Api implements ParameterTransforma
             requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
+    addFapiInteractionId(httpHeaders, fapiInteractionId);
     httpHeaders.add("Content-Type", "application/json");
     return new ResponseEntity<>(
         response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));

@@ -18,6 +18,7 @@ package org.idp.server.adapters.springboot.application.restapi.me;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
+import org.idp.server.adapters.springboot.application.restapi.FapiInteractionIdConfigurable;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.adapters.springboot.application.restapi.model.ResourceOwnerPrincipal;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationApi;
@@ -34,7 +35,8 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/{tenant-id}/v1/me/identity-verification/results")
-public class IdentityVerificationV1Api implements ParameterTransformable {
+public class IdentityVerificationV1Api
+    implements ParameterTransformable, FapiInteractionIdConfigurable {
 
   IdentityVerificationApi identityVerificationApi;
 
@@ -46,6 +48,7 @@ public class IdentityVerificationV1Api implements ParameterTransformable {
   public ResponseEntity<?> findList(
       @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestHeader(required = false, value = "x-fapi-interaction-id") String fapiInteractionId,
       @RequestParam Map<String, String> queryParams,
       HttpServletRequest httpServletRequest) {
 
@@ -60,6 +63,7 @@ public class IdentityVerificationV1Api implements ParameterTransformable {
             requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
+    addFapiInteractionId(httpHeaders, fapiInteractionId);
     httpHeaders.add("Content-Type", "application/json");
     return new ResponseEntity<>(
         response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));

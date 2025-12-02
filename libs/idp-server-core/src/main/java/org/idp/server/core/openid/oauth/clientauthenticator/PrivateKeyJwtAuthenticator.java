@@ -23,6 +23,7 @@ import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAu
 import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertification;
 import org.idp.server.core.openid.oauth.clientauthenticator.plugin.ClientAuthenticator;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.openid.oauth.type.oauth.ClientSecret;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
@@ -30,6 +31,7 @@ import org.idp.server.platform.jose.JoseContext;
 import org.idp.server.platform.jose.JoseHandler;
 import org.idp.server.platform.jose.JoseInvalidException;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.x509.X509CertInvalidException;
 
 class PrivateKeyJwtAuthenticator
     implements ClientAuthenticator, ClientAuthenticationJwtValidatable {
@@ -54,6 +56,10 @@ class PrivateKeyJwtAuthenticator
         new ClientAuthenticationPublicKey(joseContext.jsonWebKey());
     ClientAssertionJwt clientAssertionJwt = new ClientAssertionJwt(joseContext.jsonWebSignature());
 
+    throwExceptionIfUnmatchedAlg(context, clientAssertionJwt, clientAuthenticationPublicKey);
+
+    ClientCertification clientCertification = parseClientCertification(context);
+
     log.info(
         "Client authentication succeeded: method={}, client_id={}",
         ClientAuthenticationType.private_key_jwt.name(),
@@ -65,7 +71,20 @@ class PrivateKeyJwtAuthenticator
         clientSecret,
         clientAuthenticationPublicKey,
         clientAssertionJwt,
-        new ClientCertification());
+        clientCertification);
+  }
+
+  private ClientCertification parseClientCertification(BackchannelRequestContext context) {
+    ClientCert clientCert = context.clientCert();
+    if (clientCert == null || !clientCert.exists()) {
+      return new ClientCertification();
+    }
+    try {
+      return ClientCertification.parse(clientCert.plainValue());
+    } catch (X509CertInvalidException e) {
+      log.warn("Failed to parse client certificate: {}", e.getMessage());
+      return new ClientCertification();
+    }
   }
 
   void throwExceptionIfNotContainsClientAssertion(BackchannelRequestContext context) {
@@ -105,6 +124,20 @@ class PrivateKeyJwtAuthenticator
           clientId,
           "client_assertion validation failed: " + e.getMessage(),
           e);
+    }
+  }
+
+  void throwExceptionIfUnmatchedAlg(
+      BackchannelRequestContext context,
+      ClientAssertionJwt clientAssertionJwt,
+      ClientAuthenticationPublicKey clientAuthenticationPublicKey) {
+    String algorithm = clientAssertionJwt.algorithm();
+    String publicKeyAlgorithm = clientAuthenticationPublicKey.algorithm();
+    if (!algorithm.equals(publicKeyAlgorithm)) {
+      throw new ClientUnAuthorizedException(
+          ClientAuthenticationType.private_key_jwt.name(),
+          context.requestedClientId(),
+          "Client_assertion alg  mismatch public key algorithm.");
     }
   }
 }

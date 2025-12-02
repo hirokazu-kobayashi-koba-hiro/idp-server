@@ -458,7 +458,7 @@ describe("User Status verification. Can not authorize when user status is not ac
           clientSecret: clientSecret,
           scope: "openid profile email",
           loginHint: `sub:${user.sub},idp:idp-server`,
-          bindingMessage: "CIBA Test",
+          bindingMessage: "1234",
         });
 
         console.log(`CIBA response for ${status}:`, cibaResponse.status, cibaResponse.data);

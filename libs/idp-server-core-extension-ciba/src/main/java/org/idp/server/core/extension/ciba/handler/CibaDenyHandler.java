@@ -63,9 +63,6 @@ public class CibaDenyHandler {
             CibaGrantStatus.access_denied, new Authentication(), new DeniedScopes());
     cibaGrantRepository.update(tenant, updated);
 
-    backchannelAuthenticationRequestRepository.delete(
-        tenant, backchannelAuthenticationRequestIdentifier);
-
     return new CibaDenyResponse(CibaDenyStatus.OK);
   }
 }

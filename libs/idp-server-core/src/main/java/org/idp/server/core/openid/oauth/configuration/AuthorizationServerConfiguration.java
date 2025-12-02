@@ -69,6 +69,7 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
   List<String> introspectionEndpointAuthSigningAlgValuesSupported = new ArrayList<>();
   List<String> codeChallengeMethodsSupported = new ArrayList<>();
   boolean tlsClientCertificateBoundAccessTokens = false;
+  Map<String, String> mtlsEndpointAliases = new HashMap<>();
   boolean requireSignedRequestObject = false;
   boolean authorizationResponseIssParameterSupported = false;
 
@@ -273,6 +274,14 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
 
   public boolean isTlsClientCertificateBoundAccessTokens() {
     return tlsClientCertificateBoundAccessTokens;
+  }
+
+  public Map<String, String> mtlsEndpointAliases() {
+    return mtlsEndpointAliases;
+  }
+
+  public boolean hasMtlsEndpointAliases() {
+    return mtlsEndpointAliases != null && !mtlsEndpointAliases.isEmpty();
   }
 
   public boolean requireSignedRequestObject() {
@@ -722,6 +731,9 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     map.put("request_uri_parameter_supported", requestUriParameterSupported);
     map.put("require_request_uri_registration", requireRequestUriRegistration);
     map.put("tls_client_certificate_bound_access_tokens", tlsClientCertificateBoundAccessTokens);
+    if (hasMtlsEndpointAliases()) {
+      map.put("mtls_endpoint_aliases", mtlsEndpointAliases);
+    }
 
     if (hasBackchannelTokenDeliveryModesSupported()) {
       map.put("backchannel_token_delivery_modes_supported", backchannelTokenDeliveryModesSupported);

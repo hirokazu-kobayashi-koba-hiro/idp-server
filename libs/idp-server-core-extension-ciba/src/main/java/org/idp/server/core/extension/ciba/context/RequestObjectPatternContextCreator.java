@@ -29,6 +29,7 @@ import org.idp.server.core.openid.oauth.type.oauth.ClientSecretBasic;
 import org.idp.server.platform.jose.JoseContext;
 import org.idp.server.platform.jose.JoseHandler;
 import org.idp.server.platform.jose.JoseInvalidException;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /** RequestObjectPatternContextService */
@@ -36,6 +37,7 @@ public class RequestObjectPatternContextCreator implements CibaRequestContextCre
 
   RequestObjectPatternFactory requestObjectPatternFactory = new RequestObjectPatternFactory();
   JoseHandler joseHandler = new JoseHandler();
+  LoggerWrapper log = LoggerWrapper.getLogger(RequestObjectPatternContextCreator.class);
 
   @Override
   public CibaRequestContext create(
@@ -87,8 +89,12 @@ public class RequestObjectPatternContextCreator implements CibaRequestContextCre
           authorizationServerConfiguration,
           clientConfiguration);
     } catch (JoseInvalidException exception) {
+
+      log.error(exception.getMessage(), exception);
+
+      // CIBA Core Section 13 does not define 'invalid_request_object' error code
       throw new BackchannelAuthenticationBadRequestException(
-          "invalid_request_object", exception.getMessage(), exception);
+          "invalid_request", exception.getMessage(), exception);
     }
   }
 }

@@ -1,0 +1,43 @@
+{
+  "client_id": "b2c3d4e5-f6a7-b8c9-d0e1-f2a3b4c5d6e7",
+  "client_id_alias": "fapi-ciba-tls-client-auth-client-2",
+  "redirect_uris": [
+    "https://localhost.emobix.co.uk:8443/test/a/fapi-ciba/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/fapi-ciba/callback?dummy1=lorem&dummy2=ipsum"
+  ],
+  "response_types": [
+    "code",
+    "code id_token"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token",
+    "urn:openid:params:grant-type:ciba"
+  ],
+  "scope": "openid profile email address phone offline_access account transfers read write identity_verification_application",
+  "client_name": "FAPI-CIBA TLS Client Auth Client 2",
+  "client_name#ja-JP": "FAPI-CIBA TLSクライアント認証クライアント2",
+  "token_endpoint_auth_method": "tls_client_auth",
+  "tls_client_auth_subject_dn": "CN=fapi-ciba-tls-client-2,O=FAPI-CIBA Certification,C=JP",
+  "jwks": "{\"keys\":[{\n    \"kty\": \"EC\",\n    \"use\": \"sig\",\n    \"crv\": \"P-256\",\n    \"kid\": \"private_key_jwt_client_key_2\",\n    \"x\": \"_ZF_bakuQWfPH9rA3ILPHWeFi9jVe2_zro1IW6V83Ak\",\n    \"y\": \"5F9HBApKoA9ozTXoXSTcops6GKVBb3Vk-ZlVmWjOALY\",\n    \"alg\": \"ES256\"\n},{\n    \"kty\": \"EC\",\n    \"use\": \"sig\",\n    \"crv\": \"P-256\",\n    \"kid\": \"tls_client_auth_client_key\",\n    \"x\": \"CXUeNgsS88UXv3orUu6Z3AaIcc_2-MNUVfhoa-Ze32g\",\n    \"y\": \"Nrx-GflJe0bYnd_euvY_FYnGFz650RH2_MToAxsJ9Vs\",\n    \"alg\": \"ES256\"\n}]}",
+  "backchannel_token_delivery_mode": "poll",
+  "backchannel_authentication_request_signing_alg": "ES256",
+  "backchannel_user_code_parameter": false,
+  "backchannel_client_notification_endpoint": "https://localhost.emobix.co.uk:8443/test/a/fapi-ciba/ciba-notification-endpoint",
+  "application_type": "web",
+  "authorization_details_types": [
+    "payment_initiation",
+    "account_information"
+  ],
+  "tls_client_certificate_bound_access_tokens": true,
+  "request_object_signing_alg": "ES256",
+  "id_token_signed_response_alg": "ES256",
+  "userinfo_signed_response_alg": "ES256",
+  "authorization_signed_response_alg": "ES256",
+  "default_max_age": 300,
+  "require_auth_time": true,
+  "default_acr_values": [
+    "urn:mace:incommon:iap:gold",
+    "urn:openbanking:psd2:sca"
+  ]
+}

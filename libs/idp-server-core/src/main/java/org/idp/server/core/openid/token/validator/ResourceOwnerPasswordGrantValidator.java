@@ -51,7 +51,6 @@ public class ResourceOwnerPasswordGrantValidator {
     throwExceptionIfUnSupportedGrantTypeWithClient();
     throwExceptionIfNotContainsUsername();
     throwExceptionIfNotContainsPassword();
-    throwExceptionIfNotContainsClientId();
   }
 
   void throwExceptionIfUnSupportedGrantTypeWithServer() {
@@ -81,16 +80,6 @@ public class ResourceOwnerPasswordGrantValidator {
     if (!tokenRequestContext.hasPassword()) {
       throw new TokenBadRequestException(
           "token request does not contains password, password grant must contains password");
-    }
-  }
-
-  void throwExceptionIfNotContainsClientId() {
-    if (tokenRequestContext.hasClientSecretBasic()) {
-      return;
-    }
-    if (!tokenRequestContext.hasClientId()) {
-      throw new TokenBadRequestException(
-          "token request does not contains client_id, password must contains client_id");
     }
   }
 }

@@ -196,8 +196,8 @@
       "fr-FR",
       "fr-CA"
     ],
-    "token_introspection_endpoint": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/tokens/introspection",
-    "token_revocation_endpoint": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/tokens/revocation",
+    "introspection_endpoint": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/tokens/introspection",
+    "revocation_endpoint": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/tokens/revocation",
     "backchannel_token_delivery_modes_supported": [
       "poll",
       "ping",
@@ -228,19 +228,13 @@
       "A128GCM"
     ],
     "tls_client_certificate_bound_access_tokens": true,
-    "vp_formats_supported": {
-      "jwt_vc_json": {
-        "alg_values_supported": [
-          "ES256K",
-          "ES384"
-        ]
-      },
-      "jwt_vp_json": {
-        "alg_values_supported": [
-          "ES256K",
-          "EdDSA"
-        ]
-      }
+    "mtls_endpoint_aliases": {
+      "token_endpoint": "https:///host.docker.internal:8445/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/tokens",
+      "revocation_endpoint": "https:///host.docker.internal:8445/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/tokens/revocation",
+      "introspection_endpoint": "https:///host.docker.internal:8445/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/tokens/introspection",
+      "userinfo_endpoint": "https:///host.docker.internal:8445/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/userinfo",
+      "backchannel_authentication_endpoint": "https:///host.docker.internal:8445/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/backchannel/authentications",
+      "jwks_uri": "https:///host.docker.internal:8445/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/jwks"
     },
     "extension": {
       "access_token_type": "JWT",

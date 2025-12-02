@@ -20,6 +20,17 @@ import java.util.Objects;
 import org.idp.server.platform.jose.JsonWebSignature;
 import org.idp.server.platform.jose.JsonWebTokenClaims;
 
+/**
+ * ClientAssertionJwt
+ *
+ * <p>Represents the client_assertion JWT used in private_key_jwt client authentication. Contains
+ * the parsed JWT including its claims and signature algorithm.
+ *
+ * @see <a href="https://www.rfc-editor.org/rfc/rfc7523">RFC 7523 - JWT Profile for OAuth 2.0 Client
+ *     Authentication</a>
+ * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication">OIDC
+ *     Core - Client Authentication</a>
+ */
 public class ClientAssertionJwt {
   JsonWebSignature jsonWebSignature;
 
@@ -43,5 +54,17 @@ public class ClientAssertionJwt {
 
   public boolean exists() {
     return Objects.nonNull(jsonWebSignature) && jsonWebSignature.exists();
+  }
+
+  /**
+   * Returns the signing algorithm used for this client assertion JWT.
+   *
+   * <p>Common algorithms include PS256, ES256, RS256. FAPI profiles restrict this to PS256 or ES256
+   * only.
+   *
+   * @return the algorithm identifier (e.g., "PS256", "ES256", "RS256")
+   */
+  public String algorithm() {
+    return jsonWebSignature.algorithm();
   }
 }

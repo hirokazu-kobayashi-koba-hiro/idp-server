@@ -18,22 +18,25 @@ package org.idp.server.core.extension.ciba.verifier;
 
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationBadRequestException;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.exception.RequestObjectInvalidException;
 import org.idp.server.core.openid.oauth.verifier.extension.RequestObjectVerifyable;
 
 public class CibaRequestObjectVerifier implements CibaExtensionVerifier, RequestObjectVerifyable {
 
   @Override
-  public boolean shouldVerify(CibaRequestContext context) {
+  public boolean shouldVerify(CibaRequestContext context, ClientCredentials clientCredentials) {
     return context.isRequestObjectPattern();
   }
 
-  public void verify(CibaRequestContext context) {
+  public void verify(CibaRequestContext context, ClientCredentials clientCredentials) {
+
     try {
       verify(context.joseContext(), context.serverConfiguration(), context.clientConfiguration());
     } catch (RequestObjectInvalidException exception) {
+      // CIBA Core Section 13 does not define 'invalid_request_object' error code
       throw new BackchannelAuthenticationBadRequestException(
-          "invalid_request_object", exception.getMessage());
+          "invalid_request", exception.getMessage());
     }
   }
 }

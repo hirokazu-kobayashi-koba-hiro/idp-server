@@ -1,0 +1,23 @@
+{
+  "sub": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "provider_id": "idp-server",
+  "name": "FAPI Test User",
+  "given_name": "Test",
+  "family_name": "User",
+  "email": "fapi-test@example.com",
+  "email_verified": true,
+  "phone_number": "+81-90-1234-5678",
+  "phone_number_verified": true,
+  "authentication_devices": [
+    {
+      "id": "b2c3d4e5-f6a7-8901-bcde-f23456789012",
+      "platform": "iOS",
+      "os": "iOS 18.0",
+      "model": "iPhone15",
+      "notification_channel": "fcm",
+      "notification_token": "fapi-ciba-test-fcm-token",
+      "preferred_for_notification": true
+    }
+  ],
+  "raw_password": "FapiCibaTestSecure123!"
+}

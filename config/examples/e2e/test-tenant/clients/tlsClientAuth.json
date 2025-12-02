@@ -1,0 +1,57 @@
+{
+  "client_id": "d835debc-8e62-4a49-bc3d-ee715d42fa88",
+  "client_id_alias": "tlsClientAuth",
+  "client_secret": "tlsClientAuth12345678901234567890123456789012345678901234567890123456789012345678901234567890",
+  "client_id_issued_at": 2893256800,
+  "client_secret_expires_at": 2893276800,
+  "redirect_uris": [
+    "https://client.example.org/callback",
+    "https://client.example.org/callback2",
+    "http://localhost:8081/callback",
+    "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/idp_oidc_basic/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/idp_oidc_implicit/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/idp_oidc_hybrid/callback"
+  ],
+  "response_types": [
+    "code",
+    "token",
+    "id_token",
+    "code token",
+    "code token id_token",
+    "token id_token",
+    "code id_token",
+    "none"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token",
+    "password",
+    "client_credentials",
+    "urn:openid:params:grant-type:ciba"
+  ],
+  "scope": "openid profile email address phone management verified_claims:family_name claims:ex_sub claims:status claims:authentication_devices claims:roles claims:permissions claims:assigned_tenants claims:assigned_organizations claims:authentication_devices offline_access account transfers read write identity_verification_application identity_verification_application_delete identity_credentials_update",
+  "client_name": "TLS Client Auth Example",
+  "client_name#ja-Jpan-JP": "TLSクライアント認証サンプル",
+  "token_endpoint_auth_method": "tls_client_auth",
+  "tls_client_auth_subject_dn": "CN=fapi-client.example.com,O=Example Client,L=Tokyo,ST=Tokyo,C=JP",
+  "logo_uri": "https://client.example.org/logo.png",
+  "tos_uri": "https://idp-auth-frontend-diqt.vercel.app/terms",
+  "policy_uri": "https://idp-auth-frontend-diqt.vercel.app/privacy",
+  "backchannel_token_delivery_mode": "poll",
+  "backchannel_client_notification_endpoint": "",
+  "backchannel_authentication_request_signing_alg": "PS256",
+  "application_type": "web",
+  "authorization_details_types": [
+    "payment_initiation",
+    "account_information",
+    "openid_credential"
+  ],
+  "tls_client_certificate_bound_access_tokens": true,
+  "authorization_signed_response_alg": "ES256",
+  "jwks": "{\n  \"keys\": [\n    {\n      \"kty\": \"EC\",\n      \"use\": \"sig\",\n      \"crv\": \"P-256\",\n      \"kid\": \"tlsClientRequestKey\",\n      \"x\": \"BMbdGWZ3-ui_tZrwXmUXjPJOkkPyXBN1jXRlYAYp0j4\",\n      \"y\": \"5PN28UzVlNy8-_Y-oaYTOw2CDWOE4-p0DAixRD0_tm0\",\n      \"alg\": \"ES256\"\n    }\n  ]\n}",
+  "extension": {
+    "access_token_duration": 1,
+    "refresh_token_duration": 2
+  }
+}

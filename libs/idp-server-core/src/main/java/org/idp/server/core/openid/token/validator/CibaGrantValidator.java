@@ -32,7 +32,10 @@ public class CibaGrantValidator {
     throwExceptionIfUnSupportedGrantTypeWithServer();
     throwExceptionIfUnSupportedGrantTypeWithClient();
     throwExceptionIfNotContainsAuthReqId();
-    throwExceptionIfNotContainsClientId();
+    // Note: client_id validation is not needed here because:
+    // 1. TokenRequest.clientId() already extracts from parameters, Basic Auth, or client_assertion
+    // 2. ClientConfiguration lookup would fail before reaching this validator if client_id is
+    // missing
   }
 
   void throwExceptionIfUnSupportedGrantTypeWithClient() {
@@ -54,16 +57,6 @@ public class CibaGrantValidator {
     if (!tokenRequestContext.hasAuthReqId()) {
       throw new TokenBadRequestException(
           "token request does not contains auth_req_id, ciba grant must contains auth_req_id");
-    }
-  }
-
-  void throwExceptionIfNotContainsClientId() {
-    if (tokenRequestContext.hasClientSecretBasic()) {
-      return;
-    }
-    if (!tokenRequestContext.hasClientId()) {
-      throw new TokenBadRequestException(
-          "token request does not contains client_id, ciba grant must contains client_id");
     }
   }
 }

@@ -16,7 +16,9 @@
 
 package org.idp.server.core.extension.ciba.verifier;
 
+import org.idp.server.core.extension.ciba.CibaProfile;
 import org.idp.server.core.extension.ciba.CibaRequestContext;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 
 /**
  * CibaRequestNormalProfileVerifier
@@ -35,7 +37,12 @@ public class CibaRequestNormalProfileVerifier implements CibaVerifier {
   }
 
   @Override
-  public void verify(CibaRequestContext context) {
+  public CibaProfile profile() {
+    return CibaProfile.CIBA;
+  }
+
+  @Override
+  public void verify(CibaRequestContext context, ClientCredentials clientCredentials) {
     baseVerifier.verify(context);
   }
 }

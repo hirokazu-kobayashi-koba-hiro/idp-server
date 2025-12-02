@@ -296,9 +296,9 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
           "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
       });
       console.log(tokenResponse.data);
-      expect(tokenResponse.status).toBe(400);
+      expect(tokenResponse.status).toBe(401);
       expect(tokenResponse.data.error).toEqual("invalid_client");
-      expect(tokenResponse.data.error_description).toContain("When FAPI Baseline profile, client_id must matched client_assertion sub claim");
+      expect(tokenResponse.data.error_description).toContain("client assertion is invalid, iss claim must match client_id parameter");
     });
 
     it("20. shall require redirect URIs to use the https scheme;", async () => {

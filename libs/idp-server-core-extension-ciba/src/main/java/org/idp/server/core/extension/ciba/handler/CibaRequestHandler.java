@@ -16,7 +16,6 @@
 
 package org.idp.server.core.extension.ciba.handler;
 
-import java.util.UUID;
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.CibaRequestParameters;
 import org.idp.server.core.extension.ciba.CibaRequestPattern;
@@ -39,6 +38,7 @@ import org.idp.server.core.extension.ciba.verifier.CibaRequestVerifier;
 import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
@@ -66,6 +66,7 @@ public class CibaRequestHandler {
   ClientAuthenticationHandler clientAuthenticationHandler;
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
+  CibaRequestVerifier verifier;
 
   /**
    * Constructs a CibaRequestHandler with the specified repository and configuration dependencies.
@@ -90,6 +91,7 @@ public class CibaRequestHandler {
     this.clientAuthenticationHandler = new ClientAuthenticationHandler();
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
+    this.verifier = new CibaRequestVerifier();
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
   }
 
@@ -116,9 +118,8 @@ public class CibaRequestHandler {
             authorizationServerConfiguration,
             clientConfiguration);
 
-    CibaRequestVerifier verifier = new CibaRequestVerifier(context);
-    verifier.verify();
-    clientAuthenticationHandler.authenticate(context);
+    ClientCredentials clientCredentials = clientAuthenticationHandler.authenticate(context);
+    verifier.verify(context, clientCredentials);
 
     return context;
   }
@@ -129,7 +130,7 @@ public class CibaRequestHandler {
 
     BackchannelAuthenticationResponse response =
         new BackchannelAuthenticationResponseBuilder()
-            .add(new AuthReqId(UUID.randomUUID().toString()))
+            .add(AuthReqId.generate())
             .add(context.expiresIn())
             .add(context.interval())
             .build();

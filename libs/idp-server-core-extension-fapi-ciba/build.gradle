@@ -1,0 +1,39 @@
+plugins {
+	id 'java'
+	id "com.diffplug.spotless" version "6.24.0"
+}
+
+group = 'org.idp.server'
+version = project.hasProperty('releaseVersion') ? project.releaseVersion : '0.9.0-SNAPSHOT'
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation project(':libs:idp-server-platform')
+	implementation project(':libs:idp-server-core')
+	implementation project(':libs:idp-server-core-extension-fapi')
+	implementation project(':libs:idp-server-core-extension-ciba')
+
+	testImplementation platform('org.junit:junit-bom:5.10.0')
+	testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+	useJUnitPlatform()
+}
+
+spotless {
+	java {
+		target 'src/*/java/**/*.java'
+		importOrder()
+		removeUnusedImports()
+		googleJavaFormat()
+		toggleOffOn()
+	}
+	groovyGradle {
+		target '*.gradle'
+		greclipse()
+	}
+}

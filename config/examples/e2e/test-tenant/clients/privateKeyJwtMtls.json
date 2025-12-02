@@ -1,0 +1,56 @@
+{
+  "client_id": "8f3a2b1c-9d4e-5f6a-7b8c-9d0e1f2a3b4c",
+  "client_id_alias": "privateKeyJwtMtls",
+  "client_secret": "privateKeyJwtMtlsSecret123456789012345678901234567890123456789012345678901234567890123456",
+  "client_id_issued_at": 2893256800,
+  "client_secret_expires_at": 2893276800,
+  "redirect_uris": [
+    "https://client.example.org/callback",
+    "https://client.example.org/callback2",
+    "http://localhost:8081/callback",
+    "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/idp_oidc_basic/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/idp_oidc_implicit/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/idp_oidc_hybrid/callback"
+  ],
+  "response_types": [
+    "code",
+    "token",
+    "id_token",
+    "code token",
+    "code token id_token",
+    "token id_token",
+    "code id_token",
+    "none"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token",
+    "password",
+    "client_credentials",
+    "urn:openid:params:grant-type:ciba"
+  ],
+  "scope": "openid profile email address phone management verified_claims:family_name claims:ex_sub claims:status claims:authentication_devices claims:roles claims:permissions claims:assigned_tenants claims:assigned_organizations claims:authentication_devices offline_access account transfers read write identity_verification_application identity_verification_application_delete identity_credentials_update",
+  "client_name": "Private Key JWT with mTLS Client",
+  "client_name#ja-Jpan-JP": "Private Key JWT mTLSクライアント",
+  "token_endpoint_auth_method": "private_key_jwt",
+  "logo_uri": "https://client.example.org/logo.png",
+  "tos_uri": "https://idp-auth-frontend-diqt.vercel.app/terms",
+  "policy_uri": "https://idp-auth-frontend-diqt.vercel.app/privacy",
+  "jwks": "{\n  \"keys\": [\n    {\n      \"kty\": \"EC\",\n      \"use\": \"sig\",\n      \"crv\": \"P-256\",\n      \"kid\": \"privateKeyMtlsRequesttKey\",\n      \"x\": \"7NEL__3iYg6nF-qXH9rMDKceeoPX7K8tcFPKAf5QF2w\",\n      \"y\": \"c4pN0A_K3t3bqeF_BRzYbsbKe_leUYh5eUZW2JOFSdg\",\n      \"alg\": \"ES256\"\n    }\n,{\n    \"kty\": \"EC\",\n    \"use\": \"sig\",\n    \"crv\": \"P-256\",\n    \"kid\": \"privateKeyMtlsSecretKey\",\n    \"x\": \"n-SgrlqX-2EZ-oC1c8TW2PRa1cAMtfHsipHza7zW_88\",\n    \"y\": \"qxMEw6qvhLuglglE9uIiSqZdtBiu9S0xtWW3CbZVTQw\",\n    \"alg\": \"ES256\"\n}  ]\n}",
+  "backchannel_token_delivery_mode": "poll",
+  "backchannel_client_notification_endpoint": "",
+  "backchannel_authentication_request_signing_alg": "PS256",
+  "application_type": "web",
+  "authorization_details_types": [
+    "payment_initiation",
+    "account_information",
+    "openid_credential"
+  ],
+  "tls_client_certificate_bound_access_tokens": true,
+  "authorization_signed_response_alg": "ES256",
+  "extension": {
+    "access_token_duration": 1,
+    "refresh_token_duration": 2
+  }
+}

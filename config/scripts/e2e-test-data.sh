@@ -113,12 +113,15 @@ client_files=(
   clientSecretBasic.json
   clientSecretBasic2.json
   clientSecretJwt.json
+  clientSecretJwt2.json
   clientSecretPost.json
   clientSecretPostWithIdTokenEnc.json
   privateKeyJwt.json
+  privateKeyJwtMtls.json
   publicClient.json
   selfSignedTlsClientAuth.json
   selfSignedTlsClientAuth2.json
+  tlsClientAuth.json
   unsupportedClient.json
   federationClient.json
 )

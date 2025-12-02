@@ -1,0 +1,43 @@
+{
+  "client_id": "e5f6a7b8-c9d0-e1f2-a3b4-c5d6e7f8a9b0",
+  "client_id_alias": "fapi-ciba-private-key-jwt-client",
+  "redirect_uris": [
+    "https://localhost.emobix.co.uk:8443/test/a/fapi-ciba/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/fapi-ciba/callback?dummy1=lorem&dummy2=ipsum"
+  ],
+  "response_types": [
+    "code",
+    "code id_token"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token",
+    "urn:openid:params:grant-type:ciba"
+  ],
+  "scope": "openid profile email address phone offline_access account transfers read write identity_verification_application",
+  "client_name": "FAPI-CIBA Private Key JWT Client",
+  "client_name#ja-JP": "FAPI-CIBA Private Key JWTクライアント",
+  "token_endpoint_auth_method": "private_key_jwt",
+  "token_endpoint_auth_signing_alg": "ES256",
+  "jwks": "{\"keys\":[{\n    \"kty\": \"RSA\",\n    \"e\": \"AQAB\",\n    \"use\": \"sig\",\n    \"kid\": \"private_key_jwt_client_key\",\n    \"alg\": \"PS256\",\n    \"n\": \"yajJSOpkezhLKceKPqg_d-CoSS7p_hUhJJK5baVJLDbPjNuhbrGByZsLQqhiqPdTPoTWfE0vRegyHNrKD43jPsbJkX71v5ijLJtNHTOnf_soGlm5zPptu17D4eExSJdt4zPIJBBaIzONDe-1djoKnDUrdGUedSKm2mNp0y_rbEFctVLJx98bkBewe8nwc3cBuseNN3AyWAhkzYIpd-YXWMYP8Vqb65ShNvnCKma_83B1jd0y-XeajAgvKUh8zX94jFmeWO5eZ4JnQ82ob2J-UwItXtDe1Tq1QVjFraM2grLJyQEX8ADdfl9thYCnuCpNSbxFidpBJ3Cp1JehoR_jf9gd07CoJhLMHx7I-b_V65C0oBggrHvSgvAG7KKEw1iTDlqIKofOUutInY2w4cagcYw6kdVjh2KvhiZtGxsn1xig79F0VEkswuN8K9jj0GJudy17W_r5Dqapa6fCwrdWemXlO-xvBN9rF7_imm3NqaaxW_YLPEJ-zK1DloSgJgMKfSev9YSEz5mfasdwrYuxB7StLc4kilcvwD1T3pSrH3RHwOY63gbrYowNgL1FRGS2_rr0os29p_8qNkqRz-UBg3wNmQFPeF9quMrMfLyyQ8x3_nBU7BMJyN6H2dd1sJNuFeoOK_qSLWiSqk45UcEYxRGeracYoVVDDTW7XGpWYrE\"\n}]}",
+  "backchannel_token_delivery_mode": "poll",
+  "backchannel_authentication_request_signing_alg": "ES256",
+  "backchannel_user_code_parameter": false,
+  "backchannel_client_notification_endpoint": "https://localhost.emobix.co.uk:8443/test/a/fapi-ciba/ciba-notification-endpoint",
+  "application_type": "web",
+  "authorization_details_types": [
+    "payment_initiation",
+    "account_information"
+  ],
+  "tls_client_certificate_bound_access_tokens": true,
+  "request_object_signing_alg": "ES256",
+  "id_token_signed_response_alg": "ES256",
+  "userinfo_signed_response_alg": "ES256",
+  "authorization_signed_response_alg": "ES256",
+  "default_max_age": 300,
+  "require_auth_time": true,
+  "default_acr_values": [
+    "urn:mace:incommon:iap:gold",
+    "urn:openbanking:psd2:sca"
+  ]
+}

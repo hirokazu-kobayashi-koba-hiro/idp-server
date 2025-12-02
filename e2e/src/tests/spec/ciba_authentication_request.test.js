@@ -7,13 +7,16 @@ import {
   requestToken
 } from "../../api/oauthClient";
 import {
+  clientSecretJwtClient,
   clientSecretPostClient,
   privateKeyJwtClient,
+  publicClient,
   serverConfig,
 } from "../testConfig";
 import { createJwt, createJwtWithPrivateKey, generateJti } from "../../lib/jose";
 import { isNumber, sleep, toEpocTime } from "../../lib/util";
 import { postWithJson } from "../../lib/http";
+import { createClientAssertion } from "../../lib/oauth";
 
 describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core 1.0", () => {
   const ciba = serverConfig.ciba;
@@ -96,6 +99,44 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
 
   describe("7. Backchannel Authentication Endpoint", () => {
     describe("7.1. Authentication Request", () => {
+      it ("The Client MUST authenticate to the Backchannel Authentication Endpoint using the authentication method registered for its client_id, such as the authentication methods from Section 9 of [OpenID.Core] or authentication methods defined by extension in other specifications.", async () => {
+        // Public clients use 'none' authentication type and have no client authentication
+        // This test attempts CIBA request without any client authentication
+        const requestObject = createJwtWithPrivateKey({
+          payload: {
+            scope: "openid profile phone email ",
+            binding_message: ciba.bindingMessage,
+            user_code: ciba.userCode,
+            login_hint: ciba.loginHintDevice,
+            client_id: publicClient.clientId,
+            aud: serverConfig.issuer,
+            iss: publicClient.clientId,
+            exp: toEpocTime({ adjusted: 1800 }),
+            iat: toEpocTime({}),
+            nbf: toEpocTime({}),
+            jti: generateJti(),
+          },
+          privateKey: publicClient.requestKey,
+        });
+
+        // Attempt request without client certificate (no mTLS) or client assertion
+        // This simulates a public client attempting CIBA
+        const backchannelResponse = await requestBackchannelAuthentications({
+          endpoint: serverConfig.backchannelAuthenticationEndpoint,
+          clientId: publicClient.clientId,
+          request: requestObject,
+          // clientCertFile is intentionally omitted - no mTLS authentication
+          // In a real scenario, server should also check for absence of client_assertion
+        });
+
+        console.log("Expected error (public client):", backchannelResponse.data);
+        // Note: The actual error depends on how the request is made
+        // Without mTLS cert, it may fail at transport level or with 401 Unauthorized
+        // With properly configured server, it should return unauthorized_client
+        expect(backchannelResponse.status).toBe(400);
+        expect(backchannelResponse.data.error).toEqual("unauthorized_client");
+      });
+
       it("scope REQUIRED. The scope of the access request as described by Section 3.3 of [RFC6749].", async () => {
         const backchannelAuthenticationResponse =
           await requestBackchannelAuthentications({
@@ -165,7 +206,7 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
         console.log(backchannelAuthenticationResponse.data);
         expect(backchannelAuthenticationResponse.status).toBe(400);
         expect(backchannelAuthenticationResponse.data.error).toEqual(
-          "invalid_request_object"
+          "invalid_request"
         );
         expect(
           backchannelAuthenticationResponse.data.error_description
@@ -197,7 +238,7 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
         console.log(backchannelAuthenticationResponse.data);
         expect(backchannelAuthenticationResponse.status).toBe(400);
         expect(backchannelAuthenticationResponse.data.error).toEqual(
-          "invalid_request_object"
+          "invalid_request"
         );
         expect(
           backchannelAuthenticationResponse.data.error_description
@@ -227,7 +268,7 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
         console.log(backchannelAuthenticationResponse.data);
         expect(backchannelAuthenticationResponse.status).toBe(400);
         expect(backchannelAuthenticationResponse.data.error).toEqual(
-          "invalid_request_object"
+          "invalid_request"
         );
         expect(
           backchannelAuthenticationResponse.data.error_description
@@ -264,7 +305,7 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
         console.log(backchannelAuthenticationResponse.data);
         expect(backchannelAuthenticationResponse.status).toBe(400);
         expect(backchannelAuthenticationResponse.data.error).toEqual(
-          "invalid_request_object"
+          "invalid_request"
         );
         expect(
           backchannelAuthenticationResponse.data.error_description
@@ -386,7 +427,7 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
         console.log(backchannelAuthenticationResponse.data);
         expect(backchannelAuthenticationResponse.status).toBe(400);
         expect(backchannelAuthenticationResponse.data.error).toEqual(
-          "invalid_request_object"
+          "invalid_request"
         );
       });
 
@@ -779,6 +820,10 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
     });
 
     it("unauthorized_client The Client is not authorized to use this authentication flow.", async () => {
+      const clientAssertion = createClientAssertion({
+        client: privateKeyJwtClient,
+        issuer: serverConfig.issuer,
+      });
       const backchannelAuthenticationResponse =
         await requestBackchannelAuthentications({
           endpoint: serverConfig.backchannelAuthenticationEndpoint,
@@ -787,6 +832,8 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
           userCode: ciba.userCode,
           loginHint: ciba.loginHint,
           scope: "openid profile phone email" + privateKeyJwtClient.scope,
+          clientAssertion,
+          clientAssertionType: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
         });
       console.log(backchannelAuthenticationResponse.data);
       expect(backchannelAuthenticationResponse.status).toBe(400);
@@ -855,7 +902,7 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
       console.log(backchannelAuthenticationResponse.data);
       expect(backchannelAuthenticationResponse.status).toBe(400);
       expect(backchannelAuthenticationResponse.data.error).toEqual("invalid_request");
-      expect(backchannelAuthenticationResponse.data.error_description).toEqual("client_id is in neither body or header. client_id is required");
+      expect(backchannelAuthenticationResponse.data.error_description).toEqual("Unable to identify client. Provide client_id parameter, HTTP Basic Authentication, or client_assertion with iss claim.");
     });
 
     it("loginHint is invalid format", async () => {

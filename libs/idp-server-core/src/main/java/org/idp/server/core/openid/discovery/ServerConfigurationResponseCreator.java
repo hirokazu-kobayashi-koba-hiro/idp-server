@@ -134,6 +134,9 @@ public class ServerConfigurationResponseCreator {
     map.put(
         "tls_client_certificate_bound_access_tokens",
         authorizationServerConfiguration.isTlsClientCertificateBoundAccessTokens());
+    if (authorizationServerConfiguration.hasMtlsEndpointAliases()) {
+      map.put("mtls_endpoint_aliases", authorizationServerConfiguration.mtlsEndpointAliases());
+    }
 
     // Introspection and Revocation endpoints
     if (authorizationServerConfiguration.hasIntrospectionEndpoint()) {

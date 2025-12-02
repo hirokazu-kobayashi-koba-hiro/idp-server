@@ -50,6 +50,7 @@ public class CibaGrantService implements OAuthTokenCreationService, RefreshToken
   AuthorizationGrantedRepository authorizationGrantedRepository;
   IdTokenCreator idTokenCreator;
   AccessTokenCreator accessTokenCreator;
+  CibaGrantVerifier verifier;
 
   public CibaGrantService(
       BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
@@ -61,6 +62,7 @@ public class CibaGrantService implements OAuthTokenCreationService, RefreshToken
     this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
     this.authorizationGrantedRepository = authorizationGrantedRepository;
     this.idTokenCreator = IdTokenCreator.getInstance();
+    this.verifier = new CibaGrantVerifier();
     this.accessTokenCreator = AccessTokenCreator.getInstance();
   }
 
@@ -91,9 +93,8 @@ public class CibaGrantService implements OAuthTokenCreationService, RefreshToken
         backchannelAuthenticationRequestRepository.find(
             tenant, cibaGrant.backchannelAuthenticationRequestIdentifier());
 
-    CibaGrantVerifier verifier =
-        new CibaGrantVerifier(tokenRequestContext, backchannelAuthenticationRequest, cibaGrant);
-    verifier.verify();
+    verifier.verify(
+        tokenRequestContext, backchannelAuthenticationRequest, cibaGrant, clientCredentials);
 
     AuthorizationServerConfiguration authorizationServerConfiguration =
         tokenRequestContext.serverConfiguration();
@@ -129,6 +130,8 @@ public class CibaGrantService implements OAuthTokenCreationService, RefreshToken
     OAuthToken oAuthToken = oAuthTokenBuilder.build();
 
     oAuthTokenCommandRepository.register(tenant, oAuthToken);
+    backchannelAuthenticationRequestRepository.delete(
+        tenant, cibaGrant.backchannelAuthenticationRequestIdentifier());
     cibaGrantRepository.delete(tenant, cibaGrant);
 
     return oAuthToken;

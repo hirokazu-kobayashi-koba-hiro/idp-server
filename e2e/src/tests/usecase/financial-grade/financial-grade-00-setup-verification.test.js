@@ -202,7 +202,7 @@ describe("Financial Grade: Setup Verification", () => {
     expect(tokenResponse.data.scope).toContain("management");
 
     orgAdminToken = tokenResponse.data.access_token;
-    console.log(`✅ Organization admin logged in`);
+    console.log("✅ Organization admin logged in");
 
     // Step 3: Create financial tenant
     console.log("\n=== Step 3: Creating Financial Tenant ===");
@@ -240,7 +240,7 @@ describe("Financial Grade: Setup Verification", () => {
     expect(authServer.extension.required_identity_verification_scopes).toEqual(["transfers"]);
 
     // Verify token settings
-    expect(authServer.extension.access_token_duration).toBe(900); // 15 minutes
+    expect(authServer.extension.access_token_duration).toBe(300); // 15 minutes
     expect(authServer.extension.id_token_strict_mode).toBe(true);
     expect(authServer.extension.refresh_token_duration).toBe(2592000); // 30 days
 
@@ -278,8 +278,8 @@ describe("Financial Grade: Setup Verification", () => {
     expect(createClientResponse.data.result.tls_client_certificate_bound_access_tokens).toBe(true);
 
     console.log(`✅ Financial Client created: ${financialClientId}`);
-    console.log(`✅ Auth Method: self_signed_tls_client_auth`);
-    console.log(`✅ MTLS Token Binding: enabled`);
+    console.log("✅ Auth Method: self_signed_tls_client_auth");
+    console.log("✅ MTLS Token Binding: enabled");
 
     // Step 6: Create authentication policy
     console.log("\n=== Step 6: Creating Authentication Policy ===");
@@ -328,7 +328,7 @@ describe("Financial Grade: Setup Verification", () => {
 
     // Verify token endpoint auth signing algorithms
     expect(discovery.token_endpoint_auth_signing_alg_values_supported).toEqual(
-      expect.arrayContaining(["RS256", "ES256"])
+      expect.arrayContaining(["PS256", "ES256"])
     );
 
     // Verify grant types
@@ -352,16 +352,16 @@ describe("Financial Grade: Setup Verification", () => {
     );
 
     // Verify subject types (pairwise for FAPI)
-    expect(discovery.subject_types_supported).toEqual(["pairwise"]);
+    expect(discovery.subject_types_supported).toEqual(["public", "pairwise"]);
 
     // Verify ID token signing algorithms
     expect(discovery.id_token_signing_alg_values_supported).toEqual(
-      expect.arrayContaining(["RS256", "ES256"])
+      expect.arrayContaining(["PS256", "ES256"])
     );
 
     // Verify request object signing algorithms
     expect(discovery.request_object_signing_alg_values_supported).toEqual(
-      expect.arrayContaining(["RS256", "ES256"])
+      expect.arrayContaining(["PS256", "ES256"])
     );
 
     // Verify claims parameter support
@@ -372,7 +372,7 @@ describe("Financial Grade: Setup Verification", () => {
       expect.arrayContaining(["poll", "ping"])
     );
     expect(discovery.backchannel_authentication_request_signing_alg_values_supported).toEqual(
-      expect.arrayContaining(["RS256", "ES256"])
+      expect.arrayContaining(["PS256", "ES256"])
     );
     expect(discovery.backchannel_user_code_parameter_supported).toBe(true);
 
@@ -384,8 +384,8 @@ describe("Financial Grade: Setup Verification", () => {
     // Verify MTLS certificate-bound access tokens (Issue #967)
     expect(discovery.tls_client_certificate_bound_access_tokens).toBe(true);
 
-    console.log(`✅ Discovery endpoint accessible`);
-    console.log(`✅ All endpoints verified`);
+    console.log("✅ Discovery endpoint accessible");
+    console.log("✅ All endpoints verified");
     console.log(`✅ FAPI-compliant auth methods: ${discovery.token_endpoint_auth_methods_supported.join(", ")}`);
     console.log(`✅ Grant types: ${discovery.grant_types_supported.join(", ")}`);
     console.log(`✅ Subject types: ${discovery.subject_types_supported.join(", ")}`);
@@ -408,14 +408,14 @@ describe("Financial Grade: Setup Verification", () => {
 
     // Verify tenant basic info
     expect(tenant.id).toBe(financialTenantId);
-    expect(tenant.name).toBe("Financial Grade Business Tenant");
+    expect(tenant.name).toBe("FAPI-CIBA Certification Tenant");
     expect(tenant.type).toBe("PUBLIC");
 
     // Security event log config
     const logConfig = tenant.security_event_log_config;
     expect(logConfig.format).toBe("structured_json");
-    expect(logConfig.debug_logging).toBe(false);
-    expect(logConfig.stage).toBe("production");
+    expect(logConfig.debug_logging).toBe(true);
+    expect(logConfig.stage).toBe("certification");
     expect(logConfig.include_user_id).toBe(true);
     expect(logConfig.include_user_ex_sub).toBe(true);
     expect(logConfig.include_client_id).toBe(true);
@@ -425,8 +425,8 @@ describe("Financial Grade: Setup Verification", () => {
     expect(logConfig.include_user_detail).toBe(true);
     expect(logConfig.include_user_pii).toBe(false);
     expect(logConfig.include_trace_context).toBe(true);
-    expect(logConfig.service_name).toBe("idp-server-financial-biz");
-    expect(logConfig.custom_tags).toBe("environment:production,industry:financial,tenant_type:business");
+    expect(logConfig.service_name).toBe("idp-server-fapi-ciba");
+    expect(logConfig.custom_tags).toBe("environment:certification,profile:fapi-ciba");
     expect(logConfig.tracing_enabled).toBe(true);
     expect(logConfig.persistence_enabled).toBe(true);
     expect(logConfig.detail_scrub_keys).toContain("authorization");
@@ -459,22 +459,22 @@ describe("Financial Grade: Setup Verification", () => {
 
     // Session security settings
     const sessionConfig = tenant.session_config;
-    expect(sessionConfig.cookie_name).toBe("FINANCIAL_BIZ_SESSION");
-    expect(sessionConfig.cookie_same_site).toBe("strict");
+    expect(sessionConfig.cookie_name).toBe("FAPI_CIBA_SESSION");
+    expect(sessionConfig.cookie_same_site).toBe("none");
     expect(sessionConfig.use_secure_cookie).toBe(true);
     expect(sessionConfig.use_http_only_cookie).toBe(true);
     expect(sessionConfig.cookie_path).toBe("/");
 
     // CORS configuration
     const corsConfig = tenant.cors_config;
-    expect(corsConfig.allow_origins).toEqual(["http://localhost:3000", "http://localhost:3001"]);
+    expect(corsConfig.allow_origins).toEqual(["https://localhost.emobix.co.uk:8443", "https://host.docker.internal:8445"]);
     expect(corsConfig.allow_headers).toContain("Authorization");
     expect(corsConfig.allow_headers).toContain("Content-Type");
     expect(corsConfig.allow_methods).toContain("GET");
     expect(corsConfig.allow_methods).toContain("POST");
     expect(corsConfig.allow_credentials).toBe(true);
 
-    console.log(`✅ Tenant configuration verified`);
+    console.log("✅ Tenant configuration verified");
     console.log(`✅ Security event logging: ${logConfig.format} (stage: ${logConfig.stage})`);
     console.log(`✅ Session security: SameSite=${sessionConfig.cookie_same_site}, Secure=${sessionConfig.use_secure_cookie}, HttpOnly=${sessionConfig.use_http_only_cookie}`);
     console.log(`✅ CORS origins: ${corsConfig.allow_origins.join(", ")}`);
@@ -514,8 +514,8 @@ describe("Financial Grade: Setup Verification", () => {
       expect(mtlsTokenResponse.status).toBe(400);
       expect(mtlsTokenResponse.data.error).toBe("invalid_grant");
 
-      console.log(`✅ MTLS client authentication successful`);
-      console.log(`✅ Client authenticated via self_signed_tls_client_auth`);
+      console.log("✅ MTLS client authentication successful");
+      console.log("✅ Client authenticated via self_signed_tls_client_auth");
     }
 
     // Step 9: Test without certificate (should fail)
@@ -541,6 +541,6 @@ describe("Financial Grade: Setup Verification", () => {
     expect(noCertTokenResponse.data.error).toBe("invalid_client");
     expect(noCertTokenResponse.data.error_description).toContain("client_cert");
 
-    console.log(`✅ Correctly rejected request without certificate`);
+    console.log("✅ Correctly rejected request without certificate");
   });
 });

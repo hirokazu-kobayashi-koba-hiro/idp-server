@@ -17,6 +17,7 @@ dependencies {
 	implementation project(':libs:idp-server-core-extension-pkce')
 	implementation project(':libs:idp-server-core-extension-fapi')
 	implementation project(':libs:idp-server-core-extension-ciba')
+	implementation project(':libs:idp-server-core-extension-fapi-ciba')
 	implementation project(':libs:idp-server-core-extension-ida')
 	implementation project(':libs:idp-server-core-extension-verifiable-credentials')
 	implementation project(':libs:idp-server-security-event-framework')

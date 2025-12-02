@@ -34,6 +34,18 @@ public interface ClientAuthenticationJwtValidatable {
     throwExceptionIfInvalidExp(joseContext, context);
   }
 
+  /**
+   * Validates the iss claim in the client assertion JWT.
+   *
+   * <p>Per RFC 7523 Section 3, the "iss" claim MUST contain the client_id of the OAuth client.
+   *
+   * <p>Per RFC 7521 Section 4.2, if the client_id parameter is present, it MUST identify the same
+   * client as identified by the client assertion.
+   *
+   * @param joseContext the parsed JWT context
+   * @param context the backchannel request context containing the explicit client_id if provided
+   * @throws ClientUnAuthorizedException if validation fails
+   */
   default void throwExceptionIfInvalidIss(
       JoseContext joseContext, BackchannelRequestContext context) {
     JsonWebTokenClaims claims = joseContext.claims();
@@ -41,14 +53,24 @@ public interface ClientAuthenticationJwtValidatable {
       throw new ClientUnAuthorizedException(
           "client assertion is invalid, must contains iss claim in jwt payload");
     }
-    // TODO
-    RequestedClientId requestedClientId = context.parameters().clientId();
-    //    if (!claims.getIss().equals(clientId.value())) {
-    //      throw new ClientUnAuthorizedException(
-    //          "client assertion is invalid, iss claim must be client_id");
-    //    }
+    // RFC 7521 Section 4.2: If client_id parameter is present, it MUST match the assertion
+    RequestedClientId explicitClientId = context.parameters().clientId();
+    if (explicitClientId.exists() && !claims.getIss().equals(explicitClientId.value())) {
+      throw new ClientUnAuthorizedException(
+          "client assertion is invalid, iss claim must match client_id parameter");
+    }
   }
 
+  /**
+   * Validates the sub claim in the client assertion JWT.
+   *
+   * <p>Per RFC 7523 Section 3, for client authentication, the "sub" claim MUST be the client_id of
+   * the OAuth client, and MUST be identical to the "iss" claim.
+   *
+   * @param joseContext the parsed JWT context
+   * @param context the backchannel request context
+   * @throws ClientUnAuthorizedException if validation fails
+   */
   default void throwExceptionIfInvalidSub(
       JoseContext joseContext, BackchannelRequestContext context) {
     JsonWebTokenClaims claims = joseContext.claims();
@@ -56,14 +78,28 @@ public interface ClientAuthenticationJwtValidatable {
       throw new ClientUnAuthorizedException(
           "client assertion is invalid, must contains sub claim in jwt payload");
     }
-    // TODO
-    RequestedClientId requestedClientId = context.parameters().clientId();
-    //    if (!claims.getSub().equals(clientId.value())) {
-    //      throw new ClientUnAuthorizedException(
-    //          "client assertion is invalid, sub claim must be client_id");
-    //    }
+    // RFC 7523 Section 3: For client authentication, iss and sub MUST be identical
+    if (!claims.getSub().equals(claims.getIss())) {
+      throw new ClientUnAuthorizedException(
+          "client assertion is invalid, sub claim must be identical to iss claim");
+    }
   }
 
+  /**
+   * Validates the aud claim in the client assertion JWT.
+   *
+   * <p>Per RFC 7523 Section 3, the JWT MUST contain an "aud" claim containing a value that
+   * identifies the authorization server as an intended audience. The token endpoint URL MAY be used
+   * as an audience value.
+   *
+   * <p>Per CIBA Core Section 7.1, to facilitate interoperability, the OP MUST accept its Issuer
+   * Identifier, Token Endpoint URL, or Backchannel Authentication Endpoint URL as values that
+   * identify it as an intended audience.
+   *
+   * @param joseContext the parsed JWT context
+   * @param context the backchannel request context
+   * @throws ClientUnAuthorizedException if validation fails
+   */
   default void throwExceptionIfInvalidAud(
       JoseContext joseContext, BackchannelRequestContext context) {
     JsonWebTokenClaims claims = joseContext.claims();
@@ -71,16 +107,20 @@ public interface ClientAuthenticationJwtValidatable {
       throw new ClientUnAuthorizedException(
           "client assertion is invalid, must contains aud claim in jwt payload");
     }
-    AuthorizationServerConfiguration authorizationServerConfiguration =
-        context.serverConfiguration();
-    if (claims.getAud().contains(authorizationServerConfiguration.tokenIssuer().value())) {
+    AuthorizationServerConfiguration serverConfig = context.serverConfiguration();
+    // RFC 7523 Section 3: Token endpoint URL or issuer identifier
+    if (claims.getAud().contains(serverConfig.tokenIssuer().value())) {
       return;
     }
-    if (claims.getAud().contains(authorizationServerConfiguration.tokenEndpoint())) {
+    if (claims.getAud().contains(serverConfig.tokenEndpoint())) {
+      return;
+    }
+    // CIBA Core Section 7.1: Backchannel authentication endpoint URL
+    if (claims.getAud().contains(serverConfig.backchannelAuthenticationEndpoint())) {
       return;
     }
     throw new ClientUnAuthorizedException(
-        "client assertion is invalid, aud claim must be issuer or tokenEndpoint");
+        "client assertion is invalid, aud claim must be issuer, tokenEndpoint, or backchannelAuthenticationEndpoint");
   }
 
   default void throwExceptionIfInvalidJti(

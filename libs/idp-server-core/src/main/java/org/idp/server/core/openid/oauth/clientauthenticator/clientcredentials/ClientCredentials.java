@@ -78,4 +78,8 @@ public class ClientCredentials {
     return clientAuthenticationType == ClientAuthenticationType.tls_client_auth
         || clientAuthenticationType == ClientAuthenticationType.self_signed_tls_client_auth;
   }
+
+  public boolean hasClientCertification() {
+    return Objects.nonNull(clientCertification) && clientCertification.exists();
+  }
 }

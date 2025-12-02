@@ -127,26 +127,49 @@ else
   echo ""
 fi
 
-# Step 3: Delete financial client (in Financial Tenant) - Using System API
-if [ -n "${FINANCIAL_CLIENT_ID}" ] && [ -n "${FINANCIAL_TENANT_ID}" ]; then
-  echo "🗑️  Step 3: Deleting financial web app client (in Financial Tenant)..."
-  FINANCIAL_CLIENT_DELETE_RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE \
-    "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${FINANCIAL_TENANT_ID}/clients/${FINANCIAL_CLIENT_ID}" \
-    -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}")
+# Step 3: Delete financial clients (in Financial Tenant) - Using System API
+if [ -n "${FINANCIAL_TENANT_ID}" ]; then
+  echo "🗑️  Step 3: Deleting financial web app clients (in Financial Tenant)..."
 
-  FINANCIAL_CLIENT_DELETE_HTTP_CODE=$(echo "${FINANCIAL_CLIENT_DELETE_RESPONSE}" | tail -n1)
-  FINANCIAL_CLIENT_DELETE_BODY=$(echo "${FINANCIAL_CLIENT_DELETE_RESPONSE}" | sed '$d')
+  # Define client files to delete
+  CLIENT_FILES=(
+    "financial-client.json"
+    "private-key-jwt-client.json"
+    "private-key-jwt-client-2.json"
+    "tls-client-auth-client.json"
+    "tls-client-auth-client-2.json"
+  )
 
-  if [ "${FINANCIAL_CLIENT_DELETE_HTTP_CODE}" = "200" ] || [ "${FINANCIAL_CLIENT_DELETE_HTTP_CODE}" = "204" ]; then
-    echo "✅ Financial client deleted successfully"
-  elif [ "${FINANCIAL_CLIENT_DELETE_HTTP_CODE}" = "404" ]; then
-    echo "⚠️  Financial client not found (may already be deleted)"
-  else
-    echo "⚠️  Financial client deletion failed (HTTP ${FINANCIAL_CLIENT_DELETE_HTTP_CODE})"
-    if [ -n "${FINANCIAL_CLIENT_DELETE_BODY}" ]; then
-      echo "Response: ${FINANCIAL_CLIENT_DELETE_BODY}" | jq '.' || echo "${FINANCIAL_CLIENT_DELETE_BODY}"
+  for CLIENT_FILE in "${CLIENT_FILES[@]}"; do
+    CLIENT_FILE_PATH="${SCRIPT_DIR}/${CLIENT_FILE}"
+
+    if [ ! -f "${CLIENT_FILE_PATH}" ]; then
+      continue
     fi
-  fi
+
+    CLIENT_ID=$(jq -r '.client_id' "${CLIENT_FILE_PATH}")
+    CLIENT_ALIAS=$(jq -r '.client_id_alias // .client_id' "${CLIENT_FILE_PATH}")
+
+    echo "   🗑️  Deleting client: ${CLIENT_ALIAS}..."
+
+    CLIENT_DELETE_RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE \
+      "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${FINANCIAL_TENANT_ID}/clients/${CLIENT_ID}" \
+      -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}")
+
+    CLIENT_DELETE_HTTP_CODE=$(echo "${CLIENT_DELETE_RESPONSE}" | tail -n1)
+    CLIENT_DELETE_BODY=$(echo "${CLIENT_DELETE_RESPONSE}" | sed '$d')
+
+    if [ "${CLIENT_DELETE_HTTP_CODE}" = "200" ] || [ "${CLIENT_DELETE_HTTP_CODE}" = "204" ]; then
+      echo "   ✅ Deleted: ${CLIENT_ID}"
+    elif [ "${CLIENT_DELETE_HTTP_CODE}" = "404" ]; then
+      echo "   ⚠️  Not found (may already be deleted)"
+    else
+      echo "   ⚠️  Failed (HTTP ${CLIENT_DELETE_HTTP_CODE})"
+      if [ -n "${CLIENT_DELETE_BODY}" ]; then
+        echo "   Response: ${CLIENT_DELETE_BODY}" | jq '.' 2>/dev/null || echo "   ${CLIENT_DELETE_BODY}"
+      fi
+    fi
+  done
 
   echo ""
 else

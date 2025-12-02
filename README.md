@@ -121,6 +121,14 @@ curl -v http://localhost:8080/actuator/health
 ./setup.sh
 ```
 
+```shell
+curl -v http://host.docker.internal:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/.well-known/openid-configuration
+```
+
+```shell
+curl -v http://host.docker.internal:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/.well-known/openid-configuration
+```
+
 * admin-tenant
 
 ```shell
