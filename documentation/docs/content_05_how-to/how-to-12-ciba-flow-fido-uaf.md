@@ -81,7 +81,7 @@ client_id=...&client_secret=...&scope=openid profile phone email&login_hint=...&
 | `scope`                 | `string`        | ✅    | `openid` を含める必要がある。例：`openid profile email`                        |
 | `login_hint`            | `string`        | 条件付き | ユーザーを識別するヒント。例：sub:ユーザーID `login_hint` または `id_token_hint` のいずれか必須 |
 | `id_token_hint`         | `string`        | 条件付き | 過去のID Token。`login_hint` または `id_token_hint` のいずれか必須               |
-| `binding_message`       | `string`        | -    | ユーザー端末に表示されるメッセージ（ランダムな数字など）                                       |
+| `binding_message`       | `string`        | -    | ユーザー端末に表示されるメッセージ（最大20文字）                                            |
 | `requested_expiry`      | `integer`       | -    | `auth_req_id` の有効期限（秒）                                             |
 | `request_context`       | `string`        | -    | 認証時に使う追加情報。ユーザー通知に含めることも可                                          |
 | `acr_values`            | `string`        | -    | 要求する認証強度（ACR値）                                                     |

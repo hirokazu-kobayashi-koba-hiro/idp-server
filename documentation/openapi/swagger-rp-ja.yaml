@@ -2344,7 +2344,8 @@ components:
           description: "過去の ID Token を用いたユーザー識別 ※login_hintまたはid_token_hintの指定が必要"
         binding_message:
           type: string
-          description: "ユーザー端末に表示される文言"
+          maxLength: 20
+          description: "ユーザー端末に表示される文言（最大20文字）"
         requested_expiry:
           type: integer
           description: "auth_req_id の有効期限（秒）"
