@@ -19,6 +19,7 @@ package org.idp.server.core.openid.oauth.validator;
 import java.util.List;
 import org.idp.server.core.openid.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.openid.oauth.request.OAuthRequestParameters;
+import org.idp.server.core.openid.oauth.type.OAuthRequestKey;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
@@ -44,6 +45,7 @@ public class OAuthRequestValidator {
   public void validate() {
     throwExceptionIfNotContainsClientId();
     throwExceptionIfDuplicateValue();
+    throwExceptionIfInvalidAuthorizationDetails();
   }
 
   void throwExceptionIfNotContainsClientId() {
@@ -72,5 +74,22 @@ public class OAuthRequestValidator {
               "authorization request must not contains duplicate value; keys (%s)", keysValue),
           tenant);
     }
+  }
+
+  /**
+   * RFC 9396 Section 2 & Section 5 - Authorization Details Validation
+   *
+   * <p>Delegates to {@link AuthorizationDetailsValidator} for common validation logic.
+   *
+   * @throws OAuthBadRequestException with error code "invalid_authorization_details"
+   * @see AuthorizationDetailsValidator
+   */
+  void throwExceptionIfInvalidAuthorizationDetails() {
+    if (!oAuthRequestParameters.hasAuthorizationDetails()) {
+      return;
+    }
+
+    String object = oAuthRequestParameters.getValueOrEmpty(OAuthRequestKey.authorization_details);
+    AuthorizationDetailsValidator.validate(object, tenant);
   }
 }

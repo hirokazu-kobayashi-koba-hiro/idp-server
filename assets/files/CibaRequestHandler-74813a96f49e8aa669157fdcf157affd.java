@@ -16,7 +16,6 @@
 
 package org.idp.server.core.extension.ciba.handler;
 
-import java.util.UUID;
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.CibaRequestParameters;
 import org.idp.server.core.extension.ciba.CibaRequestPattern;
@@ -34,7 +33,7 @@ import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationReque
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationResponse;
 import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationResponseBuilder;
-import org.idp.server.core.extension.ciba.validator.CibaRequestValidator;
+import org.idp.server.core.extension.ciba.validator.CibaNormalRequestValidator;
 import org.idp.server.core.extension.ciba.verifier.CibaRequestVerifier;
 import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.identity.User;
@@ -66,6 +65,7 @@ public class CibaRequestHandler {
   ClientAuthenticationHandler clientAuthenticationHandler;
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
+  CibaRequestVerifier verifier;
 
   /**
    * Constructs a CibaRequestHandler with the specified repository and configuration dependencies.
@@ -90,6 +90,7 @@ public class CibaRequestHandler {
     this.clientAuthenticationHandler = new ClientAuthenticationHandler();
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
+    this.verifier = new CibaRequestVerifier();
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
   }
 
@@ -97,7 +98,7 @@ public class CibaRequestHandler {
     CibaRequestParameters parameters = request.toParameters();
     Tenant tenant = request.tenant();
 
-    CibaRequestValidator validator = new CibaRequestValidator(request);
+    CibaNormalRequestValidator validator = new CibaNormalRequestValidator(request);
     validator.validate();
 
     AuthorizationServerConfiguration authorizationServerConfiguration =
@@ -116,9 +117,8 @@ public class CibaRequestHandler {
             authorizationServerConfiguration,
             clientConfiguration);
 
-    CibaRequestVerifier verifier = new CibaRequestVerifier(context);
-    verifier.verify();
     clientAuthenticationHandler.authenticate(context);
+    verifier.verify(context);
 
     return context;
   }
@@ -129,7 +129,7 @@ public class CibaRequestHandler {
 
     BackchannelAuthenticationResponse response =
         new BackchannelAuthenticationResponseBuilder()
-            .add(new AuthReqId(UUID.randomUUID().toString()))
+            .add(AuthReqId.generate())
             .add(context.expiresIn())
             .add(context.interval())
             .build();

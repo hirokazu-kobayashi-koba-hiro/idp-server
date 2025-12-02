@@ -5521,7 +5521,7 @@ components:
           items:
             type: string
             format: uuid
-          description: List of permission IDs to assign to this role
+          description: List of permission IDs to assign to this role (empty array is allowed)
 
     RoleUpdateRequest:
       type: object
@@ -5542,7 +5542,7 @@ components:
           items:
             type: string
             format: uuid
-          description: List of permission IDs to assign to this role
+          description: List of permission IDs to assign to this role (empty array is allowed for complete removal)
 
     # Organization User Management Schemas
     OrganizationUser:
