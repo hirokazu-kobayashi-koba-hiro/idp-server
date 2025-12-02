@@ -158,7 +158,7 @@ describe("Monkey test CIBA Flow", () => {
       ["scope", 123, 400, "invalid_scope"],
       ["scope", null, 400, "invalid_scope"],
       ["loginHint", ["array"], 400, "unknown_user_id"],
-      ["bindingMessage", {}, 400, ""],
+      ["bindingMessage", "123456789012345678901", 400, ""],
       ["clientId", null, 400, "invalid_request"],
       ["clientSecret", ["a", "b"], 401, "invalid_client"],
       ["acrValues", undefined, 200, undefined],
