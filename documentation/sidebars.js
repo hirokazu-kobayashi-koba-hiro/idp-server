@@ -80,6 +80,8 @@ const sidebars = {
         "content_04_protocols/protocol-01-authorization-code-flow",
         "content_04_protocols/protocol-02-ciba-flow",
         "content_04_protocols/protocol-03-introspection",
+        "content_04_protocols/protocol-04-ciba-rar",
+        "content_04_protocols/protocol-05-fapi-ciba"
       ]
     },
     {

@@ -174,10 +174,10 @@ FAPI CIBAは **3つの仕様を積み重ねた構造** になっています：
 
 ### 重要な上書き関係
 
-| 要件 | FAPI Part 1 | FAPI Part 2（上書き） | 最終適用 |
-|------|------------|---------------------|---------|
-| **Client Authentication** | `private_key_jwt`<br>`client_secret_jwt` ✅<br>mTLS | `private_key_jwt`<br>`client_secret_jwt` ❌<br>mTLS | **Part 2が優先**<br>secret系は禁止 |
-| **PKCE** | 必須（5.2.2-7） | 免除（CIBAには不適用） | **Part 2が優先**<br>CIBA不要 |
+| 要件 | FAPI Part 1                                          | FAPI Part 2（上書き）                                     | 最終適用                         |
+|------|------------------------------------------------------|------------------------------------------------------|------------------------------|
+| **Client Authentication** | `private_key_jwt`<br/>`client_secret_jwt` ✅<br/>mTLS | `private_key_jwt`<br/>`client_secret_jwt` ❌<br/>mTLS | **Part 2が優先**<br/>secret系は禁止 |
+| **PKCE** | 必須（5.2.2-7）                                          | 免除（CIBAには不適用）                                        | **Part 2が優先**<br/>CIBA不要     |
 
 ### FAPI Part 1 (Baseline) 5.2.2 要件
 
