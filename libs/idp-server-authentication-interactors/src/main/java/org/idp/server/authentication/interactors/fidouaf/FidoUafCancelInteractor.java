@@ -18,6 +18,7 @@ package org.idp.server.authentication.interactors.fidouaf;
 
 import java.util.Map;
 import org.idp.server.core.openid.authentication.*;
+import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -54,10 +55,11 @@ public class FidoUafCancelInteractor implements AuthenticationInteractor {
 
     log.debug("FidoUafCancelInteractor called");
 
+    User user = transaction.user();
     AuthenticationInteractionStatus status = AuthenticationInteractionStatus.SUCCESS;
     Map<String, Object> response = Map.of();
     DefaultSecurityEventType eventType = DefaultSecurityEventType.authentication_cancel_success;
     return new AuthenticationInteractionRequestResult(
-        status, type, operationType(), method(), response, eventType);
+        status, type, operationType(), method(), user, response, eventType);
   }
 }

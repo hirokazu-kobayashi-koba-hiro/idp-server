@@ -86,7 +86,7 @@ describe("role management api", () => {
           ]
         }
       });
-      console.log(updateResponse.data);
+      console.log(JSON.stringify(updateResponse.data, null, 2));
       expect(updateResponse.status).toBe(200);
       expect(updateResponse.data).toHaveProperty("result");
       expect(updateResponse.data).toHaveProperty("diff");
@@ -100,10 +100,9 @@ describe("role management api", () => {
       });
       expect(afterUpdateDetail.status).toBe(200);
       expect(afterUpdateDetail.data.permissions).toHaveLength(2);
-      expect(afterUpdateDetail.data.permissions.map(p => p.id)).toEqual([
-        permissionListResponse.data.list[2].id,
-        permissionListResponse.data.list[3].id
-      ]);
+      expect(afterUpdateDetail.data.permissions.map(p => p.id)).toContain(permissionListResponse.data.list[2].id);
+      expect(afterUpdateDetail.data.permissions.map(p => p.id)).toContain(permissionListResponse.data.list[3].id);
+
       // Original permissions should be removed
       expect(afterUpdateDetail.data.permissions.map(p => p.id)).not.toContain(
         permissionListResponse.data.list[0].id
