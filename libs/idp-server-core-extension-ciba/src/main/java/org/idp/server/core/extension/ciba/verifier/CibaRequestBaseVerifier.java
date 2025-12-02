@@ -30,8 +30,11 @@ public class CibaRequestBaseVerifier {
    * <p>Per CIBA Core Section 7.1, the binding_message SHOULD be relatively short and use a limited
    * set of plain text characters. This limit ensures the message can be displayed on authentication
    * devices with limited screen space.
+   *
+   * <p>This implementation allows up to 20 characters to support more descriptive transaction
+   * contexts while maintaining compatibility with typical mobile device displays.
    */
-  private static final int BINDING_MESSAGE_MAX_LENGTH = 6;
+  private static final int BINDING_MESSAGE_MAX_LENGTH = 20;
 
   public void verify(CibaRequestContext context) {
     throwExceptionIfUnSupportedGrantType(context);

@@ -108,13 +108,13 @@ public class MysqlExecutor implements BackchannelAuthenticationRequestSqlExecuto
     } else {
       params.add(null);
     }
-    if (request.hasBindingMessage()) {
-      params.add(request.bindingMessage().value());
+    if (request.hasClientNotificationToken()) {
+      params.add(request.clientNotificationToken().value());
     } else {
       params.add(null);
     }
-    if (request.hasClientNotificationToken()) {
-      params.add(request.clientNotificationToken().value());
+    if (request.hasBindingMessage()) {
+      params.add(request.bindingMessage().value());
     } else {
       params.add(null);
     }
