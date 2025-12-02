@@ -19,6 +19,7 @@ package org.idp.server.platform.datasource;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.*;
+import org.postgresql.util.PGobject;
 
 public class SqlExecutor {
   private final Connection connection;
@@ -32,28 +33,23 @@ public class SqlExecutor {
 
       int index = 1;
       for (Object param : params) {
-        if (param instanceof String stringValue) {
+        if (param instanceof PGobject pgObject) {
+          prepareStatement.setObject(index, pgObject);
+        } else if (param instanceof String stringValue) {
           prepareStatement.setString(index, stringValue);
-        }
-        if (param instanceof Integer integerValue) {
+        } else if (param instanceof Integer integerValue) {
           prepareStatement.setInt(index, integerValue);
-        }
-        if (param instanceof Long longValue) {
+        } else if (param instanceof Long longValue) {
           prepareStatement.setLong(index, longValue);
-        }
-        if (param instanceof Boolean booleanValue) {
+        } else if (param instanceof Boolean booleanValue) {
           prepareStatement.setBoolean(index, booleanValue);
-        }
-        if (param instanceof byte[] binary) {
+        } else if (param instanceof byte[] binary) {
           prepareStatement.setBytes(index, binary);
-        }
-        if (param instanceof UUID uuid) {
+        } else if (param instanceof UUID uuid) {
           prepareStatement.setObject(index, uuid);
-        }
-        if (param instanceof LocalDateTime localDateTime) {
+        } else if (param instanceof LocalDateTime localDateTime) {
           prepareStatement.setObject(index, localDateTime);
-        }
-        if (param == null) {
+        } else if (param == null) {
           prepareStatement.setObject(index, null);
         }
         index++;
@@ -87,28 +83,23 @@ public class SqlExecutor {
 
       int index = 1;
       for (Object param : params) {
-        if (param instanceof String stringValue) {
+        if (param instanceof PGobject pgObject) {
+          prepareStatement.setObject(index, pgObject);
+        } else if (param instanceof String stringValue) {
           prepareStatement.setString(index, stringValue);
-        }
-        if (param instanceof Integer integerValue) {
+        } else if (param instanceof Integer integerValue) {
           prepareStatement.setInt(index, integerValue);
-        }
-        if (param instanceof Long longValue) {
+        } else if (param instanceof Long longValue) {
           prepareStatement.setLong(index, longValue);
-        }
-        if (param instanceof Boolean booleanValue) {
+        } else if (param instanceof Boolean booleanValue) {
           prepareStatement.setBoolean(index, booleanValue);
-        }
-        if (param instanceof byte[] binary) {
+        } else if (param instanceof byte[] binary) {
           prepareStatement.setBytes(index, binary);
-        }
-        if (param instanceof UUID uuid) {
+        } else if (param instanceof UUID uuid) {
           prepareStatement.setObject(index, uuid);
-        }
-        if (param instanceof LocalDateTime localDateTime) {
+        } else if (param instanceof LocalDateTime localDateTime) {
           prepareStatement.setObject(index, localDateTime);
-        }
-        if (param == null) {
+        } else if (param == null) {
           prepareStatement.setObject(index, null);
         }
         index++;
@@ -139,28 +130,23 @@ public class SqlExecutor {
 
       int index = 1;
       for (Object param : params) {
-        if (param instanceof String stringValue) {
+        if (param instanceof PGobject pgObject) {
+          prepareStatement.setObject(index, pgObject);
+        } else if (param instanceof String stringValue) {
           prepareStatement.setString(index, stringValue);
-        }
-        if (param instanceof Integer integerValue) {
+        } else if (param instanceof Integer integerValue) {
           prepareStatement.setInt(index, integerValue);
-        }
-        if (param instanceof Long longValue) {
+        } else if (param instanceof Long longValue) {
           prepareStatement.setLong(index, longValue);
-        }
-        if (param instanceof Boolean booleanValue) {
+        } else if (param instanceof Boolean booleanValue) {
           prepareStatement.setBoolean(index, booleanValue);
-        }
-        if (param instanceof byte[] binary) {
+        } else if (param instanceof byte[] binary) {
           prepareStatement.setBytes(index, binary);
-        }
-        if (param instanceof UUID uuid) {
+        } else if (param instanceof UUID uuid) {
           prepareStatement.setObject(index, uuid);
-        }
-        if (param instanceof LocalDateTime localDateTime) {
+        } else if (param instanceof LocalDateTime localDateTime) {
           prepareStatement.setObject(index, localDateTime);
-        }
-        if (param == null) {
+        } else if (param == null) {
           prepareStatement.setObject(index, null);
         }
         index++;
@@ -191,28 +177,23 @@ public class SqlExecutor {
 
       int index = 1;
       for (Object param : params) {
-        if (param instanceof String stringValue) {
+        if (param instanceof PGobject pgObject) {
+          prepareStatement.setObject(index, pgObject);
+        } else if (param instanceof String stringValue) {
           prepareStatement.setString(index, stringValue);
-        }
-        if (param instanceof Integer integerValue) {
+        } else if (param instanceof Integer integerValue) {
           prepareStatement.setInt(index, integerValue);
-        }
-        if (param instanceof Long longValue) {
+        } else if (param instanceof Long longValue) {
           prepareStatement.setLong(index, longValue);
-        }
-        if (param instanceof Boolean booleanValue) {
+        } else if (param instanceof Boolean booleanValue) {
           prepareStatement.setBoolean(index, booleanValue);
-        }
-        if (param instanceof byte[] binary) {
+        } else if (param instanceof byte[] binary) {
           prepareStatement.setBytes(index, binary);
-        }
-        if (param instanceof UUID uuid) {
+        } else if (param instanceof UUID uuid) {
           prepareStatement.setObject(index, uuid);
-        }
-        if (param instanceof LocalDateTime localDateTime) {
+        } else if (param instanceof LocalDateTime localDateTime) {
           prepareStatement.setObject(index, localDateTime);
-        }
-        if (param == null) {
+        } else if (param == null) {
           prepareStatement.setObject(index, null);
         }
         index++;

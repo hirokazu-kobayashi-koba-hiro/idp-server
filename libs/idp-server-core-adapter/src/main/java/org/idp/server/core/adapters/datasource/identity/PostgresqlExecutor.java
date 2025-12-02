@@ -16,6 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.identity;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,7 @@ import org.idp.server.core.openid.identity.UserQueries;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.postgresql.util.PGobject;
 
 public class PostgresqlExecutor implements UserSqlExecutor {
 
@@ -91,12 +93,22 @@ public class PostgresqlExecutor implements UserSqlExecutor {
             selectSql,
             """
                 WHERE idp_user.tenant_id = ?::uuid
-                AND authentication_devices @> ?::jsonb
+                AND authentication_devices @> ?
                 AND idp_user.provider_id = ?
             """);
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierUUID());
-    params.add(String.format("[{\"id\": \"%s\"}]", deviceId.valueAsUuid()));
+
+    // Create PGobject for jsonb parameter to enable GIN index usage
+    try {
+      PGobject jsonParam = new PGobject();
+      jsonParam.setType("jsonb");
+      jsonParam.setValue(String.format("[{\"id\": \"%s\"}]", deviceId.valueAsUuid()));
+      params.add(jsonParam);
+    } catch (SQLException e) {
+      throw new RuntimeException("Failed to create jsonb parameter", e);
+    }
+
     params.add(providerId);
 
     return sqlExecutor.selectOne(sqlTemplate, params);

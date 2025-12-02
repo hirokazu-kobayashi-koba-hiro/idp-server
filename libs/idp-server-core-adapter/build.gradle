@@ -21,7 +21,7 @@ dependencies {
 	implementation project(':libs:idp-server-control-plane')
 
 	//database
-	runtimeOnly 'org.postgresql:postgresql:42.7.2'
+	implementation 'org.postgresql:postgresql:42.7.2'
 	runtimeOnly 'com.mysql:mysql-connector-j:9.2.0'
 	implementation 'com.zaxxer:HikariCP:6.3.0'
 	//cache
