@@ -89,7 +89,7 @@ describe("Monkey test CIBA Flow", () => {
         endpoint: serverConfig.backchannelAuthenticationEndpoint,
         clientId: clientSecretPostClient.clientId,
         scope: "openid " + longStr,
-        bindingMessage: longStr,
+        bindingMessage: "123456",
         userCode: ciba.userCode,
         loginHint: ciba.loginHint,
         clientSecret: clientSecretPostClient.clientSecret
@@ -158,7 +158,7 @@ describe("Monkey test CIBA Flow", () => {
       ["scope", 123, 400, "invalid_scope"],
       ["scope", null, 400, "invalid_scope"],
       ["loginHint", ["array"], 400, "unknown_user_id"],
-      ["bindingMessage", {}, 200, ""],
+      ["bindingMessage", {}, 400, ""],
       ["clientId", null, 400, "invalid_request"],
       ["clientSecret", ["a", "b"], 401, "invalid_client"],
       ["acrValues", undefined, 200, undefined],

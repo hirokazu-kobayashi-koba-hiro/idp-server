@@ -19,7 +19,7 @@
   "client_name#ja-JP": "FAPI-CIBA Private Key JWTクライアント",
   "token_endpoint_auth_method": "private_key_jwt",
   "token_endpoint_auth_signing_alg": "ES256",
-  "jwks": "{\"keys\":[{\n    \"kty\": \"EC\",\n    \"use\": \"sig\",\n    \"crv\": \"P-256\",\n    \"kid\": \"private_key_jwt_client_key\",\n    \"x\": \"IJTHvaDefrhc38KtfO26vZMJff1ukIQUPU2oNvC3b0A\",\n    \"y\": \"zCbddvV_GK_o6HcKtqNLYz-jhX2DkUB3cc39xg5yfv8\",\n    \"alg\": \"ES256\"\n}]}",
+  "jwks": "{\"keys\":[{\n    \"kty\": \"RSA\",\n    \"e\": \"AQAB\",\n    \"use\": \"sig\",\n    \"kid\": \"private_key_jwt_client_key\",\n    \"alg\": \"PS256\",\n    \"n\": \"yajJSOpkezhLKceKPqg_d-CoSS7p_hUhJJK5baVJLDbPjNuhbrGByZsLQqhiqPdTPoTWfE0vRegyHNrKD43jPsbJkX71v5ijLJtNHTOnf_soGlm5zPptu17D4eExSJdt4zPIJBBaIzONDe-1djoKnDUrdGUedSKm2mNp0y_rbEFctVLJx98bkBewe8nwc3cBuseNN3AyWAhkzYIpd-YXWMYP8Vqb65ShNvnCKma_83B1jd0y-XeajAgvKUh8zX94jFmeWO5eZ4JnQ82ob2J-UwItXtDe1Tq1QVjFraM2grLJyQEX8ADdfl9thYCnuCpNSbxFidpBJ3Cp1JehoR_jf9gd07CoJhLMHx7I-b_V65C0oBggrHvSgvAG7KKEw1iTDlqIKofOUutInY2w4cagcYw6kdVjh2KvhiZtGxsn1xig79F0VEkswuN8K9jj0GJudy17W_r5Dqapa6fCwrdWemXlO-xvBN9rF7_imm3NqaaxW_YLPEJ-zK1DloSgJgMKfSev9YSEz5mfasdwrYuxB7StLc4kilcvwD1T3pSrH3RHwOY63gbrYowNgL1FRGS2_rr0os29p_8qNkqRz-UBg3wNmQFPeF9quMrMfLyyQ8x3_nBU7BMJyN6H2dd1sJNuFeoOK_qSLWiSqk45UcEYxRGeracYoVVDDTW7XGpWYrE\"\n}]}",
   "backchannel_token_delivery_mode": "poll",
   "backchannel_authentication_request_signing_alg": "ES256",
   "backchannel_user_code_parameter": false,

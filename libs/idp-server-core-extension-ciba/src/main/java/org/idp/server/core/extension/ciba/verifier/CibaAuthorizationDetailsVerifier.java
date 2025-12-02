@@ -18,6 +18,7 @@ package org.idp.server.core.extension.ciba.verifier;
 
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationBadRequestException;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetailsInvalidException;
 import org.idp.server.core.openid.oauth.verifier.extension.AuthorizationDetailsVerifier;
 
@@ -52,12 +53,12 @@ import org.idp.server.core.openid.oauth.verifier.extension.AuthorizationDetailsV
 public class CibaAuthorizationDetailsVerifier implements CibaExtensionVerifier {
 
   @Override
-  public boolean shouldVerify(CibaRequestContext context) {
+  public boolean shouldVerify(CibaRequestContext context, ClientCredentials clientCredentials) {
     return context.hasAuthorizationDetails();
   }
 
   @Override
-  public void verify(CibaRequestContext context) {
+  public void verify(CibaRequestContext context, ClientCredentials clientCredentials) {
     try {
       AuthorizationDetailsVerifier authorizationDetailsVerifier =
           new AuthorizationDetailsVerifier(

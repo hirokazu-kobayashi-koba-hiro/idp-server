@@ -20,6 +20,7 @@ import org.idp.server.core.extension.ciba.CibaProfile;
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.verifier.CibaRequestBaseVerifier;
 import org.idp.server.core.extension.ciba.verifier.CibaVerifier;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 
 public class CibaRequestFapiProfileVerifier implements CibaVerifier {
 
@@ -37,8 +38,8 @@ public class CibaRequestFapiProfileVerifier implements CibaVerifier {
   }
 
   @Override
-  public void verify(CibaRequestContext context) {
+  public void verify(CibaRequestContext context, ClientCredentials clientCredentials) {
     baseVerifier.verify(context);
-    fapiCibaVerifier.verify(context);
+    fapiCibaVerifier.verify(context, clientCredentials);
   }
 }

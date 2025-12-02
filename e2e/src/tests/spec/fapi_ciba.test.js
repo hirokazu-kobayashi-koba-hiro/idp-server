@@ -22,9 +22,9 @@ import {
   tlsClientAuth,
 } from "../testConfig";
 import { createJwtWithPrivateKey, generateJti } from "../../lib/jose";
-import { getEntropyBits, isArray, toEpocTime } from "../../lib/util";
+import { createBasicAuthHeader, getEntropyBits, isArray, toEpocTime } from "../../lib/util";
 import { certThumbprint, requestAuthorizations } from "../../oauth/request";
-import { calculateCodeChallengeWithS256, generateCodeVerifier } from "../../lib/oauth";
+import { calculateCodeChallengeWithS256, createClientAssertion, generateCodeVerifier } from "../../lib/oauth";
 import { post } from "../../lib/http";
 import { mtlsPost } from "../../lib/http/mtls";
 import { encodedClientCert } from "../../api/cert/clientCert";
@@ -119,6 +119,11 @@ describe("FAPI CIBA Profile - Financial-grade API: Client Initiated Backchannel 
     // Additional FAPI CIBA Spec Tests based on OpenID FAPI CIBA Profile 5.2.2
 
     it("3. shall not support CIBA push mode", async () => {
+      const clientAssertion = createClientAssertion({
+        client: clientSecretJwtClient,
+        issuer: serverConfig.issuer
+      });
+
       const requestObject = createJwtWithPrivateKey({
         payload: {
           scope: "openid profile phone email " + clientSecretJwtClient.fapiBaselineScope,
@@ -141,6 +146,8 @@ describe("FAPI CIBA Profile - Financial-grade API: Client Initiated Backchannel 
         clientId: clientSecretJwtClient.clientId,
         request: requestObject,
         clientCertFile: client.clientCertFile,
+        clientAssertion,
+        clientAssertionType: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
       });
 
       console.log("Expected error (no nbf):", backchannelResponse.data);
@@ -1243,6 +1250,10 @@ describe("FAPI CIBA Profile - Financial-grade API: Client Initiated Backchannel 
         endpoint: serverConfig.backchannelAuthenticationEndpoint,
         clientId: clientSecretBasicClient.clientId,
         request: requestObject,
+        basicAuth: createBasicAuthHeader({
+          username: clientSecretBasicClient.clientId,
+          password: clientSecretBasicClient.clientSecret,
+        })
       });
       console.log(backchannelAuthenticationResponse.data);
       expect(backchannelAuthenticationResponse.status).toBe(401);
@@ -1271,6 +1282,7 @@ describe("FAPI CIBA Profile - Financial-grade API: Client Initiated Backchannel 
       const backchannelAuthenticationResponse  = await requestBackchannelAuthentications({
         endpoint: serverConfig.backchannelAuthenticationEndpoint,
         clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
         request: requestObject,
       });
       console.log(backchannelAuthenticationResponse.data);
@@ -1280,6 +1292,11 @@ describe("FAPI CIBA Profile - Financial-grade API: Client Initiated Backchannel 
     });
 
     it("4. shall authenticate the confidential client using one of the following methods: unauthorized client_secret_jwt", async () => {
+      const clientAssertion = createClientAssertion({
+        client: clientSecretJwt2Client,
+        issuer: serverConfig.issuer,
+      });
+
       const requestObject = createJwtWithPrivateKey({
         payload: {
           scope: "openid profile phone email " + clientSecretJwt2Client.fapiBaselineScope,
@@ -1301,6 +1318,8 @@ describe("FAPI CIBA Profile - Financial-grade API: Client Initiated Backchannel 
         endpoint: serverConfig.backchannelAuthenticationEndpoint,
         clientId: clientSecretJwt2Client.clientId,
         request: requestObject,
+        clientAssertion,
+        clientAssertionType: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
       });
       console.log(backchannelAuthenticationResponse.data);
       expect(backchannelAuthenticationResponse.status).toBe(401);

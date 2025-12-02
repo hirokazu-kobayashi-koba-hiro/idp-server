@@ -20,6 +20,9 @@ import java.util.Date;
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationBadRequestException;
 import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationUnauthorizedException;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientAssertionJwt;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientAuthenticationPublicKey;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.type.ciba.BackchannelTokenDeliveryMode;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.platform.jose.JoseContext;
@@ -52,11 +55,12 @@ public class FapiCibaVerifier {
 
   private static final long MAX_REQUEST_OBJECT_LIFETIME_MS = 60 * 60 * 1000; // 60 minutes
 
-  public void verify(CibaRequestContext context) {
+  public void verify(CibaRequestContext context, ClientCredentials clientCredentials) {
     throwExceptionIfNotSignedRequestObject(context);
     throwExceptionIfMissingIat(context);
     throwExceptionIfInvalidRequestObjectLifetime(context);
     throwExceptionIfInvalidSigningAlgorithm(context);
+    throwExceptionIfInvalidSigningAlgorithmForClientAssertion(context, clientCredentials);
     throwExceptionIfNotConfidentialClient(context);
     throwExceptionIfMissingBindingMessage(context);
     throwExceptionIfPushMode(context);
@@ -203,6 +207,63 @@ public class FapiCibaVerifier {
 
     // FAPI Part 1 5.2.2-5, 5.2.2-6: Key size requirements
     int keySize = joseContext.jsonWebKey().keySize();
+
+    if ("PS256".equals(algorithm) && keySize < 2048) {
+      // RSA algorithms require 2048 bits or larger
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_request",
+          String.format(
+              "FAPI CIBA Profile requires RSA key size to be 2048 bits or larger. Current key size: %d bits",
+              keySize));
+    }
+
+    if ("ES256".equals(algorithm) && keySize < 160) {
+      // Elliptic curve algorithms require 160 bits or larger (ES256 uses 256 bits)
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_request",
+          String.format(
+              "FAPI CIBA Profile requires elliptic curve key size to be 160 bits or larger. Current key size: %d bits",
+              keySize));
+    }
+  }
+
+  /**
+   * 5.2.2.3 Signing Algorithm Restrictions (FAPI CIBA 7.10)
+   *
+   * <p>shall use PS256 or ES256 algorithms
+   *
+   * <p>should not use algorithms that use RSASSA-PKCS1-v1_5 (e.g. RS256)
+   *
+   * <p>shall not use none
+   *
+   * <p>5.2.2.4 Key Size Requirements (FAPI Part 1 5.2.2-5, 5.2.2-6)
+   *
+   * <p>shall require and use a key of size 2048 bits or larger for RSA algorithms (PS256)
+   *
+   * <p>shall require and use a key of size 160 bits or larger for elliptic curve algorithms (ES256)
+   */
+  void throwExceptionIfInvalidSigningAlgorithmForClientAssertion(
+      CibaRequestContext context, ClientCredentials clientCredentials) {
+    if (!context.clientAuthenticationType().isPrivateKeyJwt()) {
+      return;
+    }
+
+    ClientAssertionJwt clientAssertionJwt = clientCredentials.clientAssertionJwt();
+    String algorithm = clientAssertionJwt.algorithm();
+
+    // FAPI CIBA 7.10: shall use PS256 or ES256 algorithms
+    if (!"PS256".equals(algorithm) && !"ES256".equals(algorithm)) {
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_request",
+          String.format(
+              "FAPI CIBA Profile requires signing algorithm to be PS256 or ES256. Current algorithm: %s",
+              algorithm));
+    }
+
+    // FAPI Part 1 5.2.2-5, 5.2.2-6: Key size requirements
+    ClientAuthenticationPublicKey clientAuthenticationPublicKey =
+        clientCredentials.clientAuthenticationPublicKey();
+    int keySize = clientAuthenticationPublicKey.size();
 
     if ("PS256".equals(algorithm) && keySize < 2048) {
       // RSA algorithms require 2048 bits or larger

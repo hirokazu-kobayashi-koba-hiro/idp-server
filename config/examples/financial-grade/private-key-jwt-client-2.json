@@ -19,7 +19,7 @@
   "client_name#ja-JP": "FAPI-CIBA Private Key JWTクライアント2",
   "token_endpoint_auth_method": "private_key_jwt",
   "token_endpoint_auth_signing_alg": "ES256",
-  "jwks": "{\"keys\":[{\n    \"kty\": \"EC\",\n    \"use\": \"sig\",\n    \"crv\": \"P-256\",\n    \"kid\": \"private_key_jwt_client_key_2\",\n    \"x\": \"GVvDYgE0SguVklJHRLyShLJFkfMwkEOEM18VD7Va1xQ\",\n    \"y\": \"Fvd8f9AL1Nypxauo5b_bk7hM3GW0e1kboSFb1Evs-20\",\n    \"alg\": \"ES256\"\n}]}",
+  "jwks": "{\"keys\":[{\n    \"kty\": \"RSA\",\n    \"e\": \"AQAB\",\n    \"use\": \"sig\",\n    \"kid\": \"private_key_jwt_client_key_2\",\n    \"alg\": \"PS256\",\n    \"n\": \"jA6lCn8RQtt2d9I_OuGEBAmoF1i6UePgzPjqUSbTOnekyqsDmWKXV8BZr_1vWgb9LvgPTngfgWo1PQrsKu5cL0Ji7byGZ7YElO8cMIkI7lu2gMjtVuCsmh6-0D-ZvLfUqc8yEbdGh4oDdaV4LX35lFTXDJvtcgYGCgdNKU6dQpYsn1_f6RAJ7klV8sUqP2Yn8SWVP7eQDMUoRdwhL7roBT-Ky_0KNkWWOxUKgpu5Jwmt5BS_TTGCdJ92LALI7fuNlJwFaEfYemA1j7HVgeTvlgT5M_tsNM2kQzLMo6bQwOeth8VDP79tmiLJFNvZT6Lpjqas3O4pTDF_x8tROcyghw\"\n}]}",
   "backchannel_token_delivery_mode": "poll",
   "backchannel_authentication_request_signing_alg": "ES256",
   "backchannel_user_code_parameter": false,

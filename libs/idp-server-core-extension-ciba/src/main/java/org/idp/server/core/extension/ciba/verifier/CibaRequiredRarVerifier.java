@@ -18,6 +18,7 @@ package org.idp.server.core.extension.ciba.verifier;
 
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationBadRequestException;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 
 /**
  * CibaRequiredRarVerifier
@@ -77,12 +78,12 @@ import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationBad
 public class CibaRequiredRarVerifier implements CibaExtensionVerifier {
 
   @Override
-  public boolean shouldVerify(CibaRequestContext context) {
+  public boolean shouldVerify(CibaRequestContext context, ClientCredentials clientCredentials) {
     return context.clientConfiguration().isCibaRequireRar();
   }
 
   @Override
-  public void verify(CibaRequestContext context) {
+  public void verify(CibaRequestContext context, ClientCredentials clientCredentials) {
     if (!context.hasAuthorizationDetails()) {
       throw new BackchannelAuthenticationBadRequestException(
           "invalid_request", "authorization_details is required for this client");

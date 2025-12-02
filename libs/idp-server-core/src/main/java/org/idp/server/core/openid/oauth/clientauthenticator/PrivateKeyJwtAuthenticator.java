@@ -55,6 +55,9 @@ class PrivateKeyJwtAuthenticator
     ClientAuthenticationPublicKey clientAuthenticationPublicKey =
         new ClientAuthenticationPublicKey(joseContext.jsonWebKey());
     ClientAssertionJwt clientAssertionJwt = new ClientAssertionJwt(joseContext.jsonWebSignature());
+
+    throwExceptionIfUnmatchedAlg(context, clientAssertionJwt, clientAuthenticationPublicKey);
+
     ClientCertification clientCertification = parseClientCertification(context);
 
     log.info(
@@ -121,6 +124,20 @@ class PrivateKeyJwtAuthenticator
           clientId,
           "client_assertion validation failed: " + e.getMessage(),
           e);
+    }
+  }
+
+  void throwExceptionIfUnmatchedAlg(
+      BackchannelRequestContext context,
+      ClientAssertionJwt clientAssertionJwt,
+      ClientAuthenticationPublicKey clientAuthenticationPublicKey) {
+    String algorithm = clientAssertionJwt.algorithm();
+    String publicKeyAlgorithm = clientAuthenticationPublicKey.algorithm();
+    if (!algorithm.equals(publicKeyAlgorithm)) {
+      throw new ClientUnAuthorizedException(
+          ClientAuthenticationType.private_key_jwt.name(),
+          context.requestedClientId(),
+          "Client_assertion alg  mismatch public key algorithm.");
     }
   }
 }

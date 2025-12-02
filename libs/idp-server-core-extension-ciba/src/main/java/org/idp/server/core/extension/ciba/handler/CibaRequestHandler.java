@@ -38,6 +38,7 @@ import org.idp.server.core.extension.ciba.verifier.CibaRequestVerifier;
 import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
@@ -117,8 +118,8 @@ public class CibaRequestHandler {
             authorizationServerConfiguration,
             clientConfiguration);
 
-    clientAuthenticationHandler.authenticate(context);
-    verifier.verify(context);
+    ClientCredentials clientCredentials = clientAuthenticationHandler.authenticate(context);
+    verifier.verify(context, clientCredentials);
 
     return context;
   }

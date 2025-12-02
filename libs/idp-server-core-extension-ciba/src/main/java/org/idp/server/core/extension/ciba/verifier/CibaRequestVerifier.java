@@ -24,6 +24,7 @@ import java.util.Objects;
 import org.idp.server.core.extension.ciba.CibaProfile;
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.plugin.CibaVerifierPluginLoader;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.platform.exception.UnSupportedException;
 
 /**
@@ -54,22 +55,22 @@ public class CibaRequestVerifier {
     this.extensionVerifiers.add(new CibaAuthorizationDetailsVerifier());
   }
 
-  public void verify(CibaRequestContext context) {
+  public void verify(CibaRequestContext context, ClientCredentials clientCredentials) {
     // 1. Profile-specific base verification
     CibaVerifier cibaVerifier = baseVerifiers.get(context.profile());
     if (Objects.isNull(cibaVerifier)) {
       throw new UnSupportedException(
           String.format("unsupported ciba profile (%s)", context.profile().name()));
     }
-    cibaVerifier.verify(context);
+    cibaVerifier.verify(context, clientCredentials);
 
     // 2. Common extension verifications
     extensionVerifiers.forEach(
         extensionVerifier -> {
-          if (!extensionVerifier.shouldVerify(context)) {
+          if (!extensionVerifier.shouldVerify(context, clientCredentials)) {
             return;
           }
-          extensionVerifier.verify(context);
+          extensionVerifier.verify(context, clientCredentials);
         });
   }
 }

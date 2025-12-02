@@ -20,6 +20,14 @@ import java.util.Objects;
 import org.idp.server.platform.jose.JsonWebKey;
 import org.idp.server.platform.jose.JsonWebKeyType;
 
+/**
+ * ClientAuthenticationPublicKey
+ *
+ * <p>Represents the public key used for verifying client_assertion JWTs in private_key_jwt client
+ * authentication. Provides access to key metadata including type, size, and algorithm.
+ *
+ * @see <a href="https://www.rfc-editor.org/rfc/rfc7517">RFC 7517 - JSON Web Key (JWK)</a>
+ */
 public class ClientAuthenticationPublicKey {
 
   JsonWebKey jsonWebKey;
@@ -44,7 +52,26 @@ public class ClientAuthenticationPublicKey {
     return jsonWebKeyType.isEc();
   }
 
+  /**
+   * Returns the key size in bits.
+   *
+   * <p>For RSA keys, this is the modulus size. For EC keys, this is the curve size. FAPI requires
+   * RSA keys to be 2048 bits or larger, and EC keys to be 160 bits or larger.
+   *
+   * @return the key size in bits
+   */
   public int size() {
     return jsonWebKey.size();
+  }
+
+  /**
+   * Returns the algorithm specified in the JWK's "alg" parameter.
+   *
+   * <p>This should match the algorithm used in the client_assertion JWT signature.
+   *
+   * @return the algorithm identifier (e.g., "PS256", "ES256"), or null if not specified
+   */
+  public String algorithm() {
+    return jsonWebKey.algorithm();
   }
 }

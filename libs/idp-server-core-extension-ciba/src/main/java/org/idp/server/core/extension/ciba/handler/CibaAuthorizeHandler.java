@@ -91,9 +91,6 @@ public class CibaAuthorizeHandler {
             CibaGrantStatus.authorized, request.authentication(), request.toDeniedScopes());
     cibaGrantRepository.update(tenant, updated);
 
-    backchannelAuthenticationRequestRepository.delete(
-        tenant, backchannelAuthenticationRequestIdentifier);
-
     clientNotificationService.notify(
         tenant,
         backchannelAuthenticationRequest,

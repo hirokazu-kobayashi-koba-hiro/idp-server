@@ -17,12 +17,13 @@
 package org.idp.server.core.extension.ciba.verifier;
 
 import org.idp.server.core.extension.ciba.CibaRequestContext;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 
 public interface CibaExtensionVerifier {
 
-  default boolean shouldVerify(CibaRequestContext context) {
+  default boolean shouldVerify(CibaRequestContext context, ClientCredentials clientCredentials) {
     return true;
   }
 
-  void verify(CibaRequestContext context);
+  void verify(CibaRequestContext context, ClientCredentials clientCredentials);
 }

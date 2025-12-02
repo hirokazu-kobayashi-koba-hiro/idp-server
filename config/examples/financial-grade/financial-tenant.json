@@ -138,7 +138,8 @@
     ],
     "request_object_signing_alg_values_supported": [
       "ES256",
-      "PS256"
+      "PS256",
+      "RS256"
     ],
     "authorization_signing_alg_values_supported": [
       "ES256",

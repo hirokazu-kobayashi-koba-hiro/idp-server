@@ -7,6 +7,7 @@ import {
   requestToken
 } from "../../api/oauthClient";
 import {
+  clientSecretJwtClient,
   clientSecretPostClient,
   privateKeyJwtClient,
   publicClient,
@@ -15,6 +16,7 @@ import {
 import { createJwt, createJwtWithPrivateKey, generateJti } from "../../lib/jose";
 import { isNumber, sleep, toEpocTime } from "../../lib/util";
 import { postWithJson } from "../../lib/http";
+import { createClientAssertion } from "../../lib/oauth";
 
 describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core 1.0", () => {
   const ciba = serverConfig.ciba;
@@ -264,13 +266,13 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
             request,
           });
         console.log(backchannelAuthenticationResponse.data);
-        expect(backchannelAuthenticationResponse.status).toBe(401);
+        expect(backchannelAuthenticationResponse.status).toBe(400);
         expect(backchannelAuthenticationResponse.data.error).toEqual(
-          "invalid_client"
+          "invalid_request"
         );
         expect(
           backchannelAuthenticationResponse.data.error_description
-        ).toEqual("Client authentication failed: 'iss' claim in request object does not match client_id.");
+        ).toEqual("request object is invalid, iss claim must be client_id");
       });
 
       it("exp An expiration time that limits the validity lifetime of the signed authentication request.", async () => {
@@ -818,6 +820,10 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
     });
 
     it("unauthorized_client The Client is not authorized to use this authentication flow.", async () => {
+      const clientAssertion = createClientAssertion({
+        client: privateKeyJwtClient,
+        issuer: serverConfig.issuer,
+      });
       const backchannelAuthenticationResponse =
         await requestBackchannelAuthentications({
           endpoint: serverConfig.backchannelAuthenticationEndpoint,
@@ -826,6 +832,8 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
           userCode: ciba.userCode,
           loginHint: ciba.loginHint,
           scope: "openid profile phone email" + privateKeyJwtClient.scope,
+          clientAssertion,
+          clientAssertionType: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
         });
       console.log(backchannelAuthenticationResponse.data);
       expect(backchannelAuthenticationResponse.status).toBe(400);
