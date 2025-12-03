@@ -294,6 +294,8 @@ UserInfoエンドポイントでは、以下を検証します：
 2. **有効期限チェック**: `exp`クレームが期限内か
 3. **失効チェック**: トークンが失効（revoke）されていないか
 4. **Audience検証**: トークンの用途が正しいか
+5. **ユーザー存在チェック**: ユーザーが存在するか
+6. **ユーザーステータスチェック**: ユーザーがアクティブな状態か（LOCKED, DISABLED, SUSPENDED, DEACTIVATED, DELETED_PENDING, DELETEDは拒否）
 
 ### 検証エラー
 
@@ -330,6 +332,30 @@ Authorization: Bearer eyJ...（失効済み）
 {
   "error": "invalid_token",
   "error_description": "The access token has been revoked"
+}
+```
+
+```bash
+# ユーザーが見つからない
+GET /{tenant-id}/v1/userinfo
+Authorization: Bearer eyJ...
+
+→ HTTP 401 Unauthorized
+{
+  "error": "invalid_token",
+  "error_description": "not found user"
+}
+```
+
+```bash
+# ユーザーがアクティブでない（LOCKED, DISABLED等）
+GET /{tenant-id}/v1/userinfo
+Authorization: Bearer eyJ...
+
+→ HTTP 401 Unauthorized
+{
+  "error": "invalid_token",
+  "error_description": "user is not active (id: xxx, status: LOCKED)"
 }
 ```
 
@@ -397,6 +423,12 @@ UserInfoレスポンス:
 // ✅ 正しい
 scope: 'openid profile email'  // profile, emailスコープ追加
 ```
+
+### エラー3: `invalid_token` - ユーザーがアクティブでない
+
+**原因**: ユーザーのステータスがLOCKED, DISABLED, SUSPENDED, DEACTIVATED, DELETED_PENDING, DELETEDのいずれか
+
+**解決策**: 管理者がユーザーステータスをアクティブな状態（INITIALIZED, FEDERATED, REGISTERED, IDENTITY_VERIFIED, IDENTITY_VERIFICATION_REQUIRED）に変更する
 
 ---
 
