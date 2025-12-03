@@ -142,21 +142,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   events: {
     async signOut() {
       console.log("------------- signOut event -----------------");
-
-      // RP-Initiated Logout: バックエンドのログアウトAPIを呼び出し
-      // Note: eventsハンドラーではsessionにアクセスできないため、client_idのみで呼び出し
-      const params = new URLSearchParams({
-        client_id: process.env.NEXT_PUBLIC_IDP_CLIENT_ID as string,
-        post_logout_redirect_uri: `${frontendUrl}/logout`,
-      });
-
-      await fetch(
-        `${internalIssuer}/v1/logout?${params.toString()}`,
-        {
-          method: "GET",
-          credentials: "include",
-        },
-      );
+      // Note: RP-Initiated Logout はブラウザリダイレクト方式に変更
+      // LogoutButton コンポーネントから直接 IDP server の /v1/logout にリダイレクトする
+      // これにより Cookie が正しく送信され、セッションが確実に削除される
     },
   },
   session: {
