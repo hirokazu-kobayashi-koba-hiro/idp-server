@@ -32,6 +32,7 @@ public class ResourceOwnerPasswordGrantVerifier {
 
   public void verify() {
     throwExceptionIfUnspecifiedUser();
+    throwExceptionIfInactiveUser();
     throwExceptionIfInvalidScope();
   }
 
@@ -39,6 +40,15 @@ public class ResourceOwnerPasswordGrantVerifier {
     if (!user.exists()) {
       throw new TokenBadRequestException(
           "invalid_grant", "does not found user by token request, or invalid password");
+    }
+  }
+
+  void throwExceptionIfInactiveUser() {
+    if (!user.isActive()) {
+      throw new TokenBadRequestException(
+          "invalid_grant",
+          String.format(
+              "user is not active (id: %s, status: %s)", user.sub(), user.status().name()));
     }
   }
 

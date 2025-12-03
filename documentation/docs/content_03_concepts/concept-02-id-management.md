@@ -269,7 +269,75 @@ DELETED_PENDING
 DELETED
 ```
 
-##   
+#### ステータスによるアクセス制御
+
+ユーザーステータスは、各種エンドポイントでのアクセス制御に使用されます。
+
+##### アクティブと判定されるステータス
+
+以下のステータスのユーザーのみがアクティブとして扱われます：
+
+| ステータス | 説明 |
+|-----------|------|
+| `INITIALIZED` | アカウント初期化済み |
+| `FEDERATED` | 外部IdP連携済み |
+| `REGISTERED` | 登録完了 |
+| `IDENTITY_VERIFICATION_REQUIRED` | 身元確認待ち |
+| `IDENTITY_VERIFIED` | 身元確認済み |
+
+##### 非アクティブと判定されるステータス
+
+以下のステータスのユーザーはアクセスが拒否されます：
+
+| ステータス | 説明 | 影響 |
+|-----------|------|------|
+| `LOCKED` | 認証失敗によるロック | トークン発行・更新・Userinfo不可 |
+| `DISABLED` | 管理者による無効化 | トークン発行・更新・Userinfo不可 |
+| `SUSPENDED` | ポリシー違反による停止 | トークン発行・更新・Userinfo不可 |
+| `DEACTIVATED` | 退会申請による無効化 | トークン発行・更新・Userinfo不可 |
+| `DELETED_PENDING` | 削除処理中 | トークン発行・更新・Userinfo不可 |
+| `DELETED` | 完全削除済み | 全アクセス不可 |
+
+##### エンドポイント別のステータスチェック
+
+| エンドポイント | Grant Type | ステータスチェック | 理由 |
+|--------------|------------|----------------|------|
+| Token Endpoint | `authorization_code` | なし | 認可時点でユーザー認証済みのため |
+| Token Endpoint | `refresh_token` | あり | 長期間有効なトークンのため、更新時に再検証 |
+| Token Endpoint | `password` | あり | ユーザー認証を含むため |
+| Token Introspection Endpoint | - | あり | トークン有効性検証時にユーザー状態も検証 |
+| Userinfo Endpoint | - | あり | ユーザー情報取得時に検証 |
+
+##### エラーレスポンス
+
+非アクティブなユーザーでアクセスした場合、以下のエラーが返されます：
+
+**Token Endpoint（refresh_token / password）**
+```json
+{
+  "error": "invalid_grant",
+  "error_description": "user is not active (id: user-123, status: LOCKED)"
+}
+```
+
+**Token Introspection Endpoint**
+
+RFC 7662に準拠し、非アクティブなユーザーのトークンは`active: false`として返されます（HTTPステータスは200）。
+```json
+{
+  "active": false
+}
+```
+
+**Userinfo Endpoint**
+```json
+{
+  "error": "invalid_token",
+  "error_description": "user is not active (id: user-123, status: DISABLED)"
+}
+```
+
+---
 
 ## 削除
 

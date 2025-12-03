@@ -35,6 +35,7 @@ import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.PasswordCredentialsGrantDelegate;
 import org.idp.server.core.openid.token.TokenRequestContext;
 import org.idp.server.core.openid.token.TokenRequestParameters;
+import org.idp.server.core.openid.token.TokenUserFindingDelegate;
 import org.idp.server.core.openid.token.handler.token.io.TokenRequest;
 import org.idp.server.core.openid.token.handler.token.io.TokenRequestResponse;
 import org.idp.server.core.openid.token.handler.token.io.TokenRequestStatus;
@@ -81,7 +82,8 @@ public class TokenRequestHandler {
 
   public TokenRequestResponse handle(
       TokenRequest tokenRequest,
-      PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate) {
+      PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate,
+      TokenUserFindingDelegate tokenUserFindingDelegate) {
     Tenant tenant = tokenRequest.tenant();
     TokenRequestParameters parameters = tokenRequest.toParameters();
     TokenRequestValidator baseValidator = new TokenRequestValidator(parameters);
@@ -104,6 +106,7 @@ public class TokenRequestHandler {
             parameters,
             customProperties,
             passwordCredentialsGrantDelegate,
+            tokenUserFindingDelegate,
             authorizationServerConfiguration,
             clientConfiguration);
 

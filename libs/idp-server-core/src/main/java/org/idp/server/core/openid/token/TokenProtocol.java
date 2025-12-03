@@ -30,11 +30,13 @@ public interface TokenProtocol {
 
   AuthorizationProvider authorizationProtocolProvider();
 
-  TokenRequestResponse request(TokenRequest tokenRequest);
+  TokenRequestResponse request(TokenRequest tokenRequest, TokenUserFindingDelegate delegate);
 
-  TokenIntrospectionResponse inspect(TokenIntrospectionRequest request);
+  TokenIntrospectionResponse inspect(
+      TokenIntrospectionRequest request, TokenUserFindingDelegate delegate);
 
-  TokenIntrospectionResponse inspectWithVerification(TokenIntrospectionExtensionRequest request);
+  TokenIntrospectionResponse inspectWithVerification(
+      TokenIntrospectionExtensionRequest request, TokenUserFindingDelegate delegate);
 
   TokenIntrospectionResponse inspectForInternal(TokenIntrospectionInternalRequest request);
 
