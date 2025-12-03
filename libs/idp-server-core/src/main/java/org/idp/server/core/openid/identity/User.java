@@ -941,7 +941,7 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
   }
 
   public boolean isActive() {
-    return status.isActive();
+    return exists() && status.isActive();
   }
 
   public boolean enabledFidoUaf() {

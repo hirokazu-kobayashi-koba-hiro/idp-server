@@ -268,6 +268,205 @@ describe("User Status verification. Can not authorize when user status is not ac
 
   });
 
+  describe("Userinfo flow - Issue #901", () => {
+
+    it("Userinfo should fail when user status is not active", async () => {
+      console.log("\n=== Starting Userinfo User Status Validation Test ===\n");
+
+      // Step 1: Get admin access token
+      console.log("Step 1: Getting admin access token...");
+      const adminTokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+        scope: clientSecretPostClient.scope,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret
+      });
+      expect(adminTokenResponse.status).toBe(200);
+      const adminAccessToken = adminTokenResponse.data.access_token;
+      console.log("✓ Admin access token obtained\n");
+
+      // Step 2: Create new tenant
+      console.log("Step 2: Creating new tenant...");
+      const tenantId = uuidv4();
+      const { jwks } = await generateRS256KeyPair();
+
+      const tenantData = {
+        tenant: {
+          id: tenantId,
+          name: "Userinfo Status Test Tenant",
+          domain: "http://localhost:8080",
+          description: "Test tenant for userinfo status validation",
+          authorization_provider: "idp-server",
+          tenant_type: "BUSINESS"
+        },
+        authorization_server: {
+          issuer: `${backendUrl}/${tenantId}`,
+          authorization_endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+          token_endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+          userinfo_endpoint: `${backendUrl}/${tenantId}/v1/userinfo`,
+          jwks_uri: `${backendUrl}/${tenantId}/.well-known/jwks.json`,
+          jwks: jwks,
+          scopes_supported: ["openid", "profile", "email"],
+          response_types_supported: ["code"],
+          response_modes_supported: ["query"],
+          subject_types_supported: ["public"],
+          grant_types_supported: ["authorization_code", "password"],
+          token_endpoint_auth_methods_supported: ["client_secret_post"],
+          id_token_signing_alg_values_supported: ["RS256"],
+          claims_supported: ["sub", "name", "email"],
+          extension: {
+            access_token_type: "JWT",
+            access_token_duration: 3600,
+            id_token_duration: 3600
+          }
+        }
+      };
+
+      const createTenantResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants`,
+        headers: {
+          Authorization: `Bearer ${adminAccessToken}`,
+        },
+        body: tenantData
+      });
+      expect(createTenantResponse.status).toBe(201);
+      console.log(`✓ Tenant created: ${tenantId}\n`);
+
+      // Step 3: Register client
+      console.log("Step 3: Registering client...");
+      const clientId = uuidv4();
+      const clientSecret = uuidv4();
+      const redirectUri = "http://localhost:8080/callback";
+
+      const clientData = {
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uris: [redirectUri],
+        grant_types: ["authorization_code"],
+        response_types: ["code"],
+        scope: "openid profile email",
+        token_endpoint_auth_method: "client_secret_post"
+      };
+
+      const createClientResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${tenantId}/clients`,
+        headers: {
+          Authorization: `Bearer ${adminAccessToken}`,
+        },
+        body: clientData
+      });
+      expect(createClientResponse.status).toBe(201);
+      console.log(`✓ Client registered: ${clientId}\n`);
+
+      // Step 4: Create user via authorization flow
+      console.log("Step 4: Creating user via authorization flow...");
+      const userEmail = faker.internet.email();
+      const userName = faker.person.fullName();
+      const password = "TestPassword123!";
+
+      const interaction = async (id, user) => {
+        const registrationResponse = await postWithJson({
+          url: `${backendUrl}/${tenantId}/v1/authorizations/${id}/initial-registration`,
+          body: {
+            email: user.email,
+            password: user.password,
+            name: user.name
+          }
+        });
+        expect(registrationResponse.status).toBe(200);
+      };
+
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+        authorizeEndpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/authorize`,
+        denyEndpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/deny`,
+        clientId: clientId,
+        responseType: "code",
+        state: `state_${Date.now()}`,
+        scope: "openid profile email",
+        redirectUri: redirectUri,
+        user: {
+          email: userEmail,
+          password: password,
+          name: userName
+        },
+        interaction,
+      });
+
+      expect(authorizationResponse.code).not.toBeNull();
+      console.log("✓ User created via authorization flow\n");
+
+      // Step 5: Get access token
+      console.log("Step 5: Getting access token...");
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: redirectUri,
+        clientId: clientId,
+        clientSecret: clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      const userAccessToken = tokenResponse.data.access_token;
+      console.log("✓ Access token obtained\n");
+
+      // Verify userinfo works initially
+      const initialUserinfoResponse = await get({
+        url: `${backendUrl}/${tenantId}/v1/userinfo`,
+        headers: {
+          Authorization: `Bearer ${userAccessToken}`
+        }
+      });
+      expect(initialUserinfoResponse.status).toBe(200);
+      const user = initialUserinfoResponse.data;
+      console.log(`✓ Initial userinfo verified for user: ${user.sub}\n`);
+
+      // Step 6: Test all inactive user statuses
+      const inactiveStatuses = ["LOCKED", "DISABLED", "SUSPENDED", "DEACTIVATED", "DELETED_PENDING", "DELETED"];
+
+      for (const status of inactiveStatuses) {
+        console.log(`\nStep 6: Testing status ${status} with Userinfo endpoint...`);
+
+        // Change user status
+        console.log(`Changing user status to ${status}...`);
+        const changeStatusResponse = await patchWithJson({
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${tenantId}/users/${user.sub}`,
+          headers: {
+            Authorization: `Bearer ${adminAccessToken}`,
+          },
+          body: {
+            status: status
+          }
+        });
+        expect(changeStatusResponse.status).toBe(200);
+        console.log(`✓ User status changed to ${status}`);
+
+        // Attempt userinfo with inactive user
+        console.log(`Attempting userinfo access with ${status} user...`);
+        const userinfoResponse = await get({
+          url: `${backendUrl}/${tenantId}/v1/userinfo`,
+          headers: {
+            Authorization: `Bearer ${userAccessToken}`
+          }
+        });
+
+        console.log(`Userinfo response for ${status}:`, userinfoResponse.status, userinfoResponse.data);
+
+        // Expect 401 Unauthorized with invalid_token error
+        expect(userinfoResponse.status).toBe(401);
+        expect(userinfoResponse.data.error).toBe("invalid_token");
+        expect(userinfoResponse.data.error_description).toContain("user is not active");
+        expect(userinfoResponse.data.error_description).toContain(status);
+        console.log(`✓ Userinfo correctly rejected for ${status} user\n`);
+      }
+
+    }, 90000);
+
+  });
+
   describe("CIBA flow", () => {
 
     it("CIBA authentication request should fail when user status is LOCKED", async () => {

@@ -43,9 +43,21 @@ public class UserinfoVerifier {
   public void verify() {
     throwExceptionIfNotFoundToken();
     throwExceptionIfUnMatchClientCert();
-    // FIXME
+    throwExceptionIfNotFoundUser();
+    throwExceptionIfInactiveUser();
+  }
+
+  void throwExceptionIfNotFoundUser() {
     if (!user.exists()) {
       throw new TokenInvalidException("not found user");
+    }
+  }
+
+  void throwExceptionIfInactiveUser() {
+    if (!user.isActive()) {
+      throw new TokenInvalidException(
+          String.format(
+              "user is not active (id: %s, status: %s)", user.sub(), user.status().name()));
     }
   }
 
