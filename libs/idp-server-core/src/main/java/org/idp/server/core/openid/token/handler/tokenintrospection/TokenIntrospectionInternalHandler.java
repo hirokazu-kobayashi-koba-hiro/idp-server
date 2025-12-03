@@ -54,22 +54,20 @@ public class TokenIntrospectionInternalHandler {
     Tenant tenant = request.tenant();
 
     OAuthToken oAuthToken = oAuthTokenQueryRepository.find(tenant, accessTokenEntity);
-    log.debug(
-        "Token found: exists={}, hasCertification={}",
-        oAuthToken.exists(),
-        oAuthToken.hasClientCertification());
 
     TokenIntrospectionVerifier verifier = new TokenIntrospectionVerifier(oAuthToken);
     TokenIntrospectionRequestStatus verifiedStatus = verifier.verify();
 
     if (!verifiedStatus.isOK()) {
-      log.warn("Token verification failed: status={}", verifiedStatus);
+      log.debug("Token verification failed: status={}", verifiedStatus);
       Map<String, Object> contents = TokenIntrospectionContentsCreator.createFailureContents();
       return new TokenIntrospectionResponse(verifiedStatus, oAuthToken, contents);
     }
 
+    log.debug(
+        "Token verified successfully: hasCertification={}", oAuthToken.hasClientCertification());
+
     // RFC 8705: Verify certificate binding for sender-constrained access tokens
-    log.debug("Verifying certificate binding (if required)");
     CertificateBindingVerifier certificateBindingVerifier = new CertificateBindingVerifier();
     certificateBindingVerifier.verify(request.toClientCert(), oAuthToken);
 
