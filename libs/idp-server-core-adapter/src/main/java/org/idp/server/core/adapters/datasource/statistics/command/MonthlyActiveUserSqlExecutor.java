@@ -16,30 +16,29 @@
 
 package org.idp.server.core.adapters.datasource.statistics.command;
 
-import java.time.LocalDate;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.user.UserIdentifier;
 
 public interface MonthlyActiveUserSqlExecutor {
 
-  void addActiveUser(TenantIdentifier tenantId, LocalDate statMonth, UserIdentifier userId);
+  void addActiveUser(TenantIdentifier tenantId, String statMonth, UserIdentifier userId);
 
   /**
    * Add active user and return whether it was a new user for the month
    *
    * @param tenantId tenant identifier
-   * @param statMonth first day of the calendar month
+   * @param statMonth year and month in YYYY-MM format (e.g., 2025-01)
    * @param userId user identifier
    * @return true if user was newly added (not a duplicate), false if already existed
    */
   boolean addActiveUserAndReturnIfNew(
-      TenantIdentifier tenantId, LocalDate statMonth, UserIdentifier userId);
+      TenantIdentifier tenantId, String statMonth, UserIdentifier userId);
 
-  void deleteByMonth(TenantIdentifier tenantId, LocalDate statMonth);
+  void deleteByMonth(TenantIdentifier tenantId, String statMonth);
 
-  void deleteOlderThan(LocalDate before);
+  void deleteOlderThan(String beforeMonth);
 
   void deleteByTenantId(TenantIdentifier tenantId);
 
-  int getMauCount(TenantIdentifier tenantId, LocalDate statMonth);
+  int getMauCount(TenantIdentifier tenantId, String statMonth);
 }

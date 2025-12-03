@@ -16,50 +16,99 @@
 
 package org.idp.server.platform.statistics.repository;
 
-import java.time.LocalDate;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 /**
  * Command repository for TenantStatistics
  *
- * <p>Provides write operations for daily tenant statistics.
+ * <p>Provides write operations for monthly tenant statistics with daily breakdown.
  *
- * <p>Currently supports only real-time metric increments used by SecurityEventHandler.
+ * <p>Uses monthly rows with JSONB daily_metrics for efficient storage and querying.
  *
  * <p>Example usage:
  *
  * <pre>{@code
- * // Increment login_success_count by 1
- * repository.incrementMetric(tenantId, LocalDate.now(), "login_success_count", 1);
+ * // Increment daily login_success_count by 1
+ * repository.incrementDailyMetric(tenantId, "2025-01", "15", "login_success_count", 1);
  *
- * // Increment DAU metric
- * repository.incrementMetric(tenantId, LocalDate.now(), "dau", 1);
+ * // Increment monthly summary metric
+ * repository.incrementMonthlySummaryMetric(tenantId, "2025-01", "total_logins", 1);
  * }</pre>
  *
- * @see TenantStatistics
  * @see TenantStatisticsQueryRepository
  */
 public interface TenantStatisticsCommandRepository {
 
   /**
-   * Increment a numeric metric value (real-time update)
+   * Increment a daily metric value within the monthly record
    *
-   * <p>Creates new record if (tenant_id, stat_date) doesn't exist. If metric doesn't exist,
-   * initializes to increment value.
+   * <p>Creates new monthly record if (tenant_id, stat_month) doesn't exist. Updates nested JSONB
+   * structure for the specific day and metric.
    *
-   * <p>Leverages PostgreSQL's ON CONFLICT DO UPDATE and MySQL's ON DUPLICATE KEY UPDATE.
+   * <p>Leverages PostgreSQL's jsonb_set() and MySQL's JSON_SET() for partial updates.
    *
    * <p>Example:
    *
    * <pre>{@code
-   * // Increment login_success_count by 1
-   * repository.incrementMetric(tenantId, LocalDate.now(), "login_success_count", 1);
+   * // Increment login_success_count for day 15 in January 2025
+   * repository.incrementDailyMetric(tenantId, "2025-01", "15", "login_success_count", 1);
    * }</pre>
    *
    * @param tenantId tenant identifier
-   * @param date statistics date
+   * @param statMonth year and month in YYYY-MM format (e.g., "2025-01")
+   * @param day day of month as string (e.g., "1", "15", "31")
    * @param metricName metric name to increment
    * @param increment value to add (can be negative for decrement)
    */
-  void incrementMetric(TenantIdentifier tenantId, LocalDate date, String metricName, int increment);
+  void incrementDailyMetric(
+      TenantIdentifier tenantId, String statMonth, String day, String metricName, int increment);
+
+  /**
+   * Increment a monthly summary metric
+   *
+   * <p>Creates new monthly record if (tenant_id, stat_month) doesn't exist. Updates monthly_summary
+   * JSONB field.
+   *
+   * <p>Example:
+   *
+   * <pre>{@code
+   * // Increment total logins for January 2025
+   * repository.incrementMonthlySummaryMetric(tenantId, "2025-01", "total_logins", 1);
+   * }</pre>
+   *
+   * @param tenantId tenant identifier
+   * @param statMonth year and month in YYYY-MM format (e.g., "2025-01")
+   * @param metricName metric name to increment
+   * @param increment value to add (can be negative for decrement)
+   */
+  void incrementMonthlySummaryMetric(
+      TenantIdentifier tenantId, String statMonth, String metricName, int increment);
+
+  /**
+   * Increment monthly summary MAU and set cumulative MAU in daily metrics
+   *
+   * <p>This method atomically:
+   *
+   * <ol>
+   *   <li>Increments monthly_summary.mau by the specified amount
+   *   <li>Sets daily_metrics[day].mau to the new cumulative MAU value
+   * </ol>
+   *
+   * <p>This ensures daily_metrics contains the running total of unique users up to each day.
+   *
+   * <p>Example:
+   *
+   * <pre>{@code
+   * // After this call, if monthly MAU was 10, it becomes 11
+   * // and daily_metrics["15"].mau is set to 11
+   * repository.incrementMauWithDailyCumulative(tenantId, "2025-01", "15", 1);
+   * }</pre>
+   *
+   * @param tenantId tenant identifier
+   * @param statMonth year and month in YYYY-MM format (e.g., "2025-01")
+   * @param day day of month as string (e.g., "1", "15", "31")
+   * @param increment value to add to MAU
+   */
+  void incrementMauWithDailyCumulative(
+      TenantIdentifier tenantId, String statMonth, String day, int increment);
 }

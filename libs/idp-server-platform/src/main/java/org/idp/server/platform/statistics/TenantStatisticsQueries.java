@@ -16,15 +16,34 @@
 
 package org.idp.server.platform.statistics;
 
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Query parameters for tenant statistics
+ *
+ * <p>Supports month-based queries with pagination.
+ *
+ * <p>Query parameters:
+ *
+ * <ul>
+ *   <li>from - Start month in YYYY-MM format (e.g., "2025-01")
+ *   <li>to - End month in YYYY-MM format (e.g., "2025-03")
+ *   <li>limit - Maximum number of records to return (default: 12)
+ *   <li>offset - Number of records to skip (default: 0)
+ * </ul>
+ */
 public class TenantStatisticsQueries {
+
+  private static final int DEFAULT_LIMIT = 12;
+  private static final int DEFAULT_OFFSET = 0;
+
   Map<String, String> values;
 
-  public TenantStatisticsQueries() {}
+  public TenantStatisticsQueries() {
+    this.values = new HashMap<>();
+  }
 
   public TenantStatisticsQueries(Map<String, String> values) {
     this.values = Objects.requireNonNullElseGet(values, HashMap::new);
@@ -46,10 +65,6 @@ public class TenantStatisticsQueries {
     return values.get("from");
   }
 
-  public LocalDate fromAsLocalDate() {
-    return LocalDate.parse(values.get("from"));
-  }
-
   public boolean hasTo() {
     return values.containsKey("to");
   }
@@ -58,21 +73,37 @@ public class TenantStatisticsQueries {
     return values.get("to");
   }
 
-  public LocalDate toAsLocalDate() {
-    return LocalDate.parse(values.get("to"));
+  public boolean hasLimit() {
+    return values.containsKey("limit");
   }
 
-  public Map<String, Object> toMap() {
-    Map<String, Object> map = new HashMap<>();
-    if (hasTenantId()) {
-      map.put("tenant_id", tenantId());
+  public int limit() {
+    if (!hasLimit()) {
+      return DEFAULT_LIMIT;
     }
-    if (hasFrom()) {
-      map.put("from", from());
+    try {
+      return Integer.parseInt(values.get("limit"));
+    } catch (NumberFormatException e) {
+      return DEFAULT_LIMIT;
     }
-    if (hasTo()) {
-      map.put("to", to());
+  }
+
+  public boolean hasOffset() {
+    return values.containsKey("offset");
+  }
+
+  public int offset() {
+    if (!hasOffset()) {
+      return DEFAULT_OFFSET;
     }
-    return map;
+    try {
+      return Integer.parseInt(values.get("offset"));
+    } catch (NumberFormatException e) {
+      return DEFAULT_OFFSET;
+    }
+  }
+
+  public Map<String, String> toMap() {
+    return values;
   }
 }

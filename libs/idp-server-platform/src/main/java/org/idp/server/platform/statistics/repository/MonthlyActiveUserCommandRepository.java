@@ -16,7 +16,6 @@
 
 package org.idp.server.platform.statistics.repository;
 
-import java.time.LocalDate;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.user.UserIdentifier;
 
@@ -25,13 +24,13 @@ import org.idp.server.platform.user.UserIdentifier;
  *
  * <p>Provides write operations for tracking unique monthly active users.
  *
- * <p>Uses separate table (monthly_active_users) to enable real-time MAU calculation.
+ * <p>Uses separate table (statistics_monthly_users) to enable real-time MAU calculation.
  *
  * <p>Example usage:
  *
  * <pre>{@code
  * // Track user login for MAU
- * LocalDate statMonth = LocalDate.now().withDayOfMonth(1); // First day of month
+ * String statMonth = "2025-01"; // YYYY-MM format
  * repository.addActiveUser(tenantId, statMonth, userId);
  * // Duplicate calls are automatically ignored (PRIMARY KEY constraint)
  * }</pre>
@@ -47,10 +46,10 @@ public interface MonthlyActiveUserCommandRepository {
    * <p>This ensures each user is counted only once per calendar month.
    *
    * @param tenantId tenant identifier
-   * @param statMonth first day of the calendar month (e.g., 2025-01-01)
+   * @param statMonth year and month in YYYY-MM format (e.g., 2025-01)
    * @param userId user identifier to track
    */
-  void addActiveUser(TenantIdentifier tenantId, LocalDate statMonth, UserIdentifier userId);
+  void addActiveUser(TenantIdentifier tenantId, String statMonth, UserIdentifier userId);
 
   /**
    * Add a user to monthly active users and return whether it was new
@@ -61,33 +60,33 @@ public interface MonthlyActiveUserCommandRepository {
    * <p>Useful for incrementing MAU count only when a new unique user appears.
    *
    * @param tenantId tenant identifier
-   * @param statMonth first day of the calendar month (e.g., 2025-01-01)
+   * @param statMonth year and month in YYYY-MM format (e.g., 2025-01)
    * @param userId user identifier to track
    * @return true if user was newly added, false if already existed
    */
   boolean addActiveUserAndReturnIfNew(
-      TenantIdentifier tenantId, LocalDate statMonth, UserIdentifier userId);
+      TenantIdentifier tenantId, String statMonth, UserIdentifier userId);
 
   /**
    * Delete active users by month
    *
    * @param tenantId tenant identifier
-   * @param statMonth first day of the calendar month
+   * @param statMonth year and month in YYYY-MM format
    */
-  void deleteByMonth(TenantIdentifier tenantId, LocalDate statMonth);
+  void deleteByMonth(TenantIdentifier tenantId, String statMonth);
 
   /**
    * Delete old active user data (data retention)
    *
-   * <p>Example: Delete data older than 365 days
+   * <p>Example: Delete data older than 12 months
    *
    * <pre>{@code
-   * repository.deleteOlderThan(LocalDate.now().minusDays(365));
+   * repository.deleteOlderThan("2024-01"); // Delete all data before 2024-01
    * }</pre>
    *
-   * @param before delete data older than this date (exclusive)
+   * @param beforeMonth delete data older than this month (exclusive, YYYY-MM format)
    */
-  void deleteOlderThan(LocalDate before);
+  void deleteOlderThan(String beforeMonth);
 
   /**
    * Delete all active user data for a tenant

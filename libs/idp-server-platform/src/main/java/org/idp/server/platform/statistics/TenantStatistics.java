@@ -17,7 +17,6 @@
 package org.idp.server.platform.statistics;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,20 +24,17 @@ import java.util.Objects;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 /**
- * Tenant daily statistics
+ * Tenant monthly statistics
  *
- * <p>Holds calculated daily statistics with hardcoded metrics in JSONB format.
+ * <p>Holds monthly statistics with daily breakdown in JSONB format.
  *
- * <p>Standard metrics (calculated by DailyStatisticsAggregationService):
+ * <p>Structure:
  *
  * <ul>
- *   <li>dau - Daily Active Users
- *   <li>login_success_count - Successful logins
- *   <li>login_failure_count - Failed logins
- *   <li>login_success_rate - Success rate percentage
- *   <li>tokens_issued - Total tokens issued
- *   <li>new_users - New user registrations
- *   <li>total_users - Cumulative user count
+ *   <li>stat_month - Year and month in YYYY-MM format (e.g., "2025-01")
+ *   <li>monthly_summary - Aggregated monthly metrics (e.g., {"mau": 100, "login_success_count":
+ *       500})
+ *   <li>daily_metrics - Daily breakdown by day number (e.g., {"1": {"dau": 10}, "2": {"dau": 15}})
  * </ul>
  *
  * <p>Example usage:
@@ -46,52 +42,53 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
  * <pre>{@code
  * TenantStatistics statistics = TenantStatistics.builder()
  *     .tenantId(tenantId)
- *     .statDate(LocalDate.now().minusDays(1))
- *     .addMetric("dau", 1250)
- *     .addMetric("login_success_rate", 97.5)
- *     .addMetric("tokens_issued", 800)
+ *     .statMonth("2025-01")
+ *     .addMonthlySummaryMetric("mau", 100)
+ *     .addDailyMetric("1", Map.of("dau", 10, "login_success_count", 50))
  *     .build();
  *
- * Integer dau = statistics.getIntegerMetric("dau");
- * Double successRate = statistics.getNumberMetric("login_success_rate");
+ * Integer mau = statistics.getMonthlySummaryMetric("mau");
+ * Map<String, Object> day1Metrics = statistics.getDailyMetrics("1");
  * }</pre>
  */
 public class TenantStatistics {
 
   private final TenantStatisticsIdentifier id;
   private final TenantIdentifier tenantId;
-  private final LocalDate statDate;
-  private final Map<String, Object> metrics;
+  private final String statMonth;
+  private final Map<String, Object> monthlySummary;
+  private final Map<String, Map<String, Object>> dailyMetrics;
   private final Instant createdAt;
   private final Instant updatedAt;
 
   private TenantStatistics(Builder builder) {
     this.id = builder.id;
     this.tenantId = Objects.requireNonNull(builder.tenantId, "tenantId must not be null");
-    this.statDate = Objects.requireNonNull(builder.statDate, "statDate must not be null");
-    this.metrics = Collections.unmodifiableMap(new HashMap<>(builder.metrics));
+    this.statMonth = Objects.requireNonNull(builder.statMonth, "statMonth must not be null");
+    this.monthlySummary = Collections.unmodifiableMap(new HashMap<>(builder.monthlySummary));
+    this.dailyMetrics = Collections.unmodifiableMap(new HashMap<>(builder.dailyMetrics));
     this.createdAt = builder.createdAt != null ? builder.createdAt : Instant.now();
     this.updatedAt = builder.updatedAt != null ? builder.updatedAt : Instant.now();
   }
 
   /**
-   * Check if metric exists
+   * Check if monthly summary metric exists
    *
    * @param metricName metric name
    * @return true if exists
    */
-  public boolean hasMetric(String metricName) {
-    return metrics.containsKey(metricName);
+  public boolean hasMonthlySummaryMetric(String metricName) {
+    return monthlySummary.containsKey(metricName);
   }
 
   /**
-   * Get Integer metric (type-safe)
+   * Get Integer metric from monthly summary (type-safe)
    *
    * @param name metric name
    * @return Integer value (null if not exists or wrong type)
    */
-  public Integer getIntegerMetric(String name) {
-    Object value = metrics.get(name);
+  public Integer getMonthlySummaryMetric(String name) {
+    Object value = monthlySummary.get(name);
     if (value instanceof Integer) {
       return (Integer) value;
     }
@@ -102,34 +99,24 @@ public class TenantStatistics {
   }
 
   /**
-   * Get Long metric (type-safe)
+   * Get daily metrics for a specific day
    *
-   * @param name metric name
-   * @return Long value (null if not exists or wrong type)
+   * @param day day of month as string (e.g., "1", "15", "31")
+   * @return metrics map for the day (null if not exists)
    */
-  public Long getLongMetric(String name) {
-    Object value = metrics.get(name);
-    if (value instanceof Long) {
-      return (Long) value;
-    }
-    if (value instanceof Number) {
-      return ((Number) value).longValue();
-    }
-    return null;
+  @SuppressWarnings("unchecked")
+  public Map<String, Object> getDailyMetrics(String day) {
+    return dailyMetrics.get(day);
   }
 
   /**
-   * Get Double metric (type-safe)
+   * Check if daily metrics exists for a specific day
    *
-   * @param name metric name
-   * @return Double value (null if not exists or wrong type)
+   * @param day day of month as string
+   * @return true if exists
    */
-  public Double getNumberMetric(String name) {
-    Object value = metrics.get(name);
-    if (value instanceof Number) {
-      return ((Number) value).doubleValue();
-    }
-    return null;
+  public boolean hasDailyMetrics(String day) {
+    return dailyMetrics.containsKey(day);
   }
 
   /**
@@ -138,11 +125,13 @@ public class TenantStatistics {
    * @return Map representation
    */
   public Map<String, Object> toMap() {
-    return Map.of(
-        "date", statDate.toString(),
-        "metrics", metrics,
-        "created_at", createdAt.toString(),
-        "updated_at", updatedAt.toString());
+    Map<String, Object> map = new HashMap<>();
+    map.put("stat_month", statMonth);
+    map.put("monthly_summary", monthlySummary);
+    map.put("daily_metrics", dailyMetrics);
+    map.put("created_at", createdAt.toString());
+    map.put("updated_at", updatedAt.toString());
+    return map;
   }
 
   // Getters
@@ -155,12 +144,16 @@ public class TenantStatistics {
     return tenantId;
   }
 
-  public LocalDate statDate() {
-    return statDate;
+  public String statMonth() {
+    return statMonth;
   }
 
-  public Map<String, Object> metrics() {
-    return metrics;
+  public Map<String, Object> monthlySummary() {
+    return monthlySummary;
+  }
+
+  public Map<String, Map<String, Object>> dailyMetrics() {
+    return dailyMetrics;
   }
 
   public Instant createdAt() {
@@ -180,8 +173,9 @@ public class TenantStatistics {
   public static class Builder {
     private TenantStatisticsIdentifier id;
     private TenantIdentifier tenantId;
-    private LocalDate statDate;
-    private Map<String, Object> metrics = new HashMap<>();
+    private String statMonth;
+    private Map<String, Object> monthlySummary = new HashMap<>();
+    private Map<String, Map<String, Object>> dailyMetrics = new HashMap<>();
     private Instant createdAt;
     private Instant updatedAt;
 
@@ -195,18 +189,28 @@ public class TenantStatistics {
       return this;
     }
 
-    public Builder statDate(LocalDate statDate) {
-      this.statDate = statDate;
+    public Builder statMonth(String statMonth) {
+      this.statMonth = statMonth;
       return this;
     }
 
-    public Builder metrics(Map<String, Object> metrics) {
-      this.metrics = new HashMap<>(metrics);
+    public Builder monthlySummary(Map<String, Object> monthlySummary) {
+      this.monthlySummary = new HashMap<>(monthlySummary);
       return this;
     }
 
-    public Builder addMetric(String name, Object value) {
-      this.metrics.put(name, value);
+    public Builder addMonthlySummaryMetric(String name, Object value) {
+      this.monthlySummary.put(name, value);
+      return this;
+    }
+
+    public Builder dailyMetrics(Map<String, Map<String, Object>> dailyMetrics) {
+      this.dailyMetrics = new HashMap<>(dailyMetrics);
+      return this;
+    }
+
+    public Builder addDailyMetric(String day, Map<String, Object> metrics) {
+      this.dailyMetrics.put(day, new HashMap<>(metrics));
       return this;
     }
 
@@ -232,13 +236,12 @@ public class TenantStatistics {
     TenantStatistics that = (TenantStatistics) o;
     return Objects.equals(id, that.id)
         && Objects.equals(tenantId, that.tenantId)
-        && Objects.equals(statDate, that.statDate)
-        && Objects.equals(metrics, that.metrics);
+        && Objects.equals(statMonth, that.statMonth);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, tenantId, statDate, metrics);
+    return Objects.hash(id, tenantId, statMonth);
   }
 
   @Override
@@ -248,10 +251,12 @@ public class TenantStatistics {
         + id
         + ", tenantId="
         + tenantId
-        + ", statDate="
-        + statDate
-        + ", metricsCount="
-        + metrics.size()
+        + ", statMonth="
+        + statMonth
+        + ", monthlySummarySize="
+        + monthlySummary.size()
+        + ", dailyMetricsSize="
+        + dailyMetrics.size()
         + ", createdAt="
         + createdAt
         + ", updatedAt="

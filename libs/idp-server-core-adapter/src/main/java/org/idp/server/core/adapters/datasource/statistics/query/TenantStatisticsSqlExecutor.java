@@ -16,7 +16,6 @@
 
 package org.idp.server.core.adapters.datasource.statistics.query;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -27,14 +26,14 @@ public interface TenantStatisticsSqlExecutor {
 
   Map<String, String> selectOne(TenantStatisticsIdentifier id);
 
-  Map<String, String> selectByDate(TenantIdentifier tenantId, LocalDate date);
+  Map<String, String> selectByMonth(TenantIdentifier tenantId, String statMonth);
 
-  List<Map<String, String>> selectByDateRange(
+  List<Map<String, String>> selectByMonthRange(
       TenantIdentifier tenantId, TenantStatisticsQueries queries);
 
-  Map<String, String> selectCount(TenantIdentifier tenantId, LocalDate from, LocalDate to);
+  Map<String, String> selectCount(TenantIdentifier tenantId, String fromMonth, String toMonth);
 
   Map<String, String> selectLatest(TenantIdentifier tenantId);
 
-  Map<String, String> selectExists(TenantIdentifier tenantId, LocalDate date);
+  Map<String, String> selectExists(TenantIdentifier tenantId, String statMonth);
 }

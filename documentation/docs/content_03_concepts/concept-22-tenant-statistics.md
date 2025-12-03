@@ -4,22 +4,22 @@ idp-serverのテナント統計管理システムの概念について説明し�
 
 ## テナント統計とは
 
-**テナント統計（Tenant Statistics）** とは、各テナントのユーザー活動やシステム利用状況を日次で集計・分析するための仕組みです。
+**テナント統計（Tenant Statistics）** とは、各テナントのユーザー活動やシステム利用状況を月次・日次で集計・分析するための仕組みです。
 
 ```mermaid
 flowchart LR
-    SE[Security Event] -->|イベント発行| HANDLER[統計ハンドラー]
-    HANDLER -->|集計| METRICS[日次メトリクス]
-    HANDLER -->|重複排除| DAU[ユニークユーザー]
-    METRICS -->|可視化| DASHBOARD[ダッシュボード]
-    DAU -->|カウント| METRICS
+    SE[Security Event] -->|イベント発行| HANDLER[SecurityEventHandler]
+    HANDLER -->|集計| MONTHLY[月次メトリクス]
+    HANDLER -->|重複排除| DAU[DAU / MAU]
+    MONTHLY -->|API取得| DASHBOARD[ダッシュボード]
+    DAU -->|カウント| MONTHLY
 ```
 
 ### 目的
 
-- **利用状況の可視化**: DAU、ログイン数、トークン発行数などの把握
+- **利用状況の可視化**: DAU（日次アクティブユーザー）、MAU（月次アクティブユーザー）、ログイン数などの把握
 - **容量計画**: テナントごとのリソース使用状況の追跡
-- **課金基盤**: 利用量ベースの課金データ提供
+- **課金基盤**: MAUベースの課金データ提供
 - **セキュリティ監視**: 異常なアクティビティの検知
 
 ---
@@ -42,141 +42,216 @@ idp-serverでは、バッチ処理ではなく**イベント駆動によるリ�
 - トランザクション整合性を保証できる
 
 **トレードオフ**:
-- ❌ イベントハンドラーの複雑性増加
-- ❌ 統計更新失敗時のエラーハンドリング必要
-- ✅ ただし、認証フローと統計更新は疎結合（統計失敗でも認証は成功）
+- イベントハンドラーの複雑性増加
+- 統計更新失敗時のエラーハンドリング必要
+- ただし、認証フローと統計更新は疎結合（統計失敗でも認証は成功）
 
 ---
 
 ## データモデル
 
-### 統計データの構造
+### データベーステーブル構成
+
+統計データは3つのテーブルで管理されます。
 
 ```mermaid
 erDiagram
-    TENANT_STATISTICS ||--o{ DAILY_ACTIVE_USERS : tracks
-    TENANT_STATISTICS {
+    statistics_monthly ||--o{ statistics_daily_users : "tracks DAU"
+    statistics_monthly ||--o{ statistics_monthly_users : "tracks MAU"
+    statistics_monthly {
+        uuid id PK
         uuid tenant_id
-        date stat_date
-        jsonb metrics
+        char_7 stat_month
+        jsonb monthly_summary
+        jsonb daily_metrics
+        timestamp created_at
         timestamp updated_at
     }
-    DAILY_ACTIVE_USERS {
-        uuid tenant_id
-        date stat_date
-        uuid user_id
+    statistics_daily_users {
+        uuid tenant_id PK
+        date stat_date PK
+        uuid user_id PK
+        timestamp created_at
+    }
+    statistics_monthly_users {
+        uuid tenant_id PK
+        char_7 stat_month PK
+        uuid user_id PK
+        timestamp created_at
     }
 ```
 
-**設計の要点**:
-- **1テナント・1日 = 1レコード**: `(tenant_id, stat_date)` の一意制約
-- **JSONB形式**: 柔軟なメトリクス格納
-- **別テーブル管理**: ユニークカウント（DAU等）は専用テーブルで重複排除
+### テーブル詳細
 
-### メトリクスの柔軟性（JSONB）
+#### statistics_monthly
 
-メトリクスはJSONB形式で格納され、スキーマ変更なしで拡張可能です：
+月次統計のメインテーブル。1テナント・1月 = 1レコードで管理。
+
+| カラム | 型 | 説明 |
+|:---|:---|:---|
+| `id` | UUID | 統計レコードID |
+| `tenant_id` | UUID | テナント識別子 |
+| `stat_month` | CHAR(7) | 統計対象月（YYYY-MM形式、例: 2025-01） |
+| `monthly_summary` | JSONB | 月次集計メトリクス |
+| `daily_metrics` | JSONB | 日別メトリクス（キー: 日番号 01-31） |
+
+**月次集計メトリクス（monthly_summary）の例**:
 
 ```json
 {
-  "user_activity": {
-    "dau": 1250,
-    "login_count": 1560
-  },
-  "authentication": {
-    "password": 800,
-    "webauthn": 450,
-    "federation": 310
-  },
-  "tokens": {
-    "issued": 1200,
-    "refreshed": 890
-  }
+  "mau": 5000,
+  "login_success_count": 45000,
+  "dau": 3200,
+  "issue_token_success": 12000,
+  "refresh_token_success": 8000
 }
 ```
 
-**JSONBを採用する理由**:
-- **柔軟性**: 将来のメトリクス追加が容易
-- **階層化**: カテゴリ別にメトリクスを整理
-- **テナント固有性**: テナントごとに異なるメトリクスセット対応
-- **クエリ性能**: GINインデックスによる高速検索
+**日別メトリクス（daily_metrics）の例**:
+
+```json
+{
+  "1": {"dau": 100, "login_success_count": 1500},
+  "2": {"dau": 110, "login_success_count": 1600},
+  "15": {"dau": 95, "login_success_count": 1400},
+  "31": {"dau": 88, "login_success_count": 1200}
+}
+```
+
+#### statistics_daily_users
+
+日次アクティブユーザー（DAU）の重複排除テーブル。
+
+| カラム | 型 | 説明 |
+|:---|:---|:---|
+| `tenant_id` | UUID | テナント識別子 |
+| `stat_date` | DATE | 統計対象日 |
+| `user_id` | UUID | ユーザー識別子 |
+
+**複合主キー**: `(tenant_id, stat_date, user_id)`
+
+同一ユーザーが同じ日に複数回ログインしても、1レコードのみ記録されます。
+
+#### statistics_monthly_users
+
+月次アクティブユーザー（MAU）の重複排除テーブル。
+
+| カラム | 型 | 説明 |
+|:---|:---|:---|
+| `tenant_id` | UUID | テナント識別子 |
+| `stat_month` | CHAR(7) | 統計対象月（YYYY-MM形式） |
+| `user_id` | UUID | ユーザー識別子 |
+
+**複合主キー**: `(tenant_id, stat_month, user_id)`
+
+同一ユーザーが同じ月に複数回ログインしても、1レコードのみ記録されます。
 
 ---
 
 ## 統計更新フロー
 
-### イベント駆動更新
+### SecurityEventHandlerによる統計収集
 
-セキュリティイベント発行時に統計を同期的に更新します。
+セキュリティイベント発行時に、`SecurityEventHandler`が統計を同期的に更新します。
 
 ```mermaid
 sequenceDiagram
     participant Auth as 認証処理
-    participant Event as イベント発行
+    participant Handler as SecurityEventHandler
+    participant Log as ログサービス
     participant Stats as 統計更新
     participant Hook as フック実行
 
-    Auth->>Event: ログイン成功
-    Event->>Stats: 統計更新（同期）
-    Stats-->>Event: 完了
-    Event->>Hook: フック実行（非同期）
-    Event-->>Auth: 完了
+    Auth->>Handler: handle(tenant, securityEvent)
+    Handler->>Log: logEvent()
+    Handler->>Stats: updateStatistics()
+    Stats-->>Handler: 完了
+    Handler->>Hook: フック実行（非同期）
+    Handler-->>Auth: 完了
 ```
 
-**同期実行の理由**:
-- トランザクション整合性の保証
-- エラー発生時の即座な検知
-- 統計とイベントの強い一貫性
+### アクティブユーザーイベントの判定
 
-**失敗時の挙動**:
-- 統計更新エラーはログ記録のみ
-- 認証フローは継続（疎結合）
+以下のセキュリティイベントがアクティブユーザーイベントとして判定されます（`DefaultSecurityEventType.isActiveUserEvent()`）:
+
+| イベントタイプ | 説明 |
+|:---|:---|
+| `login_success` | ログイン成功 |
+| `issue_token_success` | トークン発行成功 |
+| `refresh_token_success` | トークンリフレッシュ成功 |
+| `inspect_token_success` | トークン検証成功 |
+
+### 統計更新処理の詳細
+
+```mermaid
+flowchart TD
+    EVENT[セキュリティイベント] --> CHECK{アクティブユーザー<br/>イベント?}
+    CHECK -->|Yes| DAU_CHECK{DAUテーブルに<br/>存在する?}
+    CHECK -->|No| INCREMENT[メトリクス +1]
+
+    DAU_CHECK -->|No| ADD_DAU[DAUテーブルに追加]
+    DAU_CHECK -->|Yes| MAU_CHECK{MAUテーブルに<br/>存在する?}
+
+    ADD_DAU --> INCREMENT_DAU[dau +1]
+    INCREMENT_DAU --> MAU_CHECK
+
+    MAU_CHECK -->|No| ADD_MAU[MAUテーブルに追加]
+    MAU_CHECK -->|Yes| LOGIN_COUNT[login_success_count +1]
+
+    ADD_MAU --> INCREMENT_MAU[mau +1]
+    INCREMENT_MAU --> LOGIN_COUNT
+
+    INCREMENT --> END[完了]
+    LOGIN_COUNT --> END
+```
+
+**処理フロー**:
+
+1. **イベント種別判定**: `DefaultSecurityEventType.isActiveUserEvent()` でアクティブユーザーイベントか判定
+2. **タイムゾーン変換**: UTCタイムスタンプをテナントのタイムゾーンに変換して日付を決定
+3. **DAU処理**: `statistics_daily_users` テーブルでユーザーの初回アクティビティを検出
+4. **MAU処理**: `statistics_monthly_users` テーブルでユーザーの月初アクティビティを検出
+5. **メトリクス更新**: 日次・月次メトリクスをJSONBで増分更新
 
 ---
 
-## メトリクス集計パターン
+## メトリクス種別
 
-### パターン1: シンプルなカウンター
+### 収集されるメトリクス
 
-イベント発生回数をカウントする最も基本的なパターンです。
+| メトリクス名 | 説明 | 集計レベル |
+|:---|:---|:---|
+| `dau` | 日次アクティブユーザー数 | 日次 |
+| `mau` | 月次アクティブユーザー数 | 月次 |
+| `login_success_count` | ログイン成功回数 | 日次・月次 |
+| `issue_token_success` | トークン発行成功回数 | 日次・月次 |
+| `refresh_token_success` | トークンリフレッシュ成功回数 | 日次・月次 |
+| その他セキュリティイベント | イベント種別ごとにカウント | 日次・月次 |
 
-```
-イベント発生 → メトリクス +1
-```
+### カウントパターン
 
-**適用例**: ログイン試行、トークン発行、API呼び出し
+#### パターン1: シンプルなカウンター
 
-### パターン2: ユニークエンティティのカウント
-
-重複を排除してユニークなエンティティをカウントします。
-
-```
-イベント発生 → エンティティ記録
-           → 新規なら メトリクス +1
-           → 既存なら スキップ
-```
-
-**DAU（Daily Active Users）の例**:
-- 同じユーザーが1日に複数回ログインしても、DAUは1
-- 別テーブル（`daily_active_users`）で重複を管理
-- 初回アクティビティのみメトリクスを増分
-
-**応用**:
-- DAC (Daily Active Clients) - 日次アクティブクライアント
-- DAD (Daily Active Devices) - 日次アクティブデバイス
-
-### パターン3: 集約メトリクス
-
-複数の基本メトリクスから計算される派生メトリクスです。
+セキュリティイベント発生ごとにメトリクスを+1します。
 
 ```
-基本: login_success_count, login_failure_count
-派生: login_success_rate = success / (success + failure) × 100
+イベント発生 → daily_metrics[day].{metric} +1
+           → monthly_summary.{metric} +1
 ```
 
-**計算タイミングの選択**:
-- **リアルタイム計算**: クエリ時に計算（最新値、計算コスト）
-- **事前計算**: 定期的に計算して保存（高速、若干の遅延）
+**適用**: 非アクティブユーザーイベント（例: `password_failure`, `authorize_failure`）
+
+#### パターン2: ユニークカウンター（DAU/MAU）
+
+重複排除テーブルを使用してユニークユーザーをカウントします。
+
+```
+ログイン成功 → statistics_daily_users に INSERT（重複時は無視）
+           → 新規なら dau +1
+           → statistics_monthly_users に INSERT（重複時は無視）
+           → 新規なら mau +1
+           → login_success_count +1
+```
 
 ---
 
@@ -184,22 +259,123 @@ sequenceDiagram
 
 グローバルなマルチテナント環境では、タイムゾーン処理が重要です。
 
-```mermaid
-flowchart LR
-    UTC[UTC イベント] -->|変換| TZ[テナントのタイムゾーン]
-    TZ -->|日付抽出| DATE[統計日付]
-    DATE -->|集計| STATS[日次統計]
+```java
+// SecurityEventHandler.updateStatistics() より
+LocalDate eventDate = securityEvent
+    .createdAt()
+    .value()
+    .atZone(ZoneOffset.UTC)
+    .withZoneSameInstant(tenant.timezone())
+    .toLocalDate();
 ```
 
 **原則**:
-- イベントのタイムスタンプはUTC
+- イベントのタイムスタンプはUTCで記録
 - 統計日付はテナントのタイムゾーンで計算
-- 例: 東京のテナント（JST +9）の23:30 UTC → 翌日の統計
+- 例: 東京のテナント（JST +9）の23:30 UTC → 翌日08:30 JST として集計
 
-**重要性**:
-- 正確な日次集計
-- テナントごとの営業日の尊重
-- 時差による集計ズレの防止
+---
+
+## データベース実装
+
+### PostgreSQL vs MySQL
+
+両データベースで同等の機能を提供しています。
+
+| 機能 | PostgreSQL | MySQL |
+|:---|:---|:---|
+| UUID生成 | `gen_random_uuid()` | `UUID()` |
+| JSON型 | `JSONB` | `JSON` |
+| JSONパス更新 | `jsonb_set()` | `JSON_SET()` |
+| UPSERT | `ON CONFLICT ... DO UPDATE` | `ON DUPLICATE KEY UPDATE` |
+| 行レベルセキュリティ | RLSポリシー | なし（アプリ層で制御） |
+
+### UPSERT による増分更新
+
+アトミックな増分更新により、同時実行制御を実現しています。
+
+**PostgreSQL例**:
+```sql
+INSERT INTO statistics_monthly (...)
+VALUES (...)
+ON CONFLICT (tenant_id, stat_month)
+DO UPDATE SET
+    daily_metrics = jsonb_set(
+        COALESCE(statistics_monthly.daily_metrics, '{}'::jsonb),
+        ARRAY[?::text],
+        jsonb_set(
+            COALESCE(statistics_monthly.daily_metrics->?::text, '{}'::jsonb),
+            ARRAY[?::text],
+            to_jsonb(COALESCE((statistics_monthly.daily_metrics->?::text->>?::text)::int, 0) + ?::int)
+        )
+    ),
+    updated_at = now()
+```
+
+**メリット**:
+- ロック不要
+- デッドロック回避
+- 高スループット
+
+---
+
+## 管理API
+
+### エンドポイント
+
+#### システムレベルAPI
+
+```
+GET /v1/management/tenants/{tenantId}/statistics?from=2025-01&to=2025-12
+```
+
+#### 組織レベルAPI
+
+```
+GET /v1/management/organizations/{orgId}/tenants/{tenantId}/statistics?from=2025-01&to=2025-12
+```
+
+### リクエストパラメータ
+
+| パラメータ | 必須 | 型 | 説明 |
+|:---|:---|:---|:---|
+| `from` | Yes | String | 開始月（YYYY-MM形式、例: 2025-01） |
+| `to` | Yes | String | 終了月（YYYY-MM形式、例: 2025-12） |
+| `limit` | No | Integer | 最大取得件数（デフォルト: 12、最大: 100） |
+| `offset` | No | Integer | スキップ件数（デフォルト: 0） |
+
+### レスポンス
+
+```json
+{
+  "list": [
+    {
+      "stat_month": "2025-01",
+      "monthly_summary": {
+        "mau": 5000,
+        "login_success_count": 45000,
+        "dau": 3200
+      },
+      "daily_metrics": {
+        "1": {"dau": 100, "login_success_count": 1500},
+        "2": {"dau": 110, "login_success_count": 1600}
+      },
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-31T23:59:59Z"
+    }
+  ],
+  "total_count": 12,
+  "limit": 12,
+  "offset": 0
+}
+```
+
+### 必要な権限
+
+| API | 必要権限 |
+|:---|:---|
+| システムレベル | `TENANT_READ` |
+| 組織レベル | `TENANT_READ` + 組織メンバーシップ |
 
 ---
 
@@ -214,21 +390,47 @@ flowchart LR
     COLD -->|削除| ARCHIVE[アーカイブ<br/>or 削除]
 ```
 
-**推奨保持期間**:
-- **Hot** (頻繁アクセス): 90日 - ダッシュボード表示用
-- **Warm** (時々アクセス): 365日 - 年次レポート用
-- **Cold** (稀にアクセス): S3等の外部ストレージへアーカイブ
+### クリーンアップ関数
 
-**クリーンアップ**:
-- 定期的な古いデータの削除
-- ディスク容量の管理
-- VACUUM実行による領域回収
+PostgreSQLでは以下のクリーンアップ関数が提供されています:
+
+```sql
+-- 月次統計データの削除（指定月数より古いデータ）
+SELECT cleanup_old_statistics(12);  -- 12ヶ月より古いデータを削除
+
+-- 日次アクティブユーザーデータの削除（指定日数より古いデータ）
+SELECT cleanup_old_daily_users(90);  -- 90日より古いデータを削除
+
+-- 月次アクティブユーザーデータの削除（指定月数より古いデータ）
+SELECT cleanup_old_monthly_users(12);  -- 12ヶ月より古いデータを削除
+```
+
+**推奨保持期間**:
+- **統計データ（statistics_monthly）**: 24ヶ月
+- **DAUデータ（statistics_daily_users）**: 90日
+- **MAUデータ（statistics_monthly_users）**: 12ヶ月
 
 ---
 
 ## パフォーマンス考慮事項
 
-### 増分更新戦略
+### インデックス戦略
+
+```sql
+-- 時系列クエリ用（最頻出）
+CREATE INDEX idx_statistics_monthly_tenant_month
+    ON statistics_monthly (tenant_id, stat_month DESC);
+
+-- DAUカウントクエリ用
+CREATE INDEX idx_statistics_daily_users_tenant_date
+    ON statistics_daily_users (tenant_id, stat_date);
+
+-- MAUカウントクエリ用
+CREATE INDEX idx_statistics_monthly_users_tenant_month
+    ON statistics_monthly_users (tenant_id, stat_month);
+```
+
+### 増分更新による負荷軽減
 
 **避けるべきパターン**:
 ```
@@ -240,73 +442,29 @@ flowchart LR
 **推奨パターン**:
 ```
 ✅ 増分更新のみ（低コスト）
-   increment_metric(tenant, date, metric_name, +1)
+   incrementDailyMetric(tenant, month, day, metric, +1)
 ```
-
-### インデックス戦略
-
-**3種類のインデックス**:
-1. **時系列インデックス**: `(tenant_id, stat_date DESC)` - 最頻出クエリ
-2. **日付インデックス**: `(stat_date)` - クロステナント分析
-3. **JSONB GINインデックス**: `(metrics)` - 柔軟な検索
-
-### UPSERT による競合回避
-
-アトミックな増分更新により、同時実行制御が不要になります：
-
-```
-INSERT ... ON CONFLICT ... UPDATE
-  metrics = JSON_SET(metrics, path, value + 1)
-```
-
-**メリット**:
-- ロック不要
-- デッドロック回避
-- 高スループット
-
----
-
-## 管理API
-
-### システムレベル vs 組織レベル
-
-| レベル | エンドポイント | 権限 | 用途 |
-|:---|:---|:---|:---|
-| **システム** | `/v1/management/tenants/{id}/statistics` | システム管理者 | 全テナント管理 |
-| **組織** | `/v1/management/organizations/{orgId}/tenants/{id}/statistics` | 組織管理者 | 組織配下テナント管理 |
-
-**組織レベルの権限チェック**:
-1. 組織メンバーシップ検証
-2. テナントアクセス検証
-3. 組織-テナント関係検証
 
 ---
 
 ## モニタリング
 
-### 統計の健全性チェック
+### 統計更新エラーの挙動
 
-**監視すべき指標**:
-- 統計更新の成功率
-- メトリクス更新の遅延
-- 異常値の検知（前日比、平均比）
-
-**アラート例**:
-- DAUが前日比50%以上増減
-- 統計更新エラー率が1%超過
-- メトリクス更新が1時間以上遅延
-
-### 統計更新失敗時の対応
+統計更新エラーは認証フローを停止しません（疎結合設計）。
 
 ```mermaid
 flowchart TD
     ERROR[統計更新エラー] -->|ログ記録| LOG[エラーログ]
     ERROR -->|継続| AUTH[認証フローは継続]
     LOG -->|監視| ALERT[アラート発火]
-    ALERT -->|対応| MANUAL[手動再計算]
 ```
 
-**原則**: 統計更新の失敗は認証フローを停止すべきではない
+### 監視すべき指標
+
+- 統計更新の成功率
+- DAU/MAUの急激な変動
+- メトリクス更新のレイテンシ
 
 ---
 
@@ -317,36 +475,31 @@ flowchart TD
 テナント管理者が自テナントの利用状況を可視化します。
 
 **表示メトリクス**:
-- DAU/WAU/MAU トレンド
+- DAU/MAU トレンドグラフ
 - 認証成功率
-- トークン発行数
+- トークン発行数推移
 
-### 2. 課金基盤
+### 2. MAUベース課金
 
-利用量ベースの課金を実現します。
+月次アクティブユーザー数に基づく従量課金を実現します。
 
-**課金メトリクス**:
-- 月間アクティブユーザー数（MAU）
-- API呼び出し数
-- ストレージ使用量
+```json
+{
+  "stat_month": "2025-01",
+  "monthly_summary": {
+    "mau": 5000  // この値で課金計算
+  }
+}
+```
 
-### 3. 容量計画
-
-リソース増強の判断材料を提供します。
-
-**分析内容**:
-- ユーザー増加トレンド
-- ピーク時の負荷
-- 将来予測
-
-### 4. セキュリティ監視
+### 3. セキュリティ監視
 
 異常なアクティビティを検知します。
 
 **検知パターン**:
-- ログイン失敗の急増
-- 特定ユーザーの異常なAPI呼び出し
-- 通常と異なる時間帯のアクセス
+- DAUの急増（ボット攻撃の可能性）
+- ログイン失敗率の急上昇
+- 特定時間帯への集中
 
 ---
 

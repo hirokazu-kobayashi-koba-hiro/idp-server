@@ -32,14 +32,12 @@ public class DailyActiveUserMysqlExecutor implements DailyActiveUserSqlExecutor 
 
     String sql =
         """
-                INSERT INTO daily_active_users (
+                INSERT IGNORE INTO statistics_daily_users (
                     tenant_id,
                     stat_date,
                     user_id,
-                    created_at,
-                    updated_at
-                ) VALUES (?, ?, ?, NOW(), NOW())
-                ON DUPLICATE KEY UPDATE updated_at = NOW()
+                    created_at
+                ) VALUES (?, ?, ?, NOW())
                 """;
 
     List<Object> params = new ArrayList<>();
@@ -58,13 +56,12 @@ public class DailyActiveUserMysqlExecutor implements DailyActiveUserSqlExecutor 
     // MySQL: Use INSERT IGNORE + ROW_COUNT() to check if new row was inserted
     String sql =
         """
-                INSERT IGNORE INTO daily_active_users (
+                INSERT IGNORE INTO statistics_daily_users (
                     tenant_id,
                     stat_date,
                     user_id,
-                    created_at,
-                    updated_at
-                ) VALUES (?, ?, ?, NOW(), NOW())
+                    created_at
+                ) VALUES (?, ?, ?, NOW())
                 """;
 
     List<Object> params = new ArrayList<>();
@@ -81,7 +78,7 @@ public class DailyActiveUserMysqlExecutor implements DailyActiveUserSqlExecutor 
 
     String sql =
         """
-                DELETE FROM daily_active_users
+                DELETE FROM statistics_daily_users
                 WHERE tenant_id = ? AND stat_date = ?
                 """;
 
@@ -98,7 +95,7 @@ public class DailyActiveUserMysqlExecutor implements DailyActiveUserSqlExecutor 
 
     String sql =
         """
-                DELETE FROM daily_active_users
+                DELETE FROM statistics_daily_users
                 WHERE stat_date < ?
                 """;
 
@@ -114,7 +111,7 @@ public class DailyActiveUserMysqlExecutor implements DailyActiveUserSqlExecutor 
 
     String sql =
         """
-                DELETE FROM daily_active_users
+                DELETE FROM statistics_daily_users
                 WHERE tenant_id = ?
                 """;
 
@@ -130,8 +127,8 @@ public class DailyActiveUserMysqlExecutor implements DailyActiveUserSqlExecutor 
 
     String sql =
         """
-                SELECT COUNT(DISTINCT user_id) as dau_count
-                FROM daily_active_users
+                SELECT COUNT(*) as dau_count
+                FROM statistics_daily_users
                 WHERE tenant_id = ? AND stat_date = ?
                 """;
 

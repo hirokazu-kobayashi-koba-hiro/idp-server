@@ -16,10 +16,44 @@
 
 package org.idp.server.core.adapters.datasource.statistics.command;
 
-import java.time.LocalDate;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public interface TenantStatisticsSqlExecutor {
 
-  void incrementMetric(TenantIdentifier tenantId, LocalDate date, String metricName, int increment);
+  /**
+   * Increment a metric in daily_metrics JSONB for a specific day
+   *
+   * @param tenantId tenant identifier
+   * @param statMonth year and month in YYYY-MM format (e.g., 2025-01)
+   * @param day day of month (01-31)
+   * @param metricName metric name (e.g., dau, logins, failures)
+   * @param increment value to add
+   */
+  void incrementDailyMetric(
+      TenantIdentifier tenantId, String statMonth, String day, String metricName, int increment);
+
+  /**
+   * Increment a metric in monthly_summary JSONB
+   *
+   * @param tenantId tenant identifier
+   * @param statMonth year and month in YYYY-MM format (e.g., 2025-01)
+   * @param metricName metric name (e.g., mau, total_logins)
+   * @param increment value to add
+   */
+  void incrementMonthlySummaryMetric(
+      TenantIdentifier tenantId, String statMonth, String metricName, int increment);
+
+  /**
+   * Increment monthly summary MAU and set cumulative MAU in daily metrics
+   *
+   * <p>Atomically increments monthly_summary.mau and sets daily_metrics[day].mau to the new
+   * cumulative value.
+   *
+   * @param tenantId tenant identifier
+   * @param statMonth year and month in YYYY-MM format (e.g., 2025-01)
+   * @param day day of month (1-31)
+   * @param increment value to add to MAU
+   */
+  void incrementMauWithDailyCumulative(
+      TenantIdentifier tenantId, String statMonth, String day, int increment);
 }

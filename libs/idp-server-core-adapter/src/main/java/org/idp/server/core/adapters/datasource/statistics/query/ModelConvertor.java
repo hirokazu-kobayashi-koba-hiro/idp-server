@@ -17,9 +17,9 @@
 package org.idp.server.core.adapters.datasource.statistics.query;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.platform.date.LocalDateTimeParser;
 import org.idp.server.platform.json.JsonConverter;
@@ -29,17 +29,27 @@ import org.idp.server.platform.statistics.TenantStatisticsIdentifier;
 
 public class ModelConvertor {
 
+  @SuppressWarnings("unchecked")
   static TenantStatistics convert(Map<String, String> values) {
     JsonConverter jsonConverter = JsonConverter.defaultInstance();
 
     String id = values.get("id");
     String tenantId = values.get("tenant_id");
-    String statDate = values.get("stat_date");
-    String metrics = values.get("metrics");
+    String statMonth = values.get("stat_month");
+    String monthlySummary = values.get("monthly_summary");
+    String dailyMetrics = values.get("daily_metrics");
     String createdAt = values.get("created_at");
     String updatedAt = values.get("updated_at");
 
-    Map<String, Object> metricsMap = jsonConverter.read(metrics, Map.class);
+    Map<String, Object> monthlySummaryMap =
+        monthlySummary != null && !monthlySummary.isEmpty()
+            ? jsonConverter.read(monthlySummary, Map.class)
+            : new HashMap<>();
+
+    Map<String, Map<String, Object>> dailyMetricsMap =
+        dailyMetrics != null && !dailyMetrics.isEmpty()
+            ? jsonConverter.read(dailyMetrics, Map.class)
+            : new HashMap<>();
 
     // LocalDateTimeParser supports both PostgreSQL TIMESTAMP and ISO-8601 formats
     LocalDateTime createdAtLocalDateTime = LocalDateTimeParser.parse(createdAt);
@@ -51,8 +61,9 @@ public class ModelConvertor {
     return TenantStatistics.builder()
         .id(new TenantStatisticsIdentifier(id))
         .tenantId(new TenantIdentifier(tenantId))
-        .statDate(LocalDate.parse(statDate))
-        .metrics(metricsMap)
+        .statMonth(statMonth)
+        .monthlySummary(monthlySummaryMap)
+        .dailyMetrics(dailyMetricsMap)
         .createdAt(createdAtInstant)
         .updatedAt(updatedAtInstant)
         .build();

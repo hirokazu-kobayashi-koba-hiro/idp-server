@@ -382,20 +382,15 @@ describe("Standard Use Case: Onboarding Flow with Audit Log Tracking", () => {
 
     console.log("\n=== Step 6: Test Tenant Statistics API ===");
 
-    // Calculate date range for statistics query
+    // Calculate month range for statistics query (YYYY-MM format)
     const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const currentMonth = today.toISOString().slice(0, 7); // YYYY-MM format
+    const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().slice(0, 7);
 
-    const fromDate = yesterday.toISOString().split("T")[0];
-    const toDate = tomorrow.toISOString().split("T")[0];
-
-    console.log(`Querying statistics from ${fromDate} to ${toDate}`);
+    console.log(`Querying statistics from ${lastMonth} to ${currentMonth}`);
 
     const statisticsResponse = await get({
-      url: `${backendUrl}/v1/management/tenants/${tenantId}/statistics?from=${fromDate}&to=${toDate}`,
+      url: `${backendUrl}/v1/management/tenants/${tenantId}/statistics?from=${lastMonth}&to=${currentMonth}`,
       headers: {
         Authorization: `Bearer ${systemAccessToken}`,
       },
@@ -403,25 +398,27 @@ describe("Standard Use Case: Onboarding Flow with Audit Log Tracking", () => {
 
     console.log(JSON.stringify(statisticsResponse.data, null, 2));
     expect(statisticsResponse.status).toBe(200);
-    expect(statisticsResponse.data).toHaveProperty("tenant_id", tenantId);
-    expect(statisticsResponse.data).toHaveProperty("period");
-    expect(statisticsResponse.data.period.from).toBe(fromDate);
-    expect(statisticsResponse.data.period.to).toBe(toDate);
-    expect(statisticsResponse.data).toHaveProperty("daily_statistics");
-    expect(Array.isArray(statisticsResponse.data.daily_statistics)).toBe(true);
+    expect(statisticsResponse.data).toHaveProperty("list");
+    expect(statisticsResponse.data).toHaveProperty("total_count");
+    expect(statisticsResponse.data).toHaveProperty("limit");
+    expect(statisticsResponse.data).toHaveProperty("offset");
+    expect(Array.isArray(statisticsResponse.data.list)).toBe(true);
 
-    console.log(`✅ Retrieved statistics for ${statisticsResponse.data.daily_statistics.length} days`);
+    console.log(`✅ Retrieved statistics for ${statisticsResponse.data.list.length} months (total: ${statisticsResponse.data.total_count})`);
 
-    // Verify statistics data structure
-    const dailyStat = statisticsResponse.data.daily_statistics[0];
-    expect(dailyStat).toHaveProperty("date");
-    expect(dailyStat).toHaveProperty("metrics");
-    console.log(`  Sample daily stat: ${dailyStat.date} - ${JSON.stringify(dailyStat.metrics)}`);
+    // Verify statistics data structure if data exists
+    if (statisticsResponse.data.list.length > 0) {
+      const monthlyStat = statisticsResponse.data.list[0];
+      expect(monthlyStat).toHaveProperty("stat_month");
+      expect(monthlyStat).toHaveProperty("monthly_summary");
+      expect(monthlyStat).toHaveProperty("daily_metrics");
+      console.log(`  Sample monthly stat: ${monthlyStat.stat_month} - summary: ${JSON.stringify(monthlyStat.monthly_summary)}`);
+    }
 
     console.log("\n=== Step 7: Test Organization-level Tenant Statistics API ===");
 
     const orgStatisticsResponse = await get({
-      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/statistics?from=${fromDate}&to=${toDate}`,
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/statistics?from=${lastMonth}&to=${currentMonth}`,
       headers: {
         Authorization: `Bearer ${orgAccessToken}`,
       },
@@ -429,14 +426,13 @@ describe("Standard Use Case: Onboarding Flow with Audit Log Tracking", () => {
 
     console.log(JSON.stringify(orgStatisticsResponse.data, null, 2));
     expect(orgStatisticsResponse.status).toBe(200);
-    expect(orgStatisticsResponse.data).toHaveProperty("tenant_id", tenantId);
-    expect(orgStatisticsResponse.data).toHaveProperty("period");
-    expect(orgStatisticsResponse.data.period.from).toBe(fromDate);
-    expect(orgStatisticsResponse.data.period.to).toBe(toDate);
-    expect(orgStatisticsResponse.data).toHaveProperty("daily_statistics");
-    expect(Array.isArray(orgStatisticsResponse.data.daily_statistics)).toBe(true);
+    expect(orgStatisticsResponse.data).toHaveProperty("list");
+    expect(orgStatisticsResponse.data).toHaveProperty("total_count");
+    expect(orgStatisticsResponse.data).toHaveProperty("limit");
+    expect(orgStatisticsResponse.data).toHaveProperty("offset");
+    expect(Array.isArray(orgStatisticsResponse.data.list)).toBe(true);
 
-    console.log(`✅ Retrieved org-level statistics for ${orgStatisticsResponse.data.daily_statistics.length} days`);
+    console.log(`✅ Retrieved org-level statistics for ${orgStatisticsResponse.data.list.length} months (total: ${orgStatisticsResponse.data.total_count})`);
 
 
     console.log("\n=== Cleanup ===");

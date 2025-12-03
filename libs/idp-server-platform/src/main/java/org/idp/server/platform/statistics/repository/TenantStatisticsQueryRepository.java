@@ -16,7 +16,6 @@
 
 package org.idp.server.platform.statistics.repository;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -25,24 +24,22 @@ import org.idp.server.platform.statistics.TenantStatisticsIdentifier;
 import org.idp.server.platform.statistics.TenantStatisticsQueries;
 
 /**
- * Query repository for TenantStatistics
+ * Query repository for TenantStatistics (monthly-based)
  *
- * <p>Provides read-only operations for daily tenant statistics retrieval.
+ * <p>Provides read-only operations for monthly tenant statistics retrieval.
  *
  * <p>Example usage:
  *
  * <pre>{@code
- * // Get last 7 days statistics
+ * // Get statistics for month range with pagination
  * TenantStatisticsQueries queries = new TenantStatisticsQueries(
- *     Map.of("from", "2025-01-01", "to", "2025-01-07")
+ *     Map.of("from", "2025-01", "to", "2025-03", "limit", "10", "offset", "0")
  * );
- * List<TenantStatistics> stats = repository.findByDateRange(tenant, queries);
+ * List<TenantStatistics> stats = repository.findByMonthRange(tenant, queries);
+ * long totalCount = repository.countByMonthRange(tenant, "2025-01", "2025-03");
  *
- * // Get specific date
- * Optional<TenantStatistics> todayStats = repository.findByDate(
- *     tenant,
- *     LocalDate.now()
- * );
+ * // Get specific month
+ * Optional<TenantStatistics> janStats = repository.findByMonth(tenant, "2025-01");
  * }</pre>
  *
  * @see TenantStatistics
@@ -51,22 +48,22 @@ import org.idp.server.platform.statistics.TenantStatisticsQueries;
 public interface TenantStatisticsQueryRepository {
 
   /**
-   * Find statistics by date range
+   * Find statistics by month range with pagination
    *
    * @param tenant tenant
-   * @param queries query parameters containing from/to dates
+   * @param queries query parameters containing from/to months, limit, offset
    * @return list of statistics (empty if not found)
    */
-  List<TenantStatistics> findByDateRange(Tenant tenant, TenantStatisticsQueries queries);
+  List<TenantStatistics> findByMonthRange(Tenant tenant, TenantStatisticsQueries queries);
 
   /**
-   * Find statistics for specific date
+   * Find statistics for specific month
    *
    * @param tenant tenant
-   * @param date target date
+   * @param statMonth target month in YYYY-MM format (e.g., "2025-01")
    * @return optional statistics (empty if not found)
    */
-  Optional<TenantStatistics> findByDate(Tenant tenant, LocalDate date);
+  Optional<TenantStatistics> findByMonth(Tenant tenant, String statMonth);
 
   /**
    * Get statistics by ID
@@ -88,14 +85,14 @@ public interface TenantStatisticsQueryRepository {
   Optional<TenantStatistics> find(Tenant tenant, TenantStatisticsIdentifier id);
 
   /**
-   * Count statistics records in date range
+   * Count statistics records in month range
    *
    * @param tenant tenant
-   * @param from start date (inclusive)
-   * @param to end date (inclusive)
+   * @param fromMonth start month (inclusive, YYYY-MM format)
+   * @param toMonth end month (inclusive, YYYY-MM format)
    * @return total count
    */
-  long countByDateRange(Tenant tenant, LocalDate from, LocalDate to);
+  long countByMonthRange(Tenant tenant, String fromMonth, String toMonth);
 
   /**
    * Find latest statistics
@@ -106,11 +103,11 @@ public interface TenantStatisticsQueryRepository {
   Optional<TenantStatistics> findLatest(Tenant tenant);
 
   /**
-   * Check if statistics exists for date
+   * Check if statistics exists for month
    *
    * @param tenant tenant
-   * @param date target date
+   * @param statMonth target month in YYYY-MM format
    * @return true if exists
    */
-  boolean exists(Tenant tenant, LocalDate date);
+  boolean exists(Tenant tenant, String statMonth);
 }
