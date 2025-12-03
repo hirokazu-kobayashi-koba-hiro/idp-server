@@ -47,7 +47,7 @@ public class StructuredJsonLogFormatter implements SecurityEventLogFormatter {
 
     jsonMap.put("event_id", securityEvent.identifier().value());
     jsonMap.put("event_type", securityEvent.type().value());
-    jsonMap.put("timestamp", securityEvent.createdAt().value().toString());
+    jsonMap.put("timestamp", securityEvent.createdAt().valueAsString());
 
     if (stage != null) {
       jsonMap.put("stage", stage);
