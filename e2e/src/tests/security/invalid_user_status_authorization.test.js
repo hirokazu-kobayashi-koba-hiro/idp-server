@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 import { requestToken, postAuthentication, requestBackchannelAuthentications } from "../../api/oauthClient";
 import { adminServerConfig, backendUrl, clientSecretPostClient, mockApiBaseUrl, serverConfig } from "../testConfig";
-import { post, postWithJson, get, patchWithJson } from "../../lib/http";
+import { post, postWithJson, get, patchWithJson, deletion } from "../../lib/http";
 import { faker } from "@faker-js/faker";
 import { v4 as uuidv4 } from "uuid";
 import { requestAuthorizations } from "../../oauth/request";
@@ -1364,6 +1364,413 @@ describe("User Status verification. Can not authorize when user status is not ac
           console.log("✓ User status restored to REGISTERED");
         }
       }
+
+    }, 90000);
+
+  });
+
+  describe("User deletion after token issuance - Issue #900, #997", () => {
+
+    it("Refresh token should fail when user is physically deleted after token issuance", async () => {
+      console.log("\n=== Starting User Deletion After Token Issuance Test (Refresh Token) ===\n");
+
+      // Step 1: Get admin access token
+      console.log("Step 1: Getting admin access token...");
+      const adminTokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+        scope: clientSecretPostClient.scope,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret
+      });
+      expect(adminTokenResponse.status).toBe(200);
+      const adminAccessToken = adminTokenResponse.data.access_token;
+      console.log("✓ Admin access token obtained\n");
+
+      // Step 2: Create new tenant
+      console.log("Step 2: Creating new tenant...");
+      const tenantId = uuidv4();
+      const { jwks } = await generateRS256KeyPair();
+
+      const tenantData = {
+        tenant: {
+          id: tenantId,
+          name: "User Deletion Test Tenant (Refresh Token)",
+          domain: "http://localhost:8080",
+          description: "Test tenant for user deletion after token issuance",
+          authorization_provider: "idp-server",
+          tenant_type: "BUSINESS"
+        },
+        authorization_server: {
+          issuer: `${backendUrl}/${tenantId}`,
+          authorization_endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+          token_endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+          userinfo_endpoint: `${backendUrl}/${tenantId}/v1/userinfo`,
+          jwks_uri: `${backendUrl}/${tenantId}/.well-known/jwks.json`,
+          jwks: jwks,
+          scopes_supported: ["openid", "profile", "email", "offline_access"],
+          response_types_supported: ["code"],
+          response_modes_supported: ["query"],
+          subject_types_supported: ["public"],
+          grant_types_supported: ["authorization_code", "refresh_token"],
+          token_endpoint_auth_methods_supported: ["client_secret_post"],
+          id_token_signing_alg_values_supported: ["RS256"],
+          claims_supported: ["sub", "name", "email"],
+          extension: {
+            access_token_type: "JWT",
+            access_token_duration: 3600,
+            refresh_token_duration: 86400,
+            id_token_duration: 3600
+          }
+        }
+      };
+
+      const createTenantResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants`,
+        headers: {
+          Authorization: `Bearer ${adminAccessToken}`,
+        },
+        body: tenantData
+      });
+      expect(createTenantResponse.status).toBe(201);
+      console.log(`✓ Tenant created: ${tenantId}\n`);
+
+      // Step 3: Register client with refresh token support
+      console.log("Step 3: Registering client with refresh token support...");
+      const clientId = uuidv4();
+      const clientSecret = uuidv4();
+      const redirectUri = "http://localhost:8080/callback";
+
+      const clientData = {
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uris: [redirectUri],
+        grant_types: ["authorization_code", "refresh_token"],
+        response_types: ["code"],
+        scope: "openid profile email offline_access",
+        token_endpoint_auth_method: "client_secret_post"
+      };
+
+      const createClientResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${tenantId}/clients`,
+        headers: {
+          Authorization: `Bearer ${adminAccessToken}`,
+        },
+        body: clientData
+      });
+      expect(createClientResponse.status).toBe(201);
+      console.log(`✓ Client registered: ${clientId}\n`);
+
+      // Step 4: Create user via authorization flow
+      console.log("Step 4: Creating user via authorization flow...");
+      const userEmail = faker.internet.email();
+      const userName = faker.person.fullName();
+      const password = "TestPassword123!";
+
+      const interaction = async (id, user) => {
+        const registrationResponse = await postWithJson({
+          url: `${backendUrl}/${tenantId}/v1/authorizations/${id}/initial-registration`,
+          body: {
+            email: user.email,
+            password: user.password,
+            name: user.name
+          }
+        });
+        expect(registrationResponse.status).toBe(200);
+      };
+
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+        authorizeEndpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/authorize`,
+        denyEndpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/deny`,
+        clientId: clientId,
+        responseType: "code",
+        state: `state_${Date.now()}`,
+        scope: "openid profile email offline_access",
+        redirectUri: redirectUri,
+        user: {
+          email: userEmail,
+          password: password,
+          name: userName
+        },
+        interaction,
+      });
+
+      expect(authorizationResponse.code).not.toBeNull();
+      console.log("✓ User created via authorization flow\n");
+
+      // Step 5: Get access token and refresh token
+      console.log("Step 5: Getting access token and refresh token...");
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: redirectUri,
+        clientId: clientId,
+        clientSecret: clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("refresh_token");
+      const userAccessToken = tokenResponse.data.access_token;
+      const refreshToken = tokenResponse.data.refresh_token;
+      console.log("✓ Access token and refresh token obtained\n");
+
+      // Verify userinfo works initially
+      const initialUserinfoResponse = await get({
+        url: `${backendUrl}/${tenantId}/v1/userinfo`,
+        headers: {
+          Authorization: `Bearer ${userAccessToken}`
+        }
+      });
+      expect(initialUserinfoResponse.status).toBe(200);
+      const user = initialUserinfoResponse.data;
+      console.log(`✓ Initial userinfo verified for user: ${user.sub}\n`);
+
+      // Verify refresh token works initially
+      console.log("Step 6: Verifying refresh token works initially...");
+      const initialRefreshResponse = await requestToken({
+        endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        grantType: "refresh_token",
+        refreshToken: refreshToken,
+        clientId: clientId,
+        clientSecret: clientSecret,
+      });
+      expect(initialRefreshResponse.status).toBe(200);
+      console.log("✓ Refresh token works initially\n");
+
+      // Step 7: Physically delete user via Management API
+      console.log("Step 7: Physically deleting user via Management API...");
+      const deleteUserResponse = await deletion({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${tenantId}/users/${user.sub}`,
+        headers: {
+          Authorization: `Bearer ${adminAccessToken}`,
+        }
+      });
+      expect(deleteUserResponse.status).toBe(204);
+      console.log(`✓ User ${user.sub} physically deleted\n`);
+
+      // Step 8: Attempt refresh token with deleted user
+      console.log("Step 8: Attempting refresh token with deleted user...");
+      const refreshTokenResponse = await requestToken({
+        endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        grantType: "refresh_token",
+        refreshToken: refreshToken,
+        clientId: clientId,
+        clientSecret: clientSecret,
+      });
+
+      console.log("Refresh token response:", refreshTokenResponse.status, refreshTokenResponse.data);
+
+      // Expect 400 Bad Request with invalid_grant error
+      // Note: When user is deleted, tokens may also be deleted (cascade delete)
+      // So we may get "refresh token does not exists" or "not found user"
+      expect(refreshTokenResponse.status).toBe(400);
+      expect(refreshTokenResponse.data.error).toBe("invalid_grant");
+      const validErrorMessages = ["not found user", "refresh token does not exists"];
+      const hasValidErrorMessage = validErrorMessages.some(msg =>
+        refreshTokenResponse.data.error_description.includes(msg)
+      );
+      expect(hasValidErrorMessage).toBe(true);
+      console.log("✓ Refresh token correctly rejected for deleted user\n");
+
+    }, 90000);
+
+    it("Token introspection should return active:false when user is physically deleted after token issuance", async () => {
+      console.log("\n=== Starting User Deletion After Token Issuance Test (Token Introspection) ===\n");
+
+      // Step 1: Get admin access token
+      console.log("Step 1: Getting admin access token...");
+      const adminTokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+        scope: clientSecretPostClient.scope,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret
+      });
+      expect(adminTokenResponse.status).toBe(200);
+      const adminAccessToken = adminTokenResponse.data.access_token;
+      console.log("✓ Admin access token obtained\n");
+
+      // Step 2: Create new tenant
+      console.log("Step 2: Creating new tenant...");
+      const tenantId = uuidv4();
+      const { jwks } = await generateRS256KeyPair();
+
+      const tenantData = {
+        tenant: {
+          id: tenantId,
+          name: "User Deletion Test Tenant (Introspection)",
+          domain: "http://localhost:8080",
+          description: "Test tenant for user deletion after token issuance (introspection)",
+          authorization_provider: "idp-server",
+          tenant_type: "BUSINESS"
+        },
+        authorization_server: {
+          issuer: `${backendUrl}/${tenantId}`,
+          authorization_endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+          token_endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+          introspection_endpoint: `${backendUrl}/${tenantId}/v1/tokens/introspection`,
+          userinfo_endpoint: `${backendUrl}/${tenantId}/v1/userinfo`,
+          jwks_uri: `${backendUrl}/${tenantId}/.well-known/jwks.json`,
+          jwks: jwks,
+          scopes_supported: ["openid", "profile", "email"],
+          response_types_supported: ["code"],
+          response_modes_supported: ["query"],
+          subject_types_supported: ["public"],
+          grant_types_supported: ["authorization_code"],
+          token_endpoint_auth_methods_supported: ["client_secret_post", "client_secret_basic"],
+          id_token_signing_alg_values_supported: ["RS256"],
+          claims_supported: ["sub", "name", "email"],
+          extension: {
+            access_token_type: "JWT",
+            access_token_duration: 3600,
+            id_token_duration: 3600
+          }
+        }
+      };
+
+      const createTenantResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants`,
+        headers: {
+          Authorization: `Bearer ${adminAccessToken}`,
+        },
+        body: tenantData
+      });
+      expect(createTenantResponse.status).toBe(201);
+      console.log(`✓ Tenant created: ${tenantId}\n`);
+
+      // Step 3: Register client
+      console.log("Step 3: Registering client...");
+      const clientId = uuidv4();
+      const clientSecret = uuidv4();
+      const redirectUri = "http://localhost:8080/callback";
+
+      const clientData = {
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uris: [redirectUri],
+        grant_types: ["authorization_code"],
+        response_types: ["code"],
+        scope: "openid profile email",
+        token_endpoint_auth_method: "client_secret_post"
+      };
+
+      const createClientResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${tenantId}/clients`,
+        headers: {
+          Authorization: `Bearer ${adminAccessToken}`,
+        },
+        body: clientData
+      });
+      expect(createClientResponse.status).toBe(201);
+      console.log(`✓ Client registered: ${clientId}\n`);
+
+      // Step 4: Create user via authorization flow
+      console.log("Step 4: Creating user via authorization flow...");
+      const userEmail = faker.internet.email();
+      const userName = faker.person.fullName();
+      const password = "TestPassword123!";
+
+      const interaction = async (id, user) => {
+        const registrationResponse = await postWithJson({
+          url: `${backendUrl}/${tenantId}/v1/authorizations/${id}/initial-registration`,
+          body: {
+            email: user.email,
+            password: user.password,
+            name: user.name
+          }
+        });
+        expect(registrationResponse.status).toBe(200);
+      };
+
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+        authorizeEndpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/authorize`,
+        denyEndpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/deny`,
+        clientId: clientId,
+        responseType: "code",
+        state: `state_${Date.now()}`,
+        scope: "openid profile email",
+        redirectUri: redirectUri,
+        user: {
+          email: userEmail,
+          password: password,
+          name: userName
+        },
+        interaction,
+      });
+
+      expect(authorizationResponse.code).not.toBeNull();
+      console.log("✓ User created via authorization flow\n");
+
+      // Step 5: Get access token
+      console.log("Step 5: Getting access token...");
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: redirectUri,
+        clientId: clientId,
+        clientSecret: clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      const userAccessToken = tokenResponse.data.access_token;
+      console.log("✓ Access token obtained\n");
+
+      // Verify token introspection works initially
+      const initialIntrospectionResponse = await post({
+        url: `${backendUrl}/${tenantId}/v1/tokens/introspection`,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: `token=${userAccessToken}&client_id=${clientId}&client_secret=${clientSecret}`
+      });
+      expect(initialIntrospectionResponse.status).toBe(200);
+      expect(initialIntrospectionResponse.data.active).toBe(true);
+      console.log("✓ Initial token introspection verified: active=true\n");
+
+      // Get user info for deletion
+      const userinfoResponse = await get({
+        url: `${backendUrl}/${tenantId}/v1/userinfo`,
+        headers: {
+          Authorization: `Bearer ${userAccessToken}`
+        }
+      });
+      expect(userinfoResponse.status).toBe(200);
+      const user = userinfoResponse.data;
+      console.log(`✓ User info obtained: ${user.sub}\n`);
+
+      // Step 6: Physically delete user via Management API
+      console.log("Step 6: Physically deleting user via Management API...");
+      const deleteUserResponse = await deletion({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${tenantId}/users/${user.sub}`,
+        headers: {
+          Authorization: `Bearer ${adminAccessToken}`,
+        }
+      });
+      expect(deleteUserResponse.status).toBe(204);
+      console.log(`✓ User ${user.sub} physically deleted\n`);
+
+      // Step 7: Attempt token introspection with deleted user's token
+      console.log("Step 7: Attempting token introspection with deleted user's token...");
+      const introspectionResponse = await post({
+        url: `${backendUrl}/${tenantId}/v1/tokens/introspection`,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: `token=${userAccessToken}&client_id=${clientId}&client_secret=${clientSecret}`
+      });
+
+      console.log("Token introspection response:", introspectionResponse.status, introspectionResponse.data);
+
+      // Expect 200 OK with active: false (per RFC 7662)
+      expect(introspectionResponse.status).toBe(200);
+      expect(introspectionResponse.data.active).toBe(false);
+      console.log("✓ Token introspection correctly returned active:false for deleted user\n");
 
     }, 90000);
 

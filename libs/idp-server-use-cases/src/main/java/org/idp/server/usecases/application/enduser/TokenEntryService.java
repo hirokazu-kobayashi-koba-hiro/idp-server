@@ -160,6 +160,6 @@ public class TokenEntryService implements TokenApi, TokenUserFindingDelegate {
   @Override
   public User findUser(Tenant tenant, Subject subject) {
     UserIdentifier userIdentifier = new UserIdentifier(subject.value());
-    return userQueryRepository.get(tenant, userIdentifier);
+    return userQueryRepository.findById(tenant, userIdentifier);
   }
 }
