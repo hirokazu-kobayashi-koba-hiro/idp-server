@@ -184,7 +184,9 @@ services:
       - "8445:8443"   # HTTPS + mTLS
 
   postgres-primary:
-    image: postgres:15
+    build:
+      context: ./docker/postgresql/primary
+    image: idp-postgres-primary:15
     container_name: postgres-primary
     environment:
       - POSTGRES_USER=idpserver
@@ -195,7 +197,7 @@ services:
       - DB_OWNER_PASSWORD=${DB_OWNER_PASSWORD?Database owner password is required. Set DB_OWNER_PASSWORD environment variable.}
     ports:
       - "5432:5432"
-    command: [ "postgres", "-c", "shared_preload_libraries=pg_stat_statements" ]
+    command: [ "postgres", "-c", "shared_preload_libraries=pg_stat_statements,pg_cron", "-c", "cron.database_name=idpserver" ]
     volumes:
       - ./libs/idp-server-database/postgresql/init/00-init-app-user.sh:/docker-entrypoint-initdb.d/00-init-app-user.sh
       - ./libs/idp-server-database/postgresql/init/01-add-bypassrls.sh:/docker-entrypoint-initdb.d/01-add-bypassrls.sh
