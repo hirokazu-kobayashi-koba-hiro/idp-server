@@ -39,6 +39,7 @@ public class TokenRequestContext implements BackchannelRequestContext {
   TokenRequestParameters parameters;
   CustomProperties customProperties;
   PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate;
+  TokenUserFindingDelegate tokenUserFindingDelegate;
   AuthorizationServerConfiguration authorizationServerConfiguration;
   ClientConfiguration clientConfiguration;
 
@@ -49,6 +50,7 @@ public class TokenRequestContext implements BackchannelRequestContext {
       TokenRequestParameters parameters,
       CustomProperties customProperties,
       PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate,
+      TokenUserFindingDelegate tokenUserFindingDelegate,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
     this.tenant = tenant;
@@ -57,6 +59,7 @@ public class TokenRequestContext implements BackchannelRequestContext {
     this.parameters = parameters;
     this.customProperties = customProperties;
     this.passwordCredentialsGrantDelegate = passwordCredentialsGrantDelegate;
+    this.tokenUserFindingDelegate = tokenUserFindingDelegate;
     this.authorizationServerConfiguration = authorizationServerConfiguration;
     this.clientConfiguration = clientConfiguration;
   }
@@ -208,6 +211,14 @@ public class TokenRequestContext implements BackchannelRequestContext {
 
   public boolean isSupportedPasswordGrant() {
     return Objects.nonNull(passwordCredentialsGrantDelegate);
+  }
+
+  public TokenUserFindingDelegate refreshTokenGrantDelegate() {
+    return tokenUserFindingDelegate;
+  }
+
+  public boolean isSupportedRefreshTokenGrant() {
+    return Objects.nonNull(tokenUserFindingDelegate);
   }
 
   public Username username() {

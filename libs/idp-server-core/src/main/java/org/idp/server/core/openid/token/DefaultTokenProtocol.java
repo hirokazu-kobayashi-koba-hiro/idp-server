@@ -38,6 +38,7 @@ import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.openid.token.service.OAuthTokenCreationService;
 import org.idp.server.core.openid.token.tokenintrospection.TokenIntrospectionContentsCreator;
 import org.idp.server.core.openid.token.tokenintrospection.exception.TokenInvalidException;
+import org.idp.server.core.openid.token.tokenintrospection.exception.TokenUserInactiveException;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.platform.dependency.protocol.DefaultAuthorizationProvider;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -114,22 +115,29 @@ public class DefaultTokenProtocol implements TokenProtocol {
     return DefaultAuthorizationProvider.idp_server.toAuthorizationProtocolProvider();
   }
 
-  public TokenRequestResponse request(TokenRequest tokenRequest) {
+  public TokenRequestResponse request(
+      TokenRequest tokenRequest, TokenUserFindingDelegate tokenUserFindingDelegate) {
     try {
-      return tokenRequestHandler.handle(tokenRequest, passwordCredentialsGrantDelegate);
+      return tokenRequestHandler.handle(
+          tokenRequest, passwordCredentialsGrantDelegate, tokenUserFindingDelegate);
     } catch (Exception exception) {
       return errorHandler.handle(exception);
     }
   }
 
-  public TokenIntrospectionResponse inspect(TokenIntrospectionRequest request) {
+  public TokenIntrospectionResponse inspect(
+      TokenIntrospectionRequest request, TokenUserFindingDelegate delegate) {
     try {
 
-      return introspectionHandler.handle(request);
+      return introspectionHandler.handle(request, delegate);
     } catch (TokenInvalidException exception) {
       Map<String, Object> contents = TokenIntrospectionContentsCreator.createFailureContents();
       return new TokenIntrospectionResponse(
           TokenIntrospectionRequestStatus.INVALID_TOKEN, contents);
+    } catch (TokenUserInactiveException exception) {
+      Map<String, Object> contents = TokenIntrospectionContentsCreator.createFailureContents();
+      return new TokenIntrospectionResponse(
+          TokenIntrospectionRequestStatus.INACTIVE_USER, contents);
     } catch (Exception exception) {
 
       return introspectionErrorHandler.handle(exception);
@@ -137,10 +145,10 @@ public class DefaultTokenProtocol implements TokenProtocol {
   }
 
   public TokenIntrospectionResponse inspectWithVerification(
-      TokenIntrospectionExtensionRequest request) {
+      TokenIntrospectionExtensionRequest request, TokenUserFindingDelegate delegate) {
     try {
 
-      return introspectionExtensionHandler.handle(request);
+      return introspectionExtensionHandler.handle(request, delegate);
     } catch (Exception exception) {
 
       return introspectionErrorHandler.handle(exception);

@@ -467,6 +467,908 @@ describe("User Status verification. Can not authorize when user status is not ac
 
   });
 
+  describe("Refresh Token flow - Issue #900", () => {
+
+    it("Refresh token should fail when user status is not active", async () => {
+      console.log("\n=== Starting Refresh Token User Status Validation Test ===\n");
+
+      // Step 1: Get admin access token
+      console.log("Step 1: Getting admin access token...");
+      const adminTokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+        scope: clientSecretPostClient.scope,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret
+      });
+      expect(adminTokenResponse.status).toBe(200);
+      const adminAccessToken = adminTokenResponse.data.access_token;
+      console.log("✓ Admin access token obtained\n");
+
+      // Step 2: Create new tenant
+      console.log("Step 2: Creating new tenant...");
+      const tenantId = uuidv4();
+      const { jwks } = await generateRS256KeyPair();
+
+      const tenantData = {
+        tenant: {
+          id: tenantId,
+          name: "Refresh Token Status Test Tenant",
+          domain: "http://localhost:8080",
+          description: "Test tenant for refresh token status validation",
+          authorization_provider: "idp-server",
+          tenant_type: "BUSINESS"
+        },
+        authorization_server: {
+          issuer: `${backendUrl}/${tenantId}`,
+          authorization_endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+          token_endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+          userinfo_endpoint: `${backendUrl}/${tenantId}/v1/userinfo`,
+          jwks_uri: `${backendUrl}/${tenantId}/.well-known/jwks.json`,
+          jwks: jwks,
+          scopes_supported: ["openid", "profile", "email", "offline_access"],
+          response_types_supported: ["code"],
+          response_modes_supported: ["query"],
+          subject_types_supported: ["public"],
+          grant_types_supported: ["authorization_code", "refresh_token"],
+          token_endpoint_auth_methods_supported: ["client_secret_post"],
+          id_token_signing_alg_values_supported: ["RS256"],
+          claims_supported: ["sub", "name", "email"],
+          extension: {
+            access_token_type: "JWT",
+            access_token_duration: 3600,
+            refresh_token_duration: 86400,
+            id_token_duration: 3600
+          }
+        }
+      };
+
+      const createTenantResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants`,
+        headers: {
+          Authorization: `Bearer ${adminAccessToken}`,
+        },
+        body: tenantData
+      });
+      expect(createTenantResponse.status).toBe(201);
+      console.log(`✓ Tenant created: ${tenantId}\n`);
+
+      // Step 3: Register client with refresh token support
+      console.log("Step 3: Registering client with refresh token support...");
+      const clientId = uuidv4();
+      const clientSecret = uuidv4();
+      const redirectUri = "http://localhost:8080/callback";
+
+      const clientData = {
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uris: [redirectUri],
+        grant_types: ["authorization_code", "refresh_token"],
+        response_types: ["code"],
+        scope: "openid profile email offline_access",
+        token_endpoint_auth_method: "client_secret_post"
+      };
+
+      const createClientResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${tenantId}/clients`,
+        headers: {
+          Authorization: `Bearer ${adminAccessToken}`,
+        },
+        body: clientData
+      });
+      expect(createClientResponse.status).toBe(201);
+      console.log(`✓ Client registered: ${clientId}\n`);
+
+      // Step 4: Create user via authorization flow
+      console.log("Step 4: Creating user via authorization flow...");
+      const userEmail = faker.internet.email();
+      const userName = faker.person.fullName();
+      const password = "TestPassword123!";
+
+      const interaction = async (id, user) => {
+        const registrationResponse = await postWithJson({
+          url: `${backendUrl}/${tenantId}/v1/authorizations/${id}/initial-registration`,
+          body: {
+            email: user.email,
+            password: user.password,
+            name: user.name
+          }
+        });
+        expect(registrationResponse.status).toBe(200);
+      };
+
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+        authorizeEndpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/authorize`,
+        denyEndpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/deny`,
+        clientId: clientId,
+        responseType: "code",
+        state: `state_${Date.now()}`,
+        scope: "openid profile email offline_access",
+        redirectUri: redirectUri,
+        user: {
+          email: userEmail,
+          password: password,
+          name: userName
+        },
+        interaction,
+      });
+
+      expect(authorizationResponse.code).not.toBeNull();
+      console.log("✓ User created via authorization flow\n");
+
+      // Step 5: Get access token and refresh token
+      console.log("Step 5: Getting access token and refresh token...");
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: redirectUri,
+        clientId: clientId,
+        clientSecret: clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("refresh_token");
+      const userAccessToken = tokenResponse.data.access_token;
+      let refreshToken = tokenResponse.data.refresh_token;
+      console.log("✓ Access token and refresh token obtained\n");
+
+      // Verify userinfo works initially
+      const initialUserinfoResponse = await get({
+        url: `${backendUrl}/${tenantId}/v1/userinfo`,
+        headers: {
+          Authorization: `Bearer ${userAccessToken}`
+        }
+      });
+      expect(initialUserinfoResponse.status).toBe(200);
+      const user = initialUserinfoResponse.data;
+      console.log(`✓ Initial userinfo verified for user: ${user.sub}\n`);
+
+      // Step 6: Test all inactive user statuses
+      const inactiveStatuses = ["LOCKED", "DISABLED", "SUSPENDED", "DEACTIVATED", "DELETED_PENDING", "DELETED"];
+
+      for (const status of inactiveStatuses) {
+        console.log(`\nStep 6: Testing status ${status} with Refresh Token...`);
+
+        // Change user status
+        console.log(`Changing user status to ${status}...`);
+        const changeStatusResponse = await patchWithJson({
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${tenantId}/users/${user.sub}`,
+          headers: {
+            Authorization: `Bearer ${adminAccessToken}`,
+          },
+          body: {
+            status: status
+          }
+        });
+        expect(changeStatusResponse.status).toBe(200);
+        console.log(`✓ User status changed to ${status}`);
+
+        // Attempt refresh token with inactive user
+        console.log(`Attempting refresh token with ${status} user...`);
+        const refreshTokenResponse = await requestToken({
+          endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+          grantType: "refresh_token",
+          refreshToken: refreshToken,
+          clientId: clientId,
+          clientSecret: clientSecret,
+        });
+
+        console.log(`Refresh token response for ${status}:`, refreshTokenResponse.status, refreshTokenResponse.data);
+
+        // Expect 400 Bad Request with invalid_grant error
+        expect(refreshTokenResponse.status).toBe(400);
+        expect(refreshTokenResponse.data.error).toBe("invalid_grant");
+        expect(refreshTokenResponse.data.error_description).toContain("user is not active");
+        expect(refreshTokenResponse.data.error_description).toContain(status);
+        console.log(`✓ Refresh token correctly rejected for ${status} user\n`);
+
+        // Restore user status to REGISTERED for next iteration
+        if (status !== "DELETED") {
+          const restoreStatusResponse = await patchWithJson({
+            url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${tenantId}/users/${user.sub}`,
+            headers: {
+              Authorization: `Bearer ${adminAccessToken}`,
+            },
+            body: {
+              status: "REGISTERED"
+            }
+          });
+          expect(restoreStatusResponse.status).toBe(200);
+          console.log("✓ User status restored to REGISTERED");
+
+          // Get a new refresh token for next iteration
+          const newTokenResponse = await requestToken({
+            endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+            grantType: "refresh_token",
+            refreshToken: refreshToken,
+            clientId: clientId,
+            clientSecret: clientSecret,
+          });
+          if (newTokenResponse.status === 200 && newTokenResponse.data.refresh_token) {
+            refreshToken = newTokenResponse.data.refresh_token;
+            console.log("✓ New refresh token obtained for next iteration");
+          }
+        }
+      }
+
+    }, 90000);
+
+  });
+
+  describe("Password Grant flow - Issue #900", () => {
+
+    it("Password grant should fail when user status is not active", async () => {
+      console.log("\n=== Starting Password Grant User Status Validation Test ===\n");
+
+      // Step 1: Get admin access token
+      console.log("Step 1: Getting admin access token...");
+      const adminTokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+        scope: clientSecretPostClient.scope,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret
+      });
+      expect(adminTokenResponse.status).toBe(200);
+      const adminAccessToken = adminTokenResponse.data.access_token;
+      console.log("✓ Admin access token obtained\n");
+
+      // Step 2: Create new tenant
+      console.log("Step 2: Creating new tenant...");
+      const tenantId = uuidv4();
+      const { jwks } = await generateRS256KeyPair();
+
+      const tenantData = {
+        tenant: {
+          id: tenantId,
+          name: "Password Grant Status Test Tenant",
+          domain: "http://localhost:8080",
+          description: "Test tenant for password grant status validation",
+          authorization_provider: "idp-server",
+          tenant_type: "BUSINESS"
+        },
+        authorization_server: {
+          issuer: `${backendUrl}/${tenantId}`,
+          authorization_endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+          token_endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+          userinfo_endpoint: `${backendUrl}/${tenantId}/v1/userinfo`,
+          jwks_uri: `${backendUrl}/${tenantId}/.well-known/jwks.json`,
+          jwks: jwks,
+          scopes_supported: ["openid", "profile", "email"],
+          response_types_supported: ["code"],
+          response_modes_supported: ["query"],
+          subject_types_supported: ["public"],
+          grant_types_supported: ["authorization_code", "password"],
+          token_endpoint_auth_methods_supported: ["client_secret_post"],
+          id_token_signing_alg_values_supported: ["RS256"],
+          claims_supported: ["sub", "name", "email"],
+          extension: {
+            access_token_type: "JWT",
+            access_token_duration: 3600,
+            id_token_duration: 3600
+          }
+        }
+      };
+
+      const createTenantResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants`,
+        headers: {
+          Authorization: `Bearer ${adminAccessToken}`,
+        },
+        body: tenantData
+      });
+      expect(createTenantResponse.status).toBe(201);
+      console.log(`✓ Tenant created: ${tenantId}\n`);
+
+      // Step 3: Register client with password grant support
+      console.log("Step 3: Registering client with password grant support...");
+      const clientId = uuidv4();
+      const clientSecret = uuidv4();
+      const redirectUri = "http://localhost:8080/callback";
+
+      const clientData = {
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uris: [redirectUri],
+        grant_types: ["authorization_code", "password"],
+        response_types: ["code"],
+        scope: "openid profile email",
+        token_endpoint_auth_method: "client_secret_post"
+      };
+
+      const createClientResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${tenantId}/clients`,
+        headers: {
+          Authorization: `Bearer ${adminAccessToken}`,
+        },
+        body: clientData
+      });
+      expect(createClientResponse.status).toBe(201);
+      console.log(`✓ Client registered: ${clientId}\n`);
+
+      // Step 4: Create user via authorization flow
+      console.log("Step 4: Creating user via authorization flow...");
+      const userEmail = faker.internet.email();
+      const userName = faker.person.fullName();
+      const password = "TestPassword123!";
+
+      const interaction = async (id, user) => {
+        const registrationResponse = await postWithJson({
+          url: `${backendUrl}/${tenantId}/v1/authorizations/${id}/initial-registration`,
+          body: {
+            email: user.email,
+            password: user.password,
+            name: user.name
+          }
+        });
+        expect(registrationResponse.status).toBe(200);
+      };
+
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+        authorizeEndpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/authorize`,
+        denyEndpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/deny`,
+        clientId: clientId,
+        responseType: "code",
+        state: `state_${Date.now()}`,
+        scope: "openid profile email",
+        redirectUri: redirectUri,
+        user: {
+          email: userEmail,
+          password: password,
+          name: userName
+        },
+        interaction,
+      });
+
+      expect(authorizationResponse.code).not.toBeNull();
+      console.log("✓ User created via authorization flow\n");
+
+      // Step 5: Verify password grant works initially
+      console.log("Step 5: Verifying password grant works initially...");
+      const initialPasswordGrantResponse = await requestToken({
+        endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        grantType: "password",
+        username: userEmail,
+        password: password,
+        scope: "openid profile email",
+        clientId: clientId,
+        clientSecret: clientSecret
+      });
+      expect(initialPasswordGrantResponse.status).toBe(200);
+      expect(initialPasswordGrantResponse.data).toHaveProperty("access_token");
+      console.log("✓ Password grant works initially\n");
+
+      // Get user info for status changes
+      const userinfoResponse = await get({
+        url: `${backendUrl}/${tenantId}/v1/userinfo`,
+        headers: {
+          Authorization: `Bearer ${initialPasswordGrantResponse.data.access_token}`
+        }
+      });
+      expect(userinfoResponse.status).toBe(200);
+      const user = userinfoResponse.data;
+      console.log(`✓ User info obtained: ${user.sub}\n`);
+
+      // Step 6: Test all inactive user statuses
+      const inactiveStatuses = ["LOCKED", "DISABLED", "SUSPENDED", "DEACTIVATED", "DELETED_PENDING", "DELETED"];
+
+      for (const status of inactiveStatuses) {
+        console.log(`\nStep 6: Testing status ${status} with Password Grant...`);
+
+        // Change user status
+        console.log(`Changing user status to ${status}...`);
+        const changeStatusResponse = await patchWithJson({
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${tenantId}/users/${user.sub}`,
+          headers: {
+            Authorization: `Bearer ${adminAccessToken}`,
+          },
+          body: {
+            status: status
+          }
+        });
+        expect(changeStatusResponse.status).toBe(200);
+        console.log(`✓ User status changed to ${status}`);
+
+        // Attempt password grant with inactive user
+        console.log(`Attempting password grant with ${status} user...`);
+        const passwordGrantResponse = await requestToken({
+          endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+          grantType: "password",
+          username: userEmail,
+          password: password,
+          scope: "openid profile email",
+          clientId: clientId,
+          clientSecret: clientSecret
+        });
+
+        console.log(`Password grant response for ${status}:`, passwordGrantResponse.status, passwordGrantResponse.data);
+
+        // Expect 400 Bad Request with invalid_grant error
+        expect(passwordGrantResponse.status).toBe(400);
+        expect(passwordGrantResponse.data.error).toBe("invalid_grant");
+        expect(passwordGrantResponse.data.error_description).toContain("user is not active");
+        expect(passwordGrantResponse.data.error_description).toContain(status);
+        console.log(`✓ Password grant correctly rejected for ${status} user\n`);
+
+        // Restore user status to REGISTERED for next iteration
+        if (status !== "DELETED") {
+          const restoreStatusResponse = await patchWithJson({
+            url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${tenantId}/users/${user.sub}`,
+            headers: {
+              Authorization: `Bearer ${adminAccessToken}`,
+            },
+            body: {
+              status: "REGISTERED"
+            }
+          });
+          expect(restoreStatusResponse.status).toBe(200);
+          console.log("✓ User status restored to REGISTERED");
+        }
+      }
+
+    }, 90000);
+
+  });
+
+  describe("Token Introspection flow - Issue #900", () => {
+
+    it("Token introspection should return active:false when user status is not active", async () => {
+      console.log("\n=== Starting Token Introspection User Status Validation Test ===\n");
+
+      // Step 1: Get admin access token
+      console.log("Step 1: Getting admin access token...");
+      const adminTokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+        scope: clientSecretPostClient.scope,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret
+      });
+      expect(adminTokenResponse.status).toBe(200);
+      const adminAccessToken = adminTokenResponse.data.access_token;
+      console.log("✓ Admin access token obtained\n");
+
+      // Step 2: Create new tenant
+      console.log("Step 2: Creating new tenant...");
+      const tenantId = uuidv4();
+      const { jwks } = await generateRS256KeyPair();
+
+      const tenantData = {
+        tenant: {
+          id: tenantId,
+          name: "Token Introspection Status Test Tenant",
+          domain: "http://localhost:8080",
+          description: "Test tenant for token introspection status validation",
+          authorization_provider: "idp-server",
+          tenant_type: "BUSINESS"
+        },
+        authorization_server: {
+          issuer: `${backendUrl}/${tenantId}`,
+          authorization_endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+          token_endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+          introspection_endpoint: `${backendUrl}/${tenantId}/v1/tokens/introspection`,
+          userinfo_endpoint: `${backendUrl}/${tenantId}/v1/userinfo`,
+          jwks_uri: `${backendUrl}/${tenantId}/.well-known/jwks.json`,
+          jwks: jwks,
+          scopes_supported: ["openid", "profile", "email"],
+          response_types_supported: ["code"],
+          response_modes_supported: ["query"],
+          subject_types_supported: ["public"],
+          grant_types_supported: ["authorization_code"],
+          token_endpoint_auth_methods_supported: ["client_secret_post", "client_secret_basic"],
+          id_token_signing_alg_values_supported: ["RS256"],
+          claims_supported: ["sub", "name", "email"],
+          extension: {
+            access_token_type: "JWT",
+            access_token_duration: 3600,
+            id_token_duration: 3600
+          }
+        }
+      };
+
+      const createTenantResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants`,
+        headers: {
+          Authorization: `Bearer ${adminAccessToken}`,
+        },
+        body: tenantData
+      });
+      expect(createTenantResponse.status).toBe(201);
+      console.log(`✓ Tenant created: ${tenantId}\n`);
+
+      // Step 3: Register client
+      console.log("Step 3: Registering client...");
+      const clientId = uuidv4();
+      const clientSecret = uuidv4();
+      const redirectUri = "http://localhost:8080/callback";
+
+      const clientData = {
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uris: [redirectUri],
+        grant_types: ["authorization_code"],
+        response_types: ["code"],
+        scope: "openid profile email",
+        token_endpoint_auth_method: "client_secret_post"
+      };
+
+      const createClientResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${tenantId}/clients`,
+        headers: {
+          Authorization: `Bearer ${adminAccessToken}`,
+        },
+        body: clientData
+      });
+      expect(createClientResponse.status).toBe(201);
+      console.log(`✓ Client registered: ${clientId}\n`);
+
+      // Step 4: Create user via authorization flow
+      console.log("Step 4: Creating user via authorization flow...");
+      const userEmail = faker.internet.email();
+      const userName = faker.person.fullName();
+      const password = "TestPassword123!";
+
+      const interaction = async (id, user) => {
+        const registrationResponse = await postWithJson({
+          url: `${backendUrl}/${tenantId}/v1/authorizations/${id}/initial-registration`,
+          body: {
+            email: user.email,
+            password: user.password,
+            name: user.name
+          }
+        });
+        expect(registrationResponse.status).toBe(200);
+      };
+
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+        authorizeEndpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/authorize`,
+        denyEndpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/deny`,
+        clientId: clientId,
+        responseType: "code",
+        state: `state_${Date.now()}`,
+        scope: "openid profile email",
+        redirectUri: redirectUri,
+        user: {
+          email: userEmail,
+          password: password,
+          name: userName
+        },
+        interaction,
+      });
+
+      expect(authorizationResponse.code).not.toBeNull();
+      console.log("✓ User created via authorization flow\n");
+
+      // Step 5: Get access token
+      console.log("Step 5: Getting access token...");
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: redirectUri,
+        clientId: clientId,
+        clientSecret: clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      const userAccessToken = tokenResponse.data.access_token;
+      console.log("✓ Access token obtained\n");
+
+      // Verify token introspection works initially
+      const initialIntrospectionResponse = await post({
+        url: `${backendUrl}/${tenantId}/v1/tokens/introspection`,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: `token=${userAccessToken}&client_id=${clientId}&client_secret=${clientSecret}`
+      });
+      expect(initialIntrospectionResponse.status).toBe(200);
+      expect(initialIntrospectionResponse.data.active).toBe(true);
+      console.log("✓ Initial token introspection verified: active=true\n");
+
+      // Get user info for status changes
+      const userinfoResponse = await get({
+        url: `${backendUrl}/${tenantId}/v1/userinfo`,
+        headers: {
+          Authorization: `Bearer ${userAccessToken}`
+        }
+      });
+      expect(userinfoResponse.status).toBe(200);
+      const user = userinfoResponse.data;
+
+      // Step 6: Test all inactive user statuses
+      const inactiveStatuses = ["LOCKED", "DISABLED", "SUSPENDED", "DEACTIVATED", "DELETED_PENDING", "DELETED"];
+
+      for (const status of inactiveStatuses) {
+        console.log(`\nStep 6: Testing status ${status} with Token Introspection...`);
+
+        // Change user status
+        console.log(`Changing user status to ${status}...`);
+        const changeStatusResponse = await patchWithJson({
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${tenantId}/users/${user.sub}`,
+          headers: {
+            Authorization: `Bearer ${adminAccessToken}`,
+          },
+          body: {
+            status: status
+          }
+        });
+        expect(changeStatusResponse.status).toBe(200);
+        console.log(`✓ User status changed to ${status}`);
+
+        // Attempt token introspection with inactive user's token
+        console.log(`Attempting token introspection with ${status} user's token...`);
+        const introspectionResponse = await post({
+          url: `${backendUrl}/${tenantId}/v1/tokens/introspection`,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: `token=${userAccessToken}&client_id=${clientId}&client_secret=${clientSecret}`
+        });
+
+        console.log(`Token introspection response for ${status}:`, introspectionResponse.status, introspectionResponse.data);
+
+        // Expect 200 OK with active: false (per RFC 7662)
+        expect(introspectionResponse.status).toBe(200);
+        expect(introspectionResponse.data.active).toBe(false);
+        console.log(`✓ Token introspection correctly returned active:false for ${status} user\n`);
+
+        // Restore user status to REGISTERED for next iteration
+        if (status !== "DELETED") {
+          const restoreStatusResponse = await patchWithJson({
+            url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${tenantId}/users/${user.sub}`,
+            headers: {
+              Authorization: `Bearer ${adminAccessToken}`,
+            },
+            body: {
+              status: "REGISTERED"
+            }
+          });
+          expect(restoreStatusResponse.status).toBe(200);
+          console.log("✓ User status restored to REGISTERED");
+        }
+      }
+
+    }, 90000);
+
+  });
+
+  describe("Token Introspection Extension flow - Issue #900", () => {
+
+    it("Token introspection extension should return active:false when user status is not active", async () => {
+      console.log("\n=== Starting Token Introspection Extension User Status Validation Test ===\n");
+
+      // Step 1: Get admin access token
+      console.log("Step 1: Getting admin access token...");
+      const adminTokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+        scope: clientSecretPostClient.scope,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret
+      });
+      expect(adminTokenResponse.status).toBe(200);
+      const adminAccessToken = adminTokenResponse.data.access_token;
+      console.log("✓ Admin access token obtained\n");
+
+      // Step 2: Create new tenant
+      console.log("Step 2: Creating new tenant...");
+      const tenantId = uuidv4();
+      const { jwks } = await generateRS256KeyPair();
+
+      const tenantData = {
+        tenant: {
+          id: tenantId,
+          name: "Token Introspection Extension Status Test Tenant",
+          domain: "http://localhost:8080",
+          description: "Test tenant for token introspection extension status validation",
+          authorization_provider: "idp-server",
+          tenant_type: "BUSINESS"
+        },
+        authorization_server: {
+          issuer: `${backendUrl}/${tenantId}`,
+          authorization_endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+          token_endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+          introspection_endpoint: `${backendUrl}/${tenantId}/v1/tokens/introspection`,
+          userinfo_endpoint: `${backendUrl}/${tenantId}/v1/userinfo`,
+          jwks_uri: `${backendUrl}/${tenantId}/.well-known/jwks.json`,
+          jwks: jwks,
+          scopes_supported: ["openid", "profile", "email"],
+          response_types_supported: ["code"],
+          response_modes_supported: ["query"],
+          subject_types_supported: ["public"],
+          grant_types_supported: ["authorization_code"],
+          token_endpoint_auth_methods_supported: ["client_secret_post", "client_secret_basic"],
+          id_token_signing_alg_values_supported: ["RS256"],
+          claims_supported: ["sub", "name", "email"],
+          extension: {
+            access_token_type: "JWT",
+            access_token_duration: 3600,
+            id_token_duration: 3600
+          }
+        }
+      };
+
+      const createTenantResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants`,
+        headers: {
+          Authorization: `Bearer ${adminAccessToken}`,
+        },
+        body: tenantData
+      });
+      expect(createTenantResponse.status).toBe(201);
+      console.log(`✓ Tenant created: ${tenantId}\n`);
+
+      // Step 3: Register client
+      console.log("Step 3: Registering client...");
+      const clientId = uuidv4();
+      const clientSecret = uuidv4();
+      const redirectUri = "http://localhost:8080/callback";
+
+      const clientData = {
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uris: [redirectUri],
+        grant_types: ["authorization_code"],
+        response_types: ["code"],
+        scope: "openid profile email",
+        token_endpoint_auth_method: "client_secret_post"
+      };
+
+      const createClientResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${tenantId}/clients`,
+        headers: {
+          Authorization: `Bearer ${adminAccessToken}`,
+        },
+        body: clientData
+      });
+      expect(createClientResponse.status).toBe(201);
+      console.log(`✓ Client registered: ${clientId}\n`);
+
+      // Step 4: Create user via authorization flow
+      console.log("Step 4: Creating user via authorization flow...");
+      const userEmail = faker.internet.email();
+      const userName = faker.person.fullName();
+      const password = "TestPassword123!";
+
+      const interaction = async (id, user) => {
+        const registrationResponse = await postWithJson({
+          url: `${backendUrl}/${tenantId}/v1/authorizations/${id}/initial-registration`,
+          body: {
+            email: user.email,
+            password: user.password,
+            name: user.name
+          }
+        });
+        expect(registrationResponse.status).toBe(200);
+      };
+
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+        authorizeEndpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/authorize`,
+        denyEndpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/deny`,
+        clientId: clientId,
+        responseType: "code",
+        state: `state_${Date.now()}`,
+        scope: "openid profile email",
+        redirectUri: redirectUri,
+        user: {
+          email: userEmail,
+          password: password,
+          name: userName
+        },
+        interaction,
+      });
+
+      expect(authorizationResponse.code).not.toBeNull();
+      console.log("✓ User created via authorization flow\n");
+
+      // Step 5: Get access token
+      console.log("Step 5: Getting access token...");
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: redirectUri,
+        clientId: clientId,
+        clientSecret: clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      const userAccessToken = tokenResponse.data.access_token;
+      console.log("✓ Access token obtained\n");
+
+      // Verify token introspection extension works initially
+      const initialIntrospectionResponse = await post({
+        url: `${backendUrl}/${tenantId}/v1/tokens/introspection-extensions`,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: `token=${userAccessToken}&client_id=${clientId}&client_secret=${clientSecret}`
+      });
+      expect(initialIntrospectionResponse.status).toBe(200);
+      expect(initialIntrospectionResponse.data.active).toBe(true);
+      console.log("✓ Initial token introspection extension verified: active=true\n");
+
+      // Get user info for status changes
+      const userinfoResponse = await get({
+        url: `${backendUrl}/${tenantId}/v1/userinfo`,
+        headers: {
+          Authorization: `Bearer ${userAccessToken}`
+        }
+      });
+      expect(userinfoResponse.status).toBe(200);
+      const user = userinfoResponse.data;
+
+      // Step 6: Test all inactive user statuses
+      const inactiveStatuses = ["LOCKED", "DISABLED", "SUSPENDED", "DEACTIVATED", "DELETED_PENDING", "DELETED"];
+
+      for (const status of inactiveStatuses) {
+        console.log(`\nStep 6: Testing status ${status} with Token Introspection Extension...`);
+
+        // Change user status
+        console.log(`Changing user status to ${status}...`);
+        const changeStatusResponse = await patchWithJson({
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${tenantId}/users/${user.sub}`,
+          headers: {
+            Authorization: `Bearer ${adminAccessToken}`,
+          },
+          body: {
+            status: status
+          }
+        });
+        expect(changeStatusResponse.status).toBe(200);
+        console.log(`✓ User status changed to ${status}`);
+
+        // Attempt token introspection extension with inactive user's token
+        console.log(`Attempting token introspection extension with ${status} user's token...`);
+        const introspectionResponse = await post({
+          url: `${backendUrl}/${tenantId}/v1/tokens/introspection-extensions`,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: `token=${userAccessToken}&client_id=${clientId}&client_secret=${clientSecret}`
+        });
+
+        console.log(`Token introspection extension response for ${status}:`, introspectionResponse.status, JSON.stringify(introspectionResponse.data, null, 2));
+
+        // Expect 200 OK with active: false and error details (per RFC 7662)
+        expect(introspectionResponse.status).toBe(200);
+        expect(introspectionResponse.data.active).toBe(false);
+        expect(introspectionResponse.data.error).toBe("invalid_token");
+        expect(introspectionResponse.data.error_description).toBeDefined();
+        expect(introspectionResponse.data.status_code).toBe(401);
+        console.log(`✓ Token introspection extension correctly returned active:false with error details for ${status} user\n`);
+
+        // Restore user status to REGISTERED for next iteration
+        if (status !== "DELETED") {
+          const restoreStatusResponse = await patchWithJson({
+            url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${tenantId}/users/${user.sub}`,
+            headers: {
+              Authorization: `Bearer ${adminAccessToken}`,
+            },
+            body: {
+              status: "REGISTERED"
+            }
+          });
+          expect(restoreStatusResponse.status).toBe(200);
+          console.log("✓ User status restored to REGISTERED");
+        }
+      }
+
+    }, 90000);
+
+  });
+
   describe("CIBA flow", () => {
 
     it("CIBA authentication request should fail when user status is LOCKED", async () => {

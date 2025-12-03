@@ -23,6 +23,7 @@ import org.idp.server.core.openid.token.exception.TokenBadRequestException;
 import org.idp.server.platform.date.SystemDateTime;
 
 public class RefreshTokenVerifier {
+
   TokenRequestContext context;
   OAuthToken oAuthToken;
 
@@ -32,11 +33,11 @@ public class RefreshTokenVerifier {
   }
 
   public void verify() {
-    throwINotFoundToken();
+    throwIfNotFoundToken();
     throwExceptionIfExpiredToken();
   }
 
-  void throwINotFoundToken() {
+  void throwIfNotFoundToken() {
     if (!oAuthToken.exists()) {
       throw new TokenBadRequestException("invalid_grant", "refresh token does not exists.");
     }

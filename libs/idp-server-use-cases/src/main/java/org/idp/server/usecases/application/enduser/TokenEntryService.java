@@ -17,10 +17,14 @@
 package org.idp.server.usecases.application.enduser;
 
 import java.util.Map;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.core.openid.oauth.type.oauth.Subject;
 import org.idp.server.core.openid.token.TokenApi;
 import org.idp.server.core.openid.token.TokenProtocol;
 import org.idp.server.core.openid.token.TokenProtocols;
+import org.idp.server.core.openid.token.TokenUserFindingDelegate;
 import org.idp.server.core.openid.token.UserEventPublisher;
 import org.idp.server.core.openid.token.handler.token.io.TokenRequest;
 import org.idp.server.core.openid.token.handler.token.io.TokenRequestResponse;
@@ -36,7 +40,7 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
 @Transaction
-public class TokenEntryService implements TokenApi {
+public class TokenEntryService implements TokenApi, TokenUserFindingDelegate {
 
   TokenProtocols tokenProtocols;
   TenantQueryRepository tenantQueryRepository;
@@ -67,7 +71,7 @@ public class TokenEntryService implements TokenApi {
 
     TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProvider());
 
-    TokenRequestResponse requestResponse = tokenProtocol.request(tokenRequest);
+    TokenRequestResponse requestResponse = tokenProtocol.request(tokenRequest, this);
 
     if (requestResponse.isOK()) {
       eventPublisher.publish(
@@ -94,7 +98,7 @@ public class TokenEntryService implements TokenApi {
 
     TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProvider());
 
-    TokenIntrospectionResponse result = tokenProtocol.inspect(tokenIntrospectionRequest);
+    TokenIntrospectionResponse result = tokenProtocol.inspect(tokenIntrospectionRequest, this);
 
     if (result.hasOAuthToken()) {
       eventPublisher.publish(
@@ -119,7 +123,7 @@ public class TokenEntryService implements TokenApi {
     TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProvider());
 
     TokenIntrospectionResponse result =
-        tokenProtocol.inspectWithVerification(tokenIntrospectionRequest);
+        tokenProtocol.inspectWithVerification(tokenIntrospectionRequest, this);
 
     if (result.hasOAuthToken()) {
       eventPublisher.publish(
@@ -151,5 +155,11 @@ public class TokenEntryService implements TokenApi {
     }
 
     return result;
+  }
+
+  @Override
+  public User findUser(Tenant tenant, Subject subject) {
+    UserIdentifier userIdentifier = new UserIdentifier(subject.value());
+    return userQueryRepository.get(tenant, userIdentifier);
   }
 }

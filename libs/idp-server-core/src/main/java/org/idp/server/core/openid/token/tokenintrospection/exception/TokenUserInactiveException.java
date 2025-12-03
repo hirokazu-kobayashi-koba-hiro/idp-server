@@ -14,33 +14,10 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.openid.token.handler.tokenintrospection.io;
+package org.idp.server.core.openid.token.tokenintrospection.exception;
 
-public enum TokenIntrospectionRequestStatus {
-  OK(200),
-  BAD_REQUEST(400),
-  INVALID_TOKEN(200),
-  EXPIRED_TOKEN(200),
-  INACTIVE_USER(200),
-  INSUFFICIENT_SCOPE(200),
-  INVALID_CLIENT_CERT(200),
-  SERVER_ERROR(500);
-
-  int statusCode;
-
-  TokenIntrospectionRequestStatus(int statusCode) {
-    this.statusCode = statusCode;
-  }
-
-  public int statusCode() {
-    return statusCode;
-  }
-
-  public boolean isOK() {
-    return this == OK;
-  }
-
-  public boolean isExpired() {
-    return this == EXPIRED_TOKEN;
+public class TokenUserInactiveException extends RuntimeException {
+  public TokenUserInactiveException(String message) {
+    super(message);
   }
 }

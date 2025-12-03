@@ -539,6 +539,8 @@ RefreshTokenGrantService.create()
 ├─────────────────────────────────────────────┤
 │  - Refresh Token有効期限チェック              │
 │  - クライアント一致チェック                    │
+│  - ユーザー存在チェック                        │
+│  - ユーザーステータスチェック（Issue #900）     │
 └─────────────────────────────────────────────┘
     ↓
 ┌─────────────────────────────────────────────┐
@@ -561,6 +563,88 @@ RefreshTokenGrantService.create()
 ```
 
 **重要**: 元のOAuthTokenは削除され、新しいOAuthTokenに置き換わる
+
+---
+
+#### 1.4.4 Resource Owner Password Credentials Grant
+
+**用途**
+
+**ユーザー認証** - ユーザー名とパスワードで直接トークン取得（レガシーシステム移行用）
+
+**使用場面**:
+- レガシーシステムからの移行期間中
+- 信頼できるファーストパーティアプリケーション
+
+⚠️ **注意**: OAuth 2.1では非推奨。新規実装では使用を避けてください。
+
+### リクエスト例
+
+**実装**: [ResourceOwnerPasswordGrantService.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/service/ResourceOwnerPasswordGrantService.java)
+
+```bash
+curl -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -H "Authorization: Basic $(echo -n 'client-id:client-secret' | base64)" \
+  -d "grant_type=password&username=${USERNAME}&password=${PASSWORD}&scope=openid"
+```
+
+**レスポンス**:
+```json
+{
+  "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "refresh_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "scope": "openid"
+}
+```
+
+### 処理フロー
+
+```
+ResourceOwnerPasswordGrantService.create()
+    ↓
+┌─────────────────────────────────────────────┐
+│ 1. Validator                                │
+│    実装: ResourceOwnerPasswordGrantValidator │
+├─────────────────────────────────────────────┤
+│  - username必須チェック                       │
+│  - password必須チェック                       │
+└─────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────┐
+│ 2. ユーザー認証                              │
+├─────────────────────────────────────────────┤
+│  ResourceOwnerPasswordGrantDelegate         │
+│    .authenticate(username, password)        │
+│  - パスワード検証                             │
+│  - ユーザー取得                              │
+└─────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────┐
+│ 3. Verifier検証                              │
+│    実装: ResourceOwnerPasswordGrantVerifier  │
+├─────────────────────────────────────────────┤
+│  - ユーザー存在チェック                        │
+│  - ユーザーステータスチェック（Issue #900）     │
+│  - スコープ検証                               │
+└─────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────┐
+│ 4. トークン生成                               │
+├─────────────────────────────────────────────┤
+│  AccessTokenCreator.create()                │
+│  RefreshTokenCreator.create()               │
+│  IdTokenCreator.createIdToken() (OIDC時)    │
+└─────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────┐
+│ 5. OAuthToken保存                            │
+├─────────────────────────────────────────────┤
+│  oAuthTokenCommandRepository.register()     │
+└─────────────────────────────────────────────┘
+```
 
 ---
 
@@ -794,6 +878,52 @@ curl -X GET "http://localhost:8080/${TENANT_ID}/.well-known/openid-configuration
 
 ---
 
+### エラー4: `invalid_grant` - ユーザーが無効状態（Issue #900）
+
+**実際のエラー**:
+```json
+{
+  "error": "invalid_grant",
+  "error_description": "user is not active (id: user-12345, status: LOCKED)"
+}
+```
+
+**原因**: トークン発行時にユーザーが無効状態になっている
+
+**対象Grant Type**:
+- **Refresh Token Grant**: トークン更新時にユーザーステータスをチェック
+- **Password Grant**: ユーザー認証時にユーザーステータスをチェック
+
+**無効と判定されるステータス**:
+| ステータス | 説明 | 発生ケース |
+|-----------|------|-----------|
+| **LOCKED** | アカウントロック | 認証失敗回数超過 |
+| **DISABLED** | 無効化 | 管理者による無効化 |
+| **SUSPENDED** | 一時停止 | ポリシー違反等 |
+| **DEACTIVATED** | 非アクティブ化 | ユーザーによる退会申請 |
+| **DELETED_PENDING** | 削除待ち | 削除処理中 |
+| **DELETED** | 削除済み | 完全削除 |
+
+**実装詳細**:
+- Refresh Token Grant: [RefreshTokenVerifier.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/verifier/RefreshTokenVerifier.java) の `throwExceptionIfInactiveUser()`
+- Password Grant: [ResourceOwnerPasswordGrantVerifier.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/verifier/ResourceOwnerPasswordGrantVerifier.java) の `throwExceptionIfInactiveUser()`
+
+**セキュリティ考慮事項**:
+- **Authorization Code Grant では未チェック**: 認可時点でユーザー認証済みのため、トークン交換時の再チェックは不要（Keycloakと同じアプローチ）
+- **Refresh Token Grant でのチェック理由**: 長期間有効なRefresh Tokenの場合、その間にユーザーが無効化される可能性がある
+
+**解決策**:
+```bash
+# ユーザーステータス確認
+docker exec -it postgres psql -U idp_user -d idp_db -c \
+  "SELECT id, status FROM idp_user WHERE id='${USER_ID}';"
+
+# 有効なステータス（ACTIVE）でない場合、管理者によるステータス変更が必要
+# または新しいユーザーで認証をやり直す
+```
+
+---
+
 ## 次のステップ
 
 ✅ Token Flowの実装を理解した！
@@ -812,4 +942,4 @@ curl -X GET "http://localhost:8080/${TENANT_ID}/.well-known/openid-configuration
 ---
 
 **情報源**: [TokenEntryService.java](../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/application/enduser/TokenEntryService.java)
-**最終更新**: 2025-10-12
+**最終更新**: 2025-12-03

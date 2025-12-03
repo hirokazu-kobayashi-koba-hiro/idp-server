@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.token.handler.tokenintrospection;
 
 import java.util.Map;
+import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
@@ -25,6 +26,7 @@ import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
 import org.idp.server.core.openid.oauth.type.oauth.RefreshTokenEntity;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.core.openid.token.TokenUserFindingDelegate;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionRequest;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionRequestStatus;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
@@ -34,6 +36,7 @@ import org.idp.server.core.openid.token.tokenintrospection.TokenIntrospectionCon
 import org.idp.server.core.openid.token.tokenintrospection.TokenIntrospectionRequestContext;
 import org.idp.server.core.openid.token.tokenintrospection.TokenIntrospectionRequestParameters;
 import org.idp.server.core.openid.token.tokenintrospection.validator.TokenIntrospectionValidator;
+import org.idp.server.core.openid.token.tokenintrospection.verifier.TokenIntrospectionUserVerifier;
 import org.idp.server.core.openid.token.tokenintrospection.verifier.TokenIntrospectionVerifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -59,7 +62,8 @@ public class TokenIntrospectionHandler {
     this.clientAuthenticationHandler = new ClientAuthenticationHandler();
   }
 
-  public TokenIntrospectionResponse handle(TokenIntrospectionRequest request) {
+  public TokenIntrospectionResponse handle(
+      TokenIntrospectionRequest request, TokenUserFindingDelegate delegate) {
     TokenIntrospectionValidator validator = new TokenIntrospectionValidator(request.toParameters());
     validator.validate();
 
@@ -85,6 +89,12 @@ public class TokenIntrospectionHandler {
     if (!verifiedStatus.isOK()) {
       Map<String, Object> contents = TokenIntrospectionContentsCreator.createFailureContents();
       return new TokenIntrospectionResponse(verifiedStatus, oAuthToken, contents);
+    }
+
+    if (!oAuthToken.isClientCredentialsGrant()) {
+      User user = delegate.findUser(tenant, oAuthToken.subject());
+      TokenIntrospectionUserVerifier userVerifier = new TokenIntrospectionUserVerifier(user);
+      userVerifier.verify();
     }
 
     Map<String, Object> contents =

@@ -28,6 +28,7 @@ import org.idp.server.core.openid.token.tokenintrospection.exception.TokenCertif
 import org.idp.server.core.openid.token.tokenintrospection.exception.TokenInsufficientScopeException;
 import org.idp.server.core.openid.token.tokenintrospection.exception.TokenIntrospectionBadRequestException;
 import org.idp.server.core.openid.token.tokenintrospection.exception.TokenInvalidException;
+import org.idp.server.core.openid.token.tokenintrospection.exception.TokenUserInactiveException;
 import org.idp.server.platform.log.LoggerWrapper;
 
 public class TokenIntrospectionErrorHandler {
@@ -57,6 +58,18 @@ public class TokenIntrospectionErrorHandler {
       contents.put("status_code", 401);
 
       return new TokenIntrospectionResponse(INVALID_TOKEN, contents);
+    }
+
+    if (exception instanceof TokenUserInactiveException userInactiveException) {
+      logTokenIntrospectionError("inactive_user", "invalid_token", exception.getMessage());
+
+      Map<String, Object> contents = new HashMap<>();
+      contents.put("active", false);
+      contents.put("error", "invalid_token");
+      contents.put("error_description", userInactiveException.getMessage());
+      contents.put("status_code", 401);
+
+      return new TokenIntrospectionResponse(INACTIVE_USER, contents);
     }
 
     if (exception instanceof TokenCertificationBindingInvalidException bindingInvalidException) {

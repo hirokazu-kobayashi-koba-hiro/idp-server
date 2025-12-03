@@ -18,6 +18,7 @@ package org.idp.server.core.openid.token.service;
 
 import java.util.UUID;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
+import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
@@ -27,6 +28,7 @@ import org.idp.server.core.openid.token.*;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.openid.token.validator.RefreshTokenGrantValidator;
+import org.idp.server.core.openid.token.verifier.RefreshTokenUserVerifier;
 import org.idp.server.core.openid.token.verifier.RefreshTokenVerifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -61,8 +63,14 @@ public class RefreshTokenGrantService implements OAuthTokenCreationService, Refr
     ClientConfiguration clientConfiguration = context.clientConfiguration();
     OAuthToken oAuthToken = oAuthTokenQueryRepository.find(context.tenant(), refreshTokenEntity);
 
-    RefreshTokenVerifier verifier = new RefreshTokenVerifier(context, oAuthToken);
-    verifier.verify();
+    RefreshTokenVerifier refreshTokenVerifier = new RefreshTokenVerifier(context, oAuthToken);
+    refreshTokenVerifier.verify();
+
+    TokenUserFindingDelegate delegate = context.refreshTokenGrantDelegate();
+    User user = delegate.findUser(tenant, oAuthToken.subject());
+
+    RefreshTokenUserVerifier userVerifier = new RefreshTokenUserVerifier(user);
+    userVerifier.verify();
     AuthorizationGrant authorizationGrant = oAuthToken.authorizationGrant();
 
     AccessToken accessToken =
