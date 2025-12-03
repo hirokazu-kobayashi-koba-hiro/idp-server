@@ -16,6 +16,8 @@
 
 package org.idp.server.control_plane.management.statistics.validator;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
 import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.platform.json.JsonNodeWrapper;
@@ -35,7 +37,8 @@ public class TenantStatisticsRequestValidator {
   }
 
   public void validate() {
-    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(queries.toMap());
+    Map<String, Object> map = new HashMap<>(queries.toMap());
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(map);
     JsonSchemaValidationResult result = schemaValidator.validate(jsonNodeWrapper);
 
     throwExceptionIfInvalid(result);

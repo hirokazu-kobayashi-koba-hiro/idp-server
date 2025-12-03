@@ -46,12 +46,10 @@ public class TenantStatisticsFindService
 
     new TenantStatisticsRequestValidator(queries).validate();
 
-    List<TenantStatistics> statistics = repository.findByDateRange(tenant, queries);
+    List<TenantStatistics> statistics = repository.findByMonthRange(tenant, queries);
+    long totalCount = repository.countByMonthRange(tenant, queries.from(), queries.to());
 
     return TenantStatisticsResponse.success(
-        tenant.identifier().value(),
-        queries.fromAsLocalDate().toString(),
-        queries.toAsLocalDate().toString(),
-        statistics);
+        statistics, totalCount, queries.limit(), queries.offset());
   }
 }

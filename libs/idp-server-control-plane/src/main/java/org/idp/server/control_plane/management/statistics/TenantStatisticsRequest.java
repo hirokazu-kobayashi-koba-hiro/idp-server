@@ -16,17 +16,16 @@
 
 package org.idp.server.control_plane.management.statistics;
 
-import java.time.LocalDate;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.statistics.TenantStatisticsQueries;
 
 public record TenantStatisticsRequest(TenantIdentifier tenantId, TenantStatisticsQueries queries) {
 
-  public LocalDate from() {
-    return queries.fromAsLocalDate();
+  public String from() {
+    return queries.from();
   }
 
-  public LocalDate to() {
-    return queries.toAsLocalDate();
+  public String to() {
+    return queries.to();
   }
 }

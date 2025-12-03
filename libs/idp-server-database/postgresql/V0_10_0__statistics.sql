@@ -1,146 +1,171 @@
 -- V0_10_0__statistics.sql
 -- Issue #441: Tenant statistics data collection
--- Simple version with hardcoded metrics
 
 -- =====================================================
--- tenant_statistics
--- Daily statistics with hardcoded metrics in JSONB
+-- statistics_monthly
+-- Monthly statistics with daily breakdown in JSONB
 -- =====================================================
 
-CREATE TABLE tenant_statistics (
+CREATE TABLE statistics_monthly (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL,
-    stat_date DATE NOT NULL,
+    stat_month CHAR(7) NOT NULL,  -- YYYY-MM format (2025-01, 2025-02, ...)
 
-    -- Calculated statistics (hardcoded metrics in application)
-    metrics JSONB NOT NULL DEFAULT '{}'::JSONB,
-    /* Standard metrics (calculated by DailyStatisticsAggregationService):
-    {
-      "dau": 1250,                      // Daily Active Users
-      "login_success_count": 1560,      // Successful logins
-      "login_failure_count": 40,        // Failed logins
-      "login_success_rate": 97.5,       // Success rate percentage
-      "tokens_issued": 800,             // Total tokens issued
-      "new_users": 45,                  // New user registrations
-      "total_users": 12500              // Cumulative user count
-    }
-    */
+    -- Monthly summary (for quick access)
+    monthly_summary JSONB NOT NULL DEFAULT '{}'::JSONB,
+    /* {
+      "mau": 5000,
+      "total_logins": 45000,
+      "total_login_failures": 500,
+      "new_users": 200
+    } */
+
+    -- Daily breakdown (for charts/graphs)
+    daily_metrics JSONB NOT NULL DEFAULT '{}'::JSONB,
+    /* {
+      "01": {"dau": 100, "logins": 1500, "failures": 20},
+      "02": {"dau": 110, "logins": 1600, "failures": 15},
+      ...
+      "31": {"dau": 95, "logins": 1400, "failures": 18}
+    } */
 
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    -- One record per tenant per date
-    UNIQUE(tenant_id, stat_date)
+    UNIQUE(tenant_id, stat_month)
 );
 
 -- Index for time-series queries
-CREATE INDEX idx_stats_tenant_date ON tenant_statistics (tenant_id, stat_date DESC);
-
--- Index for date-only queries (cross-tenant analytics)
-CREATE INDEX idx_stats_date ON tenant_statistics (stat_date);
-
--- JSONB GIN index for flexible queries
-CREATE INDEX idx_stats_metrics_gin ON tenant_statistics USING GIN (metrics);
+CREATE INDEX idx_statistics_monthly_tenant_month ON statistics_monthly (tenant_id, stat_month DESC);
 
 -- Row Level Security (RLS)
-ALTER TABLE tenant_statistics ENABLE ROW LEVEL SECURITY;
+ALTER TABLE statistics_monthly ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY tenant_isolation_policy ON tenant_statistics
+CREATE POLICY tenant_isolation_policy ON statistics_monthly
     USING (tenant_id = current_setting('app.tenant_id')::uuid);
 
-ALTER TABLE tenant_statistics FORCE ROW LEVEL SECURITY;
+ALTER TABLE statistics_monthly FORCE ROW LEVEL SECURITY;
 
 -- Comments
-COMMENT ON TABLE tenant_statistics IS 'Daily tenant statistics with hardcoded metrics (DAU, login rate, tokens, etc.)';
-COMMENT ON COLUMN tenant_statistics.stat_date IS 'Date of statistics (daily granularity)';
-COMMENT ON COLUMN tenant_statistics.metrics IS 'Calculated statistics in JSONB format (hardcoded metrics in application code)';
-COMMENT ON COLUMN tenant_statistics.updated_at IS 'Timestamp of last update (for recalculation tracking)';
+COMMENT ON TABLE statistics_monthly IS 'Monthly tenant statistics with daily breakdown in JSONB';
+COMMENT ON COLUMN statistics_monthly.stat_month IS 'Year and month in YYYY-MM format (e.g., 2025-01)';
+COMMENT ON COLUMN statistics_monthly.monthly_summary IS 'Monthly aggregated metrics (MAU, total logins, etc.)';
+COMMENT ON COLUMN statistics_monthly.daily_metrics IS 'Daily breakdown keyed by day number (01-31)';
 
 -- =====================================================
--- Data retention function (optional)
+-- statistics_daily_users
+-- Track unique daily active users
 -- =====================================================
 
--- Delete statistics data older than specified days
-CREATE OR REPLACE FUNCTION cleanup_old_statistics(retention_days INTEGER)
-RETURNS INTEGER AS $$
-DECLARE
-    deleted_count INTEGER;
-BEGIN
-    DELETE FROM tenant_statistics
-    WHERE stat_date < CURRENT_DATE - (retention_days || ' days')::INTERVAL;
-
-    GET DIAGNOSTICS deleted_count = ROW_COUNT;
-    RETURN deleted_count;
-END;
-$$ LANGUAGE plpgsql;
-
-COMMENT ON FUNCTION cleanup_old_statistics(INTEGER) IS 'Delete statistics data older than specified days (e.g., SELECT cleanup_old_statistics(365))';
-
--- =====================================================
--- daily_active_users
--- Track unique daily active users separately
--- =====================================================
-
-CREATE TABLE daily_active_users (
+CREATE TABLE statistics_daily_users (
     tenant_id UUID NOT NULL,
     stat_date DATE NOT NULL,
     user_id UUID NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    -- Unique constraint to prevent duplicates
     PRIMARY KEY (tenant_id, stat_date, user_id)
 );
 
 -- Index for DAU count queries
-CREATE INDEX idx_dau_tenant_date ON daily_active_users (tenant_id, stat_date);
-
--- Index for user-specific queries
-CREATE INDEX idx_dau_user ON daily_active_users (user_id, stat_date);
+CREATE INDEX idx_statistics_daily_users_tenant_date ON statistics_daily_users (tenant_id, stat_date);
 
 -- Row Level Security (RLS)
-ALTER TABLE daily_active_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE statistics_daily_users ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY tenant_isolation_policy ON daily_active_users
+CREATE POLICY tenant_isolation_policy ON statistics_daily_users
     USING (tenant_id = current_setting('app.tenant_id')::uuid);
 
-ALTER TABLE daily_active_users FORCE ROW LEVEL SECURITY;
+ALTER TABLE statistics_daily_users FORCE ROW LEVEL SECURITY;
 
 -- Comments
-COMMENT ON TABLE daily_active_users IS 'Daily active users tracking (one row per unique user per day)';
-COMMENT ON COLUMN daily_active_users.stat_date IS 'Date of user activity';
-COMMENT ON COLUMN daily_active_users.user_id IS 'Active user identifier';
+COMMENT ON TABLE statistics_daily_users IS 'Daily active users tracking (one row per unique user per day)';
+COMMENT ON COLUMN statistics_daily_users.stat_date IS 'Date of user activity';
+COMMENT ON COLUMN statistics_daily_users.user_id IS 'Active user identifier';
 
 -- =====================================================
--- DAU calculation function
+-- statistics_monthly_users
+-- Track unique monthly active users
+-- =====================================================
+
+CREATE TABLE statistics_monthly_users (
+    tenant_id UUID NOT NULL,
+    stat_month CHAR(7) NOT NULL,  -- YYYY-MM format
+    user_id UUID NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (tenant_id, stat_month, user_id)
+);
+
+-- Index for MAU count queries
+CREATE INDEX idx_statistics_monthly_users_tenant_month ON statistics_monthly_users (tenant_id, stat_month);
+
+-- Row Level Security (RLS)
+ALTER TABLE statistics_monthly_users ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY tenant_isolation_policy ON statistics_monthly_users
+    USING (tenant_id = current_setting('app.tenant_id')::uuid);
+
+ALTER TABLE statistics_monthly_users FORCE ROW LEVEL SECURITY;
+
+-- Comments
+COMMENT ON TABLE statistics_monthly_users IS 'Monthly active users tracking (one row per unique user per calendar month)';
+COMMENT ON COLUMN statistics_monthly_users.stat_month IS 'Year and month in YYYY-MM format (e.g., 2025-01)';
+COMMENT ON COLUMN statistics_monthly_users.user_id IS 'Active user identifier';
+
+-- =====================================================
+-- Helper functions
 -- =====================================================
 
 -- Get DAU count for a specific tenant and date
 CREATE OR REPLACE FUNCTION get_dau_count(p_tenant_id UUID, p_stat_date DATE)
 RETURNS INTEGER AS $$
-DECLARE
-    dau_count INTEGER;
 BEGIN
-    SELECT COUNT(DISTINCT user_id) INTO dau_count
-    FROM daily_active_users
-    WHERE tenant_id = p_tenant_id AND stat_date = p_stat_date;
-
-    RETURN COALESCE(dau_count, 0);
+    RETURN (
+        SELECT COUNT(*)
+        FROM statistics_daily_users
+        WHERE tenant_id = p_tenant_id AND stat_date = p_stat_date
+    );
 END;
 $$ LANGUAGE plpgsql;
 
-COMMENT ON FUNCTION get_dau_count(UUID, DATE) IS 'Get DAU count for a specific tenant and date';
+-- Get MAU count for a specific tenant and month
+CREATE OR REPLACE FUNCTION get_mau_count(p_tenant_id UUID, p_stat_month CHAR(7))
+RETURNS INTEGER AS $$
+BEGIN
+    RETURN (
+        SELECT COUNT(*)
+        FROM statistics_monthly_users
+        WHERE tenant_id = p_tenant_id AND stat_month = p_stat_month
+    );
+END;
+$$ LANGUAGE plpgsql;
 
 -- =====================================================
--- Data retention for DAU
+-- Data retention functions
 -- =====================================================
 
-CREATE OR REPLACE FUNCTION cleanup_old_dau(retention_days INTEGER)
+CREATE OR REPLACE FUNCTION cleanup_old_statistics(retention_months INTEGER)
+RETURNS INTEGER AS $$
+DECLARE
+    deleted_count INTEGER;
+    cutoff_month CHAR(7);
+BEGIN
+    cutoff_month := TO_CHAR(CURRENT_DATE - (retention_months || ' months')::INTERVAL, 'YYYY-MM');
+
+    DELETE FROM statistics_monthly
+    WHERE stat_month < cutoff_month;
+
+    GET DIAGNOSTICS deleted_count = ROW_COUNT;
+    RETURN deleted_count;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION cleanup_old_daily_users(retention_days INTEGER)
 RETURNS INTEGER AS $$
 DECLARE
     deleted_count INTEGER;
 BEGIN
-    DELETE FROM daily_active_users
+    DELETE FROM statistics_daily_users
     WHERE stat_date < CURRENT_DATE - (retention_days || ' days')::INTERVAL;
 
     GET DIAGNOSTICS deleted_count = ROW_COUNT;
@@ -148,78 +173,22 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-COMMENT ON FUNCTION cleanup_old_dau(INTEGER) IS 'Delete DAU data older than specified days';
-
--- =====================================================
--- monthly_active_users
--- Track unique monthly active users (MAU)
--- =====================================================
-
-CREATE TABLE monthly_active_users (
-    tenant_id UUID NOT NULL,
-    stat_month DATE NOT NULL,
-    user_id UUID NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    -- Unique constraint to prevent duplicates
-    PRIMARY KEY (tenant_id, stat_month, user_id)
-);
-
--- Index for MAU count queries
-CREATE INDEX idx_mau_tenant_month ON monthly_active_users (tenant_id, stat_month);
-
--- Index for user-specific queries
-CREATE INDEX idx_mau_user ON monthly_active_users (user_id, stat_month);
-
--- Row Level Security (RLS)
-ALTER TABLE monthly_active_users ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY tenant_isolation_policy ON monthly_active_users
-    USING (tenant_id = current_setting('app.tenant_id')::uuid);
-
-ALTER TABLE monthly_active_users FORCE ROW LEVEL SECURITY;
-
--- Comments
-COMMENT ON TABLE monthly_active_users IS 'Monthly active users tracking (one row per unique user per calendar month)';
-COMMENT ON COLUMN monthly_active_users.stat_month IS 'First day of the calendar month (e.g., 2025-01-01)';
-COMMENT ON COLUMN monthly_active_users.user_id IS 'Active user identifier';
-
--- =====================================================
--- MAU calculation function
--- =====================================================
-
--- Get MAU count for a specific tenant and month
-CREATE OR REPLACE FUNCTION get_mau_count(p_tenant_id UUID, p_stat_month DATE)
-RETURNS INTEGER AS $$
-DECLARE
-    mau_count INTEGER;
-BEGIN
-    SELECT COUNT(DISTINCT user_id) INTO mau_count
-    FROM monthly_active_users
-    WHERE tenant_id = p_tenant_id AND stat_month = p_stat_month;
-
-    RETURN COALESCE(mau_count, 0);
-END;
-$$ LANGUAGE plpgsql;
-
-COMMENT ON FUNCTION get_mau_count(UUID, DATE) IS 'Get MAU count for a specific tenant and calendar month (stat_month should be first day of month)';
-
--- =====================================================
--- Data retention for MAU
--- =====================================================
-
-CREATE OR REPLACE FUNCTION cleanup_old_mau(retention_days INTEGER)
+CREATE OR REPLACE FUNCTION cleanup_old_monthly_users(retention_months INTEGER)
 RETURNS INTEGER AS $$
 DECLARE
     deleted_count INTEGER;
+    cutoff_month CHAR(7);
 BEGIN
-    DELETE FROM monthly_active_users
-    WHERE stat_month < DATE_TRUNC('month', CURRENT_DATE) - (retention_days || ' days')::INTERVAL;
+    cutoff_month := TO_CHAR(CURRENT_DATE - (retention_months || ' months')::INTERVAL, 'YYYY-MM');
+
+    DELETE FROM statistics_monthly_users
+    WHERE stat_month < cutoff_month;
 
     GET DIAGNOSTICS deleted_count = ROW_COUNT;
     RETURN deleted_count;
 END;
 $$ LANGUAGE plpgsql;
 
-COMMENT ON FUNCTION cleanup_old_mau(INTEGER) IS 'Delete MAU data older than specified days (based on stat_month)';
+COMMENT ON FUNCTION cleanup_old_statistics(INTEGER) IS 'Delete statistics older than specified months';
+COMMENT ON FUNCTION cleanup_old_daily_users(INTEGER) IS 'Delete daily user data older than specified days';
+COMMENT ON FUNCTION cleanup_old_monthly_users(INTEGER) IS 'Delete monthly user data older than specified months';

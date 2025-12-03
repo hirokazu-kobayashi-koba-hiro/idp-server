@@ -33,12 +33,12 @@ public class TenantStatisticsResponse {
   }
 
   public static TenantStatisticsResponse success(
-      String tenantId, String from, String to, List<TenantStatistics> dailyStatistics) {
+      List<TenantStatistics> monthlyStatistics, long totalCount, int limit, int offset) {
     Map<String, Object> contents = new HashMap<>();
-    contents.put("tenant_id", tenantId);
-    contents.put("period", Map.of("from", from, "to", to));
-    contents.put(
-        "daily_statistics", dailyStatistics.stream().map(TenantStatistics::toMap).toList());
+    contents.put("list", monthlyStatistics.stream().map(TenantStatistics::toMap).toList());
+    contents.put("total_count", totalCount);
+    contents.put("limit", limit);
+    contents.put("offset", offset);
     return new TenantStatisticsResponse(TenantStatisticsStatus.OK, contents);
   }
 

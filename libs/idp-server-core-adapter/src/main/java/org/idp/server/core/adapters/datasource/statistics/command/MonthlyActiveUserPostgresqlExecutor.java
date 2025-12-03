@@ -16,7 +16,6 @@
 
 package org.idp.server.core.adapters.datasource.statistics.command;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -27,26 +26,23 @@ import org.idp.server.platform.user.UserIdentifier;
 public class MonthlyActiveUserPostgresqlExecutor implements MonthlyActiveUserSqlExecutor {
 
   @Override
-  public void addActiveUser(TenantIdentifier tenantId, LocalDate statMonth, UserIdentifier userId) {
+  public void addActiveUser(TenantIdentifier tenantId, String statMonth, UserIdentifier userId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sql =
         """
-                INSERT INTO monthly_active_users (
+                INSERT INTO statistics_monthly_users (
                     tenant_id,
                     stat_month,
                     user_id,
-                    created_at,
-                    updated_at
+                    created_at
                 ) VALUES (
                     ?::uuid,
                     ?,
                     ?::uuid,
-                    NOW(),
                     NOW()
                 )
-                ON CONFLICT (tenant_id, stat_month, user_id)
-                DO UPDATE SET updated_at = NOW()
+                ON CONFLICT (tenant_id, stat_month, user_id) DO NOTHING
                 """;
 
     List<Object> params = new ArrayList<>();
@@ -59,22 +55,20 @@ public class MonthlyActiveUserPostgresqlExecutor implements MonthlyActiveUserSql
 
   @Override
   public boolean addActiveUserAndReturnIfNew(
-      TenantIdentifier tenantId, LocalDate statMonth, UserIdentifier userId) {
+      TenantIdentifier tenantId, String statMonth, UserIdentifier userId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sql =
         """
-                INSERT INTO monthly_active_users (
+                INSERT INTO statistics_monthly_users (
                     tenant_id,
                     stat_month,
                     user_id,
-                    created_at,
-                    updated_at
+                    created_at
                 ) VALUES (
                     ?::uuid,
                     ?,
                     ?::uuid,
-                    NOW(),
                     NOW()
                 )
                 ON CONFLICT (tenant_id, stat_month, user_id) DO NOTHING
@@ -90,12 +84,12 @@ public class MonthlyActiveUserPostgresqlExecutor implements MonthlyActiveUserSql
   }
 
   @Override
-  public void deleteByMonth(TenantIdentifier tenantId, LocalDate statMonth) {
+  public void deleteByMonth(TenantIdentifier tenantId, String statMonth) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sql =
         """
-                DELETE FROM monthly_active_users
+                DELETE FROM statistics_monthly_users
                 WHERE tenant_id = ?::uuid AND stat_month = ?
                 """;
 
@@ -107,17 +101,17 @@ public class MonthlyActiveUserPostgresqlExecutor implements MonthlyActiveUserSql
   }
 
   @Override
-  public void deleteOlderThan(LocalDate before) {
+  public void deleteOlderThan(String beforeMonth) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sql =
         """
-                DELETE FROM monthly_active_users
+                DELETE FROM statistics_monthly_users
                 WHERE stat_month < ?
                 """;
 
     List<Object> params = new ArrayList<>();
-    params.add(before);
+    params.add(beforeMonth);
 
     sqlExecutor.execute(sql, params);
   }
@@ -128,7 +122,7 @@ public class MonthlyActiveUserPostgresqlExecutor implements MonthlyActiveUserSql
 
     String sql =
         """
-                DELETE FROM monthly_active_users
+                DELETE FROM statistics_monthly_users
                 WHERE tenant_id = ?::uuid
                 """;
 
@@ -139,13 +133,13 @@ public class MonthlyActiveUserPostgresqlExecutor implements MonthlyActiveUserSql
   }
 
   @Override
-  public int getMauCount(TenantIdentifier tenantId, LocalDate statMonth) {
+  public int getMauCount(TenantIdentifier tenantId, String statMonth) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sql =
         """
-                SELECT COUNT(DISTINCT user_id) as mau_count
-                FROM monthly_active_users
+                SELECT COUNT(*) as mau_count
+                FROM statistics_monthly_users
                 WHERE tenant_id = ?::uuid AND stat_month = ?
                 """;
 

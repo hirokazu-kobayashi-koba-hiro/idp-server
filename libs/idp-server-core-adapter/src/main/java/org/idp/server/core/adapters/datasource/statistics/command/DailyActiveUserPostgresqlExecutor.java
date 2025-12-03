@@ -32,21 +32,18 @@ public class DailyActiveUserPostgresqlExecutor implements DailyActiveUserSqlExec
 
     String sql =
         """
-                INSERT INTO daily_active_users (
+                INSERT INTO statistics_daily_users (
                     tenant_id,
                     stat_date,
                     user_id,
-                    created_at,
-                    updated_at
+                    created_at
                 ) VALUES (
                     ?::uuid,
                     ?,
                     ?::uuid,
-                    NOW(),
                     NOW()
                 )
-                ON CONFLICT (tenant_id, stat_date, user_id)
-                DO UPDATE SET updated_at = NOW()
+                ON CONFLICT (tenant_id, stat_date, user_id) DO NOTHING
                 """;
 
     List<Object> params = new ArrayList<>();
@@ -64,17 +61,15 @@ public class DailyActiveUserPostgresqlExecutor implements DailyActiveUserSqlExec
 
     String sql =
         """
-                INSERT INTO daily_active_users (
+                INSERT INTO statistics_daily_users (
                     tenant_id,
                     stat_date,
                     user_id,
-                    created_at,
-                    updated_at
+                    created_at
                 ) VALUES (
                     ?::uuid,
                     ?,
                     ?::uuid,
-                    NOW(),
                     NOW()
                 )
                 ON CONFLICT (tenant_id, stat_date, user_id) DO NOTHING
@@ -95,7 +90,7 @@ public class DailyActiveUserPostgresqlExecutor implements DailyActiveUserSqlExec
 
     String sql =
         """
-                DELETE FROM daily_active_users
+                DELETE FROM statistics_daily_users
                 WHERE tenant_id = ?::uuid AND stat_date = ?
                 """;
 
@@ -112,7 +107,7 @@ public class DailyActiveUserPostgresqlExecutor implements DailyActiveUserSqlExec
 
     String sql =
         """
-                DELETE FROM daily_active_users
+                DELETE FROM statistics_daily_users
                 WHERE stat_date < ?
                 """;
 
@@ -128,7 +123,7 @@ public class DailyActiveUserPostgresqlExecutor implements DailyActiveUserSqlExec
 
     String sql =
         """
-                DELETE FROM daily_active_users
+                DELETE FROM statistics_daily_users
                 WHERE tenant_id = ?::uuid
                 """;
 
@@ -144,8 +139,8 @@ public class DailyActiveUserPostgresqlExecutor implements DailyActiveUserSqlExec
 
     String sql =
         """
-                SELECT COUNT(DISTINCT user_id) as dau_count
-                FROM daily_active_users
+                SELECT COUNT(*) as dau_count
+                FROM statistics_daily_users
                 WHERE tenant_id = ?::uuid AND stat_date = ?
                 """;
 

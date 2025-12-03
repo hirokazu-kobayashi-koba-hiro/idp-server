@@ -18,11 +18,13 @@ package org.idp.server.platform.security.handler;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
+import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.security.hook.*;
 import org.idp.server.platform.security.hook.SecurityEventHook;
 import org.idp.server.platform.security.hook.SecurityEventHooks;
@@ -38,6 +40,8 @@ import org.idp.server.platform.statistics.repository.TenantStatisticsCommandRepo
 import org.idp.server.platform.user.UserIdentifier;
 
 public class SecurityEventHandler {
+
+  private static final DateTimeFormatter MONTH_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM");
 
   SecurityEventCommandRepository securityEventCommandRepository;
   SecurityEventHookResultCommandRepository resultsCommandRepository;
@@ -120,7 +124,7 @@ public class SecurityEventHandler {
     }
 
     // Convert UTC timestamp to tenant's local date
-    String eventType = securityEvent.type().value();
+    String eventTypeValue = securityEvent.type().value();
     LocalDate eventDate =
         securityEvent
             .createdAt()
@@ -129,28 +133,33 @@ public class SecurityEventHandler {
             .withZoneSameInstant(tenant.timezone())
             .toLocalDate();
 
-    if (eventType.equals("login_success")) {
+    DefaultSecurityEventType eventType = DefaultSecurityEventType.findByValue(eventTypeValue);
+    String day = String.valueOf(eventDate.getDayOfMonth());
+
+    if (eventType != null && eventType.isActiveUserEvent()) {
       UserIdentifier userId =
           securityEvent.hasUser()
               ? new UserIdentifier(securityEvent.user().subAsUuid().toString())
               : null;
-      handleLoginSuccess(tenant, userId, eventDate);
+      handleActiveUserEvent(tenant, userId, eventDate, day);
     } else {
-      incrementMetric(tenant, eventDate, eventType);
+      incrementMetric(tenant, eventDate, eventTypeValue);
     }
   }
 
   /**
-   * Handle login success event
+   * Handle active user event
    *
-   * <p>Increments login_success_count and tracks unique daily/monthly active users (DAU/MAU)
+   * <p>Increments login_success_count and tracks unique daily/monthly active users (DAU/MAU). An
+   * active user event is defined by {@link DefaultSecurityEventType#isActiveUserEvent()}.
    */
-  private void handleLoginSuccess(Tenant tenant, UserIdentifier userId, LocalDate eventDate) {
+  private void handleActiveUserEvent(
+      Tenant tenant, UserIdentifier userId, LocalDate eventDate, String day) {
     if (userId == null) {
       return;
     }
 
-    // Increment login success count
+    // Increment login success count (both daily and monthly)
     incrementMetric(tenant, eventDate, "login_success_count");
 
     // Track DAU - add user to daily active users table and increment DAU count if new
@@ -164,7 +173,9 @@ public class SecurityEventHandler {
           tenant.identifierValue(),
           eventDate,
           userId.value());
-      incrementMetric(tenant, eventDate, "dau");
+      // DAU is daily-only metric, not aggregated to monthly_summary
+      String statMonth = eventDate.format(MONTH_FORMATTER);
+      statisticsRepository.incrementDailyMetric(tenant.identifier(), statMonth, day, "dau", 1);
     } else {
       log.debug(
           "User already active today: tenant={}, date={}, user={}",
@@ -174,7 +185,7 @@ public class SecurityEventHandler {
     }
 
     // Track MAU - add user to monthly active users table and increment MAU count if new
-    LocalDate statMonth = eventDate.withDayOfMonth(1); // First day of calendar month
+    String statMonth = eventDate.format(MONTH_FORMATTER);
     boolean isNewMonthlyUser =
         monthlyActiveUserRepository.addActiveUserAndReturnIfNew(
             tenant.identifier(), statMonth, userId);
@@ -185,7 +196,8 @@ public class SecurityEventHandler {
           tenant.identifierValue(),
           statMonth,
           userId.value());
-      incrementMetric(tenant, eventDate, "mau");
+      // Increment monthly_summary.mau and set cumulative MAU in daily_metrics[day].mau
+      statisticsRepository.incrementMauWithDailyCumulative(tenant.identifier(), statMonth, day, 1);
     } else {
       log.debug(
           "User already active this month: tenant={}, month={}, user={}",
@@ -196,18 +208,31 @@ public class SecurityEventHandler {
   }
 
   /**
-   * Increment a numeric metric by 1
+   * Increment a metric in both daily_metrics and monthly_summary
+   *
+   * <p>Updates both the daily_metrics JSONB field (for daily breakdown) and monthly_summary JSONB
+   * field (for monthly totals) within the monthly statistics record.
    *
    * @param tenant the tenant
    * @param date statistics date
    * @param metricName metric name to increment
    */
   private void incrementMetric(Tenant tenant, LocalDate date, String metricName) {
+    String statMonth = date.format(MONTH_FORMATTER);
+    String day = String.valueOf(date.getDayOfMonth());
+
     log.debug(
-        "Incrementing metric: tenant={}, date={}, metric={}",
+        "Incrementing metric: tenant={}, month={}, day={}, metric={}",
         tenant.identifierValue(),
-        date,
+        statMonth,
+        day,
         metricName);
-    statisticsRepository.incrementMetric(tenant.identifier(), date, metricName, 1);
+
+    // Update daily breakdown
+    statisticsRepository.incrementDailyMetric(tenant.identifier(), statMonth, day, metricName, 1);
+
+    // Update monthly total
+    statisticsRepository.incrementMonthlySummaryMetric(
+        tenant.identifier(), statMonth, metricName, 1);
   }
 }
