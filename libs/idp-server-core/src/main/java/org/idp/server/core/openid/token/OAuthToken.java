@@ -137,11 +137,11 @@ public class OAuthToken {
   }
 
   public boolean hasClientCertification() {
-    return accessToken.hasClientCertification();
+    return accessToken != null && accessToken.hasClientCertification();
   }
 
   public boolean hasCustomClaims() {
-    return accessToken.hasCustomClaims();
+    return accessToken != null && accessToken.hasCustomClaims();
   }
 
   public CNonce cNonce() {
@@ -181,11 +181,11 @@ public class OAuthToken {
   }
 
   public boolean isClientCredentialsGrant() {
-    return accessToken.isClientCredentialsGrant();
+    return accessToken != null && accessToken.isClientCredentialsGrant();
   }
 
   public boolean isOneshotToken() {
-    return accessToken.isOneshotToken();
+    return accessToken != null && accessToken.isOneshotToken();
   }
 
   public ExpiresAt expiresAt() {
@@ -201,6 +201,6 @@ public class OAuthToken {
   }
 
   public boolean isGrantedScopes(Scopes scopes) {
-    return accessToken.isGrantedScopes(scopes);
+    return accessToken != null && accessToken.isGrantedScopes(scopes);
   }
 }
