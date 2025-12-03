@@ -31,6 +31,7 @@ import org.idp.server.core.openid.federation.io.FederationCallbackRequest;
 import org.idp.server.core.openid.federation.io.FederationRequestResponse;
 import org.idp.server.core.openid.federation.sso.SsoProvider;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.UserRegistrator;
 import org.idp.server.core.openid.identity.event.UserLifecycleEvent;
 import org.idp.server.core.openid.identity.event.UserLifecycleEventPublisher;
@@ -53,7 +54,7 @@ import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
 @Transaction
-public class OAuthFlowEntryService implements OAuthFlowApi {
+public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
 
   OAuthProtocols oAuthProtocols;
   OAuthSessionDelegate oAuthSessionDelegate;
@@ -156,7 +157,13 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
 
-    return oAuthProtocol.getViewData(oAuthViewDataRequest);
+    return oAuthProtocol.getViewData(oAuthViewDataRequest, this);
+  }
+
+  @Override
+  public boolean userExists(Tenant tenant, UserIdentifier userIdentifier) {
+    User user = userQueryRepository.findById(tenant, userIdentifier);
+    return user.exists();
   }
 
   @Override
@@ -172,9 +179,6 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
     AuthorizationRequest authorizationRequest =
         oAuthProtocol.get(tenant, authorizationRequestIdentifier);
-
-    OAuthSession oAuthSession =
-        oAuthSessionDelegate.findOrInitialize(authorizationRequest.sessionKey());
 
     AuthenticationInteractor authenticationInteractor = authenticationInteractors.get(type);
     AuthorizationIdentifier authorizationIdentifier =
@@ -195,8 +199,9 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     authenticationTransactionCommandRepository.update(tenant, updatedTransaction);
 
     if (result.isSuccess()) {
-      OAuthSession updated =
-          oAuthSession.didAuthentication(result.user(), updatedTransaction.authentication());
+      OAuthSession oAuthSession =
+          oAuthSessionDelegate.findOrInitialize(authorizationRequest.sessionKey());
+      OAuthSession updated = oAuthSession.didAuthentication(result.user(), new Authentication());
       oAuthSessionDelegate.updateSession(updated);
     }
 

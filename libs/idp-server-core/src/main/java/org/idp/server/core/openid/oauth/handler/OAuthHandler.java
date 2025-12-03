@@ -19,6 +19,7 @@ package org.idp.server.core.openid.oauth.handler;
 import org.idp.server.core.openid.oauth.OAuthSession;
 import org.idp.server.core.openid.oauth.OAuthSessionDelegate;
 import org.idp.server.core.openid.oauth.OAuthSessionKey;
+import org.idp.server.core.openid.oauth.OAuthUserDelegate;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
@@ -51,7 +52,9 @@ public class OAuthHandler {
   }
 
   public OAuthViewDataResponse handleViewData(
-      OAuthViewDataRequest request, OAuthSessionDelegate oAuthSessionDelegate) {
+      OAuthViewDataRequest request,
+      OAuthSessionDelegate oAuthSessionDelegate,
+      OAuthUserDelegate oAuthUserDelegate) {
     Tenant tenant = request.tenant();
     AuthorizationRequestIdentifier authorizationRequestIdentifier = request.toIdentifier();
 
@@ -64,6 +67,13 @@ public class OAuthHandler {
         clientConfigurationQueryRepository.get(tenant, requestedClientId);
 
     OAuthSession session = oAuthSessionDelegate.find(authorizationRequest.sessionKey());
+
+    if (session != null && session.hasUser()) {
+      boolean userExists = oAuthUserDelegate.userExists(tenant, session.user().userIdentifier());
+      if (!userExists) {
+        session = null;
+      }
+    }
 
     OAuthViewDataCreator creator =
         new OAuthViewDataCreator(

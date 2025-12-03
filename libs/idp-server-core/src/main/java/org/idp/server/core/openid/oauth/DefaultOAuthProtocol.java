@@ -134,9 +134,10 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
     }
   }
 
-  public OAuthViewDataResponse getViewData(OAuthViewDataRequest request) {
+  public OAuthViewDataResponse getViewData(
+      OAuthViewDataRequest request, OAuthUserDelegate oAuthUserDelegate) {
 
-    return oAuthHandler.handleViewData(request, oAuthSessionDelegate);
+    return oAuthHandler.handleViewData(request, oAuthSessionDelegate, oAuthUserDelegate);
   }
 
   public AuthorizationRequest get(Tenant tenant, AuthorizationRequestIdentifier identifier) {
