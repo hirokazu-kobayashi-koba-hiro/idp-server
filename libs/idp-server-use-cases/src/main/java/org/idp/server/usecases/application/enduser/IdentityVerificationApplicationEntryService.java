@@ -138,6 +138,9 @@ public class IdentityVerificationApplicationEntryService
           DefaultSecurityEventType.identity_verification_application_failure,
           applyingResult.errorResponse().response(),
           requestAttributes);
+      SecurityEventType typeSpecificFailureEvent =
+          new SecurityEventType(type.name() + "_application_failure");
+      eventPublisher.publish(tenant, oAuthToken, typeSpecificFailureEvent, requestAttributes);
       return applyingResult.errorResponse();
     }
 
@@ -156,6 +159,9 @@ public class IdentityVerificationApplicationEntryService
         oAuthToken,
         DefaultSecurityEventType.identity_verification_application_apply,
         requestAttributes);
+    SecurityEventType typeSpecificApplyEvent =
+        new SecurityEventType(type.name() + "_application_success");
+    eventPublisher.publish(tenant, oAuthToken, typeSpecificApplyEvent, requestAttributes);
 
     IdentityVerificationContext updatedContext =
         new IdentityVerificationContextBuilder()
@@ -289,6 +295,9 @@ public class IdentityVerificationApplicationEntryService
           oAuthToken,
           DefaultSecurityEventType.identity_verification_application_approved,
           requestAttributes);
+      SecurityEventType typeSpecificApprovedEvent =
+          new SecurityEventType(type.name() + "_approved");
+      eventPublisher.publish(tenant, oAuthToken, typeSpecificApprovedEvent, requestAttributes);
     }
 
     if (updated.isRejected()) {
@@ -297,6 +306,9 @@ public class IdentityVerificationApplicationEntryService
           oAuthToken,
           DefaultSecurityEventType.identity_verification_application_rejected,
           requestAttributes);
+      SecurityEventType typeSpecificRejectedEvent =
+          new SecurityEventType(type.name() + "_rejected");
+      eventPublisher.publish(tenant, oAuthToken, typeSpecificRejectedEvent, requestAttributes);
     }
 
     IdentityVerificationContext updatedContext =

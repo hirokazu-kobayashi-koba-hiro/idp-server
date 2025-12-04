@@ -63,12 +63,12 @@ public class UserEventPublisher implements SecurityEventUserCreatable {
       Tenant tenant,
       RequestedClientId requestedClientId,
       User user,
-      DefaultSecurityEventType type,
+      SecurityEventType type,
       RequestAttributes requestAttributes) {
     HashMap<String, Object> detailsMap = new HashMap<>();
     SecurityEventBuilder builder = new SecurityEventBuilder();
-    builder.add(type.toEventType());
-    builder.add(type.toEventDescription());
+    builder.add(type);
+    builder.add(new SecurityEventDescription(type.value()));
 
     SecurityEventTenant securityEventTenant =
         new SecurityEventTenant(
