@@ -86,24 +86,24 @@ WITH daily_events AS (
     SELECT
         tenant_id,
         TO_CHAR(created_at, 'YYYY-MM') as stat_month,
-        EXTRACT(DAY FROM created_at)::INT as day_num,
+        TO_CHAR(created_at, 'YYYY-MM-DD') as stat_date,
         type as event_type,
         COUNT(*) as event_count
     FROM security_event
     WHERE created_at >= :'start_date'::DATE
       AND created_at < :'end_date'::DATE + INTERVAL '1 day'
-    GROUP BY tenant_id, TO_CHAR(created_at, 'YYYY-MM'), EXTRACT(DAY FROM created_at), type
+    GROUP BY tenant_id, TO_CHAR(created_at, 'YYYY-MM'), TO_CHAR(created_at, 'YYYY-MM-DD'), type
 ),
 daily_dau AS (
     SELECT
         tenant_id,
         TO_CHAR(stat_date, 'YYYY-MM') as stat_month,
-        EXTRACT(DAY FROM stat_date)::INT as day_num,
+        TO_CHAR(stat_date, 'YYYY-MM-DD') as stat_date,
         COUNT(DISTINCT user_id) as dau
     FROM statistics_daily_users
     WHERE stat_date >= :'start_date'::DATE
       AND stat_date < :'end_date'::DATE + INTERVAL '1 day'
-    GROUP BY tenant_id, TO_CHAR(stat_date, 'YYYY-MM'), EXTRACT(DAY FROM stat_date)
+    GROUP BY tenant_id, TO_CHAR(stat_date, 'YYYY-MM'), TO_CHAR(stat_date, 'YYYY-MM-DD')
 ),
 monthly_mau AS (
     SELECT
@@ -118,7 +118,7 @@ monthly_mau AS (
 SELECT
     de.tenant_id,
     de.stat_month,
-    de.day_num,
+    de.stat_date,
     de.event_type,
     de.event_count,
     COALESCE(dd.dau, 0) as dau,
@@ -126,7 +126,7 @@ SELECT
 FROM daily_events de
 LEFT JOIN daily_dau dd ON de.tenant_id = dd.tenant_id
     AND de.stat_month = dd.stat_month
-    AND de.day_num = dd.day_num
+    AND de.stat_date = dd.stat_date
 LEFT JOIN monthly_mau mm ON de.tenant_id = mm.tenant_id
     AND de.stat_month = mm.stat_month;
 
@@ -136,17 +136,17 @@ DROP TABLE IF EXISTS temp_cumulative_mau;
 
 CREATE TEMP TABLE temp_cumulative_mau AS
 WITH all_days AS (
-    -- Get all unique (tenant, month, day) combinations from events
-    SELECT DISTINCT tenant_id, stat_month, day_num
+    -- Get all unique (tenant, month, date) combinations from events
+    SELECT DISTINCT tenant_id, stat_month, stat_date
     FROM temp_event_aggregation
 ),
 first_activity AS (
-    -- Get the first day each user was active in each month
+    -- Get the first date each user was active in each month
     SELECT
         tenant_id,
         stat_month,
         user_id,
-        MIN(EXTRACT(DAY FROM created_at)::INT) as first_day
+        MIN(TO_CHAR(created_at, 'YYYY-MM-DD')) as first_date
     FROM statistics_monthly_users
     WHERE stat_month >= TO_CHAR(:'start_date'::DATE, 'YYYY-MM')
       AND stat_month <= TO_CHAR(:'end_date'::DATE, 'YYYY-MM')
@@ -155,14 +155,14 @@ first_activity AS (
 SELECT
     ad.tenant_id,
     ad.stat_month,
-    ad.day_num,
+    ad.stat_date,
     COUNT(fa.user_id) as cumulative_mau
 FROM all_days ad
 LEFT JOIN first_activity fa
     ON ad.tenant_id = fa.tenant_id
     AND ad.stat_month = fa.stat_month
-    AND fa.first_day <= ad.day_num
-GROUP BY ad.tenant_id, ad.stat_month, ad.day_num;
+    AND fa.first_date <= ad.stat_date
+GROUP BY ad.tenant_id, ad.stat_month, ad.stat_date;
 
 \echo 'Step 3 complete.'
 
@@ -188,10 +188,10 @@ SELECT
     ) as monthly_summary,
     -- daily_metrics: per-day breakdown
     (
-        SELECT jsonb_object_agg(days.day_num::TEXT, days.day_data)
+        SELECT jsonb_object_agg(days.stat_date, days.day_data)
         FROM (
             SELECT
-                tea.day_num,
+                tea.stat_date,
                 (
                     jsonb_build_object('dau', MAX(tea.dau), 'mau', COALESCE(MAX(cm.cumulative_mau), 0)) ||
                     jsonb_object_agg(tea.event_type, tea.event_count)
@@ -200,9 +200,9 @@ SELECT
             LEFT JOIN temp_cumulative_mau cm
                 ON tea.tenant_id = cm.tenant_id
                 AND tea.stat_month = cm.stat_month
-                AND tea.day_num = cm.day_num
+                AND tea.stat_date = cm.stat_date
             WHERE tea.tenant_id = t.tenant_id AND tea.stat_month = t.stat_month
-            GROUP BY tea.day_num
+            GROUP BY tea.stat_date
         ) days
     ) as daily_metrics,
     NOW() as created_at,

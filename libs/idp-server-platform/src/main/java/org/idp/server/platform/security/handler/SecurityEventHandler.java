@@ -42,6 +42,7 @@ import org.idp.server.platform.user.UserIdentifier;
 public class SecurityEventHandler {
 
   private static final DateTimeFormatter MONTH_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM");
+  private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
 
   SecurityEventCommandRepository securityEventCommandRepository;
   SecurityEventHookResultCommandRepository resultsCommandRepository;
@@ -134,7 +135,7 @@ public class SecurityEventHandler {
             .toLocalDate();
 
     DefaultSecurityEventType eventType = DefaultSecurityEventType.findByValue(eventTypeValue);
-    String day = String.valueOf(eventDate.getDayOfMonth());
+    String day = eventDate.format(DATE_FORMATTER);
 
     if (eventType != null && eventType.isActiveUserEvent()) {
       UserIdentifier userId =
@@ -219,7 +220,7 @@ public class SecurityEventHandler {
    */
   private void incrementMetric(Tenant tenant, LocalDate date, String metricName) {
     String statMonth = date.format(MONTH_FORMATTER);
-    String day = String.valueOf(date.getDayOfMonth());
+    String day = date.format(DATE_FORMATTER);
 
     log.debug(
         "Incrementing metric: tenant={}, month={}, day={}, metric={}",
