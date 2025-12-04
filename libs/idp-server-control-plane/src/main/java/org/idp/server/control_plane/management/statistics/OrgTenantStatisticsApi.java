@@ -26,6 +26,7 @@ import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.statistics.TenantStatisticsQueries;
+import org.idp.server.platform.statistics.TenantStatisticsReportQuery;
 import org.idp.server.platform.type.RequestAttributes;
 
 public interface OrgTenantStatisticsApi {
@@ -33,6 +34,7 @@ public interface OrgTenantStatisticsApi {
   default AdminPermissions getRequiredPermissions(String method) {
     Map<String, AdminPermissions> map = new HashMap<>();
     map.put("findByDateRange", new AdminPermissions(Set.of(DefaultAdminPermission.TENANT_READ)));
+    map.put("findYearlyReport", new AdminPermissions(Set.of(DefaultAdminPermission.TENANT_READ)));
     AdminPermissions adminPermissions = map.get(method);
     if (adminPermissions == null) {
       throw new UnSupportedException("Method " + method + " not supported");
@@ -45,5 +47,12 @@ public interface OrgTenantStatisticsApi {
       OrganizationIdentifier organizationIdentifier,
       TenantIdentifier tenantIdentifier,
       TenantStatisticsQueries queries,
+      RequestAttributes requestAttributes);
+
+  TenantStatisticsResponse findYearlyReport(
+      OrganizationAuthenticationContext authenticationContext,
+      OrganizationIdentifier organizationIdentifier,
+      TenantIdentifier tenantIdentifier,
+      TenantStatisticsReportQuery query,
       RequestAttributes requestAttributes);
 }

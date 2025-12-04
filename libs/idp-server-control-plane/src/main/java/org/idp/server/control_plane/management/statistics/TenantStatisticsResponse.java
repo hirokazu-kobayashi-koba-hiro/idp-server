@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.statistics.TenantStatistics;
+import org.idp.server.platform.statistics.TenantStatisticsReport;
 
 public class TenantStatisticsResponse {
 
@@ -40,6 +41,10 @@ public class TenantStatisticsResponse {
     contents.put("limit", limit);
     contents.put("offset", offset);
     return new TenantStatisticsResponse(TenantStatisticsStatus.OK, contents);
+  }
+
+  public static TenantStatisticsResponse successReport(TenantStatisticsReport report) {
+    return new TenantStatisticsResponse(TenantStatisticsStatus.OK, report.toMap());
   }
 
   public static TenantStatisticsResponse error(

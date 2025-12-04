@@ -159,6 +159,7 @@ import org.idp.server.platform.statistics.repository.MonthlyActiveUserCommandRep
 import org.idp.server.platform.statistics.repository.TenantStatisticsCommandRepository;
 import org.idp.server.platform.statistics.repository.TenantStatisticsQueryRepository;
 import org.idp.server.platform.statistics.repository.TenantYearlyStatisticsCommandRepository;
+import org.idp.server.platform.statistics.repository.TenantYearlyStatisticsQueryRepository;
 import org.idp.server.platform.statistics.repository.YearlyActiveUserCommandRepository;
 import org.idp.server.security.event.hook.ssf.SharedSignalsFrameworkMetaDataApi;
 import org.idp.server.usecases.application.enduser.*;
@@ -396,6 +397,8 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(TenantStatisticsCommandRepository.class);
     TenantStatisticsQueryRepository tenantStatisticsQueryRepository =
         applicationComponentContainer.resolve(TenantStatisticsQueryRepository.class);
+    TenantYearlyStatisticsQueryRepository tenantYearlyStatisticsQueryRepository =
+        applicationComponentContainer.resolve(TenantYearlyStatisticsQueryRepository.class);
     DailyActiveUserCommandRepository dailyActiveUserCommandRepository =
         applicationComponentContainer.resolve(DailyActiveUserCommandRepository.class);
     MonthlyActiveUserCommandRepository monthlyActiveUserCommandRepository =
@@ -772,7 +775,10 @@ public class IdpServerApplication {
     this.tenantStatisticsApi =
         ManagementTypeEntryServiceProxy.createProxy(
             new TenantStatisticsEntryService(
-                tenantStatisticsQueryRepository, tenantQueryRepository, auditLogPublisher),
+                tenantStatisticsQueryRepository,
+                tenantYearlyStatisticsQueryRepository,
+                tenantQueryRepository,
+                auditLogPublisher),
             TenantStatisticsApi.class,
             databaseTypeProvider);
 
@@ -965,6 +971,7 @@ public class IdpServerApplication {
         ManagementTypeEntryServiceProxy.createProxy(
             new OrgTenantStatisticsEntryService(
                 tenantStatisticsQueryRepository,
+                tenantYearlyStatisticsQueryRepository,
                 organizationRepository,
                 tenantQueryRepository,
                 auditLogPublisher),

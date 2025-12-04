@@ -44,6 +44,9 @@
         "max_devices": 100,
         "required_identity_verification": true
       }
+    },
+    "attributes": {
+      "timezone": "Asia/Tokyo"
     }
   },
   "authorization_server": {

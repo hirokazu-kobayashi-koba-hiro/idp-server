@@ -34,6 +34,7 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.statistics.TenantStatisticsQueries;
+import org.idp.server.platform.statistics.TenantStatisticsReportQuery;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
@@ -55,6 +56,7 @@ import org.idp.server.platform.type.RequestAttributes;
 public class OrgTenantStatisticsManagementHandler {
 
   private final TenantStatisticsManagementService<TenantStatisticsQueries> findService;
+  private final TenantStatisticsManagementService<TenantStatisticsReportQuery> reportFindService;
   private final OrgTenantStatisticsApi managementApi;
   private final OrganizationRepository organizationRepository;
   private final TenantQueryRepository tenantQueryRepository;
@@ -63,10 +65,12 @@ public class OrgTenantStatisticsManagementHandler {
 
   public OrgTenantStatisticsManagementHandler(
       TenantStatisticsManagementService<TenantStatisticsQueries> findService,
+      TenantStatisticsManagementService<TenantStatisticsReportQuery> reportFindService,
       OrgTenantStatisticsApi managementApi,
       OrganizationRepository organizationRepository,
       TenantQueryRepository tenantQueryRepository) {
     this.findService = findService;
+    this.reportFindService = reportFindService;
     this.managementApi = managementApi;
     this.organizationRepository = organizationRepository;
     this.tenantQueryRepository = tenantQueryRepository;
@@ -130,6 +134,67 @@ public class OrgTenantStatisticsManagementHandler {
               organizationIdentifier,
               tenantIdentifier,
               queries,
+              operator,
+              oAuthToken,
+              requestAttributes);
+      return TenantStatisticsManagementResult.error(context, e);
+    }
+  }
+
+  public TenantStatisticsManagementResult handleReport(
+      OrganizationAuthenticationContext authenticationContext,
+      OrganizationIdentifier organizationIdentifier,
+      TenantIdentifier tenantIdentifier,
+      TenantStatisticsReportQuery query,
+      RequestAttributes requestAttributes) {
+
+    User operator = authenticationContext.operator();
+    OAuthToken oAuthToken = authenticationContext.oAuthToken();
+
+    try {
+
+      Organization organization = organizationRepository.get(organizationIdentifier);
+      organizationAccessVerifier.verify(
+          organization,
+          tenantIdentifier,
+          operator,
+          managementApi.getRequiredPermissions("findYearlyReport"));
+
+      Tenant targetTenant = tenantQueryRepository.get(tenantIdentifier);
+
+      TenantStatisticsResponse response =
+          reportFindService.execute(targetTenant, operator, oAuthToken, query, requestAttributes);
+
+      OrgTenantStatisticsContext context =
+          new OrgTenantStatisticsContext(
+              organizationIdentifier,
+              tenantIdentifier,
+              null,
+              operator,
+              oAuthToken,
+              requestAttributes);
+      return TenantStatisticsManagementResult.success(context, response);
+    } catch (NotFoundException e) {
+
+      log.warn(e.getMessage());
+      ResourceNotFoundException notFound = new ResourceNotFoundException(e.getMessage());
+      OrgTenantStatisticsContext context =
+          new OrgTenantStatisticsContext(
+              organizationIdentifier,
+              tenantIdentifier,
+              null,
+              operator,
+              oAuthToken,
+              requestAttributes);
+      return TenantStatisticsManagementResult.error(context, notFound);
+    } catch (ManagementApiException e) {
+
+      log.warn(e.getMessage());
+      OrgTenantStatisticsContext context =
+          new OrgTenantStatisticsContext(
+              organizationIdentifier,
+              tenantIdentifier,
+              null,
               operator,
               oAuthToken,
               requestAttributes);

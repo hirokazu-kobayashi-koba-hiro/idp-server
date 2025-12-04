@@ -26,6 +26,8 @@ import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.statistics.TenantStatistics;
 import org.idp.server.platform.statistics.TenantStatisticsIdentifier;
+import org.idp.server.platform.statistics.TenantYearlyStatistics;
+import org.idp.server.platform.statistics.TenantYearlyStatisticsIdentifier;
 
 public class ModelConvertor {
 
@@ -64,6 +66,38 @@ public class ModelConvertor {
         .statMonth(statMonth)
         .monthlySummary(monthlySummaryMap)
         .dailyMetrics(dailyMetricsMap)
+        .createdAt(createdAtInstant)
+        .updatedAt(updatedAtInstant)
+        .build();
+  }
+
+  @SuppressWarnings("unchecked")
+  static TenantYearlyStatistics convertYearly(Map<String, String> values) {
+    JsonConverter jsonConverter = JsonConverter.defaultInstance();
+
+    String id = values.get("id");
+    String tenantId = values.get("tenant_id");
+    String statYear = values.get("stat_year");
+    String yearlySummary = values.get("yearly_summary");
+    String createdAt = values.get("created_at");
+    String updatedAt = values.get("updated_at");
+
+    Map<String, Object> yearlySummaryMap =
+        yearlySummary != null && !yearlySummary.isEmpty()
+            ? jsonConverter.read(yearlySummary, Map.class)
+            : new HashMap<>();
+
+    LocalDateTime createdAtLocalDateTime = LocalDateTimeParser.parse(createdAt);
+    Instant createdAtInstant = createdAtLocalDateTime.atZone(ZoneOffset.UTC).toInstant();
+
+    LocalDateTime updatedAtLocalDateTime = LocalDateTimeParser.parse(updatedAt);
+    Instant updatedAtInstant = updatedAtLocalDateTime.atZone(ZoneOffset.UTC).toInstant();
+
+    return TenantYearlyStatistics.builder()
+        .id(new TenantYearlyStatisticsIdentifier(id))
+        .tenantId(new TenantIdentifier(tenantId))
+        .statYear(statYear)
+        .yearlySummary(yearlySummaryMap)
         .createdAt(createdAtInstant)
         .updatedAt(updatedAtInstant)
         .build();

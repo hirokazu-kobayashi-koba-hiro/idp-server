@@ -100,7 +100,9 @@ public class OrgTenantStatisticsContext implements AuditableContext {
     Map<String, Object> map = new HashMap<>();
     map.put("organization_id", organizationIdentifier.value());
     map.put("tenant_id", tenantIdentifier.value());
-    map.putAll(queries.toMap());
+    if (queries != null) {
+      map.putAll(queries.toMap());
+    }
     return map;
   }
 
