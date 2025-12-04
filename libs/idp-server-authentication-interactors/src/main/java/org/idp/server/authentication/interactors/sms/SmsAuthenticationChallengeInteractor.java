@@ -110,8 +110,10 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
 
       AuthenticationExecutor executor = executors.get(executionConfig.function());
 
+      Map<String, Object> executionRequestValues = new HashMap<>(request.toMap());
+      executionRequestValues.put("phone_number", phoneNumber);
       AuthenticationExecutionRequest executionRequest =
-          new AuthenticationExecutionRequest(request.toMap());
+          new AuthenticationExecutionRequest(executionRequestValues);
       AuthenticationExecutionResult executionResult =
           executor.execute(
               tenant,

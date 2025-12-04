@@ -111,8 +111,10 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
 
       AuthenticationExecutor executor = authenticationExecutors.get(execution.function());
 
+      Map<String, Object> executionRequestValues = new HashMap<>(request.toMap());
+      executionRequestValues.put("email", email);
       AuthenticationExecutionRequest executionRequest =
-          new AuthenticationExecutionRequest(request.toMap());
+          new AuthenticationExecutionRequest(executionRequestValues);
       AuthenticationExecutionResult executionResult =
           executor.execute(
               tenant, transaction.identifier(), executionRequest, requestAttributes, execution);
