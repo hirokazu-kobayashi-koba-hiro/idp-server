@@ -105,13 +105,13 @@ Step 4: statistics_monthly への集計データ投入
 #### daily_metrics
 ```json
 {
-  "1": {
+  "2024-01-01": {
     "dau": 45,
     "mau": 45,
     "login_success": 120,
     "oauth_authorize": 80
   },
-  "2": {
+  "2024-01-02": {
     "dau": 52,
     "mau": 85,
     "login_success": 140,
