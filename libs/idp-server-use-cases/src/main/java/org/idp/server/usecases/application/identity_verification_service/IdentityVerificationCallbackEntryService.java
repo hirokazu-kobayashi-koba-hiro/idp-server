@@ -43,6 +43,7 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.security.event.SecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
 @Transaction
@@ -115,6 +116,7 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
 
     Map<String, Object> response =
         updateApplicationAndCreateResponse(
+            type,
             process,
             request,
             requestAttributes,
@@ -158,6 +160,7 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
 
     Map<String, Object> response =
         updateApplicationAndCreateResponse(
+            type,
             process,
             request,
             requestAttributes,
@@ -170,6 +173,7 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
   }
 
   private Map<String, Object> updateApplicationAndCreateResponse(
+      IdentityVerificationType type,
       IdentityVerificationProcess process,
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes,
@@ -207,7 +211,15 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
           tenant,
           application.requestedClientId(),
           user,
-          DefaultSecurityEventType.identity_verification_application_approved,
+          DefaultSecurityEventType.identity_verification_application_approved.toEventType(),
+          requestAttributes);
+      SecurityEventType typeSpecificApprovedEvent =
+          new SecurityEventType(type.name() + "_approved");
+      eventPublisher.publish(
+          tenant,
+          application.requestedClientId(),
+          user,
+          typeSpecificApprovedEvent,
           requestAttributes);
     }
 
@@ -216,7 +228,15 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
           tenant,
           application.requestedClientId(),
           user,
-          DefaultSecurityEventType.identity_verification_application_rejected,
+          DefaultSecurityEventType.identity_verification_application_rejected.toEventType(),
+          requestAttributes);
+      SecurityEventType typeSpecificRejectedEvent =
+          new SecurityEventType(type.name() + "_rejected");
+      eventPublisher.publish(
+          tenant,
+          application.requestedClientId(),
+          user,
+          typeSpecificRejectedEvent,
           requestAttributes);
     }
 

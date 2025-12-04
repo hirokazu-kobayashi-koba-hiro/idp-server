@@ -90,6 +90,24 @@ Step 4: statistics_monthly への集計データ投入
 - `refresh_token_success`
 - `inspect_token_success`
 
+### 身元確認イベント
+
+身元確認申込み機能では、汎用イベントに加えてtype単位のカスタムイベントも記録されます：
+
+| 操作 | 汎用イベント | type単位イベント |
+|------|--------------|------------------|
+| 申込み成功 | `identity_verification_application_apply` | `{type}_application_success` |
+| 申込み失敗 | `identity_verification_application_failure` | `{type}_application_failure` |
+| 承認 | `identity_verification_application_approved` | `{type}_approved` |
+| 却下 | `identity_verification_application_rejected` | `{type}_rejected` |
+| 後続プロセス成功 | - | `{type}_{process}_success` |
+| 後続プロセス失敗 | - | `{type}_{process}_failure` |
+
+例: type=`investment-account-opening`, process=`request-ekyc` の場合
+- `investment-account-opening_application_success`
+- `investment-account-opening_request-ekyc_success`
+- `investment-account-opening_approved`
+
 ### 出力データ形式
 
 #### monthly_summary
