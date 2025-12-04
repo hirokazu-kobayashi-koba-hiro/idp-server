@@ -2,8 +2,8 @@
 -- Historical Statistics Aggregation Script
 --
 -- This script aggregates historical security_event data
--- into the statistics tables (statistics_monthly,
--- statistics_daily_users, statistics_monthly_users)
+-- into the statistics tables (statistics_monthly, statistics_yearly,
+-- statistics_daily_users, statistics_monthly_users, statistics_yearly_users)
 --
 -- Usage:
 --   psql -h <host> -U <user> -d <database> -f aggregate_historical_statistics.sql
@@ -38,11 +38,12 @@ WHERE created_at >= :'start_date'::DATE
 \echo 'Step 1: Populating statistics_daily_users (DAU tracking)...'
 \echo '========================================'
 
-INSERT INTO statistics_daily_users (tenant_id, stat_date, user_id, created_at)
+INSERT INTO statistics_daily_users (tenant_id, stat_date, user_id, last_used_at, created_at)
 SELECT DISTINCT
     tenant_id,
     DATE(created_at) as stat_date,
     user_id,
+    MAX(created_at) as last_used_at,
     MIN(created_at) as created_at
 FROM security_event
 WHERE user_id IS NOT NULL
@@ -50,7 +51,8 @@ WHERE user_id IS NOT NULL
   AND created_at >= :'start_date'::DATE
   AND created_at < :'end_date'::DATE + INTERVAL '1 day'
 GROUP BY tenant_id, DATE(created_at), user_id
-ON CONFLICT (tenant_id, stat_date, user_id) DO NOTHING;
+ON CONFLICT (tenant_id, stat_date, user_id) DO UPDATE
+SET last_used_at = GREATEST(statistics_daily_users.last_used_at, EXCLUDED.last_used_at);
 
 \echo 'Step 1 complete.'
 
@@ -58,11 +60,12 @@ ON CONFLICT (tenant_id, stat_date, user_id) DO NOTHING;
 \echo 'Step 2: Populating statistics_monthly_users (MAU tracking)...'
 \echo '========================================'
 
-INSERT INTO statistics_monthly_users (tenant_id, stat_month, user_id, created_at)
+INSERT INTO statistics_monthly_users (tenant_id, stat_month, user_id, last_used_at, created_at)
 SELECT DISTINCT
     tenant_id,
     TO_CHAR(created_at, 'YYYY-MM') as stat_month,
     user_id,
+    MAX(created_at) as last_used_at,
     MIN(created_at) as created_at
 FROM security_event
 WHERE user_id IS NOT NULL
@@ -70,12 +73,35 @@ WHERE user_id IS NOT NULL
   AND created_at >= :'start_date'::DATE
   AND created_at < :'end_date'::DATE + INTERVAL '1 day'
 GROUP BY tenant_id, TO_CHAR(created_at, 'YYYY-MM'), user_id
-ON CONFLICT (tenant_id, stat_month, user_id) DO NOTHING;
+ON CONFLICT (tenant_id, stat_month, user_id) DO UPDATE
+SET last_used_at = GREATEST(statistics_monthly_users.last_used_at, EXCLUDED.last_used_at);
 
 \echo 'Step 2 complete.'
 
 \echo '========================================'
-\echo 'Step 3: Creating temporary aggregation table...'
+\echo 'Step 3: Populating statistics_yearly_users (YAU tracking)...'
+\echo '========================================'
+
+INSERT INTO statistics_yearly_users (tenant_id, stat_year, user_id, last_used_at, created_at)
+SELECT DISTINCT
+    tenant_id,
+    TO_CHAR(created_at, 'YYYY') as stat_year,
+    user_id,
+    MAX(created_at) as last_used_at,
+    MIN(created_at) as created_at
+FROM security_event
+WHERE user_id IS NOT NULL
+  AND type IN ('login_success', 'issue_token_success', 'refresh_token_success', 'inspect_token_success')
+  AND created_at >= :'start_date'::DATE
+  AND created_at < :'end_date'::DATE + INTERVAL '1 day'
+GROUP BY tenant_id, TO_CHAR(created_at, 'YYYY'), user_id
+ON CONFLICT (tenant_id, stat_year, user_id) DO UPDATE
+SET last_used_at = GREATEST(statistics_yearly_users.last_used_at, EXCLUDED.last_used_at);
+
+\echo 'Step 3 complete.'
+
+\echo '========================================'
+\echo 'Step 4: Creating temporary aggregation table...'
 \echo '========================================'
 
 -- Create temporary table for aggregation
@@ -85,6 +111,7 @@ CREATE TEMP TABLE temp_event_aggregation AS
 WITH daily_events AS (
     SELECT
         tenant_id,
+        TO_CHAR(created_at, 'YYYY') as stat_year,
         TO_CHAR(created_at, 'YYYY-MM') as stat_month,
         TO_CHAR(created_at, 'YYYY-MM-DD') as stat_date,
         type as event_type,
@@ -92,7 +119,7 @@ WITH daily_events AS (
     FROM security_event
     WHERE created_at >= :'start_date'::DATE
       AND created_at < :'end_date'::DATE + INTERVAL '1 day'
-    GROUP BY tenant_id, TO_CHAR(created_at, 'YYYY-MM'), TO_CHAR(created_at, 'YYYY-MM-DD'), type
+    GROUP BY tenant_id, TO_CHAR(created_at, 'YYYY'), TO_CHAR(created_at, 'YYYY-MM'), TO_CHAR(created_at, 'YYYY-MM-DD'), type
 ),
 daily_dau AS (
     SELECT
@@ -114,21 +141,35 @@ monthly_mau AS (
     WHERE stat_month >= TO_CHAR(:'start_date'::DATE, 'YYYY-MM')
       AND stat_month <= TO_CHAR(:'end_date'::DATE, 'YYYY-MM')
     GROUP BY tenant_id, stat_month
+),
+yearly_yau AS (
+    SELECT
+        tenant_id,
+        stat_year,
+        COUNT(DISTINCT user_id) as yau
+    FROM statistics_yearly_users
+    WHERE stat_year >= TO_CHAR(:'start_date'::DATE, 'YYYY')
+      AND stat_year <= TO_CHAR(:'end_date'::DATE, 'YYYY')
+    GROUP BY tenant_id, stat_year
 )
 SELECT
     de.tenant_id,
+    de.stat_year,
     de.stat_month,
     de.stat_date,
     de.event_type,
     de.event_count,
     COALESCE(dd.dau, 0) as dau,
-    COALESCE(mm.mau, 0) as mau
+    COALESCE(mm.mau, 0) as mau,
+    COALESCE(yy.yau, 0) as yau
 FROM daily_events de
 LEFT JOIN daily_dau dd ON de.tenant_id = dd.tenant_id
     AND de.stat_month = dd.stat_month
     AND de.stat_date = dd.stat_date
 LEFT JOIN monthly_mau mm ON de.tenant_id = mm.tenant_id
-    AND de.stat_month = mm.stat_month;
+    AND de.stat_month = mm.stat_month
+LEFT JOIN yearly_yau yy ON de.tenant_id = yy.tenant_id
+    AND de.stat_year = yy.stat_year;
 
 -- Calculate cumulative MAU per day
 -- For each day, count all unique users who were first active on or before that day
@@ -164,10 +205,10 @@ LEFT JOIN first_activity fa
     AND fa.first_date <= ad.stat_date
 GROUP BY ad.tenant_id, ad.stat_month, ad.stat_date;
 
-\echo 'Step 3 complete.'
+\echo 'Step 4 complete.'
 
 \echo '========================================'
-\echo 'Step 4: Building statistics_monthly records...'
+\echo 'Step 5: Building statistics_monthly records...'
 \echo '========================================'
 
 -- Build monthly_summary and daily_metrics JSONB
@@ -217,7 +258,40 @@ DO UPDATE SET
     daily_metrics = EXCLUDED.daily_metrics,
     updated_at = NOW();
 
-\echo 'Step 4 complete.'
+\echo 'Step 5 complete.'
+
+\echo '========================================'
+\echo 'Step 6: Building statistics_yearly records...'
+\echo '========================================'
+
+-- Build yearly_summary JSONB (monthly breakdown is in statistics_monthly table)
+INSERT INTO statistics_yearly (tenant_id, stat_year, yearly_summary, created_at, updated_at)
+SELECT
+    t.tenant_id,
+    t.stat_year,
+    -- yearly_summary: yau + all event totals
+    (
+        SELECT jsonb_build_object('yau', MAX(t2.yau)) ||
+               jsonb_object_agg(t2.event_type, t2.total_count)
+        FROM (
+            SELECT event_type, SUM(event_count) as total_count, MAX(yau) as yau
+            FROM temp_event_aggregation
+            WHERE tenant_id = t.tenant_id AND stat_year = t.stat_year
+            GROUP BY event_type
+        ) t2
+    ) as yearly_summary,
+    NOW() as created_at,
+    NOW() as updated_at
+FROM (
+    SELECT DISTINCT tenant_id, stat_year
+    FROM temp_event_aggregation
+) t
+ON CONFLICT (tenant_id, stat_year)
+DO UPDATE SET
+    yearly_summary = EXCLUDED.yearly_summary,
+    updated_at = NOW();
+
+\echo 'Step 6 complete.'
 
 -- Cleanup
 DROP TABLE IF EXISTS temp_event_aggregation;
@@ -230,8 +304,12 @@ DROP TABLE IF EXISTS temp_cumulative_mau;
 -- Show summary
 SELECT 'statistics_monthly' as table_name, COUNT(*) as row_count FROM statistics_monthly
 UNION ALL
+SELECT 'statistics_yearly', COUNT(*) FROM statistics_yearly
+UNION ALL
 SELECT 'statistics_daily_users', COUNT(*) FROM statistics_daily_users
 UNION ALL
-SELECT 'statistics_monthly_users', COUNT(*) FROM statistics_monthly_users;
+SELECT 'statistics_monthly_users', COUNT(*) FROM statistics_monthly_users
+UNION ALL
+SELECT 'statistics_yearly_users', COUNT(*) FROM statistics_yearly_users;
 
 \echo '========================================'

@@ -158,6 +158,8 @@ import org.idp.server.platform.statistics.repository.DailyActiveUserCommandRepos
 import org.idp.server.platform.statistics.repository.MonthlyActiveUserCommandRepository;
 import org.idp.server.platform.statistics.repository.TenantStatisticsCommandRepository;
 import org.idp.server.platform.statistics.repository.TenantStatisticsQueryRepository;
+import org.idp.server.platform.statistics.repository.TenantYearlyStatisticsCommandRepository;
+import org.idp.server.platform.statistics.repository.YearlyActiveUserCommandRepository;
 import org.idp.server.security.event.hook.ssf.SharedSignalsFrameworkMetaDataApi;
 import org.idp.server.usecases.application.enduser.*;
 import org.idp.server.usecases.application.identity_verification_service.IdentityVerificationCallbackEntryService;
@@ -398,6 +400,10 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(DailyActiveUserCommandRepository.class);
     MonthlyActiveUserCommandRepository monthlyActiveUserCommandRepository =
         applicationComponentContainer.resolve(MonthlyActiveUserCommandRepository.class);
+    YearlyActiveUserCommandRepository yearlyActiveUserCommandRepository =
+        applicationComponentContainer.resolve(YearlyActiveUserCommandRepository.class);
+    TenantYearlyStatisticsCommandRepository tenantYearlyStatisticsCommandRepository =
+        applicationComponentContainer.resolve(TenantYearlyStatisticsCommandRepository.class);
 
     HttpClient httpClient = HttpClientFactory.defaultClient();
     HttpRequestExecutor httpRequestExecutor =
@@ -649,8 +655,10 @@ public class IdpServerApplication {
                 hookQueryRepository,
                 tenantQueryRepository,
                 tenantStatisticsCommandRepository,
+                tenantYearlyStatisticsCommandRepository,
                 dailyActiveUserCommandRepository,
-                monthlyActiveUserCommandRepository),
+                monthlyActiveUserCommandRepository,
+                yearlyActiveUserCommandRepository),
             SecurityEventApi.class,
             databaseTypeProvider);
 
