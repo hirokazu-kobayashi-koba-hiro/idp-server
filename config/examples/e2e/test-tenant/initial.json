@@ -39,6 +39,9 @@
     },
     "identity_policy_config": {
       "identity_unique_key_type": "EMAIL_OR_EXTERNAL_USER_ID"
+    },
+    "attributes": {
+      "timezone": "Asia/Tokyo"
     }
   },
   "authorization_server": {

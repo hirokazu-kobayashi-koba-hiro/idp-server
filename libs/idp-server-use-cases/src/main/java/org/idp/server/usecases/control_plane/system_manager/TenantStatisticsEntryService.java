@@ -20,6 +20,7 @@ import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.management.statistics.TenantStatisticsApi;
 import org.idp.server.control_plane.management.statistics.TenantStatisticsFindService;
+import org.idp.server.control_plane.management.statistics.TenantStatisticsReportFindService;
 import org.idp.server.control_plane.management.statistics.TenantStatisticsResponse;
 import org.idp.server.control_plane.management.statistics.handler.TenantStatisticsManagementHandler;
 import org.idp.server.control_plane.management.statistics.handler.TenantStatisticsManagementResult;
@@ -29,7 +30,9 @@ import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.statistics.TenantStatisticsQueries;
+import org.idp.server.platform.statistics.TenantStatisticsReportQuery;
 import org.idp.server.platform.statistics.repository.TenantStatisticsQueryRepository;
+import org.idp.server.platform.statistics.repository.TenantYearlyStatisticsQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
 @Transaction
@@ -40,10 +43,15 @@ public class TenantStatisticsEntryService implements TenantStatisticsApi {
 
   public TenantStatisticsEntryService(
       TenantStatisticsQueryRepository repository,
+      TenantYearlyStatisticsQueryRepository yearlyRepository,
       TenantQueryRepository tenantQueryRepository,
       AuditLogPublisher auditLogPublisher) {
     TenantStatisticsFindService findService = new TenantStatisticsFindService(repository);
-    this.handler = new TenantStatisticsManagementHandler(findService, this, tenantQueryRepository);
+    TenantStatisticsReportFindService reportFindService =
+        new TenantStatisticsReportFindService(repository, yearlyRepository);
+    this.handler =
+        new TenantStatisticsManagementHandler(
+            findService, reportFindService, this, tenantQueryRepository);
     this.auditLogPublisher = auditLogPublisher;
   }
 
@@ -56,6 +64,22 @@ public class TenantStatisticsEntryService implements TenantStatisticsApi {
 
     TenantStatisticsManagementResult result =
         handler.handle(authenticationContext, tenantIdentifier, queries, requestAttributes);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
+    auditLogPublisher.publish(auditLog);
+
+    return result.toResponse();
+  }
+
+  @Override
+  public TenantStatisticsResponse findYearlyReport(
+      AdminAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      TenantStatisticsReportQuery query,
+      RequestAttributes requestAttributes) {
+
+    TenantStatisticsManagementResult result =
+        handler.handleReport(authenticationContext, tenantIdentifier, query, requestAttributes);
 
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);

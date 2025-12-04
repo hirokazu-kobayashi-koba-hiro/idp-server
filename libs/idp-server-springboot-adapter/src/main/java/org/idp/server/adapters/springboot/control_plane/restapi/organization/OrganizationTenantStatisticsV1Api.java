@@ -25,6 +25,7 @@ import org.idp.server.control_plane.management.statistics.TenantStatisticsRespon
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.statistics.TenantStatisticsQueries;
+import org.idp.server.platform.statistics.TenantStatisticsReportQuery;
 import org.idp.server.platform.type.RequestAttributes;
 import org.idp.server.usecases.IdpServerApplication;
 import org.springframework.http.HttpHeaders;
@@ -88,6 +89,33 @@ public class OrganizationTenantStatisticsV1Api implements ParameterTransformable
             new OrganizationIdentifier(organizationId),
             tenantIdentifier,
             queries,
+            requestAttributes);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("content-type", "application/json");
+
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @GetMapping("/yearly/{year}")
+  public ResponseEntity<?> getYearlyReport(
+      @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
+      @PathVariable String organizationId,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("year") String year,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    TenantStatisticsReportQuery query = new TenantStatisticsReportQuery(year);
+
+    TenantStatisticsResponse response =
+        orgTenantStatisticsApi.findYearlyReport(
+            organizationOperatorPrincipal.authenticationContext(),
+            new OrganizationIdentifier(organizationId),
+            tenantIdentifier,
+            query,
             requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();

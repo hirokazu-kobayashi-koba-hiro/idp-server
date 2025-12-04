@@ -95,7 +95,9 @@ public class TenantStatisticsContext implements AuditableContext {
   public Map<String, Object> request() {
     Map<String, Object> map = new HashMap<>();
     map.put("tenant_id", tenantIdentifier.value());
-    map.putAll(queries.toMap());
+    if (queries != null) {
+      map.putAll(queries.toMap());
+    }
     return map;
   }
 
