@@ -94,4 +94,45 @@ public class PasswordChangeService {
 
     return PasswordChangeResponse.success(user);
   }
+
+  /**
+   * Resets user's password without verifying current password.
+   *
+   * <p>This method is used when a user has forgotten their password and has been authenticated
+   * through an alternative method (e.g., email verification with {@code password:reset} scope).
+   *
+   * <p>Unlike {@link #changePassword(Tenant, User, PasswordChangeRequest)}, this method does not
+   * require the current password because the user has already proven their identity through the
+   * authentication flow.
+   *
+   * @param tenant tenant
+   * @param user authenticated user
+   * @param request password reset request
+   * @return password change response
+   */
+  public PasswordChangeResponse resetPassword(
+      Tenant tenant, User user, PasswordResetRequest request) {
+
+    // 1. Validate request parameters
+    if (!request.hasNewPassword()) {
+      return PasswordChangeResponse.invalidRequest("New password is required.");
+    }
+
+    // 2. Validate new password against tenant's policy
+    PasswordPolicyConfig policyConfig = tenant.identityPolicyConfig().passwordPolicyConfig();
+    PasswordPolicyValidator passwordPolicy = new PasswordPolicyValidator(policyConfig);
+    PasswordPolicyValidationResult policyResult = passwordPolicy.validate(request.newPassword());
+    if (policyResult.isInvalid()) {
+      return PasswordChangeResponse.invalidNewPassword(policyResult.errorMessage());
+    }
+
+    // 3. Encode new password and update user
+    String encodedPassword = passwordEncodeDelegation.encode(request.newPassword());
+    user.setHashedPassword(encodedPassword);
+
+    // 4. Save to database
+    userCommandRepository.updatePassword(tenant, user);
+
+    return PasswordChangeResponse.success(user);
+  }
 }

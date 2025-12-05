@@ -106,6 +106,8 @@ public enum DefaultSecurityEventType {
   backchannel_authentication_authorize("User authorized with a backchannel authentication"),
   backchannel_authentication_deny("User denied with a backchannel authentication"),
   password_reset("User reset their password"),
+  password_reset_success("User successfully reset their password"),
+  password_reset_failure("User failed to reset their password"),
   password_change("User changed their password"),
   password_change_success("User successfully changed their password"),
   password_change_failure("User failed to change their password"),

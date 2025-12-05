@@ -29,6 +29,7 @@ import org.idp.server.core.openid.identity.authentication.PasswordChangeRequest;
 import org.idp.server.core.openid.identity.authentication.PasswordChangeResponse;
 import org.idp.server.core.openid.identity.authentication.PasswordChangeService;
 import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegation;
+import org.idp.server.core.openid.identity.authentication.PasswordResetRequest;
 import org.idp.server.core.openid.identity.authentication.PasswordVerificationDelegation;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
@@ -291,6 +292,41 @@ public class UserOperationEntryService implements UserOperationApi {
     } else {
       eventPublisher.publish(
           tenant, oAuthToken, DefaultSecurityEventType.password_change_failure, requestAttributes);
+    }
+
+    return response;
+  }
+
+  @Override
+  public PasswordChangeResponse resetPassword(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      PasswordResetRequest request,
+      RequestAttributes requestAttributes) {
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    // Scope validation - RFC 6750 Section 3.1
+    if (!oAuthToken.scopes().contains("password:reset")) {
+      Map<String, Object> contents = new HashMap<>();
+      contents.put("error", "insufficient_scope");
+      contents.put("error_description", "The request requires 'password:reset' scope");
+      contents.put("scope", "password:reset");
+      return PasswordChangeResponse.insufficientScope(contents);
+    }
+
+    PasswordChangeService passwordChangeService =
+        new PasswordChangeService(
+            passwordVerificationDelegation, passwordEncodeDelegation, userCommandRepository);
+
+    PasswordChangeResponse response = passwordChangeService.resetPassword(tenant, user, request);
+
+    if (response.isSuccess()) {
+      eventPublisher.publish(
+          tenant, oAuthToken, DefaultSecurityEventType.password_reset_success, requestAttributes);
+    } else {
+      eventPublisher.publish(
+          tenant, oAuthToken, DefaultSecurityEventType.password_reset_failure, requestAttributes);
     }
 
     return response;
