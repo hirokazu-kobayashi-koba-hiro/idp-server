@@ -427,6 +427,155 @@ paths:
       responses:
         '302':
           description: 認可画面のURL（リダイレクト）
+    post:
+      summary: 認可リクエスト（POST）
+      tags:
+        - 認可コードフロー
+      description: >
+        クライアントアプリケーションがエンドユーザーの認可を取得するためのエンドポイント（POSTメソッド）。
+
+
+        ## 仕様準拠
+
+
+        - **RFC 6749 Section 3.1**: Authorization
+        ServerはGETメソッドをサポートしなければならず（MUST）、POSTメソッドもサポートしてもよい（MAY）
+
+        - **OIDC Core 1.0 Section 3.1.2.1**: Authorization
+        ServerはGETとPOSTの両方をサポートしなければならない（MUST）
+
+
+        ## POSTメソッドの利点
+
+
+        1. **URLの長さ制限を回避**: `authorization_details` や `claims` などの長いパラメータに対応
+
+        2. **セキュリティ向上**: ブラウザ履歴やプロキシログにセンシティブなパラメータが残らない
+
+        3. **プライバシー保護**: `login_hint` などの個人情報がURLに含まれない
+
+
+        ## パラメータ
+
+
+        GETメソッドと同じパラメータを `application/x-www-form-urlencoded` 形式でリクエストボディに含めます。
+
+
+        ## 参考
+
+
+        - [RFC 6749 Section
+        3.1](https://datatracker.ietf.org/doc/html/rfc6749#section-3.1)
+
+        - [OIDC Core 1.0 Section
+        3.1.2.1](https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest)
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - response_type
+                - client_id
+                - redirect_uri
+                - scope
+              properties:
+                response_type:
+                  type: string
+                  description: レスポンスタイプ（code, id_token, token等）
+                  example: code
+                client_id:
+                  type: string
+                  description: クライアントID
+                  example: client123
+                redirect_uri:
+                  type: string
+                  format: uri
+                  description: リダイレクトURI
+                  example: https://app.example.com/callback
+                scope:
+                  type: string
+                  description: 要求するスコープ（スペース区切り）
+                  example: openid profile email
+                state:
+                  type: string
+                  description: CSRF対策用のstate値
+                  example: xyz123
+                nonce:
+                  type: string
+                  description: リプレイ攻撃防止用のnonce値
+                  example: abc456
+                display:
+                  type: string
+                  enum:
+                    - page
+                    - popup
+                    - touch
+                    - wap
+                  description: 認証画面の表示形式
+                prompt:
+                  type: string
+                  enum:
+                    - none
+                    - login
+                    - consent
+                    - select_account
+                  description: 認証プロンプトの動作
+                max_age:
+                  type: integer
+                  description: 最大認証経過時間（秒）
+                ui_locales:
+                  type: string
+                  description: UI表示言語（スペース区切り）
+                  example: ja en
+                id_token_hint:
+                  type: string
+                  description: IDトークンのヒント
+                login_hint:
+                  type: string
+                  description: ログインヒント（メールアドレス等）
+                  example: user@example.com
+                acr_values:
+                  type: string
+                  description: 要求する認証コンテキストクラス参照値
+                claims:
+                  type: string
+                  description: 要求するクレーム（JSON形式）
+                  example: '{"id_token":{"email":null}}'
+                request:
+                  type: string
+                  description: JWTリクエストオブジェクト
+                request_uri:
+                  type: string
+                  format: uri
+                  description: リクエストオブジェクトのURI
+                code_challenge:
+                  type: string
+                  description: PKCEコードチャレンジ
+                code_challenge_method:
+                  type: string
+                  enum:
+                    - plain
+                    - S256
+                  description: コードチャレンジメソッド
+                  default: plain
+                authorization_details:
+                  type: string
+                  description: 認可詳細（JSON配列形式）
+                  example: >-
+                    [{"type":"payment_initiation","locations":["https://example.com"]}]
+      responses:
+        '302':
+          description: 認可画面のURL（リダイレクト）
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+              description: 認証画面のURL
+              example: >-
+                https://idp.example.com/{tenant-id}/v1/authorizations/authenticate?id={authorization-id}
   /v1/tokens:
     post:
       summary: トークンリクエスト
@@ -2608,7 +2757,8 @@ components:
           description: 過去の ID Token を用いたユーザー識別 ※login_hintまたはid_token_hintの指定が必要
         binding_message:
           type: string
-          description: ユーザー端末に表示される文言
+          maxLength: 20
+          description: ユーザー端末に表示される文言（最大20文字）
         requested_expiry:
           type: integer
           description: auth_req_id の有効期限（秒）

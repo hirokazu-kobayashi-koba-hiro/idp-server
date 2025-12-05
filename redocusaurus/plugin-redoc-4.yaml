@@ -7435,6 +7435,11 @@ components:
           default: false
     IdentityPolicyConfiguration:
       type: object
+      description: |
+        ユーザー識別ポリシーとパスワードポリシーの設定
+
+        - identity_unique_key_type: ユーザーの一意識別子として使用するフィールドを定義
+        - password_policy: パスワードの要件を定義（OWASP/NIST準拠）
       properties:
         identity_unique_key_type:
           type: string
@@ -7469,11 +7474,78 @@ components:
             - EXTERNAL_USER_ID: external_user_idを一意キーとして使用
 
 
-            フォールバック時の形式:
+            **フォールバック時のpreferred_username形式**:
 
-            - 外部IdP: `{provider_id}.{external_user_id}` (例: google.123456)
 
-            - ローカル(idp-server): `{external_user_id}` (例: uuid)
+            フォールバックが発生した場合（例: GitHubでメール非公開）、preferred_usernameは以下の形式で設定されます：
+
+            - 外部IdP: `{provider_id}.{external_user_id}` (例: `google.123456`,
+            `github.987654`)
+
+            - ローカル(idp-server): `{external_user_id}` (例:
+            `550e8400-e29b-41d4-a716-446655440000`)
+
+
+            **重要**:
+            フォールバックが発生しない場合（メール等が存在する場合）、preferred_usernameは通常の値（メールアドレス等）が設定されます。
+        password_policy:
+          type: object
+          description: |
+            パスワードポリシー設定（OWASP/NIST準拠）
+
+            NIST推奨: 最小8文字、複雑性要件なし（ユーザビリティ優先）
+            金融グレード: 最小12文字、複雑性要件あり
+          properties:
+            min_length:
+              type: integer
+              minimum: 1
+              maximum: 72
+              default: 8
+              description: パスワード最小文字数
+              example: 8
+            max_length:
+              type: integer
+              minimum: 1
+              maximum: 72
+              default: 72
+              description: パスワード最大文字数（BCrypt制限）
+              example: 72
+            require_uppercase:
+              type: boolean
+              default: false
+              description: 大文字を必須とするか
+              example: false
+            require_lowercase:
+              type: boolean
+              default: false
+              description: 小文字を必須とするか
+              example: false
+            require_number:
+              type: boolean
+              default: false
+              description: 数字を必須とするか
+              example: false
+            require_special_char:
+              type: boolean
+              default: false
+              description: 特殊文字を必須とするか
+              example: false
+            max_history:
+              type: integer
+              minimum: 0
+              default: 0
+              description: パスワード履歴保持数（将来対応 Issue
+              example: 0
+      example:
+        identity_unique_key_type: EMAIL_OR_EXTERNAL_USER_ID
+        password_policy:
+          min_length: 8
+          max_length: 72
+          require_uppercase: false
+          require_lowercase: false
+          require_number: false
+          require_special_char: false
+          max_history: 0
   responses:
     BadRequest:
       description: Bad Request - Invalid input parameters

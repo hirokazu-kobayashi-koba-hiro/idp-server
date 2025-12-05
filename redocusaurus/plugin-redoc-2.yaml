@@ -285,6 +285,186 @@ paths:
                     example: openid
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /{tenant-id}/v1/me/password/reset:
+    post:
+      tags:
+        - ユーザー
+      summary: パスワードリセット
+      description: >
+        セルフサービスでパスワードをリセットします。
+
+
+        ## 認可フロー
+
+
+        このAPIは特別なスコープ `password:reset` が必要です。
+
+        通常のログインフローではなく、以下の手順で取得します：
+
+
+        1. Email認証フローで認可リクエスト開始（scope=password:reset）
+
+        2. Email認証チャレンジで検証コード送信
+
+        3. Email認証検証でユーザー認証
+
+        4. 認可コード取得
+
+        5. トークンエンドポイントで `password:reset` スコープ付きアクセストークン取得
+
+        6. このAPIでパスワードリセット実行
+
+
+        ## password/change との違い
+
+
+        | API | 必要なもの | スコープ | ユースケース |
+
+        |-----|----------|---------|-------------|
+
+        | `/v1/me/password/change` | 現在のパスワード | `openid` | ログイン中のパスワード変更 |
+
+        | `/v1/me/password/reset` | Email認証等 | `password:reset` | パスワードを忘れた場合 |
+
+
+        **重要**: このAPIは現在のパスワードを**必要としません**。代わりに、Email認証などの別の認証方式で取得した
+        `password:reset` スコープ付きトークンを使用します。
+
+
+        ## パスワードポリシー
+
+
+        テナントごとに以下のポリシーを設定可能（`identity_policy_config.password_policy`）：
+
+        - `min_length`: 最小文字数（デフォルト: 8）
+
+        - `require_uppercase`: 大文字必須（デフォルト: false）
+
+        - `require_lowercase`: 小文字必須（デフォルト: false）
+
+        - `require_number`: 数字必須（デフォルト: false）
+
+        - `require_special_char`: 記号必須（デフォルト: false）
+
+
+        デフォルトポリシーはNIST SP 800-63Bの推奨に従い、最小8文字のみを要求します。
+
+
+        ## セキュリティイベント
+
+
+        パスワードリセットの成功・失敗時に以下のセキュリティイベントが発行されます：
+
+        - `password_reset_success`: パスワードリセット成功時
+
+        - `password_reset_failure`: パスワードリセット失敗時（ポリシー違反等）
+
+
+        ## 参考
+
+
+        - Issue #1002: Self-service password reset using email authentication
+
+        - [NIST SP 800-63B](https://pages.nist.gov/800-63-3/sp800-63b.html)
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      security:
+        - OAuth2:
+            - password:reset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - new_password
+              properties:
+                new_password:
+                  type: string
+                  description: 新しいパスワード
+                  minLength: 8
+                  maxLength: 72
+                  example: NewSecurePassword456!
+            example:
+              new_password: NewSecurePassword456!
+      responses:
+        '200':
+          description: パスワードリセット成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+                    description: 成功メッセージ
+                    example: Password changed successfully.
+        '400':
+          description: |
+            バリデーションエラー
+            - 新しいパスワードが未入力
+            - 新しいパスワードがポリシー違反
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                  - error_description
+                properties:
+                  error:
+                    type: string
+                    enum:
+                      - invalid_request
+                      - invalid_new_password
+                    description: エラーコード
+                  error_description:
+                    type: string
+                    description: エラー詳細メッセージ
+              examples:
+                missing_new_password:
+                  value:
+                    error: invalid_request
+                    error_description: New password is required.
+                password_too_short:
+                  value:
+                    error: invalid_new_password
+                    error_description: Password must be at least 8 characters long.
+                password_policy_violation:
+                  value:
+                    error: invalid_new_password
+                    error_description: >-
+                      Password must contain at least one uppercase letter, one
+                      lowercase letter, one digit, and one special character.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: |
+            スコープ不足
+            - 必要スコープ: `password:reset`
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                  - error_description
+                  - scope
+                properties:
+                  error:
+                    type: string
+                    example: insufficient_scope
+                  error_description:
+                    type: string
+                    example: The request requires 'password:reset' scope
+                  scope:
+                    type: string
+                    example: password:reset
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{verification-process}:
     post:
       tags:
