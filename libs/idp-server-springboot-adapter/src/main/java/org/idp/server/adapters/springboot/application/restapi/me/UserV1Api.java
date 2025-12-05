@@ -25,6 +25,7 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserOperationApi;
 import org.idp.server.core.openid.identity.authentication.PasswordChangeRequest;
 import org.idp.server.core.openid.identity.authentication.PasswordChangeResponse;
+import org.idp.server.core.openid.identity.authentication.PasswordResetRequest;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.openid.identity.io.AuthenticationDevicePatchRequest;
 import org.idp.server.core.openid.identity.io.MfaRegistrationRequest;
@@ -143,6 +144,30 @@ public class UserV1Api implements ParameterTransformable, FapiInteractionIdConfi
 
     PasswordChangeResponse response =
         userOperationApi.changePassword(
+            tenantIdentifier, user, oAuthToken, request, requestAttributes);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    addFapiInteractionId(httpHeaders, fapiInteractionId);
+    httpHeaders.add("Content-Type", "application/json");
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @PostMapping("/password/reset")
+  public ResponseEntity<?> resetPassword(
+      @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestHeader(required = false, value = "x-fapi-interaction-id") String fapiInteractionId,
+      @RequestBody Map<String, Object> requestBody,
+      HttpServletRequest httpServletRequest) {
+
+    User user = resourceOwnerPrincipal.getUser();
+    OAuthToken oAuthToken = resourceOwnerPrincipal.getOAuthToken();
+    PasswordResetRequest request = new PasswordResetRequest(requestBody);
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    PasswordChangeResponse response =
+        userOperationApi.resetPassword(
             tenantIdentifier, user, oAuthToken, request, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();

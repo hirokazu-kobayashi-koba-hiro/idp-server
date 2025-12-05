@@ -859,57 +859,135 @@ idp-serverでは、Tenant設定を型安全な6つのConfigurationクラスに�
 
 ### Identity Policy Configuration
 
-**目的**: ユーザー識別キーの設定
+**目的**: ユーザー識別キーとパスワードポリシーの設定
 
 **フィールド**:
 ```json
 {
   "identity_policy_config": {
-    "identity_unique_key_type": "EMAIL"
+    "identity_unique_key_type": "EMAIL_OR_EXTERNAL_USER_ID",
+    "password_policy": {
+      "min_length": 8,
+      "max_length": 72,
+      "require_uppercase": false,
+      "require_lowercase": false,
+      "require_number": false,
+      "require_special_char": false,
+      "max_history": 0
+    }
   }
 }
 ```
 
 | フィールド | 型 | デフォルト | 説明 |
 |-----------|---|----------|------|
-| `identity_unique_key_type` | string | `EMAIL` | ユニークキー種別 |
+| `identity_unique_key_type` | string | `EMAIL_OR_EXTERNAL_USER_ID` | ユニークキー種別 |
+| `password_policy` | object | デフォルトポリシー | パスワードポリシー設定 |
+
+#### identity_unique_key_type - ユーザー識別キー戦略
 
 **許可される値**:
-- `USERNAME`: ユーザー名を一意キーとして使用
-- `EMAIL`: メールアドレスを一意キーとして使用
-- `PHONE`: 電話番号を一意キーとして使用
-- `EXTERNAL_USER_ID`: 外部ユーザーIDを一意キーとして使用
+
+| 値 | 説明 | 用途 |
+|---|------|------|
+| `USERNAME` | ユーザー名を一意キーとして使用 | ユーザー名ベース認証 |
+| `USERNAME_OR_EXTERNAL_USER_ID` | ユーザー名、なければ外部ユーザーID | 外部IdP連携（ユーザー名優先） |
+| `EMAIL` | メールアドレスを一意キーとして使用 | メールベース認証（厳密） |
+| `EMAIL_OR_EXTERNAL_USER_ID` | メールアドレス、なければ外部ユーザーID | **推奨**：外部IdP連携（メール優先） |
+| `PHONE` | 電話番号を一意キーとして使用 | 電話番号ベース認証 |
+| `PHONE_OR_EXTERNAL_USER_ID` | 電話番号、なければ外部ユーザーID | 外部IdP連携（電話番号優先） |
+| `EXTERNAL_USER_ID` | 外部ユーザーIDを一意キーとして使用 | 外部システム完全連携 |
+
+**デフォルト値**: `EMAIL_OR_EXTERNAL_USER_ID` (Issue #729対応)
+
+**フォールバック動作**:
+
+フォールバックが発生した場合（例: GitHubでメール非公開）、`preferred_username`は以下の形式で設定されます：
+- **外部IdP**: `{provider_id}.{external_user_id}` (例: `google.123456`, `github.987654`)
+- **ローカル(idp-server)**: `{external_user_id}` (例: `550e8400-e29b-41d4-a716-446655440000`)
+
+**重要**: フォールバックが発生しない場合（メール等が存在する場合）、`preferred_username`は通常の値（メールアドレス等）が設定されます。
+
+**推奨設定**:
+- **外部IdP統合**: `EMAIL_OR_EXTERNAL_USER_ID` - GitHub等でメール非公開の場合に対応
+- **独自ユーザーDB**: `EMAIL` - メールアドレスを厳密に使用
+- **電話番号認証**: `PHONE_OR_EXTERNAL_USER_ID` - SMS認証等
+
+#### password_policy - パスワードポリシー設定
+
+**OWASP/NIST準拠**: [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html), [NIST SP 800-63B](https://pages.nist.gov/800-63-3/sp800-63b.html)
+
+| フィールド | 型 | デフォルト | 説明 |
+|-----------|---|----------|------|
+| `min_length` | number | `8` | 最小文字数 |
+| `max_length` | number | `72` | 最大文字数（BCrypt制限） |
+| `require_uppercase` | boolean | `false` | 大文字必須 |
+| `require_lowercase` | boolean | `false` | 小文字必須 |
+| `require_number` | boolean | `false` | 数字必須 |
+| `require_special_char` | boolean | `false` | 特殊文字必須 |
+| `max_history` | number | `0` | パスワード履歴保持数（将来対応 Issue #741） |
+
+**NIST推奨**: 最小8文字、複雑性要件なし（ユーザビリティ優先）
 
 **使用例**:
 
-**パターン1: メールベース認証**（デフォルト）
+**パターン1: NIST推奨（デフォルト）**
 ```json
 {
   "identity_policy_config": {
-    "identity_unique_key_type": "EMAIL"
+    "identity_unique_key_type": "EMAIL_OR_EXTERNAL_USER_ID",
+    "password_policy": {
+      "min_length": 8,
+      "require_uppercase": false,
+      "require_lowercase": false,
+      "require_number": false,
+      "require_special_char": false
+    }
   }
 }
 ```
 
-**パターン2: 電話番号ベース認証**
+**パターン2: 金融グレード（高セキュリティ）**
 ```json
 {
   "identity_policy_config": {
-    "identity_unique_key_type": "PHONE"
+    "identity_unique_key_type": "EMAIL",
+    "password_policy": {
+      "min_length": 12,
+      "require_uppercase": true,
+      "require_lowercase": true,
+      "require_number": true,
+      "require_special_char": true
+    }
   }
 }
 ```
 
-**パターン3: 外部システム連携**
+**パターン3: 外部IdP統合（メールフォールバック）**
 ```json
 {
   "identity_policy_config": {
-    "identity_unique_key_type": "EXTERNAL_USER_ID"
+    "identity_unique_key_type": "EMAIL_OR_EXTERNAL_USER_ID"
+  }
+}
+```
+→ GitHub等でメールを非公開にしているユーザーでも`external_user_id`で識別可能
+
+**パターン4: 電話番号認証**
+```json
+{
+  "identity_policy_config": {
+    "identity_unique_key_type": "PHONE_OR_EXTERNAL_USER_ID",
+    "password_policy": {
+      "min_length": 6
+    }
   }
 }
 ```
 
-**実装**: [TenantIdentityPolicy.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/policy/TenantIdentityPolicy.java)
+**実装リファレンス**:
+- [TenantIdentityPolicy.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/policy/TenantIdentityPolicy.java)
+- [PasswordPolicyConfig.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/policy/PasswordPolicyConfig.java)
 
 ---
 
