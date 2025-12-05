@@ -380,6 +380,128 @@ describe("Standard Use Case: Onboarding Flow with Audit Log Tracking", () => {
     expect(emptyTargetTenantIdResponse.data.error).toBe("invalid_request");
     console.log("✅ Empty target_tenant_id parameter correctly rejected");
 
+    console.log("\n=== Step 6: Test Tenant Statistics API ===");
+
+    // Calculate month range for statistics query (YYYY-MM format)
+    const today = new Date();
+    const currentMonth = today.toISOString().slice(0, 7); // YYYY-MM format
+    const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().slice(0, 7);
+
+    console.log(`Querying statistics from ${lastMonth} to ${currentMonth}`);
+
+    const statisticsResponse = await get({
+      url: `${backendUrl}/v1/management/tenants/${tenantId}/statistics?from=${lastMonth}&to=${currentMonth}`,
+      headers: {
+        Authorization: `Bearer ${systemAccessToken}`,
+      },
+    });
+
+    console.log(JSON.stringify(statisticsResponse.data, null, 2));
+    expect(statisticsResponse.status).toBe(200);
+    expect(statisticsResponse.data).toHaveProperty("list");
+    expect(statisticsResponse.data).toHaveProperty("total_count");
+    expect(statisticsResponse.data).toHaveProperty("limit");
+    expect(statisticsResponse.data).toHaveProperty("offset");
+    expect(Array.isArray(statisticsResponse.data.list)).toBe(true);
+
+    console.log(`✅ Retrieved statistics for ${statisticsResponse.data.list.length} months (total: ${statisticsResponse.data.total_count})`);
+
+    // Verify statistics data structure if data exists
+    if (statisticsResponse.data.list.length > 0) {
+      const monthlyStat = statisticsResponse.data.list[0];
+      expect(monthlyStat).toHaveProperty("stat_month");
+      expect(monthlyStat).toHaveProperty("monthly_summary");
+      expect(monthlyStat).toHaveProperty("daily_metrics");
+      console.log(`  Sample monthly stat: ${monthlyStat.stat_month} - summary: ${JSON.stringify(monthlyStat.monthly_summary)}`);
+    }
+
+    console.log("\n=== Step 7: Test Organization-level Tenant Statistics API ===");
+
+    const orgStatisticsResponse = await get({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/statistics?from=${lastMonth}&to=${currentMonth}`,
+      headers: {
+        Authorization: `Bearer ${orgAccessToken}`,
+      },
+    });
+
+    console.log(JSON.stringify(orgStatisticsResponse.data, null, 2));
+    expect(orgStatisticsResponse.status).toBe(200);
+    expect(orgStatisticsResponse.data).toHaveProperty("list");
+    expect(orgStatisticsResponse.data).toHaveProperty("total_count");
+    expect(orgStatisticsResponse.data).toHaveProperty("limit");
+    expect(orgStatisticsResponse.data).toHaveProperty("offset");
+    expect(Array.isArray(orgStatisticsResponse.data.list)).toBe(true);
+
+    console.log(`✅ Retrieved org-level statistics for ${orgStatisticsResponse.data.list.length} months (total: ${orgStatisticsResponse.data.total_count})`);
+
+    console.log("\n=== Step 8: Test Yearly Statistics Report API (System-level) ===");
+
+    const currentYear = today.getFullYear().toString();
+    console.log(`Querying yearly statistics report for ${currentYear}`);
+
+    const yearlyStatisticsResponse = await get({
+      url: `${backendUrl}/v1/management/tenants/${tenantId}/statistics/yearly/${currentYear}`,
+      headers: {
+        Authorization: `Bearer ${systemAccessToken}`,
+      },
+    });
+
+    console.log(JSON.stringify(yearlyStatisticsResponse.data, null, 2));
+    expect(yearlyStatisticsResponse.status).toBe(200);
+    expect(yearlyStatisticsResponse.data).toHaveProperty("period");
+    expect(yearlyStatisticsResponse.data).toHaveProperty("summary");
+    expect(yearlyStatisticsResponse.data).toHaveProperty("monthly");
+    expect(Array.isArray(yearlyStatisticsResponse.data.monthly)).toBe(true);
+
+    // Verify period structure
+    expect(yearlyStatisticsResponse.data.period).toHaveProperty("year");
+    expect(yearlyStatisticsResponse.data.period).toHaveProperty("from_month");
+    expect(yearlyStatisticsResponse.data.period).toHaveProperty("to_month");
+    expect(yearlyStatisticsResponse.data.period.year).toBe(currentYear);
+    expect(yearlyStatisticsResponse.data.period.from_month).toBe(`${currentYear}-01`);
+    expect(yearlyStatisticsResponse.data.period.to_month).toBe(`${currentYear}-12`);
+
+    console.log(`✅ Retrieved yearly report for ${currentYear} - ${yearlyStatisticsResponse.data.monthly.length} months data`);
+
+    // Verify monthly data structure if data exists
+    if (yearlyStatisticsResponse.data.monthly.length > 0) {
+      const monthlyData = yearlyStatisticsResponse.data.monthly[0];
+      expect(monthlyData).toHaveProperty("month");
+      expect(monthlyData).toHaveProperty("cumulative_yau");
+      expect(monthlyData).toHaveProperty("daily");
+      expect(Array.isArray(monthlyData.daily)).toBe(true);
+      console.log(`  Sample monthly data: ${monthlyData.month} - cumulative_yau: ${monthlyData.cumulative_yau}`);
+
+      // Verify daily data structure if exists
+      if (monthlyData.daily.length > 0) {
+        const dailyData = monthlyData.daily[0];
+        expect(dailyData).toHaveProperty("day");
+        console.log(`  Sample daily data: ${dailyData.day}`);
+      }
+    }
+
+    console.log("\n=== Step 9: Test Yearly Statistics Report API (Organization-level) ===");
+
+    const orgYearlyStatisticsResponse = await get({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/statistics/yearly/${currentYear}`,
+      headers: {
+        Authorization: `Bearer ${orgAccessToken}`,
+      },
+    });
+
+    console.log(JSON.stringify(orgYearlyStatisticsResponse.data, null, 2));
+    expect(orgYearlyStatisticsResponse.status).toBe(200);
+    expect(orgYearlyStatisticsResponse.data).toHaveProperty("period");
+    expect(orgYearlyStatisticsResponse.data).toHaveProperty("summary");
+    expect(orgYearlyStatisticsResponse.data).toHaveProperty("monthly");
+    expect(Array.isArray(orgYearlyStatisticsResponse.data.monthly)).toBe(true);
+
+    // Verify period structure
+    expect(orgYearlyStatisticsResponse.data.period.year).toBe(currentYear);
+
+    console.log(`✅ Retrieved org-level yearly report for ${currentYear} - ${orgYearlyStatisticsResponse.data.monthly.length} months data`);
+
+
     console.log("\n=== Cleanup ===");
 
     // Delete business client

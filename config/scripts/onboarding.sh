@@ -51,7 +51,7 @@ HTTP_CODE=$(echo "$RESPONSE" | grep HTTP_CODE | cut -d: -f2)
 echo "📡 HTTP ${HTTP_CODE}"
 echo "$BODY"
 
-if [ "$HTTP_CODE" != "200" ]; then
+if [ "$HTTP_CODE" != "201" ]; then
   echo "❌ Onboarding request failed"
   exit 1
 else
