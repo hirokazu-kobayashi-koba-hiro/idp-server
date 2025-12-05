@@ -112,20 +112,37 @@ public class InitialRegistrationInteractor implements AuthenticationInteractor {
 
     // Validate password against tenant password policy
     if (request.containsKey("password")) {
-      String password = request.getValueAsString("password");
-      log.debug("Applying tenant password policy for initial registration");
-      TenantIdentityPolicy identityPolicy = tenant.identityPolicyConfig();
-      PasswordPolicyValidator passwordPolicy =
-          new PasswordPolicyValidator(identityPolicy.passwordPolicyConfig());
-      PasswordPolicyValidationResult passwordValidationResult = passwordPolicy.validate(password);
+      try {
+        String password = request.getValueAsString("password");
+        log.debug("Applying tenant password policy for initial registration");
+        TenantIdentityPolicy identityPolicy = tenant.identityPolicyConfig();
+        PasswordPolicyValidator passwordPolicy =
+            new PasswordPolicyValidator(identityPolicy.passwordPolicyConfig());
+        PasswordPolicyValidationResult passwordValidationResult = passwordPolicy.validate(password);
 
-      if (passwordValidationResult.isInvalid()) {
-        log.info(
-            "Initial registration failed: password policy violation - {}",
-            passwordValidationResult.errorMessage());
+        if (passwordValidationResult.isInvalid()) {
+          log.info(
+              "Initial registration failed: password policy violation - {}",
+              passwordValidationResult.errorMessage());
+          Map<String, Object> response = new HashMap<>();
+          response.put("error", "invalid_request");
+          response.put("error_description", passwordValidationResult.errorMessage());
+
+          return AuthenticationInteractionRequestResult.clientError(
+              response,
+              type,
+              operationType(),
+              method(),
+              DefaultSecurityEventType.user_signup_failure);
+        }
+        log.debug("Password policy validation succeeded for initial registration");
+      } catch (IllegalArgumentException validationException) {
+        // Issue #1008: Handle validation errors from getValueAsString()
+        log.warn("Password validation failed: {}", validationException.getMessage());
+
         Map<String, Object> response = new HashMap<>();
         response.put("error", "invalid_request");
-        response.put("error_description", passwordValidationResult.errorMessage());
+        response.put("error_description", validationException.getMessage());
 
         return AuthenticationInteractionRequestResult.clientError(
             response,
@@ -134,7 +151,6 @@ public class InitialRegistrationInteractor implements AuthenticationInteractor {
             method(),
             DefaultSecurityEventType.user_signup_failure);
       }
-      log.debug("Password policy validation succeeded for initial registration");
     }
 
     IdPUserCreator idPUserCreator =

@@ -119,6 +119,15 @@ public class WebAuthn4jAuthenticationChallengeExecutor implements Authentication
       log.info("webauthn4j authentication challenge generated successfully");
       return AuthenticationExecutionResult.success(response);
 
+    } catch (IllegalArgumentException validationException) {
+      // Issue #1008: Handle validation errors from getValueAsString()
+      log.warn("Request validation failed: {}", validationException.getMessage());
+
+      Map<String, Object> errorResponse = new HashMap<>();
+      errorResponse.put("error", "invalid_request");
+      errorResponse.put("error_description", validationException.getMessage());
+
+      return AuthenticationExecutionResult.clientError(errorResponse);
     } catch (Exception e) {
       log.error("webauthn4j unexpected error during authentication challenge generation", e);
       Map<String, Object> errorResponse = new HashMap<>();

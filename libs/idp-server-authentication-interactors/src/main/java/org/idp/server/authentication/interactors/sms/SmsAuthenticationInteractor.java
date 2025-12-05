@@ -34,6 +34,9 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
+import org.idp.server.platform.json.schema.JsonSchemaDefinition;
+import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
+import org.idp.server.platform.json.schema.JsonSchemaValidator;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -80,6 +83,37 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
     AuthenticationConfiguration configuration = configurationQueryRepository.get(tenant, "sms");
     AuthenticationInteractionConfig authenticationInteractionConfig =
         configuration.getAuthenticationConfig("sms-authentication");
+
+    // JSON Schema validation (Layer 2) - Issue #1008
+    JsonSchemaDefinition schemaDefinition =
+        authenticationInteractionConfig.request().requestSchemaAsDefinition();
+
+    if (schemaDefinition.exists()) {
+      JsonNodeWrapper requestNode = JsonNodeWrapper.fromMap(request.toMap());
+      JsonSchemaValidator validator = new JsonSchemaValidator(schemaDefinition);
+      JsonSchemaValidationResult validationResult = validator.validate(requestNode);
+
+      if (!validationResult.isValid()) {
+        log.warn(
+            "SMS authentication request validation failed: error_count={}, errors={}",
+            validationResult.errors().size(),
+            validationResult.errors());
+
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("error", "invalid_request");
+        errorResponse.put(
+            "error_description", "The authentication request is invalid. Please check your input.");
+        errorResponse.put("error_messages", validationResult.errors());
+
+        return AuthenticationInteractionRequestResult.clientError(
+            errorResponse,
+            type,
+            operationType(),
+            method(),
+            DefaultSecurityEventType.sms_verification_failure);
+      }
+    }
+
     AuthenticationExecutionConfig execution = authenticationInteractionConfig.execution();
     AuthenticationExecutor executor = executors.get(execution.function());
 

@@ -48,42 +48,58 @@ public class AuthenticationDeviceBindingMessageInteractor implements Authenticat
       RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
-    log.debug("AuthenticationDeviceBindingMessageInteractor called");
+    try {
+      log.debug("AuthenticationDeviceBindingMessageInteractor called");
 
-    AuthenticationContext authenticationContext = transaction.requestContext();
-    BindingMessage bindingMessage = authenticationContext.bindingMessage();
+      AuthenticationContext authenticationContext = transaction.requestContext();
+      BindingMessage bindingMessage = authenticationContext.bindingMessage();
 
-    if (bindingMessage == null) {
+      if (bindingMessage == null) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("error", "invalid_request");
+        response.put("error_description", "Binding Message is null");
+
+        DefaultSecurityEventType eventType =
+            DefaultSecurityEventType.authentication_device_binding_message_failure;
+
+        return AuthenticationInteractionRequestResult.clientError(
+            response, type, operationType(), method(), eventType);
+      }
+
+      String bindingMessageValue = request.getValueAsString("binding_message");
+      if (!bindingMessage.value().equals(bindingMessageValue)) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("error", "invalid_request");
+        response.put("error_description", "Binding Message is unmatched");
+
+        DefaultSecurityEventType eventType =
+            DefaultSecurityEventType.authentication_device_binding_message_failure;
+
+        return AuthenticationInteractionRequestResult.clientError(
+            response, type, operationType(), method(), eventType);
+      }
+
+      AuthenticationInteractionStatus status = AuthenticationInteractionStatus.SUCCESS;
+      Map<String, Object> response = Map.of();
+      DefaultSecurityEventType eventType =
+          DefaultSecurityEventType.authentication_device_binding_message_success;
+
+      return new AuthenticationInteractionRequestResult(
+          status, type, operationType(), method(), response, eventType);
+    } catch (IllegalArgumentException validationException) {
+      // Issue #1008: Handle validation errors from getValueAsString()
+      log.warn("Request validation failed: {}", validationException.getMessage());
+
       Map<String, Object> response = new HashMap<>();
       response.put("error", "invalid_request");
-      response.put("error_description", "Binding Message is null");
-
-      DefaultSecurityEventType eventType =
-          DefaultSecurityEventType.authentication_device_binding_message_failure;
+      response.put("error_description", validationException.getMessage());
 
       return AuthenticationInteractionRequestResult.clientError(
-          response, type, operationType(), method(), eventType);
+          response,
+          type,
+          operationType(),
+          method(),
+          DefaultSecurityEventType.authentication_device_binding_message_failure);
     }
-
-    String bindingMessageValue = request.getValueAsString("binding_message");
-    if (!bindingMessage.value().equals(bindingMessageValue)) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "invalid_request");
-      response.put("error_description", "Binding Message is unmatched");
-
-      DefaultSecurityEventType eventType =
-          DefaultSecurityEventType.authentication_device_binding_message_failure;
-
-      return AuthenticationInteractionRequestResult.clientError(
-          response, type, operationType(), method(), eventType);
-    }
-
-    AuthenticationInteractionStatus status = AuthenticationInteractionStatus.SUCCESS;
-    Map<String, Object> response = Map.of();
-    DefaultSecurityEventType eventType =
-        DefaultSecurityEventType.authentication_device_binding_message_success;
-
-    return new AuthenticationInteractionRequestResult(
-        status, type, operationType(), method(), response, eventType);
   }
 }

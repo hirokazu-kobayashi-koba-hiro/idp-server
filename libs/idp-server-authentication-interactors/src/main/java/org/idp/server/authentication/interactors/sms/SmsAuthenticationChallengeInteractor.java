@@ -171,10 +171,12 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
           contents,
           DefaultSecurityEventType.sms_verification_challenge_success);
     } catch (UserTooManyFoundResultException tooManyFoundResultException) {
+      // Issue #1008: Use optValueAsString() to avoid IllegalArgumentException in error handling
+      String phoneNumber = request.optValueAsString("phone_number", "<unspecified>");
 
       log.error(
           "Too many users found for phone number. phoneNumber={}, method={}",
-          request.getValueAsString("phone_number"),
+          phoneNumber,
           method(),
           tooManyFoundResultException);
 
@@ -183,7 +185,21 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
               "error",
               "invalid_request",
               "error_description",
-              "too many users found for phone number: " + request.getValueAsString("phone_number"));
+              "too many users found for phone number: " + phoneNumber);
+      return AuthenticationInteractionRequestResult.clientError(
+          response,
+          type,
+          operationType(),
+          method(),
+          DefaultSecurityEventType.sms_verification_challenge_failure);
+    } catch (IllegalArgumentException validationException) {
+      // Issue #1008: Handle validation errors from getValueAsString()
+      log.warn("Request validation failed: {}", validationException.getMessage());
+
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "invalid_request");
+      response.put("error_description", validationException.getMessage());
+
       return AuthenticationInteractionRequestResult.clientError(
           response,
           type,

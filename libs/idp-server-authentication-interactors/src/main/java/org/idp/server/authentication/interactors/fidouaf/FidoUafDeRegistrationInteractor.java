@@ -78,78 +78,94 @@ public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor
       RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
-    log.debug("FidoUafDeRegistrationInteractor called");
+    try {
+      log.debug("FidoUafDeRegistrationInteractor called");
 
-    AuthenticationConfiguration configuration =
-        configurationQueryRepository.get(tenant, "fido-uaf");
-    AuthenticationInteractionConfig authenticationInteractionConfig =
-        configuration.getAuthenticationConfig("fido-uaf-deregistration");
-    AuthenticationExecutionConfig execution = authenticationInteractionConfig.execution();
-    AuthenticationExecutor executor = authenticationExecutors.get(execution.function());
+      AuthenticationConfiguration configuration =
+          configurationQueryRepository.get(tenant, "fido-uaf");
+      AuthenticationInteractionConfig authenticationInteractionConfig =
+          configuration.getAuthenticationConfig("fido-uaf-deregistration");
+      AuthenticationExecutionConfig execution = authenticationInteractionConfig.execution();
+      AuthenticationExecutor executor = authenticationExecutors.get(execution.function());
 
-    Map<String, Object> executionRequest = new HashMap<>(request.toMap());
-    Map<String, Object> additionalRequests =
-        additionalRequestResolvers.resolveAll(tenant, type, request, transaction);
-    executionRequest.putAll(additionalRequests);
+      Map<String, Object> executionRequest = new HashMap<>(request.toMap());
+      Map<String, Object> additionalRequests =
+          additionalRequestResolvers.resolveAll(tenant, type, request, transaction);
+      executionRequest.putAll(additionalRequests);
 
-    AuthenticationExecutionRequest authenticationExecutionRequest =
-        new AuthenticationExecutionRequest(executionRequest);
-    AuthenticationExecutionResult executionResult =
-        executor.execute(
-            tenant,
-            transaction.identifier(),
-            authenticationExecutionRequest,
-            requestAttributes,
-            execution);
+      AuthenticationExecutionRequest authenticationExecutionRequest =
+          new AuthenticationExecutionRequest(executionRequest);
+      AuthenticationExecutionResult executionResult =
+          executor.execute(
+              tenant,
+              transaction.identifier(),
+              authenticationExecutionRequest,
+              requestAttributes,
+              execution);
 
-    // Apply response mapping configuration
-    AuthenticationResponseConfig responseConfig = authenticationInteractionConfig.response();
-    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(executionResult.contents());
-    JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
-    Map<String, Object> contents =
-        MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
+      // Apply response mapping configuration
+      AuthenticationResponseConfig responseConfig = authenticationInteractionConfig.response();
+      JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(executionResult.contents());
+      JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
+      Map<String, Object> contents =
+          MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
 
-    if (executionResult.isClientError()) {
+      if (executionResult.isClientError()) {
 
-      log.warn("FIDO-UAF deregistration failed. Client error: {}", executionResult.contents());
+        log.warn("FIDO-UAF deregistration failed. Client error: {}", executionResult.contents());
+
+        return AuthenticationInteractionRequestResult.clientError(
+            contents,
+            type,
+            operationType(),
+            method(),
+            DefaultSecurityEventType.fido_uaf_deregistration_failure);
+      }
+
+      if (executionResult.isServerError()) {
+
+        log.warn("FIDO-UAF deregistration failed. Server error: {}", executionResult.contents());
+
+        return AuthenticationInteractionRequestResult.serverError(
+            contents,
+            type,
+            operationType(),
+            method(),
+            DefaultSecurityEventType.fido_uaf_deregistration_failure);
+      }
+
+      String deviceId = request.getValueAsString("device_id");
+      User user = transaction.user();
+
+      User removedDeviceUser = user.removeAuthenticationDevice(deviceId);
+
+      log.debug(
+          "FIDO-UAF deregistration succeeded for user: {}, device: {}",
+          removedDeviceUser.sub(),
+          deviceId);
+
+      return new AuthenticationInteractionRequestResult(
+          AuthenticationInteractionStatus.SUCCESS,
+          type,
+          operationType(),
+          method(),
+          removedDeviceUser,
+          contents,
+          DefaultSecurityEventType.fido_uaf_deregistration_success);
+    } catch (IllegalArgumentException validationException) {
+      // Issue #1008: Handle validation errors from getValueAsString()
+      log.warn("Request validation failed: {}", validationException.getMessage());
+
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "invalid_request");
+      response.put("error_description", validationException.getMessage());
 
       return AuthenticationInteractionRequestResult.clientError(
-          contents,
+          response,
           type,
           operationType(),
           method(),
           DefaultSecurityEventType.fido_uaf_deregistration_failure);
     }
-
-    if (executionResult.isServerError()) {
-
-      log.warn("FIDO-UAF deregistration failed. Server error: {}", executionResult.contents());
-
-      return AuthenticationInteractionRequestResult.serverError(
-          contents,
-          type,
-          operationType(),
-          method(),
-          DefaultSecurityEventType.fido_uaf_deregistration_failure);
-    }
-
-    String deviceId = request.getValueAsString("device_id");
-    User user = transaction.user();
-
-    User removedDeviceUser = user.removeAuthenticationDevice(deviceId);
-
-    log.debug(
-        "FIDO-UAF deregistration succeeded for user: {}, device: {}",
-        removedDeviceUser.sub(),
-        deviceId);
-
-    return new AuthenticationInteractionRequestResult(
-        AuthenticationInteractionStatus.SUCCESS,
-        type,
-        operationType(),
-        method(),
-        removedDeviceUser,
-        contents,
-        DefaultSecurityEventType.fido_uaf_deregistration_success);
   }
 }

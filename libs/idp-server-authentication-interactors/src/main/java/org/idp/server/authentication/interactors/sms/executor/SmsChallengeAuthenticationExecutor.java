@@ -16,6 +16,7 @@
 
 package org.idp.server.authentication.interactors.sms.executor;
 
+import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.authentication.interactors.email.OneTimePassword;
 import org.idp.server.authentication.interactors.email.OneTimePasswordGenerator;
@@ -65,36 +66,45 @@ public class SmsChallengeAuthenticationExecutor implements AuthenticationExecuto
       RequestAttributes requestAttributes,
       AuthenticationExecutionConfig configuration) {
 
-    Map<String, Object> detail = configuration.details();
-    SmsAuthenticationConfiguration smsAuthenticationConfiguration =
-        jsonConverter.read(detail, SmsAuthenticationConfiguration.class);
+    try {
+      Map<String, Object> detail = configuration.details();
+      SmsAuthenticationConfiguration smsAuthenticationConfiguration =
+          jsonConverter.read(detail, SmsAuthenticationConfiguration.class);
 
-    OneTimePassword oneTimePassword = OneTimePasswordGenerator.generate();
-    SmslVerificationTemplate verificationTemplate =
-        smsAuthenticationConfiguration.findTemplate(
-            request.optValueAsString("template", "authentication"));
-    int retryCountLimitation = smsAuthenticationConfiguration.retryCountLimitation();
-    int expireSeconds = smsAuthenticationConfiguration.expireSeconds();
-    String phoneNumber = request.getValueAsString("phone_number");
-    String body = verificationTemplate.interpolateBody(oneTimePassword.value(), expireSeconds);
+      OneTimePassword oneTimePassword = OneTimePasswordGenerator.generate();
+      SmslVerificationTemplate verificationTemplate =
+          smsAuthenticationConfiguration.findTemplate(
+              request.optValueAsString("template", "authentication"));
+      int retryCountLimitation = smsAuthenticationConfiguration.retryCountLimitation();
+      int expireSeconds = smsAuthenticationConfiguration.expireSeconds();
+      String phoneNumber = request.getValueAsString("phone_number");
+      String body = verificationTemplate.interpolateBody(oneTimePassword.value(), expireSeconds);
 
-    SmsSendingRequest sendingRequest = new SmsSendingRequest(phoneNumber, body);
+      SmsSendingRequest sendingRequest = new SmsSendingRequest(phoneNumber, body);
 
-    SmsSender smsSender = smsSenders.get(smsAuthenticationConfiguration.senderType());
-    SmsSendResult sendResult =
-        smsSender.send(sendingRequest, smsAuthenticationConfiguration.settings());
+      SmsSender smsSender = smsSenders.get(smsAuthenticationConfiguration.senderType());
+      SmsSendResult sendResult =
+          smsSender.send(sendingRequest, smsAuthenticationConfiguration.settings());
 
-    if (sendResult.isError()) {
+      if (sendResult.isError()) {
 
-      return AuthenticationExecutionResult.clientError(sendResult.data());
+        return AuthenticationExecutionResult.clientError(sendResult.data());
+      }
+
+      SmsVerificationChallenge verificationChallenge =
+          SmsVerificationChallenge.create(oneTimePassword, retryCountLimitation, expireSeconds);
+
+      interactionCommandRepository.register(
+          tenant, identifier, "sms-authentication-challenge", verificationChallenge);
+
+      return AuthenticationExecutionResult.success(Map.of());
+    } catch (IllegalArgumentException validationException) {
+      // Issue #1008: Handle validation errors from getValueAsString()
+      Map<String, Object> errorResponse = new HashMap<>();
+      errorResponse.put("error", "invalid_request");
+      errorResponse.put("error_description", validationException.getMessage());
+
+      return AuthenticationExecutionResult.clientError(errorResponse);
     }
-
-    SmsVerificationChallenge verificationChallenge =
-        SmsVerificationChallenge.create(oneTimePassword, retryCountLimitation, expireSeconds);
-
-    interactionCommandRepository.register(
-        tenant, identifier, "sms-authentication-challenge", verificationChallenge);
-
-    return AuthenticationExecutionResult.success(Map.of());
   }
 }
