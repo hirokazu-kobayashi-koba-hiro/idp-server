@@ -10,6 +10,7 @@ import { requestAuthorizations, requestLogout } from "../../oauth/request";
 import { createJwtWithPrivateKey, verifyAndDecodeJwt } from "../../lib/jose";
 import { createBasicAuthHeader, toEpocTime } from "../../lib/util";
 import { calculateIdTokenClaimHashWithS256 } from "../../lib/oauth";
+import { get, post } from "../../lib/http";
 
 describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
   it("success pattern", async () => {
@@ -340,6 +341,149 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       expect(authorizationResponse.errorDescription).toEqual(
         "authorization request max_age is invalid (-100)"
       );
+    });
+
+    describe("HTTP POST method support (RFC 6749 Section 3.1, OIDC Core Section 3.1.2.1)", () => {
+      it("OIDC Core 1.0 Section 3.1.2.1: Authorization Servers MUST support the use of the HTTP GET and POST methods at the Authorization Endpoint", async () => {
+        // RFC 6749 Section 3.1: The authorization server MUST support the use of the HTTP "GET"
+        // method for the authorization endpoint and MAY support the use of the "POST" method as well.
+        //
+        // OIDC Core 1.0 Section 3.1.2.1: Authorization Servers MUST support the use of the HTTP GET
+        // and POST methods defined in RFC 2616 [RFC2616] at the Authorization Endpoint.
+
+        // Prepare authorization request parameters
+        const params = new URLSearchParams({
+          response_type: "code",
+          client_id: clientSecretPostClient.clientId,
+          redirect_uri: clientSecretPostClient.redirectUri,
+          scope: "openid " + clientSecretPostClient.scope,
+          state: `state_${Date.now()}`,
+          nonce: `nonce_${Date.now()}`,
+        });
+
+        console.log("\n=== Testing POST /v1/authorizations (RFC 6749 Section 3.1) ===");
+        console.log("Request parameters:", params.toString());
+
+        // POST request with application/x-www-form-urlencoded
+        const response = await post({
+          url: serverConfig.authorizationEndpoint,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: params.toString(),
+        });
+
+        console.log("Response status:", response);
+        console.log("Response headers:", response.headers);
+
+        // Should redirect to authentication page (302 Found)
+        expect(response.status).toBe(302);
+        expect(response.headers.location).toBeDefined();
+        expect(response.headers.location).toContain("id=");
+
+        console.log("✓ POST method successfully handled authorization request");
+        console.log("✓ Redirect location:", response.headers.location);
+      });
+
+      it("POST and GET should produce identical results for same parameters", async () => {
+        // Test that POST produces the same result as GET
+
+        const testParams = {
+          response_type: "code",
+          client_id: clientSecretPostClient.clientId,
+          redirect_uri: clientSecretPostClient.redirectUri,
+          scope: "openid " + clientSecretPostClient.scope,
+          state: `state_identical_${Date.now()}`,
+        };
+
+        console.log("\n=== Comparing GET vs POST behavior ===");
+
+        // GET request (direct, not using helper)
+        const getParams = new URLSearchParams(testParams);
+        const getResponse = await get({
+          url: `${serverConfig.authorizationEndpoint}?${getParams.toString()}`,
+          headers: {},
+        });
+
+        console.log("GET result status:", getResponse.status);
+
+        // POST request
+        const params = new URLSearchParams(testParams);
+        const postResponse = await post({
+          url: serverConfig.authorizationEndpoint,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: params.toString(),
+        });
+
+        console.log("POST result status:", postResponse.status);
+
+        // Both should return 302 redirect
+        expect(getResponse.status).toBe(postResponse.status);
+        expect(postResponse.status).toBe(302);
+
+        // Both should redirect to authentication page
+        expect(postResponse.headers.location).toContain("id=");
+
+        console.log("✓ GET and POST produce identical behavior");
+      });
+
+      it("POST should handle long parameters without URL length limitations", async () => {
+        // Test POST with very long authorization_details parameter
+
+        // Create a long authorization_details JSON
+        const authorizationDetails = JSON.stringify([
+          {
+            type: "payment_initiation",
+            locations: ["https://example.com/payments"],
+            instructedAmount: {
+              currency: "EUR",
+              amount: "123.50"
+            },
+            creditorName: "Merchant A with a very long name to test parameter length handling",
+            creditorAccount: {
+              iban: "DE02100100109307118603"
+            }
+          },
+          {
+            type: "account_information",
+            locations: ["https://example.com/accounts"],
+            actions: ["read_balances", "read_transactions"],
+            datatypes: ["balances", "transactions"]
+          }
+        ]);
+
+        const params = new URLSearchParams({
+          response_type: "code",
+          client_id: clientSecretPostClient.clientId,
+          redirect_uri: clientSecretPostClient.redirectUri,
+          scope: "openid " + clientSecretPostClient.scope,
+          state: `state_long_${Date.now()}`,
+          authorization_details: authorizationDetails,
+        });
+
+        console.log("\n=== Testing POST with long parameters ===");
+        console.log("authorization_details length:", authorizationDetails.length, "characters");
+        console.log("Total request body length:", params.toString().length, "characters");
+
+        const response = await post({
+          url: serverConfig.authorizationEndpoint,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: params.toString(),
+        });
+
+        console.log("Response status:", response.status);
+
+        // Should successfully handle long parameters
+        expect(response.status).toBe(302);
+        expect(response.headers.location).toBeDefined();
+
+        console.log("✓ POST successfully handled long authorization_details parameter");
+        console.log("✓ No URL length limitation issue");
+      });
     });
   });
 

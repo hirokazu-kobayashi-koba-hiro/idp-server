@@ -21,10 +21,10 @@ export const get = async ({ url, headers }) => {
 export const post = async ({ url, headers, body }) => {
   try {
     return await client.post(url, body, {
+      maxRedirects: 0,
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
         ...headers,
-        maxRedirects: 0,
       },
       withCredentials: true
     });
@@ -36,6 +36,7 @@ export const post = async ({ url, headers, body }) => {
 export const postWithJson = async ({ url, headers, body }) => {
   try {
     return await client.post(url, body, {
+      maxRedirects: 0,
       headers,
       withCredentials: true
     });

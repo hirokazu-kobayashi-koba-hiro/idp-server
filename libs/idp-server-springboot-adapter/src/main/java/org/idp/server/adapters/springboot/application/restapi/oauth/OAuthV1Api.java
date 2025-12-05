@@ -78,6 +78,37 @@ public class OAuthV1Api implements ParameterTransformable, SecurityHeaderConfigu
       @RequestParam(required = false) MultiValueMap<String, String> request,
       HttpServletRequest httpServletRequest) {
 
+    return handleAuthorizationRequest(tenantIdentifier, request, httpServletRequest);
+  }
+
+  @PostMapping(consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+  public ResponseEntity<?> post(
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestParam(required = false) MultiValueMap<String, String> request,
+      HttpServletRequest httpServletRequest) {
+
+    return handleAuthorizationRequest(tenantIdentifier, request, httpServletRequest);
+  }
+
+  /**
+   * Handle authorization request (common logic for GET and POST).
+   *
+   * <p>RFC 6749 Section 3.1: The authorization server MUST support the use of the HTTP "GET" method
+   * for the authorization endpoint and MAY support the use of the "POST" method as well.
+   *
+   * <p>OIDC Core 1.0 Section 3.1.2.1: Authorization Servers MUST support the use of the HTTP GET
+   * and POST methods at the Authorization Endpoint.
+   *
+   * @param tenantIdentifier tenant identifier
+   * @param request request parameters
+   * @param httpServletRequest HTTP servlet request
+   * @return authorization response
+   */
+  private ResponseEntity<?> handleAuthorizationRequest(
+      TenantIdentifier tenantIdentifier,
+      MultiValueMap<String, String> request,
+      HttpServletRequest httpServletRequest) {
+
     Map<String, String[]> params = transform(request);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
