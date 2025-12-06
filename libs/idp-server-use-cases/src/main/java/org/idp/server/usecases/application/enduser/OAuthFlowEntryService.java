@@ -19,7 +19,6 @@ package org.idp.server.usecases.application.enduser;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import org.idp.server.core.openid.authentication.*;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
@@ -39,7 +38,6 @@ import org.idp.server.core.openid.identity.event.UserLifecycleType;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.*;
-import org.idp.server.core.openid.oauth.exception.OAuthAuthorizeBadRequestException;
 import org.idp.server.core.openid.oauth.io.*;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
@@ -347,10 +345,17 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
         oAuthProtocol.get(tenant, authorizationRequestIdentifier);
     OAuthSession session = oAuthSessionDelegate.find(authorizationRequest.sessionKey());
 
-    if (Objects.isNull(session)
-        || session.isExpire(SystemDateTime.now())
-        || Objects.isNull(session.user())) {
-      throw new OAuthAuthorizeBadRequestException("invalid_request", "session expired");
+    if (!session.exists() || session.isExpire(SystemDateTime.now())) {
+
+      eventPublisher.publish(
+          tenant,
+          authorizationRequest,
+          session.user(),
+          DefaultSecurityEventType.oauth_authorize_with_session_expired.toEventType(),
+          requestAttributes);
+
+      return new OAuthAuthorizeResponse(
+          OAuthAuthorizeStatus.BAD_REQUEST, "invalid_request", "session expired");
     }
 
     OAuthAuthorizeRequest authAuthorizeRequest =
@@ -362,12 +367,21 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
 
     OAuthAuthorizeResponse authorize = oAuthProtocol.authorize(authAuthorizeRequest);
 
-    eventPublisher.publish(
-        tenant,
-        authorizationRequest,
-        session.user(),
-        DefaultSecurityEventType.oauth_authorize_with_session.toEventType(),
-        requestAttributes);
+    if (authorize.isOk()) {
+      eventPublisher.publish(
+          tenant,
+          authorizationRequest,
+          session.user(),
+          DefaultSecurityEventType.oauth_authorize_with_session.toEventType(),
+          requestAttributes);
+    } else {
+      eventPublisher.publish(
+          tenant,
+          authorizationRequest,
+          session.user(),
+          DefaultSecurityEventType.authorize_failure.toEventType(),
+          requestAttributes);
+    }
 
     return authorize;
   }
