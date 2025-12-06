@@ -51,12 +51,12 @@ PUT  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authenti
 
 ```json
 {
-  "password": {
+  "password-authentication": {
     "success_count": 0,
     "failure_count": 2,
     "last_attempt_at": "2025-10-13T10:00:00Z"
   },
-  "sms": {
+  "sms-authentication": {
     "success_count": 1,
     "failure_count": 0
   }
@@ -67,9 +67,9 @@ PUT  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authenti
 
 | JSONPath | 意味 | 例の値 |
 |----------|------|-------|
-| `$.password.success_count` | password認証の成功回数 | `0` |
-| `$.password.failure_count` | password認証の失敗回数 | `2` |
-| `$.sms.success_count` | SMS認証の成功回数 | `1` |
+| `$.password-authentication.success_count` | password認証の成功回数 | `0` |
+| `$.password-authentication.failure_count` | password認証の失敗回数 | `2` |
+| `$.sms-authentication.success_count` | SMS認証の成功回数 | `1` |
 
 ---
 
@@ -77,14 +77,14 @@ PUT  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authenti
 
 ```json
 {
-  "path": "$.password.success_count",  // 何をチェックするか
-  "type": "integer",                   // 値の型
-  "operation": "gte",                  // 比較演算子（>=）
-  "value": 1                           // 期待値
+  "path": "$.password-authentication.success_count",  // 何をチェックするか
+  "type": "integer",                                  // 値の型
+  "operation": "gte",                                 // 比較演算子（>=）
+  "value": 1                                          // 期待値
 }
 ```
 
-**意味**: `password.success_count >= 1`
+**意味**: `password-authentication.success_count >= 1`
 
 ---
 
@@ -110,7 +110,7 @@ PUT  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authenti
   "any_of": [
     [
       {
-        "path": "$.password.success_count",
+        "path": "$.password-authentication.success_count",
         "type": "integer",
         "operation": "gte",
         "value": 1
@@ -124,7 +124,7 @@ PUT  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authenti
 
 **フロー**:
 ```
-password成功 → password.success_count = 1
+password成功 → password-authentication.success_count = 1
   → 1 >= 1 → 条件満たす
   → 認証完了
 ```
@@ -138,7 +138,7 @@ password成功 → password.success_count = 1
   "any_of": [
     [
       {
-        "path": "$.password.success_count",
+        "path": "$.password-authentication.success_count",
         "type": "integer",
         "operation": "gte",
         "value": 1
@@ -146,7 +146,7 @@ password成功 → password.success_count = 1
     ],
     [
       {
-        "path": "$.sms.success_count",
+        "path": "$.sms-authentication.success_count",
         "type": "integer",
         "operation": "gte",
         "value": 1
@@ -161,11 +161,11 @@ password成功 → password.success_count = 1
 **フロー**:
 ```
 Case 1: password成功
-  → password.success_count = 1
+  → password-authentication.success_count = 1
   → 条件満たす → 認証完了
 
 Case 2: sms成功
-  → sms.success_count = 1
+  → sms-authentication.success_count = 1
   → 条件満たす → 認証完了
 ```
 
@@ -178,13 +178,13 @@ Case 2: sms成功
   "any_of": [
     [
       {
-        "path": "$.password.success_count",
+        "path": "$.password-authentication.success_count",
         "type": "integer",
         "operation": "gte",
         "value": 1
       },
       {
-        "path": "$.sms.success_count",
+        "path": "$.sms-authentication.success_count",
         "type": "integer",
         "operation": "gte",
         "value": 1
@@ -198,8 +198,8 @@ Case 2: sms成功
 
 **フロー**:
 ```
-password成功 → password.success_count = 1
-sms成功 → sms.success_count = 1
+password成功 → password-authentication.success_count = 1
+sms成功 → sms-authentication.success_count = 1
   → 両方 >= 1 → 条件満たす
   → 認証完了
 ```
@@ -213,7 +213,7 @@ sms成功 → sms.success_count = 1
   "any_of": [
     [
       {
-        "path": "$.webauthn.success_count",
+        "path": "$.fido2-authentication.success_count",
         "type": "integer",
         "operation": "gte",
         "value": 1
@@ -221,13 +221,13 @@ sms成功 → sms.success_count = 1
     ],
     [
       {
-        "path": "$.password.success_count",
+        "path": "$.password-authentication.success_count",
         "type": "integer",
         "operation": "gte",
         "value": 1
       },
       {
-        "path": "$.sms.success_count",
+        "path": "$.sms-authentication.success_count",
         "type": "integer",
         "operation": "gte",
         "value": 1
@@ -237,11 +237,11 @@ sms成功 → sms.success_count = 1
 }
 ```
 
-**意味**: WebAuthn成功 **OR** （パスワード成功 **AND** SMS成功）
+**意味**: FIDO2成功 **OR** （パスワード成功 **AND** SMS成功）
 
 **フロー**:
 ```
-Case 1: WebAuthnのみで認証完了
+Case 1: FIDO2のみで認証完了
 Case 2: パスワード + SMS OTPで認証完了
 ```
 
@@ -262,14 +262,22 @@ Case 2: パスワード + SMS OTPで認証完了
       "conditions": {},
       "available_methods": ["password"],
       "success_conditions": {
-        "type": "all",
-        "authentication_methods": ["password"]
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
       },
       "failure_conditions": {
         "any_of": [
           [
             {
-              "path": "$.password.failure_count",
+              "path": "$.password-authentication.failure_count",
               "type": "integer",
               "operation": "gte",
               "value": 5
@@ -294,15 +302,6 @@ Case 2: パスワード + SMS OTPで認証完了
   → 認証失敗エラー
 ```
 
-**レスポンス**:
-```json
-{
-  "error": "authentication_failed",
-  "error_description": "Maximum authentication attempts exceeded",
-  "remaining_attempts": 0
-}
-```
-
 ---
 
 ## Level 4: lock_conditions（アカウントロック）
@@ -320,14 +319,22 @@ Case 2: パスワード + SMS OTPで認証完了
       "conditions": {},
       "available_methods": ["password"],
       "success_conditions": {
-        "type": "all",
-        "authentication_methods": ["password"]
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
       },
       "failure_conditions": {
         "any_of": [
           [
             {
-              "path": "$.password.failure_count",
+              "path": "$.password-authentication.failure_count",
               "type": "integer",
               "operation": "gte",
               "value": 3
@@ -339,7 +346,7 @@ Case 2: パスワード + SMS OTPで認証完了
         "any_of": [
           [
             {
-              "path": "$.password.failure_count",
+              "path": "$.password-authentication.failure_count",
               "type": "integer",
               "operation": "gte",
               "value": 5
@@ -401,7 +408,7 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
         "fido-uaf"
       ],
       "acr_mapping_rules": {
-        "urn:mace:incommon:iap:gold": ["fido-uaf", "webauthn"],
+        "urn:mace:incommon:iap:gold": ["fido-uaf", "fido2"],
         "urn:mace:incommon:iap:silver": ["oidc-external-idp"],
         "urn:mace:incommon:iap:bronze": ["external-token"]
       },
@@ -481,7 +488,7 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
    - アカウントはロックされない
 
 5. **ACRマッピング**:
-   - FIDO UAF/WebAuthn → gold（高）
+   - FIDO UAF/FIDO2 → gold（高）
    - Email/SMS → silver（中）
    - Password/External Token → bronze（低）
 
@@ -535,7 +542,7 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
   "any_of": [
     [
       {
-        "path": "$.password.success_count",
+        "path": "$.password-authentication.success_count",
         "type": "integer",
         "operation": "gte",
         "value": 1
@@ -543,7 +550,7 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
     ],
     [
       {
-        "path": "$.sms.success_count",
+        "path": "$.sms-authentication.success_count",
         "type": "integer",
         "operation": "gte",
         "value": 1
@@ -555,14 +562,14 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
 
 ---
 
-### 例2: （パスワード成功 AND SMS成功）OR WebAuthn成功
+### 例2: （パスワード成功 AND SMS成功）OR FIDO2成功
 
 ```json
 "success_conditions": {
   "any_of": [
     [
       {
-        "path": "$.webauthn.success_count",
+        "path": "$.fido2-authentication.success_count",
         "type": "integer",
         "operation": "gte",
         "value": 1
@@ -570,13 +577,13 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
     ],
     [
       {
-        "path": "$.password.success_count",
+        "path": "$.password-authentication.success_count",
         "type": "integer",
         "operation": "gte",
         "value": 1
       },
       {
-        "path": "$.sms.success_count",
+        "path": "$.sms-authentication.success_count",
         "type": "integer",
         "operation": "gte",
         "value": 1
@@ -587,7 +594,7 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
 ```
 
 **意味**:
-- WebAuthnだけで認証完了（高セキュリティ）
+- FIDO2だけで認証完了（高セキュリティ）
 - または、パスワード + SMS OTPで認証完了（標準MFA）
 
 ---
@@ -599,7 +606,7 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
   "any_of": [
     [
       {
-        "path": "$.password.failure_count",
+        "path": "$.password-authentication.failure_count",
         "type": "integer",
         "operation": "gte",
         "value": 3
@@ -607,7 +614,7 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
     ],
     [
       {
-        "path": "$.sms.failure_count",
+        "path": "$.sms-authentication.failure_count",
         "type": "integer",
         "operation": "gte",
         "value": 5
@@ -628,7 +635,7 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
   "any_of": [
     [
       {
-        "path": "$.password.failure_count",
+        "path": "$.password-authentication.failure_count",
         "type": "integer",
         "operation": "gte",
         "value": 5
@@ -667,7 +674,7 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
 
 ```json
 "acr_mapping_rules": {
-  "urn:mace:incommon:iap:gold": ["webauthn", "fido-uaf"],
+  "urn:mace:incommon:iap:gold": ["fido2", "fido-uaf"],
   "urn:mace:incommon:iap:silver": ["sms", "email", "totp"],
   "urn:mace:incommon:iap:bronze": ["password"]
 }
@@ -675,7 +682,7 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
 
 **動作**:
 ```
-WebAuthn認証成功
+FIDO2認証成功
   → ACR: urn:mace:incommon:iap:gold
   → ID Token.acr = "urn:mace:incommon:iap:gold"
 
@@ -718,13 +725,15 @@ client_id=${CLIENT_ID}&\
 acr_values=urn:mace:incommon:iap:gold"  # gold レベル必須
 ```
 
-**効果**: gold レベルの認証方式（WebAuthn等）のみ許可される
+**効果**: gold レベルの認証方式（FIDO2等）のみ許可される
 
 ---
 
 ## Level 4: 条件（conditions）によるポリシー分岐
 
 ### クライアント別ポリシー
+
+**重要**: priorityは**値が大きいほど優先度が高い**です（100 > 50 > 1）。
 
 ```json
 {
@@ -733,36 +742,72 @@ acr_values=urn:mace:incommon:iap:gold"  # gold レベル必須
   "policies": [
     {
       "description": "admin app - high security",
-      "priority": 1,
+      "priority": 100,
       "conditions": {
         "client_ids": ["admin-app", "super-admin-app"]
       },
-      "available_methods": ["password", "webauthn"],
+      "available_methods": ["password", "fido2"],
       "success_conditions": {
-        "type": "all",
-        "authentication_methods": ["password", "webauthn"]
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            },
+            {
+              "path": "$.fido2-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
       }
     },
     {
       "description": "normal app - standard security",
-      "priority": 2,
+      "priority": 50,
       "conditions": {
         "client_ids": ["user-app"]
       },
       "available_methods": ["password", "sms"],
       "success_conditions": {
-        "type": "all",
-        "authentication_methods": ["password", "sms"]
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            },
+            {
+              "path": "$.sms-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
       }
     },
     {
       "description": "default - password only",
-      "priority": 999,
+      "priority": 1,
       "conditions": {},
       "available_methods": ["password"],
       "success_conditions": {
-        "type": "all",
-        "authentication_methods": ["password"]
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
       }
     }
   ]
@@ -772,15 +817,15 @@ acr_values=urn:mace:incommon:iap:gold"  # gold レベル必須
 **動作**:
 ```
 admin-app からのリクエスト
-  → priority 1 にマッチ（client_ids条件）
-  → パスワード + WebAuthn必須
+  → priority 100 にマッチ（client_ids条件、最高優先度）
+  → パスワード + FIDO2必須
 
 user-app からのリクエスト
-  → priority 2 にマッチ
+  → priority 50 にマッチ
   → パスワード + SMS OTP必須
 
 other-app からのリクエスト
-  → priority 999 にマッチ（デフォルト）
+  → priority 1 にマッチ（デフォルト、最低優先度）
   → パスワードのみ
 ```
 
@@ -791,14 +836,28 @@ other-app からのリクエスト
 ```json
 {
   "description": "sensitive scope requires high auth",
-  "priority": 1,
+  "priority": 100,
   "conditions": {
     "scopes": ["admin", "delete", "update_sensitive"]
   },
-  "available_methods": ["password", "webauthn"],
+  "available_methods": ["password", "fido2"],
   "success_conditions": {
-    "type": "all",
-    "authentication_methods": ["password", "webauthn"]
+    "any_of": [
+      [
+        {
+          "path": "$.password-authentication.success_count",
+          "type": "integer",
+          "operation": "gte",
+          "value": 1
+        },
+        {
+          "path": "$.fido2-authentication.success_count",
+          "type": "integer",
+          "operation": "gte",
+          "value": 1
+        }
+      ]
+    ]
   }
 }
 ```
@@ -806,11 +865,11 @@ other-app からのリクエスト
 **動作**:
 ```
 scope=admin を要求
-  → priority 1 にマッチ
-  → パスワード + WebAuthn必須（高セキュリティ）
+  → priority 100 にマッチ（最高優先度）
+  → パスワード + FIDO2必須（高セキュリティ）
 
 scope=read を要求
-  → マッチせず、デフォルトポリシー
+  → マッチせず、デフォルトポリシー（低いpriority）
   → パスワードのみ
 ```
 
@@ -833,10 +892,10 @@ scope=read を要求
 **例**:
 ```json
 // ❌ 間違い
-"path": "password.success_count"  // $ がない
+"path": "password-authentication.success_count"  // $ がない
 
 // ✅ 正しい
-"path": "$.password.success_count"
+"path": "$.password-authentication.success_count"
 ```
 
 ---
@@ -858,7 +917,7 @@ scope=read を要求
 // ❌ 間違い: 単一配列
 "any_of": [
   {
-    "path": "$.password.success_count",
+    "path": "$.password-authentication.success_count",
     ...
   }
 ]
@@ -867,7 +926,7 @@ scope=read を要求
 "any_of": [
   [
     {
-      "path": "$.password.success_count",
+      "path": "$.password-authentication.success_count",
       ...
     }
   ]
@@ -884,12 +943,12 @@ scope=read を要求
 ```json
 "failure_conditions": {
   "any_of": [[
-    { "path": "$.password.failure_count", "operation": "gte", "value": 5 }
+    { "path": "$.password-authentication.failure_count", "operation": "gte", "value": 5 }
   ]]
 },
 "lock_conditions": {
   "any_of": [[
-    { "path": "$.password.failure_count", "operation": "gte", "value": 3 }
+    { "path": "$.password-authentication.failure_count", "operation": "gte", "value": 3 }
   ]]
 }
 ```

@@ -62,8 +62,16 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
         "conditions": {},
         "available_methods": ["password"],
         "success_conditions": {
-          "type": "all",
-          "authentication_methods": ["password"]
+          "any_of": [
+            [
+              {
+                "path": "$.password-authentication.success_count",
+                "type": "integer",
+                "operation": "gte",
+                "value": 1
+              }
+            ]
+          ]
         }
       }
     ]
@@ -73,8 +81,8 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 **設定内容**:
 - `flow: "oauth"` - OAuth/OIDC認証フローで使用
 - `available_methods: ["password"]` - パスワード認証のみ許可
-- `success_conditions.type: "all"` - 指定した全ての認証方式が必要
-- `authentication_methods: ["password"]` - パスワード認証が成功すれば完了
+- `success_conditions.any_of` - 成功条件の配列（外側はOR、内側はAND）
+- `$.password-authentication.success_count >= 1` - パスワード認証が1回以上成功すれば完了
 
 ---
 
@@ -96,8 +104,22 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
         "conditions": {},
         "available_methods": ["password", "sms"],
         "success_conditions": {
-          "type": "all",
-          "authentication_methods": ["password", "sms"]
+          "any_of": [
+            [
+              {
+                "path": "$.password-authentication.success_count",
+                "type": "integer",
+                "operation": "gte",
+                "value": 1
+              },
+              {
+                "path": "$.sms-authentication.success_count",
+                "type": "integer",
+                "operation": "gte",
+                "value": 1
+              }
+            ]
+          ]
         }
       }
     ]
@@ -106,7 +128,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 
 **設定内容**:
 - `available_methods: ["password", "sms"]` - 両方許可
-- `type: "all"` - **両方成功が必要**（MFA）
+- `any_of: [[ 条件1, 条件2 ]]` - **両方成功が必要**（内側の配列はAND条件）
 
 **認証フロー**:
 ```
@@ -138,13 +160,35 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
         "conditions": {},
         "available_methods": ["password", "sms", "email"],
         "success_conditions": {
-          "type": "all",
-          "authentication_methods": [
-            "password",
-            {
-              "type": "any",
-              "authentication_methods": ["sms", "email"]
-            }
+          "any_of": [
+            [
+              {
+                "path": "$.password-authentication.success_count",
+                "type": "integer",
+                "operation": "gte",
+                "value": 1
+              },
+              {
+                "path": "$.sms-authentication.success_count",
+                "type": "integer",
+                "operation": "gte",
+                "value": 1
+              }
+            ],
+            [
+              {
+                "path": "$.password-authentication.success_count",
+                "type": "integer",
+                "operation": "gte",
+                "value": 1
+              },
+              {
+                "path": "$.email-authentication.success_count",
+                "type": "integer",
+                "operation": "gte",
+                "value": 1
+              }
+            ]
           ]
         }
       }
@@ -155,6 +199,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 **設定内容**:
 - パスワード必須
 - SMS **または** Email（ユーザーが選択）
+- `any_of: [[ パスワード, SMS ], [ パスワード, Email ]]` - どちらかのグループを満たせばOK
 
 **認証フロー**:
 ```
@@ -170,19 +215,46 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 
 ## success_conditionsの基本
 
-### type: "all" vs "any"
-
-| type | 意味 | 例 |
-|------|------|---|
-| `all` | **全て**成功が必要 | パスワード **かつ** SMS OTP |
-| `any` | **いずれか1つ**成功でOK | パスワード **または** SMS OTP |
-
-### パターン1: type: "all"（AND条件）
+### any_of構造
 
 ```json
 {
-  "type": "all",
-  "authentication_methods": ["password", "sms"]
+  "success_conditions": {
+    "any_of": [
+      [ 条件グループ1 ],  // このグループ内の条件は全てAND
+      [ 条件グループ2 ]   // グループ間はOR
+    ]
+  }
+}
+```
+
+| 構造 | 意味 | 例 |
+|------|------|---|
+| `any_of: [[ 条件1, 条件2 ]]` | **全て**成功が必要（AND） | パスワード **かつ** SMS OTP |
+| `any_of: [[ 条件1 ], [ 条件2 ]]` | **いずれか1つ**成功でOK（OR） | パスワード **または** SMS OTP |
+
+### パターン1: AND条件（MFA）
+
+```json
+{
+  "success_conditions": {
+    "any_of": [
+      [
+        {
+          "path": "$.password-authentication.success_count",
+          "type": "integer",
+          "operation": "gte",
+          "value": 1
+        },
+        {
+          "path": "$.sms-authentication.success_count",
+          "type": "integer",
+          "operation": "gte",
+          "value": 1
+        }
+      ]
+    ]
+  }
 }
 ```
 
@@ -197,48 +269,101 @@ sms失敗 → 認証失敗
 
 ---
 
-### パターン2: type: "any"（OR条件）
+### パターン2: OR条件
 
 ```json
 {
-  "type": "any",
-  "authentication_methods": ["password", "sms", "webauthn"]
+  "success_conditions": {
+    "any_of": [
+      [
+        {
+          "path": "$.password-authentication.success_count",
+          "type": "integer",
+          "operation": "gte",
+          "value": 1
+        }
+      ],
+      [
+        {
+          "path": "$.sms-authentication.success_count",
+          "type": "integer",
+          "operation": "gte",
+          "value": 1
+        }
+      ],
+      [
+        {
+          "path": "$.fido2-authentication.success_count",
+          "type": "integer",
+          "operation": "gte",
+          "value": 1
+        }
+      ]
+    ]
+  }
 }
 ```
 
-**意味**: パスワード **OR** SMS OTP **OR** WebAuthn
+**意味**: パスワード **OR** SMS OTP **OR** FIDO2
 
 **フロー**:
 ```
-passwordで成功 → 認証完了（sms、webauthnは不要）
+passwordで成功 → 認証完了（sms、fido2は不要）
 smsで成功 → 認証完了
-webauthnで成功 → 認証完了
+fido2で成功 → 認証完了
 ```
 
 ---
 
-### パターン3: ネスト（AND + OR）
+### パターン3: AND + OR（選択式MFA）
 
 ```json
 {
-  "type": "all",
-  "authentication_methods": [
-    "password",
-    {
-      "type": "any",
-      "authentication_methods": ["sms", "email", "webauthn"]
-    }
-  ]
+  "success_conditions": {
+    "any_of": [
+      [
+        { "path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 },
+        { "path": "$.sms-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }
+      ],
+      [
+        { "path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 },
+        { "path": "$.email-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }
+      ],
+      [
+        { "path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 },
+        { "path": "$.fido2-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }
+      ]
+    ]
+  }
 }
 ```
 
-**意味**: パスワード **AND** （SMS **OR** Email **OR** WebAuthn）
+**意味**: パスワード **AND** （SMS **OR** Email **OR** FIDO2）
 
 **フロー**:
 ```
 1. password必須
-2. sms、email、webauthnのいずれか1つ
+2. sms、email、fido2のいずれか1つ
 ```
+
+---
+
+### JSONPath条件の書き方
+
+| フィールド | 説明 | 例 |
+|-----------|------|---|
+| `path` | JSONPath形式で認証結果を参照 | `$.password-authentication.success_count` |
+| `type` | 値の型 | `integer`, `string`, `boolean` |
+| `operation` | 比較演算子 | `gte`, `lte`, `eq`, `gt`, `lt` |
+| `value` | 比較する値 | `1` |
+
+**利用可能なpath例**:
+- `$.password-authentication.success_count` - パスワード認証成功回数
+- `$.sms-authentication.success_count` - SMS認証成功回数
+- `$.email-authentication.success_count` - Email認証成功回数
+- `$.fido2-authentication.success_count` - FIDO2認証成功回数
+- `$.fido-uaf-authentication.success_count` - FIDO UAF認証成功回数
+- `$.password-authentication.failure_count` - パスワード認証失敗回数
 
 ---
 
@@ -256,36 +381,46 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
     "policies": [
       {
         "description": "admin app - high security",
-        "priority": 1,
+        "priority": 100,
         "conditions": {
           "client_ids": ["admin-app"]
         },
-        "available_methods": ["password", "webauthn"],
+        "available_methods": ["password", "fido2"],
         "success_conditions": {
-          "type": "all",
-          "authentication_methods": ["password", "webauthn"]
+          "any_of": [
+            [
+              { "path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 },
+              { "path": "$.fido2-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }
+            ]
+          ]
         }
       },
       {
         "description": "normal app - standard security",
-        "priority": 2,
+        "priority": 50,
         "conditions": {
           "client_ids": ["user-app"]
         },
         "available_methods": ["password"],
         "success_conditions": {
-          "type": "all",
-          "authentication_methods": ["password"]
+          "any_of": [
+            [
+              { "path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }
+            ]
+          ]
         }
       },
       {
         "description": "default - password only",
-        "priority": 3,
+        "priority": 1,
         "conditions": {},
         "available_methods": ["password"],
         "success_conditions": {
-          "type": "all",
-          "authentication_methods": ["password"]
+          "any_of": [
+            [
+              { "path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }
+            ]
+          ]
         }
       }
     ]
@@ -295,19 +430,19 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 **動作**:
 ```
 admin-app からのリクエスト
-  → priority 1 にマッチ
-  → パスワード + WebAuthn（高セキュリティ）
+  → priority 100 にマッチ（最優先）
+  → パスワード + FIDO2（高セキュリティ）
 
 user-app からのリクエスト
-  → priority 2 にマッチ
+  → priority 50 にマッチ
   → パスワードのみ（標準セキュリティ）
 
 other-app からのリクエスト
-  → priority 3 にマッチ（デフォルト）
+  → priority 1 にマッチ（デフォルト・最低優先度）
   → パスワードのみ
 ```
 
-**重要**: priorityが**小さい**ほど優先（1 > 2 > 3）
+**重要**: priorityが**大きい**ほど優先（100 > 50 > 1）
 
 ---
 
@@ -321,7 +456,7 @@ other-app からのリクエスト
 ユーザー認証完了
   ↓
 どの認証方式を使った？
-  - WebAuthn → ACR: urn:mace:incommon:iap:gold（高）
+  - FIDO2 → ACR: urn:mace:incommon:iap:gold（高）
   - SMS OTP → ACR: urn:mace:incommon:iap:silver（中）
   - パスワード → ACR: urn:mace:incommon:iap:bronze（低）
   ↓
@@ -339,15 +474,18 @@ ID Tokenに acr クレームとして含める
       "description": "with acr mapping",
       "priority": 1,
       "conditions": {},
-      "available_methods": ["password", "sms", "webauthn"],
+      "available_methods": ["password", "sms", "fido2"],
       "acr_mapping_rules": {
-        "urn:mace:incommon:iap:gold": ["webauthn"],
+        "urn:mace:incommon:iap:gold": ["fido2"],
         "urn:mace:incommon:iap:silver": ["sms", "email"],
         "urn:mace:incommon:iap:bronze": ["password"]
       },
       "success_conditions": {
-        "type": "any",
-        "authentication_methods": ["password", "sms", "webauthn"]
+        "any_of": [
+          [{ "path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }],
+          [{ "path": "$.sms-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }],
+          [{ "path": "$.fido2-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }]
+        ]
       }
     }
   ]
@@ -356,7 +494,7 @@ ID Tokenに acr クレームとして含める
 
 **効果**:
 ```json
-// WebAuthn認証した場合のID Token
+// FIDO2認証した場合のID Token
 {
   "sub": "user-12345",
   "acr": "urn:mace:incommon:iap:gold",  // 高レベル
@@ -379,130 +517,16 @@ ID Tokenに acr クレームとして含める
 
 ---
 
-## よくあるエラー
-
-### エラー1: 認証方式が許可されていない
-
-**エラー**:
-```json
-{
-  "error": "authentication_method_not_allowed",
-  "error_description": "password authentication is not allowed"
-}
-```
-
-**原因**: `available_methods`に`password`が含まれていない
-
-**解決策**:
-```bash
-# 認証ポリシーを確認
-curl "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies/oauth" \
-  -H "Authorization: Bearer ${ADMIN_TOKEN}"
-
-# available_methodsに追加
-curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies/oauth" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer ${ADMIN_TOKEN}" \
-  -d '{
-    "flow": "oauth",
-    "enabled": true,
-    "policies": [
-      {
-        "description": "allow password",
-        "priority": 1,
-        "conditions": {},
-        "available_methods": ["password"],
-        "success_conditions": {
-          "type": "all",
-          "authentication_methods": ["password"]
-        }
-      }
-    ]
-  }'
-```
-
----
-
-### エラー2: 成功条件を満たせない
-
-**エラー**:
-```json
-{
-  "error": "authentication_incomplete",
-  "error_description": "Required authentication methods not completed"
-}
-```
-
-**原因**: `success_conditions`で指定した認証方式が完了していない
-
-**例**:
-```json
-// 設定
-"success_conditions": {
-  "type": "all",
-  "authentication_methods": ["password", "sms"]
-}
-
-// 実行
-ユーザーがパスワード認証のみ実行
-→ SMS OTP認証が未完了
-→ エラー
-```
-
-**解決策**: 全ての必須認証方式を完了する
-
----
-
-### エラー3: ポリシーが見つからない
-
-**エラー**:
-```json
-{
-  "error": "policy_not_found",
-  "error_description": "No matching authentication policy found"
-}
-```
-
-**原因**:
-- 認証ポリシーが作成されていない
-- `conditions`にマッチするポリシーがない
-
-**解決策**:
-```bash
-# デフォルトポリシーを作成（conditions: {}）
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer ${ADMIN_TOKEN}" \
-  -d '{
-    "flow": "oauth",
-    "enabled": true,
-    "policies": [
-      {
-        "description": "default policy",
-        "priority": 999,
-        "conditions": {},  // すべてにマッチ
-        "available_methods": ["password"],
-        "success_conditions": {
-          "type": "all",
-          "authentication_methods": ["password"]
-        }
-      }
-    ]
-  }'
-```
-
----
-
 ## 認証ポリシーのベストプラクティス
 
-### ✅ 推奨
+### 推奨
 
 1. **デフォルトポリシーを必ず用意**
    ```json
    {
      "description": "default - fallback policy",
      "priority": 999,
-     "conditions": {},  // すべてにマッチ
+     "conditions": {},
      ...
    }
    ```
@@ -515,16 +539,16 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 
 3. **descriptionを分かりやすく**
    ```json
-   // ✅ 良い
-   "description": "admin app - password + webauthn mfa"
+   // 良い
+   "description": "admin app - password + fido2 mfa"
 
-   // ❌ 悪い
+   // 悪い
    "description": "policy1"
    ```
 
 ---
 
-### ❌ 避けるべき設定
+### 避けるべき設定
 
 1. **デフォルトポリシーなし**
    ```json
@@ -535,29 +559,36 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
        ...
      }
    ]
-   // ❌ specific-app以外がエラーになる
+   // specific-app以外がエラーになる
    ```
 
-2. **available_methodsと success_conditionsの不一致**
+2. **available_methodsとsuccess_conditionsの不一致**
    ```json
-   // ❌ 間違い
+   // 間違い
    "available_methods": ["password"],  // パスワードのみ許可
    "success_conditions": {
-     "type": "all",
-     "authentication_methods": ["password", "sms"]  // SMSも必要？
+     "any_of": [
+       [
+         { "path": "$.password-authentication.success_count", ... },
+         { "path": "$.sms-authentication.success_count", ... }  // SMSも必要？
+       ]
+     ]
    }
    // → SMS認証ができない（available_methodsにない）
    ```
 
-3. **type: "all"とtype: "any"の混同**
+3. **AND条件とOR条件の混同**
    ```json
-   // ❌ MFAのつもりがMFAになっていない
+   // MFAのつもりがMFAになっていない
    "available_methods": ["password", "sms"],
    "success_conditions": {
-     "type": "any",  // どちらか1つでOK
-     "authentication_methods": ["password", "sms"]
+     "any_of": [
+       [{ "path": "$.password-authentication.success_count", ... }],
+       [{ "path": "$.sms-authentication.success_count", ... }]
+     ]
    }
    // → パスワードのみで認証完了（MFAではない）
+   // ※ 外側の配列はOR条件なので、どちらか1つでOKになる
    ```
 
 ---
@@ -614,10 +645,13 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
         "description": "updated policy",
         "priority": 1,
         "conditions": {},
-        "available_methods": ["password", "sms", "webauthn"],
+        "available_methods": ["password", "sms", "fido2"],
         "success_conditions": {
-          "type": "any",
-          "authentication_methods": ["password", "sms", "webauthn"]
+          "any_of": [
+            [{ "path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }],
+            [{ "path": "$.sms-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }],
+            [{ "path": "$.fido2-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }]
+          ]
         }
       }
     ]
@@ -647,7 +681,7 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
 
 ## 次のステップ
 
-✅ 基本的な認証ポリシーを設定できました！
+基本的な認証ポリシーを設定できました！
 
 ### より高度な設定
 - [How-to: 認証ポリシー詳細](./how-to-10-authentication-policy-advanced.md) - 条件式、JSONPath、failure_conditions
@@ -669,7 +703,7 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
 
 ---
 
-**最終更新**: 2025-10-13
+**最終更新**: 2025-12-06
 **難易度**: ⭐⭐☆☆☆（初級〜中級）
 **対象**: 認証ポリシーを初めて設定する管理者・開発者
-**習得スキル**: success_conditions、type: "all" vs "any"、priority、ACRマッピング基礎
+**習得スキル**: success_conditions（any_of構造）、JSONPath条件、priority、ACRマッピング基礎

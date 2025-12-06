@@ -98,16 +98,30 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
     "flow": "oauth",
     "available_methods": ["password", "sms"],
     "success_conditions": {
-      "type": "all",
-      "authentication_methods": ["password", "sms"]
+      "any_of": [
+        [
+          {
+            "path": "$.password-authentication.success_count",
+            "type": "integer",
+            "operation": "gte",
+            "value": 1
+          },
+          {
+            "path": "$.sms-authentication.success_count",
+            "type": "integer",
+            "operation": "gte",
+            "value": 1
+          }
+        ]
+      ]
     }
   }'
 ```
 
 **重要な変更点**:
 - `available_methods`: `["password"]` → `["password", "sms"]` - 両方許可
-- `type: "all"` - **両方成功**が必要（MFA）
-- `type: "any"`の場合 - どちらか1つでOK（MFAではない）
+- `any_of`の内側配列に複数条件 = **AND条件**（両方成功が必要 = MFA）
+- `any_of`の外側配列に複数グループ = **OR条件**（どれか1つでOK）
 
 ---
 
@@ -219,8 +233,12 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authentications/${AUTH_TRANS
 {
   "available_methods": ["password", "sms"],
   "success_conditions": {
-    "type": "all",
-    "authentication_methods": ["password", "sms"]
+    "any_of": [
+      [
+        { "path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 },
+        { "path": "$.sms-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }
+      ]
+    ]
   }
 }
 ```
@@ -231,31 +249,37 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authentications/${AUTH_TRANS
 {
   "available_methods": ["password", "totp"],
   "success_conditions": {
-    "type": "all",
-    "authentication_methods": ["password", "totp"]
-  }
-}
-```
-
-### パターン3: 選択式MFA（どちらか1つでOK）
-
-```json
-{
-  "available_methods": ["password", "sms", "totp"],
-  "success_conditions": {
-    "type": "all",
-    "authentication_methods": [
-      "password",
-      {
-        "type": "any",
-        "authentication_methods": ["sms", "totp"]
-      }
+    "any_of": [
+      [
+        { "path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 },
+        { "path": "$.totp-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }
+      ]
     ]
   }
 }
 ```
 
-**意味**: パスワード必須 + （SMS または TOTP）
+### パターン3: 選択式MFA（パスワード必須 + SMS または TOTP）
+
+```json
+{
+  "available_methods": ["password", "sms", "totp"],
+  "success_conditions": {
+    "any_of": [
+      [
+        { "path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 },
+        { "path": "$.sms-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }
+      ],
+      [
+        { "path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 },
+        { "path": "$.totp-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }
+      ]
+    ]
+  }
+}
+```
+
+**意味**: （パスワード + SMS）**OR**（パスワード + TOTP）
 
 ---
 
@@ -352,7 +376,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 ✅ MFA（SMS OTP）を設定できました！
 
 ### さらにセキュリティを強化
-- [How-to: FIDO2/WebAuthn設定](./how-to-13-fido-uaf-registration.md) - 生体認証
+- [How-to: FIDO2設定](./how-to-13-fido-uaf-registration.md) - 生体認証
 
 ---
 

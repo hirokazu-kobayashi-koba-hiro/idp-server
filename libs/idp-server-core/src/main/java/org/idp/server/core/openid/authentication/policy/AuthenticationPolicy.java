@@ -29,6 +29,7 @@ import org.idp.server.platform.json.JsonReadable;
 public class AuthenticationPolicy implements JsonReadable {
 
   int priority;
+  String description;
   AuthenticationPolicyCondition conditions = new AuthenticationPolicyCondition();
   List<String> availableMethods = new ArrayList<>();
   Map<String, List<String>> acrMappingRules = new HashMap<>();
@@ -47,6 +48,14 @@ public class AuthenticationPolicy implements JsonReadable {
 
   public int priority() {
     return priority;
+  }
+
+  public String description() {
+    return description;
+  }
+
+  public boolean hasDescription() {
+    return description != null && !description.isEmpty();
   }
 
   public AuthenticationPolicyCondition conditions() {
@@ -133,6 +142,8 @@ public class AuthenticationPolicy implements JsonReadable {
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
+    map.put("priority", priority);
+    if (hasDescription()) map.put("description", description);
     if (hasPolicyConditions()) map.put("conditions", conditions.toMap());
     if (hasAvailableMethods()) map.put("available_methods", availableMethods);
     if (hasAcrMappingRules()) map.put("acr_mapping_rules", acrMappingRules);
