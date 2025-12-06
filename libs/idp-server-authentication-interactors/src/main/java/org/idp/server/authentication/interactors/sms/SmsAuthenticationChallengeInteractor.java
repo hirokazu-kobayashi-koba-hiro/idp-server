@@ -97,7 +97,7 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
 
         Map<String, Object> response = new HashMap<>();
         response.put("error", "invalid_request");
-        response.put("error_description", "phoneNumber is unspecified.");
+        response.put("error_description", "phone_number is unspecified or invalid format.");
 
         return new AuthenticationInteractionRequestResult(
             AuthenticationInteractionStatus.CLIENT_ERROR,

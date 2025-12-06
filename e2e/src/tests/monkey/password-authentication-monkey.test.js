@@ -92,10 +92,8 @@ describe("Monkey test Password Authentication", () => {
         console.log("Status:", response.status);
         console.log("Response:", JSON.stringify(response.data));
 
-        // 500 errors are not acceptable
-        expect(response.status).not.toBe(500);
-        // Expect 400 series errors
-        expect([400, 401, 403]).toContain(response.status);
+        // Type mismatch should return 400 (invalid_request)
+        expect(response.status).toBe(400);
       }
     );
   });
@@ -160,10 +158,8 @@ describe("Monkey test Password Authentication", () => {
         console.log("Status:", response.status);
         console.log("Response:", JSON.stringify(response.data));
 
-        // 500 errors are not acceptable
-        expect(response.status).not.toBe(500);
-        // Expect 400 series errors or authentication failure
-        expect([400, 401, 403]).toContain(response.status);
+        // Malicious input should return 400 (invalid_request)
+        expect(response.status).toBe(400);
       }
     );
   });
@@ -213,10 +209,8 @@ describe("Monkey test Password Authentication", () => {
         console.log("Status:", response.status);
         console.log("Response:", JSON.stringify(response.data));
 
-        // 500 errors are not acceptable
-        expect(response.status).not.toBe(500);
-        // Expect success or 400 series errors
-        expect([200, 400, 401, 403]).toContain(response.status);
+        // Missing/extra fields should return 400 (invalid_request)
+        expect(response.status).toBe(400);
       }
     );
   });

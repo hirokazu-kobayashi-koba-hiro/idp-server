@@ -70,6 +70,12 @@ public class AuthenticationExecutionRequest {
 
     Object value = values.get(key);
 
+    // Null check
+    if (value == null) {
+      log.warn("Field '{}' is null. Returning default value.", key);
+      return defaultValue;
+    }
+
     // Type check (prevent ClassCastException)
     if (!(value instanceof String stringValue)) {
       log.warn(

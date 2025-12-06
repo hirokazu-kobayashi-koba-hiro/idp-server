@@ -144,19 +144,13 @@ public class OAuthRequestHandler {
 
     OAuthSession session = delegate.find(context.sessionKey());
 
-    if (session.exists()) {
+    if (session.exists() && session.hasUser()) {
       context.setSession(session);
 
       AuthorizationGranted authorizationGranted =
           grantedRepository.find(tenant, parameters.clientId(), session.user());
       context.setAuthorizationGranted(authorizationGranted);
     }
-
-    log.info(
-        "OAuth request completed: client={}, session_exists={}, auto_authorize={}",
-        parameters.clientId().value(),
-        session.exists(),
-        context.canAutomaticallyAuthorize());
 
     return context;
   }

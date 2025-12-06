@@ -98,7 +98,7 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
 
         Map<String, Object> response = new HashMap<>();
         response.put("error", "invalid_request");
-        response.put("error_description", "email is unspecified.");
+        response.put("error_description", "email is unspecified or invalid format.");
 
         return new AuthenticationInteractionRequestResult(
             AuthenticationInteractionStatus.CLIENT_ERROR,
@@ -238,7 +238,8 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
 
     // 1st factor: get from request or transaction
     if (request.containsKey("email")) {
-      String email = request.getValueAsString("email");
+      // Issue #1008: Use optValueAsString to handle type mismatch gracefully
+      String email = request.optValueAsString("email", "");
       log.debug("1st factor: email from request. email={}", email);
       return email;
     }
