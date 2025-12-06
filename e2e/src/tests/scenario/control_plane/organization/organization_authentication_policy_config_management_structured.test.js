@@ -252,7 +252,7 @@ describe("Organization Authentication Policy Config Management API - Structured 
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             id: configId,
-            flow: "hybrid",
+            flow: configId,
             policies: [
               {
                 priority: 3,
@@ -270,7 +270,7 @@ describe("Organization Authentication Policy Config Management API - Structured 
           }
         });
 
-        expect([201, 409]).toContain(createResponse.status); // May already exist
+        expect(createResponse.status).toBe(201); // May already exist
 
         // Now retrieve it
         const response = await get({
@@ -280,7 +280,7 @@ describe("Organization Authentication Policy Config Management API - Structured 
 
         expect(response.status).toBe(200);
         expect(response.data).toHaveProperty("id", configId);
-        expect(response.data).toHaveProperty("flow", "hybrid");
+        expect(response.data).toHaveProperty("flow", configId);
         expect(response.data).toHaveProperty("policies");
         expect(Array.isArray(response.data.policies)).toBe(true);
 

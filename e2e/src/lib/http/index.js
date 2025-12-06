@@ -6,11 +6,12 @@ const jar = new CookieJar();
 const client = wrapper(axios.create({ jar, withCredentials: true }));
 
 
-export const get = async ({ url, headers }) => {
+export const get = async ({ url, headers, params }) => {
   try {
     return await client.get(url, {
       maxRedirects: 0,
       headers,
+      params,
       withCredentials: true,
     });
   } catch (e) {

@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.oauth;
 
 import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.core.openid.identity.SecurityEventUserCreatable;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
@@ -32,6 +33,7 @@ public class OAuthFlowEventCreator implements SecurityEventUserCreatable {
   User user;
   SecurityEventType securityEventType;
   SecurityEventDescription securityEventDescription;
+  Map<String, Object> authenticationResult;
   RequestAttributes requestAttributes;
 
   public OAuthFlowEventCreator(
@@ -45,6 +47,23 @@ public class OAuthFlowEventCreator implements SecurityEventUserCreatable {
     this.user = user;
     this.securityEventType = securityEventType;
     this.securityEventDescription = new SecurityEventDescription(securityEventType.value());
+    this.authenticationResult = Map.of();
+    this.requestAttributes = requestAttributes;
+  }
+
+  public OAuthFlowEventCreator(
+      Tenant tenant,
+      AuthorizationRequest authorizationRequest,
+      User user,
+      SecurityEventType securityEventType,
+      Map<String, Object> authenticationResult,
+      RequestAttributes requestAttributes) {
+    this.tenant = tenant;
+    this.authorizationRequest = authorizationRequest;
+    this.user = user;
+    this.securityEventType = securityEventType;
+    this.securityEventDescription = new SecurityEventDescription(securityEventType.value());
+    this.authenticationResult = authenticationResult != null ? authenticationResult : Map.of();
     this.requestAttributes = requestAttributes;
   }
 
@@ -58,6 +77,7 @@ public class OAuthFlowEventCreator implements SecurityEventUserCreatable {
     this.user = user;
     this.securityEventType = securityEventType;
     this.securityEventDescription = securityEventDescription;
+    this.authenticationResult = Map.of();
     this.requestAttributes = requestAttributes;
   }
 
@@ -87,6 +107,10 @@ public class OAuthFlowEventCreator implements SecurityEventUserCreatable {
     builder.add(requestAttributes.getIpAddress());
     builder.add(requestAttributes.getUserAgent());
     detailsMap.putAll(requestAttributes.toMap());
+
+    if (securityEventType.isFailure() || !authenticationResult.isEmpty()) {
+      detailsMap.put("execution_result", authenticationResult);
+    }
 
     SecurityEventDetail securityEventDetail =
         createSecurityEventDetailWithScrubbing(detailsMap, tenant);

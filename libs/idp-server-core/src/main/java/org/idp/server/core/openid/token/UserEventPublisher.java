@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.token;
 
 import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.core.openid.identity.SecurityEventUserCreatable;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
@@ -41,6 +42,18 @@ public class UserEventPublisher implements SecurityEventUserCreatable {
       RequestAttributes requestAttributes) {
     UserEventCreator eventCreator =
         new UserEventCreator(tenant, oAuthToken, type, requestAttributes);
+    SecurityEvent securityEvent = eventCreator.create();
+    securityEventPublisher.publish(securityEvent);
+  }
+
+  public void publish(
+      Tenant tenant,
+      OAuthToken oAuthToken,
+      DefaultSecurityEventType type,
+      Map<String, Object> executionResult,
+      RequestAttributes requestAttributes) {
+    UserEventCreator eventCreator =
+        new UserEventCreator(tenant, oAuthToken, type, executionResult, requestAttributes);
     SecurityEvent securityEvent = eventCreator.create();
     securityEventPublisher.publish(securityEvent);
   }
@@ -91,6 +104,26 @@ public class UserEventPublisher implements SecurityEventUserCreatable {
     UserEventCreator eventCreator =
         new UserEventCreator(
             tenant, oAuthToken, securityEventType, securityEventDescription, requestAttributes);
+    SecurityEvent securityEvent = eventCreator.create();
+    securityEventPublisher.publish(securityEvent);
+  }
+
+  public void publish(
+      Tenant tenant,
+      OAuthToken oAuthToken,
+      SecurityEventType securityEventType,
+      Map<String, Object> executionResult,
+      RequestAttributes requestAttributes) {
+    SecurityEventDescription securityEventDescription =
+        new SecurityEventDescription(securityEventType.value());
+    UserEventCreator eventCreator =
+        new UserEventCreator(
+            tenant,
+            oAuthToken,
+            securityEventType,
+            securityEventDescription,
+            executionResult,
+            requestAttributes);
     SecurityEvent securityEvent = eventCreator.create();
     securityEventPublisher.publish(securityEvent);
   }

@@ -16,6 +16,7 @@
 
 package org.idp.server.core.extension.ciba;
 
+import java.util.Map;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -40,6 +41,20 @@ public class CibaFlowEventPublisher {
       RequestAttributes requestAttributes) {
     CibaFlowEventCreator eventCreator =
         new CibaFlowEventCreator(tenant, request, user, type, requestAttributes);
+    SecurityEvent securityEvent = eventCreator.create();
+    securityEventPublisher.publish(securityEvent);
+  }
+
+  public void publish(
+      Tenant tenant,
+      BackchannelAuthenticationRequest request,
+      User user,
+      SecurityEventType type,
+      Map<String, Object> authenticationResult,
+      RequestAttributes requestAttributes) {
+    CibaFlowEventCreator eventCreator =
+        new CibaFlowEventCreator(
+            tenant, request, user, type, authenticationResult, requestAttributes);
     SecurityEvent securityEvent = eventCreator.create();
     securityEventPublisher.publish(securityEvent);
   }

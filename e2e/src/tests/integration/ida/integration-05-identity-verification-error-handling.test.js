@@ -9,6 +9,7 @@ import {
 } from "../../testConfig";
 import { createFederatedUser, registerFidoUaf } from "../../../user";
 import { v4 as uuidv4 } from "uuid";
+import { sleep } from "../../../lib/util";
 
 describe("Identity Verification Error Handling", () => {
   const orgId = serverConfig.organizationId;

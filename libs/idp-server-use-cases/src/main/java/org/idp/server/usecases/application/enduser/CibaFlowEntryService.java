@@ -173,6 +173,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
         backchannelAuthenticationRequest,
         result.user(),
         result.eventType(),
+        result.response(),
         requestAttributes);
 
     if (updatedTransaction.isSuccess()) {

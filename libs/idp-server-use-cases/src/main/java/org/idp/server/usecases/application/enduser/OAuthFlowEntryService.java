@@ -210,7 +210,12 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     }
 
     eventPublisher.publish(
-        tenant, authorizationRequest, result.user(), result.eventType(), requestAttributes);
+        tenant,
+        authorizationRequest,
+        result.user(),
+        result.eventType(),
+        result.response(),
+        requestAttributes);
 
     return result;
   }

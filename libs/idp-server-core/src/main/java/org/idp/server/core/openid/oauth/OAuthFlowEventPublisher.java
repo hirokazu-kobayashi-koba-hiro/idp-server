@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.oauth;
 
+import java.util.Map;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -40,6 +41,20 @@ public class OAuthFlowEventPublisher {
       RequestAttributes requestAttributes) {
     OAuthFlowEventCreator eventCreator =
         new OAuthFlowEventCreator(tenant, authorizationRequest, user, type, requestAttributes);
+    SecurityEvent securityEvent = eventCreator.create();
+    securityEventPublisher.publish(securityEvent);
+  }
+
+  public void publish(
+      Tenant tenant,
+      AuthorizationRequest authorizationRequest,
+      User user,
+      SecurityEventType type,
+      Map<String, Object> authenticationResult,
+      RequestAttributes requestAttributes) {
+    OAuthFlowEventCreator eventCreator =
+        new OAuthFlowEventCreator(
+            tenant, authorizationRequest, user, type, authenticationResult, requestAttributes);
     SecurityEvent securityEvent = eventCreator.create();
     securityEventPublisher.publish(securityEvent);
   }

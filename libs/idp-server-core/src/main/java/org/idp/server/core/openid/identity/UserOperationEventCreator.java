@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.identity;
 
 import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.core.openid.authentication.AuthenticationTransaction;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
@@ -29,6 +30,7 @@ public class UserOperationEventCreator implements SecurityEventUserCreatable {
   AuthenticationTransaction authenticationTransaction;
   SecurityEventType securityEventType;
   SecurityEventDescription securityEventDescription;
+  Map<String, Object> executionResult;
   RequestAttributes requestAttributes;
 
   public UserOperationEventCreator(
@@ -40,6 +42,21 @@ public class UserOperationEventCreator implements SecurityEventUserCreatable {
     this.authenticationTransaction = authenticationTransaction;
     this.securityEventType = securityEventType;
     this.securityEventDescription = new SecurityEventDescription(securityEventType.value());
+    this.executionResult = Map.of();
+    this.requestAttributes = requestAttributes;
+  }
+
+  public UserOperationEventCreator(
+      Tenant tenant,
+      AuthenticationTransaction authenticationTransaction,
+      SecurityEventType securityEventType,
+      Map<String, Object> executionResult,
+      RequestAttributes requestAttributes) {
+    this.tenant = tenant;
+    this.authenticationTransaction = authenticationTransaction;
+    this.securityEventType = securityEventType;
+    this.securityEventDescription = new SecurityEventDescription(securityEventType.value());
+    this.executionResult = executionResult != null ? executionResult : Map.of();
     this.requestAttributes = requestAttributes;
   }
 
@@ -71,6 +88,10 @@ public class UserOperationEventCreator implements SecurityEventUserCreatable {
     builder.add(requestAttributes.getIpAddress());
     builder.add(requestAttributes.getUserAgent());
     detailsMap.putAll(requestAttributes.toMap());
+
+    if (securityEventType.isFailure() || !executionResult.isEmpty()) {
+      detailsMap.put("execution_result", executionResult);
+    }
 
     SecurityEventDetail securityEventDetail =
         createSecurityEventDetailWithScrubbing(detailsMap, tenant);
