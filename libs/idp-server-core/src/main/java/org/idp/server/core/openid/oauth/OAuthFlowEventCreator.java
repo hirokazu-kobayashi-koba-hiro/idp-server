@@ -78,7 +78,7 @@ public class OAuthFlowEventCreator implements SecurityEventUserCreatable {
             authorizationRequest.clientNameValue());
     builder.add(securityEventClient);
 
-    if (user != null) {
+    if (user != null && user.exists()) {
       SecurityEventUser securityEventUser = createSecurityEventUser(user);
       builder.add(securityEventUser);
       detailsMap.put("user", toDetailWithSensitiveData(user, tenant));
