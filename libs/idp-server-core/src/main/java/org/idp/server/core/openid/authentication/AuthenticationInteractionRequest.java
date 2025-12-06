@@ -84,26 +84,29 @@ public class AuthenticationInteractionRequest {
     }
 
     // NULL character check (prevent SQL Injection - Issue #1008)
+    // Security event: Potential attack pattern detected
     if (stringValue.contains("\0")) {
-      log.warn(
-          "Field '{}' contains NULL character (0x00). Potential SQL Injection attempt. Returning default value.",
+      log.error(
+          "[SECURITY] Field '{}' contains NULL character (0x00). Potential SQL Injection attempt detected. Returning default value.",
           key);
       return defaultValue;
     }
 
     // Control character check (prevent log pollution)
     // Allow: Tab (0x09), LF (0x0A), CR (0x0D)
+    // Security event: Potential attack pattern detected
     if (stringValue.chars().anyMatch(c -> c < 0x20 && c != 0x09 && c != 0x0A && c != 0x0D)) {
-      log.warn(
-          "Field '{}' contains control characters. Potential log pollution attempt. Returning default value.",
+      log.error(
+          "[SECURITY] Field '{}' contains control characters. Potential log injection attack detected. Returning default value.",
           key);
       return defaultValue;
     }
 
     // Absolute max length check (prevent DoS attacks)
+    // Security event: Potential attack pattern detected
     if (stringValue.length() > ABSOLUTE_MAX_LENGTH) {
-      log.warn(
-          "Field '{}' exceeds absolute maximum length ({}). length={}. Returning default value.",
+      log.error(
+          "[SECURITY] Field '{}' exceeds absolute maximum length ({}). length={}. Potential DoS attack detected. Returning default value.",
           key,
           ABSOLUTE_MAX_LENGTH,
           stringValue.length());
