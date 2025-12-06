@@ -97,6 +97,11 @@ describe("Organization Authentication Policy Config Management API Test", () => 
     expect(getResponse.data).toHaveProperty("flow");
     expect(getResponse.data).toHaveProperty("enabled", true);
 
+    // Issue #1011: Verify priority and description are preserved
+    expect(getResponse.data).toHaveProperty("policies");
+    expect(getResponse.data.policies[0]).toHaveProperty("priority", 1);
+    expect(getResponse.data.policies[0]).toHaveProperty("description", "test_password_policy");
+
     // Test UPDATE
     const updateRequest = {
       id: configId,
@@ -140,6 +145,10 @@ describe("Organization Authentication Policy Config Management API Test", () => 
     expect(updateResponse.data).toHaveProperty("result");
     expect(updateResponse.data.result).toHaveProperty("policies");
     expect(Array.isArray(updateResponse.data.result.policies)).toBe(true);
+
+    // Issue #1011: Verify priority and description are preserved after update
+    expect(updateResponse.data.result.policies[0]).toHaveProperty("priority", 1);
+    expect(updateResponse.data.result.policies[0]).toHaveProperty("description", "updated_password_policy");
 
     // Test DELETE
     const deleteResponse = await deletion({

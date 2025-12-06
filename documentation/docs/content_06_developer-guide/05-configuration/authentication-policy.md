@@ -48,7 +48,7 @@
         "any_of": [
           [
             {
-              "path": "$.password.success_count",
+              "path": "$.password-authentication.success_count",
               "type": "integer",
               "operation": "gte",
               "value": 1
@@ -87,7 +87,7 @@
 | フィールド | 必須 | 説明 |
 |-----------|------|------|
 | `description` | ❌ | ポリシー説明 |
-| `priority` | ✅ | 優先度（低い値が優先） |
+| `priority` | ✅ | 優先度（高い値が優先） |
 | `conditions` | ❌ | 適用条件 |
 | `available_methods` | ✅ | 利用可能な認証方式 |
 | `acr_mapping_rules` | ❌ | ACRマッピング |
@@ -146,7 +146,7 @@ ACR値と認証方式のマッピング：
     "any_of": [
       [
         {
-          "path": "$.password.success_count",
+          "path": "$.password-authentication.success_count",
           "type": "integer",
           "operation": "gte",
           "value": 1
@@ -154,13 +154,13 @@ ACR値と認証方式のマッピング：
       ],
       [
         {
-          "path": "$.email.success_count",
+          "path": "$.email-authentication.success_count",
           "type": "integer",
           "operation": "gte",
           "value": 1
         },
         {
-          "path": "$.fido-uaf.success_count",
+          "path": "$.fido-uaf-authentication.success_count",
           "type": "integer",
           "operation": "gte",
           "value": 1
@@ -194,12 +194,14 @@ ACR値と認証方式のマッピング：
     "any_of": [
       [
         {
-          "path": "$.password.success_count",
+          "path": "$.password-authentication.success_count",
+          "type": "integer",
           "operation": "gte",
           "value": 1
         },
         {
-          "path": "$.email.success_count",
+          "path": "$.email-authentication.success_count",
+          "type": "integer",
           "operation": "gte",
           "value": 1
         }
@@ -239,7 +241,7 @@ Content-Type: application/json
       "success_conditions": {
         "any_of": [
           [
-            {"path": "$.password.success_count", "operation": "gte", "value": 1}
+            {"path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1}
           ]
         ]
       }
@@ -276,9 +278,9 @@ Content-Type: application/json
   "success_conditions": {
     "any_of": [
       [
-        {"path": "$.password.success_count", "value": 1},
-        {"path": "$.email.success_count", "value": 1},
-        {"path": "$.fido-uaf.success_count", "value": 1}
+        {"path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1},
+        {"path": "$.email-authentication.success_count", "type": "integer", "operation": "gte", "value": 1},
+        {"path": "$.fido-uaf-authentication.success_count", "type": "integer", "operation": "gte", "value": 1}
       ]
     ]
   }
@@ -290,8 +292,8 @@ Content-Type: application/json
 {
   "success_conditions": {
     "any_of": [
-      [{"path": "$.password.success_count", "value": 1}],
-      [{"path": "$.email.success_count", "value": 1}]
+      [{"path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1}],
+      [{"path": "$.email-authentication.success_count", "type": "integer", "operation": "gte", "value": 1}]
     ]
   }
 }
@@ -314,7 +316,7 @@ Content-Type: application/json
 
 ---
 
-**最終更新**: 2025-10-13
+**最終更新**: 2025-12-06
 
 ---
 
@@ -340,7 +342,7 @@ Content-Type: application/json
   - Policyがどのタイミングで評価されるか
 
 - [ ] **JSONPath基礎の説明**（重要度: 高）
-  - JSONPath構文（`$.password.success_count`）の読み方
+  - JSONPath構文（`$.password-authentication.success_count`）の読み方
   - どのようなデータ構造を参照しているか
   - 利用可能なパスの一覧
 
@@ -376,11 +378,11 @@ Content-Type: application/json
 2. **JSONPath参照データ構造**:
    ```json
    {
-     "password": {
+     "password-authentication": {
        "success_count": 1,
        "failure_count": 0
      },
-     "email": {
+     "email-authentication": {
        "success_count": 0,
        "failure_count": 0
      }
@@ -489,16 +491,16 @@ Content-Type: application/json
 
 \`\`\`json
 {
-  "password": {
+  "password-authentication": {
     "success_count": 1,
     "failure_count": 0,
     "last_attempt_at": "2025-01-15T10:00:00Z"
   },
-  "email": {
+  "email-authentication": {
     "success_count": 0,
     "failure_count": 0
   },
-  "fido-uaf": {
+  "fido-uaf-authentication": {
     "success_count": 0,
     "failure_count": 0
   }
@@ -508,10 +510,10 @@ Content-Type: application/json
 ### JSONPath構文
 
 \`\`\`
-$.password.success_count
-│    │          │
-│    │          └─ フィールド名
-│    └─ 認証方式名
+$.password-authentication.success_count
+│              │                   │
+│              │                   └─ フィールド名
+│              └─ 認証インタラクション名
 └─ ルート
 
 結果: 1（パスワード認証の成功回数）
@@ -521,11 +523,10 @@ $.password.success_count
 
 | JSONPath | 説明 | 型 |
 |----------|------|-----|
-| \`$.{method}.success_count\` | 成功回数 | integer |
-| \`$.{method}.failure_count\` | 失敗回数 | integer |
-| \`$.{method}.locked\` | ロック状態 | boolean |
+| \`$.{method}-authentication.success_count\` | 成功回数 | integer |
+| \`$.{method}-authentication.failure_count\` | 失敗回数 | integer |
 
-**{method}**: available_methodsで指定した認証方式名
+**{method}**: password, email, sms, webauthn, fido-uaf など
 ```
 
 #### 3. any_of論理構造の図解
@@ -568,8 +569,8 @@ $.password.success_count
   "success_conditions": {
     "any_of": [
       [
-        {"path": "$.password.success_count", "operation": "gte", "value": 1},
-        {"path": "$.email.success_count", "operation": "gte", "value": 1}
+        {"path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1},
+        {"path": "$.email-authentication.success_count", "type": "integer", "operation": "gte", "value": 1}
       ]
     ]
   }
@@ -586,8 +587,8 @@ $.password.success_count
 {
   "success_conditions": {
     "any_of": [
-      [{"path": "$.password.success_count", "value": 1}],
-      [{"path": "$.fido-uaf.success_count", "value": 1}]
+      [{"path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1}],
+      [{"path": "$.fido-uaf-authentication.success_count", "type": "integer", "operation": "gte", "value": 1}]
     ]
   }
 }
@@ -616,7 +617,7 @@ $.password.success_count
     "available_methods": ["password"],
     "success_conditions": {
       "any_of": [[
-        {"path": "$.password.success_count", "operation": "gte", "value": 1}
+        {"path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1}
       ]]
     }
   }]
@@ -635,8 +636,8 @@ $.password.success_count
     "available_methods": ["password", "email"],
     "success_conditions": {
       "any_of": [[
-        {"path": "$.password.success_count", "operation": "gte", "value": 1},
-        {"path": "$.email.success_count", "operation": "gte", "value": 1}
+        {"path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1},
+        {"path": "$.email-authentication.success_count", "type": "integer", "operation": "gte", "value": 1}
       ]]
     }
   }]
@@ -659,8 +660,8 @@ $.password.success_count
     },
     "success_conditions": {
       "any_of": [
-        [{"path": "$.password.success_count", "value": 1}],
-        [{"path": "$.fido-uaf.success_count", "value": 1}]
+        [{"path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1}],
+        [{"path": "$.fido-uaf-authentication.success_count", "type": "integer", "operation": "gte", "value": 1}]
       ]
     }
   }]
