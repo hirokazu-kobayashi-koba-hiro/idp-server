@@ -82,100 +82,121 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
       RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
-    log.debug("FidoUafAuthenticationChallengeInteractor called");
+    try {
+      log.debug("FidoUafAuthenticationChallengeInteractor called");
 
-    AuthenticationConfiguration configuration =
-        configurationQueryRepository.get(tenant, "fido-uaf");
-    AuthenticationInteractionConfig authenticationInteractionConfig =
-        configuration.getAuthenticationConfig("fido-uaf-authentication-challenge");
-    AuthenticationExecutionConfig execution = authenticationInteractionConfig.execution();
-    AuthenticationExecutor executor = authenticationExecutors.get(execution.function());
+      AuthenticationConfiguration configuration =
+          configurationQueryRepository.get(tenant, "fido-uaf");
+      AuthenticationInteractionConfig authenticationInteractionConfig =
+          configuration.getAuthenticationConfig("fido-uaf-authentication-challenge");
+      AuthenticationExecutionConfig execution = authenticationInteractionConfig.execution();
+      AuthenticationExecutor executor = authenticationExecutors.get(execution.function());
 
-    String deviceId = extractDeviceId(transaction, request, requestAttributes);
+      String deviceId = extractDeviceId(transaction, request, requestAttributes);
 
-    // request
-    if (deviceId == null || deviceId.isEmpty()) {
+      // request
+      if (deviceId == null || deviceId.isEmpty()) {
 
-      log.warn("FIDO-UAF authentication challenge failed. device_id is required.");
+        log.warn("FIDO-UAF authentication challenge failed. device_id is required.");
 
-      Map<String, Object> contents = new HashMap<>();
-      contents.put("error", "invalid_request");
-      contents.put("error_description", "device_id is required.");
+        Map<String, Object> contents = new HashMap<>();
+        contents.put("error", "invalid_request");
+        contents.put("error_description", "device_id is required.");
+
+        return AuthenticationInteractionRequestResult.clientError(
+            contents,
+            type,
+            operationType(),
+            method(),
+            DefaultSecurityEventType.fido_uaf_authentication_challenge_failure);
+      }
+
+      FidoUafInteraction fidoUafInteraction = new FidoUafInteraction(deviceId);
+      authenticationInteractionCommandRepository.register(
+          tenant,
+          transaction.identifier(),
+          "fido-uaf-authentication-challenge",
+          fidoUafInteraction);
+
+      // TODO pre_hook
+      Map<String, Object> executionRequest = new HashMap<>();
+      executionRequest.put("device_id", deviceId);
+
+      Map<String, Object> additionalRequests =
+          additionalRequestResolvers.resolveAll(tenant, type, request, transaction);
+      executionRequest.putAll(additionalRequests);
+
+      AuthenticationExecutionRequest authenticationExecutionRequest =
+          new AuthenticationExecutionRequest(executionRequest);
+
+      // execution
+      AuthenticationExecutionResult executionResult =
+          executor.execute(
+              tenant,
+              transaction.identifier(),
+              authenticationExecutionRequest,
+              requestAttributes,
+              execution);
+
+      AuthenticationResponseConfig responseConfig = authenticationInteractionConfig.response();
+      JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(executionResult.contents());
+      JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
+      Map<String, Object> contents =
+          MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
+
+      if (executionResult.isClientError()) {
+
+        log.warn(
+            "FIDO-UAF authentication challenge failed. Client error: {}",
+            executionResult.contents());
+
+        return AuthenticationInteractionRequestResult.clientError(
+            contents,
+            type,
+            operationType(),
+            method(),
+            DefaultSecurityEventType.fido_uaf_authentication_challenge_failure);
+      }
+
+      if (executionResult.isServerError()) {
+
+        log.warn(
+            "FIDO-UAF authentication challenge failed. Server error: {}",
+            executionResult.contents());
+
+        return AuthenticationInteractionRequestResult.serverError(
+            contents,
+            type,
+            operationType(),
+            method(),
+            DefaultSecurityEventType.fido_uaf_authentication_challenge_failure);
+      }
+
+      log.debug("FIDO-UAF authentication challenge succeeded for device: {}", deviceId);
+
+      return new AuthenticationInteractionRequestResult(
+          AuthenticationInteractionStatus.SUCCESS,
+          type,
+          operationType(),
+          method(),
+          transaction.user(),
+          contents,
+          DefaultSecurityEventType.fido_uaf_authentication_challenge_success);
+    } catch (IllegalArgumentException validationException) {
+      // Issue #1008: Handle validation errors from getValueAsString()
+      log.warn("Request validation failed: {}", validationException.getMessage());
+
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "invalid_request");
+      response.put("error_description", validationException.getMessage());
 
       return AuthenticationInteractionRequestResult.clientError(
-          contents,
+          response,
           type,
           operationType(),
           method(),
           DefaultSecurityEventType.fido_uaf_authentication_challenge_failure);
     }
-
-    FidoUafInteraction fidoUafInteraction = new FidoUafInteraction(deviceId);
-    authenticationInteractionCommandRepository.register(
-        tenant, transaction.identifier(), "fido-uaf-authentication-challenge", fidoUafInteraction);
-
-    // TODO pre_hook
-    Map<String, Object> executionRequest = new HashMap<>();
-    executionRequest.put("device_id", deviceId);
-
-    Map<String, Object> additionalRequests =
-        additionalRequestResolvers.resolveAll(tenant, type, request, transaction);
-    executionRequest.putAll(additionalRequests);
-
-    AuthenticationExecutionRequest authenticationExecutionRequest =
-        new AuthenticationExecutionRequest(executionRequest);
-
-    // execution
-    AuthenticationExecutionResult executionResult =
-        executor.execute(
-            tenant,
-            transaction.identifier(),
-            authenticationExecutionRequest,
-            requestAttributes,
-            execution);
-
-    AuthenticationResponseConfig responseConfig = authenticationInteractionConfig.response();
-    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(executionResult.contents());
-    JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
-    Map<String, Object> contents =
-        MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
-
-    if (executionResult.isClientError()) {
-
-      log.warn(
-          "FIDO-UAF authentication challenge failed. Client error: {}", executionResult.contents());
-
-      return AuthenticationInteractionRequestResult.clientError(
-          contents,
-          type,
-          operationType(),
-          method(),
-          DefaultSecurityEventType.fido_uaf_authentication_challenge_failure);
-    }
-
-    if (executionResult.isServerError()) {
-
-      log.warn(
-          "FIDO-UAF authentication challenge failed. Server error: {}", executionResult.contents());
-
-      return AuthenticationInteractionRequestResult.serverError(
-          contents,
-          type,
-          operationType(),
-          method(),
-          DefaultSecurityEventType.fido_uaf_authentication_challenge_failure);
-    }
-
-    log.debug("FIDO-UAF authentication challenge succeeded for device: {}", deviceId);
-
-    return new AuthenticationInteractionRequestResult(
-        AuthenticationInteractionStatus.SUCCESS,
-        type,
-        operationType(),
-        method(),
-        transaction.user(),
-        contents,
-        DefaultSecurityEventType.fido_uaf_authentication_challenge_success);
   }
 
   private String extractDeviceId(

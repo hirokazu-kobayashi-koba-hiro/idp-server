@@ -16,9 +16,11 @@
 
 package org.idp.server.core.openid.authentication.exception;
 
-public class AuthenticationInteractorUnSupportedException extends RuntimeException {
+import org.idp.server.platform.exception.NotFoundException;
 
-  public AuthenticationInteractorUnSupportedException(String message) {
+public class AuthenticationInteractorNotFoundException extends NotFoundException {
+
+  public AuthenticationInteractorNotFoundException(String message) {
     super(message);
   }
 }

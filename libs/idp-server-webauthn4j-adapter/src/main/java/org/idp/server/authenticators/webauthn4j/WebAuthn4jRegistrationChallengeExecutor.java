@@ -94,6 +94,15 @@ public class WebAuthn4jRegistrationChallengeExecutor implements AuthenticationEx
           "webauthn4j registration challenge generated successfully for user: {}", user.name());
       return AuthenticationExecutionResult.success(response);
 
+    } catch (IllegalArgumentException validationException) {
+      // Issue #1008: Handle validation errors from getValueAsString()
+      log.warn("Request validation failed: {}", validationException.getMessage());
+
+      Map<String, Object> errorResponse = new HashMap<>();
+      errorResponse.put("error", "invalid_request");
+      errorResponse.put("error_description", validationException.getMessage());
+
+      return AuthenticationExecutionResult.clientError(errorResponse);
     } catch (Exception e) {
       log.error("webauthn4j unexpected error during registration challenge generation", e);
       Map<String, Object> errorResponse = new HashMap<>();

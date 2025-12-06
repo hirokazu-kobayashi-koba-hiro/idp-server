@@ -37,6 +37,9 @@ import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
+import org.idp.server.platform.json.schema.JsonSchemaDefinition;
+import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
+import org.idp.server.platform.json.schema.JsonSchemaValidator;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.mapper.MappingRule;
 import org.idp.server.platform.mapper.MappingRuleObjectMapper;
@@ -94,6 +97,37 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
     AuthenticationConfiguration configuration = getConfig(tenant);
     AuthenticationInteractionConfig authenticationInteractionConfig =
         configuration.getAuthenticationConfig("password-authentication");
+
+    // JSON Schema validation (Layer 2) - Issue #1008
+    JsonSchemaDefinition schemaDefinition =
+        authenticationInteractionConfig.request().requestSchemaAsDefinition();
+
+    if (schemaDefinition.exists()) {
+      JsonNodeWrapper requestNode = JsonNodeWrapper.fromMap(request.toMap());
+      JsonSchemaValidator validator = new JsonSchemaValidator(schemaDefinition);
+      JsonSchemaValidationResult validationResult = validator.validate(requestNode);
+
+      if (!validationResult.isValid()) {
+        log.warn(
+            "Password authentication request validation failed: error_count={}, errors={}",
+            validationResult.errors().size(),
+            validationResult.errors());
+
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("error", "invalid_request");
+        errorResponse.put(
+            "error_description", "The authentication request is invalid. Please check your input.");
+        errorResponse.put("error_messages", validationResult.errors());
+
+        return AuthenticationInteractionRequestResult.clientError(
+            errorResponse,
+            type,
+            operationType(),
+            method(),
+            DefaultSecurityEventType.password_failure);
+      }
+    }
+
     AuthenticationExecutionConfig execution = authenticationInteractionConfig.execution();
     AuthenticationExecutor executor = authenticationExecutors.get(execution.function());
 
@@ -168,6 +202,21 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
     return createDefaultConfiguration();
   }
 
+  /**
+   * Create default password authentication configuration with JSON Schema validation.
+   *
+   * <p><b>Issue #1008:</b> Added JSON Schema for request validation (Layer 2).
+   *
+   * <p><b>Default Schema:</b>
+   *
+   * <ul>
+   *   <li>username: required, string, minLength=1, maxLength=256
+   *   <li>password: required, string, minLength=1, maxLength=128
+   *   <li>provider_id: optional, string, maxLength=100
+   * </ul>
+   *
+   * @return default password authentication configuration
+   */
   private AuthenticationConfiguration createDefaultConfiguration() {
     String config =
         """
@@ -180,6 +229,29 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
                 "metadata": {},
                 "interactions": {
                   "password-authentication": {
+                    "request": {
+                      "schema": {
+                        "type": "object",
+                        "required": ["username", "password"],
+                        "properties": {
+                          "username": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          },
+                          "password": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128
+                          },
+                          "provider_id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 100
+                          }
+                        }
+                      }
+                    },
                     "execution": {
                       "function": "password_verification"
                     },

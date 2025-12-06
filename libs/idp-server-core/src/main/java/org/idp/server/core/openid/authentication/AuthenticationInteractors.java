@@ -18,7 +18,7 @@ package org.idp.server.core.openid.authentication;
 
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.openid.authentication.exception.AuthenticationInteractorUnSupportedException;
+import org.idp.server.core.openid.authentication.exception.AuthenticationInteractorNotFoundException;
 
 public class AuthenticationInteractors {
 
@@ -33,8 +33,8 @@ public class AuthenticationInteractors {
     AuthenticationInteractor interactor = values.get(type);
 
     if (Objects.isNull(interactor)) {
-      throw new AuthenticationInteractorUnSupportedException(
-          "No OAuthInteractor found for type " + type.name());
+      throw new AuthenticationInteractorNotFoundException(
+          "Unsupported interaction type: " + type.name());
     }
 
     return interactor;

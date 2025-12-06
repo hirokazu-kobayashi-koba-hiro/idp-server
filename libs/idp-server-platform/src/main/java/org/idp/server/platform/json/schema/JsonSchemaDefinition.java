@@ -31,6 +31,25 @@ public class JsonSchemaDefinition {
     this.definition = definition;
   }
 
+  /**
+   * Check if schema definition exists (has properties).
+   *
+   * <p><b>Issue #1008:</b> Added for validation check in authentication interactors.
+   *
+   * <p><b>Defensive programming:</b> Returns false if definition is null or properties is empty.
+   *
+   * @return true if schema has properties defined, false otherwise
+   */
+  public boolean exists() {
+    if (definition == null) {
+      return false;
+    }
+    if (!definition.exists()) {
+      return false;
+    }
+    return !getProperties().isEmpty();
+  }
+
   public List<String> requiredFields() {
     if (!definition.contains("required")) {
       return List.of();

@@ -98,7 +98,7 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
 
         Map<String, Object> response = new HashMap<>();
         response.put("error", "invalid_request");
-        response.put("error_description", "email is unspecified.");
+        response.put("error_description", "email is unspecified or invalid format.");
 
         return new AuthenticationInteractionRequestResult(
             AuthenticationInteractionStatus.CLIENT_ERROR,
@@ -168,10 +168,12 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
           contents,
           DefaultSecurityEventType.email_verification_request_success);
     } catch (UserTooManyFoundResultException tooManyFoundResultException) {
+      // Issue #1008: Use optValueAsString() to avoid IllegalArgumentException in error handling
+      String email = request.optValueAsString("email", "<unspecified>");
 
       log.error(
           "Too many users found for email. email={}, method={}",
-          request.getValueAsString("email"),
+          email,
           method(),
           tooManyFoundResultException);
 
@@ -180,7 +182,21 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
               "error",
               "invalid_request",
               "error_description",
-              "too many users found for email: " + request.getValueAsString("email"));
+              "too many users found for email: " + email);
+      return AuthenticationInteractionRequestResult.clientError(
+          response,
+          type,
+          operationType(),
+          method(),
+          DefaultSecurityEventType.email_verification_request_failure);
+    } catch (IllegalArgumentException validationException) {
+      // Issue #1008: Handle validation errors from getValueAsString()
+      log.warn("Request validation failed: {}", validationException.getMessage());
+
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "invalid_request");
+      response.put("error_description", validationException.getMessage());
+
       return AuthenticationInteractionRequestResult.clientError(
           response,
           type,
@@ -222,7 +238,8 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
 
     // 1st factor: get from request or transaction
     if (request.containsKey("email")) {
-      String email = request.getValueAsString("email");
+      // Issue #1008: Use optValueAsString to handle type mismatch gracefully
+      String email = request.optValueAsString("email", "");
       log.debug("1st factor: email from request. email={}", email);
       return email;
     }
