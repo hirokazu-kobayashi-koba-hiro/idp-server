@@ -89,7 +89,7 @@
 | `description` | ❌ | ポリシー説明 |
 | `priority` | ✅ | 優先度（高い値が優先） |
 | `conditions` | ❌ | 適用条件 |
-| `available_methods` | ✅ | 利用可能な認証方式 |
+| `available_methods` | ✅ | UIに表示する認証方式（UIヒント） |
 | `acr_mapping_rules` | ❌ | ACRマッピング |
 | `success_conditions` | ✅ | 成功条件 |
 | `failure_conditions` | ❌ | 失敗条件 |
@@ -99,7 +99,7 @@
 
 ## Available Methods
 
-利用可能な認証方式を指定：
+UIに表示する認証方式を指定します。この設定は**UIヒント**として機能し、フロントエンドが認証画面で表示する認証方式を決定するために使用されます。
 
 ```json
 {
@@ -112,7 +112,10 @@
 }
 ```
 
-**注意**: Authentication Configuration で登録済みの認証方式のみ指定可能
+**重要**:
+- この設定はバックエンドでの認証方式の制限には使用されません
+- 認証の成功条件は `success_conditions` で制御してください
+- Authentication Configuration で登録済みの認証方式のみ指定可能
 
 ---
 

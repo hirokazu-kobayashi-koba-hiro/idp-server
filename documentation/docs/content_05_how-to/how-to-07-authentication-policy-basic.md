@@ -80,7 +80,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 
 **設定内容**:
 - `flow: "oauth"` - OAuth/OIDC認証フローで使用
-- `available_methods: ["password"]` - パスワード認証のみ許可
+- `available_methods: ["password"]` - UIにパスワード認証を表示
 - `success_conditions.any_of` - 成功条件の配列（外側はOR、内側はAND）
 - `$.password-authentication.success_count >= 1` - パスワード認証が1回以上成功すれば完了
 
@@ -127,7 +127,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 ```
 
 **設定内容**:
-- `available_methods: ["password", "sms"]` - 両方許可
+- `available_methods: ["password", "sms"]` - UIに両方の認証方式を表示
 - `any_of: [[ 条件1, 条件2 ]]` - **両方成功が必要**（内側の配列はAND条件）
 
 **認証フロー**:
@@ -568,7 +568,7 @@ ID Tokenに acr クレームとして含める
 2. **available_methodsとsuccess_conditionsの不一致**
    ```json
    // 間違い
-   "available_methods": ["password"],  // パスワードのみ許可
+   "available_methods": ["password"],  // UIにはパスワードのみ表示
    "success_conditions": {
      "any_of": [
        [
@@ -577,8 +577,10 @@ ID Tokenに acr クレームとして含める
        ]
      ]
    }
-   // → SMS認証ができない（available_methodsにない）
+   // → UIにSMS認証が表示されず、ユーザーが認証を完了できない
    ```
+
+   **注意**: `available_methods`はUIヒントです。`success_conditions`で必要な認証方式は必ず`available_methods`にも含めてください。
 
 3. **AND条件とOR条件の混同**
    ```json

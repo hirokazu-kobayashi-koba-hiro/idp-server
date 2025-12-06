@@ -118,7 +118,7 @@
 | `description`                      | ポリシーの説明                                            | `"MFA required for high-value transactions"`                       |
 | `priority`                         | 優先度（数値が大きいほど優先）                                  | `1`                                                                 |
 | `conditions`                       | 適用条件。`scopes`, `acr_values`, `client_ids`等を指定       | `{"scopes": ["openid"], "acr_values": ["urn:mace:incommon:iap:gold"]}` |
-| `available_methods`                | 利用可能な認証方式のリスト                                     | `["password", "fido-uaf", "webauthn"]`                              |
+| `available_methods`                | UIに表示する認証方式のリスト（UIヒント）                           | `["password", "fido-uaf", "webauthn"]`                              |
 | `acr_mapping_rules`                | ACR値と認証方式のマッピング                                   | `{"urn:mace:incommon:iap:gold": ["fido-uaf", "webauthn"]}`          |
 | `level_of_authentication_scopes`   | スコープ別の必須認証レベル                                     | `{"transfers": ["fido-uaf", "webauthn"]}`                           |
 | `success_conditions`               | 認証成功とみなす条件（JSONPath + 演算子）                        | 下記参照                                                                |
@@ -156,7 +156,7 @@
 ## 🔁 評価フロー例
 
 1. `conditions` に一致するポリシーが選択される
-2. `available_methods` に定義された認証方式が提示・実行される
+2. `available_methods` に定義された認証方式がUIに提示される
 3. 各認証ステップの結果が収集される
 4. `success_conditions` を満たせば → ✅ 認証成功
 5. `failure_conditions` を満たせば → ⚠️ 警告や記録
@@ -168,7 +168,7 @@
 
 - 機密操作（例：送金）では厳格な `success_conditions` を設定
 - ブルートフォース攻撃対策に `lock_conditions` を活用
-- 信頼済み端末からのログインには `available_methods` を最小化
+- 信頼済み端末からのログインにはUIに表示する `available_methods` を最小化
 
 ---
 

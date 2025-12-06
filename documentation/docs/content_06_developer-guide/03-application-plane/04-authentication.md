@@ -719,7 +719,7 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
 | フィールド | 型 | 説明 |
 |-----------|---|------|
 | `priority` | number | ポリシーの優先順位（複数ポリシー時、低い値が優先） |
-| `available_methods` | array | 使用可能な認証方式のリスト |
+| `available_methods` | array | UIに表示する認証方式のリスト（UIヒント） |
 | `success_conditions` | object | 認証成功の条件（`any_of`で複数パターン） |
 | `failure_conditions` | object | 認証失敗の条件 |
 | `lock_conditions` | object | アカウントロックの条件 |
