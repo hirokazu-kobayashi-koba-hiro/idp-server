@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.token;
 
 import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.core.openid.identity.SecurityEventUserCreatable;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -30,6 +31,7 @@ public class UserEventCreator implements SecurityEventUserCreatable {
   OAuthToken oAuthToken;
   SecurityEventType securityEventType;
   SecurityEventDescription securityEventDescription;
+  Map<String, Object> executionResult;
   RequestAttributes requestAttributes;
 
   public UserEventCreator(
@@ -41,6 +43,21 @@ public class UserEventCreator implements SecurityEventUserCreatable {
     this.oAuthToken = oAuthToken;
     this.securityEventType = defaultSecurityEventType.toEventType();
     this.securityEventDescription = defaultSecurityEventType.toEventDescription();
+    this.executionResult = Map.of();
+    this.requestAttributes = requestAttributes;
+  }
+
+  public UserEventCreator(
+      Tenant tenant,
+      OAuthToken oAuthToken,
+      DefaultSecurityEventType defaultSecurityEventType,
+      Map<String, Object> executionResult,
+      RequestAttributes requestAttributes) {
+    this.tenant = tenant;
+    this.oAuthToken = oAuthToken;
+    this.securityEventType = defaultSecurityEventType.toEventType();
+    this.securityEventDescription = defaultSecurityEventType.toEventDescription();
+    this.executionResult = executionResult != null ? executionResult : Map.of();
     this.requestAttributes = requestAttributes;
   }
 
@@ -54,6 +71,22 @@ public class UserEventCreator implements SecurityEventUserCreatable {
     this.oAuthToken = oAuthToken;
     this.securityEventType = securityEventType;
     this.securityEventDescription = securityEventDescription;
+    this.executionResult = Map.of();
+    this.requestAttributes = requestAttributes;
+  }
+
+  public UserEventCreator(
+      Tenant tenant,
+      OAuthToken oAuthToken,
+      SecurityEventType securityEventType,
+      SecurityEventDescription securityEventDescription,
+      Map<String, Object> executionResult,
+      RequestAttributes requestAttributes) {
+    this.tenant = tenant;
+    this.oAuthToken = oAuthToken;
+    this.securityEventType = securityEventType;
+    this.securityEventDescription = securityEventDescription;
+    this.executionResult = executionResult != null ? executionResult : Map.of();
     this.requestAttributes = requestAttributes;
   }
 
@@ -83,6 +116,10 @@ public class UserEventCreator implements SecurityEventUserCreatable {
     builder.add(requestAttributes.getIpAddress());
     builder.add(requestAttributes.getUserAgent());
     detailsMap.putAll(requestAttributes.toMap());
+
+    if (securityEventType.isFailure() || !executionResult.isEmpty()) {
+      detailsMap.put("execution_result", executionResult);
+    }
 
     SecurityEventDetail securityEventDetail =
         createSecurityEventDetailWithScrubbing(detailsMap, tenant);

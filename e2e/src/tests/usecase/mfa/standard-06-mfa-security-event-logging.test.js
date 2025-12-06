@@ -471,13 +471,13 @@ describe("Use Case: MFA Security Event Logging", () => {
     expect(latestFailureEvent.detail).toBeDefined();
     console.log("Event detail:", JSON.stringify(latestFailureEvent.detail, null, 2));
 
-    // Issue #915: Verify authentication_result is present
-    expect(latestFailureEvent.detail).toHaveProperty("authentication_result");
-    expect(latestFailureEvent.detail.authentication_result).toHaveProperty("error");
-    expect(latestFailureEvent.detail.authentication_result).toHaveProperty("error_description");
-    console.log("✓ Authentication result found in security event:");
-    console.log(`  - error: ${latestFailureEvent.detail.authentication_result.error}`);
-    console.log(`  - error_description: ${latestFailureEvent.detail.authentication_result.error_description}`);
+    // Issue #915: Verify execution_result is present
+    expect(latestFailureEvent.detail).toHaveProperty("execution_result");
+    expect(latestFailureEvent.detail.execution_result).toHaveProperty("error");
+    expect(latestFailureEvent.detail.execution_result).toHaveProperty("error_description");
+    console.log("✓ Execution result found in security event:");
+    console.log(`  - error: ${latestFailureEvent.detail.execution_result.error}`);
+    console.log(`  - error_description: ${latestFailureEvent.detail.execution_result.error_description}`);
 
     console.log("\n=== Step 4: Attempt Correct Password and Verify Success Event ===");
 
@@ -546,7 +546,7 @@ describe("Use Case: MFA Security Event Logging", () => {
     console.log("\n=== Test Completed Successfully ===\n");
     console.log("Summary:");
     console.log("  - Password authentication failure events are recorded");
-    console.log("  - Error details (code, message) are included in failure events");
+    console.log("  - Error details (error, error_description) are included in execution_result");
     console.log("  - Password authentication success events are recorded");
   });
 
@@ -778,13 +778,13 @@ describe("Use Case: MFA Security Event Logging", () => {
     // Verify event type
     expect(latestFailureEvent).toHaveProperty("type", "email_verification_failure");
 
-    // Issue #915: detail and authentication_result must exist
+    // Issue #915: detail and execution_result must exist
     expect(latestFailureEvent).toHaveProperty("detail");
     expect(latestFailureEvent.detail).toBeDefined();
 
-    expect(latestFailureEvent.detail).toHaveProperty("authentication_result");
-    console.log("✓ Authentication result found in email failure security event:");
-    console.log(`  - authentication_result: ${JSON.stringify(latestFailureEvent.detail.authentication_result)}`);
+    expect(latestFailureEvent.detail).toHaveProperty("execution_result");
+    console.log("✓ Execution result found in email failure security event:");
+    console.log(`  - execution_result: ${JSON.stringify(latestFailureEvent.detail.execution_result)}`);
 
     console.log("\n=== Email Authentication Failure Test Completed ===\n");
   });

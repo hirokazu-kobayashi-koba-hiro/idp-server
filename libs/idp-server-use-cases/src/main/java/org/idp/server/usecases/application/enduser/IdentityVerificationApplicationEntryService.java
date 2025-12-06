@@ -136,6 +136,7 @@ public class IdentityVerificationApplicationEntryService
           tenant,
           oAuthToken,
           DefaultSecurityEventType.identity_verification_application_failure,
+          applyingResult.errorResponse().response(),
           requestAttributes);
       return applyingResult.errorResponse();
     }
@@ -254,7 +255,12 @@ public class IdentityVerificationApplicationEntryService
 
       SecurityEventType securityEventType =
           new SecurityEventType(type.name() + "_" + process.name() + "_" + "failure");
-      eventPublisher.publish(tenant, oAuthToken, securityEventType, requestAttributes);
+      eventPublisher.publish(
+          tenant,
+          oAuthToken,
+          securityEventType,
+          applyingResult.errorResponse().response(),
+          requestAttributes);
 
       return applyingResult.errorResponse();
     }

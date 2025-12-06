@@ -160,8 +160,17 @@ public class UserOperationEntryService implements UserOperationApi {
 
     AuthenticationTransaction updatedTransaction = authenticationTransaction.updateWith(result);
 
-    userOperationEventPublisher.publish(
-        tenant, authenticationTransaction, result.eventType(), requestAttributes);
+    if (result.isError()) {
+      userOperationEventPublisher.publish(
+          tenant,
+          authenticationTransaction,
+          result.eventType(),
+          result.response(),
+          requestAttributes);
+    } else {
+      userOperationEventPublisher.publish(
+          tenant, authenticationTransaction, result.eventType(), requestAttributes);
+    }
 
     if (updatedTransaction.isSuccess()) {
       // TODO to be more correctly. no verification update is danger.
@@ -291,7 +300,11 @@ public class UserOperationEntryService implements UserOperationApi {
           tenant, oAuthToken, DefaultSecurityEventType.password_change_success, requestAttributes);
     } else {
       eventPublisher.publish(
-          tenant, oAuthToken, DefaultSecurityEventType.password_change_failure, requestAttributes);
+          tenant,
+          oAuthToken,
+          DefaultSecurityEventType.password_change_failure,
+          response.contents(),
+          requestAttributes);
     }
 
     return response;
@@ -326,7 +339,11 @@ public class UserOperationEntryService implements UserOperationApi {
           tenant, oAuthToken, DefaultSecurityEventType.password_reset_success, requestAttributes);
     } else {
       eventPublisher.publish(
-          tenant, oAuthToken, DefaultSecurityEventType.password_reset_failure, requestAttributes);
+          tenant,
+          oAuthToken,
+          DefaultSecurityEventType.password_reset_failure,
+          response.contents(),
+          requestAttributes);
     }
 
     return response;

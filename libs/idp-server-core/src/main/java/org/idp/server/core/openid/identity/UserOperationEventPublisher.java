@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.identity;
 
+import java.util.Map;
 import org.idp.server.core.openid.authentication.AuthenticationTransaction;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
@@ -39,6 +40,23 @@ public class UserOperationEventPublisher {
     UserOperationEventCreator eventCreator =
         new UserOperationEventCreator(
             tenant, authenticationTransaction, securityEventType, requestAttributes);
+    SecurityEvent securityEvent = eventCreator.create();
+    securityEventPublisher.publish(securityEvent);
+  }
+
+  public void publish(
+      Tenant tenant,
+      AuthenticationTransaction authenticationTransaction,
+      SecurityEventType securityEventType,
+      Map<String, Object> executionResult,
+      RequestAttributes requestAttributes) {
+    UserOperationEventCreator eventCreator =
+        new UserOperationEventCreator(
+            tenant,
+            authenticationTransaction,
+            securityEventType,
+            executionResult,
+            requestAttributes);
     SecurityEvent securityEvent = eventCreator.create();
     securityEventPublisher.publish(securityEvent);
   }
