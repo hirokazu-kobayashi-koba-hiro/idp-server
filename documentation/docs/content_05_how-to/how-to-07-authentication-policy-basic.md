@@ -525,17 +525,20 @@ ID Tokenに acr クレームとして含める
    ```json
    {
      "description": "default - fallback policy",
-     "priority": 999,
+     "priority": 1,
      "conditions": {},
      ...
    }
    ```
+   - デフォルトは最低優先度（priority: 1）に設定
+   - 条件付きポリシーより後にマッチさせる
 
-2. **priorityは10刻みで設定**
+2. **priorityは余裕を持って設定**
    ```json
-   priority: 10, 20, 30, ...
+   priority: 100, 50, 1
    ```
-   - 後から挿入しやすい
+   - 高い値ほど優先される
+   - 間隔を空けておくと後から挿入しやすい
 
 3. **descriptionを分かりやすく**
    ```json
