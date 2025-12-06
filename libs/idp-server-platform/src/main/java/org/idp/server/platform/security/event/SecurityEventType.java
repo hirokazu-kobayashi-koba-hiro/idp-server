@@ -29,4 +29,8 @@ public class SecurityEventType {
   public String value() {
     return value;
   }
+
+  public boolean isFailure() {
+    return value != null && value.contains("failure");
+  }
 }

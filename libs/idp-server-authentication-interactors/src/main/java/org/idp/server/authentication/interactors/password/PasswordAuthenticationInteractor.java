@@ -138,10 +138,15 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
             tenant, transaction.identifier(), executionRequest, requestAttributes, execution);
 
     AuthenticationResponseConfig responseConfig = authenticationInteractionConfig.response();
-    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(executionResult.contents());
-    JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
-    Map<String, Object> contents =
-        MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
+    Map<String, Object> contents;
+    if (responseConfig.bodyMappingRules().isEmpty()) {
+      contents = executionResult.contents();
+    } else {
+      JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromObject(executionResult.contents());
+      JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
+      contents =
+          MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
+    }
 
     if (executionResult.isClientError()) {
       log.warn("Password authentication failed. Client error: {}", executionResult.contents());

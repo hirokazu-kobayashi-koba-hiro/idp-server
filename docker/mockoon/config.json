@@ -605,16 +605,43 @@
     {
       "uuid": "6f5729bd-7086-4c1a-863c-37f3cbb4e8c3",
       "type": "http",
-      "documentation": "",
+      "documentation": "Email authentication verification - returns 400 for wrong code, 200 for correct code",
       "method": "post",
       "endpoint": "email-authentication",
       "responses": [
         {
-          "uuid": "385209ae-9162-4e2b-a547-50e7409331a9",
-          "body": "{\n  \"status\": \"ok\" \n}",
+          "uuid": "email-auth-success",
+          "body": "{\n  \"status\": \"ok\",\n  \"verified\": true\n}",
           "latency": 0,
           "statusCode": 200,
-          "label": "",
+          "label": "Success - correct code (123456)",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "",
+              "value": "123456",
+              "invert": false,
+              "operator": "regex"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "email-auth-failure",
+          "body": "{\n  \"error\": \"invalid_verification_code\",\n  \"error_description\": \"The verification code is invalid or expired\"\n}",
+          "latency": 0,
+          "statusCode": 400,
+          "label": "Failure - wrong code",
           "headers": [],
           "bodyType": "INLINE",
           "filePath": "",
@@ -624,7 +651,7 @@
           "rulesOperator": "OR",
           "disableTemplating": false,
           "fallbackTo404": false,
-          "default": false,
+          "default": true,
           "crudKey": "id",
           "callbacks": []
         }

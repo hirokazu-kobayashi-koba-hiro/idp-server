@@ -17,6 +17,7 @@
 package org.idp.server.core.extension.ciba;
 
 import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.openid.identity.SecurityEventUserCreatable;
 import org.idp.server.core.openid.identity.User;
@@ -32,6 +33,7 @@ public class CibaFlowEventCreator implements SecurityEventUserCreatable {
   User user;
   SecurityEventType securityEventType;
   SecurityEventDescription securityEventDescription;
+  Map<String, Object> authenticationResult;
   RequestAttributes requestAttributes;
 
   public CibaFlowEventCreator(
@@ -45,6 +47,23 @@ public class CibaFlowEventCreator implements SecurityEventUserCreatable {
     this.user = user;
     this.securityEventType = securityEventType;
     this.securityEventDescription = new SecurityEventDescription(securityEventType.value());
+    this.authenticationResult = Map.of();
+    this.requestAttributes = requestAttributes;
+  }
+
+  public CibaFlowEventCreator(
+      Tenant tenant,
+      BackchannelAuthenticationRequest request,
+      User user,
+      SecurityEventType securityEventType,
+      Map<String, Object> authenticationResult,
+      RequestAttributes requestAttributes) {
+    this.tenant = tenant;
+    this.request = request;
+    this.user = user;
+    this.securityEventType = securityEventType;
+    this.securityEventDescription = new SecurityEventDescription(securityEventType.value());
+    this.authenticationResult = authenticationResult != null ? authenticationResult : Map.of();
     this.requestAttributes = requestAttributes;
   }
 
@@ -72,6 +91,10 @@ public class CibaFlowEventCreator implements SecurityEventUserCreatable {
     builder.add(requestAttributes.getIpAddress());
     builder.add(requestAttributes.getUserAgent());
     detailsMap.putAll(requestAttributes.toMap());
+
+    if (securityEventType.isFailure() || !authenticationResult.isEmpty()) {
+      detailsMap.put("authentication_result", authenticationResult);
+    }
 
     SecurityEventDetail securityEventDetail =
         createSecurityEventDetailWithScrubbing(detailsMap, tenant);
