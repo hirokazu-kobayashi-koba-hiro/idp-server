@@ -13,6 +13,154 @@ Issue #801のセキュリティ監査用E2Eテストスイート。Issue #800で
 **CVE**: CWE-287 (Improper Authentication)
 **関連**: Issue #800修正の検証
 
+### S9: Redirect URI切り替え攻撃 (OAuth 2.0)
+**ファイル**: `redirect_uri_switching_attack.test.js`
+
+**重大度**: Critical
+**CVE**: CWE-601 (URL Redirection to Untrusted Site)
+**関連**: RFC 6749 Section 4.1.3 準拠確認
+
+#### 攻撃シナリオ
+
+**Token Endpoint Redirect URI Mismatch**:
+1. 正規のredirect_uriで認可リクエスト
+2. 認可コード取得
+3. 攻撃者のredirect_uriでトークンリクエスト
+4. **期待**: invalid_grant エラー ✅
+5. **脆弱**: トークン発行 → 認可コード漏洩 ❌
+
+**Unregistered Redirect URI**:
+1. 登録されていないredirect_uriで認可リクエスト
+2. **期待**: invalid_request エラー ✅
+3. **脆弱**: 認可成功 → フィッシング攻撃 ❌
+
+**Substring Matching Attack**:
+1. 登録URI: `https://example.com/callback`
+2. 攻撃URI: `https://example.com/callback.evil.com`
+3. **期待**: invalid_request エラー（完全一致検証） ✅
+4. **脆弱**: 認可成功（部分一致検証） ❌
+
+#### テスト内容
+
+##### 1. Token Endpoint Redirect URI Validation
+```javascript
+it("Should reject token request when redirect_uri does not match authorization request")
+```
+
+**検証フロー**:
+1. 正規のredirect_uriで認可リクエスト → 認可コード取得
+2. 異なるredirect_uriでトークンリクエスト
+3. トークンエンドポイントのレスポンスを検証
+4. **PASS**: `status === 400 && error === "invalid_grant"`
+5. **FAIL**: `status === 200 && access_token` → RFC 6749 Section 4.1.3違反
+
+**RFC 6749 Section 4.1.3**:
+> "REQUIRED, if the 'redirect_uri' parameter was included in the
+> authorization request as described in Section 4.1.1, and their
+> values MUST be identical."
+
+##### 2. Redirect URI Omission Attack
+```javascript
+it("Should reject token request when redirect_uri is missing but was present in authorization")
+```
+
+**検証フロー**:
+1. redirect_uri付きで認可リクエスト
+2. redirect_uri省略でトークンリクエスト
+3. **PASS**: `status === 400 && error === "invalid_grant"`
+4. **FAIL**: トークン発行成功
+
+##### 3. Unregistered Redirect URI Validation
+```javascript
+it("Should reject authorization request with unregistered redirect_uri")
+```
+
+**検証フロー**:
+1. 登録されていないredirect_uriで認可リクエスト
+2. **PASS**: `error === "invalid_request" || "unauthorized_client"`
+3. **FAIL**: 認可成功 → フィッシング攻撃が可能
+
+**RFC 6749 Section 3.1.2.3**:
+> "The authorization server MUST require the following clients to
+> register their redirection endpoint"
+
+##### 4. Exact Match Validation
+```javascript
+it("Should validate exact match of redirect_uri (no substring matching)")
+```
+
+**検証フロー**:
+1. 登録URI + ".evil.com" で認可リクエスト
+2. **PASS**: エラー返却（完全一致検証）
+3. **FAIL**: 認可成功（部分一致検証）
+
+#### 高度な検証（合計21テストケース）
+
+##### 5-12. URI Normalization and Strict Matching
+- HTTP vs HTTPS スキーム違い検証
+- デフォルトポート省略 vs 明示（:443）
+- クエリパラメータ追加検証
+- フラグメント（#）付きURI検証
+- 末尾スラッシュ有無検証
+- ホスト名Case違い検証（WWW.EXAMPLE.COM vs www.example.com）
+- 非標準ポート違い検証
+- 完全一致ポジティブテスト
+
+**RFC 3986 vs OAuth 2.0 厳密モード**:
+```
+RFC 3986 正規化: https://example.com == https://example.com:443
+OAuth 2.0 厳密: https://example.com != https://example.com:443 ✅ (idp-server)
+```
+
+##### 13-16. Multiple Registered Redirect URIs
+```javascript
+it("Should validate redirect_uri when client has multiple registered URIs")
+it("Should not allow cross-contamination between registered redirect_uris")
+it("Should bind authorization code to specific redirect_uri")
+it("Should allow authorization code reuse with same redirect_uri")
+```
+
+**検証内容**:
+- 複数登録URI（HTTPS + HTTP）の個別検証
+- 登録URI間のクロスコンタミネーション防止
+- 認可コードの特定redirect_uriへのバインディング
+- 同じredirect_uriでのトークン取得成功
+
+**重要な発見**:
+```
+認可: redirect_uri A でコード取得
+トークン: redirect_uri B でリクエスト（A, B両方とも登録済み）
+→ 400/401エラー ✅ （登録済みでも異なるURIは拒否）
+```
+
+##### 17-19. URL Encoding and Special Characters
+- URL-encoded文字の扱い検証
+- パストラバーサル攻撃（../）防止
+- Localhost variants検証
+
+##### 20-21. Authorization Code Security
+```javascript
+it("Should reject second token request with same authorization code")
+```
+
+**RFC 6749 Section 10.5 検証**:
+> "The authorization server MUST ensure that authorization codes
+> cannot be used more than once."
+
+**検証フロー**:
+1. 認可コード取得
+2. 1回目のトークンリクエスト → 成功 ✅
+3. 2回目のトークンリクエスト（同じコード） → invalid_grant ✅
+
+**テスト結果**:
+```
+First token request:           SUCCESS
+Second token request (reuse):  REJECTED
+Error Code:                    invalid_grant
+```
+
+---
+
 #### 攻撃シナリオ
 
 **Email認証パターン**:
