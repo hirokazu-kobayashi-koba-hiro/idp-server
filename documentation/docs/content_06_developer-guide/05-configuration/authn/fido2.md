@@ -1,32 +1,32 @@
-# WebAuthn認証
+# FIDO2/WebAuthn認証
 
-このドキュメントは、`webauthn-authentication` 方式によるパスワードレス認証・多要素認証処理の `概要`・`設定`・`利用方法`
+このドキュメントは、`fido2` 方式によるパスワードレス認証・多要素認証処理の `概要`・`設定`・`利用方法`
 について説明します。
 
 ---
 
 ## 概要
 
-WebAuthn（Web
+FIDO2/WebAuthn（Web
 Authentication）は、FIDO2の仕様に基づいたWeb標準の認証方式です。ユーザーが所持する公開鍵ベースの認証器（セキュリティキー、デバイス内蔵の生体認証など）を使って、安全かつパスワードレスな認証を実現します。
 
-WebAuthn認証は以下の複数のインタラクションを連続的に実行することで成立します：
+FIDO2認証は以下の複数のインタラクションを連続的に実行することで成立します：
 
 登録時：
 
-* `webauthn-registration-challenge`: 登録チャレンジ生成
-* `webauthn-registration`: クライアントからの登録応答を受け取り検証・登録
+* `fido2-registration-challenge`: 登録チャレンジ生成
+* `fido2-registration`: クライアントからの登録応答を受け取り検証・登録
 
 認証時：
 
-* `webauthn-authentication-challenge`: 認証チャレンジ生成
-* `webauthn-authentication`: クライアントからの認証応答を検証
+* `fido2-authentication-challenge`: 認証チャレンジ生成
+* `fido2-authentication`: クライアントからの認証応答を検証
 
 ---
 
 ## 設定
 
-設定には `webauthn` をキーとする `AuthenticationConfiguration` をテナントごとに登録する必要があります。
+設定には `fido2` をキーとする `AuthenticationConfiguration` をテナントごとに登録する必要があります。
 
 ### 外部FIDOサーバー
 
@@ -80,14 +80,14 @@ WebAuthn認証は以下の複数のインタラクションを連続的に実行
 
 ### 事前準備
 
-- テナントに `type = "webauthn"` の設定（`AuthenticationConfiguration`）を登録する
+- テナントに `type = "fido2"` の設定（`AuthenticationConfiguration`）を登録する
 
 ### 認証時の流れ
 
-1. クライアントが `/v1/authorizations/{id}/webauthn-authentication-challenge`
+1. クライアントが `/v1/authorizations/{id}/fido2-authentication-challenge`
    にリクエストし、チャレンジ（PublicKeyCredentialRequestOptions）を取得
 2. ブラウザのWebAuthn APIを使ってユーザーが認証器で認証を実行し、認証応答（Credential）を取得
-3. クライアントが `/v1/authorizations/{id}/webauthn-authentication` に応答を送信
+3. クライアントが `/v1/authorizations/{id}/fido2-authentication` に応答を送信
 4. サーバー側で公開鍵検証などを行い、成功時に `Authentication` を返却
 
 ---

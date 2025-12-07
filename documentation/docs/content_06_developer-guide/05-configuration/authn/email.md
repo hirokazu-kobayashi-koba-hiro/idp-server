@@ -33,42 +33,319 @@ Email認証は以下の2つのインタラクションを連続的に実行す�
 
 ## 設定
 
-設定には `email` をキーとする `AuthenticationConfiguration` をテナントごとに登録する必要があります。
+Email認証を使用するには、テナントに `type = "email"` の認証設定を登録する必要があります。
 
-### 1. 外部Email認証サービスを利用
+### 基本構造
 
-外部APIサービスを使用してコード生成・送信・検証を行う設定です。
+すべての認証設定は、統一されたinteractions形式を使用します。Email認証では**2つのinteraction**を定義します：
 
-#### 基本構造
+1. **email-authentication-challenge**: ワンタイムコード生成・送信
+2. **email-authentication**: ワンタイムコード検証
 
 ```json
 {
-  "id": "設定ID",
+  "id": "UUID",
   "type": "email",
+  "attributes": {},
   "metadata": {
     "type": "external",
-    "description": "説明",
-    "transaction_id_param": "外部サービスのトランザクションIDパラメータ名",
-    "verification_code_param": "外部サービスの検証コードパラメータ名"
+    "description": "Email authentication",
+    "transaction_id_param": "transaction_id",
+    "verification_code_param": "verification_code"
   },
   "interactions": {
-    "email-authentication-challenge": { /* チャレンジ送信設定 */ },
-    "email-authentication": { /* コード検証設定 */ }
+    "email-authentication-challenge": {
+      "request": { "schema": {...} },
+      "execution": { "function": "email_authentication_challenge", "details": {...} },
+      "response": { "body_mapping_rules": [...] }
+    },
+    "email-authentication": {
+      "request": { "schema": {...} },
+      "execution": { "function": "email_authentication" },
+      "response": { "body_mapping_rules": [...] }
+    }
   }
 }
 ```
 
-#### interactions設定
+### Interaction 1: email-authentication-challenge
 
-各インタラクションで `http_request` 実行を使用し、以下を設定：
+ワンタイムコードを生成し、メール送信するinteractionです。
 
-| 項目                    | 説明                                    |
-|-----------------------|---------------------------------------|
-| `url`                 | 外部サービスAPIのURL                        |
-| `method`              | HTTPメソッド（通常は "POST"）                  |
-| `oauth_authorization` | OAuth2認証設定（client_credentials等）      |
-| `header_mapping_rules` | HTTPヘッダーマッピングルール                     |
-| `body_mapping_rules`  | リクエストボディマッピングルール                    |
+#### Request Schema
+
+```json
+{
+  "request": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "template": { "type": "string" }
+      }
+    }
+  }
+}
+```
+
+#### Execution
+
+**function**: `email_authentication_challenge`
+
+**details設定**:
+
+```json
+{
+  "execution": {
+    "function": "email_authentication_challenge",
+    "details": {
+      "function": "no_action",
+      "sender": "test@gmail.com",
+      "templates": {
+        "registration": {
+          "subject": "[ID Verification] Your signup email confirmation code",
+          "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds."
+        },
+        "authentication": {
+          "subject": "[ID Verification] Your login email confirmation code",
+          "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds."
+        }
+      },
+      "retry_count_limitation": 5,
+      "expire_seconds": 300
+    }
+  }
+}
+```
+
+**details.function**:
+- `no_action`: テスト用（実際のメール送信なし）
+- `smtp`: SMTP経由でメール送信
+- `http_request`: HTTP API経由でメール送信
+
+#### Response
+
+```json
+{
+  "response": {
+    "body_mapping_rules": [
+      { "from": "$.response_body", "to": "*" }
+    ]
+  }
+}
+```
+
+---
+
+### Interaction 2: email-authentication
+
+送信されたワンタイムコードを検証するinteractionです。
+
+#### Request Schema
+
+```json
+{
+  "request": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "verification_code": { "type": "string" }
+      }
+    }
+  }
+}
+```
+
+#### Execution
+
+**function**: `email_authentication`
+
+ワンタイムコードの検証を行います。
+
+#### Response
+
+```json
+{
+  "response": {
+    "body_mapping_rules": [
+      { "from": "$.response_body", "to": "*" }
+    ]
+  }
+}
+```
+
+---
+
+### 完全な設定例（no-action）
+
+**情報源**: `config/examples/e2e/test-tenant/authentication-config/email/no-action.json`
+
+```json
+{
+  "id": "6f5b0255-8faf-42cf-9f24-4f702386993f",
+  "type": "email",
+  "attributes": {},
+  "metadata": {
+    "type": "external",
+    "description": "mocky",
+    "transaction_id_param": "transaction_id",
+    "verification_code_param": "verification_code"
+  },
+  "interactions": {
+    "email-authentication-challenge": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "email": { "type": "string" },
+            "template": { "type": "string" }
+          }
+        }
+      },
+      "pre_hook": {},
+      "execution": {
+        "function": "email_authentication_challenge",
+        "details": {
+          "function": "no_action",
+          "sender": "test@gmail.com",
+          "templates": {
+            "registration": {
+              "subject": "[ID Verification] Your signup email confirmation code",
+              "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\nIf you did not request this, please contact your administrator.\n\n– IDP Support"
+            },
+            "authentication": {
+              "subject": "[ID Verification] Your login email confirmation code",
+              "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\nIf you did not request this, please contact your administrator.\n\n– IDP Support"
+            }
+          },
+          "retry_count_limitation": 5,
+          "expire_seconds": 300
+        }
+      },
+      "post_hook": {},
+      "response": {
+        "body_mapping_rules": [
+          { "from": "$.response_body", "to": "*" }
+        ]
+      }
+    },
+    "email-authentication": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "verification_code": { "type": "string" }
+          }
+        }
+      },
+      "pre_hook": {},
+      "execution": {
+        "function": "email_authentication"
+      },
+      "post_hook": {},
+      "response": {
+        "body_mapping_rules": [
+          { "from": "$.response_body", "to": "*" }
+        ]
+      }
+    }
+  }
+}
+```
+
+---
+
+## 設定パターン詳細
+
+### パターン1: テスト用（no-action）
+
+実際のメール送信を行わず、ワンタイムコードのみ生成するテスト用設定です。
+
+**execution.details.function**: `"no_action"`
+
+上記の完全な設定例を参照してください。
+
+---
+
+### パターン2: SMTP送信
+
+idp-serverでワンタイムコードを生成・検証し、SMTPでメール送信する設定です。
+
+#### execution.details設定
+
+```json
+{
+  "execution": {
+    "function": "email_authentication_challenge",
+    "details": {
+      "function": "smtp",
+      "sender": "noreply@example.com",
+      "smtp_config": {
+        "host": "smtp.gmail.com",
+        "port": 587,
+        "username": "your-email@gmail.com",
+        "password": "your-app-password",
+        "auth": true,
+        "starttls_enable": true
+      },
+      "templates": {
+        "registration": {
+          "subject": "[ID Verification] Your signup email confirmation code",
+          "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds."
+        },
+        "authentication": {
+          "subject": "[ID Verification] Your login email confirmation code",
+          "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds."
+        }
+      },
+      "retry_count_limitation": 5,
+      "expire_seconds": 300
+    }
+  }
+}
+```
+
+---
+
+### パターン3: HTTP API送信
+
+idp-serverでワンタイムコードを生成・検証し、HTTP APIでメール送信する設定です。
+
+**情報源**: `config/examples/e2e/test-tenant/authentication-config/email/external.json`
+
+#### execution.details設定
+
+```json
+{
+  "execution": {
+    "function": "email_authentication_challenge",
+    "details": {
+      "function": "http_request",
+      "sender": "noreply@example.com",
+      "http_request_config": {
+        "url": "https://api.sendgrid.com/v3/mail/send",
+        "method": "POST",
+        "auth_type": "bearer",
+        "bearer_token": "your-api-key",
+        "header_mapping_rules": [...],
+        "body_mapping_rules": [...]
+      },
+      "templates": {
+        "registration": { "subject": "...", "body": "..." },
+        "authentication": { "subject": "...", "body": "..." }
+      },
+      "retry_count_limitation": 5,
+      "expire_seconds": 300
+    }
+  }
+}
+```
+
+---
+
+## 旧設定方式（廃止予定）
+
+以下の設定方式は旧バージョンで使用されていた構造です。新規実装ではinteractions形式を使用してください。
 
 ### 2. SMTP送信
 
