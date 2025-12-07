@@ -540,6 +540,11 @@ describe("Use Case: MFA Security Event Logging", () => {
       console.log("Latest success event:", JSON.stringify(latestSuccessEvent, null, 2));
 
       expect(latestSuccessEvent).toHaveProperty("type", "password_success");
+
+      // Issue #1017: Verify user.name is preferred_username (email by default identity policy)
+      expect(latestSuccessEvent.user).toHaveProperty("name", userEmail);
+      console.log(`✓ user.name matches preferred_username: ${latestSuccessEvent.user.name}`);
+
       console.log("✓ Password authentication success event recorded\n");
     }
 

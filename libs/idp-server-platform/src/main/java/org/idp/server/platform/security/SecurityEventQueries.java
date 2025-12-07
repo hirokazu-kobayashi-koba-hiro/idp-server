@@ -94,6 +94,15 @@ public class SecurityEventQueries implements UuidConvertable {
     return value != null && !value.isEmpty();
   }
 
+  public String userName() {
+    return values.get("user_name");
+  }
+
+  public boolean hasUserName() {
+    String value = values.get("user_name");
+    return value != null && !value.isEmpty();
+  }
+
   public boolean hasEventType() {
     String value = values.get("event_type");
     return value != null && !value.isEmpty();

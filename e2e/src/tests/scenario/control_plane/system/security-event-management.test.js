@@ -39,6 +39,11 @@ describe("security event management api", () => {
           expect(securityEvent).toHaveProperty("created_at");
           expect(typeof securityEvent.created_at).toBe("string");
           expect(securityEvent.created_at).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/); // ISO 8601 format
+
+          // user.name should be string if present (preferred_username of the user)
+          if (securityEvent.user && securityEvent.user.name) {
+            expect(typeof securityEvent.user.name).toBe("string");
+          }
         });
         console.log("✅ All security events contain created_at field");
       }
@@ -94,6 +99,7 @@ describe("security event management api", () => {
       ["id", "id", "3ec055a8-8000-44a2-8677-e70ebff414e2"],
       ["ex-sub", "external_user_id", "3ec055a8-8000-44a2-8677-e70ebff414e2"],
       ["user-id", "user_id", "3ec055a8-8000-44a2-8677-e70ebff414e2"],
+      ["user-name", "user_name", "admin"],
       ["client-id", "client_id", "client"],
       ["event-type", "event_type", "oauth_deny"],
       ["from", "from", "2025-06-20 19:51:39.901577"],

@@ -89,7 +89,7 @@ public class UserOperationEventCreator implements SecurityEventUserCreatable {
     builder.add(requestAttributes.getUserAgent());
     detailsMap.putAll(requestAttributes.toMap());
 
-    if (securityEventType.isFailure() || !executionResult.isEmpty()) {
+    if (securityEventType.isFailure() && !executionResult.isEmpty()) {
       detailsMap.put("execution_result", executionResult);
     }
 

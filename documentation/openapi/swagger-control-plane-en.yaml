@@ -7248,7 +7248,7 @@ components:
           default: true
         include_name:
           type: boolean
-          default: false
+          default: true
         include_external_user_id:
           type: boolean
           default: true
