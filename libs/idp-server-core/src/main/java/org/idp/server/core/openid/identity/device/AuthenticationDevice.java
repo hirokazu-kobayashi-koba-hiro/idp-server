@@ -136,8 +136,8 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
   }
 
   public Integer priority() {
-    // fallback value
-    return Objects.requireNonNullElse(priority, 100);
+    // fallback value: 0 means lowest priority (higher value = higher priority)
+    return Objects.requireNonNullElse(priority, 0);
   }
 
   public boolean hasPriority() {
