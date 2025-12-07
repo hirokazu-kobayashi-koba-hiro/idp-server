@@ -69,6 +69,11 @@ public class MysqlExecutor implements SecurityEventSqlExecutor {
       params.add(queries.externalUserId());
     }
 
+    if (queries.hasUserName()) {
+      sql.append(" AND user_name LIKE ?");
+      params.add("%" + queries.userName() + "%");
+    }
+
     if (queries.hasEventType()) {
       List<String> eventTypes = queries.eventTypes();
       if (!eventTypes.isEmpty()) {
@@ -135,6 +140,11 @@ public class MysqlExecutor implements SecurityEventSqlExecutor {
     if (queries.hasExternalUserId()) {
       sql.append(" AND external_user_id = ?");
       params.add(queries.externalUserId());
+    }
+
+    if (queries.hasUserName()) {
+      sql.append(" AND user_name LIKE ?");
+      params.add("%" + queries.userName() + "%");
     }
 
     if (queries.hasEventType()) {

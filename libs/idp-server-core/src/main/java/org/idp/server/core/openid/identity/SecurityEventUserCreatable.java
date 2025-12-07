@@ -32,7 +32,8 @@ public interface SecurityEventUserCreatable {
   default SecurityEventUser createSecurityEventUser(User user) {
 
     String id = user.sub();
-    String name = user.name();
+    // Use preferred_username for easier identification by administrators in logs
+    String name = user.preferredUsername();
     String externalUserId = user.externalUserId();
     String email = user.email();
     String phoneNumber = user.phoneNumber();
@@ -115,8 +116,8 @@ public interface SecurityEventUserCreatable {
       result.put("assigned_tenants", user.assignedTenants());
     }
 
-    if (userConfig.isIncludeName() && user.name() != null) {
-      result.put("name", user.name());
+    if (userConfig.isIncludeName() && user.preferredUsername() != null) {
+      result.put("name", user.preferredUsername());
     }
     if (userConfig.isIncludeEmail() && user.email() != null) {
       result.put("email", user.email());

@@ -818,7 +818,7 @@ idp-serverでは、Tenant設定を型安全な6つのConfigurationクラスに�
 {
   "security_event_user_config": {
     "include_id": true,
-    "include_name": false,
+    "include_name": true,
     "include_external_user_id": true,
     "include_email": false,
     "include_phone_number": false,
@@ -842,15 +842,27 @@ idp-serverでは、Tenant設定を型安全な6つのConfigurationクラスに�
 }
 ```
 
-**デフォルト**: `include_id`と`include_external_user_id`のみ`true`（最小限の情報）
+**主要フィールドの説明**:
+
+| フィールド | 記録される値 | 説明 |
+|-----------|-------------|------|
+| `include_id` | `sub` | ユーザーの内部識別子 |
+| `include_name` | `preferred_username` | 管理者が識別しやすい名前（IDポリシーにより決定） |
+| `include_external_user_id` | `ex_sub` | 外部システム連携用の識別子 |
+
+> **注意**: `include_name`に記録される値は、テナントのIDポリシー設定により決定されます。
+> - `EMAIL_OR_EXTERNAL_USER_ID`（デフォルト）: メールアドレスが記録される
+> - `USERNAME_OR_EXTERNAL_USER_ID`: ユーザー名が記録される
+
+**デフォルト**: `include_id`、`include_name`、`include_external_user_id`が`true`（管理者による識別のため`include_name`を追加）
 
 **プライバシーレベル別設定**:
 
 | レベル | 設定 | 用途 |
 |--------|------|------|
-| **最小** | `include_id`, `include_external_user_id`のみ | 本番環境（推奨） |
+| **最小** | `include_id`, `include_name`, `include_external_user_id`のみ | 本番環境（推奨） |
 | **標準** | + `include_email`, `include_roles` | 監査要件がある場合 |
-| **詳細** | + `include_name`, `include_phone_number` | デバッグ・調査時（一時的） |
+| **詳細** | + `include_phone_number` | デバッグ・調査時（一時的） |
 | **フル** | 全て`true` | ❌ 非推奨（GDPR/個人情報保護法違反リスク） |
 
 **実装**: [SecurityEventUserAttributeConfiguration.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/security/event/SecurityEventUserAttributeConfiguration.java)

@@ -32,6 +32,11 @@
       "minLength": 1,
       "description": "External user identifier filter"
     },
+    "user_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "User name filter (partial match with preferred_username)"
+    },
     "limit": {
       "type": "string",
       "pattern": "^([1-9][0-9]{0,2}|1000)$",

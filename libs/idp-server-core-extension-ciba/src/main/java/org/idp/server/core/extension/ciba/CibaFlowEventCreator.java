@@ -92,7 +92,7 @@ public class CibaFlowEventCreator implements SecurityEventUserCreatable {
     builder.add(requestAttributes.getUserAgent());
     detailsMap.putAll(requestAttributes.toMap());
 
-    if (securityEventType.isFailure() || !authenticationResult.isEmpty()) {
+    if (securityEventType.isFailure() && !authenticationResult.isEmpty()) {
       detailsMap.put("execution_result", authenticationResult);
     }
 

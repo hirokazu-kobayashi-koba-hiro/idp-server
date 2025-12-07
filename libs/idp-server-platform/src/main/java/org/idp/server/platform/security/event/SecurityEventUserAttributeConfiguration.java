@@ -46,7 +46,7 @@ public class SecurityEventUserAttributeConfiguration {
 
   public SecurityEventUserAttributeConfiguration() {
     this.includeId = true;
-    this.includeName = false;
+    this.includeName = true;
     this.includeExternalUserId = true;
     this.includeEmail = false;
     this.includePhoneNumber = false;
@@ -71,7 +71,7 @@ public class SecurityEventUserAttributeConfiguration {
   public SecurityEventUserAttributeConfiguration(Map<String, Object> values) {
     Map<String, Object> safeValues = Objects.requireNonNullElseGet(values, HashMap::new);
     this.includeId = extractBoolean(safeValues, "include_id", true);
-    this.includeName = extractBoolean(safeValues, "include_name", false);
+    this.includeName = extractBoolean(safeValues, "include_name", true);
     this.includeExternalUserId = extractBoolean(safeValues, "include_external_user_id", true);
     this.includeEmail = extractBoolean(safeValues, "include_email", false);
     this.includePhoneNumber = extractBoolean(safeValues, "include_phone_number", false);
