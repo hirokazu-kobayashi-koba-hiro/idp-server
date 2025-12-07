@@ -84,6 +84,17 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
     AuthenticationInteractionConfig authenticationInteractionConfig =
         configuration.getAuthenticationConfig("email-authentication");
 
+    // Issue #1021: Fetch challenge request early for user resolution on failure
+    // Challenge request must exist in authentication phase (created in challenge phase)
+    EmailVerificationChallengeRequest challengeRequest =
+        interactionQueryRepository.get(
+            tenant,
+            transaction.identifier(),
+            "email-authentication-challenge-request",
+            EmailVerificationChallengeRequest.class);
+    String email = challengeRequest.email();
+    String providerId = challengeRequest.providerId();
+
     // JSON Schema validation (Layer 2) - Issue #1008
     JsonSchemaDefinition schemaDefinition =
         authenticationInteractionConfig.request().requestSchemaAsDefinition();
@@ -99,6 +110,10 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
             validationResult.errors().size(),
             validationResult.errors());
 
+        // Issue #1021: Try to resolve user for security event logging
+        User attemptedUser =
+            tryResolveUserForLogging(tenant, email, providerId, userQueryRepository);
+
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("error", "invalid_request");
         errorResponse.put(
@@ -110,6 +125,7 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
             type,
             operationType(),
             method(),
+            attemptedUser,
             DefaultSecurityEventType.email_verification_failure);
       }
     }
@@ -130,38 +146,32 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
         MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
 
     if (executionResult.isClientError()) {
-
       log.warn("Email authentication failed. Client error: {}", executionResult.contents());
-
+      // Issue #1021: Try to resolve user for security event logging
+      User attemptedUser = tryResolveUserForLogging(tenant, email, providerId, userQueryRepository);
       return AuthenticationInteractionRequestResult.clientError(
           contents,
           type,
           operationType(),
           method(),
+          attemptedUser,
           DefaultSecurityEventType.email_verification_failure);
     }
 
     if (executionResult.isServerError()) {
-
       log.warn("Email authentication failed. Server error: {}", executionResult.contents());
-
+      // Issue #1021: Try to resolve user for security event logging
+      User attemptedUser = tryResolveUserForLogging(tenant, email, providerId, userQueryRepository);
       return AuthenticationInteractionRequestResult.serverError(
           contents,
           type,
           operationType(),
           method(),
+          attemptedUser,
           DefaultSecurityEventType.email_verification_failure);
     }
 
-    EmailVerificationChallengeRequest verificationChallengeRequest =
-        interactionQueryRepository.get(
-            tenant,
-            transaction.identifier(),
-            "email-authentication-challenge-request",
-            EmailVerificationChallengeRequest.class);
-
-    String email = verificationChallengeRequest.email();
-    String providerId = verificationChallengeRequest.providerId();
+    // email and providerId already retrieved from challenge request earlier (Issue #1021)
     User verifiedUser = resolveUser(tenant, transaction, email, providerId, userQueryRepository);
 
     // Check if user was not found (registration disabled or 2nd factor without authenticated
@@ -315,5 +325,37 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
     user.setEmail(email);
 
     return user;
+  }
+
+  /**
+   * Attempts to resolve user from email for security event logging.
+   *
+   * <p><b>Issue #1021:</b> This method is used to attach user information to authentication failure
+   * security events. It returns null if the user cannot be resolved (e.g., user doesn't exist),
+   * which is acceptable for logging purposes.
+   *
+   * @param tenant the tenant
+   * @param email the email from the challenge request
+   * @param providerId the provider ID
+   * @param userQueryRepository the user query repository
+   * @return the resolved user, or null if not found
+   */
+  private User tryResolveUserForLogging(
+      Tenant tenant, String email, String providerId, UserQueryRepository userQueryRepository) {
+    if (email == null || email.isEmpty()) {
+      return null;
+    }
+
+    try {
+      User user = userQueryRepository.findByEmail(tenant, email, providerId);
+      if (user.exists()) {
+        log.debug("User resolved for security event logging. email={}, sub={}", email, user.sub());
+        return user;
+      }
+    } catch (Exception e) {
+      log.debug("Failed to resolve user for security event logging. email={}", email);
+    }
+
+    return null;
   }
 }

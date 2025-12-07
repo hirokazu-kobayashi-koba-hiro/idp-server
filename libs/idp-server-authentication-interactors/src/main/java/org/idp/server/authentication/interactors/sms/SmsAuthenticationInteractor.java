@@ -84,6 +84,17 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
     AuthenticationInteractionConfig authenticationInteractionConfig =
         configuration.getAuthenticationConfig("sms-authentication");
 
+    // Issue #1021: Fetch challenge request early for user resolution on failure
+    // Challenge request must exist in authentication phase (created in challenge phase)
+    SmslVerificationChallengeRequest challengeRequest =
+        interactionQueryRepository.get(
+            tenant,
+            transaction.identifier(),
+            "sms-authentication-challenge-request",
+            SmslVerificationChallengeRequest.class);
+    String phoneNumber = challengeRequest.phoneNumber();
+    String providerId = challengeRequest.providerId();
+
     // JSON Schema validation (Layer 2) - Issue #1008
     JsonSchemaDefinition schemaDefinition =
         authenticationInteractionConfig.request().requestSchemaAsDefinition();
@@ -99,6 +110,10 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
             validationResult.errors().size(),
             validationResult.errors());
 
+        // Issue #1021: Try to resolve user for security event logging
+        User attemptedUser =
+            tryResolveUserForLogging(tenant, phoneNumber, providerId, userQueryRepository);
+
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("error", "invalid_request");
         errorResponse.put(
@@ -110,6 +125,7 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
             type,
             operationType(),
             method(),
+            attemptedUser,
             DefaultSecurityEventType.sms_verification_failure);
       }
     }
@@ -130,38 +146,34 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
         MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
 
     if (executionResult.isClientError()) {
-
       log.warn("SMS authentication failed. Client error: {}", executionResult.contents());
-
+      // Issue #1021: Try to resolve user for security event logging
+      User attemptedUser =
+          tryResolveUserForLogging(tenant, phoneNumber, providerId, userQueryRepository);
       return AuthenticationInteractionRequestResult.clientError(
           contents,
           type,
           operationType(),
           method(),
+          attemptedUser,
           DefaultSecurityEventType.sms_verification_failure);
     }
 
     if (executionResult.isServerError()) {
-
       log.warn("SMS authentication failed. Server error: {}", executionResult.contents());
-
+      // Issue #1021: Try to resolve user for security event logging
+      User attemptedUser =
+          tryResolveUserForLogging(tenant, phoneNumber, providerId, userQueryRepository);
       return AuthenticationInteractionRequestResult.serverError(
           contents,
           type,
           operationType(),
           method(),
+          attemptedUser,
           DefaultSecurityEventType.sms_verification_failure);
     }
 
-    SmslVerificationChallengeRequest smslVerificationChallengeRequest =
-        interactionQueryRepository.get(
-            tenant,
-            transaction.identifier(),
-            "sms-authentication-challenge-request",
-            SmslVerificationChallengeRequest.class);
-
-    String providerId = smslVerificationChallengeRequest.providerId();
-    String phoneNumber = smslVerificationChallengeRequest.phoneNumber();
+    // phoneNumber and providerId already retrieved from challenge request earlier (Issue #1021)
     User verifiedUser =
         resolveUser(tenant, transaction, phoneNumber, providerId, userQueryRepository);
 
@@ -316,5 +328,43 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
     user.setPhoneNumber(phoneNumber);
 
     return user;
+  }
+
+  /**
+   * Attempts to resolve user from phone number for security event logging.
+   *
+   * <p><b>Issue #1021:</b> This method is used to attach user information to authentication failure
+   * security events. It returns null if the user cannot be resolved (e.g., user doesn't exist),
+   * which is acceptable for logging purposes.
+   *
+   * @param tenant the tenant
+   * @param phoneNumber the phone number from the challenge request
+   * @param providerId the provider ID
+   * @param userQueryRepository the user query repository
+   * @return the resolved user, or null if not found
+   */
+  private User tryResolveUserForLogging(
+      Tenant tenant,
+      String phoneNumber,
+      String providerId,
+      UserQueryRepository userQueryRepository) {
+    if (phoneNumber == null || phoneNumber.isEmpty()) {
+      return null;
+    }
+
+    try {
+      User user = userQueryRepository.findByPhone(tenant, phoneNumber, providerId);
+      if (user.exists()) {
+        log.debug(
+            "User resolved for security event logging. phoneNumber={}, sub={}",
+            phoneNumber,
+            user.sub());
+        return user;
+      }
+    } catch (Exception e) {
+      log.debug("Failed to resolve user for security event logging. phoneNumber={}", phoneNumber);
+    }
+
+    return null;
   }
 }

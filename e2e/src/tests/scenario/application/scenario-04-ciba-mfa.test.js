@@ -571,7 +571,6 @@ describe("ciba - mfa", () => {
       }
     });
     console.log(interactionResponse.data);
-    const verificationCode = interactionResponse.data.payload.verification_code;
 
     authenticationResponse = await postAuthenticationDeviceInteraction({
       endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
@@ -579,7 +578,7 @@ describe("ciba - mfa", () => {
       id: authenticationTransaction.id,
       interactionType: "sms-authentication",
       body: {
-        "verification_code": verificationCode,
+        "verification_code": "123456",
       }
     });
     console.log(JSON.stringify(authenticationResponse.data, null, 2));

@@ -62,6 +62,70 @@ public class AuthenticationInteractionRequestResult {
         eventType);
   }
 
+  /**
+   * Creates a client error result with user information for security event logging.
+   *
+   * <p><b>Issue #1021:</b> This overload allows attaching user information to failure results for
+   * security event logging, without polluting the authentication transaction (see
+   * AuthenticationTransaction.updateWithUser()).
+   *
+   * @param response the error response
+   * @param type the authentication interaction type
+   * @param operationType the operation type
+   * @param method the authentication method
+   * @param user the user for security event logging (may be null)
+   * @param eventType the security event type
+   * @return the client error result with user
+   */
+  public static AuthenticationInteractionRequestResult clientError(
+      Map<String, Object> response,
+      AuthenticationInteractionType type,
+      OperationType operationType,
+      String method,
+      User user,
+      DefaultSecurityEventType eventType) {
+    return new AuthenticationInteractionRequestResult(
+        AuthenticationInteractionStatus.CLIENT_ERROR,
+        type,
+        operationType,
+        method,
+        user,
+        response,
+        eventType);
+  }
+
+  /**
+   * Creates a server error result with user information for security event logging.
+   *
+   * <p><b>Issue #1021:</b> This overload allows attaching user information to failure results for
+   * security event logging, without polluting the authentication transaction (see
+   * AuthenticationTransaction.updateWithUser()).
+   *
+   * @param response the error response
+   * @param type the authentication interaction type
+   * @param operationType the operation type
+   * @param method the authentication method
+   * @param user the user for security event logging (may be null)
+   * @param eventType the security event type
+   * @return the server error result with user
+   */
+  public static AuthenticationInteractionRequestResult serverError(
+      Map<String, Object> response,
+      AuthenticationInteractionType type,
+      OperationType operationType,
+      String method,
+      User user,
+      DefaultSecurityEventType eventType) {
+    return new AuthenticationInteractionRequestResult(
+        AuthenticationInteractionStatus.SERVER_ERROR,
+        type,
+        operationType,
+        method,
+        user,
+        response,
+        eventType);
+  }
+
   public AuthenticationInteractionRequestResult(
       AuthenticationInteractionStatus status,
       AuthenticationInteractionType type,

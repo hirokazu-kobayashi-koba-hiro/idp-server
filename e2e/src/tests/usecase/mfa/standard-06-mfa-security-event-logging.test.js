@@ -279,6 +279,116 @@ describe("Use Case: MFA Security Event Logging", () => {
 
     expect(emailAuthConfigResponse.status).toBe(201);
 
+    // Create SMS authentication configuration
+    const smsAuthConfigId = uuidv4();
+    const smsAuthConfigResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/authentication-configurations`,
+      headers: {
+        Authorization: `Bearer ${adminAccessToken}`,
+      },
+      body: {
+        id: smsAuthConfigId,
+        type: "sms",
+        attributes: {},
+        metadata: {
+          type: "external",
+          description: "SMS authentication for security event test",
+          transaction_id_param: "transaction_id",
+          verification_code_param: "verification_code",
+          retry_count_limitation: 5,
+          expire_seconds: 300
+        },
+        interactions: {
+          "sms-authentication-challenge": {
+            request: {
+              schema: {
+                type: "object",
+                properties: {
+                  phone_number: { type: "string" },
+                  template: { type: "string" }
+                }
+              }
+            },
+            pre_hook: {},
+            execution: {
+              function: "http_request",
+              http_request: {
+                url: "http://host.docker.internal:4000/sms-authentication-challenge",
+                method: "POST",
+                oauth_authorization: {
+                  type: "password",
+                  token_endpoint: "http://host.docker.internal:4000/token",
+                  client_id: "your-client-id",
+                  username: "username",
+                  password: "password",
+                  scope: "application"
+                },
+                header_mapping_rules: [
+                  { static_value: "application/json", to: "Content-Type" }
+                ],
+                body_mapping_rules: [
+                  { from: "$.request_body", to: "*" }
+                ]
+              },
+              http_request_store: {
+                key: "sms-authentication-challenge",
+                interaction_mapping_rules: [
+                  { from: "$.response_body.transaction_id", to: "transaction_id" }
+                ]
+              }
+            },
+            post_hook: {},
+            response: {
+              body_mapping_rules: [
+                { from: "$.execution_http_request.response_body", to: "*" }
+              ]
+            }
+          },
+          "sms-authentication": {
+            request: {
+              schema: {
+                type: "object",
+                properties: {
+                  verification_code: { type: "string" }
+                }
+              }
+            },
+            pre_hook: {},
+            execution: {
+              function: "http_request",
+              previous_interaction: { key: "sms-authentication-challenge" },
+              http_request: {
+                url: "http://host.docker.internal:4000/sms-authentication",
+                method: "POST",
+                oauth_authorization: {
+                  type: "password",
+                  token_endpoint: "http://host.docker.internal:4000/token",
+                  client_id: "your-client-id",
+                  username: "username",
+                  password: "password",
+                  scope: "application"
+                },
+                header_mapping_rules: [
+                  { static_value: "application/json", to: "Content-Type" }
+                ],
+                body_mapping_rules: [
+                  { from: "$.request_body", to: "*" }
+                ]
+              }
+            },
+            post_hook: {},
+            response: {
+              body_mapping_rules: [
+                { from: "$.execution_http_request.response_body", to: "*" }
+              ]
+            }
+          }
+        }
+      }
+    });
+
+    expect(smsAuthConfigResponse.status).toBe(201);
+
     // Create authentication policy
     const authPolicyConfigId = uuidv4();
     const authPolicyResponse = await postWithJson({
@@ -478,6 +588,13 @@ describe("Use Case: MFA Security Event Logging", () => {
     console.log("✓ Execution result found in security event:");
     console.log(`  - error: ${latestFailureEvent.detail.execution_result.error}`);
     console.log(`  - error_description: ${latestFailureEvent.detail.execution_result.error_description}`);
+
+    // Issue #1021: Verify user information is present in failure event
+    expect(latestFailureEvent).toHaveProperty("user");
+    expect(latestFailureEvent.user).toBeDefined();
+    expect(latestFailureEvent.user).toHaveProperty("name", userEmail);
+    console.log("✓ User information found in failure event (Issue #1021):");
+    console.log(`  - user.name: ${latestFailureEvent.user.name}`);
 
     console.log("\n=== Step 4: Attempt Correct Password and Verify Success Event ===");
 
@@ -791,6 +908,157 @@ describe("Use Case: MFA Security Event Logging", () => {
     console.log("✓ Execution result found in email failure security event:");
     console.log(`  - execution_result: ${JSON.stringify(latestFailureEvent.detail.execution_result)}`);
 
+    // Issue #1021: Verify user information is present in failure event
+    expect(latestFailureEvent).toHaveProperty("user");
+    expect(latestFailureEvent.user).toBeDefined();
+    expect(latestFailureEvent.user).toHaveProperty("name", userEmail);
+    console.log("✓ User information found in email failure event (Issue #1021):");
+    console.log(`  - user.name: ${latestFailureEvent.user.name}`);
+
     console.log("\n=== Email Authentication Failure Test Completed ===\n");
+  });
+
+  it("should record SMS authentication failure with error details in security event (Issue #1021)", async () => {
+    const timestamp = Date.now();
+    const userEmail = faker.internet.email();
+    const userName = faker.person.fullName();
+    const correctPassword = `CorrectPass${timestamp}!`;
+    const userPhoneNumber = `+8190${Math.floor(10000000 + Math.random() * 90000000)}`;
+
+    console.log("\n=== SMS Authentication Failure Test ===");
+
+    // Step 1: Register user
+    console.log("\n=== Step 1: Register User ===");
+
+    const authParams = new URLSearchParams({
+      response_type: "code",
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      scope: "openid profile email",
+      state: `state_sms_${timestamp}`,
+    });
+
+    const authorizeResponse = await get({
+      url: `${backendUrl}/${tenantId}/v1/authorizations?${authParams.toString()}`,
+      headers: {},
+    });
+
+    expect(authorizeResponse.status).toBe(302);
+    const location = authorizeResponse.headers.location;
+    const authId = new URL(location, backendUrl).searchParams.get('id');
+    expect(authId).toBeDefined();
+
+    // Register user
+    const registrationResponse = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/initial-registration`,
+      body: {
+        email: userEmail,
+        password: correctPassword,
+        name: userName,
+        phone_number: userPhoneNumber,
+      },
+    });
+
+    expect(registrationResponse.status).toBe(200);
+    console.log("✓ User registered:", userEmail, "phone:", userPhoneNumber);
+
+    // Complete authorization
+    await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/authorize`,
+      body: {},
+    });
+
+    // Step 2: Start new authorization and attempt SMS authentication with wrong code
+    console.log("\n=== Step 2: SMS Authentication Challenge and Wrong Code ===");
+
+    const authParams2 = new URLSearchParams({
+      response_type: "code",
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      scope: "openid profile email",
+      state: `state_sms_fail_${timestamp}`,
+    });
+
+    const authorizeResponse2 = await get({
+      url: `${backendUrl}/${tenantId}/v1/authorizations?${authParams2.toString()}`,
+      headers: {},
+    });
+
+    expect(authorizeResponse2.status).toBe(302);
+    const location2 = authorizeResponse2.headers.location;
+    const authId2 = new URL(location2, backendUrl).searchParams.get('id');
+    expect(authId2).toBeDefined();
+    console.log("New authorization started:", authId2);
+
+    // Send SMS authentication challenge
+    const challengeResponse = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId2}/sms-authentication-challenge`,
+      body: {
+        phone_number: userPhoneNumber,
+        template: "authentication",
+      },
+    });
+
+    console.log("SMS challenge response:", challengeResponse.status, JSON.stringify(challengeResponse.data, null, 2));
+
+    // Attempt SMS authentication with WRONG verification code
+    const wrongCodeResponse = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId2}/sms-authentication`,
+      body: {
+        verification_code: "000000", // Wrong code
+      },
+    });
+
+    console.log("Wrong code response:", wrongCodeResponse.status, JSON.stringify(wrongCodeResponse.data, null, 2));
+    expect(wrongCodeResponse.status).toBe(400);
+    expect(wrongCodeResponse.data.error).toBeDefined();
+    console.log("✓ SMS authentication failed as expected\n");
+
+    // Step 3: Verify security event contains error details
+    console.log("\n=== Step 3: Verify Security Event Contains Error Details ===");
+
+    await sleep(2000);
+
+    const securityEventsResponse = await get({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/security-events`,
+      headers: {
+        Authorization: `Bearer ${adminAccessToken}`,
+      },
+      params: {
+        type: "sms_verification_failure",
+        limit: 10,
+      },
+    });
+
+    console.log("Security events response:", securityEventsResponse.status);
+    expect(securityEventsResponse.status).toBe(200);
+
+    const failureEvents = securityEventsResponse.data.list;
+    console.log(`Found ${failureEvents.length} sms_verification_failure event(s)`);
+
+    expect(failureEvents.length).toBeGreaterThan(0);
+
+    const latestFailureEvent = failureEvents[0];
+    console.log("Latest failure event:", JSON.stringify(latestFailureEvent, null, 2));
+
+    // Verify event type
+    expect(latestFailureEvent).toHaveProperty("type", "sms_verification_failure");
+
+    // Issue #915: detail and execution_result must exist
+    expect(latestFailureEvent).toHaveProperty("detail");
+    expect(latestFailureEvent.detail).toBeDefined();
+
+    expect(latestFailureEvent.detail).toHaveProperty("execution_result");
+    console.log("✓ Execution result found in SMS failure security event:");
+    console.log(`  - execution_result: ${JSON.stringify(latestFailureEvent.detail.execution_result)}`);
+
+    // Issue #1021: Verify user information is present in failure event
+    expect(latestFailureEvent).toHaveProperty("user");
+    expect(latestFailureEvent.user).toBeDefined();
+    console.log("✓ User information found in SMS failure event (Issue #1021):");
+    console.log(`  - user.name: ${latestFailureEvent.user.name}`);
+    console.log(`  - user.sub: ${latestFailureEvent.user.sub}`);
+
+    console.log("\n=== SMS Authentication Failure Test Completed ===\n");
   });
 });
