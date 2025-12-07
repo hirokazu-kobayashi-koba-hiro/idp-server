@@ -89,6 +89,16 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
       }
     }
 
+    if (queries.hasIpAddress()) {
+      sql.append(" AND ip_address = ?::inet");
+      params.add(queries.ipAddress());
+    }
+
+    if (queries.hasUserAgent()) {
+      sql.append(" AND user_agent LIKE ?");
+      params.add("%" + queries.userAgent() + "%");
+    }
+
     if (queries.hasDetails()) {
       for (Map.Entry<String, String> entry : queries.details().entrySet()) {
         String key = entry.getKey();
@@ -160,6 +170,16 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
           params.addAll(eventTypes);
         }
       }
+    }
+
+    if (queries.hasIpAddress()) {
+      sql.append(" AND ip_address = ?::inet");
+      params.add(queries.ipAddress());
+    }
+
+    if (queries.hasUserAgent()) {
+      sql.append(" AND user_agent LIKE ?");
+      params.add("%" + queries.userAgent() + "%");
     }
 
     if (queries.hasDetails()) {

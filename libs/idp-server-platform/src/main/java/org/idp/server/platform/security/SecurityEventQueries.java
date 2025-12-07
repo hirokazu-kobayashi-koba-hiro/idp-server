@@ -120,6 +120,24 @@ public class SecurityEventQueries implements UuidConvertable {
     return Arrays.asList(value.split(","));
   }
 
+  public boolean hasIpAddress() {
+    String value = values.get("ip_address");
+    return value != null && !value.isEmpty();
+  }
+
+  public String ipAddress() {
+    return values.get("ip_address");
+  }
+
+  public boolean hasUserAgent() {
+    String value = values.get("user_agent");
+    return value != null && !value.isEmpty();
+  }
+
+  public String userAgent() {
+    return values.get("user_agent");
+  }
+
   public boolean hasDetails() {
     return !details().isEmpty();
   }

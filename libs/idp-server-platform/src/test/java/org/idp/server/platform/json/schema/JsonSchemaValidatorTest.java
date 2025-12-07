@@ -312,4 +312,196 @@ public class JsonSchemaValidatorTest {
 
     assertTrue(nullResult.isValid());
   }
+
+  private static final String IP_ADDRESS_PATTERN =
+      "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$";
+
+  @Test
+  public void testIpAddressValidPattern() throws Exception {
+    String schemaJson =
+        """
+      {
+        "type": "object",
+        "properties": {
+          "ip_address": {
+            "type": "string",
+            "pattern": "%s"
+          }
+        }
+      }
+      """
+            .formatted(IP_ADDRESS_PATTERN);
+
+    JsonSchemaDefinition schemaDefinition =
+        new JsonSchemaDefinition(new JsonNodeWrapper(objectMapper.readTree(schemaJson)));
+    JsonSchemaValidator validator = new JsonSchemaValidator(schemaDefinition);
+
+    // Valid IPv4 addresses
+    String validIp1 = """
+      { "ip_address": "127.0.0.1" }
+      """;
+    JsonSchemaValidationResult result1 =
+        validator.validate(new JsonNodeWrapper(objectMapper.readTree(validIp1)));
+    assertTrue(result1.isValid(), "127.0.0.1 should be valid");
+
+    String validIp2 = """
+      { "ip_address": "192.168.1.100" }
+      """;
+    JsonSchemaValidationResult result2 =
+        validator.validate(new JsonNodeWrapper(objectMapper.readTree(validIp2)));
+    assertTrue(result2.isValid(), "192.168.1.100 should be valid");
+
+    String validIp3 = """
+      { "ip_address": "255.255.255.255" }
+      """;
+    JsonSchemaValidationResult result3 =
+        validator.validate(new JsonNodeWrapper(objectMapper.readTree(validIp3)));
+    assertTrue(result3.isValid(), "255.255.255.255 should be valid");
+
+    String validIp4 = """
+      { "ip_address": "0.0.0.0" }
+      """;
+    JsonSchemaValidationResult result4 =
+        validator.validate(new JsonNodeWrapper(objectMapper.readTree(validIp4)));
+    assertTrue(result4.isValid(), "0.0.0.0 should be valid");
+  }
+
+  @Test
+  public void testIpAddressInvalidPattern() throws Exception {
+    String schemaJson =
+        """
+      {
+        "type": "object",
+        "properties": {
+          "ip_address": {
+            "type": "string",
+            "pattern": "%s"
+          }
+        }
+      }
+      """
+            .formatted(IP_ADDRESS_PATTERN);
+
+    JsonSchemaDefinition schemaDefinition =
+        new JsonSchemaDefinition(new JsonNodeWrapper(objectMapper.readTree(schemaJson)));
+    JsonSchemaValidator validator = new JsonSchemaValidator(schemaDefinition);
+
+    // Invalid: non-IP string
+    String invalidIp1 = """
+      { "ip_address": "invalid-ip" }
+      """;
+    JsonSchemaValidationResult result1 =
+        validator.validate(new JsonNodeWrapper(objectMapper.readTree(invalidIp1)));
+    assertFalse(result1.isValid(), "invalid-ip should be invalid");
+
+    // Invalid: out of range (999 > 255)
+    String invalidIp2 = """
+      { "ip_address": "999.999.999.999" }
+      """;
+    JsonSchemaValidationResult result2 =
+        validator.validate(new JsonNodeWrapper(objectMapper.readTree(invalidIp2)));
+    assertFalse(result2.isValid(), "999.999.999.999 should be invalid (out of range)");
+
+    // Invalid: 256 > 255
+    String invalidIp3 = """
+      { "ip_address": "256.1.1.1" }
+      """;
+    JsonSchemaValidationResult result3 =
+        validator.validate(new JsonNodeWrapper(objectMapper.readTree(invalidIp3)));
+    assertFalse(result3.isValid(), "256.1.1.1 should be invalid (256 > 255)");
+
+    // Invalid: missing octet
+    String invalidIp4 = """
+      { "ip_address": "192.168.1" }
+      """;
+    JsonSchemaValidationResult result4 =
+        validator.validate(new JsonNodeWrapper(objectMapper.readTree(invalidIp4)));
+    assertFalse(result4.isValid(), "192.168.1 should be invalid (missing octet)");
+
+    // Invalid: extra octet
+    String invalidIp5 = """
+      { "ip_address": "192.168.1.1.1" }
+      """;
+    JsonSchemaValidationResult result5 =
+        validator.validate(new JsonNodeWrapper(objectMapper.readTree(invalidIp5)));
+    assertFalse(result5.isValid(), "192.168.1.1.1 should be invalid (extra octet)");
+  }
+
+  @Test
+  public void testIpAddressValidIPv6Pattern() throws Exception {
+    String schemaJson =
+        """
+      {
+        "type": "object",
+        "properties": {
+          "ip_address": {
+            "type": "string",
+            "pattern": "%s"
+          }
+        }
+      }
+      """
+            .formatted(IP_ADDRESS_PATTERN);
+
+    JsonSchemaDefinition schemaDefinition =
+        new JsonSchemaDefinition(new JsonNodeWrapper(objectMapper.readTree(schemaJson)));
+    JsonSchemaValidator validator = new JsonSchemaValidator(schemaDefinition);
+
+    // Valid IPv6: full form
+    String validIpv6_1 =
+        """
+      { "ip_address": "2001:0db8:85a3:0000:0000:8a2e:0370:7334" }
+      """;
+    JsonSchemaValidationResult result1 =
+        validator.validate(new JsonNodeWrapper(objectMapper.readTree(validIpv6_1)));
+    assertTrue(result1.isValid(), "Full IPv6 address should be valid");
+
+    // Valid IPv6: unspecified address
+    String validIpv6_2 = """
+      { "ip_address": "::" }
+      """;
+    JsonSchemaValidationResult result2 =
+        validator.validate(new JsonNodeWrapper(objectMapper.readTree(validIpv6_2)));
+    assertTrue(result2.isValid(), ":: (IPv6 unspecified) should be valid");
+
+    // Valid IPv6: localhost
+    String validIpv6_3 = """
+      { "ip_address": "::1" }
+      """;
+    JsonSchemaValidationResult result3 =
+        validator.validate(new JsonNodeWrapper(objectMapper.readTree(validIpv6_3)));
+    assertTrue(result3.isValid(), "::1 (IPv6 localhost) should be valid");
+
+    // Valid IPv6: link-local with abbreviation
+    String validIpv6_4 = """
+      { "ip_address": "fe80::1" }
+      """;
+    JsonSchemaValidationResult result4 =
+        validator.validate(new JsonNodeWrapper(objectMapper.readTree(validIpv6_4)));
+    assertTrue(result4.isValid(), "fe80::1 (link-local) should be valid");
+
+    // Valid IPv6: abbreviation in the middle
+    String validIpv6_5 = """
+      { "ip_address": "2001:db8::1" }
+      """;
+    JsonSchemaValidationResult result5 =
+        validator.validate(new JsonNodeWrapper(objectMapper.readTree(validIpv6_5)));
+    assertTrue(result5.isValid(), "2001:db8::1 should be valid");
+
+    // Valid IPv6: trailing abbreviation
+    String validIpv6_6 = """
+      { "ip_address": "2001:db8::" }
+      """;
+    JsonSchemaValidationResult result6 =
+        validator.validate(new JsonNodeWrapper(objectMapper.readTree(validIpv6_6)));
+    assertTrue(result6.isValid(), "2001:db8:: should be valid");
+
+    // Valid IPv6: multiple segments after abbreviation
+    String validIpv6_7 = """
+      { "ip_address": "2001:db8::8a2e:370:7334" }
+      """;
+    JsonSchemaValidationResult result7 =
+        validator.validate(new JsonNodeWrapper(objectMapper.readTree(validIpv6_7)));
+    assertTrue(result7.isValid(), "2001:db8::8a2e:370:7334 should be valid");
+  }
 }
