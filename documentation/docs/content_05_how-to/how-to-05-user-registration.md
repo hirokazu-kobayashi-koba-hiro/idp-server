@@ -1,9 +1,29 @@
 # ユーザー登録と初回認証
 
-## このドキュメントの位置づけ
+## このドキュメントの目的
 
-サーバーセットアップ → 組織作成 → テナント作成 → クライアント登録と進めてきました。
-次は**ユーザーの登録方法**を学びます。
+**ユーザー登録（セルフサインアップ）を実装し、初回認証でトークンを取得する**ことが目標です。
+
+具体的には、**initial-registration API**を使用して、ユーザーが自分でアカウントを作成し、即座にログインできるフローを構築します。
+
+### 学べること
+
+✅ **ユーザー登録の基礎**
+- セルフサインアップ（initial-registration）の仕組み
+- 登録時のパスワードポリシー検証
+- 登録完了後の自動認証フロー
+
+✅ **実践的な知識**
+- Authorization Request → initial-registration → Token取得の一連の流れ
+- カスタム登録スキーマの設定方法
+- トラブルシューティング
+
+### 所要時間
+⏱️ **約10分**
+
+### このドキュメントの位置づけ
+
+**Phase 1**: 最小構成で動作確認（Step 4/5）
 
 **前提ドキュメント**:
 - [how-to-01: 組織初期化](./how-to-02-organization-initialization.md) - 組織作成済み
@@ -12,6 +32,11 @@
 
 **次のドキュメント**:
 - [how-to-06: 認証ポリシー基礎編](./how-to-07-authentication-policy-basic.md) - より柔軟な認証設定
+
+### 前提条件
+- [how-to-03](./how-to-04-client-registration.md)でクライアント登録完了
+- 組織ID・テナントID・クライアントIDを確認済み
+- OAuth 2.0 / OIDC の基本的なフロー理解
 
 ---
 
@@ -45,23 +70,14 @@ Auth0/Keycloakと同じように、ログイン画面に「新規登録」を用
 
 ---
 
-## このドキュメントで学ぶこと
+## このドキュメントで行うこと
 
-**initial-registrationを使ったセルフサインアップフロー**を実装します。
+### 🧭 全体の流れ
 
-### 実装する流れ
-1. ユーザーがログイン画面にアクセス（Authorization Request）
-2. 「新規登録」でメール・パスワード入力（initial-registration API）
-3. 登録完了 → 即座にログイン完了（Authorization Code発行）
-4. アクセストークン・IDトークン取得（Token Request）
-
-### 所要時間
-⏱️ **約10分**
-
-### 前提条件
-- [how-to-03](./how-to-04-client-registration.md)でクライアント登録完了
-- 組織ID・テナントID・クライアントIDを確認済み
-- OAuth 2.0 / OIDC の基本的なフロー理解
+1. Authorization Request（認可リクエスト）
+2. initial-registration API でユーザー登録
+3. Authorization Code 取得
+4. Token Request でアクセストークン・IDトークン取得
 
 ---
 
