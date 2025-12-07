@@ -37,6 +37,17 @@
       "minLength": 1,
       "description": "User name filter (partial match with preferred_username)"
     },
+    "ip_address": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::$|^([0-9a-fA-F]{1,4}:){1,7}:$|^::[0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4}){0,5}$",
+      "description": "IP address filter (IPv4 or IPv6 format, exact match)"
+    },
+    "user_agent": {
+      "type": "string",
+      "minLength": 1,
+      "description": "User-Agent filter (partial match)"
+    },
     "limit": {
       "type": "string",
       "pattern": "^([1-9][0-9]{0,2}|1000)$",

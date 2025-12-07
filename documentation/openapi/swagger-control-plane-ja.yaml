@@ -2970,6 +2970,23 @@ paths:
           description: 外部ユーザー識別子でフィルター
           schema:
             type: string
+        - name: user_name
+          in: query
+          description: ユーザー名でフィルター（部分一致）
+          schema:
+            type: string
+        - name: ip_address
+          in: query
+          description: IPアドレスでフィルター（IPv4またはIPv6形式、完全一致）
+          schema:
+            type: string
+          example: "192.168.1.100"
+        - name: user_agent
+          in: query
+          description: User-Agentでフィルター（部分一致）
+          schema:
+            type: string
+          example: "Mozilla"
       responses:
         '200':
           description: 組織セキュリティイベントの一覧

@@ -102,6 +102,8 @@ describe("security event management api", () => {
       ["user-name", "user_name", "admin"],
       ["client-id", "client_id", "client"],
       ["event-type", "event_type", "oauth_deny"],
+      ["ip-address", "ip_address", "127.0.0.1"],
+      ["user-agent", "user_agent", "Mozilla"],
       ["from", "from", "2025-06-20 19:51:39.901577"],
       ["to", "to", "2025-06-20 19:51:39.901577"],
       ["limit", "limit", "1"],
@@ -142,6 +144,8 @@ describe("security event management api", () => {
     ["user_id", "user_id", "123"],
     ["from", "from", "2025-06-20C19:51:39.901577"],
     ["to", "to", "2025-06-20-19:51:39.901577"],
+    ["ip_address-invalid", "ip_address", "invalid-ip"],
+    ["ip_address-out-of-range", "ip_address", "999.999.999.999"],
   ];
   test.each(errorCases)("error case:%s param: %s, value: %s", async (description, param, value) => {
     console.log(description, param, value);
