@@ -1,8 +1,28 @@
 # CIBA + FIDO-UAF
 
-このドキュメントでは、CIBAフローにおけるFIDO-UAF認証の利用方法を説明します。
+## このドキュメントの目的
 
-FIDO-UAF認証を利用するためには、事前にFIDO-UAFを利用できる[デバイスの登録](how-to-13-fido-uaf-registration.md)が必要となります。
+**CIBAフローでFIDO-UAF認証を利用し、モバイルデバイスでの生体認証を実装する**ことが目標です。
+
+### 学べること
+
+✅ **CIBA + FIDO-UAFの基礎**
+- CIBAフローの概要（デカップルドフロー）
+- FIDO-UAF認証の仕組み
+- 消費デバイスと認証デバイスの役割分担
+
+✅ **実践的な知識**
+- Backchannel Authentication リクエストの実行
+- 認証デバイスでのFIDO-UAF認証フロー
+- トークン取得までの一連の流れ
+
+### 所要時間
+⏱️ **約20分**
+
+### 前提条件
+- [how-to-11: FIDO-UAF登録](./how-to-13-fido-uaf-registration.md)でデバイス登録完了
+- テナントでCIBAが有効化されている
+- FCM（Firebase Cloud Messaging）の設定完了
 
 ---
 
