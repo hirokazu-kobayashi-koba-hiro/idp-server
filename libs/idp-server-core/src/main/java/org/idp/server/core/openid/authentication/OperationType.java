@@ -41,4 +41,8 @@ public enum OperationType {
   public boolean isDeny() {
     return this == DENY;
   }
+
+  public boolean isChallenge() {
+    return this == CHALLENGE;
+  }
 }

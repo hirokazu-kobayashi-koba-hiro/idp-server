@@ -218,7 +218,7 @@ describe("Issue #800: Authentication Step Definitions (1st/2nd Factor)", () => {
             Authorization: `Bearer ${accessToken}`
           }
         });
-        verificationCode = interactionResponse.data.payload.verification_code;
+        verificationCode = "123456";
 
         verificationResponse = await postAuthentication({
           endpoint: serverConfig.authorizationIdEndpoint + "sms-authentication",
@@ -640,7 +640,7 @@ describe("Issue #800: Authentication Step Definitions (1st/2nd Factor)", () => {
           }
         });
         console.log(interactionResponse.data);
-        const verificationCode = interactionResponse.data.payload.verification_code;
+        const verificationCode = "123456";
 
         const verificationResponse = await postAuthentication({
           endpoint: serverConfig.authorizationIdEndpoint + "sms-authentication",

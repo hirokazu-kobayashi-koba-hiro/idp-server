@@ -359,7 +359,7 @@ describe("Issue #801 - S1: Authentication Identifier Switching Attack", () => {
             Authorization: `Bearer ${accessToken}`,
           },
         });
-        verificationCode = interactionResponse.data.payload.verification_code;
+        verificationCode = "123456";
 
         console.log(
           `[Step 4] Got verification code for attacker: ${verificationCode}`

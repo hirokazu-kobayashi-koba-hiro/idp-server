@@ -98,6 +98,10 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
     AuthenticationInteractionConfig authenticationInteractionConfig =
         configuration.getAuthenticationConfig("password-authentication");
 
+    // Issue #1021: Extract username for user resolution on failure
+    String username = request.optValueAsString("username", "");
+    String providerId = request.optValueAsString("provider_id", "idp-server");
+
     // JSON Schema validation (Layer 2) - Issue #1008
     JsonSchemaDefinition schemaDefinition =
         authenticationInteractionConfig.request().requestSchemaAsDefinition();
@@ -113,6 +117,10 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
             validationResult.errors().size(),
             validationResult.errors());
 
+        // Issue #1021: Try to resolve user for security event logging
+        User attemptedUser =
+            tryResolveUserForLogging(tenant, username, providerId, userQueryRepository);
+
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("error", "invalid_request");
         errorResponse.put(
@@ -124,6 +132,7 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
             type,
             operationType(),
             method(),
+            attemptedUser,
             DefaultSecurityEventType.password_failure);
       }
     }
@@ -150,14 +159,30 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
 
     if (executionResult.isClientError()) {
       log.warn("Password authentication failed. Client error: {}", executionResult.contents());
+      // Issue #1021: Try to resolve user for security event logging
+      User attemptedUser =
+          tryResolveUserForLogging(tenant, username, providerId, userQueryRepository);
       return AuthenticationInteractionRequestResult.clientError(
-          contents, type, operationType(), method(), DefaultSecurityEventType.password_failure);
+          contents,
+          type,
+          operationType(),
+          method(),
+          attemptedUser,
+          DefaultSecurityEventType.password_failure);
     }
 
     if (executionResult.isServerError()) {
       log.warn("Password authentication failed. Server error: {}", executionResult.contents());
+      // Issue #1021: Try to resolve user for security event logging
+      User attemptedUser =
+          tryResolveUserForLogging(tenant, username, providerId, userQueryRepository);
       return AuthenticationInteractionRequestResult.serverError(
-          contents, type, operationType(), method(), DefaultSecurityEventType.password_failure);
+          contents,
+          type,
+          operationType(),
+          method(),
+          attemptedUser,
+          DefaultSecurityEventType.password_failure);
     }
 
     User verifiedUser =
@@ -438,5 +463,38 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
     Map<String, Object> executed = MappingRuleObjectMapper.execute(mappingRules, jsonPath);
 
     return jsonConverter.read(executed, User.class);
+  }
+
+  /**
+   * Attempts to resolve user from username for security event logging.
+   *
+   * <p><b>Issue #1021:</b> This method is used to attach user information to authentication failure
+   * security events. It returns null if the user cannot be resolved (e.g., user doesn't exist),
+   * which is acceptable for logging purposes.
+   *
+   * @param tenant the tenant
+   * @param username the username from the authentication request
+   * @param providerId the provider ID
+   * @param userQueryRepository the user query repository
+   * @return the resolved user, or null if not found
+   */
+  private User tryResolveUserForLogging(
+      Tenant tenant, String username, String providerId, UserQueryRepository userQueryRepository) {
+    if (username == null || username.isEmpty()) {
+      return null;
+    }
+
+    try {
+      User user = userQueryRepository.findByPreferredUsername(tenant, providerId, username);
+      if (user.exists()) {
+        log.debug(
+            "User resolved for security event logging. username={}, sub={}", username, user.sub());
+        return user;
+      }
+    } catch (Exception e) {
+      log.debug("Failed to resolve user for security event logging. username={}", username);
+    }
+
+    return null;
   }
 }

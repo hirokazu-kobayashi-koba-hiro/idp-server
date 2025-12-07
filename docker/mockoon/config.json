@@ -543,16 +543,43 @@
     {
       "uuid": "a2e213af-1a06-4090-9759-d18cb8497091",
       "type": "http",
-      "documentation": "",
+      "documentation": "SMS authentication verification - returns 400 for wrong code, 200 for correct code (123456)",
       "method": "post",
       "endpoint": "sms-authentication",
       "responses": [
         {
-          "uuid": "37c5d4b8-2d49-4b59-aab4-f405ce13dfb6",
-          "body": "{\n  \"status\": \"ok\" \n}",
+          "uuid": "sms-auth-success",
+          "body": "{\n  \"status\": \"ok\",\n  \"verified\": true\n}",
           "latency": 0,
           "statusCode": 200,
-          "label": "",
+          "label": "Success - correct code (123456)",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "",
+              "value": "123456",
+              "invert": false,
+              "operator": "regex"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "sms-auth-failure",
+          "body": "{\n  \"error\": \"invalid_verification_code\",\n  \"error_description\": \"The verification code is invalid or expired\"\n}",
+          "latency": 0,
+          "statusCode": 400,
+          "label": "Failure - wrong code",
           "headers": [],
           "bodyType": "INLINE",
           "filePath": "",
@@ -562,7 +589,7 @@
           "rulesOperator": "OR",
           "disableTemplating": false,
           "fallbackTo404": false,
-          "default": false,
+          "default": true,
           "crudKey": "id",
           "callbacks": []
         }

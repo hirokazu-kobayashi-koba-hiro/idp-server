@@ -112,13 +112,42 @@ public class AuthenticationTransaction {
         attributes);
   }
 
+  /**
+   * Updates the authentication request with user information from the interaction result.
+   *
+   * <p><b>Issue #1021:</b> User is only added to the transaction when:
+   *
+   * <ul>
+   *   <li>The result contains a user
+   *   <li>The interaction was successful
+   *   <li>The operation type is not CHALLENGE (challenge phase = user not yet verified)
+   * </ul>
+   *
+   * <p>This prevents transaction pollution on failure (PR #973) and ensures that users are only
+   * committed to the transaction after successful authentication, not during the challenge phase.
+   *
+   * @param interactionRequestResult the authentication interaction result
+   * @return the updated authentication request
+   */
   private AuthenticationRequest updateWithUser(
       AuthenticationInteractionRequestResult interactionRequestResult) {
 
+    // No user in result - keep request unchanged
     if (!interactionRequestResult.hasUser()) {
       return request;
     }
 
+    // Issue #1021: Don't add user on failure (prevents transaction pollution - PR #973)
+    if (!interactionRequestResult.isSuccess()) {
+      return request;
+    }
+
+    // Issue #1021: Challenge phase = user not yet verified, don't add to transaction
+    if (interactionRequestResult.operationType().isChallenge()) {
+      return request;
+    }
+
+    // Authentication success - add user to transaction
     if (!request.hasUser()) {
       return request.updateWithUser(interactionRequestResult);
     }
