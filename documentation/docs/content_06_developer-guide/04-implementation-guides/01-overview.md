@@ -23,7 +23,7 @@ idp-serverの**コア機能の実装方法**を説明する技術ドキュメン
 
 ### Group 1: 基盤アーキテクチャ（Architecture Fundamentals）
 
-**読む順序**: 1 → 2 → 3 → 4
+**読む順序**: 1 → 2 → 3 → 4 → 5
 
 | # | ファイル | タイトル | 内容 | 行数 |
 |---|---------|---------|------|------|
@@ -31,22 +31,26 @@ idp-serverの**コア機能の実装方法**を説明する技術ドキュメン
 | 02 | [impl-02-multi-datasource.md](./impl-02-multi-datasource.md) | マルチデータソースアーキテクチャ | マルチテナント+マルチDB管理 | 124 |
 | 03 | [impl-03-transaction.md](./impl-03-transaction.md) | トランザクション管理 | フレームワーク非依存のトランザクション管理 | 189 |
 | 04 | [impl-04-caching.md](./impl-04-caching.md) | キャッシュ戦略 | Redis使用のパフォーマンス最適化 | 41 |
+| 05 | [impl-07-multi-tenancy.md](./impl-07-multi-tenancy.md) | Multi-Tenancy実装ガイド | Tenant/Organization分離、RLSによるDB分離 | 647 |
 
-**合計**: 469行
+**合計**: 1,116行
 
 ---
 
 ### Group 2: 認証・認可（Authentication & Authorization）
 
-**読む順序**: 5 → 6 → 7
+**読む順序**: 6 → 7 → 8 → 9 → 10 → 11
 
 | # | ファイル | タイトル | 内容 | 行数 |
 |---|---------|---------|------|------|
-| 05 | [impl-05-authentication-policy.md](./impl-05-authentication-policy.md) | 認証ポリシー | OAuth/OIDC/CIBA認証フロー制御 | 182 |
-| 06 | [impl-06-authentication-interactor.md](./impl-06-authentication-interactor.md) | AuthenticationInteractor実装ガイド | 新しい認証方式の追加手順 | 113 |
-| 07 | [impl-08-federation-provider.md](./impl-08-federation-provider.md) | Federation Provider実装ガイド | 新しいSsoProvider追加手順 | 285 |
+| 06 | [impl-05-authentication-policy.md](./impl-05-authentication-policy.md) | 認証ポリシー | OAuth/OIDC/CIBA認証フロー制御 | 182 |
+| 07 | [impl-06-authentication-interactor.md](./impl-06-authentication-interactor.md) | AuthenticationInteractor実装ガイド | 新しい認証方式の追加手順 | 113 |
+| 08 | [impl-08-federation-provider.md](./impl-08-federation-provider.md) | Federation Provider実装ガイド | 新しいSsoProvider追加手順 | 285 |
+| 09 | [impl-22-fapi-implementation.md](./impl-22-fapi-implementation.md) | FAPI実装ガイド | FAPI Baseline/Advance、mTLS、Sender-constrained Tokens | 656 |
+| 10 | [impl-23-pkce-implementation.md](./impl-23-pkce-implementation.md) | PKCE実装ガイド | Code Verifier/Challenge生成、S256検証 | 612 |
+| 11 | [impl-26-discovery-metadata.md](./impl-26-discovery-metadata.md) | OpenID Connect Discovery実装ガイド | .well-known/openid-configuration、JWKS、メタデータ生成 | 623 |
 
-**合計**: 580行
+**合計**: 2,471行
 
 **移動**:
 - impl-08-federation.md → [Application Plane: 08-federation.md](../03-application-plane/08-federation.md)（利用者向け）
@@ -56,30 +60,33 @@ idp-serverの**コア機能の実装方法**を説明する技術ドキュメン
 
 ### Group 3: データアクセス・設定管理（Data Access & Configuration）
 
-**読む順序**: 9 → 10 → 11
+**読む順序**: 12 → 13 → 14 → 15
 
 | # | ファイル | タイトル | 内容 | 行数 |
 |---|---------|---------|------|------|
-| 09 | [impl-10-repository-implementation.md](./impl-10-repository-implementation.md) | Repository実装ガイド | DataSource-SqlExecutor Query/Command分離 | 433 |
-| 10 | [impl-11-configuration-management-api.md](./impl-11-configuration-management-api.md) | 設定管理API | 統一CRUD API（有効/無効機能） | 455 |
-| 11 | [impl-12-plugin-implementation.md](./impl-12-plugin-implementation.md) | Plugin実装ガイド | PluginLoaderパターンによる動的切り替え | 366 |
+| 12 | [impl-10-repository-implementation.md](./impl-10-repository-implementation.md) | Repository実装ガイド | DataSource-SqlExecutor Query/Command分離 | 433 |
+| 13 | [impl-11-configuration-management-api.md](./impl-11-configuration-management-api.md) | 設定管理API | 統一CRUD API（有効/無効機能） | 455 |
+| 14 | [impl-12-plugin-implementation.md](./impl-12-plugin-implementation.md) | Plugin実装ガイド | PluginLoaderパターンによる動的切り替え | 366 |
+| 15 | [impl-21-scope-claims-management.md](./impl-21-scope-claims-management.md) | Scope & Claims Management実装ガイド | スコープ・クレーム管理、カスタムクレームプラグイン | 687 |
 
-**合計**: 1,254行
+**合計**: 1,941行
 
 ---
 
 ### Group 4: イベント・外部連携（Event & Integration）
 
-**読む順序**: 12 → 13 → 14 → 15
+**読む順序**: 16 → 17 → 18 → 19 → 20 → 21
 
 | # | ファイル | タイトル | 内容 | 行数 |
 |---|---------|---------|------|------|
-| 12 | [impl-15-security-event-hooks.md](./impl-15-security-event-hooks.md) | セキュリティイベントフック実装 | Hook実装・リトライ戦略・エラーハンドリング | 412 |
-| 13 | [impl-16-http-request-executor.md](./impl-16-http-request-executor.md) | HTTP Request Executor | リトライ機構と包括的エラーハンドリング | 521 |
-| 14 | [impl-17-external-integration.md](./impl-17-external-integration.md) | 外部サービス連携ガイド | HttpRequestExecutorを使った外部API連携 | 413 |
-| 15 | [impl-18-spring-session.md](./impl-18-spring-session.md) | Spring Session統合ガイド | RedisセッションストアとSafeRedisSessionRepository | 476 |
+| 16 | [impl-15-security-event-hooks.md](./impl-15-security-event-hooks.md) | セキュリティイベントフック実装 | Hook実装・リトライ戦略・エラーハンドリング | 412 |
+| 17 | [impl-16-http-request-executor.md](./impl-16-http-request-executor.md) | HTTP Request Executor | リトライ機構と包括的エラーハンドリング | 521 |
+| 18 | [impl-17-external-integration.md](./impl-17-external-integration.md) | 外部サービス連携ガイド | HttpRequestExecutorを使った外部API連携 | 413 |
+| 19 | [impl-18-spring-session.md](./impl-18-spring-session.md) | Spring Session統合ガイド | RedisセッションストアとSafeRedisSessionRepository | 476 |
+| 20 | [impl-24-notification-fcm-apns.md](./impl-24-notification-fcm-apns.md) | FCM/APNs プッシュ通知実装 | AuthenticationDeviceNotifier プラグイン、JWT トークンキャッシュ | 570 |
+| 21 | [impl-25-audit-logging.md](./impl-25-audit-logging.md) | Audit Logging実装ガイド | AuditLogWriter プラグイン、非同期処理、カスタムログ出力先 | 489 |
 
-**合計**: 1,822行
+**合計**: 2,881行
 
 **移動**: impl-13-events.md + impl-14-user-lifecycle-event.md → [Application Plane: 09-events.md](../03-application-plane/09-events.md)（概念的な内容のため）
 
@@ -97,21 +104,38 @@ idp-serverの**コア機能の実装方法**を説明する技術ドキュメン
 
 | やりたいこと | 読むべきドキュメント |
 |-----------|-----------------|
-| **新しい認証方式を追加** | 06 → 07 → 12 (Interactor → 分析 → Plugin) |
-| **外部eKYCサービス連携** | 16 → 17 (HTTP Executor → 外部連携) |
-| **設定管理APIを理解** | 11 → 10 (設定API → Repository) |
-| **セキュリティイベント追加** | 13 → 15 (イベント → フック) |
-| **Repository実装** | 10 → 02 → 03 (Repository → DataSource → Transaction) |
-| **Plugin実装** | 12 → 01 (Plugin → DI) |
+| **新しい認証方式を追加** | 07 → 08 → 14 (Interactor → Federation → Plugin) |
+| **カスタムクレームを実装** | 15 → 14 (Scope & Claims → Plugin) |
+| **FAPI準拠の実装** | 09 → 10 → 11 (FAPI → PKCE → Discovery) |
+| **PKCEを理解・実装** | 10 (PKCE) |
+| **Discoveryメタデータを理解** | 11 (Discovery Metadata) |
+| **プッシュ通知を実装** | 20 → 14 (FCM/APNs → Plugin) |
+| **監査ログ出力先を追加** | 21 → 14 (Audit Logging → Plugin) |
+| **外部eKYCサービス連携** | 17 → 18 (HTTP Executor → 外部連携) |
+| **設定管理APIを理解** | 13 → 12 (設定API → Repository) |
+| **セキュリティイベント追加** | 16 → 17 (Event Hooks → HTTP Executor) |
+| **Repository実装** | 12 → 02 → 03 → 05 (Repository → DataSource → Transaction → Multi-Tenancy) |
+| **Plugin実装** | 14 → 01 (Plugin → DI) |
+| **マルチテナント機能実装** | 05 → 02 → 03 → 12 (Multi-Tenancy → DataSource → Transaction → Repository) |
 
 ### トラブルシューティング
 
 | 問題 | 読むべきドキュメント |
 |------|-----------------|
-| 外部API呼び出し失敗 | 16 (HTTP Executor) |
+| 外部API呼び出し失敗 | 17 (HTTP Executor) |
 | トランザクションエラー | 03 (Transaction) |
-| 認証失敗 | 05 → 06 → 07 (Policy → Interactor → 分析) |
+| 認証失敗 | 06 → 07 → 08 (Policy → Interactor → Federation) |
 | キャッシュ不整合 | 04 (Caching) |
+| テナント分離エラー | 05 (Multi-Tenancy) |
+| RLS動作不具合 | 05 → 03 (Multi-Tenancy → Transaction) |
+| クレームが返されない | 15 (Scope & Claims Management) |
+| カスタムクレームプラグインが動かない | 15 → 14 (Scope & Claims → Plugin) |
+| FAPI検証エラー | 09 (FAPI Implementation) |
+| PKCE検証失敗 | 10 (PKCE Implementation) |
+| Discoveryメタデータが不正 | 11 (Discovery Metadata) |
+| JWKSで秘密鍵が漏洩 | 11 (Discovery Metadata) |
+| プッシュ通知が届かない | 20 (FCM/APNs Notification) |
+| 監査ログが記録されない | 21 (Audit Logging) |
 
 ---
 
@@ -139,11 +163,11 @@ idp-serverの**コア機能の実装方法**を説明する技術ドキュメン
 
 | カテゴリ | ファイル数 | 総行数 | 平均行数 |
 |---------|----------|--------|---------|
-| Group 1: 基盤アーキテクチャ | 4 | 469行 | 117行 |
-| Group 2: 認証・認可 | 3 | 580行 | 193行 |
-| Group 3: データアクセス・設定管理 | 3 | 1,254行 | 418行 |
-| Group 4: イベント・外部連携 | 4 | 1,822行 | 456行 |
-| **合計** | **14** | **4,125行** | **295行** |
+| Group 1: 基盤アーキテクチャ | 5 | 1,116行 | 223行 |
+| Group 2: 認証・認可 | 6 | 2,471行 | 412行 |
+| Group 3: データアクセス・設定管理 | 4 | 1,941行 | 485行 |
+| Group 4: イベント・外部連携 | 6 | 2,881行 | 480行 |
+| **合計** | **21** | **8,409行** | **400行** |
 
 **整理内容**:
 - ❌ **削除**: impl-07-authentication-interactions.md（610行）- Issue #298分析ドキュメント、重複のため削除
@@ -154,5 +178,5 @@ idp-serverの**コア機能の実装方法**を説明する技術ドキュメン
 
 ---
 
-**最終更新**: 2025-10-13
+**最終更新**: 2025-12-07
 **整理者**: Claude Code（AI開発支援）

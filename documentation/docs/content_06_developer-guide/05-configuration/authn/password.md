@@ -21,13 +21,96 @@
 
 ## 設定
 
-パスワード認証は設定不要で使用できます。
+パスワード認証を使用するには、テナントに `type = "password"` の認証設定を登録する必要があります。
 
-テナント作成時に自動的に有効化され、以下の機能が利用可能になります：
+### 基本構造
 
-* ユーザーID（メールアドレス等）とパスワードによる認証
-* ハッシュ化されたパスワードの安全な照合
-* 認証成功時の`pwd`認証手段とACR値の付与
+すべての認証設定は、統一されたinteractions形式を使用します：
+
+```json
+{
+  "id": "UUID",
+  "type": "password",
+  "attributes": {},
+  "metadata": {
+    "type": "password",
+    "description": "Standard password authentication"
+  },
+  "interactions": {
+    "password-authentication": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string",
+              "description": "Username (preferred_username)"
+            },
+            "password": {
+              "type": "string",
+              "description": "Password"
+            },
+            "provider_id": {
+              "type": "string",
+              "description": "Provider ID (default: idp-server)"
+            }
+          },
+          "required": ["username", "password"]
+        }
+      },
+      "pre_hook": {},
+      "execution": {
+        "function": "password_verification"
+      },
+      "post_hook": {},
+      "response": {
+        "body_mapping_rules": [
+          { "from": "$.user_id", "to": "user_id" },
+          { "from": "$.username", "to": "username" }
+        ]
+      }
+    }
+  }
+}
+```
+
+**情報源**: `config/examples/e2e/test-tenant/authentication-config/password/standard.json`
+
+### 設定項目
+
+| フィールド | 説明 |
+|-----------|------|
+| `id` | 設定ID（UUID） |
+| `type` | `"password"` 固定 |
+| `attributes` | カスタム属性（オプション） |
+| `metadata` | メタデータ（説明等） |
+| `interactions` | インタラクション定義 |
+
+### Request Schema
+
+`password-authentication` interactionで受け付けるリクエストの構造：
+
+| フィールド | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `username` | string | ✅ | ユーザー名（通常はメールアドレス） |
+| `password` | string | ✅ | パスワード |
+| `provider_id` | string | ❌ | プロバイダーID（デフォルト: "idp-server"） |
+
+### Execution Function
+
+**`password_verification`**: パスワード検証を実行します。
+
+**処理内容**:
+1. ユーザー検索（username + provider_id）
+2. パスワードハッシュ照合
+3. 成功時にユーザー情報とAuthentication返却
+
+### Response Mapping
+
+**`body_mapping_rules`**: 認証成功時のレスポンスマッピング
+
+- `$.user_id` → `user_id`: ユーザーID
+- `$.username` → `username`: ユーザー名
 
 ### 前提条件
 
@@ -36,20 +119,36 @@
 
 ## 利用方法
 
-1. テナントに `type = "password-authentication"` の設定を登録する
-2. 認可リクエストにてログイン画面を表示（例：`prompt=login`）
-3. ログインフォームで入力された `username` と `password` を使って、以下のエンドポイントにPOSTする：
+### 事前準備
 
-```
-POST /authorizations/{id}/password-authentication
+1. テナントに `type = "password"` の認証設定を登録する（上記設定例を参照）
+
+### 認証フロー
+
+1. 認可リクエストにてログイン画面を表示（例：`prompt=login`）
+2. ログインフォームで入力された `username` と `password` を使って、以下のエンドポイントにPOSTする：
+
+```http
+POST /v1/authorizations/{id}/password-authentication
+Content-Type: application/json
 ```
 
-リクエストボディの例：
+**リクエストボディ例**:
 
 ```json
 {
   "username": "user@example.com",
-  "password": "P@ssw0rd!"
+  "password": "P@ssw0rd!",
+  "provider_id": "idp-server"
+}
+```
+
+**レスポンス例（成功時）**:
+
+```json
+{
+  "user_id": "550e8400-e29b-41d4-a716-446655440000",
+  "username": "user@example.com"
 }
 ```
 

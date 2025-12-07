@@ -20,26 +20,41 @@
 
 ### 📘 全体構成
 
+すべての認証設定は、統一されたinteractions形式を使用します：
+
 ```json
 {
   "id": "UUID",
   "type": "initial-registration",
-  "payload": {
-    "required": [],
-    "properties": {}
+  "attributes": {},
+  "metadata": {},
+  "interactions": {
+    "initial-registration": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "required": [],
+          "properties": {}
+        }
+      }
+    }
   }
 }
 ```
 
-| フィールド     | 説明                                         |
-|-----------|--------------------------------------------|
-| `id`      | スキーマの一意な識別子（UUIDなど）                        |
-| `type`    | スキーマのタイプ。ここでは `"initial-registration"` 固定。 |
-| `payload` | 実際のユーザー属性スキーマ本体。JSON Schema準拠。             |
+| フィールド | 説明 |
+|-----------|------|
+| `id` | 設定ID（UUID） |
+| `type` | `"initial-registration"` 固定 |
+| `attributes` | カスタム属性（オプション） |
+| `metadata` | メタデータ（オプション） |
+| `interactions` | インタラクション定義 |
 
 ---
 
-### 🔧 payload の構成
+### 🔧 Request Schema の構成
+
+`interactions.initial-registration.request.schema` で、ユーザー登録時に受け付けるフィールドを定義します。
 
 #### ✔ required
 
@@ -117,32 +132,56 @@
 
 ---
 
-### 🧪 サンプル（抜粋）
+### 🧪 完全な設定例
+
+**情報源**: `config/examples/e2e/test-tenant/authentication-config/initial-registration/standard.json`
 
 ```json
 {
+  "id": "609dfa45-b475-4b50-b981-59c2975db2b3",
   "type": "initial-registration",
-  "payload": {
-    "required": [
-      "email",
-      "password",
-      "name"
-    ],
-    "properties": {
-      "email": {
-        "type": "string",
-        "format": "email",
-        "maxLength": 255
-      },
-      "password": {
-        "type": "string",
-        "pattern": "^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()]).+$",
-        "minLength": 8,
-        "maxLength": 64
-      },
-      "name": {
-        "type": "string",
-        "maxLength": 255
+  "attributes": {},
+  "metadata": {},
+  "interactions": {
+    "initial-registration": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "required": [
+            "email",
+            "password",
+            "name"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "email": {
+              "type": "string",
+              "format": "email",
+              "maxLength": 255
+            },
+            "password": {
+              "type": "string",
+              "pattern": "^(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()]).+$",
+              "minLength": 8,
+              "maxLength": 64
+            },
+            "gender": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "locale": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "custom_properties": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
       }
     }
   }

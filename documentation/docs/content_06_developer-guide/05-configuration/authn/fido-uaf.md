@@ -24,39 +24,101 @@ FIDO-UAF認証は以下の複数のインタラクションを連続的に実行
 
 ## 設定
 
-設定には `fido-uaf` をキーとする `AuthenticationConfiguration` をテナントごとに登録する必要があります。
+FIDO-UAF認証を使用するには、テナントに `type = "fido-uaf"` の認証設定を登録する必要があります。
 
-### 外部FIDOサーバー
+### 基本構造
 
-#### 設定項目（テンプレート定義）
+すべての認証設定は、統一されたinteractions形式を使用します。FIDO-UAF認証では以下のinteractionsを定義します：
 
-| 項目                    | 内容                    |
-|-----------------------|-----------------------|
-| `type`                | `external-authn` 固定   |
-| `device_id_param`     | 外部サービスのデバイスIDのパラメータ名  |
-| `oauth_authorization` | 外部APIへの認証情報（OAuth2設定） |
-| `executions`          | 外部サービスAPI定義           |
+1. **fido-uaf-facets**: FIDO-UAFメタデータ取得
+2. **fido-uaf-registration-challenge**: 登録チャレンジ生成
+3. **fido-uaf-registration**: 登録応答検証
+4. **fido-uaf-authentication-challenge**: 認証チャレンジ生成
+5. **fido-uaf-authentication**: 認証応答検証
+6. **fido-uaf-deregistration**: 認証器削除
 
-外部FIDOサーバーのAPI定義を6つ設定することができます。
+```json
+{
+  "id": "UUID",
+  "type": "fido-uaf",
+  "attributes": {
+    "type": "external",
+    "service_name": "external-fido-service",
+    "device_id_param": "user_id"
+  },
+  "metadata": {},
+  "interactions": {
+    "fido-uaf-facets": {
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "https://fido-service.example.com/facets",
+          "method": "GET",
+          "auth_type": "oauth2",
+          "oauth_authorization": {
+            "type": "password",
+            "token_endpoint": "https://fido-service.example.com/token",
+            "client_id": "your-client-id",
+            "username": "username",
+            "password": "password",
+            "scope": "application",
+            "cache_buffer_seconds": 10,
+            "cache_ttl_seconds": 1800,
+            "cache_enabled": true
+          }
+        }
+      },
+      "response": {
+        "body_mapping_rules": [
+          { "from": "$.execution_http_request.response_body", "to": "*" }
+        ]
+      }
+    }
+  }
+}
+```
 
-1. facets FIDO-UAFのメタデータ取得API用の設定
-2. registration-challenge 登録チャレンジ用のAPI設定
-3. registration 登録用のAPI設定
-4. authentication-challenge 認証チャレンジ用のAPI設定
-5. authentication 認証用のAPI設定
-6. delete-key 鍵の削除用のAPI設定
+**情報源**: `config/examples/e2e/test-tenant/authentication-config/fido-uaf/external.json`
 
-#### API定義項目
+### 設定項目
 
-外部サービスのAPI仕様に応じて設定を行います。
+| フィールド | 説明 |
+|-----------|------|
+| `id` | 設定ID（UUID） |
+| `type` | `"fido-uaf"` 固定 |
+| `attributes.type` | `"external"` - 外部FIDO-UAFサービス連携 |
+| `attributes.service_name` | 外部サービス識別名 |
+| `attributes.device_id_param` | デバイスIDパラメータ名 |
+| `interactions` | 各interactionの定義 |
 
-| 項目                  | 説明                                                   |
-|---------------------|------------------------------------------------------|
-| `url`               | 外部サービスAPIのURL。POSTで呼び出される。                           |
-| `method`            | HTTPメソッド（通常は `"POST"`）                               |
-| `headers`           | API呼び出し時のHTTPヘッダ（`Content-Type`, `Authorization` など） |
-| `dynamic_body_keys` | APIリクエストbodyに含める動的キー。ユーザー入力などから取得                    |
-| `static_body`       | APIリクエストbodyに含める固定キー（例：`{"service_code": "001"}`）    |
+### HTTP Request 設定
+
+各interactionの`execution.http_request`で外部APIへのリクエストを設定：
+
+| 項目 | 説明 |
+|------|------|
+| `url` | 外部FIDOサービスのAPIエンドポイント |
+| `method` | HTTPメソッド（GET/POST） |
+| `auth_type` | 認証タイプ（`oauth2`, `bearer`, `none`等） |
+| `oauth_authorization` | OAuth2認証設定 |
+| `header_mapping_rules` | HTTPヘッダーマッピング |
+| `body_mapping_rules` | リクエストボディマッピング |
+
+### OAuth2認証設定
+
+外部FIDOサービスへの認証を設定：
+
+| 項目 | 説明 |
+|------|------|
+| `type` | Grant Type（`password`, `client_credentials`等） |
+| `token_endpoint` | トークンエンドポイントURL |
+| `client_id` | クライアントID |
+| `username` | ユーザー名（passwordグラントの場合） |
+| `password` | パスワード（passwordグラントの場合） |
+| `scope` | 要求スコープ |
+| `cache_enabled` | トークンキャッシュ有効化 |
+| `cache_ttl_seconds` | キャッシュTTL（秒） |
+| `cache_buffer_seconds` | キャッシュ更新バッファ（秒） |
 
 ---
 
