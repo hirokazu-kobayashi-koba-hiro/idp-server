@@ -516,9 +516,16 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     return new AuthenticationDevices(authenticationDevices);
   }
 
+  /**
+   * Finds the primary authentication device based on highest priority.
+   *
+   * <p>Higher priority value means higher precedence (consistent with AuthenticationPolicy).
+   *
+   * @return the authentication device with highest priority, or empty device if none exists
+   */
   public AuthenticationDevice findPrimaryAuthenticationDevice() {
     return authenticationDevices.stream()
-        .min(Comparator.comparingInt(AuthenticationDevice::priority))
+        .max(Comparator.comparingInt(AuthenticationDevice::priority))
         .orElse(new AuthenticationDevice());
   }
 
