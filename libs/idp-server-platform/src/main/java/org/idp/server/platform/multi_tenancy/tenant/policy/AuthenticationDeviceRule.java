@@ -112,15 +112,6 @@ public class AuthenticationDeviceRule {
   }
 
   /**
-   * Checks if this rule exists (has been configured).
-   *
-   * @return true if configured
-   */
-  public boolean exists() {
-    return true;
-  }
-
-  /**
    * Converts this rule to a Map for JSON serialization.
    *
    * @return map representation

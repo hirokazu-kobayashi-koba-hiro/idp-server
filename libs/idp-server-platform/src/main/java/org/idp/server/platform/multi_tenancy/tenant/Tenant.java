@@ -26,6 +26,7 @@ import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier
 import org.idp.server.platform.multi_tenancy.tenant.config.CorsConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.config.SessionConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.config.UIConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.policy.AuthenticationDeviceRule;
 import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
 import org.idp.server.platform.security.event.SecurityEventUserAttributeConfiguration;
 import org.idp.server.platform.security.log.SecurityEventLogConfiguration;
@@ -232,6 +233,9 @@ public class Tenant implements Configurable {
    * @return maximum device count from authentication device rule
    */
   public int maxDevicesForAuthentication() {
+    if (identityPolicyConfig == null) {
+      return AuthenticationDeviceRule.defaultRule().maxDevices();
+    }
     return identityPolicyConfig.maxDevices();
   }
 
@@ -241,6 +245,9 @@ public class Tenant implements Configurable {
    * @return true if identity verification is required
    */
   public boolean requiresIdentityVerificationForDeviceRegistration() {
+    if (identityPolicyConfig == null) {
+      return AuthenticationDeviceRule.defaultRule().requiredIdentityVerification();
+    }
     return identityPolicyConfig.requiresIdentityVerificationForDeviceRegistration();
   }
 }
