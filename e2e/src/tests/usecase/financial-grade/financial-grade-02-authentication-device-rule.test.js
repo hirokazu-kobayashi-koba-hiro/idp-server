@@ -195,8 +195,8 @@ describe("Financial Grade: Authentication Device Rule (Issue #728)", () => {
 
     const deviceRule = identityPolicyConfig.authentication_device_rule;
 
-    // Verify values match template (financial-grade: max_devices=100, required_identity_verification=true)
-    expect(deviceRule.max_devices).toBe(100);
+    // Verify values match template (financial-grade: max_devices=1, required_identity_verification=true)
+    expect(deviceRule.max_devices).toBe(1);
     console.log(`✅ max_devices: ${deviceRule.max_devices}`);
 
     expect(deviceRule.required_identity_verification).toBe(true);
@@ -272,13 +272,13 @@ describe("Financial Grade: Authentication Device Rule (Issue #728)", () => {
     const deviceRule = templateIdentityPolicy.authentication_device_rule;
 
     // 金融機関向けテンプレート: 高セキュリティ設定
-    // max_devices: 100 (複数端末での利用を許容しつつ上限設定)
+    // max_devices: 1 (1ユーザー1デバイス - 金融グレードの厳格なセキュリティ)
     // required_identity_verification: true (本人確認必須)
-    expect(deviceRule.max_devices).toBe(100);
+    expect(deviceRule.max_devices).toBe(1);
     expect(deviceRule.required_identity_verification).toBe(true);
 
     console.log("✅ Financial-grade template authentication_device_rule:");
-    console.log(`   - max_devices: ${deviceRule.max_devices} (allows multiple devices with limit)`);
+    console.log(`   - max_devices: ${deviceRule.max_devices} (one device per user - strict security)`);
     console.log(`   - required_identity_verification: ${deviceRule.required_identity_verification} (identity verification required)`);
     console.log("\n✅ Template settings match financial-grade security requirements (Issue #728)");
   });
