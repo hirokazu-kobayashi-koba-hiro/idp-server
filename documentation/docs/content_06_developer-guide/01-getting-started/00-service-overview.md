@@ -248,10 +248,6 @@ Organization (大企業グループ)
             }
           ]
         ]
-      },
-      "authentication_device_rule": {
-        "max_devices": 100,
-        "required_identity_verification": true
       }
     }
   ]
@@ -259,6 +255,8 @@ Organization (大企業グループ)
 ```
 
 **コード変更なしで認証方式を変更可能**
+
+> **Note**: デバイス登録ルール（`authentication_device_rule`）はテナントの`identity_policy_config`で設定します。
 
 ---
 

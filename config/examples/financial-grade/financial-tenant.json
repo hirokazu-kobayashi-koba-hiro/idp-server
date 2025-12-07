@@ -66,7 +66,11 @@
       "include_verified_claims": true
     },
     "identity_policy_config": {
-      "identity_unique_key_type": "EMAIL"
+      "identity_unique_key_type": "EMAIL",
+      "authentication_device_rule": {
+        "max_devices": 1,
+        "required_identity_verification": true
+      }
     }
   },
   "authorization_server": {

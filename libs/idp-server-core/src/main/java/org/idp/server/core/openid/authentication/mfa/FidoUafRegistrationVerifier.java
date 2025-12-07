@@ -18,25 +18,23 @@ package org.idp.server.core.openid.authentication.mfa;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.openid.authentication.policy.AuthenticationDeviceRule;
-import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.io.MfaRegistrationRequest;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class FidoUafRegistrationVerifier implements MfaRequestVerifier {
 
   @Override
   public MfaVerificationResult verify(
-      User user, MfaRegistrationRequest registrationRequest, AuthenticationPolicy policy) {
+      User user, MfaRegistrationRequest registrationRequest, Tenant tenant) {
 
     // Skip device count limit check for reset action
     if (registrationRequest.isResetAction()) {
       return MfaVerificationResult.success();
     }
 
-    AuthenticationDeviceRule authenticationDeviceRule = policy.authenticationDeviceRule();
     int authenticationDeviceCount = user.authenticationDeviceCount();
-    int maxDevices = authenticationDeviceRule.maxDevices();
+    int maxDevices = tenant.maxDevicesForAuthentication();
 
     if (authenticationDeviceCount >= maxDevices) {
       Map<String, Object> errors = new HashMap<>();

@@ -18,15 +18,15 @@ package org.idp.server.core.openid.authentication.mfa;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.io.MfaRegistrationRequest;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class FidoUafDeRegistrationVerifier implements MfaRequestVerifier {
 
   @Override
   public MfaVerificationResult verify(
-      User user, MfaRegistrationRequest registrationRequest, AuthenticationPolicy policy) {
+      User user, MfaRegistrationRequest registrationRequest, Tenant tenant) {
     String deviceId = registrationRequest.getValueOrEmpty("device_id");
 
     if (!user.hasAuthenticationDevice(deviceId)) {

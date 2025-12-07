@@ -38,7 +38,11 @@
       "include_email": true
     },
     "identity_policy_config": {
-      "identity_unique_key_type": "EMAIL_OR_EXTERNAL_USER_ID"
+      "identity_unique_key_type": "EMAIL_OR_EXTERNAL_USER_ID",
+      "authentication_device_rule": {
+        "max_devices": 100,
+        "required_identity_verification": true
+      }
     }
   },
   "authorization_server": {

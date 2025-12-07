@@ -29,7 +29,6 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionResult;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
-import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
 import org.idp.server.core.openid.identity.User;
@@ -157,8 +156,7 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
 
     User addedDeviceUser = addAuthenticationDevice(baseUser, deviceId, transaction.attributes());
 
-    AuthenticationPolicy authenticationPolicy = transaction.authenticationPolicy();
-    if (authenticationPolicy.authenticationDeviceRule().requiredIdentityVerification()) {
+    if (tenant.requiresIdentityVerificationForDeviceRegistration()) {
       addedDeviceUser.setStatus(UserStatus.IDENTITY_VERIFICATION_REQUIRED);
     }
 

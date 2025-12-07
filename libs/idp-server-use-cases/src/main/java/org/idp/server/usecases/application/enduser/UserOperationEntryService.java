@@ -121,8 +121,7 @@ public class UserOperationEntryService implements UserOperationApi {
             tenant, user, token, authFlow, request, authenticationPolicyConfiguration);
 
     MfaRequestVerifier mfaRequestVerifier = mfaRegistrationVerifiers.get(authFlow);
-    MfaVerificationResult verificationResult =
-        mfaRequestVerifier.verify(user, request, authenticationTransaction.authenticationPolicy());
+    MfaVerificationResult verificationResult = mfaRequestVerifier.verify(user, request, tenant);
 
     if (verificationResult.isFailure()) {
       return UserOperationResponse.failure(verificationResult.errorContents());
