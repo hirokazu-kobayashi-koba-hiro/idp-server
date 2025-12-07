@@ -44,10 +44,6 @@
             }
           ]
         ]
-      },
-      "authentication_device_rule": {
-        "max_devices": 100,
-        "required_identity_verification": true
       }
     }
   ]

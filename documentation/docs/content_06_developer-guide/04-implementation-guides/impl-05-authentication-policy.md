@@ -88,10 +88,6 @@
             }
           ]
         ]
-      },
-      "authentication_device_rule": {
-        "max_devices": 100,
-        "required_identity_verification": true
       }
     }
   ]
@@ -124,8 +120,9 @@
 | `success_conditions`               | 認証成功とみなす条件（JSONPath + 演算子）                        | 下記参照                                                                |
 | `failure_conditions`               | 警告や統計記録の対象となる失敗条件                                 | 下記参照                                                                |
 | `lock_conditions`                  | アカウントロックや認可拒否に至る失敗条件                               | 下記参照                                                                |
-| `authentication_device_rule`       | デバイス登録ルール（MFA登録フロー用）                              | `{"max_devices": 100, "required_identity_verification": true}`      |
 | `step_definitions`                 | 多段階認証の定義                                           | -                                                                   |
+
+> **Note**: デバイス登録ルール（`authentication_device_rule`）はテナントの`identity_policy_config`で設定します。詳細は[FIDO-UAF登録](../../content_05_how-to/how-to-13-fido-uaf-registration.md)を参照してください。
 
 ### 条件評価フィールド構造
 

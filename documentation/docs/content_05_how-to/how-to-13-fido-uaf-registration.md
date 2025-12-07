@@ -25,7 +25,33 @@
 
 FIDO-UAF登録を行う前に、以下の設定が必要です：
 
-### 1. 認証ポリシーの登録
+### 1. テナントのデバイス登録ルール設定
+
+テナントの `identity_policy_config` に `authentication_device_rule` を設定してください。
+
+```http
+PUT /v1/management/tenants/{tenant-id}
+Content-Type: application/json
+
+{
+  "tenant": {
+    "identity_policy_config": {
+      "identity_unique_key_type": "EMAIL",
+      "authentication_device_rule": {
+        "max_devices": 100,
+        "required_identity_verification": true
+      }
+    }
+  }
+}
+```
+
+#### 主要パラメータ
+
+- `max_devices`: ユーザーあたりの最大デバイス登録数 (デフォルト: 5)
+- `required_identity_verification`: デバイス登録時に身元確認必須フラグ (デフォルト: false)
+
+### 2. 認証ポリシーの登録
 
 `fido-uaf-registration` フローの認証ポリシーを事前に登録してください。
 
@@ -40,20 +66,11 @@ Content-Type: application/json
     {
       "description": "FIDO-UAF device registration policy",
       "priority": 1,
-      "available_methods": ["fido-uaf"],
-      "authentication_device_rule": {
-        "max_devices": 100,
-        "required_identity_verification": true
-      }
+      "available_methods": ["fido-uaf"]
     }
   ]
 }
 ```
-
-#### 主要パラメータ
-
-- `max_devices`: ユーザーあたりの最大デバイス登録数 (デフォルト: 100)
-- `required_identity_verification`: 身元確認必須フラグ
 
 ---
 

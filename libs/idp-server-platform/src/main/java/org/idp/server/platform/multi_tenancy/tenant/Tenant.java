@@ -225,4 +225,22 @@ public class Tenant implements Configurable {
   public TenantIdentityPolicy identityPolicyConfig() {
     return identityPolicyConfig;
   }
+
+  /**
+   * Returns maximum number of authentication devices allowed per user.
+   *
+   * @return maximum device count from authentication device rule
+   */
+  public int maxDevicesForAuthentication() {
+    return identityPolicyConfig.maxDevices();
+  }
+
+  /**
+   * Checks if identity verification is required for device registration.
+   *
+   * @return true if identity verification is required
+   */
+  public boolean requiresIdentityVerificationForDeviceRegistration() {
+    return identityPolicyConfig.requiresIdentityVerificationForDeviceRegistration();
+  }
 }

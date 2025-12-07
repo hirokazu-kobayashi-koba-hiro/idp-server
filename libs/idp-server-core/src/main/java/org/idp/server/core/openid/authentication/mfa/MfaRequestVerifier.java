@@ -16,12 +16,12 @@
 
 package org.idp.server.core.openid.authentication.mfa;
 
-import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.io.MfaRegistrationRequest;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface MfaRequestVerifier {
 
   MfaVerificationResult verify(
-      User user, MfaRegistrationRequest registrationRequest, AuthenticationPolicy policy);
+      User user, MfaRegistrationRequest registrationRequest, Tenant tenant);
 }

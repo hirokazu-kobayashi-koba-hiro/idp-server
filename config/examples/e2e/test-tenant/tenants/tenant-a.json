@@ -21,7 +21,11 @@
       "detail_scrub_keys": "authorization,cookie,set-cookie,proxy-authorization,password,secret,token,refresh_token,access_token,id_token,client_secret,api_key,bearer"
     },
     "identity_policy_config": {
-      "identity_unique_key_type": "EMAIL"
+      "identity_unique_key_type": "EMAIL",
+      "authentication_device_rule": {
+        "max_devices": 100,
+        "required_identity_verification": true
+      }
     }
   },
   "authorization_server": {

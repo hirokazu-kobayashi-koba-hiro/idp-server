@@ -37,7 +37,6 @@ public class AuthenticationPolicy implements JsonReadable {
   AuthenticationResultConditionConfig successConditions = new AuthenticationResultConditionConfig();
   AuthenticationResultConditionConfig failureConditions = new AuthenticationResultConditionConfig();
   AuthenticationResultConditionConfig lockConditions = new AuthenticationResultConditionConfig();
-  AuthenticationDeviceRule authenticationDeviceRule = new AuthenticationDeviceRule();
   List<AuthenticationStepDefinition> stepDefinitions = new ArrayList<>();
 
   public AuthenticationPolicy() {}
@@ -114,14 +113,6 @@ public class AuthenticationPolicy implements JsonReadable {
     return lockConditions != null;
   }
 
-  public AuthenticationDeviceRule authenticationDeviceRule() {
-    return authenticationDeviceRule;
-  }
-
-  public boolean hasAuthenticationDeviceRule() {
-    return authenticationDeviceRule != null;
-  }
-
   public List<AuthenticationStepDefinition> stepDefinitions() {
     return stepDefinitions;
   }
@@ -152,8 +143,6 @@ public class AuthenticationPolicy implements JsonReadable {
     if (hasSuccessConditions()) map.put("success_conditions", successConditions.toMap());
     if (hasFailureConditions()) map.put("failure_conditions", failureConditions.toMap());
     if (hasLockConditions()) map.put("lock_conditions", lockConditions.toMap());
-    if (hasAuthenticationDeviceRule())
-      map.put("authentication_device_rule", authenticationDeviceRule.toMap());
     if (hasStepDefinitions()) map.put("step_definitions", stepDefinitionsAsMap());
     return map;
   }

@@ -18,11 +18,11 @@ package org.idp.server.core.openid.authentication.mfa;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.io.MfaRegistrationRequest;
 import org.idp.server.core.openid.oauth.type.AuthFlow;
 import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class MfaRegistrationVerifiers {
 
@@ -45,7 +45,7 @@ public class MfaRegistrationVerifiers {
 
         @Override
         public MfaVerificationResult verify(
-            User user, MfaRegistrationRequest registrationRequest, AuthenticationPolicy policy) {
+            User user, MfaRegistrationRequest registrationRequest, Tenant tenant) {
 
           return MfaVerificationResult.success();
         }
