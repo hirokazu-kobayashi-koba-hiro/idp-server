@@ -59,6 +59,10 @@ public class StructuredJsonLogFormatter implements SecurityEventLogFormatter {
       jsonMap.put("user_id", securityEvent.userSub());
     }
 
+    if (config.includeUserName() && securityEvent.hasUser() && securityEvent.userName() != null) {
+      jsonMap.put("user_name", securityEvent.userName());
+    }
+
     if (config.includeUserExSub() && securityEvent.hasUser() && securityEvent.userExSub() != null) {
       jsonMap.put("user_ex_sub", securityEvent.userExSub());
     }
@@ -97,6 +101,7 @@ public class StructuredJsonLogFormatter implements SecurityEventLogFormatter {
     if (securityEvent.type().value().endsWith("_success")) {
       tags.add("success");
     }
+    jsonMap.put("log_type", "security_event");
     jsonMap.put("tags", tags);
 
     jsonMap.putAll(additionalFields);

@@ -208,6 +208,10 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
           if (exSub != null && !exSub.isEmpty()) {
             TenantLoggingContext.setUserExSub(exSub);
           }
+          String preferredUsername = user.preferredUsername();
+          if (preferredUsername != null && !preferredUsername.isEmpty()) {
+            TenantLoggingContext.setUserName(preferredUsername);
+          }
         }
       }
     }

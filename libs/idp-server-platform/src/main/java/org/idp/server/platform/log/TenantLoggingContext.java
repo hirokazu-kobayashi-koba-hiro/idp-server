@@ -26,6 +26,8 @@ public class TenantLoggingContext {
   private static final String CLIENT_ID_KEY = "client_id";
   private static final String USER_ID_KEY = "user_id";
   private static final String USER_EX_SUB_KEY = "user_ex_sub";
+  private static final String USER_NAME_KEY = "user_name";
+  private static final String LOG_TYPE_KEY = "log_type";
 
   public static void setTenant(TenantIdentifier tenantIdentifier) {
     if (Objects.nonNull(tenantIdentifier) && tenantIdentifier.exists()) {
@@ -85,6 +87,38 @@ public class TenantLoggingContext {
 
   public static void clearUserId() {
     MDC.remove(USER_ID_KEY);
+  }
+
+  public static void setUserName(String userName) {
+    if (Objects.nonNull(userName) && !userName.isEmpty()) {
+      MDC.put(USER_NAME_KEY, userName);
+    }
+  }
+
+  public static String getCurrentUserName() {
+    return MDC.get(USER_NAME_KEY);
+  }
+
+  public static boolean hasUserName() {
+    return Objects.nonNull(MDC.get(USER_NAME_KEY));
+  }
+
+  public static void clearUserName() {
+    MDC.remove(USER_NAME_KEY);
+  }
+
+  public static void setLogType(String logType) {
+    if (Objects.nonNull(logType) && !logType.isEmpty()) {
+      MDC.put(LOG_TYPE_KEY, logType);
+    }
+  }
+
+  public static String getCurrentLogType() {
+    return MDC.get(LOG_TYPE_KEY);
+  }
+
+  public static void clearLogType() {
+    MDC.remove(LOG_TYPE_KEY);
   }
 
   public static void clearAll() {
