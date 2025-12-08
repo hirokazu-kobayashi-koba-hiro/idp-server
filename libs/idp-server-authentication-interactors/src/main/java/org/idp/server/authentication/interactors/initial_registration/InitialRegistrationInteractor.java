@@ -106,8 +106,14 @@ public class InitialRegistrationInteractor implements AuthenticationInteractor {
       response.put("error", "invalid_request");
       response.put("error_description", "user is conflict with username and password");
 
+      // Issue #1034: Include existing user in security event for better audit logging
       return AuthenticationInteractionRequestResult.clientError(
-          response, type, operationType(), method(), DefaultSecurityEventType.user_signup_conflict);
+          response,
+          type,
+          operationType(),
+          method(),
+          existingUser,
+          DefaultSecurityEventType.user_signup_conflict);
     }
 
     // Validate password against tenant password policy

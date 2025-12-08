@@ -111,11 +111,14 @@ public class FidoUafAuthenticationInteractor implements AuthenticationInteractor
 
       log.warn("FIDO-UAF authentication failed. Client error: {}", executionResult.contents());
 
+      // Issue #1034: Try to use transaction user for security event logging (2nd factor case)
+      User attemptedUser = transaction.hasUser() ? transaction.user() : null;
       return AuthenticationInteractionRequestResult.clientError(
           contents,
           type,
           operationType(),
           method(),
+          attemptedUser,
           DefaultSecurityEventType.fido_uaf_authentication_failure);
     }
 
@@ -123,11 +126,14 @@ public class FidoUafAuthenticationInteractor implements AuthenticationInteractor
 
       log.warn("FIDO-UAF authentication failed. Server error: {}", executionResult.contents());
 
+      // Issue #1034: Try to use transaction user for security event logging (2nd factor case)
+      User attemptedUser = transaction.hasUser() ? transaction.user() : null;
       return AuthenticationInteractionRequestResult.serverError(
           contents,
           type,
           operationType(),
           method(),
+          attemptedUser,
           DefaultSecurityEventType.fido_uaf_authentication_failure);
     }
 
