@@ -106,7 +106,8 @@ public class CibaFlowEntryService implements CibaFlowApi {
         issueResponse.request(),
         issueResponse.user(),
         DefaultSecurityEventType.backchannel_authentication_request_success.toEventType(),
-        requestAttributes);
+        requestAttributes,
+        issueResponse.clientAttributes());
 
     AuthenticationPolicyConfiguration authenticationPolicyConfiguration =
         authenticationPolicyConfigurationQueryRepository.find(
@@ -137,7 +138,8 @@ public class CibaFlowEntryService implements CibaFlowApi {
         issueResponse.request(),
         issueResponse.user(),
         interactionRequestResult.eventType(),
-        requestAttributes);
+        requestAttributes,
+        issueResponse.clientAttributes());
     return issueResponse.toResponse();
   }
 
@@ -174,7 +176,8 @@ public class CibaFlowEntryService implements CibaFlowApi {
         result.user(),
         result.eventType(),
         result.response(),
-        requestAttributes);
+        requestAttributes,
+        authenticationTransaction.request().clientAttributes());
 
     if (updatedTransaction.isSuccess()) {
 
@@ -191,7 +194,8 @@ public class CibaFlowEntryService implements CibaFlowApi {
           backchannelAuthenticationRequest,
           result.user(),
           DefaultSecurityEventType.backchannel_authentication_authorize.toEventType(),
-          requestAttributes);
+          requestAttributes,
+          authenticationTransaction.request().clientAttributes());
     }
 
     if (updatedTransaction.isFailure()) {
@@ -203,7 +207,8 @@ public class CibaFlowEntryService implements CibaFlowApi {
           backchannelAuthenticationRequest,
           result.user(),
           DefaultSecurityEventType.backchannel_authentication_deny.toEventType(),
-          requestAttributes);
+          requestAttributes,
+          authenticationTransaction.request().clientAttributes());
     }
 
     if (updatedTransaction.isLocked()) {

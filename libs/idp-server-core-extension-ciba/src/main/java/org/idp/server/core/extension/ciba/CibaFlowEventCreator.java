@@ -21,6 +21,7 @@ import java.util.Map;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.openid.identity.SecurityEventUserCreatable;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.oauth.configuration.client.ClientAttributes;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.event.*;
@@ -35,13 +36,15 @@ public class CibaFlowEventCreator implements SecurityEventUserCreatable {
   SecurityEventDescription securityEventDescription;
   Map<String, Object> authenticationResult;
   RequestAttributes requestAttributes;
+  ClientAttributes clientAttributes;
 
   public CibaFlowEventCreator(
       Tenant tenant,
       BackchannelAuthenticationRequest request,
       User user,
       SecurityEventType securityEventType,
-      RequestAttributes requestAttributes) {
+      RequestAttributes requestAttributes,
+      ClientAttributes clientAttributes) {
     this.tenant = tenant;
     this.request = request;
     this.user = user;
@@ -49,6 +52,7 @@ public class CibaFlowEventCreator implements SecurityEventUserCreatable {
     this.securityEventDescription = new SecurityEventDescription(securityEventType.value());
     this.authenticationResult = Map.of();
     this.requestAttributes = requestAttributes;
+    this.clientAttributes = clientAttributes;
   }
 
   public CibaFlowEventCreator(
@@ -57,7 +61,8 @@ public class CibaFlowEventCreator implements SecurityEventUserCreatable {
       User user,
       SecurityEventType securityEventType,
       Map<String, Object> authenticationResult,
-      RequestAttributes requestAttributes) {
+      RequestAttributes requestAttributes,
+      ClientAttributes clientAttributes) {
     this.tenant = tenant;
     this.request = request;
     this.user = user;
@@ -65,6 +70,7 @@ public class CibaFlowEventCreator implements SecurityEventUserCreatable {
     this.securityEventDescription = new SecurityEventDescription(securityEventType.value());
     this.authenticationResult = authenticationResult != null ? authenticationResult : Map.of();
     this.requestAttributes = requestAttributes;
+    this.clientAttributes = clientAttributes;
   }
 
   public SecurityEvent create() {
@@ -78,8 +84,9 @@ public class CibaFlowEventCreator implements SecurityEventUserCreatable {
             tenant.identifier().value(), tenant.tokenIssuer(), tenant.name().value());
     builder.add(securityEventTenant);
 
+    String clientName = resolveClientName();
     SecurityEventClient securityEventClient =
-        new SecurityEventClient(request.requestedClientId().value(), "");
+        new SecurityEventClient(request.requestedClientId().value(), clientName);
     builder.add(securityEventClient);
 
     if (user != null) {
@@ -102,5 +109,15 @@ public class CibaFlowEventCreator implements SecurityEventUserCreatable {
     builder.add(securityEventDetail);
 
     return builder.build();
+  }
+
+  private String resolveClientName() {
+    if (clientAttributes == null) {
+      return "";
+    }
+    if (!clientAttributes.hasClientName()) {
+      return "";
+    }
+    return clientAttributes.clientName().value();
   }
 }
