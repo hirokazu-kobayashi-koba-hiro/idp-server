@@ -93,9 +93,6 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
       String providerId = request.optValueAsString("provider_id", "idp-server");
       String email = resolveEmail(transaction, request);
 
-      // email and providerId already retrieved from challenge request earlier (Issue #1021)
-      User resolvedUser = resolveUser(tenant, transaction, email, providerId, userQueryRepository);
-
       if (email.isEmpty()) {
         log.warn("Email is empty. method={}", method());
 
@@ -138,7 +135,6 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
             type,
             operationType(),
             method(),
-            resolvedUser,
             DefaultSecurityEventType.email_verification_request_failure);
       }
 
@@ -152,7 +148,6 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
             type,
             operationType(),
             method(),
-            resolvedUser,
             DefaultSecurityEventType.email_verification_request_failure);
       }
 
@@ -169,7 +164,7 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
           type,
           operationType(),
           method(),
-          resolvedUser,
+          transaction.user(),
           contents,
           DefaultSecurityEventType.email_verification_request_success);
     } catch (UserTooManyFoundResultException tooManyFoundResultException) {
@@ -255,119 +250,5 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
     }
     log.debug("No email found in request or transaction");
     return "";
-  }
-
-  /**
-   * Resolve user for authentication (1st factor - user identification).
-   *
-   * <p><b>Issue #800 Fix:</b> Search database by input identifier FIRST, before checking
-   * transaction.
-   *
-   * <p><b>AuthenticationStepDefinition Integration:</b>
-   *
-   * <ul>
-   *   <li>allowRegistration: controls whether new user creation is allowed
-   *   <li>userIdentitySource: determines which field to use for identification
-   * </ul>
-   *
-   * <p><b>Resolution Logic:</b>
-   *
-   * <ol>
-   *   <li>Search database by input email (HIGHEST PRIORITY - Issue #800 fix)
-   *   <li>Reuse transaction user if same identity (Challenge resend scenario)
-   *   <li>Create new user if allowRegistration=true
-   *   <li>Throw exception if user not found and registration disabled
-   * </ol>
-   *
-   * @param tenant tenant
-   * @param transaction authentication transaction
-   * @param email input email address
-   * @param providerId provider ID
-   * @param userQueryRepository user query repository
-   * @return resolved user
-   */
-  private User resolveUser(
-      Tenant tenant,
-      AuthenticationTransaction transaction,
-      String email,
-      String providerId,
-      UserQueryRepository userQueryRepository) {
-
-    // Get step definition from policy
-    AuthenticationStepDefinition stepDefinition = transaction.getCurrentStepDefinition(method());
-    // 3. New user creation decision
-    boolean allowRegistration =
-        stepDefinition != null && stepDefinition.allowRegistration(); // default: disabled
-
-    // SECURITY: 2nd factor requires authenticated user (prevent authentication bypass)
-    if (stepDefinition != null && stepDefinition.requiresUser()) {
-      if (!transaction.hasUser()) {
-        // 2nd factor without authenticated user -> security violation
-        log.warn(
-            "2nd factor requires authenticated user but transaction has no user. method={}, email={}",
-            method(),
-            email);
-        return User.notFound();
-      }
-
-      if (allowRegistration) {
-        log.info(
-            "2nd factor requires authenticated and allowRegistration. method={}, phoneNumber={}",
-            method(),
-            email);
-
-        User user = transaction.user();
-        user.setEmail(email);
-        return user;
-      }
-      // 2nd factor: return authenticated user (immutable)
-      log.debug(
-          "2nd factor: returning authenticated user. method={}, sub={}",
-          method(),
-          transaction.user().sub());
-      return transaction.user();
-    }
-
-    // === 1st factor user identification ===
-
-    // 1. Database search FIRST (Issue #800 fix)
-    User existingUser = userQueryRepository.findByEmail(tenant, email, providerId);
-    if (existingUser.exists()) {
-      log.debug("User found in database. email={}, sub={}", email, existingUser.sub());
-      return existingUser;
-    }
-    log.debug("User not found in database. email={}", email);
-
-    // 2. Reuse transaction user if same identity (Challenge resend scenario)
-    if (transaction.hasUser()) {
-      User transactionUser = transaction.user();
-
-      if (email.equals(transactionUser.email())) {
-        log.debug(
-            "Reusing transaction user (same email). email={}, sub={}",
-            email,
-            transactionUser.sub());
-        return transactionUser; // Same identity -> reuse
-      }
-      // Different identity -> discard previous user and create new
-      log.debug(
-          "Transaction user has different email. requested={}, transaction={}",
-          email,
-          transactionUser.email());
-    }
-
-    if (!allowRegistration) {
-      log.warn(
-          "User not found and registration disabled. email={}, allowRegistration=false", email);
-      return User.notFound();
-    }
-
-    // 4. Create new user
-    log.debug("Creating new user. email={}, allowRegistration=true", email);
-    User user = User.initialized();
-    user.setEmail(email);
-    user.applyIdentityPolicy(tenant.identityPolicyConfig());
-
-    return user;
   }
 }

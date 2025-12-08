@@ -154,9 +154,6 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
             DefaultSecurityEventType.sms_verification_challenge_failure);
       }
 
-      User resolvedUser =
-          resolveUser(tenant, transaction, phoneNumber, providerId, userQueryRepository);
-
       SmslVerificationChallengeRequest smslVerificationChallengeRequest =
           new SmslVerificationChallengeRequest(providerId, phoneNumber);
       interactionCommandRepository.register(
@@ -170,7 +167,7 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
           type,
           operationType(),
           method(),
-          resolvedUser,
+          transaction.user(),
           contents,
           DefaultSecurityEventType.sms_verification_challenge_success);
     } catch (UserTooManyFoundResultException tooManyFoundResultException) {
@@ -254,119 +251,5 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
     }
     log.debug("No phone number found in request or transaction");
     return "";
-  }
-
-  /**
-   * Resolve user for authentication (1st factor - user identification).
-   *
-   * <p><b>Issue #800 Fix:</b> Search database by input identifier FIRST, before checking
-   * transaction.
-   *
-   * <p><b>AuthenticationStepDefinition Integration:</b>
-   *
-   * <ul>
-   *   <li>allowRegistration: controls whether new user creation is allowed
-   *   <li>userIdentitySource: determines which field to use for identification
-   * </ul>
-   *
-   * <p><b>Resolution Logic:</b>
-   *
-   * <ol>
-   *   <li>Search database by input phone number (HIGHEST PRIORITY - Issue #800 fix)
-   *   <li>Reuse transaction user if same identity (Challenge resend scenario)
-   *   <li>Create new user if allowRegistration=true
-   *   <li>Throw exception if user not found and registration disabled
-   * </ol>
-   *
-   * @param tenant tenant
-   * @param transaction authentication transaction
-   * @param phoneNumber input phone number
-   * @param providerId provider ID
-   * @param userQueryRepository user query repository
-   * @return resolved user
-   */
-  private User resolveUser(
-      Tenant tenant,
-      AuthenticationTransaction transaction,
-      String phoneNumber,
-      String providerId,
-      UserQueryRepository userQueryRepository) {
-
-    // Get step definition from policy
-    AuthenticationStepDefinition stepDefinition = transaction.getCurrentStepDefinition(method());
-    // New user creation decision
-    boolean allowRegistration =
-        stepDefinition != null && stepDefinition.allowRegistration(); // default: disabled
-
-    // SECURITY: 2nd factor requires authenticated user (prevent authentication bypass)
-    if (stepDefinition != null && stepDefinition.requiresUser()) {
-      if (!transaction.hasUser()) {
-        // 2nd factor without authenticated user -> security violation
-        log.warn(
-            "2nd factor requires authenticated user but transaction has no user. method={}, phoneNumber={}",
-            method(),
-            phoneNumber);
-        return User.notFound();
-      }
-      if (allowRegistration) {
-        log.info(
-            "2nd factor requires authenticated and allowRegistration. method={}, phoneNumber={}",
-            method(),
-            phoneNumber);
-
-        User user = transaction.user();
-        user.setPhoneNumber(phoneNumber);
-        return user;
-      }
-      // 2nd factor: return authenticated user (immutable)
-      log.debug(
-          "2nd factor: returning authenticated user. method={}, sub={}",
-          method(),
-          transaction.user().sub());
-      return transaction.user();
-    }
-
-    // === 1st factor user identification ===
-
-    // 1. Database search FIRST (Issue #800 fix)
-    User existingUser = userQueryRepository.findByPhone(tenant, phoneNumber, providerId);
-    if (existingUser.exists()) {
-      log.debug("User found in database. phoneNumber={}, sub={}", phoneNumber, existingUser.sub());
-      return existingUser;
-    }
-    log.debug("User not found in database. phoneNumber={}", phoneNumber);
-
-    // 2. Reuse transaction user if same identity (Challenge resend scenario)
-    if (transaction.hasUser()) {
-      User transactionUser = transaction.user();
-
-      if (phoneNumber.equals(transactionUser.phoneNumber())) {
-        log.debug(
-            "Reusing transaction user (same phone). phoneNumber={}, sub={}",
-            phoneNumber,
-            transactionUser.sub());
-        return transactionUser; // Same identity -> reuse
-      }
-      // Different identity -> discard previous user and create new
-      log.debug(
-          "Transaction user has different phone. requested={}, transaction={}",
-          phoneNumber,
-          transactionUser.phoneNumber());
-    }
-
-    if (!allowRegistration) {
-      log.warn(
-          "User not found and registration disabled. phoneNumber={}, allowRegistration=false",
-          phoneNumber);
-      return User.notFound();
-    }
-
-    // 4. Create new user
-    log.debug("Creating new user. phoneNumber={}, allowRegistration=true", phoneNumber);
-    User user = User.initialized();
-    user.setPhoneNumber(phoneNumber);
-    user.applyIdentityPolicy(tenant.identityPolicyConfig());
-
-    return user;
   }
 }

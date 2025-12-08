@@ -117,11 +117,9 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
             validationResult.errors().size(),
             validationResult.errors());
 
-        // Issue #1034: Prioritize transaction user, fallback to database lookup
+        // Issue #1021: Try to resolve user for security event logging
         User attemptedUser =
-            transaction.hasUser()
-                ? transaction.user()
-                : tryResolveUserForLogging(tenant, username, providerId, userQueryRepository);
+            tryResolveUserForLogging(tenant, username, providerId, userQueryRepository);
 
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("error", "invalid_request");
