@@ -33,7 +33,19 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
-@Transaction(readOnly = true)
+/**
+ * AuthenticationTransactionEntryService handles authentication transaction queries for
+ * authentication devices.
+ *
+ * <p>This service uses Primary DB (readOnly = false) instead of Read Replica to avoid replication
+ * lag issues in CIBA flow. When a backchannel authentication request is created, the authentication
+ * device needs to retrieve the transaction immediately. Using Read Replica can cause data not found
+ * errors due to replication lag (100-500ms under normal load, several seconds under high load).
+ *
+ * @see <a href="https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1040">Issue
+ *     #1040</a>
+ */
+@Transaction(readOnly = false)
 public class AuthenticationTransactionEntryService implements AuthenticationTransactionApi {
 
   TenantQueryRepository tenantQueryRepository;
