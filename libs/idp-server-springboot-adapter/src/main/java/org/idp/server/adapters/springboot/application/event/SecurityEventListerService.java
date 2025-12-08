@@ -45,8 +45,12 @@ public class SecurityEventListerService {
   @EventListener
   public void onEvent(SecurityEvent securityEvent) {
     TenantLoggingContext.setTenant(securityEvent.tenantIdentifier());
+    if (securityEvent.hasUser()) {
+      TenantLoggingContext.setUserId(securityEvent.userSub());
+      TenantLoggingContext.setUserName(securityEvent.userName());
+    }
     try {
-      log.info("SecurityEventListerService.onEvent, event_type: {}", securityEvent.type().value());
+      log.debug("SecurityEventListerService.onEvent, event_type: {}", securityEvent.type().value());
 
       taskExecutor.execute(
           new SecurityEventRunnable(

@@ -760,6 +760,7 @@ idp-serverでは、Tenant設定を型安全な6つのConfigurationクラスに�
     "debug_logging": false,
     "stage": "processed",
     "include_user_id": true,
+    "include_user_name": true,
     "include_user_ex_sub": true,
     "include_client_id": true,
     "include_ip_address": true,
@@ -784,6 +785,7 @@ idp-serverでは、Tenant設定を型安全な6つのConfigurationクラスに�
 | `debug_logging` | boolean | `false` | デバッグログ出力を有効化 |
 | `stage` | string | `processed` | ログ出力タイミング |
 | `include_user_id` | boolean | `true` | ユーザーIDを含める |
+| `include_user_name` | boolean | `true` | ユーザー名を含める |
 | `include_user_ex_sub` | boolean | `true` | 外部ユーザーIDを含める |
 | `include_client_id` | boolean | `true` | クライアントIDを含める |
 | `include_ip_address` | boolean | `true` | IPアドレスを含める |

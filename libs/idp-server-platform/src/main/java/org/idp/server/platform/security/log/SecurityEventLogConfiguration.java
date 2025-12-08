@@ -31,6 +31,7 @@ public class SecurityEventLogConfiguration {
   private final boolean debugEnabled;
   private final String stage;
   private final boolean includeUserId;
+  private final boolean includeUserName;
   private final boolean includeUserExSub;
   private final boolean includeClientId;
   private final boolean includeIpAddress;
@@ -63,6 +64,7 @@ public class SecurityEventLogConfiguration {
     this.debugEnabled = false;
     this.stage = "processed";
     this.includeUserId = true;
+    this.includeUserName = true;
     this.includeUserExSub = true;
     this.includeClientId = true;
     this.includeIpAddress = true;
@@ -87,6 +89,7 @@ public class SecurityEventLogConfiguration {
     this.debugEnabled = extractBoolean(safeValues, "debug_logging", false);
     this.stage = extractString(safeValues, "stage", "processed");
     this.includeUserId = extractBoolean(safeValues, "include_user_id", true);
+    this.includeUserName = extractBoolean(safeValues, "include_user_name", true);
     this.includeUserExSub = extractBoolean(safeValues, "include_user_ex_sub", true);
     this.includeClientId = extractBoolean(safeValues, "include_client_id", true);
     this.includeIpAddress = extractBoolean(safeValues, "include_ip_address", true);
@@ -110,6 +113,7 @@ public class SecurityEventLogConfiguration {
     map.put("debug_logging", debugEnabled);
     map.put("stage", stage);
     map.put("include_user_id", includeUserId);
+    map.put("include_user_name", includeUserName);
     map.put("include_user_ex_sub", includeUserExSub);
     map.put("include_client_id", includeClientId);
     map.put("include_ip_address", includeIpAddress);
@@ -145,6 +149,10 @@ public class SecurityEventLogConfiguration {
 
   public boolean includeUserId() {
     return includeUserId;
+  }
+
+  public boolean includeUserName() {
+    return includeUserName;
   }
 
   public boolean includeUserExSub() {

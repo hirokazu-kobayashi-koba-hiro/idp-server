@@ -6998,6 +6998,10 @@ components:
         include_user_id:
           type: boolean
           default: true
+        include_user_name:
+          type: boolean
+          default: true
+          description: ユーザー名を含める
         include_user_ex_sub:
           type: boolean
           default: true

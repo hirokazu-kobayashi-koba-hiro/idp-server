@@ -93,6 +93,13 @@ public class SecurityEvent {
     return user.sub();
   }
 
+  public String userName() {
+    if (user == null) {
+      return "";
+    }
+    return user.name();
+  }
+
   public String userExSub() {
     if (user == null) {
       return null;

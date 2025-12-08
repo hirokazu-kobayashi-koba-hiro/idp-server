@@ -27,6 +27,7 @@
       "debug_logging": true,
       "stage": "development",
       "include_user_id": true,
+      "include_user_name": true,
       "include_user_ex_sub": true,
       "include_client_id": true,
       "include_ip_address": true,

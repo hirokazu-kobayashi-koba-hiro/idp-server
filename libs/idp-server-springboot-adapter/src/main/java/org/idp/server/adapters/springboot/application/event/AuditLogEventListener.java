@@ -59,7 +59,7 @@ public class AuditLogEventListener {
     TenantLoggingContext.setTenant(tenantIdentifier);
 
     try {
-      log.info(
+      log.debug(
           "AuditLogEventListener.onEvent, type: {}, resource: {}",
           auditLog.type(),
           auditLog.targetResource());
