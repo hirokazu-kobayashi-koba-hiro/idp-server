@@ -32,7 +32,6 @@ import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonDiffCalculator;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -136,8 +135,7 @@ public class UserUpdateService implements UserManagementService<UserUpdateReques
     // Always recalculate preferred_username based on tenant identity policy
     // OIDC Core: preferred_username is mutable and should reflect current user attributes
     // Issue #729: When email/phone/username changes, preferred_username must update accordingly
-    TenantIdentityPolicy policy = TenantIdentityPolicy.fromTenantAttributes(tenant.attributes());
-    newUser.applyIdentityPolicy(policy);
+    newUser.applyIdentityPolicy(tenant.identityPolicyConfig());
 
     return newUser;
   }
