@@ -133,11 +133,17 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
             "SMS verification execution failed (client error). method={}, contents={}",
             method(),
             contents);
+        // Issue #1034: Try to resolve user for security event logging
+        User attemptedUser =
+            transaction.hasUser()
+                ? transaction.user()
+                : tryResolveUserForLogging(tenant, phoneNumber, providerId, userQueryRepository);
         return AuthenticationInteractionRequestResult.clientError(
             contents,
             type,
             operationType(),
             method(),
+            attemptedUser,
             DefaultSecurityEventType.sms_verification_challenge_failure);
       }
 
@@ -146,11 +152,17 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
             "SMS verification execution failed (server error). method={}, contents={}",
             method(),
             contents);
+        // Issue #1034: Try to resolve user for security event logging
+        User attemptedUser =
+            transaction.hasUser()
+                ? transaction.user()
+                : tryResolveUserForLogging(tenant, phoneNumber, providerId, userQueryRepository);
         return AuthenticationInteractionRequestResult.serverError(
             contents,
             type,
             operationType(),
             method(),
+            attemptedUser,
             DefaultSecurityEventType.sms_verification_challenge_failure);
       }
 
@@ -251,5 +263,42 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
     }
     log.debug("No phone number found in request or transaction");
     return "";
+  }
+
+  /**
+   * Try to resolve user for security event logging purposes only.
+   *
+   * <p>This method attempts to find a user by phone number for logging purposes. It does NOT modify
+   * the transaction user to avoid identifier switching attacks (Issue #801).
+   *
+   * @param tenant the tenant
+   * @param phoneNumber the phone number from the challenge request
+   * @param providerId the provider ID
+   * @param userQueryRepository the user query repository
+   * @return the resolved user, or null if not found
+   */
+  private User tryResolveUserForLogging(
+      Tenant tenant,
+      String phoneNumber,
+      String providerId,
+      UserQueryRepository userQueryRepository) {
+    if (phoneNumber == null || phoneNumber.isEmpty()) {
+      return null;
+    }
+
+    try {
+      User user = userQueryRepository.findByPhone(tenant, phoneNumber, providerId);
+      if (user.exists()) {
+        log.debug(
+            "User resolved for security event logging. phoneNumber={}, sub={}",
+            phoneNumber,
+            user.sub());
+        return user;
+      }
+    } catch (Exception e) {
+      log.debug("Failed to resolve user for security event logging. phoneNumber={}", phoneNumber);
+    }
+
+    return null;
   }
 }

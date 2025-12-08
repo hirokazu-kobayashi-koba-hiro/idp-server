@@ -19,6 +19,7 @@ package org.idp.server.core.extension.ciba;
 import java.util.Map;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.oauth.configuration.client.ClientAttributes;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.SecurityEventPublisher;
@@ -38,9 +39,10 @@ public class CibaFlowEventPublisher {
       BackchannelAuthenticationRequest request,
       User user,
       SecurityEventType type,
-      RequestAttributes requestAttributes) {
+      RequestAttributes requestAttributes,
+      ClientAttributes clientAttributes) {
     CibaFlowEventCreator eventCreator =
-        new CibaFlowEventCreator(tenant, request, user, type, requestAttributes);
+        new CibaFlowEventCreator(tenant, request, user, type, requestAttributes, clientAttributes);
     SecurityEvent securityEvent = eventCreator.create();
     securityEventPublisher.publish(securityEvent);
   }
@@ -51,10 +53,11 @@ public class CibaFlowEventPublisher {
       User user,
       SecurityEventType type,
       Map<String, Object> authenticationResult,
-      RequestAttributes requestAttributes) {
+      RequestAttributes requestAttributes,
+      ClientAttributes clientAttributes) {
     CibaFlowEventCreator eventCreator =
         new CibaFlowEventCreator(
-            tenant, request, user, type, authenticationResult, requestAttributes);
+            tenant, request, user, type, authenticationResult, requestAttributes, clientAttributes);
     SecurityEvent securityEvent = eventCreator.create();
     securityEventPublisher.publish(securityEvent);
   }
