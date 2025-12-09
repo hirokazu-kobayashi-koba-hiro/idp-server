@@ -156,6 +156,7 @@ public class InitialRegistrationInteractor implements AuthenticationInteractor {
     IdPUserCreator idPUserCreator =
         new IdPUserCreator(jsonSchemaDefinition, request, passwordEncodeDelegation);
     User user = idPUserCreator.create();
+    user.applyIdentityPolicy(tenant.identityPolicyConfig());
 
     Map<String, Object> response = new HashMap<>();
     response.put("user", user.toMap());

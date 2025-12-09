@@ -110,9 +110,12 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
             validationResult.errors().size(),
             validationResult.errors());
 
-        // Issue #1021: Try to resolve user for security event logging
+        // Issue #1034: Check transaction user first (for registration flow),
+        // then try database lookup (for login flow)
         User attemptedUser =
-            tryResolveUserForLogging(tenant, phoneNumber, providerId, userQueryRepository);
+            transaction.hasUser()
+                ? transaction.user()
+                : tryResolveUserForLogging(tenant, phoneNumber, providerId, userQueryRepository);
 
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("error", "invalid_request");
@@ -147,9 +150,12 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
 
     if (executionResult.isClientError()) {
       log.warn("SMS authentication failed. Client error: {}", executionResult.contents());
-      // Issue #1021: Try to resolve user for security event logging
+      // Issue #1034: Check transaction user first (for registration flow),
+      // then try database lookup (for login flow)
       User attemptedUser =
-          tryResolveUserForLogging(tenant, phoneNumber, providerId, userQueryRepository);
+          transaction.hasUser()
+              ? transaction.user()
+              : tryResolveUserForLogging(tenant, phoneNumber, providerId, userQueryRepository);
       return AuthenticationInteractionRequestResult.clientError(
           contents,
           type,
@@ -161,9 +167,12 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
 
     if (executionResult.isServerError()) {
       log.warn("SMS authentication failed. Server error: {}", executionResult.contents());
-      // Issue #1021: Try to resolve user for security event logging
+      // Issue #1034: Check transaction user first (for registration flow),
+      // then try database lookup (for login flow)
       User attemptedUser =
-          tryResolveUserForLogging(tenant, phoneNumber, providerId, userQueryRepository);
+          transaction.hasUser()
+              ? transaction.user()
+              : tryResolveUserForLogging(tenant, phoneNumber, providerId, userQueryRepository);
       return AuthenticationInteractionRequestResult.serverError(
           contents,
           type,
@@ -326,6 +335,7 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
     log.debug("Creating new user. phoneNumber={}, allowRegistration=true", phoneNumber);
     User user = User.initialized();
     user.setPhoneNumber(phoneNumber);
+    user.applyIdentityPolicy(tenant.identityPolicyConfig());
 
     return user;
   }

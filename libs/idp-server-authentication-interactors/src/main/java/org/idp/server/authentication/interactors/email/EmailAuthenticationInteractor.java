@@ -110,9 +110,12 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
             validationResult.errors().size(),
             validationResult.errors());
 
-        // Issue #1021: Try to resolve user for security event logging
+        // Issue #1034: Check transaction user first (for registration flow),
+        // then try database lookup (for login flow)
         User attemptedUser =
-            tryResolveUserForLogging(tenant, email, providerId, userQueryRepository);
+            transaction.hasUser()
+                ? transaction.user()
+                : tryResolveUserForLogging(tenant, email, providerId, userQueryRepository);
 
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("error", "invalid_request");
@@ -147,8 +150,12 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
 
     if (executionResult.isClientError()) {
       log.warn("Email authentication failed. Client error: {}", executionResult.contents());
-      // Issue #1021: Try to resolve user for security event logging
-      User attemptedUser = tryResolveUserForLogging(tenant, email, providerId, userQueryRepository);
+      // Issue #1034: Check transaction user first (for registration flow),
+      // then try database lookup (for login flow)
+      User attemptedUser =
+          transaction.hasUser()
+              ? transaction.user()
+              : tryResolveUserForLogging(tenant, email, providerId, userQueryRepository);
       return AuthenticationInteractionRequestResult.clientError(
           contents,
           type,
@@ -160,8 +167,12 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
 
     if (executionResult.isServerError()) {
       log.warn("Email authentication failed. Server error: {}", executionResult.contents());
-      // Issue #1021: Try to resolve user for security event logging
-      User attemptedUser = tryResolveUserForLogging(tenant, email, providerId, userQueryRepository);
+      // Issue #1034: Check transaction user first (for registration flow),
+      // then try database lookup (for login flow)
+      User attemptedUser =
+          transaction.hasUser()
+              ? transaction.user()
+              : tryResolveUserForLogging(tenant, email, providerId, userQueryRepository);
       return AuthenticationInteractionRequestResult.serverError(
           contents,
           type,
@@ -323,6 +334,7 @@ public class EmailAuthenticationInteractor implements AuthenticationInteractor {
     log.debug("Creating new user. email={}, allowRegistration=true", email);
     User user = User.initialized();
     user.setEmail(email);
+    user.applyIdentityPolicy(tenant.identityPolicyConfig());
 
     return user;
   }
