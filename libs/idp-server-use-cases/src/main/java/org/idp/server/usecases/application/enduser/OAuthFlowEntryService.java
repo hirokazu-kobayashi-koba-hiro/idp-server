@@ -199,7 +199,13 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     if (result.isSuccess()) {
       OAuthSession oAuthSession =
           oAuthSessionDelegate.findOrInitialize(authorizationRequest.sessionKey());
-      OAuthSession updated = oAuthSession.didAuthentication(result.user(), new Authentication());
+      // MFA bypass prevention
+      // Authentication now contains interactionResultsMap and completed flag
+      // AuthenticationTransaction.authentication() returns Authentication with:
+      // - interactionResultsMap populated from interaction results
+      // - completed=true if MFA policy is satisfied (isSuccess())
+      Authentication authentication = updatedTransaction.authentication();
+      OAuthSession updated = oAuthSession.didAuthentication(result.user(), authentication);
       oAuthSessionDelegate.updateSession(updated);
     }
 
@@ -361,6 +367,24 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
 
       return new OAuthAuthorizeResponse(
           OAuthAuthorizeStatus.BAD_REQUEST, "invalid_request", "session expired");
+    }
+
+    // MFA bypass prevention - check if authentication is completed
+    // Authentication.isCompleted() is set to true when MFA policy was satisfied during interact()
+    Authentication authentication = session.authentication();
+    if (authentication == null || !authentication.isCompleted()) {
+
+      eventPublisher.publish(
+          tenant,
+          authorizationRequest,
+          session.user(),
+          DefaultSecurityEventType.mfa_bypass_attempt.toEventType(),
+          requestAttributes);
+
+      return new OAuthAuthorizeResponse(
+          OAuthAuthorizeStatus.BAD_REQUEST,
+          "invalid_request",
+          "Authentication policy requirements not satisfied");
     }
 
     OAuthAuthorizeRequest authAuthorizeRequest =

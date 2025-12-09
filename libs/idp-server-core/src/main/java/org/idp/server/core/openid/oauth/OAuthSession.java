@@ -100,6 +100,15 @@ public class OAuthSession implements Serializable {
     return authentication;
   }
 
+  // Delegate to Authentication for interaction results
+  public Map<String, Object> interactionResultsMap() {
+    return authentication != null ? authentication.interactionResultsMap() : Collections.emptyMap();
+  }
+
+  public boolean hasInteractionResults() {
+    return authentication != null && authentication.hasInteractionResults();
+  }
+
   public LocalDateTime authenticationTime() {
     return authentication.time();
   }
@@ -142,7 +151,6 @@ public class OAuthSession implements Serializable {
   }
 
   public OAuthSession didAuthentication(User user, Authentication authentication) {
-
     return new OAuthSession(oAuthSessionKey, user, authentication, maxAge, createdAt, expiredAt);
   }
 

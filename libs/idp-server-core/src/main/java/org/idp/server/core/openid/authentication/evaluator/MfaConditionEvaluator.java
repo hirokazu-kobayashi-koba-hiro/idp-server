@@ -39,6 +39,18 @@ public class MfaConditionEvaluator {
     return result.isSuccess();
   }
 
+  // Overload to accept Map directly for session-based MFA policy evaluation
+  public static boolean isSuccessSatisfied(
+      AuthenticationResultConditionConfig config, Map<String, Object> interactionResultsMap) {
+    if (!config.exists() || interactionResultsMap == null || interactionResultsMap.isEmpty()) {
+      return false;
+    }
+
+    ConditionTransitionResult result = isAnySatisfied(config, interactionResultsMap);
+
+    return result.isSuccess();
+  }
+
   public static boolean isFailureSatisfied(
       AuthenticationResultConditionConfig config, AuthenticationInteractionResults results) {
     if (!config.exists() || !results.exists()) {

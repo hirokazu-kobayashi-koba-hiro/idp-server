@@ -25,6 +25,9 @@ public class Authentication implements Serializable, JsonReadable {
   LocalDateTime time;
   List<String> methods = new ArrayList<>();
   String acr = "";
+  // Store interaction results for MFA policy evaluation
+  HashMap<String, Object> interactionResultsMap = new HashMap<>();
+  boolean completed = false;
 
   public Authentication() {}
 
@@ -72,6 +75,30 @@ public class Authentication implements Serializable, JsonReadable {
   public boolean exists() {
 
     return hasAuthenticationTime();
+  }
+
+  // MFA policy support methods
+  public Authentication setInteractionResults(HashMap<String, Object> interactionResultsMap) {
+    this.interactionResultsMap =
+        interactionResultsMap != null ? interactionResultsMap : new HashMap<>();
+    return this;
+  }
+
+  public Map<String, Object> interactionResultsMap() {
+    return interactionResultsMap;
+  }
+
+  public boolean hasInteractionResults() {
+    return interactionResultsMap != null && !interactionResultsMap.isEmpty();
+  }
+
+  public Authentication didComplete() {
+    this.completed = true;
+    return this;
+  }
+
+  public boolean isCompleted() {
+    return completed;
   }
 
   public Map<String, Object> toMap() {

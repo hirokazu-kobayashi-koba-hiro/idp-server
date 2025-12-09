@@ -54,8 +54,11 @@ public class OAuthAuthorizeRequestValidator {
     if (Objects.isNull(user) || !user.exists()) {
       throw new OAuthAuthorizeBadRequestException("invalid_request", "user is required");
     }
-    if (Objects.isNull(authentication)) {
-      throw new OAuthAuthorizeBadRequestException("invalid_request", "authentication is required");
+    // MFA bypass prevention - check authentication is completed (MFA policy satisfied)
+    if (Objects.isNull(authentication) || !authentication.isCompleted()) {
+      throw new OAuthAuthorizeBadRequestException(
+          "invalid_request",
+          "Valid authentication is required. Authentication policy requirements not satisfied.");
     }
   }
 

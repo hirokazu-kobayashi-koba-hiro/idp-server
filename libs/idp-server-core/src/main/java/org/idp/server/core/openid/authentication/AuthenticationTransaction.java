@@ -308,14 +308,25 @@ public class AuthenticationTransaction {
   }
 
   public Authentication authentication() {
+    // Always include interaction results for MFA policy evaluation in authorizeWithSession
+    HashMap<String, Object> interactionResultsMap =
+        new HashMap<>(interactionResults.toMapAsObject());
+
     if (!isSuccess()) {
-      return new Authentication();
+      // MFA not yet complete - return Authentication with interaction results but not completed
+      return new Authentication().setInteractionResults(interactionResultsMap);
     }
 
+    // MFA complete - return Authentication with all data and marked as completed
     LocalDateTime time = interactionResults.authenticationTime();
     List<String> methods = interactionResults.authenticationMethods();
     String acr = AcrResolver.resolve(authenticationPolicy.acrMappingRules(), methods);
-    return new Authentication().setTime(time).addMethods(methods).addAcr(acr);
+    return new Authentication()
+        .setTime(time)
+        .addMethods(methods)
+        .addAcr(acr)
+        .setInteractionResults(interactionResultsMap)
+        .didComplete();
   }
 
   public List<String> deniedScopes() {
