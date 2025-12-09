@@ -66,6 +66,55 @@ CIBA フローにおけるユーザー認証も、通常の認可コードフロ
 
 通常の認可コードフローと同様に、認可対象のスコープ・acr_values などを条件に、認証の強度を制御することができます。
 
+## バインディングメッセージ（binding_message）
+
+### 概要
+
+`binding_message` は、消費デバイスと認証デバイスを視覚的に連動させ、ユーザーがトランザクションを確認できるようにするためのパラメータです。
+
+[OIDC CIBA仕様 Section 7.1](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html#rfc.section.7.1)より:
+
+> The binding_message is intended to be displayed on both the consumption device and the authentication device to interlock them together for the transaction by way of a visual cue for the end-user.
+
+### 用途
+
+| 用途 | 説明 | 例 |
+|-----|------|---|
+| **フィッシング対策** | ユーザーが正しいトランザクションを承認しているか確認 | `確認コード: 1234` |
+| **トランザクション確認** | 金融取引等での取引内容確認 | `振込: ¥50,000` |
+| **セッション連動** | 複数デバイス間でのセッション一致確認 | `TX-ABCD-1234` |
+
+### 制約
+
+- **最大長**: 20文字
+- **文字種**: プレーンテキスト（特殊文字は避けることを推奨）
+
+### バックエンド検証
+
+`idp-server`は、認証デバイスでユーザーが入力した`binding_message`と、CIBAリクエスト時に送信された`binding_message`の一致を検証する機能を提供しています。
+
+```mermaid
+sequenceDiagram
+    participant Client as 消費デバイス
+    participant idp as idp-server
+    participant Device as 認証デバイス
+
+    Client ->> idp: CIBAリクエスト (binding_message="999")
+    idp -->> Client: auth_req_id返却
+    idp ->> Device: Push通知 (binding_message="999" 表示)
+    Note over Device: ユーザーが画面で "999" を確認
+    Device ->> idp: バインディングメッセージ検証 (binding_message="999")
+    alt 一致
+        idp -->> Device: 200 OK (検証成功)
+    else 不一致
+        idp -->> Device: 400 Bad Request (検証失敗)
+    end
+```
+
+**認証インタラクションタイプ**: `authentication-device-binding-message`
+
+**詳細**: [How-To: CIBAバインディングメッセージのバックエンド検証](../content_05_how-to/how-to-19-ciba-binding-message-verification.md)
+
 ## デリバリーモード
 
 `idp-server`は Poll・Push・Pingの3つのモードをサポートしています。

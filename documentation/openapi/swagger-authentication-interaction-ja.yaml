@@ -99,7 +99,19 @@ paths:
         - `authentication-cancel` - 認証キャンセル
         - `authentication-device-notification` - 認証デバイス通知
         - `authentication-device-deny` - 認証デバイス拒否
-        - `authentication-device-binding-message` - 認証デバイスバインディングメッセージ
+        - `authentication-device-binding-message` - 認証デバイスバインディングメッセージ検証
+
+        ### バインディングメッセージ検証について
+
+        `authentication-device-binding-message`は、CIBAフローにおいて消費デバイスと認証デバイス間の
+        トランザクション一致を確認するための検証インタラクションです。
+
+        **用途**:
+        - フィッシング対策: ユーザーが正しいトランザクションを承認しているか確認
+        - トランザクション確認: 金融取引等での取引内容確認
+        - セッション連動: 複数デバイス間でのセッション一致確認
+
+        **OIDC CIBA仕様**: [Section 7.1](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html#rfc.section.7.1)
 
       parameters:
         - $ref: '#/components/parameters/TenantId'
@@ -125,6 +137,7 @@ paths:
                 - $ref: '#/components/schemas/InitialRegistrationRequest'
                 - $ref: '#/components/schemas/WebAuthnChallengeRequest'
                 - $ref: '#/components/schemas/WebAuthnAuthenticationRequest'
+                - $ref: '#/components/schemas/AuthenticationDeviceBindingMessageRequest'
                 - $ref: '#/components/schemas/EmptyRequest'
             examples:
               password-authentication:
@@ -149,6 +162,13 @@ paths:
                   phone_number: "090-1234-5678"
                   locale: "ja-JP"
                   zoneinfo: "Asia/Tokyo"
+              authentication-device-binding-message:
+                summary: バインディングメッセージ検証の例
+                description: |
+                  CIBAフローにおけるバインディングメッセージのバックエンド検証。
+                  消費デバイスに表示されたコードを認証デバイスで入力し、一致を確認します。
+                value:
+                  binding_message: "999"
       responses:
         '200':
           description: |
@@ -800,6 +820,25 @@ components:
           type: string
           description: 組織名
           example: "テスト組織"
+
+    AuthenticationDeviceBindingMessageRequest:
+      type: object
+      required:
+        - binding_message
+      properties:
+        binding_message:
+          type: string
+          maxLength: 20
+          description: |
+            ユーザーが認証デバイスで入力したバインディングメッセージ。
+            CIBAリクエスト時に指定されたbinding_messageと一致する必要があります。
+
+            **用途**:
+            - フィッシング対策: 消費デバイスと認証デバイス間のトランザクション一致確認
+            - トランザクション確認: 金融取引等での取引内容確認
+
+            **OIDC CIBA仕様**: [Section 7.1](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html#rfc.section.7.1)
+          example: "999"
 
     EmptyRequest:
       type: object
