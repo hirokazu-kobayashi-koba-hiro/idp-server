@@ -623,8 +623,8 @@ String handleApnsError(HttpResponse<String> response, String apnsId, Tenant tena
   - [ ] `ExpiredProviderToken` エラー時にキャッシュクリア
 
 - [ ] **HTTP/2 リクエスト**:
-  - [ ] Authorization: bearer {jwt_token}
-  - [ ] apns-topic: {bundle_id}
+  - [ ] Authorization: bearer `<jwt_token>`
+  - [ ] apns-topic: `<bundle_id>`
   - [ ] apns-priority: 10（即時配信）
   - [ ] apns-push-type: alert
 
