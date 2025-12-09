@@ -1561,4 +1561,256 @@ describe("Use Case: MFA Security Event Logging", () => {
     console.log("  - UserTooManyFoundResultException is caught (returns null)");
     console.log("  - Security event recorded without user info");
   });
+
+  it("should record user info in security event when 2nd factor Email authentication fails during user registration", async () => {
+    const timestamp = Date.now();
+    const userEmail = faker.internet.email();
+    const userName = faker.person.fullName();
+    const userPassword = `RegistrationPass${timestamp}!`;
+
+    console.log("\n=== 2nd Factor Email Auth Failure During Registration Test ===");
+    console.log("This test verifies that when a user is being registered and 2nd factor");
+    console.log("Email authentication fails, the security event contains user info.");
+
+    // Step 1: Start authorization and perform initial-registration
+    console.log("\n=== Step 1: Start Registration (initial-registration) ===");
+
+    const authParams = new URLSearchParams({
+      response_type: "code",
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      scope: "openid profile email",
+      state: `state_reg_email_2fa_${timestamp}`,
+    });
+
+    const authorizeResponse = await get({
+      url: `${backendUrl}/${tenantId}/v1/authorizations?${authParams.toString()}`,
+      headers: {},
+    });
+
+    expect(authorizeResponse.status).toBe(302);
+    const location = authorizeResponse.headers.location;
+    const authId = new URL(location, backendUrl).searchParams.get('id');
+    expect(authId).toBeDefined();
+    console.log("Authorization started:", authId);
+
+    // Perform initial-registration (user is created in transaction but not yet completed)
+    const registrationResponse = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/initial-registration`,
+      body: {
+        email: userEmail,
+        password: userPassword,
+        name: userName,
+      },
+    });
+
+    expect(registrationResponse.status).toBe(200);
+    console.log("✓ Initial registration completed:", userEmail);
+    console.log("  User is now in transaction but registration flow not yet finalized");
+
+    // Step 2: Attempt Email authentication as 2nd factor with wrong code
+    // Note: At this point, the user exists in the transaction from initial-registration
+    console.log("\n=== Step 2: Email Authentication (2nd Factor) - Wrong Code ===");
+
+    // Send Email challenge
+    const challengeResponse = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/email-authentication-challenge`,
+      body: {
+        email: userEmail,
+        template: "registration",
+      },
+    });
+
+    console.log("Email challenge response:", challengeResponse.status, JSON.stringify(challengeResponse.data, null, 2));
+
+    // Attempt Email authentication with WRONG verification code
+    const wrongCodeResponse = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/email-authentication`,
+      body: {
+        verification_code: "000000", // Wrong code
+      },
+    });
+
+    console.log("Wrong code response:", wrongCodeResponse.status, JSON.stringify(wrongCodeResponse.data, null, 2));
+    expect(wrongCodeResponse.status).toBe(400);
+    expect(wrongCodeResponse.data.error).toBeDefined();
+    console.log("✓ Email authentication failed as expected (2nd factor during registration)\n");
+
+    // Step 3: Verify security event contains user information
+    console.log("\n=== Step 3: Verify Security Event Contains User Info ===");
+
+    await sleep(2000);
+
+    const securityEventsResponse = await get({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/security-events`,
+      headers: {
+        Authorization: `Bearer ${adminAccessToken}`,
+      },
+      params: {
+        type: "email_verification_failure",
+        limit: 10,
+      },
+    });
+
+    console.log("Security events response:", securityEventsResponse.status);
+    expect(securityEventsResponse.status).toBe(200);
+
+    const failureEvents = securityEventsResponse.data.list;
+    console.log(`Found ${failureEvents.length} email_verification_failure event(s)`);
+
+    expect(failureEvents.length).toBeGreaterThan(0);
+
+    const latestFailureEvent = failureEvents[0];
+    console.log("Latest failure event:", JSON.stringify(latestFailureEvent, null, 2));
+
+    // Verify event type
+    expect(latestFailureEvent).toHaveProperty("type", "email_verification_failure");
+
+    // Key assertion: User info should be present even during registration flow
+    // The user was created in initial-registration and exists in transaction
+    expect(latestFailureEvent).toHaveProperty("user");
+    expect(latestFailureEvent.user).toBeDefined();
+    expect(latestFailureEvent.user).toHaveProperty("sub");
+    expect(latestFailureEvent.user).toHaveProperty("name");
+    console.log("✓ User information found in 2nd factor Email failure during registration:");
+    console.log(`  - user.name: ${latestFailureEvent.user.name}`);
+    console.log(`  - user.sub: ${latestFailureEvent.user.sub}`);
+
+    // The user name should match the registered user's email (preferred_username)
+    expect(latestFailureEvent.user.name).toBe(userEmail);
+    console.log("✓ User name matches registered user's email");
+
+    console.log("\n=== 2nd Factor Email Auth Failure During Registration Test Completed ===\n");
+    console.log("Summary:");
+    console.log("  - User started registration via initial-registration");
+    console.log("  - 2nd factor Email authentication failed with wrong code");
+    console.log("  - Security event correctly includes user info from transaction");
+    console.log("  - This confirms Issue #1034 fix works for registration flow too");
+  });
+
+  it("should record user info in security event when 2nd factor SMS authentication fails during user registration", async () => {
+    const timestamp = Date.now();
+    const userEmail = faker.internet.email();
+    const userName = faker.person.fullName();
+    const userPassword = `RegistrationPass${timestamp}!`;
+    const userPhoneNumber = `+8190${Math.floor(10000000 + Math.random() * 90000000)}`;
+
+    console.log("\n=== 2nd Factor SMS Auth Failure During Registration Test ===");
+    console.log("This test verifies that when a user is being registered and 2nd factor");
+    console.log("SMS authentication fails, the security event contains user info.");
+
+    // Step 1: Start authorization and perform initial-registration
+    console.log("\n=== Step 1: Start Registration (initial-registration) ===");
+
+    const authParams = new URLSearchParams({
+      response_type: "code",
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      scope: "openid profile email",
+      state: `state_reg_sms_2fa_${timestamp}`,
+    });
+
+    const authorizeResponse = await get({
+      url: `${backendUrl}/${tenantId}/v1/authorizations?${authParams.toString()}`,
+      headers: {},
+    });
+
+    expect(authorizeResponse.status).toBe(302);
+    const location = authorizeResponse.headers.location;
+    const authId = new URL(location, backendUrl).searchParams.get('id');
+    expect(authId).toBeDefined();
+    console.log("Authorization started:", authId);
+
+    // Perform initial-registration with phone number
+    const registrationResponse = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/initial-registration`,
+      body: {
+        email: userEmail,
+        password: userPassword,
+        name: userName,
+        phone_number: userPhoneNumber,
+      },
+    });
+
+    expect(registrationResponse.status).toBe(200);
+    console.log("✓ Initial registration completed:", userEmail, "phone:", userPhoneNumber);
+    console.log("  User is now in transaction but registration flow not yet finalized");
+
+    // Step 2: Attempt SMS authentication as 2nd factor with wrong code
+    console.log("\n=== Step 2: SMS Authentication (2nd Factor) - Wrong Code ===");
+
+    // Send SMS challenge
+    const challengeResponse = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/sms-authentication-challenge`,
+      body: {
+        phone_number: userPhoneNumber,
+        template: "registration",
+      },
+    });
+
+    console.log("SMS challenge response:", challengeResponse.status, JSON.stringify(challengeResponse.data, null, 2));
+
+    // Attempt SMS authentication with WRONG verification code
+    const wrongCodeResponse = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/sms-authentication`,
+      body: {
+        verification_code: "000000", // Wrong code
+      },
+    });
+
+    console.log("Wrong code response:", wrongCodeResponse.status, JSON.stringify(wrongCodeResponse.data, null, 2));
+    expect(wrongCodeResponse.status).toBe(400);
+    expect(wrongCodeResponse.data.error).toBeDefined();
+    console.log("✓ SMS authentication failed as expected (2nd factor during registration)\n");
+
+    // Step 3: Verify security event contains user information
+    console.log("\n=== Step 3: Verify Security Event Contains User Info ===");
+
+    await sleep(2000);
+
+    const securityEventsResponse = await get({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/security-events`,
+      headers: {
+        Authorization: `Bearer ${adminAccessToken}`,
+      },
+      params: {
+        type: "sms_verification_failure",
+        limit: 10,
+      },
+    });
+
+    console.log("Security events response:", securityEventsResponse.status);
+    expect(securityEventsResponse.status).toBe(200);
+
+    const failureEvents = securityEventsResponse.data.list;
+    console.log(`Found ${failureEvents.length} sms_verification_failure event(s)`);
+
+    expect(failureEvents.length).toBeGreaterThan(0);
+
+    const latestFailureEvent = failureEvents[0];
+    console.log("Latest failure event:", JSON.stringify(latestFailureEvent, null, 2));
+
+    // Verify event type
+    expect(latestFailureEvent).toHaveProperty("type", "sms_verification_failure");
+
+    // Key assertion: User info should be present even during registration flow
+    expect(latestFailureEvent).toHaveProperty("user");
+    expect(latestFailureEvent.user).toBeDefined();
+    expect(latestFailureEvent.user).toHaveProperty("sub");
+    expect(latestFailureEvent.user).toHaveProperty("name");
+    console.log("✓ User information found in 2nd factor SMS failure during registration:");
+    console.log(`  - user.name: ${latestFailureEvent.user.name}`);
+    console.log(`  - user.sub: ${latestFailureEvent.user.sub}`);
+
+    // The user name should match the registered user's email (preferred_username)
+    expect(latestFailureEvent.user.name).toBe(userEmail);
+    console.log("✓ User name matches registered user's email");
+
+    console.log("\n=== 2nd Factor SMS Auth Failure During Registration Test Completed ===\n");
+    console.log("Summary:");
+    console.log("  - User started registration via initial-registration");
+    console.log("  - 2nd factor SMS authentication failed with wrong code");
+    console.log("  - Security event correctly includes user info from transaction");
+    console.log("  - This confirms Issue #1034 fix works for registration flow too");
+  });
 });
