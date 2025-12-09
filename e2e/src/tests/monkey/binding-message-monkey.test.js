@@ -17,14 +17,21 @@ import { createFederatedUser, registerFidoUaf } from "../../user";
  * Monkey tests for Binding Message Interactor (CIBA)
  *
  * Issue #1008: Weak input validation causes 500 errors
+ * Issue #1045: Documentation for binding message backend verification
  *
  * Purpose:
+ * - Verify that binding message verification works correctly (success case)
  * - Verify that type mismatch requests return 400 errors instead of 500
  * - Verify that malicious inputs do not cause 500 errors
  * - Verify that unexpected inputs do not crash the application
+ * - Verify boundary conditions (max length: 20 characters)
  *
  * Endpoints tested:
  * - authentication-device-binding-message: Verify binding message in CIBA flow
+ *
+ * Related documentation:
+ * - how-to-19-ciba-binding-message-verification.md
+ * - protocol-02-ciba-flow.md (バインディングメッセージセクション)
  */
 describe("Monkey test Binding Message", () => {
 
@@ -79,6 +86,81 @@ describe("Monkey test Binding Message", () => {
       authReqId: backchannelAuthenticationResponse.data.auth_req_id
     };
   };
+
+  describe("Binding Message - Success Cases", () => {
+
+    test("should return 200 when binding_message matches exactly", async () => {
+      const transaction = await createCibaTransaction();
+      if (!transaction) {
+        console.log("Skipping test - could not create CIBA transaction");
+        return;
+      }
+
+      // The CIBA request was made with binding_message="999"
+      const body = { binding_message: "999" };
+
+      const response = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        flowType: transaction.flowType,
+        id: transaction.transactionId,
+        interactionType: "authentication-device-binding-message",
+        body
+      });
+
+      console.log("\n Test: binding_message matches exactly");
+      console.log("Request body:", JSON.stringify(body));
+      console.log("Status:", response.status);
+      console.log("Response:", JSON.stringify(response.data));
+
+      // Exact match should return 200 (success)
+      expect(response.status).toBe(200);
+    });
+  });
+
+  describe("Binding Message - Boundary Conditions", () => {
+
+    const boundaryCases = [
+      // Max length (20 characters) - should fail because it doesn't match "999"
+      { value: "12345678901234567890", description: "exactly 20 characters (max length)", expectedStatus: 400 },
+
+      // Over max length (21 characters) - should fail
+      { value: "123456789012345678901", description: "21 characters (over max)", expectedStatus: 400 },
+
+      // Single character
+      { value: "9", description: "single character", expectedStatus: 400 },
+
+      // Numeric only (same as expected but different value)
+      { value: "123", description: "numeric 3 digits (not matching)", expectedStatus: 400 },
+    ];
+
+    test.each(boundaryCases)(
+      "should return $expectedStatus when $description",
+      async ({ value, description, expectedStatus }) => {
+        const transaction = await createCibaTransaction();
+        if (!transaction) {
+          console.log("Skipping test - could not create CIBA transaction");
+          return;
+        }
+
+        const body = { binding_message: value };
+
+        const response = await postAuthenticationDeviceInteraction({
+          endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+          flowType: transaction.flowType,
+          id: transaction.transactionId,
+          interactionType: "authentication-device-binding-message",
+          body
+        });
+
+        console.log(`\n Test: ${description}`);
+        console.log("Request value:", JSON.stringify(value).substring(0, 50));
+        console.log("Status:", response.status);
+        console.log("Response:", JSON.stringify(response.data));
+
+        expect(response.status).toBe(expectedStatus);
+      }
+    );
+  });
 
   describe("Binding Message - Type Mismatch", () => {
 

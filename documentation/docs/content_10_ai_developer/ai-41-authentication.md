@@ -348,6 +348,79 @@ public class AuthenticationDeviceDeniedInteractor implements AuthenticationInter
 - ✅ **AuthenticationDeviceNotifiers**: FCM/APNS等のPush通知サービス抽象化
 - ✅ **Challenge Code**: デバイス固有のチャレンジコードで検証
 
+### AuthenticationDeviceBindingMessageInteractor 詳細
+
+**情報源**: [AuthenticationDeviceBindingMessageInteractor.java](../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/device/AuthenticationDeviceBindingMessageInteractor.java)
+
+CIBAフローにおけるバインディングメッセージのバックエンド検証を担当。
+
+```java
+public class AuthenticationDeviceBindingMessageInteractor implements AuthenticationInteractor {
+
+  @Override
+  public AuthenticationInteractionType type() {
+    return StandardAuthenticationInteraction.AUTHENTICATION_DEVICE_BINDING_MESSAGE.toType();
+  }
+
+  @Override
+  public String method() {
+    return "binding-message";
+  }
+
+  @Override
+  public AuthenticationInteractionRequestResult interact(
+      Tenant tenant,
+      AuthenticationTransaction transaction,
+      AuthenticationInteractionType type,
+      AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes,
+      UserQueryRepository userQueryRepository) {
+
+    // 1. AuthenticationContextからbinding_messageを取得
+    AuthenticationContext authenticationContext = transaction.requestContext();
+    BindingMessage bindingMessage = authenticationContext.bindingMessage();
+
+    // 2. binding_message未設定チェック
+    if (bindingMessage == null) {
+      return AuthenticationInteractionRequestResult.clientError(
+          Map.of("error", "invalid_request",
+                 "error_description", "Binding Message is null"),
+          type, operationType(), method(),
+          DefaultSecurityEventType.authentication_device_binding_message_failure);
+    }
+
+    // 3. ユーザー入力との一致検証
+    String bindingMessageValue = request.getValueAsString("binding_message");
+    if (!bindingMessage.value().equals(bindingMessageValue)) {
+      return AuthenticationInteractionRequestResult.clientError(
+          Map.of("error", "invalid_request",
+                 "error_description", "Binding Message is unmatched"),
+          type, operationType(), method(),
+          DefaultSecurityEventType.authentication_device_binding_message_failure);
+    }
+
+    // 4. 検証成功
+    return new AuthenticationInteractionRequestResult(
+        AuthenticationInteractionStatus.SUCCESS,
+        type, operationType(), method(),
+        Map.of(),
+        DefaultSecurityEventType.authentication_device_binding_message_success);
+  }
+}
+```
+
+**用途**:
+- **フィッシング対策**: 消費デバイスと認証デバイス間のトランザクション一致確認
+- **OIDC CIBA仕様準拠**: [Section 7.1](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html#rfc.section.7.1)
+
+**SecurityEventType**:
+| イベント | 説明 |
+|---------|------|
+| `authentication_device_binding_message_success` | バインディングメッセージ検証成功 |
+| `authentication_device_binding_message_failure` | バインディングメッセージ検証失敗 |
+
+**関連ドキュメント**: [how-to-19: CIBAバインディングメッセージのバックエンド検証](../content_05_how-to/how-to-19-ciba-binding-message-verification.md)
+
 ### 4. WebAuthn認証実装（Challenge-Response）
 
 **情報源**: `libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/webauthn/`
