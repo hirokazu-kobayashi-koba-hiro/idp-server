@@ -2071,7 +2071,7 @@ components:
           type: integer
           minimum: 1
           description: >
-            このデバイスの通知の優先順位（例: 1, 2, 100）。 数値が小さいほど優先度が高く、1が最も高い。
+            このデバイスの通知の優先順位（例: 1, 50, 100）。 数値が大きいほど優先度が高く、100が最も高い。
             省略された場合は、認証デバイスの登録数の連番となる。
     PasswordChangeRequest:
       type: object

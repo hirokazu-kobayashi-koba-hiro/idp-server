@@ -2968,6 +2968,23 @@ paths:
           description: 外部ユーザー識別子でフィルター
           schema:
             type: string
+        - name: user_name
+          in: query
+          description: ユーザー名でフィルター（部分一致）
+          schema:
+            type: string
+        - name: ip_address
+          in: query
+          description: IPアドレスでフィルター（IPv4またはIPv6形式、完全一致）
+          schema:
+            type: string
+          example: 192.168.1.100
+        - name: user_agent
+          in: query
+          description: User-Agentでフィルター（部分一致）
+          schema:
+            type: string
+          example: Mozilla
       responses:
         '200':
           description: 組織セキュリティイベントの一覧
@@ -6625,8 +6642,6 @@ components:
           $ref: '#/components/schemas/AuthenticationResultConditionConfig'
         lock_conditions:
           $ref: '#/components/schemas/AuthenticationResultConditionConfig'
-        authentication_device_rule:
-          $ref: '#/components/schemas/AuthenticationDeviceRule'
         step_definitions:
           type: array
           description: List of authentication step definitions
@@ -6666,17 +6681,23 @@ components:
       additionalProperties: true
     AuthenticationDeviceRule:
       type: object
-      description: Authentication device rule configuration
+      description: |
+        認証デバイス登録ルール設定（テナントのidentity_policy_configで設定）
+
+        - max_devices: ユーザーあたりの最大デバイス登録数
+        - required_identity_verification: デバイス登録時に身元確認を必須とするか
       properties:
-        require_device_registration:
+        max_devices:
+          type: integer
+          minimum: 1
+          default: 5
+          description: ユーザーあたりの最大デバイス登録数
+          example: 5
+        required_identity_verification:
           type: boolean
-          description: Whether device registration is required
-        trusted_devices_only:
-          type: boolean
-          description: Whether only trusted devices are allowed
-        device_verification_required:
-          type: boolean
-          description: Whether device verification is required
+          default: false
+          description: デバイス登録時に身元確認（KYC）を必須とするか
+          example: false
       additionalProperties: true
     AuthenticationStepDefinition:
       type: object
@@ -7319,6 +7340,10 @@ components:
         include_user_id:
           type: boolean
           default: true
+        include_user_name:
+          type: boolean
+          default: true
+          description: ユーザー名を含める
         include_user_ex_sub:
           type: boolean
           default: true
@@ -7375,7 +7400,7 @@ components:
           default: true
         include_name:
           type: boolean
-          default: false
+          default: true
         include_external_user_id:
           type: boolean
           default: true
@@ -7440,6 +7465,7 @@ components:
 
         - identity_unique_key_type: ユーザーの一意識別子として使用するフィールドを定義
         - password_policy: パスワードの要件を定義（OWASP/NIST準拠）
+        - authentication_device_rule: 認証デバイス登録ルール（最大登録数、身元確認必須等）
       properties:
         identity_unique_key_type:
           type: string
@@ -7536,6 +7562,8 @@ components:
               default: 0
               description: パスワード履歴保持数（将来対応 Issue
               example: 0
+        authentication_device_rule:
+          $ref: '#/components/schemas/AuthenticationDeviceRule'
       example:
         identity_unique_key_type: EMAIL_OR_EXTERNAL_USER_ID
         password_policy:
@@ -7546,6 +7574,9 @@ components:
           require_number: false
           require_special_char: false
           max_history: 0
+        authentication_device_rule:
+          max_devices: 5
+          required_identity_verification: false
   responses:
     BadRequest:
       description: Bad Request - Invalid input parameters
