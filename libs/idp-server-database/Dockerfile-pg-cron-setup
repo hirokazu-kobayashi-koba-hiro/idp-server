@@ -1,0 +1,13 @@
+# pg_cron job setup container
+FROM postgres:15-alpine
+
+WORKDIR /scripts
+
+# Copy setup script
+COPY postgresql/operation/setup-pg-cron-jobs.sql ./setup-pg-cron-jobs.sql
+COPY entrypoint-pg-cron-setup.sh /entrypoint.sh
+
+# Grant execution permissions
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]

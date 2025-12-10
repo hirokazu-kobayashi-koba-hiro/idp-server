@@ -524,7 +524,205 @@ SELECT cron.schedule(
 
 ---
 
-## 11. 参考資料
+## 11. pg_partman / pg_cron 初期化
+
+### 11.1 Docker環境での初期化
+
+idp-serverでは、Docker PostgreSQLイメージの初期化スクリプトで pg_partman と pg_cron を設定しています。
+
+**初期化スクリプト位置**: `libs/idp-server-database/postgresql/init/02-init-partman.sh`
+
+```bash
+#!/bin/sh
+set -eu
+
+: "${DB_OWNER_USER:=idp}"
+
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+  -- pg_cron for scheduled execution
+  CREATE EXTENSION IF NOT EXISTS pg_cron;
+
+  -- pg_partman for partition management
+  CREATE SCHEMA IF NOT EXISTS partman;
+  CREATE EXTENSION IF NOT EXISTS pg_partman WITH SCHEMA partman;
+
+  -- Grant permissions to application owner user
+  GRANT USAGE, CREATE ON SCHEMA partman TO ${DB_OWNER_USER};
+  GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA partman TO ${DB_OWNER_USER};
+  GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA partman TO ${DB_OWNER_USER};
+  GRANT ALL ON ALL SEQUENCES IN SCHEMA partman TO ${DB_OWNER_USER};
+
+  GRANT USAGE ON SCHEMA cron TO ${DB_OWNER_USER};
+  GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA cron TO ${DB_OWNER_USER};
+EOSQL
+
+echo "pg_cron and pg_partman extensions initialized"
+```
+
+### 11.2 トラブルシューティング
+
+#### Permission denied エラー
+
+```
+/bin/sh: /docker-entrypoint-initdb.d/02-init-partman.sh: Permission denied
+```
+
+**原因**: シェルスクリプトの読み取り権限が不足
+
+**解決策**:
+```bash
+chmod 755 libs/idp-server-database/postgresql/init/02-init-partman.sh
+```
+
+#### partman スキーマが存在しない
+
+```
+ERROR: schema "partman" does not exist
+```
+
+**原因**: 初期化スクリプトが実行されていない
+
+**解決策**:
+1. Docker ボリュームを削除して再初期化
+   ```bash
+   docker-compose down -v
+   docker-compose up -d
+   ```
+
+2. 手動で初期化（既存データがある場合）
+   ```sql
+   CREATE SCHEMA IF NOT EXISTS partman;
+   CREATE EXTENSION IF NOT EXISTS pg_partman WITH SCHEMA partman;
+   ```
+
+#### RAISE NOTICE エラー
+
+```
+ERROR: syntax error at or near "RAISE"
+```
+
+**原因**: `RAISE NOTICE` は PL/pgSQL 専用構文であり、プレーンSQLでは使用不可
+
+**解決策**: シェルの `echo` コマンドを使用
+```bash
+# ❌ 誤り（EOSQL内）
+# RAISE NOTICE 'Completed';
+
+# ✅ 正解（EOSQL外）
+echo "Completed"
+```
+
+### 11.3 Docker Compose 設定
+
+pg_partman / pg_cron を使用するには、`shared_preload_libraries` の設定が必要です。
+
+```yaml
+services:
+  postgres:
+    image: postgres:16
+    command: postgres -c shared_preload_libraries=pg_cron,pg_partman_bgw
+    environment:
+      POSTGRES_DB: idp
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - ./libs/idp-server-database/postgresql/init:/docker-entrypoint-initdb.d
+```
+
+**Note**: `docker-entrypoint-initdb.d` のスクリプトは、データディレクトリが空の場合のみ実行されます。
+
+---
+
+## 12. 運用カスタマイズ
+
+### 12.1 デフォルト設定
+
+| 項目 | デフォルト値 | 設定場所 |
+|------|-------------|---------|
+| メンテナンス実行時刻 | 毎日 02:00 UTC | `setup-pg-cron-jobs.sql` |
+| security_event 保持期間 | 90日 | `V0_9_21_1__add_event_partitioning.sql` |
+| security_event_hook_results 保持期間 | 90日 | 同上 |
+| statistics_*_users 保持期間 | テーブルにより異なる | `V0_9_21_2__statistics.sql` |
+
+### 12.2 cronスケジュールの変更
+
+`setup-pg-cron-jobs.sql` を編集するか、直接SQLを実行します。
+
+```sql
+-- 現在のスケジュール確認
+SELECT jobid, jobname, schedule, command, active FROM cron.job;
+
+-- スケジュール変更（例: 毎時実行に変更）
+SELECT cron.unschedule('partman-maintenance');
+SELECT cron.schedule(
+    'partman-maintenance',
+    '0 * * * *',  -- 毎時0分
+    $$CALL partman.run_maintenance_proc()$$
+);
+
+-- ジョブの一時停止
+UPDATE cron.job SET active = false WHERE jobname = 'partman-maintenance';
+
+-- ジョブの再開
+UPDATE cron.job SET active = true WHERE jobname = 'partman-maintenance';
+```
+
+### 12.3 保持期間の変更
+
+```sql
+-- 現在の設定確認
+SELECT parent_table, partition_interval, retention, premake
+FROM partman.part_config;
+
+-- security_event の保持期間を180日に変更
+UPDATE partman.part_config
+SET retention = '180 days'
+WHERE parent_table = 'public.security_event';
+
+-- security_event_hook_results の保持期間を30日に短縮
+UPDATE partman.part_config
+SET retention = '30 days'
+WHERE parent_table = 'public.security_event_hook_results';
+```
+
+### 12.4 partman.part_config の主要設定項目
+
+| カラム | 説明 | 例 |
+|--------|------|-----|
+| `partition_interval` | パーティション間隔 | `1 day`, `1 month` |
+| `retention` | 保持期間（超過で自動削除） | `90 days`, `1 year` |
+| `premake` | 事前作成するパーティション数 | `90` |
+| `infinite_time_partitions` | 無限にパーティション作成 | `true` |
+| `retention_keep_table` | 削除時にテーブルを残すか | `false` |
+| `retention_keep_index` | 削除時にインデックスを残すか | `false` |
+
+### 12.5 手動メンテナンス実行
+
+cronを待たずに即時実行したい場合：
+
+```sql
+-- パーティション作成・削除を即時実行
+CALL partman.run_maintenance_proc();
+
+-- 実行結果確認
+SELECT * FROM cron.job_run_details ORDER BY runid DESC LIMIT 5;
+```
+
+### 12.6 DDL vs 運用スクリプトの切り分け
+
+| 項目 | 管理場所 | 変更方法 |
+|------|----------|---------|
+| テーブル構造 | DDL (Flyway) | 新規マイグレーション作成 |
+| パーティション初期設定 | DDL (Flyway) | 新規マイグレーション作成 |
+| cronスケジュール | `setup-pg-cron-jobs.sql` | ファイル編集 or 直接SQL |
+| 保持期間 | `partman.part_config` | 直接SQL |
+
+**設計思想**: DDLはスキーマ定義（リリース時に確定）、運用設定は環境ごとに調整可能。
+
+---
+
+## 13. 参考資料
 
 - [PostgreSQL Table Partitioning](https://www.postgresql.org/docs/current/ddl-partitioning.html)
 - [pg_cron Extension](https://github.com/citusdata/pg_cron)
+- [pg_partman Extension](https://github.com/pgpartman/pg_partman)

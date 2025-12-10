@@ -215,8 +215,66 @@ private TenantManagementStatus mapExceptionToStatus(ManagementApiException e) {
 - **UPSERT**: PostgreSQL=`ON CONFLICT`, MySQL=`ON DUPLICATE KEY UPDATE`
 - **新規判定**: PostgreSQL=`RETURNING`, MySQL=`ROW_COUNT()`
 - **JSON**: PostgreSQL=JSONB/`jsonb_set()`, MySQL=JSON/`JSON_SET()`
+- **DATE型パラメータ**: PostgreSQL=`?::date`キャスト必要, MySQL=直接渡し可
 
 **教訓**: SQL構文差異をExecutor層で吸収。上位層（Repository, Service）はDB非依存を維持。
+
+#### LocalDate と DATE型の使用パターン
+
+**重要**: 日付列（`stat_month`, `stat_year`等）はCHAR型ではなくDATE型を使用すること。
+
+```java
+// ✅ 正解: LocalDate を使用
+public Map<String, String> selectByMonth(TenantIdentifier tenantId, LocalDate statMonth);
+
+// ❌ 誤り: String を使用
+public Map<String, String> selectByMonth(TenantIdentifier tenantId, String statMonth);
+```
+
+**理由**:
+- PostgreSQLのDATE型カラムとString比較で `ERROR: date >= character varying` エラー
+- pg_partmanパーティショニングはDATE型カラムを要求
+- Java LocalDate → JDBC → DATE型への自動変換が適切に機能
+
+**変換パターン**:
+```java
+// API層（String "YYYY-MM"形式）→ データベース層（LocalDate）
+public LocalDate fromAsLocalDate() {
+  YearMonth yearMonth = YearMonth.parse(from(), DateTimeFormatter.ofPattern("yyyy-MM"));
+  return yearMonth.atDay(1);  // 月初日
+}
+```
+
+### Docker PostgreSQL 初期化スクリプト
+
+**重要**: `docker-entrypoint-initdb.d` の初期化スクリプトは以下の条件で失敗する可能性があります。
+
+#### シェルスクリプトのパーミッション
+```bash
+# ❌ 誤り: 読み取り権限なし (--x--x--x)
+-rwx--x--x 02-init-partman.sh
+# エラー: /bin/sh: Permission denied
+
+# ✅ 正解: 読み取り権限あり (rwxr-xr-x)
+chmod 755 libs/idp-server-database/postgresql/init/*.sh
+```
+
+#### RAISE NOTICE の使用制限
+```sql
+-- ❌ 誤り: psql の EOSQL 内で使用
+RAISE NOTICE 'Completed';
+-- エラー: syntax error at or near "RAISE"
+
+-- ✅ 正解: シェルの echo を使用
+EOSQL
+echo "Completed"
+```
+
+**理由**: `RAISE NOTICE` は PL/pgSQL 専用構文。プレーンSQL（psql直接実行）では使用不可。
+
+#### 初期化スクリプトが実行されない
+- **原因**: `docker-entrypoint-initdb.d` のスクリプトはデータディレクトリが空の場合のみ実行
+- **解決策**: `docker-compose down -v` でボリューム削除後に再起動
 
 ### Plugin 拡張パターン
 - **Map<Type, Service>**: `Map<GrantType, OAuthTokenCreationService>` で動的選択

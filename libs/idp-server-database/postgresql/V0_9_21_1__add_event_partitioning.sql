@@ -203,16 +203,12 @@ INSERT INTO security_event_hook_results SELECT * FROM security_event_hook_result
 -- ================================================
 -- Phase 6: Schedule pg_partman maintenance with pg_cron
 -- ================================================
-
--- Run maintenance daily at 02:00 UTC
--- This single procedure handles both:
---   - Creating new partitions (based on premake setting)
---   - Dropping old partitions (based on retention setting)
-SELECT cron.schedule(
-    'partman-maintenance',
-    '0 2 * * *',
-    $$CALL partman.run_maintenance_proc()$$
-);
+-- Note: pg_cron job registration is handled by pg-cron-setup container
+-- (see docker-compose.yaml and setup-pg-cron-jobs.sql)
+-- This separation allows:
+--   - Idempotent job registration (safe to run multiple times)
+--   - Environment-specific schedule customization
+--   - Clear separation of DDL and operational setup
 
 -- ================================================
 -- Phase 7: Initial maintenance (run after migration)

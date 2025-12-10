@@ -112,47 +112,46 @@ flowchart TD
 ### 2. データモデル設計
 
 #### 基本統計エンティティ
+
+> **Note**: 以下は設計提案時の案です。実装された統計テーブル構造は [concept-22-tenant-statistics.md](../content_03_concepts/concept-22-tenant-statistics.md) を参照してください。
+
 ```sql
--- テナント別日次統計
-CREATE TABLE tenant_daily_statistics (
+-- 月次統計テーブル（実装済み）
+CREATE TABLE statistics_monthly (
     id UUID PRIMARY KEY,
     tenant_id UUID NOT NULL,
-    date DATE NOT NULL,
-
-    -- 認証統計
-    total_logins INTEGER DEFAULT 0,
-    successful_logins INTEGER DEFAULT 0,
-    failed_logins INTEGER DEFAULT 0,
-    unique_users INTEGER DEFAULT 0,
-
-    -- トークン統計
-    tokens_issued INTEGER DEFAULT 0,
-    tokens_refreshed INTEGER DEFAULT 0,
-    tokens_revoked INTEGER DEFAULT 0,
-
-    -- セキュリティ統計
-    mfa_attempts INTEGER DEFAULT 0,
-    mfa_successes INTEGER DEFAULT 0,
-    security_events INTEGER DEFAULT 0,
-
-    -- パフォーマンス統計
-    avg_response_time_ms INTEGER DEFAULT 0,
-    p95_response_time_ms INTEGER DEFAULT 0,
-    error_rate DECIMAL(5,4) DEFAULT 0,
-
+    stat_month DATE NOT NULL,  -- DATE型: 月初日（例: 2025-01-01）
+    monthly_summary JSONB DEFAULT '{}',
+    daily_metrics JSONB DEFAULT '{}',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(tenant_id, stat_month)
+);
 
-    UNIQUE(tenant_id, date)
+-- 年次統計テーブル（実装済み）
+CREATE TABLE statistics_yearly (
+    id UUID PRIMARY KEY,
+    tenant_id UUID NOT NULL,
+    stat_year DATE NOT NULL,  -- DATE型: 年初日（例: 2025-01-01）
+    yearly_summary JSONB DEFAULT '{}',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(tenant_id, stat_year)
 );
 
 -- RLS適用
-ALTER TABLE tenant_daily_statistics ENABLE ROW LEVEL SECURITY;
-CREATE POLICY rls_tenant_daily_statistics
-  ON tenant_daily_statistics
+ALTER TABLE statistics_monthly ENABLE ROW LEVEL SECURITY;
+CREATE POLICY rls_statistics_monthly
+  ON statistics_monthly
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
-ALTER TABLE tenant_daily_statistics FORCE ROW LEVEL SECURITY;
+ALTER TABLE statistics_monthly FORCE ROW LEVEL SECURITY;
 ```
+
+**設計判断**:
+- **DATE型採用**: `stat_month`/`stat_year`は`CHAR(7)`/`CHAR(4)`ではなくDATE型を使用
+  - PostgreSQL範囲演算との互換性（`stat_month >= ?::date`）
+  - パーティショニング対応（pg_partman要件）
+  - Java `LocalDate`型との直接マッピング
 
 #### 時系列データ（リアルタイム）
 ```sql

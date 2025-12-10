@@ -65,7 +65,7 @@ erDiagram
     statistics_monthly {
         uuid id PK
         uuid tenant_id
-        char_7 stat_month
+        date stat_month
         jsonb monthly_summary
         jsonb daily_metrics
         timestamp created_at
@@ -74,7 +74,7 @@ erDiagram
     statistics_yearly {
         uuid id PK
         uuid tenant_id
-        char_4 stat_year
+        date stat_year
         jsonb yearly_summary
         timestamp created_at
         timestamp updated_at
@@ -88,14 +88,14 @@ erDiagram
     }
     statistics_monthly_users {
         uuid tenant_id PK
-        char_7 stat_month PK
+        date stat_month PK
         uuid user_id PK
         timestamp last_used_at
         timestamp created_at
     }
     statistics_yearly_users {
         uuid tenant_id PK
-        char_4 stat_year PK
+        date stat_year PK
         uuid user_id PK
         timestamp last_used_at
         timestamp created_at
@@ -112,9 +112,11 @@ erDiagram
 |:---|:---|:---|
 | `id` | UUID | 統計レコードID |
 | `tenant_id` | UUID | テナント識別子 |
-| `stat_month` | CHAR(7) | 統計対象月（YYYY-MM形式、例: 2025-01） |
+| `stat_month` | DATE | 統計対象月（月初日、例: 2025-01-01） |
 | `monthly_summary` | JSONB | 月次集計メトリクス |
-| `daily_metrics` | JSONB | 日別メトリクス（キー: 日番号 01-31） |
+| `daily_metrics` | JSONB | 日別メトリクス（キー: 日付 YYYY-MM-DD形式） |
+
+> **Note**: `stat_month`はDATE型で月初日（1日）を格納します。パーティショニング対応のため、CHAR(7)からDATE型に変更されました。
 
 **月次集計メトリクス（monthly_summary）の例**:
 
@@ -132,10 +134,10 @@ erDiagram
 
 ```json
 {
-  "1": {"dau": 100, "login_success_count": 1500},
-  "2": {"dau": 110, "login_success_count": 1600},
-  "15": {"dau": 95, "login_success_count": 1400},
-  "31": {"dau": 88, "login_success_count": 1200}
+  "2025-01-01": {"dau": 100, "login_success_count": 1500},
+  "2025-01-02": {"dau": 110, "login_success_count": 1600},
+  "2025-01-15": {"dau": 95, "login_success_count": 1400},
+  "2025-01-31": {"dau": 88, "login_success_count": 1200}
 }
 ```
 
@@ -160,7 +162,7 @@ erDiagram
 | カラム | 型 | 説明 |
 |:---|:---|:---|
 | `tenant_id` | UUID | テナント識別子 |
-| `stat_month` | CHAR(7) | 統計対象月（YYYY-MM形式） |
+| `stat_month` | DATE | 統計対象月（月初日） |
 | `user_id` | UUID | ユーザー識別子 |
 
 **複合主キー**: `(tenant_id, stat_month, user_id)`
@@ -175,8 +177,10 @@ erDiagram
 |:---|:---|:---|
 | `id` | UUID | 統計レコードID |
 | `tenant_id` | UUID | テナント識別子 |
-| `stat_year` | CHAR(4) | 統計対象年（YYYY形式、例: 2025） |
+| `stat_year` | DATE | 統計対象年（年初日、例: 2025-01-01） |
 | `yearly_summary` | JSONB | 年次集計メトリクス |
+
+> **Note**: `stat_year`はDATE型で年初日（1月1日）を格納します。
 
 **年次集計メトリクス（yearly_summary）の例**:
 
@@ -196,7 +200,7 @@ erDiagram
 | カラム | 型 | 説明 |
 |:---|:---|:---|
 | `tenant_id` | UUID | テナント識別子 |
-| `stat_year` | CHAR(4) | 統計対象年（YYYY形式） |
+| `stat_year` | DATE | 統計対象年（年初日） |
 | `user_id` | UUID | ユーザー識別子 |
 | `last_used_at` | TIMESTAMP | 当該年における最終アクティビティ日時 |
 
@@ -301,7 +305,7 @@ flowchart TD
 セキュリティイベント発生ごとにメトリクスを+1します。
 
 ```
-イベント発生 → daily_metrics[day].{metric} +1
+イベント発生 → daily_metrics["2025-01-15"].{metric} +1
            → monthly_summary.{metric} +1
 ```
 
@@ -425,8 +429,8 @@ GET /v1/management/organizations/{orgId}/tenants/{tenantId}/statistics?from=2025
         "dau": 3200
       },
       "daily_metrics": {
-        "1": {"dau": 100, "login_success_count": 1500},
-        "2": {"dau": 110, "login_success_count": 1600}
+        "2025-01-01": {"dau": 100, "login_success_count": 1500},
+        "2025-01-02": {"dau": 110, "login_success_count": 1600}
       },
       "created_at": "2025-01-01T00:00:00Z",
       "updated_at": "2025-01-31T23:59:59Z"
@@ -602,6 +606,57 @@ flowchart TD
 - DAUの急増（ボット攻撃の可能性）
 - ログイン失敗率の急上昇
 - 特定時間帯への集中
+
+---
+
+## 実装パターン
+
+### LocalDate型の使用
+
+統計機能では、日付パラメータに`java.time.LocalDate`型を使用します。
+
+```java
+// SecurityEventHandler.updateStatistics() より
+LocalDate eventDate = securityEvent
+    .createdAt()
+    .value()
+    .atZone(ZoneOffset.UTC)
+    .withZoneSameInstant(tenant.timezone())
+    .toLocalDate();
+
+// 月初日・年初日の計算
+LocalDate monthStart = eventDate.withDayOfMonth(1);
+LocalDate yearStart = eventDate.withDayOfYear(1);
+
+// Repository呼び出し
+statisticsRepository.incrementDailyMetric(tenant.identifier(), monthStart, day, "dau", 1);
+yearlyStatisticsRepository.incrementYau(tenant.identifier(), yearStart, 1);
+```
+
+**設計原則**:
+- API層（`TenantStatisticsQueries`）では`String`型（"YYYY-MM"形式）でパラメータを受け取る
+- クエリ実行時に`LocalDate`に変換（`fromAsLocalDate()`, `toAsLocalDate()`）
+- データベース層では`LocalDate`を直接使用（JDBCが自動変換）
+
+### パーティションテーブルでの新規レコード検出
+
+PostgreSQLのパーティションテーブルでは、システムカラム`xmax`を使用した新規レコード検出ができません。
+
+```sql
+-- ❌ 誤り: パーティションテーブルでは使用不可
+INSERT INTO statistics_yearly_users (...)
+ON CONFLICT (...) DO UPDATE SET last_used_at = NOW()
+RETURNING (xmax = 0) AS is_new
+
+-- ✅ 正解: RETURNING + DO NOTHING パターン
+INSERT INTO statistics_yearly_users (...)
+ON CONFLICT (...) DO NOTHING
+RETURNING user_id
+```
+
+**判定ロジック**:
+- `RETURNING`で行が返る = 新規INSERT成功（新規ユーザー）
+- `RETURNING`で行が返らない = CONFLICT発生（既存ユーザー）
 
 ---
 
