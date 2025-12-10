@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import { get, postWithJson, putWithJson, deletion } from "../../../../lib/http";
 import { requestToken } from "../../../../api/oauthClient";
 import { backendUrl } from "../../../testConfig";
+import { sleep } from "../../../../lib/util";
 
 describe("organization federation configuration management api", () => {
   const orgId = "72cf4a12-8da3-40fb-8ae4-a77e3cda95e2";
@@ -210,7 +211,9 @@ describe("organization federation configuration management api", () => {
             Authorization: `Bearer ${accessToken}`
           }
         });
+
         console.log("Detail Response 3 (should be 404):", detailResponse3.status);
+        await sleep(500);
         expect(detailResponse3.status).toBe(404);
         console.log("✅ Federation config no longer accessible after deletion");
 

@@ -31,6 +31,6 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
   -- cron schema permissions
   GRANT USAGE ON SCHEMA cron TO ${DB_OWNER_USER};
   GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA cron TO ${DB_OWNER_USER};
-
-  RAISE NOTICE 'pg_cron and pg_partman extensions initialized with permissions for "%"', '${DB_OWNER_USER}';
 EOSQL
+
+echo "pg_cron and pg_partman extensions initialized with permissions for '${DB_OWNER_USER}'"
