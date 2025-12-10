@@ -16,8 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.statistics.command;
 
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,38 +27,8 @@ import org.idp.server.platform.user.UserIdentifier;
 public class YearlyActiveUserMysqlExecutor implements YearlyActiveUserSqlExecutor {
 
   @Override
-  public void addActiveUser(TenantIdentifier tenantId, String statYear, UserIdentifier userId) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-
-    String sql =
-        """
-                INSERT INTO statistics_yearly_users (
-                    tenant_id,
-                    stat_year,
-                    user_id,
-                    last_used_at,
-                    created_at
-                ) VALUES (
-                    ?,
-                    ?,
-                    ?,
-                    NOW(),
-                    NOW()
-                )
-                ON DUPLICATE KEY UPDATE last_used_at = NOW()
-                """;
-
-    List<Object> params = new ArrayList<>();
-    params.add(tenantId.value());
-    params.add(statYear);
-    params.add(userId.value());
-
-    sqlExecutor.execute(sql, params);
-  }
-
-  @Override
   public boolean addActiveUserAndReturnIfNew(
-      TenantIdentifier tenantId, String statYear, UserIdentifier userId) {
+      TenantIdentifier tenantId, LocalDate statYear, UserIdentifier userId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     // MySQL doesn't support RETURNING, so we check if the record exists first
@@ -78,21 +47,16 @@ public class YearlyActiveUserMysqlExecutor implements YearlyActiveUserSqlExecuto
     boolean isNew = existing.isEmpty();
 
     // Insert or update
-    addActiveUser(tenantId, statYear, userId);
-
-    return isNew;
-  }
-
-  @Override
-  public LocalDateTime getLastUsedAt(
-      TenantIdentifier tenantId, String statYear, UserIdentifier userId) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-
     String sql =
         """
-                SELECT last_used_at
-                FROM statistics_yearly_users
-                WHERE tenant_id = ? AND stat_year = ? AND user_id = ?
+                INSERT INTO statistics_yearly_users (
+                    tenant_id,
+                    stat_year,
+                    user_id,
+                    last_used_at,
+                    created_at
+                ) VALUES (?, ?, ?, NOW(), NOW())
+                ON DUPLICATE KEY UPDATE last_used_at = NOW()
                 """;
 
     List<Object> params = new ArrayList<>();
@@ -100,95 +64,8 @@ public class YearlyActiveUserMysqlExecutor implements YearlyActiveUserSqlExecuto
     params.add(statYear);
     params.add(userId.value());
 
-    Map<String, String> result = sqlExecutor.selectOne(sql, params);
-    if (result.isEmpty()) {
-      return null;
-    }
-
-    String lastUsedAtStr = result.get("last_used_at");
-    if (lastUsedAtStr != null && !lastUsedAtStr.isEmpty()) {
-      return Timestamp.valueOf(lastUsedAtStr).toLocalDateTime();
-    }
-    return null;
-  }
-
-  @Override
-  public void deleteByYear(TenantIdentifier tenantId, String statYear) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-
-    String sql =
-        """
-                DELETE FROM statistics_yearly_users
-                WHERE tenant_id = ? AND stat_year = ?
-                """;
-
-    List<Object> params = new ArrayList<>();
-    params.add(tenantId.value());
-    params.add(statYear);
-
     sqlExecutor.execute(sql, params);
-  }
 
-  @Override
-  public void deleteOlderThan(String beforeYear) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-
-    String sql =
-        """
-                DELETE FROM statistics_yearly_users
-                WHERE stat_year < ?
-                """;
-
-    List<Object> params = new ArrayList<>();
-    params.add(beforeYear);
-
-    sqlExecutor.execute(sql, params);
-  }
-
-  @Override
-  public void deleteByTenantId(TenantIdentifier tenantId) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-
-    String sql =
-        """
-                DELETE FROM statistics_yearly_users
-                WHERE tenant_id = ?
-                """;
-
-    List<Object> params = new ArrayList<>();
-    params.add(tenantId.value());
-
-    sqlExecutor.execute(sql, params);
-  }
-
-  @Override
-  public int getYauCount(TenantIdentifier tenantId, String statYear) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-
-    String sql =
-        """
-                SELECT COUNT(*) as yau_count
-                FROM statistics_yearly_users
-                WHERE tenant_id = ? AND stat_year = ?
-                """;
-
-    List<Object> params = new ArrayList<>();
-    params.add(tenantId.value());
-    params.add(statYear);
-
-    Map<String, Object> result = sqlExecutor.selectOneWithType(sql, params);
-
-    if (result.isEmpty()) {
-      return 0;
-    }
-
-    Object yauCountObj = result.get("yau_count");
-    if (yauCountObj instanceof Long longValue) {
-      return longValue.intValue();
-    } else if (yauCountObj instanceof Integer intValue) {
-      return intValue;
-    }
-
-    return 0;
+    return isNew;
   }
 }

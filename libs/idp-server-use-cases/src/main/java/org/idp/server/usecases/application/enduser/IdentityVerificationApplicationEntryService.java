@@ -131,16 +131,17 @@ public class IdentityVerificationApplicationEntryService
             requestAttributes,
             verificationConfiguration);
     if (applyingResult.isError()) {
-
+      Map<String, Object> executionResult = applyingResult.errorResponse().response();
       eventPublisher.publish(
           tenant,
           oAuthToken,
           DefaultSecurityEventType.identity_verification_application_failure,
-          applyingResult.errorResponse().response(),
+          executionResult,
           requestAttributes);
       SecurityEventType typeSpecificFailureEvent =
           new SecurityEventType(type.name() + "_application_failure");
-      eventPublisher.publish(tenant, oAuthToken, typeSpecificFailureEvent, requestAttributes);
+      eventPublisher.publish(
+          tenant, oAuthToken, typeSpecificFailureEvent, executionResult, requestAttributes);
       return applyingResult.errorResponse();
     }
 
@@ -240,7 +241,14 @@ public class IdentityVerificationApplicationEntryService
         applicationValidator.validate();
 
     if (requestValidationResult.isError()) {
-      return requestValidationResult.errorResponse();
+
+      IdentityVerificationApplicationResponse errorResponse =
+          requestValidationResult.errorResponse();
+      SecurityEventType securityEventType =
+          new SecurityEventType(type.name() + "_" + process.name() + "_" + "failure");
+      eventPublisher.publish(
+          tenant, oAuthToken, securityEventType, errorResponse.response(), requestAttributes);
+      return errorResponse;
     }
 
     IdentityVerificationApplications applications =

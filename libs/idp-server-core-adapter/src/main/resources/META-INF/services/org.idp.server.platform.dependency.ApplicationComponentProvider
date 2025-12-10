@@ -56,7 +56,6 @@ org.idp.server.core.adapters.datasource.identity.role.query.RoleQueryDataSourceP
 org.idp.server.core.adapters.datasource.statistics.command.TenantStatisticsDataCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.statistics.query.TenantStatisticsDataQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.statistics.command.DailyActiveUserCommandDataSourceProvider
-org.idp.server.core.adapters.datasource.statistics.query.DailyActiveUserQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.statistics.command.MonthlyActiveUserCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.statistics.command.YearlyActiveUserCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.statistics.command.TenantYearlyStatisticsCommandDataSourceProvider

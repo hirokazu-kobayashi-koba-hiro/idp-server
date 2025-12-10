@@ -261,7 +261,7 @@ describe("Integration: Identity Verification Security Event Logging", () => {
         Authorization: `Bearer ${adminAccessToken}`,
       },
       params: {
-        type: "identity_verification_application_failure",
+        type: `${identityVerificationConfigType}_application_failure`,
         limit: 10,
       },
     });
@@ -280,7 +280,7 @@ describe("Integration: Identity Verification Security Event Logging", () => {
     console.log("Latest failure event:", JSON.stringify(latestFailureEvent, null, 2));
 
     // Verify event type
-    expect(latestFailureEvent).toHaveProperty("type", "identity_verification_application_failure");
+    expect(latestFailureEvent).toHaveProperty("type", `${identityVerificationConfigType}_application_failure`);
 
     // Issue #915: detail field must exist
     expect(latestFailureEvent).toHaveProperty("detail");
@@ -341,7 +341,7 @@ describe("Integration: Identity Verification Security Event Logging", () => {
         Authorization: `Bearer ${adminAccessToken}`,
       },
       params: {
-        type: "identity_verification_application_apply",
+        type: `${identityVerificationConfigType}_application_success`,
         limit: 10,
       },
     });
@@ -351,7 +351,7 @@ describe("Integration: Identity Verification Security Event Logging", () => {
 
     if (successEventsResponse.data.list.length > 0) {
       const successEvent = successEventsResponse.data.list[0];
-      expect(successEvent).toHaveProperty("type", "identity_verification_application_apply");
+      expect(successEvent).toHaveProperty("type", `${identityVerificationConfigType}_application_success`);
       console.log("✓ Apply success event recorded");
     }
 
@@ -399,7 +399,7 @@ describe("Integration: Identity Verification Security Event Logging", () => {
         Authorization: `Bearer ${adminAccessToken}`,
       },
       params: {
-        type: "identity_verification_application_failure",
+        type: `${identityVerificationConfigType}_application_failure`,
         limit: 10,
       },
     });
@@ -457,7 +457,7 @@ describe("Integration: Identity Verification Security Event Logging", () => {
         Authorization: `Bearer ${adminAccessToken}`,
       },
       params: {
-        type: "identity_verification_application_failure",
+        type: `${identityVerificationConfigType}_application_failure`,
         limit: 5,
       },
     });

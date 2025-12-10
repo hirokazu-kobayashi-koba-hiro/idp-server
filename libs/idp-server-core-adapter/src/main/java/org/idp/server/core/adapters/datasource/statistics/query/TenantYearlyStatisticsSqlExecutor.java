@@ -16,12 +16,13 @@
 
 package org.idp.server.core.adapters.datasource.statistics.query;
 
+import java.time.LocalDate;
 import java.util.Map;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public interface TenantYearlyStatisticsSqlExecutor {
 
-  Map<String, String> selectByYear(TenantIdentifier tenantId, String statYear);
+  Map<String, String> selectByYear(TenantIdentifier tenantId, LocalDate statYear);
 
-  Map<String, String> selectExists(TenantIdentifier tenantId, String statYear);
+  Map<String, String> selectExists(TenantIdentifier tenantId, LocalDate statYear);
 }

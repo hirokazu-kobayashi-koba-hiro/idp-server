@@ -16,6 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.statistics.command;
 
+import java.time.LocalDate;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public interface TenantYearlyStatisticsSqlExecutor {
@@ -24,19 +25,19 @@ public interface TenantYearlyStatisticsSqlExecutor {
    * Increment a metric in yearly_summary JSONB
    *
    * @param tenantId tenant identifier
-   * @param statYear year in YYYY format (e.g., 2025)
+   * @param statYear first day of year (e.g., 2025-01-01 for year 2025)
    * @param metricName metric name (e.g., yau, total_logins)
    * @param increment value to add
    */
   void incrementYearlySummaryMetric(
-      TenantIdentifier tenantId, String statYear, String metricName, int increment);
+      TenantIdentifier tenantId, LocalDate statYear, String metricName, int increment);
 
   /**
    * Increment yearly summary YAU
    *
    * @param tenantId tenant identifier
-   * @param statYear year in YYYY format (e.g., 2025)
+   * @param statYear first day of year (e.g., 2025-01-01 for year 2025)
    * @param increment value to add to YAU
    */
-  void incrementYau(TenantIdentifier tenantId, String statYear, int increment);
+  void incrementYau(TenantIdentifier tenantId, LocalDate statYear, int increment);
 }

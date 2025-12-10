@@ -16,6 +16,7 @@
 
 package org.idp.server.platform.statistics.repository;
 
+import java.time.LocalDate;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 /**
@@ -51,17 +52,18 @@ public interface TenantStatisticsCommandRepository {
    *
    * <pre>{@code
    * // Increment login_success_count for day 15 in January 2025
-   * repository.incrementDailyMetric(tenantId, "2025-01", "15", "login_success_count", 1);
+   * LocalDate monthStart = LocalDate.of(2025, 1, 1);
+   * repository.incrementDailyMetric(tenantId, monthStart, "15", "login_success_count", 1);
    * }</pre>
    *
    * @param tenantId tenant identifier
-   * @param statMonth year and month in YYYY-MM format (e.g., "2025-01")
+   * @param statMonth first day of month (e.g., 2025-01-01 for January 2025)
    * @param day day of month as string (e.g., "1", "15", "31")
    * @param metricName metric name to increment
    * @param increment value to add (can be negative for decrement)
    */
   void incrementDailyMetric(
-      TenantIdentifier tenantId, String statMonth, String day, String metricName, int increment);
+      TenantIdentifier tenantId, LocalDate statMonth, String day, String metricName, int increment);
 
   /**
    * Increment a monthly summary metric
@@ -73,16 +75,17 @@ public interface TenantStatisticsCommandRepository {
    *
    * <pre>{@code
    * // Increment total logins for January 2025
-   * repository.incrementMonthlySummaryMetric(tenantId, "2025-01", "total_logins", 1);
+   * LocalDate monthStart = LocalDate.of(2025, 1, 1);
+   * repository.incrementMonthlySummaryMetric(tenantId, monthStart, "total_logins", 1);
    * }</pre>
    *
    * @param tenantId tenant identifier
-   * @param statMonth year and month in YYYY-MM format (e.g., "2025-01")
+   * @param statMonth first day of month (e.g., 2025-01-01 for January 2025)
    * @param metricName metric name to increment
    * @param increment value to add (can be negative for decrement)
    */
   void incrementMonthlySummaryMetric(
-      TenantIdentifier tenantId, String statMonth, String metricName, int increment);
+      TenantIdentifier tenantId, LocalDate statMonth, String metricName, int increment);
 
   /**
    * Increment monthly summary MAU and set cumulative MAU in daily metrics
@@ -101,14 +104,15 @@ public interface TenantStatisticsCommandRepository {
    * <pre>{@code
    * // After this call, if monthly MAU was 10, it becomes 11
    * // and daily_metrics["15"].mau is set to 11
-   * repository.incrementMauWithDailyCumulative(tenantId, "2025-01", "15", 1);
+   * LocalDate monthStart = LocalDate.of(2025, 1, 1);
+   * repository.incrementMauWithDailyCumulative(tenantId, monthStart, "15", 1);
    * }</pre>
    *
    * @param tenantId tenant identifier
-   * @param statMonth year and month in YYYY-MM format (e.g., "2025-01")
+   * @param statMonth first day of month (e.g., 2025-01-01 for January 2025)
    * @param day day of month as string (e.g., "1", "15", "31")
    * @param increment value to add to MAU
    */
   void incrementMauWithDailyCumulative(
-      TenantIdentifier tenantId, String statMonth, String day, int increment);
+      TenantIdentifier tenantId, LocalDate statMonth, String day, int increment);
 }

@@ -16,6 +16,9 @@
 
 package org.idp.server.platform.statistics;
 
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -65,12 +68,30 @@ public class TenantStatisticsQueries {
     return values.get("from");
   }
 
+  public LocalDate fromAsLocalDate() {
+    String from = from();
+    if (from == null || from.isEmpty()) {
+      return null;
+    }
+    YearMonth yearMonth = YearMonth.parse(from, DateTimeFormatter.ofPattern("yyyy-MM"));
+    return yearMonth.atDay(1);
+  }
+
   public boolean hasTo() {
     return values.containsKey("to");
   }
 
   public String to() {
     return values.get("to");
+  }
+
+  public LocalDate toAsLocalDate() {
+    String to = to();
+    if (to == null || to.isEmpty()) {
+      return null;
+    }
+    YearMonth yearMonth = YearMonth.parse(to, DateTimeFormatter.ofPattern("yyyy-MM"));
+    return yearMonth.atDay(1);
   }
 
   public boolean hasLimit() {

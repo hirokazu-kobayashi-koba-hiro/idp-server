@@ -16,6 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.statistics.command;
 
+import java.time.LocalDate;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.statistics.repository.MonthlyActiveUserCommandRepository;
 import org.idp.server.platform.user.UserIdentifier;
@@ -29,28 +30,8 @@ public class MonthlyActiveUserCommandDataSource implements MonthlyActiveUserComm
   }
 
   @Override
-  public void addActiveUser(TenantIdentifier tenantId, String statMonth, UserIdentifier userId) {
-    executor.addActiveUser(tenantId, statMonth, userId);
-  }
-
-  @Override
   public boolean addActiveUserAndReturnIfNew(
-      TenantIdentifier tenantId, String statMonth, UserIdentifier userId) {
+      TenantIdentifier tenantId, LocalDate statMonth, UserIdentifier userId) {
     return executor.addActiveUserAndReturnIfNew(tenantId, statMonth, userId);
-  }
-
-  @Override
-  public void deleteByMonth(TenantIdentifier tenantId, String statMonth) {
-    executor.deleteByMonth(tenantId, statMonth);
-  }
-
-  @Override
-  public void deleteOlderThan(String beforeMonth) {
-    executor.deleteOlderThan(beforeMonth);
-  }
-
-  @Override
-  public void deleteByTenantId(TenantIdentifier tenantId) {
-    executor.deleteByTenantId(tenantId);
   }
 }

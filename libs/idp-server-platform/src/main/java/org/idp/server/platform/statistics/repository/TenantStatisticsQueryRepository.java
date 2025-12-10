@@ -16,6 +16,7 @@
 
 package org.idp.server.platform.statistics.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -60,10 +61,10 @@ public interface TenantStatisticsQueryRepository {
    * Find statistics for specific month
    *
    * @param tenant tenant
-   * @param statMonth target month in YYYY-MM format (e.g., "2025-01")
+   * @param statMonth target month as LocalDate (first day of month, e.g., 2025-01-01)
    * @return optional statistics (empty if not found)
    */
-  Optional<TenantStatistics> findByMonth(Tenant tenant, String statMonth);
+  Optional<TenantStatistics> findByMonth(Tenant tenant, LocalDate statMonth);
 
   /**
    * Get statistics by ID
@@ -88,11 +89,11 @@ public interface TenantStatisticsQueryRepository {
    * Count statistics records in month range
    *
    * @param tenant tenant
-   * @param fromMonth start month (inclusive, YYYY-MM format)
-   * @param toMonth end month (inclusive, YYYY-MM format)
+   * @param fromMonth start month as LocalDate (first day of month)
+   * @param toMonth end month as LocalDate (first day of month)
    * @return total count
    */
-  long countByMonthRange(Tenant tenant, String fromMonth, String toMonth);
+  long countByMonthRange(Tenant tenant, LocalDate fromMonth, LocalDate toMonth);
 
   /**
    * Find latest statistics
@@ -106,8 +107,8 @@ public interface TenantStatisticsQueryRepository {
    * Check if statistics exists for month
    *
    * @param tenant tenant
-   * @param statMonth target month in YYYY-MM format
+   * @param statMonth target month as LocalDate (first day of month)
    * @return true if exists
    */
-  boolean exists(Tenant tenant, String statMonth);
+  boolean exists(Tenant tenant, LocalDate statMonth);
 }

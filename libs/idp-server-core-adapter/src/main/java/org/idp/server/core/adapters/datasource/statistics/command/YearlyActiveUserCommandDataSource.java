@@ -16,7 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.statistics.command;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.statistics.repository.YearlyActiveUserCommandRepository;
 import org.idp.server.platform.user.UserIdentifier;
@@ -30,34 +30,8 @@ public class YearlyActiveUserCommandDataSource implements YearlyActiveUserComman
   }
 
   @Override
-  public void addActiveUser(TenantIdentifier tenantId, String statYear, UserIdentifier userId) {
-    executor.addActiveUser(tenantId, statYear, userId);
-  }
-
-  @Override
   public boolean addActiveUserAndReturnIfNew(
-      TenantIdentifier tenantId, String statYear, UserIdentifier userId) {
+      TenantIdentifier tenantId, LocalDate statYear, UserIdentifier userId) {
     return executor.addActiveUserAndReturnIfNew(tenantId, statYear, userId);
-  }
-
-  @Override
-  public LocalDateTime getLastUsedAt(
-      TenantIdentifier tenantId, String statYear, UserIdentifier userId) {
-    return executor.getLastUsedAt(tenantId, statYear, userId);
-  }
-
-  @Override
-  public void deleteByYear(TenantIdentifier tenantId, String statYear) {
-    executor.deleteByYear(tenantId, statYear);
-  }
-
-  @Override
-  public void deleteOlderThan(String beforeYear) {
-    executor.deleteOlderThan(beforeYear);
-  }
-
-  @Override
-  public void deleteByTenantId(TenantIdentifier tenantId) {
-    executor.deleteByTenantId(tenantId);
   }
 }

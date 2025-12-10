@@ -16,6 +16,7 @@
 
 package org.idp.server.platform.statistics.repository;
 
+import java.time.LocalDate;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 /**
@@ -29,10 +30,11 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
  *
  * <pre>{@code
  * // Increment yearly summary metric
- * repository.incrementYearlySummaryMetric(tenantId, "2025", "login_success_count", 1);
+ * LocalDate yearStart = LocalDate.of(2025, 1, 1);
+ * repository.incrementYearlySummaryMetric(tenantId, yearStart, "login_success_count", 1);
  *
  * // Increment YAU when new user becomes active
- * repository.incrementYau(tenantId, "2025", 1);
+ * repository.incrementYau(tenantId, yearStart, 1);
  * }</pre>
  */
 public interface TenantYearlyStatisticsCommandRepository {
@@ -44,12 +46,12 @@ public interface TenantYearlyStatisticsCommandRepository {
    * JSONB field.
    *
    * @param tenantId tenant identifier
-   * @param statYear year in YYYY format (e.g., "2025")
+   * @param statYear first day of year (e.g., 2025-01-01 for year 2025)
    * @param metricName metric name to increment
    * @param increment value to add (can be negative for decrement)
    */
   void incrementYearlySummaryMetric(
-      TenantIdentifier tenantId, String statYear, String metricName, int increment);
+      TenantIdentifier tenantId, LocalDate statYear, String metricName, int increment);
 
   /**
    * Increment yearly summary YAU
@@ -58,8 +60,8 @@ public interface TenantYearlyStatisticsCommandRepository {
    * yearly_summary.yau by the specified amount.
    *
    * @param tenantId tenant identifier
-   * @param statYear year in YYYY format (e.g., "2025")
+   * @param statYear first day of year (e.g., 2025-01-01 for year 2025)
    * @param increment value to add to YAU
    */
-  void incrementYau(TenantIdentifier tenantId, String statYear, int increment);
+  void incrementYau(TenantIdentifier tenantId, LocalDate statYear, int increment);
 }

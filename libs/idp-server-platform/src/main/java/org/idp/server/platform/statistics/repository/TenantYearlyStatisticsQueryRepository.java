@@ -16,6 +16,7 @@
 
 package org.idp.server.platform.statistics.repository;
 
+import java.time.LocalDate;
 import java.util.Optional;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.statistics.TenantYearlyStatistics;
@@ -31,17 +32,17 @@ public interface TenantYearlyStatisticsQueryRepository {
    * Find statistics for specific year
    *
    * @param tenant tenant
-   * @param statYear target year in YYYY format (e.g., "2025")
+   * @param statYear target year as LocalDate (first day of year, e.g., 2025-01-01)
    * @return optional statistics (empty if not found)
    */
-  Optional<TenantYearlyStatistics> findByYear(Tenant tenant, String statYear);
+  Optional<TenantYearlyStatistics> findByYear(Tenant tenant, LocalDate statYear);
 
   /**
    * Check if statistics exists for year
    *
    * @param tenant tenant
-   * @param statYear target year in YYYY format
+   * @param statYear target year as LocalDate (first day of year)
    * @return true if exists
    */
-  boolean exists(Tenant tenant, String statYear);
+  boolean exists(Tenant tenant, LocalDate statYear);
 }

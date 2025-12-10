@@ -52,7 +52,8 @@ public class TenantStatisticsReportFindService
       TenantStatisticsReportQuery query,
       RequestAttributes requestAttributes) {
 
-    Optional<TenantYearlyStatistics> yearlyOpt = yearlyRepository.findByYear(tenant, query.year());
+    Optional<TenantYearlyStatistics> yearlyOpt =
+        yearlyRepository.findByYear(tenant, query.yearAsLocalDate());
 
     Map<String, String> queryParams = new HashMap<>();
     queryParams.put("from", query.fromMonth());

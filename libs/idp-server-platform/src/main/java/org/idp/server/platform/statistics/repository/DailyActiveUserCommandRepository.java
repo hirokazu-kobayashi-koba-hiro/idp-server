@@ -38,20 +38,6 @@ import org.idp.server.platform.user.UserIdentifier;
 public interface DailyActiveUserCommandRepository {
 
   /**
-   * Add a user to daily active users
-   *
-   * <p>If the same (tenant_id, stat_date, user_id) already exists, the operation is silently
-   * ignored (ON CONFLICT DO NOTHING).
-   *
-   * <p>This ensures each user is counted only once per day.
-   *
-   * @param tenantId tenant identifier
-   * @param date statistics date
-   * @param userId user identifier to track
-   */
-  void addActiveUser(TenantIdentifier tenantId, LocalDate date, UserIdentifier userId);
-
-  /**
    * Add a user to daily active users and return whether it was new
    *
    * <p>Returns true if the user was newly added (first activity of the day), false if the user was
@@ -66,32 +52,4 @@ public interface DailyActiveUserCommandRepository {
    */
   boolean addActiveUserAndReturnIfNew(
       TenantIdentifier tenantId, LocalDate date, UserIdentifier userId);
-
-  /**
-   * Delete active users by date
-   *
-   * @param tenantId tenant identifier
-   * @param date target date
-   */
-  void deleteByDate(TenantIdentifier tenantId, LocalDate date);
-
-  /**
-   * Delete old active user data (data retention)
-   *
-   * <p>Example: Delete data older than 365 days
-   *
-   * <pre>{@code
-   * repository.deleteOlderThan(LocalDate.now().minusDays(365));
-   * }</pre>
-   *
-   * @param before delete data older than this date (exclusive)
-   */
-  void deleteOlderThan(LocalDate before);
-
-  /**
-   * Delete all active user data for a tenant
-   *
-   * @param tenantId tenant identifier
-   */
-  void deleteByTenantId(TenantIdentifier tenantId);
 }

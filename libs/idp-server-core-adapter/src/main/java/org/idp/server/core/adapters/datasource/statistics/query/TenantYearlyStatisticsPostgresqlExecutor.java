@@ -16,6 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.statistics.query;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,14 +26,14 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 public class TenantYearlyStatisticsPostgresqlExecutor implements TenantYearlyStatisticsSqlExecutor {
 
   @Override
-  public Map<String, String> selectByYear(TenantIdentifier tenantId, String statYear) {
+  public Map<String, String> selectByYear(TenantIdentifier tenantId, LocalDate statYear) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sql =
         """
             SELECT id, tenant_id, stat_year, yearly_summary, created_at, updated_at
             FROM statistics_yearly
-            WHERE tenant_id = ?::uuid AND stat_year = ?
+            WHERE tenant_id = ?::uuid AND stat_year = ?::date
             """;
 
     List<Object> params = new ArrayList<>();
@@ -43,14 +44,14 @@ public class TenantYearlyStatisticsPostgresqlExecutor implements TenantYearlySta
   }
 
   @Override
-  public Map<String, String> selectExists(TenantIdentifier tenantId, String statYear) {
+  public Map<String, String> selectExists(TenantIdentifier tenantId, LocalDate statYear) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sql =
         """
             SELECT COUNT(*) as count
             FROM statistics_yearly
-            WHERE tenant_id = ?::uuid AND stat_year = ?
+            WHERE tenant_id = ?::uuid AND stat_year = ?::date
             """;
 
     List<Object> params = new ArrayList<>();

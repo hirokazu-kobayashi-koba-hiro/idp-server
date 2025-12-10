@@ -16,6 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.statistics.query;
 
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -32,7 +33,7 @@ public class TenantYearlyStatisticsQueryDataSource
   }
 
   @Override
-  public Optional<TenantYearlyStatistics> findByYear(Tenant tenant, String statYear) {
+  public Optional<TenantYearlyStatistics> findByYear(Tenant tenant, LocalDate statYear) {
     Map<String, String> result = executor.selectByYear(tenant.identifier(), statYear);
 
     if (result == null || result.isEmpty()) {
@@ -43,7 +44,7 @@ public class TenantYearlyStatisticsQueryDataSource
   }
 
   @Override
-  public boolean exists(Tenant tenant, String statYear) {
+  public boolean exists(Tenant tenant, LocalDate statYear) {
     Map<String, String> result = executor.selectExists(tenant.identifier(), statYear);
 
     if (result == null || result.isEmpty()) {

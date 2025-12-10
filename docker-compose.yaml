@@ -201,6 +201,7 @@ services:
     volumes:
       - ./libs/idp-server-database/postgresql/init/00-init-app-user.sh:/docker-entrypoint-initdb.d/00-init-app-user.sh
       - ./libs/idp-server-database/postgresql/init/01-add-bypassrls.sh:/docker-entrypoint-initdb.d/01-add-bypassrls.sh
+      - ./libs/idp-server-database/postgresql/init/02-init-partman.sh:/docker-entrypoint-initdb.d/02-init-partman.sh
       - ./docker/postgresql/primary/init-replication.sh:/docker-entrypoint-initdb.d/99-init-replication.sh
       - postgres_primary_data:/var/lib/postgresql/data
     healthcheck:

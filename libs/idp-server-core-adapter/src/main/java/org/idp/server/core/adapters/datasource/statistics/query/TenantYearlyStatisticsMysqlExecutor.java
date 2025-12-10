@@ -16,6 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.statistics.query;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +26,7 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 public class TenantYearlyStatisticsMysqlExecutor implements TenantYearlyStatisticsSqlExecutor {
 
   @Override
-  public Map<String, String> selectByYear(TenantIdentifier tenantId, String statYear) {
+  public Map<String, String> selectByYear(TenantIdentifier tenantId, LocalDate statYear) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sql =
@@ -43,7 +44,7 @@ public class TenantYearlyStatisticsMysqlExecutor implements TenantYearlyStatisti
   }
 
   @Override
-  public Map<String, String> selectExists(TenantIdentifier tenantId, String statYear) {
+  public Map<String, String> selectExists(TenantIdentifier tenantId, LocalDate statYear) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sql =

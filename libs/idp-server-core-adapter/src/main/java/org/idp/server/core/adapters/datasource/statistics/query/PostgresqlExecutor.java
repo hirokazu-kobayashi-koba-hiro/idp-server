@@ -16,6 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.statistics.query;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -43,13 +44,13 @@ public class PostgresqlExecutor implements TenantStatisticsSqlExecutor {
   }
 
   @Override
-  public Map<String, String> selectByMonth(TenantIdentifier tenantId, String statMonth) {
+  public Map<String, String> selectByMonth(TenantIdentifier tenantId, LocalDate statMonth) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sql =
         """
                 SELECT id, tenant_id, stat_month, monthly_summary, daily_metrics, created_at, updated_at
                 FROM statistics_monthly
-                WHERE tenant_id = ?::uuid AND stat_month = ?
+                WHERE tenant_id = ?::uuid AND stat_month = ?::date
                 """;
 
     List<Object> params = new ArrayList<>();
@@ -68,8 +69,8 @@ public class PostgresqlExecutor implements TenantStatisticsSqlExecutor {
                 SELECT id, tenant_id, stat_month, monthly_summary, daily_metrics, created_at, updated_at
                 FROM statistics_monthly
                 WHERE tenant_id = ?::uuid
-                  AND stat_month >= ?
-                  AND stat_month <= ?
+                  AND stat_month >= ?::date
+                  AND stat_month <= ?::date
                 ORDER BY stat_month DESC
                 LIMIT ?
                 OFFSET ?
@@ -77,8 +78,8 @@ public class PostgresqlExecutor implements TenantStatisticsSqlExecutor {
 
     List<Object> params = new ArrayList<>();
     params.add(tenantId.value());
-    params.add(queries.from());
-    params.add(queries.to());
+    params.add(queries.fromAsLocalDate());
+    params.add(queries.toAsLocalDate());
     params.add(queries.limit());
     params.add(queries.offset());
 
@@ -87,15 +88,15 @@ public class PostgresqlExecutor implements TenantStatisticsSqlExecutor {
 
   @Override
   public Map<String, String> selectCount(
-      TenantIdentifier tenantId, String fromMonth, String toMonth) {
+      TenantIdentifier tenantId, LocalDate fromMonth, LocalDate toMonth) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sql =
         """
                 SELECT COUNT(*) as count
                 FROM statistics_monthly
                 WHERE tenant_id = ?::uuid
-                  AND stat_month >= ?
-                  AND stat_month <= ?
+                  AND stat_month >= ?::date
+                  AND stat_month <= ?::date
                 """;
 
     List<Object> params = new ArrayList<>();
@@ -125,13 +126,13 @@ public class PostgresqlExecutor implements TenantStatisticsSqlExecutor {
   }
 
   @Override
-  public Map<String, String> selectExists(TenantIdentifier tenantId, String statMonth) {
+  public Map<String, String> selectExists(TenantIdentifier tenantId, LocalDate statMonth) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sql =
         """
                 SELECT COUNT(*) as count
                 FROM statistics_monthly
-                WHERE tenant_id = ?::uuid AND stat_month = ?
+                WHERE tenant_id = ?::uuid AND stat_month = ?::date
                 """;
 
     List<Object> params = new ArrayList<>();

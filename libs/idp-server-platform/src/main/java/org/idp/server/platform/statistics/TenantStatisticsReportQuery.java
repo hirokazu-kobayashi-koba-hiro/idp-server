@@ -16,6 +16,7 @@
 
 package org.idp.server.platform.statistics;
 
+import java.time.LocalDate;
 import java.util.Objects;
 
 /**
@@ -33,6 +34,11 @@ public class TenantStatisticsReportQuery {
 
   public String year() {
     return year;
+  }
+
+  public LocalDate yearAsLocalDate() {
+    int yearInt = Integer.parseInt(year);
+    return LocalDate.of(yearInt, 1, 1);
   }
 
   public String fromMonth() {

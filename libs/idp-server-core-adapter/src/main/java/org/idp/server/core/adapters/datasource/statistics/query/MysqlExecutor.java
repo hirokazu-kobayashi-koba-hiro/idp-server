@@ -16,6 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.statistics.query;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +44,7 @@ public class MysqlExecutor implements TenantStatisticsSqlExecutor {
   }
 
   @Override
-  public Map<String, String> selectByMonth(TenantIdentifier tenantId, String statMonth) {
+  public Map<String, String> selectByMonth(TenantIdentifier tenantId, LocalDate statMonth) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sql =
         """
@@ -77,8 +78,8 @@ public class MysqlExecutor implements TenantStatisticsSqlExecutor {
 
     List<Object> params = new ArrayList<>();
     params.add(tenantId.value());
-    params.add(queries.from());
-    params.add(queries.to());
+    params.add(queries.fromAsLocalDate());
+    params.add(queries.toAsLocalDate());
     params.add(queries.limit());
     params.add(queries.offset());
 
@@ -87,7 +88,7 @@ public class MysqlExecutor implements TenantStatisticsSqlExecutor {
 
   @Override
   public Map<String, String> selectCount(
-      TenantIdentifier tenantId, String fromMonth, String toMonth) {
+      TenantIdentifier tenantId, LocalDate fromMonth, LocalDate toMonth) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sql =
         """
@@ -125,7 +126,7 @@ public class MysqlExecutor implements TenantStatisticsSqlExecutor {
   }
 
   @Override
-  public Map<String, String> selectExists(TenantIdentifier tenantId, String statMonth) {
+  public Map<String, String> selectExists(TenantIdentifier tenantId, LocalDate statMonth) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sql =
         """

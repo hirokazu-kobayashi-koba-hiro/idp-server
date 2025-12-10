@@ -22,8 +22,6 @@ import org.idp.server.platform.user.UserIdentifier;
 
 public interface DailyActiveUserSqlExecutor {
 
-  void addActiveUser(TenantIdentifier tenantId, LocalDate date, UserIdentifier userId);
-
   /**
    * Add active user and return whether it was a new user for the day
    *
@@ -34,12 +32,4 @@ public interface DailyActiveUserSqlExecutor {
    */
   boolean addActiveUserAndReturnIfNew(
       TenantIdentifier tenantId, LocalDate date, UserIdentifier userId);
-
-  void deleteByDate(TenantIdentifier tenantId, LocalDate date);
-
-  void deleteOlderThan(LocalDate before);
-
-  void deleteByTenantId(TenantIdentifier tenantId);
-
-  int getDauCount(TenantIdentifier tenantId, LocalDate date);
 }

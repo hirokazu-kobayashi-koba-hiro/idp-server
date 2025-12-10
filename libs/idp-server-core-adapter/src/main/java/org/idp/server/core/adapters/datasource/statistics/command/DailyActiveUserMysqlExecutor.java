@@ -19,34 +19,11 @@ package org.idp.server.core.adapters.datasource.statistics.command;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.user.UserIdentifier;
 
 public class DailyActiveUserMysqlExecutor implements DailyActiveUserSqlExecutor {
-
-  @Override
-  public void addActiveUser(TenantIdentifier tenantId, LocalDate date, UserIdentifier userId) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-
-    String sql =
-        """
-                INSERT IGNORE INTO statistics_daily_users (
-                    tenant_id,
-                    stat_date,
-                    user_id,
-                    created_at
-                ) VALUES (?, ?, ?, NOW())
-                """;
-
-    List<Object> params = new ArrayList<>();
-    params.add(tenantId.value());
-    params.add(date);
-    params.add(userId.value());
-
-    sqlExecutor.execute(sql, params);
-  }
 
   @Override
   public boolean addActiveUserAndReturnIfNew(
@@ -70,85 +47,5 @@ public class DailyActiveUserMysqlExecutor implements DailyActiveUserSqlExecutor 
     params.add(userId.value());
 
     return sqlExecutor.executeAndCheckReturned(sql, params);
-  }
-
-  @Override
-  public void deleteByDate(TenantIdentifier tenantId, LocalDate date) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-
-    String sql =
-        """
-                DELETE FROM statistics_daily_users
-                WHERE tenant_id = ? AND stat_date = ?
-                """;
-
-    List<Object> params = new ArrayList<>();
-    params.add(tenantId.value());
-    params.add(date);
-
-    sqlExecutor.execute(sql, params);
-  }
-
-  @Override
-  public void deleteOlderThan(LocalDate before) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-
-    String sql =
-        """
-                DELETE FROM statistics_daily_users
-                WHERE stat_date < ?
-                """;
-
-    List<Object> params = new ArrayList<>();
-    params.add(before);
-
-    sqlExecutor.execute(sql, params);
-  }
-
-  @Override
-  public void deleteByTenantId(TenantIdentifier tenantId) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-
-    String sql =
-        """
-                DELETE FROM statistics_daily_users
-                WHERE tenant_id = ?
-                """;
-
-    List<Object> params = new ArrayList<>();
-    params.add(tenantId.value());
-
-    sqlExecutor.execute(sql, params);
-  }
-
-  @Override
-  public int getDauCount(TenantIdentifier tenantId, LocalDate date) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-
-    String sql =
-        """
-                SELECT COUNT(*) as dau_count
-                FROM statistics_daily_users
-                WHERE tenant_id = ? AND stat_date = ?
-                """;
-
-    List<Object> params = new ArrayList<>();
-    params.add(tenantId.value());
-    params.add(date);
-
-    Map<String, Object> result = sqlExecutor.selectOneWithType(sql, params);
-
-    if (result.isEmpty()) {
-      return 0;
-    }
-
-    Object dauCountObj = result.get("dau_count");
-    if (dauCountObj instanceof Long longValue) {
-      return longValue.intValue();
-    } else if (dauCountObj instanceof Integer intValue) {
-      return intValue;
-    }
-
-    return 0;
   }
 }

@@ -16,6 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.statistics.command;
 
+import java.time.LocalDate;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.statistics.repository.TenantYearlyStatisticsCommandRepository;
 
@@ -30,12 +31,12 @@ public class TenantYearlyStatisticsCommandDataSource
 
   @Override
   public void incrementYearlySummaryMetric(
-      TenantIdentifier tenantId, String statYear, String metricName, int increment) {
+      TenantIdentifier tenantId, LocalDate statYear, String metricName, int increment) {
     executor.incrementYearlySummaryMetric(tenantId, statYear, metricName, increment);
   }
 
   @Override
-  public void incrementYau(TenantIdentifier tenantId, String statYear, int increment) {
+  public void incrementYau(TenantIdentifier tenantId, LocalDate statYear, int increment) {
     executor.incrementYau(tenantId, statYear, increment);
   }
 }

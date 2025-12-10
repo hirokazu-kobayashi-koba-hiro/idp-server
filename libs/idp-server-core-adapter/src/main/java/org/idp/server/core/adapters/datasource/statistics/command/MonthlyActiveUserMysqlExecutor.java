@@ -16,9 +16,9 @@
 
 package org.idp.server.core.adapters.datasource.statistics.command;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.user.UserIdentifier;
@@ -26,30 +26,8 @@ import org.idp.server.platform.user.UserIdentifier;
 public class MonthlyActiveUserMysqlExecutor implements MonthlyActiveUserSqlExecutor {
 
   @Override
-  public void addActiveUser(TenantIdentifier tenantId, String statMonth, UserIdentifier userId) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-
-    String sql =
-        """
-                INSERT IGNORE INTO statistics_monthly_users (
-                    tenant_id,
-                    stat_month,
-                    user_id,
-                    created_at
-                ) VALUES (?, ?, ?, NOW())
-                """;
-
-    List<Object> params = new ArrayList<>();
-    params.add(tenantId.value());
-    params.add(statMonth);
-    params.add(userId.value());
-
-    sqlExecutor.execute(sql, params);
-  }
-
-  @Override
   public boolean addActiveUserAndReturnIfNew(
-      TenantIdentifier tenantId, String statMonth, UserIdentifier userId) {
+      TenantIdentifier tenantId, LocalDate statMonth, UserIdentifier userId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     // MySQL: Use INSERT IGNORE + ROW_COUNT() to check if new row was inserted
@@ -69,85 +47,5 @@ public class MonthlyActiveUserMysqlExecutor implements MonthlyActiveUserSqlExecu
     params.add(userId.value());
 
     return sqlExecutor.executeAndCheckReturned(sql, params);
-  }
-
-  @Override
-  public void deleteByMonth(TenantIdentifier tenantId, String statMonth) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-
-    String sql =
-        """
-                DELETE FROM statistics_monthly_users
-                WHERE tenant_id = ? AND stat_month = ?
-                """;
-
-    List<Object> params = new ArrayList<>();
-    params.add(tenantId.value());
-    params.add(statMonth);
-
-    sqlExecutor.execute(sql, params);
-  }
-
-  @Override
-  public void deleteOlderThan(String beforeMonth) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-
-    String sql =
-        """
-                DELETE FROM statistics_monthly_users
-                WHERE stat_month < ?
-                """;
-
-    List<Object> params = new ArrayList<>();
-    params.add(beforeMonth);
-
-    sqlExecutor.execute(sql, params);
-  }
-
-  @Override
-  public void deleteByTenantId(TenantIdentifier tenantId) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-
-    String sql =
-        """
-                DELETE FROM statistics_monthly_users
-                WHERE tenant_id = ?
-                """;
-
-    List<Object> params = new ArrayList<>();
-    params.add(tenantId.value());
-
-    sqlExecutor.execute(sql, params);
-  }
-
-  @Override
-  public int getMauCount(TenantIdentifier tenantId, String statMonth) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-
-    String sql =
-        """
-                SELECT COUNT(*) as mau_count
-                FROM statistics_monthly_users
-                WHERE tenant_id = ? AND stat_month = ?
-                """;
-
-    List<Object> params = new ArrayList<>();
-    params.add(tenantId.value());
-    params.add(statMonth);
-
-    Map<String, Object> result = sqlExecutor.selectOneWithType(sql, params);
-
-    if (result.isEmpty()) {
-      return 0;
-    }
-
-    Object mauCountObj = result.get("mau_count");
-    if (mauCountObj instanceof Long longValue) {
-      return longValue.intValue();
-    } else if (mauCountObj instanceof Integer intValue) {
-      return intValue;
-    }
-
-    return 0;
   }
 }

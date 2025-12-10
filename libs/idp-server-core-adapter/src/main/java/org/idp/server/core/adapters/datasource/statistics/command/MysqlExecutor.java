@@ -16,6 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.statistics.command;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.platform.datasource.SqlExecutor;
@@ -25,7 +26,11 @@ public class MysqlExecutor implements TenantStatisticsSqlExecutor {
 
   @Override
   public void incrementDailyMetric(
-      TenantIdentifier tenantId, String statMonth, String day, String metricName, int increment) {
+      TenantIdentifier tenantId,
+      LocalDate statMonth,
+      String day,
+      String metricName,
+      int increment) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     // MySQL JSON_SET with nested path
@@ -81,7 +86,7 @@ public class MysqlExecutor implements TenantStatisticsSqlExecutor {
 
   @Override
   public void incrementMonthlySummaryMetric(
-      TenantIdentifier tenantId, String statMonth, String metricName, int increment) {
+      TenantIdentifier tenantId, LocalDate statMonth, String metricName, int increment) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sql =
@@ -128,7 +133,7 @@ public class MysqlExecutor implements TenantStatisticsSqlExecutor {
 
   @Override
   public void incrementMauWithDailyCumulative(
-      TenantIdentifier tenantId, String statMonth, String day, int increment) {
+      TenantIdentifier tenantId, LocalDate statMonth, String day, int increment) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     // Atomically increment monthly_summary.mau and set daily_metrics[day].mau to cumulative value

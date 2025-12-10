@@ -16,6 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.statistics.query;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +48,7 @@ public class TenantStatisticsDataQueryDataSource implements TenantStatisticsQuer
   }
 
   @Override
-  public Optional<TenantStatistics> findByMonth(Tenant tenant, String statMonth) {
+  public Optional<TenantStatistics> findByMonth(Tenant tenant, LocalDate statMonth) {
     Map<String, String> result = executor.selectByMonth(tenant.identifier(), statMonth);
 
     if (result == null || result.isEmpty()) {
@@ -80,7 +81,7 @@ public class TenantStatisticsDataQueryDataSource implements TenantStatisticsQuer
   }
 
   @Override
-  public long countByMonthRange(Tenant tenant, String fromMonth, String toMonth) {
+  public long countByMonthRange(Tenant tenant, LocalDate fromMonth, LocalDate toMonth) {
     Map<String, String> result = executor.selectCount(tenant.identifier(), fromMonth, toMonth);
 
     if (result == null || result.isEmpty()) {
@@ -102,7 +103,7 @@ public class TenantStatisticsDataQueryDataSource implements TenantStatisticsQuer
   }
 
   @Override
-  public boolean exists(Tenant tenant, String statMonth) {
+  public boolean exists(Tenant tenant, LocalDate statMonth) {
     Map<String, String> result = executor.selectExists(tenant.identifier(), statMonth);
 
     if (result == null || result.isEmpty()) {

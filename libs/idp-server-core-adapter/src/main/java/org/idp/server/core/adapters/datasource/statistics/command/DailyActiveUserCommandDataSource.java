@@ -30,28 +30,8 @@ public class DailyActiveUserCommandDataSource implements DailyActiveUserCommandR
   }
 
   @Override
-  public void addActiveUser(TenantIdentifier tenantId, LocalDate date, UserIdentifier userId) {
-    executor.addActiveUser(tenantId, date, userId);
-  }
-
-  @Override
   public boolean addActiveUserAndReturnIfNew(
       TenantIdentifier tenantId, LocalDate date, UserIdentifier userId) {
     return executor.addActiveUserAndReturnIfNew(tenantId, date, userId);
-  }
-
-  @Override
-  public void deleteByDate(TenantIdentifier tenantId, LocalDate date) {
-    executor.deleteByDate(tenantId, date);
-  }
-
-  @Override
-  public void deleteOlderThan(LocalDate before) {
-    executor.deleteOlderThan(before);
-  }
-
-  @Override
-  public void deleteByTenantId(TenantIdentifier tenantId) {
-    executor.deleteByTenantId(tenantId);
   }
 }

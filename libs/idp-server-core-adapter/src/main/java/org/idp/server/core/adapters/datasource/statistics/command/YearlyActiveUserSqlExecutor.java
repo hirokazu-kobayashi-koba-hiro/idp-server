@@ -16,32 +16,20 @@
 
 package org.idp.server.core.adapters.datasource.statistics.command;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.user.UserIdentifier;
 
 public interface YearlyActiveUserSqlExecutor {
 
-  void addActiveUser(TenantIdentifier tenantId, String statYear, UserIdentifier userId);
-
   /**
    * Add active user and return whether it was a new user for the year
    *
    * @param tenantId tenant identifier
-   * @param statYear year in YYYY format (e.g., 2025)
+   * @param statYear first day of year (e.g., 2025-01-01)
    * @param userId user identifier
    * @return true if user was newly added (not a duplicate), false if already existed
    */
   boolean addActiveUserAndReturnIfNew(
-      TenantIdentifier tenantId, String statYear, UserIdentifier userId);
-
-  LocalDateTime getLastUsedAt(TenantIdentifier tenantId, String statYear, UserIdentifier userId);
-
-  void deleteByYear(TenantIdentifier tenantId, String statYear);
-
-  void deleteOlderThan(String beforeYear);
-
-  void deleteByTenantId(TenantIdentifier tenantId);
-
-  int getYauCount(TenantIdentifier tenantId, String statYear);
+      TenantIdentifier tenantId, LocalDate statYear, UserIdentifier userId);
 }

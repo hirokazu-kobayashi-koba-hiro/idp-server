@@ -16,6 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.statistics.command;
 
+import java.time.LocalDate;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.statistics.repository.TenantStatisticsCommandRepository;
 
@@ -29,19 +30,23 @@ public class TenantStatisticsCommandDataSource implements TenantStatisticsComman
 
   @Override
   public void incrementDailyMetric(
-      TenantIdentifier tenantId, String statMonth, String day, String metricName, int increment) {
+      TenantIdentifier tenantId,
+      LocalDate statMonth,
+      String day,
+      String metricName,
+      int increment) {
     executor.incrementDailyMetric(tenantId, statMonth, day, metricName, increment);
   }
 
   @Override
   public void incrementMonthlySummaryMetric(
-      TenantIdentifier tenantId, String statMonth, String metricName, int increment) {
+      TenantIdentifier tenantId, LocalDate statMonth, String metricName, int increment) {
     executor.incrementMonthlySummaryMetric(tenantId, statMonth, metricName, increment);
   }
 
   @Override
   public void incrementMauWithDailyCumulative(
-      TenantIdentifier tenantId, String statMonth, String day, int increment) {
+      TenantIdentifier tenantId, LocalDate statMonth, String day, int increment) {
     executor.incrementMauWithDailyCumulative(tenantId, statMonth, day, increment);
   }
 }

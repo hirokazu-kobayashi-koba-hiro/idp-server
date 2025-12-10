@@ -16,6 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.statistics.command;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -26,7 +27,7 @@ public class TenantYearlyStatisticsMysqlExecutor implements TenantYearlyStatisti
 
   @Override
   public void incrementYearlySummaryMetric(
-      TenantIdentifier tenantId, String statYear, String metricName, int increment) {
+      TenantIdentifier tenantId, LocalDate statYear, String metricName, int increment) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sql =
@@ -71,7 +72,7 @@ public class TenantYearlyStatisticsMysqlExecutor implements TenantYearlyStatisti
   }
 
   @Override
-  public void incrementYau(TenantIdentifier tenantId, String statYear, int increment) {
+  public void incrementYau(TenantIdentifier tenantId, LocalDate statYear, int increment) {
     incrementYearlySummaryMetric(tenantId, statYear, "yau", increment);
   }
 }
