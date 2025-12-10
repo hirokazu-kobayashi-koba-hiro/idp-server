@@ -150,7 +150,7 @@ public class SecurityEventHandler {
           securityEvent.hasUser()
               ? new UserIdentifier(securityEvent.user().subAsUuid().toString())
               : null;
-      handleActiveUserEvent(tenant, userId, eventDate, day);
+      handleActiveUserEvent(tenant, userId, eventDate, day, eventTypeValue);
     } else {
       incrementMetric(tenant, eventDate, eventTypeValue);
     }
@@ -159,12 +159,12 @@ public class SecurityEventHandler {
   /**
    * Handle active user event
    *
-   * <p>Increments login_success_count and tracks unique daily/monthly/yearly active users
-   * (DAU/MAU/YAU). An active user event is defined by {@link
-   * DefaultSecurityEventType#isActiveUserEvent()}.
+   * <p>Increments the event type metric (e.g., login_success, issue_token_success) and tracks
+   * unique daily/monthly/yearly active users (DAU/MAU/YAU). An active user event is defined by
+   * {@link DefaultSecurityEventType#isActiveUserEvent()}.
    */
   private void handleActiveUserEvent(
-      Tenant tenant, UserIdentifier userId, LocalDate eventDate, String day) {
+      Tenant tenant, UserIdentifier userId, LocalDate eventDate, String day, String eventType) {
     if (userId == null) {
       return;
     }
@@ -173,8 +173,8 @@ public class SecurityEventHandler {
     LocalDate monthStart = eventDate.withDayOfMonth(1);
     LocalDate yearStart = eventDate.withDayOfYear(1);
 
-    // Increment login success count (both daily and monthly)
-    incrementMetric(tenant, eventDate, "login_success_count");
+    // Increment the actual event type metric (both daily and monthly)
+    incrementMetric(tenant, eventDate, eventType);
 
     // Track DAU - add user to daily active users table and increment DAU count if new
     boolean isNewDailyUser =
