@@ -4,22 +4,25 @@ idp-serverのテナント統計管理システムの概念について説明し�
 
 ## テナント統計とは
 
-**テナント統計（Tenant Statistics）** とは、各テナントのユーザー活動やシステム利用状況を月次・日次で集計・分析するための仕組みです。
+**テナント統計（Tenant Statistics）** とは、各テナントのユーザー活動やシステム利用状況を日次・月次・年次で集計・分析するための仕組みです。
 
 ```mermaid
 flowchart LR
     SE[Security Event] -->|イベント発行| HANDLER[SecurityEventHandler]
     HANDLER -->|集計| MONTHLY[月次メトリクス]
-    HANDLER -->|重複排除| DAU[DAU / MAU]
+    HANDLER -->|集計| YEARLY[年次メトリクス]
+    HANDLER -->|重複排除| DAU[DAU / MAU / YAU]
     MONTHLY -->|API取得| DASHBOARD[ダッシュボード]
+    YEARLY -->|API取得| DASHBOARD
     DAU -->|カウント| MONTHLY
+    DAU -->|カウント| YEARLY
 ```
 
 ### 目的
 
-- **利用状況の可視化**: DAU（日次アクティブユーザー）、MAU（月次アクティブユーザー）、ログイン数などの把握
+- **利用状況の可視化**: DAU（日次アクティブユーザー）、MAU（月次アクティブユーザー）、YAU（年次アクティブユーザー）、ログイン数などの把握
 - **容量計画**: テナントごとのリソース使用状況の追跡
-- **課金基盤**: MAUベースの課金データ提供
+- **課金基盤**: MAU/YAUベースの課金データ提供
 - **セキュリティ監視**: 異常なアクティビティの検知
 
 ---
@@ -52,12 +55,13 @@ idp-serverでは、バッチ処理ではなく**イベント駆動によるリ�
 
 ### データベーステーブル構成
 
-統計データは3つのテーブルで管理されます。
+統計データは5つのテーブルで管理されます。
 
 ```mermaid
 erDiagram
     statistics_monthly ||--o{ statistics_daily_users : "tracks DAU"
     statistics_monthly ||--o{ statistics_monthly_users : "tracks MAU"
+    statistics_yearly ||--o{ statistics_yearly_users : "tracks YAU"
     statistics_monthly {
         uuid id PK
         uuid tenant_id
@@ -67,16 +71,33 @@ erDiagram
         timestamp created_at
         timestamp updated_at
     }
+    statistics_yearly {
+        uuid id PK
+        uuid tenant_id
+        char_4 stat_year
+        jsonb yearly_summary
+        timestamp created_at
+        timestamp updated_at
+    }
     statistics_daily_users {
         uuid tenant_id PK
         date stat_date PK
         uuid user_id PK
+        timestamp last_used_at
         timestamp created_at
     }
     statistics_monthly_users {
         uuid tenant_id PK
         char_7 stat_month PK
         uuid user_id PK
+        timestamp last_used_at
+        timestamp created_at
+    }
+    statistics_yearly_users {
+        uuid tenant_id PK
+        char_4 stat_year PK
+        uuid user_id PK
+        timestamp last_used_at
         timestamp created_at
     }
 ```
@@ -146,6 +167,43 @@ erDiagram
 
 同一ユーザーが同じ月に複数回ログインしても、1レコードのみ記録されます。
 
+#### statistics_yearly
+
+年次統計のメインテーブル。1テナント・1年 = 1レコードで管理。
+
+| カラム | 型 | 説明 |
+|:---|:---|:---|
+| `id` | UUID | 統計レコードID |
+| `tenant_id` | UUID | テナント識別子 |
+| `stat_year` | CHAR(4) | 統計対象年（YYYY形式、例: 2025） |
+| `yearly_summary` | JSONB | 年次集計メトリクス |
+
+**年次集計メトリクス（yearly_summary）の例**:
+
+```json
+{
+  "yau": 15000,
+  "total_logins": 500000,
+  "total_login_failures": 5000,
+  "new_users": 2000
+}
+```
+
+#### statistics_yearly_users
+
+年次アクティブユーザー（YAU）の重複排除テーブル。
+
+| カラム | 型 | 説明 |
+|:---|:---|:---|
+| `tenant_id` | UUID | テナント識別子 |
+| `stat_year` | CHAR(4) | 統計対象年（YYYY形式） |
+| `user_id` | UUID | ユーザー識別子 |
+| `last_used_at` | TIMESTAMP | 当該年における最終アクティビティ日時 |
+
+**複合主キー**: `(tenant_id, stat_year, user_id)`
+
+同一ユーザーが同じ年に複数回ログインしても、1レコードのみ記録されます。`last_used_at`は最新のアクティビティ日時で更新されます。
+
 ---
 
 ## 統計更新フロー
@@ -196,10 +254,16 @@ flowchart TD
     INCREMENT_DAU --> MAU_CHECK
 
     MAU_CHECK -->|No| ADD_MAU[MAUテーブルに追加]
-    MAU_CHECK -->|Yes| LOGIN_COUNT[login_success_count +1]
+    MAU_CHECK -->|Yes| YAU_CHECK{YAUテーブルに<br/>存在する?}
 
     ADD_MAU --> INCREMENT_MAU[mau +1]
-    INCREMENT_MAU --> LOGIN_COUNT
+    INCREMENT_MAU --> YAU_CHECK
+
+    YAU_CHECK -->|No| ADD_YAU[YAUテーブルに追加]
+    YAU_CHECK -->|Yes| LOGIN_COUNT[login_success_count +1]
+
+    ADD_YAU --> INCREMENT_YAU[yau +1]
+    INCREMENT_YAU --> LOGIN_COUNT
 
     INCREMENT --> END[完了]
     LOGIN_COUNT --> END
@@ -211,7 +275,8 @@ flowchart TD
 2. **タイムゾーン変換**: UTCタイムスタンプをテナントのタイムゾーンに変換して日付を決定
 3. **DAU処理**: `statistics_daily_users` テーブルでユーザーの初回アクティビティを検出
 4. **MAU処理**: `statistics_monthly_users` テーブルでユーザーの月初アクティビティを検出
-5. **メトリクス更新**: 日次・月次メトリクスをJSONBで増分更新
+5. **YAU処理**: `statistics_yearly_users` テーブルでユーザーの年初アクティビティを検出
+6. **メトリクス更新**: 日次・月次・年次メトリクスをJSONBで増分更新
 
 ---
 
@@ -223,10 +288,11 @@ flowchart TD
 |:---|:---|:---|
 | `dau` | 日次アクティブユーザー数 | 日次 |
 | `mau` | 月次アクティブユーザー数 | 月次 |
-| `login_success_count` | ログイン成功回数 | 日次・月次 |
-| `issue_token_success` | トークン発行成功回数 | 日次・月次 |
-| `refresh_token_success` | トークンリフレッシュ成功回数 | 日次・月次 |
-| その他セキュリティイベント | イベント種別ごとにカウント | 日次・月次 |
+| `yau` | 年次アクティブユーザー数 | 年次 |
+| `login_success_count` | ログイン成功回数 | 日次・月次・年次 |
+| `issue_token_success` | トークン発行成功回数 | 日次・月次・年次 |
+| `refresh_token_success` | トークンリフレッシュ成功回数 | 日次・月次・年次 |
+| その他セキュリティイベント | イベント種別ごとにカウント | 日次・月次・年次 |
 
 ### カウントパターン
 
@@ -241,7 +307,7 @@ flowchart TD
 
 **適用**: 非アクティブユーザーイベント（例: `password_failure`, `authorize_failure`）
 
-#### パターン2: ユニークカウンター（DAU/MAU）
+#### パターン2: ユニークカウンター（DAU/MAU/YAU）
 
 重複排除テーブルを使用してユニークユーザーをカウントします。
 
@@ -250,6 +316,8 @@ flowchart TD
            → 新規なら dau +1
            → statistics_monthly_users に INSERT（重複時は無視）
            → 新規なら mau +1
+           → statistics_yearly_users に INSERT（重複時は無視）
+           → 新規なら yau +1
            → login_success_count +1
 ```
 
@@ -403,12 +471,20 @@ SELECT cleanup_old_daily_users(90);  -- 90日より古いデータを削除
 
 -- 月次アクティブユーザーデータの削除（指定月数より古いデータ）
 SELECT cleanup_old_monthly_users(12);  -- 12ヶ月より古いデータを削除
+
+-- 年次アクティブユーザーデータの削除（指定年数より古いデータ）
+SELECT cleanup_old_yearly_users(5);  -- 5年より古いデータを削除
+
+-- 年次統計データの削除（指定年数より古いデータ）
+SELECT cleanup_old_yearly_statistics(5);  -- 5年より古いデータを削除
 ```
 
 **推奨保持期間**:
 - **統計データ（statistics_monthly）**: 24ヶ月
-- **DAUデータ（statistics_daily_users）**: 90日
-- **MAUデータ（statistics_monthly_users）**: 12ヶ月
+- **DAUデータ（statistics_daily_users）**: 90日（6ヶ月）
+- **MAUデータ（statistics_monthly_users）**: 36ヶ月（3年）
+- **YAUデータ（statistics_yearly_users）**: 5年
+- **年次統計（statistics_yearly）**: 5年
 
 ---
 
@@ -421,6 +497,9 @@ SELECT cleanup_old_monthly_users(12);  -- 12ヶ月より古いデータを削除
 CREATE INDEX idx_statistics_monthly_tenant_month
     ON statistics_monthly (tenant_id, stat_month DESC);
 
+CREATE INDEX idx_statistics_yearly_tenant_year
+    ON statistics_yearly (tenant_id, stat_year DESC);
+
 -- DAUカウントクエリ用
 CREATE INDEX idx_statistics_daily_users_tenant_date
     ON statistics_daily_users (tenant_id, stat_date);
@@ -428,6 +507,14 @@ CREATE INDEX idx_statistics_daily_users_tenant_date
 -- MAUカウントクエリ用
 CREATE INDEX idx_statistics_monthly_users_tenant_month
     ON statistics_monthly_users (tenant_id, stat_month);
+
+-- YAUカウントクエリ用
+CREATE INDEX idx_statistics_yearly_users_tenant_year
+    ON statistics_yearly_users (tenant_id, stat_year);
+
+-- 非アクティブユーザー検索用
+CREATE INDEX idx_statistics_yearly_users_last_used
+    ON statistics_yearly_users (tenant_id, last_used_at);
 ```
 
 ### 増分更新による負荷軽減
@@ -475,22 +562,37 @@ flowchart TD
 テナント管理者が自テナントの利用状況を可視化します。
 
 **表示メトリクス**:
-- DAU/MAU トレンドグラフ
+- DAU/MAU/YAU トレンドグラフ
 - 認証成功率
 - トークン発行数推移
+- 年間アクティブユーザー推移
 
-### 2. MAUベース課金
+### 2. MAU/YAUベース課金
 
-月次アクティブユーザー数に基づく従量課金を実現します。
+月次・年次アクティブユーザー数に基づく従量課金を実現します。
 
 ```json
 {
   "stat_month": "2025-01",
   "monthly_summary": {
-    "mau": 5000  // この値で課金計算
+    "mau": 5000  // この値で月次課金計算
   }
 }
 ```
+
+```json
+{
+  "stat_year": "2025",
+  "yearly_summary": {
+    "yau": 15000  // この値で年次ライセンス計算
+  }
+}
+```
+
+**YAUの活用例**:
+- 年間ライセンス費用の算定
+- 年間サブスクリプション価格の決定
+- 長期利用ユーザーの識別（last_used_at活用）
 
 ### 3. セキュリティ監視
 
@@ -500,6 +602,113 @@ flowchart TD
 - DAUの急増（ボット攻撃の可能性）
 - ログイン失敗率の急上昇
 - 特定時間帯への集中
+
+---
+
+## パーティショニング戦略
+
+### 大規模データへの対応
+
+統計ユーザーテーブルは、大規模テナントでは年間10万行以上に成長する可能性があります。PostgreSQLでは**pg_partman**拡張を使用した自動パーティション管理が推奨されます。
+
+```mermaid
+flowchart TD
+    subgraph "Parent Table"
+        PARENT[statistics_daily_users]
+    end
+    subgraph "Monthly Partitions"
+        P1[statistics_daily_users_p20250101]
+        P2[statistics_daily_users_p20250201]
+        P3[statistics_daily_users_p20250301]
+        PD[statistics_daily_users_default]
+    end
+    PARENT --> P1
+    PARENT --> P2
+    PARENT --> P3
+    PARENT --> PD
+```
+
+### pg_partmanによる自動管理
+
+| テーブル | パーティション間隔 | 保持期間 | 備考 |
+|:---|:---|:---|:---|
+| `statistics_daily_users` | 月別 | 6ヶ月 | DAU追跡（データ量最大） |
+| `statistics_monthly_users` | 年別 | 3年 | MAU追跡 |
+| `statistics_yearly_users` | 年別 | 5年 | YAU追跡 |
+
+### パーティショニングのメリット
+
+1. **クエリ性能向上**: パーティションプルーニングにより、特定期間のクエリが高速化
+2. **メンテナンス効率化**: 古いパーティションのDROP操作は DELETE より高速
+3. **自動管理**: pg_partmanが新規パーティションを自動作成・古いパーティションを自動削除
+
+### 検証スクリプト
+
+pg_partman検証用のスクリプトが `scripts/pg_partman/` に用意されています：
+
+```bash
+# pg_partmanセットアップ
+./scripts/pg_partman/setup-pg_partman.sh
+
+# 統計ユーザーテーブルのパーティション設定
+./scripts/pg_partman/statistics-users-pg_partman.sh
+
+# 動作検証
+./scripts/pg_partman/verify-pg_partman.sh
+
+# クリーンアップ
+./scripts/pg_partman/cleanup-pg_partman.sh
+```
+
+---
+
+## 年次統計レポートAPI
+
+### エンドポイント
+
+#### システムレベルAPI
+
+```
+GET /v1/management/tenants/{tenantId}/statistics/yearly?from=2023&to=2025
+```
+
+#### 組織レベルAPI
+
+```
+GET /v1/management/organizations/{orgId}/tenants/{tenantId}/statistics/yearly?from=2023&to=2025
+```
+
+### リクエストパラメータ
+
+| パラメータ | 必須 | 型 | 説明 |
+|:---|:---|:---|:---|
+| `from` | Yes | String | 開始年（YYYY形式、例: 2023） |
+| `to` | Yes | String | 終了年（YYYY形式、例: 2025） |
+| `limit` | No | Integer | 最大取得件数（デフォルト: 10、最大: 100） |
+| `offset` | No | Integer | スキップ件数（デフォルト: 0） |
+
+### レスポンス
+
+```json
+{
+  "list": [
+    {
+      "stat_year": "2025",
+      "yearly_summary": {
+        "yau": 15000,
+        "total_logins": 500000,
+        "total_login_failures": 5000,
+        "new_users": 2000
+      },
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-12-31T23:59:59Z"
+    }
+  ],
+  "total_count": 3,
+  "limit": 10,
+  "offset": 0
+}
+```
 
 ---
 

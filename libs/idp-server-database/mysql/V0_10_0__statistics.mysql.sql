@@ -1,5 +1,5 @@
 -- V0_10_0__statistics.mysql.sql
--- Issue #441: Tenant statistics data collection (MySQL version)
+-- Issue #441: Tenant statistics data collection (DAU/MAU/YAU) (MySQL version)
 
 -- =====================================================
 -- statistics_monthly
@@ -38,6 +38,34 @@ CREATE TABLE statistics_monthly (
 COMMENT='Monthly tenant statistics with daily breakdown in JSON';
 
 -- =====================================================
+-- statistics_yearly
+-- Yearly statistics summary
+-- Note: Monthly breakdown is available via statistics_monthly table
+-- =====================================================
+
+CREATE TABLE statistics_yearly (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    tenant_id CHAR(36) NOT NULL,
+    stat_year CHAR(4) NOT NULL COMMENT 'YYYY format (2025, 2026, ...)',
+
+    -- Yearly summary (for quick access)
+    yearly_summary JSON NOT NULL DEFAULT ('{}'),
+    /* {
+      "yau": 15000,
+      "total_logins": 500000,
+      "total_login_failures": 5000,
+      "new_users": 2000
+    } */
+
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    UNIQUE KEY uk_tenant_year (tenant_id, stat_year),
+    KEY idx_statistics_yearly_tenant_year (tenant_id, stat_year DESC)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Yearly tenant statistics summary (monthly breakdown via statistics_monthly table)';
+
+-- =====================================================
 -- statistics_daily_users
 -- Track unique daily active users
 -- =====================================================
@@ -46,6 +74,7 @@ CREATE TABLE statistics_daily_users (
     tenant_id CHAR(36) NOT NULL,
     stat_date DATE NOT NULL,
     user_id CHAR(36) NOT NULL,
+    last_used_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (tenant_id, stat_date, user_id),
@@ -62,12 +91,31 @@ CREATE TABLE statistics_monthly_users (
     tenant_id CHAR(36) NOT NULL,
     stat_month CHAR(7) NOT NULL COMMENT 'YYYY-MM format (e.g., 2025-01)',
     user_id CHAR(36) NOT NULL,
+    last_used_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (tenant_id, stat_month, user_id),
     KEY idx_statistics_monthly_users_tenant_month (tenant_id, stat_month)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Monthly active users tracking (one row per unique user per calendar month)';
+
+-- =====================================================
+-- statistics_yearly_users
+-- Track unique yearly active users
+-- =====================================================
+
+CREATE TABLE statistics_yearly_users (
+    tenant_id CHAR(36) NOT NULL,
+    stat_year CHAR(4) NOT NULL COMMENT 'YYYY format (e.g., 2025)',
+    user_id CHAR(36) NOT NULL,
+    last_used_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (tenant_id, stat_year, user_id),
+    KEY idx_statistics_yearly_users_tenant_year (tenant_id, stat_year),
+    KEY idx_statistics_yearly_users_last_used (tenant_id, last_used_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Yearly active users tracking (one row per unique user per calendar year)';
 
 -- =====================================================
 -- Data retention procedures
@@ -104,6 +152,30 @@ BEGIN
 
     DELETE FROM statistics_monthly_users
     WHERE stat_month < cutoff_month;
+
+    SELECT ROW_COUNT() AS deleted_count;
+END//
+
+-- Delete yearly user data older than specified years
+CREATE PROCEDURE cleanup_old_yearly_users(IN retention_years INT)
+BEGIN
+    DECLARE cutoff_year CHAR(4);
+    SET cutoff_year = DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL retention_years YEAR), '%Y');
+
+    DELETE FROM statistics_yearly_users
+    WHERE stat_year < cutoff_year;
+
+    SELECT ROW_COUNT() AS deleted_count;
+END//
+
+-- Delete yearly statistics data older than specified years
+CREATE PROCEDURE cleanup_old_yearly_statistics(IN retention_years INT)
+BEGIN
+    DECLARE cutoff_year CHAR(4);
+    SET cutoff_year = DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL retention_years YEAR), '%Y');
+
+    DELETE FROM statistics_yearly
+    WHERE stat_year < cutoff_year;
 
     SELECT ROW_COUNT() AS deleted_count;
 END//
