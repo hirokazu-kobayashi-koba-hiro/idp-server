@@ -4,10 +4,116 @@
 
 ## スクリプト一覧
 
-| スクリプト | 説明 |
-|-----------|------|
-| `app_user.sql` | アプリケーションユーザー作成 |
-| `aggregate_historical_statistics.sql` | 過去データの統計集計 |
+| スクリプト | 説明 | 実行ユーザー |
+|-----------|------|-------------|
+| `01-create-users.sh` | アプリケーションユーザー作成 | superuser |
+| `02-init-extensions.sql` | pg_cron/pg_partman拡張初期化 | superuser |
+| `setup-pg-cron-jobs.sql` | pg_cronジョブ登録 | db_owner |
+| `aggregate_historical_statistics.sql` | 過去データの統計集計 | db_owner |
+
+---
+
+## データベース構築手順（手動）
+
+Docker Composeを使わずに手動でデータベースを構築する場合の手順です。
+
+### 前提条件
+
+- PostgreSQL 15以上
+- pg_cron, pg_partman 拡張がインストール済み
+- `postgresql.conf` に以下の設定が必要:
+  ```
+  shared_preload_libraries = 'pg_cron,pg_partman_bgw'
+  cron.database_name = '<database_name>'
+  ```
+
+### Step 1: データベース・ユーザー作成
+
+```bash
+# 環境変数設定
+export POSTGRES_USER=idpserver
+export POSTGRES_PASSWORD=<your_password>
+export POSTGRES_DB=idpserver
+export DB_OWNER_USER=idp
+export IDP_DB_ADMIN_PASSWORD=<admin_password>
+export IDP_DB_APP_PASSWORD=<app_password>
+
+# ユーザー作成
+./01-create-users.sh
+```
+
+### Step 2: pg_cron/pg_partman 拡張初期化
+
+```bash
+# superuserで実行
+psql -U postgres -d idpserver -f 02-init-extensions.sql
+
+# カスタムDB_OWNER_USERを指定する場合
+psql -U postgres -d idpserver -v db_owner_user=myuser -f 02-init-extensions.sql
+```
+
+### Step 3: Flywayマイグレーション実行
+
+```bash
+# Flyway実行（DB_OWNER_USERで実行）
+flyway -url=jdbc:postgresql://localhost:5432/idpserver \
+       -user=idp \
+       -password=<password> \
+       migrate
+```
+
+### Step 4: pg_cronジョブ登録
+
+```bash
+# DB_OWNER_USERで実行
+psql -U idp -d idpserver -f setup-pg-cron-jobs.sql
+```
+
+### 構築順序図
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Step 1: ユーザー作成 (01-create-users.sh)                      │
+│  ─────────────────────────────────────────────────────────────  │
+│  • idp (DB_OWNER_USER) - DDL実行、BYPASSRLS                     │
+│  • idp_admin_user - 管理API用、BYPASSRLS                        │
+│  • idp_app_user - アプリケーション用、RLS適用                    │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  Step 2: 拡張初期化 (02-init-extensions.sql)                    │
+│  ─────────────────────────────────────────────────────────────  │
+│  • pg_cron 拡張作成                                             │
+│  • pg_partman 拡張作成（partmanスキーマ）                        │
+│  • DB_OWNER_USERへの権限付与                                    │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  Step 3: Flywayマイグレーション                                  │
+│  ─────────────────────────────────────────────────────────────  │
+│  • テーブル作成（V0_9_0__init_lib.sql）                          │
+│  • パーティション設定（V0_9_21_1, V0_9_21_2）                    │
+│  • RLSポリシー設定                                               │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  Step 4: pg_cronジョブ登録 (setup-pg-cron-jobs.sql)             │
+│  ─────────────────────────────────────────────────────────────  │
+│  • partman-maintenance ジョブ（毎日02:00 UTC）                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Docker Compose との対応
+
+| 手動構築 | Docker Compose |
+|----------|---------------|
+| `01-create-users.sh` | `postgres-user-init` コンテナ |
+| `02-init-extensions.sql` | `02-init-partman.sh` (init スクリプト) |
+| Flyway CLI | `flyway-migrator` コンテナ |
+| `setup-pg-cron-jobs.sql` | `pg-cron-setup` コンテナ |
 
 ---
 
