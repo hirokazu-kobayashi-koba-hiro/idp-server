@@ -31,6 +31,14 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
   -- cron schema permissions
   GRANT USAGE ON SCHEMA cron TO ${DB_OWNER_USER};
   GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA cron TO ${DB_OWNER_USER};
+
+  -- ================================================
+  -- Grant file write permission for archive export
+  -- ================================================
+  -- Required for COPY TO file in archive.export_partition_to_external_storage()
+  -- This allows the DB owner to export archived partitions to local files.
+  -- Note: In production with AWS RDS/Aurora, use aws_s3 extension instead.
+  GRANT pg_write_server_files TO ${DB_OWNER_USER};
 EOSQL
 
 echo "pg_cron and pg_partman extensions initialized with permissions for '${DB_OWNER_USER}'"
