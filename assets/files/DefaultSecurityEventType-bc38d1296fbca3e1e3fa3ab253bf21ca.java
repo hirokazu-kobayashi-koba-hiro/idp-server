@@ -155,4 +155,34 @@ public enum DefaultSecurityEventType {
   public boolean isIdentifyUserEventType() {
     return this == user_signup || this == password_success;
   }
+
+  /**
+   * Check if this event type should count as active user activity.
+   *
+   * <p>Used for DAU/MAU tracking. Events that indicate successful user authentication or login
+   * should return true.
+   *
+   * @return true if this event type indicates active user activity
+   */
+  public boolean isActiveUserEvent() {
+    return this == login_success
+        || this == issue_token_success
+        || this == refresh_token_success
+        || this == inspect_token_success;
+  }
+
+  /**
+   * Find DefaultSecurityEventType by event type value.
+   *
+   * @param value the event type string value
+   * @return the matching DefaultSecurityEventType, or null if not found
+   */
+  public static DefaultSecurityEventType findByValue(String value) {
+    for (DefaultSecurityEventType type : values()) {
+      if (type.name().equals(value)) {
+        return type;
+      }
+    }
+    return null;
+  }
 }
