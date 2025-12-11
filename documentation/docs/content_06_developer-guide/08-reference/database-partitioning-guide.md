@@ -668,7 +668,8 @@ services:
   postgres:
     image: postgres:16
     # pg_cron はクロスデータベースモードで postgres データベースにインストール
-    command: postgres -c shared_preload_libraries=pg_cron,pg_partman_bgw -c cron.database_name=postgres
+    # pg_partman_bgw は使用せず、pg_cron でパーティション管理をスケジュール実行
+    command: postgres -c shared_preload_libraries=pg_cron -c cron.database_name=postgres
     environment:
       POSTGRES_DB: idpserver
       POSTGRES_USER: postgres

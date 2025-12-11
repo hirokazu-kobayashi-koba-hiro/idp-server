@@ -37,9 +37,10 @@ CREATE SCHEMA IF NOT EXISTS archive;
 
 COMMENT ON SCHEMA archive IS 'Temporary storage for detached partitions awaiting export to external storage (S3, GCS, etc.)';
 
--- Grant permissions (assuming db_owner runs migrations)
-GRANT USAGE ON SCHEMA archive TO idp_app_user;
-GRANT SELECT ON ALL TABLES IN SCHEMA archive TO idp_app_user;
+-- Note: User permissions for archive schema are managed separately in:
+--   - postgresql/user/admin_user.sql
+--   - postgresql/user/app_user.sql
+-- Add permissions there when application access is needed.
 
 -- ================================================
 -- Phase 2: Update pg_partman configuration

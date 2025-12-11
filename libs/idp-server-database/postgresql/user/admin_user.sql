@@ -30,8 +30,8 @@ ALTER DEFAULT PRIVILEGES
     IN SCHEMA public
     GRANT USAGE, SELECT ON SEQUENCES TO idp_admin_user;
 
--- Set connection limit (sufficient for multiple server instances)
-ALTER USER idp_admin_user CONNECTION LIMIT 25;
+-- Connection limit is unlimited (-1) by default
+-- Connection pooling (e.g., HikariCP) should manage connection limits at application level
 
 -- Verification query
 SELECT

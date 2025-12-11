@@ -23,9 +23,11 @@ Docker Composeを使わずに手動でデータベースを構築する場合の
 - pg_cron, pg_partman 拡張がインストール済み
 - `postgresql.conf` に以下の設定が必要:
   ```
-  shared_preload_libraries = 'pg_cron,pg_partman_bgw'
+  shared_preload_libraries = 'pg_cron'
   cron.database_name = 'postgres'
   ```
+
+**Note**: `pg_partman_bgw` は使用せず、pg_cron でパーティション管理をスケジュール実行しています。
 
 **注意**: `cron.database_name = 'postgres'` を設定することで、pg_cronはクロスデータベースモードで動作します。
 これにより `cron.schedule_in_database()` 関数を使用して任意のデータベースでジョブを実行できます。
