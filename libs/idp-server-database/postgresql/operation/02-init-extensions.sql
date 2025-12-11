@@ -62,7 +62,18 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA cron TO :db_owner_u
 \echo 'Granted cron schema permissions to' :db_owner_user
 
 -- ================================================
--- 4. Verification
+-- 4. Grant file write permission for archive export
+-- ================================================
+-- Required for COPY TO file in archive.export_partition_to_external_storage()
+-- This allows the DB owner to export archived partitions to local files.
+-- Note: In production with AWS RDS/Aurora, use aws_s3 extension instead.
+
+GRANT pg_write_server_files TO :db_owner_user;
+
+\echo 'Granted pg_write_server_files to' :db_owner_user
+
+-- ================================================
+-- 5. Verification
 -- ================================================
 
 \echo ''
