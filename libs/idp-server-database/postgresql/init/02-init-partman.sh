@@ -4,16 +4,30 @@ set -eu
 # Application owner user configuration
 : "${DB_OWNER_USER:=idp}"
 
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
-  -- ================================================
-  -- Initialize pg_cron and pg_partman extensions
-  -- These require superuser privileges
-  -- ================================================
-
-  -- pg_cron for scheduled execution
+# ================================================
+# Initialize pg_cron in postgres database (cross-database setup)
+# ================================================
+# pg_cron is configured with cron.database_name=postgres
+# This allows scheduling jobs that run on any database using
+# cron.schedule_in_database() function.
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "postgres" <<-EOSQL
+  -- pg_cron for scheduled execution (cross-database mode)
   -- Note: pg_cron must be in shared_preload_libraries
   CREATE EXTENSION IF NOT EXISTS pg_cron;
 
+  -- Grant cron schema permissions to application owner user
+  -- This allows the user to create and manage scheduled jobs
+  GRANT USAGE ON SCHEMA cron TO ${DB_OWNER_USER};
+  GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA cron TO ${DB_OWNER_USER};
+
+  -- Grant execute permission on cron functions for cross-database scheduling
+  GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA cron TO ${DB_OWNER_USER};
+EOSQL
+
+# ================================================
+# Initialize pg_partman in application database
+# ================================================
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
   -- pg_partman for partition management
   CREATE SCHEMA IF NOT EXISTS partman;
   CREATE EXTENSION IF NOT EXISTS pg_partman WITH SCHEMA partman;
@@ -27,10 +41,6 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
   GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA partman TO ${DB_OWNER_USER};
   GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA partman TO ${DB_OWNER_USER};
   GRANT ALL ON ALL SEQUENCES IN SCHEMA partman TO ${DB_OWNER_USER};
-
-  -- cron schema permissions
-  GRANT USAGE ON SCHEMA cron TO ${DB_OWNER_USER};
-  GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA cron TO ${DB_OWNER_USER};
 
   -- ================================================
   -- Grant file write permission for archive export

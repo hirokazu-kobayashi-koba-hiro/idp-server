@@ -77,13 +77,14 @@ PGPASSWORD="$DB_PASSWORD" psql \
     -c "UPDATE partman.part_config SET retention = '1 day' WHERE parent_table IN ('public.security_event', 'public.security_event_hook_results');"
 
 # Update pg_cron schedule to every 5 minutes for local testing
+# Note: pg_cron is installed in postgres database (cross-database mode)
 echo ""
 echo "Setting pg_cron jobs to run every 5 minutes..."
 PGPASSWORD="$DB_PASSWORD" psql \
     -h "$DB_HOST" \
     -p "$DB_PORT" \
     -U "$DB_USER" \
-    -d "$DB_NAME" \
+    -d "postgres" \
     -c "UPDATE cron.job SET schedule = '0,5,10,15,20,25,30,35,40,45,50,55 * * * *' WHERE jobname IN ('partman-maintenance', 'archive-processing');"
 
 # Verify configuration
@@ -106,13 +107,13 @@ PGPASSWORD="$DB_PASSWORD" psql \
     -c "SELECT parent_table, retention, retention_keep_table, retention_schema FROM partman.part_config;"
 
 echo ""
-echo "pg_cron job schedule:"
+echo "pg_cron job schedule (from postgres database):"
 PGPASSWORD="$DB_PASSWORD" psql \
     -h "$DB_HOST" \
     -p "$DB_PORT" \
     -U "$DB_USER" \
-    -d "$DB_NAME" \
-    -c "SELECT jobname, schedule, active FROM cron.job WHERE jobname IN ('partman-maintenance', 'archive-processing');"
+    -d "postgres" \
+    -c "SELECT jobname, schedule, database, active FROM cron.job WHERE jobname IN ('partman-maintenance', 'archive-processing');"
 
 echo ""
 echo "================================================"

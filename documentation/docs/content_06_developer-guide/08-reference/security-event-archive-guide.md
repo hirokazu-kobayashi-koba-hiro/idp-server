@@ -427,16 +427,23 @@ COMMENT ON FUNCTION archive.process_archived_partitions(BOOLEAN) IS
 
 ## Step 4: pg_cronジョブの設定
 
+**重要**: pg_cron は `postgres` データベースにインストールされています（クロスデータベースモード）。
+ジョブ登録は `postgres` データベースに接続して `cron.schedule_in_database()` を使用します。
+
 ```sql
+-- postgres データベースに接続
+-- psql -h localhost -U idp -d postgres
+
 -- アーカイブ処理ジョブ（毎日03:00、pg_partmanメンテナンス後）
-SELECT cron.schedule(
+SELECT cron.schedule_in_database(
     'archive-processing',
     '0 3 * * *',
-    $$SELECT * FROM archive.process_archived_partitions(p_dry_run := FALSE)$$
+    $$SELECT * FROM archive.process_archived_partitions(p_dry_run := FALSE)$$,
+    'idpserver'  -- 実行対象データベース
 );
 
 -- ジョブ確認
-SELECT jobid, jobname, schedule, command, active
+SELECT jobid, jobname, schedule, database, command, active
 FROM cron.job
 WHERE jobname = 'archive-processing';
 ```
@@ -725,6 +732,8 @@ WHERE schemaname = 'archive'
 ORDER BY tablename DESC;
 
 -- pg_cronジョブの実行履歴
+-- 注意: pg_cron は postgres データベースにインストールされています
+-- psql -h localhost -U idp -d postgres で接続して実行
 SELECT
     jobid,
     jobname,

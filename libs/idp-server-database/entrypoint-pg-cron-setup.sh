@@ -12,7 +12,9 @@ done
 echo "PostgreSQL is ready. Running pg_cron setup script..."
 
 # Execute setup script
-PGPASSWORD="$DB_PASSWORD" psql -h "$PGHOST" -p "$PGPORT" -U "$DB_USER_NAME" -d "$POSTGRES_DB" -f /scripts/setup-pg-cron-jobs.sql
+# Note: pg_cron is installed in 'postgres' database (cross-database mode)
+# The script uses cron.schedule_in_database() to target 'idpserver' database
+PGPASSWORD="$DB_PASSWORD" psql -h "$PGHOST" -p "$PGPORT" -U "$DB_USER_NAME" -d "postgres" -f /scripts/setup-pg-cron-jobs.sql
 
 if [ $? -eq 0 ]; then
   echo "✓ pg_cron job setup completed successfully"

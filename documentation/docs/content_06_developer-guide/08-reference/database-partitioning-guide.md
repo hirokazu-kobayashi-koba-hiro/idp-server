@@ -362,11 +362,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- スケジュール設定
-SELECT cron.schedule('create-next-day-partitions', '0 2 * * *',
-                     'SELECT create_next_day_partitions();');
-SELECT cron.schedule('drop-old-daily-partitions', '0 3 * * *',
-                     'SELECT drop_old_daily_partitions();');
+-- スケジュール設定（postgres DBに接続して実行）
+-- psql -h localhost -U idp -d postgres
+SELECT cron.schedule_in_database('create-next-day-partitions', '0 2 * * *',
+                     'SELECT create_next_day_partitions();', 'idpserver');
+SELECT cron.schedule_in_database('drop-old-daily-partitions', '0 3 * * *',
+                     'SELECT drop_old_daily_partitions();', 'idpserver');
 ```
 
 ---
@@ -459,26 +460,30 @@ security_event（比較用）:
 
 ```sql
 -- 統計データのクリーンアップスケジュール（推奨）
+-- postgres DBに接続して実行: psql -h localhost -U idp -d postgres
 
 -- daily_users: 90日保持
-SELECT cron.schedule(
+SELECT cron.schedule_in_database(
     'cleanup-daily-users',
     '0 4 * * *',  -- 毎日午前4時
-    'SELECT cleanup_old_daily_users(90);'
+    'SELECT cleanup_old_daily_users(90);',
+    'idpserver'
 );
 
 -- monthly_users: 13ヶ月保持（YoY比較用）
-SELECT cron.schedule(
+SELECT cron.schedule_in_database(
     'cleanup-monthly-users',
     '0 4 1 * *',  -- 毎月1日午前4時
-    'SELECT cleanup_old_monthly_users(13);'
+    'SELECT cleanup_old_monthly_users(13);',
+    'idpserver'
 );
 
 -- statistics_monthly: 25ヶ月保持（YoY比較用）
-SELECT cron.schedule(
+SELECT cron.schedule_in_database(
     'cleanup-monthly-statistics',
     '0 4 1 * *',
-    'SELECT cleanup_old_statistics(25);'
+    'SELECT cleanup_old_statistics(25);',
+    'idpserver'
 );
 
 -- yearly_users, statistics_yearly: 永続保持（削除しない）
@@ -530,6 +535,11 @@ SELECT cron.schedule(
 
 idp-serverでは、Docker PostgreSQLイメージの初期化スクリプトで pg_partman と pg_cron を設定しています。
 
+**重要**: pg_cron はクロスデータベースモードで動作します。
+- pg_cron 拡張は `postgres` データベースにインストール
+- ジョブは `cron.schedule_in_database()` で `idpserver` データベースを指定して実行
+- これにより複数データベースのジョブを一元管理可能
+
 **初期化スクリプト位置**: `libs/idp-server-database/postgresql/init/02-init-partman.sh`
 
 ```bash
@@ -539,16 +549,27 @@ set -eu
 # Application owner user configuration
 : "${DB_OWNER_USER:=idp}"
 
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
-  -- ================================================
-  -- Initialize pg_cron and pg_partman extensions
-  -- These require superuser privileges
-  -- ================================================
-
-  -- pg_cron for scheduled execution
+# ================================================
+# Initialize pg_cron in postgres database (cross-database setup)
+# ================================================
+# pg_cron is configured with cron.database_name=postgres
+# This allows scheduling jobs that run on any database using
+# cron.schedule_in_database() function.
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "postgres" <<-EOSQL
+  -- pg_cron for scheduled execution (cross-database mode)
   -- Note: pg_cron must be in shared_preload_libraries
   CREATE EXTENSION IF NOT EXISTS pg_cron;
 
+  -- Grant cron schema permissions to application owner user
+  -- This allows the user to create and manage scheduled jobs
+  GRANT USAGE ON SCHEMA cron TO ${DB_OWNER_USER};
+  GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA cron TO ${DB_OWNER_USER};
+EOSQL
+
+# ================================================
+# Initialize pg_partman in application database
+# ================================================
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
   -- pg_partman for partition management
   CREATE SCHEMA IF NOT EXISTS partman;
   CREATE EXTENSION IF NOT EXISTS pg_partman WITH SCHEMA partman;
@@ -562,10 +583,6 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
   GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA partman TO ${DB_OWNER_USER};
   GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA partman TO ${DB_OWNER_USER};
   GRANT ALL ON ALL SEQUENCES IN SCHEMA partman TO ${DB_OWNER_USER};
-
-  -- cron schema permissions
-  GRANT USAGE ON SCHEMA cron TO ${DB_OWNER_USER};
-  GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA cron TO ${DB_OWNER_USER};
 
   -- ================================================
   -- Grant file write permission for archive export
@@ -644,22 +661,25 @@ echo "Completed"
 
 ### 11.3 Docker Compose 設定
 
-pg_partman / pg_cron を使用するには、`shared_preload_libraries` の設定が必要です。
+pg_partman / pg_cron を使用するには、`shared_preload_libraries` と `cron.database_name` の設定が必要です。
 
 ```yaml
 services:
   postgres:
     image: postgres:16
-    command: postgres -c shared_preload_libraries=pg_cron,pg_partman_bgw
+    # pg_cron はクロスデータベースモードで postgres データベースにインストール
+    command: postgres -c shared_preload_libraries=pg_cron,pg_partman_bgw -c cron.database_name=postgres
     environment:
-      POSTGRES_DB: idp
+      POSTGRES_DB: idpserver
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
     volumes:
       - ./libs/idp-server-database/postgresql/init:/docker-entrypoint-initdb.d
 ```
 
-**Note**: `docker-entrypoint-initdb.d` のスクリプトは、データディレクトリが空の場合のみ実行されます。
+**Note**:
+- `docker-entrypoint-initdb.d` のスクリプトは、データディレクトリが空の場合のみ実行されます。
+- `cron.database_name=postgres` により、pg_cron は postgres データベースで動作し、`cron.schedule_in_database()` で他のデータベースのジョブも実行可能です。
 
 ---
 
@@ -678,16 +698,22 @@ services:
 
 `setup-pg-cron-jobs.sql` を編集するか、直接SQLを実行します。
 
+**重要**: pg_cron は `postgres` データベースにインストールされているため、cron操作は `postgres` データベースに接続して行います。
+
 ```sql
+-- postgres データベースに接続して操作
+-- psql -h localhost -U idp -d postgres
+
 -- 現在のスケジュール確認
-SELECT jobid, jobname, schedule, command, active FROM cron.job;
+SELECT jobid, jobname, schedule, database, command, active FROM cron.job;
 
 -- スケジュール変更（例: 毎時実行に変更）
 SELECT cron.unschedule('partman-maintenance');
-SELECT cron.schedule(
+SELECT cron.schedule_in_database(
     'partman-maintenance',
     '0 * * * *',  -- 毎時0分
-    $$CALL partman.run_maintenance_proc()$$
+    $$CALL partman.run_maintenance_proc()$$,
+    'idpserver'   -- 実行対象データベース
 );
 
 -- ジョブの一時停止

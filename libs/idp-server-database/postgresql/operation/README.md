@@ -24,8 +24,11 @@ Docker Composeを使わずに手動でデータベースを構築する場合の
 - `postgresql.conf` に以下の設定が必要:
   ```
   shared_preload_libraries = 'pg_cron,pg_partman_bgw'
-  cron.database_name = '<database_name>'
+  cron.database_name = 'postgres'
   ```
+
+**注意**: `cron.database_name = 'postgres'` を設定することで、pg_cronはクロスデータベースモードで動作します。
+これにより `cron.schedule_in_database()` 関数を使用して任意のデータベースでジョブを実行できます。
 
 ### Step 1: データベース・ユーザー作成
 
@@ -46,11 +49,16 @@ export IDP_DB_APP_PASSWORD=<app_password>
 
 ```bash
 # superuserで実行
-psql -U postgres -d idpserver -f 02-init-extensions.sql
+# pg_cron は postgres データベースに、pg_partman は idpserver データベースに作成
+psql -U postgres -d postgres -f 02-init-extensions.sql
+psql -U postgres -d idpserver -f 02-init-partman-extensions.sql
 
 # カスタムDB_OWNER_USERを指定する場合
-psql -U postgres -d idpserver -v db_owner_user=myuser -f 02-init-extensions.sql
+psql -U postgres -d postgres -v db_owner_user=myuser -f 02-init-extensions.sql
+psql -U postgres -d idpserver -v db_owner_user=myuser -f 02-init-partman-extensions.sql
 ```
+
+**Note**: Docker環境では `02-init-partman.sh` が両方の処理を行います。
 
 ### Step 3: Flywayマイグレーション実行
 
@@ -66,8 +74,13 @@ flyway -url=jdbc:postgresql://localhost:5432/idpserver \
 
 ```bash
 # DB_OWNER_USERで実行
-psql -U idp -d idpserver -f setup-pg-cron-jobs.sql
+# 重要: pg_cron は postgres データベースにインストールされているため、
+#       postgres データベースに接続してジョブを登録します
+psql -U idp -d postgres -f setup-pg-cron-jobs.sql
 ```
+
+**Note**: `setup-pg-cron-jobs.sql` は `cron.schedule_in_database()` を使用して
+`idpserver` データベースでジョブを実行するよう設定します。
 
 ### 構築順序図
 
@@ -82,11 +95,11 @@ psql -U idp -d idpserver -f setup-pg-cron-jobs.sql
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  Step 2: 拡張初期化 (02-init-extensions.sql)                    │
+│  Step 2: 拡張初期化 (02-init-partman.sh)                        │
 │  ─────────────────────────────────────────────────────────────  │
-│  • pg_cron 拡張作成                                             │
-│  • pg_partman 拡張作成（partmanスキーマ）                        │
-│  • DB_OWNER_USERへの権限付与                                    │
+│  • pg_cron 拡張作成（postgres DB、クロスデータベースモード）     │
+│  • pg_partman 拡張作成（idpserver DB、partmanスキーマ）          │
+│  • DB_OWNER_USERへの権限付与（cron関数実行権限含む）             │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -102,7 +115,10 @@ psql -U idp -d idpserver -f setup-pg-cron-jobs.sql
 ┌─────────────────────────────────────────────────────────────────┐
 │  Step 4: pg_cronジョブ登録 (setup-pg-cron-jobs.sql)             │
 │  ─────────────────────────────────────────────────────────────  │
+│  • postgres DBに接続してジョブ登録                               │
+│  • cron.schedule_in_database() で idpserver を指定              │
 │  • partman-maintenance ジョブ（毎日02:00 UTC）                   │
+│  • archive-processing ジョブ（毎日03:00 UTC）                    │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
