@@ -334,82 +334,93 @@ WHERE parent_table LIKE 'public.security_event%';
 ```sql
 -- エクスポート関数のインターフェース定義
 -- 利用者が自身の環境に合わせて実装する
-CREATE OR REPLACE FUNCTION archive_to_external_storage(
-    table_name TEXT,
-    target_path TEXT DEFAULT NULL
+CREATE OR REPLACE FUNCTION archive.export_partition_to_external_storage(
+    p_schema_name TEXT,
+    p_table_name TEXT,
+    p_destination_path TEXT DEFAULT NULL
 )
 RETURNS BOOLEAN AS $$
 BEGIN
     -- デフォルト実装: 何もしない（利用者が上書き実装）
-    RAISE NOTICE 'archive_to_external_storage() not implemented. Override this function for your environment.';
-    RAISE NOTICE 'Table: %, Path: %', table_name, COALESCE(target_path, '(default)');
+    RAISE NOTICE 'archive.export_partition_to_external_storage() not implemented. Override this function for your environment.';
+    RAISE NOTICE 'Table: %.%, Path: %', p_schema_name, p_table_name, COALESCE(p_destination_path, '(default)');
     RETURN FALSE;
 END;
 $$ LANGUAGE plpgsql;
 
-COMMENT ON FUNCTION archive_to_external_storage(TEXT, TEXT) IS
+COMMENT ON FUNCTION archive.export_partition_to_external_storage(TEXT, TEXT, TEXT) IS
 'Export archived partition to external storage. Override this function for your cloud environment (AWS S3, GCS, Azure Blob, etc.)';
 ```
 
 ### 3.2 メイン処理関数
 
 ```sql
-CREATE OR REPLACE FUNCTION process_archived_partitions()
-RETURNS TABLE(table_name TEXT, exported BOOLEAN, dropped BOOLEAN) AS $$
+CREATE OR REPLACE FUNCTION archive.process_archived_partitions(
+    p_dry_run BOOLEAN DEFAULT FALSE
+)
+RETURNS TABLE(
+    table_name TEXT,
+    row_count BIGINT,
+    exported BOOLEAN,
+    dropped BOOLEAN,
+    message TEXT
+) AS $$
 DECLARE
     tbl RECORD;
+    v_row_count BIGINT;
     export_success BOOLEAN;
-    export_func_exists BOOLEAN;
 BEGIN
-    -- エクスポート関数の存在チェック（カスタム実装されているか）
-    SELECT EXISTS(
-        SELECT 1 FROM pg_proc p
-        JOIN pg_namespace n ON p.pronamespace = n.oid
-        WHERE p.proname = 'archive_to_external_storage'
-          AND n.nspname = 'public'
-          AND p.prosrc NOT LIKE '%not implemented%'
-    ) INTO export_func_exists;
+    RAISE NOTICE 'Starting archive processing (dry_run=%)', p_dry_run;
 
     FOR tbl IN
         SELECT t.tablename, t.schemaname
         FROM pg_tables t
         WHERE t.schemaname = 'archive'
-          AND t.tablename LIKE 'security_event%'
         ORDER BY t.tablename
     LOOP
         table_name := tbl.tablename;
         exported := FALSE;
         dropped := FALSE;
 
-        IF export_func_exists THEN
+        -- 行数取得
+        EXECUTE format('SELECT COUNT(*) FROM %I.%I', tbl.schemaname, tbl.tablename)
+        INTO v_row_count;
+        row_count := v_row_count;
+
+        IF p_dry_run THEN
+            message := format('Would process: %s.%s (%s rows)', tbl.schemaname, tbl.tablename, v_row_count);
+            RAISE NOTICE '%', message;
+        ELSE
             -- エクスポート実行
             BEGIN
-                export_success := archive_to_external_storage(tbl.tablename);
+                export_success := archive.export_partition_to_external_storage(tbl.schemaname, tbl.tablename);
                 exported := export_success;
 
                 IF export_success THEN
                     -- エクスポート成功時のみ削除
-                    EXECUTE format('DROP TABLE archive.%I', tbl.tablename);
+                    EXECUTE format('DROP TABLE %I.%I', tbl.schemaname, tbl.tablename);
                     dropped := TRUE;
-                    RAISE NOTICE 'Exported and dropped: %', tbl.tablename;
+                    message := format('Exported and dropped (%s rows)', v_row_count);
+                    RAISE NOTICE 'Dropped archived table %.%', tbl.schemaname, tbl.tablename;
                 ELSE
-                    RAISE WARNING 'Export failed for %, table retained', tbl.tablename;
+                    message := format('Export not performed, table retained (%s rows)', v_row_count);
+                    RAISE NOTICE 'Keeping archived table %.%', tbl.schemaname, tbl.tablename;
                 END IF;
             EXCEPTION WHEN OTHERS THEN
-                RAISE WARNING 'Error processing %: %', tbl.tablename, SQLERRM;
+                message := format('Error: %s', SQLERRM);
+                RAISE WARNING 'Error processing %.%: %', tbl.schemaname, tbl.tablename, SQLERRM;
             END;
-        ELSE
-            -- エクスポート関数未実装: テーブルを保持
-            RAISE NOTICE 'Export function not implemented. Table % retained in archive schema.', tbl.tablename;
         END IF;
 
         RETURN NEXT;
     END LOOP;
+
+    RAISE NOTICE 'Archive processing complete';
 END;
 $$ LANGUAGE plpgsql;
 
-COMMENT ON FUNCTION process_archived_partitions() IS
-'Process archived partitions: export to external storage and drop if successful';
+COMMENT ON FUNCTION archive.process_archived_partitions(BOOLEAN) IS
+'Process archived partitions: export to external storage and drop if successful. Use p_dry_run=TRUE to preview without changes.';
 ```
 
 ---
@@ -419,15 +430,15 @@ COMMENT ON FUNCTION process_archived_partitions() IS
 ```sql
 -- アーカイブ処理ジョブ（毎日03:00、pg_partmanメンテナンス後）
 SELECT cron.schedule(
-    'process-archived-partitions',
+    'archive-processing',
     '0 3 * * *',
-    $$SELECT * FROM process_archived_partitions()$$
+    $$SELECT * FROM archive.process_archived_partitions(p_dry_run := FALSE)$$
 );
 
 -- ジョブ確認
 SELECT jobid, jobname, schedule, command, active
 FROM cron.job
-WHERE jobname = 'process-archived-partitions';
+WHERE jobname = 'archive-processing';
 ```
 
 ---
@@ -438,9 +449,10 @@ WHERE jobname = 'process-archived-partitions';
 
 ```sql
 -- aws_s3 拡張を使用
-CREATE OR REPLACE FUNCTION archive_to_external_storage(
-    table_name TEXT,
-    target_path TEXT DEFAULT NULL
+CREATE OR REPLACE FUNCTION archive.export_partition_to_external_storage(
+    p_schema_name TEXT,
+    p_table_name TEXT,
+    p_destination_path TEXT DEFAULT NULL
 )
 RETURNS BOOLEAN AS $$
 DECLARE
@@ -451,11 +463,11 @@ DECLARE
 BEGIN
     -- S3パスの構築（Hive形式パーティション）
     -- 例: security_event_p20250905 → security_event/year=2025/month=09/day=05/
-    s3_path := COALESCE(target_path, build_s3_path(table_name));
+    s3_path := COALESCE(p_destination_path, archive.build_s3_path(p_table_name));
 
     -- S3にエクスポート（Parquet形式推奨だがCSVも可）
     SELECT aws_s3.query_export_to_s3(
-        format('SELECT * FROM archive.%I', table_name),
+        format('SELECT * FROM %I.%I', p_schema_name, p_table_name),
         aws_commons.create_s3_uri(s3_bucket, s3_path, s3_region),
         options := 'FORMAT CSV, HEADER TRUE'
     ) INTO result_rows;
@@ -470,7 +482,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- S3パス構築ヘルパー関数
-CREATE OR REPLACE FUNCTION build_s3_path(table_name TEXT)
+CREATE OR REPLACE FUNCTION archive.build_s3_path(p_table_name TEXT)
 RETURNS TEXT AS $$
 DECLARE
     -- security_event_p20250905 → 2025, 09, 05 を抽出
@@ -482,9 +494,9 @@ DECLARE
 BEGIN
     -- パーティション名からベース名と日付を抽出
     -- 例: security_event_p20250905 または security_event_hook_results_p20250905
-    IF table_name ~ '_p[0-9]{8}$' THEN
-        date_part := substring(table_name from '_p([0-9]{8})$');
-        base_name := regexp_replace(table_name, '_p[0-9]{8}$', '');
+    IF p_table_name ~ '_p[0-9]{8}$' THEN
+        date_part := substring(p_table_name from '_p([0-9]{8})$');
+        base_name := regexp_replace(p_table_name, '_p[0-9]{8}$', '');
         year_val := substring(date_part from 1 for 4);
         month_val := substring(date_part from 5 for 2);
         day_val := substring(date_part from 7 for 2);
@@ -493,7 +505,7 @@ BEGIN
                       base_name, year_val, month_val, day_val);
     ELSE
         -- フォールバック
-        RETURN format('archive/%s/data.csv', table_name);
+        RETURN format('archive/%s/data.csv', p_table_name);
     END IF;
 END;
 $$ LANGUAGE plpgsql;
@@ -503,21 +515,22 @@ $$ LANGUAGE plpgsql;
 
 ```sql
 -- pg_export_data 関数を使用（要: cloudsql_import_export権限）
-CREATE OR REPLACE FUNCTION archive_to_external_storage(
-    table_name TEXT,
-    target_path TEXT DEFAULT NULL
+CREATE OR REPLACE FUNCTION archive.export_partition_to_external_storage(
+    p_schema_name TEXT,
+    p_table_name TEXT,
+    p_destination_path TEXT DEFAULT NULL
 )
 RETURNS BOOLEAN AS $$
 DECLARE
     gcs_bucket TEXT := 'gs://your-archive-bucket';
     gcs_path TEXT;
 BEGIN
-    gcs_path := COALESCE(target_path, build_gcs_path(table_name));
+    gcs_path := COALESCE(p_destination_path, archive.build_gcs_path(p_table_name));
 
     -- Cloud SQLからGCSにエクスポート
     -- Note: Cloud SQL Admin APIを使用する場合は外部スクリプトが必要
     PERFORM pg_export_data(
-        format('SELECT * FROM archive.%I', table_name),
+        format('SELECT * FROM %I.%I', p_schema_name, p_table_name),
         gcs_bucket || '/' || gcs_path
     );
 
@@ -529,36 +542,70 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-### ローカルファイル / pg_dump
+### ローカルファイル（Docker環境）
 
 ```sql
--- COPYコマンドでローカルエクスポート（スーパーユーザー権限必要）
-CREATE OR REPLACE FUNCTION archive_to_external_storage(
-    table_name TEXT,
-    target_path TEXT DEFAULT NULL
+-- COPYコマンドでローカルエクスポート（pg_write_server_files権限必要）
+-- デフォルトパス: /var/lib/postgresql/data/archive (Dockerデータボリューム内)
+CREATE OR REPLACE FUNCTION archive.export_partition_to_external_storage(
+    p_schema_name TEXT,
+    p_table_name TEXT,
+    p_destination_path TEXT DEFAULT NULL
 )
 RETURNS BOOLEAN AS $$
 DECLARE
-    export_dir TEXT := '/var/lib/postgresql/archive';
-    file_path TEXT;
+    v_row_count BIGINT;
+    v_export_dir TEXT;
+    v_file_path TEXT;
 BEGIN
-    file_path := COALESCE(target_path, format('%s/%s.csv', export_dir, table_name));
+    -- 行数取得
+    EXECUTE format('SELECT COUNT(*) FROM %I.%I', p_schema_name, p_table_name)
+    INTO v_row_count;
 
-    EXECUTE format(
-        'COPY archive.%I TO %L WITH (FORMAT CSV, HEADER TRUE)',
-        table_name,
-        file_path
-    );
+    IF v_row_count = 0 THEN
+        RAISE NOTICE 'Table %.% is empty, skipping export', p_schema_name, p_table_name;
+        RETURN TRUE;  -- 空テーブルは成功扱い
+    END IF;
 
-    RAISE NOTICE 'Exported to %', file_path;
+    -- パーティションテーブル以外はスキップ
+    IF p_table_name !~ '_p\d{8}$' THEN
+        RAISE NOTICE 'Table %.% is not a partition table, skipping', p_schema_name, p_table_name;
+        RETURN FALSE;
+    END IF;
+
+    -- エクスポートディレクトリ取得
+    v_export_dir := archive.get_config('export_directory', '/var/lib/postgresql/data/archive');
+
+    -- ファイルパス構築（フラット構造）
+    v_file_path := v_export_dir || '/' || p_table_name || '.csv';
+
+    -- カスタムパスが指定された場合はそちらを使用
+    IF p_destination_path IS NOT NULL THEN
+        v_file_path := p_destination_path;
+    END IF;
+
+    RAISE NOTICE 'Exporting %.% (% rows) to %',
+        p_schema_name, p_table_name, v_row_count, v_file_path;
+
+    -- CSVファイルにエクスポート
+    BEGIN
+        EXECUTE format(
+            'COPY (SELECT * FROM %I.%I) TO %L WITH (FORMAT CSV, HEADER)',
+            p_schema_name, p_table_name, v_file_path
+        );
+    EXCEPTION WHEN OTHERS THEN
+        RAISE WARNING 'Failed to export %.% to %: %',
+            p_schema_name, p_table_name, v_file_path, SQLERRM;
+        RETURN FALSE;
+    END;
+
+    RAISE NOTICE 'Successfully exported %.% to %', p_schema_name, p_table_name, v_file_path;
     RETURN TRUE;
-
-EXCEPTION WHEN OTHERS THEN
-    RAISE WARNING 'Local export failed: %', SQLERRM;
-    RETURN FALSE;
 END;
 $$ LANGUAGE plpgsql;
 ```
+
+**必要な権限**: `GRANT pg_write_server_files TO <db_owner_user>;`
 
 ---
 
@@ -666,7 +713,10 @@ ORDER BY attempt_count DESC;
 ### アーカイブ状況の確認
 
 ```sql
--- archiveスキーマのテーブル一覧
+-- archiveスキーマのテーブル一覧（archive.get_archive_status関数を使用）
+SELECT * FROM archive.get_archive_status();
+
+-- または手動クエリ
 SELECT
     tablename,
     pg_size_pretty(pg_total_relation_size('archive.' || tablename)) as size
@@ -683,9 +733,12 @@ SELECT
     status,
     return_message
 FROM cron.job_run_details
-WHERE jobname = 'process-archived-partitions'
+WHERE jobname IN ('partman-maintenance', 'archive-processing')
 ORDER BY start_time DESC
 LIMIT 10;
+
+-- dry runでアーカイブ対象を確認
+SELECT * FROM archive.process_archived_partitions(p_dry_run := TRUE);
 ```
 
 ### トラブルシューティング
@@ -695,13 +748,16 @@ LIMIT 10;
 **原因**: エクスポート関数が未実装または失敗している
 
 **対処**:
-1. `archive_to_external_storage()` 関数が実装されているか確認
+1. `archive.export_partition_to_external_storage()` 関数が実装されているか確認
 2. pg_cronジョブのログを確認
 3. 手動でエクスポートを試行
 
 ```sql
 -- 手動エクスポートテスト
-SELECT archive_to_external_storage('security_event_p20250905');
+SELECT archive.export_partition_to_external_storage('archive', 'security_event_p20250905');
+
+-- またはprocess_archived_partitionsで一括処理
+SELECT * FROM archive.process_archived_partitions(p_dry_run := FALSE);
 ```
 
 #### S3エクスポートが失敗する

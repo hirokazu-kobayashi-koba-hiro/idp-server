@@ -3,14 +3,19 @@
 # Setup Local Archive Export for Testing
 # ================================================
 # This script configures PostgreSQL to export archived partitions
-# to the local logs/archive directory.
+# for local testing. It sets shorter retention periods and more
+# frequent pg_cron schedules.
 #
 # Usage:
 #   ./scripts/archive/setup-local-export.sh
 #
 # Prerequisites:
-#   - PostgreSQL running with idp-server database
+#   - PostgreSQL running with idp-server database (Docker)
 #   - V0_9_21_3__archive_support.sql migration applied
+#
+# Note:
+#   Export directory is /var/lib/postgresql/data/archive inside
+#   the Docker container. This is created by 02-init-partman.sh.
 # ================================================
 
 set -e
@@ -18,7 +23,9 @@ set -e
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-EXPORT_DIR="$PROJECT_ROOT/logs/archive"
+
+# Docker container internal path (not host path)
+EXPORT_DIR="/var/lib/postgresql/data/archive"
 
 # Load .env if exists
 if [ -f "$PROJECT_ROOT/.env" ]; then
@@ -36,21 +43,11 @@ echo "================================================"
 echo "Setting up Local Archive Export"
 echo "================================================"
 echo "Project root: $PROJECT_ROOT"
-echo "Export directory: $EXPORT_DIR"
+echo "Export directory (container): $EXPORT_DIR"
 echo "Database: $DB_NAME@$DB_HOST:$DB_PORT"
 echo ""
 
-# Create export directory structure
-echo "Creating export directory structure..."
-mkdir -p "$EXPORT_DIR/security_event"
-mkdir -p "$EXPORT_DIR/security_event_hook_results"
-
-# Set permissions (PostgreSQL needs write access)
-chmod -R 777 "$EXPORT_DIR"
-echo "Created: $EXPORT_DIR"
-
 # Apply local export SQL
-echo ""
 echo "Applying local export configuration to PostgreSQL..."
 PGPASSWORD="$DB_PASSWORD" psql \
     -h "$DB_HOST" \
@@ -59,15 +56,15 @@ PGPASSWORD="$DB_PASSWORD" psql \
     -d "$DB_NAME" \
     -f "$PROJECT_ROOT/libs/idp-server-database/postgresql/operation/archive-export-local.sql"
 
-# Update export directory in config
+# Verify export directory in config (should already be set correctly by migration)
 echo ""
-echo "Setting export directory to: $EXPORT_DIR"
+echo "Verifying export directory is set to: $EXPORT_DIR"
 PGPASSWORD="$DB_PASSWORD" psql \
     -h "$DB_HOST" \
     -p "$DB_PORT" \
     -U "$DB_USER" \
     -d "$DB_NAME" \
-    -c "UPDATE archive.config SET value = '$EXPORT_DIR', updated_at = CURRENT_TIMESTAMP WHERE key = 'export_directory';"
+    -c "SELECT * FROM archive.config WHERE key = 'export_directory';"
 
 # Update retention to 1 day for local testing
 echo ""
@@ -132,6 +129,6 @@ echo ""
 echo "  3. Process archives (export and drop):"
 echo "     SELECT * FROM archive.process_archived_partitions(p_dry_run := FALSE);"
 echo ""
-echo "  4. Check exported files:"
-echo "     ls -la $EXPORT_DIR/"
+echo "  4. Check exported files (inside Docker container):"
+echo "     docker exec postgres-primary ls -la $EXPORT_DIR/"
 echo ""

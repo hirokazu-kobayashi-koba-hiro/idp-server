@@ -41,4 +41,14 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
   GRANT pg_write_server_files TO ${DB_OWNER_USER};
 EOSQL
 
+# ================================================
+# Create archive export directory
+# ================================================
+# pg_partman archive export writes CSV files to this directory.
+# Located inside the data volume so it persists and is writable by postgres.
+ARCHIVE_DIR="/var/lib/postgresql/data/archive"
+mkdir -p "$ARCHIVE_DIR"
+chown postgres:postgres "$ARCHIVE_DIR"
+echo "Archive export directory created: $ARCHIVE_DIR"
+
 echo "pg_cron and pg_partman extensions initialized with permissions for '${DB_OWNER_USER}'"

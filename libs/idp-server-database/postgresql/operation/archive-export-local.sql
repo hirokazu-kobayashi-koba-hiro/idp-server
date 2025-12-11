@@ -16,8 +16,8 @@
 -- ================================================
 -- Configuration: Set export directory
 -- ================================================
--- Default: /var/lib/postgresql/archive
--- For Docker: mount a volume to this path
+-- Default: /var/lib/postgresql/data/archive (inside Docker data volume)
+-- For Docker: directory is created inside the data volume
 -- For local dev: use a path PostgreSQL can write to
 
 -- Create a configuration table for archive settings
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS archive.config (
 
 -- Insert default configuration (upsert)
 INSERT INTO archive.config (key, value, description)
-VALUES ('export_directory', '/var/lib/postgresql/archive', 'Directory for local file exports')
+VALUES ('export_directory', '/var/lib/postgresql/data/archive', 'Directory for local file exports')
 ON CONFLICT (key) DO NOTHING;
 
 COMMENT ON TABLE archive.config IS 'Configuration settings for archive functionality';
@@ -79,7 +79,7 @@ BEGIN
     END IF;
 
     -- Get export directory from config
-    v_export_dir := archive.get_config('export_directory', '/var/lib/postgresql/archive');
+    v_export_dir := archive.get_config('export_directory', '/var/lib/postgresql/data/archive');
 
     -- Build file path: export_dir/table_name.csv (flat structure for local testing)
     -- PostgreSQL COPY TO cannot create directories, so use flat structure
