@@ -76,6 +76,9 @@ docker compose up -d postgres-primary postgres-replica postgres-user-init flyway
 ### 確認コマンド
 
 ```bash
+# インストール済み拡張の確認
+docker exec -it postgres-primary psql -U idp -d idpserver -c "\dx"
+
 # pg_cron ジョブ確認
 docker exec -it postgres-primary psql -U idp -d postgres -c "SELECT jobname, schedule, database, active FROM cron.job;"
 
@@ -85,6 +88,16 @@ docker exec -it postgres-primary psql -U idp -d idpserver -c "SELECT parent_tabl
 # ユーザー確認
 docker exec -it postgres-primary psql -U idpserver -d idpserver -c "SELECT rolname, rolsuper, rolbypassrls FROM pg_roles WHERE rolname IN ('idp', 'idp_admin_user', 'idp_app_user');"
 ```
+
+**拡張の期待結果**（ローカル環境）:
+```
+    Name    | Version |   Schema   |                     Description
+------------+---------+------------+------------------------------------------------------
+ pg_partman | 5.x.x   | partman    | Extension to manage partitioned tables by time or ID
+ plpgsql    | 1.0     | pg_catalog | PL/pgSQL procedural language
+```
+
+**Note**: `aws_s3`/`aws_commons` 拡張はAWS RDS/Aurora専用のため、ローカル環境には含まれません。
 
 ---
 

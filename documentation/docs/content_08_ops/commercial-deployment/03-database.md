@@ -65,7 +65,16 @@ idp-server のマルチテナント環境で必要なPostgreSQL設定の手順�
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  1.7 動作確認                                                    │
+│  1.7 S3エクスポート設定（オプション・AWS環境のみ）                │
+│  ─────────────────────────────────────────────────────────────  │
+│  • aws_s3 拡張インストール                                       │
+│  • IAMロール作成・関連付け                                       │
+│  • エクスポート関数の設定                                        │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  1.8 動作確認                                                    │
 │  ─────────────────────────────────────────────────────────────  │
 │  • ユーザー権限、RLS、パーティション、ジョブの確認                │
 └─────────────────────────────────────────────────────────────────┘
@@ -401,6 +410,257 @@ WHERE jobname IN ('partman-maintenance', 'archive-processing');
 
 ---
 
+### 2.7 S3エクスポート設定（AWS RDS/Aurora）
+
+AWS環境でセキュリティイベントをS3にアーカイブする場合の設定です。
+
+#### 2.7.1 前提条件
+
+- AWS RDS PostgreSQL または Aurora PostgreSQL
+- S3バケット（アーカイブ用）
+- IAMロール（RDS/Aurora → S3アクセス用）
+
+#### 2.7.2 S3バケットの作成
+
+```bash
+# S3バケット作成
+aws s3 mb s3://your-idp-archive-bucket --region ap-northeast-1
+
+# ライフサイクルポリシー設定（コスト最適化）
+cat > lifecycle-policy.json << 'EOF'
+{
+  "Rules": [
+    {
+      "ID": "ArchiveToGlacier",
+      "Status": "Enabled",
+      "Filter": { "Prefix": "security_event/" },
+      "Transitions": [
+        { "Days": 90, "StorageClass": "STANDARD_IA" },
+        { "Days": 365, "StorageClass": "GLACIER" }
+      ]
+    }
+  ]
+}
+EOF
+
+aws s3api put-bucket-lifecycle-configuration \
+  --bucket your-idp-archive-bucket \
+  --lifecycle-configuration file://lifecycle-policy.json
+```
+
+#### 2.7.3 IAMロールの作成
+
+```bash
+# 信頼ポリシー
+cat > trust-policy.json << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": { "Service": "rds.amazonaws.com" },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+
+# IAMロール作成
+aws iam create-role \
+  --role-name idp-rds-s3-export-role \
+  --assume-role-policy-document file://trust-policy.json
+
+# S3アクセスポリシー
+cat > s3-policy.json << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:GetObject",
+        "s3:ListBucket",
+        "s3:DeleteObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::your-idp-archive-bucket",
+        "arn:aws:s3:::your-idp-archive-bucket/*"
+      ]
+    }
+  ]
+}
+EOF
+
+aws iam put-role-policy \
+  --role-name idp-rds-s3-export-role \
+  --policy-name S3ExportPolicy \
+  --policy-document file://s3-policy.json
+```
+
+#### 2.7.4 RDS/AuroraへのIAMロール関連付け
+
+```bash
+# RDSインスタンスにIAMロールを関連付け
+aws rds add-role-to-db-instance \
+  --db-instance-identifier your-rds-instance \
+  --role-arn arn:aws:iam::ACCOUNT_ID:role/idp-rds-s3-export-role \
+  --feature-name s3Export
+
+# Aurora の場合はクラスターに関連付け
+aws rds add-role-to-db-cluster \
+  --db-cluster-identifier your-aurora-cluster \
+  --role-arn arn:aws:iam::ACCOUNT_ID:role/idp-rds-s3-export-role \
+  --feature-name s3Export
+```
+
+#### 2.7.5 aws_s3拡張のインストール
+
+```sql
+-- idpserver データベースに接続（superuserで実行）
+-- psql -h $IDP_DB_HOST -p $IDP_DB_PORT -U <superuser> -d idpserver
+
+CREATE EXTENSION IF NOT EXISTS aws_s3 CASCADE;
+
+-- 確認
+SELECT * FROM pg_extension WHERE extname IN ('aws_s3', 'aws_commons');
+```
+
+#### 2.7.6 エクスポート関数の設定
+
+Flywayで作成されたスタブ関数を、S3エクスポート実装に置き換えます。
+
+```sql
+-- idpserver データベースに接続（idp ユーザーで実行）
+-- psql -h $IDP_DB_HOST -p $IDP_DB_PORT -U idp -d idpserver
+
+-- S3パス構築ヘルパー関数
+CREATE OR REPLACE FUNCTION archive.build_s3_path(p_table_name TEXT)
+RETURNS TEXT AS $$
+DECLARE
+    date_part TEXT;
+    year_val TEXT;
+    month_val TEXT;
+    day_val TEXT;
+    base_name TEXT;
+BEGIN
+    -- パーティション名から日付を抽出
+    -- 例: security_event_p20250905 → security_event/year=2025/month=09/day=05/
+    IF p_table_name ~ '_p[0-9]{8}$' THEN
+        date_part := substring(p_table_name from '_p([0-9]{8})$');
+        base_name := regexp_replace(p_table_name, '_p[0-9]{8}$', '');
+        year_val := substring(date_part from 1 for 4);
+        month_val := substring(date_part from 5 for 2);
+        day_val := substring(date_part from 7 for 2);
+
+        RETURN format('%s/year=%s/month=%s/day=%s/data.csv',
+                      base_name, year_val, month_val, day_val);
+    ELSE
+        RETURN format('archive/%s/data.csv', p_table_name);
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- S3エクスポート関数（スタブ関数を置き換え）
+CREATE OR REPLACE FUNCTION archive.export_partition_to_external_storage(
+    p_schema_name TEXT,
+    p_table_name TEXT,
+    p_destination_path TEXT DEFAULT NULL
+)
+RETURNS BOOLEAN AS $$
+DECLARE
+    v_s3_bucket TEXT := 'your-idp-archive-bucket';  -- ★ 要変更
+    v_s3_region TEXT := 'ap-northeast-1';           -- ★ 要変更
+    v_s3_path TEXT;
+    v_row_count BIGINT;
+    v_result RECORD;
+BEGIN
+    -- 行数取得
+    EXECUTE format('SELECT COUNT(*) FROM %I.%I', p_schema_name, p_table_name)
+    INTO v_row_count;
+
+    IF v_row_count = 0 THEN
+        RAISE NOTICE 'Table %.% is empty, skipping export', p_schema_name, p_table_name;
+        RETURN TRUE;
+    END IF;
+
+    -- S3パスの構築（Hive形式パーティション）
+    v_s3_path := COALESCE(p_destination_path, archive.build_s3_path(p_table_name));
+
+    RAISE NOTICE 'Exporting %.% (% rows) to s3://%/%',
+        p_schema_name, p_table_name, v_row_count, v_s3_bucket, v_s3_path;
+
+    -- S3にエクスポート
+    SELECT * INTO v_result FROM aws_s3.query_export_to_s3(
+        format('SELECT * FROM %I.%I', p_schema_name, p_table_name),
+        aws_commons.create_s3_uri(v_s3_bucket, v_s3_path, v_s3_region),
+        options := 'FORMAT CSV, HEADER TRUE'
+    );
+
+    RAISE NOTICE 'Exported % rows, % files, % bytes to S3',
+        v_result.rows_uploaded, v_result.files_uploaded, v_result.bytes_uploaded;
+
+    RETURN TRUE;
+
+EXCEPTION WHEN OTHERS THEN
+    RAISE WARNING 'S3 export failed for %.%: %', p_schema_name, p_table_name, SQLERRM;
+    RETURN FALSE;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION archive.export_partition_to_external_storage(TEXT, TEXT, TEXT) IS
+'Export archived partition to AWS S3. Uses aws_s3 extension for direct export.';
+```
+
+**重要**: `v_s3_bucket` と `v_s3_region` を実際の値に変更してください。
+
+#### 2.7.7 エクスポートテスト
+
+```sql
+-- idpserver データベースに接続
+
+-- archiveスキーマの状態確認
+SELECT * FROM archive.get_archive_status();
+
+-- dry runでエクスポート対象を確認
+SELECT * FROM archive.process_archived_partitions(p_dry_run := TRUE);
+
+-- 単一テーブルのエクスポートテスト（テスト用パーティションがある場合）
+-- SELECT archive.export_partition_to_external_storage('archive', 'security_event_p20250101');
+
+-- S3にアップロードされたか確認
+-- aws s3 ls s3://your-idp-archive-bucket/security_event/ --recursive
+```
+
+#### 2.7.8 S3バケットポリシー（オプション）
+
+VPCエンドポイント経由のアクセスのみに制限する場合：
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowVPCEndpointAccess",
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": "s3:*",
+      "Resource": [
+        "arn:aws:s3:::your-idp-archive-bucket",
+        "arn:aws:s3:::your-idp-archive-bucket/*"
+      ],
+      "Condition": {
+        "StringNotEquals": {
+          "aws:sourceVpce": "vpce-xxxxxxxxxx"
+        }
+      }
+    }
+  ]
+}
+```
+
+---
+
 ## 3. 動作確認
 
 ### 3.1 RLS設定確認
@@ -532,6 +792,15 @@ LIMIT 10;
 - [ ] **3.1**: RLS 設定確認
 - [ ] **3.2**: テナント分離動作確認
 - [ ] **3.3**: pg_partman 設定確認
+
+### オプション設定項目（AWS環境）
+
+- [ ] **2.7**: S3バケット作成・ライフサイクルポリシー設定
+- [ ] **2.7**: IAMロール作成・S3アクセスポリシー設定
+- [ ] **2.7**: RDS/AuroraへのIAMロール関連付け
+- [ ] **2.7**: aws_s3 拡張インストール
+- [ ] **2.7**: エクスポート関数の設定（スタブ関数の置き換え）
+- [ ] **2.7**: エクスポートテスト実行
 
 ---
 
