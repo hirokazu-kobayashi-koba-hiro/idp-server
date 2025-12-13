@@ -16,7 +16,9 @@
 
 package org.idp.server.adapters.springboot.application.event;
 
+import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.security.SecurityEvent;
@@ -28,9 +30,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class SecurityEventRetryScheduler {
 
+  private static final int MAX_RETRIES = 3;
+
   LoggerWrapper log = LoggerWrapper.getLogger(SecurityEventRetryScheduler.class);
 
   Queue<SecurityEvent> retryQueue = new ConcurrentLinkedQueue<>();
+  Map<String, Integer> retryCountMap = new ConcurrentHashMap<>();
 
   SecurityEventApi securityEventApi;
 
@@ -40,18 +45,42 @@ public class SecurityEventRetryScheduler {
 
   public void enqueue(SecurityEvent securityEvent) {
     retryQueue.add(securityEvent);
+    retryCountMap.putIfAbsent(securityEvent.identifier().value(), 0);
   }
 
   @Scheduled(fixedDelay = 60_000)
   public void resendFailedEvents() {
+    int queueSize = retryQueue.size();
+    if (queueSize > 0) {
+      log.info("processing security event retry queue: {} events", queueSize);
+    }
+
     while (!retryQueue.isEmpty()) {
       SecurityEvent securityEvent = retryQueue.poll();
+      String eventId = securityEvent.identifier().value();
+
       try {
-        log.info("retry event: {}", securityEvent.toMap());
+        int currentAttempt = retryCountMap.getOrDefault(eventId, 0) + 1;
+        log.info(
+            "retry security event (attempt {}/{}): {}",
+            currentAttempt,
+            MAX_RETRIES,
+            securityEvent.toMap());
         securityEventApi.handle(securityEvent.tenantIdentifier(), securityEvent);
+        retryCountMap.remove(eventId);
       } catch (Exception e) {
-        log.error("retry event error: {}", securityEvent.toMap());
-        retryQueue.add(securityEvent);
+        int count = retryCountMap.merge(eventId, 1, Integer::sum);
+        if (count < MAX_RETRIES) {
+          log.warn(
+              "retry security event scheduled ({}/{}): {}",
+              count,
+              MAX_RETRIES,
+              securityEvent.identifier().value());
+          retryQueue.add(securityEvent);
+        } else {
+          log.error("max retries exceeded, dropping security event: {}", securityEvent.toMap(), e);
+          retryCountMap.remove(eventId);
+        }
       }
     }
   }

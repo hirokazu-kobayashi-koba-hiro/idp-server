@@ -52,15 +52,21 @@ public class AsyncConfig {
     executor.setThreadNamePrefix("SecurityEvent-Async-");
 
     executor.setRejectedExecutionHandler(
-        (r, executor1) -> {
-          logger.warn("Rejected Execution Handler");
-
+        (r, executorRef) -> {
           if (r instanceof SecurityEventRunnable) {
             SecurityEvent securityEvent = ((SecurityEventRunnable) r).getEvent();
+            logger.warn(
+                "security event rejected, queuing for retry: id={}, type={}, pool=[active={}, queue={}, completed={}]",
+                securityEvent.identifier().value(),
+                securityEvent.type().value(),
+                executor.getActiveCount(),
+                executor.getThreadPoolExecutor().getQueue().size(),
+                executor.getThreadPoolExecutor().getCompletedTaskCount());
             securityEventRetryScheduler.enqueue(securityEvent);
           } else {
-
-            logger.error("unknown EventRunnable" + r.getClass().getName());
+            logger.error(
+                "unknown runnable rejected from security event executor: {}",
+                r.getClass().getName());
           }
         });
 
@@ -77,15 +83,21 @@ public class AsyncConfig {
     executor.setThreadNamePrefix("UserLifecycleEvent-Async-");
 
     executor.setRejectedExecutionHandler(
-        (r, executor1) -> {
-          logger.warn("Rejected Execution Handler");
-
+        (r, executorRef) -> {
           if (r instanceof UserLifecycleEventRunnable) {
             UserLifecycleEvent userLifecycleEvent = ((UserLifecycleEventRunnable) r).getEvent();
+            logger.warn(
+                "user lifecycle event rejected, queuing for retry: type={}, user={}, pool=[active={}, queue={}, completed={}]",
+                userLifecycleEvent.lifecycleType().name(),
+                userLifecycleEvent.user().sub(),
+                executor.getActiveCount(),
+                executor.getThreadPoolExecutor().getQueue().size(),
+                executor.getThreadPoolExecutor().getCompletedTaskCount());
             userLifecycleEventRetryScheduler.enqueue(userLifecycleEvent);
           } else {
-
-            logger.error("unknown EventRunnable" + r.getClass().getName());
+            logger.error(
+                "unknown runnable rejected from user lifecycle event executor: {}",
+                r.getClass().getName());
           }
         });
 
@@ -102,15 +114,20 @@ public class AsyncConfig {
     executor.setThreadNamePrefix("AuditLog-Async-");
 
     executor.setRejectedExecutionHandler(
-        (r, executor1) -> {
-          logger.warn("AuditLog Rejected Execution Handler");
-
+        (r, executorRef) -> {
           if (r instanceof AuditLogRunnable) {
             AuditLog auditLog = ((AuditLogRunnable) r).getAuditLog();
-            logger.error("Failed to process audit log asynchronously: {}", auditLog.id());
+            logger.warn(
+                "audit log rejected, queuing for retry: id={}, type={}, pool=[active={}, queue={}, completed={}]",
+                auditLog.id(),
+                auditLog.type(),
+                executor.getActiveCount(),
+                executor.getThreadPoolExecutor().getQueue().size(),
+                executor.getThreadPoolExecutor().getCompletedTaskCount());
             auditLogRetryScheduler.enqueue(auditLog);
           } else {
-            logger.error("unknown AuditLog EventRunnable: {}", r.getClass().getName());
+            logger.error(
+                "unknown runnable rejected from audit log executor: {}", r.getClass().getName());
           }
         });
 
