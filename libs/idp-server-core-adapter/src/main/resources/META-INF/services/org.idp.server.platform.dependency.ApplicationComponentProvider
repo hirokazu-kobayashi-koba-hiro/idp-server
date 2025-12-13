@@ -53,10 +53,10 @@ org.idp.server.core.adapters.datasource.authentication.policy.command.Authentica
 org.idp.server.core.adapters.datasource.authentication.policy.query.AuthenticationPolicyConfigurationQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.identity.permission.query.PermissionQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.identity.role.query.RoleQueryDataSourceProvider
-org.idp.server.core.adapters.datasource.statistics.command.TenantStatisticsDataCommandDataSourceProvider
-org.idp.server.core.adapters.datasource.statistics.query.TenantStatisticsDataQueryDataSourceProvider
-org.idp.server.core.adapters.datasource.statistics.command.DailyActiveUserCommandDataSourceProvider
-org.idp.server.core.adapters.datasource.statistics.command.MonthlyActiveUserCommandDataSourceProvider
-org.idp.server.core.adapters.datasource.statistics.command.YearlyActiveUserCommandDataSourceProvider
-org.idp.server.core.adapters.datasource.statistics.command.TenantYearlyStatisticsCommandDataSourceProvider
-org.idp.server.core.adapters.datasource.statistics.query.TenantYearlyStatisticsQueryDataSourceProvider
+org.idp.server.core.adapters.datasource.statistics.command.monthly.TenantStatisticsDataCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.statistics.query.monthly.TenantStatisticsDataQueryDataSourceProvider
+org.idp.server.core.adapters.datasource.statistics.command.daily.DailyActiveUserCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.statistics.command.monthly.MonthlyActiveUserCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.statistics.command.yearly.YearlyActiveUserCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.statistics.command.yearly.TenantYearlyStatisticsCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.statistics.query.yearly.TenantYearlyStatisticsQueryDataSourceProvider
