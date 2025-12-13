@@ -184,7 +184,9 @@ services:
       - "8445:8443"   # HTTPS + mTLS
 
   postgres-primary:
-    image: postgres:15
+    build:
+      context: ./docker/postgresql/primary
+    image: idp-postgres-primary:15
     container_name: postgres-primary
     environment:
       - POSTGRES_USER=idpserver
@@ -195,10 +197,11 @@ services:
       - DB_OWNER_PASSWORD=${DB_OWNER_PASSWORD?Database owner password is required. Set DB_OWNER_PASSWORD environment variable.}
     ports:
       - "5432:5432"
-    command: [ "postgres", "-c", "shared_preload_libraries=pg_stat_statements" ]
+    command: [ "postgres", "-c", "shared_preload_libraries=pg_stat_statements,pg_cron", "-c", "cron.database_name=postgres" ]
     volumes:
       - ./libs/idp-server-database/postgresql/init/00-init-app-user.sh:/docker-entrypoint-initdb.d/00-init-app-user.sh
       - ./libs/idp-server-database/postgresql/init/01-add-bypassrls.sh:/docker-entrypoint-initdb.d/01-add-bypassrls.sh
+      - ./libs/idp-server-database/postgresql/init/02-init-partman.sh:/docker-entrypoint-initdb.d/02-init-partman.sh
       - ./docker/postgresql/primary/init-replication.sh:/docker-entrypoint-initdb.d/99-init-replication.sh
       - postgres_primary_data:/var/lib/postgresql/data
     healthcheck:
@@ -283,6 +286,24 @@ services:
       DB_USER_NAME: ${DB_OWNER_USER?Database owner user is required. Set DB_OWNER_USER environment variable.}
       DB_PASSWORD: ${DB_OWNER_PASSWORD?Database owner password is required. Set DB_OWNER_PASSWORD environment variable.}
     command: [ "migrate" ]    # info / repair / clean
+
+  pg-cron-setup:
+    build:
+      context: ./libs/idp-server-database
+      dockerfile: Dockerfile-pg-cron-setup
+    image: idp-pg-cron-setup:latest
+    restart: "no"
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+      flyway-migrator:
+        condition: service_completed_successfully
+    environment:
+      PGHOST: postgres-primary
+      PGPORT: 5432
+      POSTGRES_DB: idpserver
+      DB_USER_NAME: ${DB_OWNER_USER?Database owner user is required. Set DB_OWNER_USER environment variable.}
+      DB_PASSWORD: ${DB_OWNER_PASSWORD?Database owner password is required. Set DB_OWNER_PASSWORD environment variable.}
 
   redis:
     image: redis:7.2-alpine

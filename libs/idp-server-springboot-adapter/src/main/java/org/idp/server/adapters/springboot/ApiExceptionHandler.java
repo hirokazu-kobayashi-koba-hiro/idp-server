@@ -17,6 +17,7 @@
 package org.idp.server.adapters.springboot;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.format.DateTimeParseException;
 import java.util.Map;
 import org.idp.server.platform.datasource.SqlDuplicateKeyException;
 import org.idp.server.platform.exception.*;
@@ -134,6 +135,18 @@ public class ApiExceptionHandler {
             "invalid_request",
             "error_description",
             "The request is malformed or contains invalid parameters"),
+        HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(DateTimeParseException.class)
+  public ResponseEntity<?> handleException(DateTimeParseException exception) {
+    log.warn(exception.getMessage(), exception);
+    return new ResponseEntity<>(
+        Map.of(
+            "error",
+            "invalid_request",
+            "error_description",
+            "Invalid date format. Expected format: YYYY-MM-DD (e.g., 2025-11-24)"),
         HttpStatus.BAD_REQUEST);
   }
 

@@ -16,13 +16,17 @@
 
 package org.idp.server.platform.multi_tenancy.tenant;
 
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
+import org.idp.server.platform.log.LoggerWrapper;
 
 public class TenantAttributes {
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(TenantAttributes.class);
+
   Map<String, Object> values;
 
   public TenantAttributes() {
@@ -80,5 +84,18 @@ public class TenantAttributes {
       return defaultValue;
     }
     return (List<String>) values.get(key);
+  }
+
+  public ZoneId timezone() {
+    String timezoneStr = optValueAsString("timezone", "UTC");
+    try {
+      return ZoneId.of(timezoneStr);
+    } catch (Exception e) {
+      log.warn(
+          "Invalid timezone value '{}', falling back to UTC. Error: {}",
+          timezoneStr,
+          e.getMessage());
+      return ZoneId.of("UTC");
+    }
   }
 }
