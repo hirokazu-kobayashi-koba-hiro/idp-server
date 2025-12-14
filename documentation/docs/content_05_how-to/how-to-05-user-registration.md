@@ -608,6 +608,7 @@ curl -X POST "http://localhost:8080/${PUBLIC_TENANT_ID}/v1/authorizations/${AUTH
 - [How-to: Federation設定](./how-to-11-federation-setup.md) - Google、Azure AD連携
 
 ### パスワード管理
+- [How-to: パスワード管理](./how-to-06-password-management.md) - パスワード変更・リセット
 - [Concept: Password Policy](../content_03_concepts/concept-20-password-policy.md) - パスワードポリシー詳細
 
 ---
