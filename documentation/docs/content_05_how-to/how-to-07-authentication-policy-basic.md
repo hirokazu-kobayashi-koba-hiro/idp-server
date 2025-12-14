@@ -696,8 +696,8 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
 - [How-to: MFA設定](./how-to-08-mfa-setup.md)
 
 ### 関連概念
-- [Concept: 認証ポリシー](../content_03_concepts/concept-05-authentication-policy.md)
-- [Concept: MFA](../content_03_concepts/concept-08-mfa.md)
+- [Concept: 認証ポリシー](../content_03_concepts/concept-06-authentication-policy.md)
+- [Concept: MFA](../content_03_concepts/concept-07-mfa.md)
 
 ---
 

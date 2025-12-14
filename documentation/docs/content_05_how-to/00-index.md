@@ -306,8 +306,8 @@ scope=openid+profile+email"
 
 ### コンセプト理解
 - [マルチテナント](../content_03_concepts/concept-01-multi-tenant.md) - テナントの概念
-- [認証ポリシー](../content_03_concepts/concept-05-authentication-policy.md) - ポリシーの仕組み
-- [トークン管理](../content_03_concepts/concept-06-token-management.md) - トークン戦略
+- [認証ポリシー](../content_03_concepts/concept-06-authentication-policy.md) - ポリシーの仕組み
+- [トークン管理](../content_03_concepts/concept-13-token-management.md) - トークン戦略
 
 ### API仕様
 - [OpenAPI仕様](../../openapi/swagger-control-plane-ja.yaml) - Management API詳細

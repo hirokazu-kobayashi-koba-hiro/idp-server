@@ -277,7 +277,7 @@ RFC標準に加えて、独自の拡張機能を提供：
 
 ### Concepts
 - [Concept 01: マルチテナント](concept-01-multi-tenant.md) - Tenant-Client関係
-- [Concept 18: IDトークン](concept-18-id-token.md) - IDトークン仕様
+- [Concept 18: IDトークン](concept-12-id-token.md) - IDトークン仕様
 
 ### 技術詳細
 - [AI開発者向け: Core - OAuth](../content_10_ai_developer/ai-11-core.md#oauth---oauth-20コア) - OAuth 2.0実装詳細

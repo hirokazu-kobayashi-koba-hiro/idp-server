@@ -175,7 +175,7 @@ idp-serverはJSON構造化ログを出力します。以下の3種類のログ�
 | Audit Log | 操作履歴（コンプライアンス用） |
 | Security Event | セキュリティイベント（外部連携可能） |
 
-詳細は [アプリケーションログ](../content_03_concepts/concept-17-application-logging.md) を参照してください。
+詳細は [アプリケーションログ](../content_03_concepts/concept-21-application-logging.md) を参照してください。
 
 ---
 

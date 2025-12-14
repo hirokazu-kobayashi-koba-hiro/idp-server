@@ -834,7 +834,7 @@ JsonWebKeys jsonWebKeys = JsonWebKeys.parse(jwks);
 ### 📖 関連ドキュメント
 
 - [AI開発者向け: Platform - JOSE](../content_10_ai_developer/ai-12-platform.md#jose---jwtjwsjwe処理)
-- [実装ガイド: ID Token生成](./../../content_03_concepts/concept-18-id-token.md) - at_hash/c_hash計算
+- [実装ガイド: ID Token生成](./../../content_03_concepts/concept-12-id-token.md) - at_hash/c_hash計算
 
 ### 🔗 詳細情報
 

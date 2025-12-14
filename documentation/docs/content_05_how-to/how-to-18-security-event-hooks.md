@@ -572,13 +572,13 @@ SecurityEventHook executed: type=Webhook, event=login_failure, status=RETRY (att
 
 ### 関連機能
 - [How-to: Identity Verification](./how-to-16-identity-verification-application.md) - 本人確認申請
-- [Concept: Security Events](../content_03_concepts/concept-11-security-events.md)
+- [Concept: Security Events](../content_03_concepts/concept-17-security-events.md)
 
 ---
 
 ## 関連ドキュメント
 
-- [Concept: Audit & Compliance](../content_03_concepts/concept-13-audit-compliance.md) - 監査ログ
+- [Concept: Audit & Compliance](../content_03_concepts/concept-20-audit-compliance.md) - 監査ログ
 - [Implementation Guide: HTTP Request Executor](../content_06_developer-guide/04-implementation-guides/impl-16-http-request-executor.md) - リトライ機構
 - [API Reference](../content_07_reference/api-reference.md) - Management API仕様
 

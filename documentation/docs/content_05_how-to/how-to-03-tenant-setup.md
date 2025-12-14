@@ -585,7 +585,7 @@ curl -X PUT ".../authorization-server" -d '{...}'
 
 - [認可コードフロー](../content_04_protocols/protocol-01-authorization-code-flow.md) - プロトコル仕様詳細
 - [マルチテナント](../content_03_concepts/concept-01-multi-tenant.md) - テナント概念の理解
-- [組織管理](../content_03_concepts/concept-04-enterprise-id.md) - 組織レベルAPI概要
+- [組織管理](../content_03_concepts/concept-16-enterprise-id.md) - 組織レベルAPI概要
 
 ---
 

@@ -6,9 +6,9 @@
 
 このドキュメントを理解するには、以下の基礎知識が役立ちます：
 
-- [身元確認済みID](concept-03-id-verified.md) - 身元確認プロセスの概要
-- [外部サービス連携](concept-16-external-service-integration.md) - 外部API連携の仕組み
-- [認証ポリシー](concept-05-authentication-policy.md) - 認証フローの設定
+- [身元確認済みID](concept-15-id-verified.md) - 身元確認プロセスの概要
+- [外部サービス連携](concept-18-external-service-integration.md) - 外部API連携の仕組み
+- [認証ポリシー](concept-06-authentication-policy.md) - 認証フローの設定
 
 ---
 

@@ -122,18 +122,18 @@ Claude Code、GitHub Copilot等のAI支援ツールでコード生成精度を�
 
 | 機能 | 概念 | How-to | 開発者向け |
 |------|------|--------|-----------|
-| 認証ポリシー | [concept-05](./content_03_concepts/concept-05-authentication-policy.md) | [基礎](./content_05_how-to/how-to-07-authentication-policy-basic.md) / [詳細](./content_05_how-to/how-to-10-authentication-policy-advanced.md) | [impl-05](./content_06_developer-guide/04-implementation-guides/impl-05-authentication-policy.md) |
-| MFA（多要素認証） | [concept-08](./content_03_concepts/concept-08-mfa.md) | [MFA設定](./content_05_how-to/how-to-08-mfa-setup.md) | - |
-| パスワードポリシー | [concept-20](./content_03_concepts/concept-20-password-policy.md) | - | [config/password](./content_06_developer-guide/05-configuration/authn/password.md) |
+| 認証ポリシー | [concept-06](./content_03_concepts/concept-06-authentication-policy.md) | [基礎](./content_05_how-to/how-to-07-authentication-policy-basic.md) / [詳細](./content_05_how-to/how-to-10-authentication-policy-advanced.md) | [impl-05](./content_06_developer-guide/04-implementation-guides/impl-05-authentication-policy.md) |
+| MFA（多要素認証） | [concept-07](./content_03_concepts/concept-07-mfa.md) | [MFA設定](./content_05_how-to/how-to-08-mfa-setup.md) | - |
+| パスワードポリシー | [concept-05](./content_03_concepts/concept-05-password-policy.md) | - | [config/password](./content_06_developer-guide/05-configuration/authn/password.md) |
 | WebAuthn/FIDO2 | [basic-16~21](./content_03_concepts/basic/basic-16-fido2-webauthn-passwordless.md) | - | [config/fido2](./content_06_developer-guide/05-configuration/authn/fido2.md) |
 
 ### トークン・セッション
 
 | 機能 | 概念 | How-to | 開発者向け |
 |------|------|--------|-----------|
-| トークン管理 | [concept-06](./content_03_concepts/concept-06-token-management.md) | [トークン戦略](./content_05_how-to/how-to-09-token-strategy.md) | - |
-| セッション管理 | [concept-07](./content_03_concepts/concept-07-session-management.md) | - | [impl-18](./content_06_developer-guide/04-implementation-guides/impl-18-spring-session.md) |
-| IDトークン | [concept-18](./content_03_concepts/concept-18-id-token.md) | - | - |
+| トークン管理 | [concept-13](./content_03_concepts/concept-13-token-management.md) | [トークン戦略](./content_05_how-to/how-to-09-token-strategy.md) | - |
+| セッション管理 | [concept-08](./content_03_concepts/concept-08-session-management.md) | - | [impl-18](./content_06_developer-guide/04-implementation-guides/impl-18-spring-session.md) |
+| IDトークン | [concept-12](./content_03_concepts/concept-12-id-token.md) | - | - |
 
 ### マルチテナント・組織
 
@@ -141,29 +141,29 @@ Claude Code、GitHub Copilot等のAI支援ツールでコード生成精度を�
 |------|------|--------|-----------|
 | マルチテナント | [concept-01](./content_03_concepts/concept-01-multi-tenant.md) | [組織初期化](./content_05_how-to/how-to-02-organization-initialization.md) | [impl-07](./content_06_developer-guide/04-implementation-guides/impl-07-multi-tenancy.md) |
 | テナント設定 | - | [テナント設定](./content_05_how-to/how-to-03-tenant-setup.md) | [config/tenant](./content_06_developer-guide/05-configuration/tenant.md) |
-| クライアント | [concept-19](./content_03_concepts/concept-19-client.md) | [クライアント登録](./content_05_how-to/how-to-04-client-registration.md) | [config/client](./content_06_developer-guide/05-configuration/client.md) |
+| クライアント | [concept-03](./content_03_concepts/concept-03-client.md) | [クライアント登録](./content_05_how-to/how-to-04-client-registration.md) | [config/client](./content_06_developer-guide/05-configuration/client.md) |
 
 ### 身元確認・eKYC
 
 | 機能 | 概念 | How-to | 開発者向け |
 |------|------|--------|-----------|
-| 身元確認済みID | [concept-03](./content_03_concepts/concept-03-id-verified.md) | [ガイド](./content_05_how-to/how-to-15-identity-verification-guide.md) / [申込み](./content_05_how-to/how-to-16-identity-verification-application.md) | [impl-07](./content_06_developer-guide/03-application-plane/07-identity-verification.md) |
-| カスタムクレーム | [concept-09](./content_03_concepts/concept-09-custom-claims.md) | - | [impl-21](./content_06_developer-guide/04-implementation-guides/impl-21-scope-claims-management.md) |
+| 身元確認済みID | [concept-15](./content_03_concepts/concept-15-id-verified.md) | [ガイド](./content_05_how-to/how-to-15-identity-verification-guide.md) / [申込み](./content_05_how-to/how-to-16-identity-verification-application.md) | [impl-07](./content_06_developer-guide/03-application-plane/07-identity-verification.md) |
+| カスタムクレーム | [concept-14](./content_03_concepts/concept-14-custom-claims.md) | - | [impl-21](./content_06_developer-guide/04-implementation-guides/impl-21-scope-claims-management.md) |
 
 ### 外部連携・フェデレーション
 
 | 機能 | 概念 | How-to | 開発者向け |
 |------|------|--------|-----------|
 | 外部IdP連携 | - | [Federation設定](./content_05_how-to/how-to-11-federation-setup.md) | [impl-08](./content_06_developer-guide/04-implementation-guides/impl-08-federation-provider.md) |
-| 外部サービス連携 | [concept-16](./content_03_concepts/concept-16-external-service-integration.md) | - | [impl-17](./content_06_developer-guide/04-implementation-guides/impl-17-external-integration.md) |
+| 外部サービス連携 | [concept-18](./content_03_concepts/concept-18-external-service-integration.md) | - | [impl-17](./content_06_developer-guide/04-implementation-guides/impl-17-external-integration.md) |
 
 ### セキュリティ・監査
 
 | 機能 | 概念 | How-to | 開発者向け |
 |------|------|--------|-----------|
-| セキュリティイベント | [concept-11](./content_03_concepts/concept-11-security-events.md) | [フック設定](./content_05_how-to/how-to-18-security-event-hooks.md) | [impl-15](./content_06_developer-guide/04-implementation-guides/impl-15-security-event-hooks.md) |
-| 監査ログ | [concept-13](./content_03_concepts/concept-13-audit-compliance.md) | - | [impl-25](./content_06_developer-guide/04-implementation-guides/impl-25-audit-logging.md) |
-| 認可許諾管理 | [concept-14](./content_03_concepts/concept-14-grant-management.md) | - | - |
+| セキュリティイベント | [concept-17](./content_03_concepts/concept-17-security-events.md) | [フック設定](./content_05_how-to/how-to-18-security-event-hooks.md) | [impl-15](./content_06_developer-guide/04-implementation-guides/impl-15-security-event-hooks.md) |
+| 監査ログ | [concept-20](./content_03_concepts/concept-20-audit-compliance.md) | - | [impl-25](./content_06_developer-guide/04-implementation-guides/impl-25-audit-logging.md) |
+| 認可許諾管理 | [concept-10](./content_03_concepts/concept-10-grant-management.md) | - | - |
 
 ---
 
@@ -174,7 +174,7 @@ Claude Code、GitHub Copilot等のAI支援ツールでコード生成精度を�
 | **Authorization Code Flow** | [protocol-01](./content_04_protocols/protocol-01-authorization-code-flow.md) | [impl](./content_06_developer-guide/03-application-plane/02-authorization-flow.md) |
 | **CIBA** | [protocol-02](./content_04_protocols/protocol-02-ciba-flow.md) / [protocol-04](./content_04_protocols/protocol-04-ciba-rar.md) | [impl](./content_06_developer-guide/03-application-plane/06-ciba-flow.md) |
 | **Token Introspection** | [protocol-03](./content_04_protocols/protocol-03-introspection.md) | - |
-| **FAPI** | [concept-22](./content_03_concepts/concept-22-fapi.md) / [protocol-05](./content_04_protocols/protocol-05-fapi-ciba.md) | [impl-22](./content_06_developer-guide/04-implementation-guides/impl-22-fapi-implementation.md) |
+| **FAPI** | [concept-11](./content_03_concepts/concept-11-fapi.md) / [protocol-05](./content_04_protocols/protocol-05-fapi-ciba.md) | [impl-22](./content_06_developer-guide/04-implementation-guides/impl-22-fapi-implementation.md) |
 | **PKCE** | - | [impl-23](./content_06_developer-guide/04-implementation-guides/impl-23-pkce-implementation.md) |
 
 ---
@@ -205,31 +205,31 @@ Claude Code、GitHub Copilot等のAI支援ツールでコード生成精度を�
 <details>
 <summary><strong>content_03_concepts - 概念・コンセプト (23)</strong></summary>
 
-| ファイル | タイトル |
-|---------|---------|
-| concept-01-multi-tenant.md | マルチテナント |
-| concept-02-id-management.md | ID（ユーザー）管理 |
-| concept-03-id-verified.md | 身元確認済みID |
-| concept-04-enterprise-id.md | エンタープライズID |
-| concept-05-authentication-policy.md | 認証ポリシー |
-| concept-06-token-management.md | トークン管理 |
-| concept-07-session-management.md | セッション管理 |
-| concept-08-mfa.md | 多要素認証（MFA） |
-| concept-09-custom-claims.md | カスタムクレーム・スコープ |
-| concept-10-control-plane.md | コントロールプレーン |
-| concept-11-security-events.md | セキュリティイベント・フック |
-| concept-12-authorization.md | 認可 |
-| concept-13-audit-compliance.md | 監査ログ |
-| concept-14-grant-management.md | 認可許諾管理 |
-| concept-15-operations.md | 運用・保守 |
-| concept-16-external-service-integration.md | 外部サービス連携 |
-| concept-17-application-logging.md | アプリケーションログ |
-| concept-18-id-token.md | IDトークン |
-| concept-19-client.md | クライアント |
-| concept-20-password-policy.md | パスワードポリシー |
-| concept-21-schema-validation.md | スキーマバリデーション |
-| concept-22-fapi.md | FAPI |
-| concept-23-tenant-statistics.md | テナント統計 |
+| # | ファイル | タイトル | カテゴリ |
+|---|---------|---------|---------|
+| 01 | concept-01-multi-tenant.md | マルチテナント | 基盤概念 |
+| 02 | concept-02-control-plane.md | コントロールプレーン | 基盤概念 |
+| 03 | concept-03-client.md | クライアント | 基盤概念 |
+| 04 | concept-04-id-management.md | ID（ユーザー）管理 | アイデンティティ管理 |
+| 05 | concept-05-password-policy.md | パスワードポリシー | アイデンティティ管理 |
+| 06 | concept-06-authentication-policy.md | 認証ポリシー | 認証・認可 |
+| 07 | concept-07-mfa.md | 多要素認証（MFA） | 認証・認可 |
+| 08 | concept-08-session-management.md | セッション管理 | 認証・認可 |
+| 09 | concept-09-authorization.md | 認可 | 認証・認可 |
+| 10 | concept-10-grant-management.md | 認可許諾管理 | 認証・認可 |
+| 11 | concept-11-fapi.md | FAPI | 認証・認可 |
+| 12 | concept-12-id-token.md | IDトークン | トークン・クレーム |
+| 13 | concept-13-token-management.md | トークン管理 | トークン・クレーム |
+| 14 | concept-14-custom-claims.md | カスタムクレーム・スコープ | トークン・クレーム |
+| 15 | concept-15-id-verified.md | 身元確認済みID | 高度なID機能 |
+| 16 | concept-16-enterprise-id.md | エンタープライズID | 高度なID機能 |
+| 17 | concept-17-security-events.md | セキュリティイベント・フック | セキュリティ・拡張 |
+| 18 | concept-18-external-service-integration.md | 外部サービス連携 | セキュリティ・拡張 |
+| 19 | concept-19-schema-validation.md | スキーマバリデーション | セキュリティ・拡張 |
+| 20 | concept-20-audit-compliance.md | 監査ログ | 運用・監視 |
+| 21 | concept-21-application-logging.md | アプリケーションログ | 運用・監視 |
+| 22 | concept-22-tenant-statistics.md | テナント統計 | 運用・監視 |
+| 23 | concept-23-operations.md | 運用・保守 | 運用・監視 |
 
 **basic/ (21)** - OAuth/OIDC/FIDO2基礎知識シリーズ
 
