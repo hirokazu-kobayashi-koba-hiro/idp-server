@@ -65,7 +65,8 @@ const sidebars = {
         "content_03_concepts/concept-19-client",
         "content_03_concepts/concept-20-password-policy",
         "content_03_concepts/concept-21-schema-validation",
-        "content_03_concepts/concept-22-tenant-statistics",
+        "content_03_concepts/concept-22-fapi",
+        "content_03_concepts/concept-23-tenant-statistics",
         {
           type: "category",
           label: "基礎（読み物）",

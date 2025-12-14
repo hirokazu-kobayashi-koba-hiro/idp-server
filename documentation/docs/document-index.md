@@ -229,7 +229,7 @@ Claude Code、GitHub Copilot等のAI支援ツールでコード生成精度を�
 | concept-20-password-policy.md | パスワードポリシー |
 | concept-21-schema-validation.md | スキーマバリデーション |
 | concept-22-fapi.md | FAPI |
-| concept-22-tenant-statistics.md | テナント統計 |
+| concept-23-tenant-statistics.md | テナント統計 |
 
 **basic/ (21)** - OAuth/OIDC/FIDO2基礎知識シリーズ
 
@@ -294,12 +294,11 @@ Claude Code、GitHub Copilot等のAI支援ツールでコード生成精度を�
 </details>
 
 <details>
-<summary><strong>content_07_reference - APIリファレンス (5)</strong></summary>
+<summary><strong>content_07_reference - APIリファレンス (4)</strong></summary>
 
 | ファイル | タイトル |
 |---------|---------|
 | api-reference.md | API概要 |
-| api-reference/oidc.md | OIDC API |
 | api-reference/api-authentication-device-ja.md | 認証デバイスAPI |
 | api-reference/api-internal-ja.md | 内部API |
 | api-reference/api-resource-owner-ja.md | リソースオーナーAPI |
@@ -326,18 +325,17 @@ Claude Code、GitHub Copilot等のAI支援ツールでコード生成精度を�
 </details>
 
 <details>
-<summary><strong>content_09_project - プロジェクト情報 (10)</strong></summary>
+<summary><strong>content_09_project - プロジェクト情報 (7)</strong></summary>
 
 | ファイル | タイトル |
 |---------|---------|
-| project-01-faq.md | FAQ |
+| project-01-faq.md | FAQ（よくある質問） |
 | project-02-roadmap.md | ロードマップ |
 | project-03-contributing.md | コントリビュートガイド |
 | project-04-license.md | ライセンス |
 | analytics-statistics-design.md | 統計・分析機能設計 |
 | control-plane-separation-design.md | Control Plane分離設計 |
 | security-event-pubsub-architecture.md | セキュリティイベントPub/Sub設計 |
-| unit-testing-*.md | ユニットテスト戦略 |
 
 </details>
 
@@ -357,11 +355,13 @@ Claude Code、GitHub Copilot等のAI支援ツールでコード生成精度を�
 </details>
 
 <details>
-<summary><strong>content_20_testing - テスト (1)</strong></summary>
+<summary><strong>content_20_testing - テスト (3)</strong></summary>
 
 | ファイル | タイトル |
 |---------|---------|
 | e2e-test-coverage.md | E2Eテストカバレッジ |
+| unit-testing-strategy-by-module.md | モジュール別ユニットテスト戦略 |
+| unit-testing-detailed-class-lists.md | クラス別テスト一覧 |
 
 </details>
 
