@@ -6,7 +6,7 @@
 
 このドキュメントを理解するには、以下の基礎知識が役立ちます：
 
-- [コントロールプレーン](concept-02-control-plane.md) - Management APIの概要
+- [コントロールプレーン](../01-foundation/concept-02-control-plane.md) - Management APIの概要
 - [監査ログ](concept-20-audit-compliance.md) - 監査証跡の保持
 
 ---
@@ -114,8 +114,8 @@ GET /actuator/health
 ## 関連ドキュメント
 
 - [監査ログ](concept-20-audit-compliance.md) - 監査証跡、データ保持ポリシー
-- [コントロールプレーン](concept-02-control-plane.md) - Management API、System Administrator権限
-- [運用ガイダンス](../content_08_ops/commercial-deployment/05-operational-guidance.md) - 詳細な運用手順、トラブルシューティング
+- [コントロールプレーン](../01-foundation/concept-02-control-plane.md) - Management API、System Administrator権限
+- [運用ガイダンス](../../content_08_ops/commercial-deployment/05-operational-guidance.md) - 詳細な運用手順、トラブルシューティング
 
 ---
 

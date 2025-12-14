@@ -975,7 +975,7 @@ scope=read を要求
 
 ## 関連ドキュメント
 
-- [Concept: 認証ポリシー](../content_03_concepts/concept-06-authentication-policy.md) - 認証ポリシー概念
+- [Concept: 認証ポリシー](../content_03_concepts/03-authentication-authorization/concept-06-authentication-policy.md) - 認証ポリシー概念
 - [Developer Guide: Authentication実装](../content_06_developer-guide/03-application-plane/04-authentication.md) - 実装詳細
 - [Implementation Guide: Authentication Policy](../content_06_developer-guide/04-implementation-guides/impl-05-authentication-policy.md) - 内部実装
 

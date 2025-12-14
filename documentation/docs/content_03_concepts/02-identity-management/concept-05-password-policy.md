@@ -435,10 +435,10 @@ NIST SP 800-63Bは、**定期的なパスワード変更を非推奨**として�
 
 ## 関連ドキュメント
 
-- [認証ポリシー](concept-06-authentication-policy.md) - 認証方式の制御
-- [多要素認証（MFA）](concept-07-mfa.md) - パスワード以外の認証要素
-- [セキュリティイベント](concept-17-security-events.md) - イベント管理
-- [マルチテナント](concept-01-multi-tenant.md) - テナントごとの設定
+- [認証ポリシー](../03-authentication-authorization/concept-06-authentication-policy.md) - 認証方式の制御
+- [多要素認証（MFA）](../03-authentication-authorization/concept-07-mfa.md) - パスワード以外の認証要素
+- [セキュリティイベント](../06-security-extensions/concept-17-security-events.md) - イベント管理
+- [マルチテナント](../01-foundation/concept-01-multi-tenant.md) - テナントごとの設定
 
 ## 参考文献
 

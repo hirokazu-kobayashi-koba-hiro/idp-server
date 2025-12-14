@@ -917,8 +917,8 @@ curl "..."  # いきなり本番実行
 - [how-to-03 クライアント登録](./how-to-04-client-registration.md) - アプリケーションクライアント登録
 
 ### 関連ドキュメント
-- [Concept: エンタープライズID](../content_03_concepts/concept-16-enterprise-id.md) - 組織・テナント概念
-- [Concept: マルチテナント](../content_03_concepts/concept-01-multi-tenant.md) - マルチテナント設計
+- [Concept: エンタープライズID](../content_03_concepts/05-advanced-id/concept-16-enterprise-id.md) - 組織・テナント概念
+- [Concept: マルチテナント](../content_03_concepts/01-foundation/concept-01-multi-tenant.md) - マルチテナント設計
 - [Configuration: Tenant設定](../content_06_developer-guide/05-configuration/tenant.md) - テナント設定詳細
 
 ### 参考資料

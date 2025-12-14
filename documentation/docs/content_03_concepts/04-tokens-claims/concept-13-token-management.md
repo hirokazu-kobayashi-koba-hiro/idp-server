@@ -2,7 +2,7 @@
 
 idp-serverにおけるトークン管理の概念を説明します。
 
-> **基礎知識**: OAuth 2.0のトークンの種類については [OAuth 2.0のトークンの種類と用途](basic/basic-10-oauth2-token-types.md) を参照してください。
+> **基礎知識**: OAuth 2.0のトークンの種類については [OAuth 2.0のトークンの種類と用途](../basic/basic-10-oauth2-token-types.md) を参照してください。
 
 ## idp-serverのトークン管理でできること
 
@@ -50,9 +50,9 @@ idp-serverでは、Refresh Tokenは使用のたびに新しいトークンを発
 
 ## 関連ドキュメント
 
-- [トークン有効期限パターン](../content_05_how-to/how-to-09-token-strategy.md) - 具体的な設定例
-- [イントロスペクション](../content_04_protocols/protocol-03-introspection.md) - イントロスペクション仕様
-- [セッション管理](concept-08-session-management.md) - セッションとトークンの関係
+- [トークン有効期限パターン](../../content_05_how-to/how-to-09-token-strategy.md) - 具体的な設定例
+- [イントロスペクション](../../content_04_protocols/protocol-03-introspection.md) - イントロスペクション仕様
+- [セッション管理](../03-authentication-authorization/concept-08-session-management.md) - セッションとトークンの関係
 
 ## 参考仕様
 

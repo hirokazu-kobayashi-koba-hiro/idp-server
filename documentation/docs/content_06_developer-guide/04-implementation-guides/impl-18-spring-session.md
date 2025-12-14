@@ -467,7 +467,7 @@ Spring Session統合時の確認項目：
 ### 🔗 詳細情報
 
 - [AI開発者向け: Platform - Session](../content_10_ai_developer/ai-12-platform.md#session---セッション管理)
-- [Concepts: Session Management](../../content_03_concepts/concept-08-session-management.md)
+- [Concepts: Session Management](../../content_03_concepts/03-authentication-authorization/concept-08-session-management.md)
 - [Spring Session Documentation](https://spring.io/projects/spring-session)
 
 ---

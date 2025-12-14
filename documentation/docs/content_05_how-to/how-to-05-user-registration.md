@@ -559,7 +559,7 @@ curl -X POST "http://localhost:8080/${PUBLIC_TENANT_ID}/v1/authorizations/${AUTH
    }
    ```
 
-   詳細は [Concept: Password Policy](../content_03_concepts/concept-05-password-policy.md) を参照。
+   詳細は [Concept: Password Policy](../content_03_concepts/02-identity-management/concept-05-password-policy.md) を参照。
 
 2. **メール検証フロー**
 
@@ -609,14 +609,14 @@ curl -X POST "http://localhost:8080/${PUBLIC_TENANT_ID}/v1/authorizations/${AUTH
 
 ### パスワード管理
 - [How-to: パスワード管理](./how-to-06-password-management.md) - パスワード変更・リセット
-- [Concept: Password Policy](../content_03_concepts/concept-05-password-policy.md) - パスワードポリシー詳細
+- [Concept: Password Policy](../content_03_concepts/02-identity-management/concept-05-password-policy.md) - パスワードポリシー詳細
 
 ---
 
 ## 関連ドキュメント
 
-- [Concept: 認証ポリシー](../content_03_concepts/concept-06-authentication-policy.md) - 認証ポリシーの詳細
-- [Concept: Password Policy](../content_03_concepts/concept-05-password-policy.md) - パスワードポリシー詳細
+- [Concept: 認証ポリシー](../content_03_concepts/03-authentication-authorization/concept-06-authentication-policy.md) - 認証ポリシーの詳細
+- [Concept: Password Policy](../content_03_concepts/02-identity-management/concept-05-password-policy.md) - パスワードポリシー詳細
 - [Developer Guide: Authentication実装](../content_06_developer-guide/03-application-plane/04-authentication.md) - 開発者向け実装ガイド
 - [API Reference](../content_07_reference/api-reference.md) - Management API仕様
 

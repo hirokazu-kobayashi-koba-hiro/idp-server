@@ -130,9 +130,9 @@ JWTは「.（ドット）」で区切られた3つのパートからできてい
 | JWKSエンドポイント | ✅ 完全対応 | RFC 7517 JWK準拠 |
 | 鍵ローテーション | ✅ 完全対応 | 定期的な鍵更新対応 |
 | **IDトークン拡張** | | |
-| 標準クレーム | ✅ 完全対応 | [クレーム設定](../concept-04-id-management.md) |
+| 標準クレーム | ✅ 完全対応 | [クレーム設定](../02-identity-management/concept-04-id-management.md) |
 | カスタムクレーム | ✅ 完全対応 | プラグインで拡張可能 |
-| 身元確認済みクレーム | ✅ 完全対応 | [身元確認](../concept-15-id-verified.md) |
+| 身元確認済みクレーム | ✅ 完全対応 | [身元確認](../05-advanced-id/concept-15-id-verified.md) |
 
 ### idp-server独自JWT拡張
 

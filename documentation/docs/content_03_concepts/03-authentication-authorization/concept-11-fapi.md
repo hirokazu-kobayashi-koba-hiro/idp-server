@@ -77,7 +77,7 @@ idp-serverは、**リクエストされたスコープ**に基づいてFAPIプ�
 - Sender-constrained アクセストークン必須
 - aud claim必須（Issuer URL）
 
-**詳細ガイド**: [FAPI CIBA Profile - プロトコル仕様](../content_04_protocols/protocol-05-fapi-ciba.md)
+**詳細ガイド**: [FAPI CIBA Profile - プロトコル仕様](../../content_04_protocols/protocol-05-fapi-ciba.md)
 
 
 ## mTLS（Mutual TLS）によるトークンバインディング
@@ -260,9 +260,9 @@ FAPIは、**金融グレードのセキュリティを実現するOAuth/OIDC拡�
 
 ## 関連ドキュメント
 
-- [FAPI CIBA Profile - プロトコル仕様](../content_04_protocols/protocol-05-fapi-ciba.md)
-- [CIBA + FIDO-UAF](../content_05_how-to/how-to-12-ciba-flow-fido-uaf.md)
-- [クライアント設定](./concept-03-client.md)
+- [FAPI CIBA Profile - プロトコル仕様](../../content_04_protocols/protocol-05-fapi-ciba.md)
+- [CIBA + FIDO-UAF](../../content_05_how-to/how-to-12-ciba-flow-fido-uaf.md)
+- [クライアント設定](../01-foundation/concept-03-client.md)
 - [トークン管理](./concept-13-token-management.md)
 
 ## 参考仕様

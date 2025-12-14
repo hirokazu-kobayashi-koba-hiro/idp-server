@@ -186,9 +186,9 @@ DB接続エラーが発生した場合の調査。
 ## 関連ドキュメント
 
 - [監査ログ](concept-20-audit-compliance.md) - AuditLog、SecurityEvent、3種類のログの違い
-- [セキュリティイベント](concept-17-security-events.md) - SecurityEvent詳細
+- [セキュリティイベント](../06-security-extensions/concept-17-security-events.md) - SecurityEvent詳細
 - [運用・保守](concept-23-operations.md) - ヘルスチェック、メトリクス
-- [運用ガイダンス](../content_08_ops/commercial-deployment/05-operational-guidance.md) - ログパターン、トラブルシューティング
+- [運用ガイダンス](../../content_08_ops/commercial-deployment/05-operational-guidance.md) - ログパターン、トラブルシューティング
 
 ---
 

@@ -12,7 +12,7 @@
 - テナントコンテキスト管理の仕組み
 
 **前提知識**:
-- [concept-01: マルチテナント](../../content_03_concepts/concept-01-multi-tenant.md)の理解
+- [concept-01: マルチテナント](../../content_03_concepts/01-foundation/concept-01-multi-tenant.md)の理解
 - [Hexagonal Architecture](../../content_01_intro/tech-overview.md#アーキテクチャ)の基礎知識
 - Repository パターンの理解
 
@@ -628,7 +628,7 @@ stmt.execute("SELECT set_config('app.tenant_id', ?, true)");
 ## 🔗 関連ドキュメント
 
 **概念・基礎**:
-- [concept-01: マルチテナント](../../content_03_concepts/concept-01-multi-tenant.md) - マルチテナントの設計思想
+- [concept-01: マルチテナント](../../content_03_concepts/01-foundation/concept-01-multi-tenant.md) - マルチテナントの設計思想
 - [how-to-02: 組織初期化](../../content_05_how-to/how-to-02-organization-initialization.md) - 組織作成手順
 - [how-to-03: テナントセットアップ](../../content_05_how-to/how-to-03-tenant-setup.md) - テナント作成手順
 

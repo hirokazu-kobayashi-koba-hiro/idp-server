@@ -38,7 +38,7 @@ flowchart LR
 1. **セキュリティ**: 管理操作と認証処理の攻撃面を分離
 2. **責務分離**: 管理者権限と一般ユーザー権限を明確に分離
 
-**詳細**: [コントロールプレーン](../../content_03_concepts/concept-02-control-plane.md)
+**詳細**: [コントロールプレーン](../../content_03_concepts/01-foundation/concept-02-control-plane.md)
 
 ---
 

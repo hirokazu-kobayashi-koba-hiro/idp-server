@@ -200,8 +200,8 @@ flowchart LR
 ## 関連ドキュメント
 
 - [多要素認証（MFA）](concept-07-mfa.md) - MFA手段の種類と登録（予定）
-- [認証ポリシー設定ガイド](../content_06_developer-guide/04-implementation-guides/impl-05-authentication-policy.md) - 具体的な設定方法
-- [マルチテナント](concept-01-multi-tenant.md) - テナントごとの認証ポリシー設定
+- [認証ポリシー設定ガイド](../../content_06_developer-guide/04-implementation-guides/impl-05-authentication-policy.md) - 具体的な設定方法
+- [マルチテナント](../01-foundation/concept-01-multi-tenant.md) - テナントごとの認証ポリシー設定
 
 ## 参考仕様
 
