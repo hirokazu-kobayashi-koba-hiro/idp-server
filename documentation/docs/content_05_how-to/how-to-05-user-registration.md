@@ -609,7 +609,6 @@ curl -X POST "http://localhost:8080/${PUBLIC_TENANT_ID}/v1/authorizations/${AUTH
 
 ### パスワード管理
 - [Concept: Password Policy](../content_03_concepts/concept-20-password-policy.md) - パスワードポリシー詳細
-- [How-to: パスワード変更API](./how-to-06-password-change.md) - ユーザー自身によるパスワード変更
 
 ---
 
