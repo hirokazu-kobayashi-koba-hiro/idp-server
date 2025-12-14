@@ -99,6 +99,7 @@ export ADMIN_TOKEN=$(curl -sS -X POST 'http://localhost:8080/system/v1/tokens' \
 | 03 | [テナント設定](./how-to-03-tenant-setup.md)                    | 15分 | Authorization Server設定 |
 | 04 | [クライアント登録](./how-to-04-client-registration.md)           | 20分 | OAuth/OIDCクライアント登録 |
 | 05 | [ユーザー登録・認証](./how-to-05-user-registration.md)            | 15分 | 基本的な認証方式 |
+| 06 | [パスワード管理](./how-to-06-password-management.md)            | 10分 | パスワード変更・リセット |
 | 07 | [認証ポリシー（基礎）](./how-to-07-authentication-policy-basic.md) | 20分 | 認証要件の定義 |
 
 **完了後にできること**:
