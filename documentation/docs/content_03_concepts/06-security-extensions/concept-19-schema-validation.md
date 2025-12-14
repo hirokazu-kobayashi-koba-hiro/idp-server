@@ -6,9 +6,9 @@
 
 このドキュメントを理解するには、以下の基礎知識が役立ちます：
 
-- [身元確認済みID](concept-03-id-verified.md) - 身元確認プロセスの概要
-- [外部サービス連携](concept-16-external-service-integration.md) - 外部API連携の仕組み
-- [認証ポリシー](concept-05-authentication-policy.md) - 認証フローの設定
+- [身元確認済みID](../05-advanced-id/concept-15-id-verified.md) - 身元確認プロセスの概要
+- [外部サービス連携](concept-18-external-service-integration.md) - 外部API連携の仕組み
+- [認証ポリシー](../03-authentication-authorization/concept-06-authentication-policy.md) - 認証フローの設定
 
 ---
 
@@ -213,7 +213,7 @@ JsonSchemaValidator.validate()
   └─ 失敗 → 400 Bad Request + エラー詳細
 ```
 
-**詳細**: [初期登録設定ガイド](../content_06_developer-guide/05-configuration/authn/initial-registration.md)
+**詳細**: [初期登録設定ガイド](../../content_06_developer-guide/05-configuration/authn/initial-registration.md)
 
 ---
 
@@ -289,7 +289,7 @@ JsonSchemaValidator.validate(request, schema)
 }
 ```
 
-**詳細**: [身元確認申込みガイド](../content_05_how-to/how-to-16-identity-verification-application.md)
+**詳細**: [身元確認申込みガイド](../../content_05_how-to/how-to-16-identity-verification-application.md)
 
 ---
 
@@ -416,11 +416,11 @@ JSON Schemaは以下のような検証を宣言的に定義できます：
 ## 関連ドキュメント
 
 ### 設定方法
-- [初期登録設定](../content_06_developer-guide/05-configuration/authn/initial-registration.md) - JSON Schemaの詳細設定
-- [身元確認申込み](../content_05_how-to/how-to-16-identity-verification-application.md) - 申込みテンプレートでの活用
+- [初期登録設定](../../content_06_developer-guide/05-configuration/authn/initial-registration.md) - JSON Schemaの詳細設定
+- [身元確認申込み](../../content_05_how-to/how-to-16-identity-verification-application.md) - 申込みテンプレートでの活用
 
 ### API仕様
-- [リソースオーナー用API](../content_07_reference/api-reference/api-resource-owner-ja.md) - バリデーションエラーのレスポンス形式
+- [リソースオーナー用API](../../content_07_reference/api-reference/api-resource-owner-ja.md) - バリデーションエラーのレスポンス形式
 
 ### E2Eテスト
 - `e2e/src/tests/integration/ida/integration-04-jsonschema-validation-logging.test.js` - バリデーションログの動作確認

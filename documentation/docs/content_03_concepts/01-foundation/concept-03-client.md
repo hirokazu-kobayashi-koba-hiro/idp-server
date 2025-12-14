@@ -111,7 +111,7 @@ idp-serverは、RFC標準パラメータの組み合わせで代表的なユー�
 - `grant_types`: `authorization_code`, `refresh_token`
 - `application_type`: `web`
 
-**詳細設定**: [Developer Guide: Webアプリケーション設定](../content_06_developer-guide/05-configuration/client.md#1-webアプリケーション標準)
+**詳細設定**: [Developer Guide: Webアプリケーション設定](../../content_06_developer-guide/05-configuration/client.md#1-webアプリケーション標準)
 
 ---
 
@@ -124,7 +124,7 @@ idp-serverは、RFC標準パラメータの組み合わせで代表的なユー�
 - `grant_types`: `authorization_code`, `refresh_token`
 - `application_type`: `web`
 
-**詳細設定**: [Developer Guide: SPA設定](../content_06_developer-guide/05-configuration/client.md#2-spasingle-page-app)
+**詳細設定**: [Developer Guide: SPA設定](../../content_06_developer-guide/05-configuration/client.md#2-spasingle-page-app)
 
 ---
 
@@ -138,7 +138,7 @@ idp-serverは、RFC標準パラメータの組み合わせで代表的なユー�
 - `application_type`: `native`
 - `redirect_uris`: カスタムURLスキーム（例: `com.example.myapp://callback`）
 
-**詳細設定**: [Developer Guide: モバイルアプリ設定](../content_06_developer-guide/05-configuration/client.md#3-モバイルアプリiosandroid)
+**詳細設定**: [Developer Guide: モバイルアプリ設定](../../content_06_developer-guide/05-configuration/client.md#3-モバイルアプリiosandroid)
 
 ---
 
@@ -152,7 +152,7 @@ idp-serverは、RFC標準パラメータの組み合わせで代表的なユー�
 - `redirect_uris`: 空配列（不要）
 - `scope`: カスタムスコープ（例: `api:read`, `api:write`）
 
-**詳細設定**: [Developer Guide: M2M設定](../content_06_developer-guide/05-configuration/client.md#4-m2mmachine-to-machine)
+**詳細設定**: [Developer Guide: M2M設定](../../content_06_developer-guide/05-configuration/client.md#4-m2mmachine-to-machine)
 
 ---
 
@@ -166,7 +166,7 @@ idp-serverは、RFC標準パラメータの組み合わせで代表的なユー�
 - `require_pushed_authorization_requests`: `true`（PAR必須）
 - `jwks_uri`: 公開鍵配置URL
 
-**詳細設定**: [Developer Guide: FAPI設定](../content_06_developer-guide/05-configuration/client.md#5-金融グレードfapi)
+**詳細設定**: [Developer Guide: FAPI設定](../../content_06_developer-guide/05-configuration/client.md#5-金融グレードfapi)
 
 **RFC準拠**: [FAPI 1.0 Advanced Profile](https://openid.net/specs/openid-financial-api-part-2-1_0.html)
 
@@ -244,7 +244,7 @@ RFC標準に加えて、独自の拡張機能を提供：
 | **CIBA設定** | デフォルトの認証インタラクションタイプを指定 |
 | **Client ID Alias** | 人間可読なエイリアスを設定（ログ・監査用） |
 
-**詳細設定**: [Developer Guide: Client設定](../content_06_developer-guide/05-configuration/client.md)
+**詳細設定**: [Developer Guide: Client設定](../../content_06_developer-guide/05-configuration/client.md)
 
 ---
 
@@ -270,18 +270,18 @@ RFC標準に加えて、独自の拡張機能を提供：
 ## 関連ドキュメント
 
 ### How-to ガイド
-- [How-to 03: クライアント登録](../content_05_how-to/how-to-04-client-registration.md) - 実践的な登録手順
+- [How-to 03: クライアント登録](../../content_05_how-to/how-to-04-client-registration.md) - 実践的な登録手順
 
 ### Developer Guide
-- [Developer Guide: Client設定](../content_06_developer-guide/05-configuration/client.md) - シナリオ別設定例、RFC標準パラメータ、extension詳細
+- [Developer Guide: Client設定](../../content_06_developer-guide/05-configuration/client.md) - シナリオ別設定例、RFC標準パラメータ、extension詳細
 
 ### Concepts
 - [Concept 01: マルチテナント](concept-01-multi-tenant.md) - Tenant-Client関係
-- [Concept 18: IDトークン](concept-18-id-token.md) - IDトークン仕様
+- [Concept 18: IDトークン](../04-tokens-claims/concept-12-id-token.md) - IDトークン仕様
 
 ### 技術詳細
-- [AI開発者向け: Core - OAuth](../content_10_ai_developer/ai-11-core.md#oauth---oauth-20コア) - OAuth 2.0実装詳細
-- [AI開発者向け: Control Plane - Client Registration](../content_10_ai_developer/ai-13-control-plane.md#クライアント管理api) - Client Registration API
+- [AI開発者向け: Core - OAuth](../../content_10_ai_developer/ai-11-core.md#oauth---oauth-20コア) - OAuth 2.0実装詳細
+- [AI開発者向け: Control Plane - Client Registration](../../content_10_ai_developer/ai-13-control-plane.md#クライアント管理api) - Client Registration API
 
 ---
 

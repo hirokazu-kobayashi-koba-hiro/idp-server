@@ -44,29 +44,78 @@ const sidebars = {
       label: "コア概念",
       collapsed: true,
       items: [
-        "content_03_concepts/concept-01-multi-tenant",
-        "content_03_concepts/concept-02-id-management",
-        "content_03_concepts/concept-03-id-verified",
-        "content_03_concepts/concept-04-enterprise-id",
-        "content_03_concepts/concept-05-authentication-policy",
-        "content_03_concepts/concept-06-token-management",
-        "content_03_concepts/concept-07-session-management",
-        "content_03_concepts/concept-08-mfa",
-        "content_03_concepts/concept-09-custom-claims",
-        "content_03_concepts/concept-10-control-plane",
-        "content_03_concepts/concept-11-security-events",
-        "content_03_concepts/concept-12-authorization",
-        "content_03_concepts/concept-13-audit-compliance",
-        "content_03_concepts/concept-14-grant-management",
-        "content_03_concepts/concept-15-operations",
-        "content_03_concepts/concept-16-external-service-integration",
-        "content_03_concepts/concept-17-application-logging",
-        "content_03_concepts/concept-18-id-token",
-        "content_03_concepts/concept-19-client",
-        "content_03_concepts/concept-20-password-policy",
-        "content_03_concepts/concept-21-schema-validation",
-        "content_03_concepts/concept-22-fapi",
-        "content_03_concepts/concept-23-tenant-statistics",
+        {
+          type: "category",
+          label: "基盤概念",
+          collapsed: false,
+          items: [
+            "content_03_concepts/foundation/concept-01-multi-tenant",
+            "content_03_concepts/foundation/concept-02-control-plane",
+            "content_03_concepts/foundation/concept-03-client",
+          ]
+        },
+        {
+          type: "category",
+          label: "アイデンティティ管理",
+          collapsed: false,
+          items: [
+            "content_03_concepts/identity-management/concept-04-id-management",
+            "content_03_concepts/identity-management/concept-05-password-policy",
+          ]
+        },
+        {
+          type: "category",
+          label: "認証・認可",
+          collapsed: false,
+          items: [
+            "content_03_concepts/authentication-authorization/concept-06-authentication-policy",
+            "content_03_concepts/authentication-authorization/concept-07-mfa",
+            "content_03_concepts/authentication-authorization/concept-08-session-management",
+            "content_03_concepts/authentication-authorization/concept-09-authorization",
+            "content_03_concepts/authentication-authorization/concept-10-grant-management",
+            "content_03_concepts/authentication-authorization/concept-11-fapi",
+          ]
+        },
+        {
+          type: "category",
+          label: "トークン・クレーム",
+          collapsed: false,
+          items: [
+            "content_03_concepts/tokens-claims/concept-12-id-token",
+            "content_03_concepts/tokens-claims/concept-13-token-management",
+            "content_03_concepts/tokens-claims/concept-14-custom-claims",
+          ]
+        },
+        {
+          type: "category",
+          label: "高度なID機能",
+          collapsed: false,
+          items: [
+            "content_03_concepts/advanced-id/concept-15-id-verified",
+            "content_03_concepts/advanced-id/concept-16-enterprise-id",
+          ]
+        },
+        {
+          type: "category",
+          label: "セキュリティ・拡張",
+          collapsed: false,
+          items: [
+            "content_03_concepts/security-extensions/concept-17-security-events",
+            "content_03_concepts/security-extensions/concept-18-external-service-integration",
+            "content_03_concepts/security-extensions/concept-19-schema-validation",
+          ]
+        },
+        {
+          type: "category",
+          label: "運用・監視",
+          collapsed: false,
+          items: [
+            "content_03_concepts/operations/concept-20-audit-compliance",
+            "content_03_concepts/operations/concept-21-application-logging",
+            "content_03_concepts/operations/concept-22-tenant-statistics",
+            "content_03_concepts/operations/concept-23-operations",
+          ]
+        },
         {
           type: "category",
           label: "基礎（読み物）",

@@ -80,7 +80,7 @@ idp-serverは、身元確認済みのIDを安全に発行・活用できるエ�
 
 PostgreSQLの **Row Level Security (RLS)** を使用して、データベースレベルで完全に分離しています。アプリケーション層でも `tenant_id` による分離を徹底しています。
 
-詳細は [マルチテナント](../content_03_concepts/concept-01-multi-tenant.md) を参照してください。
+詳細は [マルチテナント](../content_03_concepts/01-foundation/concept-01-multi-tenant.md) を参照してください。
 
 ---
 
@@ -175,7 +175,7 @@ idp-serverはJSON構造化ログを出力します。以下の3種類のログ�
 | Audit Log | 操作履歴（コンプライアンス用） |
 | Security Event | セキュリティイベント（外部連携可能） |
 
-詳細は [アプリケーションログ](../content_03_concepts/concept-17-application-logging.md) を参照してください。
+詳細は [アプリケーションログ](../content_03_concepts/07-operations/concept-21-application-logging.md) を参照してください。
 
 ---
 

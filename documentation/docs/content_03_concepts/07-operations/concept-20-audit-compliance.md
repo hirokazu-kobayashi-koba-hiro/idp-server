@@ -6,9 +6,9 @@
 
 このドキュメントを理解するには、以下の基礎知識が役立ちます：
 
-- [セキュリティイベント](concept-11-security-events.md) - SecurityEventログの基礎
-- [コントロールプレーン](concept-10-control-plane.md) - Management APIの概要
-- [マルチテナント](concept-01-multi-tenant.md) - テナント分離の仕組み
+- [セキュリティイベント](../06-security-extensions/concept-17-security-events.md) - SecurityEventログの基礎
+- [コントロールプレーン](../01-foundation/concept-02-control-plane.md) - Management APIの概要
+- [マルチテナント](../01-foundation/concept-01-multi-tenant.md) - テナント分離の仕組み
 
 ---
 
@@ -83,7 +83,7 @@ flowchart TB
 
 **対象**: 認証・認可（ログイン、トークン発行、MFA等）、身元確認申込み等
 
-詳細は [concept-11: セキュリティイベント](concept-11-security-events.md) を参照。
+詳細は [concept-11: セキュリティイベント](../06-security-extensions/concept-17-security-events.md) を参照。
 
 **使い分け**:
 
@@ -188,9 +188,9 @@ flowchart TB
 
 ## 関連ドキュメント
 
-- [セキュリティイベント](concept-11-security-events.md) - SecurityEventログ、6種類のフック
-- [マルチテナント](concept-01-multi-tenant.md) - テナント単位の監査分離、RLS
-- [コントロールプレーン](concept-10-control-plane.md) - Management API、権限管理
+- [セキュリティイベント](../06-security-extensions/concept-17-security-events.md) - SecurityEventログ、6種類のフック
+- [マルチテナント](../01-foundation/concept-01-multi-tenant.md) - テナント単位の監査分離、RLS
+- [コントロールプレーン](../01-foundation/concept-02-control-plane.md) - Management API、権限管理
 
 ---
 

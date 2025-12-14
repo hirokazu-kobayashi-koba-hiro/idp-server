@@ -163,7 +163,7 @@ GET /v1/management/tenants/{tenant-id}/security-events?from=2025-01-01 00:00:00&
 
 ### プライバシー設定
 
-セキュリティイベントに含めるユーザー属性は、テナント設定（`security_event_user_config`）で制御できます。詳細は[テナント設定](../content_06_developer-guide/05-configuration/tenant.md#security-event-user-attribute-configuration)を参照してください。
+セキュリティイベントに含めるユーザー属性は、テナント設定（`security_event_user_config`）で制御できます。詳細は[テナント設定](../../content_06_developer-guide/05-configuration/tenant.md#security-event-user-attribute-configuration)を参照してください。
 
 ### 失敗イベントの詳細情報
 
@@ -244,7 +244,7 @@ idp-serverでは、以下の6種類のフックをサポートしています。
 | **Datadog** | メトリクス・ログ送信 | Datadog API |
 | **監査ログ** | データベース永続化 | idp-serverデータベース |
 
-詳細な設定方法については、[イベント & フックシステム](../content_06_developer-guide/04-implementation-guides/impl-15-security-event-hooks.md)を参照してください。
+詳細な設定方法については、[イベント & フックシステム](../../content_06_developer-guide/04-implementation-guides/impl-15-security-event-hooks.md)を参照してください。
 
 ### SSFについて
 
@@ -346,9 +346,9 @@ idp-serverでは、2種類のイベントシステムが連携して動作しま
 
 ## 関連ドキュメント
 
-- [イベント & フックシステム](../content_06_developer-guide/04-implementation-guides/impl-15-security-event-hooks.md) - 実装詳細
-- [HTTP Request Executor](../content_06_developer-guide/04-implementation-guides/impl-16-http-request-executor.md) - Webhook実行基盤
-- [認証ポリシー](concept-05-authentication-policy.md) - アカウントロック設定
+- [イベント & フックシステム](../../content_06_developer-guide/04-implementation-guides/impl-15-security-event-hooks.md) - 実装詳細
+- [HTTP Request Executor](../../content_06_developer-guide/04-implementation-guides/impl-16-http-request-executor.md) - Webhook実行基盤
+- [認証ポリシー](../03-authentication-authorization/concept-06-authentication-policy.md) - アカウントロック設定
 
 ---
 

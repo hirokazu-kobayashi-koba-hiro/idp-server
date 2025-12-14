@@ -1,6 +1,6 @@
 # テナント統計機能 実装ガイド
 
-このドキュメントでは、テナント統計機能の実装詳細について説明します。概要については [テナント統計管理](../../../content_03_concepts/concept-23-tenant-statistics.md) を参照してください。
+このドキュメントでは、テナント統計機能の実装詳細について説明します。概要については [テナント統計管理](../../content_03_concepts/07-operations/concept-22-tenant-statistics.md) を参照してください。
 
 ---
 
@@ -483,7 +483,7 @@ pg_partman検証用のスクリプトが用意されています:
 
 ## 関連ドキュメント
 
-- [テナント統計管理](../../../content_03_concepts/concept-23-tenant-statistics.md) - 概念・API仕様
+- [テナント統計管理](../../content_03_concepts/07-operations/concept-22-tenant-statistics.md) - 概念・API仕様
 - [データベースパーティショニングガイド](./database-partitioning-guide.md) - パーティショニング詳細
 - [pg_partman運用ガイド](./pg-partman-operations-guide.md) - pg_partman運用詳細
-- [セキュリティイベント・フック](../../../content_03_concepts/concept-11-security-events.md) - イベント駆動アーキテクチャ
+- [セキュリティイベント・フック](../../content_03_concepts/06-security-extensions/concept-17-security-events.md) - イベント駆動アーキテクチャ

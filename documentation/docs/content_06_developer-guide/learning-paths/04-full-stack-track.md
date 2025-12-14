@@ -513,7 +513,7 @@ POST /v1/management/tenants/{tenantId}/authentication-configurations/bulk
 - [AI開発者向け: 全モジュールガイド](../content_10_ai_developer/ai-01-index.md)
 - [AI開発者向け: Lessons Learned](../content_10_ai_developer/ai-02-lessons-learned.md)
 - [開発者ガイドTOC](../DEVELOPER_GUIDE_TOC.md)
-- [Control Plane概念](../../content_03_concepts/concept-10-control-plane.md)
+- [Control Plane概念](../../content_03_concepts/01-foundation/concept-02-control-plane.md)
 
 ---
 

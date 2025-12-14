@@ -6,8 +6,8 @@
 
 このドキュメントを理解するには、以下の基礎知識が役立ちます：
 
-- [監査ログ](concept-13-audit-compliance.md) - AuditLog、SecurityEventとの違い
-- [運用・保守](concept-15-operations.md) - 運用における位置づけ
+- [監査ログ](concept-20-audit-compliance.md) - AuditLog、SecurityEventとの違い
+- [運用・保守](concept-23-operations.md) - 運用における位置づけ
 
 ---
 
@@ -46,7 +46,7 @@ idp-serverでは、目的に応じて3種類のログを使い分けます。
 - **Application Log**: 開発者・運用担当者向け、一時的な記録
 - **AuditLog/SecurityEvent**: コンプライアンス・監査向け、永続的な記録
 
-詳細は [concept-13: 監査ログ](concept-13-audit-compliance.md) を参照。
+詳細は [concept-13: 監査ログ](concept-20-audit-compliance.md) を参照。
 
 ---
 
@@ -185,10 +185,10 @@ DB接続エラーが発生した場合の調査。
 
 ## 関連ドキュメント
 
-- [監査ログ](concept-13-audit-compliance.md) - AuditLog、SecurityEvent、3種類のログの違い
-- [セキュリティイベント](concept-11-security-events.md) - SecurityEvent詳細
-- [運用・保守](concept-15-operations.md) - ヘルスチェック、メトリクス
-- [運用ガイダンス](../content_08_ops/commercial-deployment/05-operational-guidance.md) - ログパターン、トラブルシューティング
+- [監査ログ](concept-20-audit-compliance.md) - AuditLog、SecurityEvent、3種類のログの違い
+- [セキュリティイベント](../06-security-extensions/concept-17-security-events.md) - SecurityEvent詳細
+- [運用・保守](concept-23-operations.md) - ヘルスチェック、メトリクス
+- [運用ガイダンス](../../content_08_ops/commercial-deployment/05-operational-guidance.md) - ログパターン、トラブルシューティング
 
 ---
 

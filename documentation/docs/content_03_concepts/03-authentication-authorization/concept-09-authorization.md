@@ -6,10 +6,10 @@
 
 このドキュメントを理解するには、以下の基礎知識が役立ちます：
 
-- [OAuth 2.0の基本](basic/basic-06-oauth2-authorization.md) - OAuth 2.0の認可の仕組み
-- [OpenID Connectの基本](basic/basic-11-oauth-oidc-basics.md) - OIDCによる認証
-- [OAuth 2.0の役割](basic/basic-07-oauth2-roles.md) - 4つの役割
-- [認可コードフロー](../content_04_protocols/protocol-01-authorization-code-flow.md) - 認可フローの詳細
+- [OAuth 2.0の基本](../basic/basic-06-oauth2-authorization.md) - OAuth 2.0の認可の仕組み
+- [OpenID Connectの基本](../basic/basic-11-oauth-oidc-basics.md) - OIDCによる認証
+- [OAuth 2.0の役割](../basic/basic-07-oauth2-roles.md) - 4つの役割
+- [認可コードフロー](../../content_04_protocols/protocol-01-authorization-code-flow.md) - 認可フローの詳細
 
 ---
 
@@ -83,7 +83,7 @@ flowchart TB
 - テナントごとのカスタマイズ可能
 - セキュリティ境界の明確化
 
-詳細は [concept-01: マルチテナント](concept-01-multi-tenant.md) を参照。
+詳細は [concept-01: マルチテナント](../01-foundation/concept-01-multi-tenant.md) を参照。
 
 ### 2. スコープベースのアクセス制御
 
@@ -113,7 +113,7 @@ flowchart LR
 - **粒度の適切さ**: 粗すぎず細かすぎない権限設計
 - **認証強度との連動**: 強い認証 = より多くのスコープ許可（動的スコープフィルタリング）
 
-詳細は [concept-09: カスタムクレーム](concept-09-custom-claims.md) を参照。
+詳細は [concept-09: カスタムクレーム](../04-tokens-claims/concept-14-custom-claims.md) を参照。
 
 ### 3. 認証強度と連動した動的スコープフィルタリング
 
@@ -136,7 +136,7 @@ FIDO2認証 → scope=openid verified_claims:*（身元確認済み情報も許�
 - 過剰な権限付与の防止
 - セキュリティとユーザー体験の両立
 
-詳細は [concept-05: 認証ポリシー](concept-05-authentication-policy.md) を参照。
+詳細は [concept-05: 認証ポリシー](concept-06-authentication-policy.md) を参照。
 
 ### 4. 身元確認との連携
 
@@ -154,7 +154,7 @@ scope=openid verified_claims:given_name verified_claims:family_name
 - `verified_claims:` プレフィックス付きスコープを要求
 - 認証強度が要件を満たしていること
 
-詳細は [concept-03: 身元確認済みID](concept-03-id-verified.md) を参照。
+詳細は [concept-03: 身元確認済みID](../05-advanced-id/concept-15-id-verified.md) を参照。
 
 ### 5. 多様な認可フロー
 
@@ -182,8 +182,8 @@ flowchart TB
 | IoT/デバイス認証 | CIBA Flow | 非同期・プッシュ通知対応 |
 
 詳細は以下を参照：
-- [protocol-01: Authorization Code Flow](../content_04_protocols/protocol-01-authorization-code-flow.md)
-- [protocol-02: CIBA Flow](../content_04_protocols/protocol-02-ciba-flow.md)
+- [protocol-01: Authorization Code Flow](../../content_04_protocols/protocol-01-authorization-code-flow.md)
+- [protocol-02: CIBA Flow](../../content_04_protocols/protocol-02-ciba-flow.md)
 
 ### 6. クライアント認証の柔軟性
 
@@ -248,7 +248,7 @@ idp-serverは、2種類のトークン形式をサポートします。
 | **パフォーマンス** | DB問い合わせ必要 | 署名検証のみ |
 | **推奨用途** | 厳密な制御が必要な場合 | 高速・スケーラブル |
 
-詳細は [concept-06: トークン管理](concept-06-token-management.md) を参照。
+詳細は [concept-06: トークン管理](../04-tokens-claims/concept-13-token-management.md) を参照。
 
 ---
 
@@ -325,7 +325,7 @@ idp-serverは、2種類のトークン形式をサポートします。
 4. idp-serverがクライアントにPush通知（認証完了）
 5. クライアントがトークンエンドポイントでトークン取得
 
-詳細は [protocol-02: CIBA Flow](../content_04_protocols/protocol-02-ciba-flow.md) を参照。
+詳細は [protocol-02: CIBA Flow](../../content_04_protocols/protocol-02-ciba-flow.md) を参照。
 
 ---
 
@@ -374,16 +374,16 @@ idp-serverは、最新のOAuth/OIDCセキュリティ拡張をサポートしま
 
 ## 関連ドキュメント
 
-- [マルチテナント](concept-01-multi-tenant.md) - テナント単位の認可サーバー
-- [身元確認済みID](concept-03-id-verified.md) - verified_claimsスコープ
-- [認証ポリシー](concept-05-authentication-policy.md) - 認証強度と連動したスコープ制御
-- [トークン管理](concept-06-token-management.md) - トークン形式・有効期限設計
-- [カスタムクレーム](concept-09-custom-claims.md) - スコープとクレームの関係
-- [コントロールプレーン](concept-10-control-plane.md) - 認可サーバー・クライアント設定API
-- [セキュリティイベント](concept-11-security-events.md) - 認可操作のログ記録
-- [Authorization Code Flow](../content_04_protocols/protocol-01-authorization-code-flow.md) - 認可フロー詳細
-- [CIBA Flow](../content_04_protocols/protocol-02-ciba-flow.md) - バックチャネル認証
-- [Introspection](../content_04_protocols/protocol-03-introspection.md) - トークン検証
+- [マルチテナント](../01-foundation/concept-01-multi-tenant.md) - テナント単位の認可サーバー
+- [身元確認済みID](../05-advanced-id/concept-15-id-verified.md) - verified_claimsスコープ
+- [認証ポリシー](concept-06-authentication-policy.md) - 認証強度と連動したスコープ制御
+- [トークン管理](../04-tokens-claims/concept-13-token-management.md) - トークン形式・有効期限設計
+- [カスタムクレーム](../04-tokens-claims/concept-14-custom-claims.md) - スコープとクレームの関係
+- [コントロールプレーン](../01-foundation/concept-02-control-plane.md) - 認可サーバー・クライアント設定API
+- [セキュリティイベント](../06-security-extensions/concept-17-security-events.md) - 認可操作のログ記録
+- [Authorization Code Flow](../../content_04_protocols/protocol-01-authorization-code-flow.md) - 認可フロー詳細
+- [CIBA Flow](../../content_04_protocols/protocol-02-ciba-flow.md) - バックチャネル認証
+- [Introspection](../../content_04_protocols/protocol-03-introspection.md) - トークン検証
 
 ---
 

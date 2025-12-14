@@ -81,7 +81,7 @@ export ADMIN_TOKEN=$(curl -sS -X POST 'http://localhost:8080/system/v1/tokens' \
   └─ テナント: development（開発環境）
 ```
 
-詳細: [Concept: マルチテナント](../content_03_concepts/concept-01-multi-tenant.md)
+詳細: [Concept: マルチテナント](../content_03_concepts/01-foundation/concept-01-multi-tenant.md)
 
 ---
 
@@ -305,9 +305,9 @@ scope=openid+profile+email"
 - [Implementation Guides](../content_06_developer-guide/04-implementation-guides/01-overview.md) - 実装パターン
 
 ### コンセプト理解
-- [マルチテナント](../content_03_concepts/concept-01-multi-tenant.md) - テナントの概念
-- [認証ポリシー](../content_03_concepts/concept-05-authentication-policy.md) - ポリシーの仕組み
-- [トークン管理](../content_03_concepts/concept-06-token-management.md) - トークン戦略
+- [マルチテナント](../content_03_concepts/01-foundation/concept-01-multi-tenant.md) - テナントの概念
+- [認証ポリシー](../content_03_concepts/03-authentication-authorization/concept-06-authentication-policy.md) - ポリシーの仕組み
+- [トークン管理](../content_03_concepts/04-tokens-claims/concept-13-token-management.md) - トークン戦略
 
 ### API仕様
 - [OpenAPI仕様](../../openapi/swagger-control-plane-ja.yaml) - Management API詳細

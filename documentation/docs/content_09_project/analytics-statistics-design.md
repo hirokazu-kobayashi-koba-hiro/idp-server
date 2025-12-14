@@ -113,7 +113,7 @@ flowchart TD
 
 #### 基本統計エンティティ
 
-> **Note**: 以下は設計提案時の案です。実装された統計テーブル構造は [concept-23-tenant-statistics.md](../content_03_concepts/concept-23-tenant-statistics.md) を参照してください。
+> **Note**: 以下は設計提案時の案です。実装された統計テーブル構造は [concept-22-tenant-statistics.md](../content_03_concepts/07-operations/concept-22-tenant-statistics.md) を参照してください。
 
 ```sql
 -- 月次統計テーブル（実装済み）

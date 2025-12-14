@@ -77,7 +77,7 @@ OpenID Connectは、OAuth 2.0の「認可」に加えて「認証・ID」の要�
 | **拡張仕様** | CIBA | ✅ 完全対応 | [CIBAフロー](../../content_04_protocols/protocol-02-ciba-flow.md) |
 | | FAPI 2.0 | 🔄 計画中 | 金融グレードセキュリティ対応予定 |
 | | DPoP | 🔄 計画中 | Demonstration of Proof-of-Possession対応予定 |
-| | IDA | ✅ 対応 | [身元確認](../concept-03-id-verified.md) |
+| | IDA | ✅ 対応 | [身元確認](../05-advanced-id/concept-15-id-verified.md) |
 
 ### idp-server独自機能
 

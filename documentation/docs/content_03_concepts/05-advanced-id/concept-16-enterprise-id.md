@@ -6,10 +6,10 @@
 
 このドキュメントを理解するには、以下の基礎知識が役立ちます：
 
-- [OAuth 2.0の基本](basic/basic-06-oauth2-authorization.md) - OAuth 2.0の認可の仕組み
-- [OpenID Connectの基本](basic/basic-11-oauth-oidc-basics.md) - OIDCによる認証
-- [マルチテナント](concept-01-multi-tenant.md) - テナント・組織の階層構造
-- [認可コードフロー](../content_04_protocols/protocol-01-authorization-code-flow.md) - エンタープライズSSOの基盤
+- [OAuth 2.0の基本](../basic/basic-06-oauth2-authorization.md) - OAuth 2.0の認可の仕組み
+- [OpenID Connectの基本](../basic/basic-11-oauth-oidc-basics.md) - OIDCによる認証
+- [マルチテナント](../01-foundation/concept-01-multi-tenant.md) - テナント・組織の階層構造
+- [認可コードフロー](../../content_04_protocols/protocol-01-authorization-code-flow.md) - エンタープライズSSOの基盤
 
 ---
 
@@ -202,9 +202,9 @@ Organization → Tenant → Role → Permission → User
 - [FIDO2](https://fidoalliance.org/fido2/) - 強固な認証基盤
 
 ### 関連ドキュメント
-- [マルチテナント](concept-01-multi-tenant.md) - 組織・テナント階層の詳細
-- [身元確認済みID](concept-03-id-verified.md) - エンタープライズ身元確認統合
-- [認可コードフロー](../content_04_protocols/protocol-01-authorization-code-flow.md) - エンタープライズSSOの基盤技術
+- [マルチテナント](../01-foundation/concept-01-multi-tenant.md) - 組織・テナント階層の詳細
+- [身元確認済みID](concept-15-id-verified.md) - エンタープライズ身元確認統合
+- [認可コードフロー](../../content_04_protocols/protocol-01-authorization-code-flow.md) - エンタープライズSSOの基盤技術
 
 ---
 

@@ -76,17 +76,17 @@ idp-serverのコントロールプレーンでは、以下の設定・管理が�
 - トークン有効期限の設定
 - サポートするスコープの設定
 - OIDC Discovery メタデータの設定
-- 詳細: [トークン管理](concept-06-token-management.md)
+- 詳細: [トークン管理](../04-tokens-claims/concept-13-token-management.md)
 
 ### 5. フェデレーション設定
 - 外部IdP（Google, Azure AD等）との連携設定
 - 属性マッピングの定義
-- 詳細: [ID管理](concept-02-id-management.md)
+- 詳細: [ID管理](../02-identity-management/concept-04-id-management.md)
 
 ### 6. 認証設定
 - 認証方式（パスワード、MFA、FIDO2等）の有効化・無効化
 - 認証ポリシーの設定
-- 詳細: [認証ポリシー](concept-05-authentication-policy.md), [MFA](concept-08-mfa.md)
+- 詳細: [認証ポリシー](../03-authentication-authorization/concept-06-authentication-policy.md), [MFA](../03-authentication-authorization/concept-07-mfa.md)
 
 ### 7. セキュリティイベントフック
 - Slack、Email、Webhook等の通知設定
@@ -169,18 +169,18 @@ idp-serverでは、以下の権限モデルを採用しています：
 - **システムレベル権限**: `DefaultAdminPermission`（40以上の細かい権限）
 - **組織レベル権限**: `OrganizationAdminPermissions`（組織内操作の権限）
 
-詳細な権限設定については、[設定管理API](../content_06_developer-guide/04-implementation-guides/impl-11-configuration-management-api.md)を参照してください。
+詳細な権限設定については、[設定管理API](../../content_06_developer-guide/04-implementation-guides/impl-11-configuration-management-api.md)を参照してください。
 
 ---
 
 ## 関連ドキュメント
 
-- [設定管理API](../content_06_developer-guide/04-implementation-guides/impl-11-configuration-management-api.md) - 実装詳細
-- [組織初期化ガイド](../content_05_how-to/how-to-02-organization-initialization.md) - 実践例
+- [設定管理API](../../content_06_developer-guide/04-implementation-guides/impl-11-configuration-management-api.md) - 実装詳細
+- [組織初期化ガイド](../../content_05_how-to/how-to-02-organization-initialization.md) - 実践例
 - [マルチテナント](concept-01-multi-tenant.md) - テナント・組織の概念
-- [認証ポリシー](concept-05-authentication-policy.md) - 認証制御
-- [トークン管理](concept-06-token-management.md) - トークン設定
-- [API Reference](../content_07_reference/api-reference.md) - API仕様書
+- [認証ポリシー](../03-authentication-authorization/concept-06-authentication-policy.md) - 認証制御
+- [トークン管理](../04-tokens-claims/concept-13-token-management.md) - トークン設定
+- [API Reference](../../content_07_reference/api-reference.md) - API仕様書
 
 ---
 
