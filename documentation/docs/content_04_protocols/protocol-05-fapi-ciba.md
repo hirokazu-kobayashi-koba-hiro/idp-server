@@ -497,8 +497,8 @@ openssl ecparam -genkey -name secp384r1 -out private-key.pem
 ### idp-server ドキュメント
 
 - [Concept: FAPI](../content_03_concepts/concept-22-fapi.md)
-- [How-to: FAPI CIBA Profile 設定ガイド](../content_05_how-to/how-to-19-fapi-ciba-profile.md)
 - [How-to: CIBA + FIDO-UAF](../content_05_how-to/how-to-12-ciba-flow-fido-uaf.md)
+- [How-to: CIBA binding_message検証](../content_05_how-to/how-to-19-ciba-binding-message-verification.md)
 - [Protocol: CIBA Flow](./protocol-02-ciba-flow.md)
 - [Protocol: CIBA + Rich Authorization Requests](./protocol-04-ciba-rar.md)
 

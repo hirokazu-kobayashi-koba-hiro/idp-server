@@ -747,7 +747,7 @@ GROUP BY parent.relname;
 ## 11. 関連ドキュメント
 
 - [データベースパーティショニングガイド](database-partitioning-guide.md) - パーティショニングの基本概念
-- [テナント統計管理](../../content_03_concepts/concept-22-tenant-statistics.md) - 統計データの設計
+- [テナント統計管理](../../content_03_concepts/concept-23-tenant-statistics.md) - 統計データの設計
 
 ## 12. 参考資料
 
