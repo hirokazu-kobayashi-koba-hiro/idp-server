@@ -55,7 +55,7 @@ public class SelfSignedTlsClientAuthAuthenticator implements ClientAuthenticator
 
     ClientSecret clientSecret = new ClientSecret();
 
-    log.info(
+    log.debug(
         "Client authentication succeeded: method={}, client_id={}",
         ClientAuthenticationType.self_signed_tls_client_auth.name(),
         requestedClientId.value());

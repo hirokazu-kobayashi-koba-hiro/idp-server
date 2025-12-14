@@ -86,19 +86,20 @@ public class MysqlExecutor implements UserSqlExecutor {
       Tenant tenant, AuthenticationDeviceIdentifier deviceId, String providerId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
+    // Search by device id using subquery on idp_user_authentication_devices table
     String sqlTemplate =
         String.format(
             selectSql,
             """
-                  WHERE idp_user.tenant_id = ?
-                  AND JSON_CONTAINS(COALESCE(idp_user.authentication_devices, JSON_ARRAY()),
-                                    JSON_ARRAY(JSON_OBJECT('id', ?)),
-                                    '$')
-                  AND idp_user.provider_id = ?
-              """);
+                WHERE idp_user.id = (
+                    SELECT user_id FROM idp_user_authentication_devices
+                    WHERE id = ? AND tenant_id = ?
+                )
+                AND idp_user.provider_id = ?
+            """);
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifier().value());
     params.add(deviceId.valueAsUuid().toString());
+    params.add(tenant.identifier().value());
     params.add(providerId);
 
     return sqlExecutor.selectOne(sqlTemplate, params);
@@ -226,7 +227,7 @@ public class MysqlExecutor implements UserSqlExecutor {
     }
 
     if (queries.hasPermission()) {
-      where.append(" AND user_effective_permissions_view.permission_name LIKE ?");
+      where.append(" AND permission.name LIKE ?");
       params.add("%" + queries.permission() + "%");
     }
 
@@ -236,7 +237,8 @@ public class MysqlExecutor implements UserSqlExecutor {
     FROM idp_user
     LEFT JOIN idp_user_roles ON idp_user.id = idp_user_roles.user_id
     LEFT JOIN role ON idp_user_roles.role_id = role.id
-    LEFT JOIN user_effective_permissions_view ON idp_user.id = user_effective_permissions_view.user_id
+    LEFT JOIN role_permission ON role.id = role_permission.role_id
+    LEFT JOIN permission ON role_permission.permission_id = permission.id
     """;
 
     return sqlExecutor.selectOne(sql + where, params);
@@ -324,7 +326,7 @@ public class MysqlExecutor implements UserSqlExecutor {
     }
 
     if (queries.hasPermission()) {
-      where.append(" AND user_effective_permissions_view.permission_name LIKE ?");
+      where.append(" AND permission.name LIKE ?");
       params.add("%" + queries.permission() + "%");
     }
 
@@ -366,18 +368,19 @@ public class MysqlExecutor implements UserSqlExecutor {
   public Map<String, String> selectByAuthenticationDevice(Tenant tenant, String deviceId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
+    // Search by device id using subquery on idp_user_authentication_devices table
     String sqlTemplate =
         String.format(
             selectSql,
             """
-            WHERE idp_user.tenant_id = ?
-            AND JSON_CONTAINS(COALESCE(idp_user.authentication_devices, JSON_ARRAY()),
-                             JSON_ARRAY(JSON_OBJECT('id', ?)),
-                              '$')
+                WHERE idp_user.id = (
+                    SELECT user_id FROM idp_user_authentication_devices
+                    WHERE id = ? AND tenant_id = ?
+                )
             """);
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
     params.add(deviceId);
+    params.add(tenant.identifierValue());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
@@ -506,7 +509,18 @@ public class MysqlExecutor implements UserSqlExecutor {
                    idp_user.custom_properties,
                    idp_user.credentials,
                    idp_user.hashed_password,
-                   idp_user.authentication_devices,
+                   (SELECT JSON_ARRAYAGG(JSON_OBJECT(
+                       'id', d.id,
+                       'os', d.os,
+                       'model', d.model,
+                       'platform', d.platform,
+                       'locale', d.locale,
+                       'app_name', d.app_name,
+                       'priority', d.priority,
+                       'available_methods', d.available_methods,
+                       'notification_token', d.notification_token,
+                       'notification_channel', d.notification_channel
+                   )) FROM idp_user_authentication_devices d WHERE d.user_id = idp_user.id) AS authentication_devices,
                    idp_user.verified_claims,
                    idp_user.status,
                    idp_user.created_at,
@@ -566,7 +580,6 @@ public class MysqlExecutor implements UserSqlExecutor {
                    idp_user.custom_properties,
                    idp_user.credentials,
                    idp_user.hashed_password,
-                   idp_user.authentication_devices,
                    idp_user.verified_claims,
                    idp_user.status,
                    idp_user.created_at,

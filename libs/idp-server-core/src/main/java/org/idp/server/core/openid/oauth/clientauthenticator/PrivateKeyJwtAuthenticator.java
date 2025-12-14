@@ -60,7 +60,7 @@ class PrivateKeyJwtAuthenticator
 
     ClientCertification clientCertification = parseClientCertification(context);
 
-    log.info(
+    log.debug(
         "Client authentication succeeded: method={}, client_id={}",
         ClientAuthenticationType.private_key_jwt.name(),
         requestedClientId.value());

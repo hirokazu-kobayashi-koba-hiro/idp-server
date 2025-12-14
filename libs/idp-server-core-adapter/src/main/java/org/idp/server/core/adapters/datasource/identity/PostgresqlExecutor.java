@@ -86,17 +86,20 @@ public class PostgresqlExecutor implements UserSqlExecutor {
       Tenant tenant, AuthenticationDeviceIdentifier deviceId, String providerId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
+    // Search by device id using subquery on idp_user_authentication_devices table
     String sqlTemplate =
         String.format(
             selectSql,
             """
-                WHERE idp_user.tenant_id = ?::uuid
-                AND authentication_devices @> ?::jsonb
+                WHERE idp_user.id = (
+                    SELECT user_id FROM idp_user_authentication_devices
+                    WHERE id = ?::uuid AND tenant_id = ?::uuid
+                )
                 AND idp_user.provider_id = ?
             """);
     List<Object> params = new ArrayList<>();
+    params.add(deviceId.valueAsUuid());
     params.add(tenant.identifierUUID());
-    params.add(String.format("[{\"id\": \"%s\"}]", deviceId.valueAsUuid()));
     params.add(providerId);
 
     return sqlExecutor.selectOne(sqlTemplate, params);
@@ -222,7 +225,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
     }
 
     if (queries.hasPermission()) {
-      where.append(" AND user_effective_permissions_view.permission_name ILIKE ?");
+      where.append(" AND permission.name ILIKE ?");
       params.add("%" + queries.permission() + "%");
     }
 
@@ -232,7 +235,8 @@ public class PostgresqlExecutor implements UserSqlExecutor {
     FROM idp_user
     LEFT JOIN idp_user_roles ON idp_user.id = idp_user_roles.user_id
     LEFT JOIN role ON idp_user_roles.role_id = role.id
-    LEFT JOIN user_effective_permissions_view ON idp_user.id = user_effective_permissions_view.user_id
+    LEFT JOIN role_permission ON role.id = role_permission.role_id
+    LEFT JOIN permission ON role_permission.permission_id = permission.id
     """;
 
     return sqlExecutor.selectOne(sql + where, params);
@@ -318,7 +322,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
     }
 
     if (queries.hasPermission()) {
-      where.append(" AND user_effective_permissions_view.permission_name ILIKE ?");
+      where.append(" AND permission.name ILIKE ?");
       params.add("%" + queries.permission() + "%");
     }
 
@@ -360,20 +364,19 @@ public class PostgresqlExecutor implements UserSqlExecutor {
   public Map<String, String> selectByAuthenticationDevice(Tenant tenant, String deviceId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
+    // Search by device id using subquery on idp_user_authentication_devices table
     String sqlTemplate =
         String.format(
             selectSql,
             """
-                        WHERE idp_user.tenant_id = ?::uuid
-                        AND EXISTS (
-                                  SELECT 1
-                                  FROM jsonb_array_elements(idp_user.authentication_devices) AS device
-                                  WHERE device->>'id' = ?
-                        )
-                    """);
+                WHERE idp_user.id = (
+                    SELECT user_id FROM idp_user_authentication_devices
+                    WHERE id = ?::uuid AND tenant_id = ?::uuid
+                )
+            """);
     List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
     params.add(deviceId);
+    params.add(tenant.identifierUUID());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
@@ -503,7 +506,18 @@ public class PostgresqlExecutor implements UserSqlExecutor {
               idp_user.custom_properties,
               idp_user.credentials,
               idp_user.hashed_password,
-              idp_user.authentication_devices,
+              (SELECT JSON_AGG(JSON_BUILD_OBJECT(
+                  'id', d.id,
+                  'os', d.os,
+                  'model', d.model,
+                  'platform', d.platform,
+                  'locale', d.locale,
+                  'app_name', d.app_name,
+                  'priority', d.priority,
+                  'available_methods', d.available_methods,
+                  'notification_token', d.notification_token,
+                  'notification_channel', d.notification_channel
+              )) FROM idp_user_authentication_devices d WHERE d.user_id = idp_user.id) AS authentication_devices,
               idp_user.verified_claims,
               idp_user.status,
               idp_user.created_at,
@@ -555,7 +569,6 @@ public class PostgresqlExecutor implements UserSqlExecutor {
               idp_user.custom_properties,
               idp_user.credentials,
               idp_user.hashed_password,
-              idp_user.authentication_devices,
               idp_user.verified_claims,
               idp_user.status,
               idp_user.created_at,

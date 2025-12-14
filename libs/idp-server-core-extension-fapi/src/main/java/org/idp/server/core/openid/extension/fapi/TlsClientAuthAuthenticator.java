@@ -51,7 +51,7 @@ public class TlsClientAuthAuthenticator implements ClientAuthenticator {
     ClientSecret clientSecret = new ClientSecret();
     ClientCertification clientCertification = new ClientCertification(x509Certification);
 
-    log.info(
+    log.debug(
         "Client authentication succeeded: method={}, client_id={}",
         ClientAuthenticationType.tls_client_auth.name(),
         requestedClientId.value());

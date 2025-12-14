@@ -52,7 +52,7 @@ class ClientSecretJwtAuthenticator
     ClientSecret clientSecret = new ClientSecret(context.clientConfiguration().clientSecretValue());
     ClientAssertionJwt clientAssertionJwt = new ClientAssertionJwt(joseContext.jsonWebSignature());
 
-    log.info(
+    log.debug(
         "Client authentication succeeded: method={}, client_id={}",
         ClientAuthenticationType.client_secret_jwt.name(),
         requestedClientId.value());

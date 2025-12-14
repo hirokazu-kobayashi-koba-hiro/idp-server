@@ -10,7 +10,7 @@ EMAIL_DOMAIN = "example.com"
 os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
 
 with open(OUTPUT_FILE, "w") as f:
-    for i in range(1, 100_001):
+    for i in range(1, 1_000_001):
         user_sub = str(uuid.uuid4())
         user_id = f"user_{uuid.uuid4()}"
         email = f"{user_id}@{EMAIL_DOMAIN}"
