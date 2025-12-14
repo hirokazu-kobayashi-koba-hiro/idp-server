@@ -2,7 +2,7 @@
 
 idp-serverの独自機能である、カスタムクレームスコープマッピングについて説明します。
 
-> **基礎知識**: スコープとクレームの基本、標準的なユーザー属性については [ID管理](../02-identity-management/concept-04-id-management.md) を参照してください。
+> **基礎知識**: スコープとクレームの基本、標準的なユーザー属性については [ID管理](../02-identity-management/concept-01-id-management.md) を参照してください。
 
 ## カスタムクレームスコープマッピング
 
@@ -90,9 +90,9 @@ scope=openid verified_claims:given_name verified_claims:family_name
 
 ## 関連ドキュメント
 
-- [認証ポリシー](../03-authentication-authorization/concept-06-authentication-policy.md) - 認証方式によるスコープ制御
-- [身元確認済みID](../05-advanced-id/concept-15-id-verified.md) - verified_claimsの詳細
-- [ID管理](../02-identity-management/concept-04-id-management.md) - ユーザー属性の全体像
+- [認証ポリシー](../03-authentication-authorization/concept-01-authentication-policy.md) - 認証方式によるスコープ制御
+- [身元確認済みID](../05-advanced-id/concept-01-id-verified.md) - verified_claimsの詳細
+- [ID管理](../02-identity-management/concept-01-id-management.md) - ユーザー属性の全体像
 
 ## 参考仕様
 

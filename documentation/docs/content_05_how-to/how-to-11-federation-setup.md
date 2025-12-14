@@ -490,7 +490,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 
 ## 関連ドキュメント
 
-- [Concept: ID管理](../content_03_concepts/02-identity-management/concept-04-id-management.md) - Federation概念
+- [Concept: ID管理](../content_03_concepts/02-identity-management/concept-01-id-management.md) - Federation概念
 - [Developer Guide: Federation実装](../content_06_developer-guide/03-application-plane/08-federation.md) - 開発者向け
 - [How-to: 組織初期化](./how-to-02-organization-initialization.md) - テナント・ユーザー作成
 

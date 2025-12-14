@@ -46,45 +46,7 @@ sequenceDiagram
 
 #### `外部IdP`とのフェデレーションによるユーザー登録
 
-```mermaid
-sequenceDiagram
-    participant Client as クライアント（ユーザー操作を含む）
-    participant AsView as 認可画面
-    participant idp as idp-server
-    participant ExIdp as 外部IdP
-    Client ->> idp: 認可リクエスト（/authorizations?prompt=creat）
-    idp ->> idp: 認可リクエスト検証と記録
-    idp -->> Client: 302 リダイレクト(認可画面URL)
-    Client -->> AsView: 認可画面の表示
-    AsView ->> AsView: 外部IdPの選択
-    AsView ->> idp: フェデレーションリクエスト
-    idp ->> idp: 外部IdPへの認可リクエストのURLを生成
-    idp ->> idp: セッション(state)生成と記録
-    idp -->> AsView: 外部IdPへの認可リクエストのURLを返却
-    AsView -->> ExIdp: 認可リクエストのURLへ遷移
-    ExIdp ->> ExIdp: 認証
-    ExIdp -->> AsView: リダイレクト（認可コード付き）
-    AsView ->> idp: フェデレーションコールバックに外部IdPからのパラメータをリクエスト
-    idp -->> idp: stateからセッションを取得
-    idp -->> ExIdp: トークンリクエスト
-    ExIdp -->> idp: トークンレスポンス
-    idp -->> ExIdp: Userinfoリクエスト
-    ExIdp -->> idp: Userinfoレスポンス
-    idp ->> idp: Userinfoをベースにidpユーザーへのデータマッピング
-    idp -->> idp: IDポリシーチェックと結果の記録
-    idp ->> AsView: コールバックのレスポンス
-    AsView ->> AsView: 同意画面（スキップ可）
-    AsView ->> idp: 同意
-    idp -->> idp: 登録結果のチェック
-    idp ->> idp: ユーザー登録
-    idp -->> idp: 認可コードの生成と記録
-    idp -->> AsView: 認可コード付きリダイレクトURL（200）
-    AsView -->> Client: 認可コード付きリダイレクトURLへリダイレクト
-    Client ->> idp: トークンリクエスト（/tokens）
-    idp ->> idp: 認可コードのチェック
-    idp ->> idp: トークンの生成と記録
-    idp -->> Client: アクセストークン + IDトークン + リフレッシュトークン
-```
+外部IdP（Google、Azure AD等）との連携によるユーザー登録の詳細は、[フェデレーション（外部IdP連携）](../03-authentication-authorization/concept-08-federation.md)を参照してください。
 
 ## データ構造
 

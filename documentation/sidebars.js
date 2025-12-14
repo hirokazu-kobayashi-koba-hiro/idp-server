@@ -47,7 +47,7 @@ const sidebars = {
         {
           type: "category",
           label: "基盤概念",
-          collapsed: false,
+          collapsed: true,
           items: [
             "content_03_concepts/foundation/concept-01-multi-tenant",
             "content_03_concepts/foundation/concept-02-control-plane",
@@ -57,63 +57,65 @@ const sidebars = {
         {
           type: "category",
           label: "アイデンティティ管理",
-          collapsed: false,
+          collapsed: true,
           items: [
-            "content_03_concepts/identity-management/concept-04-id-management",
-            "content_03_concepts/identity-management/concept-05-password-policy",
+            "content_03_concepts/identity-management/concept-01-id-management",
+            "content_03_concepts/identity-management/concept-02-password-policy",
           ]
         },
         {
           type: "category",
           label: "認証・認可",
-          collapsed: false,
+          collapsed: true,
           items: [
-            "content_03_concepts/authentication-authorization/concept-06-authentication-policy",
-            "content_03_concepts/authentication-authorization/concept-07-mfa",
-            "content_03_concepts/authentication-authorization/concept-08-session-management",
-            "content_03_concepts/authentication-authorization/concept-09-authorization",
-            "content_03_concepts/authentication-authorization/concept-10-grant-management",
-            "content_03_concepts/authentication-authorization/concept-11-fapi",
+            "content_03_concepts/authentication-authorization/concept-01-authentication-policy",
+            "content_03_concepts/authentication-authorization/concept-02-mfa",
+            "content_03_concepts/authentication-authorization/concept-03-session-management",
+            "content_03_concepts/authentication-authorization/concept-04-authorization",
+            "content_03_concepts/authentication-authorization/concept-05-grant-management",
+            "content_03_concepts/authentication-authorization/concept-06-fapi",
+            "content_03_concepts/authentication-authorization/concept-07-passwordless",
+            "content_03_concepts/authentication-authorization/concept-08-federation",
           ]
         },
         {
           type: "category",
           label: "トークン・クレーム",
-          collapsed: false,
+          collapsed: true,
           items: [
-            "content_03_concepts/tokens-claims/concept-12-id-token",
-            "content_03_concepts/tokens-claims/concept-13-token-management",
-            "content_03_concepts/tokens-claims/concept-14-custom-claims",
+            "content_03_concepts/tokens-claims/concept-01-id-token",
+            "content_03_concepts/tokens-claims/concept-02-token-management",
+            "content_03_concepts/tokens-claims/concept-03-custom-claims",
           ]
         },
         {
           type: "category",
           label: "高度なID機能",
-          collapsed: false,
+          collapsed: true,
           items: [
-            "content_03_concepts/advanced-id/concept-15-id-verified",
-            "content_03_concepts/advanced-id/concept-16-enterprise-id",
+            "content_03_concepts/advanced-id/concept-01-id-verified",
+            "content_03_concepts/advanced-id/concept-02-enterprise-id",
           ]
         },
         {
           type: "category",
           label: "セキュリティ・拡張",
-          collapsed: false,
+          collapsed: true,
           items: [
-            "content_03_concepts/security-extensions/concept-17-security-events",
-            "content_03_concepts/security-extensions/concept-18-external-service-integration",
-            "content_03_concepts/security-extensions/concept-19-schema-validation",
+            "content_03_concepts/security-extensions/concept-01-security-events",
+            "content_03_concepts/security-extensions/concept-02-external-service-integration",
+            "content_03_concepts/security-extensions/concept-03-schema-validation",
           ]
         },
         {
           type: "category",
           label: "運用・監視",
-          collapsed: false,
+          collapsed: true,
           items: [
-            "content_03_concepts/operations/concept-20-audit-compliance",
-            "content_03_concepts/operations/concept-21-application-logging",
-            "content_03_concepts/operations/concept-22-tenant-statistics",
-            "content_03_concepts/operations/concept-23-operations",
+            "content_03_concepts/operations/concept-01-audit-compliance",
+            "content_03_concepts/operations/concept-02-application-logging",
+            "content_03_concepts/operations/concept-03-tenant-statistics",
+            "content_03_concepts/operations/concept-04-operations",
           ]
         },
         {

@@ -7,8 +7,8 @@
 このドキュメントを理解するには、以下の基礎知識が役立ちます：
 
 - [OAuth 2.0の基本](../basic/basic-06-oauth2-authorization.md) - OAuth 2.0の認可の仕組み
-- [認可](concept-09-authorization.md) - 認可サーバーの概要
-- [監査ログ](../07-operations/concept-20-audit-compliance.md) - 監査証跡の保持
+- [認可](concept-04-authorization.md) - 認可サーバーの概要
+- [監査ログ](../07-operations/concept-01-audit-compliance.md) - 監査証跡の保持
 
 ---
 
@@ -109,7 +109,7 @@ flowchart TB
 | **取り消し済み** | 設定済み | 同意が取り消された | 再度同意画面を表示 |
 | **ユーザー削除後** | 設定済み | ユーザーは削除されたが履歴は保持 | 監査証跡として保持 |
 
-詳細は [concept-13: 監査ログ](../07-operations/concept-20-audit-compliance.md) を参照。
+詳細は [concept-13: 監査ログ](../07-operations/concept-01-audit-compliance.md) を参照。
 
 ### 4. ユーザー削除時の扱い
 
@@ -211,9 +211,9 @@ idp-serverは、GDPR主要条項に対応しています。
 
 ## 関連ドキュメント
 
-- [認可](concept-09-authorization.md) - 認可サーバー、スコープベースアクセス制御
-- [監査ログ](../07-operations/concept-20-audit-compliance.md) - 監査証跡、データ保持ポリシー
-- [カスタムクレーム](../04-tokens-claims/concept-14-custom-claims.md) - スコープとクレームの関係
+- [認可](concept-04-authorization.md) - 認可サーバー、スコープベースアクセス制御
+- [監査ログ](../07-operations/concept-01-audit-compliance.md) - 監査証跡、データ保持ポリシー
+- [カスタムクレーム](../04-tokens-claims/concept-03-custom-claims.md) - スコープとクレームの関係
 
 ---
 

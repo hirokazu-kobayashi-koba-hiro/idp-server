@@ -6,8 +6,8 @@
 
 このドキュメントを理解するには、以下の基礎知識が役立ちます：
 
-- [身元確認済みID](../05-advanced-id/concept-15-id-verified.md) - eKYC連携の概要
-- [セキュリティイベント](concept-17-security-events.md) - Webhook連携の概要
+- [身元確認済みID](../05-advanced-id/concept-01-id-verified.md) - eKYC連携の概要
+- [セキュリティイベント](concept-01-security-events.md) - Webhook連携の概要
 
 ---
 
@@ -196,7 +196,7 @@ idp-serverでは、3つの主要領域で外部サービス連携を使用しま
 - リクエスト: ユーザー情報 → eKYC申込み形式
 - レスポンス: eKYC審査結果 → verified_claims形式
 
-詳細は [concept-03: 身元確認済みID](../05-advanced-id/concept-15-id-verified.md) を参照。
+詳細は [concept-03: 身元確認済みID](../05-advanced-id/concept-01-id-verified.md) を参照。
 
 ### 2. Security Event Hook
 
@@ -211,7 +211,7 @@ SecurityEvent発行 → Data Mapping → HTTP Executor → 外部SIEM/Slack
 - リクエスト: SecurityEvent → Webhook形式/SSF形式
 - レスポンス: HTTP status → Hook実行結果
 
-詳細は [concept-11: セキュリティイベント](concept-17-security-events.md) を参照。
+詳細は [concept-11: セキュリティイベント](concept-01-security-events.md) を参照。
 
 ### 3. 認証連携
 
@@ -282,8 +282,8 @@ SecurityEvent発行 → Data Mapping → HTTP Executor → 外部SIEM/Slack
 
 ## 関連ドキュメント
 
-- [身元確認済みID](../05-advanced-id/concept-15-id-verified.md) - eKYC連携、verified_claims
-- [セキュリティイベント](concept-17-security-events.md) - Webhook、SSF連携
+- [身元確認済みID](../05-advanced-id/concept-01-id-verified.md) - eKYC連携、verified_claims
+- [セキュリティイベント](concept-01-security-events.md) - Webhook、SSF連携
 - [HTTP Request Executor](../../content_06_developer-guide/04-implementation-guides/impl-16-http-request-executor.md) - 実装詳細
 - [Mapping Functions](../../content_06_developer-guide/04-implementation-guides/impl-20-mapping-functions.md) - マッピング関数開発ガイド
 - [身元確認申込みガイド](../../content_05_how-to/how-to-16-identity-verification-application.md) - 設定例

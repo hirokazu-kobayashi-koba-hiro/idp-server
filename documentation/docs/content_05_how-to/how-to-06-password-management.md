@@ -281,7 +281,7 @@ curl "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenan
 }
 ```
 
-詳細は [Concept: Password Policy](../content_03_concepts/02-identity-management/concept-05-password-policy.md) を参照してください。
+詳細は [Concept: Password Policy](../content_03_concepts/02-identity-management/concept-02-password-policy.md) を参照してください。
 
 ---
 
@@ -478,8 +478,8 @@ Content-Type: application/json
 
 ## 関連ドキュメント
 
-- [Concept: Password Policy](../content_03_concepts/02-identity-management/concept-05-password-policy.md) - パスワードポリシー詳細
-- [Concept: 認証ポリシー](../content_03_concepts/03-authentication-authorization/concept-06-authentication-policy.md) - 認証ポリシーの詳細
+- [Concept: Password Policy](../content_03_concepts/02-identity-management/concept-02-password-policy.md) - パスワードポリシー詳細
+- [Concept: 認証ポリシー](../content_03_concepts/03-authentication-authorization/concept-01-authentication-policy.md) - 認証ポリシーの詳細
 - [How-to: ユーザー登録](./how-to-05-user-registration.md) - ユーザー登録フロー
 - [API Reference](../content_07_reference/api-reference.md) - API仕様
 

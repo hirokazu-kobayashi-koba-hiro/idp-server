@@ -348,7 +348,7 @@ idp-serverでは、2種類のイベントシステムが連携して動作しま
 
 - [イベント & フックシステム](../../content_06_developer-guide/04-implementation-guides/impl-15-security-event-hooks.md) - 実装詳細
 - [HTTP Request Executor](../../content_06_developer-guide/04-implementation-guides/impl-16-http-request-executor.md) - Webhook実行基盤
-- [認証ポリシー](../03-authentication-authorization/concept-06-authentication-policy.md) - アカウントロック設定
+- [認証ポリシー](../03-authentication-authorization/concept-01-authentication-policy.md) - アカウントロック設定
 
 ---
 
