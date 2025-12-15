@@ -19,7 +19,7 @@
 ⏱️ **約10分**
 
 ### 前提条件
-- [how-to-02](./how-to-03-tenant-setup.md)でテナント作成完了
+- [how-to-02](../phase-1-foundation/03-tenant-setup.md)でテナント作成完了
 - 認可サーバー設定の基本理解
 
 ---

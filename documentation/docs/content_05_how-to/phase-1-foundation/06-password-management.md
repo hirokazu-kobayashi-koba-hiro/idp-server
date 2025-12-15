@@ -26,14 +26,14 @@
 **Phase 1**: 最小構成で動作確認（Step 5/5）
 
 **前提ドキュメント**:
-- [how-to-05: ユーザー登録](./how-to-05-user-registration.md) - ユーザー登録済み
+- [ユーザー登録](./05-user-registration.md) - ユーザー登録済み
 
 **次のドキュメント**:
-- [how-to-07: 認証ポリシー基礎編](./how-to-07-authentication-policy-basic.md) - より柔軟な認証設定
-- [how-to-08: MFA設定](./how-to-08-mfa-setup.md) - 多要素認証
+- [認証ポリシー基礎編](./07-authentication-policy.md) - より柔軟な認証設定
+- [MFA設定](../phase-2-security/01-mfa-setup.md) - 多要素認証
 
 ### 前提条件
-- [how-to-05](./how-to-05-user-registration.md)でユーザー登録完了
+- [how-to-05](./05-user-registration.md)でユーザー登録完了
 - アクセストークン取得済み
 - OAuth 2.0 / OIDC の基本的なフロー理解
 
@@ -468,11 +468,11 @@ Content-Type: application/json
 ✅ パスワード管理機能を理解しました！
 
 ### 認証機能の拡張
-- [How-to: 認証ポリシー基礎編](./how-to-07-authentication-policy-basic.md) - より柔軟な認証設定
-- [How-to: MFA設定](./how-to-08-mfa-setup.md) - SMS OTP、TOTP、FIDO2
+- [How-to: 認証ポリシー基礎編](./07-authentication-policy.md) - より柔軟な認証設定
+- [How-to: MFA設定](../phase-2-security/01-mfa-setup.md) - SMS OTP、TOTP、FIDO2
 
 ### セキュリティ強化
-- [How-to: セキュリティイベントHooks](./how-to-18-security-event-hooks.md) - パスワード変更時の通知
+- [How-to: セキュリティイベントHooks](../phase-4-extensions/04-security-event-hooks.md) - パスワード変更時の通知
 
 ---
 
@@ -480,7 +480,7 @@ Content-Type: application/json
 
 - [Concept: Password Policy](../content_03_concepts/02-identity-management/concept-02-password-policy.md) - パスワードポリシー詳細
 - [Concept: 認証ポリシー](../content_03_concepts/03-authentication-authorization/concept-01-authentication-policy.md) - 認証ポリシーの詳細
-- [How-to: ユーザー登録](./how-to-05-user-registration.md) - ユーザー登録フロー
+- [How-to: ユーザー登録](./05-user-registration.md) - ユーザー登録フロー
 - [API Reference](../content_07_reference/api-reference.md) - API仕様
 
 ---

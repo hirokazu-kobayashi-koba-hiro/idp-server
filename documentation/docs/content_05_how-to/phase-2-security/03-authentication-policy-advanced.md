@@ -8,7 +8,7 @@
 ⏱️ **約30分**
 
 ### 前提条件
-- [認証ポリシー基礎](./how-to-07-authentication-policy-basic.md)完了
+- [認証ポリシー基礎](../phase-1-foundation/07-authentication-policy.md)完了
 - JSONPath基礎知識（このドキュメントで学べます）
 - 組織ID（organization-id）を取得済み
 
@@ -493,7 +493,7 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
    - Password/External Token → bronze（低）
 
 **初学者へのアドバイス**:
-- まずは基礎編（how-to-14）のシンプルなポリシーから始める
+- まずは基礎編（Phase 1の07-authentication-policy）のシンプルなポリシーから始める
 - 必要に応じて段階的に複雑化
 
 ---
@@ -968,8 +968,8 @@ scope=read を要求
 ✅ 複雑な認証ポリシーを設定できました！
 
 ### さらに高度な設定
-- [How-to: CIBA認証ポリシー](./how-to-12-ciba-flow-fido-uaf.md)
-- [How-to: FIDO UAF登録ポリシー](./how-to-13-fido-uaf-registration.md)
+- [How-to: CIBA認証ポリシー](../phase-3-advanced/fido-uaf/01-ciba-flow.md)
+- [How-to: FIDO UAF登録ポリシー](../phase-3-advanced/fido-uaf/02-registration.md)
 
 ---
 

@@ -20,7 +20,7 @@
 ⏱️ **約20分**
 
 ### 前提条件
-- [how-to-11: FIDO-UAF登録](./how-to-13-fido-uaf-registration.md)でデバイス登録完了
+- [FIDO-UAF登録](./02-registration.md)でデバイス登録完了
 - テナントでCIBAが有効化されている
 - FCM（Firebase Cloud Messaging）の設定完了
 
@@ -199,7 +199,7 @@ login_hintの形式に関しては、[CIBA フロー](content_04_protocols/proto
 
 優先順位など認証デバイスの属性情報に登録できる項目は下記ドキュメントを参照ください。
 
-[FIDO-UAF登録](how-to-13-fido-uaf-registration.md)
+[FIDO-UAF登録](./02-registration.md)
 
 ### 認証トランザクションの取得（認証デバイス）
 

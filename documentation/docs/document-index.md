@@ -45,7 +45,7 @@ idp-serverを初めて触る方は、以下の順序で読み進めてくださ�
 
 idp-serverの設定を段階的に行いたい方向け。
 
-**推奨**: [How-to ガイド - 学習ロードマップ](./content_05_how-to/00-index.md)
+**推奨**: [How-to ガイド - 学習ロードマップ](./content_05_how-to/index.md)
 
 | Phase | 内容 | 所要時間 |
 |-------|------|---------|
@@ -122,8 +122,8 @@ Claude Code、GitHub Copilot等のAI支援ツールでコード生成精度を�
 
 | 機能 | 概念 | How-to | 開発者向け |
 |------|------|--------|-----------|
-| 認証ポリシー | [concept-01](content_03_concepts/03-authentication-authorization/concept-01-authentication-policy.md) | [基礎](./content_05_how-to/how-to-07-authentication-policy-basic.md) / [詳細](./content_05_how-to/how-to-10-authentication-policy-advanced.md) | [impl-05](./content_06_developer-guide/04-implementation-guides/impl-05-authentication-policy.md) |
-| MFA（多要素認証） | [concept-02](content_03_concepts/03-authentication-authorization/concept-02-mfa.md) | [MFA設定](./content_05_how-to/how-to-08-mfa-setup.md) | - |
+| 認証ポリシー | [concept-01](content_03_concepts/03-authentication-authorization/concept-01-authentication-policy.md) | [基礎](./content_05_how-to/phase-1-foundation/07-authentication-policy.md) / [詳細](./content_05_how-to/phase-2-security/03-authentication-policy-advanced.md) | [impl-05](./content_06_developer-guide/04-implementation-guides/impl-05-authentication-policy.md) |
+| MFA（多要素認証） | [concept-02](content_03_concepts/03-authentication-authorization/concept-02-mfa.md) | [MFA設定](./content_05_how-to/phase-2-security/01-mfa-setup.md) | - |
 | パスワードポリシー | [concept-02](content_03_concepts/02-identity-management/concept-02-password-policy.md) | - | [config/password](./content_06_developer-guide/05-configuration/authn/password.md) |
 | WebAuthn/FIDO2 | [basic-16~21](./content_03_concepts/basic/basic-16-fido2-webauthn-passwordless.md) | - | [config/fido2](./content_06_developer-guide/05-configuration/authn/fido2.md) |
 
@@ -131,7 +131,7 @@ Claude Code、GitHub Copilot等のAI支援ツールでコード生成精度を�
 
 | 機能 | 概念 | How-to | 開発者向け |
 |------|------|--------|-----------|
-| トークン管理 | [concept-02](content_03_concepts/04-tokens-claims/concept-02-token-management.md) | [トークン戦略](./content_05_how-to/how-to-09-token-strategy.md) | - |
+| トークン管理 | [concept-02](content_03_concepts/04-tokens-claims/concept-02-token-management.md) | [トークン戦略](./content_05_how-to/phase-2-security/02-token-strategy.md) | - |
 | セッション管理 | [concept-03](content_03_concepts/03-authentication-authorization/concept-03-session-management.md) | - | [impl-18](./content_06_developer-guide/04-implementation-guides/impl-18-spring-session.md) |
 | IDトークン | [concept-01](content_03_concepts/04-tokens-claims/concept-01-id-token.md) | - | - |
 
@@ -139,29 +139,29 @@ Claude Code、GitHub Copilot等のAI支援ツールでコード生成精度を�
 
 | 機能 | 概念 | How-to | 開発者向け |
 |------|------|--------|-----------|
-| マルチテナント | [concept-01](content_03_concepts/01-foundation/concept-01-multi-tenant.md) | [組織初期化](./content_05_how-to/how-to-02-organization-initialization.md) | [impl-07](./content_06_developer-guide/04-implementation-guides/impl-07-multi-tenancy.md) |
-| テナント設定 | - | [テナント設定](./content_05_how-to/how-to-03-tenant-setup.md) | [config/tenant](./content_06_developer-guide/05-configuration/tenant.md) |
-| クライアント | [concept-03](content_03_concepts/01-foundation/concept-03-client.md) | [クライアント登録](./content_05_how-to/how-to-04-client-registration.md) | [config/client](./content_06_developer-guide/05-configuration/client.md) |
+| マルチテナント | [concept-01](content_03_concepts/01-foundation/concept-01-multi-tenant.md) | [組織初期化](./content_05_how-to/phase-1-foundation/02-organization-initialization.md) | [impl-07](./content_06_developer-guide/04-implementation-guides/impl-07-multi-tenancy.md) |
+| テナント設定 | - | [テナント設定](./content_05_how-to/phase-1-foundation/03-tenant-setup.md) | [config/tenant](./content_06_developer-guide/05-configuration/tenant.md) |
+| クライアント | [concept-03](content_03_concepts/01-foundation/concept-03-client.md) | [クライアント登録](./content_05_how-to/phase-1-foundation/04-client-registration.md) | [config/client](./content_06_developer-guide/05-configuration/client.md) |
 
 ### 身元確認・eKYC
 
 | 機能 | 概念 | How-to | 開発者向け |
 |------|------|--------|-----------|
-| 身元確認済みID | [concept-01](content_03_concepts/05-advanced-id/concept-01-id-verified.md) | [ガイド](./content_05_how-to/how-to-15-identity-verification-guide.md) / [申込み](./content_05_how-to/how-to-16-identity-verification-application.md) | [impl-07](./content_06_developer-guide/03-application-plane/07-identity-verification.md) |
+| 身元確認済みID | [concept-01](content_03_concepts/05-advanced-id/concept-01-id-verified.md) | [ガイド](./content_05_how-to/phase-4-extensions/identity-verification/01-guide.md) / [申込み](./content_05_how-to/phase-4-extensions/identity-verification/02-application.md) | [impl-07](./content_06_developer-guide/03-application-plane/07-identity-verification.md) |
 | カスタムクレーム | [concept-03](content_03_concepts/04-tokens-claims/concept-03-custom-claims.md) | - | [impl-21](./content_06_developer-guide/04-implementation-guides/impl-21-scope-claims-management.md) |
 
 ### 外部連携・フェデレーション
 
 | 機能 | 概念 | How-to | 開発者向け |
 |------|------|--------|-----------|
-| 外部IdP連携 | - | [Federation設定](./content_05_how-to/how-to-11-federation-setup.md) | [impl-08](./content_06_developer-guide/04-implementation-guides/impl-08-federation-provider.md) |
+| 外部IdP連携 | - | [Federation設定](./content_05_how-to/phase-3-advanced/01-federation-setup.md) | [impl-08](./content_06_developer-guide/04-implementation-guides/impl-08-federation-provider.md) |
 | 外部サービス連携 | [concept-02](content_03_concepts/06-security-extensions/concept-02-external-service-integration.md) | - | [impl-17](./content_06_developer-guide/04-implementation-guides/impl-17-external-integration.md) |
 
 ### セキュリティ・監査
 
 | 機能 | 概念 | How-to | 開発者向け |
 |------|------|--------|-----------|
-| セキュリティイベント | [concept-01](content_03_concepts/06-security-extensions/concept-01-security-events.md) | [フック設定](./content_05_how-to/how-to-18-security-event-hooks.md) | [impl-15](./content_06_developer-guide/04-implementation-guides/impl-15-security-event-hooks.md) |
+| セキュリティイベント | [concept-01](content_03_concepts/06-security-extensions/concept-01-security-events.md) | [フック設定](./content_05_how-to/phase-4-extensions/04-security-event-hooks.md) | [impl-15](./content_06_developer-guide/04-implementation-guides/impl-15-security-event-hooks.md) |
 | 監査ログ | [concept-01](content_03_concepts/07-operations/concept-01-audit-compliance.md) | - | [impl-25](./content_06_developer-guide/04-implementation-guides/impl-25-audit-logging.md) |
 | 認可許諾管理 | [concept-05](content_03_concepts/03-authentication-authorization/concept-05-grant-management.md) | - | - |
 
@@ -251,27 +251,32 @@ Claude Code、GitHub Copilot等のAI支援ツールでコード生成精度を�
 <details>
 <summary><strong>content_05_how-to - ハウツーガイド (19)</strong></summary>
 
-| Phase | ファイル | タイトル |
-|-------|---------|---------|
-| - | 00-index.md | 学習ロードマップ |
-| 1 | how-to-01-server-setup.md | サーバーセットアップ |
-| 1 | how-to-02-organization-initialization.md | 組織初期化 |
-| 1 | how-to-03-tenant-setup.md | テナント設定 |
-| 1 | how-to-04-client-registration.md | クライアント登録 |
-| 1 | how-to-05-user-registration.md | ユーザー登録 |
-| 1 | how-to-07-authentication-policy-basic.md | 認証ポリシー（基礎） |
-| 2 | how-to-08-mfa-setup.md | MFA設定 |
-| 2 | how-to-09-token-strategy.md | トークン戦略 |
-| 2 | how-to-10-authentication-policy-advanced.md | 認証ポリシー（詳細） |
-| 3 | how-to-11-federation-setup.md | 外部IdP連携 |
-| 3 | how-to-12-ciba-flow-fido-uaf.md | CIBA + FIDO-UAF |
-| 3 | how-to-13-fido-uaf-registration.md | FIDO-UAF登録 |
-| 3 | how-to-14-fido-uaf-deregistration.md | FIDO-UAF解除 |
-| 4 | how-to-15-identity-verification-guide.md | 身元確認ガイド |
-| 4 | how-to-16-identity-verification-application.md | 身元確認申込み |
-| 4 | how-to-17-identity-verification-registration.md | 身元確認データ登録 |
-| 4 | how-to-18-security-event-hooks.md | セキュリティイベントフック |
-| - | how-to-19-ciba-binding-message-verification.md | CIBA Binding Message検証 |
+| Phase | ディレクトリ/ファイル | タイトル |
+|-------|----------------------|---------|
+| - | index.md | 学習ロードマップ |
+| **Phase 1** | **phase-1-foundation/** | **基盤構築** |
+| 1 | 01-server-setup.md | サーバーセットアップ |
+| 1 | 02-organization-initialization.md | 組織初期化 |
+| 1 | 03-tenant-setup.md | テナント設定 |
+| 1 | 04-client-registration.md | クライアント登録 |
+| 1 | 05-user-registration.md | ユーザー登録 |
+| 1 | 06-password-management.md | パスワード管理 |
+| 1 | 07-authentication-policy.md | 認証ポリシー（基礎） |
+| **Phase 2** | **phase-2-security/** | **セキュリティ強化** |
+| 2 | 01-mfa-setup.md | MFA設定 |
+| 2 | 02-token-strategy.md | トークン戦略 |
+| 2 | 03-authentication-policy-advanced.md | 認証ポリシー（詳細） |
+| **Phase 3** | **phase-3-advanced/** | **高度な機能** |
+| 3 | 01-federation-setup.md | 外部IdP連携 |
+| 3 | fido-uaf/01-ciba-flow.md | CIBA + FIDO-UAF |
+| 3 | fido-uaf/02-registration.md | FIDO-UAF登録 |
+| 3 | fido-uaf/03-deregistration.md | FIDO-UAF解除 |
+| **Phase 4** | **phase-4-extensions/** | **拡張機能** |
+| 4 | identity-verification/01-guide.md | 身元確認ガイド |
+| 4 | identity-verification/02-application.md | 身元確認申込み |
+| 4 | identity-verification/03-registration.md | 身元確認データ登録 |
+| 4 | 04-security-event-hooks.md | セキュリティイベントフック |
+| 4 | 05-ciba-binding-message.md | CIBA Binding Message検証 |
 
 </details>
 

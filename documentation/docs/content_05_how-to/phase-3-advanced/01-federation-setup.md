@@ -436,8 +436,8 @@ ID Token検証時:
 ✅ 外部IdP連携を設定できました！
 
 ### さらに高度な認証
-- [How-to: CIBA Flow](./how-to-12-ciba-flow-fido-uaf.md) - バックチャネル認証
-- [How-to: Identity Verification](./how-to-16-identity-verification-application.md) - 身元確認申込み
+- [CIBA Flow](./how-to-12-ciba-flow-fido-uaf.md) - バックチャネル認証
+- [Identity Verification](../phase-4-extensions/identity-verification/02-application.md) - 身元確認申込み
 
 ### 他の外部IdP
 - **Azure AD**: エンタープライズSSO
@@ -476,7 +476,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 
 - [Concept: ID管理](../content_03_concepts/02-identity-management/concept-01-id-management.md) - Federation概念
 - [Developer Guide: Federation実装](../content_06_developer-guide/03-application-plane/08-federation.md) - 開発者向け
-- [How-to: 組織初期化](./how-to-02-organization-initialization.md) - テナント・ユーザー作成
+- [組織初期化](../phase-1-foundation/02-organization-initialization.md) - テナント・ユーザー作成
 
 ---
 
