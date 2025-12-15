@@ -119,7 +119,7 @@ public class UserOrganizationAssignmentsUpdateService
     }
 
     // 6. Repository operation
-    userCommandRepository.update(tenant, after);
+    userCommandRepository.updateOrganizationAssignments(tenant, after);
 
     return response;
   }

@@ -101,7 +101,7 @@ public class JsonDiffCalculator {
    */
   private static void diffRecursive(
       String path, JsonNodeWrapper before, JsonNodeWrapper after, Map<String, Object> diff) {
-    if (before == null || !before.exists()) {
+    if (before == null || !before.existsWithValue()) {
       // Added field: {before: null, after: <value>}
       Map<String, Object> addedDiff = new HashMap<>();
       addedDiff.put("before", null);
@@ -175,7 +175,7 @@ public class JsonDiffCalculator {
    * @return a serializable representation of the value
    */
   private static Object toSerializableValue(JsonNodeWrapper wrapper) {
-    if (wrapper == null || !wrapper.exists()) {
+    if (wrapper == null || !wrapper.existsWithValue()) {
       return null;
     }
     switch (wrapper.nodeType()) {

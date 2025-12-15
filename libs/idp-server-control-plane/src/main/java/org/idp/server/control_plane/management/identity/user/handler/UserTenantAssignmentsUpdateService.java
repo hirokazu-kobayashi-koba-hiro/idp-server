@@ -116,7 +116,7 @@ public class UserTenantAssignmentsUpdateService
     }
 
     // 6. Repository operation
-    userCommandRepository.update(tenant, after);
+    userCommandRepository.updateTenantAssignments(tenant, after);
 
     return response;
   }

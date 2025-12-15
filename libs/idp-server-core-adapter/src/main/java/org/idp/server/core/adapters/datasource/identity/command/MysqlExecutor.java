@@ -278,12 +278,25 @@ public class MysqlExecutor implements UserCommandSqlExecutor {
   }
 
   @Override
+  public void deleteAssignedTenants(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String deleteSql =
+        """
+            DELETE FROM idp_user_assigned_tenants
+            WHERE user_id = ?;
+            """;
+    List<Object> deleteParams = new ArrayList<>();
+    deleteParams.add(user.sub());
+    sqlExecutor.execute(deleteSql, deleteParams);
+  }
+
+  @Override
   public void upsertAssignedTenants(Tenant tenant, User user) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     StringBuilder sqlTemplateBuilder = new StringBuilder();
     sqlTemplateBuilder.append(
         """
-                        INSERT INTO idp_user_assigned_tenants (id, tenant_id, user_id)
+                        INSERT IGNORE INTO idp_user_assigned_tenants (id, tenant_id, user_id)
                         VALUES
                         """);
 
@@ -299,13 +312,22 @@ public class MysqlExecutor implements UserCommandSqlExecutor {
           params.add(user.sub());
         });
     sqlTemplateBuilder.append(String.join(",", sqlValues));
-    sqlTemplateBuilder.append(
-        """
-            ON DUPLICATE KEY UPDATE user_id = user_id;
-            """);
     sqlTemplateBuilder.append(";");
 
     sqlExecutor.execute(sqlTemplateBuilder.toString(), params);
+  }
+
+  @Override
+  public void deleteCurrentTenant(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String deleteSql =
+        """
+            DELETE FROM idp_user_current_tenant
+            WHERE user_id = ?;
+            """;
+    List<Object> deleteParams = new ArrayList<>();
+    deleteParams.add(user.sub());
+    sqlExecutor.execute(deleteSql, deleteParams);
   }
 
   @Override
@@ -332,12 +354,25 @@ public class MysqlExecutor implements UserCommandSqlExecutor {
   }
 
   @Override
+  public void deleteAssignedOrganizations(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String deleteSql =
+        """
+            DELETE FROM idp_user_assigned_organizations
+            WHERE user_id = ?;
+            """;
+    List<Object> deleteParams = new ArrayList<>();
+    deleteParams.add(user.sub());
+    sqlExecutor.execute(deleteSql, deleteParams);
+  }
+
+  @Override
   public void upsertAssignedOrganizations(Tenant tenant, User user) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     StringBuilder sqlTemplateBuilder = new StringBuilder();
     sqlTemplateBuilder.append(
         """
-                            INSERT INTO idp_user_assigned_organizations (id, organization_id, user_id)
+                            INSERT IGNORE INTO idp_user_assigned_organizations (id, organization_id, user_id)
                             VALUES
                             """);
 
@@ -353,13 +388,22 @@ public class MysqlExecutor implements UserCommandSqlExecutor {
           params.add(user.sub());
         });
     sqlTemplateBuilder.append(String.join(",", sqlValues));
-    sqlTemplateBuilder.append(
-        """
-                ON DUPLICATE KEY UPDATE organization_id = organization_id
-                """);
     sqlTemplateBuilder.append(";");
 
     sqlExecutor.execute(sqlTemplateBuilder.toString(), params);
+  }
+
+  @Override
+  public void deleteCurrentOrganization(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String deleteSql =
+        """
+            DELETE FROM idp_user_current_organization
+            WHERE user_id = ?;
+            """;
+    List<Object> deleteParams = new ArrayList<>();
+    deleteParams.add(user.sub());
+    sqlExecutor.execute(deleteSql, deleteParams);
   }
 
   @Override

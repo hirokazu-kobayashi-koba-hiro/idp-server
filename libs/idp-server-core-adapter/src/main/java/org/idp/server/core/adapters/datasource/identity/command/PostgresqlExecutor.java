@@ -276,6 +276,19 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
   }
 
   @Override
+  public void deleteAssignedTenants(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String deleteSql =
+        """
+            DELETE FROM idp_user_assigned_tenants
+            WHERE user_id = ?::uuid;
+            """;
+    List<Object> deleteParams = new ArrayList<>();
+    deleteParams.add(user.subAsUuid());
+    sqlExecutor.execute(deleteSql, deleteParams);
+  }
+
+  @Override
   public void upsertAssignedTenants(Tenant tenant, User user) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     StringBuilder sqlTemplateBuilder = new StringBuilder();
@@ -296,13 +309,22 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
           params.add(user.subAsUuid());
         });
     sqlTemplateBuilder.append(String.join(",", sqlValues));
-    sqlTemplateBuilder.append(
-        """
-            ON CONFLICT (tenant_id, user_id) DO NOTHING;
-            """);
-    sqlTemplateBuilder.append(";");
+    sqlTemplateBuilder.append(" ON CONFLICT (tenant_id, user_id) DO NOTHING;");
 
     sqlExecutor.execute(sqlTemplateBuilder.toString(), params);
+  }
+
+  @Override
+  public void deleteCurrentTenant(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String deleteSql =
+        """
+            DELETE FROM idp_user_current_tenant
+            WHERE user_id = ?::uuid;
+            """;
+    List<Object> deleteParams = new ArrayList<>();
+    deleteParams.add(user.subAsUuid());
+    sqlExecutor.execute(deleteSql, deleteParams);
   }
 
   @Override
@@ -329,6 +351,19 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
   }
 
   @Override
+  public void deleteAssignedOrganizations(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String deleteSql =
+        """
+            DELETE FROM idp_user_assigned_organizations
+            WHERE user_id = ?::uuid;
+            """;
+    List<Object> deleteParams = new ArrayList<>();
+    deleteParams.add(user.subAsUuid());
+    sqlExecutor.execute(deleteSql, deleteParams);
+  }
+
+  @Override
   public void upsertAssignedOrganizations(Tenant tenant, User user) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     StringBuilder sqlTemplateBuilder = new StringBuilder();
@@ -349,13 +384,22 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
           params.add(user.subAsUuid());
         });
     sqlTemplateBuilder.append(String.join(",", sqlValues));
-    sqlTemplateBuilder.append(
-        """
-                ON CONFLICT (organization_id, user_id) DO NOTHING;
-                """);
-    sqlTemplateBuilder.append(";");
+    sqlTemplateBuilder.append(" ON CONFLICT (organization_id, user_id) DO NOTHING;");
 
     sqlExecutor.execute(sqlTemplateBuilder.toString(), params);
+  }
+
+  @Override
+  public void deleteCurrentOrganization(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String deleteSql =
+        """
+            DELETE FROM idp_user_current_organization
+            WHERE user_id = ?::uuid;
+            """;
+    List<Object> deleteParams = new ArrayList<>();
+    deleteParams.add(user.subAsUuid());
+    sqlExecutor.execute(deleteSql, deleteParams);
   }
 
   @Override
