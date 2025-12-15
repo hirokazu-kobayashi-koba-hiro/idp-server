@@ -124,31 +124,63 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
     "flow": "oauth",
     "available_methods": ["password", "oidc-google"],
     "success_conditions": {
-      "type": "any",
-      "authentication_methods": ["password", "oidc-google"]
+      "any_of": [
+        [
+          {
+            "path": "$.password-authentication.success_count",
+            "type": "integer",
+            "operation": "gte",
+            "value": 1
+          }
+        ],
+        [
+          {
+            "path": "$.oidc-google.success_count",
+            "type": "integer",
+            "operation": "gte",
+            "value": 1
+          }
+        ]
+      ]
     }
   }'
 ```
 
 **設定内容**:
 - `available_methods` に `"oidc-google"` を追加
-- `type: "any"` - パスワード**または**Google認証でOK
+- `success_conditions.any_of` - パスワード認証**または**Google認証のいずれかが1回以上成功すればOK
 
 ---
 
 ### Step 4: クライアントでFederationを有効化
 
+Step 2で作成したフェデレーション設定のIDを使用して、クライアントにFederationを設定します。
+
 ```bash
+# FEDERATION_ID は Step 2 のレスポンスで取得した id を使用
+FEDERATION_ID="770e8400-e29b-41d4-a716-446655440002"
+
 curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/clients/${CLIENT_ID}" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
-    "available_federations": ["oidc-google"]
+    "extension": {
+      "available_federations": [
+        {
+          "id": "'${FEDERATION_ID}'",
+          "type": "oidc",
+          "sso_provider": "google"
+        }
+      ]
+    }
   }'
 ```
 
 **設定内容**:
-- このクライアントでGoogle連携を利用可能にする
+- `extension.available_federations` にフェデレーション設定を追加
+- `id`: Step 2で作成したフェデレーション設定のID
+- `type`: プロトコルタイプ（oidc）
+- `sso_provider`: IdP識別子（google）
 
 ---
 
@@ -366,54 +398,6 @@ Authorization Request時:
 ID Token検証時:
   ID Token.nonce == 保存したnonce → OK
   不一致 → リプレイ攻撃の可能性 → エラー
-```
-
----
-
-## ユーザー統合戦略
-
-### パターン1: メールアドレスで統合（デフォルト）
-
-```json
-{
-  "user_mapping_rules": {
-    "email": "$.email"
-  },
-  "user_integration_strategy": "email_match"
-}
-```
-
-**動作**:
-```
-Googleからemail取得: john@example.com
-  ↓
-idp-serverで同じemailのユーザーを検索
-  ↓
-存在する → 既存ユーザーと統合（更新）
-存在しない → 新規ユーザー作成
-```
-
-### パターン2: 外部IDで統合
-
-```json
-{
-  "user_mapping_rules": {
-    "sub": "$.sub",
-    "email": "$.email"
-  },
-  "user_integration_strategy": "external_id_match",
-  "external_id_attribute": "sub"
-}
-```
-
-**動作**:
-```
-Googleからsub取得: google-1234567890
-  ↓
-idp-serverでexternal_id="google-1234567890"のユーザーを検索
-  ↓
-存在する → 既存ユーザーと統合
-存在しない → 新規ユーザー作成（external_id="google-1234567890"）
 ```
 
 ---
