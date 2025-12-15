@@ -16,7 +16,11 @@
 
 package org.idp.server.control_plane.management.identity.user.handler;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.idp.server.control_plane.management.identity.user.UserManagementContextBuilder;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementResponse;
 import org.idp.server.control_plane.management.identity.user.io.UserManagementStatus;
@@ -25,8 +29,13 @@ import org.idp.server.control_plane.management.identity.user.io.UserUpdateReques
 import org.idp.server.control_plane.management.identity.user.validator.UserRolesUpdateRequestValidator;
 import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationRelatedDataVerifier;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.UserRole;
+import org.idp.server.core.openid.identity.permission.Permission;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.core.openid.identity.role.Role;
+import org.idp.server.core.openid.identity.role.RoleIdentifier;
+import org.idp.server.core.openid.identity.role.RoleQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonDiffCalculator;
@@ -63,14 +72,17 @@ public class UserRolesUpdateService implements UserManagementService<UserUpdateR
 
   private final UserQueryRepository userQueryRepository;
   private final UserCommandRepository userCommandRepository;
+  private final RoleQueryRepository roleQueryRepository;
   private final UserRegistrationRelatedDataVerifier relatedDataVerifier;
 
   public UserRolesUpdateService(
       UserQueryRepository userQueryRepository,
       UserCommandRepository userCommandRepository,
+      RoleQueryRepository roleQueryRepository,
       UserRegistrationRelatedDataVerifier relatedDataVerifier) {
     this.userQueryRepository = userQueryRepository;
     this.userCommandRepository = userCommandRepository;
+    this.roleQueryRepository = roleQueryRepository;
     this.relatedDataVerifier = relatedDataVerifier;
   }
 
@@ -89,9 +101,29 @@ public class UserRolesUpdateService implements UserManagementService<UserUpdateR
     new UserRolesUpdateRequestValidator(request.registrationRequest(), dryRun).validate();
     relatedDataVerifier.verifyRoles(tenant, request.registrationRequest());
 
-    User after = updateUser(request.registrationRequest(), before);
+    User updated = updateUser(request.registrationRequest(), before);
 
-    // Set before/after users to builder for context completion
+    if (dryRun) {
+      // For dry run, calculate permissions from roles to provide accurate preview
+      List<String> permissions = calculatePermissionsFromRoles(tenant, updated.roles());
+      updated.setPermissions(permissions);
+
+      builder.withBefore(before);
+      builder.withAfter(updated);
+
+      JsonNodeWrapper beforeJson = JsonNodeWrapper.fromMap(before.toMap());
+      JsonNodeWrapper afterJson = JsonNodeWrapper.fromMap(updated.toMap());
+      Map<String, Object> diff = JsonDiffCalculator.deepDiff(beforeJson, afterJson);
+      Map<String, Object> contents =
+          Map.of("result", updated.toMap(), "diff", diff, "dry_run", dryRun);
+      return new UserManagementResponse(UserManagementStatus.OK, contents);
+    }
+
+    userCommandRepository.updateRoles(tenant, updated);
+
+    // Re-fetch from DB to get accurate permissions derived from roles
+    User after = userQueryRepository.get(tenant, request.userIdentifier());
+
     builder.withBefore(before);
     builder.withAfter(after);
 
@@ -99,14 +131,7 @@ public class UserRolesUpdateService implements UserManagementService<UserUpdateR
     JsonNodeWrapper afterJson = JsonNodeWrapper.fromMap(after.toMap());
     Map<String, Object> diff = JsonDiffCalculator.deepDiff(beforeJson, afterJson);
     Map<String, Object> contents = Map.of("result", after.toMap(), "diff", diff, "dry_run", dryRun);
-    UserManagementResponse response = new UserManagementResponse(UserManagementStatus.OK, contents);
-
-    if (dryRun) {
-      return response;
-    }
-
-    userCommandRepository.update(tenant, after);
-    return response;
+    return new UserManagementResponse(UserManagementStatus.OK, contents);
   }
 
   public User updateUser(UserRegistrationRequest request, User before) {
@@ -118,5 +143,23 @@ public class UserRolesUpdateService implements UserManagementService<UserUpdateR
     updated.setRoles(newUser.roles());
 
     return updated;
+  }
+
+  private List<String> calculatePermissionsFromRoles(Tenant tenant, List<UserRole> userRoles) {
+    if (userRoles == null || userRoles.isEmpty()) {
+      return new ArrayList<>();
+    }
+
+    Set<String> permissionNames = new LinkedHashSet<>();
+    for (UserRole userRole : userRoles) {
+      Role role = roleQueryRepository.find(tenant, new RoleIdentifier(userRole.roleId()));
+      if (role != null && role.exists() && role.permissions() != null) {
+        for (Permission permission : role.permissions()) {
+          permissionNames.add(permission.name());
+        }
+      }
+    }
+
+    return new ArrayList<>(permissionNames);
   }
 }

@@ -29,6 +29,8 @@ public interface UserCommandSqlExecutor {
 
   void delete(Tenant tenant, UserIdentifier userIdentifier);
 
+  void deleteRoles(Tenant tenant, User user);
+
   void upsertRoles(Tenant tenant, User user);
 
   void upsertAssignedTenants(Tenant tenant, User user);

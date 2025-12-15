@@ -109,7 +109,9 @@ describe("organization user management - PATCH parameter tests", () => {
 
       // Verify diff shows only changed field
       expect(response.data).toHaveProperty("diff");
-      expect(response.data.diff).toHaveProperty("name", newName);
+      expect(response.data.diff).toHaveProperty("name");
+      expect(response.data.diff.name.after).toEqual(newName);
+
       expect(Object.keys(response.data.diff)).toHaveLength(1);
 
       // Verify other fields unchanged
@@ -145,7 +147,8 @@ describe("organization user management - PATCH parameter tests", () => {
 
       // Verify diff shows only changed field
       expect(response.data).toHaveProperty("diff");
-      expect(response.data.diff).toHaveProperty("given_name", newGivenName);
+      expect(response.data.diff).toHaveProperty("given_name");
+      expect(response.data.diff.given_name.after).toEqual(newGivenName);
       expect(Object.keys(response.data.diff)).toHaveLength(1);
 
       // Verify status unchanged
@@ -176,7 +179,10 @@ describe("organization user management - PATCH parameter tests", () => {
 
       // Verify diff shows only changed field
       expect(response.data).toHaveProperty("diff");
-      expect(response.data.diff).toHaveProperty("family_name", newFamilyName);
+      expect(response.data.diff).toHaveProperty("family_name");
+      expect(response.data.diff.family_name).toHaveProperty("before");
+      expect(response.data.diff.family_name).toHaveProperty("after");
+      expect(response.data.diff.family_name.after).toEqual(newFamilyName);
       expect(Object.keys(response.data.diff)).toHaveLength(1);
 
       // Verify status unchanged
@@ -207,7 +213,10 @@ describe("organization user management - PATCH parameter tests", () => {
 
       // Verify diff shows only changed field
       expect(response.data).toHaveProperty("diff");
-      expect(response.data.diff).toHaveProperty("middle_name", newMiddleName);
+      expect(response.data.diff).toHaveProperty("middle_name");
+      expect(response.data.diff.middle_name).toHaveProperty("before");
+      expect(response.data.diff.middle_name).toHaveProperty("after");
+      expect(response.data.diff.middle_name.after).toEqual(newMiddleName);
       expect(Object.keys(response.data.diff)).toHaveLength(1);
 
       // Verify status unchanged
@@ -238,7 +247,10 @@ describe("organization user management - PATCH parameter tests", () => {
 
       // Verify diff shows only changed field
       expect(response.data).toHaveProperty("diff");
-      expect(response.data.diff).toHaveProperty("nickname", newNickname);
+      expect(response.data.diff).toHaveProperty("nickname");
+      expect(response.data.diff.nickname).toHaveProperty("before");
+      expect(response.data.diff.nickname).toHaveProperty("after");
+      expect(response.data.diff.nickname.after).toEqual(newNickname);
       expect(Object.keys(response.data.diff)).toHaveLength(1);
 
       // Verify status unchanged
@@ -269,7 +281,10 @@ describe("organization user management - PATCH parameter tests", () => {
 
       // Verify diff shows only changed field
       expect(response.data).toHaveProperty("diff");
-      expect(response.data.diff).toHaveProperty("preferred_username", newPreferredUsername);
+      expect(response.data.diff).toHaveProperty("preferred_username");
+      expect(response.data.diff.preferred_username).toHaveProperty("before");
+      expect(response.data.diff.preferred_username).toHaveProperty("after");
+      expect(response.data.diff.preferred_username.after).toEqual(newPreferredUsername);
       expect(Object.keys(response.data.diff)).toHaveLength(1);
 
       // Verify status unchanged
@@ -302,7 +317,10 @@ describe("organization user management - PATCH parameter tests", () => {
 
       // Verify diff shows changed fields (email update may trigger preferred_username update)
       expect(response.data).toHaveProperty("diff");
-      expect(response.data.diff).toHaveProperty("email", newEmail);
+      expect(response.data.diff).toHaveProperty("email");
+      expect(response.data.diff.email).toHaveProperty("before");
+      expect(response.data.diff.email).toHaveProperty("after");
+      expect(response.data.diff.email.after).toEqual(newEmail);
 
       // Verify status unchanged
       expect(response.data.result.status).toBe(userStatus);
@@ -332,7 +350,11 @@ describe("organization user management - PATCH parameter tests", () => {
 
       // Verify diff shows only changed field
       expect(response.data).toHaveProperty("diff");
-      expect(response.data.diff).toHaveProperty("phone_number", newPhoneNumber);
+      expect(response.data.diff).toHaveProperty("phone_number");
+      expect(response.data.diff.phone_number).toHaveProperty("before");
+      expect(response.data.diff.phone_number).toHaveProperty("after");
+      expect(response.data.diff.phone_number.after).toEqual(newPhoneNumber);
+
       expect(Object.keys(response.data.diff)).toHaveLength(1);
 
       // Verify status unchanged
@@ -365,7 +387,10 @@ describe("organization user management - PATCH parameter tests", () => {
 
       // Verify diff shows only changed field
       expect(response.data).toHaveProperty("diff");
-      expect(response.data.diff).toHaveProperty("profile", newProfile);
+      expect(response.data.diff).toHaveProperty("profile");
+      expect(response.data.diff.profile).toHaveProperty("before");
+      expect(response.data.diff.profile).toHaveProperty("after");
+      expect(response.data.diff.profile.after).toEqual(newProfile);
       expect(Object.keys(response.data.diff)).toHaveLength(1);
 
       // Verify status unchanged
@@ -396,7 +421,10 @@ describe("organization user management - PATCH parameter tests", () => {
 
       // Verify diff shows only changed field
       expect(response.data).toHaveProperty("diff");
-      expect(response.data.diff).toHaveProperty("picture", newPicture);
+      expect(response.data.diff).toHaveProperty("picture");
+      expect(response.data.diff.picture).toHaveProperty("before");
+      expect(response.data.diff.picture).toHaveProperty("after");
+      expect(response.data.diff.picture.after).toEqual(newPicture);
       expect(Object.keys(response.data.diff)).toHaveLength(1);
 
       // Verify status unchanged
@@ -427,7 +455,10 @@ describe("organization user management - PATCH parameter tests", () => {
 
       // Verify diff shows only changed field
       expect(response.data).toHaveProperty("diff");
-      expect(response.data.diff).toHaveProperty("website", newWebsite);
+      expect(response.data.diff).toHaveProperty("website");
+      expect(response.data.diff.website).toHaveProperty("before");
+      expect(response.data.diff.website).toHaveProperty("after");
+      expect(response.data.diff.website.after).toEqual(newWebsite);
       expect(Object.keys(response.data.diff)).toHaveLength(1);
 
       // Verify status unchanged
@@ -460,7 +491,10 @@ describe("organization user management - PATCH parameter tests", () => {
 
       // Verify diff shows only changed field
       expect(response.data).toHaveProperty("diff");
-      expect(response.data.diff).toHaveProperty("gender", newGender);
+      expect(response.data.diff).toHaveProperty("gender");
+      expect(response.data.diff.gender).toHaveProperty("before");
+      expect(response.data.diff.gender).toHaveProperty("after");
+      expect(response.data.diff.gender.after).toEqual(newGender);
       expect(Object.keys(response.data.diff)).toHaveLength(1);
 
       // Verify status unchanged
@@ -491,7 +525,10 @@ describe("organization user management - PATCH parameter tests", () => {
 
       // Verify diff shows only changed field
       expect(response.data).toHaveProperty("diff");
-      expect(response.data.diff).toHaveProperty("birthdate", newBirthdate);
+      expect(response.data.diff).toHaveProperty("birthdate");
+      expect(response.data.diff.birthdate).toHaveProperty("before");
+      expect(response.data.diff.birthdate).toHaveProperty("after");
+      expect(response.data.diff.birthdate.after).toEqual(newBirthdate);
       expect(Object.keys(response.data.diff)).toHaveLength(1);
 
       // Verify status unchanged
@@ -522,7 +559,10 @@ describe("organization user management - PATCH parameter tests", () => {
 
       // Verify diff shows only changed field
       expect(response.data).toHaveProperty("diff");
-      expect(response.data.diff).toHaveProperty("zoneinfo", newZoneinfo);
+      expect(response.data.diff).toHaveProperty("zoneinfo");
+      expect(response.data.diff.zoneinfo).toHaveProperty("before");
+      expect(response.data.diff.zoneinfo).toHaveProperty("after");
+      expect(response.data.diff.zoneinfo.after).toEqual(newZoneinfo);
       expect(Object.keys(response.data.diff)).toHaveLength(1);
 
       // Verify status unchanged
@@ -553,7 +593,10 @@ describe("organization user management - PATCH parameter tests", () => {
 
       // Verify diff shows only changed field
       expect(response.data).toHaveProperty("diff");
-      expect(response.data.diff).toHaveProperty("locale", newLocale);
+      expect(response.data.diff).toHaveProperty("locale");
+      expect(response.data.diff.locale).toHaveProperty("before");
+      expect(response.data.diff.locale).toHaveProperty("after");
+      expect(response.data.diff.locale.after).toEqual(newLocale);
       expect(Object.keys(response.data.diff)).toHaveLength(1);
 
       // Verify status unchanged
@@ -593,7 +636,7 @@ describe("organization user management - PATCH parameter tests", () => {
 
       // Verify diff shows address field using dot notation key
       expect(response.data).toHaveProperty("diff");
-      expect(response.data.diff["address.street_address"]).toBe(newStreetAddress);
+      expect(response.data.diff["address.street_address"].after).toBe(newStreetAddress);
 
       // Verify status unchanged
       expect(response.data.result.status).toBe(userStatus);
@@ -630,7 +673,7 @@ describe("organization user management - PATCH parameter tests", () => {
 
       // Verify diff shows address field using dot notation key
       expect(response.data).toHaveProperty("diff");
-      expect(response.data.diff["address.postal_code"]).toBe(newPostalCode);
+      expect(response.data.diff["address.postal_code"].after).toBe(newPostalCode);
 
       // Verify status unchanged
       expect(response.data.result.status).toBe(userStatus);
@@ -669,7 +712,7 @@ describe("organization user management - PATCH parameter tests", () => {
 
       // Verify diff shows custom_properties field using dot notation key
       expect(response.data).toHaveProperty("diff");
-      expect(response.data.diff["custom_properties.department"]).toBe(newDepartment);
+      expect(response.data.diff["custom_properties.department"].after).toBe(newDepartment);
 
       // Verify status unchanged
       expect(response.data.result.status).toBe(userStatus);
@@ -705,7 +748,7 @@ describe("organization user management - PATCH parameter tests", () => {
 
       // Verify diff shows custom_properties field using dot notation key
       expect(response.data).toHaveProperty("diff");
-      expect(response.data.diff["custom_properties.location"]).toBe("Tokyo Office");
+      expect(response.data.diff["custom_properties.location"].after).toBe("Tokyo Office");
 
       // Verify status unchanged
       expect(response.data.result.status).toBe(userStatus);
@@ -743,8 +786,14 @@ describe("organization user management - PATCH parameter tests", () => {
 
       // Verify diff shows changed fields (may include preferred_username if email triggers it)
       expect(response.data).toHaveProperty("diff");
-      expect(response.data.diff).toHaveProperty("name", newName);
-      expect(response.data.diff).toHaveProperty("email", newEmail);
+      expect(response.data.diff).toHaveProperty("name");
+      expect(response.data.diff.name).toHaveProperty("before");
+      expect(response.data.diff.name).toHaveProperty("after");
+      expect(response.data.diff.name.after).toEqual(newName);
+      expect(response.data.diff).toHaveProperty("email");
+      expect(response.data.diff.email).toHaveProperty("before");
+      expect(response.data.diff.email).toHaveProperty("after");
+      expect(response.data.diff.email.after).toEqual(newEmail);
 
       // Verify status unchanged
       expect(response.data.result.status).toBe(userStatus);

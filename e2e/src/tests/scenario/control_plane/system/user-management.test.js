@@ -191,6 +191,63 @@ describe("user management api", () => {
       expect(updateRolesResponse.status).toBe(200);
       expect(updateRolesResponse.data.result).toHaveProperty("roles");
 
+      // Verify roles were added
+      const verifyRolesAdded = await get({
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/users/${userId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      expect(verifyRolesAdded.status).toBe(200);
+      expect(verifyRolesAdded.data.roles.length).toBeGreaterThan(0);
+
+      // Test removing all roles (DELETE INSERT with empty roles)
+      const removeAllRolesResponse = await patchWithJson({
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/users/${userId}/roles`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          "roles": []
+        }
+      });
+      console.log("removeAllRoles response:", removeAllRolesResponse.data);
+      expect(removeAllRolesResponse.status).toBe(200);
+      // Empty roles are omitted from response (User.toMap() behavior)
+      const resultRoles = removeAllRolesResponse.data.result.roles || [];
+      expect(resultRoles).toHaveLength(0);
+      // Verify diff shows roles and permissions were removed
+      expect(removeAllRolesResponse.data).toHaveProperty("diff");
+      expect(removeAllRolesResponse.data.diff).toHaveProperty("roles");
+      expect(removeAllRolesResponse.data.diff).toHaveProperty("permissions");
+      console.log("Diff:", JSON.stringify(removeAllRolesResponse.data.diff, null, 2));
+
+      // Verify roles are actually removed from database
+      const verifyRolesRemoved = await get({
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/users/${userId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      expect(verifyRolesRemoved.status).toBe(200);
+      // Empty roles are omitted from response
+      const dbRoles = verifyRolesRemoved.data.roles || [];
+      expect(dbRoles).toHaveLength(0);
+      // Permissions should also be empty when roles are removed
+      const dbPermissions = verifyRolesRemoved.data.permissions || [];
+      expect(dbPermissions).toHaveLength(0);
+      console.log("✅ Roles and permissions successfully removed from user (system level)");
+
+      // Re-add roles for subsequent tests
+      await patchWithJson({
+        url: `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/users/${userId}/roles`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          "roles": rolesToAssign
+        }
+      });
 
       // Test tenant assignments update
       const updateTenantAssignmentsResponse = await patchWithJson({

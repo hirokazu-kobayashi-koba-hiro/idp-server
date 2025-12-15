@@ -234,19 +234,34 @@ public class MysqlExecutor implements UserCommandSqlExecutor {
   }
 
   @Override
+  public void deleteRoles(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String deleteSql =
+        """
+            DELETE FROM idp_user_roles
+            WHERE tenant_id = ? AND user_id = ?;
+            """;
+    List<Object> deleteParams = new ArrayList<>();
+    deleteParams.add(tenant.identifier().value());
+    deleteParams.add(user.sub());
+    sqlExecutor.execute(deleteSql, deleteParams);
+  }
+
+  @Override
   public void upsertRoles(Tenant tenant, User user) {
     SqlExecutor sqlExecutor = new SqlExecutor();
+    List<UserRole> userRoles = user.roles();
+
     StringBuilder sqlTemplateBuilder = new StringBuilder();
     sqlTemplateBuilder.append(
         """
-                        INSERT INTO idp_user_roles (id, tenant_id, user_id, role_id)
+                        INSERT IGNORE INTO idp_user_roles (id, tenant_id, user_id, role_id)
                         VALUES
                         """);
 
     List<String> sqlValues = new ArrayList<>();
     List<Object> params = new ArrayList<>();
 
-    List<UserRole> userRoles = user.roles();
     userRoles.forEach(
         userRole -> {
           sqlValues.add("(?, ?, ?, ?)");
@@ -257,10 +272,6 @@ public class MysqlExecutor implements UserCommandSqlExecutor {
         });
 
     sqlTemplateBuilder.append(String.join(",", sqlValues));
-    sqlTemplateBuilder.append(
-        """
-            ON DUPLICATE KEY UPDATE user_id = user_id;
-            """);
     sqlTemplateBuilder.append(";");
 
     sqlExecutor.execute(sqlTemplateBuilder.toString(), params);

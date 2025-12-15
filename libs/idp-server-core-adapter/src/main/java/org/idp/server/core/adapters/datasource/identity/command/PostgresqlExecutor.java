@@ -233,8 +233,24 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
   }
 
   @Override
+  public void deleteRoles(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String deleteSql =
+        """
+            DELETE FROM idp_user_roles
+            WHERE tenant_id = ?::uuid AND user_id = ?::uuid;
+            """;
+    List<Object> deleteParams = new ArrayList<>();
+    deleteParams.add(tenant.identifierUUID());
+    deleteParams.add(user.subAsUuid());
+    sqlExecutor.execute(deleteSql, deleteParams);
+  }
+
+  @Override
   public void upsertRoles(Tenant tenant, User user) {
     SqlExecutor sqlExecutor = new SqlExecutor();
+    List<UserRole> userRoles = user.roles();
+
     StringBuilder sqlTemplateBuilder = new StringBuilder();
     sqlTemplateBuilder.append(
         """
@@ -245,7 +261,6 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
     List<String> sqlValues = new ArrayList<>();
     List<Object> params = new ArrayList<>();
 
-    List<UserRole> userRoles = user.roles();
     userRoles.forEach(
         userRole -> {
           sqlValues.add("(?::uuid, ?::uuid, ?::uuid)");
@@ -255,11 +270,7 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
         });
 
     sqlTemplateBuilder.append(String.join(",", sqlValues));
-    sqlTemplateBuilder.append(
-        """
-            ON CONFLICT (user_id, role_id) DO NOTHING;
-            """);
-    sqlTemplateBuilder.append(";");
+    sqlTemplateBuilder.append(" ON CONFLICT DO NOTHING;");
 
     sqlExecutor.execute(sqlTemplateBuilder.toString(), params);
   }

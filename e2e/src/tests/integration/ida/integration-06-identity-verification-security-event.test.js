@@ -261,7 +261,7 @@ describe("Integration: Identity Verification Security Event Logging", () => {
         Authorization: `Bearer ${adminAccessToken}`,
       },
       params: {
-        type: `${identityVerificationConfigType}_application_failure`,
+        event_type: `${identityVerificationConfigType}_application_failure`,
         limit: 10,
       },
     });
@@ -341,7 +341,7 @@ describe("Integration: Identity Verification Security Event Logging", () => {
         Authorization: `Bearer ${adminAccessToken}`,
       },
       params: {
-        type: `${identityVerificationConfigType}_application_success`,
+        event_type: `${identityVerificationConfigType}_application_success`,
         limit: 10,
       },
     });
@@ -399,7 +399,7 @@ describe("Integration: Identity Verification Security Event Logging", () => {
         Authorization: `Bearer ${adminAccessToken}`,
       },
       params: {
-        type: `${identityVerificationConfigType}_application_failure`,
+        event_type: `${identityVerificationConfigType}_application_failure`,
         limit: 10,
       },
     });
@@ -457,7 +457,7 @@ describe("Integration: Identity Verification Security Event Logging", () => {
         Authorization: `Bearer ${adminAccessToken}`,
       },
       params: {
-        type: `${identityVerificationConfigType}_application_failure`,
+        event_type: `${identityVerificationConfigType}_application_failure`,
         limit: 5,
       },
     });

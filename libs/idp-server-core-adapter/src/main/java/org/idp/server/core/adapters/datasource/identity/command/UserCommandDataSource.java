@@ -53,7 +53,7 @@ public class UserCommandDataSource implements UserCommandRepository {
   public void update(Tenant tenant, User user) {
     executor.update(tenant, user);
     if (user.hasRoles()) {
-      executor.upsertRoles(tenant, user);
+      updateRoles(tenant, user);
     }
     if (user.hasAssignedTenants()) {
       executor.upsertAssignedTenants(tenant, user);
@@ -66,6 +66,14 @@ public class UserCommandDataSource implements UserCommandRepository {
     }
     if (user.hasCurrentOrganizationId()) {
       executor.upsertCurrentOrganization(tenant, user);
+    }
+  }
+
+  @Override
+  public void updateRoles(Tenant tenant, User user) {
+    executor.deleteRoles(tenant, user);
+    if (user.hasRoles()) {
+      executor.upsertRoles(tenant, user);
     }
   }
 
