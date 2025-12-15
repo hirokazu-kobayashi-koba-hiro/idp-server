@@ -13,7 +13,7 @@
 - Request Object 検証の詳細
 
 **前提知識**:
-- [concept-22: FAPI](../../content_03_concepts/03-authentication-authorization/concept-11-fapi.md)の理解
+- [concept-22: FAPI](../../content_03_concepts/03-authentication-authorization/concept-06-fapi.md)の理解
 - [basic-08: 認可コードフロー](../../content_03_concepts/basic/basic-08-oauth2-authorization-code-flow.md)の理解
 - OAuth 2.0 / OIDC の基礎知識
 
@@ -721,7 +721,7 @@ if (context.responseType().isCode() && context.responseMode().isJwt()) {
 ## 🔗 関連ドキュメント
 
 **概念・基礎**:
-- [concept-22: FAPI](../../content_03_concepts/03-authentication-authorization/concept-11-fapi.md) - FAPI概念説明
+- [concept-22: FAPI](../../content_03_concepts/03-authentication-authorization/concept-06-fapi.md) - FAPI概念説明
 - [basic-08: 認可コードフロー](../../content_03_concepts/basic/basic-08-oauth2-authorization-code-flow.md) - 基本フロー
 
 **実装詳細**:

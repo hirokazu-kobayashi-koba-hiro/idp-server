@@ -627,4 +627,4 @@ GET /{tenant-id}/userinfo
 
 - [身元確認申込みガイド](../../content_05_how-to/how-to-16-identity-verification-application.md)
 - [FIDO2登録フロー](../../content_05_how-to/how-to-13-fido-uaf-registration.md)
-- [認証ポリシー](../../content_03_concepts/03-authentication-authorization/concept-06-authentication-policy.md)
+- [認証ポリシー](../../content_03_concepts/03-authentication-authorization/concept-01-authentication-policy.md)

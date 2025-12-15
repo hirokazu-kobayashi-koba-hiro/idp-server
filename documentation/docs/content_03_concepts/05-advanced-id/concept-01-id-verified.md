@@ -359,7 +359,7 @@ client_id=clientSecretPost
 - [認可コードフロー](../../content_04_protocols/protocol-01-authorization-code-flow.md) - トークンへのverified_claims埋め込み詳細
 - [CIBA](../../content_04_protocols/protocol-02-ciba-flow.md) - バックチャネル認証での身元確認要求
 - [マルチテナント](../01-foundation/concept-01-multi-tenant.md) - テナント別の身元確認設定
-- [エンタープライズID](concept-16-enterprise-id.md) - 企業での身元確認統合
+- [エンタープライズID](concept-02-enterprise-id.md) - 企業での身元確認統合
 - [身元確認申込み設定](../../content_05_how-to/how-to-16-identity-verification-application.md) - 外部サービス連携設定
 - [身元確認結果登録](../../content_05_how-to/how-to-17-identity-verification-registration.md) - 直接登録設定
 

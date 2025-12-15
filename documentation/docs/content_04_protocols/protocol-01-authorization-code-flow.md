@@ -217,6 +217,6 @@ IDトークンとアクセストークンに含めることができます。
 
 ### 関連ドキュメント
 - [マルチテナント](../content_03_concepts/01-foundation/concept-01-multi-tenant.md) - テナント設定の詳細
-- [身元確認済みID](../content_03_concepts/05-advanced-id/concept-15-id-verified.md) - OIDC4IDAの実装ガイド
+- [身元確認済みID](../content_03_concepts/05-advanced-id/concept-01-id-verified.md) - OIDC4IDAの実装ガイド
 
 ---

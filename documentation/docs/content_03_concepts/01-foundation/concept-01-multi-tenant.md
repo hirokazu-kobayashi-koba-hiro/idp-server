@@ -215,10 +215,10 @@ flowchart TB
 - [Financial-grade API (FAPI)](https://openid.net/specs/openid-financial-api-part-1-1_0.html) - 金融レベルセキュリティ
 
 ### 関連ドキュメント
-- [エンタープライズID](../05-advanced-id/concept-16-enterprise-id.md) - エンタープライズでの活用パターン
-- [身元確認済みID](../05-advanced-id/concept-15-id-verified.md) - テナント別の身元確認設定
+- [エンタープライズID](../05-advanced-id/concept-02-enterprise-id.md) - エンタープライズでの活用パターン
+- [身元確認済みID](../05-advanced-id/concept-01-id-verified.md) - テナント別の身元確認設定
 - [コントロールプレーン](concept-02-control-plane.md) - Management API、組織管理
-- [監査ログ](../07-operations/concept-20-audit-compliance.md) - テナント単位の監査分離
+- [監査ログ](../07-operations/concept-01-audit-compliance.md) - テナント単位の監査分離
 
 ---                                                                                                                                                                                                |
 

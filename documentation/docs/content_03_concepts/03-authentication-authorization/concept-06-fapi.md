@@ -263,7 +263,7 @@ FAPIは、**金融グレードのセキュリティを実現するOAuth/OIDC拡�
 - [FAPI CIBA Profile - プロトコル仕様](../../content_04_protocols/protocol-05-fapi-ciba.md)
 - [CIBA + FIDO-UAF](../../content_05_how-to/how-to-12-ciba-flow-fido-uaf.md)
 - [クライアント設定](../01-foundation/concept-03-client.md)
-- [トークン管理](./concept-13-token-management.md)
+- [トークン管理](../04-tokens-claims/concept-02-token-management.md)
 
 ## 参考仕様
 

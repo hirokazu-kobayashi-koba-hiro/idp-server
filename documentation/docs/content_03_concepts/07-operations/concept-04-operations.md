@@ -7,7 +7,7 @@
 このドキュメントを理解するには、以下の基礎知識が役立ちます：
 
 - [コントロールプレーン](../01-foundation/concept-02-control-plane.md) - Management APIの概要
-- [監査ログ](concept-20-audit-compliance.md) - 監査証跡の保持
+- [監査ログ](concept-01-audit-compliance.md) - 監査証跡の保持
 
 ---
 
@@ -71,7 +71,7 @@ idp-serverは、以下のデータを自動削除します。
 - 監査ログ（`audit_log`）
 - セキュリティイベント（`security_event`）
 
-詳細は [concept-13: 監査ログ](concept-20-audit-compliance.md) を参照。
+詳細は [concept-13: 監査ログ](concept-01-audit-compliance.md) を参照。
 
 ### 3. ヘルスチェック・モニタリング
 
@@ -113,7 +113,7 @@ GET /actuator/health
 
 ## 関連ドキュメント
 
-- [監査ログ](concept-20-audit-compliance.md) - 監査証跡、データ保持ポリシー
+- [監査ログ](concept-01-audit-compliance.md) - 監査証跡、データ保持ポリシー
 - [コントロールプレーン](../01-foundation/concept-02-control-plane.md) - Management API、System Administrator権限
 - [運用ガイダンス](../../content_08_ops/commercial-deployment/05-operational-guidance.md) - 詳細な運用手順、トラブルシューティング
 

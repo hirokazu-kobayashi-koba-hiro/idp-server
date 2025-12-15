@@ -54,7 +54,7 @@ idp-serverの**コア機能の実装方法**を説明する技術ドキュメン
 
 **移動**:
 - impl-08-federation.md → [Application Plane: 08-federation.md](../03-application-plane/08-federation.md)（利用者向け）
-- impl-09-id-token-structure.md → [Concepts: concept-12-id-token.md](../../content_03_concepts/04-tokens-claims/concept-12-id-token.md)（概念説明）
+- impl-09-id-token-structure.md → [Concepts: concept-01-id-token.md](../../content_03_concepts/04-tokens-claims/concept-01-id-token.md)（概念説明）
 
 ---
 
@@ -173,7 +173,7 @@ idp-serverの**コア機能の実装方法**を説明する技術ドキュメン
 - ❌ **削除**: impl-07-authentication-interactions.md（610行）- Issue #298分析ドキュメント、重複のため削除
 - 🔄 **分割・移動**:
   - impl-08-federation.md → Application Plane: 08-federation.md（利用者向け）+ impl-08-federation-provider.md（実装者向け）
-  - impl-09-id-token-structure.md → Concepts: concept-12-id-token.md（概念説明、146行）
+  - impl-09-id-token-structure.md → Concepts: concept-01-id-token.md（概念説明、146行）
   - impl-13-events.md + impl-14-user-lifecycle-event.md → Application Plane: 09-events.md（概念的な内容）
 
 ---

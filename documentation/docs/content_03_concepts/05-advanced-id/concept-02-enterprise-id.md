@@ -203,7 +203,7 @@ Organization → Tenant → Role → Permission → User
 
 ### 関連ドキュメント
 - [マルチテナント](../01-foundation/concept-01-multi-tenant.md) - 組織・テナント階層の詳細
-- [身元確認済みID](concept-15-id-verified.md) - エンタープライズ身元確認統合
+- [身元確認済みID](concept-01-id-verified.md) - エンタープライズ身元確認統合
 - [認可コードフロー](../../content_04_protocols/protocol-01-authorization-code-flow.md) - エンタープライズSSOの基盤技術
 
 ---

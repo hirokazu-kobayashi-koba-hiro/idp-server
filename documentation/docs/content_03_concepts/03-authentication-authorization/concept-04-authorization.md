@@ -113,7 +113,7 @@ flowchart LR
 - **粒度の適切さ**: 粗すぎず細かすぎない権限設計
 - **認証強度との連動**: 強い認証 = より多くのスコープ許可（動的スコープフィルタリング）
 
-詳細は [concept-09: カスタムクレーム](../04-tokens-claims/concept-14-custom-claims.md) を参照。
+詳細は [concept-09: カスタムクレーム](../04-tokens-claims/concept-03-custom-claims.md) を参照。
 
 ### 3. 認証強度と連動した動的スコープフィルタリング
 
@@ -136,7 +136,7 @@ FIDO2認証 → scope=openid verified_claims:*（身元確認済み情報も許�
 - 過剰な権限付与の防止
 - セキュリティとユーザー体験の両立
 
-詳細は [concept-05: 認証ポリシー](concept-06-authentication-policy.md) を参照。
+詳細は [concept-05: 認証ポリシー](concept-01-authentication-policy.md) を参照。
 
 ### 4. 身元確認との連携
 
@@ -154,7 +154,7 @@ scope=openid verified_claims:given_name verified_claims:family_name
 - `verified_claims:` プレフィックス付きスコープを要求
 - 認証強度が要件を満たしていること
 
-詳細は [concept-03: 身元確認済みID](../05-advanced-id/concept-15-id-verified.md) を参照。
+詳細は [concept-03: 身元確認済みID](../05-advanced-id/concept-01-id-verified.md) を参照。
 
 ### 5. 多様な認可フロー
 
@@ -248,7 +248,7 @@ idp-serverは、2種類のトークン形式をサポートします。
 | **パフォーマンス** | DB問い合わせ必要 | 署名検証のみ |
 | **推奨用途** | 厳密な制御が必要な場合 | 高速・スケーラブル |
 
-詳細は [concept-06: トークン管理](../04-tokens-claims/concept-13-token-management.md) を参照。
+詳細は [concept-06: トークン管理](../04-tokens-claims/concept-02-token-management.md) を参照。
 
 ---
 
@@ -375,12 +375,12 @@ idp-serverは、最新のOAuth/OIDCセキュリティ拡張をサポートしま
 ## 関連ドキュメント
 
 - [マルチテナント](../01-foundation/concept-01-multi-tenant.md) - テナント単位の認可サーバー
-- [身元確認済みID](../05-advanced-id/concept-15-id-verified.md) - verified_claimsスコープ
-- [認証ポリシー](concept-06-authentication-policy.md) - 認証強度と連動したスコープ制御
-- [トークン管理](../04-tokens-claims/concept-13-token-management.md) - トークン形式・有効期限設計
-- [カスタムクレーム](../04-tokens-claims/concept-14-custom-claims.md) - スコープとクレームの関係
+- [身元確認済みID](../05-advanced-id/concept-01-id-verified.md) - verified_claimsスコープ
+- [認証ポリシー](concept-01-authentication-policy.md) - 認証強度と連動したスコープ制御
+- [トークン管理](../04-tokens-claims/concept-02-token-management.md) - トークン形式・有効期限設計
+- [カスタムクレーム](../04-tokens-claims/concept-03-custom-claims.md) - スコープとクレームの関係
 - [コントロールプレーン](../01-foundation/concept-02-control-plane.md) - 認可サーバー・クライアント設定API
-- [セキュリティイベント](../06-security-extensions/concept-17-security-events.md) - 認可操作のログ記録
+- [セキュリティイベント](../06-security-extensions/concept-01-security-events.md) - 認可操作のログ記録
 - [Authorization Code Flow](../../content_04_protocols/protocol-01-authorization-code-flow.md) - 認可フロー詳細
 - [CIBA Flow](../../content_04_protocols/protocol-02-ciba-flow.md) - バックチャネル認証
 - [Introspection](../../content_04_protocols/protocol-03-introspection.md) - トークン検証
