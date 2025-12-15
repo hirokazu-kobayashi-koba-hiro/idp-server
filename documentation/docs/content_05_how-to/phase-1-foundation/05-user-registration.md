@@ -26,15 +26,15 @@
 **Phase 1**: 最小構成で動作確認（Step 4/5）
 
 **前提ドキュメント**:
-- [how-to-01: 組織初期化](./how-to-02-organization-initialization.md) - 組織作成済み
-- [how-to-02: テナント作成](./how-to-03-tenant-setup.md) - テナント作成済み
-- [how-to-03: クライアント登録](./how-to-04-client-registration.md) - クライアント登録済み
+- [組織初期化](./02-organization-initialization.md) - 組織作成済み
+- [テナント作成](./03-tenant-setup.md) - テナント作成済み
+- [クライアント登録](./04-client-registration.md) - クライアント登録済み
 
 **次のドキュメント**:
-- [how-to-06: 認証ポリシー基礎編](./how-to-07-authentication-policy-basic.md) - より柔軟な認証設定
+- [認証ポリシー基礎編](./07-authentication-policy.md) - より柔軟な認証設定
 
 ### 前提条件
-- [how-to-03](./how-to-04-client-registration.md)でクライアント登録完了
+- [how-to-03](./04-client-registration.md)でクライアント登録完了
 - 組織ID・テナントID・クライアントIDを確認済み
 - OAuth 2.0 / OIDC の基本的なフロー理解
 
@@ -125,7 +125,7 @@ initial-registrationは、OAuth認可フロー中にユーザー登録を行い�
 
 ## 環境変数の準備
 
-**前提**: [how-to-03](./how-to-04-client-registration.md)で設定した環境変数を使用します。
+**前提**: [how-to-03](./04-client-registration.md)で設定した環境変数を使用します。
 
 ```bash
 # 環境変数の確認
@@ -601,14 +601,14 @@ curl -X POST "http://localhost:8080/${PUBLIC_TENANT_ID}/v1/authorizations/${AUTH
 ✅ セルフサービスユーザー登録ができました！
 
 ### より高度な認証設定
-- [How-to: 認証ポリシー基礎編](./how-to-07-authentication-policy-basic.md) - より柔軟な認証設定
-- [How-to: MFA設定](./how-to-08-mfa-setup.md) - SMS OTP、TOTP、FIDO2
+- [How-to: 認証ポリシー基礎編](./07-authentication-policy.md) - より柔軟な認証設定
+- [How-to: MFA設定](../phase-2-security/01-mfa-setup.md) - SMS OTP、TOTP、FIDO2
 
 ### 外部IdP連携
 - [How-to: Federation設定](./how-to-11-federation-setup.md) - Google、Azure AD連携
 
 ### パスワード管理
-- [How-to: パスワード管理](./how-to-06-password-management.md) - パスワード変更・リセット
+- [How-to: パスワード管理](./06-password-management.md) - パスワード変更・リセット
 - [Concept: Password Policy](../content_03_concepts/02-identity-management/concept-02-password-policy.md) - パスワードポリシー詳細
 
 ---

@@ -26,13 +26,13 @@
 **Phase 1**: 最小構成で動作確認（Step 2/5）
 
 **前提ドキュメント**:
-- [how-to-01 組織初期化](./how-to-02-organization-initialization.md) - 組織とOrganizerテナント作成済み
+- [組織初期化](./02-organization-initialization.md) - 組織とOrganizerテナント作成済み
 
 **次のドキュメント**:
-- [how-to-03 クライアント登録](./how-to-04-client-registration.md) - クライアント登録
+- [クライアント登録](./04-client-registration.md) - クライアント登録
 
 ### 前提条件
-- [how-to-01](./how-to-02-organization-initialization.md)で組織初期化完了
+- [how-to-01](./02-organization-initialization.md)で組織初期化完了
 - 組織管理者トークンを取得済み
 - 組織ID（organization-id）を確認済み
 
@@ -99,7 +99,7 @@ OAuth/OIDC認証を動作させるために、以下の設定が必要です：
 
 ### 1. 事前確認
 
-**前提**: [how-to-01](./how-to-02-organization-initialization.md)で設定した環境変数を使用します。
+**前提**: [how-to-01](./02-organization-initialization.md)で設定した環境変数を使用します。
 
 まだ設定していない場合は、以下を実行してください：
 

@@ -20,7 +20,7 @@
 **約15分**
 
 ### 前提条件
-- [how-to-12: CIBA + FIDO-UAF](./how-to-12-ciba-flow-fido-uaf.md)の理解
+- [CIBA + FIDO-UAF](../phase-3-advanced/fido-uaf/01-ciba-flow.md)の理解
 - テナントでCIBAが有効化されている
 - 認証デバイスが登録されている
 
@@ -319,7 +319,7 @@ curl -X POST "${TENANT_ID}/v1/backchannel/authentications" \
 
 ## 関連ドキュメント
 
-- [how-to-12: CIBA + FIDO-UAF](./how-to-12-ciba-flow-fido-uaf.md) - CIBAフローの基本
+- [CIBA + FIDO-UAF](../phase-3-advanced/fido-uaf/01-ciba-flow.md) - CIBAフローの基本
 - [CIBA Flow実装ガイド](../content_06_developer-guide/03-application-plane/06-ciba-flow.md) - 開発者向け詳細
 - [OpenID Connect CIBA Core 1.0](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html) - 仕様書
 

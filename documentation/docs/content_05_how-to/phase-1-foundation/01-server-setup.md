@@ -4,7 +4,7 @@
 
 **idp-serverを実運用可能な状態で構築する**ことが目標です。
 
-このドキュメントは[クイックスタート](../content_02_quickstart/quickstart-01-getting-started.md)を補足し、本格的なセットアップに必要な詳細を提供します。
+このドキュメントは[クイックスタート](../../content_02_quickstart/quickstart-01-getting-started.md)を補足し、本格的なセットアップに必要な詳細を提供します。
 
 ### このドキュメントの位置づけ
 
@@ -21,13 +21,13 @@
 ⏱️ **約30分**（環境構築含む）
 
 ### 次のドキュメント
-- [how-to-02: 組織初期化](./how-to-02-organization-initialization.md) - 組織・テナント・ユーザーの作成
+- [組織初期化](./02-organization-initialization.md) - 組織・テナント・ユーザーの作成
 
 ---
 
 ## 前提条件
 
-- [quickstartの完了](../content_02_quickstart/quickstart-01-getting-started.md)
+- [quickstartの完了](../../content_02_quickstart/quickstart-01-getting-started.md)
 
 ---
 
@@ -122,15 +122,15 @@ curl -X POST "http://localhost:8080/${ADMIN_TENANT_ID}/v1/tokens" \
 
 次に、idp-serverの初期設定を行います：
 
-1. **[how-to-02: 組織初期化](./how-to-02-organization-initialization.md)**
+1. **[組織初期化](./02-organization-initialization.md)**
    - 組織・管理者テナント・ユーザーの作成
    - 管理者権限の設定
 
-2. **[how-to-03: テナント設定](./how-to-03-tenant-setup.md)**
+2. **[テナント設定](./03-tenant-setup.md)**
    - アプリケーション用テナントの作成
    - OAuth/OIDC認証設定
 
-3. **[how-to-04: クライアント登録](./how-to-04-client-registration.md)**
+3. **[クライアント登録](./04-client-registration.md)**
    - クライアントアプリケーションの登録
    - 認証フローの設定
 
@@ -139,9 +139,9 @@ curl -X POST "http://localhost:8080/${ADMIN_TENANT_ID}/v1/tokens" \
 
 ## 関連ドキュメント
 
-- [クイックスタート](../content_02_quickstart/quickstart-01-getting-started.md) - 5分で試す
-- [how-to-02: 組織初期化](./how-to-02-organization-initialization.md) - 組織・テナント作成
-- [Developer Guide: デプロイメント](../content_08_ops/commercial-deployment/00-overview.md) - 詳細なデプロイ手順
+- [クイックスタート](../../content_02_quickstart/quickstart-01-getting-started.md) - 5分で試す
+- [組織初期化](./02-organization-initialization.md) - 組織・テナント作成
+- [Developer Guide: デプロイメント](../../content_08_ops/commercial-deployment/00-overview.md) - 詳細なデプロイ手順
 
 ---
 

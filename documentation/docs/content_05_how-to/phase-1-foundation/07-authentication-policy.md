@@ -8,7 +8,7 @@
 ⏱️ **約15分**
 
 ### 前提条件
-- [パスワード認証設定](./how-to-05-user-registration.md)完了
+- [パスワード認証設定](./05-user-registration.md)完了
 - 管理者トークンを取得済み
 - 組織ID（organization-id）を取得済み
 
@@ -513,7 +513,7 @@ ID Tokenに acr クレームとして含める
 - クライアントがACR値を確認してアクセス制御
 - 重要操作は`gold`レベル必須等
 
-**詳細**: [認証ポリシー詳細ガイド](./how-to-10-authentication-policy-advanced.md)
+**詳細**: [認証ポリシー詳細ガイド](../phase-2-security/03-authentication-policy-advanced.md)
 
 ---
 
@@ -689,11 +689,11 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
 基本的な認証ポリシーを設定できました！
 
 ### より高度な設定
-- [How-to: 認証ポリシー詳細](./how-to-10-authentication-policy-advanced.md) - 条件式、JSONPath、failure_conditions
+- [How-to: 認証ポリシー詳細](../phase-2-security/03-authentication-policy-advanced.md) - 条件式、JSONPath、failure_conditions
 
 ### 実際の認証設定
-- [How-to: パスワード認証](./how-to-05-user-registration.md)
-- [How-to: MFA設定](./how-to-08-mfa-setup.md)
+- [How-to: パスワード認証](./05-user-registration.md)
+- [How-to: MFA設定](../phase-2-security/01-mfa-setup.md)
 
 ### 関連概念
 - [Concept: 認証ポリシー](../content_03_concepts/03-authentication-authorization/concept-01-authentication-policy.md)
