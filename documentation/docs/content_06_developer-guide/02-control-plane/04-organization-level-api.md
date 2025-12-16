@@ -337,17 +337,17 @@ public class IdpServerApplication {
   public IdpServerApplication(...) {
     // ...
 
-    // ✅ TenantAwareEntryServiceProxy を使用
-    // 理由: 第二引数が TenantIdentifier（組織レベルAPIでもTenantIdentifierがある）
+    // ✅ ManagementTypeEntryServiceProxy を使用
+    // 理由: Organization-level Control Plane API
     this.orgRoleManagementApi =
-        TenantAwareEntryServiceProxy.createProxy(
+        ManagementTypeEntryServiceProxy.createProxy(
             new OrgRoleManagementEntryService(
                 tenantQueryRepository,
                 organizationRepository,
-                roleCommandRepository,
                 roleQueryRepository,
-                auditLogPublisher,
-                organizationAccessVerifier),
+                roleCommandRepository,
+                permissionQueryRepository,
+                auditLogPublisher),
             OrgRoleManagementApi.class,
             databaseTypeProvider);
   }
