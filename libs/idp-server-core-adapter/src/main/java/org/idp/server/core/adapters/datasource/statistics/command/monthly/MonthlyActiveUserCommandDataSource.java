@@ -18,8 +18,8 @@ package org.idp.server.core.adapters.datasource.statistics.command.monthly;
 
 import java.time.LocalDate;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.security.event.SecurityEventUserIdentifier;
 import org.idp.server.platform.statistics.repository.MonthlyActiveUserCommandRepository;
-import org.idp.server.platform.user.UserIdentifier;
 
 public class MonthlyActiveUserCommandDataSource implements MonthlyActiveUserCommandRepository {
 
@@ -31,7 +31,10 @@ public class MonthlyActiveUserCommandDataSource implements MonthlyActiveUserComm
 
   @Override
   public boolean addActiveUserAndReturnIfNew(
-      TenantIdentifier tenantId, LocalDate statMonth, UserIdentifier userId) {
-    return executor.addActiveUserAndReturnIfNew(tenantId, statMonth, userId);
+      TenantIdentifier tenantId,
+      LocalDate statMonth,
+      SecurityEventUserIdentifier userId,
+      String userName) {
+    return executor.addActiveUserAndReturnIfNew(tenantId, statMonth, userId, userName);
   }
 }

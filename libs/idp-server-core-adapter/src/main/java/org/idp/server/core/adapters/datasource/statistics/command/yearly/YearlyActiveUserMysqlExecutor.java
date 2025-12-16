@@ -22,13 +22,16 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.user.UserIdentifier;
+import org.idp.server.platform.security.event.SecurityEventUserIdentifier;
 
 public class YearlyActiveUserMysqlExecutor implements YearlyActiveUserSqlExecutor {
 
   @Override
   public boolean addActiveUserAndReturnIfNew(
-      TenantIdentifier tenantId, LocalDate statYear, UserIdentifier userId) {
+      TenantIdentifier tenantId,
+      LocalDate statYear,
+      SecurityEventUserIdentifier userId,
+      String userName) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     // MySQL doesn't support RETURNING, so we check if the record exists first
@@ -53,9 +56,10 @@ public class YearlyActiveUserMysqlExecutor implements YearlyActiveUserSqlExecuto
                     tenant_id,
                     stat_year,
                     user_id,
+                    user_name,
                     last_used_at,
                     created_at
-                ) VALUES (?, ?, ?, NOW(), NOW())
+                ) VALUES (?, ?, ?, ?, NOW(), NOW())
                 ON DUPLICATE KEY UPDATE last_used_at = NOW()
                 """;
 
@@ -63,6 +67,7 @@ public class YearlyActiveUserMysqlExecutor implements YearlyActiveUserSqlExecuto
     params.add(tenantId.value());
     params.add(statYear);
     params.add(userId.value());
+    params.add(userName != null ? userName : "");
 
     sqlExecutor.execute(sql, params);
 

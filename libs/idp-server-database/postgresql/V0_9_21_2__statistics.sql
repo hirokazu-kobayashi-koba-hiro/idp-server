@@ -36,6 +36,7 @@ CREATE TABLE statistics_daily_users (
     tenant_id UUID NOT NULL,
     stat_date DATE NOT NULL,
     user_id UUID NOT NULL,
+    user_name VARCHAR(255) NOT NULL DEFAULT '',
     last_used_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -84,6 +85,7 @@ CREATE TABLE statistics_monthly_users (
     tenant_id UUID NOT NULL,
     stat_month DATE NOT NULL,  -- First day of month (e.g., 2025-01-01)
     user_id UUID NOT NULL,
+    user_name VARCHAR(255) NOT NULL DEFAULT '',
     last_used_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -132,6 +134,7 @@ CREATE TABLE statistics_yearly_users (
     tenant_id UUID NOT NULL,
     stat_year DATE NOT NULL,  -- First day of year (e.g., 2025-01-01)
     user_id UUID NOT NULL,
+    user_name VARCHAR(255) NOT NULL DEFAULT '',
     last_used_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

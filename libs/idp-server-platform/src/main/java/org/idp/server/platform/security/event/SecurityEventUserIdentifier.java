@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-package org.idp.server.platform.user;
+package org.idp.server.platform.security.event;
 
 import java.util.Objects;
 import java.util.UUID;
 import org.idp.server.platform.uuid.UuidConvertable;
 
-/** Identifier for User */
-public class UserIdentifier implements UuidConvertable {
+/** Identifier for Security Event User */
+public class SecurityEventUserIdentifier implements UuidConvertable {
 
   String value;
 
-  public UserIdentifier() {}
+  public SecurityEventUserIdentifier() {}
 
-  public UserIdentifier(String value) {
+  public SecurityEventUserIdentifier(String value) {
     this.value = value;
   }
 
-  public UserIdentifier(UUID value) {
+  public SecurityEventUserIdentifier(UUID value) {
     this.value = value.toString();
   }
 
@@ -46,7 +46,7 @@ public class UserIdentifier implements UuidConvertable {
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
-    UserIdentifier that = (UserIdentifier) o;
+    SecurityEventUserIdentifier that = (SecurityEventUserIdentifier) o;
     return Objects.equals(value, that.value);
   }
 

@@ -18,7 +18,7 @@ package org.idp.server.core.adapters.datasource.statistics.command.yearly;
 
 import java.time.LocalDate;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.user.UserIdentifier;
+import org.idp.server.platform.security.event.SecurityEventUserIdentifier;
 
 public interface YearlyActiveUserSqlExecutor {
 
@@ -28,8 +28,12 @@ public interface YearlyActiveUserSqlExecutor {
    * @param tenantId tenant identifier
    * @param statYear first day of year (e.g., 2025-01-01)
    * @param userId user identifier
+   * @param userName user name to store
    * @return true if user was newly added (not a duplicate), false if already existed
    */
   boolean addActiveUserAndReturnIfNew(
-      TenantIdentifier tenantId, LocalDate statYear, UserIdentifier userId);
+      TenantIdentifier tenantId,
+      LocalDate statYear,
+      SecurityEventUserIdentifier userId,
+      String userName);
 }

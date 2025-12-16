@@ -243,4 +243,8 @@ public class SecurityEventUser implements UuidConvertable, JsonReadable {
   public boolean exists() {
     return Objects.nonNull(sub) && !sub.isEmpty();
   }
+
+  public SecurityEventUserIdentifier securityEventUserIdentifier() {
+    return new SecurityEventUserIdentifier(subAsUuid());
+  }
 }

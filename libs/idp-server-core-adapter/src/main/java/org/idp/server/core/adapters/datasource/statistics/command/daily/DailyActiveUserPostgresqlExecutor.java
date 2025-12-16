@@ -21,13 +21,16 @@ import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.user.UserIdentifier;
+import org.idp.server.platform.security.event.SecurityEventUserIdentifier;
 
 public class DailyActiveUserPostgresqlExecutor implements DailyActiveUserSqlExecutor {
 
   @Override
   public boolean addActiveUserAndReturnIfNew(
-      TenantIdentifier tenantId, LocalDate date, UserIdentifier userId) {
+      TenantIdentifier tenantId,
+      LocalDate date,
+      SecurityEventUserIdentifier userId,
+      String userName) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sql =
@@ -36,11 +39,13 @@ public class DailyActiveUserPostgresqlExecutor implements DailyActiveUserSqlExec
                     tenant_id,
                     stat_date,
                     user_id,
+                    user_name,
                     created_at
                 ) VALUES (
                     ?::uuid,
                     ?,
                     ?::uuid,
+                    ?,
                     NOW()
                 )
                 ON CONFLICT (tenant_id, stat_date, user_id) DO NOTHING
@@ -51,6 +56,7 @@ public class DailyActiveUserPostgresqlExecutor implements DailyActiveUserSqlExec
     params.add(tenantId.value());
     params.add(date);
     params.add(userId.value());
+    params.add(userName != null ? userName : "");
 
     return sqlExecutor.executeAndCheckReturned(sql, params);
   }

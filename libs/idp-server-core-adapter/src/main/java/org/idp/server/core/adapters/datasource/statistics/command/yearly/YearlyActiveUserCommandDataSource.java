@@ -18,8 +18,8 @@ package org.idp.server.core.adapters.datasource.statistics.command.yearly;
 
 import java.time.LocalDate;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.security.event.SecurityEventUserIdentifier;
 import org.idp.server.platform.statistics.repository.YearlyActiveUserCommandRepository;
-import org.idp.server.platform.user.UserIdentifier;
 
 public class YearlyActiveUserCommandDataSource implements YearlyActiveUserCommandRepository {
 
@@ -31,7 +31,10 @@ public class YearlyActiveUserCommandDataSource implements YearlyActiveUserComman
 
   @Override
   public boolean addActiveUserAndReturnIfNew(
-      TenantIdentifier tenantId, LocalDate statYear, UserIdentifier userId) {
-    return executor.addActiveUserAndReturnIfNew(tenantId, statYear, userId);
+      TenantIdentifier tenantId,
+      LocalDate statYear,
+      SecurityEventUserIdentifier userId,
+      String userName) {
+    return executor.addActiveUserAndReturnIfNew(tenantId, statYear, userId, userName);
   }
 }

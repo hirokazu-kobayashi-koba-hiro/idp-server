@@ -1,4 +1,4 @@
--- V0_10_0__statistics.mysql.sql
+-- V0_9_21_2__statistics.mysql.sql
 -- Issue #441: Tenant statistics data collection (DAU/MAU/YAU) (MySQL version)
 
 -- =====================================================
@@ -74,6 +74,7 @@ CREATE TABLE statistics_daily_users (
     tenant_id CHAR(36) NOT NULL,
     stat_date DATE NOT NULL,
     user_id CHAR(36) NOT NULL,
+    user_name VARCHAR(255) NOT NULL DEFAULT '',
     last_used_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -91,6 +92,7 @@ CREATE TABLE statistics_monthly_users (
     tenant_id CHAR(36) NOT NULL,
     stat_month CHAR(7) NOT NULL COMMENT 'YYYY-MM format (e.g., 2025-01)',
     user_id CHAR(36) NOT NULL,
+    user_name VARCHAR(255) NOT NULL DEFAULT '',
     last_used_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -108,6 +110,7 @@ CREATE TABLE statistics_yearly_users (
     tenant_id CHAR(36) NOT NULL,
     stat_year CHAR(4) NOT NULL COMMENT 'YYYY format (e.g., 2025)',
     user_id CHAR(36) NOT NULL,
+    user_name VARCHAR(255) NOT NULL DEFAULT '',
     last_used_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

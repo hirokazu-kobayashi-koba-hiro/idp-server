@@ -18,7 +18,7 @@ package org.idp.server.platform.statistics.repository;
 
 import java.time.LocalDate;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.user.UserIdentifier;
+import org.idp.server.platform.security.event.SecurityEventUserIdentifier;
 
 /**
  * Command repository for daily active users
@@ -31,7 +31,7 @@ import org.idp.server.platform.user.UserIdentifier;
  *
  * <pre>{@code
  * // Track user login for DAU
- * repository.addActiveUser(tenantId, LocalDate.now(), userId);
+ * repository.addActiveUser(tenantId, LocalDate.now(), userId, userName);
  * // Duplicate calls are automatically ignored (PRIMARY KEY constraint)
  * }</pre>
  */
@@ -48,8 +48,12 @@ public interface DailyActiveUserCommandRepository {
    * @param tenantId tenant identifier
    * @param date statistics date
    * @param userId user identifier to track
+   * @param userName user name to store
    * @return true if user was newly added, false if already existed
    */
   boolean addActiveUserAndReturnIfNew(
-      TenantIdentifier tenantId, LocalDate date, UserIdentifier userId);
+      TenantIdentifier tenantId,
+      LocalDate date,
+      SecurityEventUserIdentifier userId,
+      String userName);
 }
