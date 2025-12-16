@@ -251,6 +251,47 @@ public class JsonDiffCalculatorTest {
   }
 
   @Test
+  void test_no_diff_when_both_null() {
+    // Test that null -> null does not produce a diff
+    String beforeJson =
+        """
+        {
+          "name": "Alice",
+          "attributes": null
+        }
+        """;
+
+    String afterJson =
+        """
+        {
+          "name": "Alice",
+          "attributes": null
+        }
+        """;
+
+    JsonNodeWrapper before = JsonNodeWrapper.fromString(beforeJson);
+    JsonNodeWrapper after = JsonNodeWrapper.fromString(afterJson);
+
+    Map<String, Object> diff = JsonDiffCalculator.deepDiff(before, after);
+
+    System.out.println("=== test_no_diff_when_both_null ===");
+    System.out.println("diff = " + diff);
+
+    assertTrue(diff.isEmpty(), "No diff should be produced when both values are null");
+  }
+
+  @Test
+  void test_no_diff_when_field_missing_in_both() {
+    // Test that missing field in both does not produce a diff
+    JsonNodeWrapper before = JsonNodeWrapper.fromMap(Map.of("name", "Alice"));
+    JsonNodeWrapper after = JsonNodeWrapper.fromMap(Map.of("name", "Alice"));
+
+    Map<String, Object> diff = JsonDiffCalculator.deepDiff(before, after);
+
+    assertTrue(diff.isEmpty(), "No diff should be produced when field is missing in both");
+  }
+
+  @Test
   void test_diff_with_removed_field() {
     JsonNodeWrapper before =
         JsonNodeWrapper.fromMap(

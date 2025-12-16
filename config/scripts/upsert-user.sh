@@ -68,13 +68,22 @@ BODY=$(echo "$RESPONSE" | sed -n '1,/HTTP_CODE:/p' | sed '$d')
 FINAL_HTTP_CODE=$(echo "$RESPONSE" | grep HTTP_CODE | cut -d: -f2)
 
 echo "📡 HTTP $FINAL_HTTP_CODE"
-echo "$BODY"
 
 if [[ "$METHOD" == "POST" && "$FINAL_HTTP_CODE" == "201" ]]; then
-  echo "✅ Client successfully registered"
+  echo "$BODY"
+  echo "✅ User successfully registered"
 elif [[ "$METHOD" == "PUT" && "$FINAL_HTTP_CODE" == "200" ]]; then
-  echo "✅ Client successfully updated"
+  # Update時はdiffのみを出力
+  DIFF=$(echo "$BODY" | jq -r '.diff // empty')
+  if [ -n "$DIFF" ] && [ "$DIFF" != "{}" ] && [ "$DIFF" != "null" ]; then
+    echo "📝 Changes:"
+    echo "$DIFF" | jq .
+  else
+    echo "📝 No changes detected"
+  fi
+  echo "✅ User successfully updated"
 else
-  echo "❌ Client $METHOD failed"
+  echo "$BODY"
+  echo "❌ User $METHOD failed"
   exit 1
 fi

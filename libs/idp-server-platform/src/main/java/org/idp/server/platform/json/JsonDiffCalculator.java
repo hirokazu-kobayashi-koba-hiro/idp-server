@@ -101,12 +101,29 @@ public class JsonDiffCalculator {
    */
   private static void diffRecursive(
       String path, JsonNodeWrapper before, JsonNodeWrapper after, Map<String, Object> diff) {
-    if (before == null || !before.existsWithValue()) {
+    boolean beforeEmpty = (before == null || !before.existsWithValue());
+    boolean afterEmpty = (after == null || !after.existsWithValue());
+
+    // Both null/empty: no change
+    if (beforeEmpty && afterEmpty) {
+      return;
+    }
+
+    if (beforeEmpty) {
       // Added field: {before: null, after: <value>}
       Map<String, Object> addedDiff = new HashMap<>();
       addedDiff.put("before", null);
       addedDiff.put("after", toSerializableValue(after));
       diff.put(path, addedDiff);
+      return;
+    }
+
+    if (afterEmpty) {
+      // Removed field: {before: <value>, after: null}
+      Map<String, Object> removedDiff = new HashMap<>();
+      removedDiff.put("before", toSerializableValue(before));
+      removedDiff.put("after", null);
+      diff.put(path, removedDiff);
       return;
     }
 

@@ -36,6 +36,23 @@ if [ "$DRY_RUN" == true ]; then
 fi
 
 # =========================
+# 🔍 Check if organization/tenant already exists
+# =========================
+ORGANIZATION_ID=$(jq -r '.organization.id' "$JSON_FILE")
+ONBOARD_TENANT_ID=$(jq -r '.tenant.id' "$JSON_FILE")
+
+if [ -n "$ORGANIZATION_ID" ] && [ "$ORGANIZATION_ID" != "null" ]; then
+  CHECK_HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X GET \
+    "${BASE_URL}/v1/management/tenants/${ONBOARD_TENANT_ID}" \
+    -H "Authorization: Bearer ${ACCESS_TOKEN}")
+
+  if [ "$CHECK_HTTP_CODE" == "200" ]; then
+    echo "⏭️  Tenant already exists (org: ${ORGANIZATION_ID}, tenant: ${ONBOARD_TENANT_ID}). Skipping."
+    exit 0
+  fi
+fi
+
+# =========================
 # 🚀 Onboarding POST request
 # =========================
 echo "🚀 Sending onboarding request (dry_run=${DRY_RUN})"
@@ -49,9 +66,9 @@ BODY=$(echo "$RESPONSE" | sed -n '1,/HTTP_CODE:/p' | sed '$d')
 HTTP_CODE=$(echo "$RESPONSE" | grep HTTP_CODE | cut -d: -f2)
 
 echo "📡 HTTP ${HTTP_CODE}"
-echo "$BODY"
 
 if [ "$HTTP_CODE" != "201" ]; then
+  echo "$BODY"
   echo "❌ Onboarding request failed"
   exit 1
 else
