@@ -21,13 +21,16 @@ import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.user.UserIdentifier;
+import org.idp.server.platform.security.event.SecurityEventUserIdentifier;
 
 public class MonthlyActiveUserPostgresqlExecutor implements MonthlyActiveUserSqlExecutor {
 
   @Override
   public boolean addActiveUserAndReturnIfNew(
-      TenantIdentifier tenantId, LocalDate statMonth, UserIdentifier userId) {
+      TenantIdentifier tenantId,
+      LocalDate statMonth,
+      SecurityEventUserIdentifier userId,
+      String userName) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sql =
@@ -36,11 +39,13 @@ public class MonthlyActiveUserPostgresqlExecutor implements MonthlyActiveUserSql
                     tenant_id,
                     stat_month,
                     user_id,
+                    user_name,
                     created_at
                 ) VALUES (
                     ?::uuid,
                     ?::date,
                     ?::uuid,
+                    ?,
                     NOW()
                 )
                 ON CONFLICT (tenant_id, stat_month, user_id) DO NOTHING
@@ -51,6 +56,7 @@ public class MonthlyActiveUserPostgresqlExecutor implements MonthlyActiveUserSql
     params.add(tenantId.value());
     params.add(statMonth);
     params.add(userId.value());
+    params.add(userName != null ? userName : "");
 
     return sqlExecutor.executeAndCheckReturned(sql, params);
   }

@@ -18,7 +18,7 @@ package org.idp.server.core.adapters.datasource.statistics.command.daily;
 
 import java.time.LocalDate;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.user.UserIdentifier;
+import org.idp.server.platform.security.event.SecurityEventUserIdentifier;
 
 public interface DailyActiveUserSqlExecutor {
 
@@ -28,8 +28,12 @@ public interface DailyActiveUserSqlExecutor {
    * @param tenantId tenant identifier
    * @param date statistics date
    * @param userId user identifier
+   * @param userName user name to store
    * @return true if user was newly added (not a duplicate), false if already existed
    */
   boolean addActiveUserAndReturnIfNew(
-      TenantIdentifier tenantId, LocalDate date, UserIdentifier userId);
+      TenantIdentifier tenantId,
+      LocalDate date,
+      SecurityEventUserIdentifier userId,
+      String userName);
 }

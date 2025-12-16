@@ -18,8 +18,8 @@ package org.idp.server.core.adapters.datasource.statistics.command.daily;
 
 import java.time.LocalDate;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.security.event.SecurityEventUserIdentifier;
 import org.idp.server.platform.statistics.repository.DailyActiveUserCommandRepository;
-import org.idp.server.platform.user.UserIdentifier;
 
 public class DailyActiveUserCommandDataSource implements DailyActiveUserCommandRepository {
 
@@ -31,7 +31,10 @@ public class DailyActiveUserCommandDataSource implements DailyActiveUserCommandR
 
   @Override
   public boolean addActiveUserAndReturnIfNew(
-      TenantIdentifier tenantId, LocalDate date, UserIdentifier userId) {
-    return executor.addActiveUserAndReturnIfNew(tenantId, date, userId);
+      TenantIdentifier tenantId,
+      LocalDate date,
+      SecurityEventUserIdentifier userId,
+      String userName) {
+    return executor.addActiveUserAndReturnIfNew(tenantId, date, userId, userName);
   }
 }

@@ -166,6 +166,10 @@ public class SecurityEvent {
     return tenant.id();
   }
 
+  public SecurityEventUserIdentifier securityEventUserIdentifier() {
+    return user.securityEventUserIdentifier();
+  }
+
   public String tokenIssuerValue() {
     return tenant.issuerAsString();
   }

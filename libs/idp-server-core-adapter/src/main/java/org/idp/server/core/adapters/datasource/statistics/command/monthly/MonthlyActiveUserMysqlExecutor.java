@@ -21,13 +21,16 @@ import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.user.UserIdentifier;
+import org.idp.server.platform.security.event.SecurityEventUserIdentifier;
 
 public class MonthlyActiveUserMysqlExecutor implements MonthlyActiveUserSqlExecutor {
 
   @Override
   public boolean addActiveUserAndReturnIfNew(
-      TenantIdentifier tenantId, LocalDate statMonth, UserIdentifier userId) {
+      TenantIdentifier tenantId,
+      LocalDate statMonth,
+      SecurityEventUserIdentifier userId,
+      String userName) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     // MySQL: Use INSERT IGNORE + ROW_COUNT() to check if new row was inserted
@@ -37,14 +40,16 @@ public class MonthlyActiveUserMysqlExecutor implements MonthlyActiveUserSqlExecu
                     tenant_id,
                     stat_month,
                     user_id,
+                    user_name,
                     created_at
-                ) VALUES (?, ?, ?, NOW())
+                ) VALUES (?, ?, ?, ?, NOW())
                 """;
 
     List<Object> params = new ArrayList<>();
     params.add(tenantId.value());
     params.add(statMonth);
     params.add(userId.value());
+    params.add(userName != null ? userName : "");
 
     return sqlExecutor.executeAndCheckReturned(sql, params);
   }

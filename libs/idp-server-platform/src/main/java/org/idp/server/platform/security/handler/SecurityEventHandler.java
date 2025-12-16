@@ -25,6 +25,8 @@ import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.security.event.SecurityEventUser;
+import org.idp.server.platform.security.event.SecurityEventUserIdentifier;
 import org.idp.server.platform.security.hook.*;
 import org.idp.server.platform.security.hook.SecurityEventHook;
 import org.idp.server.platform.security.hook.SecurityEventHooks;
@@ -39,7 +41,6 @@ import org.idp.server.platform.statistics.repository.MonthlyActiveUserCommandRep
 import org.idp.server.platform.statistics.repository.TenantStatisticsCommandRepository;
 import org.idp.server.platform.statistics.repository.TenantYearlyStatisticsCommandRepository;
 import org.idp.server.platform.statistics.repository.YearlyActiveUserCommandRepository;
-import org.idp.server.platform.user.UserIdentifier;
 
 public class SecurityEventHandler {
 
@@ -145,12 +146,9 @@ public class SecurityEventHandler {
     DefaultSecurityEventType eventType = DefaultSecurityEventType.findByValue(eventTypeValue);
     String day = eventDate.format(DATE_FORMATTER);
 
-    if (eventType != null && eventType.isActiveUserEvent()) {
-      UserIdentifier userId =
-          securityEvent.hasUser()
-              ? new UserIdentifier(securityEvent.user().subAsUuid().toString())
-              : null;
-      handleActiveUserEvent(tenant, userId, eventDate, day, eventTypeValue);
+    if (eventType != null && eventType.isActiveUserEvent() && securityEvent.hasUser()) {
+
+      handleActiveUserEvent(tenant, securityEvent.user(), eventDate, day, eventTypeValue);
     } else {
       incrementMetric(tenant, eventDate, eventTypeValue);
     }
@@ -164,10 +162,14 @@ public class SecurityEventHandler {
    * {@link DefaultSecurityEventType#isActiveUserEvent()}.
    */
   private void handleActiveUserEvent(
-      Tenant tenant, UserIdentifier userId, LocalDate eventDate, String day, String eventType) {
-    if (userId == null) {
-      return;
-    }
+      Tenant tenant,
+      SecurityEventUser securityEventUser,
+      LocalDate eventDate,
+      String day,
+      String eventType) {
+
+    SecurityEventUserIdentifier userId = securityEventUser.securityEventUserIdentifier();
+    String userName = securityEventUser.name();
 
     // Derive month and year from eventDate for statistics grouping
     LocalDate monthStart = eventDate.withDayOfMonth(1);
@@ -179,7 +181,7 @@ public class SecurityEventHandler {
     // Track DAU - add user to daily active users table and increment DAU count if new
     boolean isNewDailyUser =
         dailyActiveUserRepository.addActiveUserAndReturnIfNew(
-            tenant.identifier(), eventDate, userId);
+            tenant.identifier(), eventDate, userId, userName);
 
     if (isNewDailyUser) {
       log.debug(
@@ -200,7 +202,7 @@ public class SecurityEventHandler {
     // Track MAU - add user to monthly active users table and increment MAU count if new
     boolean isNewMonthlyUser =
         monthlyActiveUserRepository.addActiveUserAndReturnIfNew(
-            tenant.identifier(), monthStart, userId);
+            tenant.identifier(), monthStart, userId, userName);
 
     if (isNewMonthlyUser) {
       log.debug(
@@ -221,7 +223,7 @@ public class SecurityEventHandler {
     // Track YAU - add user to yearly active users table and increment YAU count if new
     boolean isNewYearlyUser =
         yearlyActiveUserRepository.addActiveUserAndReturnIfNew(
-            tenant.identifier(), yearStart, userId);
+            tenant.identifier(), yearStart, userId, userName);
 
     if (isNewYearlyUser) {
       log.debug(
