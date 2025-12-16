@@ -232,6 +232,22 @@ public class JsonNodeWrapper {
     return jsonNode != null;
   }
 
+  /**
+   * Returns true if the JSON node exists and has a meaningful value. An empty object node (created
+   * by {@link #empty()}) is considered to not have a value.
+   *
+   * @return true if the node exists and is not an empty object
+   */
+  public boolean existsWithValue() {
+    if (jsonNode == null) {
+      return false;
+    }
+    if (jsonNode.isObject() && jsonNode.isEmpty()) {
+      return false;
+    }
+    return true;
+  }
+
   public JsonNodeType nodeType() {
     if (jsonNode.isObject()) {
       return JsonNodeType.OBJECT;

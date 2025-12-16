@@ -280,7 +280,7 @@ describe("organization user management api", () => {
         },
         body: {
           "sub": userId,
-          "external_user_id": `ext_updated_${timestamp}`,
+          // Note: external_user_id is not updatable (federation identifier should be immutable)
           "name": `Updated Organization User ${timestamp}`,
           "given_name": "Updated Organization",
           "family_name": `UpdatedUser${timestamp}`,
@@ -337,7 +337,8 @@ describe("organization user management api", () => {
 
       // Verify all updated parameters
       const updateResult = updateResponse.data.result;
-      expect(updateResult).toHaveProperty("external_user_id", `ext_updated_${timestamp}`);
+      // Note: external_user_id should remain unchanged (not updatable)
+      expect(updateResult).toHaveProperty("external_user_id", `ext_${timestamp}`);
       expect(updateResult).toHaveProperty("name", `Updated Organization User ${timestamp}`);
       expect(updateResult).toHaveProperty("given_name", "Updated Organization");
       expect(updateResult).toHaveProperty("family_name", `UpdatedUser${timestamp}`);
@@ -1713,6 +1714,54 @@ describe("organization user management api", () => {
         console.log("Roles dry run response:", rolesDryRunResponse.data);
         expect(rolesDryRunResponse.status).toBe(200);
         expect(rolesDryRunResponse.data).toHaveProperty("dry_run", true);
+
+        // Verify roles still exist after dry run (dry run should not persist changes)
+        const getUserAfterDryRun = await get({
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        });
+        expect(getUserAfterDryRun.status).toBe(200);
+        expect(getUserAfterDryRun.data.roles).toHaveLength(1);
+
+        // Test removing all roles (DELETE INSERT with empty roles)
+        const removeAllRolesResponse = await patchWithJson({
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}/roles`,
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          },
+          body: {
+            "roles": []
+          }
+        });
+        console.log("Remove all roles response:", removeAllRolesResponse.data);
+        expect(removeAllRolesResponse.status).toBe(200);
+        expect(removeAllRolesResponse.data).toHaveProperty("result");
+        // Empty roles are omitted from response (User.toMap() behavior)
+        const resultRoles = removeAllRolesResponse.data.result.roles || [];
+        expect(resultRoles).toHaveLength(0);
+        // Verify diff shows roles and permissions were removed
+        expect(removeAllRolesResponse.data).toHaveProperty("diff");
+        expect(removeAllRolesResponse.data.diff).toHaveProperty("roles");
+        expect(removeAllRolesResponse.data.diff).toHaveProperty("permissions");
+        console.log("Diff:", JSON.stringify(removeAllRolesResponse.data.diff, null, 2));
+
+        // Verify roles are actually removed from database
+        const getUserAfterRemove = await get({
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        });
+        expect(getUserAfterRemove.status).toBe(200);
+        // Empty roles are omitted from response
+        const dbRoles = getUserAfterRemove.data.roles || [];
+        expect(dbRoles).toHaveLength(0);
+        // Permissions should also be empty when roles are removed
+        const dbPermissions = getUserAfterRemove.data.permissions || [];
+        expect(dbPermissions).toHaveLength(0);
+        console.log("✅ Roles and permissions successfully removed from user");
 
         // Cleanup
         await deletion({

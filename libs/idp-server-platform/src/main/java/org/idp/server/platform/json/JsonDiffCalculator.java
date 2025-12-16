@@ -101,46 +101,115 @@ public class JsonDiffCalculator {
    */
   private static void diffRecursive(
       String path, JsonNodeWrapper before, JsonNodeWrapper after, Map<String, Object> diff) {
-    if (before == null || !before.exists()) {
-      // Added field
-      diff.put(path, after.toMap());
+    boolean beforeEmpty = (before == null || !before.existsWithValue());
+    boolean afterEmpty = (after == null || !after.existsWithValue());
+
+    // Both null/empty: no change
+    if (beforeEmpty && afterEmpty) {
+      return;
+    }
+
+    if (beforeEmpty) {
+      // Added field: {before: null, after: <value>}
+      Map<String, Object> addedDiff = new HashMap<>();
+      addedDiff.put("before", null);
+      addedDiff.put("after", toSerializableValue(after));
+      diff.put(path, addedDiff);
+      return;
+    }
+
+    if (afterEmpty) {
+      // Removed field: {before: <value>, after: null}
+      Map<String, Object> removedDiff = new HashMap<>();
+      removedDiff.put("before", toSerializableValue(before));
+      removedDiff.put("after", null);
+      diff.put(path, removedDiff);
       return;
     }
 
     if (before.nodeType() != after.nodeType()) {
-      if (after.isString()) {
-        diff.put(path, after.asText());
-      } else {
-        diff.put(path, after.toMap());
-      }
+      // Type changed: {before: <old>, after: <new>}
+      Map<String, Object> changedDiff = new HashMap<>();
+      changedDiff.put("before", toSerializableValue(before));
+      changedDiff.put("after", toSerializableValue(after));
+      diff.put(path, changedDiff);
       return;
     }
 
     switch (after.nodeType()) {
       case OBJECT:
-        Iterator<String> fields = after.fieldNames();
-        while (fields.hasNext()) {
-          String field = fields.next();
+        // Check fields in 'after' (added or changed)
+        Iterator<String> afterFields = after.fieldNames();
+        while (afterFields.hasNext()) {
+          String field = afterFields.next();
           String newPath = path.isEmpty() ? field : path + "." + field;
           JsonNodeWrapper beforeChild =
               before.contains(field) ? before.getValueAsJsonNode(field) : JsonNodeWrapper.empty();
           JsonNodeWrapper afterChild = after.getValueAsJsonNode(field);
           diffRecursive(newPath, beforeChild, afterChild, diff);
         }
+        // Check fields in 'before' that were removed in 'after'
+        Iterator<String> beforeFields = before.fieldNames();
+        while (beforeFields.hasNext()) {
+          String field = beforeFields.next();
+          if (!after.contains(field)) {
+            String newPath = path.isEmpty() ? field : path + "." + field;
+            JsonNodeWrapper beforeChild = before.getValueAsJsonNode(field);
+            // Removed field: {before: <value>, after: null}
+            Map<String, Object> removedDiff = new HashMap<>();
+            removedDiff.put("before", toSerializableValue(beforeChild));
+            removedDiff.put("after", null);
+            diff.put(newPath, removedDiff);
+          }
+        }
         break;
       case ARRAY:
         // Shallow comparison for arrays
         if (!before.node().equals(after.node())) {
-          // Convert array to List, recursively converting nested structures
-          List<Object> afterList = convertArrayToList(after);
-          diff.put(path, afterList);
+          // Array changed: {before: <old>, after: <new>}
+          Map<String, Object> arrayDiff = new HashMap<>();
+          arrayDiff.put("before", convertArrayToList(before));
+          arrayDiff.put("after", convertArrayToList(after));
+          diff.put(path, arrayDiff);
         }
         break;
       default:
         if (!Objects.equals(before.node(), after.node())) {
-          diff.put(path, after.node());
+          // Primitive changed: {before: <old>, after: <new>}
+          Map<String, Object> primitiveDiff = new HashMap<>();
+          primitiveDiff.put("before", toSerializableValue(before));
+          primitiveDiff.put("after", toSerializableValue(after));
+          diff.put(path, primitiveDiff);
         }
         break;
+    }
+  }
+
+  /**
+   * Converts a JsonNodeWrapper to a serializable value.
+   *
+   * @param wrapper the JSON node wrapper
+   * @return a serializable representation of the value
+   */
+  private static Object toSerializableValue(JsonNodeWrapper wrapper) {
+    if (wrapper == null || !wrapper.existsWithValue()) {
+      return null;
+    }
+    switch (wrapper.nodeType()) {
+      case OBJECT:
+        return wrapper.toMap();
+      case ARRAY:
+        return convertArrayToList(wrapper);
+      case STRING:
+        return wrapper.asText();
+      case INT:
+        return wrapper.asInt();
+      case BOOLEAN:
+      case LONG:
+      case DOUBLE:
+      case NULL:
+      default:
+        return wrapper.node();
     }
   }
 }

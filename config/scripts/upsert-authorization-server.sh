@@ -58,11 +58,19 @@ BODY=$(echo "$RESPONSE" | sed -n '1,/HTTP_CODE:/p' | sed '$d')
 FINAL_HTTP_CODE=$(echo "$RESPONSE" | grep HTTP_CODE | cut -d: -f2)
 
 echo "📡 HTTP $FINAL_HTTP_CODE"
-echo "$BODY"
 
 if [[ "$METHOD" == "PUT" && "$FINAL_HTTP_CODE" == "200" ]]; then
+  # Update時はdiffのみを出力
+  DIFF=$(echo "$BODY" | jq -r '.diff // empty')
+  if [ -n "$DIFF" ] && [ "$DIFF" != "{}" ] && [ "$DIFF" != "null" ]; then
+    echo "📝 Changes:"
+    echo "$DIFF" | jq .
+  else
+    echo "📝 No changes detected"
+  fi
   echo "✅ authorization-server successfully updated"
 else
+  echo "$BODY"
   echo "❌ authorization-server $METHOD failed"
   exit 1
 fi

@@ -113,15 +113,25 @@ public class UserOrganizationAssignmentsUpdateService
     Map<String, Object> diff = JsonDiffCalculator.deepDiff(beforeJson, afterJson);
     Map<String, Object> contents = Map.of("result", after.toMap(), "diff", diff, "dry_run", dryRun);
     UserManagementResponse response = new UserManagementResponse(UserManagementStatus.OK, contents);
+
     // 5. Dry-run check
     if (dryRun) {
       return response;
     }
 
     // 6. Repository operation
-    userCommandRepository.update(tenant, after);
+    userCommandRepository.updateOrganizationAssignments(tenant, after);
 
-    return response;
+    // 7. Re-fetch from DB to get complete user data
+    User updatedUser = userQueryRepository.get(tenant, request.userIdentifier());
+
+    // 8. Recalculate diff with actual DB state
+    JsonNodeWrapper updatedJson = JsonNodeWrapper.fromMap(updatedUser.toMap());
+    Map<String, Object> actualDiff = JsonDiffCalculator.deepDiff(beforeJson, updatedJson);
+    Map<String, Object> actualContents =
+        Map.of("result", updatedUser.toMap(), "diff", actualDiff, "dry_run", dryRun);
+
+    return new UserManagementResponse(UserManagementStatus.OK, actualContents);
   }
 
   public User updateUser(UserRegistrationRequest request, User before) {

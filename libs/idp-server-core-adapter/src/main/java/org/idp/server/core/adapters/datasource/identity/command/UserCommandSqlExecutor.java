@@ -29,13 +29,23 @@ public interface UserCommandSqlExecutor {
 
   void delete(Tenant tenant, UserIdentifier userIdentifier);
 
+  void deleteRoles(Tenant tenant, User user);
+
   void upsertRoles(Tenant tenant, User user);
+
+  void deleteAssignedTenants(Tenant tenant, User user);
 
   void upsertAssignedTenants(Tenant tenant, User user);
 
+  void deleteCurrentTenant(Tenant tenant, User user);
+
   void upsertCurrentTenant(Tenant tenant, User user);
 
+  void deleteAssignedOrganizations(Tenant tenant, User user);
+
   void upsertAssignedOrganizations(Tenant tenant, User user);
+
+  void deleteCurrentOrganization(Tenant tenant, User user);
 
   void upsertCurrentOrganization(Tenant tenant, User user);
 }

@@ -20,6 +20,7 @@ import { get, postWithJson, putWithJson, deletion } from "../../../../lib/http";
 import { requestToken } from "../../../../api/oauthClient";
 import { backendUrl } from "../../../testConfig";
 import { v4 as uuidv4 } from "uuid";
+import { sleep } from "../../../../lib/util";
 
 describe("Organization Federation Config Management API - Structured Tests", () => {
   const orgId = "72cf4a12-8da3-40fb-8ae4-a77e3cda95e2";
@@ -933,6 +934,8 @@ describe("Organization Federation Config Management API - Structured Tests", () 
         expect(deleteResponse.status).toBe(204); // DELETE returns 204 No Content
 
         // Step 6: Verify deletion
+        await sleep(500);
+
         const getFinalResponse = await get({
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` }

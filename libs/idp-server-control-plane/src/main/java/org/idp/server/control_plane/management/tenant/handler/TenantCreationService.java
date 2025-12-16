@@ -132,7 +132,7 @@ public class TenantCreationService implements TenantManagementService<TenantRequ
     tenantCommandRepository.register(newTenant);
     organizationRepository.update(assignedOrganization);
     authorizationServerConfigurationCommandRepository.register(newTenant, newAuthorizationServer);
-    userCommandRepository.update(adminTenant, operator);
+    userCommandRepository.updateTenantAssignments(adminTenant, operator);
 
     return new TenantManagementResponse(TenantManagementStatus.CREATED, contents);
   }

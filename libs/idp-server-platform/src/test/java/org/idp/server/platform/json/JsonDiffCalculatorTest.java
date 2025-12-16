@@ -34,10 +34,18 @@ public class JsonDiffCalculatorTest {
                 "email", "alice@example.com"));
 
     Map<String, Object> diff = JsonDiffCalculator.deepDiff(before, after);
+    System.out.println("=== test_diff_with_added_field ===");
+    System.out.println("diff = " + diff);
     JsonNodeWrapper diffJson = JsonNodeWrapper.fromMap(diff);
 
     assertEquals(1, diff.size());
-    assertEquals("alice@example.com", diffJson.getValueOrEmptyAsString("email"));
+    // New format: {before: null, after: <value>}
+    assertTrue(diff.containsKey("email"));
+    @SuppressWarnings("unchecked")
+    java.util.Map<String, Object> emailDiff = (java.util.Map<String, Object>) diff.get("email");
+    System.out.println("emailDiff = " + emailDiff);
+    assertEquals(null, emailDiff.get("before"));
+    assertEquals("alice@example.com", emailDiff.get("after"));
   }
 
   @Test
@@ -49,7 +57,9 @@ public class JsonDiffCalculatorTest {
     JsonNodeWrapper diffJson = JsonNodeWrapper.fromMap(diff);
 
     assertEquals(1, diff.size());
-    assertEquals(5000, diffJson.getValueAsInt("timeout"));
+    // New format: {before: <old>, after: <new>}
+    assertEquals(3000, diffJson.getValueAsJsonNode("timeout").getValueAsInt("before"));
+    assertEquals(5000, diffJson.getValueAsJsonNode("timeout").getValueAsInt("after"));
   }
 
   @Test
@@ -65,7 +75,10 @@ public class JsonDiffCalculatorTest {
     JsonNodeWrapper diffJson = JsonNodeWrapper.fromMap(diff);
 
     assertEquals(1, diff.size());
-    assertEquals("https://new.example.com", diffJson.getValueOrEmptyAsString("provider.endpoint"));
+    // New format: {before: <old>, after: <new>}
+    JsonNodeWrapper endpointDiff = diffJson.getValueAsJsonNode("provider.endpoint");
+    assertEquals("https://old.example.com", endpointDiff.getValueOrEmptyAsString("before"));
+    assertEquals("https://new.example.com", endpointDiff.getValueOrEmptyAsString("after"));
   }
 
   @Test
@@ -80,15 +93,24 @@ public class JsonDiffCalculatorTest {
     assertEquals(1, diff.size());
     assertTrue(diff.containsKey("scopes"));
 
-    // Validate array content
+    // New format: {before: <old>, after: <new>}
     Object scopesValue = diff.get("scopes");
-    assertTrue(scopesValue instanceof java.util.List, "scopes should be a List");
+    assertTrue(scopesValue instanceof java.util.Map, "scopes should be a Map with before/after");
     @SuppressWarnings("unchecked")
-    java.util.List<String> scopesList = (java.util.List<String>) scopesValue;
-    assertEquals(3, scopesList.size());
-    assertTrue(scopesList.contains("openid"));
-    assertTrue(scopesList.contains("profile"));
-    assertTrue(scopesList.contains("email"));
+    java.util.Map<String, Object> scopesDiff = (java.util.Map<String, Object>) scopesValue;
+
+    @SuppressWarnings("unchecked")
+    java.util.List<String> beforeList = (java.util.List<String>) scopesDiff.get("before");
+    assertEquals(2, beforeList.size());
+    assertTrue(beforeList.contains("openid"));
+    assertTrue(beforeList.contains("email"));
+
+    @SuppressWarnings("unchecked")
+    java.util.List<String> afterList = (java.util.List<String>) scopesDiff.get("after");
+    assertEquals(3, afterList.size());
+    assertTrue(afterList.contains("openid"));
+    assertTrue(afterList.contains("profile"));
+    assertTrue(afterList.contains("email"));
   }
 
   @Test
@@ -211,17 +233,94 @@ public class JsonDiffCalculatorTest {
     assertEquals(1, diff.size());
     assertTrue(diff.containsKey("users"));
 
-    // Validate array content
+    // New format: {before: <old>, after: <new>}
     Object usersValue = diff.get("users");
-    assertTrue(usersValue instanceof java.util.List, "users should be a List");
+    assertTrue(usersValue instanceof java.util.Map, "users should be a Map with before/after");
 
     @SuppressWarnings("unchecked")
-    java.util.List<Map<String, Object>> usersList =
-        (java.util.List<Map<String, Object>>) usersValue;
-    assertEquals(2, usersList.size());
+    java.util.Map<String, Object> usersDiff = (java.util.Map<String, Object>) usersValue;
+
+    @SuppressWarnings("unchecked")
+    java.util.List<Map<String, Object>> afterList =
+        (java.util.List<Map<String, Object>>) usersDiff.get("after");
+    assertEquals(2, afterList.size());
 
     // Verify the changed element
-    Map<String, Object> firstUser = usersList.get(0);
+    Map<String, Object> firstUser = afterList.get(0);
     assertEquals("admin", firstUser.get("role"));
+  }
+
+  @Test
+  void test_no_diff_when_both_null() {
+    // Test that null -> null does not produce a diff
+    String beforeJson =
+        """
+        {
+          "name": "Alice",
+          "attributes": null
+        }
+        """;
+
+    String afterJson =
+        """
+        {
+          "name": "Alice",
+          "attributes": null
+        }
+        """;
+
+    JsonNodeWrapper before = JsonNodeWrapper.fromString(beforeJson);
+    JsonNodeWrapper after = JsonNodeWrapper.fromString(afterJson);
+
+    Map<String, Object> diff = JsonDiffCalculator.deepDiff(before, after);
+
+    System.out.println("=== test_no_diff_when_both_null ===");
+    System.out.println("diff = " + diff);
+
+    assertTrue(diff.isEmpty(), "No diff should be produced when both values are null");
+  }
+
+  @Test
+  void test_no_diff_when_field_missing_in_both() {
+    // Test that missing field in both does not produce a diff
+    JsonNodeWrapper before = JsonNodeWrapper.fromMap(Map.of("name", "Alice"));
+    JsonNodeWrapper after = JsonNodeWrapper.fromMap(Map.of("name", "Alice"));
+
+    Map<String, Object> diff = JsonDiffCalculator.deepDiff(before, after);
+
+    assertTrue(diff.isEmpty(), "No diff should be produced when field is missing in both");
+  }
+
+  @Test
+  void test_diff_with_removed_field() {
+    JsonNodeWrapper before =
+        JsonNodeWrapper.fromMap(
+            Map.of(
+                "name", "Alice",
+                "email", "alice@example.com",
+                "roles", java.util.List.of("admin", "user")));
+    JsonNodeWrapper after = JsonNodeWrapper.fromMap(Map.of("name", "Alice"));
+
+    Map<String, Object> diff = JsonDiffCalculator.deepDiff(before, after);
+    JsonNodeWrapper diffJson = JsonNodeWrapper.fromMap(diff);
+
+    assertEquals(2, diff.size());
+
+    // email removed: {before: "alice@example.com", after: null}
+    assertTrue(diff.containsKey("email"));
+    @SuppressWarnings("unchecked")
+    java.util.Map<String, Object> emailDiff = (java.util.Map<String, Object>) diff.get("email");
+    assertEquals("alice@example.com", emailDiff.get("before"));
+    assertEquals(null, emailDiff.get("after"));
+
+    // roles removed: {before: ["admin", "user"], after: null}
+    assertTrue(diffJson.contains("roles"));
+    @SuppressWarnings("unchecked")
+    java.util.List<String> beforeRoles =
+        (java.util.List<String>) ((java.util.Map<String, Object>) diff.get("roles")).get("before");
+    assertEquals(2, beforeRoles.size());
+    assertTrue(beforeRoles.contains("admin"));
+    assertTrue(beforeRoles.contains("user"));
+    assertEquals(null, ((java.util.Map<String, Object>) diff.get("roles")).get("after"));
   }
 }

@@ -52,15 +52,32 @@ public class UserCommandDataSource implements UserCommandRepository {
   @Override
   public void update(Tenant tenant, User user) {
     executor.update(tenant, user);
+  }
+
+  @Override
+  public void updateRoles(Tenant tenant, User user) {
+    executor.deleteRoles(tenant, user);
     if (user.hasRoles()) {
       executor.upsertRoles(tenant, user);
     }
+  }
+
+  @Override
+  public void updateTenantAssignments(Tenant tenant, User user) {
+    executor.deleteAssignedTenants(tenant, user);
+    executor.deleteCurrentTenant(tenant, user);
     if (user.hasAssignedTenants()) {
       executor.upsertAssignedTenants(tenant, user);
     }
     if (user.hasCurrentTenantId()) {
       executor.upsertCurrentTenant(tenant, user);
     }
+  }
+
+  @Override
+  public void updateOrganizationAssignments(Tenant tenant, User user) {
+    executor.deleteAssignedOrganizations(tenant, user);
+    executor.deleteCurrentOrganization(tenant, user);
     if (user.hasAssignedOrganizations()) {
       executor.upsertAssignedOrganizations(tenant, user);
     }

@@ -145,7 +145,7 @@ public class UserManagementEntryService implements UserManagementApi {
     services.put(
         "updateRoles",
         new UserRolesUpdateService(
-            userQueryRepository, userCommandRepository, relatedDataVerifier));
+            userQueryRepository, userCommandRepository, roleQueryRepository, relatedDataVerifier));
     services.put(
         "updateTenantAssignments",
         new UserTenantAssignmentsUpdateService(
