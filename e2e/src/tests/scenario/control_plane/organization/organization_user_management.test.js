@@ -280,7 +280,7 @@ describe("organization user management api", () => {
         },
         body: {
           "sub": userId,
-          "external_user_id": `ext_updated_${timestamp}`,
+          // Note: external_user_id is not updatable (federation identifier should be immutable)
           "name": `Updated Organization User ${timestamp}`,
           "given_name": "Updated Organization",
           "family_name": `UpdatedUser${timestamp}`,
@@ -337,7 +337,8 @@ describe("organization user management api", () => {
 
       // Verify all updated parameters
       const updateResult = updateResponse.data.result;
-      expect(updateResult).toHaveProperty("external_user_id", `ext_updated_${timestamp}`);
+      // Note: external_user_id should remain unchanged (not updatable)
+      expect(updateResult).toHaveProperty("external_user_id", `ext_${timestamp}`);
       expect(updateResult).toHaveProperty("name", `Updated Organization User ${timestamp}`);
       expect(updateResult).toHaveProperty("given_name", "Updated Organization");
       expect(updateResult).toHaveProperty("family_name", `UpdatedUser${timestamp}`);

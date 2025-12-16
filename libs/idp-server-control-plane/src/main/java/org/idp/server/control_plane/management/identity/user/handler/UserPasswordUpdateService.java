@@ -127,16 +127,25 @@ public class UserPasswordUpdateService implements UserManagementService<UserUpda
     // 6. Repository operation (password-specific update)
     userCommandRepository.updatePassword(tenant, after);
 
-    // 7. Security event publishing (password change event)
+    // 7. Re-fetch from DB to get complete user data
+    User updatedUser = userQueryRepository.get(tenant, request.userIdentifier());
+
+    // 8. Recalculate diff with actual DB state
+    JsonNodeWrapper updatedJson = JsonNodeWrapper.fromMap(updatedUser.toMap());
+    Map<String, Object> actualDiff = JsonDiffCalculator.deepDiff(beforeJson, updatedJson);
+    Map<String, Object> actualContents =
+        Map.of("result", updatedUser.toMap(), "diff", actualDiff, "dry_run", dryRun);
+
+    // 9. Security event publishing (password change event)
     managementEventPublisher.publish(
         tenant,
         operator,
-        after,
+        updatedUser,
         oAuthToken,
         DefaultSecurityEventType.password_change.toEventType(),
         requestAttributes);
 
-    return response;
+    return new UserManagementResponse(UserManagementStatus.OK, actualContents);
   }
 
   private User updateUserPassword(

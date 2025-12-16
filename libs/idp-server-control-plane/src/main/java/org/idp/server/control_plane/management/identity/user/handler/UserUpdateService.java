@@ -113,16 +113,26 @@ public class UserUpdateService implements UserManagementService<UserUpdateReques
     // 6. Repository operation
     userCommandRepository.update(tenant, after);
 
-    // 7. Security event publishing
+    // 7. Re-fetch from DB to get complete user data
+    // (includes roles, authentication_devices, hashed_password, created_at, updated_at)
+    User updatedUser = userQueryRepository.get(tenant, request.userIdentifier());
+
+    // 8. Recalculate diff with actual DB state
+    JsonNodeWrapper updatedJson = JsonNodeWrapper.fromMap(updatedUser.toMap());
+    Map<String, Object> actualDiff = JsonDiffCalculator.deepDiff(beforeJson, updatedJson);
+    Map<String, Object> actualContents =
+        Map.of("result", updatedUser.toMap(), "diff", actualDiff, "dry_run", dryRun);
+
+    // 9. Security event publishing
     managementEventPublisher.publish(
         tenant,
         operator,
-        after,
+        updatedUser,
         oAuthToken,
         DefaultSecurityEventType.user_edit.toEventType(),
         requestAttributes);
 
-    return response;
+    return new UserManagementResponse(UserManagementStatus.OK, actualContents);
   }
 
   private User updateUser(Tenant tenant, UserRegistrationRequest request, User before) {

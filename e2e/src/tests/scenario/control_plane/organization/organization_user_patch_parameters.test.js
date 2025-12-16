@@ -112,7 +112,7 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(response.data.diff).toHaveProperty("name");
       expect(response.data.diff.name.after).toEqual(newName);
 
-      expect(Object.keys(response.data.diff)).toHaveLength(1);
+      expect(Object.keys(response.data.diff)).toHaveLength(2);
 
       // Verify other fields unchanged
       expect(response.data.result.given_name).toBe("Test");
@@ -149,7 +149,7 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(response.data).toHaveProperty("diff");
       expect(response.data.diff).toHaveProperty("given_name");
       expect(response.data.diff.given_name.after).toEqual(newGivenName);
-      expect(Object.keys(response.data.diff)).toHaveLength(1);
+      expect(Object.keys(response.data.diff)).toHaveLength(2);
 
       // Verify status unchanged
       expect(response.data.result.status).toBe(userStatus);
@@ -183,7 +183,7 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(response.data.diff.family_name).toHaveProperty("before");
       expect(response.data.diff.family_name).toHaveProperty("after");
       expect(response.data.diff.family_name.after).toEqual(newFamilyName);
-      expect(Object.keys(response.data.diff)).toHaveLength(1);
+      expect(Object.keys(response.data.diff)).toHaveLength(2);
 
       // Verify status unchanged
       expect(response.data.result.status).toBe(userStatus);
@@ -217,7 +217,7 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(response.data.diff.middle_name).toHaveProperty("before");
       expect(response.data.diff.middle_name).toHaveProperty("after");
       expect(response.data.diff.middle_name.after).toEqual(newMiddleName);
-      expect(Object.keys(response.data.diff)).toHaveLength(1);
+      expect(Object.keys(response.data.diff)).toHaveLength(2);
 
       // Verify status unchanged
       expect(response.data.result.status).toBe(userStatus);
@@ -251,7 +251,7 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(response.data.diff.nickname).toHaveProperty("before");
       expect(response.data.diff.nickname).toHaveProperty("after");
       expect(response.data.diff.nickname.after).toEqual(newNickname);
-      expect(Object.keys(response.data.diff)).toHaveLength(1);
+      expect(Object.keys(response.data.diff)).toHaveLength(2);
 
       // Verify status unchanged
       expect(response.data.result.status).toBe(userStatus);
@@ -285,7 +285,7 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(response.data.diff.preferred_username).toHaveProperty("before");
       expect(response.data.diff.preferred_username).toHaveProperty("after");
       expect(response.data.diff.preferred_username.after).toEqual(newPreferredUsername);
-      expect(Object.keys(response.data.diff)).toHaveLength(1);
+      expect(Object.keys(response.data.diff)).toHaveLength(2);
 
       // Verify status unchanged
       expect(response.data.result.status).toBe(userStatus);
@@ -355,7 +355,7 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(response.data.diff.phone_number).toHaveProperty("after");
       expect(response.data.diff.phone_number.after).toEqual(newPhoneNumber);
 
-      expect(Object.keys(response.data.diff)).toHaveLength(1);
+      expect(Object.keys(response.data.diff)).toHaveLength(2);
 
       // Verify status unchanged
       expect(response.data.result.status).toBe(userStatus);
@@ -391,7 +391,7 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(response.data.diff.profile).toHaveProperty("before");
       expect(response.data.diff.profile).toHaveProperty("after");
       expect(response.data.diff.profile.after).toEqual(newProfile);
-      expect(Object.keys(response.data.diff)).toHaveLength(1);
+      expect(Object.keys(response.data.diff)).toHaveLength(2);
 
       // Verify status unchanged
       expect(response.data.result.status).toBe(userStatus);
@@ -425,7 +425,7 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(response.data.diff.picture).toHaveProperty("before");
       expect(response.data.diff.picture).toHaveProperty("after");
       expect(response.data.diff.picture.after).toEqual(newPicture);
-      expect(Object.keys(response.data.diff)).toHaveLength(1);
+      expect(Object.keys(response.data.diff)).toHaveLength(2);
 
       // Verify status unchanged
       expect(response.data.result.status).toBe(userStatus);
@@ -459,7 +459,7 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(response.data.diff.website).toHaveProperty("before");
       expect(response.data.diff.website).toHaveProperty("after");
       expect(response.data.diff.website.after).toEqual(newWebsite);
-      expect(Object.keys(response.data.diff)).toHaveLength(1);
+      expect(Object.keys(response.data.diff)).toHaveLength(2);
 
       // Verify status unchanged
       expect(response.data.result.status).toBe(userStatus);
@@ -495,7 +495,7 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(response.data.diff.gender).toHaveProperty("before");
       expect(response.data.diff.gender).toHaveProperty("after");
       expect(response.data.diff.gender.after).toEqual(newGender);
-      expect(Object.keys(response.data.diff)).toHaveLength(1);
+      expect(Object.keys(response.data.diff)).toHaveLength(2);
 
       // Verify status unchanged
       expect(response.data.result.status).toBe(userStatus);
@@ -529,7 +529,7 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(response.data.diff.birthdate).toHaveProperty("before");
       expect(response.data.diff.birthdate).toHaveProperty("after");
       expect(response.data.diff.birthdate.after).toEqual(newBirthdate);
-      expect(Object.keys(response.data.diff)).toHaveLength(1);
+      expect(Object.keys(response.data.diff)).toHaveLength(2);
 
       // Verify status unchanged
       expect(response.data.result.status).toBe(userStatus);
@@ -563,7 +563,7 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(response.data.diff.zoneinfo).toHaveProperty("before");
       expect(response.data.diff.zoneinfo).toHaveProperty("after");
       expect(response.data.diff.zoneinfo.after).toEqual(newZoneinfo);
-      expect(Object.keys(response.data.diff)).toHaveLength(1);
+      expect(Object.keys(response.data.diff)).toHaveLength(2);
 
       // Verify status unchanged
       expect(response.data.result.status).toBe(userStatus);
@@ -597,7 +597,7 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(response.data.diff.locale).toHaveProperty("before");
       expect(response.data.diff.locale).toHaveProperty("after");
       expect(response.data.diff.locale.after).toEqual(newLocale);
-      expect(Object.keys(response.data.diff)).toHaveLength(1);
+      expect(Object.keys(response.data.diff)).toHaveLength(2);
 
       // Verify status unchanged
       expect(response.data.result.status).toBe(userStatus);
