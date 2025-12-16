@@ -145,6 +145,7 @@ import org.idp.server.platform.health.HealthCheckApi;
 import org.idp.server.platform.http.HttpClientFactory;
 import org.idp.server.platform.http.HttpRequestExecutor;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
+import org.idp.server.platform.multi_tenancy.organization.OrganizationTenantResolverApi;
 import org.idp.server.platform.multi_tenancy.tenant.*;
 import org.idp.server.platform.notification.email.EmailSenders;
 import org.idp.server.platform.notification.sms.SmsSenders;
@@ -193,6 +194,7 @@ public class IdpServerApplication {
   AuditLogApi auditLogApi;
   SharedSignalsFrameworkMetaDataApi sharedSignalsFrameworkMetaDataApi;
   TenantMetaDataApi tenantMetaDataApi;
+  OrganizationTenantResolverApi organizationTenantResolverApi;
   TenantInvitationMetaDataApi tenantInvitationMetaDataApi;
   UserOperationApi userOperationApi;
   UserLifecycleEventApi userLifecycleEventApi;
@@ -682,6 +684,13 @@ public class IdpServerApplication {
         TenantAwareEntryServiceProxy.createProxy(
             new TenantMetaDataEntryService(tenantQueryRepository),
             TenantMetaDataApi.class,
+            databaseTypeProvider);
+
+    this.organizationTenantResolverApi =
+        ManagementTypeEntryServiceProxy.createProxy(
+            new OrganizationTenantResolverEntryService(
+                organizationRepository, tenantQueryRepository),
+            OrganizationTenantResolverApi.class,
             databaseTypeProvider);
 
     this.tenantInvitationMetaDataApi =
@@ -1194,6 +1203,10 @@ public class IdpServerApplication {
 
   public TenantMetaDataApi tenantMetadataApi() {
     return tenantMetaDataApi;
+  }
+
+  public OrganizationTenantResolverApi organizationTenantResolverApi() {
+    return organizationTenantResolverApi;
   }
 
   public TenantInvitationMetaDataApi tenantInvitationMetaDataApi() {

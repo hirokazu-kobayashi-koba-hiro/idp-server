@@ -27,6 +27,43 @@ import org.idp.server.platform.log.TenantLoggingContext;
 import org.idp.server.platform.multi_tenancy.tenant.MissingRequiredTenantIdentifierException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
+/**
+ * Tenant-aware entry service proxy with RLS (Row-Level Security) support.
+ *
+ * <h2>Proxy Selection Guide</h2>
+ *
+ * <pre>
+ * ┌─────────────────────────────────┬─────────────────────────────────┐
+ * │ Layer                           │ Proxy                           │
+ * ├─────────────────────────────────┼─────────────────────────────────┤
+ * │ Application Plane               │ TenantAwareEntryServiceProxy    │
+ * │ System-level Control Plane      │ TenantAwareEntryServiceProxy    │
+ * │ Organization-level Control Plane│ ManagementTypeEntryServiceProxy │
+ * └─────────────────────────────────┴─────────────────────────────────┘
+ * </pre>
+ *
+ * <h2>Features</h2>
+ *
+ * <ul>
+ *   <li>RLS setup: {@code SET app.tenant_id} for PostgreSQL row-level security
+ *   <li>Transaction management (commit/rollback)
+ *   <li>Tenant logging context
+ * </ul>
+ *
+ * <h2>Usage</h2>
+ *
+ * <pre>{@code
+ * // Application Plane API
+ * this.oAuthFlowApi = TenantAwareEntryServiceProxy.createProxy(
+ *     new OAuthFlowEntryService(...), OAuthFlowApi.class, databaseTypeProvider);
+ *
+ * // System-level Control Plane API
+ * this.clientManagementApi = TenantAwareEntryServiceProxy.createProxy(
+ *     new ClientManagementEntryService(...), ClientManagementApi.class, databaseTypeProvider);
+ * }</pre>
+ *
+ * @see ManagementTypeEntryServiceProxy for Organization-level Control Plane APIs
+ */
 public class TenantAwareEntryServiceProxy implements InvocationHandler {
   protected final Object target;
   private final ApplicationDatabaseTypeProvider applicationDatabaseTypeProvider;
