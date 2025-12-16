@@ -322,7 +322,56 @@ if (!accessControl.isAuthorized()) {
 
 ---
 
-## Step 3: Controller実装（Controller層）
+## Step 3: IdpServerApplication登録
+
+EntryServiceを`IdpServerApplication`に登録します。
+
+**ファイル**: `libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/IdpServerApplication.java`
+
+```java
+public class IdpServerApplication {
+
+  // フィールド追加
+  OrgRoleManagementApi orgRoleManagementApi;
+
+  public IdpServerApplication(...) {
+    // ...
+
+    // ✅ ManagementTypeEntryServiceProxy を使用
+    // 理由: Organization-level Control Plane API
+    this.orgRoleManagementApi =
+        ManagementTypeEntryServiceProxy.createProxy(
+            new OrgRoleManagementEntryService(
+                tenantQueryRepository,
+                organizationRepository,
+                roleQueryRepository,
+                roleCommandRepository,
+                permissionQueryRepository,
+                auditLogPublisher),
+            OrgRoleManagementApi.class,
+            databaseTypeProvider);
+  }
+
+  // Getterメソッド追加
+  public OrgRoleManagementApi orgRoleManagementApi() {
+    return orgRoleManagementApi;
+  }
+}
+```
+
+### Proxy選択の重要ポイント
+
+| レイヤー | Proxy |
+|---------|-------|
+| Application Plane | `TenantAwareEntryServiceProxy` |
+| System-level Control Plane | `TenantAwareEntryServiceProxy` |
+| **Organization-level Control Plane** | **`ManagementTypeEntryServiceProxy`** ← このドキュメント |
+
+詳細: [トランザクション管理 - EntryService Proxy の使い分け](../04-implementation-guides/impl-03-transaction.md#8-entryservice-proxy-の使い分け)
+
+---
+
+## Step 4: Controller実装（Controller層）
 
 **ファイル**: `libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapter/springboot/controller/management/OrgRoleManagementController.java`
 
@@ -571,6 +620,11 @@ describe('Organization Role Management API', () => {
 - [ ] Context Creator使用
 - [ ] Dry Run対応
 
+### IdpServerApplication登録
+- [ ] フィールド追加
+- [ ] **`ManagementTypeEntryServiceProxy`使用**（Organization-level Control Plane）
+- [ ] Getterメソッド追加
+
 ### Controller実装（Controller層）
 - [ ] URL: `/organizations/{orgId}/tenants/{tenantId}/...`
 - [ ] `@PathVariable`: `orgId`と`tenantId`の両方
@@ -634,6 +688,28 @@ AuditLog auditLog = AuditLogCreator.create(
     context,
     requestAttributes);
 ```
+
+### エラー4: Proxy選択ミス
+
+```java
+// ❌ 間違い: Organization-level Control PlaneにTenantAwareEntryServiceProxy
+this.orgRoleManagementApi =
+    TenantAwareEntryServiceProxy.createProxy(  // 間違い
+        new OrgRoleManagementEntryService(...),
+        OrgRoleManagementApi.class,
+        databaseTypeProvider);
+
+// ✅ 正しい: Organization-level Control PlaneはManagementTypeEntryServiceProxy
+this.orgRoleManagementApi =
+    ManagementTypeEntryServiceProxy.createProxy(  // 正しい
+        new OrgRoleManagementEntryService(...),
+        OrgRoleManagementApi.class,
+        databaseTypeProvider);
+```
+
+**判断基準**: レイヤーで決まる
+- Application Plane / System-level Control Plane → `TenantAwareEntryServiceProxy`
+- Organization-level Control Plane → `ManagementTypeEntryServiceProxy`
 
 ---
 

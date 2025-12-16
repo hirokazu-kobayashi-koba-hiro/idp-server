@@ -242,10 +242,104 @@ private static void setTenantId(Connection conn, TenantIdentifier tenantIdentifi
 
 ---
 
+---
+
+## 8. EntryService Proxy の使い分け
+
+EntryServiceは、用途に応じて異なるProxyでラップする必要があります。Proxyの選択を誤ると、トランザクション管理やRLS設定が正しく動作しません。
+
+### 8.1 TenantAwareEntryServiceProxy
+
+**用途**: Application層のAPI（第一引数に`TenantIdentifier`を持つ）
+
+```java
+// 使用例: TenantIdentifierを第一引数に持つAPI
+this.tenantMetaDataApi = TenantAwareEntryServiceProxy.createProxy(
+    new TenantMetaDataEntryService(tenantQueryRepository),
+    TenantMetaDataApi.class,
+    databaseTypeProvider);
+```
+
+**動作**:
+- メソッド引数から `TenantIdentifier` を自動解決
+- RLS（Row-Level Security）用の `app.tenant_id` を自動設定
+- トランザクション管理（コミット/ロールバック）
+
+**対象APIの例**:
+- `TenantMetaDataApi` - `get(TenantIdentifier tenantIdentifier)`
+- `ClientManagementApi` - `create(TenantIdentifier tenantIdentifier, ...)`
+- `UserManagementApi` - `findList(TenantIdentifier tenantIdentifier, ...)`
+
+### 8.2 ManagementTypeEntryServiceProxy
+
+**用途**: Control Plane層の管理API（`TenantIdentifier`を引数に持たない、または別の識別子から内部で解決する必要がある）
+
+```java
+// 使用例: OrganizationIdentifierのみを引数に持つAPI
+this.organizationTenantResolverApi = ManagementTypeEntryServiceProxy.createProxy(
+    new OrganizationTenantResolverEntryService(
+        organizationRepository, tenantQueryRepository),
+    OrganizationTenantResolverApi.class,
+    databaseTypeProvider);
+```
+
+**動作**:
+- TenantIdentifierの自動解決を行わない
+- RLS設定を行わない（サービス内で必要に応じて設定）
+- 純粋なトランザクション管理のみ
+
+**対象APIの例**:
+- `OrganizationTenantResolverApi` - `resolveOrganizerTenant(OrganizationIdentifier orgId)`
+- `OnboardingApi` - `create(OnboardingRequest request)`
+- `OrganizationManagementApi` - `create(OrganizationRegistrationRequest request)`
+
+### 8.3 選択基準
+
+| レイヤー | Proxy |
+|---------|-------|
+| Application Plane | `TenantAwareEntryServiceProxy` |
+| System-level Control Plane | `TenantAwareEntryServiceProxy` |
+| Organization-level Control Plane | `ManagementTypeEntryServiceProxy` |
+
+| Proxy | RLS設定 | トランザクション |
+|-------|---------|-----------------|
+| `TenantAwareEntryServiceProxy` | ✅ 自動 | ✅ 自動 |
+| `ManagementTypeEntryServiceProxy` | ❌ なし | ✅ 自動 |
+
+### 8.4 よくあるエラーと対処法
+
+#### エラー: MissingRequiredTenantIdentifierException
+
+```
+MissingRequiredTenantIdentifierException: Missing required TenantIdentifier.
+Please ensure it is explicitly passed to the service.
+```
+
+**原因**: `TenantAwareEntryServiceProxy`を使用しているが、APIメソッドの引数に`TenantIdentifier`が含まれていない。
+
+**対処法**: `ManagementTypeEntryServiceProxy`に変更する。
+
+```java
+// 変更前（エラー発生）
+this.myApi = TenantAwareEntryServiceProxy.createProxy(
+    new MyEntryService(...),
+    MyApi.class,
+    databaseTypeProvider);
+
+// 変更後（正常動作）
+this.myApi = ManagementTypeEntryServiceProxy.createProxy(
+    new MyEntryService(...),
+    MyApi.class,
+    databaseTypeProvider);
+```
+
+---
+
 **情報源**:
 - [TransactionManager.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/TransactionManager.java)
-- [TenantAwareEntryServiceProxy.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/proxy/TenantAwareEntryServiceProxy.java)
+- [TenantAwareEntryServiceProxy.java](../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/TenantAwareEntryServiceProxy.java)
+- [ManagementTypeEntryServiceProxy.java](../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/ManagementTypeEntryServiceProxy.java)
 - [PostgreSQL - set_config()](https://www.postgresql.org/docs/current/functions-admin.html#FUNCTIONS-ADMIN-SET)
 
-**最終更新**: 2025-10-12
+**最終更新**: 2025-12-16
 **検証者**: Claude Code（AI開発支援）

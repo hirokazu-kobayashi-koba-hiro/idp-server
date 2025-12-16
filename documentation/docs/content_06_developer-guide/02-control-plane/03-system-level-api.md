@@ -555,7 +555,54 @@ public class RoleManagementEntryService implements RoleManagementApi {
 
 ---
 
-## Step 3: Controller実装（Controller層）
+## Step 3: IdpServerApplication登録
+
+EntryServiceを`IdpServerApplication`に登録します。
+
+**ファイル**: `libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/IdpServerApplication.java`
+
+```java
+public class IdpServerApplication {
+
+  // フィールド追加
+  RoleManagementApi roleManagementApi;
+
+  public IdpServerApplication(...) {
+    // ...
+
+    // ✅ TenantAwareEntryServiceProxy を使用
+    // 理由: メソッド第一引数が TenantIdentifier
+    this.roleManagementApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new RoleManagementEntryService(
+                tenantQueryRepository,
+                roleCommandRepository,
+                roleQueryRepository,
+                auditLogPublisher),
+            RoleManagementApi.class,
+            databaseTypeProvider);
+  }
+
+  // Getterメソッド追加
+  public RoleManagementApi roleManagementApi() {
+    return roleManagementApi;
+  }
+}
+```
+
+### Proxy選択の重要ポイント
+
+| レイヤー | Proxy |
+|---------|-------|
+| Application Plane | `TenantAwareEntryServiceProxy` |
+| **System-level Control Plane** | **`TenantAwareEntryServiceProxy`** ← このドキュメント |
+| Organization-level Control Plane | `ManagementTypeEntryServiceProxy` |
+
+詳細: [トランザクション管理 - EntryService Proxy の使い分け](../04-implementation-guides/impl-03-transaction.md#8-entryservice-proxy-の使い分け)
+
+---
+
+## Step 4: Controller実装（Controller層）
 
 **ファイル**: `libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapter/springboot/controller/management/RoleManagementController.java`
 
@@ -808,6 +855,11 @@ describe('Role Management API', () => {
 - [ ] 権限チェック実装
 - [ ] Audit Log記録（`create` vs `createOnRead`）
 - [ ] Dry Run対応（書き込み操作のみ）
+
+### IdpServerApplication登録
+- [ ] フィールド追加
+- [ ] **`TenantAwareEntryServiceProxy`使用**（第一引数が`TenantIdentifier`）
+- [ ] Getterメソッド追加
 
 ### Controller実装（Controller層）
 - [ ] HTTPエンドポイント定義

@@ -78,3 +78,14 @@ export const deletion = async ({ url, headers }) => {
     return e.response ? e.response : e;
   }
 };
+
+export const options = async ({ url, headers }) => {
+  try {
+    return await client.options(url, {
+      headers,
+      withCredentials: true
+    });
+  } catch (e) {
+    return e.response ? e.response : e;
+  }
+};

@@ -24,16 +24,39 @@ import org.idp.server.platform.datasource.*;
 import org.idp.server.platform.log.LoggerWrapper;
 
 /**
- * Organization-aware entry service proxy that handles both organization and tenant contexts.
+ * Management-type entry service proxy for Organization-level Control Plane APIs.
  *
- * <p>This proxy automatically resolves both OrganizationIdentifier and TenantIdentifier from method
- * arguments and performs organization-tenant relationship validation before delegating to the
- * underlying service with proper transaction management.
+ * <h2>Proxy Selection Guide</h2>
  *
- * <p>Key features: - Automatic OrganizationIdentifier resolution from method arguments -
- * Organization-tenant relationship validation - Dynamic admin tenant resolution for
- * organization-level authentication - Full transaction management for both read and write
- * operations
+ * <pre>
+ * ┌─────────────────────────────────┬─────────────────────────────────┐
+ * │ Layer                           │ Proxy                           │
+ * ├─────────────────────────────────┼─────────────────────────────────┤
+ * │ Application Plane               │ TenantAwareEntryServiceProxy    │
+ * │ System-level Control Plane      │ TenantAwareEntryServiceProxy    │
+ * │ Organization-level Control Plane│ ManagementTypeEntryServiceProxy │
+ * └─────────────────────────────────┴─────────────────────────────────┘
+ * </pre>
+ *
+ * <h2>Features</h2>
+ *
+ * <ul>
+ *   <li>Transaction management (commit/rollback)
+ *   <li>No RLS setup
+ * </ul>
+ *
+ * <h2>Usage</h2>
+ *
+ * <pre>{@code
+ * // Organization-level Control Plane API
+ * this.orgRoleManagementApi = ManagementTypeEntryServiceProxy.createProxy(
+ *     new OrgRoleManagementEntryService(...), OrgRoleManagementApi.class, databaseTypeProvider);
+ *
+ * this.organizationTenantResolverApi = ManagementTypeEntryServiceProxy.createProxy(
+ *     new OrganizationTenantResolverEntryService(...), OrganizationTenantResolverApi.class, databaseTypeProvider);
+ * }</pre>
+ *
+ * @see TenantAwareEntryServiceProxy for Application Plane and System-level Control Plane APIs
  */
 public class ManagementTypeEntryServiceProxy implements InvocationHandler {
 
