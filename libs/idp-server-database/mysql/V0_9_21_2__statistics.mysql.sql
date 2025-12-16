@@ -9,7 +9,7 @@
 CREATE TABLE statistics_monthly (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     tenant_id CHAR(36) NOT NULL,
-    stat_month CHAR(7) NOT NULL COMMENT 'YYYY-MM format (2025-01, 2025-02, ...)',
+    stat_month DATE NOT NULL COMMENT 'First day of month (e.g., 2025-01-01, 2025-02-01, ...)',
 
     -- Monthly summary (for quick access)
     monthly_summary JSON NOT NULL DEFAULT ('{}'),
@@ -39,14 +39,19 @@ COMMENT='Monthly tenant statistics with daily breakdown in JSON';
 
 -- =====================================================
 -- statistics_yearly
--- Yearly statistics summary
+-- Yearly statistics summary with tenant-specific fiscal year support
 -- Note: Monthly breakdown is available via statistics_monthly table
+--
+-- Fiscal year examples:
+--   - Japan: April (stat_year = 2025-04-01 for FY2025)
+--   - US (some): October (stat_year = 2025-10-01 for FY2025)
+--   - Calendar year: January (stat_year = 2025-01-01 for FY2025)
 -- =====================================================
 
 CREATE TABLE statistics_yearly (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     tenant_id CHAR(36) NOT NULL,
-    stat_year CHAR(4) NOT NULL COMMENT 'YYYY format (2025, 2026, ...)',
+    stat_year DATE NOT NULL COMMENT 'Fiscal year start date (e.g., 2025-04-01 for April fiscal year)',
 
     -- Yearly summary (for quick access)
     yearly_summary JSON NOT NULL DEFAULT ('{}'),
@@ -63,7 +68,7 @@ CREATE TABLE statistics_yearly (
     UNIQUE KEY uk_tenant_year (tenant_id, stat_year),
     KEY idx_statistics_yearly_tenant_year (tenant_id, stat_year DESC)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Yearly tenant statistics summary (monthly breakdown via statistics_monthly table)';
+COMMENT='Yearly tenant statistics summary with fiscal year support';
 
 -- =====================================================
 -- statistics_daily_users
@@ -90,7 +95,7 @@ COMMENT='Daily active users tracking (one row per unique user per day)';
 
 CREATE TABLE statistics_monthly_users (
     tenant_id CHAR(36) NOT NULL,
-    stat_month CHAR(7) NOT NULL COMMENT 'YYYY-MM format (e.g., 2025-01)',
+    stat_month DATE NOT NULL COMMENT 'First day of month (e.g., 2025-01-01)',
     user_id CHAR(36) NOT NULL,
     user_name VARCHAR(255) NOT NULL DEFAULT '',
     last_used_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -103,12 +108,17 @@ COMMENT='Monthly active users tracking (one row per unique user per calendar mon
 
 -- =====================================================
 -- statistics_yearly_users
--- Track unique yearly active users
+-- Track unique yearly active users with tenant-specific fiscal year
+--
+-- Fiscal year examples:
+--   - Japan: April (stat_year = 2025-04-01 for FY2025)
+--   - US (some): October (stat_year = 2025-10-01 for FY2025)
+--   - Calendar year: January (stat_year = 2025-01-01 for FY2025)
 -- =====================================================
 
 CREATE TABLE statistics_yearly_users (
     tenant_id CHAR(36) NOT NULL,
-    stat_year CHAR(4) NOT NULL COMMENT 'YYYY format (e.g., 2025)',
+    stat_year DATE NOT NULL COMMENT 'Fiscal year start date (e.g., 2025-04-01 for April fiscal year)',
     user_id CHAR(36) NOT NULL,
     user_name VARCHAR(255) NOT NULL DEFAULT '',
     last_used_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -118,7 +128,7 @@ CREATE TABLE statistics_yearly_users (
     KEY idx_statistics_yearly_users_tenant_year (tenant_id, stat_year),
     KEY idx_statistics_yearly_users_last_used (tenant_id, last_used_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Yearly active users tracking (one row per unique user per calendar year)';
+COMMENT='Yearly active users tracking with fiscal year support (one row per unique user per fiscal year)';
 
 -- =====================================================
 -- Data retention procedures
@@ -129,11 +139,11 @@ DELIMITER //
 -- Delete statistics data older than specified months
 CREATE PROCEDURE cleanup_old_statistics(IN retention_months INT)
 BEGIN
-    DECLARE cutoff_month CHAR(7);
-    SET cutoff_month = DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL retention_months MONTH), '%Y-%m');
+    DECLARE cutoff_date DATE;
+    SET cutoff_date = DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL retention_months MONTH);
 
     DELETE FROM statistics_monthly
-    WHERE stat_month < cutoff_month;
+    WHERE stat_month < cutoff_date;
 
     SELECT ROW_COUNT() AS deleted_count;
 END//
@@ -150,35 +160,35 @@ END//
 -- Delete monthly user data older than specified months
 CREATE PROCEDURE cleanup_old_monthly_users(IN retention_months INT)
 BEGIN
-    DECLARE cutoff_month CHAR(7);
-    SET cutoff_month = DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL retention_months MONTH), '%Y-%m');
+    DECLARE cutoff_date DATE;
+    SET cutoff_date = DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL retention_months MONTH);
 
     DELETE FROM statistics_monthly_users
-    WHERE stat_month < cutoff_month;
+    WHERE stat_month < cutoff_date;
 
     SELECT ROW_COUNT() AS deleted_count;
 END//
 
--- Delete yearly user data older than specified years
-CREATE PROCEDURE cleanup_old_yearly_users(IN retention_years INT)
+-- Delete yearly user data older than specified months (for fiscal year support)
+CREATE PROCEDURE cleanup_old_yearly_users(IN retention_months INT)
 BEGIN
-    DECLARE cutoff_year CHAR(4);
-    SET cutoff_year = DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL retention_years YEAR), '%Y');
+    DECLARE cutoff_date DATE;
+    SET cutoff_date = DATE_SUB(CURDATE(), INTERVAL retention_months MONTH);
 
     DELETE FROM statistics_yearly_users
-    WHERE stat_year < cutoff_year;
+    WHERE stat_year < cutoff_date;
 
     SELECT ROW_COUNT() AS deleted_count;
 END//
 
--- Delete yearly statistics data older than specified years
-CREATE PROCEDURE cleanup_old_yearly_statistics(IN retention_years INT)
+-- Delete yearly statistics data older than specified months (for fiscal year support)
+CREATE PROCEDURE cleanup_old_yearly_statistics(IN retention_months INT)
 BEGIN
-    DECLARE cutoff_year CHAR(4);
-    SET cutoff_year = DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL retention_years YEAR), '%Y');
+    DECLARE cutoff_date DATE;
+    SET cutoff_date = DATE_SUB(CURDATE(), INTERVAL retention_months MONTH);
 
     DELETE FROM statistics_yearly
-    WHERE stat_year < cutoff_year;
+    WHERE stat_year < cutoff_date;
 
     SELECT ROW_COUNT() AS deleted_count;
 END//

@@ -104,7 +104,7 @@ public class MysqlExecutor implements IdentityVerificationResultSqlExecutor {
       for (Map.Entry<String, String> entry : queries.verifiedClaims().entrySet()) {
         String key = entry.getKey();
         String value = entry.getValue();
-        sqlBuilder.append(" AND JSON_EXTRACT(verified_claims, CONCAT('$.', ?)) = ?");
+        sqlBuilder.append(" AND JSON_EXTRACT(verified_claims, CONCAT('$.\"', ?, '\"')) = ?");
         params.add(key);
         params.add(value);
       }
@@ -175,7 +175,7 @@ public class MysqlExecutor implements IdentityVerificationResultSqlExecutor {
       for (Map.Entry<String, String> entry : queries.verifiedClaims().entrySet()) {
         String key = entry.getKey();
         String value = entry.getValue();
-        sqlBuilder.append(" AND JSON_EXTRACT(verified_claims, CONCAT('$.', ?)) = ?");
+        sqlBuilder.append(" AND JSON_EXTRACT(verified_claims, CONCAT('$.\"', ?, '\"')) = ?");
         params.add(key);
         params.add(value);
       }

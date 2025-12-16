@@ -105,7 +105,7 @@ public class MysqlExecutor implements IdentityVerificationConfigSqlExecutor {
       for (Map.Entry<String, String> entry : queries.details().entrySet()) {
         String key = entry.getKey();
         String value = entry.getValue();
-        sql.append(" AND JSON_EXTRACT(payload, CONCAT('$.', ?)) = ?");
+        sql.append(" AND JSON_EXTRACT(payload, CONCAT('$.\"', ?, '\"')) = ?");
         params.add(key);
         params.add(value);
       }
@@ -143,7 +143,7 @@ public class MysqlExecutor implements IdentityVerificationConfigSqlExecutor {
 
     if (queries.hasDetails()) {
       for (Map.Entry<String, String> e : queries.details().entrySet()) {
-        sql.append("\n  AND JSON_EXTRACT(payload, CONCAT('$.', ?)) = ?");
+        sql.append("\n  AND JSON_EXTRACT(payload, CONCAT('$.\"', ?, '\"')) = ?");
         params.add(e.getKey());
         params.add(e.getValue());
       }
