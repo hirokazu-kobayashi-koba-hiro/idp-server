@@ -88,11 +88,14 @@ erDiagram
 
 #### ユーザートラッキングテーブル（パーティション）
 
-| テーブル | 用途 | パーティション間隔 | 保持期間 |
-|:---|:---|:---|:---|
-| `statistics_daily_users` | DAU重複排除 | 日別 | 90日 |
-| `statistics_monthly_users` | MAU重複排除 | 月別 | 13ヶ月 |
-| `statistics_yearly_users` | YAU重複排除 | 年別 | 5年 |
+| テーブル | 用途 | パーティション間隔 | 保持期間 | 備考 |
+|:---|:---|:---|:---|:---|
+| `statistics_daily_users` | DAU重複排除 | 日別 | 90日 | |
+| `statistics_monthly_users` | MAU重複排除 | 月別 | 13ヶ月 | |
+| `statistics_yearly_users` | YAU重複排除 | 月別 | 60ヶ月 | 会計年度対応 |
+
+> **Note**: `statistics_yearly_users` は会計年度対応のため月単位パーティションを使用します。
+> `stat_year` には会計年度開始日（例: 2025-04-01 = 4月開始の2025年度）が格納されます。
 
 ### カラム詳細
 
@@ -298,14 +301,57 @@ LocalDate eventDate = securityEvent
     .withZoneSameInstant(tenant.timezone())
     .toLocalDate();
 
-// 月初日・年初日の計算
+// 月初日の計算
 LocalDate monthStart = eventDate.withDayOfMonth(1);
-LocalDate yearStart = eventDate.withDayOfYear(1);
+
+// 会計年度開始日の計算（テナント固有の会計年度に対応）
+LocalDate yearStart = calculateFiscalYearStart(eventDate, tenant.fiscalYearStartMonth());
 
 // Repository呼び出し
 statisticsRepository.incrementDailyMetric(tenant.identifier(), monthStart, day, "dau", 1);
 yearlyStatisticsRepository.incrementYau(tenant.identifier(), yearStart, 1);
 ```
+
+### 会計年度の計算
+
+テナントごとに設定された会計年度開始月に基づいて、会計年度開始日を計算します。
+
+```java
+/**
+ * 会計年度開始日を計算
+ *
+ * 例: startMonth = 4（4月開始）の場合
+ *   2025-06-15 → 2025-04-01
+ *   2025-02-15 → 2024-04-01
+ *   2025-04-01 → 2025-04-01
+ *   2025-03-31 → 2024-04-01
+ */
+private LocalDate calculateFiscalYearStart(LocalDate date, int startMonth) {
+    LocalDate candidateStart = date.withMonth(startMonth).withDayOfMonth(1);
+    if (date.isBefore(candidateStart)) {
+        return candidateStart.minusYears(1);
+    }
+    return candidateStart;
+}
+```
+
+### 会計年度の設定
+
+テナントの会計年度開始月は `TenantAttributes` で設定します:
+
+```json
+{
+  "attributes": {
+    "fiscal_year_start_month": 4
+  }
+}
+```
+
+| 設定値 | 会計年度 | 例 |
+|:---|:---|:---|
+| `1` (デフォルト) | 1月〜12月 | カレンダー年 |
+| `4` | 4月〜翌3月 | 日本企業の一般的な会計年度 |
+| `10` | 10月〜翌9月 | 一部の米国企業 |
 
 **設計原則**:
 - API層（`TenantStatisticsQueries`）では`String`型（"YYYY-MM"形式）でパラメータを受け取る
@@ -344,15 +390,41 @@ RETURNING user_id
 |:---|:---|:---|:---|:---|
 | `statistics_daily_users` | 日別 | 90日 | 90 | DAU追跡（データ量最大） |
 | `statistics_monthly_users` | 月別 | 13ヶ月 | 13 | MAU追跡（YoY比較用） |
-| `statistics_yearly_users` | 年別 | 5年 | 5 | YAU追跡 |
+| `statistics_yearly_users` | 月別 | 60ヶ月 | 60 | YAU追跡（会計年度対応） |
+
+> **会計年度対応**: `statistics_yearly_users` は月単位パーティションを使用します。
+> これにより、テナントごとに異なる会計年度開始月（1月、4月、10月など）に対応できます。
+> 例: 4月開始テナントは `partition_2025_04`、10月開始テナントは `partition_2025_10` に格納されます。
 
 **DDL参照**: `V0_9_21_2__statistics.sql`
 
 ### パーティショニングのメリット
 
 1. **クエリ性能向上**: パーティションプルーニングにより、特定期間のクエリが高速化
-2. **メンテナンス効率化**: 古いパーティションのDROP操作は DELETE より高速
-3. **自動管理**: pg_partmanが新規パーティションを自動作成・古いパーティションを自動削除
+2. **メンテナンス効率化**: パーティション単位での管理が可能
+3. **自動管理**: pg_partmanが新規パーティションを自動作成・古いパーティションを自動アーカイブ
+
+### アーカイブ方式
+
+古いパーティションは削除せず、`archive`スキーマに移動します。
+
+```sql
+-- pg_partman設定
+retention_schema = 'archive'
+retention_keep_table = true
+retention_keep_index = true
+```
+
+**メリット**:
+- 監査・コンプライアンス要件への対応
+- 必要時にアーカイブデータへのアクセスが可能
+- 誤削除のリスク軽減
+
+**アーカイブデータの参照**:
+```sql
+-- アーカイブされたDAUデータを参照
+SELECT * FROM archive.statistics_daily_users_p2024_01_01;
+```
 
 ### 運用カスタマイズ
 

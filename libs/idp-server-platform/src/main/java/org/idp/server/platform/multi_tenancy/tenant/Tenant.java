@@ -228,6 +228,10 @@ public class Tenant implements Configurable {
     return attributes.timezone();
   }
 
+  public int fiscalYearStartMonth() {
+    return attributes.fiscalYearStartMonth();
+  }
+
   public TenantIdentityPolicy identityPolicyConfig() {
     return identityPolicyConfig;
   }

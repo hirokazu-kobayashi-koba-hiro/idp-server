@@ -36,6 +36,7 @@ import org.idp.server.platform.security.log.SecurityEventLogService;
 import org.idp.server.platform.security.repository.SecurityEventCommandRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookResultCommandRepository;
+import org.idp.server.platform.statistics.FiscalYearCalculator;
 import org.idp.server.platform.statistics.repository.DailyActiveUserCommandRepository;
 import org.idp.server.platform.statistics.repository.MonthlyActiveUserCommandRepository;
 import org.idp.server.platform.statistics.repository.TenantStatisticsCommandRepository;
@@ -173,7 +174,8 @@ public class SecurityEventHandler {
 
     // Derive month and year from eventDate for statistics grouping
     LocalDate monthStart = eventDate.withDayOfMonth(1);
-    LocalDate yearStart = eventDate.withDayOfYear(1);
+    LocalDate yearStart =
+        FiscalYearCalculator.calculateFiscalYearStart(eventDate, tenant.fiscalYearStartMonth());
 
     // Increment the actual event type metric (both daily and monthly)
     incrementMetric(tenant, eventDate, eventType);
@@ -254,7 +256,8 @@ public class SecurityEventHandler {
    */
   private void incrementMetric(Tenant tenant, LocalDate date, String metricName) {
     LocalDate monthStart = date.withDayOfMonth(1);
-    LocalDate yearStart = date.withDayOfYear(1);
+    LocalDate yearStart =
+        FiscalYearCalculator.calculateFiscalYearStart(date, tenant.fiscalYearStartMonth());
     String day = date.format(DATE_FORMATTER);
 
     log.debug(
