@@ -46,7 +46,8 @@
       }
     },
     "attributes": {
-      "timezone": "Asia/Tokyo"
+      "timezone": "Asia/Tokyo",
+      "fiscal_year_start_month": 4
     }
   },
   "authorization_server": {
