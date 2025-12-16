@@ -20,12 +20,24 @@
 -- Partitioned tables (managed by pg_partman):
 --   - statistics_daily_users (daily, 90-day retention)
 --   - statistics_monthly_users (monthly, 13-month retention)
---   - statistics_yearly_users (yearly, 5-year retention)
+--   - statistics_yearly_users (monthly, 60-month retention, fiscal year support)
 --
 -- Non-partitioned tables (summary):
 --   - statistics_monthly
 --   - statistics_yearly
+--
+-- Retention policy:
+--   Old partitions are moved to 'archive' schema instead of being deleted.
+--   This allows for audit and compliance requirements.
 -- =====================================================
+
+-- =====================================================
+-- Archive schema for old partitions
+-- =====================================================
+
+CREATE SCHEMA IF NOT EXISTS archive;
+
+COMMENT ON SCHEMA archive IS 'Archive schema for old statistics partitions. Moved by pg_partman retention policy.';
 
 -- =====================================================
 -- statistics_daily_users (PARTITIONED - daily)
@@ -71,8 +83,9 @@ SELECT partman.create_parent(
 UPDATE partman.part_config
 SET infinite_time_partitions = true,
     retention = '90 days',
-    retention_keep_table = false,
-    retention_keep_index = false
+    retention_schema = 'archive',
+    retention_keep_table = true,
+    retention_keep_index = true
 WHERE parent_table = 'public.statistics_daily_users';
 
 -- =====================================================
@@ -120,19 +133,25 @@ SELECT partman.create_parent(
 UPDATE partman.part_config
 SET infinite_time_partitions = true,
     retention = '13 months',
-    retention_keep_table = false,
-    retention_keep_index = false
+    retention_schema = 'archive',
+    retention_keep_table = true,
+    retention_keep_index = true
 WHERE parent_table = 'public.statistics_monthly_users';
 
 -- =====================================================
--- statistics_yearly_users (PARTITIONED - yearly)
--- Track unique yearly active users
--- Note: stat_year is DATE type (first day of year) for pg_partman compatibility
+-- statistics_yearly_users (PARTITIONED - monthly for fiscal year support)
+-- Track unique yearly active users with tenant-specific fiscal year
+-- Note: stat_year is DATE type (fiscal year start date) for pg_partman compatibility
+--
+-- Fiscal year examples:
+--   - Japan: April (stat_year = 2025-04-01 for FY2025)
+--   - US (some): October (stat_year = 2025-10-01 for FY2025)
+--   - Calendar year: January (stat_year = 2025-01-01 for FY2025)
 -- =====================================================
 
 CREATE TABLE statistics_yearly_users (
     tenant_id UUID NOT NULL,
-    stat_year DATE NOT NULL,  -- First day of year (e.g., 2025-01-01)
+    stat_year DATE NOT NULL,  -- Fiscal year start date (e.g., 2025-04-01 for April fiscal year)
     user_id UUID NOT NULL,
     user_name VARCHAR(255) NOT NULL DEFAULT '',
     last_used_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -154,24 +173,26 @@ CREATE POLICY tenant_isolation_policy ON statistics_yearly_users
 
 ALTER TABLE statistics_yearly_users FORCE ROW LEVEL SECURITY;
 
-COMMENT ON TABLE statistics_yearly_users IS 'Yearly active users tracking with yearly partitioning. Retained for 5 years. Managed by pg_partman.';
-COMMENT ON COLUMN statistics_yearly_users.stat_year IS 'First day of year (e.g., 2025-01-01) for partition key';
+COMMENT ON TABLE statistics_yearly_users IS 'Yearly active users tracking with monthly partitioning for fiscal year support. stat_year represents fiscal year start date (tenant-specific). Retained for 60 months. Managed by pg_partman.';
+COMMENT ON COLUMN statistics_yearly_users.stat_year IS 'Fiscal year start date (e.g., 2025-04-01 for April fiscal year). Partition key.';
 
--- Configure pg_partman for statistics_yearly_users
+-- Configure pg_partman for statistics_yearly_users (monthly partitioning for fiscal year support)
+-- Start from January of current year, create 12 months ahead
 SELECT partman.create_parent(
     p_parent_table => 'public.statistics_yearly_users',
     p_control => 'stat_year',
     p_type => 'range',
-    p_interval => '1 year',
-    p_premake => 5,
-    p_start_partition => DATE_TRUNC('year', CURRENT_DATE)::text
+    p_interval => '1 month',
+    p_premake => 12,
+    p_start_partition => DATE_TRUNC('year', CURRENT_DATE)::date::text
 );
 
 UPDATE partman.part_config
 SET infinite_time_partitions = true,
-    retention = '5 years',
-    retention_keep_table = false,
-    retention_keep_index = false
+    retention = '60 months',
+    retention_schema = 'archive',
+    retention_keep_table = true,
+    retention_keep_index = true
 WHERE parent_table = 'public.statistics_yearly_users';
 
 -- =====================================================

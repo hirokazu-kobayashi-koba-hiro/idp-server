@@ -98,4 +98,19 @@ public class TenantAttributes {
       return ZoneId.of("UTC");
     }
   }
+
+  public int fiscalYearStartMonth() {
+    if (values == null || values.isEmpty() || !containsKey("fiscal_year_start_month")) {
+      return 1;
+    }
+    Object value = values.get("fiscal_year_start_month");
+    if (value instanceof Number) {
+      int month = ((Number) value).intValue();
+      if (month >= 1 && month <= 12) {
+        return month;
+      }
+      log.warn("Invalid fiscal_year_start_month value '{}', falling back to 1 (January)", month);
+    }
+    return 1;
+  }
 }

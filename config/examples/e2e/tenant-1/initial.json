@@ -65,7 +65,10 @@
       "include_assigned_tenants": false,
       "include_verified_claims": false
     },
-    "identity_policy_config": {}
+    "identity_policy_config": {},
+    "attributes": {
+      "fiscal_year_start_month": 3
+    }
   },
   "authorization_server": {
     "issuer": "http://localhost:8080/94d8598e-f238-4150-85c2-c4accf515784",
