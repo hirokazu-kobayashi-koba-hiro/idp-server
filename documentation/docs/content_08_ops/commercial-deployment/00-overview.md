@@ -135,11 +135,9 @@ idp-server の商用デプロイメントに必要な技術要件と基本的な
    - `./setup.sh` による初期化
    - 管理テナント・ユーザー作成
    - OAuth クライアント設定
-
-5. **[検証](./05-verification-checklist.md)**
    - OAuth/OIDC フロー検証
-   - テナント分離確認
 
-6. **[運用](05-operational-guidance.md)**
+5. **[運用ガイダンス](./05-operational-guidance.md)**
    - 監視設定
-   - バックアップ
+   - トラブルシューティング
+   - 運用チェックリスト

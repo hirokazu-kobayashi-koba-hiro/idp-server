@@ -14,7 +14,7 @@ GitHubリリースページから最新版をダウンロード:
 
 ```bash
 # バージョン指定
-VERSION=0.8.7
+VERSION=0.9.20
 
 # JARダウンロード
 wget https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/releases/download/v${VERSION}/idp-server-${VERSION}.jar
@@ -28,7 +28,7 @@ sha256sum -c checksums.txt --ignore-missing
 
 **期待結果**:
 ```
-idp-server-0.8.7.jar: OK
+idp-server-0.9.20.jar: OK
 ```
 
 ---
@@ -40,12 +40,12 @@ idp-server-0.8.7.jar: OK
 リリースJARを使用するシンプルなDockerfile:
 
 ```dockerfile
-FROM openjdk:21-slim
+FROM eclipse-temurin:21-jre-jammy
 
 WORKDIR /app
 
 # リリース成果物をコピー
-COPY idp-server-0.8.7.jar /app/idp-server.jar
+COPY idp-server-0.9.20.jar /app/idp-server.jar
 
 # エントリーポイント
 ENTRYPOINT ["java", "-jar", "/app/idp-server.jar"]
@@ -56,15 +56,15 @@ ENTRYPOINT ["java", "-jar", "/app/idp-server.jar"]
 ```bash
 # Dockerfile作成
 cat > Dockerfile << 'EOF'
-FROM openjdk:21-slim
+FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
-COPY idp-server-0.8.7.jar /app/idp-server.jar
+COPY idp-server-0.9.20.jar /app/idp-server.jar
 ENTRYPOINT ["java", "-jar", "/app/idp-server.jar"]
 EOF
 
 # ビルド実行
-docker build -t idp-server:0.8.7 .
-docker tag idp-server:0.8.7 idp-server:latest
+docker build -t idp-server:0.9.20 .
+docker tag idp-server:0.9.20 idp-server:latest
 ```
 
 ### イメージ確認
@@ -74,60 +74,11 @@ docker tag idp-server:0.8.7 idp-server:latest
 docker images | grep idp-server
 
 # 期待結果:
-# idp-server   0.8.7   <IMAGE_ID>   X seconds ago   XXX MB
+# idp-server   0.9.20   <IMAGE_ID>   X seconds ago   XXX MB
 # idp-server   latest  <IMAGE_ID>   X seconds ago   XXX MB
 ```
 
----
-
-## 🧪 動作確認
-
-### ローカル起動テスト
-
-**Note**: 以下の環境変数が必要です。詳細は [環境変数設定](./02-environment-variables.md) を参照してください。
-
-```bash
-docker run --rm -p 8080:8080 \
-  -e IDP_SERVER_API_KEY=<API_KEY> \
-  -e IDP_SERVER_API_SECRET=<API_SECRET> \
-  -e ENCRYPTION_KEY=<ENCRYPTION_KEY> \
-  -e DB_WRITER_URL=jdbc:postgresql://host.docker.internal:5432/idpserver \
-  -e DB_WRITER_USER_NAME=idp_app_user \
-  -e DB_WRITER_PASSWORD=idp_app_user \
-  -e DB_READER_URL=jdbc:postgresql://host.docker.internal:5433/idpserver \
-  -e DB_READER_USER_NAME=idp_app_user \
-  -e DB_READER_PASSWORD=idp_app_user \
-  -e REDIS_HOST=host.docker.internal \
-  -e REDIS_PORT=6379 \
-  idp-server:0.8.7
-```
-
-**環境変数の生成方法**:
-```bash
-# API Key/Secret生成
-export IDP_SERVER_API_KEY=$(uuidgen | tr 'A-Z' 'a-z')
-export IDP_SERVER_API_SECRET=$(uuidgen | tr 'A-Z' 'a-z' | base64)
-
-# 暗号化キー生成 (32バイト)
-export ENCRYPTION_KEY=$(head -c 32 /dev/urandom | base64)
-```
-
-### ヘルスチェック
-
-```bash
-# 起動待機（約30秒）
-sleep 30
-
-# ヘルスチェック確認
-curl http://localhost:8080/actuator/health
-```
-
-**期待結果**:
-```json
-{
-  "status": "UP"
-}
-```
+**Note**: 実際の起動・動作確認は [初期設定](./04-initial-configuration.md) を参照してください。
 
 ---
 
@@ -140,11 +91,11 @@ curl http://localhost:8080/actuator/health
 docker login <REGISTRY_URL>
 
 # 2. イメージタグ付け
-docker tag idp-server:0.8.7 <REGISTRY_URL>/idp-server:0.8.7
-docker tag idp-server:0.8.7 <REGISTRY_URL>/idp-server:latest
+docker tag idp-server:0.9.20 <REGISTRY_URL>/idp-server:0.9.20
+docker tag idp-server:0.9.20 <REGISTRY_URL>/idp-server:latest
 
 # 3. プッシュ
-docker push <REGISTRY_URL>/idp-server:0.8.7
+docker push <REGISTRY_URL>/idp-server:0.9.20
 docker push <REGISTRY_URL>/idp-server:latest
 ```
 
@@ -168,43 +119,9 @@ docker push <REGISTRY_URL>/idp-server:latest
 ls -la idp-server-*.jar
 
 # 再ダウンロード
-wget https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/releases/download/v0.8.7/idp-server-0.8.7.jar
+wget https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/releases/download/v0.9.20/idp-server-0.9.20.jar
 ```
 
-### コンテナ起動失敗
-
-**エラー**: `Unable to connect to database`
-
-**原因**: データベース接続情報が不正
-
-**対処**:
-```bash
-# 環境変数確認
-docker run --rm idp-server:0.8.7 env | grep DB_WRITER
-
-# 正しい環境変数で再起動
-docker run -p 8080:8080 \
-  -e DB_WRITER_URL=jdbc:postgresql://正しいホスト:5432/idpserver \
-  -e DB_WRITER_USER_NAME=idp_app_user \
-  -e DB_WRITER_PASSWORD=<password> \
-  ...
-```
-
-### ヘルスチェック失敗
-
-**エラー**: `curl: (7) Failed to connect`
-
-**原因**: アプリケーション起動中
-
-**対処**:
-```bash
-# ログ確認
-docker logs <CONTAINER_ID>
-
-# 起動完了まで待機（通常30-60秒）
-sleep 60
-curl http://localhost:8080/actuator/health
-```
 
 ---
 
@@ -220,14 +137,9 @@ curl http://localhost:8080/actuator/health
 - [ ] イメージビルド成功（`docker build`）
 - [ ] イメージ確認（`docker images`）
 
-### 検証
-- [ ] コンテナ起動成功
-- [ ] ヘルスチェック成功（`/actuator/health`）
-- [ ] ログにエラーなし
-
-### レジストリ
+### レジストリ（任意）
 - [ ] レジストリ認証成功
-- [ ] バージョンタグでプッシュ（例: `0.8.7`）
+- [ ] バージョンタグでプッシュ（例: `0.9.20`）
 - [ ] `latest` タグでプッシュ
 - [ ] レジストリでイメージ確認
 

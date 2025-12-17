@@ -1,275 +1,224 @@
-# 初期設定・ユーザー・ロール管理
+# 初期設定 - 管理テナント・ユーザー作成
 
-idp-server の商用デプロイメント後の初期設定、管理者ユーザー作成、ロール・権限設定、テナント管理について説明します。
-
-**情報源**: `/setup.sh`, `/config-sample/local/admin-tenant/initial.json`, `/.env`
-**確認日**: 2025-10-03
+idp-server の初回デプロイ後、管理テナント・管理者ユーザー・管理クライアントを作成する手順を説明します。
 
 ---
 
-## 🚀 初期セットアップ手順
+## ステップ1: 前提条件の確認
 
-### 1. 環境変数設定
-
-初期化スクリプトを実行して `.env` ファイルを生成します。
+以下を確認してください：
 
 ```bash
-./init.sh
+# 1. ヘルスチェック
+curl ${AUTHORIZATION_SERVER_URL}/actuator/health
+# → {"status":"UP"} が返ること
+
+# 2. データベース接続確認
+psql -h <DB_HOST> -U idp_app_user -d idpserver -c "SELECT 1;"
+# → 接続成功すること
+
+# 3. Redis接続確認
+redis-cli -h <REDIS_HOST> ping
+# → PONG が返ること
 ```
-
-**生成される内容**:
-- API Key/Secret/Encryption Key（自動生成）
-- 管理者ユーザー情報（自動生成）
-- データベースパスワード（自動生成）
-
-**生成後の編集**:
-
-`.env` ファイルを開き、本番環境用に以下を修正：
-
-```bash
-# サーバー設定（修正必須）
-IDP_SERVER_DOMAIN=https://your-domain.com/
-ENV=production
-
-# BASE_URL（修正必須）
-BASE_URL=https://your-domain.com
-
-# 管理者ユーザー（任意で変更）
-ADMIN_USERNAME=admin
-ADMIN_EMAIL=admin@your-domain.com
-
-# その他の値（API Key, Secret, Password等）は自動生成された値をそのまま使用
-```
-
-**重要**: 自動生成された値は安全に保管してください。
-
-### 2. 環境変数確認
-
-```bash
-set -a; [ -f .env ] && source .env; set +a
-
-echo "ENV: $ENV"
-echo "IDP_SERVER_DOMAIN: $IDP_SERVER_DOMAIN"
-echo "API_KEY: ${IDP_SERVER_API_KEY:0:8}..."
-```
-
-### 3. アプリケーション起動確認
-
-```bash
-# ヘルスチェック
-curl -v ${IDP_SERVER_DOMAIN}actuator/health
-```
-
-**期待結果**:
-```json
-{
-  "status": "UP"
-}
-```
-
-**注意**: 管理API認証の確認は次の初期化実行時に行われます。
 
 ---
 
-## 👨‍💼 管理テナント・組織初期化
+## ステップ2: 認証情報の準備
 
-### setup.sh による初期化
-
-**スクリプト実行**:
+管理API認証に必要な情報を準備します：
 
 ```bash
-./setup.sh
+# API Key/Secret を準備（UUID形式推奨）
+export IDP_SERVER_API_KEY="your-api-key"
+export IDP_SERVER_API_SECRET="your-api-secret"
+
+# サーバーURLを設定
+export AUTHORIZATION_SERVER_URL="https://idp.example.com"
 ```
 
-**setup.sh の動作**:
-```bash
-#!/bin/zsh
-# .env を読み込み
-set -a; [ -f .env ] && source .env; set +a
+**Note**: API Key/Secretの生成方法は [環境変数設定](./02-environment-variables.md#api認証キーシークレット設定) を参照してください。
 
-# 管理テナント初期化API呼び出し
-curl -X POST "${IDP_SERVER_DOMAIN}v1/admin/initialization" \
+---
+
+## ステップ3: 設定ファイルの確認
+
+初期化用のJSONファイルが準備されていることを確認します。
+
+**前提**: 設定ファイルは事前に準備・レビュー済みであること
+
+### 3-1. 設定ファイルの取得
+
+```bash
+# 例: S3から取得
+aws s3 cp s3://your-config-bucket/production/initial.json ./initial.json
+
+# 例: 設定管理リポジトリから取得
+git clone <config-repo>
+cp config-repo/production/initial.json ./initial.json
+```
+
+### 3-2. 内容の確認
+
+```bash
+# JSON構文チェック
+cat initial.json | jq .
+# → エラーが出ないこと
+
+# 主要項目の確認
+cat initial.json | jq '{
+  org_id: .organization.id,
+  tenant_id: .tenant.id,
+  tenant_domain: .tenant.domain,
+  user_email: .user.email
+}'
+```
+
+**Note**: 設定ファイルの作成方法は [How-to: 初期テナント・ユーザー作成](../../content_05_how-to/phase-1-setup/how-to-01-create-initial-tenant-and-user.md) を参照してください。
+
+---
+
+## ステップ4: 初期化API実行
+
+設定ファイルを使って初期化APIを実行します：
+
+```bash
+curl -X POST "${AUTHORIZATION_SERVER_URL}/v1/admin/initialization" \
   -u "${IDP_SERVER_API_KEY}:${IDP_SERVER_API_SECRET}" \
-  -H "Content-Type:application/json" \
-  --data @./config-sample/"${ENV}"/admin-tenant/initial.json | jq
+  -H "Content-Type: application/json" \
+  --data @initial.json | jq
 ```
 
-**処理内容**:
-1. `.env` から環境変数を読み込み
-2. `ENV` 環境変数に基づいて `config-sample/${ENV}/admin-tenant/initial.json` を使用
-3. `/v1/admin/initialization` エンドポイントに初期化リクエスト送信
-4. **組織**、**テナント**、**認可サーバー**、**管理者ユーザー**、**管理クライアント**を一括作成
-
-### initial.json 設定構造
-
-**情報源**: `/config-sample/local/admin-tenant/initial.json:1-310`
-
-初期化JSONファイルには以下の設定が含まれます:
+**期待されるレスポンス（200 OK）**:
 
 ```json
 {
   "organization": {
-    "id": "組織UUID",
-    "name": "組織名",
-    "description": "組織説明"
+    "id": "org-...",
+    "name": "MyCompany"
   },
   "tenant": {
-    "id": "テナントUUID",
-    "name": "テナント名",
-    "domain": "https://your-domain.com",
-    "authorization_provider": "idp-server",
-    "database_type": "postgresql",
-    "attributes": {
-      "cookie_name": "ADMIN_TENANT_IDP_SERVER_SESSION",
-      "use_secure_cookie": true,
-      "allow_origins": ["https://admin.your-domain.com"],
-      "security_event_log_format": "structured_json",
-      "security_event_log_persistence_enabled": true
-    }
-  },
-  "authorization_server": {
-    "issuer": "https://your-domain.com/{tenant-id}",
-    "authorization_endpoint": "https://your-domain.com/{tenant-id}/v1/authorizations",
-    "token_endpoint": "https://your-domain.com/{tenant-id}/v1/tokens",
-    "grant_types_supported": [
-      "authorization_code",
-      "refresh_token",
-      "password",
-      "client_credentials",
-      "urn:openid:params:grant-type:ciba"
-    ],
-    "scopes_supported": [
-      "openid", "profile", "email", "management"
-    ],
-    "extension": {
-      "access_token_duration": 3600,
-      "id_token_duration": 3600
-    }
+    "id": "tenant-...",
+    "name": "main-tenant"
   },
   "user": {
-    "sub": "ユーザーUUID",
-    "provider_id": "idp-server",
-    "name": "admin",
-    "email": "admin@your-domain.com",
-    "email_verified": true,
-    "raw_password": "SecurePassword123!",
-    "role": "Administrator"
+    "sub": "user-...",
+    "email": "admin@example.com"
   },
   "client": {
-    "client_id": "クライアントUUID",
-    "client_secret": "クライアントシークレット",
-    "redirect_uris": ["https://admin.your-domain.com/callback"],
-    "grant_types": ["authorization_code", "refresh_token"],
-    "scope": "openid profile email management",
-    "client_name": "Admin Client",
-    "token_endpoint_auth_method": "client_secret_post"
+    "client_id": "client-..."
   }
 }
 ```
 
-### 環境別設定
+---
 
-**設定ファイルの配置**:
-```
-config-sample/
-├── local/
-│   └── admin-tenant/
-│       └── initial.json  # ローカル開発環境用
-├── develop/
-│   └── admin-tenant/
-│       └── initial.json  # 開発環境用
-└── production/
-    └── admin-tenant/
-        └── initial.json  # 本番環境用（作成が必要）
-```
+## ステップ5: 検証
 
-**商用環境用設定作成**:
+### 5-1. OAuthトークン取得テスト
 
 ```bash
-# 本番環境用ディレクトリ作成
-mkdir -p config-sample/production/admin-tenant
+# initial.jsonから値を取得して環境変数に設定
+export TENANT_ID=$(cat initial.json | jq -r '.tenant.id')
+export ADMIN_EMAIL=$(cat initial.json | jq -r '.user.email')
+export ADMIN_PASSWORD=$(cat initial.json | jq -r '.user.raw_password')
+export CLIENT_ID=$(cat initial.json | jq -r '.client.client_id')
+export CLIENT_SECRET=$(cat initial.json | jq -r '.client.client_secret')
 
-# テンプレートをコピー
-cp config-sample/local/admin-tenant/initial.json \
-   config-sample/production/admin-tenant/initial.json
+# テナント固有のトークンエンドポイント
+export TOKEN_ENDPOINT="${AUTHORIZATION_SERVER_URL}/${TENANT_ID}/v1/tokens"
 
-# 本番環境用に編集
-vim config-sample/production/admin-tenant/initial.json
+# パスワード認証でトークン取得
+curl -X POST "${TOKEN_ENDPOINT}" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=password" \
+  -d "username=${ADMIN_EMAIL}" \
+  -d "password=${ADMIN_PASSWORD}" \
+  -d "client_id=${CLIENT_ID}" \
+  -d "client_secret=${CLIENT_SECRET}" \
+  -d "scope=openid profile email management" | jq
 ```
 
-**必須修正項目**:
-1. **UUID生成**: `id`, `sub`, `client_id` を新規UUID（`uuidgen | tr A-Z a-z`）に変更
-2. **ドメイン**: `domain`, `issuer`, エンドポイントURLを本番ドメインに変更
-3. **シークレット**: `client_secret`, `raw_password` を安全な値に変更
-4. **CORS設定**: `allow_origins` を本番フロントエンドURLに変更
-5. **Cookie設定**: `use_secure_cookie` を `true` に設定
-6. **JWKS**: 本番用キーペアを生成・設定（開発用キーの使用禁止）
+**期待結果**: `access_token` が返される
 
----
-
-## 🔍 初期化完了確認
-
-初期化完了後、確認スクリプトを実行して動作確認します。
+### 5-2. 管理API呼び出しテスト
 
 ```bash
-./setup-confirmation.sh
+# 取得したトークンを設定
+export ACCESS_TOKEN="eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+# テナント一覧を取得
+curl -X GET "${AUTHORIZATION_SERVER_URL}/v1/admin/tenants" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" | jq
 ```
 
-**確認内容**:
-1. 環境変数の読み込み確認（ENV、BASE_URL）
-2. OAuth パスワード認証でアクセストークン取得
-3. 管理API呼び出し
-   - テナント一覧の取得（管理テナントが存在するか）
-   - ユーザー一覧の取得（管理者ユーザーが存在するか）
-4. レスポンスタイムの確認
-
-**成功の条件**:
-- アクセストークンが取得できる
-- テナント一覧に `initial.json` で設定したテナントが含まれる
-- ユーザー一覧に `initial.json` で設定したユーザーが含まれる
-- レスポンスタイムが妥当（< 1秒）
+**期待結果**: 作成したテナントが含まれるリストが返される
 
 ---
 
-## 📋 初期設定チェックリスト
+## トラブルシューティング
 
-### 環境変数設定
-- [ ] `.env` ファイル作成・権限設定（600）
-- [ ] `IDP_SERVER_API_KEY`, `IDP_SERVER_API_SECRET` 設定
-- [ ] `ENCRYPTION_KEY` 生成・設定（32バイト Base64）
-- [ ] `ENV` 設定（production/develop/local）
+### エラー: `401 Unauthorized`
 
-### 設定ファイル準備
-- [ ] `config-sample/${ENV}/admin-tenant/initial.json` 作成
-- [ ] UUID生成・設定（organization, tenant, user, client）
-- [ ] ドメイン・エンドポイントURL設定
-- [ ] シークレット・パスワード設定
-- [ ] JWKS キーペア生成・設定
+**原因**: API Key/Secret が間違っている
 
-### 初期化実行
-- [ ] `./setup.sh` 実行成功
-- [ ] 組織作成確認（`/v1/admin/organizations` で確認）
-- [ ] テナント作成確認（`/v1/admin/tenants` で確認）
-- [ ] 管理者ユーザー作成確認
-- [ ] 管理クライアント作成確認
-
-### 動作確認
-- [ ] ヘルスチェック成功（DB, Redis）
-- [ ] 管理API認証成功
-- [ ] パスワード認証テスト成功
-- [ ] クライアント認証テスト成功
-
-### セキュリティ確認
-- [ ] 本番環境で開発用JWKS使用していない
-- [ ] `use_secure_cookie=true` 設定（HTTPS環境）
-- [ ] CORS `allow_origins` が適切に設定
-- [ ] パスワード・シークレットが安全な値
+**確認**:
+```bash
+echo -n "${IDP_SERVER_API_KEY}:${IDP_SERVER_API_SECRET}" | base64
+```
 
 ---
 
-## 🔗 関連ドキュメント
+### エラー: `curl: (7) Failed to connect`
 
-- [デプロイ概要](./00-overview.md)
+**原因**: アプリケーションが起動していない
+
+**確認**:
+```bash
+curl -v ${AUTHORIZATION_SERVER_URL}/actuator/health
+```
+
+---
+
+### エラー: `400 Bad Request`
+
+**原因**: JSONが不正
+
+**確認**:
+```bash
+cat initial.json | jq .
+```
+
+---
+
+### エラー: `409 Conflict`
+
+**原因**: 同じIDのリソースが既に存在
+
+**対処**: 別のUUIDを使用するか、データベースをリセット（開発環境のみ）
+
+---
+
+## 関連ドキュメント
+
 - [環境変数設定](./02-environment-variables.md)
 - [データベース設定](./03-database.md)
-- [運用ガイダンス](05-operational-guidance.md)
+- [運用ガイダンス](./05-operational-guidance.md)
+
+### 詳細情報
+- [How-to: 初期テナント・ユーザー作成](../../content_05_how-to/phase-1-setup/how-to-01-create-initial-tenant-and-user.md) - 各フィールドの詳細説明
+- [Control Plane API - 初期化](../../content_06_developer-guide/02-control-plane/03-system-level-api.md) - API仕様の詳細
+
+---
+
+## 参考: 開発環境用スクリプト
+
+ローカル開発環境では、以下のスクリプトで自動化できます：
+
+```bash
+./init-generate-env.sh      # .env生成
+./init-admin-tenant-config.sh  # initial.json生成
+./setup.sh                   # 初期化API実行
+```
+
+**Note**: 本番環境では、これらのスクリプトを直接使用せず、設定管理システム（Terraform、Ansible等）や Secrets Manager を使用してください。
