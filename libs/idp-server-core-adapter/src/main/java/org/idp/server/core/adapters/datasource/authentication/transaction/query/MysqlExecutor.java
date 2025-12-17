@@ -60,7 +60,7 @@ public class MysqlExecutor implements AuthenticationTransactionQuerySqlExecutor 
             AND tenant_id = ?
             """;
     List<Object> params = new ArrayList<>();
-    params.add(identifier.value());
+    params.add(identifier.valueAsUuid().toString());
     params.add(tenant.identifier().value());
 
     return sqlExecutor.selectOne(sqlTemplate, params);

@@ -71,6 +71,7 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
       });
       console.log(tokenResponse.data);
       expect(tokenResponse.status).toBe(400);
+      //MySQL is error. Because timestamp unit is second. TODO https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1089
       expect(tokenResponse.data.error).toEqual("expired_token");
     });
 

@@ -127,8 +127,9 @@ describe("role management api", () => {
       expect(updateNoNameChangeResponse.data).toHaveProperty("result");
       expect(updateNoNameChangeResponse.data.result.name).toBe(createResponse.data.result.name);
       expect(updateNoNameChangeResponse.data.result.description).toBe("test-2");
-      expect(updateNoNameChangeResponse.data.result.permissions[0].id).toEqual(permissionListResponse.data.list[1].id);
-      expect(updateNoNameChangeResponse.data.result.permissions[1].id).toEqual(permissionListResponse.data.list[2].id);
+      const updateNoNameChangePermissionIds = updateNoNameChangeResponse.data.result.permissions.map(data => data.id);
+      expect(updateNoNameChangePermissionIds).toContain(permissionListResponse.data.list[1].id);
+      expect(updateNoNameChangePermissionIds).toContain(permissionListResponse.data.list[2].id);
 
       // Test: Update with empty permissions array (should remove all permissions)
       const updateEmptyPermissionsResponse = await putWithJson({
