@@ -391,6 +391,88 @@ POST /{tenant-id}/v1/me/identity-verification/applications/{type}/cancel
 
 ---
 
+### Result（結果設定）
+
+#### verified_claims_mapping_rules
+
+OIDC4IDA（OpenID Connect for Identity Assurance）準拠のverified_claims生成ルールです。
+
+**設定例**:
+```json
+{
+  "result": {
+    "verified_claims_mapping_rules": [
+      {
+        "static_value": "jp_aml",
+        "to": "verification.trust_framework"
+      },
+      {
+        "from": "$.response_body.user.family_name",
+        "to": "claims.family_name"
+      },
+      {
+        "from": "$.response_body.user.given_name",
+        "to": "claims.given_name"
+      },
+      {
+        "from": "$.response_body.user.birthdate",
+        "to": "claims.birthdate"
+      }
+    ]
+  }
+}
+```
+
+**フィールド構造**:
+- `verification.*`: 身元確認のメタデータ
+  - `trust_framework`: 信頼フレームワーク（例: `jp_aml`）
+  - `evidence`: 証拠情報（例: 本人確認書類の種類）
+- `claims.*`: 検証済みユーザー属性
+  - `family_name`: 姓
+  - `given_name`: 名
+  - `birthdate`: 生年月日
+  - `address`: 住所
+  - など
+
+**動作**:
+1. eKYC等の外部サービスから取得した情報を`verified_claims`形式にマッピング
+2. OIDCトークンに含めて発行
+3. クライアントアプリケーションが信頼できる身元確認済み情報として利用可能
+
+**使用シーン**:
+- eKYC連携（本人確認書類のスキャン等）
+- 身元確認済みIDの発行
+- Verified Credentialsの生成
+
+**参照仕様**:
+- [OpenID Connect for Identity Assurance 1.0](https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html)
+
+---
+
+### Common（共通設定）
+
+複数プロセスに共通する設定項目です。
+
+**設定例**:
+```json
+{
+  "common": {
+    "external_service": "kyc-provider",
+    "callback_application_id_param": "application_id"
+  }
+}
+```
+
+**フィールド説明**:
+- `external_service`: 外部サービスの識別名（ログ・監査用）
+- `callback_application_id_param`: コールバック時に使用する申請ID識別パラメータ名
+
+**使用シーン**:
+- 複数プロセスで共通する外部サービス名の定義
+- コールバック処理での申請ID識別
+
+---
+
 ## Management APIで登録
 
 ### API エンドポイント

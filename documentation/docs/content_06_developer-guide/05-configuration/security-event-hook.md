@@ -286,6 +286,89 @@ Shared Signals Framework準拠の通知。
 
 **詳細**: [Security Event Hooks実装ガイド](../04-implementation-guides/impl-15-security-event-hooks.md)
 
+#### SSF eventsセクション構造
+
+`events`セクションでは、イベントタイプごとに個別の実行設定を定義できます。
+
+**フィールド説明**:
+
+| フィールド | 説明 |
+|-----------|------|
+| `events` | イベント名をキーとした実行設定のマップ |
+| `events.{event_name}.execution.type` | `"ssf"` 固定 |
+| `events.{event_name}.execution.details.security_event_type_identifier` | SSFイベントタイプURI（RISC準拠） |
+| `events.{event_name}.execution.details.kid` | Security Event Token（SET）の署名鍵ID |
+| `events.{event_name}.execution.details.url` | SET送信先URL |
+| `events.{event_name}.execution.details.oauth_authorization` | OAuth 2.0認証設定（オプション） |
+| `metadata.spec_version` | SSF仕様バージョン（`"1_0"`） |
+| `metadata.jwks_uri` | SSF用のJWKS URI |
+| `metadata.stream_configuration` | SSFストリーム設定 |
+| `metadata.stream_configuration.aud` | 受信側のクライアントID一覧 |
+
+**完全な設定例**:
+```json
+{
+  "type": "SSF",
+  "triggers": ["identity_verification_approved", "user_locked"],
+  "metadata": {
+    "issuer": "https://idp.example.com/tenant-id",
+    "spec_version": "1_0",
+    "jwks_uri": "https://idp.example.com/tenant-id/v1/ssf/jwks",
+    "jwks": { "keys": [...] },
+    "delivery_methods_supported": ["https://schemas.openid.net/secevent/risc/delivery-method/push"],
+    "stream_configuration": {
+      "aud": ["client-id-1", "client-id-2"]
+    }
+  },
+  "events": {
+    "identity_verification_approved": {
+      "execution": {
+        "type": "ssf",
+        "details": {
+          "security_event_type_identifier": "https://schemas.openid.net/secevent/risc/event-type/account-enabled",
+          "kid": "ssf-signing-key",
+          "url": "https://receiver.example.com/events",
+          "oauth_authorization": {
+            "type": "client_credentials",
+            "token_endpoint": "https://receiver.example.com/oauth/token",
+            "client_id": "idp-client",
+            "client_secret": "secret",
+            "cache_enabled": true
+          }
+        }
+      }
+    },
+    "user_locked": {
+      "execution": {
+        "type": "ssf",
+        "details": {
+          "security_event_type_identifier": "https://schemas.openid.net/secevent/risc/event-type/account-disabled",
+          "kid": "ssf-signing-key",
+          "url": "https://receiver.example.com/events"
+        }
+      }
+    }
+  },
+  "security_event_token_additional_payload_mapping_rules": [
+    {
+      "from": "$.event.user.sub",
+      "to": "reason"
+    }
+  ]
+}
+```
+
+**動作フロー**:
+1. `triggers`で指定されたイベントが発生
+2. 対応する`events.{event_name}`の実行設定を取得
+3. Security Event Token（SET）を生成
+4. `kid`で指定された鍵で署名
+5. `url`で指定されたエンドポイントへHTTP POST送信
+
+**参照仕様**:
+- [OpenID Shared Signals Framework 1.0](https://openid.net/specs/openid-sharedsignals-framework-1_0.html)
+- [OpenID RISC Event Types](https://openid.net/specs/openid-risc-event-types-1_0.html)
+
 ---
 
 ## Management APIで登録

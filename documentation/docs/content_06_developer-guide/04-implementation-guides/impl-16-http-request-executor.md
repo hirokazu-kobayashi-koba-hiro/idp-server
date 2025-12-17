@@ -319,6 +319,205 @@ OAuthAuthorizationResolver resolver = resolvers.get("client_credentials");
 
 ---
 
+## 🗺️ Mapping Rules（データマッピング）
+
+HTTPリクエストの動的な構築とレスポンスの変換を行うMapping Rulesについて説明します。
+
+### Mapping Rulesの種類
+
+| Mapping Rule | 用途 | 説明 |
+|-------------|------|------|
+| `path_mapping_rules` | URLパス | URLテンプレート内の変数を動的に置き換え |
+| `header_mapping_rules` | HTTPヘッダー | ヘッダーの動的設定 |
+| `body_mapping_rules` | リクエストボディ | JSONボディの動的構築 |
+| `query_mapping_rules` | クエリパラメータ | URLクエリパラメータの動的設定 |
+
+**詳細**: [Mapping Functions 開発ガイド](impl-20-mapping-functions.md)
+
+### path_mapping_rules
+
+URLパスパラメータを動的に設定する機能です。
+
+**設定例**:
+```json
+{
+  "http_request": {
+    "url": "https://api.example.com/v1/applications/{{application_id}}/documents/{{document_id}}",
+    "path_mapping_rules": [
+      {
+        "from": "$.application.id",
+        "to": "application_id"
+      },
+      {
+        "from": "$.document.id",
+        "to": "document_id"
+      }
+    ]
+  }
+}
+```
+
+**動作**:
+1. URLテンプレート内の`{{application_id}}`と`{{document_id}}`を検出
+2. `path_mapping_rules`に基づいて値を取得
+3. 最終的なURL: `https://api.example.com/v1/applications/12345/documents/67890`
+
+**使用シーン**:
+- RESTful APIのリソースIDをパスに埋め込む
+- 動的なエンドポイント構築（ユーザーID、テナントID等）
+
+### header_mapping_rules / body_mapping_rules
+
+ヘッダーとボディのマッピングについては、[Mapping Functions 開発ガイド](impl-20-mapping-functions.md)を参照してください。
+
+---
+
+## 🔍 Response Resolver（レスポンス解決）
+
+HTTPレスポンスをアプリケーションレベルのステータスコードにマッピングする機能です。
+
+### 目的
+
+外部APIのレスポンスは様々な形式があります：
+- HTTP 200でも、ボディ内に`"status": "error"`が含まれる場合
+- HTTP 503でも、再試行可能なエラーと不可能なエラーがある
+- ビジネスレベルの成功/失敗をHTTPステータスとボディで複合判定する必要がある
+
+Response Resolverは、これらの複雑なレスポンスを統一的に扱うための仕組みです。
+
+### 設定構造
+
+```json
+{
+  "http_request": {
+    "url": "https://api.example.com/verify",
+    "response_resolve_configs": {
+      "configs": [
+        {
+          "conditions": [
+            {"path": "$.httpStatusCode", "operation": "in", "value": [200, 201]},
+            {"path": "$.response_body.status", "operation": "eq", "value": "approved"}
+          ],
+          "match_mode": "all",
+          "mapped_status_code": 200
+        },
+        {
+          "conditions": [
+            {"path": "$.httpStatusCode", "operation": "eq", "value": 200},
+            {"path": "$.response_body.status", "operation": "eq", "value": "pending"}
+          ],
+          "match_mode": "all",
+          "mapped_status_code": 202
+        },
+        {
+          "conditions": [
+            {"path": "$.httpStatusCode", "operation": "eq", "value": 503}
+          ],
+          "match_mode": "all",
+          "mapped_status_code": 503,
+          "error_message_json_path": "$.response_body.message"
+        }
+      ]
+    }
+  }
+}
+```
+
+### フィールド説明
+
+| フィールド | 説明 |
+|-----------|------|
+| `conditions` | レスポンス判定条件の配列 |
+| `conditions[].path` | JSONPath（`$.httpStatusCode`、`$.response_body.*`） |
+| `conditions[].operation` | 演算子（`eq`, `in`, `ne`, `gte`, `lte`等） |
+| `conditions[].value` | 比較値 |
+| `match_mode` | マッチモード（`all`: AND条件、`any`: OR条件） |
+| `mapped_status_code` | マッピング先のステータスコード |
+| `error_message_json_path` | エラーメッセージ抽出用JSONPath（オプション） |
+
+### 動作
+
+1. レスポンスを受信
+2. `configs`を順番に評価
+3. 最初にマッチした設定の`mapped_status_code`を適用
+4. どれもマッチしない場合は、元のHTTPステータスコードを使用
+
+### 使用シーン
+
+**ケース1: HTTP 200でもエラーを検出**
+
+外部APIが常にHTTP 200を返すが、ボディで成功/失敗を区別する場合：
+
+```json
+{
+  "configs": [
+    {
+      "conditions": [
+        {"path": "$.response_body.result", "operation": "eq", "value": "success"}
+      ],
+      "match_mode": "all",
+      "mapped_status_code": 200
+    },
+    {
+      "conditions": [
+        {"path": "$.response_body.result", "operation": "eq", "value": "error"}
+      ],
+      "match_mode": "all",
+      "mapped_status_code": 400,
+      "error_message_json_path": "$.response_body.error_message"
+    }
+  ]
+}
+```
+
+**ケース2: ビジネスステータスによる判定**
+
+eKYCの審査結果を判定する場合：
+
+```json
+{
+  "configs": [
+    {
+      "conditions": [
+        {"path": "$.httpStatusCode", "operation": "eq", "value": 200},
+        {"path": "$.response_body.verification_status", "operation": "eq", "value": "approved"}
+      ],
+      "match_mode": "all",
+      "mapped_status_code": 200
+    },
+    {
+      "conditions": [
+        {"path": "$.httpStatusCode", "operation": "eq", "value": 200},
+        {"path": "$.response_body.verification_status", "operation": "eq", "value": "rejected"}
+      ],
+      "match_mode": "all",
+      "mapped_status_code": 400
+    }
+  ]
+}
+```
+
+**ケース3: 複数条件の組み合わせ**
+
+```json
+{
+  "conditions": [
+    {"path": "$.httpStatusCode", "operation": "in", "value": [200, 201, 204]},
+    {"path": "$.response_body.errors", "operation": "eq", "value": null}
+  ],
+  "match_mode": "all",
+  "mapped_status_code": 200
+}
+```
+
+### 評価順序
+
+- `configs`配列の**順番**が重要
+- 最初にマッチした設定が適用される
+- より具体的な条件を先に、一般的な条件を後に配置
+
+---
+
 ## 🔄 再試行メカニズム
 
 ### 再試行可能な条件
