@@ -6,7 +6,7 @@ idp-server の商用デプロイメントにおける環境変数、セキュリ
 
 ### 最低限設定すべき必須項目 (Priority 1)
 
-**✅ セキュリティクリティカル**
+🔒 **機密情報（厳重管理が必要）**
 - `IDP_SERVER_API_KEY` - 管理API認証キー
 - `IDP_SERVER_API_SECRET` - 管理API認証シークレット
 - `ENCRYPTION_KEY` - データ暗号化キー (AES-256)
@@ -29,7 +29,7 @@ idp-server の商用デプロイメントにおける環境変数、セキュリ
 - `CACHE_TIME_TO_LIVE_SECOND` - キャッシュTTL (業務要件に応じて)
 
 **🔒 セキュリティ設定**
-- `LOGGING_LEVEL_ROOT` - 本番は `warn` 推奨
+- `LOGGING_LEVEL_ROOT` - 本番は `info` 推奨（監査・トラブルシューティングに必要）
 - `SESSION_TIMEOUT` - セキュリティポリシーに応じて
 
 ### 環境規模別推奨値
@@ -92,8 +92,8 @@ idp-server の設定は `application.yaml` で定義され、環境変数で上�
 | パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
 |-----------|----------|------|-------------|-----------|
 | `url` | `CONTROL_PLANE_DB_WRITER_URL` | 書き込み用DB接続URL | `jdbc:postgresql://localhost:5432/idpserver` | RDS Primary エンドポイント |
-| `username` | `CONTROL_PLANE_DB_WRITER_USER_NAME` | Control Plane用DBユーザー | `idpserver` | `idp_admin` |
-| `password` | `CONTROL_PLANE_DB_WRITER_PASSWORD` | Control Plane用DBパスワード | `idpserver` | Secrets Manager |
+| `username` | `CONTROL_PLANE_DB_WRITER_USER_NAME` | Control Plane用DBユーザー | **必須（デフォルトなし）** | `idp_admin` |
+| `password` | `CONTROL_PLANE_DB_WRITER_PASSWORD` | Control Plane用DBパスワード | **必須（デフォルトなし）** | Secrets Manager |
 | `connection-timeout` | `CONTROL_PLANE_DB_WRITER_TIMEOUT` | 接続タイムアウト (ms) | `2000` | `3000` |
 | `maximum-pool-size` | `CONTROL_PLANE_DB_WRITER_MAX_POOL_SIZE` | 最大接続プールサイズ | `10` | `15` |
 | `minimum-idle` | `CONTROL_PLANE_DB_WRITER_MIN_IDLE` | 最小アイドル接続数 | `5` | `5` |
@@ -102,8 +102,8 @@ idp-server の設定は `application.yaml` で定義され、環境変数で上�
 | パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
 |-----------|----------|------|-------------|-----------|
 | `url` | `CONTROL_PLANE_DB_READER_URL` | 読み込み用DB接続URL | `jdbc:postgresql://localhost:5433/idpserver` | RDS Replica エンドポイント |
-| `username` | `CONTROL_PLANE_DB_READER_USER_NAME` | Control Plane用読み込み専用DBユーザー | `idpserver` | `idp_admin_ro` |
-| `password` | `CONTROL_PLANE_DB_READER_PASSWORD` | Control Plane用読み込み専用DBパスワード | `idpserver` | Secrets Manager |
+| `username` | `CONTROL_PLANE_DB_READER_USER_NAME` | Control Plane用読み込み専用DBユーザー | **必須（デフォルトなし）** | `idp_admin_ro` |
+| `password` | `CONTROL_PLANE_DB_READER_PASSWORD` | Control Plane用読み込み専用DBパスワード | **必須（デフォルトなし）** | Secrets Manager |
 | `connection-timeout` | `CONTROL_PLANE_DB_READER_TIMEOUT` | 接続タイムアウト (ms) | `2000` | `3000` |
 | `maximum-pool-size` | `CONTROL_PLANE_DB_READER_MAX_POOL_SIZE` | 最大接続プールサイズ | `10` | `20` |
 | `minimum-idle` | `CONTROL_PLANE_DB_READER_MIN_IDLE` | 最小アイドル接続数 | `5` | `8` |
@@ -114,8 +114,8 @@ idp-server の設定は `application.yaml` で定義され、環境変数で上�
 | パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
 |-----------|----------|------|-------------|-----------|
 | `url` | `DB_WRITER_URL` | 書き込み用DB接続URL | `jdbc:postgresql://localhost:5432/idpserver` | RDS Primary エンドポイント |
-| `username` | `DB_WRITER_USER_NAME` | アプリ用DBユーザー | `idp_app_user` | `idp_app_user` |
-| `password` | `DB_WRITER_PASSWORD` | アプリ用DBパスワード | `idp_app_user` | Secrets Manager |
+| `username` | `DB_WRITER_USER_NAME` | アプリ用DBユーザー | **必須（デフォルトなし）** | `idp_app_user` |
+| `password` | `DB_WRITER_PASSWORD` | アプリ用DBパスワード | **必須（デフォルトなし）** | Secrets Manager |
 | `connection-timeout` | `DB_WRITER_TIMEOUT` | 接続タイムアウト (ms) | `2000` | `2000` |
 | `maximum-pool-size` | `DB_WRITER_MAX_POOL_SIZE` | 最大接続プールサイズ | `30` | `50` |
 | `minimum-idle` | `DB_WRITER_MIN_IDLE` | 最小アイドル接続数 | `10` | `15` |
@@ -124,8 +124,8 @@ idp-server の設定は `application.yaml` で定義され、環境変数で上�
 | パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
 |-----------|----------|------|-------------|-----------|
 | `url` | `DB_READER_URL` | 読み込み用DB接続URL | `jdbc:postgresql://localhost:5433/idpserver` | RDS Replica エンドポイント |
-| `username` | `DB_READER_USER_NAME` | アプリ用読み込み専用DBユーザー | `idp_app_user` | `idp_app_user_ro` |
-| `password` | `DB_READER_PASSWORD` | アプリ用読み込み専用DBパスワード | `idp_app_user` | Secrets Manager |
+| `username` | `DB_READER_USER_NAME` | アプリ用読み込み専用DBユーザー | **必須（デフォルトなし）** | `idp_app_user_ro` |
+| `password` | `DB_READER_PASSWORD` | アプリ用読み込み専用DBパスワード | **必須（デフォルトなし）** | Secrets Manager |
 | `connection-timeout` | `DB_READER_TIMEOUT` | 接続タイムアウト (ms) | `2000` | `2000` |
 | `maximum-pool-size` | `DB_READER_MAX_POOL_SIZE` | 最大接続プールサイズ | `30` | `80` |
 | `minimum-idle` | `DB_READER_MIN_IDLE` | 最小アイドル接続数 | `10` | `25` |
@@ -152,7 +152,7 @@ idp-server の設定は `application.yaml` で定義され、環境変数で上�
 
 | パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
 |-----------|----------|------|-------------|-----------|
-| `root` | `LOGGING_LEVEL_ROOT` | ルートログレベル | `info` | `warn` |
+| `root` | `LOGGING_LEVEL_ROOT` | ルートログレベル | `info` | `info` |
 | `web` | `LOGGING_LEVEL_WEB` | Webレイヤーログレベル | `info` | `info` |
 | `platform` | `LOGGING_LEVEL_IDP_SERVER_PLATFORM` | プラットフォームログレベル | `info` | `info` |
 | `authentication` | `LOGGING_LEVEL_IDP_SERVER_AUTHENTICATION_INTERACTORS` | 認証処理ログレベル | `info` | `info` |
@@ -220,28 +220,18 @@ IDP_LOGGING_REQUEST_RESPONSE_ENABLED=false
 | `spring.session.timeout` | `SESSION_TIMEOUT` | セッションタイムアウト | `3600s` | `7200s` |
 | `spring.lifecycle.timeout-per-shutdown-phase` | - | Shutdown phase タイムアウト | `30s` | `30s` |
 
-### management (監視・ヘルスチェック設定)
-
-| パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
-|-----------|----------|------|-------------|-----------|
-| `endpoints.web.exposure.include` | - | 公開するエンドポイント | `health,info` | `health,info` または `health,info,metrics,prometheus` |
-| `endpoint.health.probes.enabled` | - | Kubernetes プローブ有効化 | `true` | `true` |
-| `endpoint.health.show-details` | - | ヘルスチェック詳細表示 | `when-authorized` | `when-authorized` |
-| `health.readiness-state.enabled` | - | Readiness プローブ有効化 | `true` | `true` |
-| `health.liveness-state.enabled` | - | Liveness プローブ有効化 | `true` | `true` |
-
-**Kubernetes ヘルスチェック:**
-- **Readiness**: `/actuator/health/readiness` - アプリケーションがリクエストを受け付ける準備ができているか
-- **Liveness**: `/actuator/health/liveness` - アプリケーションが正常に動作しているか
-- **用途**: Kubernetesのローリングアップデート、自動再起動に使用
-
 ### server (Tomcat サーバー設定)
 
-| パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
-|-----------|----------|------|-------------|-----------|
-| `shutdown` | - | Shutdown モード | `graceful` | `graceful` |
-| `tomcat.threads.max` | `SERVER_TOMCAT_THREADS_MAX` | 最大スレッド数 | `300` | `500` |
-| `tomcat.threads.min-spare` | `SERVER_TOMCAT_THREADS_MIN_SPARE` | 最小予備スレッド数 | `50` | `100` |
+| パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値            |
+|-----------|----------|------|-------------|------------------|
+| `shutdown` | - | Shutdown モード | `graceful` | `graceful`（変更不可） |
+| `tomcat.threads.max` | `SERVER_TOMCAT_THREADS_MAX` | 最大スレッド数 | `300` | `500`            |
+| `tomcat.threads.min-spare` | `SERVER_TOMCAT_THREADS_MIN_SPARE` | 最小予備スレッド数 | `50` | `100`            |
+
+**Note**: 以下の設定は application.yaml で固定値として設定されており、環境変数での変更はサポートされていません：
+- Graceful shutdown: 有効（30秒）
+- Kubernetes ヘルスチェック（Readiness/Liveness）: 有効
+- 公開エンドポイント: `health,info` のみ（メトリクス有効化は [運用ガイダンス](./05-operational-guidance.md) 参照）
 
 ---
 
@@ -293,40 +283,25 @@ echo $ENCRYPTION_KEY | base64 -d | wc -c
 ```
 
 **用途:**
-- **PII データ暗号化**: 個人識別情報のフィールドレベル暗号化
-- **機密属性暗号化**: email、phone_number、address等
-- **Verified Claims暗号化**: eKYC結果等の機密データ
-- **セッション暗号化**: Redis保存時の暗号化
+- **OAuthトークン暗号化**: アクセストークン・リフレッシュトークンのDB保存時の暗号化
 
-**重要事項:**
-- **キーローテーション**: 定期的な暗号化キー更新が必要
-- **過去キー保持**: 過去の暗号化データ復号のため全履歴保持必要
-- **ゼロダウンタイム更新**: アプリケーション停止なしでのキー更新対応
+#### 暗号化キーローテーション
 
-#### 暗号化キーローテーション戦略
+> ⚠️ **重要**: 暗号化キーローテーション機能は現在未実装です。
+>
+> **暗号化キーを変更すると、既存の全トークンが無効化されます。**
+> - 既存のアクセストークン・リフレッシュトークンが復号不可能になります
+> - 全ユーザーが強制ログアウトされます
+> - 全ユーザーが再ログインする必要があります
+>
+> **通常運用では暗号化キーの変更は推奨されません。**
+> セキュリティインシデント（キー漏洩など）の緊急時のみ実施してください。
+>
+> 詳細な実装計画については [Issue #439: 暗号化キーローテーション機能の実装](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/439) を参照してください
 
-> ⚠️ **重要**: 暗号化キーローテーション機能は現在未実装です
-> 詳細な実装計画と仕様については [Issue #439: 暗号化キーローテーション機能の実装](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/439) を参照してください
+---
 
-**現在の制限事項:**
-- 暗号化キーは手動更新のみ対応
-- 過去キーでの復号化は未サポート
-- 自動キーローテーション機能なし
-
-**暫定的な運用指針:**
-1. **キー更新頻度**: 年1回以上の手動更新
-2. **緊急時対応**: セキュリティインシデント時の即座更新
-3. **バックアップ**: 暗号化キーの安全な複製保存
-4. **アクセス制御**: Secrets Manager での厳格な権限管理
-
-**将来実装予定の機能 (Issue #439):**
-- マルチキーバージョン管理
-- 過去キーでの段階的復号化
-- 自動データ再暗号化
-- キーローテーション API
-- 監査ログ・アクセス追跡
-
-#### 本番環境での機密情報管理
+### 2. 本番環境での機密情報管理
 
 **必須機密情報項目:**
 - `IDP_SERVER_API_KEY` - 管理API認証キー
@@ -466,8 +441,8 @@ minIdle: 5       # maxIdle の 50% 程度
 LOGGING_LEVEL_IDP_SERVER_AUTHENTICATION_INTERACTORS=info
 LOGGING_LEVEL_IDP_SERVER_SECURITY_EVENT_HOOKS=info
 
-# パフォーマンス影響大 → warn に変更
-LOGGING_LEVEL_ROOT=warn
+# ルートログレベル（監査・トラブルシューティングに必要）
+LOGGING_LEVEL_ROOT=info
 
 # 開発用詳細ログ → info に変更
 LOGGING_LEVEL_IDP_SERVER_HTTP_REQUEST_EXECUTOR=info
@@ -548,8 +523,8 @@ export SESSION_TIMEOUT=7200s
 
 ### Phase 3: 運用・監視設定 📊
 ```bash
-# ログレベル最適化
-export LOGGING_LEVEL_ROOT=warn
+# ログレベル設定（監査・トラブルシューティング用）
+export LOGGING_LEVEL_ROOT=info
 export LOGGING_LEVEL_IDP_SERVER_AUTHENTICATION_INTERACTORS=info
 export LOGGING_LEVEL_IDP_SERVER_SECURITY_EVENT_HOOKS=info
 
@@ -573,4 +548,4 @@ export SESSION_TIMEOUT=7200s
 - [デプロイ概要](./00-overview.md)
 - [データベース設定](./03-database.md)
 - [初期設定・ユーザー・ロール](./04-initial-configuration.md)
-- [運用ガイダンス](05-operational-guidance.md)
+- [運用ガイダンス](./05-operational-guidance.md)
