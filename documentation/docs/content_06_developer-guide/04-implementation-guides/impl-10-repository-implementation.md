@@ -1,4 +1,4 @@
-# Repository実装ガイド
+# Repository
 
 ## このドキュメントの目的
 

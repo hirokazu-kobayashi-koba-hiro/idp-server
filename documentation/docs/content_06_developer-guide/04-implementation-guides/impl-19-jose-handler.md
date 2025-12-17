@@ -1,4 +1,4 @@
-# JOSE（JWT/JWS/JWE）処理実装ガイド
+# JOSE (JWT/JWS/JWE)
 
 ## このドキュメントの目的
 

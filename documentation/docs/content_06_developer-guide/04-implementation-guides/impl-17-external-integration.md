@@ -1,4 +1,4 @@
-# 外部サービス連携ガイド
+# 外部サービス連携
 
 > **関連ドキュメント**
 > - [HTTP Request Executor](impl-16-http-request-executor.md) - リトライ制御と認証設定

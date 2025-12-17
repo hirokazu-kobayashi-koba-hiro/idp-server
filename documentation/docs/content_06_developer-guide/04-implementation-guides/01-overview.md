@@ -1,4 +1,4 @@
-# 実装ガイド概要 - Implementation Guides Overview
+# 実装ガイド概要
 
 ## このディレクトリについて
 
