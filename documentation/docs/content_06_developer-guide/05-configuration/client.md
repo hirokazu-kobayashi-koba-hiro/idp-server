@@ -331,6 +331,35 @@ CIBA（Client Initiated Backchannel Authentication）対応のクライアント
 
 **詳細**: [CIBA Flow実装ガイド](../03-application-plane/06-ciba-flow.md)
 
+#### CIBA RAR必須化
+
+CIBAリクエスト時に、authorization_details（RAR: Rich Authorization Requests）を必須とする設定：
+
+```json
+{
+  "extension": {
+    "ciba_require_rar": true
+  },
+  "authorization_details_types": ["transaction"]
+}
+```
+
+**フィールド説明**:
+- `ciba_require_rar`: CIBAリクエスト時に`authorization_details`パラメータを必須とするか
+- `authorization_details_types`: サポートするauthorization detailsのタイプ
+
+**動作**:
+- `ciba_require_rar: true`の場合、CIBAリクエストに`authorization_details`が含まれていないとエラー
+- トランザクション詳細（金額、送金先等）をユーザーに明示的に提示して承認を得る
+
+**使用シーン**:
+- 金融トランザクション（送金、振込等）の承認
+- 高リスク操作の詳細確認
+- FAPI準拠のトランザクション承認
+
+**参照仕様**:
+- [RFC 9396: OAuth 2.0 Rich Authorization Requests](https://www.rfc-editor.org/rfc/rfc9396.html)
+
 ---
 
 ### Federation設定

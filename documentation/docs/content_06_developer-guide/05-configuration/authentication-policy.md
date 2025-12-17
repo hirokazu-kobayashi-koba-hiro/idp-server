@@ -91,6 +91,7 @@
 | `conditions` | ❌ | 適用条件 |
 | `available_methods` | ✅ | UIに表示する認証方式（UIヒント） |
 | `acr_mapping_rules` | ❌ | ACRマッピング |
+| `step_definitions` | ❌ | 多段階認証のステップ定義 |
 | `success_conditions` | ✅ | 成功条件 |
 | `failure_conditions` | ❌ | 失敗条件 |
 | `lock_conditions` | ❌ | ロック条件 |
@@ -185,6 +186,82 @@ ACR値と認証方式のマッピング：
 | `lte` | 以下 | `failure_count <= 3` |
 | `eq` | 等しい | `status == "verified"` |
 | `ne` | 等しくない | `status != "locked"` |
+
+---
+
+## Step Definitions（多段階認証）
+
+**目的**: 認証ステップの実行順序とユーザー識別制御を定義します。
+
+### step_definitionsとsuccess_conditionsの違い
+
+| 項目 | `step_definitions` | `success_conditions` |
+|------|-------------------|---------------------|
+| **目的** | 認証の**実行順序**と**ユーザー識別** | 認証の**成功判定** |
+| **制御内容** | どの順番で認証を実行するか | どの認証が成功すれば完了か |
+| **使用シーン** | Email → SMS のような順序制御 | パスワード OR 生体認証 のような条件 |
+
+### フィールド一覧
+
+| フィールド | 型 | 必須 | 説明 | 例 |
+|-----------|-----|------|------|---|
+| `method` | string | ✅ | 認証方式 | `"email"`, `"sms"`, `"password"` |
+| `order` | integer | ✅ | 実行順序（小さい値が先） | `1`, `2`, `3` |
+| `requires_user` | boolean | ✅ | ユーザーが事前に識別されている必要があるか | `false`（1st factor）/ `true`（2nd factor） |
+| `allow_registration` | boolean | ❌ | このステップでユーザー登録を許可するか | `true` / `false` |
+| `user_identity_source` | string | ❌ | ユーザー識別に使用する属性 | `"email"`, `"phone_number"`, `"username"` |
+
+### 設定例: Email → SMS 多段階認証
+
+```json
+{
+  "step_definitions": [
+    {
+      "method": "email",
+      "order": 1,
+      "requires_user": false,
+      "allow_registration": true,
+      "user_identity_source": "email"
+    },
+    {
+      "method": "sms",
+      "order": 2,
+      "requires_user": true,
+      "allow_registration": false,
+      "user_identity_source": "phone_number"
+    }
+  ]
+}
+```
+
+**動作**:
+1. **ステップ1（Email認証）**:
+   - `requires_user: false` → ユーザー未特定でもOK
+   - `allow_registration: true` → 新規ユーザー登録可能
+   - メールアドレスでユーザーを識別
+
+2. **ステップ2（SMS認証）**:
+   - `requires_user: true` → ステップ1でユーザーが特定済みである必要
+   - `allow_registration: false` → 登録不可（既存ユーザーのみ）
+   - 電話番号で検証
+
+### 1st Factor と 2nd Factor
+
+**1st Factor (`requires_user: false`)**:
+- ユーザー識別フェーズ
+- ユーザーが未特定でも実行可能
+- 新規ユーザー登録が可能（`allow_registration: true`）
+
+**2nd Factor (`requires_user: true`)**:
+- 認証検証フェーズ
+- ユーザーが既に特定されている必要あり
+- ユーザーを変更できない
+
+### 使用シーン
+
+- **段階的なユーザー登録**: Email認証 → SMS認証で段階的に情報を収集
+- **ステップアップ認証**: 通常ログイン後、重要な操作前にSMS認証を要求
+- **複合認証**: 複数の認証方式を組み合わせてセキュリティを強化
 
 ---
 
