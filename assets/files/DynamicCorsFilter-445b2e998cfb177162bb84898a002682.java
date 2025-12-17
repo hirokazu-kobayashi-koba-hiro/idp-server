@@ -22,9 +22,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.idp.server.platform.exception.BadRequestException;
 import org.idp.server.platform.exception.NotFoundException;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
+import org.idp.server.platform.multi_tenancy.organization.OrganizationNotFoundException;
+import org.idp.server.platform.multi_tenancy.organization.OrganizationTenantResolverApi;
 import org.idp.server.platform.multi_tenancy.tenant.*;
 import org.idp.server.platform.multi_tenancy.tenant.config.CorsConfiguration;
 import org.idp.server.usecases.IdpServerApplication;
@@ -33,11 +38,17 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
 public class DynamicCorsFilter extends OncePerRequestFilter {
+
+  private static final Pattern ORG_PATH_PATTERN =
+      Pattern.compile("^/v1/management/organizations/([^/]+)/");
+
   TenantMetaDataApi tenantMetaDataApi;
+  OrganizationTenantResolverApi organizationTenantResolverApi;
   LoggerWrapper log = LoggerWrapper.getLogger(DynamicCorsFilter.class);
 
   public DynamicCorsFilter(IdpServerApplication idpServerApplication) {
     this.tenantMetaDataApi = idpServerApplication.tenantMetadataApi();
+    this.organizationTenantResolverApi = idpServerApplication.organizationTenantResolverApi();
   }
 
   @Override
@@ -53,8 +64,7 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
           request.getRequestURI(),
           request.getMethod());
 
-      TenantIdentifier tenantIdentifier = extractTenantIdentifier(request);
-      Tenant tenant = tenantMetaDataApi.get(tenantIdentifier);
+      Tenant tenant = resolveTenant(request);
       CorsConfiguration corsConfiguration = tenant.corsConfiguration();
       List<String> allowOrigins = corsConfiguration.allowOrigins();
       String origin = request.getHeader("Origin") != null ? request.getHeader("Origin") : "";
@@ -64,7 +74,9 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
               .findFirst()
               .orElse(tenant.domain().value());
       log.debug(
-          "DynamicCorsFilter tenantId: {} allow origin: {}", tenantIdentifier.value(), allowOrigin);
+          "DynamicCorsFilter tenantId: {} allow origin: {}",
+          tenant.identifier().value(),
+          allowOrigin);
 
       response.setHeader("Access-Control-Allow-Origin", allowOrigin);
       response.setHeader(
@@ -78,7 +90,7 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
       }
 
       filterChain.doFilter(request, response);
-    } catch (TenantNotFoundException exception) {
+    } catch (TenantNotFoundException | OrganizationNotFoundException exception) {
 
       log.warn(exception.getMessage(), exception);
       response.sendError(HttpServletResponse.SC_NOT_FOUND, exception.getMessage());
@@ -89,12 +101,40 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
     }
   }
 
-  private TenantIdentifier extractTenantIdentifier(HttpServletRequest request) {
+  /**
+   * Resolves tenant for CORS configuration.
+   *
+   * <p>Resolution order:
+   *
+   * <ol>
+   *   <li>Organization management APIs (/management/organizations/{orgId}/) -> ORGANIZER tenant
+   *   <li>System management APIs (/management/) -> Admin tenant
+   *   <li>Application APIs (/{tenantId}/) -> specified tenant
+   * </ol>
+   */
+  private Tenant resolveTenant(HttpServletRequest request) {
     String path = request.getRequestURI();
-    if (path.contains("/management/")) {
-      return AdminTenantContext.getTenantIdentifier();
+
+    // 1. Organization management API: use organization's ORGANIZER tenant
+    Matcher matcher = ORG_PATH_PATTERN.matcher(path);
+    if (matcher.find()) {
+      String orgId = matcher.group(1);
+      return organizationTenantResolverApi.resolveOrganizerTenant(
+          new OrganizationIdentifier(orgId));
     }
 
+    // 2. System management API: use admin tenant
+    if (path.contains("/management/")) {
+      return tenantMetaDataApi.get(AdminTenantContext.getTenantIdentifier());
+    }
+
+    // 3. Application API: extract tenant from path
+    TenantIdentifier tenantIdentifier = extractTenantIdentifier(request);
+    return tenantMetaDataApi.get(tenantIdentifier);
+  }
+
+  private TenantIdentifier extractTenantIdentifier(HttpServletRequest request) {
+    String path = request.getRequestURI();
     String[] parts = path.split("/");
 
     if (parts.length > 1) {
