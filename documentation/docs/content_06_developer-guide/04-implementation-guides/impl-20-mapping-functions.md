@@ -1,4 +1,4 @@
-# Mapping Functions 開発ガイド
+# Mapping Functions
 
 > **関連ドキュメント**
 > - [HTTP Request Executor](impl-16-http-request-executor.md) - HTTP通信でのMapping Functions利用

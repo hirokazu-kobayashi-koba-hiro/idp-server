@@ -1,4 +1,4 @@
-# AuthenticationInteractor 実装ガイド
+# 認証インタラクター
 
 ## 目的
 
