@@ -1,4 +1,4 @@
-# OpenID Connect Discovery実装ガイド
+# OpenID Connect Discovery
 
 ## 📍 このドキュメントの位置づけ
 

@@ -1,4 +1,4 @@
-# Federation Provider実装ガイド
+# Federation
 
 ## このドキュメントの目的
 

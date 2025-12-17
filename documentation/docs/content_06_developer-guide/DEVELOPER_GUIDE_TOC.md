@@ -135,7 +135,7 @@
 
 | ドキュメント | 技術詳細リンク |
 |------------|---------------|
-| [Design Principles & Guidelines](./08-reference/design-principles-guidelines.md) | プロジェクト設計原則 |
+| [設計原則](./01-getting-started/02-design-principles.md) | プロジェクト設計原則 |
 
 ### ⚠️ エラーハンドリング
 

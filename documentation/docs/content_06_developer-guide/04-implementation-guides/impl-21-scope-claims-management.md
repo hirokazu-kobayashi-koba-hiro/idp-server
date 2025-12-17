@@ -1,4 +1,4 @@
-# Scope & Claims Management実装ガイド
+# Scope & Claims
 
 ## 📍 このドキュメントの位置づけ
 

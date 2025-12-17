@@ -1,4 +1,4 @@
-# 💉 Dependency Injection アーキテクチャ
+# DI (Dependency Injection)
 
 ## はじめに
 
