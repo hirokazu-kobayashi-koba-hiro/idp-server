@@ -14,7 +14,7 @@
 
 **前提知識**:
 - [concept-22: FAPI](../../content_03_concepts/03-authentication-authorization/concept-06-fapi.md)の理解
-- [basic-08: 認可コードフロー](../../content_03_concepts/basic/basic-08-oauth2-authorization-code-flow.md)の理解
+- [basic-08: 認可コードフロー](../../content_11_learning/02-oauth-fundamentals/oauth2-authorization-code-flow.md)の理解
 - OAuth 2.0 / OIDC の基礎知識
 
 ---
@@ -722,7 +722,7 @@ if (context.responseType().isCode() && context.responseMode().isJwt()) {
 
 **概念・基礎**:
 - [concept-22: FAPI](../../content_03_concepts/03-authentication-authorization/concept-06-fapi.md) - FAPI概念説明
-- [basic-08: 認可コードフロー](../../content_03_concepts/basic/basic-08-oauth2-authorization-code-flow.md) - 基本フロー
+- [basic-08: 認可コードフロー](../../content_11_learning/02-oauth-fundamentals/oauth2-authorization-code-flow.md) - 基本フロー
 
 **実装詳細**:
 - [impl-12: Plugin実装ガイド](./impl-12-plugin-implementation.md) - プラグインシステム

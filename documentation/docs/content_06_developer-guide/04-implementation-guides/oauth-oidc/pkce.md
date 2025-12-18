@@ -12,7 +12,7 @@
 - モバイルアプリ・SPAでのPKCE適用パターン
 
 **前提知識**:
-- [basic-08: 認可コードフロー](../../content_03_concepts/basic/basic-08-oauth2-authorization-code-flow.md)の理解
+- [basic-08: 認可コードフロー](../../content_11_learning/02-oauth-fundamentals/oauth2-authorization-code-flow.md)の理解
 - OAuth 2.0 の基礎知識
 
 ---
@@ -605,7 +605,7 @@ const base64url = btoa(String.fromCharCode(...buffer))
 ## 🔗 関連ドキュメント
 
 **概念・基礎**:
-- [basic-08: 認可コードフロー](../../content_03_concepts/basic/basic-08-oauth2-authorization-code-flow.md) - 基本フロー
+- [basic-08: 認可コードフロー](../../content_11_learning/02-oauth-fundamentals/oauth2-authorization-code-flow.md) - 基本フロー
 - [concept-22: FAPI](../../content_03_concepts/03-authentication-authorization/concept-06-fapi.md) - FAPI BaselineでのPKCE必須化
 
 **実装詳細**:

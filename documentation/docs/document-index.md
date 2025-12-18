@@ -90,12 +90,12 @@ OAuth 2.0 / OpenID Connect の基礎から学びたい方向け。
 
 | # | ドキュメント | 内容 |
 |---|-------------|------|
-| 01 | [アイデンティティ管理の基礎](./content_03_concepts/basic/basic-01-identity-management-basics.md) | 認証と認可の違い |
-| 02 | [身近な実例で学ぶID管理](./content_03_concepts/basic/basic-02-identity-management-examples.md) | ATM等の実例 |
-| 03-04 | [最新トレンド](./content_03_concepts/basic/basic-03-identity-trends.md) / [現代Webの認証認可](./content_03_concepts/basic/basic-04-modern-web-authz-authn.md) | eKYC・FIDO・MFA |
-| 05-10 | [OAuth 2.0シリーズ](./content_03_concepts/basic/basic-05-oauth-oidc-why-needed.md) | なぜ必要か → 認可 → 役割 → フロー → トークン |
-| 11-15 | [OpenID Connectシリーズ](./content_03_concepts/basic/basic-11-oauth-oidc-basics.md) | OIDC基礎 → 詳細 → JWT → クレーム → Discovery |
-| 16-21 | [FIDO2/WebAuthnシリーズ](./content_03_concepts/basic/basic-16-fido2-webauthn-passwordless.md) | パスワードレス認証の仕組み |
+| 01 | [アイデンティティ管理の基礎](./content_11_learning/01-identity-basics/identity-management-basics.md) | 認証と認可の違い |
+| 02 | [身近な実例で学ぶID管理](./content_11_learning/01-identity-basics/identity-management-examples.md) | ATM等の実例 |
+| 03-04 | [最新トレンド](./content_11_learning/01-identity-basics/identity-trends.md) / [現代Webの認証認可](./content_11_learning/02-oauth-fundamentals/modern-web-authz-authn.md) | eKYC・FIDO・MFA |
+| 05-10 | [OAuth 2.0シリーズ](./content_11_learning/02-oauth-fundamentals/oauth-oidc-why-needed.md) | なぜ必要か → 認可 → 役割 → フロー → トークン |
+| 11-15 | [OpenID Connectシリーズ](./content_11_learning/04-openid-connect/oauth-oidc-basics.md) | OIDC基礎 → 詳細 → JWT → クレーム → Discovery |
+| 16-21 | [FIDO2/WebAuthnシリーズ](./content_11_learning/05-fido-webauthn/fido2-webauthn-passwordless.md) | パスワードレス認証の仕組み |
 
 ---
 
@@ -125,7 +125,7 @@ Claude Code、GitHub Copilot等のAI支援ツールでコード生成精度を�
 | 認証ポリシー | [concept-01](content_03_concepts/03-authentication-authorization/concept-01-authentication-policy.md) | [基礎](./content_05_how-to/phase-1-foundation/07-authentication-policy.md) / [詳細](./content_05_how-to/phase-2-security/03-authentication-policy-advanced.md) | [impl-05](./content_06_developer-guide/04-implementation-guides/impl-05-authentication-policy.md) |
 | MFA（多要素認証） | [concept-02](content_03_concepts/03-authentication-authorization/concept-02-mfa.md) | [MFA設定](./content_05_how-to/phase-2-security/01-mfa-setup.md) | - |
 | パスワードポリシー | [concept-02](content_03_concepts/02-identity-management/concept-02-password-policy.md) | - | [config/password](./content_06_developer-guide/05-configuration/authn/password.md) |
-| WebAuthn/FIDO2 | [basic-16~21](./content_03_concepts/basic/basic-16-fido2-webauthn-passwordless.md) | - | [config/fido2](./content_06_developer-guide/05-configuration/authn/fido2.md) |
+| WebAuthn/FIDO2 | [basic-16~21](./content_11_learning/05-fido-webauthn/fido2-webauthn-passwordless.md) | - | [config/fido2](./content_06_developer-guide/05-configuration/authn/fido2.md) |
 
 ### トークン・セッション
 

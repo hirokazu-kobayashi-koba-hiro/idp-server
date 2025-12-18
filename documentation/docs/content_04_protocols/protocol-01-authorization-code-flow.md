@@ -6,9 +6,9 @@
 
 このドキュメントを理解するには、以下の基礎知識が役立ちます：
 
-- [OAuth 2.0の基本](../content_03_concepts/basic/basic-06-oauth2-authorization.md) - OAuth 2.0の認可の仕組み
-- [認可コードグラントフロー](../content_03_concepts/basic/basic-08-oauth2-authorization-code-flow.md) - 認可コードフローの詳細
-- [OpenID Connectの基本](../content_03_concepts/basic/basic-11-oauth-oidc-basics.md) - OIDCによる認証
+- [OAuth 2.0の基本](../content_11_learning/02-oauth-fundamentals/oauth2-authorization.md) - OAuth 2.0の認可の仕組み
+- [認可コードグラントフロー](../content_11_learning/02-oauth-fundamentals/oauth2-authorization-code-flow.md) - 認可コードフローの詳細
+- [OpenID Connectの基本](../content_11_learning/04-openid-connect/oauth-oidc-basics.md) - OIDCによる認証
 
 ---
 
