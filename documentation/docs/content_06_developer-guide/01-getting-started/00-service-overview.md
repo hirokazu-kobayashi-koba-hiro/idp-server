@@ -340,7 +340,7 @@ idp-serverが準拠している主要な仕様：
 
 1. **OAuth/OIDC初心者**: [OAuth 2.0/OIDC基礎](../../content_03_concepts/) - 仕様理解
 2. **新規開発者**: [01. アーキテクチャ概要](./01-architecture-overview.md) - 実装構造理解
-3. **実装者**: [Control Plane API実装](../02-control-plane/02-first-api.md) - 実践
+3. **実装者**: [Control Plane API実装](../02-control-plane/03-system-level-api.md) - 実践
 
 ### 🎓 ラーニングパス
 

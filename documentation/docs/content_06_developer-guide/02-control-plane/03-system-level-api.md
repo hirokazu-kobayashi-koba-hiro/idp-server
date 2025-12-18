@@ -9,7 +9,7 @@
 
 ### 前提知識
 - [01. アーキテクチャ概要](../01-getting-started/01-architecture-overview.md)
-- [02. 最初のAPI実装](./02-first-api.md)
+- [02. 最初のAPI実装](./03-system-level-api.md)
 
 ---
 

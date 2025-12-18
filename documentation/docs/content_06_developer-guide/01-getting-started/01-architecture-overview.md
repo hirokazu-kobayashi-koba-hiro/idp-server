@@ -512,7 +512,7 @@ ClientConfiguration client = repository.get(tenant, clientId);
 
 ### 📖 次に読むべきドキュメント
 
-1. [Control Plane API実装](../02-control-plane/02-first-api.md) - 実際に手を動かす
+1. [Control Plane API実装](../02-control-plane/03-system-level-api.md) - 実際に手を動かす
 2. [共通実装パターン](../06-patterns/common-patterns.md) - よく使うパターンを学ぶ
 
 ### 🔗 詳細情報

@@ -30,7 +30,7 @@ learning-paths/         → スキルレベル別の学習経路
 ### 管理API実装者
 
 1. [Control Plane概要](02-control-plane/01-overview.md) - 10分
-2. [最初の管理API実装](02-control-plane/02-first-api.md) - 30分
+2. [最初の管理API実装](02-control-plane/03-system-level-api.md) - 30分
 3. [システムレベルAPI](02-control-plane/03-system-level-api.md) - 45分
 
 ### OAuth/OIDCフロー実装者
