@@ -152,7 +152,7 @@ DELETE /v1/management/tenants/{tenant-id}/clients/{id}    # client:delete
 
 ### 📖 実装する場合
 
-- [02. 最初の管理API実装](./02-first-api.md) - 実践チュートリアル
+- [02. 最初の管理API実装](./03-system-level-api.md) - 実践チュートリアル
 - [03. システムレベルAPI](./03-system-level-api.md) - CRUD実装
 
 ---

@@ -55,7 +55,7 @@
 | ドキュメント | 説明 | 所要時間 |
 |------------|------|---------|
 | [Control Plane 概要](./02-control-plane/01-overview.md) | 管理APIの全体像・種類 | 10分 |
-| [最初の管理API実装](./02-control-plane/02-first-api.md) | テナント管理API実装チュートリアル | 30分 |
+| [最初の管理API実装](./02-control-plane/03-system-level-api.md) | テナント管理API実装チュートリアル | 30分 |
 | [システムレベルAPI](./02-control-plane/03-system-level-api.md) | テナント単位の管理API実装 | 45分 |
 | [組織レベルAPI](./02-control-plane/04-organization-level-api.md) | 組織単位の管理API実装（4ステップアクセス制御） | 60分 |
 
@@ -170,7 +170,7 @@
 **目標**: Control Plane（管理API）実装・Repository追加
 
 1. [Control Plane概要](./02-control-plane/01-overview.md)
-2. [最初の管理API実装](./02-control-plane/02-first-api.md)
+2. [最初の管理API実装](./02-control-plane/03-system-level-api.md)
 3. [システムレベルAPI](./02-control-plane/03-system-level-api.md)
 4. [Repository実装](./04-implementation-guides/impl-10-repository-implementation.md)
 5. **実践**: 新規Management API追加

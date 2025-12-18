@@ -16,7 +16,7 @@
 | **URL** | `/{tenant-id}/v1/...` | `/v1/management/...` |
 | **認証** | ユーザートークン or クライアント認証 | 管理者トークン（特定権限必須） |
 | **実装パッケージ** | `usecases/application/` | `usecases/control_plane/` |
-| **実装パターン** | シンプルな委譲（権限チェックなし） | 10フェーズ（権限・Audit Log・Dry Run） |
+| **実装パターン** | シンプルな委譲（権限チェックなし） | Handler-Serviceパターン（権限・Audit Log・Dry Run） |
 
 ---
 
