@@ -6,19 +6,66 @@
 
 ---
 
-## JOSE（JSON Object Signing and Encryption）
+## JWT/JWS/JWE/JOSEの関係
 
-**JOSE**:
-- JSON形式のデータを**署名**または**暗号化**するための仕様群
-- JWT、JWS、JWE、JWK、JWAを含む
+### 全体像（包含関係）
 
-| 仕様 | 説明 | RFC |
+```
+┌───────────────────────────────────────────────────────────┐
+│ JOSE (JSON Object Signing and Encryption)                │
+│ JSONデータの署名・暗号化仕様群                              │
+│                                                           │
+│                  ┌─────────────────┐                      │
+│                  │ JWT             │                      │
+│                  │ (トークン形式)   │                      │
+│                  └─────────────────┘                      │
+│                          │                                │
+│            ┌─────────────┴─────────────┐                 │
+│            ↓                           ↓                 │
+│ ┌─────────────────────┐  ┌─────────────────────────────┐ │
+│ │ JWS                 │  │ JWE                         │ │
+│ │ (署名)              │  │ (暗号化)                     │ │
+│ │                     │  │                             │ │
+│ │ - 改ざん検知         │  │ - 改ざん検知 + 秘匿性        │ │
+│ │ - 3部構成           │  │ - 5部構成                   │ │
+│ │ - 中身は読める       │  │ - 中身は読めない            │ │
+│ │                     │  │                             │ │
+│ │ 一般的な使用:        │  │ 機密情報の使用:             │ │
+│ │ - ID Token          │  │ - 暗号化されたトークン       │ │
+│ │ - Access Token      │  │ - 機密データ送信            │ │
+│ └─────────────────────┘  └─────────────────────────────┘ │
+└───────────────────────────────────────────────────────────┘
+```
+
+
+
+### 各仕様の役割
+
+| 仕様 | 役割 | RFC |
 |------|------|-----|
-| **JWT** | JSON Web Token（署名付きトークン） | RFC 7519 |
-| **JWS** | JSON Web Signature（署名） | RFC 7515 |
-| **JWE** | JSON Web Encryption（暗号化） | RFC 7516 |
-| **JWK** | JSON Web Key（鍵表現） | RFC 7517 |
-| **JWA** | JSON Web Algorithms（アルゴリズム） | RFC 7518 |
+| **JOSE** | JSONデータの署名・暗号化仕様群（全体の傘） | - |
+| **JWS** | 署名の仕組み（改ざん検知） | RFC 7515 |
+| **JWE** | 暗号化の仕組み（秘匿性） | RFC 7516 |
+| **JWT** | 署名付きトークン（JWSの一種） | RFC 7519 |
+
+### 簡単に言うと
+
+```
+JOSE（全体の傘）
+  └─ JWT（トークン形式）
+      ├─ JWS形式（署名付き）← 一般的
+      │   ├─ ID Token
+      │   └─ Access Token
+      │
+      └─ JWE形式（暗号化）← 機密情報用
+          └─ 暗号化されたトークン
+```
+
+**ポイント**:
+- **JWTはJWSまたはJWEの形式で存在**
+- 一般的にはJWT = JWS（署名付き）
+- 機密情報が必要な場合のみJWT = JWE（暗号化）
+- JOSEはこれら全体の仕様群
 
 ---
 
@@ -244,8 +291,7 @@ Part 5: Authentication Tag
 
 ### 次に読むべきドキュメント
 
-1. [JWTのベストプラクティス](./jwt-best-practices.md) - 有効期限、クレーム設計
-2. [JOSE Handler実装ガイド](../../content_06_developer-guide/04-implementation-guides/oauth-oidc/jose-handler.md) - 実装詳細
+1. [JOSE Handler実装ガイド](../../content_06_developer-guide/04-implementation-guides/oauth-oidc/jose-handler.md) - 実装詳細
 
 ---
 

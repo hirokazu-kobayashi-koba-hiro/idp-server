@@ -254,7 +254,6 @@ JWTの中身は誰でも読める:
 
 1. [署名アルゴリズムの選び方](./signature-algorithms.md) - RS256 vs ES256 vs HS256
 2. [JWS/JWEの基礎](./jws-jwe-basics.md) - 署名と暗号化
-3. [JWTのベストプラクティス](./jwt-best-practices.md) - 有効期限、クレーム設計
 
 ---
 
