@@ -76,11 +76,100 @@ graph TD
 
 ---
 
+## 7. トランザクション分離レベル
+
+`idp-server` では、PostgreSQL/MySQLのデフォルト分離レベルである **READ COMMITTED** を使用しています。
+
+**関連ドキュメント**: Writer/Reader DataSourceの分岐については [Writer/Reader DataSource](./writer-reader-datasource.md) を参照してください。
+
+### 分離レベルの特性
+
+| 分離レベル | 動作 |
+|-----------|------|
+| **READ COMMITTED** | コミット済みのデータのみ参照可能。同一トランザクション内では自分の更新は即座に参照可能（Read Your Own Writes） |
+
+**PostgreSQL**: デフォルトで READ COMMITTED
+**MySQL/InnoDB**: デフォルトで REPEATABLE READ（より厳密）だが、Read Your Own Writesは両方でサポート
+
+### データベース別の動作
+
+| データベース | デフォルト分離レベル | Read Your Own Writes |
+|-------------|-------------------|---------------------|
+| PostgreSQL | READ COMMITTED | ✅ サポート |
+| MySQL (InnoDB) | REPEATABLE READ | ✅ サポート |
+
+**参考**:
+- [PostgreSQL - Transaction Isolation](https://www.postgresql.org/docs/current/transaction-iso.html)
+- [MySQL - Transaction Isolation Levels](https://dev.mysql.com/doc/refman/8.0/en/innodb-transaction-isolation-levels.html)
+
+---
+
+## 8. Read Your Own Writes パターン
+
+同一トランザクション内では、自分が更新したデータは即座に参照可能です。
+
+**重要**: このパターンは**Writer DataSource**での書き込みトランザクションで有効です。Reader DataSourceは読み取り専用のため、Read Your Own Writesは適用されません。詳細は [Writer/Reader DataSource](./writer-reader-datasource.md#writerreader分岐の詳細) を参照してください。
+
+### ユースケース: 更新API実行後のデータ再取得
+
+更新APIでDBから再取得してレスポンスを返す場合、同一トランザクション内で更新後のデータを正確に取得できます。
+
+```java
+// 1. トランザクション開始（@Transactionアノテーションにより自動開始）
+@Transaction
+public UserManagementResponse update(TenantIdentifier tenant, ...) {
+
+    // 2. UPDATE実行（updated_at = now() はDB側で設定）
+    userCommandRepository.update(tenant, user);
+
+    // 3. 同一トランザクション内で再取得
+    // → 更新後のデータ（updated_at含む）が即座に取得可能
+    User updatedUser = userQueryRepository.get(tenant, userIdentifier);
+
+    // 4. レスポンス生成
+    return toResponse(updatedUser);
+
+    // 5. コミット（メソッド終了時に自動コミット）
+}
+```
+
+### Read Your Own Writes が保証する動作
+
+- **即座の可視性**: UPDATE/INSERT直後のSELECTで最新データを取得可能
+- **DB関数の値**: `now()`, `CURRENT_TIMESTAMP`, `uuid_generate_v4()` 等のDB側で設定される値も取得可能
+- **ThreadLocal共有**: `ThreadLocal`により同一スレッドで同じ `Connection` を使用
+- **コミット前でも参照可能**: コミット前でもSELECTで自分の更新を参照可能
+
+### 関連テーブルのJOIN取得
+
+ユーザーエンティティなど、複数テーブルにまたがるデータの場合、更新後に再取得することでメインテーブルと関連テーブルの両方の最新データを一括で取得できます。
+
+```
+関連テーブル例（Userエンティティ）:
+- idp_user               メインテーブル（updated_atがDB側で更新される）
+- idp_user_roles         ロール割り当て
+- idp_user_assigned_tenants        テナント割り当て
+- idp_user_assigned_organizations  組織割り当て
+```
+
+**メリット**:
+- 1回のSELECT（JOIN）で全関連データを取得
+- DB側で設定された値（updated_at等）も含めて取得
+- レスポンスに最新の正確なデータを含められる
+
+### 注意点
+
+- **同一トランザクション内でのみ有効**: トランザクション境界を超えると、別のConnectionが使用される可能性がある
+- **他トランザクションの更新は不可視**: READ COMMITTEDのため、他のトランザクションの未コミット更新は参照できない
+- **ThreadLocal依存**: 同一スレッド内でのみ有効（非同期処理では動作が異なる可能性）
+
+---
+
 このモジュール化されたトランザクションアーキテクチャは、すべての ID／認可フローにおいて移植性、拡張性、安全なデータ一貫性を保証します。
 
 ---
 
-## 7. Row-Level Security（RLS）との統合
+## 9. Row-Level Security（RLS）との統合
 
 `idp-server` では、PostgreSQL の **Row-Level Security（RLS）** を独自トランザクション管理レイヤーと組み合わせることで、テナントベースのデータ分離を厳密に実現します。
 
@@ -188,67 +277,13 @@ WHERE grantee = 'idp_app_user'
 
 この設計により、**あらゆる実行環境においてもマルチテナント安全性をデータベースレベルで実現**できます。
 
-## 📋 ドキュメント検証結果
-
-**検証日**: 2025-10-12
-**検証方法**: TransactionManager.java 実装確認、setTenantId()メソッド照合
-
-### ✅ 検証済み項目
-
-| 項目 | 記載内容 | 実装確認 | 状態 |
-|------|---------|---------|------|
-| **setTenantId()実装** | lines 109-120 | ✅ [TransactionManager.java:156-167](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/TransactionManager.java#L156-L167) | ✅ 完全一致 |
-| **@Transactionアノテーション** | クラス・メソッドレベル | ✅ 実装確認 | ✅ 正確 |
-| **トランザクション伝播** | REQUIRED | ✅ 実装確認 | ✅ 正確 |
-| **ThreadLocal制御** | connectionHolder | ✅ [TransactionManager.java:27](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/TransactionManager.java#L27) | ✅ 正確 |
-| **RLSポリシー** | SQL例 | ✅ PostgreSQL仕様準拠 | ✅ 正確 |
-
-### 🔍 実装照合結果
-
-#### setTenantId()メソッド
-
-**ドキュメント記載** (lines 109-120):
-```java
-private static void setTenantId(Connection conn, TenantIdentifier tenantIdentifier) {
-    log.trace("[RLS] SET app.tenant_id: tenant={}", tenantIdentifier.value());
-    try (var stmt = conn.prepareStatement("SELECT set_config('app.tenant_id', ?, true)")) {
-        stmt.setString(1, tenantIdentifier.value());
-        stmt.execute();
-    }
-}
-```
-
-**実装ファイル**: ✅ **完全一致**（コメント、SQL文、エラーハンドリング全て一致）
-
-### 📊 品質評価
-
-| カテゴリ | 評価 | 詳細 |
-|---------|------|------|
-| **実装アーキテクチャ** | 95% | ✅ ThreadLocal、RLS統合が明確 |
-| **主要クラス説明** | 90% | ✅ TransactionManager、TenantAwareProxy |
-| **実装コード** | 100% | ✅ setTenantId()が完全一致 |
-| **詳細のわかりやすさ** | 95% | ✅ RLSポリシー、デバッグSQL |
-| **全体精度** | **95%** | ✅ 優秀 |
-
-### 🎯 強み
-
-1. **SQL Injection対策明記**: PreparedStatement使用の理由をコメントで説明
-2. **PostgreSQL公式ドキュメントリンク**: set_config()関数の仕様書参照
-3. **RLSポリシーSQL**: 実際のCREATE POLICY文を記載
-4. **デバッグSQL**: RLS確認、権限確認のSQLを提供
-5. **実装コード一致**: setTenantId()が実装と完全一致
-
-**結論**: このドキュメントは既に高品質で、実装と完全に一致しています。特にセキュリティ（SQL Injection対策）とRLS統合の説明が優秀。
-
 ---
 
----
-
-## 8. EntryService Proxy の使い分け
+## 10. EntryService Proxy の使い分け
 
 EntryServiceは、用途に応じて異なるProxyでラップする必要があります。Proxyの選択を誤ると、トランザクション管理やRLS設定が正しく動作しません。
 
-### 8.1 TenantAwareEntryServiceProxy
+### 10.1 TenantAwareEntryServiceProxy
 
 **用途**: Application層のAPI（第一引数に`TenantIdentifier`を持つ）
 
@@ -270,7 +305,7 @@ this.tenantMetaDataApi = TenantAwareEntryServiceProxy.createProxy(
 - `ClientManagementApi` - `create(TenantIdentifier tenantIdentifier, ...)`
 - `UserManagementApi` - `findList(TenantIdentifier tenantIdentifier, ...)`
 
-### 8.2 ManagementTypeEntryServiceProxy
+### 10.2 ManagementTypeEntryServiceProxy
 
 **用途**: Control Plane層の管理API（`TenantIdentifier`を引数に持たない、または別の識別子から内部で解決する必要がある）
 
@@ -293,7 +328,7 @@ this.organizationTenantResolverApi = ManagementTypeEntryServiceProxy.createProxy
 - `OnboardingApi` - `create(OnboardingRequest request)`
 - `OrganizationManagementApi` - `create(OrganizationRegistrationRequest request)`
 
-### 8.3 選択基準
+### 10.3 選択基準
 
 | レイヤー | Proxy |
 |---------|-------|
@@ -306,7 +341,7 @@ this.organizationTenantResolverApi = ManagementTypeEntryServiceProxy.createProxy
 | `TenantAwareEntryServiceProxy` | ✅ 自動 | ✅ 自動 |
 | `ManagementTypeEntryServiceProxy` | ❌ なし | ✅ 自動 |
 
-### 8.4 よくあるエラーと対処法
+### 10.4 よくあるエラーと対処法
 
 #### エラー: MissingRequiredTenantIdentifierException
 
@@ -335,11 +370,14 @@ this.myApi = ManagementTypeEntryServiceProxy.createProxy(
 
 ---
 
+---
+
 **情報源**:
 - [TransactionManager.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/TransactionManager.java)
 - [TenantAwareEntryServiceProxy.java](../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/TenantAwareEntryServiceProxy.java)
 - [ManagementTypeEntryServiceProxy.java](../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/ManagementTypeEntryServiceProxy.java)
+- [PostgreSQL - Transaction Isolation](https://www.postgresql.org/docs/current/transaction-iso.html)
 - [PostgreSQL - set_config()](https://www.postgresql.org/docs/current/functions-admin.html#FUNCTIONS-ADMIN-SET)
+- [MySQL - Transaction Isolation Levels](https://dev.mysql.com/doc/refman/8.0/en/innodb-transaction-isolation-levels.html)
 
-**最終更新**: 2025-12-16
-**検証者**: Claude Code（AI開発支援）
+**最終更新**: 2025-12-18
