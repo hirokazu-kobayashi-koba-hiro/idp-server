@@ -175,7 +175,9 @@ public class ClientManagementEntryService implements ClientManagementApi {
 }
 ```
 
-## EntryServiceの10フェーズ
+## Control Plane実装パターン（Handler-Service-Repository）
+
+**重要**: 以前「EntryServiceの10フェーズ」として説明されていた処理は、実際には**EntryService、Handler、Serviceの3層に分散**しています。
 
 ### Phase 1: 権限取得
 
@@ -272,6 +274,109 @@ clientConfigurationCommandRepository.register(tenant, context.configuration());
 ```java
 return context.toResponse();
 ```
+
+---
+
+## 実際の実装構造（3層分散パターン）
+
+**注意**: 上記の10フェーズは**理解のための概念モデル**です。実際の実装では、これらの処理が**EntryService、Handler、Serviceの3層に分散**しています。
+
+### EntryService（UseCase層）- シンプルな委譲
+
+**実装**: [ClientManagementEntryService.java](../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/control_plane/system_manager/ClientManagementEntryService.java)
+
+```java
+@Transaction
+public class ClientManagementEntryService implements ClientManagementApi {
+
+  @Override
+  public ClientManagementResponse create(...) {
+    // 1. Handlerに委譲
+    ClientManagementResult result = handler.handle(
+        "create", authenticationContext, tenantIdentifier, request, requestAttributes, dryRun);
+
+    // 2. Audit Log記録
+    AuditLog auditLog = AuditLogCreator.create(result.context());
+    auditLogPublisher.publish(auditLog);
+
+    // 3. レスポンス返却
+    return result.toResponse(dryRun);
+  }
+}
+```
+
+**責務**: トランザクション境界、Audit Log記録、レスポンス変換のみ
+
+---
+
+### Handler（Control Plane層）- オーケストレーション
+
+**実装**: [ClientManagementHandler.java](../../libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/management/oidc/client/handler/ClientManagementHandler.java)
+
+```java
+public ClientManagementResult handle(...) {
+  // 1. Service選択
+  ClientManagementService<?> service = services.get(method);
+
+  // 2. Context Builder作成
+  ClientManagementContextBuilder contextBuilder = new ClientManagementContextBuilder(...);
+
+  // 3. Tenant取得
+  Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+  // 4. 権限チェック
+  AdminPermissions requiredPermissions = api.getRequiredPermissions(method);
+  apiPermissionVerifier.verify(operator, requiredPermissions);
+
+  // 5. Serviceに委譲
+  ClientManagementResponse response = service.execute(...);
+
+  // 6. 結果作成
+  AuditableContext context = contextBuilder.build();
+  return ClientManagementResult.success(context, response);
+}
+```
+
+**責務**: Tenant取得、権限チェック、Service選択・オーケストレーション、例外ハンドリング
+
+---
+
+### Service（Control Plane層）- ビジネスロジック
+
+**実装**: [ClientCreationService.java](../../libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/management/oidc/client/handler/ClientCreationService.java)
+
+```java
+public class ClientCreationService implements ClientManagementService<ClientRegistrationRequest> {
+
+  @Override
+  public ClientManagementResponse execute(...) {
+    // 1. Validation（入力検証）
+    ClientRegistrationRequestValidator validator = new ClientRegistrationRequestValidator(request, dryRun);
+    validator.validate(); // throws exception if invalid
+
+    // 2. ビジネスロジック実行
+    ClientConfiguration config = createClientConfiguration(request);
+
+    // 3. Context Builder更新
+    contextBuilder.withAfter(config);
+
+    // 4. Dry Run判定
+    if (dryRun) {
+      return new ClientManagementResponse(CREATED, response);
+    }
+
+    // 5. 永続化
+    commandRepository.register(tenant, config);
+
+    // 6. レスポンス返却
+    return new ClientManagementResponse(CREATED, response);
+  }
+}
+```
+
+**責務**: 入力検証、ビジネスロジック、Context更新、永続化
+
+---
 
 ## Application層 EntryService パターン
 

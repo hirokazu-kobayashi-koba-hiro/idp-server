@@ -51,556 +51,209 @@ POST /v1/management/organizations/{orgId}/tenants/{tenantId}/roles
 
 ---
 
-## 実装の全体フロー
+---
 
-```
-1. API契約定義（Control Plane層）
-   ├─ インターフェース定義（Org{Domain}ManagementApi）
-   ├─ Request/Response DTO
-   ├─ Context Creator
-   └─ 権限定義（defaultメソッド）
+## システムレベルとの差分
 
-2. EntryService実装（UseCase層）
-   ├─ トランザクション管理
-   ├─ **4ステップアクセス制御**  ← システムレベルとの違い
-   ├─ Audit Log記録
-   └─ Dry Run対応
+### 再利用される部分（二重開発不要）
 
-3. Controller実装（Controller層）
-   └─ HTTPエンドポイント（組織ID + テナントID）
+以下はシステムレベルAPIと**完全に共通**です：
 
-4. E2Eテスト作成
-```
+- ✅ **Service**: ClientCreationService、ClientUpdateService等
+- ✅ **Context/ContextBuilder**: ClientManagementContext、ClientManagementContextBuilder
+- ✅ **Request/Response DTO**: すべて共通
+- ✅ **Validator**: すべて共通
+- ✅ **Repository**: すべて共通
+
+**重要**: これらは一度システムレベルで実装すれば、組織レベルで**そのまま再利用**できます。
 
 ---
 
-## 実装例: 組織ロール管理API
+### 組織レベル固有の実装（新規作成が必要）
 
-システムレベルの「Role管理API」を組織レベルに拡張します。
-
----
-
-## Step 1: API契約定義（Control Plane層）
-
-### 1-1. インターフェース定義
-
-**ファイル**: `libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/management/role/OrgRoleManagementApi.java`
-
-```java
-package org.idp.server.control_plane.management.role;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import org.idp.server.control_plane.base.definition.OrganizationAdminPermissions;
-import org.idp.server.control_plane.base.definition.DefaultOrganizationAdminPermission;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
-import org.idp.server.platform.exception.UnSupportedException;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
-import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.type.RequestAttributes;
-
-public interface OrgRoleManagementApi {
-
-  /**
-   * 必要権限を返す（defaultメソッド - 実装不要）
-   *
-   * ⚠️ 注意: OrganizationAdminPermissions を使用
-   *
-   * @param method メソッド名
-   * @return 必要な権限
-   */
-  default OrganizationAdminPermissions getRequiredPermissions(String method) {
-    Map<String, OrganizationAdminPermissions> map = new HashMap<>();
-    map.put("create", new OrganizationAdminPermissions(Set.of(DefaultOrganizationAdminPermission.ORG_ROLE_CREATE)));
-    map.put("findList", new OrganizationAdminPermissions(Set.of(DefaultOrganizationAdminPermission.ORG_ROLE_READ)));
-    map.put("get", new OrganizationAdminPermissions(Set.of(DefaultOrganizationAdminPermission.ORG_ROLE_READ)));
-    map.put("update", new OrganizationAdminPermissions(Set.of(DefaultOrganizationAdminPermission.ORG_ROLE_UPDATE)));
-    map.put("delete", new OrganizationAdminPermissions(Set.of(DefaultOrganizationAdminPermission.ORG_ROLE_DELETE)));
-
-    OrganizationAdminPermissions permissions = map.get(method);
-    if (permissions == null) {
-      throw new UnSupportedException("Method " + method + " not supported");
-    }
-    return permissions;
-  }
-
-  /**
-   * ロール作成
-   *
-   * ⚠️ 注意: 第一引数はOrganizationIdentifier、第二引数はTenantIdentifier
-   */
-  RoleManagementResponse create(
-      OrganizationIdentifier organizationIdentifier,
-      TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      RoleRegistrationRequest request,
-      RequestAttributes requestAttributes,
-      boolean dryRun);
-
-  /**
-   * ロール一覧取得
-   */
-  RoleManagementResponse findList(
-      OrganizationIdentifier organizationIdentifier,
-      TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      RoleQueries queries,
-      RequestAttributes requestAttributes);
-
-  // get(), update(), delete() メソッドも同様...
-}
-```
+#### 1. OrgXxxManagementHandler（最重要）
 
 **システムレベルとの違い**:
-- ✅ 第一引数: `OrganizationIdentifier` **（追加）**
-- ✅ 第二引数: `TenantIdentifier`
-- ✅ 権限型: `OrganizationAdminPermissions`（システムの`AdminPermissions`ではない）
+- `XxxManagementHandler` → `OrgXxxManagementHandler`
+- **OrganizationAccessVerifier追加** ← 4ステップアクセス制御
 
----
+**実装例**: [OrgClientManagementHandler.java](../../../../libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/management/oidc/client/handler/OrgClientManagementHandler.java)
 
-## Step 2: EntryService実装（UseCase層）
-
-**ファイル**: `libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/control_plane/organization_manager/OrgRoleManagementEntryService.java`
-
+**差分**（システムレベルのHandlerとの違い）:
 ```java
-package org.idp.server.usecases.control_plane.organization_manager;
+// System-level
+public ClientManagementResult handle(
+    AdminAuthenticationContext authenticationContext,
+    TenantIdentifier tenantIdentifier, ...) {
 
-import java.util.HashMap;
-import java.util.Map;
-import org.idp.server.control_plane.base.AuditLogCreator;
-import org.idp.server.control_plane.base.definition.OrganizationAdminPermissions;
-import org.idp.server.control_plane.management.role.*;
-import org.idp.server.control_plane.organization.access.OrganizationAccessControlResult;
-import org.idp.server.control_plane.organization.access.OrganizationAccessVerifier;
-import org.idp.server.core.openid.identity.Role;
-import org.idp.server.core.openid.identity.RoleCommandRepository;
-import org.idp.server.core.openid.identity.RoleQueryRepository;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
-import org.idp.server.platform.audit.AuditLog;
-import org.idp.server.platform.audit.AuditLogPublisher;
-import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.multi_tenancy.organization.Organization;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
-import org.idp.server.platform.type.RequestAttributes;
+  // Tenant取得
+  Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-@Transaction
-public class OrgRoleManagementEntryService implements OrgRoleManagementApi {
+  // 権限チェック
+  apiPermissionVerifier.verify(operator, requiredPermissions);
 
-  TenantQueryRepository tenantQueryRepository;
-  OrganizationRepository organizationRepository;
-  RoleCommandRepository roleCommandRepository;
-  RoleQueryRepository roleQueryRepository;
-  AuditLogPublisher auditLogPublisher;
-  OrganizationAccessVerifier organizationAccessVerifier;  // ✅ 組織アクセス検証
-  LoggerWrapper log = LoggerWrapper.getLogger(OrgRoleManagementEntryService.class);
-
-  public OrgRoleManagementEntryService(
-      TenantQueryRepository tenantQueryRepository,
-      OrganizationRepository organizationRepository,
-      RoleCommandRepository roleCommandRepository,
-      RoleQueryRepository roleQueryRepository,
-      AuditLogPublisher auditLogPublisher,
-      OrganizationAccessVerifier organizationAccessVerifier) {
-    this.tenantQueryRepository = tenantQueryRepository;
-    this.organizationRepository = organizationRepository;
-    this.roleCommandRepository = roleCommandRepository;
-    this.roleQueryRepository = roleQueryRepository;
-    this.auditLogPublisher = auditLogPublisher;
-    this.organizationAccessVerifier = organizationAccessVerifier;
-  }
-
-  @Override
-  public RoleManagementResponse create(
-      OrganizationIdentifier organizationIdentifier,
-      TenantIdentifier tenantIdentifier,
-      User operator,
-      OAuthToken oAuthToken,
-      RoleRegistrationRequest request,
-      RequestAttributes requestAttributes,
-      boolean dryRun) {
-
-    // 1. 必要権限を取得
-    OrganizationAdminPermissions permissions = getRequiredPermissions("create");
-
-    // 2. Organization/Tenant取得
-    Organization organization = organizationRepository.get(organizationIdentifier);
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-
-    // ✅ 3. **4ステップアクセス制御**（最重要）
-    OrganizationAccessControlResult accessControl =
-        organizationAccessVerifier.verify(
-            organization,
-            tenant,
-            operator,
-            permissions);
-
-    if (!accessControl.isAuthorized()) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "access_denied");
-      response.put("error_description", accessControl.reason());
-      log.warn(response.toString());
-      return new RoleManagementResponse("FORBIDDEN", response);
-    }
-
-    // 4. Context Creator使用
-    RoleRegistrationContextCreator contextCreator =
-        new RoleRegistrationContextCreator(tenant, request, dryRun);
-    RoleRegistrationContext context = contextCreator.create();
-
-    // 5. Audit Log記録
-    AuditLog auditLog =
-        AuditLogCreator.create(
-            "OrgRoleManagementApi.create",
-            organization,  // ✅ organization追加
-            tenant,
-            operator,
-            oAuthToken,
-            context,
-            requestAttributes);
-    auditLogPublisher.publish(auditLog);
-
-    // 6. Dry Runチェック
-    if (dryRun) {
-      return context.toResponse();
-    }
-
-    // 7. Repository保存
-    roleCommandRepository.register(tenant, context.role());
-
-    // 8. レスポンス返却
-    return context.toResponse();
-  }
-
-  // findList(), get(), update(), delete() メソッドも同様のパターン...
+  // Serviceに委譲
+  ...
 }
-```
 
-### 最重要: 4ステップアクセス制御
+// Organization-level（追加部分のみ）
+public ClientManagementResult handle(
+    OrganizationAuthenticationContext authenticationContext, // ← 引数変更
+    TenantIdentifier tenantIdentifier, ...) {
 
-**`OrganizationAccessVerifier.verify()`**が自動的に以下を検証：
+  // Organization取得（追加）
+  Organization organization = authenticationContext.organization();
 
-1. **組織メンバーシップ検証**: ユーザーが組織メンバーか？
-2. **テナントアクセス検証**: ユーザーがテナントにアクセス可能か？
-3. **組織-テナント関係検証**: テナントが組織に属しているか？
-4. **権限検証**: ユーザーが必要な権限を持っているか？
+  // Tenant取得
+  Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-**実装者への警告**: この検証を省略すると、**他の組織のリソースにアクセスできてしまう**セキュリティ脆弱性になります。
+  // 4ステップアクセス制御（追加） ← これが最重要
+  OrganizationAccessControlResult accessControl =
+      organizationAccessVerifier.verify(organization, tenant, operator, requiredPermissions);
 
----
-
-### OrganizationAccessVerifier の使用方法
-
-```java
-// ✅ 正しい使用
-OrganizationAccessControlResult accessControl =
-    organizationAccessVerifier.verify(
-        organization,        // 組織
-        tenant,             // テナント
-        operator,           // ユーザー
-        permissions);       // 必要権限
-
-if (!accessControl.isAuthorized()) {
+  if (!accessControl.isAuthorized()) {
     // アクセス拒否
-    return new RoleManagementResponse("FORBIDDEN", errorResponse);
-}
+  }
 
-// ❌ 間違い: 検証をスキップ
-// if (!permissions.includesAll(operator.permissionsAsSet())) {
-//     // 組織関係の検証が抜けている！
-// }
+  // Serviceに委譲（システムレベルと同じServiceを再利用）
+  ...
+}
 ```
+
+**ポイント**:
+- ✅ **Serviceは再利用**: System-levelと同じServiceをそのまま使う
+- ✅ **追加処理は4ステップアクセス制御のみ**
 
 ---
 
-## Step 3: IdpServerApplication登録
-
-EntryServiceを`IdpServerApplication`に登録します。
-
-**ファイル**: `libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/IdpServerApplication.java`
-
-```java
-public class IdpServerApplication {
-
-  // フィールド追加
-  OrgRoleManagementApi orgRoleManagementApi;
-
-  public IdpServerApplication(...) {
-    // ...
-
-    // ✅ ManagementTypeEntryServiceProxy を使用
-    // 理由: Organization-level Control Plane API
-    this.orgRoleManagementApi =
-        ManagementTypeEntryServiceProxy.createProxy(
-            new OrgRoleManagementEntryService(
-                tenantQueryRepository,
-                organizationRepository,
-                roleQueryRepository,
-                roleCommandRepository,
-                permissionQueryRepository,
-                auditLogPublisher),
-            OrgRoleManagementApi.class,
-            databaseTypeProvider);
-  }
-
-  // Getterメソッド追加
-  public OrgRoleManagementApi orgRoleManagementApi() {
-    return orgRoleManagementApi;
-  }
-}
-```
-
-### Proxy選択の重要ポイント
-
-| レイヤー | Proxy |
-|---------|-------|
-| Application Plane | `TenantAwareEntryServiceProxy` |
-| System-level Control Plane | `TenantAwareEntryServiceProxy` |
-| **Organization-level Control Plane** | **`ManagementTypeEntryServiceProxy`** ← このドキュメント |
-
-詳細: [トランザクション管理 - EntryService Proxy の使い分け](../04-implementation-guides/impl-03-transaction.md#8-entryservice-proxy-の使い分け)
-
----
-
-## Step 4: Controller実装（Controller層）
-
-**ファイル**: `libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapter/springboot/controller/management/OrgRoleManagementController.java`
-
-```java
-package org.idp.server.adapter.springboot.controller.management;
-
-import org.idp.server.control_plane.management.role.*;
-import org.idp.server.core.openid.identity.RoleIdentifier;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.token.OAuthToken;
-import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
-import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.type.RequestAttributes;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
-
-@RestController
-@RequestMapping("/v1/management/organizations/{orgId}/tenants/{tenantId}/roles")
-public class OrgRoleManagementController {
-
-  private final OrgRoleManagementApi orgRoleManagementApi;
-
-  public OrgRoleManagementController(OrgRoleManagementApi orgRoleManagementApi) {
-    this.orgRoleManagementApi = orgRoleManagementApi;
-  }
-
-  /**
-   * ロール作成
-   */
-  @PostMapping
-  public ResponseEntity<RoleManagementResponse> create(
-      @PathVariable("orgId") String orgId,        // ✅ 組織ID追加
-      @PathVariable("tenantId") String tenantId,
-      @RequestBody RoleRegistrationRequest request,
-      @RequestParam(value = "dry_run", defaultValue = "false") boolean dryRun,
-      @AuthenticationPrincipal User operator,
-      @RequestAttribute OAuthToken oAuthToken,
-      @RequestAttribute RequestAttributes requestAttributes) {
-
-    OrganizationIdentifier organizationIdentifier = new OrganizationIdentifier(orgId);
-    TenantIdentifier tenantIdentifier = new TenantIdentifier(tenantId);
-
-    RoleManagementResponse response =
-        orgRoleManagementApi.create(
-            organizationIdentifier,  // ✅ 組織ID追加
-            tenantIdentifier,
-            operator,
-            oAuthToken,
-            request,
-            requestAttributes,
-            dryRun);
-
-    return ResponseEntity.ok(response);
-  }
-
-  /**
-   * ロール一覧取得
-   */
-  @GetMapping
-  public ResponseEntity<RoleManagementResponse> findList(
-      @PathVariable("orgId") String orgId,
-      @PathVariable("tenantId") String tenantId,
-      @AuthenticationPrincipal User operator,
-      @RequestAttribute OAuthToken oAuthToken,
-      @RequestAttribute RequestAttributes requestAttributes) {
-
-    OrganizationIdentifier organizationIdentifier = new OrganizationIdentifier(orgId);
-    TenantIdentifier tenantIdentifier = new TenantIdentifier(tenantId);
-    RoleQueries queries = new RoleQueries();
-
-    RoleManagementResponse response =
-        orgRoleManagementApi.findList(
-            organizationIdentifier,
-            tenantIdentifier,
-            operator,
-            oAuthToken,
-            queries,
-            requestAttributes);
-
-    return ResponseEntity.ok(response);
-  }
-
-  // get(), update(), delete() メソッドも同様...
-}
-```
+#### 2. OrgXxxManagementApi
 
 **システムレベルとの違い**:
-- ✅ URL: `/organizations/{orgId}/tenants/{tenantId}/...`
-- ✅ `@PathVariable`: `orgId`と`tenantId`の両方
+- 第一引数に`OrganizationIdentifier`を追加
 
----
+```java
+// System-level
+RoleManagementResponse create(
+    TenantIdentifier tenantIdentifier, ...);
 
-## Step 4: E2Eテスト作成
-
-**ファイル**: `e2e/spec/management/org-role-management.spec.js`
-
-```javascript
-const { v4: uuidv4 } = require('uuid');
-const axios = require('axios');
-
-describe('Organization Role Management API', () => {
-  let orgAdminToken;
-  let organizationId;
-  let tenantId;
-  let roleId;
-
-  beforeAll(async () => {
-    // 1. 組織管理者トークン取得
-    const tokenResponse = await axios.post('http://localhost:8080/oauth/token', {
-      grant_type: 'client_credentials',
-      client_id: 'org-admin-client',
-      client_secret: 'org-admin-secret',
-      scope: 'org:role:read org:role:write'  // ⚠️ 組織専用スコープ
-    });
-    orgAdminToken = tokenResponse.data.access_token;
-
-    // 2. テスト組織作成
-    const orgResponse = await axios.post(
-      'http://localhost:8080/v1/management/organizations',
-      {
-        name: 'test-organization',
-        display_name: 'Test Organization'
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${orgAdminToken}`
-        }
-      }
-    );
-    organizationId = orgResponse.data.organization_id;
-
-    // 3. テスト組織配下にテナント作成
-    const tenantResponse = await axios.post(
-      `http://localhost:8080/v1/management/organizations/${organizationId}/tenants`,
-      {
-        name: 'test-tenant',
-        display_name: 'Test Tenant for Org Role Management'
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${orgAdminToken}`
-        }
-      }
-    );
-    tenantId = tenantResponse.data.tenant_id;
-
-    roleId = uuidv4();
-  });
-
-  test('should create role in organization tenant', async () => {
-    const response = await axios.post(
-      `http://localhost:8080/v1/management/organizations/${organizationId}/tenants/${tenantId}/roles`,
-      {
-        role_id: roleId,
-        role_name: 'Org Admin Role',
-        description: 'Organization administrator role',
-        permissions: ['org:tenant:read', 'org:tenant:write']
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${orgAdminToken}`
-        }
-      }
-    );
-
-    expect(response.status).toBe(200);
-    expect(response.data.status).toBe('SUCCESS');
-    expect(response.data.result).toHaveProperty('role_id', roleId);
-  });
-
-  test('should return 403 when accessing different organization tenant', async () => {
-    // 別の組織のテナントにアクセス試行
-    const anotherTenantId = uuidv4();
-
-    try {
-      await axios.post(
-        `http://localhost:8080/v1/management/organizations/${organizationId}/tenants/${anotherTenantId}/roles`,
-        {
-          role_id: uuidv4(),
-          role_name: 'Forbidden Role',
-          permissions: []
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${orgAdminToken}`
-          }
-        }
-      );
-      fail('Expected 403 error');
-    } catch (error) {
-      expect(error.response.status).toBe(403);
-    }
-  });
-
-  test('should return 403 when organization-tenant relationship is invalid', async () => {
-    // 別の組織のテナントID + 異なる組織ID
-    const anotherOrgId = uuidv4();
-
-    try {
-      await axios.post(
-        `http://localhost:8080/v1/management/organizations/${anotherOrgId}/tenants/${tenantId}/roles`,
-        {
-          role_id: uuidv4(),
-          role_name: 'Invalid Org Role',
-          permissions: []
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${orgAdminToken}`
-          }
-        }
-      );
-      fail('Expected 403 error');
-    } catch (error) {
-      expect(error.response.status).toBe(403);
-      expect(error.response.data.error_description).toContain('organization-tenant relationship');
-    }
-  });
-});
+// Organization-level
+RoleManagementResponse create(
+    OrganizationIdentifier organizationIdentifier, // ← 追加
+    TenantIdentifier tenantIdentifier, ...);
 ```
 
+---
+
+#### 3. OrgXxxManagementEntryService
+
 **システムレベルとの違い**:
-- ✅ 組織作成 → テナント作成の順序
-- ✅ 組織専用スコープ（`org:role:read`, `org:role:write`）
-- ✅ 組織関係検証のテスト追加
+- `OrgXxxManagementHandler`を使用
+- `ManagementTypeEntryServiceProxy`を使用（Proxy選択のみ）
+
+**実装パターン**（システムレベルとほぼ同じ）:
+```java
+@Transaction
+public class OrgXxxManagementEntryService implements OrgXxxManagementApi {
+
+  private final OrgXxxManagementHandler handler; // ← Org用Handler使用
+
+  public OrgXxxManagementEntryService(...) {
+    // Serviceマップ登録（システムレベルと同じServiceを再利用）
+    Map<String, XxxManagementService<?>> services = new HashMap<>();
+    services.put("create", new XxxCreationService(...)); // ← 再利用
+    services.put("update", new XxxUpdateService(...));   // ← 再利用
+
+    // Org用Handler（OrganizationAccessVerifier追加）
+    this.handler = new OrgXxxManagementHandler(
+        services, this, tenantQueryRepository, new OrganizationAccessVerifier());
+  }
+
+  // メソッドはシステムレベルと同じ3ステップパターン
+}
+```
 
 ---
 
+## 実装手順（システムレベルとの差分のみ）
+
+### Step 1: OrgXxxManagementHandler作成
+
+**新規作成するファイル**:
+```
+libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/management/{domain}/handler/
+└── Org{Domain}ManagementHandler.java  ← これだけ
+```
+
+**実装内容**:
+- システムレベルのHandlerをコピー
+- `OrganizationAccessVerifier`の呼び出しを追加
+- Organization取得処理を追加
+
+**実装の参考**: [OrgClientManagementHandler.java](../../../../libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/management/oidc/client/handler/OrgClientManagementHandler.java)
+
+---
+
+### Step 2: OrgXxxManagementApi作成
+
+**新規作成するファイル**:
+```
+libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/management/{domain}/
+└── Org{Domain}ManagementApi.java
+```
+
+**実装内容**:
+- システムレベルのAPIをコピー
+- 各メソッドの第一引数に`OrganizationIdentifier`を追加
+
+---
+
+### Step 3: OrgXxxManagementEntryService作成
+
+**新規作成するファイル**:
+```
+libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/control_plane/organization_manager/
+└── Org{Domain}ManagementEntryService.java
+```
+
+**実装内容**:
+- システムレベルのEntryServiceをコピー
+- `OrgXxxManagementHandler`を使用
+- `ManagementTypeEntryServiceProxy`を使用（Proxy選択のみ変更）
+
+**実装の参考**: [OrgClientManagementEntryService.java](../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/control_plane/organization_manager/OrgClientManagementEntryService.java)
+
+---
+
+### Step 4: Controller作成
+
+システムレベルと同様。URL pathに`organizations/{orgId}`が追加されるだけ。
+
+---
+
+### Step 5: E2Eテスト作成
+
+組織作成 → テナント作成 → リソース作成のフローでテスト。
+
+---
+
+## 重要なポイント
+
+### ✅ やること（最小限）
+
+1. **OrgXxxManagementHandler作成** - 4ステップアクセス制御追加
+2. **OrgXxxManagementApi作成** - organizationId引数追加
+3. **OrgXxxManagementEntryService作成** - Org用Handler使用
+
+### ❌ やらないこと
+
+1. Service再実装 - システムレベルのServiceを再利用
+2. Context再実装 - 同じContextBuilderを再利用
+3. Request/Response DTO再実装 - すべて再利用
+4. Validator再実装 - すべて再利用
+
+**実装量**: システムレベルの**約20%**のみ（Handlerとラッパーのみ）
+
+---
 ## チェックリスト
 
 組織レベルAPI実装前に以下を確認：

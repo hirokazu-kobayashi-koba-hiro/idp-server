@@ -65,7 +65,7 @@ learning-paths/         → スキルレベル別の学習経路
 
 - **URL**: `/v1/management/...`
 - **ユーザー**: システム管理者・組織管理者
-- **実装**: 10フェーズパターン（権限チェック・Audit Log・Dry Run）
+- **実装**: Handler-Serviceパターン（権限チェック・Audit Log・Dry Run）
 
 ### Application Plane（OAuth/OIDCフロー）
 

@@ -90,7 +90,7 @@
 ```
 
 **チェックポイント**:
-- EntryServiceの10フェーズを説明できる
+- Handler-Serviceパターン（EntryService/Handler/Service/Repositoryの責務分担）を説明できる
 - 権限チェック・Audit Log記録のタイミングを理解している
 
 ---

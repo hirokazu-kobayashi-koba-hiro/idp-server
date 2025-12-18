@@ -264,7 +264,7 @@ if (!accessControl.isAuthorized()) {
 以下をすべて達成したらControl Plane Trackクリア：
 
 ### 知識面
-- [ ] EntryServiceの10フェーズを説明できる
+- [ ] Handler-Serviceパターン（EntryService/Handler/Service/Repositoryの責務分担）を説明できる
 - [ ] Context Creatorの役割を説明できる
 - [ ] Repository第一引数がTenantである理由を説明できる
 - [ ] RLS（Row Level Security）の仕組みを説明できる

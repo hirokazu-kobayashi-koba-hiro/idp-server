@@ -186,7 +186,7 @@ public class TenantManagementEntryService implements TenantManagementApi {
         Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
         // 3. Audit Log記録（読み取り操作）
-        AuditLog auditLog = AuditLogCreator.createOnRead(
+        AuditLog auditLog = AuditLogCreator.create(
             "TenantManagementApi.getName",
             "getName",
             tenant,
@@ -214,7 +214,7 @@ public class TenantManagementEntryService implements TenantManagementApi {
 
 1. **`@Transaction(readOnly = true)`**: 読み取り専用トランザクション（最適化）
 2. **権限チェック**: `getRequiredPermissions()` で必要権限を取得し、ユーザーが持っているか確認
-3. **Audit Log記録**: `createOnRead()` で読み取り操作を記録
+3. **Audit Log記録**: `AuditLogCreator.create()` で操作を記録
 4. **シンプルなロジック**: Repository直接呼び出し（複雑なロジックがない場合）
 
 ---
@@ -444,7 +444,7 @@ npm test -- tenant-name.spec.js
 ### 🔍 さらに学ぶ
 
 - [Context Creator パターン](../../content_10_ai_developer/ai-13-control-plane.md#context-creator-パターン) - リクエスト変換の詳細
-- [EntryService 10フェーズ](../../content_10_ai_developer/ai-10-use-cases.md#entryserviceの10フェーズ) - 複雑な実装フロー
+- [Handler-Serviceパターン](../../content_10_ai_developer/ai-10-use-cases.md#entryserviceの10フェーズ) - Handler/Service/Repositoryの責務分担
 - [共通実装パターン](../06-patterns/common-patterns.md) - よく使うパターン集
 
 ---
