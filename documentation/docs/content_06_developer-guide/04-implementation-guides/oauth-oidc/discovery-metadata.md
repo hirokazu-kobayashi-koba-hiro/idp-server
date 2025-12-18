@@ -12,8 +12,8 @@
 - AuthorizationServerConfiguration からのメタデータ抽出
 
 **前提知識**:
-- [basic-15: OIDC Discovery & Dynamic Registration](../../content_03_concepts/basic/basic-15-oidc-discovery-dynamic-registration-standard.md)の理解
-- [basic-12: OpenID Connect詳解](../../content_03_concepts/basic/basic-12-openid-connect-detail.md)の理解
+- [basic-15: OIDC Discovery & Dynamic Registration](../../content_11_learning/04-openid-connect/oidc-discovery-dynamic-registration.md)の理解
+- [basic-12: OpenID Connect詳解](../../content_11_learning/04-openid-connect/openid-connect-detail.md)の理解
 - OAuth 2.0 / OIDC の基礎知識
 
 ---
@@ -670,8 +670,8 @@ map.put("jwks_uri", "https://idp.example.com/.well-known/jwks.json");
 ## 🔗 関連ドキュメント
 
 **概念・基礎**:
-- [basic-15: OIDC Discovery & Dynamic Registration](../../content_03_concepts/basic/basic-15-oidc-discovery-dynamic-registration-standard.md) - Discovery概念
-- [basic-12: OpenID Connect詳解](../../content_03_concepts/basic/basic-12-openid-connect-detail.md) - OIDC基礎
+- [basic-15: OIDC Discovery & Dynamic Registration](../../content_11_learning/04-openid-connect/oidc-discovery-dynamic-registration.md) - Discovery概念
+- [basic-12: OpenID Connect詳解](../../content_11_learning/04-openid-connect/openid-connect-detail.md) - OIDC基礎
 
 **実装詳細**:
 - [impl-22: FAPI実装ガイド](./impl-22-fapi-implementation.md) - FAPI関連メタデータ

@@ -621,7 +621,7 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
 
 ## 関連ドキュメント
 
-- [Concept: OAuth 2.0とOpenID Connect](../content_03_concepts/basic/basic-11-oauth-oidc-basics.md) - プロトコル概要
+- [Concept: OAuth 2.0とOpenID Connect](../content_11_learning/04-openid-connect/oauth-oidc-basics.md) - プロトコル概要
 - [Developer Guide: Client Authentication](../content_06_developer-guide/03-application-plane/10-client-authentication.md) - 7つの認証方式詳細
 - [API Reference](../content_07_reference/api-reference.md) - Management API仕様
 

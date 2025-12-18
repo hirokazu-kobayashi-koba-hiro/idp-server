@@ -519,6 +519,6 @@ POST /{tenant-id}/v1/authentications/{id}/sms-authentication
 ## 関連ドキュメント
 
 - [認証ポリシー設定ガイド](../../content_05_how-to/how-to-07-authentication-policy-basic.md)
-- [FIDO2認証フロー](../../content_03_concepts/basic/basic-20-fido2-authentication-flow-interface.md)
+- [FIDO2認証フロー](../../content_11_learning/05-fido-webauthn/fido2-authentication-flow-interface.md)
 - [FIDO-UAF登録フロー](../../content_05_how-to/how-to-13-fido-uaf-registration.md)
 - [CIBAフロー](../../content_04_protocols/protocol-02-ciba-flow.md)

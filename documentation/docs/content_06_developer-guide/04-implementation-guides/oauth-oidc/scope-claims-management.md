@@ -12,7 +12,7 @@
 - 標準クレームのスコープマッピング
 
 **前提知識**:
-- [basic-12: OpenID Connect詳解](../../content_03_concepts/basic/basic-12-openid-connect-detail.md)の理解
+- [basic-12: OpenID Connect詳解](../../content_11_learning/04-openid-connect/openid-connect-detail.md)の理解
 - [concept-09: カスタムクレーム](../../content_03_concepts/04-tokens-claims/concept-03-custom-claims.md)の理解
 - [impl-12: Plugin実装ガイド](./impl-12-plugin-implementation.md)の理解
 
@@ -781,8 +781,8 @@ if (scopes.contains("claims:email")) {
 ## 🔗 関連ドキュメント
 
 **概念・基礎**:
-- [basic-12: OpenID Connect詳解](../../content_03_concepts/basic/basic-12-openid-connect-detail.md) - OIDC仕様
-- [basic-14: OIDCクレーム設計](../../content_03_concepts/basic/basic-14-oidc-claim-design.md) - クレーム設計ガイド
+- [basic-12: OpenID Connect詳解](../../content_11_learning/04-openid-connect/openid-connect-detail.md) - OIDC仕様
+- [basic-14: OIDCクレーム設計](../../content_11_learning/04-openid-connect/oidc-claim-design.md) - クレーム設計ガイド
 - [concept-09: カスタムクレーム](../../content_03_concepts/04-tokens-claims/concept-03-custom-claims.md) - カスタムクレームの概念
 
 **実装詳細**:
