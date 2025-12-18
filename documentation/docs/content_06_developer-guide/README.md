@@ -1,21 +1,28 @@
-# 開発者ガイド
+# 開発者ガイドマップ
 
 **idp-serverで実際に開発を行う開発者のための実践ガイド**
 
-## 📚 このガイドの構成
+## このガイドの目的
 
-### 学習順序で読む（推奨）
+このセクションは、**idp-serverで実際に開発を行う開発者のための実践ガイド**です。
 
-```
-01-getting-started/     → 最初に読む（サービス全体像・アーキテクチャ）
-02-control-plane/       → 管理API実装を学ぶ
-03-application-plane/   → OAuth/OIDCフロー実装を学ぶ
-04-implementation-guides/ → 実装ガイド（共通）
-06-patterns/            → 実装パターン集
-07-troubleshooting/     → 困った時に読む
-08-reference/           → PR前・レビュー時に参照
-learning-paths/         → スキルレベル別の学習経路
-```
+### 対象読者
+
+- **新規参画開発者**: idp-serverで初めて開発を行う方
+- **機能実装者**: 新機能・API追加を担当する開発者
+- **バグ修正者**: 既存コードの理解・修正を行う開発者
+
+### AI開発者向けドキュメントとの違い
+
+| ドキュメント | 目的 | 対象 |
+|------------|------|------|
+| **開発者ガイド** (このセクション) | 実践的な実装手順・タスク完了 | 人間の開発者 |
+| [AI開発者向けドキュメント](../../content_10_ai_developer/ai-01-index.md) | アーキテクチャ詳細・全体設計 | AI・深い理解が必要な開発者 |
+
+**推奨される使い方**:
+1. **最初に**このガイドでタスクを完了
+2. **詳細が必要な場合**AI開発者向けドキュメントを参照
+3. **レビュー時**AI開発者向けドキュメントで設計妥当性を確認
 
 ---
 
@@ -23,37 +30,94 @@ learning-paths/         → スキルレベル別の学習経路
 
 ### 新規開発者（初日）
 
-1. [サービス概要](01-getting-started/00-service-overview.md) - 15分
-2. [アーキテクチャ](01-getting-started/01-architecture-overview.md) - 15分
-3. 環境構築して動かしてみる
+1. [サービス概要](./01-getting-started/01-service-overview.md)
+2. [アーキテクチャ概要](./01-getting-started/02-architecture-overview.md)
+3. [設計原則](./01-getting-started/03-design-principles.md)
+4. 環境構築して動かしてみる
 
 ### 管理API実装者
 
-1. [Control Plane概要](02-control-plane/01-overview.md) - 10分
-2. [最初の管理API実装](02-control-plane/03-system-level-api.md) - 30分
-3. [システムレベルAPI](02-control-plane/03-system-level-api.md) - 45分
+1. [Control Plane概要](../02-control-plane/01-overview.md)
+2. [システムレベルAPI](../02-control-plane/03-system-level-api.md)
+3. → [Control Plane Track](../learning-paths/02-control-plane-track.md)
 
 ### OAuth/OIDCフロー実装者
 
-1. [Application Plane概要](03-application-plane/01-overview.md) - 10分
-2. [Authorization Flow実装ガイド](03-application-plane/02-authorization-flow.md) - 45分
-3. [Token Endpoint実装ガイド](03-application-plane/03-token-endpoint.md) - 30分
+1. [Application Plane概要](../03-application-plane/01-overview.md)
+2. [Authorization Flow実装](../03-application-plane/02-authorization-flow.md)
+3. → [Application Plane Track](../learning-paths/03-application-plane-track.md)
 
 ---
 
-## 📂 ディレクトリ構成
+## 📚 学習の進め方
 
-| ディレクトリ | 内容 | いつ読む |
-|------------|------|---------|
-| **01-getting-started/** | サービス概要・アーキテクチャ | 最初 |
-| **02-control-plane/** | 管理API実装（テナント・クライアント・ユーザー管理等） | 管理機能実装時 |
-| **03-application-plane/** | OAuth/OIDCフロー実装（認証・認可・トークン発行） | 認証フロー実装時 |
-| **04-implementation-guides/** | 実装ガイド（Repository/Plugin/認証/イベント等） | 実装中 |
-| **05-configuration/** | 設定ガイド（認証設定・フェデレーション等） | 設定変更時 |
-| **06-patterns/** | 実装パターン集 | 実装中 |
-| **07-troubleshooting/** | トラブルシューティング | エラー発生時 |
-| **08-reference/** | リファレンス（チェックリスト・設計原則） | PR前・レビュー時 |
-| **learning-paths/** | 学習パス（初級・中級・上級） | 体系的に学ぶ時 |
+### Phase 1: はじめに（このセクション）
+
+まず、はじめにセクションのドキュメントを順に読んでください：
+
+1. [サービス概要](./01-getting-started/01-service-overview.md) - idp-serverの全体像・ユースケース
+2. [アーキテクチャ概要](./01-getting-started/02-architecture-overview.md) - 4層アーキテクチャ・責務分離の理解
+3. [設計原則](./01-getting-started/03-design-principles.md) - 設計原則・ガイドライン
+
+次に、実装に必要な基礎知識を習得：
+
+| ドキュメント | 説明 |
+|------------|------|
+| [共通実装パターン](../06-patterns/common-patterns.md) | よく使うパターン（Repository/Handler/EntryService） |
+| [トラブルシューティング](../07-troubleshooting/common-errors.md) | よくある問題と解決策 |
+| [コードレビューチェックリスト](../08-reference/code-review-checklist.md) | PR前の必須チェック項目 |
+
+### Phase 2: 学習パス
+
+**体系的に学ぶ**: [学習パス](../learning-paths/)
+
+- [初級](../learning-paths/01-beginner.md) - アーキテクチャ理解・バグ修正
+- [Control Plane Track](../learning-paths/02-control-plane-track.md) - 管理API実装者向け
+- [Application Plane Track](../learning-paths/03-application-plane-track.md) - 認証フロー実装者向け
+- [Full Stack Track](../learning-paths/04-full-stack-track.md) - 両方マスター
+
+### Phase 3: API種別ガイド
+
+#### Control Plane（管理API）
+
+**システム管理者・組織管理者向け** - リソース設定・管理
+
+| ドキュメント | 説明 |
+|------------|------|
+| [Control Plane 概要](../02-control-plane/01-overview.md) | 管理APIの全体像・種類 |
+| [リソース一覧](../02-control-plane/00-resource-overview.md) | 管理可能なリソース |
+| [システムレベルAPI](../02-control-plane/03-system-level-api.md) | テナント単位の管理API実装 |
+| [組織レベルAPI](../02-control-plane/04-organization-level-api.md) | 組織単位の管理API実装（4ステップアクセス制御） |
+
+**URL例**: `/v1/management/tenants/{tenantId}/clients`
+
+#### Application Plane（認証・認可フロー）
+
+**エンドユーザー・アプリケーション向け** - OAuth/OIDC準拠の認証フロー
+
+| ドキュメント | 説明 |
+|------------|------|
+| [Application Plane 概要](../03-application-plane/01-overview.md) | OAuth/OIDCフローの全体像 |
+| [Authorization Code Flow](../03-application-plane/02-authorization-flow.md) | 認可フロー実装 |
+| [Token Endpoint](../03-application-plane/03-token-endpoint.md) | トークン発行実装 |
+| [Authentication](../03-application-plane/04-authentication.md) | 認証実装 |
+| [UserInfo](../03-application-plane/05-userinfo.md) | ユーザー情報取得 |
+| [CIBA Flow](../03-application-plane/06-ciba-flow.md) | バックチャネル認証実装 |
+| [Identity Verification](../03-application-plane/07-identity-verification.md) | 身元確認 |
+| [Federation](../03-application-plane/08-federation.md) | 外部IdP連携 |
+| [Events](../03-application-plane/09-events.md) | イベント処理 |
+
+**URL例**: `/oauth/authorize`, `/oauth/token`, `/{tenant}/v1/me/profile`
+
+### Phase 4: 実装ガイド
+
+詳細な実装方法は [実装ガイド](../04-implementation-guides/) を参照してください。カテゴリ別に整理されています：
+
+- **インフラ・基盤**: Repository、Transaction、DataSource、Caching等
+- **OAuth/OIDC**: PKCE、FAPI、JOSE、Scope & Claims等
+- **認証**: Authentication Interactor、Policy、Federation Provider
+- **外部連携**: HTTP Request Executor、Notification、Security Event Hooks
+- **高度な機能**: Plugin、Configuration Management、Audit Logging
 
 ---
 
@@ -77,33 +141,12 @@ learning-paths/         → スキルレベル別の学習経路
 
 ---
 
-## 🎓 役割別ラーニングパス
-
-### 全員共通
-- [初級（1-2週間）](learning-paths/01-beginner.md) - アーキテクチャ理解・バグ修正
-
-### 役割別トラック
-初級完了後、役割に応じて選択：
-
-- [Control Plane Track（2-4週間）](learning-paths/02-control-plane-track.md) - 管理API実装者向け
-  - システムレベルAPI・組織レベルAPI実装
-  - Repository実装・Context Creator実装
-
-- [Application Plane Track（2-4週間）](learning-paths/03-application-plane-track.md) - 認証フロー実装者向け
-  - Authorization Flow・Token Endpoint実装
-  - 認証インタラクター・Grant Type・Federation実装
-
-- [Full Stack Track（1-2ヶ月）](learning-paths/04-full-stack-track.md) - 両方マスター
-  - Control Plane + Application Plane完全習得
-  - 統合実装・アーキテクチャ設計
-
----
-
 ## 🔗 関連ドキュメント
 
-- [AI開発者向けモジュールガイド](../content_10_ai_developer/ai-01-index.md) - アーキテクチャ詳細
-- [Concepts](../content_03_concepts/01-foundation/concept-01-multi-tenant.md) - OAuth/OIDC仕様解説
+- [AI開発者向けモジュールガイド](../../content_10_ai_developer/ai-01-index.md) - アーキテクチャ詳細
+- [Concepts](../../content_03_concepts/) - OAuth/OIDC仕様解説
+- [How-To](../../content_05_how-to/) - 運用手順・デプロイガイド
 
 ---
 
-**最終更新**: 2025-10-12
+**最終更新**: 2025-12-18
