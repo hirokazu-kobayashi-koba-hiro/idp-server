@@ -1,93 +1,45 @@
--- V0_9_21_2__statistics.mysql.sql
--- Issue #441: Tenant statistics data collection (DAU/MAU/YAU) (MySQL version)
+-- V0_9_21_3__statistics_partition_migration.mysql.sql
+-- Migration script: Convert existing statistics tables to partitioned tables
 --
--- Partitioned tables:
---   - statistics_daily_users (daily partitions, 90-day retention)
---   - statistics_monthly_users (monthly partitions, 13-month retention)
---   - statistics_yearly_users (monthly partitions, 60-month retention, fiscal year support)
---
--- Non-partitioned tables (summary):
---   - statistics_monthly
---   - statistics_yearly
+-- This migration:
+--   1. Backs up existing data
+--   2. Recreates tables with partition definitions
+--   3. Restores data from backup
+--   4. Creates partition management procedures (if not exist)
+--   5. Sets up Event Scheduler for automatic maintenance
 --
 -- Prerequisites:
 --   - MySQL 8.0+
 --   - Event Scheduler enabled: SET GLOBAL event_scheduler = ON;
-
--- =====================================================
--- statistics_monthly
--- Monthly statistics with daily breakdown in JSON
--- =====================================================
-
-CREATE TABLE statistics_monthly (
-    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
-    tenant_id CHAR(36) NOT NULL,
-    stat_month DATE NOT NULL COMMENT 'First day of month (e.g., 2025-01-01, 2025-02-01, ...)',
-
-    -- Monthly summary (for quick access)
-    monthly_summary JSON NOT NULL DEFAULT ('{}'),
-    /* {
-      "mau": 5000,
-      "total_logins": 45000,
-      "total_login_failures": 500,
-      "new_users": 200
-    } */
-
-    -- Daily breakdown (for charts/graphs)
-    daily_metrics JSON NOT NULL DEFAULT ('{}'),
-    /* {
-      "01": {"dau": 100, "logins": 1500, "failures": 20},
-      "02": {"dau": 110, "logins": 1600, "failures": 15},
-      ...
-      "31": {"dau": 95, "logins": 1400, "failures": 18}
-    } */
-
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-    UNIQUE KEY uk_tenant_month (tenant_id, stat_month),
-    KEY idx_statistics_monthly_tenant_month (tenant_id, stat_month DESC)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Monthly tenant statistics with daily breakdown in JSON';
-
--- =====================================================
--- statistics_yearly
--- Yearly statistics summary with tenant-specific fiscal year support
--- Note: Monthly breakdown is available via statistics_monthly table
 --
--- Fiscal year examples:
---   - Japan: April (stat_year = 2025-04-01 for FY2025)
---   - US (some): October (stat_year = 2025-10-01 for FY2025)
---   - Calendar year: January (stat_year = 2025-01-01 for FY2025)
--- =====================================================
-
-CREATE TABLE statistics_yearly (
-    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
-    tenant_id CHAR(36) NOT NULL,
-    stat_year DATE NOT NULL COMMENT 'Fiscal year start date (e.g., 2025-04-01 for April fiscal year)',
-
-    -- Yearly summary (for quick access)
-    yearly_summary JSON NOT NULL DEFAULT ('{}'),
-    /* {
-      "yau": 15000,
-      "total_logins": 500000,
-      "total_login_failures": 5000,
-      "new_users": 2000
-    } */
-
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-    UNIQUE KEY uk_tenant_year (tenant_id, stat_year),
-    KEY idx_statistics_yearly_tenant_year (tenant_id, stat_year DESC)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Yearly tenant statistics summary with fiscal year support';
+-- Note: This migration preserves all existing data.
 
 -- =====================================================
+-- Step 1: Backup existing data
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS statistics_daily_users_backup AS
+SELECT * FROM statistics_daily_users;
+
+CREATE TABLE IF NOT EXISTS statistics_monthly_users_backup AS
+SELECT * FROM statistics_monthly_users;
+
+CREATE TABLE IF NOT EXISTS statistics_yearly_users_backup AS
+SELECT * FROM statistics_yearly_users;
+
+-- =====================================================
+-- Step 2: Drop old tables
+-- =====================================================
+
+DROP TABLE IF EXISTS statistics_daily_users;
+DROP TABLE IF EXISTS statistics_monthly_users;
+DROP TABLE IF EXISTS statistics_yearly_users;
+
+-- =====================================================
+-- Step 3: Recreate tables with partitioning
+-- =====================================================
+
 -- statistics_daily_users (PARTITIONED - daily)
--- Track unique daily active users
--- =====================================================
-
 CREATE TABLE statistics_daily_users (
     tenant_id CHAR(36) NOT NULL,
     stat_date DATE NOT NULL,
@@ -104,11 +56,7 @@ PARTITION BY RANGE COLUMNS(stat_date) (
     PARTITION p_future VALUES LESS THAN MAXVALUE
 );
 
--- =====================================================
 -- statistics_monthly_users (PARTITIONED - monthly)
--- Track unique monthly active users
--- =====================================================
-
 CREATE TABLE statistics_monthly_users (
     tenant_id CHAR(36) NOT NULL,
     stat_month DATE NOT NULL COMMENT 'First day of month (e.g., 2025-01-01)',
@@ -125,16 +73,7 @@ PARTITION BY RANGE COLUMNS(stat_month) (
     PARTITION p_future VALUES LESS THAN MAXVALUE
 );
 
--- =====================================================
 -- statistics_yearly_users (PARTITIONED - monthly for fiscal year)
--- Track unique yearly active users with tenant-specific fiscal year
---
--- Fiscal year examples:
---   - Japan: April (stat_year = 2025-04-01 for FY2025)
---   - US (some): October (stat_year = 2025-10-01 for FY2025)
---   - Calendar year: January (stat_year = 2025-01-01 for FY2025)
--- =====================================================
-
 CREATE TABLE statistics_yearly_users (
     tenant_id CHAR(36) NOT NULL,
     stat_year DATE NOT NULL COMMENT 'Fiscal year start date (e.g., 2025-04-01 for April fiscal year)',
@@ -153,32 +92,53 @@ PARTITION BY RANGE COLUMNS(stat_year) (
 );
 
 -- =====================================================
--- Partition management stored procedures
+-- Step 4: Restore data from backup
+-- =====================================================
+
+INSERT INTO statistics_daily_users
+SELECT * FROM statistics_daily_users_backup;
+
+INSERT INTO statistics_monthly_users
+SELECT * FROM statistics_monthly_users_backup;
+
+INSERT INTO statistics_yearly_users
+SELECT * FROM statistics_yearly_users_backup;
+
+-- =====================================================
+-- Step 5: Drop old cleanup procedures (replaced by partition management)
+-- =====================================================
+
+DROP PROCEDURE IF EXISTS cleanup_old_daily_users;
+DROP PROCEDURE IF EXISTS cleanup_old_monthly_users;
+DROP PROCEDURE IF EXISTS cleanup_old_yearly_users;
+
+-- =====================================================
+-- Step 6: Create partition management procedures
 -- =====================================================
 
 DELIMITER //
 
--- -----------------------------------------------------
 -- Create partition for statistics_daily_users (daily)
--- -----------------------------------------------------
 DROP PROCEDURE IF EXISTS create_daily_users_partition//
 CREATE PROCEDURE create_daily_users_partition(IN target_date DATE)
 BEGIN
+    DECLARE partition_name VARCHAR(20);
+    DECLARE partition_end DATE;
     DECLARE partition_exists INT DEFAULT 0;
 
-    SET @p_name = CONCAT('p', DATE_FORMAT(target_date, '%Y%m%d'));
-    SET @p_end = DATE_ADD(target_date, INTERVAL 1 DAY);
+    SET partition_name = CONCAT('p', DATE_FORMAT(target_date, '%Y%m%d'));
+    SET partition_end = DATE_ADD(target_date, INTERVAL 1 DAY);
 
     SELECT COUNT(*) INTO partition_exists
     FROM information_schema.PARTITIONS
     WHERE TABLE_SCHEMA = DATABASE()
       AND TABLE_NAME = 'statistics_daily_users'
-      AND PARTITION_NAME = @p_name;
+      AND PARTITION_NAME = partition_name;
 
     IF partition_exists = 0 THEN
         SET @sql = CONCAT(
             'ALTER TABLE statistics_daily_users REORGANIZE PARTITION p_future INTO (',
-            'PARTITION ', @p_name, ' VALUES LESS THAN (''', @p_end, '''), ',
+            'PARTITION ', partition_name, ' VALUES LESS THAN (''', partition_end, '''), ',
             'PARTITION p_future VALUES LESS THAN MAXVALUE)'
         );
         PREPARE stmt FROM @sql;
@@ -187,28 +147,29 @@ BEGIN
     END IF;
 END//
 
--- -----------------------------------------------------
 -- Create partition for statistics_monthly_users (monthly)
--- -----------------------------------------------------
 DROP PROCEDURE IF EXISTS create_monthly_users_partition//
 CREATE PROCEDURE create_monthly_users_partition(IN target_date DATE)
 BEGIN
+    DECLARE partition_name VARCHAR(20);
+    DECLARE partition_start DATE;
+    DECLARE partition_end DATE;
     DECLARE partition_exists INT DEFAULT 0;
 
-    SET @p_start = DATE_FORMAT(target_date, '%Y-%m-01');
-    SET @p_end = DATE_ADD(@p_start, INTERVAL 1 MONTH);
-    SET @p_name = CONCAT('p', DATE_FORMAT(@p_start, '%Y%m'));
+    SET partition_start = DATE_FORMAT(target_date, '%Y-%m-01');
+    SET partition_end = DATE_ADD(partition_start, INTERVAL 1 MONTH);
+    SET partition_name = CONCAT('p', DATE_FORMAT(partition_start, '%Y%m'));
 
     SELECT COUNT(*) INTO partition_exists
     FROM information_schema.PARTITIONS
     WHERE TABLE_SCHEMA = DATABASE()
       AND TABLE_NAME = 'statistics_monthly_users'
-      AND PARTITION_NAME = @p_name;
+      AND PARTITION_NAME = partition_name;
 
     IF partition_exists = 0 THEN
         SET @sql = CONCAT(
             'ALTER TABLE statistics_monthly_users REORGANIZE PARTITION p_future INTO (',
-            'PARTITION ', @p_name, ' VALUES LESS THAN (''', @p_end, '''), ',
+            'PARTITION ', partition_name, ' VALUES LESS THAN (''', partition_end, '''), ',
             'PARTITION p_future VALUES LESS THAN MAXVALUE)'
         );
         PREPARE stmt FROM @sql;
@@ -217,28 +178,29 @@ BEGIN
     END IF;
 END//
 
--- -----------------------------------------------------
 -- Create partition for statistics_yearly_users (monthly)
--- -----------------------------------------------------
 DROP PROCEDURE IF EXISTS create_yearly_users_partition//
 CREATE PROCEDURE create_yearly_users_partition(IN target_date DATE)
 BEGIN
+    DECLARE partition_name VARCHAR(20);
+    DECLARE partition_start DATE;
+    DECLARE partition_end DATE;
     DECLARE partition_exists INT DEFAULT 0;
 
-    SET @p_start = DATE_FORMAT(target_date, '%Y-%m-01');
-    SET @p_end = DATE_ADD(@p_start, INTERVAL 1 MONTH);
-    SET @p_name = CONCAT('p', DATE_FORMAT(@p_start, '%Y%m'));
+    SET partition_start = DATE_FORMAT(target_date, '%Y-%m-01');
+    SET partition_end = DATE_ADD(partition_start, INTERVAL 1 MONTH);
+    SET partition_name = CONCAT('p', DATE_FORMAT(partition_start, '%Y%m'));
 
     SELECT COUNT(*) INTO partition_exists
     FROM information_schema.PARTITIONS
     WHERE TABLE_SCHEMA = DATABASE()
       AND TABLE_NAME = 'statistics_yearly_users'
-      AND PARTITION_NAME = @p_name;
+      AND PARTITION_NAME = partition_name;
 
     IF partition_exists = 0 THEN
         SET @sql = CONCAT(
             'ALTER TABLE statistics_yearly_users REORGANIZE PARTITION p_future INTO (',
-            'PARTITION ', @p_name, ' VALUES LESS THAN (''', @p_end, '''), ',
+            'PARTITION ', partition_name, ' VALUES LESS THAN (''', partition_end, '''), ',
             'PARTITION p_future VALUES LESS THAN MAXVALUE)'
         );
         PREPARE stmt FROM @sql;
@@ -247,9 +209,7 @@ BEGIN
     END IF;
 END//
 
--- -----------------------------------------------------
 -- Drop old partitions for statistics_daily_users
--- -----------------------------------------------------
 DROP PROCEDURE IF EXISTS drop_old_daily_users_partitions//
 CREATE PROCEDURE drop_old_daily_users_partitions(IN retention_days INT)
 BEGIN
@@ -285,9 +245,7 @@ BEGIN
     CLOSE cur;
 END//
 
--- -----------------------------------------------------
 -- Drop old partitions for statistics_monthly_users
--- -----------------------------------------------------
 DROP PROCEDURE IF EXISTS drop_old_monthly_users_partitions//
 CREATE PROCEDURE drop_old_monthly_users_partitions(IN retention_months INT)
 BEGIN
@@ -323,9 +281,7 @@ BEGIN
     CLOSE cur;
 END//
 
--- -----------------------------------------------------
 -- Drop old partitions for statistics_yearly_users
--- -----------------------------------------------------
 DROP PROCEDURE IF EXISTS drop_old_yearly_users_partitions//
 CREATE PROCEDURE drop_old_yearly_users_partitions(IN retention_months INT)
 BEGIN
@@ -361,9 +317,7 @@ BEGIN
     CLOSE cur;
 END//
 
--- -----------------------------------------------------
--- Main maintenance procedure (called by Event Scheduler)
--- -----------------------------------------------------
+-- Main maintenance procedure
 DROP PROCEDURE IF EXISTS maintain_statistics_partitions//
 CREATE PROCEDURE maintain_statistics_partitions()
 BEGIN
@@ -400,44 +354,13 @@ BEGIN
     CALL drop_old_yearly_users_partitions(60);     -- 60 months retention
 END//
 
--- =====================================================
--- Data retention procedures (for non-partitioned tables)
--- =====================================================
-
--- Delete statistics_monthly data older than specified months
-DROP PROCEDURE IF EXISTS cleanup_old_statistics//
-CREATE PROCEDURE cleanup_old_statistics(IN retention_months INT)
-BEGIN
-    DECLARE cutoff_date DATE;
-    SET cutoff_date = DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL retention_months MONTH);
-
-    DELETE FROM statistics_monthly
-    WHERE stat_month < cutoff_date;
-
-    SELECT ROW_COUNT() AS deleted_count;
-END//
-
--- Delete statistics_yearly data older than specified months
-CREATE PROCEDURE cleanup_old_yearly_statistics(IN retention_months INT)
-BEGIN
-    DECLARE cutoff_date DATE;
-    SET cutoff_date = DATE_SUB(CURDATE(), INTERVAL retention_months MONTH);
-
-    DELETE FROM statistics_yearly
-    WHERE stat_year < cutoff_date;
-
-    SELECT ROW_COUNT() AS deleted_count;
-END//
-
 DELIMITER ;
 
 -- =====================================================
--- Event Scheduler configuration
--- Runs daily at 03:00 AM
+-- Step 7: Setup Event Scheduler
 -- =====================================================
 
--- Note: Event Scheduler must be enabled globally
--- SET GLOBAL event_scheduler = ON;
+DROP EVENT IF EXISTS evt_maintain_statistics_partitions;
 
 CREATE EVENT IF NOT EXISTS evt_maintain_statistics_partitions
 ON SCHEDULE EVERY 1 DAY
@@ -449,11 +372,35 @@ DO
     CALL maintain_statistics_partitions();
 
 -- =====================================================
--- Initial partition setup
--- Create partitions for current and upcoming periods
+-- Step 8: Initial partition creation
+-- This creates partitions for existing and future data
 -- =====================================================
 
--- Create initial partitions by calling maintenance procedure
--- This will be executed once during migration
--- Note: Manual execution if Event Scheduler is not yet enabled
--- CALL maintain_statistics_partitions();
+-- Run maintenance to create initial partitions
+CALL maintain_statistics_partitions();
+
+-- =====================================================
+-- Step 9: Cleanup backup tables (optional)
+-- Uncomment to remove backup tables after verification
+-- =====================================================
+
+-- DROP TABLE IF EXISTS statistics_daily_users_backup;
+-- DROP TABLE IF EXISTS statistics_monthly_users_backup;
+-- DROP TABLE IF EXISTS statistics_yearly_users_backup;
+
+-- =====================================================
+-- Verification queries (for manual check)
+-- =====================================================
+
+-- Check partition status:
+-- SELECT TABLE_NAME, PARTITION_NAME, PARTITION_DESCRIPTION, TABLE_ROWS
+-- FROM information_schema.PARTITIONS
+-- WHERE TABLE_SCHEMA = DATABASE()
+--   AND TABLE_NAME LIKE 'statistics%users'
+-- ORDER BY TABLE_NAME, PARTITION_NAME;
+
+-- Check Event Scheduler status:
+-- SHOW VARIABLES LIKE 'event_scheduler';
+
+-- Check registered events:
+-- SHOW EVENTS;
