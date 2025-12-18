@@ -30,9 +30,9 @@
 
 ### 新規開発者（初日）
 
-1. [サービス概要](./01-getting-started/01-service-overview.md)
-2. [アーキテクチャ概要](./01-getting-started/02-architecture-overview.md)
-3. [設計原則](./01-getting-started/03-design-principles.md)
+1. [サービス概要](./01-service-overview.md)
+2. [アーキテクチャ概要](./02-architecture-overview.md)
+3. [設計原則](./03-design-principles.md)
 4. 環境構築して動かしてみる
 
 ### 管理API実装者
@@ -55,9 +55,9 @@
 
 まず、はじめにセクションのドキュメントを順に読んでください：
 
-1. [サービス概要](./01-getting-started/01-service-overview.md) - idp-serverの全体像・ユースケース
-2. [アーキテクチャ概要](./01-getting-started/02-architecture-overview.md) - 4層アーキテクチャ・責務分離の理解
-3. [設計原則](./01-getting-started/03-design-principles.md) - 設計原則・ガイドライン
+1. [サービス概要](./01-service-overview.md) - idp-serverの全体像・ユースケース
+2. [アーキテクチャ概要](./02-architecture-overview.md) - 4層アーキテクチャ・責務分離の理解
+3. [設計原則](./03-design-principles.md) - 設計原則・ガイドライン
 
 次に、実装に必要な基礎知識を習得：
 
