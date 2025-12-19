@@ -394,8 +394,7 @@ public class MimeEncodedWordFunctionTest {
   @Test
   public void testApplyWithLongCompanyName() {
     // Test a realistic long company name (still under typical limits)
-    String result =
-        (String) function.apply("株式会社サンプルシステムサービスカスタマーサポートセンター", null);
+    String result = (String) function.apply("株式会社サンプルシステムサービスカスタマーサポートセンター", null);
     assertTrue(result.startsWith("=?UTF-8?B?"));
     assertTrue(result.endsWith("?="));
     // Verify it's a valid encoded-word (though may exceed 75 chars - documented limitation)

@@ -62,10 +62,10 @@ import java.util.Map;
  * <ul>
  *   <li><b>75-character limit</b>: RFC 2047 specifies that encoded-words must not exceed 75
  *       characters. This implementation does NOT enforce this limit. For typical sender names
- *       (20-30 characters), this is not an issue. If you need to encode longer text, consider
- *       using {@code jakarta.mail.internet.MimeUtility.encodeWord()}.
- *   <li><b>Simplified Q-encoding</b>: The Quoted-Printable implementation is simplified and may
- *       not handle all edge cases defined in RFC 2047.
+ *       (20-30 characters), this is not an issue. If you need to encode longer text, consider using
+ *       {@code jakarta.mail.internet.MimeUtility.encodeWord()}.
+ *   <li><b>Simplified Q-encoding</b>: The Quoted-Printable implementation is simplified and may not
+ *       handle all edge cases defined in RFC 2047.
  * </ul>
  *
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc2047">RFC 2047</a>
