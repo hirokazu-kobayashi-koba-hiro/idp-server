@@ -12,7 +12,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-      flyway-migrator:
+      mysql-partition-setup:
         condition: service_completed_successfully
     deploy:
       resources:
@@ -92,7 +92,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-      flyway-migrator:
+      mysql-partition-setup:
         condition: service_completed_successfully
     deploy:
       resources:
@@ -162,15 +162,18 @@ services:
         -XX:MaxGCPauseMillis=100
 
   nginx:
-    image: nginx:alpine
+    build: ./docker/nginx
+    image: idp-nginx:latest
     container_name: load-balancer
     depends_on:
       - idp-server-1
       - idp-server-2
     volumes:
+      # Nginx configuration (read-only)
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
-      - "8080:80"
+      - "8080:80"     # HTTP
+      - "8445:8443"   # HTTPS + mTLS
 
   mysql:
     image: mysql:8.0
@@ -205,6 +208,23 @@ services:
       DB_USER_NAME: root
       DB_PASSWORD: ${MYSQL_ROOT_PASSWORD?MySQL root password is required. Set MYSQL_ROOT_PASSWORD environment variable.}
     command: [ "migrate" ]    # info / repair / clean
+
+  mysql-partition-setup:
+    build:
+      context: ./libs/idp-server-database
+      dockerfile: Dockerfile-mysql-partition-setup
+    image: idp-mysql-partition-setup:latest
+    container_name: mysql-partition-setup
+    restart: "no"
+    depends_on:
+      flyway-migrator:
+        condition: service_completed_successfully
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD?MySQL root password is required. Set MYSQL_ROOT_PASSWORD environment variable.}
+      MYSQL_DATABASE: idpserver
 
   redis:
     image: redis:7.2-alpine

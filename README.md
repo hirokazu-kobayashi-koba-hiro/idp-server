@@ -39,7 +39,12 @@ docker compose up -d
 
 For MySQL:
 ```bash
+# Generate environment variables
 ./init-generate-env.sh mysql
+
+# Setup admin tenant configuration
+./init-admin-tenant-config.sh
+
 docker compose -f docker-compose-mysql.yaml build
 docker compose -f docker-compose-mysql.yaml up -d
 ```

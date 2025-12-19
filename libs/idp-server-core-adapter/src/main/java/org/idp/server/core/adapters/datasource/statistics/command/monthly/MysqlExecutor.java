@@ -34,6 +34,7 @@ public class MysqlExecutor implements TenantStatisticsSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     // MySQL JSON_SET with nested path
+    // Note: Use quoted keys like $."2025-12-17" for keys containing hyphens
     String sql =
         """
                 INSERT INTO statistics_monthly (
@@ -56,11 +57,11 @@ public class MysqlExecutor implements TenantStatisticsSqlExecutor {
                 ON DUPLICATE KEY UPDATE
                     daily_metrics = JSON_SET(
                         COALESCE(daily_metrics, JSON_OBJECT()),
-                        CONCAT('$.', ?),
+                        CONCAT('$."', ?, '"'),
                         JSON_SET(
-                            COALESCE(JSON_EXTRACT(daily_metrics, CONCAT('$.', ?)), JSON_OBJECT()),
-                            CONCAT('$.', ?),
-                            COALESCE(JSON_EXTRACT(daily_metrics, CONCAT('$.', ?, '.', ?)), 0) + ?
+                            COALESCE(JSON_EXTRACT(daily_metrics, CONCAT('$."', ?, '"')), JSON_OBJECT()),
+                            CONCAT('$."', ?, '"'),
+                            COALESCE(JSON_EXTRACT(daily_metrics, CONCAT('$."', ?, '"."', ?, '"')), 0) + ?
                         )
                     ),
                     updated_at = NOW()
@@ -89,6 +90,7 @@ public class MysqlExecutor implements TenantStatisticsSqlExecutor {
       TenantIdentifier tenantId, LocalDate statMonth, String metricName, int increment) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
+    // Note: Use quoted keys like $."metric-name" for keys containing hyphens
     String sql =
         """
                 INSERT INTO statistics_monthly (
@@ -111,8 +113,8 @@ public class MysqlExecutor implements TenantStatisticsSqlExecutor {
                 ON DUPLICATE KEY UPDATE
                     monthly_summary = JSON_SET(
                         COALESCE(monthly_summary, JSON_OBJECT()),
-                        CONCAT('$.', ?),
-                        COALESCE(JSON_EXTRACT(monthly_summary, CONCAT('$.', ?)), 0) + ?
+                        CONCAT('$."', ?, '"'),
+                        COALESCE(JSON_EXTRACT(monthly_summary, CONCAT('$."', ?, '"')), 0) + ?
                     ),
                     updated_at = NOW()
                 """;
@@ -137,6 +139,7 @@ public class MysqlExecutor implements TenantStatisticsSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     // Atomically increment monthly_summary.mau and set daily_metrics[day].mau to cumulative value
+    // Note: Use quoted keys like $."2025-12-17" for keys containing hyphens
     String sql =
         """
                 INSERT INTO statistics_monthly (
@@ -165,10 +168,10 @@ public class MysqlExecutor implements TenantStatisticsSqlExecutor {
                     daily_metrics = JSON_SET(
                         JSON_SET(
                             COALESCE(daily_metrics, JSON_OBJECT()),
-                            CONCAT('$.', ?),
-                            COALESCE(JSON_EXTRACT(daily_metrics, CONCAT('$.', ?)), JSON_OBJECT())
+                            CONCAT('$."', ?, '"'),
+                            COALESCE(JSON_EXTRACT(daily_metrics, CONCAT('$."', ?, '"')), JSON_OBJECT())
                         ),
-                        CONCAT('$.', ?, '.mau'),
+                        CONCAT('$."', ?, '".mau'),
                         COALESCE(JSON_EXTRACT(monthly_summary, '$.mau'), 0) + ?
                     ),
                     updated_at = NOW()

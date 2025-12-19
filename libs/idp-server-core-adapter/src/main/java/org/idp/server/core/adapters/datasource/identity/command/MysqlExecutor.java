@@ -190,7 +190,7 @@ public class MysqlExecutor implements UserCommandSqlExecutor {
     params.add(jsonConverter.write(user.authenticationDevicesAsList()));
     params.add(jsonConverter.write(user.verifiedClaims()));
     params.add(user.statusName());
-    params.add(user.sub());
+    params.add(user.subAsUuid().toString());
     params.add(tenant.identifier().value());
 
     sqlExecutor.execute(sqlTemplate, params);
@@ -267,7 +267,7 @@ public class MysqlExecutor implements UserCommandSqlExecutor {
           sqlValues.add("(?, ?, ?, ?)");
           params.add(UUID.randomUUID().toString());
           params.add(tenant.identifier().value());
-          params.add(user.sub());
+          params.add(user.subAsUuid().toString());
           params.add(userRole.roleId());
         });
 
@@ -286,7 +286,7 @@ public class MysqlExecutor implements UserCommandSqlExecutor {
             WHERE user_id = ?;
             """;
     List<Object> deleteParams = new ArrayList<>();
-    deleteParams.add(user.sub());
+    deleteParams.add(user.subAsUuid().toString());
     sqlExecutor.execute(deleteSql, deleteParams);
   }
 
@@ -309,7 +309,7 @@ public class MysqlExecutor implements UserCommandSqlExecutor {
           sqlValues.add("(?, ?, ?)");
           params.add(UUID.randomUUID().toString());
           params.add(assignedTenant);
-          params.add(user.sub());
+          params.add(user.subAsUuid().toString());
         });
     sqlTemplateBuilder.append(String.join(",", sqlValues));
     sqlTemplateBuilder.append(";");
@@ -326,7 +326,7 @@ public class MysqlExecutor implements UserCommandSqlExecutor {
             WHERE user_id = ?;
             """;
     List<Object> deleteParams = new ArrayList<>();
-    deleteParams.add(user.sub());
+    deleteParams.add(user.subAsUuid().toString());
     sqlExecutor.execute(deleteSql, deleteParams);
   }
 
@@ -349,7 +349,7 @@ public class MysqlExecutor implements UserCommandSqlExecutor {
             """;
     List<Object> params = new ArrayList<>();
     params.add(user.currentTenantIdentifier().value());
-    params.add(user.sub());
+    params.add(user.subAsUuid().toString());
     sqlExecutor.execute(sqlTemplate, params);
   }
 
@@ -362,7 +362,7 @@ public class MysqlExecutor implements UserCommandSqlExecutor {
             WHERE user_id = ?;
             """;
     List<Object> deleteParams = new ArrayList<>();
-    deleteParams.add(user.sub());
+    deleteParams.add(user.subAsUuid().toString());
     sqlExecutor.execute(deleteSql, deleteParams);
   }
 
@@ -385,7 +385,7 @@ public class MysqlExecutor implements UserCommandSqlExecutor {
           sqlValues.add("(?, ?, ?)");
           params.add(UUID.randomUUID().toString());
           params.add(assignedOrganization);
-          params.add(user.sub());
+          params.add(user.subAsUuid().toString());
         });
     sqlTemplateBuilder.append(String.join(",", sqlValues));
     sqlTemplateBuilder.append(";");
@@ -402,7 +402,7 @@ public class MysqlExecutor implements UserCommandSqlExecutor {
             WHERE user_id = ?;
             """;
     List<Object> deleteParams = new ArrayList<>();
-    deleteParams.add(user.sub());
+    deleteParams.add(user.subAsUuid().toString());
     sqlExecutor.execute(deleteSql, deleteParams);
   }
 
@@ -425,7 +425,7 @@ public class MysqlExecutor implements UserCommandSqlExecutor {
             """;
     List<Object> params = new ArrayList<>();
     params.add(user.currentOrganizationIdentifier().value());
-    params.add(user.sub());
+    params.add(user.subAsUuid().toString());
     sqlExecutor.execute(sqlTemplate, params);
   }
 }

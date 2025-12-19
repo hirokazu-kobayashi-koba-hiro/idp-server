@@ -265,6 +265,177 @@ FROM cron.job;
 
 ---
 
+## MySQL版 ローカル環境（Docker Compose）
+
+### 構築フロー
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  MySQL コンテナ起動                                                          │
+│  ─────────────────────────────────────────────────────────────────────────  │
+│  image: mysql:8.0                                                           │
+│  command: --default-authentication-plugin=mysql_native_password             │
+│           --event-scheduler=ON                                              │
+│                                                                             │
+│  環境変数:                                                                   │
+│    MYSQL_ROOT_PASSWORD, MYSQL_DATABASE, MYSQL_USER, MYSQL_PASSWORD          │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │ healthcheck OK
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  flyway-migrator コンテナ                                                    │
+│  ─────────────────────────────────────────────────────────────────────────  │
+│  depends_on: mysql (service_healthy)                                        │
+│                                                                             │
+│  実行内容:                                                                   │
+│    V0_9_21_1__security_event_partition.mysql.sql                           │
+│      ├─ CREATE TABLE security_event (パーティション付き)                     │
+│      ├─ CREATE TABLE security_event_hook_results (パーティション付き)        │
+│      ├─ CREATE PROCEDURE (※Flywayの制限により不完全)                        │
+│      └─ CREATE EVENT evt_maintain_security_event_partitions                 │
+│                                                                             │
+│    V0_9_21_2__statistics.mysql.sql                                         │
+│      ├─ CREATE TABLE statistics_daily_users (パーティション付き)             │
+│      ├─ CREATE TABLE statistics_monthly_users (パーティション付き)           │
+│      ├─ CREATE TABLE statistics_yearly_users (パーティション付き)            │
+│      ├─ CREATE PROCEDURE (※Flywayの制限により不完全)                        │
+│      └─ CREATE EVENT evt_maintain_statistics_partitions                     │
+│                                                                             │
+│  【注意】Flywayは DELIMITER // を正しく処理できないため、                     │
+│         ストアドプロシージャは後続のコンテナで修正される                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │ service_completed_successfully
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  mysql-partition-setup コンテナ                                              │
+│  ─────────────────────────────────────────────────────────────────────────  │
+│  depends_on: flyway-migrator (service_completed_successfully)               │
+│                                                                             │
+│  Step 1: fix-stored-procedures.sql                                         │
+│    └─ ストアドプロシージャを正しいバージョンで再作成                          │
+│       (ローカル変数 → セッション変数 @p_name, @p_end に修正)                  │
+│                                                                             │
+│  Step 2: setup-partition-maintenance.sql                                   │
+│    ├─ CALL maintain_security_event_partitions()                            │
+│    │    └─ security_event, security_event_hook_results                     │
+│    │       90日分のパーティション作成 (例: p20251218 ~ p20260317)            │
+│    └─ CALL maintain_statistics_partitions()                                │
+│         ├─ statistics_daily_users: 90日分                                   │
+│         ├─ statistics_monthly_users: 3ヶ月分                                │
+│         └─ statistics_yearly_users: 3ヶ月分                                 │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │ service_completed_successfully
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  idp-server コンテナ起動                                                     │
+│  ─────────────────────────────────────────────────────────────────────────  │
+│  depends_on: mysql-partition-setup (service_completed_successfully)         │
+│                                                                             │
+│  パーティション設定完了後にアプリケーションが起動                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 日次メンテナンス（Event Scheduler）
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  02:30 AM: evt_maintain_security_event_partitions                          │
+│            └─ 新規パーティション作成 + 90日超過パーティション削除             │
+│                                                                             │
+│  03:00 AM: evt_maintain_statistics_partitions                              │
+│            └─ 新規パーティション作成 + 保持期間超過パーティション削除          │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 起動コマンド
+
+```bash
+# 全サービス起動
+docker compose -f docker-compose-mysql.yaml up -d
+
+# データベース関連のみ起動
+docker compose -f docker-compose-mysql.yaml up -d mysql flyway-migrator mysql-partition-setup
+```
+
+### 確認コマンド
+
+```bash
+# Event Scheduler の状態確認
+docker exec mysql mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "SHOW VARIABLES LIKE 'event_scheduler';"
+
+# パーティション一覧確認
+docker exec mysql mysql -uroot -p"$MYSQL_ROOT_PASSWORD" idpserver -e "
+SELECT TABLE_NAME, COUNT(*) as partition_count
+FROM information_schema.PARTITIONS
+WHERE TABLE_SCHEMA = 'idpserver'
+  AND TABLE_NAME IN ('security_event', 'security_event_hook_results',
+                     'statistics_daily_users', 'statistics_monthly_users', 'statistics_yearly_users')
+GROUP BY TABLE_NAME;"
+
+# イベント一覧確認
+docker exec mysql mysql -uroot -p"$MYSQL_ROOT_PASSWORD" idpserver -e "
+SELECT EVENT_NAME, STATUS, INTERVAL_VALUE, INTERVAL_FIELD, LAST_EXECUTED
+FROM information_schema.EVENTS
+WHERE EVENT_SCHEMA = 'idpserver';"
+
+# ストアドプロシージャ一覧確認
+docker exec mysql mysql -uroot -p"$MYSQL_ROOT_PASSWORD" idpserver -e "
+SELECT ROUTINE_NAME, ROUTINE_TYPE
+FROM information_schema.ROUTINES
+WHERE ROUTINE_SCHEMA = 'idpserver'
+ORDER BY ROUTINE_NAME;"
+```
+
+### パーティション保持期間
+
+| テーブル | パーティション単位 | 保持期間 |
+|---------|-----------------|---------|
+| security_event | 日次 | 90日 |
+| security_event_hook_results | 日次 | 90日 |
+| statistics_daily_users | 日次 | 90日 |
+| statistics_monthly_users | 月次 | 13ヶ月 |
+| statistics_yearly_users | 月次 | 60ヶ月 |
+
+### MySQL版の技術的制約と解決策
+
+#### 問題1: FlywayのDELIMITER制限
+
+**問題**: FlywayはMySQLの`DELIMITER //`ステートメントを正しく処理できない
+
+**解決策**: `mysql-partition-setup`コンテナで`fix-stored-procedures.sql`を実行し、
+正しいストアドプロシージャを再作成
+
+#### 問題2: PREPARE/EXECUTE内の変数スコープ
+
+**問題**: MySQLのストアドプロシージャ内で`DECLARE`で宣言したローカル変数は、
+`PREPARE/EXECUTE`で生成される動的SQL内から参照できない
+
+```sql
+-- NG: ローカル変数は PREPARE/EXECUTE 内で NULL になる
+DECLARE partition_name VARCHAR(20);
+SET partition_name = 'p20251218';
+SET @sql = CONCAT('ALTER TABLE ... PARTITION ', partition_name, ' ...');
+
+-- OK: セッション変数は PREPARE/EXECUTE 内で正しく参照できる
+SET @p_name = 'p20251218';
+SET @sql = CONCAT('ALTER TABLE ... PARTITION ', @p_name, ' ...');
+```
+
+**解決策**: すべてのストアドプロシージャでセッション変数（`@変数名`）を使用
+
+### 設定ファイル一覧
+
+| ファイル | 責務 |
+|---------|------|
+| `mysql/V0_9_21_1__security_event_partition.mysql.sql` | セキュリティイベントテーブル・パーティション設定 |
+| `mysql/V0_9_21_2__statistics.mysql.sql` | 統計テーブル・パーティション設定 |
+| `mysql/operation/fix-stored-procedures.sql` | ストアドプロシージャの修正版 |
+| `mysql/operation/setup-partition-maintenance.sql` | パーティション初期作成実行 |
+| `Dockerfile-mysql-partition-setup` | partition-setupコンテナ定義 |
+| `entrypoint-mysql-partition-setup.sh` | partition-setupエントリポイント |
+
+---
+
 ## docker build
 
 ```shell

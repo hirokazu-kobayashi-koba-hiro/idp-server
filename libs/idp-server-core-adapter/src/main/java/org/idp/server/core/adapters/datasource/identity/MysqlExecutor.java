@@ -35,7 +35,7 @@ public class MysqlExecutor implements UserSqlExecutor {
         String.format(selectSql, "WHERE idp_user.tenant_id = ? AND idp_user.id = ?");
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
-    params.add(userIdentifier.value());
+    params.add(userIdentifier.valueAsUuid().toString());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
@@ -164,7 +164,7 @@ public class MysqlExecutor implements UserSqlExecutor {
 
     if (queries.hasUserId()) {
       where.append(" AND idp_user.id = ?");
-      params.add(queries.userId());
+      params.add(queries.userIdAsUuid().toString());
     }
 
     if (queries.hasExternalUserId()) {
@@ -262,7 +262,7 @@ public class MysqlExecutor implements UserSqlExecutor {
 
     if (queries.hasUserId()) {
       where.append(" AND idp_user.id = ?");
-      params.add(queries.userId());
+      params.add(queries.userIdAsUuid().toString());
     }
 
     if (queries.hasExternalUserId()) {
@@ -446,8 +446,8 @@ public class MysqlExecutor implements UserSqlExecutor {
       """;
 
     List<Object> params = new ArrayList<>();
-    params.add(userIdentifier.value());
-    params.add(userIdentifier.value());
+    params.add(userIdentifier.valueAsUuid().toString());
+    params.add(userIdentifier.valueAsUuid().toString());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
@@ -472,8 +472,8 @@ public class MysqlExecutor implements UserSqlExecutor {
       """;
 
     List<Object> params = new ArrayList<>();
-    params.add(userIdentifier.value());
-    params.add(userIdentifier.value());
+    params.add(userIdentifier.valueAsUuid().toString());
+    params.add(userIdentifier.valueAsUuid().toString());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }

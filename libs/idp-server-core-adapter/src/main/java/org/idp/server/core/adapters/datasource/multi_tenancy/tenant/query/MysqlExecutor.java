@@ -60,7 +60,7 @@ public class MysqlExecutor implements TenantQuerySqlExecutor {
             + (includeDisabled ? "" : "\n                        AND enabled = true")
             + ";";
     List<Object> params = new ArrayList<>();
-    params.add(tenantIdentifier.value());
+    params.add(tenantIdentifier.valueAsUuid().toString());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
@@ -97,7 +97,7 @@ public class MysqlExecutor implements TenantQuerySqlExecutor {
         sqlTemplateBuilder.append(", ");
       }
       sqlTemplateBuilder.append("?");
-      params.add(tenantIdentifier.value());
+      params.add(tenantIdentifier.valueAsUuid().toString());
     }
 
     sqlTemplateBuilder.append(" )");

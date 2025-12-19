@@ -30,6 +30,7 @@ public class TenantYearlyStatisticsMysqlExecutor implements TenantYearlyStatisti
       TenantIdentifier tenantId, LocalDate statYear, String metricName, int increment) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
+    // Note: Use quoted keys like $."metric-name" for keys containing hyphens
     String sql =
         """
                 INSERT INTO statistics_yearly (
@@ -50,8 +51,8 @@ public class TenantYearlyStatisticsMysqlExecutor implements TenantYearlyStatisti
                 ON DUPLICATE KEY UPDATE
                     yearly_summary = JSON_SET(
                         COALESCE(yearly_summary, JSON_OBJECT()),
-                        CONCAT('$.', ?),
-                        COALESCE(JSON_EXTRACT(yearly_summary, CONCAT('$.', ?)), 0) + ?
+                        CONCAT('$."', ?, '"'),
+                        COALESCE(JSON_EXTRACT(yearly_summary, CONCAT('$."', ?, '"')), 0) + ?
                     ),
                     updated_at = NOW()
                 """;

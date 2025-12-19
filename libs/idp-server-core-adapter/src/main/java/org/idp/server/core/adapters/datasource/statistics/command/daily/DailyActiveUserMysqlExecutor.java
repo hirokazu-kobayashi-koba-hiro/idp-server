@@ -33,7 +33,8 @@ public class DailyActiveUserMysqlExecutor implements DailyActiveUserSqlExecutor 
       String userName) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    // MySQL: Use INSERT IGNORE + ROW_COUNT() to check if new row was inserted
+    // MySQL: Use INSERT IGNORE and check affected rows to detect if new row was inserted
+    // Returns 1 if inserted, 0 if duplicate was ignored
     String sql =
         """
                 INSERT IGNORE INTO statistics_daily_users (
@@ -51,6 +52,7 @@ public class DailyActiveUserMysqlExecutor implements DailyActiveUserSqlExecutor 
     params.add(userId.value());
     params.add(userName != null ? userName : "");
 
-    return sqlExecutor.executeAndCheckReturned(sql, params);
+    int affectedRows = sqlExecutor.executeAndReturnAffectedRows(sql, params);
+    return affectedRows > 0;
   }
 }

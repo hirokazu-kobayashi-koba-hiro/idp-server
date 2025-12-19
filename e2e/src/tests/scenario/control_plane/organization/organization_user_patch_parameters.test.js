@@ -3,6 +3,7 @@ import { deletion, get, patchWithJson, postWithJson } from "../../../../lib/http
 import { backendUrl } from "../../../testConfig";
 import { requestToken } from "../../../../api/oauthClient";
 import { v4 as uuidv4 } from "uuid";
+import { sleep } from "../../../../lib/util";
 
 /**
  * Organization User Management - PATCH API Parameter Test
@@ -19,7 +20,6 @@ describe("organization user management - PATCH parameter tests", () => {
   const userStatus = "REGISTERED";
 
   let accessToken;
-  let userId;
   let timestamp;
 
   beforeAll(async () => {
@@ -36,9 +36,12 @@ describe("organization user management - PATCH parameter tests", () => {
     expect(tokenResponse.status).toBe(200);
     accessToken = tokenResponse.data.access_token;
 
+  });
+
+  const creteUser = async () => {
     // Create test user
     timestamp = Date.now();
-    userId = uuidv4();
+    const userId = uuidv4();
     const createResponse = await postWithJson({
       url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users`,
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -80,9 +83,11 @@ describe("organization user management - PATCH parameter tests", () => {
     });
     expect(createResponse.status).toBe(201);
     console.log(`✅ Test user created: ${userId}`);
-  });
+    await sleep(1000);
+    return userId;
+  };
 
-  afterAll(async () => {
+  const deleteUser = async (userId) => {
     // Cleanup test user
     try {
       await deletion({
@@ -93,10 +98,11 @@ describe("organization user management - PATCH parameter tests", () => {
     } catch (error) {
       console.warn(`⚠️ Failed to delete test user: ${error.message}`);
     }
-  });
+  };
 
   describe("PATCH - Basic profile fields", () => {
     it("should update name only", async () => {
+      const userId = await creteUser();
       const newName = `Updated Name ${timestamp}`;
       const response = await patchWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
@@ -132,9 +138,11 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(getResponse.data.status).toBe(userStatus);
 
       console.log("✅ Name updated successfully with correct diff");
+      await deleteUser(userId);
     });
 
     it("should update given_name only", async () => {
+      const userId = await creteUser();
       const newGivenName = "NewGiven";
       const response = await patchWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
@@ -164,9 +172,11 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(getResponse.data.status).toBe(userStatus);
 
       console.log("✅ Given name updated successfully with correct diff");
+      await deleteUser(userId);
     });
 
     it("should update family_name only", async () => {
+      const userId = await creteUser();
       const newFamilyName = "NewFamily";
       const response = await patchWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
@@ -198,9 +208,11 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(getResponse.data.status).toBe(userStatus);
 
       console.log("✅ Family name updated successfully with correct diff");
+      await deleteUser(userId);
     });
 
     it("should update middle_name only", async () => {
+      const userId = await creteUser();
       const newMiddleName = "NewMiddle";
       const response = await patchWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
@@ -232,9 +244,11 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(getResponse.data.status).toBe(userStatus);
 
       console.log("✅ Middle name updated successfully with correct diff");
+      await deleteUser(userId);
     });
 
     it("should update nickname only", async () => {
+      const userId = await creteUser();
       const newNickname = `newnick${timestamp}`;
       const response = await patchWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
@@ -266,9 +280,11 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(getResponse.data.status).toBe(userStatus);
 
       console.log("✅ Nickname updated successfully with correct diff");
+      await deleteUser(userId);
     });
 
     it("should update preferred_username only", async () => {
+      const userId = await creteUser();
       const newPreferredUsername = `newpreferred${timestamp}`;
       const response = await patchWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
@@ -300,11 +316,13 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(getResponse.data.status).toBe(userStatus);
 
       console.log("✅ Preferred username updated successfully with correct diff");
+      await deleteUser(userId);
     });
   });
 
   describe("PATCH - Contact information", () => {
     it("should update email only", async () => {
+      const userId = await creteUser();
       const newEmail = `newemail${timestamp}@example.com`;
       const response = await patchWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
@@ -335,9 +353,11 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(getResponse.data.status).toBe(userStatus);
 
       console.log("✅ Email updated successfully with correct diff");
+      await deleteUser(userId);
     });
 
     it("should update phone_number only", async () => {
+      const userId = await creteUser();
       const newPhoneNumber = "+81-90-9876-5432";
       const response = await patchWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
@@ -370,11 +390,13 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(getResponse.data.status).toBe(userStatus);
 
       console.log("✅ Phone number updated successfully with correct diff");
+      await deleteUser(userId);
     });
   });
 
   describe("PATCH - Profile URLs", () => {
     it("should update profile URL only", async () => {
+      const userId = await creteUser();
       const newProfile = `https://example.com/newprofile/${timestamp}`;
       const response = await patchWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
@@ -406,9 +428,11 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(getResponse.data.status).toBe(userStatus);
 
       console.log("✅ Profile URL updated successfully with correct diff");
+      await deleteUser(userId);
     });
 
     it("should update picture URL only", async () => {
+      const userId = await creteUser();
       const newPicture = `https://example.com/newpicture/${timestamp}.jpg`;
       const response = await patchWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
@@ -440,9 +464,11 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(getResponse.data.status).toBe(userStatus);
 
       console.log("✅ Picture URL updated successfully with correct diff");
+      await deleteUser(userId);
     });
 
     it("should update website URL only", async () => {
+      const userId = await creteUser();
       const newWebsite = `https://example.com/newwebsite/${timestamp}`;
       const response = await patchWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
@@ -474,11 +500,13 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(getResponse.data.status).toBe(userStatus);
 
       console.log("✅ Website URL updated successfully with correct diff");
+      await deleteUser(userId);
     });
   });
 
   describe("PATCH - Demographics", () => {
     it("should update gender only", async () => {
+      const userId = await creteUser();
       const newGender = "male";
       const response = await patchWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
@@ -510,9 +538,11 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(getResponse.data.status).toBe(userStatus);
 
       console.log("✅ Gender updated successfully with correct diff");
+      await deleteUser(userId);
     });
 
     it("should update birthdate only", async () => {
+      const userId = await creteUser();
       const newBirthdate = "1985-12-25";
       const response = await patchWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
@@ -544,9 +574,11 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(getResponse.data.status).toBe(userStatus);
 
       console.log("✅ Birthdate updated successfully with correct diff");
+      await deleteUser(userId);
     });
 
     it("should update zoneinfo only", async () => {
+      const userId = await creteUser();
       const newZoneinfo = "America/New_York";
       const response = await patchWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
@@ -578,9 +610,11 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(getResponse.data.status).toBe(userStatus);
 
       console.log("✅ Zoneinfo updated successfully with correct diff");
+      await deleteUser(userId);
     });
 
     it("should update locale only", async () => {
+      const userId = await creteUser();
       const newLocale = "en-US";
       const response = await patchWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
@@ -612,11 +646,13 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(getResponse.data.status).toBe(userStatus);
 
       console.log("✅ Locale updated successfully with correct diff");
+      await deleteUser(userId);
     });
   });
 
   describe("PATCH - Address (partial object update)", () => {
     it("should update street_address only", async () => {
+      const userId = await creteUser();
       const newStreetAddress = "9-8-7 New Street";
       const response = await patchWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
@@ -651,9 +687,11 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(getResponse.data.status).toBe(userStatus);
 
       console.log("✅ Street address updated successfully with correct diff");
+      await deleteUser(userId);
     });
 
     it("should update postal_code only", async () => {
+      const userId = await creteUser();
       const newPostalCode = "100-0001";
       const response = await patchWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
@@ -688,11 +726,13 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(getResponse.data.status).toBe(userStatus);
 
       console.log("✅ Postal code updated successfully with correct diff");
+      await deleteUser(userId);
     });
   });
 
   describe("PATCH - Custom properties (partial object update)", () => {
     it("should update department in custom_properties only", async () => {
+      const userId = await creteUser();
       const newDepartment = "Marketing";
       const response = await patchWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
@@ -727,9 +767,11 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(getResponse.data.status).toBe(userStatus);
 
       console.log("✅ Custom property (department) updated successfully with correct diff");
+      await deleteUser(userId);
     });
 
     it("should add new custom property (replaces all existing ones)", async () => {
+      const userId = await creteUser();
       const response = await patchWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,
         headers: { Authorization: `Bearer ${accessToken}` },
@@ -763,11 +805,13 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(getResponse.data.status).toBe(userStatus);
 
       console.log("✅ New custom property added successfully (previous properties replaced)");
+      await deleteUser(userId);
     });
   });
 
   describe("PATCH - Multiple fields simultaneously", () => {
     it("should update name and email together", async () => {
+      const userId = await creteUser();
       const newName = `Final Name ${timestamp}`;
       const newEmail = `finalemail${timestamp}@example.com`;
 
@@ -809,6 +853,7 @@ describe("organization user management - PATCH parameter tests", () => {
       expect(getResponse.data.status).toBe(userStatus);
 
       console.log("✅ Multiple fields updated successfully with correct diff");
+      await deleteUser(userId);
     });
   });
 });

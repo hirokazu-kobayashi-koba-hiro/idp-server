@@ -151,7 +151,7 @@ public class MysqlExecutor implements OrganizationSqlExecutor {
               organization.enabled;
           """;
     List<Object> params = new ArrayList<>();
-    params.add(identifier.value());
+    params.add(identifier.valueAsUuid().toString());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }

@@ -74,7 +74,7 @@ public class MysqlExecutor implements IdentityVerificationApplicationQuerySqlExe
         selectSql
             + " "
             + """
-                 WHERE JSON_EXTRACT(application_details, CONCAT('$.', ?)) = ?
+                 WHERE JSON_EXTRACT(application_details, CONCAT('$."', ?, '"')) = ?
                  AND tenant_id = ?;
                 """;
 
@@ -152,7 +152,7 @@ public class MysqlExecutor implements IdentityVerificationApplicationQuerySqlExe
       for (Map.Entry<String, String> entry : queries.applicationDetails().entrySet()) {
         String key = entry.getKey();
         String value = entry.getValue();
-        sqlBuilder.append(" AND JSON_EXTRACT(application_details, CONCAT('$.', ?)) = ?");
+        sqlBuilder.append(" AND JSON_EXTRACT(application_details, CONCAT('$.\"', ?, '\"')) = ?");
         params.add(key);
         params.add(value);
       }
@@ -214,7 +214,7 @@ public class MysqlExecutor implements IdentityVerificationApplicationQuerySqlExe
       for (Map.Entry<String, String> entry : queries.applicationDetails().entrySet()) {
         String key = entry.getKey();
         String value = entry.getValue();
-        sqlBuilder.append(" AND JSON_EXTRACT(application_details, CONCAT('$.', ?)) = ?");
+        sqlBuilder.append(" AND JSON_EXTRACT(application_details, CONCAT('$.\"', ?, '\"')) = ?");
         params.add(key);
         params.add(value);
       }

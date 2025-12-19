@@ -371,6 +371,67 @@ public class SqlExecutor {
     }
   }
 
+  /**
+   * Execute SQL and return the number of affected rows
+   *
+   * <p>Useful for INSERT IGNORE to detect if insertion succeeded (MySQL)
+   *
+   * @param sql SQL statement
+   * @param params SQL parameters
+   * @return number of affected rows (1 if inserted, 0 if ignored due to duplicate)
+   */
+  public int executeAndReturnAffectedRows(String sql, List<Object> params) {
+    try (PreparedStatement prepareStatement = connection.prepareStatement(sql)) {
+
+      int index = 1;
+      for (Object param : params) {
+        if (param instanceof String stringValue) {
+          prepareStatement.setString(index, stringValue);
+        }
+        if (param instanceof Integer integerValue) {
+          prepareStatement.setInt(index, integerValue);
+        }
+        if (param instanceof Long longValue) {
+          prepareStatement.setLong(index, longValue);
+        }
+        if (param instanceof Boolean booleanValue) {
+          prepareStatement.setBoolean(index, booleanValue);
+        }
+        if (param instanceof byte[] binary) {
+          prepareStatement.setBytes(index, binary);
+        }
+        if (param instanceof UUID uuid) {
+          prepareStatement.setObject(index, uuid);
+        }
+        if (param instanceof LocalDate localDate) {
+          prepareStatement.setObject(index, localDate);
+        }
+        if (param instanceof LocalDateTime localDateTime) {
+          prepareStatement.setObject(index, localDateTime);
+        }
+        if (param == null) {
+          prepareStatement.setObject(index, null);
+        }
+        index++;
+      }
+
+      return prepareStatement.executeUpdate();
+
+    } catch (SQLException exception) {
+      switch (SqlErrorClassifier.classify(exception)) {
+        case UNIQUE_VIOLATION ->
+            throw new SqlDuplicateKeyException(
+                "Duplicate key violation: " + exception.getMessage(), exception);
+        case NOT_NULL_VIOLATION, CHECK_VIOLATION ->
+            throw new SqlBadRequestException(
+                "Invalid data for: " + exception.getMessage(), exception);
+        default ->
+            throw new SqlRuntimeException(
+                "Sql execution is error: " + exception.getMessage(), exception);
+      }
+    }
+  }
+
   private List<Map<String, String>> select(String sql, PreparedStatement preparedStatement)
       throws SQLException {
     ResultSet resultSet = preparedStatement.executeQuery();

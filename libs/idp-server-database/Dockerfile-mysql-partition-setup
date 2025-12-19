@@ -1,0 +1,14 @@
+# MySQL partition setup container
+FROM mysql:8.0
+
+WORKDIR /scripts
+
+# Copy setup scripts
+COPY mysql/operation/fix-stored-procedures.sql ./fix-stored-procedures.sql
+COPY mysql/operation/setup-partition-maintenance.sql ./setup-partition-maintenance.sql
+COPY entrypoint-mysql-partition-setup.sh /entrypoint.sh
+
+# Grant execution permissions
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]

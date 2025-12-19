@@ -555,7 +555,7 @@ describe("Use Case: MFA Security Event Logging", () => {
         Authorization: `Bearer ${adminAccessToken}`,
       },
       params: {
-        type: "password_failure",
+        event_type: "password_failure",
         limit: 10,
       },
     });
@@ -881,7 +881,7 @@ describe("Use Case: MFA Security Event Logging", () => {
         Authorization: `Bearer ${adminAccessToken}`,
       },
       params: {
-        type: "email_verification_failure",
+        event_type: "email_verification_failure",
         limit: 10,
       },
     });
@@ -1025,7 +1025,7 @@ describe("Use Case: MFA Security Event Logging", () => {
         Authorization: `Bearer ${adminAccessToken}`,
       },
       params: {
-        type: "sms_verification_failure",
+        event_type: "sms_verification_failure",
         limit: 10,
       },
     });
@@ -1185,7 +1185,7 @@ describe("Use Case: MFA Security Event Logging", () => {
         Authorization: `Bearer ${adminAccessToken}`,
       },
       params: {
-        type: "sms_verification_failure",
+        event_type: "sms_verification_failure",
         limit: 10,
       },
     });
@@ -1346,7 +1346,7 @@ describe("Use Case: MFA Security Event Logging", () => {
         Authorization: `Bearer ${adminAccessToken}`,
       },
       params: {
-        type: "email_verification_failure",
+        event_type: "email_verification_failure",
         limit: 10,
       },
     });
@@ -1647,7 +1647,7 @@ describe("Use Case: MFA Security Event Logging", () => {
         Authorization: `Bearer ${adminAccessToken}`,
       },
       params: {
-        type: "email_verification_failure",
+        event_type: "email_verification_failure",
         limit: 10,
       },
     });
@@ -1774,7 +1774,7 @@ describe("Use Case: MFA Security Event Logging", () => {
         Authorization: `Bearer ${adminAccessToken}`,
       },
       params: {
-        type: "sms_verification_failure",
+        event_type: "sms_verification_failure",
         limit: 10,
       },
     });

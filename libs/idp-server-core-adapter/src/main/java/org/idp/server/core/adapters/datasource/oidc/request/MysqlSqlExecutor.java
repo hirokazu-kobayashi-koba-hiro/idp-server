@@ -272,7 +272,7 @@ public class MysqlSqlExecutor implements AuthorizationRequestSqlExecutor {
                 AND tenant_id = ?;
                 """;
     List<Object> params = new ArrayList<>();
-    params.add(authorizationRequestIdentifier.value());
+    params.add(authorizationRequestIdentifier.valueAsUuid().toString());
     params.add(tenant.identifierValue());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
