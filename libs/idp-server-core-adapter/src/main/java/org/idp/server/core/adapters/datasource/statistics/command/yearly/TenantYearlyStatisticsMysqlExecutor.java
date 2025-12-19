@@ -45,8 +45,8 @@ public class TenantYearlyStatisticsMysqlExecutor implements TenantYearlyStatisti
                     ?,
                     ?,
                     JSON_OBJECT(?, ?),
-                    NOW(),
-                    NOW()
+                    NOW(6),
+                    NOW(6)
                 )
                 ON DUPLICATE KEY UPDATE
                     yearly_summary = JSON_SET(
@@ -54,7 +54,7 @@ public class TenantYearlyStatisticsMysqlExecutor implements TenantYearlyStatisti
                         CONCAT('$."', ?, '"'),
                         COALESCE(JSON_EXTRACT(yearly_summary, CONCAT('$."', ?, '"')), 0) + ?
                     ),
-                    updated_at = NOW()
+                    updated_at = NOW(6)
                 """;
 
     List<Object> params = new ArrayList<>();

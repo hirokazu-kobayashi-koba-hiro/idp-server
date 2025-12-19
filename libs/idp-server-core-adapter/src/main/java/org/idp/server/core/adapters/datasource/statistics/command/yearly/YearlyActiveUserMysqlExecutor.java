@@ -59,8 +59,8 @@ public class YearlyActiveUserMysqlExecutor implements YearlyActiveUserSqlExecuto
                     user_name,
                     last_used_at,
                     created_at
-                ) VALUES (?, ?, ?, ?, NOW(), NOW())
-                ON DUPLICATE KEY UPDATE last_used_at = NOW()
+                ) VALUES (?, ?, ?, ?, NOW(6), NOW(6))
+                ON DUPLICATE KEY UPDATE last_used_at = NOW(6)
                 """;
 
     List<Object> params = new ArrayList<>();

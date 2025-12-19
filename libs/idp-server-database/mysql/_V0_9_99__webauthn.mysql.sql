@@ -31,9 +31,9 @@ CREATE TABLE webauthn_credentials
     transports              JSON,                           -- Authenticator transports (e.g., ["usb", "nfc", "ble", "internal", "hybrid"])
 
     -- Timestamps
-    created_at              DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at              DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
-    authenticated_at        DATETIME,                       -- Last authentication timestamp
+    created_at              DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
+    updated_at              DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) NOT NULL,
+    authenticated_at        DATETIME(6),                    -- Last authentication timestamp
 
     -- Foreign Keys
     CONSTRAINT fk_webauthn_tenant FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE

@@ -51,8 +51,8 @@ public class MysqlExecutor implements TenantStatisticsSqlExecutor {
                     ?,
                     JSON_OBJECT(),
                     JSON_OBJECT(?, JSON_OBJECT(?, ?)),
-                    NOW(),
-                    NOW()
+                    NOW(6),
+                    NOW(6)
                 )
                 ON DUPLICATE KEY UPDATE
                     daily_metrics = JSON_SET(
@@ -64,7 +64,7 @@ public class MysqlExecutor implements TenantStatisticsSqlExecutor {
                             COALESCE(JSON_EXTRACT(daily_metrics, CONCAT('$."', ?, '"."', ?, '"')), 0) + ?
                         )
                     ),
-                    updated_at = NOW()
+                    updated_at = NOW(6)
                 """;
 
     List<Object> params = new ArrayList<>();
@@ -107,8 +107,8 @@ public class MysqlExecutor implements TenantStatisticsSqlExecutor {
                     ?,
                     JSON_OBJECT(?, ?),
                     JSON_OBJECT(),
-                    NOW(),
-                    NOW()
+                    NOW(6),
+                    NOW(6)
                 )
                 ON DUPLICATE KEY UPDATE
                     monthly_summary = JSON_SET(
@@ -116,7 +116,7 @@ public class MysqlExecutor implements TenantStatisticsSqlExecutor {
                         CONCAT('$."', ?, '"'),
                         COALESCE(JSON_EXTRACT(monthly_summary, CONCAT('$."', ?, '"')), 0) + ?
                     ),
-                    updated_at = NOW()
+                    updated_at = NOW(6)
                 """;
 
     List<Object> params = new ArrayList<>();
@@ -156,8 +156,8 @@ public class MysqlExecutor implements TenantStatisticsSqlExecutor {
                     ?,
                     JSON_OBJECT('mau', ?),
                     JSON_OBJECT(?, JSON_OBJECT('mau', ?)),
-                    NOW(),
-                    NOW()
+                    NOW(6),
+                    NOW(6)
                 )
                 ON DUPLICATE KEY UPDATE
                     monthly_summary = JSON_SET(
@@ -174,7 +174,7 @@ public class MysqlExecutor implements TenantStatisticsSqlExecutor {
                         CONCAT('$."', ?, '".mau'),
                         COALESCE(JSON_EXTRACT(monthly_summary, '$.mau'), 0) + ?
                     ),
-                    updated_at = NOW()
+                    updated_at = NOW(6)
                 """;
 
     List<Object> params = new ArrayList<>();

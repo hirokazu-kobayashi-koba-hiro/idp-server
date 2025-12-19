@@ -3,8 +3,8 @@ CREATE TABLE organization
     id          CHAR(36)                           NOT NULL,
     name        VARCHAR(255)                       NOT NULL,
     description TEXT,
-    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at  DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
+    updated_at  DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     enabled     BOOLEAN DEFAULT TRUE               NOT NULL,
     PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -29,8 +29,8 @@ CREATE TABLE tenant
     features                   JSON,
     main_organization_id CHAR(36)                    NOT NULL,
 
-    created_at                 DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at                 DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at                 DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at                 DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     enabled                    BOOLEAN      NOT NULL DEFAULT TRUE,
     PRIMARY KEY (id),
     FOREIGN KEY (main_organization_id) REFERENCES organization (id)
@@ -46,7 +46,7 @@ CREATE TABLE organization_tenants
     id              CHAR(36)                           NOT NULL,
     organization_id CHAR(36)                           NOT NULL,
     tenant_id       CHAR(36)                           NOT NULL,
-    assigned_at     DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    assigned_at     DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (id),
     UNIQUE (organization_id, tenant_id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
@@ -58,8 +58,8 @@ CREATE TABLE authorization_server_configuration
     tenant_id    CHAR(36)                           NOT NULL,
     token_issuer TEXT                               NOT NULL,
     payload      JSON                               NOT NULL,
-    created_at   DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at   DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at   DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
+    updated_at   DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     enabled      BOOLEAN                            NOT NULL DEFAULT TRUE,
     PRIMARY KEY (tenant_id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
@@ -73,8 +73,8 @@ CREATE TABLE permission
     tenant_id   CHAR(36)                           NOT NULL,
     name        VARCHAR(255)                       NOT NULL,
     description TEXT,
-    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at  DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
+    updated_at  DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (id),
     CONSTRAINT uk_tenant_permission UNIQUE (tenant_id, name),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
@@ -86,8 +86,8 @@ CREATE TABLE role
     tenant_id   CHAR(36)                           NOT NULL,
     name        VARCHAR(255)                       NOT NULL,
     description VARCHAR(255),
-    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at  DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
+    updated_at  DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (id),
     CONSTRAINT uk_tenant_role UNIQUE (tenant_id, name),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
@@ -101,7 +101,7 @@ CREATE TABLE role_permission
     tenant_id     CHAR(36)                           NOT NULL,
     role_id       CHAR(36)                           NOT NULL,
     permission_id CHAR(36)                           NOT NULL,
-    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at    DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (id),
     UNIQUE (role_id, permission_id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
@@ -152,8 +152,8 @@ CREATE TABLE idp_user
     authentication_devices         JSON,
     verified_claims                JSON,
     status                         VARCHAR(255)                       NOT NULL,
-    created_at                     DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at                     DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at                     DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
+    updated_at                     DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (id),
     -- FK constraint removed for performance with billion-scale records (Issue #832)
     -- Application layer handles referential integrity via TenantDataCleanupService
@@ -175,7 +175,7 @@ CREATE TABLE idp_user_assigned_tenants
     id          CHAR(36)                           NOT NULL,
     tenant_id   CHAR(36)                           NOT NULL,
     user_id     CHAR(36)                           NOT NULL,
-    assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    assigned_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (id),
     UNIQUE (tenant_id, user_id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
@@ -187,8 +187,8 @@ CREATE TABLE idp_user_current_tenant
 (
     user_id    CHAR(36)                           NOT NULL,
     tenant_id  CHAR(36)                           NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    created_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
+    updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (user_id),
     FOREIGN KEY (user_id) REFERENCES idp_user (id) ON DELETE CASCADE,
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
@@ -200,7 +200,7 @@ CREATE TABLE idp_user_assigned_organizations
     id              CHAR(36)                            NOT NULL,
     organization_id CHAR(36)                            NOT NULL,
     user_id         CHAR(36)                            NOT NULL,
-    assigned_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    assigned_at     DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (organization_id) REFERENCES organization (id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES idp_user (id) ON DELETE CASCADE,
@@ -213,7 +213,7 @@ CREATE TABLE idp_user_roles
     tenant_id   CHAR(36)                           NOT NULL,
     user_id     CHAR(36)                           NOT NULL,
     role_id     CHAR(36)                           NOT NULL,
-    assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    assigned_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (id),
     UNIQUE (user_id, role_id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
@@ -238,8 +238,8 @@ CREATE TABLE idp_user_current_organization
 (
     user_id         CHAR(36)                           NOT NULL,
     organization_id CHAR(36)                           NOT NULL,
-    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at      DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
+    updated_at      DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (user_id),
     FOREIGN KEY (user_id) REFERENCES idp_user (id) ON DELETE CASCADE,
     FOREIGN KEY (organization_id) REFERENCES organization (id) ON DELETE CASCADE
@@ -251,8 +251,8 @@ CREATE TABLE client_configuration
     id_alias   VARCHAR(255),
     tenant_id  CHAR(36)                           NOT NULL,
     payload    JSON                               NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
+    updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     enabled    BOOLEAN                            NOT NULL DEFAULT TRUE,
     PRIMARY KEY (id),
     CONSTRAINT uk_client_configuration_alias unique (id_alias, tenant_id),
@@ -290,8 +290,8 @@ CREATE TABLE authorization_request
     authorization_details JSON,
     custom_params         JSON                               NOT NULL,
     expires_in            TEXT                               NOT NULL,
-    expires_at            TIMESTAMP                          NOT NULL,
-    created_at            DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    expires_at            DATETIME(6)                        NOT NULL,
+    created_at            DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -312,9 +312,9 @@ CREATE TABLE authorization_code_grant
     userinfo_claims          TEXT                               NOT NULL,
     custom_properties        JSON,
     authorization_details    JSON,
-    expires_at               DATETIME                           NOT NULL,
+    expires_at               DATETIME(6)                        NOT NULL,
     consent_claims           JSON,
-    created_at               DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at               DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (authorization_request_id),
     FOREIGN KEY (authorization_request_id) REFERENCES authorization_request (id) ON DELETE CASCADE,
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
@@ -354,9 +354,9 @@ CREATE TABLE oauth_token
     c_nonce                         TEXT                               NOT NULL,
     c_nonce_expires_in              TEXT                               NOT NULL,
     consent_claims                  JSON,
-    expires_at                      DATETIME                           NOT NULL,
-    created_at                      DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at                      DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    expires_at                      DATETIME(6)                        NOT NULL,
+    created_at                      DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
+    updated_at                      DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (id)
     -- FK constraint removed for performance with billion-scale records (Issue #832)
     -- Application layer handles referential integrity via TenantDataCleanupService
@@ -386,8 +386,8 @@ CREATE TABLE backchannel_authentication_request
     request_object            TEXT,
     authorization_details     JSON,
     expires_in                TEXT                               NOT NULL,
-    expires_at                TIMESTAMP                          NOT NULL,
-    created_at                DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    expires_at                DATETIME(6)                        NOT NULL,
+    created_at                DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -397,7 +397,7 @@ CREATE TABLE ciba_grant
     backchannel_authentication_request_id CHAR(36)                           NOT NULL,
     tenant_id                             CHAR(36)                           NOT NULL,
     auth_req_id                           VARCHAR(255)                       NOT NULL,
-    expires_at                            DATETIME                           NOT NULL,
+    expires_at                            DATETIME(6)                        NOT NULL,
     polling_interval                      TEXT                               NOT NULL,
     status                                VARCHAR(100)                       NOT NULL,
     user_id                               CHAR(36)                           NOT NULL,
@@ -412,7 +412,7 @@ CREATE TABLE ciba_grant
     custom_properties                     JSON,
     authorization_details                 JSON,
     consent_claims                        JSON,
-    created_at                            DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at                            DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (backchannel_authentication_request_id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -435,9 +435,9 @@ CREATE TABLE authorization_granted
     custom_properties     JSON,
     authorization_details JSON,
     consent_claims        JSON,
-    created_at            DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at            DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    revoked_at            DATETIME,
+    created_at            DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
+    updated_at            DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
+    revoked_at            DATETIME(6),
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -460,7 +460,7 @@ CREATE TABLE security_event
     ip_address       VARCHAR(45),
     user_agent       TEXT,
     detail           JSON         NOT NULL,
-    created_at       DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at       DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6),
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -481,8 +481,8 @@ CREATE TABLE security_event_hook_configurations
     payload         JSON         NOT NULL,
     execution_order INTEGER      NOT NULL DEFAULT 0,
     enabled         TINYINT      NOT NULL DEFAULT TRUE,
-    created_at      DATETIME              DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at      DATETIME              DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at      DATETIME(6)           DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
+    updated_at      DATETIME(6)           DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -501,8 +501,8 @@ CREATE TABLE security_event_hook_results
     security_event_payload                JSON                               NOT NULL,
     security_event_hook_execution_payload JSON,
     status                                VARCHAR(255)                       NOT NULL,
-    created_at                            DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at                            DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at                            DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
+    updated_at                            DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -517,8 +517,8 @@ CREATE TABLE federation_configurations
     type         VARCHAR(255)                       NOT NULL,
     sso_provider VARCHAR(255)                       NOt NULL,
     payload      JSON                               NOT NULL,
-    created_at   DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at   DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at   DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
+    updated_at   DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     enabled      BOOLEAN                            NOT NULL DEFAULT TRUE,
     PRIMARY KEY (id),
     CONSTRAINT uk_tenant_federation_configurations UNIQUE (tenant_id, type, sso_provider),
@@ -534,8 +534,8 @@ CREATE TABLE federation_sso_session
     id         CHAR(36)                           NOT NULL,
     tenant_id  CHAR(36)                           NOT NULL,
     payload    JSON                               NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
+    updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -545,8 +545,8 @@ CREATE TABLE idp_user_sso_credentials
     tenant_id       CHAR(36)                NOT NULL,
     sso_provider    VARCHAR(255)            NOT NULL,
     sso_credentials JSON                    NOT NULL,
-    created_at      TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at      TIMESTAMP DEFAULT now() NOT NULL,
+    created_at      DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
+    updated_at      DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (user_id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -559,8 +559,8 @@ CREATE TABLE authentication_configuration
     type       VARCHAR(255)                       NOT NULL,
     payload    JSON                               NOT NULL,
     enabled    TINYINT                            NOT NULL DEFAULT TRUE,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
+    updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
     UNIQUE (tenant_id, type)
@@ -575,8 +575,8 @@ CREATE TABLE authentication_policy
     flow       VARCHAR(255)                       NOT NULL,
     payload    JSON                               NOT NULL,
     enabled    TINYINT                            NOT NULL DEFAULT TRUE,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
+    updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
     UNIQUE (tenant_id, flow)
@@ -599,9 +599,9 @@ CREATE TABLE authentication_transaction
     authentication_policy         JSON,
     interactions                  JSON,
     attributes                    JSON,
-    expires_at                    DATETIME               NOT NULL,
-    created_at                    DATETIME DEFAULT now() NOT NULL,
-    updated_at                    DATETIME DEFAULT now() NOT NULL,
+    expires_at                    DATETIME(6)            NOT NULL,
+    created_at                    DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
+    updated_at                    DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -619,8 +619,8 @@ CREATE TABLE authentication_interactions
     tenant_id                     CHAR(36)                           NOT NULL,
     interaction_type              VARCHAR(255)                       NOT NULL,
     payload                       JSON                               NOT NULL,
-    created_at                    DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at                    DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at                    DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
+    updated_at                    DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (authentication_transaction_id, interaction_type),
     FOREIGN KEY (authentication_transaction_id) REFERENCES authentication_transaction (id) ON DELETE CASCADE,
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
@@ -633,8 +633,8 @@ CREATE TABLE identity_verification_configuration
     type       VARCHAR(255)                       NOT NULL,
     payload    JSON                               NOT NULL,
     enabled    TINYINT                            NOT NULL DEFAULT TRUE,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
+    updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -652,10 +652,10 @@ CREATE TABLE identity_verification_application
     application_details JSON                               NOT NULL,
     processes           JSON                               NOT NULL,
     status              VARCHAR(255)                       NOT NULL,
-    requested_at        DATETIME                           NOT NULL,
+    requested_at        DATETIME(6)                        NOT NULL,
     attributes          JSON,
-    created_at          DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at          DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at          DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
+    updated_at          DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -672,12 +672,12 @@ CREATE TABLE identity_verification_result
     application_id    CHAR(36),
     verification_type VARCHAR(255),
     verified_claims   JSON         NOT NULL,
-    verified_at       DATETIME     NOT NULL,
-    valid_until       DATETIME,
+    verified_at       DATETIME(6)  NOT NULL,
+    valid_until       DATETIME(6),
     source            VARCHAR(255) NOT NULL DEFAULT 'application',
     source_details    JSON,
     attributes        JSON,
-    created_at        DATETIME              DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at        DATETIME(6)           DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (application_id) REFERENCES identity_verification_application (id) ON DELETE CASCADE,
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
@@ -698,7 +698,7 @@ CREATE TABLE idp_user_lifecycle_event_result
     executor_name  VARCHAR(255) NOT NULL,
     status         VARCHAR(32)  NOT NULL,
     payload        JSON,
-    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at     DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6),
     PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -724,7 +724,7 @@ CREATE TABLE audit_log
     user_agent             TEXT,
     dry_run                BOOLEAN,
     attributes             JSON,
-    created_at             TIMESTAMP             DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at             DATETIME(6)           DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

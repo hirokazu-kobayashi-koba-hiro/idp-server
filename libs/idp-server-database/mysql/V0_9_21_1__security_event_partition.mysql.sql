@@ -47,7 +47,7 @@ CREATE TABLE security_event (
     ip_address       VARCHAR(45),
     user_agent       TEXT,
     detail           JSON         NOT NULL,
-    created_at       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at       DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
 
     PRIMARY KEY (id, created_at),
     KEY idx_events_type (type),
@@ -78,8 +78,8 @@ CREATE TABLE security_event_hook_results (
     security_event_payload                JSON         NOT NULL,
     security_event_hook_execution_payload JSON         COMMENT 'Stores the execution result payload from security event hooks for resending and debugging purposes',
     status                                VARCHAR(255) NOT NULL,
-    created_at                            DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at                            DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at                            DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at                            DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
 
     PRIMARY KEY (id, created_at),
     KEY idx_hook_results_tenant (tenant_id),
