@@ -84,6 +84,9 @@ public class FunctionRegistry {
     SplitFunction splitFunction = new SplitFunction();
     temp.put(splitFunction.name(), splitFunction);
 
+    MimeEncodedWordFunction mimeEncodedWordFunction = new MimeEncodedWordFunction();
+    temp.put(mimeEncodedWordFunction.name(), mimeEncodedWordFunction);
+
     // Initialize map field before calling setFunctionRegistry to prevent partial construction
     // escape
     this.map = Collections.unmodifiableMap(temp);
