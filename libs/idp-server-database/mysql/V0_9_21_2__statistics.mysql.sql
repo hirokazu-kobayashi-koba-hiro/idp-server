@@ -42,8 +42,8 @@ CREATE TABLE statistics_monthly (
       "31": {"dau": 95, "logins": 1400, "failures": 18}
     } */
 
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
 
     UNIQUE KEY uk_tenant_month (tenant_id, stat_month),
     KEY idx_statistics_monthly_tenant_month (tenant_id, stat_month DESC)
@@ -75,8 +75,8 @@ CREATE TABLE statistics_yearly (
       "new_users": 2000
     } */
 
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
 
     UNIQUE KEY uk_tenant_year (tenant_id, stat_year),
     KEY idx_statistics_yearly_tenant_year (tenant_id, stat_year DESC)
@@ -93,8 +93,8 @@ CREATE TABLE statistics_daily_users (
     stat_date DATE NOT NULL,
     user_id CHAR(36) NOT NULL,
     user_name VARCHAR(255) NOT NULL DEFAULT '',
-    last_used_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_used_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
 
     PRIMARY KEY (tenant_id, stat_date, user_id),
     KEY idx_statistics_daily_users_tenant_date (tenant_id, stat_date)
@@ -114,8 +114,8 @@ CREATE TABLE statistics_monthly_users (
     stat_month DATE NOT NULL COMMENT 'First day of month (e.g., 2025-01-01)',
     user_id CHAR(36) NOT NULL,
     user_name VARCHAR(255) NOT NULL DEFAULT '',
-    last_used_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_used_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
 
     PRIMARY KEY (tenant_id, stat_month, user_id),
     KEY idx_statistics_monthly_users_tenant_month (tenant_id, stat_month)
@@ -140,8 +140,8 @@ CREATE TABLE statistics_yearly_users (
     stat_year DATE NOT NULL COMMENT 'Fiscal year start date (e.g., 2025-04-01 for April fiscal year)',
     user_id CHAR(36) NOT NULL,
     user_name VARCHAR(255) NOT NULL DEFAULT '',
-    last_used_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_used_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
 
     PRIMARY KEY (tenant_id, stat_year, user_id),
     KEY idx_statistics_yearly_users_tenant_year (tenant_id, stat_year),

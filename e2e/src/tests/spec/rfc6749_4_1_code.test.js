@@ -707,7 +707,6 @@ describe("The OAuth 2.0 Authorization Framework code", () => {
       });
 
       console.log(tokenResponse.data);
-      //MySQL is error. Because timestamp unit is second. TODO https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1089
       expect(tokenResponse.status).toBe(400);
       expect(matchWithUSASCII(tokenResponse.data.error)).toBe(true);
       expect(tokenResponse.data.error).toEqual("invalid_grant");

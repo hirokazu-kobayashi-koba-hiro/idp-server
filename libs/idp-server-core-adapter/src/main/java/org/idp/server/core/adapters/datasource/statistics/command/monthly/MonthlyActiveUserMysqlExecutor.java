@@ -43,7 +43,7 @@ public class MonthlyActiveUserMysqlExecutor implements MonthlyActiveUserSqlExecu
                     user_id,
                     user_name,
                     created_at
-                ) VALUES (?, ?, ?, ?, NOW())
+                ) VALUES (?, ?, ?, ?, NOW(6))
                 """;
 
     List<Object> params = new ArrayList<>();
