@@ -15,13 +15,10 @@ import { sleep } from "../../../lib/util";
 /**
  * CIBA Use Case: Security Event Authentication Device IDs (Issue #1124)
  *
- * This test verifies the configuration for authentication device IDs in security events:
- * - include_authentication_device_ids configuration is accepted
- * - CIBA flow completes successfully with the configuration enabled
- *
- * NOTE: Currently, authentication_devices are not persisted during onboarding.
- * When this is fixed, the device IDs will appear in security events.
- * See: Issue for onboarding to persist authentication_devices
+ * This test verifies that authentication device IDs are included in security events:
+ * - include_authentication_device_ids=true enables device ID logging
+ * - CIBA flow security events contain the user's authentication device IDs
+ * - Device IDs match the devices registered during onboarding
  */
 describe("CIBA Use Case: Security Event Authentication Device IDs (Issue #1124)", () => {
   let systemAccessToken;
