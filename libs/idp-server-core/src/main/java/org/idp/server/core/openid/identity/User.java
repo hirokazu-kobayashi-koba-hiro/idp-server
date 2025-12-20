@@ -777,6 +777,13 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     return authenticationDevices != null && !authenticationDevices.isEmpty();
   }
 
+  public List<String> authenticationDeviceIds() {
+    if (!hasAuthenticationDevices()) {
+      return List.of();
+    }
+    return authenticationDevices.stream().map(AuthenticationDevice::id).toList();
+  }
+
   public String currentTenant() {
     return currentTenant;
   }
