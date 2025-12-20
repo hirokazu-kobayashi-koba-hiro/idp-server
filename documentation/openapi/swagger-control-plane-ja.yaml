@@ -7116,6 +7116,14 @@ components:
         include_verified_claims:
           type: boolean
           default: false
+        include_status:
+          type: boolean
+          default: true
+          description: ユーザーステータス（REGISTERED, LOCKED等）を含める
+        include_authentication_device_ids:
+          type: boolean
+          default: false
+          description: 認証デバイスIDリストを含める
 
     IdentityPolicyConfiguration:
       type: object

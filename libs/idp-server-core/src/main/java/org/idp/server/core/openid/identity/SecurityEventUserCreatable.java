@@ -56,6 +56,8 @@ public interface SecurityEventUserCreatable {
     List<String> permissions = user.permissions();
     String currentTenant = user.currentTenant();
     List<String> assignedTenants = user.assignedTenants();
+    String status = user.hasStatus() ? user.status().name() : null;
+    List<String> authenticationDeviceIds = user.authenticationDeviceIds();
 
     return new SecurityEventUser(
         id,
@@ -76,7 +78,9 @@ public interface SecurityEventUserCreatable {
         roles,
         permissions,
         currentTenant,
-        assignedTenants);
+        assignedTenants,
+        status,
+        authenticationDeviceIds);
   }
 
   default Map<String, Object> toDetailWithSensitiveData(User user, Tenant tenant) {
@@ -148,6 +152,12 @@ public interface SecurityEventUserCreatable {
     }
     if (userConfig.isIncludeBirthdate() && user.birthdate() != null) {
       result.put("birthdate", user.birthdate());
+    }
+    if (userConfig.isIncludeStatus() && user.hasStatus()) {
+      result.put("status", user.status().name());
+    }
+    if (userConfig.isIncludeAuthenticationDeviceIds() && user.hasAuthenticationDevices()) {
+      result.put("authentication_device_ids", user.authenticationDeviceIds());
     }
 
     return result;

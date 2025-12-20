@@ -43,6 +43,8 @@ public class SecurityEventUserAttributeConfiguration {
   private final boolean includeCurrentTenant;
   private final boolean includeAssignedTenants;
   private final boolean includeVerifiedClaims;
+  private final boolean includeStatus;
+  private final boolean includeAuthenticationDeviceIds;
 
   public SecurityEventUserAttributeConfiguration() {
     this.includeId = true;
@@ -66,6 +68,8 @@ public class SecurityEventUserAttributeConfiguration {
     this.includeCurrentTenant = false;
     this.includeAssignedTenants = false;
     this.includeVerifiedClaims = false;
+    this.includeStatus = true;
+    this.includeAuthenticationDeviceIds = false;
   }
 
   public SecurityEventUserAttributeConfiguration(Map<String, Object> values) {
@@ -91,6 +95,9 @@ public class SecurityEventUserAttributeConfiguration {
     this.includeCurrentTenant = extractBoolean(safeValues, "include_current_tenant", false);
     this.includeAssignedTenants = extractBoolean(safeValues, "include_assigned_tenants", false);
     this.includeVerifiedClaims = extractBoolean(safeValues, "include_verified_claims", false);
+    this.includeStatus = extractBoolean(safeValues, "include_status", true);
+    this.includeAuthenticationDeviceIds =
+        extractBoolean(safeValues, "include_authentication_device_ids", false);
   }
 
   public Map<String, Object> toMap() {
@@ -116,6 +123,8 @@ public class SecurityEventUserAttributeConfiguration {
     map.put("include_current_tenant", includeCurrentTenant);
     map.put("include_assigned_tenants", includeAssignedTenants);
     map.put("include_verified_claims", includeVerifiedClaims);
+    map.put("include_status", includeStatus);
+    map.put("include_authentication_device_ids", includeAuthenticationDeviceIds);
     return map;
   }
 
@@ -201,6 +210,14 @@ public class SecurityEventUserAttributeConfiguration {
 
   public boolean isIncludeVerifiedClaims() {
     return includeVerifiedClaims;
+  }
+
+  public boolean isIncludeStatus() {
+    return includeStatus;
+  }
+
+  public boolean isIncludeAuthenticationDeviceIds() {
+    return includeAuthenticationDeviceIds;
   }
 
   private static boolean extractBoolean(

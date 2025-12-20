@@ -44,6 +44,8 @@ public class SecurityEventUser implements UuidConvertable, JsonReadable {
   List<String> permissions;
   String currentTenant;
   List<String> assignedTenants;
+  String status;
+  List<String> authenticationDeviceIds;
 
   public SecurityEventUser() {}
 
@@ -75,7 +77,9 @@ public class SecurityEventUser implements UuidConvertable, JsonReadable {
       List<String> roles,
       List<String> permissions,
       String currentTenant,
-      List<String> assignedTenants) {
+      List<String> assignedTenants,
+      String status,
+      List<String> authenticationDeviceIds) {
     this.sub = sub;
     this.name = name;
     this.exSub = exSub;
@@ -95,6 +99,8 @@ public class SecurityEventUser implements UuidConvertable, JsonReadable {
     this.permissions = permissions;
     this.currentTenant = currentTenant;
     this.assignedTenants = assignedTenants;
+    this.status = status;
+    this.authenticationDeviceIds = authenticationDeviceIds;
   }
 
   public Map<String, Object> toMap() {
@@ -155,6 +161,12 @@ public class SecurityEventUser implements UuidConvertable, JsonReadable {
     }
     if (assignedTenants != null) {
       result.put("assigned_tenants", assignedTenants);
+    }
+    if (status != null) {
+      result.put("status", status);
+    }
+    if (authenticationDeviceIds != null && !authenticationDeviceIds.isEmpty()) {
+      result.put("authentication_device_ids", authenticationDeviceIds);
     }
 
     return result;
@@ -238,6 +250,14 @@ public class SecurityEventUser implements UuidConvertable, JsonReadable {
 
   public List<String> assignedTenants() {
     return assignedTenants;
+  }
+
+  public String status() {
+    return status;
+  }
+
+  public List<String> authenticationDeviceIds() {
+    return authenticationDeviceIds;
   }
 
   public boolean exists() {
