@@ -166,6 +166,7 @@ CREATE TABLE idp_user
 
 CREATE INDEX idx_idp_user_tenant_provider ON idp_user (tenant_id, provider_id, external_user_id);
 CREATE INDEX idx_idp_user_tenant_email ON idp_user (tenant_id, email);
+CREATE INDEX idx_idp_user_tenant_phone ON idp_user (tenant_id, phone_number);
 
 ALTER TABLE idp_user MODIFY COLUMN preferred_username VARCHAR (255) NOT NULL
     COMMENT 'Tenant and provider-scoped unique user identifier. Stores normalized username/email/phone/external_user_id based on tenant unique key policy. Multiple IdPs can use the same preferred_username (e.g., user@example.com from Google and GitHub).';

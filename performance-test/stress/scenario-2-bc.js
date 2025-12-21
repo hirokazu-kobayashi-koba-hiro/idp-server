@@ -10,7 +10,7 @@ export let options = {
   },
 };
 
-const data = JSON.parse(open('../data/performance-test-user.json'));
+const data = JSON.parse(open('../data/performance-test-user-sub.json'));
 
 function getRandomInt(max) {
   return Math.floor(Math.random() * max);
@@ -23,7 +23,7 @@ export default function () {
   const tenantId = __ENV.TENANT_ID;
 
   const testUser = data[getRandomInt(499)]
-  const loginHint = encodeURIComponent(`sub:${testUser.device_id},idp:idp-server`);
+  const loginHint = encodeURIComponent(`sub:${testUser.sub}`);
 
   const url = `${baseUrl}/${tenantId}/v1/backchannel/authentications`;
 

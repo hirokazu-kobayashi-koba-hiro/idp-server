@@ -1,5 +1,5 @@
 -- ============================================================================
--- V0_10_1__idp_user_authentication_devices.mysql.sql
+-- V0_9_21_4__user_authentication_device.mysql.sql
 -- Issue #964: Authentication device search query performance improvement
 --
 -- Summary:

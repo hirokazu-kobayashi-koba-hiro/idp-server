@@ -1,9 +1,9 @@
-# 📈 Performance Test Guide for idp-server
+# 📈 Performance Test Guide for idp-server (MySQL)
 
 This guide provides comprehensive steps and configurations to perform testing on the `idp-server`
-using [k6](https://k6.io/), PostgreSQL performance analytics, and synthetic test data.
+using [k6](https://k6.io/), MySQL performance analytics, and synthetic test data.
 
-> **Note**: For MySQL, see [README-mysql.md](./README-mysql.md)
+> **Note**: For PostgreSQL, see [README.md](./README.md)
 
 ---
 
@@ -16,11 +16,11 @@ conducted. Each test type targets a specific system behavior:
 |--------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | ✅ **Load**   | Identify the system's maximum sustainable throughput under expected usage (e.g., 500 RPS). Focuses on **steady-state behavior**.                                 |
 | ✅ **Stress** | Push beyond the expected load to observe **failure modes**, **error rates**, and **graceful degradation**.                                                       |
-| **Spike**    | Test sudden and extreme load increases (e.g., from 0 to 1000 RPS instantly) to measure the system’s **burst tolerance**.                                         |
+| **Spike**    | Test sudden and extreme load increases (e.g., from 0 to 1000 RPS instantly) to measure the system's **burst tolerance**.                                         |
 | **Soak**     | Run the system under a typical load for an extended period (1 hour or more) to detect **memory leaks**, **GC issues**, or **performance degradation over time**. |
 
 * Running various performance test scenarios with k6
-* Analyzing database performance using `pg_stat_statements`
+* Analyzing database performance using `performance_schema`
 
 ## Test Data Preparation
 
@@ -47,40 +47,27 @@ chmod +x ./performance-test/data/test-user.sh
 * register user data
 
 ```shell
-psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user (
-  id,
-  tenant_id,
-  provider_id,
-  external_user_id,
-  name,
-  email,
-  email_verified,
-  phone_number,
-  phone_number_verified,
-  preferred_username,
-  status,
-  authentication_devices
-) FROM './performance-test/data/generated_users_100k.tsv' WITH (FORMAT csv, HEADER false,  DELIMITER E'\t')"
+mysql -u root -p"$MYSQL_ROOT_PASSWORD" -h 127.0.0.1 -P 3306 idpserver --local-infile=1 -e "
+LOAD DATA LOCAL INFILE './performance-test/data/generated_users_100k.tsv'
+INTO TABLE idp_user
+FIELDS TERMINATED BY '\t' OPTIONALLY ENCLOSED BY '\"' ESCAPED BY '\"'
+LINES TERMINATED BY '\n'
+(id, tenant_id, provider_id, external_user_id, name, email, email_verified, phone_number, phone_number_verified, preferred_username, status, authentication_devices);
+"
 ```
 
 * register authentication devices data (for optimized query performance)
 
 ```shell
-psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user_authentication_devices (
-  id,
-  tenant_id,
-  user_id,
-  os,
-  model,
-  platform,
-  locale,
-  app_name,
-  priority,
-  available_methods,
-  notification_token,
-  notification_channel
-) FROM './performance-test/data/generated_user_devices_100k.tsv' WITH (FORMAT csv, HEADER false,  DELIMITER E'\t')"
+mysql -u root -p"$MYSQL_ROOT_PASSWORD" -h 127.0.0.1 -P 3306 idpserver --local-infile=1 -e "
+LOAD DATA LOCAL INFILE './performance-test/data/generated_user_devices_100k.tsv'
+INTO TABLE idp_user_authentication_devices
+FIELDS TERMINATED BY '\t'
+LINES TERMINATED BY '\n'
+(id, tenant_id, user_id, os, model, platform, locale, app_name, priority, available_methods, notification_token, notification_channel);
+"
 ```
+
 ### tenants
 
 ```shell
@@ -114,7 +101,6 @@ export TENANT_ID=67e7eae6-62b0-4500-9eff-87459f63fc66
 export CLIENT_ID=clientSecretPost
 export CLIENT_SECRET=clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890
 export REDIRECT_URI=https://www.certification.openid.net/test/a/idp_oidc_basic/callback
-export ACCESS_TOKEN=eyJhbGciOiJSUzI1NiIsInR5cCI6ImF0K2p3dCIsImtpZCI6ImlkX3Rva2VuX25leHRhdXRoIn0.eyJzdWIiOiI5MmU2ZmEwMy02NjgwLTQ3NDItOGQzOC0xYjU4NTFjMmJlYzciLCJzY29wZSI6InBob25lIG1hbmFnZW1lbnQgb3BlbmlkIHRyYW5zZmVycyBwcm9maWxlIGVtYWlsIGFjY291bnQiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvNjdlN2VhZTYtNjJiMC00NTAwLTllZmYtODc0NTlmNjNmYzY2IiwiZXhwIjoxNzQ5OTE5ODM1LCJpYXQiOjE3NDk5MTYyMzUsImNsaWVudF9pZCI6ImNsaWVudFNlY3JldFBvc3QiLCJqdGkiOiJmMzQ0Yjc0ZC1iNWJlLTQ4MjgtOWU3OS00YjVmNTRmMTFkNjkifQ.TWVEVEO172iHaBf13xr5Spcmh8wDcTY6HZlhnmpZkI8YI93L5kvpfJKtTrwxJqguYCaWXEkNKk9MlbOp0fF-keIyq1JS2ikfRkUSrYRg0SYt5Fsmvqf2re4YpxbPKlAOtD-DvNz6WQ0mQESMOTN5oYbd9togIIrqB7ReI1YYDntC6IQZKup4heYkbm6z4zn_2GjAnbOzF-gmaZ7Jm2iOhHjgvQLHSXykkUMHOb_JA3q_CachHNUh0mMhRk-3qpJlOxxCnlr6U5Q-QZS60DcKqp0ovmz6DTPZJy9aMRsDuqNwmbHpohBQz3Jzo-QG6nLsz40NGC00Plo4uaXsXTcJvA
 ```
 
 ### run
@@ -233,94 +219,124 @@ Interpret the metrics in context of test goal, such as max TPS, latency, or erro
 
 ---
 
-### 🐘 PostgreSQL: Using `pg_stat_statements`
+### 🐬 MySQL: Using `performance_schema`
 
-`pg_stat_statements` is a powerful PostgreSQL extension that helps analyze SQL performance by tracking execution
-statistics of all queries.
-
----
-
-#### 🔧 1. Enable the Extension
-
-To enable `pg_stat_statements`, it must be preloaded by PostgreSQL. You can set it in `postgresql.conf`:
-
-```conf
-shared_preload_libraries = 'pg_stat_statements'
-```
-
-If you are using Docker (e.g., Docker Compose), you can pass it as a command-line argument:
-
-```yaml
-command: [ "postgres", "-c", "shared_preload_libraries=pg_stat_statements" ]
-```
+MySQL provides `performance_schema` for analyzing SQL performance. It is enabled by default in MySQL 5.7+.
 
 ---
 
-#### 💥 2. Create the Extension (One-Time Setup)
+#### 🔐 1. Grant Permission (Required)
 
-After the database is up and running, connect using `psql` and run:
+The `performance_schema` requires SELECT permission. Grant it to your user:
+
+```shell
+mysql -h 127.0.0.1 -P 3306 -u root -p < libs/idp-server-database/mysql/operation/grant-performance-schema.sql
+```
+
+Or manually:
+
+```shell
+mysql -h 127.0.0.1 -P 3306 -u root -p
+```
 
 ```sql
-CREATE
-EXTENSION pg_stat_statements;
+-- Grant permission to idpserver user
+GRANT SELECT ON performance_schema.* TO 'idpserver'@'%';
+FLUSH PRIVILEGES;
 ```
-
-This only needs to be done once per database.
 
 ---
 
-#### 🔍 3. View Query Statistics
+#### 🔧 3. Enable Performance Schema (if disabled)
+
+Check if `performance_schema` is enabled:
+
+```sql
+SHOW VARIABLES LIKE 'performance_schema';
+```
+
+If disabled, add to `my.cnf`:
+
+```ini
+[mysqld]
+performance_schema = ON
+```
+
+For Docker, you can pass it as a command-line argument:
+
+```yaml
+command: ["mysqld", "--performance-schema=ON"]
+```
+
+---
+
+#### 🔍 4. View Query Statistics
 
 To check query performance:
 
 ```sql
-SELECT query,
-       calls,
-       total_exec_time,
-       mean_exec_time, rows, shared_blks_hit, shared_blks_read
-FROM
-    pg_stat_statements
-ORDER BY
-    total_exec_time DESC
-    LIMIT 20;
+SELECT
+    DIGEST_TEXT AS query,
+    COUNT_STAR AS calls,
+    ROUND(SUM_TIMER_WAIT / 1000000000, 2) AS total_exec_time_ms,
+    ROUND(AVG_TIMER_WAIT / 1000000000, 2) AS avg_exec_time_ms,
+    SUM_ROWS_EXAMINED AS rows_examined,
+    SUM_ROWS_SENT AS rows_sent
+FROM performance_schema.events_statements_summary_by_digest
+WHERE SCHEMA_NAME = 'idpserver'
+ORDER BY SUM_TIMER_WAIT DESC
+LIMIT 20;
 ```
 
 #### 📌 Column Descriptions
 
-| Column             | Description                                         |
-|--------------------|-----------------------------------------------------|
-| `query`            | Normalized SQL (literals are replaced with `?`)     |
-| `calls`            | Number of times the query was executed              |
-| `total_exec_time`  | Total execution time in milliseconds                |
-| `mean_exec_time`   | Average execution time per call (ms)                |
-| `rows`             | Total number of rows returned                       |
-| `shared_blks_hit`  | Cache hits (higher is better)                       |
-| `shared_blks_read` | Disk reads (higher may indicate slower performance) |
+| Column              | Description                                           |
+|---------------------|-------------------------------------------------------|
+| `DIGEST_TEXT`       | Normalized SQL (literals are replaced with `?`)       |
+| `COUNT_STAR`        | Number of times the query was executed                |
+| `SUM_TIMER_WAIT`    | Total execution time in picoseconds                   |
+| `AVG_TIMER_WAIT`    | Average execution time per call (picoseconds)         |
+| `SUM_ROWS_EXAMINED` | Total number of rows examined                         |
+| `SUM_ROWS_SENT`     | Total number of rows returned                         |
 
 ---
 
-#### 🧼 4. Reset Statistics (Optional)
+#### 🧼 5. Reset Statistics (Optional)
 
 To reset statistics before a performance test or benchmark:
 
 ```sql
-SELECT pg_stat_statements_reset();
+TRUNCATE TABLE performance_schema.events_statements_summary_by_digest;
 ```
 
 ---
 
-#### 📦 Docker Compose Example
+#### 📦 6. Docker Compose Example
 
 ```yaml
 services:
-  postgresql:
-    image: postgres:16
+  mysql:
+    image: mysql:8.0
     environment:
-      POSTGRES_PASSWORD: idpserver
-    command: [ "postgres", "-c", "shared_preload_libraries=pg_stat_statements" ]
+      MYSQL_ROOT_PASSWORD: idpserver
+    command: ["mysqld", "--performance-schema=ON"]
 ```
 
-This ensures that `pg_stat_statements` is enabled when PostgreSQL starts inside a Docker container.
+This ensures that `performance_schema` is enabled when MySQL starts inside a Docker container.
+
+---
+
+#### 🔍 7. Check Index Usage
+
+To verify indexes are being used:
+
+```sql
+-- Show indexes on idp_user table
+SHOW INDEX FROM idp_user;
+
+-- Explain a query to check index usage
+EXPLAIN SELECT * FROM idp_user WHERE tenant_id = ? AND phone_number = ?;
+```
 
 ## Tips
 
@@ -338,3 +354,16 @@ docker volume prune
 docker builder prune
 ```
 
+* Enable local_infile for LOAD DATA
+
+If you get "Loading local data is disabled" error:
+
+```sql
+SET GLOBAL local_infile = 1;
+```
+
+Or start MySQL with:
+
+```yaml
+command: ["mysqld", "--local-infile=1"]
+```
