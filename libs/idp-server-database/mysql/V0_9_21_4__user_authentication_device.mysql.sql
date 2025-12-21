@@ -102,7 +102,12 @@ BEGIN
                 JSON_UNQUOTE(JSON_EXTRACT(v_device, '$.platform')),
                 JSON_UNQUOTE(JSON_EXTRACT(v_device, '$.locale')),
                 JSON_UNQUOTE(JSON_EXTRACT(v_device, '$.app_name')),
-                COALESCE(JSON_EXTRACT(v_device, '$.priority'), 1),
+                COALESCE(
+                    CASE WHEN JSON_TYPE(JSON_EXTRACT(v_device, '$.priority')) = 'NULL' THEN NULL
+                         ELSE JSON_EXTRACT(v_device, '$.priority') + 0
+                    END,
+                    1
+                ),
                 COALESCE(JSON_EXTRACT(v_device, '$.available_methods'), JSON_ARRAY()),
                 JSON_UNQUOTE(JSON_EXTRACT(v_device, '$.notification_token')),
                 JSON_UNQUOTE(JSON_EXTRACT(v_device, '$.notification_channel')),
