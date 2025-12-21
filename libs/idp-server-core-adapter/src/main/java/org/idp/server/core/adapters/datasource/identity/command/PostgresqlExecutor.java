@@ -21,6 +21,7 @@ import java.util.List;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.UserRole;
+import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -131,6 +132,9 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
     params.add(user.statusName());
 
     sqlExecutor.execute(sqlTemplate, params);
+
+    // Sync to idp_user_authentication_devices table
+    syncAuthenticationDevices(tenant, user);
   }
 
   @Override
@@ -193,6 +197,9 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
     params.add(tenant.identifier().valueAsUuid());
 
     sqlExecutor.execute(sqlTemplate, params);
+
+    // Sync to idp_user_authentication_devices table
+    syncAuthenticationDevices(tenant, user);
   }
 
   public void updatePassword(Tenant tenant, User user) {
@@ -423,5 +430,64 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
     params.add(user.currentOrganizationIdentifier().valueAsUuid());
     params.add(user.subAsUuid());
     sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  /**
+   * Sync idp_user_authentication_devices table with idp_user.authentication_devices. Uses DELETE +
+   * INSERT for full replacement (efficient since device count is small).
+   */
+  private void syncAuthenticationDevices(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    // Delete existing devices
+    String deleteSql =
+        """
+        DELETE FROM idp_user_authentication_devices
+        WHERE user_id = ?::uuid
+        AND tenant_id = ?::uuid
+        """;
+    List<Object> deleteParams = new ArrayList<>();
+    deleteParams.add(user.subAsUuid());
+    deleteParams.add(tenant.identifierUUID());
+    sqlExecutor.execute(deleteSql, deleteParams);
+
+    // Insert new devices
+    List<AuthenticationDevice> devices = new ArrayList<>();
+    user.authenticationDevices().forEach(devices::add);
+    if (devices.isEmpty()) {
+      return;
+    }
+
+    StringBuilder insertSql = new StringBuilder();
+    insertSql.append(
+        """
+        INSERT INTO idp_user_authentication_devices (
+            id, tenant_id, user_id, os, model, platform, locale, app_name,
+            priority, available_methods, notification_token, notification_channel
+        ) VALUES
+        """);
+
+    List<String> valuePlaceholders = new ArrayList<>();
+    List<Object> insertParams = new ArrayList<>();
+
+    for (AuthenticationDevice device : devices) {
+      valuePlaceholders.add("(?::uuid, ?::uuid, ?::uuid, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?)");
+      insertParams.add(device.idAsUuid());
+      insertParams.add(tenant.identifierUUID());
+      insertParams.add(user.subAsUuid());
+      insertParams.add(device.os());
+      insertParams.add(device.model());
+      insertParams.add(device.platform());
+      insertParams.add(device.locale());
+      insertParams.add(device.appName());
+      insertParams.add(device.priority());
+      insertParams.add(jsonConverter.write(device.availableMethods()));
+      insertParams.add(device.hasNotificationToken() ? device.notificationToken().value() : null);
+      insertParams.add(
+          device.hasNotificationChannel() ? device.optNotificationChannel("").name() : null);
+    }
+
+    insertSql.append(String.join(",", valuePlaceholders));
+    sqlExecutor.execute(insertSql.toString(), insertParams);
   }
 }

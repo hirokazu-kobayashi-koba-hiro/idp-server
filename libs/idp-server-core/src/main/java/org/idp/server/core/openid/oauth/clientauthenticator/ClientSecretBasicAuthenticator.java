@@ -63,7 +63,7 @@ class ClientSecretBasicAuthenticator implements ClientAuthenticator {
 
     ClientSecret clientSecret = context.clientSecretBasic().clientSecret();
 
-    log.info(
+    log.debug(
         "Client authentication succeeded: method={}, client_id={}",
         ClientAuthenticationType.client_secret_basic.name(),
         requestedClientId.value());

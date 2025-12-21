@@ -58,7 +58,7 @@ class ClientSecretPostAuthenticator implements ClientAuthenticator {
 
     ClientSecret clientSecret = context.parameters().clientSecret();
 
-    log.info(
+    log.debug(
         "Client authentication succeeded: method={}, client_id={}",
         ClientAuthenticationType.client_secret_post.name(),
         requestedClientId.value());

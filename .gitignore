@@ -38,9 +38,9 @@ out/
 
 secret/
 
-generated_users_100k.tsv
-performance-test-user.json
-performance-test-tenant.json
+### Performance Test Data ###
+performance-test/data/generated_*.tsv
+performance-test/data/performance-test-*.json
 performance-test/result/
 
 .env
