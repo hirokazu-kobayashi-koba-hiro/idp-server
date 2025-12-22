@@ -446,6 +446,72 @@ const sidebars = {
               ]
             }
           ]
+        },
+        {
+          type: "category",
+          label: "Linux",
+          items: [
+            "content_11_learning/linux/README",
+            {
+              type: "category",
+              label: "入門",
+              collapsed: true,
+              items: [
+                "content_11_learning/linux/linux-introduction"
+              ]
+            },
+            {
+              type: "category",
+              label: "基礎",
+              collapsed: true,
+              items: [
+                "content_11_learning/linux/linux-basics",
+                "content_11_learning/linux/filesystem",
+                "content_11_learning/linux/process-management",
+                "content_11_learning/linux/users-permissions",
+                "content_11_learning/linux/shell-scripting",
+                "content_11_learning/linux/shell-scripting-examples"
+              ]
+            },
+            {
+              type: "category",
+              label: "ネットワーク",
+              collapsed: true,
+              items: [
+                "content_11_learning/linux/networking-basics",
+                "content_11_learning/linux/iptables-firewall",
+                "content_11_learning/linux/network-troubleshooting"
+              ]
+            },
+            {
+              type: "category",
+              label: "コンテナ技術の基盤",
+              collapsed: true,
+              items: [
+                "content_11_learning/linux/namespaces",
+                "content_11_learning/linux/cgroups",
+                "content_11_learning/linux/overlay-filesystem"
+              ]
+            },
+            {
+              type: "category",
+              label: "運用",
+              collapsed: true,
+              items: [
+                "content_11_learning/linux/systemd",
+                "content_11_learning/linux/logging",
+                "content_11_learning/linux/performance"
+              ]
+            },
+            {
+              type: "category",
+              label: "リファレンス",
+              collapsed: true,
+              items: [
+                "content_11_learning/linux/linux-commands"
+              ]
+            }
+          ]
         }
       ]
     },
