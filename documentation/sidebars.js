@@ -328,13 +328,13 @@ const sidebars = {
           type: "category",
           label: "PostgreSQL",
           items: [
-            "content_11_learning/11-postgresql/README",
+            "content_11_learning/postgresql/README",
             {
               type: "category",
               label: "概要",
               collapsed: true,
               items: [
-                "content_11_learning/11-postgresql/00-overview"
+                "content_11_learning/postgresql/overview"
               ]
             },
             {
@@ -342,16 +342,16 @@ const sidebars = {
               label: "DBA向け",
               collapsed: true,
               items: [
-                "content_11_learning/11-postgresql/dba-00-managed-vs-self-hosted",
-                "content_11_learning/11-postgresql/dba-01-installation",
-                "content_11_learning/11-postgresql/dba-02-backup-recovery",
-                "content_11_learning/11-postgresql/dba-03-replication-ha",
-                "content_11_learning/11-postgresql/dba-04-security",
-                "content_11_learning/11-postgresql/dba-05-monitoring",
-                "content_11_learning/11-postgresql/dba-06-maintenance",
-                "content_11_learning/11-postgresql/dba-07-partitioning",
-                "content_11_learning/11-postgresql/dba-08-planner",
-                "content_11_learning/11-postgresql/dba-09-extensions"
+                "content_11_learning/postgresql/dba-00-managed-vs-self-hosted",
+                "content_11_learning/postgresql/dba-01-installation",
+                "content_11_learning/postgresql/dba-02-backup-recovery",
+                "content_11_learning/postgresql/dba-03-replication-ha",
+                "content_11_learning/postgresql/dba-04-security",
+                "content_11_learning/postgresql/dba-05-monitoring",
+                "content_11_learning/postgresql/dba-06-maintenance",
+                "content_11_learning/postgresql/dba-07-partitioning",
+                "content_11_learning/postgresql/dba-08-planner",
+                "content_11_learning/postgresql/dba-09-extensions"
               ]
             },
             {
@@ -359,12 +359,12 @@ const sidebars = {
               label: "開発者向け",
               collapsed: true,
               items: [
-                "content_11_learning/11-postgresql/dev-01-sql-basics",
-                "content_11_learning/11-postgresql/dev-02-table-design",
-                "content_11_learning/11-postgresql/dev-03-indexes",
-                "content_11_learning/11-postgresql/dev-04-transactions",
-                "content_11_learning/11-postgresql/dev-05-query-optimization",
-                "content_11_learning/11-postgresql/dev-06-connection-pooling"
+                "content_11_learning/postgresql/dev-01-sql-basics",
+                "content_11_learning/postgresql/dev-02-table-design",
+                "content_11_learning/postgresql/dev-03-indexes",
+                "content_11_learning/postgresql/dev-04-transactions",
+                "content_11_learning/postgresql/dev-05-query-optimization",
+                "content_11_learning/postgresql/dev-06-connection-pooling"
               ]
             }
           ]
@@ -373,18 +373,18 @@ const sidebars = {
           type: "category",
           label: "暗号化",
           items: [
-            "content_11_learning/12-crypto/README",
+            "content_11_learning/crypto/README",
             {
               type: "category",
               label: "基礎編",
               collapsed: true,
               items: [
-                "content_11_learning/12-crypto/00-crypto-introduction",
-                "content_11_learning/12-crypto/01-symmetric-encryption",
-                "content_11_learning/12-crypto/02-asymmetric-encryption",
-                "content_11_learning/12-crypto/03-hash-functions",
-                "content_11_learning/12-crypto/04-digital-signatures",
-                "content_11_learning/12-crypto/05-key-management"
+                "content_11_learning/crypto/crypto-introduction",
+                "content_11_learning/crypto/symmetric-encryption",
+                "content_11_learning/crypto/asymmetric-encryption",
+                "content_11_learning/crypto/hash-functions",
+                "content_11_learning/crypto/digital-signatures",
+                "content_11_learning/crypto/key-management"
               ]
             },
             {
@@ -392,8 +392,8 @@ const sidebars = {
               label: "応用編",
               collapsed: true,
               items: [
-                "content_11_learning/12-crypto/06-tls-ssl",
-                "content_11_learning/12-crypto/07-pki-certificates"
+                "content_11_learning/crypto/tls-ssl",
+                "content_11_learning/crypto/pki-certificates"
               ]
             }
           ]
