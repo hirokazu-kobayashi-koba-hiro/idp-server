@@ -368,6 +368,35 @@ const sidebars = {
               ]
             }
           ]
+        },
+        {
+          type: "category",
+          label: "暗号化",
+          items: [
+            "content_11_learning/12-crypto/README",
+            {
+              type: "category",
+              label: "基礎編",
+              collapsed: true,
+              items: [
+                "content_11_learning/12-crypto/00-crypto-introduction",
+                "content_11_learning/12-crypto/01-symmetric-encryption",
+                "content_11_learning/12-crypto/02-asymmetric-encryption",
+                "content_11_learning/12-crypto/03-hash-functions",
+                "content_11_learning/12-crypto/04-digital-signatures",
+                "content_11_learning/12-crypto/05-key-management"
+              ]
+            },
+            {
+              type: "category",
+              label: "応用編",
+              collapsed: true,
+              items: [
+                "content_11_learning/12-crypto/06-tls-ssl",
+                "content_11_learning/12-crypto/07-pki-certificates"
+              ]
+            }
+          ]
         }
       ]
     },
